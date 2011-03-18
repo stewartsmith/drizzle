@@ -86,14 +86,13 @@
 #include <boost/checked_delete.hpp>
 
 #include <drizzled/util/backtrace.h>
-
 #include <drizzled/schema.h>
 
 using namespace std;
 
-namespace fs=boost::filesystem;
-namespace drizzled
-{
+namespace fs= boost::filesystem;
+
+namespace drizzled {
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -149,6 +148,8 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 class Session::impl_c
 {
 public:
+  typedef session::PropertyMap properties_t;
+
   Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
@@ -157,6 +158,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  properties_t properties;
   session::TableMessages table_message_cache;
 };
 
@@ -2188,15 +2190,24 @@ enum_tx_isolation Session::getTxIsolation()
   return (enum_tx_isolation)variables.tx_isolation;
 }
 
-namespace display  {
-
-static const std::string NONE= "NONE";
-static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
-static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
-
-const std::string &type(drizzled::Session::global_read_lock_t type)
+drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 {
-  switch (type) {
+  return impl_->properties.getProperty(arg);
+}
+
+void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
+{
+  impl_->properties.setProperty(arg, value);
+}
+
+const std::string& display::type(drizzled::Session::global_read_lock_t type)
+{
+  static const std::string NONE= "NONE";
+  static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
+  static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
+
+  switch (type) 
+  {
     default:
     case Session::NONE:
       return NONE;
@@ -2207,11 +2218,9 @@ const std::string &type(drizzled::Session::global_read_lock_t type)
   }
 }
 
-size_t max_string_length(drizzled::Session::global_read_lock_t)
+size_t display::max_string_length(drizzled::Session::global_read_lock_t)
 {
-  return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT.size();
+  return type(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT).size();
 }
-
-} /* namespace display */
 
 } /* namespace drizzled */

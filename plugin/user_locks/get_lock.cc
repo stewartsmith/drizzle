@@ -43,41 +43,30 @@ int64_t GetLock::val_int()
   }
   null_value= false;
 
-  user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+  user_locks::Storable *list= getSession().getProperty<user_locks::Storable>("user_locks");
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
-  bool result;
   drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
 
-    try {
-      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(*user_identifier, res->c_str()), wait_time);
+    try 
+    {
+      if (not user_locks::Locks::getInstance().lock(getSession().getSessionId(), Key(*user_identifier, res->c_str()), wait_time))
+        return 0;
     }
-    catch(boost::thread_interrupted const& error)
+    catch (boost::thread_interrupted const&)
     {
       my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
       null_value= true;
-
       return 0;
     }
   }
-
-  if (result)
-  {
-    if (not list)
-    {
-      list= new user_locks::Storable(getSession().getSessionId());
-      getSession().setProperty("user_locks", list);
-    }
-
-    list->insert(Key(*user_identifier, res->c_str()));
-
-    return 1;
-  }
-
-  return 0;
+  if (not list)
+    list= getSession().setProperty("user_locks", new user_locks::Storable(getSession().getSessionId()));
+  list->insert(Key(*user_identifier, res->c_str()));
+  return 1;
 }
 
 } /* namespace user_locks */

@@ -38,7 +38,6 @@
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/session/property_map.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
@@ -46,7 +45,6 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/transaction_context.h>
-#include <drizzled/util/storable.h>
 #include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
@@ -84,7 +82,16 @@ namespace table
   class Singular; 
 }
 
+<<<<<<< TREE
 typedef Item COND;
+=======
+namespace util
+{
+  class Storable;
+}
+
+typedef class Item COND;
+>>>>>>> MERGE-SOURCE
 
 class CopyField;
 class CreateField;
@@ -1391,15 +1398,21 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
+<<<<<<< TREE
   util::Storable *getProperty(const std::string &arg)
+=======
+  template <class T>
+  T* getProperty(const std::string& name)
+>>>>>>> MERGE-SOURCE
   {
-    return life_properties.getProperty(arg);
+    return static_cast<T*>(getProperty0(name));
   }
 
-  template<class T>
-  void setProperty(const std::string &arg, T *value)
+  template <class T>
+  T setProperty(const std::string& name, T value)
   {
-    life_properties.setProperty(arg, value);
+    setProperty0(name, value);
+    return value;
   }
 
   /**
@@ -1441,6 +1454,9 @@ private:
 	class impl_c;
 
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+  drizzled::util::Storable* getProperty0(const std::string&);
+  void setProperty0(const std::string&, drizzled::util::Storable*);
+
 
   bool resetUsage()
   {
@@ -1467,7 +1483,6 @@ private:
   bool concurrent_execute_allowed;
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
   rusage usage;
   identifier::User::shared_ptr security_ctx;
