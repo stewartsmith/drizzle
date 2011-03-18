@@ -26,7 +26,6 @@
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include <drizzled/tree.h>
 
 #include <vector>
 
