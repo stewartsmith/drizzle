@@ -23,7 +23,7 @@
 #include <drizzled/charset_info.h>
 #include <drizzled/internal/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include <drizzled/tree.h>
+
 #include <list>
 
 
