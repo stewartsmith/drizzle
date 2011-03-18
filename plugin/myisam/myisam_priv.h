@@ -27,6 +27,7 @@
 #include <drizzled/common.h>
 #include <drizzled/enum.h>
 #include <drizzled/dynamic_array.h>
+#include <drizzled/error_t.h>
 
 #include <assert.h>
 #include <fcntl.h>

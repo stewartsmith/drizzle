@@ -49,6 +49,9 @@ TODO:
 
 #include <config.h>
 
+#include <drizzled/definitions.h>
+#include <drizzled/error_t.h>
+#include <drizzled/error.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/drizzled.h>

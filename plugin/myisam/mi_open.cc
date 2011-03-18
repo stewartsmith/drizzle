@@ -29,6 +29,7 @@
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/memory/multi_malloc.h>
+#include <drizzled/identifier.h>
 
 
 using namespace std;

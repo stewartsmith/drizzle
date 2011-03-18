@@ -30,14 +30,11 @@
 
 #include <errno.h>
 
+#include <drizzled/definitions.h>
 #include <drizzled/internal/my_pthread.h>
 
-#include <drizzled/charset_info.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
 #include <drizzled/internal/aio_result.h>
-
-#include <drizzled/memory/root.h>
-#include <drizzled/error.h>
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE

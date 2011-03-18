@@ -19,7 +19,6 @@
 
 #include <config.h>
 #include <libdrizzle/libdrizzle.h>
-#include <drizzled/internal/my_sys.h>
 
 #include <client/get_password.h>
 
