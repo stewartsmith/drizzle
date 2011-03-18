@@ -330,17 +330,17 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
   }
 
   TransactionContext *trans= &session.transaction.stmt;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
+  ResourceContext& resource_context= *session.getResourceContext(monitored, 0);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   assert(monitored->participatesInSqlTransaction());
   assert(not monitored->participatesInXaTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setTransactionalStorageEngine(engine);
-  trans->registerResource(resource_context);
+  resource_context.setMonitored(monitored);
+  resource_context.setTransactionalStorageEngine(engine);
+  trans->registerResource(&resource_context);
 
   trans->no_2pc|= true;
 }
@@ -363,18 +363,18 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
   }
 
   TransactionContext *trans= &session.transaction.stmt;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
+  ResourceContext& resource_context= *session.getResourceContext(monitored, 0);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   assert(monitored->participatesInXaTransaction());
   assert(monitored->participatesInSqlTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setTransactionalStorageEngine(engine);
-  resource_context->setXaResourceManager(resource_manager);
-  trans->registerResource(resource_context);
+  resource_context.setMonitored(monitored);
+  resource_context.setTransactionalStorageEngine(engine);
+  resource_context.setXaResourceManager(resource_manager);
+  trans->registerResource(&resource_context);
 
   trans->no_2pc|= false;
 }

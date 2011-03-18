@@ -636,8 +636,6 @@ inline
 void
 Cursor::setTransactionReadWrite()
 {
-  ResourceContext *resource_context;
-
   /*
    * If the cursor has not context for execution then there should be no
    * possible resource to gain (and if there is... then there is a bug such
@@ -646,7 +644,6 @@ Cursor::setTransactionReadWrite()
   if (not getTable()->in_use)
     return;
 
-  resource_context= getTable()->in_use->getResourceContext(getEngine());
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -655,9 +652,10 @@ Cursor::setTransactionReadWrite()
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  if (resource_context->isStarted())
+  ResourceContext& resource_context= *getTable()->in_use->getResourceContext(getEngine());
+  if (resource_context.isStarted())
   {
-    resource_context->markModifiedData();
+    resource_context.markModifiedData();
   }
 }
 

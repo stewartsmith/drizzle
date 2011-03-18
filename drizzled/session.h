@@ -82,16 +82,12 @@ namespace table
   class Singular; 
 }
 
-<<<<<<< TREE
-typedef Item COND;
-=======
 namespace util
 {
   class Storable;
 }
 
-typedef class Item COND;
->>>>>>> MERGE-SOURCE
+typedef Item COND;
 
 class CopyField;
 class CreateField;
@@ -1398,12 +1394,8 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-<<<<<<< TREE
-  util::Storable *getProperty(const std::string &arg)
-=======
   template <class T>
   T* getProperty(const std::string& name)
->>>>>>> MERGE-SOURCE
   {
     return static_cast<T*>(getProperty0(name));
   }

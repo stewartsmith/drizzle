@@ -23,12 +23,16 @@
 
 #include <config.h>
 
+#include <boost/checked_delete.hpp>
+#include <boost/filesystem.hpp>
 #include <drizzled/copy_field.h>
 #include <drizzled/data_home.h>
+#include <drizzled/diagnostics_area.h>
 #include <drizzled/display.h>
 #include <drizzled/drizzled.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/internal/thread_var.h>
@@ -37,6 +41,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/return_int.h>
+#include <drizzled/item/subselect.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/plugin/authorization.h>
@@ -50,6 +55,7 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/refresh_version.h>
+#include <drizzled/schema.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/select_export.h>
@@ -59,34 +65,27 @@
 #include <drizzled/select_to_file.h>
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
+#include <drizzled/session/property_map.h>
+#include <drizzled/session/state.h>
+#include <drizzled/session/table_messages.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statement.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/user_var_entry.h>
-#include <drizzled/util/functors.h>
+#include <drizzled/util/backtrace.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/util/functors.h>
 #include <plugin/myisam/myisam.h>
-#include <drizzled/item/subselect.h>
-#include <drizzled/statement.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/ha_data.h>
-#include <drizzled/diagnostics_area.h>
-#include <drizzled/session/state.h>
-#include <drizzled/session/table_messages.h>
 
 #include <algorithm>
 #include <climits>
 #include <fcntl.h>
 #include <sys/stat.h>
-
-#include <boost/filesystem.hpp>
-#include <boost/checked_delete.hpp>
-
-#include <drizzled/util/backtrace.h>
-#include <drizzled/schema.h>
 
 using namespace std;
 
