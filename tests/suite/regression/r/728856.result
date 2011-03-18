@@ -1,0 +1,2 @@
+CREATE TABLE t1 (a int default 'aoeu');
+ERROR 42000: Invalid default value for 'a'

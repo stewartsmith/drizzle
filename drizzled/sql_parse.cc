@@ -920,10 +920,11 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return true;
   }
 
-  if (!(new_field= new CreateField()) ||
-      new_field->init(session, field_name->str, type, length, decimals, type_modifier,
-                      default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format))
+  if (!(new_field= new CreateField())
+      || new_field->init(session, field_name->str, type, length, decimals,
+                         type_modifier, comment, change, interval_list,
+                         cs, 0, column_format)
+      || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
   statement->alter_info.create_list.push_back(new_field);
