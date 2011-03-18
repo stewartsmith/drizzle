@@ -992,19 +992,19 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex.statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
-        | REPLICATE opt_equal TRUE_SYM
+        | REPLICATE '=' TRUE_SYM
           {
             parser::buildReplicationOption(&Lex, true);
           }
-        | REPLICATE opt_equal FALSE_SYM
+        | REPLICATE '=' FALSE_SYM
           {
             parser::buildReplicationOption(&Lex, false);
           }
-        | ident_or_text equal ident_or_text
+        | ident_or_text '=' ident_or_text
           {
             parser::buildSchemaOption(&Lex, $1.str, $3);
           }
-        | ident_or_text equal ulonglong_num
+        | ident_or_text '=' ulonglong_num
           {
             parser::buildSchemaOption(&Lex, $1.str, $3);
           }
@@ -1039,7 +1039,7 @@ create_table_option:
           custom_engine_option;
 
 custom_engine_option:
-        ENGINE_SYM equal ident_or_text
+        ENGINE_SYM '=' ident_or_text
           {
             Lex.table()->mutable_engine()->set_name($3.str);
           }
@@ -1059,19 +1059,19 @@ custom_engine_option:
           {
 	    message::set_is_replicated(*Lex.table(), false);
           }
-        |  ROW_FORMAT_SYM equal row_format_or_text
+        |  ROW_FORMAT_SYM '=' row_format_or_text
           {
             parser::buildEngineOption(&Lex, "ROW_FORMAT", $3);
           }
-        |  FILE_SYM equal TEXT_STRING_sys
+        |  FILE_SYM '=' TEXT_STRING_sys
           {
             parser::buildEngineOption(&Lex, "FILE", $3);
           }
-        |  ident_or_text equal engine_option_value
+        |  ident_or_text '=' engine_option_value
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
-        | ident_or_text equal ulonglong_num
+        | ident_or_text '=' ulonglong_num
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
