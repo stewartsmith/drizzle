@@ -1384,15 +1384,14 @@ bool
 push_new_name_resolution_context(Session *session,
                                  TableList *left_op, TableList *right_op)
 {
-  Name_resolution_context *on_context;
-  if (!(on_context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context *on_context= new (session->mem_root) Name_resolution_context;
   on_context->init();
   on_context->first_name_resolution_table=
     left_op->first_leaf_for_name_resolution();
   on_context->last_name_resolution_table=
     right_op->last_leaf_for_name_resolution();
-  return session->lex().push_context(on_context);
+  session->lex().push_context(on_context);
+	return false; // todo: return void
 }
 
 

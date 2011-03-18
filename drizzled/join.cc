@@ -3278,8 +3278,9 @@ static bool alloc_group_fields(Join *join, Order *group)
     for (; group ; group=group->next)
     {
       Cached_item *tmp= new_Cached_item(join->session, *group->item);
-      if (!tmp || join->group_fields.push_front(tmp))
+      if (!tmp)
         return true;
+			join->group_fields.push_front(tmp);
     }
   }
   join->sort_and_group=1;     /* Mark for do_select */
@@ -6324,7 +6325,6 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   Item_cond_and *cond=new Item_cond_and();
   Table *table=join_tab->table;
-  int error;
   if (!cond)
     return(true);
 
@@ -6339,16 +6339,16 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   if (!cond->fixed)
     cond->fix_fields(session, (Item**)&cond);
+  int error = 0;
   if (join_tab->select)
   {
-    error=(int) cond->add(join_tab->select->cond);
+    cond->add(join_tab->select->cond);
     join_tab->select_cond=join_tab->select->cond=cond;
   }
-  else if ((join_tab->select= optimizer::make_select(join_tab->table, 0, 0, cond, 0,
-                                                     &error)))
+  else if ((join_tab->select= optimizer::make_select(join_tab->table, 0, 0, cond, 0, &error)))
     join_tab->select_cond=cond;
 
-  return(error ? true : false);
+  return error;
 }
 
 static void free_blobs(Field **ptr)

@@ -1022,9 +1022,7 @@ bool Item_sum_distinct::setup(Session *session)
     PS/SP. Hence all further allocations are performed in the runtime
     mem_root.
   */
-  if (field_list.push_back(&field_def))
-    return(true);
-
+  field_list.push_back(&field_def);
   null_value= maybe_null= 1;
   quick_group= 0;
 
@@ -2599,8 +2597,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   for (uint32_t i=0; i < arg_count ; i++)
   {
     Item *item=args[i];
-    if (list.push_back(item))
-      return true;                              // End of memory
+    list.push_back(item);
     if (item->const_item() && item->is_null())
       always_null= 1;
   }
@@ -3226,8 +3223,7 @@ bool Item_func_group_concat::setup(Session *session)
   for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *item= args[i];
-    if (list.push_back(item))
-      return(true);
+    list.push_back(item);
     if (item->const_item())
     {
       if (item->is_null())

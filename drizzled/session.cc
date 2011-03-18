@@ -320,7 +320,8 @@ bool Session::add_item_to_list(Item *item)
 
 bool Session::add_value_to_list(Item *value)
 {
-  return lex().value_list.push_back(value);
+	lex().value_list.push_back(value);
+  return false;
 }
 
 bool Session::add_order_to_list(Item *item, bool asc)
@@ -398,7 +399,7 @@ void Session::get_xid(DrizzleXid *xid)
 
 /* Do operations that may take a long time */
 
-void Session::cleanup(void)
+void Session::cleanup()
 {
   assert(cleanup_done == false);
 

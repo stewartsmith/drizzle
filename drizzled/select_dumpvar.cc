@@ -22,6 +22,7 @@
 #include <drizzled/select_dumpvar.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
+#include <drizzled/var.h>
 
 namespace drizzled {
 

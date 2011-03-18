@@ -5793,8 +5793,8 @@ bool setup_copy_fields(Session *session,
   uint32_t i, border= all_fields.size() - elements;
 
   if (param->field_count &&
-      !(copy=param->copy_field= new CopyField[param->field_count]))
-    goto err2;
+      !(copy= param->copy_field= new CopyField[param->field_count]))
+    return true;
 
   param->copy_funcs.clear();
   for (i= 0; (pos= li++); i++)
@@ -5829,8 +5829,7 @@ bool setup_copy_fields(Session *session,
               copy_funcs
               (to see full test case look at having.test, BUG #4358)
             */
-        if (param->copy_funcs.push_front(pos))
-          goto err;
+        param->copy_funcs.push_front(pos);
       }
       else
       {
@@ -5871,15 +5870,11 @@ bool setup_copy_fields(Session *session,
         on how the value is to be used: In some cases this may be an
         argument in a group function, like: IF(ISNULL(col),0,COUNT(*))
       */
-      if (!(pos=new Item_copy_string(pos)))
-        goto err;
+      pos=new Item_copy_string(pos);
       if (i < border)                           // HAVING, order_st and GROUP BY
-      {
-        if (extra_funcs.push_back(pos))
-          goto err;
-      }
-      else if (param->copy_funcs.push_back(pos))
-        goto err;
+        extra_funcs.push_back(pos);
+      else 
+				param->copy_funcs.push_back(pos);
     }
     res_all_fields.push_back(pos);
     ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
@@ -5902,8 +5897,7 @@ err:
   if (copy)
     delete [] param->copy_field;			// This is never 0
   param->copy_field=0;
-err2:
-  return(true);
+  return true;
 }
 
 /**

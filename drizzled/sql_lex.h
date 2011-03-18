@@ -937,9 +937,9 @@ public:
 
   void cleanup_after_one_table_open();
 
-  bool push_context(Name_resolution_context *context)
+  void push_context(Name_resolution_context *context)
   {
-    return context_stack.push_front(context);
+    context_stack.push_front(context);
   }
 
   void pop_context()
