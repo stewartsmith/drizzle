@@ -26,7 +26,10 @@
 #include <drizzled/tree.h>
 #include <list>
 
-#include <boost/thread/mutex.hpp>
+
+namespace boost {
+  class mutex;
+}
 
 /*
   When allocating keys /rows in the internal block structure, do it
