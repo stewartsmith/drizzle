@@ -37,6 +37,7 @@
 #include <drizzled/diagnostics_area.h>
 #include <libdrizzle/constants.h>
 
+#define MIN_HANDSHAKE_SIZE 6
 #define PROTOCOL_VERSION 10
 
 namespace po= boost::program_options;

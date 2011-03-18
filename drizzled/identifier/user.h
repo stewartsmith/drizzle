@@ -56,16 +56,7 @@ public:
 
   bool hasPassword() const
   {
-    switch (password_type)
-    {
-    case NONE:
-      return false;
-    case PLAIN_TEXT:
-    case MYSQL_HASH:
-      break;
-    }
-
-    return true;
+    return password_type != NONE;
   }
 
   const std::string& address() const
@@ -75,7 +66,7 @@ public:
 
   void setAddress(const char *newip)
   {
-    _address.assign(newip);
+    _address = newip;
   }
 
   const std::string& username() const
@@ -85,10 +76,10 @@ public:
 
   void setUser(const std::string &newuser)
   {
-    _user.assign(newuser);
+    _user = newuser;
   }
 
-  PasswordType getPasswordType(void) const
+  PasswordType getPasswordType() const
   {
     return password_type;
   }
