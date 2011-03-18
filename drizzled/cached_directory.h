@@ -27,8 +27,6 @@
 
 #pragma once
 
-#include <dirent.h>
-
 #include <iostream>
 #include <vector>
 #include <set>
@@ -36,8 +34,7 @@
 #include <cstdlib>
 #include <cerrno>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * A utility class to handle processing the entries/files within a directory.
@@ -48,7 +45,8 @@ namespace drizzled
 class CachedDirectory
 {
 public:
-  enum FILTER {
+  enum FILTER 
+  {
     NONE,
     DIRECTORY,
     FILE,

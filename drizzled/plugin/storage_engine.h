@@ -19,12 +19,9 @@
 
 #pragma once
 
-
-#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/plugin.h>
@@ -39,9 +36,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
+class CachedDirectory;
 class TableList;
 class Session;
 class Cursor;
