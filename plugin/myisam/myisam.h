@@ -17,7 +17,11 @@
 
 #pragma once
 
-#include <drizzled/identifier.h>
+namespace drizzled {
+  namespace identifier {
+    class Table;
+  }
+}
 
 #include <drizzled/key_map.h>
 
