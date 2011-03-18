@@ -151,6 +151,8 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 class Session::impl_c
 {
 public:
+  typedef session::PropertyMap properties_t;
+
   Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
@@ -159,7 +161,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
-  session::PropertyMap life_properties;
+  properties_t properties;
   session::TableMessages table_message_cache;
 };
 
@@ -2208,12 +2210,12 @@ enum_tx_isolation Session::getTxIsolation()
 
 drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 {
-  return impl_->life_properties.getProperty(arg);
+  return impl_->properties.getProperty(arg);
 }
 
 void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
 {
-  impl_->life_properties.setProperty(arg, value);
+  impl_->properties.setProperty(arg, value);
 }
 
 const std::string& display::type(drizzled::Session::global_read_lock_t type)
