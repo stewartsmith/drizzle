@@ -19,8 +19,6 @@
 #include <config.h>
 #include <drizzled/base.h>
 
-#include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
 #include "heap.h"			/* Structs & some defines */
 
 #include <list>
