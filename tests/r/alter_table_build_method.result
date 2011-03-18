@@ -1,0 +1,7 @@
+CREATE TABLE t1 (a int);
+ALTER ONLINE TABLE t1 RENAME t2;
+ALTER ONLINE TABLE t2 RENAME t1;
+ALTER ONLINE TABLE t1 add column b int;
+ERROR 42000: This version of Drizzle doesn't yet support 'ALTER ONLINE TABLE t1 add column b int'
+ALTER OFFLINE TABLE t1 add column c int;
+DROP TABLE t1;
