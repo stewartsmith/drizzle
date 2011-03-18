@@ -109,19 +109,13 @@ int my_close(int fd, myf MyFlags)
 
 int my_register_filename(int fd, const char *FileName, uint32_t error_message_number, myf MyFlags)
 {
-  if ((int) fd >= 0)
-  {
+  if (fd >= 0)
     return fd;
-  }
-  else
-    errno= errno;
-
   if (MyFlags & (MY_FFNF | MY_FAE | MY_WME))
   {
     if (errno == EMFILE)
       error_message_number= EE_OUT_OF_FILERESOURCES;
-    my_error(static_cast<drizzled::error_t>(error_message_number), MYF(ME_BELL+ME_WAITTANG),
-             FileName, errno);
+    my_error(static_cast<drizzled::error_t>(error_message_number), MYF(ME_BELL+ME_WAITTANG), FileName, errno);
   }
   return -1;
 }

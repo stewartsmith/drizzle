@@ -44,7 +44,6 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/transaction_context.h>
 #include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
