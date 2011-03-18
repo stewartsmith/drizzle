@@ -39,7 +39,6 @@
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/session/property_map.h>
-#include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
@@ -53,8 +52,6 @@
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/type/time.h>
 #include <drizzled/sql_lex.h>
-
-#define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled {
 

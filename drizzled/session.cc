@@ -75,6 +75,7 @@
 #include <drizzled/ha_data.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/session/state.h>
+#include <drizzled/session/table_messages.h>
 
 #include <algorithm>
 #include <climits>
@@ -124,10 +125,8 @@ int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
-  if (fd >= 0) {
+  if (fd >= 0)
     unlink(filename);
-  }
-
   return fd;
 }
 
