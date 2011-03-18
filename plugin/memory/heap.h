@@ -22,7 +22,6 @@
 
 #include <drizzled/base.h>
 #include <drizzled/common.h>
-#include <drizzled/internal/my_pthread.h>
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
