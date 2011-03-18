@@ -39,7 +39,6 @@
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/query_id.h>
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
@@ -89,7 +88,7 @@ namespace table
   class Singular; 
 }
 
-typedef class Item COND;
+typedef Item COND;
 
 class CopyField;
 class CreateField;

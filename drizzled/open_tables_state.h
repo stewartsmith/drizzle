@@ -21,11 +21,12 @@
 #pragma once
 
 #include <drizzled/lock.h>
-#include <drizzled/query_id.h>
 
 namespace drizzled {
 
 namespace plugin { class StorageEngine; }
+
+typedef uint64_t query_id_t;
 
 class CachedDirectory;
 
