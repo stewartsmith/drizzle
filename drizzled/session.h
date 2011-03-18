@@ -474,8 +474,7 @@ private:
 
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
-  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
-                                      size_t index= 0);
+  ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
   session::Transactions transaction;
 

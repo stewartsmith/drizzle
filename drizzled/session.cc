@@ -133,10 +133,9 @@ void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
 }
 
-ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransaction *monitored,
-                                             size_t index)
+ResourceContext& Session::getResourceContext(const plugin::MonitoredInTransaction& monitored, size_t index)
 {
-  return &ha_data[monitored->getId()].resource_context[index];
+  return ha_data[monitored.getId()].resource_context[index];
 }
 
 int64_t session_test_options(const Session *session, int64_t test_options)

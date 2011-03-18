@@ -652,11 +652,9 @@ Cursor::setTransactionReadWrite()
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  ResourceContext& resource_context= *getTable()->in_use->getResourceContext(getEngine());
+  ResourceContext& resource_context= getTable()->in_use->getResourceContext(*getEngine());
   if (resource_context.isStarted())
-  {
     resource_context.markModifiedData();
-  }
 }
 
 
