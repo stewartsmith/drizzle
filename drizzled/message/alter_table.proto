@@ -1,0 +1,63 @@
+/*
+  Message format for ALTER TABLE commands.
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "AlterTableMessage";
+
+message AlterTable {
+  optional string catalog = 1;
+  required string schema = 2;
+  required string name = 3;
+
+  enum BuildMethod {
+    BUILD_DEFAULT = 0;
+    BUILD_ONLINE  = 1;
+    BUILD_OFFLINE = 2;
+  }
+      
+   required BuildMethod build_method = 4 [default = BUILD_DEFAULT];
+
+   required bool ignore = 5 [ default = false ];
+
+   message AlterTableOperation {
+     enum Operation {
+       /* Currently, the only valid DISCARD_TABLESPACE or IMPORT_TABLESPACE
+          ALTER TABLE operation is as the first and only operation */
+       DISCARD_TABLESPACE = 0;
+       IMPORT_TABLESPACE = 1;
+       DROP_KEY = 2; /* uses drop_name */
+       DROP_COLUMN = 3; /* uses drop_name */
+       DROP_FOREIGN_KEY = 4; /* uses drop_name */
+     }
+
+     required Operation operation = 1;
+
+     optional string drop_name = 2;;
+   }
+
+  repeated AlterTableOperation operations = 6; 
+
+  message RenameTable {
+    required string to_schema = 1;
+    required string to_name = 2;
+  }
+
+  message AlterKeysOnOff {
+    required bool enable = 1;
+  }
+
+  /* RenameTable and AlterKeysOnOff are weird as they can only exist once,
+     and only exist as what the last one in a ALTER TABLE statement does.
+     i.e. from SQL the following is valid:
+     CREATE TABLE t1 (a int);
+     CREATE TABLE t2 (a int);
+     ALTER TABLE t1 RENAME t2, RENAME t3;
+     (t1 is renamed to t3 without error or warning).
+     We can argue if this is insanity or not, but that's current behaviour.
+  */
+  optional RenameTable rename = 7;
+  optional AlterKeysOnOff alter_keys_onoff = 8;
+}

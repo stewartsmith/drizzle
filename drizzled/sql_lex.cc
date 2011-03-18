@@ -38,6 +38,8 @@
 #include <cstdio>
 #include <ctype.h>
 
+#include <drizzled/message/alter_table.pb.h>
+
 union ParserType;
 
 using namespace std;
@@ -297,7 +299,9 @@ void LEX::end()
 
   safe_delete(result);
   safe_delete(_create_table);
+  safe_delete(_alter_table);
   _create_table= NULL;
+  _alter_table= NULL;
   _create_field= NULL;
 
   result= 0;
@@ -1829,6 +1833,7 @@ void Select_Lex::print_limit(Session *, String *str)
 LEX::~LEX()
 {
   delete _create_table;
+  delete _alter_table;
 }
 
 /*
@@ -1892,6 +1897,7 @@ LEX::LEX() :
     cacheable(true),
     sum_expr_used(false),
     _create_table(NULL),
+    _alter_table(NULL),
     _create_field(NULL),
     _exists(false)
 {
@@ -2179,5 +2185,12 @@ bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
   return sql_reserved_words::in_word_set(string.str, string.length);
 }
 
+message::AlterTable *LEX::alter_table()
+{
+  if (not _alter_table)
+    _alter_table= new message::AlterTable;
+
+  return _alter_table;
+}
 
 } /* namespace drizzled */

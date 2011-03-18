@@ -196,6 +196,6 @@ message Table {
   optional ReplicationOptions replication_options= 16;
 }
 
-message AlterTable {
+message AddedFields {
   repeated Table.Field added_field = 1;
 }
