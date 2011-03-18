@@ -913,10 +913,6 @@ void Session::cleanup_after_query()
     Reset rand_used so that detection of calls to rand() will save random
     seeds if needed by the slave.
   */
-  {
-    /* Forget those values, for next binlogger: */
-    auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-  }
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
     /* set what LAST_INSERT_ID() will return */
@@ -1750,11 +1746,6 @@ void Session::reset_for_next_command()
 {
   free_list= 0;
   select_number= 1;
-  /*
-    Those two lines below are theoretically unneeded as
-    Session::cleanup_after_query() should take care of this already.
-  */
-  auto_inc_intervals_in_cur_stmt_for_binlog.empty();
 
   is_fatal_error= false;
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |

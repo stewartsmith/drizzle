@@ -35,7 +35,6 @@
 
 #include <drizzled/global_charset_info.h>
 #include <drizzled/base.h>
-#include <drizzled/discrete_interval.h>
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
@@ -568,9 +567,6 @@ public:
     (first_successful_insert_id_in_cur_stmt == 0), but storing "INSERT_ID=3"
     in the binlog is still needed; the list's minimum will contain 3.
   */
-  Discrete_intervals_list auto_inc_intervals_in_cur_stmt_for_binlog;
-  /** Used by replication and SET INSERT_ID */
-  Discrete_intervals_list auto_inc_intervals_forced;
 
   uint64_t limit_found_rows;
   uint64_t options; /**< Bitmap of options */
@@ -895,16 +891,6 @@ public:
   inline uint64_t read_first_successful_insert_id_in_prev_stmt()
   {
     return first_successful_insert_id_in_prev_stmt;
-  }
-  /**
-    Used by Intvar_log_event::do_apply_event() and by "SET INSERT_ID=#"
-    (mysqlbinlog). We'll soon add a variant which can take many intervals in
-    argument.
-  */
-  inline void force_one_auto_inc_interval(uint64_t next_id)
-  {
-    auto_inc_intervals_forced.empty(); // in case of multiple SET INSERT_ID
-    auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
   Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
