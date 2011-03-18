@@ -38,6 +38,11 @@ namespace drizzled {
 namespace plugin { class Function; }
 namespace statement { class Statement; }
 
+  namespace message
+  {
+    class AlterTable;
+  }
+
 class st_lex_symbol;
 class select_result_interceptor;
 
@@ -1012,6 +1017,8 @@ public:
     return _create_table;
   }
 
+  message::AlterTable *alter_table();
+
   message::Table::Field *field()
   {
     return _create_field;
@@ -1036,6 +1043,7 @@ private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::AlterTable *_alter_table;
   message::Table::Field *_create_field;
   bool _exists;
 };

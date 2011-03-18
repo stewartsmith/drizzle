@@ -1,0 +1,53 @@
+CREATE TABLE t1 (a int primary key);
+ALTER TABLE t1 RENAME t2, ADD COLUMN b int;
+show tables;
+Tables_in_test
+t2
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+ALTER TABLE t2 ADD COLUMN c int, rename t3;
+show tables;
+Tables_in_test
+t3
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  `c` INT DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+ALTER TABLE t3 DISABLE KEYS, RENAME t4;
+Warnings:
+Note	1031	Table storage engine for 't3' doesn't have this option
+show tables;
+Tables_in_test
+t4
+show create table t4;
+Table	Create Table
+t4	CREATE TABLE `t4` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  `c` INT DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+ALTER TABLE t4 ENABLE KEYS, RENAME t5, DISABLE KEYS, RENAME t6, ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 't4' doesn't have this option
+show tables;
+Tables_in_test
+t6
+show create table t6;
+Table	Create Table
+t6	CREATE TABLE `t6` (
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
+  `c` INT DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE t6;
