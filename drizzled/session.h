@@ -114,9 +114,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
 
-#define Session_SENTRY_MAGIC 0xfeedd1ff
-#define Session_SENTRY_GONE  0xdeadbeef
-
 extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 /**
@@ -304,17 +301,8 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
-private:
-  plugin::Client *client; /**< Pointer to client object */
-
 public:
-
   void setClient(plugin::Client *client_arg);
-
-  plugin::Client *getClient()
-  {
-    return client;
-  }
 
   plugin::Client *getClient() const
   {
@@ -351,23 +339,9 @@ public:
    */
   char *thread_stack;
 
-private:
-  identifier::User::shared_ptr security_ctx;
-
-  int32_t scoreboard_index;
-
-  inline void checkSentry() const
-  {
-    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
-  }
-
-public:
   identifier::User::const_shared_ptr user() const
   {
-    if (security_ctx)
-      return security_ctx;
-
-    return identifier::User::const_shared_ptr();
+    return security_ctx ? security_ctx : identifier::User::const_shared_ptr();
   }
 
   void setUser(identifier::User::shared_ptr arg)
@@ -414,7 +388,6 @@ public:
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
-  uint32_t dbug_sentry; /**< watch for memory corruption */
 
 private:
   boost::thread::id boost_thread_id;
@@ -1159,7 +1132,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
+  virtual bool handle_error(error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1421,7 +1394,7 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  drizzled::util::Storable *getProperty(const std::string &arg)
+  util::Storable *getProperty(const std::string &arg)
   {
     return life_properties.getProperty(arg);
   }
@@ -1500,6 +1473,9 @@ private:
   session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
   rusage usage;
+  identifier::User::shared_ptr security_ctx;
+  int32_t scoreboard_index;
+  plugin::Client *client;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
@@ -1522,10 +1498,10 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
-namespace display  {
-const std::string &type(drizzled::Session::global_read_lock_t type);
-size_t max_string_length(drizzled::Session::global_read_lock_t type);
-
+namespace display  
+{
+  const std::string &type(Session::global_read_lock_t);
+  size_t max_string_length(Session::global_read_lock_t);
 } /* namespace display */
 
 } /* namespace drizzled */

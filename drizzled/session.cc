@@ -166,14 +166,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   mem_root(&main_mem_root),
   query(new std::string),
   _schema(new std::string),
-  client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
   thread_stack(NULL),
-  security_ctx(identifier::User::make_shared()),
   _where(Session::DEFAULT_WHERE),
-  dbug_sentry(Session_SENTRY_MAGIC),
   mysys_var(0),
   command(COM_CONNECT),
   file_id(0),
@@ -218,7 +215,9 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   xa_id(0),
   concurrent_execute_allowed(true),
   tablespace_op(false),
-  use_usage(false)
+  use_usage(false),
+  security_ctx(identifier::User::make_shared()),
+  client(client_arg)
 {
   client->setSession(this);
 
@@ -438,8 +437,6 @@ void Session::cleanup(void)
 
 Session::~Session()
 {
-  this->checkSentry();
-
   if (client and client->isConnected())
   {
     assert(security_ctx);
@@ -470,7 +467,6 @@ Session::~Session()
 
   warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
-  dbug_sentry= Session_SENTRY_GONE;
 
   main_mem_root.free_root(MYF(0));
   currentMemRoot().release();
@@ -495,8 +491,6 @@ void Session::awake(Session::killed_state_t state_to_set)
 {
   if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
     return;
-
-  this->checkSentry();
 
   setKilled(state_to_set);
   scheduler->killSession(this);
