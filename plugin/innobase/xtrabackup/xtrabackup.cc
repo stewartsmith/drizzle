@@ -1629,7 +1629,7 @@ xtrabackup_read_metadata(char *filename)
 	return(FALSE);
 }
 
-bool
+static bool
 xtrabackup_write_metadata(char *filename)
 {
 	FILE *fp;
@@ -1643,13 +1643,13 @@ xtrabackup_write_metadata(char *filename)
 	if (fprintf(fp, "backup_type = %s\n", metadata_type)
 			< 0)
 		return(TRUE);
-	if (fprintf(fp, "from_lsn = %llu\n", metadata_from_lsn)
+	if (fprintf(fp, "from_lsn = %"PRIu64"\n", metadata_from_lsn)
 			< 0)
 		return(TRUE);
-	if (fprintf(fp, "to_lsn = %llu\n", metadata_to_lsn)
+	if (fprintf(fp, "to_lsn = %"PRIu64"\n", metadata_to_lsn)
 			< 0)
 		return(TRUE);
-	if (fprintf(fp, "last_lsn = %llu\n", metadata_last_lsn)
+	if (fprintf(fp, "last_lsn = %"PRIu64"\n", metadata_last_lsn)
 			< 0)
 		return(TRUE);
 
