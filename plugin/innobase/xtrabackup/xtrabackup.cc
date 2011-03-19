@@ -860,18 +860,18 @@ innobase_mysql_tmpfile(void)
 
 void
 innobase_invalidate_query_cache(
-	trx_t*	trx,
-	const char*	full_name,
-	ulint	full_name_len)
+	trx_t*	,
+	const char*	,
+	ulint	)
 {
 	/* do nothing */
 }
 
 int
 mysql_get_identifier_quote_char(
-	trx_t*		trx,
-	const char*	name,
-	ulint		namelen)
+	trx_t*		,
+	const char*	,
+	ulint		)
 {
 	return '"';
 }
@@ -879,8 +879,8 @@ mysql_get_identifier_quote_char(
 void
 innobase_print_identifier(
 	FILE*	f,
-	trx_t*	trx,
-	ibool	table_id,
+	trx_t*	,
+	ibool	,
 	const char*	name,
 	ulint	namelen)
 {
@@ -1021,7 +1021,7 @@ no_db_name:
 
 ibool
 trx_is_interrupted(
-	trx_t*	trx)
+	trx_t*	)
 {
 	/* There are no mysql_thd */
 	return(FALSE);
