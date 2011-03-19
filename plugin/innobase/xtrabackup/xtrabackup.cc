@@ -867,15 +867,6 @@ innobase_invalidate_query_cache(
 	/* do nothing */
 }
 
-int
-mysql_get_identifier_quote_char(
-	trx_t*		,
-	const char*	,
-	ulint		)
-{
-	return '"';
-}
-
 void
 innobase_print_identifier(
 	FILE*	f,
