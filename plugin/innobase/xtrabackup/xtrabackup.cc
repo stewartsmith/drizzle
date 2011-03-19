@@ -1132,13 +1132,6 @@ innobase_get_at_most_n_mbchars(
 	return(char_length);
 }
 
-ibool
-innobase_query_is_update(void)
-{
-	fprintf(stderr, "xtrabackup: innobase_query_is_update() is called\n");
-	return(0);
-}
-
 ulint
 innobase_raw_format(
 /*================*/
