@@ -705,9 +705,7 @@ GNU General Public License for more details.\n\
 You can download full text of the license on http://www.gnu.org/licenses/gpl-2.0.txt\n");
 
   printf("Usage: [%s [--defaults-file=#] --backup | %s [--defaults-file=#] --prepare] [OPTIONS]\n",my_progname,my_progname);
-  print_defaults("my",load_default_groups);
-  my_print_help(my_long_options);
-  my_print_variables(my_long_options);
+  // FIXME: print what variables we have
 }
 
 static bool
