@@ -95,6 +95,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
 #endif
 
+using namespace drizzled;
+
 /* prototypes for static functions in original */
 buf_block_t*
 btr_node_ptr_get_child(
@@ -1054,11 +1056,14 @@ thd_is_select(
         return(false);
 }
 
+UNIV_INTERN
 void
 innobase_mysql_print_thd(
-	FILE*   f,		
-	void*   input_thd,
-	uint	max_query_len)
+/*=====================*/
+  FILE* ,    /*!< in: output stream */
+  drizzled::Session *,  /*!< in: pointer to a Drizzle Session object */
+  uint  )   /*!< in: max query length to print, or 0 to
+           use the default max length */
 {
 	fprintf(stderr, "xtrabackup: innobase_mysql_print_thd() is called\n");
 }
