@@ -1039,7 +1039,7 @@ UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
-  drizzled::Session *session)  /*!< in: thread handle (Session*) */
+  drizzled::Session *)  /*!< in: thread handle (Session*) */
 {
   return(false);
 }
@@ -1048,7 +1048,7 @@ UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
-  const drizzled::Session *session)  /*!< in: thread handle (Session*) */
+  const drizzled::Session *)  /*!< in: thread handle (Session*) */
 {
 	fprintf(stderr, "xtrabackup: thd_is_select() is called\n");
         return(false);
