@@ -28,13 +28,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 
-#define MYSQL_VERSION_ID 50507 /* Drizzle is much greater :) */
+#define gptr
+#define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
 
-#if (MYSQL_VERSION_ID < 50100)
-#define G_PTR gptr
-#else /* MYSQL_VERSION_ID < 51000 */
-#define G_PTR uchar*
-#endif
+#define G_PTR void*
 
 #include <univ.i>
 #include <os0file.h>
@@ -63,6 +60,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #ifdef INNODB_VERSION_SHORT
 #include <ibuf0ibuf.h>
+#else
+#error ENOCOOL
 #endif
 
 #ifndef INNODB_VERSION_SHORT
@@ -544,28 +543,28 @@ extern fil_system_t*   fil_system;
 /* ==end=== definition  at fil0fil.c === */
 
 
-my_bool innodb_inited= 0;
+bool innodb_inited= 0;
 
 /* === xtrabackup specific options === */
 char xtrabackup_real_target_dir[FN_REFLEN] = "./xtrabackup_backupfiles/";
 char *xtrabackup_target_dir= xtrabackup_real_target_dir;
-my_bool xtrabackup_backup = FALSE;
-my_bool xtrabackup_stats = FALSE;
-my_bool xtrabackup_prepare = FALSE;
-my_bool xtrabackup_print_param = FALSE;
+bool xtrabackup_backup = false;
+bool xtrabackup_stats = false;
+bool xtrabackup_prepare = false;
+bool xtrabackup_print_param = false;
 
-my_bool xtrabackup_export = FALSE;
-my_bool xtrabackup_apply_log_only = FALSE;
+bool xtrabackup_export = false;
+bool xtrabackup_apply_log_only = false;
 
-my_bool xtrabackup_suspend_at_end = FALSE;
+bool xtrabackup_suspend_at_end = false;
 longlong xtrabackup_use_memory = 100*1024*1024L;
-my_bool xtrabackup_create_ib_logfile = FALSE;
+bool xtrabackup_create_ib_logfile = false;
 
 long xtrabackup_throttle = 0; /* 0:unlimited */
 lint io_ticket;
 os_event_t wait_throttle = NULL;
 
-my_bool xtrabackup_stream = FALSE;
+bool xtrabackup_stream = false;
 char *xtrabackup_incremental = NULL;
 LSN64 incremental_lsn;
 LSN64 incremental_to_lsn;
@@ -663,8 +662,8 @@ long innobase_open_files = 300L;
 
 long innobase_page_size = (1 << 14); /* 16KB */
 static ulong innobase_log_block_size = 512;
-my_bool innobase_fast_checksum = FALSE;
-my_bool	innobase_extra_undoslots = FALSE;
+bool innobase_fast_checksum = false;
+bool	innobase_extra_undoslots = false;
 char*	innobase_doublewrite_file = NULL;
 
 longlong innobase_buffer_pool_size = 8*1024*1024L;
@@ -687,15 +686,15 @@ char*	innobase_unix_file_flush_method		= NULL;
 values */
 
 ulong	innobase_fast_shutdown			= 1;
-my_bool innobase_log_archive			= FALSE;/* unused */
-my_bool innobase_use_doublewrite    = TRUE;
-my_bool innobase_use_checksums      = TRUE;
-my_bool innobase_use_large_pages    = FALSE;
-my_bool	innobase_file_per_table			= FALSE;
-my_bool innobase_locks_unsafe_for_binlog        = FALSE;
-my_bool innobase_rollback_on_timeout		= FALSE;
-my_bool innobase_create_status_file		= FALSE;
-my_bool innobase_adaptive_hash_index		= TRUE;
+bool innobase_log_archive			= FALSE;/* unused */
+bool innobase_use_doublewrite    = TRUE;
+bool innobase_use_checksums      = TRUE;
+bool innobase_use_large_pages    = FALSE;
+bool	innobase_file_per_table			= FALSE;
+bool innobase_locks_unsafe_for_binlog        = FALSE;
+bool innobase_rollback_on_timeout		= FALSE;
+bool innobase_create_status_file		= FALSE;
+bool innobase_adaptive_hash_index		= TRUE;
 
 static char *internal_innobase_data_file_path	= NULL;
 
@@ -1187,7 +1186,7 @@ You can download full text of the license on http://www.gnu.org/licenses/gpl-2.0
   my_print_variables(my_long_options);
 }
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -1758,12 +1757,12 @@ get_bit_shift(ulint value)
 	return (value >> 1) ? 0 : shift;
 }
 
-my_bool
+bool
 innodb_init_param(void)
 {
 	/* innobase_init */
 	static char	current_dir[3];		/* Set if using current lib */
-	my_bool		ret;
+	bool		ret;
 	char		*default_path;
 
 	/* === some variables from mysqld === */
@@ -1912,7 +1911,7 @@ innodb_init_param(void)
 
 	internal_innobase_data_file_path = strdup(innobase_data_file_path);
 
-	ret = (my_bool) srv_parse_data_file_paths_and_sizes(
+	ret = (bool) srv_parse_data_file_paths_and_sizes(
 #ifndef INNODB_VERSION_SHORT
 				internal_innobase_data_file_path,
 				&srv_data_file_names,
@@ -1978,7 +1977,7 @@ mem_free_and_error:
 	srv_arch_dir = innobase_log_arch_dir;
 #endif /* UNIG_LOG_ARCHIVE */
 
-	ret = (my_bool)
+	ret = (bool)
 #ifndef INNODB_VERSION_SHORT
 		srv_parse_log_group_home_dirs(innobase_log_group_home_dir,
 						&srv_log_group_home_dirs);
@@ -2174,7 +2173,7 @@ error:
 	return(TRUE);
 }
 
-my_bool
+bool
 innodb_init(void)
 {
 	int	err;
@@ -2204,7 +2203,7 @@ error:
 	return(TRUE);
 }
 
-my_bool
+bool
 innodb_end(void)
 {
 	srv_fast_shutdown = (ulint) innobase_fast_shutdown;
@@ -2234,7 +2233,7 @@ error:
 }
 
 /* ================= common ================= */
-my_bool
+bool
 xtrabackup_read_metadata(char *filename)
 {
 	FILE *fp;
@@ -2277,7 +2276,7 @@ xtrabackup_read_metadata(char *filename)
 	return(FALSE);
 }
 
-my_bool
+bool
 xtrabackup_write_metadata(char *filename)
 {
 	FILE *fp;
@@ -2321,7 +2320,7 @@ xtrabackup_write_metadata(char *filename)
 /***********************************************************************
 Read meta info for an incremental delta.
 @return TRUE on success, FALSE on failure. */
-my_bool
+bool
 xb_read_delta_metadata(const char *filepath, xb_delta_info_t *info)
 {
 	FILE *fp;
@@ -2345,7 +2344,7 @@ xb_read_delta_metadata(const char *filepath, xb_delta_info_t *info)
 /***********************************************************************
 Write meta info for an incremental delta.
 @return TRUE on success, FALSE on failure. */
-my_bool
+bool
 xb_write_delta_metadata(const char *filepath, const xb_delta_info_t *info)
 {
 	FILE *fp;
@@ -2378,7 +2377,7 @@ xtrabackup_io_throttling(void)
 /* TODO: We may tune the behavior (e.g. by fil_aio)*/
 #define COPY_CHUNK 64
 
-my_bool
+bool
 xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 {
 	os_file_t	src_file = -1;
@@ -2834,8 +2833,8 @@ skip:
 	return(FALSE);
 }
 
-my_bool
-xtrabackup_copy_logfile(LSN64 from_lsn, my_bool is_last)
+bool
+xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 {
 	/* definition from recv_recovery_from_checkpoint_start() */
 	log_group_t*	group;
@@ -3955,7 +3954,7 @@ skip_last_cp:
 }
 
 /* ================= stats ================= */
-my_bool
+bool
 xtrabackup_stats_level(
 	dict_index_t*	index,
 	ulint		level)
@@ -4469,7 +4468,7 @@ end:
 
 /* ================= prepare ================= */
 
-my_bool
+bool
 xtrabackup_init_temp_log(void)
 {
 	os_file_t	src_file = -1;
@@ -4828,7 +4827,7 @@ xtrabackup_apply_delta(
 	const char*	dbname,		/* in: database name (ibdata: NULL) */
 	const char*	filename,	/* in: file name (not a path),
 					including the .delta extension */
-	my_bool check_newer)
+	bool check_newer)
 {
 	os_file_t	src_file = -1;
 	os_file_t	dst_file = -1;
@@ -5025,7 +5024,7 @@ error:
 }
 
 void
-xtrabackup_apply_deltas(my_bool check_newer)
+xtrabackup_apply_deltas(bool check_newer)
 {
 	int		ret;
 	char		dbpath[FN_REFLEN];
@@ -5131,8 +5130,8 @@ next_datadir_item:
 
 }
 
-my_bool
-xtrabackup_close_temp_log(my_bool clear_flag)
+bool
+xtrabackup_close_temp_log(bool clear_flag)
 {
 	os_file_t	src_file = -1;
 	char	src_path[FN_REFLEN];
