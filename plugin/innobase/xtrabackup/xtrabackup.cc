@@ -1083,7 +1083,7 @@ innobase_get_at_most_n_mbchars(
 	ulint n_chars;		/* number of characters in prefix */
 	CHARSET_INFO* charset;	/* charset used in the field */
 
-	charset = get_charset((uint) charset_id, MYF(MY_WME));
+	charset = get_charset((uint) charset_id));
 
 	ut_ad(charset);
 	ut_ad(charset->mbmaxlen);
