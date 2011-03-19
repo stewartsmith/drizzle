@@ -375,7 +375,7 @@ bool xtrabackup_export = false;
 bool xtrabackup_apply_log_only = false;
 
 bool xtrabackup_suspend_at_end = false;
-longlong xtrabackup_use_memory = 100*1024*1024L;
+uint64_t xtrabackup_use_memory = 100*1024*1024L;
 bool xtrabackup_create_ib_logfile = false;
 
 long xtrabackup_throttle = 0; /* 0:unlimited */
@@ -479,9 +479,9 @@ bool innobase_fast_checksum = false;
 bool	innobase_extra_undoslots = false;
 char*	innobase_doublewrite_file = NULL;
 
-longlong innobase_buffer_pool_size = 8*1024*1024L;
-longlong innobase_log_file_size = 5*1024*1024L;
-longlong innobase_log_file_size_backup;
+uint64_t innobase_buffer_pool_size = 8*1024*1024L;
+uint64_t innobase_log_file_size = 5*1024*1024L;
+uint64_t innobase_log_file_size_backup;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -3568,9 +3568,9 @@ xtrabackup_stats_level(
 
 	ulint*	offsets = NULL;
 
-	ulonglong n_pages, n_pages_extern;
-	ulonglong sum_data, sum_data_extern;
-	ulonglong n_recs;
+	uint64_t n_pages, n_pages_extern;
+	uint64_t sum_data, sum_data_extern;
+	uint64_t n_recs;
 	ulint	page_size;
 
 	n_pages = sum_data = n_recs = 0;
