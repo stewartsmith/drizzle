@@ -94,21 +94,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
 #endif
 
-/*
-   As of MySQL 5.5.7, InnoDB uses thd_wait plugin service.
-   We have to provide mock functions to avoid linker errors.
-*/
-
-void thd_wait_begin(MYSQL_THD thd, thd_wait_type wait_type)
-{
-	return;
-}
-
-void thd_wait_end(MYSQL_THD thd)
-{
-	return;
-}
-
 /* prototypes for static functions in original */
 buf_block_t*
 btr_node_ptr_get_child(
