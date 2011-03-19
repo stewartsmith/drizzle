@@ -48,7 +48,6 @@
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/string.h>
 #include <drizzled/type/time.h>
-#include <drizzled/sql_lex.h>
 
 namespace drizzled {
 
