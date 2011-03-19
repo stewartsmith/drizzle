@@ -1171,7 +1171,7 @@ thd_supports_xa(
 ibool
 trx_is_strict(
 /*==========*/
-	trx_t*	trx)	/*!< in: transaction */
+	trx_t*)	/*!< in: transaction */
 {
 	return(FALSE);
 }
