@@ -1941,8 +1941,8 @@ skip_filter:
 	printf("[%02u] Copying %s \n     to %s\n", thread_n,
 	       node->name, dst_path);
 
-	buf2 = ut_malloc(COPY_CHUNK * page_size + UNIV_PAGE_SIZE);
-	page = ut_align(buf2, UNIV_PAGE_SIZE);
+	buf2 = (unsigned char*) ut_malloc(COPY_CHUNK * page_size + UNIV_PAGE_SIZE);
+	page = (unsigned char*) ut_align(buf2, UNIV_PAGE_SIZE);
 
 	success = os_file_read(src_file, page, 0, 0, UNIV_PAGE_SIZE);
 	if (!success) {
