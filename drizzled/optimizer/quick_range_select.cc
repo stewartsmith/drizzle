@@ -26,6 +26,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/key.h>
 #include <drizzled/table.h>
+#include <drizzled/util/test.h>
 
 #include <fcntl.h>
 

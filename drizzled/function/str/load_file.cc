@@ -24,6 +24,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/sys_var.h>
 
 #include <boost/filesystem.hpp>
 

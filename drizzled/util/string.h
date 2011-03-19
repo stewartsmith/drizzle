@@ -40,27 +40,25 @@
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/shared_ptr.hpp>
 
-namespace drizzled
+namespace drizzled {
+namespace util {
+
+namespace string 
 {
-
-namespace util
-{
-
-
-namespace string {
-typedef boost::shared_ptr<std::string> shared_ptr;
-typedef boost::shared_ptr<const std::string> const_shared_ptr;
-typedef std::vector< std::string > vector;
+  typedef boost::shared_ptr<std::string> shared_ptr;
+  typedef boost::shared_ptr<const std::string> const_shared_ptr;
+  typedef std::vector<std::string> vector;
 }
 
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>
 {
   bool operator()(std::string const& x, std::string const& y) const
   {
-    return boost::algorithm::iequals(x, y, std::locale());
+    return boost::algorithm::iequals(x, y);
   }
 };
 
@@ -69,13 +67,8 @@ struct insensitive_hash : std::unary_function<std::string, std::size_t>
   std::size_t operator()(std::string const& x) const
   {
     std::size_t seed = 0;
-    std::locale locale;
-
-    for(std::string::const_iterator it = x.begin(); it != x.end(); ++it)
-    {
-      boost::hash_combine(seed, std::toupper(*it, locale));
-    }
-
+    BOOST_FOREACH(std::string::const_reference it, x)
+      boost::hash_combine(seed, std::toupper(it));
     return seed;
   }
 };
@@ -85,12 +78,8 @@ struct sensitive_hash : std::unary_function< std::vector<char>, std::size_t>
   std::size_t operator()(std::vector<char> const& x) const
   {
     std::size_t seed = 0;
-
-    for(std::vector<char>::const_iterator it = x.begin(); it != x.end(); ++it)
-    {
-      boost::hash_combine(seed, *it);
-    }
-
+    BOOST_FOREACH(std::vector<char>::const_reference it, x)
+      boost::hash_combine(seed, it);
     return seed;
   }
 };

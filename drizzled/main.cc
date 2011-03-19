@@ -68,6 +68,7 @@
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
+#include <drizzled/diagnostics_area.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
 
@@ -110,7 +111,7 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
     if (! (session->lex().current_select &&
            session->lex().current_select->no_error && !session->is_fatal_error))
     {
-      if (! session->main_da.is_error())            // Return only first message
+      if (! session->main_da().is_error())            // Return only first message
       {
         if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
@@ -118,7 +119,7 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
         if (str == NULL)
           str= ER(error);
 
-        session->main_da.set_error_status(error, str);
+        session->main_da().set_error_status(error, str);
       }
     }
 

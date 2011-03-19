@@ -22,14 +22,13 @@
 
 #include <cstddef>
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace plugin
 {
-class MonitoredInTransaction;
-class TransactionalStorageEngine;
-class XaResourceManager;
+  class MonitoredInTransaction;
+  class TransactionalStorageEngine;
+  class XaResourceManager;
 }
 
 /**

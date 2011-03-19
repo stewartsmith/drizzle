@@ -23,12 +23,10 @@
 #include <drizzled/kill.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/kill.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 Kill::Kill(Session *in_session, Item *item, bool is_query_kill) :
   Statement(in_session)

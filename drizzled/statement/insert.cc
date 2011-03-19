@@ -24,9 +24,9 @@
 #include <drizzled/session.h>
 #include <drizzled/probes.h>
 #include <drizzled/statement/insert.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Insert::execute()
 {

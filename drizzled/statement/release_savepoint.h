@@ -21,11 +21,10 @@
 #pragma once
 
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class ReleaseSavepoint : public Statement
 {
@@ -45,6 +44,5 @@ public:
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
 

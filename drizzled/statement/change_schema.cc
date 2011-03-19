@@ -29,8 +29,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::ChangeSchema::execute()
 {

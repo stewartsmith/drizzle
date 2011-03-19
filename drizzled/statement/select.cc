@@ -21,12 +21,10 @@
 #include <config.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 Select::Select(Session *in_session) :
   Statement(in_session)
@@ -36,11 +34,8 @@ Select::Select(Session *in_session) :
 
 bool Select::execute()
 {
-  TableList *all_tables= lex().query_tables;
   session().status_var.last_query_cost= 0.0;
-  bool res= execute_sqlcom_select(&session(), all_tables);
-
-  return res;
+  return execute_sqlcom_select(&session(), lex().query_tables);
 }
 
 } /* namespace statement */

@@ -25,6 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
+#include <drizzled/plugin.h>
 
 using namespace std;
 using namespace drizzled;

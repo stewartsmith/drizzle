@@ -29,7 +29,7 @@
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/thread_var.h>
-
+#include <drizzled/session/state.h>
 #include <set>
 
 using namespace std;

@@ -166,6 +166,13 @@ static Item *default_value_item(enum_field_types field_type,
                                                                 NULL,
                                                                 &error),
                                default_value->length());
+
+    if (error && error != -1) /* was an error and wasn't a negative number */
+    {
+      delete default_item;
+      return NULL;
+    }
+
     break;
   case DRIZZLE_TYPE_DOUBLE:
     default_item= new Item_float(default_value->c_str(),
@@ -1079,6 +1086,11 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
                                         pfield.options().default_null(),
                                         &pfield.options().default_value(),
                                         &pfield.options().default_bin_value());
+      if (default_value == NULL)
+      {
+        my_error(ER_INVALID_DEFAULT, MYF(0), pfield.name().c_str());
+        return true;
+      }
     }
 
 

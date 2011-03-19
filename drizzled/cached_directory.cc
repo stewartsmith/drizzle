@@ -26,7 +26,7 @@
  */
 
 #include <config.h>
-
+#include <dirent.h>
 #include <drizzled/definitions.h>
 
 #include <sys/types.h>

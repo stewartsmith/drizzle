@@ -64,9 +64,9 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/named_savepoint.h>
-
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/cached_directory.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>

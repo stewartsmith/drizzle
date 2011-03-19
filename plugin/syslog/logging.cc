@@ -31,6 +31,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/plugin.h>
 
 #include "logging.h"
 #include "wrap.h"

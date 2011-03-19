@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <bitset>
 #include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -32,32 +33,21 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/catalog/instance.h>
-#include <drizzled/catalog/local.h>
-#include <drizzled/copy_info.h>
-#include <drizzled/cursor.h>
-#include <drizzled/diagnostics_area.h>
+#include <drizzled/global_charset_info.h>
+#include <drizzled/base.h>
+#include <drizzled/discrete_interval.h>
 #include <drizzled/error.h>
-#include <drizzled/file_exchange.h>
-#include <drizzled/ha_data.h>
-#include <drizzled/identifier.h>
-#include <drizzled/named_savepoint.h>
 #include <drizzled/open_tables_state.h>
-#include <drizzled/plugin.h>
-#include <drizzled/plugin/authorization.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
-#include <drizzled/resource_context.h>
 #include <drizzled/session/property_map.h>
-#include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/system_variables.h>
-#include <drizzled/table_ident.h>
 #include <drizzled/transaction_context.h>
 #include <drizzled/util/storable.h>
 #include <drizzled/var.h>
@@ -73,8 +63,9 @@ namespace drizzled {
 namespace plugin
 {
 	class Client;
-	class Scheduler;
 	class EventObserverList;
+  class MonitoredInTransaction;
+	class Scheduler;
 }
 
 namespace message
@@ -86,21 +77,36 @@ namespace message
 
 namespace internal { struct st_my_thread_var; }
 
+namespace session 
+{ 
+  class State; 
+  class TableMessages;
+}
+
 namespace table 
 { 
   class Placeholder; 
   class Singular; 
 }
 
+typedef class Item COND;
+
 class CopyField;
+class CreateField;
+class Diagnostics_area;
 class DrizzleXid;
+class Field;
 class Internal_error_handler;
+class Item;
+class LEX;
 class Lex_input_stream;
+class ResourceContext;
 class TableShareInstance;
 class Table_ident;
 class Time_zone;
 class select_result;
 class user_var_entry;
+struct Ha_data;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -208,6 +214,7 @@ public:
   }
 
 public:
+  Diagnostics_area& main_da();
   const LEX& lex() const;
   LEX& lex();
   enum_sql_command getSqlCommand() const;
@@ -254,11 +261,11 @@ public:
   }
 
 private:
-  session::State::shared_ptr  _state;
+  boost::shared_ptr<session::State> _state;
 
 public:
 
-  session::State::const_shared_ptr state()
+  const boost::shared_ptr<session::State>& state()
   {
     return _state;
   }
@@ -332,13 +339,10 @@ public:
   }
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
+  enum_tx_isolation getTxIsolation();
+  system_status_var status_var;
 
-  enum_tx_isolation getTxIsolation()
-  {
-    return (enum_tx_isolation)variables.tx_isolation;
-  }
-
-  system_status_var status_var; /**< Session-local status counters */
+  system_status_var status_var0; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -613,7 +617,6 @@ public:
   List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
-  Diagnostics_area main_da;
 
   ulong col_access;
 
@@ -1041,11 +1044,7 @@ public:
     utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
   }
 
-  void set_end_timer()
-  {
-    _end_timer= boost::posix_time::microsec_clock::universal_time();
-    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
-  }
+  void set_end_timer();
 
   uint64_t getElapsedTime() const
   {
@@ -1099,53 +1098,11 @@ public:
 
   int send_explain_fields(select_result *result);
 
-  /**
-    Clear the current error, if any.
-    We do not clear is_fatal_error or is_fatal_sub_stmt_error since we
-    assume this is never called if the fatal error is set.
-    @todo: To silence an error, one should use Internal_error_handler
-    mechanism. In future this function will be removed.
-  */
-  inline void clear_error(bool full= false)
-  {
-    if (main_da.is_error())
-      main_da.reset_diagnostics_area();
+  void clear_error(bool full= false);
+  void clearDiagnostics();
+  void fatal_error();
+  bool is_error() const;
 
-    if (full)
-    {
-      drizzle_reset_errors(this, true);
-    }
-  }
-
-  void clearDiagnostics()
-  {
-    main_da.reset_diagnostics_area();
-  }
-
-  /**
-    Mark the current error as fatal. Warning: this does not
-    set any error, it sets a property of the error, so must be
-    followed or prefixed with my_error().
-  */
-  inline void fatal_error()
-  {
-    assert(main_da.is_error());
-    is_fatal_error= true;
-  }
-  /**
-    true if there is an error in the error stack.
-
-    Please use this method instead of direct access to
-    net.report_error.
-
-    If true, the current (sub)-statement should be aborted.
-    The main difference between this member and is_fatal_error
-    is that a fatal error can not be handled by a stored
-    procedure continue handler, whereas a normal error can.
-
-    To raise this flag, use my_error().
-  */
-  inline bool is_error() const { return main_da.is_error(); }
   inline const CHARSET_INFO *charset() { return default_charset_info; }
 
   /**
@@ -1409,22 +1366,8 @@ public:
   void mark_used_tables_as_free_for_reuse(Table *table);
 
 public:
-
-  /** A short cut for session->main_da.set_ok_status(). */
-  inline void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0,
-                    uint64_t passed_id= 0, const char *message= NULL)
-  {
-    main_da.set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
-  }
-
-
-  /** A short cut for session->main_da.set_eof_status(). */
-
-  inline void my_eof()
-  {
-    main_da.set_eof_status(this);
-  }
-
+  void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
+  void my_eof();
   bool add_item_to_list(Item *item);
   bool add_value_to_list(Item *value);
   bool add_order_to_list(Item *item, bool asc);
@@ -1483,10 +1426,7 @@ public:
   table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
-  session::TableMessages &getMessageCache()
-  {
-    return _table_message_cache;
-  }
+  session::TableMessages &getMessageCache();
 
   /* Reopen operations */
   bool reopen_tables();
@@ -1515,13 +1455,7 @@ public:
     @return
     pointer to plugin::StorageEngine
   */
-  plugin::StorageEngine *getDefaultStorageEngine()
-  {
-    if (variables.storage_engine)
-      return variables.storage_engine;
-    return global_system_variables.storage_engine;
-  }
-
+  plugin::StorageEngine *getDefaultStorageEngine();
   void get_xid(DrizzleXid *xid); // Innodb only
 
   table::Singular *getInstanceTable();
@@ -1558,7 +1492,6 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  session::TableMessages _table_message_cache;
   boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 

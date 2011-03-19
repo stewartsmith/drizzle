@@ -28,6 +28,7 @@
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/select_create.h>
+#include <drizzled/table_ident.h>
 
 #include <iostream>
 
@@ -258,11 +259,11 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       else
       {
 
-        for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
+        for (int32_t x= 0; x < alter_info.added_fields_proto.added_field_size(); x++)
         {
           message::Table::Field *field= createTableMessage().add_field();
 
-          *field= alter_info.alter_proto.added_field(x);
+          *field= alter_info.added_fields_proto.added_field(x);
         }
 
         res= create_table(&session(), 

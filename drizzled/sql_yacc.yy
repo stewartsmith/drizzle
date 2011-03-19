@@ -40,9 +40,10 @@
 #include <drizzled/parser.h>
 #include <drizzled/session.h>
 #include <drizzled/alter_column.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/message/alter_table.pb.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/table_ident.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -153,7 +154,6 @@ using namespace drizzled;
   drizzled::st_lex *lex;
   drizzled::index_hint_type index_hint;
   drizzled::enum_filetype filetype;
-  drizzled::ha_build_method build_method;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
   drizzled::execute_string_t execute_string;
 }
@@ -731,8 +731,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <boolfunc2creator> comp_op
 
-%type <build_method> build_method
-
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
@@ -868,7 +866,7 @@ create:
           }
         | CREATE build_method
           {
-            Lex.statement= new statement::CreateIndex(YYSession, $2);
+            Lex.statement= new statement::CreateIndex(YYSession);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
@@ -1772,7 +1770,7 @@ string_list:
 alter:
           ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
-            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5, $2);
+            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5);
             Lex.statement= statement;
             Lex.duplicates= DUP_ERROR;
             if (not Lex.select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
@@ -1802,13 +1800,15 @@ alter_commands:
           /* empty */
         | DISCARD TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->alter_info.tablespace_op= DISCARD_TABLESPACE;
+            message::AlterTable::AlterTableOperation *alter_operation;
+            alter_operation= Lex.alter_table()->add_operations();
+            alter_operation->set_operation(message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
           }
         | IMPORT TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->alter_info.tablespace_op= IMPORT_TABLESPACE;
+            message::AlterTable::AlterTableOperation *alter_operation;
+            alter_operation= Lex.alter_table()->add_operations();
+            alter_operation->set_operation(message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE);
           }
         | alter_list
         ;
@@ -1816,15 +1816,15 @@ alter_commands:
 build_method:
         /* empty */
           {
-            $$= HA_BUILD_DEFAULT;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_DEFAULT);
           }
         | ONLINE_SYM
           {
-            $$= HA_BUILD_ONLINE;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_ONLINE);
           }
         | OFFLINE_SYM
           {
-            $$= HA_BUILD_OFFLINE;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_OFFLINE);
           }
         ;
 
@@ -1897,8 +1897,11 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex.alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_COLUMN);
+            operation->set_drop_name($3.str);
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
@@ -1916,15 +1919,20 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.keys_onoff= DISABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex.alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(false);
           }
         | ENABLE_SYM KEYS
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex.alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(true);
           }
         | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
@@ -1960,6 +1968,11 @@ alter_list_item:
 
             Lex.name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
+
+            message::AlterTable::RenameTable *rename_operation;
+            rename_operation= Lex.alter_table()->mutable_rename();
+            rename_operation->set_to_schema(Lex.select_lex.db);
+            rename_operation->set_to_name(Lex.name.str);
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
@@ -4150,11 +4163,16 @@ drop:
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex.statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.build_method= $2;
-            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::KEY, $4.str));
+
             if (not Lex.current_select->add_table_to_list(Lex.session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex.alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
+            operation->set_drop_name($4.str);
+
           }
         | DROP DATABASE if_exists schema_name
           {

@@ -40,6 +40,7 @@ set global hello_events1_watch_tables = "x,y";
 #include <drizzled/session.h>
 #include <drizzled/table/instance/base.h>
 #include "hello_events.h"
+#include <drizzled/plugin.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;

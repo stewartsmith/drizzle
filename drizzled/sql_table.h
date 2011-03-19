@@ -27,9 +27,9 @@
 
 #include <drizzled/base.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
+class KeyInfo;
 class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;

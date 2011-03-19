@@ -46,6 +46,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/message/statement_transform.h
 
 nodist_drizzled_message_libdrizzledmessage_la_SOURCES= \
+						       drizzled/message/alter_table.pb.cc \
 						       drizzled/message/catalog.pb.cc \
 						       drizzled/message/engine.pb.cc \
 						       drizzled/message/event.pb.cc \
@@ -56,6 +57,7 @@ nodist_drizzled_message_libdrizzledmessage_la_SOURCES= \
 						       drizzled/message/transaction.pb.cc
 
 nobase_nodist_pkginclude_HEADERS+= \
+				drizzled/message/alter_table.pb.h \
 				drizzled/message/catalog.pb.h \
 				drizzled/message/engine.pb.h \
 				drizzled/message/event.pb.h \
@@ -101,6 +103,7 @@ drizzled_message_transaction_writer_LDADD = ${MESSAGE_LDADD} ${top_builddir}/dri
 drizzled_message_transaction_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
 EXTRA_DIST += \
+	      ${MESSAGE_DIR}/alter_table.proto \
 	      ${MESSAGE_DIR}/catalog.proto \
 	      ${MESSAGE_DIR}/engine.proto \
 	      ${MESSAGE_DIR}/event.proto \
@@ -111,6 +114,7 @@ EXTRA_DIST += \
 	      ${MESSAGE_DIR}/transaction.proto
 
 BUILT_SOURCES += \
+		 ${MESSAGE_DIR}/alter_table.pb.h \
 		 ${MESSAGE_DIR}/catalog.pb.h \
 		 ${MESSAGE_DIR}/engine.pb.h \
 		 ${MESSAGE_DIR}/event.pb.h \
@@ -121,6 +125,8 @@ BUILT_SOURCES += \
 		 ${MESSAGE_DIR}/transaction.pb.h
 
 CLEANFILES += \
+	      ${MESSAGE_DIR}/alter_table.pb.cc \
+	      ${MESSAGE_DIR}/alter_table.pb.h \
 	      ${MESSAGE_DIR}/catalog.pb.cc \
 	      ${MESSAGE_DIR}/catalog.pb.h \
 	      ${MESSAGE_DIR}/engine.pb.cc \

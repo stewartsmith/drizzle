@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010,2011 Patrick Crews

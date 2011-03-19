@@ -143,14 +143,6 @@ enum enum_table_category
   TABLE_CATEGORY_INFORMATION
 };
 
-enum enum_enable_or_disable
-{
-  LEAVE_AS_IS,
-  ENABLE,
-  DISABLE
-};
-
-
 enum enum_mark_columns
 {
   MARK_COLUMNS_NONE,

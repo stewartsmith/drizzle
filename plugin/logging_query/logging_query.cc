@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
