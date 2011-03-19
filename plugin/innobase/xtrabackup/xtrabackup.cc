@@ -1961,7 +1961,7 @@ skip_filter:
 		ulint chunk_offset;
 		ulint retry_count = 10;
 copy_loop:
-		if (file_size - offset > COPY_CHUNK * page_size) {
+		if ((ulint)(file_size - offset) > COPY_CHUNK * page_size) {
 			chunk = COPY_CHUNK * page_size;
 		} else {
 			chunk = (ulint)(file_size - offset);
