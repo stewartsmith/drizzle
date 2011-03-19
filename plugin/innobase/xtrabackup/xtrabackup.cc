@@ -5242,12 +5242,14 @@ skip_tables_file_register:
 		for (i = 0; i < hash_get_n_cells(tables_hash); i++) {
 			xtrabackup_tables_t*	table;
 
-			table = HASH_GET_FIRST(tables_hash, i);
+			table = (xtrabackup_tables_t*)
+                          HASH_GET_FIRST(tables_hash, i);
 
 			while (table) {
 				xtrabackup_tables_t*	prev_table = table;
 
-				table = HASH_GET_NEXT(name_hash, prev_table);
+				table =  (xtrabackup_tables_t*)
+                                  HASH_GET_NEXT(name_hash, prev_table);
 
 				HASH_DELETE(xtrabackup_tables_t, name_hash, tables_hash,
 						ut_fold_string(prev_table->name), prev_table);
