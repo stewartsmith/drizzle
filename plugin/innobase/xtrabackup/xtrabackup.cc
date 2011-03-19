@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
 
+#define my_progname "xtrabackup"
 
 #define gptr
 #define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
