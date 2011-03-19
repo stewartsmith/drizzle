@@ -1276,13 +1276,13 @@ innodb_init_param(void)
 
 	/* Check that values don't overflow on 32-bit systems. */
 	if (sizeof(ulint) == 4) {
-		if (xtrabackup_use_memory > UINT_MAX32) {
+		if (xtrabackup_use_memory > UINT32_MAX) {
 			fprintf(stderr,
 				"xtrabackup: use-memory can't be over 4GB"
 				" on 32-bit systems\n");
 		}
 
-		if (innobase_buffer_pool_size > UINT_MAX32) {
+		if (innobase_buffer_pool_size > UINT32_MAX) {
 			fprintf(stderr,
 				"xtrabackup: innobase_buffer_pool_size can't be over 4GB"
 				" on 32-bit systems\n");
@@ -1290,7 +1290,7 @@ innodb_init_param(void)
 			goto error;
 		}
 
-		if (innobase_log_file_size > UINT_MAX32) {
+		if (innobase_log_file_size > UINT32_MAX) {
 			fprintf(stderr,
 				"xtrabackup: innobase_log_file_size can't be over 4GB"
 				" on 32-bit systemsi\n");
