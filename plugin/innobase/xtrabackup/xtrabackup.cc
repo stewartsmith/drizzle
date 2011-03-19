@@ -879,8 +879,8 @@ innobase_convert_identifier(
 	ulint		buflen,	/*!< in: length of buf, in bytes */
 	const char*	id,	/*!< in: identifier to convert */
 	ulint		idlen,	/*!< in: length of id, in bytes */
-	void*		thd,	/*!< in: MySQL connection thread, or NULL */
-	ibool		file_id)/*!< in: TRUE=id is a table or database name;
+	void*		,	/*!< in: MySQL connection thread, or NULL */
+	ibool		)/*!< in: TRUE=id is a table or database name;
 				FALSE=id is an UTF-8 string */
 {
 	const char*	s	= id;
