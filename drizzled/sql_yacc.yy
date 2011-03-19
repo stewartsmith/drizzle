@@ -3373,8 +3373,7 @@ join_table:
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             DRIZZLE_YYABORT_UNLESS( not Lex.is_cross );
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3388,8 +3387,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3418,8 +3416,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3454,8 +3451,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr

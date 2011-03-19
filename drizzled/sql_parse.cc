@@ -409,8 +409,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
   session->make_lex_string(&table, schema_table_name, false);
 
-  if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, table_options, TL_READ))
+  if (not sel->add_table_to_list(session, new Table_ident(db, table), NULL, table_options, TL_READ))
   {
     return true;
   }
@@ -961,7 +960,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                                          List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
-  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= &session->lex();
@@ -1000,8 +998,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
-  if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;
+  TableList *ptr = (TableList *) session->calloc(sizeof(TableList)));
 
   if (table->db.str)
   {
@@ -1380,18 +1377,13 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     true   if a memory allocation error occured
 */
 
-bool
-push_new_name_resolution_context(Session *session,
-                                 TableList *left_op, TableList *right_op)
+void push_new_name_resolution_context(Session& session, TableList& left_op, TableList& right_op)
 {
-  Name_resolution_context *on_context= new (session->mem_root) Name_resolution_context;
+  Name_resolution_context *on_context= new (session.mem_root) Name_resolution_context;
   on_context->init();
-  on_context->first_name_resolution_table=
-    left_op->first_leaf_for_name_resolution();
-  on_context->last_name_resolution_table=
-    right_op->last_leaf_for_name_resolution();
-  session->lex().push_context(on_context);
-	return false; // todo: return void
+  on_context->first_name_resolution_table= left_op.first_leaf_for_name_resolution();
+  on_context->last_name_resolution_table= right_op.last_leaf_for_name_resolution();
+  session.lex().push_context(on_context);
 }
 
 

@@ -2169,10 +2169,9 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
 {
   index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
-	return false; // todo: return void
 }
 
 bool check_for_sql_keyword(drizzled::lex_string_t const& string)
