@@ -1,6 +1,7 @@
 /******************************************************
 XtraBackup: The another hot backup tool for InnoDB
 (c) 2009 Percona Inc.
+(C) 2011 Stewart Smith
 Created 3/3/2009 Yasufumi Kinoshita
 
 This program is free software; you can redistribute it and/or modify
@@ -27,10 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 
-#include <my_base.h>
-#include <my_getopt.h>
-#include <mysql_version.h>
-#include <mysql_com.h>
+#define MYSQL_VERSION_ID 50507 /* Drizzle is much greater :) */
 
 #if (MYSQL_VERSION_ID < 50100)
 #define G_PTR gptr
@@ -113,8 +111,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
    As of MySQL 5.5.7, InnoDB uses thd_wait plugin service.
    We have to provide mock functions to avoid linker errors.
 */
-#include <mysql/plugin.h>
-#include <mysql/service_thd_wait.h>
 
 void thd_wait_begin(MYSQL_THD thd, thd_wait_type wait_type)
 {
