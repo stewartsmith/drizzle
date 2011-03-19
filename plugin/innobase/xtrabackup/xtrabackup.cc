@@ -1613,13 +1613,13 @@ xtrabackup_read_metadata(char *filename)
 	if (fscanf(fp, "backup_type = %29s\n", metadata_type)
 			!= 1)
 		return(TRUE);
-	if (fscanf(fp, "from_lsn = %llu\n", &metadata_from_lsn)
+	if (fscanf(fp, "from_lsn = %"PRIu64"\n", &metadata_from_lsn)
 			!= 1)
 		return(TRUE);
-	if (fscanf(fp, "to_lsn = %llu\n", &metadata_to_lsn)
+	if (fscanf(fp, "to_lsn = %"PRIu64"\n", &metadata_to_lsn)
 			!= 1)
 		return(TRUE);
-	if (fscanf(fp, "last_lsn = %llu\n", &metadata_last_lsn)
+	if (fscanf(fp, "last_lsn = %"PRIu64"\n", &metadata_last_lsn)
 			!= 1) {
 		metadata_last_lsn = 0;
 	}
