@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <config.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include "ha_prototypes.h"
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
