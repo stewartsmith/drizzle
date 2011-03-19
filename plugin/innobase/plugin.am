@@ -222,7 +222,13 @@ if BUILD_INNOBASE_PLUGIN
 noinst_LTLIBRARIES+= \
                      plugin/innobase/libinnobase.la \
 		     plugin/innobase/libpars.la
+bin_PROGRAMS+= plugin/innobase/xtrabackup/xtrabackup
 endif
+
+plugin_innobase_xtrabackup_xtrabackup_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
+plugin_innobase_xtrabackup_xtrabackup_LDADD = ${LTLIBAIO} plugin/innobase/libinnobase.la
+
+plugin_innobase_xtrabackup_xtrabackup_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_LDDADD= ${LTLIBAIO}
