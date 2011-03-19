@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define XTRABACKUP_REVISION "undefined"
 #endif
 
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset_info.h>
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 
 #define gptr
