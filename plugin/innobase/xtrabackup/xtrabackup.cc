@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/charset_info.h>
 #include <drizzled/charset.h>
+#include <drizzled/global_charset_info.h> // for default_charset_info
 #include "ha_prototypes.h"
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
@@ -933,16 +934,17 @@ innobase_convert_identifier(
 Convert a table or index name to the MySQL system_charset_info (UTF-8)
 and quote it if needed.
 @return	pointer to the end of buf */
+UNIV_INTERN
 char*
 innobase_convert_name(
 /*==================*/
-	char*		buf,	/*!< out: buffer for converted identifier */
-	ulint		buflen,	/*!< in: length of buf, in bytes */
-	const char*	id,	/*!< in: identifier to convert */
-	ulint		idlen,	/*!< in: length of id, in bytes */
-	void*		thd,	/*!< in: MySQL connection thread, or NULL */
-	ibool		table_id)/*!< in: TRUE=id is a table or database name;
-				FALSE=id is an index name */
+  char*   buf,  /*!< out: buffer for converted identifier */
+  ulint   buflen, /*!< in: length of buf, in bytes */
+  const char* id, /*!< in: identifier to convert */
+  ulint   idlen,  /*!< in: length of id, in bytes */
+  drizzled::Session *session,/*!< in: MySQL connection thread, or NULL */
+  ibool   table_id)/*!< in: TRUE=id is a table or database name;
+        FALSE=id is an index name */
 {
 	char*		s	= buf;
 	const char*	bufend	= buf + buflen;
@@ -956,20 +958,20 @@ innobase_convert_name(
 
 		/* Print the database name and table name separately. */
 		s = innobase_convert_identifier(s, bufend - s, id, slash - id,
-						thd, TRUE);
+						session, TRUE);
 		if (UNIV_LIKELY(s < bufend)) {
 			*s++ = '.';
 			s = innobase_convert_identifier(s, bufend - s,
 							slash + 1, idlen
 							- (slash - id) - 1,
-							thd, TRUE);
+							session, TRUE);
 		}
 	} else if (UNIV_UNLIKELY(*id == TEMP_INDEX_PREFIX)) {
 		/* Temporary index name (smart ALTER TABLE) */
 		const char temp_index_suffix[]= "--temporary--";
 
 		s = innobase_convert_identifier(buf, buflen, id + 1, idlen - 1,
-						thd, FALSE);
+						session, FALSE);
 		if (s - buf + (sizeof temp_index_suffix - 1) < buflen) {
 			memcpy(s, temp_index_suffix,
 			       sizeof temp_index_suffix - 1);
@@ -978,7 +980,7 @@ innobase_convert_name(
 	} else {
 no_db_name:
 		s = innobase_convert_identifier(buf, buflen, id, idlen,
-						thd, table_id);
+						session, table_id);
 	}
 
 	return(s);
@@ -993,75 +995,81 @@ trx_is_interrupted(
 	return(FALSE);
 }
 
+UNIV_INTERN int
+innobase_mysql_cmp(
+/*===============*/
+  int   mysql_type, /*!< in: MySQL type */
+  uint    charset_number, /*!< in: number of the charset */
+  const unsigned char* a,   /*!< in: data field */
+  unsigned int  a_length, /*!< in: data field length,
+          not UNIV_SQL_NULL */
+  const unsigned char* b,   /* in: data field */
+  unsigned int  b_length);  /* in: data field length,
+          not UNIV_SQL_NULL */
+
 int
 innobase_mysql_cmp(
-	int		mysql_type,
-	uint		charset_number,
-	unsigned char*	a,
-	unsigned int	a_length,
-	unsigned char*	b,
-	unsigned int	b_length)
+/*===============*/
+          /* out: 1, 0, -1, if a is greater, equal, less than b, respectively */
+  int   mysql_type, /* in: MySQL type */
+  uint    charset_number, /* in: number of the charset */
+  const unsigned char* a,   /* in: data field */
+  unsigned int  a_length, /* in: data field length, not UNIV_SQL_NULL */
+  const unsigned char* b,   /* in: data field */
+  unsigned int  b_length) /* in: data field length, not UNIV_SQL_NULL */
 {
-	CHARSET_INFO*		charset;
-	enum enum_field_types	mysql_tp;
-	int                     ret;
+  const CHARSET_INFO* charset;
+  enum_field_types  mysql_tp;
+  int     ret;
 
-	DBUG_ASSERT(a_length != UNIV_SQL_NULL);
-	DBUG_ASSERT(b_length != UNIV_SQL_NULL);
+  assert(a_length != UNIV_SQL_NULL);
+  assert(b_length != UNIV_SQL_NULL);
 
-	mysql_tp = (enum enum_field_types) mysql_type;
+  mysql_tp = (enum_field_types) mysql_type;
 
-	switch (mysql_tp) {
+  switch (mysql_tp) {
 
-        case MYSQL_TYPE_BIT:
-	case MYSQL_TYPE_STRING:
-	case MYSQL_TYPE_VAR_STRING:
-	case FIELD_TYPE_TINY_BLOB:
-	case FIELD_TYPE_MEDIUM_BLOB:
-	case FIELD_TYPE_BLOB:
-	case FIELD_TYPE_LONG_BLOB:
-        case MYSQL_TYPE_VARCHAR:
-		/* Use the charset number to pick the right charset struct for
-		the comparison. Since the MySQL function get_charset may be
-		slow before Bar removes the mutex operation there, we first
-		look at 2 common charsets directly. */
+  case DRIZZLE_TYPE_BLOB:
+  case DRIZZLE_TYPE_VARCHAR:
+    /* Use the charset number to pick the right charset struct for
+      the comparison. Since the MySQL function get_charset may be
+      slow before Bar removes the mutex operation there, we first
+      look at 2 common charsets directly. */
 
-		if (charset_number == default_charset_info->number) {
-			charset = default_charset_info;
-		} else if (charset_number == my_charset_latin1.number) {
-			charset = &my_charset_latin1;
-		} else {
-			charset = get_charset(charset_number, MYF(MY_WME));
+    if (charset_number == default_charset_info->number) {
+      charset = default_charset_info;
+    } else {
+      charset = get_charset(charset_number);
 
-			if (charset == NULL) {
-			  fprintf(stderr, "xtrabackup: InnoDB needs charset %lu for doing "
-					  "a comparison, but MySQL cannot "
-					  "find that charset.\n",
-					  (ulong) charset_number);
-				ut_a(0);
-			}
-		}
+      if (charset == NULL) {
+        fprintf(stderr, "xtrabackup needs charset %lu for doing "
+                "a comparison, but MySQL cannot "
+                "find that charset.",
+                (ulong) charset_number);
+        ut_a(0);
+      }
+    }
 
-                /* Starting from 4.1.3, we use strnncollsp() in comparisons of
-                non-latin1_swedish_ci strings. NOTE that the collation order
-                changes then: 'b\0\0...' is ordered BEFORE 'b  ...'. Users
-                having indexes on such data need to rebuild their tables! */
+    /* Starting from 4.1.3, we use strnncollsp() in comparisons of
+      non-latin1_swedish_ci strings. NOTE that the collation order
+      changes then: 'b\0\0...' is ordered BEFORE 'b  ...'. Users
+      having indexes on such data need to rebuild their tables! */
 
-                ret = charset->coll->strnncollsp(charset,
-                                  a, a_length,
-                                                 b, b_length, 0);
-		if (ret < 0) {
-		        return(-1);
-		} else if (ret > 0) {
-		        return(1);
-		} else {
-		        return(0);
-	        }
-	default:
-		assert(0);
-	}
+    ret = charset->coll->strnncollsp(charset,
+                                     a, a_length,
+                                     b, b_length, 0);
+    if (ret < 0) {
+      return(-1);
+    } else if (ret > 0) {
+      return(1);
+    } else {
+      return(0);
+    }
+  default:
+    ut_error;
+  }
 
-	return(0);
+  return(0);
 }
 
 ulint
