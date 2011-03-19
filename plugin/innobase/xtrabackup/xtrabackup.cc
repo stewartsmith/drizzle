@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <config.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/charset_info.h>
+#include "ha_prototypes.h"
 //#define XTRABACKUP_TARGET_IS_PLUGIN
 
 #define gptr
@@ -1025,28 +1026,32 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 
 /* ================ Dummys =================== */
 
+UNIV_INTERN
 ibool
 thd_is_replication_slave_thread(
-	void*	thd)
+/*============================*/
+  drizzled::Session* ) /*!< in: thread handle (Session*) */
 {
-	fprintf(stderr, "xtrabackup: thd_is_replication_slave_thread() is called\n");
-	return(FALSE);
+  return false;
 }
 
+UNIV_INTERN
 ibool
 thd_has_edited_nontrans_tables(
-	void*	thd)
+/*===========================*/
+  drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
-	fprintf(stderr, "xtrabackup: thd_has_edited_nontrans_tables() is called\n");
-	return(FALSE);
+  return(false);
 }
 
+UNIV_INTERN
 ibool
 thd_is_select(
-	const void*	thd)
+/*==========*/
+  const drizzled::Session *session)  /*!< in: thread handle (Session*) */
 {
 	fprintf(stderr, "xtrabackup: thd_is_select() is called\n");
-	return(FALSE);
+        return(false);
 }
 
 void
