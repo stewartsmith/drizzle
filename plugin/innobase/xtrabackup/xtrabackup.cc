@@ -1128,14 +1128,6 @@ innobase_casedn_str(
 	my_casedn_str(&my_charset_utf8_general_ci, a);
 }
 
-struct charset_info_st*
-innobase_get_charset(
-	void*   mysql_thd)
-{
-	fprintf(stderr, "xtrabackup: innobase_get_charset() is called\n");
-	return(NULL);
-}
-
 const char*
 innobase_get_stmt(
 	void*	mysql_thd,
