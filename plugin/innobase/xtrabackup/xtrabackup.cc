@@ -1158,11 +1158,12 @@ thd_lock_wait_timeout(
 	return(innobase_lock_wait_timeout);
 }
 
+UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
-	void*	thd)	/*!< in: thread handle (THD*), or NULL to query
-			the global innodb_supports_xa */
+  drizzled::Session* )  /*!< in: thread handle (Session*), or NULL to query
+        the global innodb_supports_xa */
 {
 	return(FALSE);
 }
