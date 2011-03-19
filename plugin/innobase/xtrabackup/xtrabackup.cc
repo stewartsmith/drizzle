@@ -708,29 +708,6 @@ You can download full text of the license on http://www.gnu.org/licenses/gpl-2.0
   // FIXME: print what variables we have
 }
 
-static bool
-get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
-{
-  switch(optid) {
-  case 'h':
-    strmake(mysql_real_data_home,argument, sizeof(mysql_real_data_home)-1);
-    mysql_data_home= mysql_real_data_home;
-    break;
-  case OPT_XTRA_TARGET_DIR:
-    strmake(xtrabackup_real_target_dir,argument, sizeof(xtrabackup_real_target_dir)-1);
-    xtrabackup_target_dir= xtrabackup_real_target_dir;
-    break;
-  case '?':
-    usage();
-    exit(EXIT_SUCCESS);
-    break;
-  default:
-    break;
-  }
-  return 0;
-}
-
 /* ================ Dummys =================== */
 
 UNIV_INTERN
