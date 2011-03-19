@@ -1101,12 +1101,14 @@ innobase_convert_from_table_id(
 	fprintf(stderr, "xtrabackup: innobase_convert_from_table_id() is called\n");
 }
 
+UNIV_INTERN
 void
 innobase_convert_from_id(
-	struct charset_info_st*	cs,
-	char*	to,
-	const char*	from,
-	ulint	len)
+/*=====================*/
+  const void*,      /*!< in: the 'from' character set */
+  char*     , /*!< out: converted identifier */
+  const char*   , /*!< in: identifier to convert */
+  ulint     )  /*!< in: length of 'to', in bytes */
 {
 	fprintf(stderr, "xtrabackup: innobase_convert_from_id() is called\n");
 }
