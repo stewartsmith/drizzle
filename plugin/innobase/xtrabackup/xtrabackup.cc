@@ -827,13 +827,13 @@ innobase_mysql_tmpfile(void)
 {
 	char	filename[FN_REFLEN];
 	int	fd2 = -1;
-	int	fd = create_temp_file(filename, opt_mysql_tmpdir, "ib",
+	int	fd = internal::create_temp_file(filename, opt_mysql_tmpdir,
+                                                "ib",
 #ifdef __WIN__
 				O_BINARY | O_TRUNC | O_SEQUENTIAL |
 				O_TEMPORARY | O_SHORT_LIVED |
 #endif /* __WIN__ */
-				O_CREAT | O_EXCL | O_RDWR,
-				MYF(MY_WME));
+				O_CREAT | O_EXCL | O_RDWR);
 	if (fd >= 0) {
 #ifndef __WIN__
 		/* On Windows, open files cannot be removed, but files can be
@@ -853,7 +853,7 @@ innobase_mysql_tmpfile(void)
 		if (fd2 < 0) {
 			fprintf(stderr, "xtrabackup: Got error %d on dup\n",fd2);
                 }
-		my_close(fd, MYF(MY_WME));
+		close(fd);
 	}
 	return(fd2);
 }
