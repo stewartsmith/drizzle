@@ -1132,16 +1132,17 @@ innobase_get_at_most_n_mbchars(
 	return(char_length);
 }
 
+UNIV_INTERN
 ulint
 innobase_raw_format(
 /*================*/
-	const char*	data,		/*!< in: raw data */
-	ulint		data_len,	/*!< in: raw data length
-					in bytes */
-	ulint		charset_coll,	/*!< in: charset collation */
-	char*		buf,		/*!< out: output buffer */
-	ulint		buf_size)	/*!< in: output buffer size
-					in bytes */
+  const char* ,   /*!< in: raw data */
+  ulint   , /*!< in: raw data length
+          in bytes */
+  ulint   ,   /*!< in: charset collation */
+  char*   ,    /*!< out: output buffer */
+  ulint   ) /*!< in: output buffer size
+          in bytes */
 {
 	fprintf(stderr, "xtrabackup: innobase_raw_format() is called\n");
 	return(0);
