@@ -811,10 +811,12 @@ innobase_casedn_str(
 	my_casedn_str(&my_charset_utf8_general_ci, a);
 }
 
+UNIV_INTERN
 const char*
 innobase_get_stmt(
-	void*	mysql_thd,
-	size_t*	length)
+/*==============*/
+       drizzled::Session *,      /*!< in: MySQL thread handle */
+       size_t* )         /*!< out: length of the SQL statement */
 {
 	fprintf(stderr, "xtrabackup: innobase_get_stmt() is called\n");
 	return("nothing");
