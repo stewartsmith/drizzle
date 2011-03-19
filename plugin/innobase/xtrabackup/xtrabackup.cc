@@ -1539,7 +1539,7 @@ error:
 	return(TRUE);
 }
 
-bool
+static bool
 innodb_init(void)
 {
 	int	err;
@@ -1569,7 +1569,7 @@ error:
 	return(TRUE);
 }
 
-bool
+static bool
 innodb_end(void)
 {
 	srv_fast_shutdown = (ulint) innobase_fast_shutdown;
@@ -1599,7 +1599,7 @@ error:
 }
 
 /* ================= common ================= */
-bool
+static bool
 xtrabackup_read_metadata(char *filename)
 {
 	FILE *fp;
