@@ -1055,18 +1055,6 @@ thd_is_select(
 }
 
 void
-innobase_mysql_prepare_print_arbitrary_thd(void)
-{
-	/* do nothing */
-}
-
-void
-innobase_mysql_end_print_arbitrary_thd(void)
-{
-	/* do nothing */
-}
-
-void
 innobase_mysql_print_thd(
 	FILE*   f,		
 	void*   input_thd,
