@@ -23,440 +23,440 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define XTRABACKUP_VERSION "undefined"
 #endif
 #ifndef XTRABACKUP_REVISION
-#define XTRABACKUP_REVISION "undefined"
-#endif
+ #define XTRABACKUP_REVISION "undefined"
+ #endif
 
-#include <config.h>
-#include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h> // for default_charset_info
-#include "ha_prototypes.h"
-//#define XTRABACKUP_TARGET_IS_PLUGIN
-#include <boost/program_options.hpp>
+ #include <config.h>
+ #include <drizzled/internal/my_sys.h>
+ #include <drizzled/charset_info.h>
+ #include <drizzled/charset.h>
+ #include <drizzled/global_charset_info.h> // for default_charset_info
+ #include "ha_prototypes.h"
+ //#define XTRABACKUP_TARGET_IS_PLUGIN
+ #include <boost/program_options.hpp>
 
-#define my_progname "xtrabackup"
+ #define my_progname "xtrabackup"
 
-#define gptr
-#define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
+ #define gptr
+ #define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
 
-#define G_PTR void*
+ #define G_PTR void*
 
-#include <univ.i>
-#include <os0file.h>
-#include <os0thread.h>
-#include <srv0start.h>
-#include <srv0srv.h>
-#include <trx0roll.h>
-#include <trx0trx.h>
-#include <trx0sys.h>
-#include <mtr0mtr.h>
-#include <row0ins.h>
-#include <row0mysql.h>
-#include <row0sel.h>
-#include <row0upd.h>
-#include <log0log.h>
-#include <log0recv.h>
-#include <lock0lock.h>
-#include <dict0crea.h>
-#include <btr0cur.h>
-#include <btr0btr.h>
-#include <btr0sea.h>
-#include <fsp0fsp.h>
-#include <sync0sync.h>
-#include <fil0fil.h>
-#include <trx0xa.h>
+ #include <univ.i>
+ #include <os0file.h>
+ #include <os0thread.h>
+ #include <srv0start.h>
+ #include <srv0srv.h>
+ #include <trx0roll.h>
+ #include <trx0trx.h>
+ #include <trx0sys.h>
+ #include <mtr0mtr.h>
+ #include <row0ins.h>
+ #include <row0mysql.h>
+ #include <row0sel.h>
+ #include <row0upd.h>
+ #include <log0log.h>
+ #include <log0recv.h>
+ #include <lock0lock.h>
+ #include <dict0crea.h>
+ #include <btr0cur.h>
+ #include <btr0btr.h>
+ #include <btr0sea.h>
+ #include <fsp0fsp.h>
+ #include <sync0sync.h>
+ #include <fil0fil.h>
+ #include <trx0xa.h>
 
-#ifdef INNODB_VERSION_SHORT
-#include <ibuf0ibuf.h>
-#else
-#error ENOCOOL
-#endif
+ #ifdef INNODB_VERSION_SHORT
+ #include <ibuf0ibuf.h>
+ #else
+ #error ENOCOOL
+ #endif
 
-#define IB_INT64 ib_int64_t
-#define LSN64 ib_uint64_t
-#define MACH_READ_64 mach_read_from_8
-#define MACH_WRITE_64 mach_write_to_8
-#define OS_MUTEX_CREATE() os_mutex_create()
-#define ut_dulint_zero 0
-#define ut_dulint_cmp(A, B) (A > B ? 1 : (A == B ? 0 : -1))
-#define ut_dulint_add(A, B) (A + B)
-#define ut_dulint_minus(A, B) (A - B)
-#define ut_dulint_align_down(A, B) (A & ~((ib_int64_t)B - 1))
-#define ut_dulint_align_up(A, B) ((A + B - 1) & ~((ib_int64_t)B - 1))
+ #define IB_INT64 ib_int64_t
+ #define LSN64 ib_uint64_t
+ #define MACH_READ_64 mach_read_from_8
+ #define MACH_WRITE_64 mach_write_to_8
+ #define OS_MUTEX_CREATE() os_mutex_create()
+ #define ut_dulint_zero 0
+ #define ut_dulint_cmp(A, B) (A > B ? 1 : (A == B ? 0 : -1))
+ #define ut_dulint_add(A, B) (A + B)
+ #define ut_dulint_minus(A, B) (A - B)
+ #define ut_dulint_align_down(A, B) (A & ~((ib_int64_t)B - 1))
+ #define ut_dulint_align_up(A, B) ((A + B - 1) & ~((ib_int64_t)B - 1))
 
-#ifdef __WIN__
-#define SRV_PATH_SEPARATOR	'\\'
-#define SRV_PATH_SEPARATOR_STR	"\\"	
-#else
-#define SRV_PATH_SEPARATOR	'/'
-#define SRV_PATH_SEPARATOR_STR	"/"
-#endif
+ #ifdef __WIN__
+ #define SRV_PATH_SEPARATOR	'\\'
+ #define SRV_PATH_SEPARATOR_STR	"\\"	
+ #else
+ #define SRV_PATH_SEPARATOR	'/'
+ #define SRV_PATH_SEPARATOR_STR	"/"
+ #endif
 
-#ifndef UNIV_PAGE_SIZE_MAX
-#define UNIV_PAGE_SIZE_MAX UNIV_PAGE_SIZE
-#endif
-#ifndef UNIV_PAGE_SIZE_SHIFT_MAX
-#define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
-#endif
+ #ifndef UNIV_PAGE_SIZE_MAX
+ #define UNIV_PAGE_SIZE_MAX UNIV_PAGE_SIZE
+ #endif
+ #ifndef UNIV_PAGE_SIZE_SHIFT_MAX
+ #define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
+ #endif
 
-using namespace drizzled;
-namespace po=boost::program_options;
+ using namespace drizzled;
+ namespace po=boost::program_options;
 
-/* prototypes for static functions in original */
-buf_block_t*
-btr_node_ptr_get_child(
-/*===================*/
-	const rec_t*	node_ptr,/*!< in: node pointer */
-	dict_index_t*	index,	/*!< in: index */
-	const ulint*	offsets,/*!< in: array returned by rec_get_offsets() */
-	mtr_t*		mtr);	/*!< in: mtr */
+ /* prototypes for static functions in original */
+ buf_block_t*
+ btr_node_ptr_get_child(
+ /*===================*/
+         const rec_t*	node_ptr,/*!< in: node pointer */
+         dict_index_t*	index,	/*!< in: index */
+         const ulint*	offsets,/*!< in: array returned by rec_get_offsets() */
+         mtr_t*		mtr);	/*!< in: mtr */
 
-buf_block_t*
-btr_root_block_get(
-/*===============*/
-	dict_index_t*	index,	/*!< in: index tree */
-	mtr_t*		mtr);	/*!< in: mtr */
+ buf_block_t*
+ btr_root_block_get(
+ /*===============*/
+         dict_index_t*	index,	/*!< in: index tree */
+         mtr_t*		mtr);	/*!< in: mtr */
 
-int
-fil_file_readdir_next_file(
-/*=======================*/
-				/* out: 0 if ok, -1 if error even after the
-				retries, 1 if at the end of the directory */
-	ulint*		err,	/* out: this is set to DB_ERROR if an error
-				was encountered, otherwise not changed */
-	const char*	dirname,/* in: directory name or path */
-	os_file_dir_t	dir,	/* in: directory stream */
-	os_file_stat_t*	info);	/* in/out: buffer where the info is returned */
+ int
+ fil_file_readdir_next_file(
+ /*=======================*/
+                                 /* out: 0 if ok, -1 if error even after the
+                                 retries, 1 if at the end of the directory */
+         ulint*		err,	/* out: this is set to DB_ERROR if an error
+                                 was encountered, otherwise not changed */
+         const char*	dirname,/* in: directory name or path */
+         os_file_dir_t	dir,	/* in: directory stream */
+         os_file_stat_t*	info);	/* in/out: buffer where the info is returned */
 
-ibool
-recv_check_cp_is_consistent(
-/*========================*/
-			/* out: TRUE if ok */
-	byte*	buf);	/* in: buffer containing checkpoint info */
+ ibool
+ recv_check_cp_is_consistent(
+ /*========================*/
+                         /* out: TRUE if ok */
+         byte*	buf);	/* in: buffer containing checkpoint info */
 
-ulint
-recv_find_max_checkpoint(
-/*=====================*/
-					/* out: error code or DB_SUCCESS */
-	log_group_t**	max_group,	/* out: max group */
-	ulint*		max_field);	/* out: LOG_CHECKPOINT_1 or
-					LOG_CHECKPOINT_2 */
+ ulint
+ recv_find_max_checkpoint(
+ /*=====================*/
+                                         /* out: error code or DB_SUCCESS */
+         log_group_t**	max_group,	/* out: max group */
+         ulint*		max_field);	/* out: LOG_CHECKPOINT_1 or
+                                         LOG_CHECKPOINT_2 */
 
-ibool
-log_block_checksum_is_ok_or_old_format(
-/*===================================*/
-			/* out: TRUE if ok, or if the log block may be in the
-			format of InnoDB version < 3.23.52 */
-	byte*	block);	/* in: pointer to a log block */
+ ibool
+ log_block_checksum_is_ok_or_old_format(
+ /*===================================*/
+                         /* out: TRUE if ok, or if the log block may be in the
+                         format of InnoDB version < 3.23.52 */
+         byte*	block);	/* in: pointer to a log block */
 
-ulint
-open_or_create_log_file(
-/*====================*/
-					/* out: DB_SUCCESS or error code */
-        ibool   create_new_db,          /* in: TRUE if we should create a
-                                        new database */
-	ibool*	log_file_created,	/* out: TRUE if new log file
-					created */
-	ibool	log_file_has_been_opened,/* in: TRUE if a log file has been
-					opened before: then it is an error
-					to try to create another log file */
-	ulint	k,			/* in: log group number */
-	ulint	i);			/* in: log file number in group */
+ ulint
+ open_or_create_log_file(
+ /*====================*/
+                                         /* out: DB_SUCCESS or error code */
+         ibool   create_new_db,          /* in: TRUE if we should create a
+                                         new database */
+         ibool*	log_file_created,	/* out: TRUE if new log file
+                                         created */
+         ibool	log_file_has_been_opened,/* in: TRUE if a log file has been
+                                         opened before: then it is an error
+                                         to try to create another log file */
+         ulint	k,			/* in: log group number */
+         ulint	i);			/* in: log file number in group */
 
-ulint
-open_or_create_data_files(
-/*======================*/
-				/* out: DB_SUCCESS or error code */
-	ibool*	create_new_db,	/* out: TRUE if new database should be
-								created */
-#ifdef XTRADB_BASED
-	ibool*	create_new_doublewrite_file,
-#endif 
-#ifdef UNIV_LOG_ARCHIVE
-	ulint*	min_arch_log_no,/* out: min of archived log numbers in data
-				files */
-	ulint*	max_arch_log_no,/* out: */
-#endif /* UNIV_LOG_ARCHIVE */
-	LSN64*	min_flushed_lsn,/* out: min of flushed lsn values in data
-				files */
-	LSN64*	max_flushed_lsn,/* out: */
-	ulint*	sum_of_new_sizes);/* out: sum of sizes of the new files added */
+ ulint
+ open_or_create_data_files(
+ /*======================*/
+                                 /* out: DB_SUCCESS or error code */
+         ibool*	create_new_db,	/* out: TRUE if new database should be
+                                                                 created */
+ #ifdef XTRADB_BASED
+         ibool*	create_new_doublewrite_file,
+ #endif 
+ #ifdef UNIV_LOG_ARCHIVE
+         ulint*	min_arch_log_no,/* out: min of archived log numbers in data
+                                 files */
+         ulint*	max_arch_log_no,/* out: */
+ #endif /* UNIV_LOG_ARCHIVE */
+         LSN64*	min_flushed_lsn,/* out: min of flushed lsn values in data
+                                 files */
+         LSN64*	max_flushed_lsn,/* out: */
+         ulint*	sum_of_new_sizes);/* out: sum of sizes of the new files added */
 
-void
-os_file_set_nocache(
-/*================*/
-	int		fd,		/* in: file descriptor to alter */
-	const char*	file_name,	/* in: used in the diagnostic message */
-	const char*	operation_name);	/* in: used in the diagnostic message,
-					we call os_file_set_nocache()
-					immediately after opening or creating
-					a file, so this is either "open" or
-					"create" */
+ void
+ os_file_set_nocache(
+ /*================*/
+         int		fd,		/* in: file descriptor to alter */
+         const char*	file_name,	/* in: used in the diagnostic message */
+         const char*	operation_name);	/* in: used in the diagnostic message,
+                                         we call os_file_set_nocache()
+                                         immediately after opening or creating
+                                         a file, so this is either "open" or
+                                         "create" */
 
-#include <fcntl.h>
-#include <regex.h>
+ #include <fcntl.h>
+ #include <regex.h>
 
-#ifdef POSIX_FADV_NORMAL
-#define USE_POSIX_FADVISE
-#endif
+ #ifdef POSIX_FADV_NORMAL
+ #define USE_POSIX_FADVISE
+ #endif
 
-/* ==start === definition at fil0fil.c === */
-// ##################################################################
-// NOTE: We should check the following definitions fit to the source.
-// ##################################################################
+ /* ==start === definition at fil0fil.c === */
+ // ##################################################################
+ // NOTE: We should check the following definitions fit to the source.
+ // ##################################################################
 
-//Plugin ?
-/** File node of a tablespace or the log data space */
-struct fil_node_struct {
-	fil_space_t*	space;	/*!< backpointer to the space where this node
-				belongs */
-	char*		name;	/*!< path to the file */
-	ibool		open;	/*!< TRUE if file open */
-	os_file_t	handle;	/*!< OS handle to the file, if file open */
-	ibool		is_raw_disk;/*!< TRUE if the 'file' is actually a raw
-				device or a raw disk partition */
-	ulint		size;	/*!< size of the file in database pages, 0 if
-				not known yet; the possible last incomplete
-				megabyte may be ignored if space == 0 */
-	ulint		n_pending;
-				/*!< count of pending i/o's on this file;
-				closing of the file is not allowed if
-				this is > 0 */
-	ulint		n_pending_flushes;
-				/*!< count of pending flushes on this file;
-				closing of the file is not allowed if
-				this is > 0 */
-	ib_int64_t	modification_counter;/*!< when we write to the file we
-				increment this by one */
-	ib_int64_t	flush_counter;/*!< up to what
-				modification_counter value we have
-				flushed the modifications to disk */
-	UT_LIST_NODE_T(fil_node_t) chain;
-				/*!< link field for the file chain */
-	UT_LIST_NODE_T(fil_node_t) LRU;
-				/*!< link field for the LRU list */
-	ulint		magic_n;/*!< FIL_NODE_MAGIC_N */
-};
+ //Plugin ?
+ /** File node of a tablespace or the log data space */
+ struct fil_node_struct {
+         fil_space_t*	space;	/*!< backpointer to the space where this node
+                                 belongs */
+         char*		name;	/*!< path to the file */
+         ibool		open;	/*!< TRUE if file open */
+         os_file_t	handle;	/*!< OS handle to the file, if file open */
+         ibool		is_raw_disk;/*!< TRUE if the 'file' is actually a raw
+                                 device or a raw disk partition */
+         ulint		size;	/*!< size of the file in database pages, 0 if
+                                 not known yet; the possible last incomplete
+                                 megabyte may be ignored if space == 0 */
+         ulint		n_pending;
+                                 /*!< count of pending i/o's on this file;
+                                 closing of the file is not allowed if
+                                 this is > 0 */
+         ulint		n_pending_flushes;
+                                 /*!< count of pending flushes on this file;
+                                 closing of the file is not allowed if
+                                 this is > 0 */
+         ib_int64_t	modification_counter;/*!< when we write to the file we
+                                 increment this by one */
+         ib_int64_t	flush_counter;/*!< up to what
+                                 modification_counter value we have
+                                 flushed the modifications to disk */
+         UT_LIST_NODE_T(fil_node_t) chain;
+                                 /*!< link field for the file chain */
+         UT_LIST_NODE_T(fil_node_t) LRU;
+                                 /*!< link field for the LRU list */
+         ulint		magic_n;/*!< FIL_NODE_MAGIC_N */
+ };
 
-struct fil_space_struct {
-	char*		name;	/*!< space name = the path to the first file in
-				it */
-	ulint		id;	/*!< space id */
-	ib_int64_t	tablespace_version;
-				/*!< in DISCARD/IMPORT this timestamp
-				is used to check if we should ignore
-				an insert buffer merge request for a
-				page because it actually was for the
-				previous incarnation of the space */
-	ibool		mark;	/*!< this is set to TRUE at database startup if
-				the space corresponds to a table in the InnoDB
-				data dictionary; so we can print a warning of
-				orphaned tablespaces */
-	ibool		stop_ios;/*!< TRUE if we want to rename the
-				.ibd file of tablespace and want to
-				stop temporarily posting of new i/o
-				requests on the file */
-	ibool		stop_ibuf_merges;
-				/*!< we set this TRUE when we start
-				deleting a single-table tablespace */
-	ibool		is_being_deleted;
-				/*!< this is set to TRUE when we start
-				deleting a single-table tablespace and its
-				file; when this flag is set no further i/o
-				or flush requests can be placed on this space,
-				though there may be such requests still being
-				processed on this space */
-	ulint		purpose;/*!< FIL_TABLESPACE, FIL_LOG, or
-				FIL_ARCH_LOG */
-	UT_LIST_BASE_NODE_T(fil_node_t) chain;
-				/*!< base node for the file chain */
-	ulint		size;	/*!< space size in pages; 0 if a single-table
-				tablespace whose size we do not know yet;
-				last incomplete megabytes in data files may be
-				ignored if space == 0 */
-	ulint		flags;	/*!< compressed page size and file format, or 0 */
-	ulint		n_reserved_extents;
-				/*!< number of reserved free extents for
-				ongoing operations like B-tree page split */
-	ulint		n_pending_flushes; /*!< this is positive when flushing
-				the tablespace to disk; dropping of the
-				tablespace is forbidden if this is positive */
-	ulint		n_pending_ibuf_merges;/*!< this is positive
-				when merging insert buffer entries to
-				a page so that we may need to access
-				the ibuf bitmap page in the
-				tablespade: dropping of the tablespace
-				is forbidden if this is positive */
-	hash_node_t	hash;	/*!< hash chain node */
-	hash_node_t	name_hash;/*!< hash chain the name_hash table */
-#ifndef UNIV_HOTBACKUP
-	rw_lock_t	latch;	/*!< latch protecting the file space storage
-				allocation */
-#endif /* !UNIV_HOTBACKUP */
-	UT_LIST_NODE_T(fil_space_t) unflushed_spaces;
-				/*!< list of spaces with at least one unflushed
-				file we have written to */
-	ibool		is_in_unflushed_spaces; /*!< TRUE if this space is
-				currently in unflushed_spaces */
-#ifdef XTRADB_BASED
-	ibool		is_corrupt;
-#endif
-	UT_LIST_NODE_T(fil_space_t) space_list;
-				/*!< list of all spaces */
-	ulint		magic_n;/*!< FIL_SPACE_MAGIC_N */
-};
+ struct fil_space_struct {
+         char*		name;	/*!< space name = the path to the first file in
+                                 it */
+         ulint		id;	/*!< space id */
+         ib_int64_t	tablespace_version;
+                                 /*!< in DISCARD/IMPORT this timestamp
+                                 is used to check if we should ignore
+                                 an insert buffer merge request for a
+                                 page because it actually was for the
+                                 previous incarnation of the space */
+         ibool		mark;	/*!< this is set to TRUE at database startup if
+                                 the space corresponds to a table in the InnoDB
+                                 data dictionary; so we can print a warning of
+                                 orphaned tablespaces */
+         ibool		stop_ios;/*!< TRUE if we want to rename the
+                                 .ibd file of tablespace and want to
+                                 stop temporarily posting of new i/o
+                                 requests on the file */
+         ibool		stop_ibuf_merges;
+                                 /*!< we set this TRUE when we start
+                                 deleting a single-table tablespace */
+         ibool		is_being_deleted;
+                                 /*!< this is set to TRUE when we start
+                                 deleting a single-table tablespace and its
+                                 file; when this flag is set no further i/o
+                                 or flush requests can be placed on this space,
+                                 though there may be such requests still being
+                                 processed on this space */
+         ulint		purpose;/*!< FIL_TABLESPACE, FIL_LOG, or
+                                 FIL_ARCH_LOG */
+         UT_LIST_BASE_NODE_T(fil_node_t) chain;
+                                 /*!< base node for the file chain */
+         ulint		size;	/*!< space size in pages; 0 if a single-table
+                                 tablespace whose size we do not know yet;
+                                 last incomplete megabytes in data files may be
+                                 ignored if space == 0 */
+         ulint		flags;	/*!< compressed page size and file format, or 0 */
+         ulint		n_reserved_extents;
+                                 /*!< number of reserved free extents for
+                                 ongoing operations like B-tree page split */
+         ulint		n_pending_flushes; /*!< this is positive when flushing
+                                 the tablespace to disk; dropping of the
+                                 tablespace is forbidden if this is positive */
+         ulint		n_pending_ibuf_merges;/*!< this is positive
+                                 when merging insert buffer entries to
+                                 a page so that we may need to access
+                                 the ibuf bitmap page in the
+                                 tablespade: dropping of the tablespace
+                                 is forbidden if this is positive */
+         hash_node_t	hash;	/*!< hash chain node */
+         hash_node_t	name_hash;/*!< hash chain the name_hash table */
+ #ifndef UNIV_HOTBACKUP
+         rw_lock_t	latch;	/*!< latch protecting the file space storage
+                                 allocation */
+ #endif /* !UNIV_HOTBACKUP */
+         UT_LIST_NODE_T(fil_space_t) unflushed_spaces;
+                                 /*!< list of spaces with at least one unflushed
+                                 file we have written to */
+         ibool		is_in_unflushed_spaces; /*!< TRUE if this space is
+                                 currently in unflushed_spaces */
+ #ifdef XTRADB_BASED
+         ibool		is_corrupt;
+ #endif
+         UT_LIST_NODE_T(fil_space_t) space_list;
+                                 /*!< list of all spaces */
+         ulint		magic_n;/*!< FIL_SPACE_MAGIC_N */
+ };
 
-typedef	struct fil_system_struct	fil_system_t;
+ typedef	struct fil_system_struct	fil_system_t;
 
-struct fil_system_struct {
-#ifndef UNIV_HOTBACKUP
-	mutex_t		mutex;		/*!< The mutex protecting the cache */
-#ifdef XTRADB55
-	mutex_t		file_extend_mutex;
-#endif
-#endif /* !UNIV_HOTBACKUP */
-	hash_table_t*	spaces;		/*!< The hash table of spaces in the
-					system; they are hashed on the space
-					id */
-	hash_table_t*	name_hash;	/*!< hash table based on the space
-					name */
-	UT_LIST_BASE_NODE_T(fil_node_t) LRU;
-					/*!< base node for the LRU list of the
-					most recently used open files with no
-					pending i/o's; if we start an i/o on
-					the file, we first remove it from this
-					list, and return it to the start of
-					the list when the i/o ends;
-					log files and the system tablespace are
-					not put to this list: they are opened
-					after the startup, and kept open until
-					shutdown */
-	UT_LIST_BASE_NODE_T(fil_space_t) unflushed_spaces;
-					/*!< base node for the list of those
-					tablespaces whose files contain
-					unflushed writes; those spaces have
-					at least one file node where
-					modification_counter > flush_counter */
-	ulint		n_open;		/*!< number of files currently open */
-	ulint		max_n_open;	/*!< n_open is not allowed to exceed
-					this */
-	ib_int64_t	modification_counter;/*!< when we write to a file we
-					increment this by one */
-	ulint		max_assigned_id;/*!< maximum space id in the existing
-					tables, or assigned during the time
-					mysqld has been up; at an InnoDB
-					startup we scan the data dictionary
-					and set here the maximum of the
-					space id's of the tables there */
-	ib_int64_t	tablespace_version;
-					/*!< a counter which is incremented for
-					every space object memory creation;
-					every space mem object gets a
-					'timestamp' from this; in DISCARD/
-					IMPORT this is used to check if we
-					should ignore an insert buffer merge
-					request */
-	UT_LIST_BASE_NODE_T(fil_space_t) space_list;
-					/*!< list of all file spaces */
-};
+ struct fil_system_struct {
+ #ifndef UNIV_HOTBACKUP
+         mutex_t		mutex;		/*!< The mutex protecting the cache */
+ #ifdef XTRADB55
+         mutex_t		file_extend_mutex;
+ #endif
+ #endif /* !UNIV_HOTBACKUP */
+         hash_table_t*	spaces;		/*!< The hash table of spaces in the
+                                         system; they are hashed on the space
+                                         id */
+         hash_table_t*	name_hash;	/*!< hash table based on the space
+                                         name */
+         UT_LIST_BASE_NODE_T(fil_node_t) LRU;
+                                         /*!< base node for the LRU list of the
+                                         most recently used open files with no
+                                         pending i/o's; if we start an i/o on
+                                         the file, we first remove it from this
+                                         list, and return it to the start of
+                                         the list when the i/o ends;
+                                         log files and the system tablespace are
+                                         not put to this list: they are opened
+                                         after the startup, and kept open until
+                                         shutdown */
+         UT_LIST_BASE_NODE_T(fil_space_t) unflushed_spaces;
+                                         /*!< base node for the list of those
+                                         tablespaces whose files contain
+                                         unflushed writes; those spaces have
+                                         at least one file node where
+                                         modification_counter > flush_counter */
+         ulint		n_open;		/*!< number of files currently open */
+         ulint		max_n_open;	/*!< n_open is not allowed to exceed
+                                         this */
+         ib_int64_t	modification_counter;/*!< when we write to a file we
+                                         increment this by one */
+         ulint		max_assigned_id;/*!< maximum space id in the existing
+                                         tables, or assigned during the time
+                                         mysqld has been up; at an InnoDB
+                                         startup we scan the data dictionary
+                                         and set here the maximum of the
+                                         space id's of the tables there */
+         ib_int64_t	tablespace_version;
+                                         /*!< a counter which is incremented for
+                                         every space object memory creation;
+                                         every space mem object gets a
+                                         'timestamp' from this; in DISCARD/
+                                         IMPORT this is used to check if we
+                                         should ignore an insert buffer merge
+                                         request */
+         UT_LIST_BASE_NODE_T(fil_space_t) space_list;
+                                         /*!< list of all file spaces */
+ };
 
-typedef struct {
-	ulint	page_size;
-} xb_delta_info_t;
+ typedef struct {
+         ulint	page_size;
+ } xb_delta_info_t;
 
-extern fil_system_t*   fil_system;
+ extern fil_system_t*   fil_system;
 
-/* ==end=== definition  at fil0fil.c === */
+ /* ==end=== definition  at fil0fil.c === */
 
 
-bool innodb_inited= 0;
+ bool innodb_inited= 0;
 
-/* === xtrabackup specific options === */
-char xtrabackup_real_target_dir[FN_REFLEN] = "./xtrabackup_backupfiles/";
-char *xtrabackup_target_dir= xtrabackup_real_target_dir;
-bool xtrabackup_backup = false;
-bool xtrabackup_stats = false;
-bool xtrabackup_prepare = false;
-bool xtrabackup_print_param = false;
+ /* === xtrabackup specific options === */
+ char xtrabackup_real_target_dir[FN_REFLEN] = "./xtrabackup_backupfiles/";
+ char *xtrabackup_target_dir= xtrabackup_real_target_dir;
+ bool xtrabackup_backup = false;
+ bool xtrabackup_stats = false;
+ bool xtrabackup_prepare = false;
+ bool xtrabackup_print_param = false;
 
-bool xtrabackup_export = false;
-bool xtrabackup_apply_log_only = false;
+ bool xtrabackup_export = false;
+ bool xtrabackup_apply_log_only = false;
 
-bool xtrabackup_suspend_at_end = false;
-uint64_t xtrabackup_use_memory = 100*1024*1024L;
-bool xtrabackup_create_ib_logfile = false;
+ bool xtrabackup_suspend_at_end = false;
+ uint64_t xtrabackup_use_memory = 100*1024*1024L;
+ bool xtrabackup_create_ib_logfile = false;
 
-long xtrabackup_throttle = 0; /* 0:unlimited */
-lint io_ticket;
-os_event_t wait_throttle = NULL;
+ long xtrabackup_throttle = 0; /* 0:unlimited */
+ lint io_ticket;
+ os_event_t wait_throttle = NULL;
 
-bool xtrabackup_stream = false;
-char *xtrabackup_incremental = NULL;
-LSN64 incremental_lsn;
-LSN64 incremental_to_lsn;
-LSN64 incremental_last_lsn;
-byte* incremental_buffer = NULL;
-byte* incremental_buffer_base = NULL;
+ bool xtrabackup_stream = false;
+ char *xtrabackup_incremental = NULL;
+ LSN64 incremental_lsn;
+ LSN64 incremental_to_lsn;
+ LSN64 incremental_last_lsn;
+ byte* incremental_buffer = NULL;
+ byte* incremental_buffer_base = NULL;
 
-char *xtrabackup_incremental_basedir = NULL; /* for --backup */
-char *xtrabackup_extra_lsndir = NULL; /* for --backup with --extra-lsndir */
-char *xtrabackup_incremental_dir = NULL; /* for --prepare */
+ char *xtrabackup_incremental_basedir = NULL; /* for --backup */
+ char *xtrabackup_extra_lsndir = NULL; /* for --backup with --extra-lsndir */
+ char *xtrabackup_incremental_dir = NULL; /* for --prepare */
 
-char *xtrabackup_tables = NULL;
-int tables_regex_num;
-regex_t *tables_regex;
-regmatch_t tables_regmatch[1];
+ char *xtrabackup_tables = NULL;
+ int tables_regex_num;
+ regex_t *tables_regex;
+ regmatch_t tables_regmatch[1];
 
-char *xtrabackup_tables_file = NULL;
-hash_table_t* tables_hash;
+ char *xtrabackup_tables_file = NULL;
+ hash_table_t* tables_hash;
 
-struct xtrabackup_tables_struct{
-	char*		name;
-	hash_node_t	name_hash;
-};
-typedef struct xtrabackup_tables_struct	xtrabackup_tables_t;
+ struct xtrabackup_tables_struct{
+         char*		name;
+         hash_node_t	name_hash;
+ };
+ typedef struct xtrabackup_tables_struct	xtrabackup_tables_t;
 
-#ifdef XTRADB_BASED
-static ulint		n[SRV_MAX_N_IO_THREADS + 6 + 64];
-static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6 + 64];
-#else
-static ulint		n[SRV_MAX_N_IO_THREADS + 6];
-static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6];
-#endif
+ #ifdef XTRADB_BASED
+ static ulint		n[SRV_MAX_N_IO_THREADS + 6 + 64];
+ static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6 + 64];
+ #else
+ static ulint		n[SRV_MAX_N_IO_THREADS + 6];
+ static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6];
+ #endif
 
-LSN64 checkpoint_lsn_start;
-LSN64 checkpoint_no_start;
-LSN64 log_copy_scanned_lsn;
-IB_INT64 log_copy_offset = 0;
-ibool log_copying = TRUE;
-ibool log_copying_running = FALSE;
-ibool log_copying_succeed = FALSE;
+ LSN64 checkpoint_lsn_start;
+ LSN64 checkpoint_no_start;
+ LSN64 log_copy_scanned_lsn;
+ IB_INT64 log_copy_offset = 0;
+ ibool log_copying = TRUE;
+ ibool log_copying_running = FALSE;
+ ibool log_copying_succeed = FALSE;
 
-ibool xtrabackup_logfile_is_renamed = FALSE;
+ ibool xtrabackup_logfile_is_renamed = FALSE;
 
-uint parallel;
+ uint parallel;
 
-/* === metadata of backup === */
-#define XTRABACKUP_METADATA_FILENAME "xtrabackup_checkpoints"
-char metadata_type[30] = ""; /*[full-backuped|full-prepared|incremental]*/
+ /* === metadata of backup === */
+ #define XTRABACKUP_METADATA_FILENAME "xtrabackup_checkpoints"
+ char metadata_type[30] = ""; /*[full-backuped|full-prepared|incremental]*/
 
-ib_uint64_t metadata_from_lsn = 0;
-ib_uint64_t metadata_to_lsn = 0;
-ib_uint64_t metadata_last_lsn = 0;
+ ib_uint64_t metadata_from_lsn = 0;
+ ib_uint64_t metadata_to_lsn = 0;
+ ib_uint64_t metadata_last_lsn = 0;
 
-#define XB_DELTA_INFO_SUFFIX ".meta"
+ #define XB_DELTA_INFO_SUFFIX ".meta"
 
-/* === sharing with thread === */
-os_file_t       dst_log = -1;
-char            dst_log_path[FN_REFLEN];
+ /* === sharing with thread === */
+ os_file_t       dst_log = -1;
+ char            dst_log_path[FN_REFLEN];
 
-/* === some variables from mysqld === */
-char mysql_real_data_home[FN_REFLEN] = "./";
-char *mysql_data_home= mysql_real_data_home;
-static char mysql_data_home_buff[2];
+ /* === some variables from mysqld === */
+ char mysql_real_data_home[FN_REFLEN] = "./";
+ char *mysql_data_home= mysql_real_data_home;
+ static char mysql_data_home_buff[2];
 
-char *opt_mysql_tmpdir = NULL;
+ char *opt_mysql_tmpdir = NULL;
 
 /* === static parameters in ha_innodb.cc */
 
@@ -1081,9 +1081,9 @@ innobase_get_at_most_n_mbchars(
 {
 	ulint char_length;	/* character length in bytes */
 	ulint n_chars;		/* number of characters in prefix */
-	CHARSET_INFO* charset;	/* charset used in the field */
+	const CHARSET_INFO* charset;	/* charset used in the field */
 
-	charset = get_charset((uint) charset_id));
+	charset = get_charset((uint) charset_id);
 
 	ut_ad(charset);
 	ut_ad(charset->mbmaxlen);
