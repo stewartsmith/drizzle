@@ -67,13 +67,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #error ENOCOOL
 #endif
 
-#ifndef INNODB_VERSION_SHORT
-#define IB_INT64 ib_longlong
-#define LSN64 dulint
-#define MACH_READ_64 mach_read_from_8
-#define MACH_WRITE_64 mach_write_to_8
-#define OS_MUTEX_CREATE() os_mutex_create(NULL)
-#else
 #define IB_INT64 ib_int64_t
 #define LSN64 ib_uint64_t
 #if (MYSQL_VERSION_ID < 50500)
@@ -91,7 +84,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define ut_dulint_minus(A, B) (A - B)
 #define ut_dulint_align_down(A, B) (A & ~((ib_int64_t)B - 1))
 #define ut_dulint_align_up(A, B) ((A + B - 1) & ~((ib_int64_t)B - 1))
-#endif
 
 #ifdef __WIN__
 #define SRV_PATH_SEPARATOR	'\\'
@@ -127,15 +119,6 @@ void thd_wait_end(MYSQL_THD thd)
 #endif /* MYSQL_VERSION_ID >= 50507 */
 
 /* prototypes for static functions in original */
-#ifndef INNODB_VERSION_SHORT
-page_t*
-btr_node_ptr_get_child(
-/*===================*/
-				/* out: child page, x-latched */
-	rec_t*		node_ptr,/* in: node pointer */
-	const ulint*	offsets,/* in: array returned by rec_get_offsets() */
-	mtr_t*		mtr);	/* in: mtr */
-#else
 buf_block_t*
 btr_node_ptr_get_child(
 /*===================*/
@@ -149,7 +132,6 @@ btr_root_block_get(
 /*===============*/
 	dict_index_t*	index,	/*!< in: index tree */
 	mtr_t*		mtr);	/*!< in: mtr */
-#endif
 
 int
 fil_file_readdir_next_file(
@@ -239,147 +221,6 @@ os_file_set_nocache(
 // NOTE: We should check the following definitions fit to the source.
 // ##################################################################
 
-#ifndef INNODB_VERSION_SHORT
-//5.0 5.1
-/* File node of a tablespace or the log data space */
-struct fil_node_struct {
-        fil_space_t*    space;  /* backpointer to the space where this node
-                                belongs */
-        char*           name;   /* path to the file */
-        ibool           open;   /* TRUE if file open */
-        os_file_t       handle; /* OS handle to the file, if file open */
-        ibool           is_raw_disk;/* TRUE if the 'file' is actually a raw
-                                device or a raw disk partition */
-        ulint           size;   /* size of the file in database pages, 0 if
-                                not known yet; the possible last incomplete
-                                megabyte may be ignored if space == 0 */
-        ulint           n_pending;
-                                /* count of pending i/o's on this file;
-                                closing of the file is not allowed if
-                                this is > 0 */
-        ulint           n_pending_flushes;
-                                /* count of pending flushes on this file;
-                                closing of the file is not allowed if
-                                this is > 0 */
-        ib_longlong     modification_counter;/* when we write to the file we
-                                increment this by one */
-        ib_longlong     flush_counter;/* up to what modification_counter value
-                                we have flushed the modifications to disk */
-        UT_LIST_NODE_T(fil_node_t) chain;
-                                /* link field for the file chain */
-        UT_LIST_NODE_T(fil_node_t) LRU;
-                                /* link field for the LRU list */
-        ulint           magic_n;
-};
-
-struct fil_space_struct {
-        char*           name;   /* space name = the path to the first file in
-                                it */
-        ulint           id;     /* space id */
-        ib_longlong     tablespace_version;
-                                /* in DISCARD/IMPORT this timestamp is used to
-                                check if we should ignore an insert buffer
-                                merge request for a page because it actually
-                                was for the previous incarnation of the
-                                space */
-        ibool           mark;   /* this is set to TRUE at database startup if
-                                the space corresponds to a table in the InnoDB
-                                data dictionary; so we can print a warning of
-                                orphaned tablespaces */
-        ibool           stop_ios;/* TRUE if we want to rename the .ibd file of
-                                tablespace and want to stop temporarily
-                                posting of new i/o requests on the file */
-        ibool           stop_ibuf_merges;
-                                /* we set this TRUE when we start deleting a
-                                single-table tablespace */
-        ibool           is_being_deleted;
-                                /* this is set to TRUE when we start
-                                deleting a single-table tablespace and its
-                                file; when this flag is set no further i/o
-                                or flush requests can be placed on this space,
-                                though there may be such requests still being
-                                processed on this space */
-        ulint           purpose;/* FIL_TABLESPACE, FIL_LOG, or FIL_ARCH_LOG */
-        UT_LIST_BASE_NODE_T(fil_node_t) chain;
-                                /* base node for the file chain */
-        ulint           size;   /* space size in pages; 0 if a single-table
-                                tablespace whose size we do not know yet;
-                                last incomplete megabytes in data files may be
-                                ignored if space == 0 */
-        ulint           n_reserved_extents;
-                                /* number of reserved free extents for
-                                ongoing operations like B-tree page split */
-        ulint           n_pending_flushes; /* this is > 0 when flushing
-                                the tablespace to disk; dropping of the
-                                tablespace is forbidden if this is > 0 */
-        ulint           n_pending_ibuf_merges;/* this is > 0 when merging
-                                insert buffer entries to a page so that we
-                                may need to access the ibuf bitmap page in the
-                                tablespade: dropping of the tablespace is
-                                forbidden if this is > 0 */
-        hash_node_t     hash;   /* hash chain node */
-        hash_node_t     name_hash;/* hash chain the name_hash table */
-        rw_lock_t       latch;  /* latch protecting the file space storage
-                                allocation */
-        UT_LIST_NODE_T(fil_space_t) unflushed_spaces;
-                                /* list of spaces with at least one unflushed
-                                file we have written to */
-        ibool           is_in_unflushed_spaces; /* TRUE if this space is
-                                currently in the list above */
-        UT_LIST_NODE_T(fil_space_t) space_list;
-                                /* list of all spaces */
-        ibuf_data_t*    ibuf_data;
-                                /* insert buffer data */
-        ulint           magic_n;
-};
-typedef struct fil_system_struct        fil_system_t;
-struct fil_system_struct {
-        mutex_t         mutex;          /* The mutex protecting the cache */
-        hash_table_t*   spaces;         /* The hash table of spaces in the
-                                        system; they are hashed on the space
-                                        id */
-        hash_table_t*   name_hash;      /* hash table based on the space
-                                        name */
-        UT_LIST_BASE_NODE_T(fil_node_t) LRU;
-                                        /* base node for the LRU list of the
-                                        most recently used open files with no
-                                        pending i/o's; if we start an i/o on
-                                        the file, we first remove it from this
-                                        list, and return it to the start of
-                                        the list when the i/o ends;
-                                        log files and the system tablespace are
-                                        not put to this list: they are opened
-                                        after the startup, and kept open until
-                                        shutdown */
-        UT_LIST_BASE_NODE_T(fil_space_t) unflushed_spaces;
-                                        /* base node for the list of those
-                                        tablespaces whose files contain
-                                        unflushed writes; those spaces have
-                                        at least one file node where
-                                        modification_counter > flush_counter */
-        ulint           n_open;         /* number of files currently open */
-        ulint           max_n_open;     /* n_open is not allowed to exceed
-                                        this */
-        ib_longlong     modification_counter;/* when we write to a file we
-                                        increment this by one */
-        ulint           max_assigned_id;/* maximum space id in the existing
-                                        tables, or assigned during the time
-                                        mysqld has been up; at an InnoDB
-                                        startup we scan the data dictionary
-                                        and set here the maximum of the
-                                        space id's of the tables there */
-        ib_longlong     tablespace_version;
-                                        /* a counter which is incremented for
-                                        every space object memory creation;
-                                        every space mem object gets a
-                                        'timestamp' from this; in DISCARD/
-                                        IMPORT this is used to check if we
-                                        should ignore an insert buffer merge
-                                        request */
-        UT_LIST_BASE_NODE_T(fil_space_t) space_list;
-                                        /* list of all file spaces */
-};
-#else
 //Plugin ?
 /** File node of a tablespace or the log data space */
 struct fil_node_struct {
@@ -535,8 +376,6 @@ struct fil_system_struct {
 					/*!< list of all file spaces */
 };
 
-#endif /* INNODB_VERSION_SHORT */
-
 typedef struct {
 	ulint	page_size;
 } xb_delta_info_t;
@@ -616,15 +455,10 @@ uint parallel;
 /* === metadata of backup === */
 #define XTRABACKUP_METADATA_FILENAME "xtrabackup_checkpoints"
 char metadata_type[30] = ""; /*[full-backuped|full-prepared|incremental]*/
-#ifndef INNODB_VERSION_SHORT
-dulint metadata_from_lsn = {0, 0};
-dulint metadata_to_lsn = {0, 0};
-dulint metadata_last_lsn = {0, 0};
-#else
+
 ib_uint64_t metadata_from_lsn = 0;
 ib_uint64_t metadata_to_lsn = 0;
 ib_uint64_t metadata_last_lsn = 0;
-#endif
 
 #define XB_DELTA_INFO_SUFFIX ".meta"
 
@@ -1282,9 +1116,7 @@ innobase_get_cset_width(
 
 void
 innobase_convert_from_table_id(
-#ifdef INNODB_VERSION_SHORT
 	struct charset_info_st*	cs,
-#endif
 	char*	to,
 	const char*	from,
 	ulint	len)
@@ -1294,9 +1126,7 @@ innobase_convert_from_table_id(
 
 void
 innobase_convert_from_id(
-#ifdef INNODB_VERSION_SHORT
 	struct charset_info_st*	cs,
-#endif
 	char*	to,
 	const char*	from,
 	ulint	len)
@@ -1375,11 +1205,7 @@ innobase_mysql_tmpfile(void)
 void
 innobase_invalidate_query_cache(
 	trx_t*	trx,
-#ifndef INNODB_VERSION_SHORT
-	char*	full_name,
-#else
 	const char*	full_name,
-#endif
 	ulint	full_name_len)
 {
 	/* do nothing */
@@ -1516,7 +1342,6 @@ innobase_convert_name(
 							- (slash - id) - 1,
 							thd, TRUE);
 		}
-#ifdef INNODB_VERSION_SHORT
 	} else if (UNIV_UNLIKELY(*id == TEMP_INDEX_PREFIX)) {
 		/* Temporary index name (smart ALTER TABLE) */
 		const char temp_index_suffix[]= "--temporary--";
@@ -1528,7 +1353,6 @@ innobase_convert_name(
 			       sizeof temp_index_suffix - 1);
 			s += sizeof temp_index_suffix - 1;
 		}
-#endif
 	} else {
 no_db_name:
 		s = innobase_convert_identifier(buf, buflen, id, idlen,
@@ -1685,7 +1509,6 @@ innobase_query_is_update(void)
 	return(0);
 }
 
-#ifdef INNODB_VERSION_SHORT
 ulint
 innobase_raw_format(
 /*================*/
@@ -1739,7 +1562,6 @@ innobase_get_slow_log()
 {
 	return(FALSE);
 }
-#endif
 #endif
 
 /***********************************************************************
@@ -1915,17 +1737,7 @@ innodb_init_param(void)
 	internal_innobase_data_file_path = strdup(innobase_data_file_path);
 
 	ret = (bool) srv_parse_data_file_paths_and_sizes(
-#ifndef INNODB_VERSION_SHORT
-				internal_innobase_data_file_path,
-				&srv_data_file_names,
-				&srv_data_file_sizes,
-				&srv_data_file_is_raw_partition,
-				&srv_n_data_files,
-				&srv_auto_extend_last_data_file,
-				&srv_last_file_size_max);
-#else
 			internal_innobase_data_file_path);
-#endif
 	if (ret == FALSE) {
 	  	fprintf(stderr,
 			"xtrabackup: syntax error in innodb_data_file_path\n");
@@ -1981,12 +1793,7 @@ mem_free_and_error:
 #endif /* UNIG_LOG_ARCHIVE */
 
 	ret = (bool)
-#ifndef INNODB_VERSION_SHORT
-		srv_parse_log_group_home_dirs(innobase_log_group_home_dir,
-						&srv_log_group_home_dirs);
-#else
 		srv_parse_log_group_home_dirs(innobase_log_group_home_dir);
-#endif
 
 	if (ret == FALSE || innobase_mirrored_log_groups != 1) {
 	  fprintf(stderr, "xtrabackup: syntax error in innodb_log_group_home_dir, or a "
@@ -1995,7 +1802,6 @@ mem_free_and_error:
                 goto mem_free_and_error;
 	}
 
-#ifdef INNODB_VERSION_SHORT
 	srv_adaptive_flushing = FALSE;
 	srv_use_sys_malloc = TRUE;
 	srv_file_format = 1; /* Barracuda */
@@ -2004,7 +1810,7 @@ mem_free_and_error:
 #else
 	srv_max_file_format_at_startup = DICT_TF_FORMAT_51; /* on */
 #endif
-#endif
+
 	/* --------------------------------------------------*/
 
 	srv_file_flush_method_str = innobase_unix_file_flush_method;
@@ -2025,51 +1831,22 @@ mem_free_and_error:
         /* We set srv_pool_size here in units of 1 kB. InnoDB internally
         changes the value so that it becomes the number of database pages. */
 
-#ifndef INNODB_VERSION_SHORT
-        if (innobase_buffer_pool_awe_mem_mb == 0) {
-                /* Careful here: we first convert the signed long int to ulint
-                and only after that divide */
-
-                //srv_pool_size = ((ulint) innobase_buffer_pool_size) / 1024;
-		srv_pool_size = ((ulint) xtrabackup_use_memory) / 1024;
-        } else {
-                srv_use_awe = TRUE;
-                srv_pool_size = (ulint)
-                                (1024 * innobase_buffer_pool_awe_mem_mb);
-                //srv_awe_window_size = (ulint) innobase_buffer_pool_size;
-		srv_awe_window_size = (ulint) xtrabackup_use_memory;
-
-                /* Note that what the user specified as
-                innodb_buffer_pool_size is actually the AWE memory window
-                size in this case, and the real buffer pool size is
-                determined by .._awe_mem_mb. */
-        }
-#else
 	//srv_buf_pool_size = (ulint) innobase_buffer_pool_size;
 	srv_buf_pool_size = (ulint) xtrabackup_use_memory;
-#endif
 
 	srv_mem_pool_size = (ulint) innobase_additional_mem_pool_size;
 
 	srv_n_file_io_threads = (ulint) innobase_file_io_threads;
-#ifdef INNODB_VERSION_SHORT
+
 	srv_n_read_io_threads = (ulint) innobase_read_io_threads;
 	srv_n_write_io_threads = (ulint) innobase_write_io_threads;
-#endif
 
-#ifndef INNODB_VERSION_SHORT
-	srv_lock_wait_timeout = (ulint) innobase_lock_wait_timeout;
-#endif
 	srv_force_recovery = (ulint) innobase_force_recovery;
 
 	srv_use_doublewrite_buf = (ibool) innobase_use_doublewrite;
 	srv_use_checksums = (ibool) innobase_use_checksums;
 
-#ifndef INNODB_VERSION_SHORT
-	srv_use_adaptive_hash_indexes = (ibool) innobase_adaptive_hash_index;
-#else
 	btr_search_enabled = (ibool) innobase_adaptive_hash_index;
-#endif
 
 	os_use_large_pages = (ibool) innobase_use_large_pages;
 	os_large_page_size = (ulint) innobase_large_page_size;
@@ -2100,16 +1877,10 @@ mem_free_and_error:
 	and consequently we do not need to know the ordering internally in
 	InnoDB. */
 
-#ifndef INNODB_VERSION_SHORT
-	ut_a(0 == strcmp((char*)my_charset_latin1.name,
-						(char*)"latin1_swedish_ci"));
-	memcpy(srv_latin1_ordering, my_charset_latin1.sort_order, 256);
-#else
 	ut_a(0 == strcmp(my_charset_latin1.name, "latin1_swedish_ci"));
 	srv_latin1_ordering = my_charset_latin1.sort_order;
 
 	//innobase_commit_concurrency_init_default();
-#endif
 
 	/* Since we in this module access directly the fields of a trx
         struct, and due to different headers and flags it might happen that
@@ -2117,9 +1888,6 @@ mem_free_and_error:
 	modules, we check at run time that the size is the same in
 	these compilation modules. */
 
-#ifndef INNODB_VERSION_SHORT
-	srv_sizeof_trx_t_in_ha_innodb_cc = sizeof(trx_t);
-#endif
 
 #if MYSQL_VERSION_ID >= 50500
 	/* On 5.5 srv_use_native_aio is TRUE by default. It is later reset
@@ -2250,18 +2018,6 @@ xtrabackup_read_metadata(char *filename)
 	if (fscanf(fp, "backup_type = %29s\n", metadata_type)
 			!= 1)
 		return(TRUE);
-#ifndef INNODB_VERSION_SHORT
-	if (fscanf(fp, "from_lsn = %lu:%lu\n", &metadata_from_lsn.high, &metadata_from_lsn.low)
-			!= 2)
-		return(TRUE);
-	if (fscanf(fp, "to_lsn = %lu:%lu\n", &metadata_to_lsn.high, &metadata_to_lsn.low)
-			!= 2)
-		return(TRUE);
-	if (fscanf(fp, "last_lsn = %lu:%lu\n", &metadata_last_lsn.high, &metadata_last_lsn.low)
-			!= 2) {
-		metadata_last_lsn.high = metadata_last_lsn.low = 0;
-	}
-#else
 	if (fscanf(fp, "from_lsn = %llu\n", &metadata_from_lsn)
 			!= 1)
 		return(TRUE);
@@ -2272,7 +2028,6 @@ xtrabackup_read_metadata(char *filename)
 			!= 1) {
 		metadata_last_lsn = 0;
 	}
-#endif
 
 	fclose(fp);
 
@@ -2293,17 +2048,6 @@ xtrabackup_write_metadata(char *filename)
 	if (fprintf(fp, "backup_type = %s\n", metadata_type)
 			< 0)
 		return(TRUE);
-#ifndef INNODB_VERSION_SHORT
-	if (fprintf(fp, "from_lsn = %lu:%lu\n", metadata_from_lsn.high, metadata_from_lsn.low)
-			< 0)
-		return(TRUE);
-	if (fprintf(fp, "to_lsn = %lu:%lu\n", metadata_to_lsn.high, metadata_to_lsn.low)
-			< 0)
-		return(TRUE);
-	if (fprintf(fp, "last_lsn = %lu:%lu\n", metadata_last_lsn.high, metadata_last_lsn.low)
-			< 0)
-		return(TRUE);
-#else
 	if (fprintf(fp, "from_lsn = %llu\n", metadata_from_lsn)
 			< 0)
 		return(TRUE);
@@ -2313,7 +2057,6 @@ xtrabackup_write_metadata(char *filename)
 	if (fprintf(fp, "last_lsn = %llu\n", metadata_last_lsn)
 			< 0)
 		return(TRUE);
-#endif
 
 	fclose(fp);
 
@@ -2397,9 +2140,7 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 	ulint		incremental_buffers = 0;
 	ulint		page_size;
 	ulint		page_size_shift;
-#ifdef INNODB_VERSION_SHORT
 	ulint		zip_size;
-#endif
 	xb_delta_info_t info;
 
 #ifdef XTRADB_BASED
@@ -2481,13 +2222,9 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 		p[p_len] = 0;
 
 		HASH_SEARCH(name_hash, tables_hash, ut_fold_string(prev),
-#ifdef INNODB_VERSION_SHORT
 			    xtrabackup_tables_t*,
-#endif
 			    table,
-#ifdef INNODB_VERSION_SHORT
 			    ut_ad(table->name),
-#endif
 	    		    !strcmp(table->name, prev));
 
 		p[p_len] = tmp;
@@ -2500,10 +2237,6 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 	}
 
 skip_filter:
-#ifndef INNODB_VERSION_SHORT
-	page_size = UNIV_PAGE_SIZE;
-	page_size_shift = UNIV_PAGE_SIZE_SHIFT;
-#else
 	zip_size = fil_space_get_zip_size(node->space->id);
 	if (zip_size == ULINT_UNDEFINED) {
 		fprintf(stderr, "[%02u] xtrabackup: Warning: "
@@ -2526,7 +2259,6 @@ skip_filter:
 		page_size = UNIV_PAGE_SIZE;
 		page_size_shift = UNIV_PAGE_SIZE_SHIFT;
 	}
-#endif
 
 #ifdef XTRADB_BASED
 	if (trx_sys_sys_space(node->space->id))
@@ -2657,11 +2389,7 @@ read_retry:
 
 		/* check corruption and retry */
 		for (chunk_offset = 0; chunk_offset < chunk; chunk_offset += page_size) {
-#ifndef INNODB_VERSION_SHORT
-			if (buf_page_is_corrupted(page + chunk_offset))
-#else
 			if (buf_page_is_corrupted(page + chunk_offset, zip_size))
-#endif
 			{
 				if (
 #ifdef XTRADB_BASED
@@ -2916,30 +2644,17 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 					(ulong) no,
 					(ulong) log_block_convert_lsn_to_no(scanned_lsn),
 					(ulong) (log_block_convert_lsn_to_no(
-#ifndef INNODB_VERSION_SHORT
-							 ut_dulint_create(0, log_group_get_capacity(group))
-#else
 							 log_group_get_capacity(group)
-#endif
 									  ) - 1));
 
 			} else if (no == log_block_convert_lsn_to_no(scanned_lsn)
 			    && !log_block_checksum_is_ok_or_old_format(
 								log_block)) {
 				fprintf(stderr,
-#ifndef INNODB_VERSION_SHORT
-"xtrabackup: Log block no %lu at lsn %lu %lu has\n"
-#else
 "xtrabackup: Log block no %lu at lsn %llu has\n"
-#endif
 "xtrabackup: ok header, but checksum field contains %lu, should be %lu\n",
 				(ulong) no,
-#ifndef INNODB_VERSION_SHORT
-				(ulong) ut_dulint_get_high(scanned_lsn),
-				(ulong) ut_dulint_get_low(scanned_lsn),
-#else
 				scanned_lsn,
-#endif
 				(ulong) log_block_get_checksum(log_block),
 				(ulong) log_block_calc_checksum(log_block));
 			}
@@ -3021,11 +2736,7 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 			ulint ret;
 			ulint stdout_write_size = write_size;
 			if (finished && !is_last
-#ifndef INNODB_VERSION_SHORT
-			    && group_scanned_lsn.low % OS_FILE_LOG_BLOCK_SIZE
-#else
 			    && group_scanned_lsn % OS_FILE_LOG_BLOCK_SIZE
-#endif
 			   )
 				stdout_write_size -= OS_FILE_LOG_BLOCK_SIZE;
 			if (stdout_write_size) {
@@ -3043,11 +2754,7 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 
 		log_copy_offset += write_size;
 
-#ifndef INNODB_VERSION_SHORT
-		if (finished && group_scanned_lsn.low % OS_FILE_LOG_BLOCK_SIZE)
-#else
 		if (finished && group_scanned_lsn % OS_FILE_LOG_BLOCK_SIZE)
-#endif
 		{
 			/* if continue, it will start from align_down(group_scanned_lsn) */
 			log_copy_offset -= OS_FILE_LOG_BLOCK_SIZE;
@@ -3082,11 +2789,7 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 			up_to_date_group = group;
 		}
 
-#ifndef INNODB_VERSION_SHORT
-		fprintf(stderr, ">> log scanned up to (%lu %lu)\n",group->scanned_lsn.high,group->scanned_lsn.low);
-#else
 		fprintf(stderr, ">> log scanned up to (%llu)\n",group->scanned_lsn);
-#endif
 
 		group = UT_LIST_GET_NEXT(log_groups, group);
 
@@ -3395,11 +3098,7 @@ xtrabackup_backup_func(void)
 	  	exit(EXIT_FAILURE);
 	}
 
-#ifndef INNODB_VERSION_SHORT
-        if (srv_pool_size >= 1000 * 1024) {
-#else
 	if (srv_buf_pool_size >= 1000 * 1024 * 1024) {
-#endif
                                   /* Here we still have srv_pool_size counted
                                   in kilobytes (in 4.0 this was in bytes)
 				  srv_boot() converts the value to
@@ -3407,11 +3106,8 @@ xtrabackup_backup_func(void)
                                   assume fewer threads. */
                 srv_max_n_threads = 50000;
 
-#ifndef INNODB_VERSION_SHORT
-        } else if (srv_pool_size >= 8 * 1024) {
-#else
+
 	} else if (srv_buf_pool_size >= 8 * 1024 * 1024) {
-#endif
 
                 srv_max_n_threads = 10000;
         } else {
@@ -3438,23 +3134,7 @@ xtrabackup_backup_func(void)
 
 	srv_log_buffer_size = srv_log_buffer_size / UNIV_PAGE_SIZE;
 
-#ifndef INNODB_VERSION_SHORT
-	srv_pool_size = srv_pool_size / (UNIV_PAGE_SIZE / 1024);
-
-	srv_awe_window_size = srv_awe_window_size / UNIV_PAGE_SIZE;
-	
-	if (srv_use_awe) {
-	        /* If we are using AWE we must save memory in the 32-bit
-		address space of the process, and cannot bind the lock
-		table size to the real buffer pool size. */
-
-	        srv_lock_table_size = 20 * srv_awe_window_size;
-	} else {
-	        srv_lock_table_size = 5 * srv_pool_size;
-	}
-#else
 	srv_lock_table_size = 5 * (srv_buf_pool_size / UNIV_PAGE_SIZE);
-#endif
 	}
 
 	os_sync_mutex = NULL;
@@ -3480,14 +3160,6 @@ xtrabackup_backup_func(void)
 #define SRV_N_PENDING_IOS_PER_THREAD 	OS_AIO_N_PENDING_IOS_PER_THREAD
 #define SRV_MAX_N_PENDING_SYNC_IOS	100
 
-#ifndef INNODB_VERSION_SHORT
-                os_aio_init(8 * SRV_N_PENDING_IOS_PER_THREAD
-                            * srv_n_file_io_threads,
-                            srv_n_file_io_threads,
-                            SRV_MAX_N_PENDING_SYNC_IOS);
-
-	fil_init(srv_max_n_open_files);
-#else
 	srv_n_file_io_threads = 2 + srv_n_read_io_threads + srv_n_write_io_threads;
 
 	os_aio_init(8 * SRV_N_PENDING_IOS_PER_THREAD,
@@ -3497,7 +3169,6 @@ xtrabackup_backup_func(void)
 
 	fil_init(srv_file_per_table ? 50000 : 5000,
 		 srv_max_n_open_files);
-#endif
 
 	fsp_init();
 	log_init();
@@ -3643,9 +3314,7 @@ xtrabackup_backup_func(void)
 
 reread_log_header:
 	fil_io(OS_FILE_READ | OS_FILE_LOG, TRUE, max_cp_group->space_id,
-#ifdef INNODB_VERSION_SHORT
 				0,
-#endif
 				0, 0, LOG_FILE_HDR_SIZE,
 				log_hdr_buf, max_cp_group);
 
@@ -3861,21 +3530,11 @@ reread_log_header:
 		latest_cp = MACH_READ_64(log_sys->checkpoint_buf + LOG_CHECKPOINT_LSN);
 
 		if (!xtrabackup_stream) {
-#ifndef INNODB_VERSION_SHORT
-			printf("xtrabackup: The latest check point (for incremental): '%lu:%lu'\n",
-				latest_cp.high, latest_cp.low);
-#else
 			printf("xtrabackup: The latest check point (for incremental): '%llu'\n",
 				latest_cp);
-#endif
 		} else {
-#ifndef INNODB_VERSION_SHORT
-			fprintf(stderr, "xtrabackup: The latest check point (for incremental): '%lu:%lu'\n",
-				latest_cp.high, latest_cp.low);
-#else
 			fprintf(stderr, "xtrabackup: The latest check point (for incremental): '%llu'\n",
 				latest_cp);
-#endif
 		}
 	}
 skip_last_cp:
@@ -3930,23 +3589,11 @@ skip_last_cp:
 		os_event_free(wait_throttle);
 
 	if (!xtrabackup_stream) {
-#ifndef INNODB_VERSION_SHORT
-        	printf("xtrabackup: Transaction log of lsn (%lu %lu) to (%lu %lu) was copied.\n",
-                	checkpoint_lsn_start.high, checkpoint_lsn_start.low,
-                	log_copy_scanned_lsn.high, log_copy_scanned_lsn.low);
-#else
 		printf("xtrabackup: Transaction log of lsn (%llu) to (%llu) was copied.\n",
 			checkpoint_lsn_start, log_copy_scanned_lsn);
-#endif
 	} else {
-#ifndef INNODB_VERSION_SHORT
-		fprintf(stderr, "xtrabackup: Transaction log of lsn (%lu %lu) to (%lu %lu) was copied.\n",
-			checkpoint_lsn_start.high, checkpoint_lsn_start.low,
-			log_copy_scanned_lsn.high, log_copy_scanned_lsn.low);
-#else
 		fprintf(stderr, "xtrabackup: Transaction log of lsn (%llu) to (%llu) was copied.\n",
 			checkpoint_lsn_start, log_copy_scanned_lsn);
-#endif
 		if(xtrabackup_extra_lsndir) {
 			char	filename[FN_REFLEN];
 			sprintf(filename, "%s/%s", xtrabackup_extra_lsndir, XTRABACKUP_METADATA_FILENAME);
@@ -3984,10 +3631,8 @@ xtrabackup_stats_level(
 	n_pages = sum_data = n_recs = 0;
 	n_pages_extern = sum_data_extern = 0;
 
-#ifdef INNODB_VERSION_SHORT
 	buf_block_t*	block;
 	ulint	zip_size;
-#endif
 
 	if (level == 0)
 		fprintf(stdout, "        leaf pages: ");
@@ -3996,53 +3641,28 @@ xtrabackup_stats_level(
 
 	mtr_start(&mtr);
 
-#ifndef INNODB_VERSION_SHORT
-#if (MYSQL_VERSION_ID < 50100)
-	mtr_x_lock(&(index->tree->lock), &mtr);
-	page = btr_root_get(index->tree, &mtr);
-#else /* MYSQL_VERSION_ID < 51000 */
-	mtr_x_lock(&(index->lock), &mtr);
-	page = btr_root_get(index, &mtr);
-#endif
-#else
 	mtr_x_lock(&(index->lock), &mtr);
 	block = btr_root_block_get(index, &mtr);
 	page = buf_block_get_frame(block);
-#endif
 
-#ifndef INNODB_VERSION_SHORT
-	space = buf_frame_get_space_id(page);
-#else
 	space = page_get_space_id(page);
 	zip_size = fil_space_get_zip_size(space);
-#endif
 
 	while (level != btr_page_get_level(page, &mtr)) {
 
-#ifndef INNODB_VERSION_SHORT
-		ut_a(btr_page_get_level(page, &mtr) > 0);
-#else
 		ut_a(space == buf_block_get_space(block));
 		ut_a(space == page_get_space_id(page));
 		ut_a(!page_is_leaf(page));
-#endif
 
-#ifndef INNODB_VERSION_SHORT
-		page_cur_set_before_first(page, &cursor);
-#else
 		page_cur_set_before_first(block, &cursor);
-#endif
 		page_cur_move_to_next(&cursor);
 
 		node_ptr = page_cur_get_rec(&cursor);
 		offsets = rec_get_offsets(node_ptr, index, offsets,
 					ULINT_UNDEFINED, &heap);
-#ifndef INNODB_VERSION_SHORT
-		page = btr_node_ptr_get_child(node_ptr, offsets, &mtr);
-#else
+
 		block = btr_node_ptr_get_child(node_ptr, index, offsets, &mtr);
 		page = buf_block_get_frame(block);
-#endif
 	}
 
 loop:
@@ -4075,11 +3695,8 @@ loop:
 
 		*offsets_ = (sizeof offsets_) / sizeof *offsets_;
 
-#ifndef INNODB_VERSION_SHORT
-		page_cur_set_before_first(page, &cur);
-#else
 		page_cur_set_before_first(block, &cur);
-#endif
+
 		page_cur_move_to_next(&cur);
 
 		for (;;) {
@@ -4103,9 +3720,7 @@ loop:
 					mtr_t	mtr;
 					ulint	local_len;
 					byte*	data;
-#ifdef INNODB_VERSION_SHORT
 					buf_block_t*	block;
-#endif
 
 					data = rec_get_nth_field(cur.rec, offsets, i, &local_len);
 
@@ -4123,12 +3738,9 @@ loop:
 					for (;;) {
 						mtr_start(&mtr);
 
-#ifndef INNODB_VERSION_SHORT
-						page = buf_page_get(space_id, page_no, RW_S_LATCH, &mtr);
-#else
 						block = btr_block_get(space_id, zip_size, page_no, RW_S_LATCH, &mtr);
 						page = buf_block_get_frame(block);
-#endif
+
 						blob_header = page + offset;
 #define BTR_BLOB_HDR_PART_LEN		0
 #define BTR_BLOB_HDR_NEXT_PAGE_NO	4
@@ -4168,25 +3780,17 @@ loop:
 	mtr_commit(&mtr);
 	if (right_page_no != FIL_NULL) {
 		mtr_start(&mtr);
-#ifndef INNODB_VERSION_SHORT
-		page = btr_page_get(space, right_page_no, RW_X_LATCH, &mtr);
-#else
 		block = btr_block_get(space, zip_size, right_page_no, RW_X_LATCH, &mtr);
 		page = buf_block_get_frame(block);
-#endif
 		goto loop;
 	}
 	mem_heap_free(heap);
 
-#ifndef INNODB_VERSION_SHORT
-	page_size = UNIV_PAGE_SIZE;
-#else
 	if (zip_size) {
 		page_size = zip_size;
 	} else {
 		page_size = UNIV_PAGE_SIZE;
 	}
-#endif
 
 	if (level == 0)
 		fprintf(stdout, "recs=%lld, ", n_recs);
@@ -4281,11 +3885,7 @@ loop:
 
 	rec = btr_pcur_get_rec(&pcur);
 
-#ifndef INNODB_VERSION_SHORT
-	if (!btr_pcur_is_on_user_rec(&pcur, &mtr))
-#else
 	if (!btr_pcur_is_on_user_rec(&pcur))
-#endif
 	{
 		/* end of index */
 
@@ -4351,13 +3951,9 @@ loop:
 			xtrabackup_tables_t*	xtable;
 
 			HASH_SEARCH(name_hash, tables_hash, ut_fold_string(table->name),
-#ifdef INNODB_VERSION_SHORT
 				    xtrabackup_tables_t*,
-#endif
 				    xtable,
-#ifdef INNODB_VERSION_SHORT
 				    ut_ad(xtable->name),
-#endif
 				    !strcmp(xtable->name, table->name));
 
 			if (!xtable)
@@ -4405,9 +4001,7 @@ loop:
 
 	fprintf(stdout,
 		"  table: %s, index: %s, space id: %lu, root page: %lu"
-#ifdef INNODB_VERSION_SHORT
 		", zip size: %lu"
-#endif
 		"\n  estimated statistics in dictionary:\n"
 		"    key vals: %lu, leaf pages: %lu, size pages: %lu\n"
 		"  real statistics:\n",
@@ -4418,9 +4012,7 @@ loop:
 #else /* MYSQL_VERSION_ID < 51000 */
 		(ulong) index->page,
 #endif
-#ifdef INNODB_VERSION_SHORT
 		(ulong) fil_space_get_zip_size(index->space),
-#endif
 		(ulong) n_vals,
 		(ulong) index->stat_n_leaf_pages,
 		(ulong) index->stat_index_size);
@@ -4748,13 +4340,8 @@ not_consistent:
 		file_size = os_file_get_size_as_iblonglong(src_file);
 	}
 
-#ifndef INNODB_VERSION_SHORT
-	printf("xtrabackup: xtrabackup_logfile detected: size=%lld, start_lsn=(%lu %lu)\n",
-		file_size, max_lsn.high, max_lsn.low);
-#else
 	printf("xtrabackup: xtrabackup_logfile detected: size=%lld, start_lsn=(%llu)\n",
 		file_size, max_lsn);
-#endif
 
 	os_file_close(src_file);
 	src_file = -1;
@@ -5277,13 +4864,11 @@ skip_check:
 	/* Create logfiles for recovery from 'xtrabackup_logfile', before start InnoDB */
 	srv_max_n_threads = 1000;
 	os_sync_mutex = NULL;
-#ifdef INNODB_VERSION_SHORT
 	ut_mem_init();
 #ifdef XTRADB_BASED
 	/* temporally dummy value to avoid crash */
 	srv_page_size_shift = 14;
 	srv_page_size = (1 << srv_page_size_shift);
-#endif
 #endif
 	os_sync_init();
 	sync_init();
@@ -5371,21 +4956,14 @@ skip_check:
 		ulint	size;
 		ulint	actual_size;
 		mtr_t	mtr;
-#ifdef INNODB_VERSION_SHORT
 		buf_block_t*	block;
 		ulint	flags;
-#endif
 
 		if (space->purpose == FIL_TABLESPACE) {
 			mutex_exit(&(system->mutex));
 
 			mtr_start(&mtr);
 
-#ifndef INNODB_VERSION_SHORT
-			mtr_s_lock(fil_space_get_latch(space->id), &mtr);
-
-			header = FIL_PAGE_DATA + buf_page_get(space->id, 0, RW_S_LATCH, &mtr);
-#else
 			mtr_s_lock(fil_space_get_latch(space->id, &flags), &mtr);
 
 			block = buf_page_get(space->id,
@@ -5393,7 +4971,6 @@ skip_check:
 					     0, RW_S_LATCH, &mtr);
 			header = FIL_PAGE_DATA /*FSP_HEADER_OFFSET*/
 				+ buf_block_get_frame(block);
-#endif
 
 			size = mtr_read_ulint(header + 8 /* FSP_SIZE */, MLOG_4BYTES, &mtr);
 
@@ -5611,21 +5188,11 @@ next_node:
 			"xtrabackup: # The log was not applied to the intended LSN!         #\n"
 			"xtrabackup: ########################################################\n");
 		if (xtrabackup_incremental) {
-#ifndef INNODB_VERSION_SHORT
-			printf("xtrabackup: The intended lsn is %lu:%lu\n",
-				incremental_last_lsn.high, incremental_last_lsn.low);
-#else
 			printf("xtrabackup: The intended lsn is %llu\n",
 				incremental_last_lsn);
-#endif
 		} else {
-#ifndef INNODB_VERSION_SHORT
-			printf("xtrabackup: The intended lsn is %lu:%lu\n",
-				metadata_last_lsn.high, metadata_last_lsn.low);
-#else
 			printf("xtrabackup: The intended lsn is %llu\n",
 				metadata_last_lsn);
-#endif
 		}
 	}
 
@@ -5636,9 +5203,8 @@ next_node:
 	os_sync_mutex = NULL;
 
 	/* re-init necessary components */
-#ifdef INNODB_VERSION_SHORT
 	ut_mem_init();
-#endif
+
 	os_sync_init();
 	sync_init();
 	os_io_init_simple();
@@ -5863,32 +5429,9 @@ skip_tables_file_register:
 		long long lsn_high, lsn_low;
 		int error = 0;
 
-#ifndef INNODB_VERSION_SHORT
-		incremental_low = strstr(xtrabackup_incremental, ":");
-		if (incremental_low) {
-			*incremental_low = '\0';
-
-			lsn_high = strtoll(xtrabackup_incremental, &endchar, 10);
-			if (*endchar != '\0' || (lsn_high >> 32))
-				error = 1;
-
-			*incremental_low = ':';
-			incremental_low++;
-
-			lsn_low = strtoll(incremental_low, &endchar, 10);
-
-			if (*endchar != '\0' || (lsn_low >> 32))
-				error = 1;
-
-			incremental_lsn = ut_dulint_create((ulint)lsn_high, (ulint)lsn_low);
-		} else {
-			error = 1;
-		}
-#else
 		incremental_lsn = strtoll(xtrabackup_incremental, &endchar, 10);
 		if (*endchar != '\0')
 			error = 1;
-#endif
 
 		if (error) {
 			fprintf(stderr, "xtrabackup: value '%s' may be wrong format for incremental option.\n",
@@ -5981,13 +5524,8 @@ skip_tables_file_register:
 	if (!xtrabackup_stream) {
 		print_version();
 		if (xtrabackup_incremental) {
-#ifndef INNODB_VERSION_SHORT
-			printf("incremental backup from %lu:%lu is enabled.\n",
-				incremental_lsn.high, incremental_lsn.low);
-#else
 			printf("incremental backup from %llu is enabled.\n",
 				incremental_lsn);
-#endif
 		}
 	} else {
 		if (xtrabackup_backup) {
