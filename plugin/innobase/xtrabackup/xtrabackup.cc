@@ -2240,7 +2240,7 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 			    && !log_block_checksum_is_ok_or_old_format(
 								log_block)) {
 				fprintf(stderr,
-"xtrabackup: Log block no %lu at lsn %llu has\n"
+"xtrabackup: Log block no %lu at lsn %"PRIu64" has\n"
 "xtrabackup: ok header, but checksum field contains %lu, should be %lu\n",
 				(ulong) no,
 				scanned_lsn,
@@ -2378,7 +2378,7 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 			up_to_date_group = group;
 		}
 
-		fprintf(stderr, ">> log scanned up to (%llu)\n",group->scanned_lsn);
+		fprintf(stderr, ">> log scanned up to (%"PRIu64")\n",group->scanned_lsn);
 
 		group = UT_LIST_GET_NEXT(log_groups, group);
 
