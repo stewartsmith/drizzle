@@ -54,18 +54,15 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-
 #include <drizzled/refresh_version.h>
-
 #include <drizzled/table/singular.h>
-
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
+#include <drizzled/sql_lex.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;

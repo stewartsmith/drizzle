@@ -46,6 +46,7 @@
 #include <drizzled/system_variables.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/util/string.h>
 #include <drizzled/type/time.h>
 #include <drizzled/sql_lex.h>
 
@@ -85,8 +86,6 @@ namespace util
   class Storable;
 }
 
-typedef Item COND;
-
 class CopyField;
 class CreateField;
 class Diagnostics_area;
@@ -103,6 +102,8 @@ class Time_zone;
 class select_result;
 class user_var_entry;
 struct Ha_data;
+
+typedef Item COND;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -285,7 +286,7 @@ public:
     if (_schema)
       return _schema;
 
-    return util::string::const_shared_ptr(new std::string(""));
+    return util::string::const_shared_ptr(new std::string);
   }
 
   /* current cache key */

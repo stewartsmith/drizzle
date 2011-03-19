@@ -26,9 +26,9 @@
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/charset_info.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Some functions to calculate dates */
 

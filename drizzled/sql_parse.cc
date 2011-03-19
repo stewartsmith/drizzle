@@ -998,7 +998,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
-  TableList *ptr = (TableList *) session->calloc(sizeof(TableList)));
+  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
 
   if (table->db.str)
   {
