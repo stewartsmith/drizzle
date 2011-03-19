@@ -159,9 +159,9 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
 
           buffered_fullpath.append(result->d_name);
 
-          stat(buffered_fullpath.c_str(), &entrystat);
+          int err= stat(buffered_fullpath.c_str(), &entrystat); 
 
-          if (S_ISDIR(entrystat.st_mode))
+          if (err == 0 && S_ISDIR(entrystat.st_mode))
           {
             entries.push_back(new Entry(result->d_name));
           }
