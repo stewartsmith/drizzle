@@ -867,31 +867,6 @@ innobase_invalidate_query_cache(
 	/* do nothing */
 }
 
-void
-innobase_print_identifier(
-	FILE*	f,
-	trx_t*	,
-	ibool	,
-	const char*	name,
-	ulint	namelen)
-{
-        const char*     s       = name;
-        const char*     e = s + namelen;
-        int             q;
-
-        q = '"';
-
-        putc(q, f);
-        while (s < e) {
-                int     c = *s++;
-                if (c == q) {
-                        putc(c, f);
-                }
-                putc(c, f);
-        }
-        putc(q, f);
-}
-
 /*****************************************************************//**
 Convert an SQL identifier to the MySQL system_charset_info (UTF-8)
 and quote it if needed.
