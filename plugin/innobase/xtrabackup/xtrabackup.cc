@@ -2420,7 +2420,7 @@ void*
 ulint
 #endif
 log_copying_thread(
-	void*	arg)
+	void*	)
 {
 	ulint	counter = 0;
 
@@ -2460,7 +2460,7 @@ void*
 ulint
 #endif
 io_watching_thread(
-	void*	arg)
+	void*	)
 {
 	/* currently, for --backup only */
 	ut_a(xtrabackup_backup);
