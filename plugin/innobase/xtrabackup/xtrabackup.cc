@@ -69,15 +69,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define IB_INT64 ib_int64_t
 #define LSN64 ib_uint64_t
-#if (MYSQL_VERSION_ID < 50500)
-#define MACH_READ_64 mach_read_ull
-#define MACH_WRITE_64 mach_write_ull
-#define OS_MUTEX_CREATE() os_mutex_create(NULL)
-#else
 #define MACH_READ_64 mach_read_from_8
 #define MACH_WRITE_64 mach_write_to_8
 #define OS_MUTEX_CREATE() os_mutex_create()
-#endif
 #define ut_dulint_zero 0
 #define ut_dulint_cmp(A, B) (A > B ? 1 : (A == B ? 0 : -1))
 #define ut_dulint_add(A, B) (A + B)
@@ -99,8 +93,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef UNIV_PAGE_SIZE_SHIFT_MAX
 #define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
 #endif
-	
-#if MYSQL_VERSION_ID >= 50507
+
 /*
    As of MySQL 5.5.7, InnoDB uses thd_wait plugin service.
    We have to provide mock functions to avoid linker errors.
@@ -115,8 +108,6 @@ void thd_wait_end(MYSQL_THD thd)
 {
 	return;
 }
-
-#endif /* MYSQL_VERSION_ID >= 50507 */
 
 /* prototypes for static functions in original */
 buf_block_t*
@@ -1695,15 +1686,6 @@ innodb_init_param(void)
 
 	ut_a(default_path);
 
-#if (MYSQL_VERSION_ID < 50500)
-//	if (specialflag & SPECIAL_NO_PRIOR) {
-	        srv_set_thread_priorities = FALSE;
-//	} else {
-//	        srv_set_thread_priorities = TRUE;
-//	        srv_query_thread_priority = QUERY_PRIOR;
-//	}
-#endif
-
 	/* Set InnoDB initialization parameters according to the values
 	read from MySQL .cnf file */
 
@@ -1805,11 +1787,7 @@ mem_free_and_error:
 	srv_adaptive_flushing = FALSE;
 	srv_use_sys_malloc = TRUE;
 	srv_file_format = 1; /* Barracuda */
-#if (MYSQL_VERSION_ID < 50500)
-	srv_check_file_format_at_startup = DICT_TF_FORMAT_51; /* on */
-#else
 	srv_max_file_format_at_startup = DICT_TF_FORMAT_51; /* on */
-#endif
 
 	/* --------------------------------------------------*/
 
@@ -1889,7 +1867,6 @@ mem_free_and_error:
 	these compilation modules. */
 
 
-#if MYSQL_VERSION_ID >= 50500
 	/* On 5.5 srv_use_native_aio is TRUE by default. It is later reset
 	if it is not supported by the platform in
 	innobase_start_or_create_for_mysql(). As we don't call it in xtrabackup,
@@ -1935,7 +1912,6 @@ mem_free_and_error:
 	srv_use_native_aio = FALSE;
 
 #endif
-#endif /* MYSQL_VERSION_ID */
 
 	return(FALSE);
 
@@ -2296,9 +2272,7 @@ skip_filter:
 	/* open src_file*/
 	if (!node->open) {
 		src_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 						0 /* dummy of innodb_file_data_key */,
-#endif
 						node->name, OS_FILE_OPEN,
 						OS_FILE_READ_ONLY, &success);
 		if (!success) {
@@ -2329,9 +2303,7 @@ skip_filter:
 	/* open dst_file */
 	/* os_file_create reads srv_unix_file_flush_method */
 	dst_file = os_file_create(
-#if (MYSQL_VERSION_ID > 50500)
 			0 /* dummy of innodb_file_data_key */,
-#endif
 			dst_path, OS_FILE_CREATE,
 			OS_FILE_NORMAL, OS_DATA_FILE, &success);
                 if (!success) {
@@ -3052,20 +3024,12 @@ xtrabackup_backup_func(void)
 
         if (srv_file_flush_method_str == NULL) {
         	/* These are the default options */
-#if (MYSQL_VERSION_ID < 50100)
-		srv_unix_file_flush_method = SRV_UNIX_FDATASYNC;
-#else /* MYSQL_VERSION_ID < 51000 */
 		srv_unix_file_flush_method = SRV_UNIX_FSYNC;
-#endif
+
 		srv_win_file_flush_method = SRV_WIN_IO_UNBUFFERED;
 #ifndef __WIN__        
-#if (MYSQL_VERSION_ID < 50100)
-	} else if (0 == ut_strcmp(srv_file_flush_method_str, "fdatasync")) {
-	  	srv_unix_file_flush_method = SRV_UNIX_FDATASYNC;
-#else /* MYSQL_VERSION_ID < 51000 */
 	} else if (0 == ut_strcmp(srv_file_flush_method_str, "fsync")) {
 		srv_unix_file_flush_method = SRV_UNIX_FSYNC;
-#endif
 
 	} else if (0 == ut_strcmp(srv_file_flush_method_str, "O_DSYNC")) {
 	  	srv_unix_file_flush_method = SRV_UNIX_O_DSYNC;
@@ -3343,9 +3307,7 @@ reread_log_header:
 		srv_normalize_path_for_win(dst_log_path);
 		/* os_file_create reads srv_unix_file_flush_method for OS_DATA_FILE*/
 		dst_log = os_file_create(
-#if (MYSQL_VERSION_ID > 50500)
 				0 /* dummy of innodb_file_data_key */,
-#endif
 				dst_log_path, OS_FILE_CREATE,
 				OS_FILE_NORMAL, OS_DATA_FILE, &success);
 
@@ -3488,9 +3450,7 @@ reread_log_header:
 		srv_normalize_path_for_win(suspend_path);
 		/* os_file_create reads srv_unix_file_flush_method */
 		suspend_file = os_file_create(
-#if (MYSQL_VERSION_ID > 50500)
 					0 /* dummy of innodb_file_data_key */,
-#endif
 					suspend_path, OS_FILE_OVERWRITE,
 					OS_FILE_NORMAL, OS_DATA_FILE, &success);
 
@@ -3668,11 +3628,7 @@ xtrabackup_stats_level(
 loop:
 	mem_heap_empty(heap);
 	offsets = NULL;
-#if (MYSQL_VERSION_ID < 50100)
-	mtr_x_lock(&(index->tree->lock), &mtr);
-#else /* MYSQL_VERSION_ID < 51000 */
 	mtr_x_lock(&(index->lock), &mtr);
-#endif
 
 	right_page_no = btr_page_get_next(page, &mtr);
 
@@ -3905,11 +3861,7 @@ loop:
 
 	field = rec_get_nth_field_old(rec, 0, &len);
 
-#if (MYSQL_VERSION_ID < 50100)
-	if (!rec_get_deleted_flag(rec, sys_tables->comp))
-#else /* MYSQL_VERSION_ID < 51000 */
 	if (!rec_get_deleted_flag(rec, 0))
-#endif
 	{
 
 		/* We found one */
@@ -3963,11 +3915,7 @@ loop:
 
 		if (table == NULL) {
 			fputs("InnoDB: Failed to load table ", stderr);
-#if (MYSQL_VERSION_ID < 50100)
-			ut_print_namel(stderr, NULL, (char*) field, len);
-#else /* MYSQL_VERSION_ID < 51000 */
 			ut_print_namel(stderr, NULL, TRUE, (char*) field, len);
-#endif
 			putc('\n', stderr);
 		} else {
 			dict_index_t*	index;
@@ -4007,11 +3955,7 @@ loop:
 		"  real statistics:\n",
 		table->name, index->name,
 		(ulong) index->space,
-#if (MYSQL_VERSION_ID < 50100)
-		(ulong) index->tree->page,
-#else /* MYSQL_VERSION_ID < 51000 */
 		(ulong) index->page,
-#endif
 		(ulong) fil_space_get_zip_size(index->space),
 		(ulong) n_vals,
 		(ulong) index->stat_n_leaf_pages,
@@ -4024,13 +3968,8 @@ loop:
 
 		mtr_start(&mtr);
 
-#if (MYSQL_VERSION_ID < 50100)
-		mtr_x_lock(&(index->tree->lock), &mtr);
-		root = btr_root_get(index->tree, &mtr);
-#else /* MYSQL_VERSION_ID < 51000 */
 		mtr_x_lock(&(index->lock), &mtr);
 		root = btr_root_get(index, &mtr);
-#endif
 		n = btr_page_get_level(root, &mtr);
 
 		xtrabackup_stats_level(index, n);
@@ -4098,9 +4037,7 @@ xtrabackup_init_temp_log(void)
 	srv_normalize_path_for_win(src_path);
 retry:
 	src_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 					0 /* dummy of innodb_file_data_key */,
-#endif
 					src_path, OS_FILE_OPEN,
 					OS_FILE_READ_WRITE /* OS_FILE_READ_ONLY */, &success);
 	if (!success) {
@@ -4113,9 +4050,7 @@ retry:
 
 		/* check if ib_logfile0 may be xtrabackup_logfile */
 		src_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 				0 /* dummy of innodb_file_data_key */,
-#endif
 				dst_path, OS_FILE_OPEN,
 				OS_FILE_READ_WRITE /* OS_FILE_READ_ONLY */, &success);
 		if (!success) {
@@ -4148,9 +4083,7 @@ retry:
 
 			/* rename and try again */
 			success = os_file_rename(
-#if (MYSQL_VERSION_ID > 50500)
 					0 /* dummy of innodb_file_data_key */,
-#endif
 					dst_path, src_path);
 			if (!success) {
 				goto error;
@@ -4360,9 +4293,7 @@ not_consistent:
 
 	/* rename 'xtrabackup_logfile' to 'ib_logfile0' */
 	success = os_file_rename(
-#if (MYSQL_VERSION_ID > 50500)
 			0 /* dummy of innodb_file_data_key */,
-#endif
 			src_path, dst_path);
 	if (!success) {
 		goto error;
@@ -4474,9 +4405,7 @@ xtrabackup_apply_delta(
 	}
 	
 	src_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 			0 /* dummy of innodb_file_data_key */,
-#endif
 			src_path, OS_FILE_OPEN, OS_FILE_READ_WRITE, &success);
 	if (!success) {
 		os_file_get_last_error(TRUE);
@@ -4496,9 +4425,7 @@ xtrabackup_apply_delta(
 	}
 
 	dst_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 			0 /* dummy of innodb_file_data_key */,
-#endif
 			dst_path, OS_FILE_OPEN, OS_FILE_READ_WRITE, &success);
 	if (!success) {
 		os_file_get_last_error(TRUE);
@@ -4753,9 +4680,7 @@ xtrabackup_close_temp_log(bool clear_flag)
 	srv_normalize_path_for_win(src_path);
 
 	success = os_file_rename(
-#if (MYSQL_VERSION_ID > 50500)
 			0 /* dummy of innodb_file_data_key */,
-#endif
 			dst_path, src_path);
 	if (!success) {
 		goto error;
@@ -4767,9 +4692,7 @@ xtrabackup_close_temp_log(bool clear_flag)
 
 	/* clear LOG_FILE_WAS_CREATED_BY_HOT_BACKUP field */
 	src_file = os_file_create_simple_no_error_handling(
-#if (MYSQL_VERSION_ID > 50500)
 				0 /* dummy of innodb_file_data_key */,
-#endif
 				src_path, OS_FILE_OPEN,
 				OS_FILE_READ_WRITE, &success);
 	if (!success) {
@@ -5087,26 +5010,15 @@ skip_check:
 					while (index) {
 						mach_write_to_8(page + n_index * 512, index->id);
 						mach_write_to_4(page + n_index * 512 + 8,
-#if (MYSQL_VERSION_ID < 50100)
-								index->tree->page);
-#else /* MYSQL_VERSION_ID < 51000 */
 								index->page);
-#endif
 						strncpy(page + n_index * 512 + 12, index->name, 500);
 
 						printf(
 "xtrabackup:     name=%s, id.low=%lu, page=%lu\n",
 							index->name,
-#if (MYSQL_VERSION_ID < 50500)
-							index->id.low,
-#else
 							(ulint)(index->id & 0xFFFFFFFFUL),
-#endif
-#if (MYSQL_VERSION_ID < 50100)
-							index->tree->page);
-#else /* MYSQL_VERSION_ID < 51000 */
+
 							(ulint) index->page);
-#endif
 
 						index = dict_table_get_next_index(index);
 						n_index++;
@@ -5114,9 +5026,7 @@ skip_check:
 
 					srv_normalize_path_for_win(info_file_path);
 					info_file = os_file_create(
-#if (MYSQL_VERSION_ID > 50500)
 								0 /* dummy of innodb_file_data_key */,
-#endif
 								info_file_path, OS_FILE_OVERWRITE,
 								OS_FILE_NORMAL, OS_DATA_FILE, &success);
 					if (!success) {
