@@ -539,7 +539,7 @@ datafiles_iter_new(fil_system_t *system)
 {
 	datafiles_iter_t *it;
 
-	it = ut_malloc(sizeof(datafiles_iter_t));
+	it = (datafiles_iter_t*) ut_malloc(sizeof(datafiles_iter_t));
 	it->mutex = OS_MUTEX_CREATE();
 
 	it->system = system;
