@@ -5018,7 +5018,7 @@ int main(int argc, char **argv)
 				*p = '\0';
 			}
 
-			table = malloc(sizeof(xtrabackup_tables_t) + strlen(name_buf) + 1);
+			table = (xtrabackup_tables_t*) malloc(sizeof(xtrabackup_tables_t) + strlen(name_buf) + 1);
 			memset(table, '\0', sizeof(xtrabackup_tables_t) + strlen(name_buf) + 1);
 			table->name = ((char*)table) + sizeof(xtrabackup_tables_t);
 			strcpy(table->name, name_buf);
@@ -5055,9 +5055,9 @@ skip_tables_file_register:
 		}
 
 		/* allocate buffer for incremental backup (4096 pages) */
-		incremental_buffer_base = malloc((UNIV_PAGE_SIZE_MAX / 4 + 1) *
+		incremental_buffer_base = (byte*) malloc((UNIV_PAGE_SIZE_MAX / 4 + 1) *
 						 UNIV_PAGE_SIZE_MAX);
-		incremental_buffer = ut_align(incremental_buffer_base,
+		incremental_buffer = (byte*) ut_align(incremental_buffer_base,
 					      UNIV_PAGE_SIZE_MAX);
 	} else if (xtrabackup_backup && xtrabackup_incremental_basedir) {
 		char	filename[FN_REFLEN];
@@ -5075,9 +5075,9 @@ skip_tables_file_register:
 		xtrabackup_incremental = xtrabackup_incremental_basedir; //dummy
 
 		/* allocate buffer for incremental backup (4096 pages) */
-		incremental_buffer_base = malloc((UNIV_PAGE_SIZE_MAX / 4 + 1) *
+		incremental_buffer_base = (byte*) malloc((UNIV_PAGE_SIZE_MAX / 4 + 1) *
 						 UNIV_PAGE_SIZE_MAX);
-		incremental_buffer = ut_align(incremental_buffer_base,
+		incremental_buffer = (byte*) ut_align(incremental_buffer_base,
 					      UNIV_PAGE_SIZE_MAX);
 	} else if (xtrabackup_prepare && xtrabackup_incremental_dir) {
 		char	filename[FN_REFLEN];
@@ -5097,15 +5097,15 @@ skip_tables_file_register:
 		xtrabackup_incremental = xtrabackup_incremental_dir; //dummy
 
 		/* allocate buffer for incremental backup (4096 pages) */
-		incremental_buffer_base = malloc((UNIV_PAGE_SIZE / 4 + 1) *
+		incremental_buffer_base = (byte*) malloc((UNIV_PAGE_SIZE / 4 + 1) *
 						 UNIV_PAGE_SIZE);
-		incremental_buffer = ut_align(incremental_buffer_base,
+		incremental_buffer = (byte*) ut_align(incremental_buffer_base,
 					      UNIV_PAGE_SIZE);
 	} else {
-		/* allocate buffer for applying incremental (for header page only) */
-		incremental_buffer_base = malloc((1 + 1) * UNIV_PAGE_SIZE_MAX);
-		incremental_buffer = ut_align(incremental_buffer_base,
-					      UNIV_PAGE_SIZE_MAX);
+          /* allocate buffer for applying incremental (for header page only) */
+          incremental_buffer_base = (byte*) malloc((1 + 1) * UNIV_PAGE_SIZE_MAX);
+          incremental_buffer = (byte*) ut_align(incremental_buffer_base,
+                                                UNIV_PAGE_SIZE_MAX);
 
 		xtrabackup_incremental = NULL;
 	}
