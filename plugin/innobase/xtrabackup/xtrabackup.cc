@@ -4915,12 +4915,12 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);		
 	}
 
-	if (srv_max_buf_pool_modified_pct > 100)) {
+	if (srv_max_buf_pool_modified_pct > 100) {
 		fprintf(stderr, "xtrabackup: innodb-max-buf-pool-modified-pct out of range\n");
 		exit(EXIT_FAILURE);		
 	}
 
-	if (innobase_open_files < 10)) {
+	if (innobase_open_files < 10) {
 		fprintf(stderr, "xtrabackup: innodb-open-files out of range\n");
 		exit(EXIT_FAILURE);		
 	}
