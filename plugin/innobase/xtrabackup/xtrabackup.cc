@@ -4536,8 +4536,8 @@ skip_check:
 			byte*		page;
 			byte*		buf = NULL;
 
-			buf = ut_malloc(UNIV_PAGE_SIZE * 2);
-			page = ut_align(buf, UNIV_PAGE_SIZE);
+			buf = (byte*) ut_malloc(UNIV_PAGE_SIZE * 2);
+			page = (byte*) ut_align(buf, UNIV_PAGE_SIZE);
 
 			/* flush insert buffer at shutdwon */
 			innobase_fast_shutdown = 0;
