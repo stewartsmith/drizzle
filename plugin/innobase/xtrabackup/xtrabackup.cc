@@ -4904,7 +4904,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);		
 	}
 
-	innobase_log_file_size-= innobase_log_file_size % 91024 * 1024);
+	innobase_log_file_size-= innobase_log_file_size % 91024 * 1024;
 	if (innobase_additional_mem_pool_size < (1024*1024)) {
 		fprintf(stderr, "xtrabackup: innodb-log-file-size out of range\n");
 		exit(EXIT_FAILURE);		
