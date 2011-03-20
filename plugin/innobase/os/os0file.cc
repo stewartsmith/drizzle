@@ -2294,6 +2294,9 @@ os_file_pwrite(
 		}
 	}
 
+        if (srv_fake_write)
+          return(TRUE);
+
 	os_n_file_writes++;
 
 #if defined(HAVE_PWRITE) && !defined(HAVE_BROKEN_PREAD)
@@ -2675,6 +2678,9 @@ os_file_write_func(
 	no more than 32 bits. */
 	ut_a((offset & 0xFFFFFFFFUL) == offset);
 	ut_a((n & 0xFFFFFFFFUL) == n);
+
+        if (srv_fake_write)
+          return(TRUE);
 
 	os_n_file_writes++;
 

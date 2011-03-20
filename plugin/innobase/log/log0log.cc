@@ -1356,7 +1356,7 @@ log_write_up_to(
 #endif /* UNIV_DEBUG */
 	ulint		unlock;
 
-	if (recv_no_ibuf_operations) {
+	if (recv_no_ibuf_operations || srv_fake_write) {
 		/* Recovery is running and no operations on the log files are
 		allowed yet (the variable name .._no_ibuf_.. is misleading) */
 
