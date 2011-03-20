@@ -652,6 +652,10 @@ os_file_lock(
 	const char*	name)	/*!< in: file name */
 {
 	struct flock lk;
+
+        if (srv_read_only)
+          return 0;
+
 	lk.l_type = F_WRLCK;
 	lk.l_whence = SEEK_SET;
 	lk.l_start = lk.l_len = 0;
