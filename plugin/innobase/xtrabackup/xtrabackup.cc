@@ -3409,7 +3409,7 @@ xtrabackup_stats_func(void)
 		exit(EXIT_FAILURE);
 
 	fprintf(stderr, "xtrabackup: Starting 'read-only' InnoDB instance to gather index statistics.\n"
-		"xtrabackup: Using %lld bytes for buffer pool (set by --use-memory parameter)\n",
+		"xtrabackup: Using %"PRIu64" bytes for buffer pool (set by --use-memory parameter)\n",
 		xtrabackup_use_memory);
 
 	if(innodb_init())
