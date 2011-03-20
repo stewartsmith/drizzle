@@ -4149,7 +4149,7 @@ error:
 	return;
 }
 
-void
+static void
 xtrabackup_apply_deltas(bool check_newer)
 {
 	int		ret;
