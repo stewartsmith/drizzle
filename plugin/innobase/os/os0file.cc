@@ -1495,7 +1495,10 @@ try_again:
 	if (create_mode == OS_FILE_OPEN || create_mode == OS_FILE_OPEN_RAW
 	    || create_mode == OS_FILE_OPEN_RETRY) {
 		mode_str = "OPEN";
-		create_flag = O_RDWR;
+		if (srv_read_only)
+                  create_flag = O_RDONLY;
+                else
+                  create_flag = O_RDWR;
 	} else if (create_mode == OS_FILE_CREATE) {
 		mode_str = "CREATE";
 		create_flag = O_RDWR | O_CREAT | O_EXCL;
