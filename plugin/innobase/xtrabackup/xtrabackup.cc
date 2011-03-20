@@ -2825,7 +2825,7 @@ xtrabackup_backup_func(void)
 	if (xtrabackup_extra_lsndir
             && (stat(xtrabackup_extra_lsndir,&stat_info) != 0)
             && (mkdir(xtrabackup_extra_lsndir,0777) != 0)){
-		fprintf(stderr,"xtrabackup: Error: cannot mkdir %d: %s\n",my_errno,xtrabackup_extra_lsndir);
+		fprintf(stderr,"xtrabackup: Error: cannot mkdir %d: %s\n",errno,xtrabackup_extra_lsndir);
 		exit(EXIT_FAILURE);
 	}
 
@@ -2835,7 +2835,7 @@ xtrabackup_backup_func(void)
 	/* create target dir if not exist */
 	if (stat(xtrabackup_target_dir,&stat_info) != 0
             && (mkdir(xtrabackup_target_dir,0777) != 0)){
-		fprintf(stderr,"xtrabackup: Error: cannot mkdir %d: %s\n",my_errno,xtrabackup_target_dir);
+		fprintf(stderr,"xtrabackup: Error: cannot mkdir %d: %s\n",errno,xtrabackup_target_dir);
 		exit(EXIT_FAILURE);
 	}
 
