@@ -4431,7 +4431,7 @@ skip_check:
 	}
 
 	fprintf(stderr, "xtrabackup: Starting InnoDB instance for recovery.\n"
-		"xtrabackup: Using %lld bytes for buffer pool (set by --use-memory parameter)\n",
+		"xtrabackup: Using %"PRIu64" bytes for buffer pool (set by --use-memory parameter)\n",
 		xtrabackup_use_memory);
 
 	if(innodb_init())
