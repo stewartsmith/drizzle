@@ -123,23 +123,6 @@ namespace drizzled {
 
  /* prototypes for static functions in original */
 
- int
- fil_file_readdir_next_file(
- /*=======================*/
-                                 /* out: 0 if ok, -1 if error even after the
-                                 retries, 1 if at the end of the directory */
-         ulint*		err,	/* out: this is set to DB_ERROR if an error
-                                 was encountered, otherwise not changed */
-         const char*	dirname,/* in: directory name or path */
-         os_file_dir_t	dir,	/* in: directory stream */
-         os_file_stat_t*	info);	/* in/out: buffer where the info is returned */
-
- ibool
- recv_check_cp_is_consistent(
- /*========================*/
-                         /* out: TRUE if ok */
-         byte*	buf);	/* in: buffer containing checkpoint info */
-
  ulint
  recv_find_max_checkpoint(
  /*=====================*/

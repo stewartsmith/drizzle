@@ -624,7 +624,6 @@ recv_synchronize_groups(
 /***********************************************************************//**
 Checks the consistency of the checkpoint info
 @return	TRUE if ok */
-static
 ibool
 recv_check_cp_is_consistent(
 /*========================*/

@@ -71,3 +71,17 @@ btr_node_ptr_get_child(
 	dict_index_t*	index,	/*!< in: index */
 	const ulint*	offsets,/*!< in: array returned by rec_get_offsets() */
 	mtr_t*		mtr);	/*!< in: mtr */
+
+ibool
+recv_check_cp_is_consistent(
+/*========================*/
+                            const byte*	buf);	/*!< in: buffer containing checkpoint info */
+
+int
+fil_file_readdir_next_file(
+/*=======================*/
+	ulint*		err,	/*!< out: this is set to DB_ERROR if an error
+				was encountered, otherwise not changed */
+	const char*	dirname,/*!< in: directory name or path */
+	os_file_dir_t	dir,	/*!< in: directory stream */
+	os_file_stat_t*	info);	/*!< in/out: buffer where the info is returned */
