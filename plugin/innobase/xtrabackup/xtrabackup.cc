@@ -4786,8 +4786,6 @@ error:
 
 int main(int argc, char **argv)
 {
-	int ho_error;
-
 	MY_INIT(argv[0]);
 
 	load_defaults("my",load_default_groups,&argc,&argv);
