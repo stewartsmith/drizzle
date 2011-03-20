@@ -3389,7 +3389,7 @@ xtrabackup_stats_func(void)
 {
 	/* cd to datadir */
 
-	if (my_setwd(mysql_real_data_home,MYF(MY_WME)))
+	if (chdir(mysql_real_data_home) != 0)
 	{
 		fprintf(stderr, "xtrabackup: cannot my_setwd %s\n", mysql_real_data_home);
 		exit(EXIT_FAILURE);
