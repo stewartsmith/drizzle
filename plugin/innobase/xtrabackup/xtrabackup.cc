@@ -521,6 +521,24 @@ innobase_rec_reset(
   return;
 }
 
+UNIV_INTERN
+void
+thd_set_lock_wait_time(
+/*===================*/
+	drizzled::Session*	,	/*!< in: thread handle (THD*) */
+	ulint	);	/*!< in: time waited for the lock */
+
+UNIV_INTERN
+void
+thd_set_lock_wait_time(
+/*===================*/
+	drizzled::Session*	,	/*!< in: thread handle (THD*) */
+	ulint	)	/*!< in: time waited for the lock */
+{
+  return;
+}
+
+
 
 /* ======== Datafiles iterator ======== */
 typedef struct {
