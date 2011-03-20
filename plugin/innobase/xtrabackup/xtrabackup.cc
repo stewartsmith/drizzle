@@ -4608,7 +4608,7 @@ skip_check:
 					mach_write_to_4(page    , 0x78706f72UL);
 					mach_write_to_4(page + 4, 0x74696e66UL);/*"xportinf"*/
 					mach_write_to_4(page + 8, n_index);
-					strncpy(page + 12, table_name, 500);
+					strncpy((char*)page + 12, table_name, 500);
 
 					printf(
 "xtrabackup: export metadata of table '%s' to file `%s` (%lu indexes)\n",
@@ -4619,7 +4619,7 @@ skip_check:
 						mach_write_to_8(page + n_index * 512, index->id);
 						mach_write_to_4(page + n_index * 512 + 8,
 								index->page);
-						strncpy(page + n_index * 512 + 12, index->name, 500);
+						strncpy((char*)page + n_index * 512 + 12, index->name, 500);
 
 						printf(
 "xtrabackup:     name=%s, id.low=%lu, page=%lu\n",
