@@ -3882,7 +3882,7 @@ not_consistent:
 		file_size = os_file_get_size_as_iblonglong(src_file);
 	}
 
-	printf("xtrabackup: xtrabackup_logfile detected: size=%lld, start_lsn=(%llu)\n",
+	printf("xtrabackup: xtrabackup_logfile detected: size=%"PRIu64", start_lsn=(%"PRIu64")\n",
 		file_size, max_lsn);
 
 	os_file_close(src_file);
