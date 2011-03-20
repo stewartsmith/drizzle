@@ -2862,7 +2862,7 @@ xtrabackup_backup_func(void)
 	os_thread_id_t log_copying_thread_id;
 	datafiles_iter_t *it;
 
-	log_hdr_buf = ut_align(log_hdr_buf_, OS_FILE_LOG_BLOCK_SIZE);
+	log_hdr_buf = (unsigned char*)ut_align(log_hdr_buf_, OS_FILE_LOG_BLOCK_SIZE);
 
 	/* log space */
 	//space = UT_LIST_GET_NEXT(space_list, UT_LIST_GET_FIRST(system->space_list));
