@@ -5043,9 +5043,7 @@ skip_tables_file_register:
 		/* direct specification is only for --backup */
 		/* and the lsn is prior to the other option */
 
-		char* incremental_low;
 		char* endchar;
-		long long lsn_high, lsn_low;
 		int error = 0;
 
 		incremental_lsn = strtoll(xtrabackup_incremental, &endchar, 10);
