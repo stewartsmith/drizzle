@@ -4841,8 +4841,7 @@ int main(int argc, char **argv)
 	po::variables_map vm;
 	// Disable allow_guessing, it is evil and broken
 	int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
-	po::store(po::command_line_parser(argc, argv).options(command_line_options).
-        	style(style), vm);	
+	po::store(po::command_line_parser(argc, argv).options(commandline_options).style(style).run(), vm);
 	po::notify(vm);
 
 	xtrabackup_use_memory-= xtrabackup_use_memory % (1024*1024);
