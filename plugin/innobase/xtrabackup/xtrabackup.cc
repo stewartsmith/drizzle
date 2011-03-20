@@ -476,6 +476,52 @@ it every INNOBASE_WAKE_INTERVAL'th step. */
 #define INNOBASE_WAKE_INTERVAL	32
 ulong	innobase_active_counter	= 0;
 
+UNIV_INTERN
+bool
+innobase_isspace(
+  const void *cs,
+  char char_to_test)
+{
+  return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+}
+
+UNIV_INTERN
+void
+innobase_rec_to_mysql(
+	Table*			,
+	const rec_t*		,
+	const dict_index_t*	,
+	const ulint*		);
+
+UNIV_INTERN
+void
+innobase_rec_to_mysql(
+/*==================*/
+	Table*			,		/*!< in/out: MySQL table */
+	const rec_t*		,		/*!< in: record */
+	const dict_index_t*	,		/*!< in: index */
+	const ulint*		)	/*!< in: rec_get_offsets(
+						rec, index, ...) */
+{
+  fprintf(stderr, "ERROR: innobase_rec_to_mysql called\n");
+  return;
+}
+
+UNIV_INTERN
+void
+innobase_rec_reset(Table*);
+
+UNIV_INTERN
+void
+innobase_rec_reset(
+/*===============*/
+	Table*			)		/*!< in/out: MySQL table */
+{
+  fprintf(stderr, "ERROR: innobase_rec_reset called\n");
+  return;
+}
+
+
 /* ======== Datafiles iterator ======== */
 typedef struct {
 	fil_system_t *system;
