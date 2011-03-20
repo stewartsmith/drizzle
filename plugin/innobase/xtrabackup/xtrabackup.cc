@@ -2601,7 +2601,7 @@ data_copy_thread_func(
 }
 
 /* CAUTION(?): Don't rename file_per_table during backup */
-void
+static void
 xtrabackup_backup_func(void)
 {
 	struct stat stat_info;
@@ -2613,7 +2613,7 @@ xtrabackup_backup_func(void)
 
 	/* cd to datadir */
 
-	if (my_setwd(mysql_real_data_home,MYF(MY_WME)))
+	if (chdir(mysql_real_data_home) != 0)
 	{
 		fprintf(stderr, "xtrabackup: cannot my_setwd %s\n", mysql_real_data_home);
 		exit(EXIT_FAILURE);
