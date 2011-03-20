@@ -4892,7 +4892,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);		
 	}
 
-	if (innobase_file_io_threads > 2) {
+	if (srv_flush_log_at_trx_commit > 2) {
 		fprintf(stderr, "xtrabackup: innodb-flush-log-at-trx-commit out of range\n");
 		exit(EXIT_FAILURE);		
 	}
