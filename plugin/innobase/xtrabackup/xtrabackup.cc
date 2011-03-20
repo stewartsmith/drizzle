@@ -4787,10 +4787,6 @@ error:
 
 int main(int argc, char **argv)
 {
-	MY_INIT(argv[0]);
-
-	load_defaults("my",load_default_groups,&argc,&argv);
-
 	po::options_description commandline_options(_("Options used only in command line"));
 	commandline_options.add_options()
 	("target-dir", po::value<char*>(&xtrabackup_target_dir), _("destination directory"))
