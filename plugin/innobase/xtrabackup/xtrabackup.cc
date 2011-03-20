@@ -104,20 +104,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  using namespace drizzled;
  namespace po=boost::program_options;
 
- /* prototypes for static functions in original */
- buf_block_t*
- btr_node_ptr_get_child(
- /*===================*/
-         const rec_t*	node_ptr,/*!< in: node pointer */
-         dict_index_t*	index,	/*!< in: index */
-         const ulint*	offsets,/*!< in: array returned by rec_get_offsets() */
-         mtr_t*		mtr);	/*!< in: mtr */
+namespace drizzled {
+  bool errmsg_printf (error::level_t, char const *format, ...);
 
- buf_block_t*
- btr_root_block_get(
- /*===============*/
-         dict_index_t*	index,	/*!< in: index tree */
-         mtr_t*		mtr);	/*!< in: mtr */
+  bool errmsg_printf (error::level_t, char const *format, ...)
+  {
+    bool rv;
+    va_list args;
+    va_start(args, format);
+    rv= vfprintf(stderr, format, args);
+    va_end(args);
+    return rv;
+  }
+
+}
+
+#include "xtrabackup_api.h"
+
+ /* prototypes for static functions in original */
 
  int
  fil_file_readdir_next_file(
@@ -144,45 +148,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
          ulint*		max_field);	/* out: LOG_CHECKPOINT_1 or
                                          LOG_CHECKPOINT_2 */
 
- ibool
- log_block_checksum_is_ok_or_old_format(
- /*===================================*/
-                         /* out: TRUE if ok, or if the log block may be in the
-                         format of InnoDB version < 3.23.52 */
-         byte*	block);	/* in: pointer to a log block */
-
- ulint
- open_or_create_log_file(
- /*====================*/
-                                         /* out: DB_SUCCESS or error code */
-         ibool   create_new_db,          /* in: TRUE if we should create a
-                                         new database */
-         ibool*	log_file_created,	/* out: TRUE if new log file
-                                         created */
-         ibool	log_file_has_been_opened,/* in: TRUE if a log file has been
-                                         opened before: then it is an error
-                                         to try to create another log file */
-         ulint	k,			/* in: log group number */
-         ulint	i);			/* in: log file number in group */
-
- ulint
- open_or_create_data_files(
- /*======================*/
-                                 /* out: DB_SUCCESS or error code */
-         ibool*	create_new_db,	/* out: TRUE if new database should be
-                                                                 created */
- #ifdef XTRADB_BASED
-         ibool*	create_new_doublewrite_file,
- #endif 
- #ifdef UNIV_LOG_ARCHIVE
-         ulint*	min_arch_log_no,/* out: min of archived log numbers in data
-                                 files */
-         ulint*	max_arch_log_no,/* out: */
- #endif /* UNIV_LOG_ARCHIVE */
-         LSN64*	min_flushed_lsn,/* out: min of flushed lsn values in data
-                                 files */
-         LSN64*	max_flushed_lsn,/* out: */
-         ulint*	sum_of_new_sizes);/* out: sum of sizes of the new files added */
 
  void
  os_file_set_nocache(

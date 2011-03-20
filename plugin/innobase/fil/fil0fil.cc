@@ -297,7 +297,7 @@ struct fil_system_struct {
 
 /** The tablespace memory cache. This variable is NULL before the module is
 initialized. */
-static fil_system_t*	fil_system	= NULL;
+fil_system_t*	fil_system	= NULL;
 
 
 /********************************************************************//**

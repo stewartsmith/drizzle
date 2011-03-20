@@ -88,6 +88,7 @@ Created 2/16/1996 Heikki Tuuri
 # include "thr0loc.h"
 # include "os0sync.h" /* for INNODB_RW_LOCKS_USE_ATOMICS */
 # include "zlib.h" /* for ZLIB_VERSION */
+#include "xtrabackup_api.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -555,7 +556,6 @@ srv_calc_high32(
 /*********************************************************************//**
 Creates or opens the log files and closes them.
 @return	DB_SUCCESS or error code */
-static
 ulint
 open_or_create_log_file(
 /*====================*/
@@ -708,7 +708,6 @@ open_or_create_log_file(
 /*********************************************************************//**
 Creates or opens database data files and closes them.
 @return	DB_SUCCESS or error code */
-static
 ulint
 open_or_create_data_files(
 /*======================*/
