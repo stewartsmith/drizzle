@@ -3957,7 +3957,7 @@ xtrabackup_apply_delta(
 	const char*	dbname,		/* in: database name (ibdata: NULL) */
 	const char*	filename,	/* in: file name (not a path),
 					including the .delta extension */
-	bool check_newer)
+	bool )
 {
 	os_file_t	src_file = -1;
 	os_file_t	dst_file = -1;
