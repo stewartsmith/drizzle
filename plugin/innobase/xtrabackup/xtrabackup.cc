@@ -4344,7 +4344,7 @@ error:
 	return(TRUE); /*ERROR*/
 }
 
-void
+static void
 xtrabackup_prepare_func(void)
 {
 	/* cd to target-dir */
