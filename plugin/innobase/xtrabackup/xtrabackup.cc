@@ -4316,8 +4316,8 @@ xtrabackup_close_temp_log(bool clear_flag)
 		os_file_set_nocache(src_file, src_path, "OPEN");
 	}
 
-	log_buf_ = ut_malloc(LOG_FILE_HDR_SIZE * 2);
-	log_buf = ut_align(log_buf_, LOG_FILE_HDR_SIZE);
+	log_buf_ = (unsigned char*) ut_malloc(LOG_FILE_HDR_SIZE * 2);
+	log_buf = (unsigned char*) ut_align(log_buf_, LOG_FILE_HDR_SIZE);
 
 	success = os_file_read(src_file, log_buf, 0, 0, LOG_FILE_HDR_SIZE);
 	if (!success) {
