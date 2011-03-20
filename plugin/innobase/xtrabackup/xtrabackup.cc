@@ -4478,7 +4478,6 @@ skip_check:
 	{
 	fil_system_t*	system = fil_system;
 	fil_space_t*	space;
-	fil_node_t*	node;
 
 	mutex_enter(&(system->mutex));
 	space = UT_LIST_GET_FIRST(system->space_list);
