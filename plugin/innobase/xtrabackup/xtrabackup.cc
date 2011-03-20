@@ -4956,7 +4956,7 @@ int main(int argc, char **argv)
 			tables_regex_num++;
 		}
 
-		tables_regex = ut_malloc(sizeof(regex_t) * tables_regex_num);
+		tables_regex = (regex_t*) ut_malloc(sizeof(regex_t) * tables_regex_num);
 
 		p = xtrabackup_tables;
 		for (i=0; i < tables_regex_num; i++) {
