@@ -4680,13 +4680,14 @@ next_node:
 	printf("\n");
 
 	/* output to xtrabackup_binlog_pos_innodb */
-	if (*trx_sys_mysql_bin_log_name != '\0') {
+        if (false) {
+//FIXME	if (*trx_sys_mysql_bin_log_name != '\0') {
 		FILE *fp;
 
 		fp = fopen("xtrabackup_binlog_pos_innodb", "w");
 		if (fp) {
 			fprintf(fp, "%s\t%llu\n",
-                                "none", 0);
+                                "none", 0ULL);
                                 /* FIXME
 				trx_sys_mysql_bin_log_name,
 				trx_sys_mysql_bin_log_pos);*/
