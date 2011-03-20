@@ -680,8 +680,6 @@ enum options_xtrabackup
   OPT_INNODB_THREAD_SLEEP_DELAY
 };
 
-static const char *load_default_groups[]= { "mysqld","xtrabackup",0 };
-
 static void print_version(void)
 {
   printf("%s  Ver %s Rev %s for %s %s (%s)\n" ,my_progname,
