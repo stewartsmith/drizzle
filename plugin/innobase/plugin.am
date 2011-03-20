@@ -209,6 +209,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/ut0wqueue.h \
                  plugin/innobase/include/ha_prototypes.h \
                  plugin/innobase/include/handler0alter.h \
+		 plugin/innobase/include/xtrabackup_api.h \
                  plugin/innobase/mem/mem0dbg.cc \
                  plugin/innobase/handler/ha_innodb.h \
                  plugin/innobase/handler/handler0vars.h \
