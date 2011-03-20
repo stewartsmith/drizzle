@@ -4256,7 +4256,7 @@ next_datadir_item:
 
 }
 
-bool
+static bool
 xtrabackup_close_temp_log(bool clear_flag)
 {
 	os_file_t	src_file = -1;
