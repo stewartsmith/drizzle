@@ -4982,7 +4982,7 @@ int main(int argc, char **argv)
 		FILE *fp;
 
 		if (xtrabackup_stream) {
-			fprintf(stderr, "xtrabackup: Warning: --tables_file option doesn't affect with --stream.\n", xtrabackup_tables_file);
+			fprintf(stderr, "xtrabackup: Warning: --tables_file option doesn't affect with --stream.\n");
 			xtrabackup_tables_file = NULL;
 			goto skip_tables_file_register;
 		}
