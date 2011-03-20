@@ -3611,7 +3611,7 @@ end:
 
 /* ================= prepare ================= */
 
-bool
+static bool
 xtrabackup_init_temp_log(void)
 {
 	os_file_t	src_file = -1;
