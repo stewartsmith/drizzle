@@ -2577,12 +2577,6 @@ data_copy_thread_func(
 	ibool			space_changed;
 	fil_node_t*     	node;
 
-	/*
-	  We have to initialize mysys thread-specific memory because
-	  of the my_stat() call in xtrabackup_create_output_dir().
-	*/
-	my_thread_init();
-
 	while ((node = datafiles_iter_next(ctxt->it, &space_changed)) != NULL) {
 		space = node->space;
 
@@ -2602,7 +2596,6 @@ data_copy_thread_func(
 	(*ctxt->count)--;
 	os_mutex_exit(ctxt->count_mutex);
 
-	my_thread_end();
 	os_thread_exit(NULL);
 	OS_THREAD_DUMMY_RETURN;
 }
