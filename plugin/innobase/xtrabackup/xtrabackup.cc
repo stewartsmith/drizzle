@@ -4706,10 +4706,10 @@ next_node:
 			"xtrabackup: # The log was not applied to the intended LSN!         #\n"
 			"xtrabackup: ########################################################\n");
 		if (xtrabackup_incremental) {
-			printf("xtrabackup: The intended lsn is %llu\n",
+			printf("xtrabackup: The intended lsn is %"PRIu64"\n",
 				incremental_last_lsn);
 		} else {
-			printf("xtrabackup: The intended lsn is %llu\n",
+			printf("xtrabackup: The intended lsn is %"PRIu64"\n",
 				metadata_last_lsn);
 		}
 	}
