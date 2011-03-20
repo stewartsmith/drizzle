@@ -3099,10 +3099,10 @@ reread_log_header:
 		latest_cp = MACH_READ_64(log_sys->checkpoint_buf + LOG_CHECKPOINT_LSN);
 
 		if (!xtrabackup_stream) {
-			printf("xtrabackup: The latest check point (for incremental): '%llu'\n",
+			printf("xtrabackup: The latest check point (for incremental): '%"PRIu64"'\n",
 				latest_cp);
 		} else {
-			fprintf(stderr, "xtrabackup: The latest check point (for incremental): '%llu'\n",
+			fprintf(stderr, "xtrabackup: The latest check point (for incremental): '%"PRIu64"'\n",
 				latest_cp);
 		}
 	}
@@ -3158,10 +3158,10 @@ skip_last_cp:
 		os_event_free(wait_throttle);
 
 	if (!xtrabackup_stream) {
-		printf("xtrabackup: Transaction log of lsn (%llu) to (%llu) was copied.\n",
+		printf("xtrabackup: Transaction log of lsn (%"PRIu64") to (%"PRIu64") was copied.\n",
 			checkpoint_lsn_start, log_copy_scanned_lsn);
 	} else {
-		fprintf(stderr, "xtrabackup: Transaction log of lsn (%llu) to (%llu) was copied.\n",
+		fprintf(stderr, "xtrabackup: Transaction log of lsn (%"PRIu64") to (%"PRIu64") was copied.\n",
 			checkpoint_lsn_start, log_copy_scanned_lsn);
 		if(xtrabackup_extra_lsndir) {
 			char	filename[FN_REFLEN];
@@ -3358,9 +3358,9 @@ loop:
 	}
 
 	if (level == 0)
-		fprintf(stdout, "recs=%lld, ", n_recs);
+		fprintf(stdout, "recs=%"PRIu64", ", n_recs);
 
-	fprintf(stdout, "pages=%lld, data=%lld bytes, data/pages=%lld%%",
+	fprintf(stdout, "pages=%"PRIu64", data=%"PRIu64" bytes, data/pages=%"PRIu64"%%",
 		n_pages, sum_data,
 		((sum_data * 100)/ page_size)/n_pages);
 
@@ -3370,7 +3370,7 @@ loop:
 		/* also scan blob pages*/
 		fprintf(stdout, "    external pages: ");
 
-		fprintf(stdout, "pages=%lld, data=%lld bytes, data/pages=%lld%%",
+		fprintf(stdout, "pages=%"PRIu64", data=%"PRIu64" bytes, data/pages=%"PRIu64"%%",
 			n_pages_extern, sum_data_extern,
 			((sum_data_extern * 100)/ page_size)/n_pages_extern);
 	}
@@ -5128,7 +5128,7 @@ skip_tables_file_register:
 		printf("innodb_log_group_home_dir = \"%s\"\n",
 			innobase_log_group_home_dir ? innobase_log_group_home_dir : mysql_data_home);
 		printf("innodb_log_files_in_group = %ld\n", innobase_log_files_in_group);
-		printf("innodb_log_file_size = %lld\n", innobase_log_file_size);
+		printf("innodb_log_file_size = %"PRIu64"\n", innobase_log_file_size);
 		printf("innodb_flush_method = \"%s\"\n",
 		       (innobase_unix_file_flush_method != NULL) ?
 		       innobase_unix_file_flush_method : "");
@@ -5138,7 +5138,7 @@ skip_tables_file_register:
 	if (!xtrabackup_stream) {
 		print_version();
 		if (xtrabackup_incremental) {
-			printf("incremental backup from %llu is enabled.\n",
+			printf("incremental backup from %"PRIu64" is enabled.\n",
 				incremental_lsn);
 		}
 	} else {
