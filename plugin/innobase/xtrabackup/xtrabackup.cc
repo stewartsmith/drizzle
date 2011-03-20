@@ -4349,7 +4349,7 @@ xtrabackup_prepare_func(void)
 {
 	/* cd to target-dir */
 
-	if (my_setwd(xtrabackup_real_target_dir,MYF(MY_WME)))
+	if (chdir(xtrabackup_real_target_dir) != 0)
 	{
 		fprintf(stderr, "xtrabackup: cannot my_setwd %s\n", xtrabackup_real_target_dir);
 		exit(EXIT_FAILURE);
