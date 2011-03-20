@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  #include <drizzled/charset.h>
  #include <drizzled/global_charset_info.h> // for default_charset_info
 #include <drizzled/gettext.h>
+#include <drizzled/constrained_value.h>
  #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
  #include <boost/program_options.hpp>
@@ -403,6 +404,7 @@ namespace drizzled {
  /* === some variables from mysqld === */
  char mysql_real_data_home[FN_REFLEN] = "./";
  char *mysql_data_home= mysql_real_data_home;
+std::string mysql_data_home_arg;
  static char mysql_data_home_buff[2];
 
  char *opt_mysql_tmpdir = NULL;
@@ -437,7 +439,10 @@ bool	innobase_extra_undoslots = false;
 char*	innobase_doublewrite_file = NULL;
 
 uint64_t innobase_buffer_pool_size = 8*1024*1024L;
-uint64_t innobase_log_file_size = 5*1024*1024L;
+
+typedef constrained_check<int64_t, INT64_MAX, 1024*1024, 1024*1024> log_file_constraint;
+static log_file_constraint innobase_log_file_size;
+
 uint64_t innobase_log_file_size_backup;
 
 /* The default values for the following char* start-up parameters
@@ -4820,7 +4825,7 @@ int main(int argc, char **argv)
 	("tables", po::value<char *>(&xtrabackup_tables), _("filtering by regexp for table names."))
 	("tables-file", po::value<char *>(&xtrabackup_tables_file), _("filtering by list of the exact database.table name in the file."))
 	("create-ib-logfile", po::value<bool>(&xtrabackup_create_ib_logfile), _("** not work for now** creates ib_logfile* also after '--prepare'. ### If you want create ib_logfile*, only re-execute this command in same options. ###"))
-	("datadir,h", po::value<char *>(&mysql_data_home), _("Path to the database root."))
+          ("datadir,h", po::value<std::string>(), _("Path to the database root."))
 	("tmpdir,t", po::value<char *>(&opt_mysql_tmpdir), _("Path for temporary files. Several paths may be specified, separated by a colon (:), in this case they are used in a round-robin fashion."))
 	("parallel", po::value<uint32_t>(&parallel)->default_value(1), _("Number of threads to use for parallel datafiles transfer. Does not have any effect in the stream mode. The default value is 1."))
 	("innodb-adaptive-hash-index", po::value<bool>(&innobase_adaptive_hash_index)->default_value(true), _("Enable InnoDB adaptive hash index (enabled by default).  Disable with --skip-innodb-adaptive-hash-index."))
@@ -4839,7 +4844,7 @@ int main(int argc, char **argv)
          ("innodb-force-recovery", po::value<long>(&innobase_force_recovery)->default_value(0), _("Helps to save your data in case the disk image of the database becomes corrupt."))
 	("innodb-lock-wait-timeout", po::value<long>(&innobase_lock_wait_timeout)->default_value(50), _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back."))
 	("innodb-log-buffer-size", po::value<long>(&innobase_log_buffer_size)->default_value(1024*1024), _("The size of the buffer which InnoDB uses to write log to the log files on disk."))
-	("innodb-log-file-size", po::value<uint64_t>(&innobase_log_file_size)->default_value(1024*1024), _("Size of each log file in a log group."))
+	("innodb-log-file-size", po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L), _("Size of each log file in a log group."))
 	("innodb-log-files-in-group", po::value<long>(&innobase_log_files_in_group)->default_value(2), _("Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here."))
 	("innodb-log-group-home-dir", po::value<char *>(&innobase_log_group_home_dir), _("Path to InnoDB log files."))
 	("innodb-max_dirty-pages-pct", po::value<ulong>(&srv_max_buf_pool_modified_pct)->default_value(90), _("Percentage of dirty pages allowed in bufferpool."))
@@ -4913,7 +4918,6 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);		
 	}
 
-	innobase_log_file_size-= innobase_log_file_size % 91024 * 1024;
 	if (innobase_additional_mem_pool_size < (1024*1024)) {
 		fprintf(stderr, "xtrabackup: innodb-log-file-size out of range\n");
 		exit(EXIT_FAILURE);		
@@ -4943,6 +4947,10 @@ int main(int argc, char **argv)
 		fprintf(stderr, "xtrabackup: innodb-log-block-size out of range\n");
 		exit(EXIT_FAILURE);		
 	}
+
+        mysql_data_home_arg.assign(vm["datadir"].as<std::string>());
+        mysql_data_home= (char*)malloc(mysql_data_home_arg.length());
+        strcpy(mysql_data_home, mysql_data_home_arg.c_str());
 
 	if (strcmp(mysql_data_home, "./") == 0) {
 		if (!xtrabackup_print_param)
@@ -5132,7 +5140,7 @@ skip_tables_file_register:
 		printf("innodb_log_group_home_dir = \"%s\"\n",
 			innobase_log_group_home_dir ? innobase_log_group_home_dir : mysql_data_home);
 		printf("innodb_log_files_in_group = %ld\n", innobase_log_files_in_group);
-		printf("innodb_log_file_size = %"PRIu64"\n", innobase_log_file_size);
+		printf("innodb_log_file_size = %"PRIu64"\n", (uint64_t)innobase_log_file_size);
 		printf("innodb_flush_method = \"%s\"\n",
 		       (innobase_unix_file_flush_method != NULL) ?
 		       innobase_unix_file_flush_method : "");
