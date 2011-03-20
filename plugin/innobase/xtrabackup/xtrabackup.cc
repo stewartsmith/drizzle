@@ -3173,7 +3173,7 @@ skip_last_cp:
 }
 
 /* ================= stats ================= */
-bool
+static bool
 xtrabackup_stats_level(
 	dict_index_t*	index,
 	ulint		level)
