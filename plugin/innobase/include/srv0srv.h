@@ -225,6 +225,7 @@ extern ulong	srv_replication_delay;
 
 extern ibool    srv_read_only;
 extern ibool    srv_fake_write;
+extern ibool    srv_apply_log_only;
 
 /*-------------------------------------------*/
 

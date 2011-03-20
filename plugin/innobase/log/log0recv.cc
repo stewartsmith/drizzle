@@ -3260,6 +3260,7 @@ recv_recovery_from_checkpoint_finish(void)
 	that the data dictionary tables will be free of any locks.
 	The data dictionary latch should guarantee that there is at
 	most one data dictionary transaction active at a time. */
+        if (! srv_apply_log_only)
 	trx_rollback_or_clean_recovered(FALSE);
 }
 

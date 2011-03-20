@@ -435,6 +435,7 @@ UNIV_INTERN ulong	srv_replication_delay		= 0;
 
 UNIV_INTERN ibool srv_read_only = FALSE;
 UNIV_INTERN ibool srv_fake_write = FALSE;
+UNIV_INTERN ibool srv_apply_log_only = FALSE;
 
 /*-------------------------------------------*/
 UNIV_INTERN ulong	srv_n_spin_wait_rounds	= 30;

@@ -1558,6 +1558,10 @@ innobase_start_or_create_for_mysql(void)
 		are initialized in trx_sys_init_at_db_start(). */
 
 		recv_recovery_from_checkpoint_finish();
+
+                if (srv_apply_log_only)
+                  goto skip_processes;
+
 		if (srv_force_recovery < SRV_FORCE_NO_IBUF_MERGE) {
 			/* The following call is necessary for the insert
 			buffer to work with multiple tablespaces. We must
@@ -1824,6 +1828,7 @@ innobase_start_or_create_for_mysql(void)
 		ibuf_update_max_tablespace_id();
 	}
 
+skip_processes:
 	srv_file_per_table = srv_file_per_table_original_value;
 
 	srv_was_started = TRUE;
