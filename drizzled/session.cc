@@ -198,8 +198,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   examined_row_count(0),
   used_tables(0),
   total_warn_count(0),
-  col_access(0),
-  statement_id_counter(0),
   row_count(0),
   thread_id(0),
   tmp_table(0),

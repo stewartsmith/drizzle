@@ -587,22 +587,11 @@ public:
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
 
-  ulong col_access;
-
-  /* Statement id is thread-wide. This counter is used to generate ids */
-  uint32_t statement_id_counter;
-  uint32_t rand_saved_seed1;
-  uint32_t rand_saved_seed2;
   /**
     Row counter, mainly for errors and warnings. Not increased in
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-
-  uint32_t getRowCount() const
-  {
-    return row_count;
-  }
 
   session_id_t thread_id;
   uint32_t tmp_table;
