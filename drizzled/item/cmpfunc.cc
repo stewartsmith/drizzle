@@ -37,14 +37,14 @@
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <math.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const double log_10[309];
 

@@ -82,6 +82,7 @@
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/functors.h>
 #include <plugin/myisam/myisam.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 #include <climits>
@@ -160,6 +161,7 @@ public:
   properties_t properties;
   system_status_var status_var;
   session::TableMessages table_message_cache;
+  drizzle_system_variables variables;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
@@ -170,6 +172,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _schema(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
+  variables(impl_->variables),
   status_var(impl_->status_var),
   lock_id(&main_lock_id),
   thread_stack(NULL),

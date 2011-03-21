@@ -24,6 +24,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>
+#include <drizzled/system_variables.h>
 
 #include <drizzled/function_container.h>
 
@@ -90,8 +91,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item;
 

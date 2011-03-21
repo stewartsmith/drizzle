@@ -72,6 +72,7 @@
 #include <drizzled/plugin/xa_storage_engine.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 #include <algorithm>

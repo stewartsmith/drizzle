@@ -32,6 +32,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 using namespace drizzled;
 

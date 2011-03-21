@@ -56,6 +56,7 @@
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/table_ident.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <limits.h>
 

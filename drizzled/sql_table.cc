@@ -37,9 +37,8 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-
 #include <drizzled/definition/cache.h>
-
+#include <drizzled/system_variables.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
@@ -53,8 +52,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool is_primary_key(KeyInfo *key_info)
 {

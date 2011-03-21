@@ -24,9 +24,9 @@
 #include <drizzled/session.h>
 #include <drizzled/function/time/month.h>
 #include <drizzled/typelib.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 int64_t Item_func_month::val_int()
 {

@@ -78,6 +78,7 @@
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
+#include <drizzled/system_variables.h>
 
 #include <google/protobuf/stubs/common.h>
 

@@ -42,8 +42,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
-// #include <drizzled/statistics_variables.h>
-#include <drizzled/system_variables.h>
+// #include <drizzled/system_variables.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/string.h>
@@ -327,7 +326,7 @@ public:
     return user_vars;
   }
 
-  drizzle_system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables& variables; /**< Mutable local variables local to the session */
   enum_tx_isolation getTxIsolation();
   system_status_var& status_var;
 

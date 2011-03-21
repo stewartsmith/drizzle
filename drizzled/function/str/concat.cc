@@ -22,13 +22,13 @@
 #include <drizzled/function/str/concat.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 String *Item_func_concat::val_str(String *str)
 {
