@@ -27,14 +27,11 @@
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
-
+#include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 Singular::Singular(Session *session, List<CreateField> &field_list) :
   _share(message::Table::INTERNAL),

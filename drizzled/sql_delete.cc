@@ -33,6 +33,7 @@
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/statistics_variables.h>
 
 namespace drizzled {
 

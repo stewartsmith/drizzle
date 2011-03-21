@@ -42,7 +42,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
-#include <drizzled/statistics_variables.h>
+// #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
@@ -99,6 +99,7 @@ class TableShareInstance;
 class Table_ident;
 class Time_zone;
 class select_result;
+class system_status_var;
 class user_var_entry;
 struct Ha_data;
 
@@ -136,6 +137,10 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 class DRIZZLED_API Session : public Open_tables_state
 {
+private:
+  class impl_c;
+
+  boost::scoped_ptr<impl_c> impl_;
 public:
   // Plugin storage in Session.
   typedef boost::shared_ptr<Session> shared_ptr;
@@ -324,7 +329,7 @@ public:
 
   drizzle_system_variables variables; /**< Mutable local variables local to the session */
   enum_tx_isolation getTxIsolation();
-  system_status_var status_var;
+  system_status_var& status_var;
 
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -1439,8 +1444,6 @@ public:
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-	class impl_c;
-
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
@@ -1451,7 +1454,6 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  boost::scoped_ptr<impl_c> impl_;
   catalog::Instance::shared_ptr _catalog;
 
   /** Pointers to memory managed by the ReplicationServices component */

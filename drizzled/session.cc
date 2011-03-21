@@ -72,6 +72,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/statement.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/tmp_table_param.h>
@@ -157,16 +158,19 @@ public:
   */
   LEX lex;
   properties_t properties;
+  system_status_var status_var;
   session::TableMessages table_message_cache;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
+  impl_(new impl_c),
   mem_root(&main_mem_root),
   query(new std::string),
   _schema(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
+  status_var(impl_->status_var),
   lock_id(&main_lock_id),
   thread_stack(NULL),
   _where(Session::DEFAULT_WHERE),
@@ -206,7 +210,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   m_lip(NULL),
   cached_table(0),
   arg_of_last_insert_id_function(false),
-  impl_(new impl_c),
   _catalog(catalog_arg),
   transaction_message(NULL),
   statement_message(NULL),

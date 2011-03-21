@@ -47,7 +47,6 @@
 #include <drizzled/internal/m_string.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/decimal.h>
@@ -59,6 +58,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
 
 using namespace std;
 
