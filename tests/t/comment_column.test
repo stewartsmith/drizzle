@@ -99,7 +99,7 @@ SELECT table_comment,char_length(table_comment) FROM data_dictionary.tables WHER
 SELECT column_comment,char_length(column_comment) FROM data_dictionary.columns WHERE table_name='t1';
 SELECT index_comment,char_length(index_comment) FROM data_dictionary.indexes WHERE table_name='t1';
 let $ENGINE=`select variable_value from data_dictionary.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE
+--error ER_BAD_TABLE_ERROR
 SHOW CREATE TABLE t1;
 
 # comment overflow(error)
