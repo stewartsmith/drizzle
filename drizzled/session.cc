@@ -2219,7 +2219,7 @@ const std::string& display::type(drizzled::Session::global_read_lock_t type)
 
 size_t display::max_string_length(drizzled::Session::global_read_lock_t)
 {
-  return type(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT).size();
+  return display::type(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT).size();
 }
 
 } /* namespace drizzled */
