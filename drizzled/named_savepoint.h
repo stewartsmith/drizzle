@@ -25,8 +25,7 @@
 
 #include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace message
 {

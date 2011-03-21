@@ -2205,6 +2205,11 @@ void Session::setProperty0(const std::string& arg, drizzled::util::Storable* val
   impl_->properties.setProperty(arg, value);
 }
 
+my_xid Session::getTransactionId()
+{
+  return transaction.xid_state.xid.quick_get_my_xid();
+}
+
 const std::string& display::type(drizzled::Session::global_read_lock_t type)
 {
   static const std::string NONE= "NONE";

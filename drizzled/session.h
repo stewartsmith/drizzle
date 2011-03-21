@@ -42,7 +42,6 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
-// #include <drizzled/system_variables.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/string.h>
@@ -71,6 +70,7 @@ namespace session
 { 
   class State; 
   class TableMessages;
+  class Transactions;
 }
 
 namespace table 
@@ -103,10 +103,12 @@ class user_var_entry;
 struct Ha_data;
 
 typedef Item COND;
+typedef uint64_t my_xid;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
+extern uint32_t server_id;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -816,10 +818,8 @@ public:
   }
 
   /** Returns the current transaction ID for the session's current statement */
-  inline my_xid getTransactionId()
-  {
-    return transaction.xid_state.xid.quick_get_my_xid();
-  }
+  my_xid getTransactionId();
+
   /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
