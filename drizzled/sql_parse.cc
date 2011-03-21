@@ -57,6 +57,7 @@
 #include <drizzled/table_ident.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <limits.h>
 

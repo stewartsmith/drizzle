@@ -43,6 +43,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/named_savepoint.h>
 
 #define my_strdup(a,b) strdup(a)
 using namespace drizzled;

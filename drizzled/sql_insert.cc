@@ -38,6 +38,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
 namespace drizzled {
 

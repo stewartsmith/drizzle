@@ -68,6 +68,7 @@
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
+#include <drizzled/session/transactions.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
@@ -161,6 +162,7 @@ public:
   properties_t properties;
   system_status_var status_var;
   session::TableMessages table_message_cache;
+	session::Transactions transaction;
   drizzle_system_variables variables;
 };
 
@@ -186,6 +188,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   ha_data(plugin::num_trx_monitored_objects),
   query_id(0),
   warn_query_id(0),
+	transaction(impl_->transaction),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),

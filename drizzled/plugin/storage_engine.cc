@@ -54,6 +54,7 @@
 #include <drizzled/table/shell.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/key.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/algorithm/string/compare.hpp>
 

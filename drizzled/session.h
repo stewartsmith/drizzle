@@ -38,7 +38,6 @@
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/session/transactions.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
@@ -479,7 +478,7 @@ public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
   ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
-  session::Transactions transaction;
+  session::Transactions& transaction;
 
   Field *dup_field;
   sigset_t signals;

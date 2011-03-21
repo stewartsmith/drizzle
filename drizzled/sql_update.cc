@@ -38,6 +38,7 @@
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/util/test.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>

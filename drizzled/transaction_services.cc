@@ -73,6 +73,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <vector>
 #include <algorithm>
