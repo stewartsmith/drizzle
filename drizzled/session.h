@@ -166,7 +166,7 @@ public:
 			that it needs to update this field in write_row
                         and update_row.
   */
-  enum enum_mark_columns mark_used_columns;
+  enum_mark_columns mark_used_columns;
   inline void* calloc(size_t size)
   {
     void *ptr= mem_root->alloc_root(size);
@@ -280,17 +280,11 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-private:
-  util::string::shared_ptr _schema;
-
 public:
 
   util::string::const_shared_ptr schema() const
   {
-    if (_schema)
-      return _schema;
-
-    return util::string::const_shared_ptr(new std::string);
+    return _schema ? _schema : util::string::const_shared_ptr(new std::string);
   }
 
   /* current cache key */
@@ -1406,8 +1400,8 @@ public:
   plugin::StorageEngine *getDefaultStorageEngine();
   void get_xid(DrizzleXid *xid); // Innodb only
 
-  table::Singular *getInstanceTable();
-  table::Singular *getInstanceTable(List<CreateField> &field_list);
+  table::Singular& getInstanceTable();
+  table::Singular& getInstanceTable(std::list<CreateField>&);
 
   void setUsage(bool arg)
   {
@@ -1465,6 +1459,7 @@ private:
   identifier::User::shared_ptr security_ctx;
   int32_t scoreboard_index;
   plugin::Client *client;
+  util::string::shared_ptr _schema;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape

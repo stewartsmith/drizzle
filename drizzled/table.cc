@@ -815,8 +815,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Singular *table;
-  table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
+  table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),

@@ -171,7 +171,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   impl_(new impl_c),
   mem_root(&main_mem_root),
   query(new std::string),
-  _schema(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
   variables(impl_->variables),
@@ -2086,15 +2085,10 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-table::Singular *Session::getInstanceTable()
+table::Singular& Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Singular()); // This will not go into the tableshare cache, so no key is used.
-
-  table::Singular *tmp_share= temporary_shares.back();
-
-  assert(tmp_share);
-
-  return tmp_share;
+  temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
+  return *temporary_shares.back();
 }
 
 
@@ -2116,10 +2110,10 @@ table::Singular *Session::getInstanceTable()
   @return
     0 if out of memory, Table object in case of success
 */
-table::Singular *Session::getInstanceTable(List<CreateField> &field_list)
+table::Singular& Session::getInstanceTable(std::list<CreateField>& field_list)
 {
   temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
-  return temporary_shares.back();
+  return *temporary_shares.back();
 }
 
 void Session::clear_error(bool full)
