@@ -258,10 +258,12 @@ class serverManager:
         for server in self.get_server_list(requester):
             self.stop_server(server)
 
-    def stop_server_list(self, server_list):
+    def stop_server_list(self, server_list, free_ports=False):
         """ Stop the servers in an arbitrary list of them """
         for server in server_list:
             self.stop_server(server)
+        if free_ports:
+            server.cleanup()
 
     def stop_all_servers(self):
         """ Stop all running servers """
@@ -386,7 +388,7 @@ class serverManager:
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]
-            self.stop_server_list(retired_servers)
+            self.stop_server_list(retired_servers, free_ports=True)
             self.set_server_list(requester, good_servers)
             
          
