@@ -33,16 +33,11 @@
 #include <boost/unordered_map.hpp>
 #include <exception>
 
-namespace drizzled
-{
-namespace
-{
+namespace drizzled {
+namespace {
 
 class ErrorStringNotFound: public std::exception
 {
-public:
-  ErrorStringNotFound()
-  {}
 };
 
 ErrorMap& get_error_map()
@@ -71,7 +66,7 @@ const char * error_message(drizzled::error_t code)
   {
     return get_error_map().find(code).c_str();
   }
-  catch (ErrorStringNotFound const& e)
+  catch (ErrorStringNotFound const&)
   {
     return get_error_map().find(ER_UNKNOWN_ERROR).c_str();
   }
