@@ -47,6 +47,11 @@
 
 namespace drizzled {
 
+namespace catalog
+{
+	class Instance;
+}
+
 namespace plugin
 {
 	class Client;
@@ -148,7 +153,7 @@ public:
   typedef const Session* const_pointer;
   typedef Session* pointer;
 
-  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  static shared_ptr make_shared(plugin::Client *client, boost::shared_ptr<catalog::Instance> instance_arg)
   {
     assert(instance_arg);
     return boost::make_shared<Session>(client, instance_arg);
@@ -842,7 +847,7 @@ public:
     return first_successful_insert_id_in_prev_stmt;
   }
 
-  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
+  Session(plugin::Client *client_arg, boost::shared_ptr<catalog::Instance> catalog);
   virtual ~Session();
 
   void cleanup();
@@ -1393,12 +1398,12 @@ public:
     return usage;
   }
 
-  catalog::Instance::const_reference catalog() const
+  const catalog::Instance& catalog() const
   {
     return *_catalog;
   }
 
-  catalog::Instance::reference catalog()
+  catalog::Instance& catalog()
   {
     return *_catalog;
   }
@@ -1415,7 +1420,7 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  catalog::Instance::shared_ptr _catalog;
+  boost::shared_ptr<catalog::Instance> _catalog;
 
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;

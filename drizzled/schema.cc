@@ -42,7 +42,7 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
-
+#include <drizzled/catalog/instance.h>
 #include <boost/thread/mutex.hpp>
 
 #define MAX_DROP_TABLE_Q_LEN      1024

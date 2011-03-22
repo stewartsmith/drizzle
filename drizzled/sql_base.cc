@@ -60,13 +60,12 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
-
 #include <drizzled/refresh_version.h>
+#include <drizzled/catalog/local.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern bool volatile shutdown_in_progress;
 

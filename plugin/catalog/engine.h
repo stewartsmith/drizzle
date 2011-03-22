@@ -20,29 +20,21 @@
 
 #pragma once
 
-#include <boost/make_shared.hpp>
 #include <drizzled/catalog/engine.h>
+#include <drizzled/catalog/local.h>
 
 namespace plugin {
 namespace catalog {
 
 class Engine : public drizzled::catalog::Engine
 {
-
 public:
-  Engine() :
-    drizzled::catalog::Engine()
-  {}
-
   bool create(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &);
   bool drop(const drizzled::identifier::Catalog &identifier);
 
   bool exist(const drizzled::identifier::Catalog &identifier)
   {
-    if (drizzled::catalog::local_identifier() == identifier)
-      return true;
-
-    return false;
+    return drizzled::catalog::local_identifier() == identifier;
   }
 
   void getIdentifiers(drizzled::identifier::Catalog::vector &identifiers)
