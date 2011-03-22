@@ -150,6 +150,7 @@ class Session::impl_c
 {
 public:
   typedef session::PropertyMap properties_t;
+  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
 
   Diagnostics_area diagnostics;
   /**
@@ -160,6 +161,7 @@ public:
   */
   LEX lex;
   properties_t properties;
+  schema_event_observers_t schema_event_observers;
   system_status_var status_var;
   session::TableMessages table_message_cache;
   std::vector<table::Singular*> temporary_shares;
@@ -480,7 +482,7 @@ Session::~Session()
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
 
-	BOOST_FOREACH(schema_event_observers_t::reference it, schema_event_observers)
+	BOOST_FOREACH(impl_c::schema_event_observers_t::reference it, impl_->schema_event_observers)
     plugin::EventObserver::deregisterSchemaEvents(it.second);
 }
 
@@ -2195,6 +2197,20 @@ void Session::setProperty0(const std::string& arg, drizzled::util::Storable* val
   impl_->properties.setProperty(arg, value);
 }
 
+plugin::EventObserverList* Session::getSchemaObservers(const std::string &db_name)
+{
+  if (impl_c::schema_event_observers_t::mapped_type* i= find_ptr(impl_->schema_event_observers, db_name))
+    return *i;
+  return NULL;
+}
+
+plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_name, plugin::EventObserverList* observers)
+{
+  impl_->schema_event_observers.erase(db_name);
+  if (observers)
+    impl_->schema_event_observers[db_name] = observers;
+	return observers;
+}
 my_xid Session::getTransactionId()
 {
   return transaction.xid_state.xid.quick_get_my_xid();

@@ -1239,7 +1239,6 @@ public:
     resultset= NULL;
   }
 
-public:
   plugin::EventObserverList *getSessionObservers()
   {
     return session_event_observers;
@@ -1250,21 +1249,8 @@ public:
     session_event_observers= observers;
   }
 
-  /* For schema event observers there is one set of observers per database. */
-  plugin::EventObserverList *getSchemaObservers(const std::string &db_name)
-  {
-    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
-      return *i;
-    return NULL;
-  }
-
-  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers)
-  {
-    schema_event_observers.erase(db_name);
-    if (observers)
-      schema_event_observers[db_name] = observers;
-  }
-
+  plugin::EventObserverList* getSchemaObservers(const std::string& schema);
+  plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
  private:
 
@@ -1438,10 +1424,6 @@ private:
   /* Pointer to the current resultset of Select query */
   message::Resultset *resultset;
   plugin::EventObserverList *session_event_observers;
-
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
 
   uint64_t xa_id;
   const char *proc_info;
