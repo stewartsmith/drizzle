@@ -1475,7 +1475,7 @@ int init_remaining_variables(module::Registry &plugins)
   global_system_variables.optimizer_prune_level=
     vm.count("disable-optimizer-prune") ? false : true;
 
-  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
+  if (! vm["help"].as<bool>())
   {
     if ((user_info= check_user(drizzled_user)))
     {
