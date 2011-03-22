@@ -50,7 +50,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\windows;$(ProjectDir);$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\windows;$(ProjectDir);$(ProjectDir)\..\libdrizzle-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBDRIZZLE_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -88,55 +88,55 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\libdrizzle\column.h" />
-    <ClInclude Include="..\libdrizzle\column_client.h" />
-    <ClInclude Include="..\libdrizzle\column_server.h" />
-    <ClInclude Include="..\libdrizzle\command_client.h" />
-    <ClInclude Include="..\libdrizzle\command_server.h" />
-    <ClInclude Include="..\libdrizzle\common.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\column.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\column_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\column_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\command_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\command_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\common.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="..\libdrizzle\conn.h" />
-    <ClInclude Include="..\libdrizzle\conn_client.h" />
-    <ClInclude Include="..\libdrizzle\conn_local.h" />
-    <ClInclude Include="..\libdrizzle\conn_server.h" />
-    <ClInclude Include="..\libdrizzle\constants.h" />
-    <ClInclude Include="..\libdrizzle\drizzle.h" />
-    <ClInclude Include="..\libdrizzle\drizzle_client.h" />
-    <ClInclude Include="..\libdrizzle\drizzle_local.h" />
-    <ClInclude Include="..\libdrizzle\drizzle_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\conn.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\conn_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\conn_local.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\conn_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\constants.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\drizzle.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\drizzle_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\drizzle_local.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\drizzle_server.h" />
     <ClInclude Include="windows\errno.h" />
-    <ClInclude Include="..\libdrizzle\field_client.h" />
-    <ClInclude Include="..\libdrizzle\field_server.h" />
-    <ClInclude Include="..\libdrizzle\handshake_client.h" />
-    <ClInclude Include="..\libdrizzle\handshake_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\field_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\field_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\handshake_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\handshake_server.h" />
     <ClInclude Include="windows\inttypes.h" />
-    <ClInclude Include="..\libdrizzle\pack.h" />
-    <ClInclude Include="..\libdrizzle\query.h" />
-    <ClInclude Include="..\libdrizzle\result.h" />
-    <ClInclude Include="..\libdrizzle\result_client.h" />
-    <ClInclude Include="..\libdrizzle\result_server.h" />
-    <ClInclude Include="..\libdrizzle\row_client.h" />
-    <ClInclude Include="..\libdrizzle\row_server.h" />
-    <ClInclude Include="..\libdrizzle\sha1.h" />
-    <ClInclude Include="..\libdrizzle\state.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\pack.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\query.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\result.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\result_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\result_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\row_client.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\row_server.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\sha1.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\state.h" />
     <ClInclude Include="windows\stdint.h" />
-    <ClInclude Include="..\libdrizzle\structs.h" />
-    <ClInclude Include="..\libdrizzle\visibility.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\structs.h" />
+    <ClInclude Include="..\libdrizzle-2.0\libdrizzle\visibility.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\libdrizzle\column.c" />
-    <ClCompile Include="..\libdrizzle\command.c" />
-    <ClCompile Include="..\libdrizzle\conn.c" />
-    <ClCompile Include="conn_uds.c" />
-    <ClCompile Include="..\libdrizzle\drizzle.c" />
-    <ClCompile Include="..\libdrizzle\field.c" />
-    <ClCompile Include="..\libdrizzle\handshake.c" />
-    <ClCompile Include="..\libdrizzle\pack.c" />
-    <ClCompile Include="..\libdrizzle\query.c" />
-    <ClCompile Include="..\libdrizzle\result.c" />
-    <ClCompile Include="..\libdrizzle\row.c" />
-    <ClCompile Include="..\libdrizzle\sha1.c" />
-    <ClCompile Include="..\libdrizzle\state.c" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\column.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\command.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\conn.cc" />
+    <ClCompile Include="conn_uds.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\drizzle.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\field.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\handshake.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\pack.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\query.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\result.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\row.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\sha1.cc" />
+    <ClCompile Include="..\libdrizzle-2.0\libdrizzle\state.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

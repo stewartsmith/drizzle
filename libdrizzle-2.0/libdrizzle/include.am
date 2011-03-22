@@ -1,0 +1,171 @@
+#
+# Drizzle Client Library
+#
+# Copyright (C) 2008 Eric Day (eday@oddments.org)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#
+#     * The names of its contributors may not be used to endorse or
+# promote products derived from this software without specific prior
+# written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+lib_LTLIBRARIES+= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+if HAVE_LIBSQLITE3
+SQLITE_PROGS= examples/sqlite_server
+endif
+
+noinst_PROGRAMS+= \
+		  libdrizzle-2.0/libdrizzle/mysql_password_hash
+libdrizzle_2_0_libdrizzle_mysql_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
+libdrizzle_2_0_libdrizzle_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+libdrizzle_2_0_libdrizzle_mysql_password_hash_SOURCES= libdrizzle-2.0/libdrizzle/mysql_password_hash.cc
+
+noinst_PROGRAMS+= \
+	examples/client \
+	examples/simple \
+	examples/simple_multi \
+	examples/pipe_query \
+	examples/server \
+	examples/proxy \
+	$(SQLITE_PROGS)
+
+libdrizzle_2_0_libdrizzle_libdrizzle_la_CXXFLAGS= \
+	${AM_CXXFLAGS} \
+        ${LIBDRIZZLE_CPPFLAGS} \
+        ${CFLAG_VISIBILITY} \
+	-DBUILDING_LIBDRIZZLE
+
+libdrizzle_2_0_libdrizzle_libdrizzle_la_LDFLAGS= \
+	$(AM_LDFLAGS) \
+	-version-info \
+	$(LIBDRIZZLE_LIBRARY_VERSION)
+
+libdrizzlepkgconfigdir= $(libdir)/pkgconfig
+libdrizzlepkgconfig_DATA= \
+                          support-files/libdrizzle-2.0.pc
+
+libdrizzle_2_0_libdrizzle_libdrizzle_la_SOURCES= \
+	libdrizzle-2.0/libdrizzle/column.cc \
+	libdrizzle-2.0/libdrizzle/command.cc \
+	libdrizzle-2.0/libdrizzle/conn.cc \
+	libdrizzle-2.0/libdrizzle/conn_uds.cc \
+	libdrizzle-2.0/libdrizzle/drizzle.cc \
+	libdrizzle-2.0/libdrizzle/field.cc \
+	libdrizzle-2.0/libdrizzle/handshake.cc \
+	libdrizzle-2.0/libdrizzle/pack.cc \
+	libdrizzle-2.0/libdrizzle/query.cc \
+	libdrizzle-2.0/libdrizzle/result.cc \
+	libdrizzle-2.0/libdrizzle/row.cc \
+	libdrizzle-2.0/libdrizzle/sha1.cc \
+	libdrizzle-2.0/libdrizzle/state.cc
+
+examples_server_CXXFLAGS= \
+                          $(AM_CXXFLAGS) \
+                          ${LIBDRIZZLE_CPPFLAGS}
+examples_server_SOURCES= examples/server.cc
+examples_server_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+examples_proxy_CXXFLAGS= \
+                         $(AM_CXXFLAGS) \
+                         ${LIBDRIZZLE_CPPFLAGS}
+examples_proxy_SOURCES= examples/proxy.cc
+examples_proxy_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+examples_client_CXXFLAGS= \
+                          $(AM_CXXFLAGS) \
+                          ${LIBDRIZZLE_CPPFLAGS}
+examples_client_SOURCES= examples/client.cc
+examples_client_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+examples_simple_CXXFLAGS= \
+                          $(AM_CXXFLAGS) \
+                          ${LIBDRIZZLE_CPPFLAGS}
+examples_simple_SOURCES= examples/simple.cc
+examples_simple_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+examples_simple_multi_CXXFLAGS= \
+                                $(AM_CXXFLAGS) \
+                                ${LIBDRIZZLE_CPPFLAGS}
+examples_simple_multi_SOURCES= examples/simple_multi.cc
+examples_simple_multi_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+examples_pipe_query_CXXFLAGS= \
+                              $(AM_CXXFLAGS) \
+                              ${LIBDRIZZLE_CPPFLAGS}
+examples_pipe_query_SOURCES= examples/pipe_query.cc
+examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+
+if HAVE_LIBSQLITE3
+examples_sqlite_server_CXXFLAGS= \
+                                 $(AM_CXXFLAGS) \
+                                 ${LIBDRIZZLE_CPPFLAGS}
+examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle/libdrizzle.la $(LTLIBSQLITE3)
+examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_sqlite_server_SOURCES= examples/sqlite_server.cc
+endif
+
+dist_libdrizzleinstall_HEADERS= \
+                                libdrizzle-2.0/libdrizzle/column.h \
+                                libdrizzle-2.0/libdrizzle/column_client.h \
+                                libdrizzle-2.0/libdrizzle/column_server.h \
+                                libdrizzle-2.0/libdrizzle/command_client.h \
+                                libdrizzle-2.0/libdrizzle/command_server.h \
+                                libdrizzle-2.0/libdrizzle/conn.h \
+                                libdrizzle-2.0/libdrizzle/conn_client.h \
+                                libdrizzle-2.0/libdrizzle/conn_server.h \
+                                libdrizzle-2.0/libdrizzle/constants.h \
+                                libdrizzle-2.0/libdrizzle/drizzle.h \
+                                libdrizzle-2.0/libdrizzle/drizzle_client.h \
+                                libdrizzle-2.0/libdrizzle/drizzle_server.h \
+                                libdrizzle-2.0/libdrizzle/field_client.h \
+                                libdrizzle-2.0/libdrizzle/field_server.h \
+                                libdrizzle-2.0/libdrizzle/handshake_client.h \
+                                libdrizzle-2.0/libdrizzle/handshake_server.h \
+                                libdrizzle-2.0/libdrizzle/libdrizzle.h \
+                                libdrizzle-2.0/libdrizzle/query.h \
+                                libdrizzle-2.0/libdrizzle/result.h \
+                                libdrizzle-2.0/libdrizzle/result_client.h \
+                                libdrizzle-2.0/libdrizzle/result_server.h \
+                                libdrizzle-2.0/libdrizzle/row_client.h \
+                                libdrizzle-2.0/libdrizzle/row_server.h \
+                                libdrizzle-2.0/libdrizzle/structs.h \
+                                libdrizzle-2.0/libdrizzle/visibility.h
+
+noinst_HEADERS+= \
+                 libdrizzle-2.0/libdrizzle/common.h \
+                 libdrizzle-2.0/libdrizzle/drizzle_local.h \
+                 libdrizzle-2.0/libdrizzle/conn_local.h \
+                 libdrizzle-2.0/libdrizzle/pack.h \
+                 libdrizzle-2.0/libdrizzle/state.h \
+                 libdrizzle-2.0/libdrizzle/sha1.h
+
+
+libdrizzle: libdrizzle-2.0/libdrizzle/libdrizzle.la
+install-libdrizzle: libdrizzle install-dist_libdrizzleinstallHEADERS install-libdrizzlepkgconfigDATA
+	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-2.0/libdrizzle/libdrizzle.la "$(DESTDIR)$(libdir)"
