@@ -741,9 +741,6 @@ public:
   /** Place to store various things */
   void *session_marker;
 
-  /** Keeps a copy of the previous table around in case we are just slamming on particular table */
-  Table *cached_table;
-
   /**
     Points to info-string that we show in SHOW PROCESSLIST
     You are supposed to call Session_SET_PROC_INFO only if you have coded
@@ -1454,7 +1451,6 @@ private:
   bool concurrent_execute_allowed;
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  std::vector<table::Singular *> temporary_shares;
   rusage usage;
   identifier::User::shared_ptr security_ctx;
   int32_t scoreboard_index;

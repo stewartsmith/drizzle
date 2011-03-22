@@ -162,6 +162,7 @@ public:
   properties_t properties;
   system_status_var status_var;
   session::TableMessages table_message_cache;
+  std::vector<table::Singular*> temporary_shares;
 	session::Transactions transaction;
   drizzle_system_variables variables;
 };
@@ -211,7 +212,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_sub_stmt_error(0),
   derived_tables_processing(false),
   m_lip(NULL),
-  cached_table(0),
   arg_of_last_insert_id_function(false),
   _catalog(catalog_arg),
   transaction_message(NULL),
@@ -480,11 +480,9 @@ Session::~Session()
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
- 
-  // Free all schema event observer lists.
-  for (std::map<std::string, plugin::EventObserverList *>::iterator it=schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
-    plugin::EventObserver::deregisterSchemaEvents(it->second);
 
+	BOOST_FOREACH(schema_event_observers_t::reference it, schema_event_observers)
+    plugin::EventObserver::deregisterSchemaEvents(it.second);
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -930,10 +928,8 @@ void Session::cleanup_after_query()
   _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for_each(temporary_shares.begin(),
-           temporary_shares.end(),
-           DeletePtr());
-  temporary_shares.clear();
+  for_each(impl_->temporary_shares.begin(), impl_->temporary_shares.end(), DeletePtr());
+  impl_->temporary_shares.clear();
 }
 
 /**
@@ -2087,8 +2083,8 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
 
 table::Singular& Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
-  return *temporary_shares.back();
+  impl_->temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
+  return *impl_->temporary_shares.back();
 }
 
 
@@ -2112,8 +2108,8 @@ table::Singular& Session::getInstanceTable()
 */
 table::Singular& Session::getInstanceTable(std::list<CreateField>& field_list)
 {
-  temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
-  return *temporary_shares.back();
+  impl_->temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+  return *impl_->temporary_shares.back();
 }
 
 void Session::clear_error(bool full)

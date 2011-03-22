@@ -979,14 +979,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     }
 
     /*
-      Before we test the global cache, we test our local session cache.
-    */
-    if (cached_table)
-    {
-      assert(false); /* Not implemented yet */
-    }
-
-    /*
       Non pre-locked/LOCK TABLES mode, and the table is not temporary:
       this is the normal use case.
       Now we should:
@@ -1017,8 +1009,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       ppp= table::getCache().equal_range(key);
 
       table= NULL;
-      for (table::CacheMap::const_iterator iter= ppp.first;
-           iter != ppp.second; ++iter, table= NULL)
+      for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter, table= NULL)
       {
         table= iter->second;
 
