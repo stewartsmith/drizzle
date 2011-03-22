@@ -670,7 +670,6 @@ public:
   bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
-  bool password;
   /**
     Set to true if execution of the current compound statement
     can not continue. In particular, disables activation of

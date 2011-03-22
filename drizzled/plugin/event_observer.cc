@@ -251,14 +251,9 @@ namespace plugin {
   {
     if (all_event_plugins.empty())
       return;
-
     EventObserverList *observers= session.getSchemaObservers(db);
-
     if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      session.setSchemaObservers(db, observers);
-   }
+      observers= session.setSchemaObservers(db, new EventObserverList());
 
     std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
                   RegisterSchemaEventsIterate(db, *observers));

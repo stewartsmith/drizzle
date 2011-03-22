@@ -208,7 +208,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _killed(NOT_KILLED),
   some_tables_deleted(false),
   no_errors(false),
-  password(false),
   is_fatal_error(false),
   transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
@@ -716,13 +715,9 @@ bool Session::authenticate()
   return true;
 }
 
-bool Session::checkUser(const std::string &passwd_str,
-                        const std::string &in_db)
+bool Session::checkUser(const std::string &passwd_str, const std::string &in_db)
 {
-  bool is_authenticated=
-    plugin::Authentication::isAuthenticated(*user(), passwd_str);
-
-  if (is_authenticated != true)
+  if (not plugin::Authentication::isAuthenticated(*user(), passwd_str))
   {
     status_var.access_denied++;
     /* isAuthenticated has pushed the error message */
@@ -730,17 +725,9 @@ bool Session::checkUser(const std::string &passwd_str,
   }
 
   /* Change database if necessary */
-  if (not in_db.empty())
-  {
-    identifier::Schema identifier(in_db);
-    if (schema::change(*this, identifier))
-    {
-      /* change_db() has pushed the error message. */
-      return false;
-    }
-  }
+  if (not in_db.empty() && schema::change(*this, identifier::Schema(in_db)))
+    return false; // change() has pushed the error message
   my_ok();
-  password= not passwd_str.empty();
 
   /* Ready to handle queries */
   return true;
@@ -748,11 +735,6 @@ bool Session::checkUser(const std::string &passwd_str,
 
 bool Session::executeStatement()
 {
-  char *l_packet= 0;
-  uint32_t packet_length;
-
-  enum enum_server_command l_command;
-
   /*
     indicator of uninitialized lex => normal flow of errors handling
     (see my_message_sql)
@@ -760,11 +742,10 @@ bool Session::executeStatement()
   lex().current_select= 0;
   clear_error();
   main_da().reset_diagnostics_area();
-
-  if (client->readCommand(&l_packet, &packet_length) == false)
-  {
+  char *l_packet= 0;
+  uint32_t packet_length;
+  if (not client->readCommand(&l_packet, &packet_length))
     return false;
-  }
 
   if (getKilled() == KILL_CONNECTION)
     return false;
@@ -772,7 +753,7 @@ bool Session::executeStatement()
   if (packet_length == 0)
     return true;
 
-  l_command= static_cast<enum_server_command>(l_packet[0]);
+  enum_server_command l_command= static_cast<enum_server_command>(l_packet[0]);
 
   if (command >= COM_END)
     command= COM_END;                           // Wrong command
