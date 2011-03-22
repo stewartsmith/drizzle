@@ -20,16 +20,13 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
+namespace util {
 
-namespace util
+class Storable 
 {
-
-class Storable {
 public:
-  virtual ~Storable()
-  { }
+  virtual ~Storable() { }
 };
 
 } /* namespace util */

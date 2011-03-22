@@ -25,6 +25,7 @@
 #include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/field/blob.h>
 #endif
 

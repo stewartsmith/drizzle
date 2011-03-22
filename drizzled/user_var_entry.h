@@ -21,14 +21,14 @@
 #pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/query_id.h>
 #include <drizzled/item_result.h>
 
 namespace drizzled {
 
 namespace type { class Decimal; }
 
-// this is needed for user_vars hash
+typedef uint64_t query_id_t;
+
 class user_var_entry
 {
  public:

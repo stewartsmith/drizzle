@@ -23,12 +23,16 @@
 
 #include <config.h>
 
+#include <boost/checked_delete.hpp>
+#include <boost/filesystem.hpp>
 #include <drizzled/copy_field.h>
 #include <drizzled/data_home.h>
+#include <drizzled/diagnostics_area.h>
 #include <drizzled/display.h>
 #include <drizzled/drizzled.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+#include <drizzled/ha_data.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/internal/thread_var.h>
@@ -37,6 +41,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/return_int.h>
+#include <drizzled/item/subselect.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/plugin/authorization.h>
@@ -50,6 +55,7 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
 #include <drizzled/refresh_version.h>
+#include <drizzled/schema.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/select_export.h>
@@ -59,40 +65,33 @@
 #include <drizzled/select_to_file.h>
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
+#include <drizzled/session/property_map.h>
+#include <drizzled/session/state.h>
+#include <drizzled/session/table_messages.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statement.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/user_var_entry.h>
-#include <drizzled/util/functors.h>
+#include <drizzled/util/backtrace.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/util/functors.h>
 #include <plugin/myisam/myisam.h>
-#include <drizzled/item/subselect.h>
-#include <drizzled/statement.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/ha_data.h>
-#include <drizzled/diagnostics_area.h>
-#include <drizzled/session/state.h>
 
 #include <algorithm>
 #include <climits>
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/checked_delete.hpp>
-
-#include <drizzled/util/backtrace.h>
-
-#include <drizzled/schema.h>
-
 using namespace std;
 
-namespace fs=boost::filesystem;
-namespace drizzled
-{
+namespace fs= boost::filesystem;
+
+namespace drizzled {
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -124,10 +123,8 @@ int tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
-  if (fd >= 0) {
+  if (fd >= 0)
     unlink(filename);
-  }
-
   return fd;
 }
 
@@ -136,10 +133,9 @@ void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
   return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
 }
 
-ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransaction *monitored,
-                                             size_t index)
+ResourceContext& Session::getResourceContext(const plugin::MonitoredInTransaction& monitored, size_t index)
 {
-  return &ha_data[monitored->getId()].resource_context[index];
+  return ha_data[monitored.getId()].resource_context[index];
 }
 
 int64_t session_test_options(const Session *session, int64_t test_options)
@@ -150,6 +146,8 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 class Session::impl_c
 {
 public:
+  typedef session::PropertyMap properties_t;
+
   Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
@@ -158,6 +156,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  properties_t properties;
   session::TableMessages table_message_cache;
 };
 
@@ -166,14 +165,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   mem_root(&main_mem_root),
   query(new std::string),
   _schema(new std::string),
-  client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
   thread_stack(NULL),
-  security_ctx(identifier::User::make_shared()),
   _where(Session::DEFAULT_WHERE),
-  dbug_sentry(Session_SENTRY_MAGIC),
   mysys_var(0),
   command(COM_CONNECT),
   file_id(0),
@@ -218,7 +214,9 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   xa_id(0),
   concurrent_execute_allowed(true),
   tablespace_op(false),
-  use_usage(false)
+  use_usage(false),
+  security_ctx(identifier::User::make_shared()),
+  client(client_arg)
 {
   client->setSession(this);
 
@@ -322,7 +320,8 @@ bool Session::add_item_to_list(Item *item)
 
 bool Session::add_value_to_list(Item *value)
 {
-  return lex().value_list.push_back(value);
+	lex().value_list.push_back(value);
+  return false;
 }
 
 bool Session::add_order_to_list(Item *item, bool asc)
@@ -400,7 +399,7 @@ void Session::get_xid(DrizzleXid *xid)
 
 /* Do operations that may take a long time */
 
-void Session::cleanup(void)
+void Session::cleanup()
 {
   assert(cleanup_done == false);
 
@@ -438,8 +437,6 @@ void Session::cleanup(void)
 
 Session::~Session()
 {
-  this->checkSentry();
-
   if (client and client->isConnected())
   {
     assert(security_ctx);
@@ -470,7 +467,6 @@ Session::~Session()
 
   warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
-  dbug_sentry= Session_SENTRY_GONE;
 
   main_mem_root.free_root(MYF(0));
   currentMemRoot().release();
@@ -495,8 +491,6 @@ void Session::awake(Session::killed_state_t state_to_set)
 {
   if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
     return;
-
-  this->checkSentry();
 
   setKilled(state_to_set);
   scheduler->killSession(this);
@@ -913,10 +907,6 @@ void Session::cleanup_after_query()
     Reset rand_used so that detection of calls to rand() will save random
     seeds if needed by the slave.
   */
-  {
-    /* Forget those values, for next binlogger: */
-    auto_inc_intervals_in_cur_stmt_for_binlog.empty();
-  }
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
     /* set what LAST_INSERT_ID() will return */
@@ -1750,11 +1740,6 @@ void Session::reset_for_next_command()
 {
   free_list= 0;
   select_number= 1;
-  /*
-    Those two lines below are theoretically unneeded as
-    Session::cleanup_after_query() should take care of this already.
-  */
-  auto_inc_intervals_in_cur_stmt_for_binlog.empty();
 
   is_fatal_error= false;
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
@@ -2204,15 +2189,24 @@ enum_tx_isolation Session::getTxIsolation()
   return (enum_tx_isolation)variables.tx_isolation;
 }
 
-namespace display  {
-
-static const std::string NONE= "NONE";
-static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
-static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
-
-const std::string &type(drizzled::Session::global_read_lock_t type)
+drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 {
-  switch (type) {
+  return impl_->properties.getProperty(arg);
+}
+
+void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
+{
+  impl_->properties.setProperty(arg, value);
+}
+
+const std::string& display::type(drizzled::Session::global_read_lock_t type)
+{
+  static const std::string NONE= "NONE";
+  static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
+  static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
+
+  switch (type) 
+  {
     default:
     case Session::NONE:
       return NONE;
@@ -2223,11 +2217,9 @@ const std::string &type(drizzled::Session::global_read_lock_t type)
   }
 }
 
-size_t max_string_length(drizzled::Session::global_read_lock_t)
+size_t display::max_string_length(drizzled::Session::global_read_lock_t)
 {
-  return MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT.size();
+  return display::type(Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT).size();
 }
-
-} /* namespace display */
 
 } /* namespace drizzled */

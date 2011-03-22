@@ -22,9 +22,10 @@
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/user_var_entry.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/charset_info.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /** Get the value of a variable as a double. */
 

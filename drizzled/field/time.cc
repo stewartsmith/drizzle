@@ -25,18 +25,14 @@
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-
-#include <math.h>
-
-#include <sstream>
-
 #include <drizzled/temporal.h>
 
-namespace drizzled
-{
+#include <arpa/inet.h>
+#include <cmath>
+#include <sstream>
 
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /**
   time_t type

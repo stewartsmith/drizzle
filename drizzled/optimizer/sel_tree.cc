@@ -191,11 +191,10 @@ optimizer::tree_or(optimizer::RangeParameter *param,
       }
       optimizer::SEL_IMERGE *merge= NULL;
       /* both trees are "range" trees, produce new index merge structure */
-      if (! (result= new optimizer::SEL_TREE()) || 
-          ! (merge= new optimizer::SEL_IMERGE()) ||
-          (result->merges.push_back(merge)) ||
-          (merge->or_sel_tree(param, tree1)) ||
-          (merge->or_sel_tree(param, tree2)))
+			result= new optimizer::SEL_TREE();
+			merge= new optimizer::SEL_IMERGE();
+			result->merges.push_back(merge);
+      if (merge->or_sel_tree(param, tree1) || merge->or_sel_tree(param, tree2))
       {
         result= NULL;
       }

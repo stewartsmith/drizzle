@@ -21,6 +21,7 @@
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
+#include <drizzled/session/table_messages.h>
 
 #include <boost/thread/mutex.hpp>
 

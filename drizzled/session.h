@@ -35,28 +35,19 @@
 
 #include <drizzled/global_charset_info.h>
 #include <drizzled/base.h>
-#include <drizzled/discrete_interval.h>
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/query_id.h>
-#include <drizzled/session/property_map.h>
-#include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
-#include <drizzled/transaction_context.h>
-#include <drizzled/util/storable.h>
-#include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/util/string.h>
 #include <drizzled/type/time.h>
-#include <drizzled/sql_lex.h>
-
-#define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled {
 
@@ -89,7 +80,10 @@ namespace table
   class Singular; 
 }
 
-typedef class Item COND;
+namespace util
+{
+  class Storable;
+}
 
 class CopyField;
 class CreateField;
@@ -108,6 +102,8 @@ class select_result;
 class user_var_entry;
 struct Ha_data;
 
+typedef Item COND;
+
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
@@ -115,9 +111,6 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
-
-#define Session_SENTRY_MAGIC 0xfeedd1ff
-#define Session_SENTRY_GONE  0xdeadbeef
 
 extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
@@ -292,7 +285,7 @@ public:
     if (_schema)
       return _schema;
 
-    return util::string::const_shared_ptr(new std::string(""));
+    return util::string::const_shared_ptr(new std::string);
   }
 
   /* current cache key */
@@ -306,17 +299,8 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
-private:
-  plugin::Client *client; /**< Pointer to client object */
-
 public:
-
   void setClient(plugin::Client *client_arg);
-
-  plugin::Client *getClient()
-  {
-    return client;
-  }
 
   plugin::Client *getClient() const
   {
@@ -342,7 +326,6 @@ public:
   enum_tx_isolation getTxIsolation();
   system_status_var status_var;
 
-  system_status_var status_var0; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -353,23 +336,9 @@ public:
    */
   char *thread_stack;
 
-private:
-  identifier::User::shared_ptr security_ctx;
-
-  int32_t scoreboard_index;
-
-  inline void checkSentry() const
-  {
-    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
-  }
-
-public:
   identifier::User::const_shared_ptr user() const
   {
-    if (security_ctx)
-      return security_ctx;
-
-    return identifier::User::const_shared_ptr();
+    return security_ctx ? security_ctx : identifier::User::const_shared_ptr();
   }
 
   void setUser(identifier::User::shared_ptr arg)
@@ -416,7 +385,6 @@ public:
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
-  uint32_t dbug_sentry; /**< watch for memory corruption */
 
 private:
   boost::thread::id boost_thread_id;
@@ -503,8 +471,7 @@ private:
 
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
-  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
-                                      size_t index= 0);
+  ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
   session::Transactions transaction;
 
@@ -569,9 +536,6 @@ public:
     (first_successful_insert_id_in_cur_stmt == 0), but storing "INSERT_ID=3"
     in the binlog is still needed; the list's minimum will contain 3.
   */
-  Discrete_intervals_list auto_inc_intervals_in_cur_stmt_for_binlog;
-  /** Used by replication and SET INSERT_ID */
-  Discrete_intervals_list auto_inc_intervals_forced;
 
   uint64_t limit_found_rows;
   uint64_t options; /**< Bitmap of options */
@@ -897,16 +861,6 @@ public:
   {
     return first_successful_insert_id_in_prev_stmt;
   }
-  /**
-    Used by Intvar_log_event::do_apply_event() and by "SET INSERT_ID=#"
-    (mysqlbinlog). We'll soon add a variant which can take many intervals in
-    argument.
-  */
-  inline void force_one_auto_inc_interval(uint64_t next_id)
-  {
-    auto_inc_intervals_forced.empty(); // in case of multiple SET INSERT_ID
-    auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
-  }
 
   Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
   virtual ~Session();
@@ -1174,7 +1128,7 @@ public:
     @param level the error level
     @return true if the error is handled
   */
-  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
+  virtual bool handle_error(error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
   /**
@@ -1436,15 +1390,17 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  drizzled::util::Storable *getProperty(const std::string &arg)
+  template <class T>
+  T* getProperty(const std::string& name)
   {
-    return life_properties.getProperty(arg);
+    return static_cast<T*>(getProperty0(name));
   }
 
-  template<class T>
-  void setProperty(const std::string &arg, T *value)
+  template <class T>
+  T setProperty(const std::string& name, T value)
   {
-    life_properties.setProperty(arg, value);
+    setProperty0(name, value);
+    return value;
   }
 
   /**
@@ -1486,6 +1442,9 @@ private:
 	class impl_c;
 
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
+  drizzled::util::Storable* getProperty0(const std::string&);
+  void setProperty0(const std::string&, drizzled::util::Storable*);
+
 
   bool resetUsage()
   {
@@ -1512,9 +1471,11 @@ private:
   bool concurrent_execute_allowed;
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  session::PropertyMap life_properties;
   std::vector<table::Singular *> temporary_shares;
   rusage usage;
+  identifier::User::shared_ptr security_ctx;
+  int32_t scoreboard_index;
+  plugin::Client *client;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
@@ -1537,10 +1498,10 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
-namespace display  {
-const std::string &type(drizzled::Session::global_read_lock_t type);
-size_t max_string_length(drizzled::Session::global_read_lock_t type);
-
+namespace display  
+{
+  const std::string &type(Session::global_read_lock_t);
+  size_t max_string_length(Session::global_read_lock_t);
 } /* namespace display */
 
 } /* namespace drizzled */

@@ -24,25 +24,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 #include <drizzled/identifier.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/table/concurrent.h>
-
 #include <drizzled/table/cache.h>
 #include <drizzled/table/unused.h>
-
 #include <drizzled/pthread_globals.h>
+#include <drizzled/sys_var.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 
-namespace table
-{
+namespace table {
 
 CacheMap &getCache(void)
 {

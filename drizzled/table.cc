@@ -54,18 +54,15 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-
 #include <drizzled/refresh_version.h>
-
 #include <drizzled/table/singular.h>
-
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
+#include <drizzled/sql_lex.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -1690,12 +1687,8 @@ bool Table::fill_item_list(List<Item> *item_list) const
     are fixed in Item_field constructor.
   */
   for (Field **ptr= field; *ptr; ptr++)
-  {
-    Item_field *item= new Item_field(*ptr);
-    if (!item || item_list->push_back(item))
-      return true;
-  }
-  return false;
+    item_list->push_back(new Item_field(*ptr));
+  return false; // todo: return void
 }
 
 

@@ -22,13 +22,11 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
-
+#include <drizzled/identifier.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace identifier
-{
+namespace drizzled {
+namespace identifier {
 
 /**
   @class User
@@ -51,25 +49,14 @@ public:
   };
 
   User():
-    password_type(NONE),
-    _user(""),
-    _address("")
+    password_type(NONE)
   { }
 
   virtual void getSQLPath(std::string &arg) const;
 
   bool hasPassword() const
   {
-    switch (password_type)
-    {
-    case NONE:
-      return false;
-    case PLAIN_TEXT:
-    case MYSQL_HASH:
-      break;
-    }
-
-    return true;
+    return password_type != NONE;
   }
 
   const std::string& address() const
@@ -79,7 +66,7 @@ public:
 
   void setAddress(const char *newip)
   {
-    _address.assign(newip);
+    _address = newip;
   }
 
   const std::string& username() const
@@ -89,10 +76,10 @@ public:
 
   void setUser(const std::string &newuser)
   {
-    _user.assign(newuser);
+    _user = newuser;
   }
 
-  PasswordType getPasswordType(void) const
+  PasswordType getPasswordType() const
   {
     return password_type;
   }
