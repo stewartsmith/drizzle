@@ -577,7 +577,6 @@ public:
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
 
