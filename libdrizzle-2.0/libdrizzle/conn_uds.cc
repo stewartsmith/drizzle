@@ -36,39 +36,44 @@
 
 /**
  * @file
- * @brief UDS Connection stubs for Windows
+ * @brief Connection Definitions for Unix Domain Sockets
  */
 
-#include "libdrizzle/common.h"
-
-/*
- * Common definitions
- */
+#include "common.h"
 
 const char *drizzle_con_uds(const drizzle_con_st *con)
 {
-  (void)con;
-  return (const char *)NULL;
+  if (con->socket_type == DRIZZLE_CON_SOCKET_UDS)
+  {
+    if (con->socket.uds.sockaddr.sun_path[0] != 0)
+      return con->socket.uds.sockaddr.sun_path;
+
+    if (con->options & DRIZZLE_CON_MYSQL)
+      return DRIZZLE_DEFAULT_UDS_MYSQL;
+
+    return DRIZZLE_DEFAULT_UDS;
+  }
+
+  return NULL;
 }
 
 void drizzle_con_set_uds(drizzle_con_st *con, const char *uds)
 {
-  (void)con;
-  (void)uds;
-}
+  drizzle_con_reset_addrinfo(con);
 
-/*
- * Private definitions
- */
+  con->socket_type= DRIZZLE_CON_SOCKET_UDS;
 
-bool drizzle_con_uses_uds(drizzle_con_st *con)
-{
-  (void)con;
-  return false;
-}
+  if (uds == NULL)
+    uds= "";
 
-void drizzle_con_clone_uds(drizzle_con_st *con, drizzle_con_st *from)
-{
-  (void)con;
-  (void)from;
+  con->socket.uds.sockaddr.sun_family= AF_UNIX;
+  strncpy(con->socket.uds.sockaddr.sun_path, uds,
+          sizeof(con->socket.uds.sockaddr.sun_path));
+  con->socket.uds.sockaddr.sun_path[sizeof(con->socket.uds.sockaddr.sun_path) - 1]= 0;
+
+  con->socket.uds.addrinfo.ai_family= AF_UNIX;
+  con->socket.uds.addrinfo.ai_socktype= SOCK_STREAM;
+  con->socket.uds.addrinfo.ai_protocol= 0;
+  con->socket.uds.addrinfo.ai_addrlen= sizeof(struct sockaddr_un);
+  con->socket.uds.addrinfo.ai_addr= (struct sockaddr *)&(con->socket.uds.sockaddr);
 }
