@@ -29,8 +29,6 @@ namespace drizzled {
 class DRIZZLED_API Identifier 
 {
 public:
-  typedef const Identifier& const_reference;
-
   virtual ~Identifier()
   { 
 	}
@@ -39,7 +37,6 @@ public:
 	{ 
 		return "";
 	}
-
 };
 
 } // namespace drizzled

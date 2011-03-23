@@ -163,9 +163,9 @@ void my_error(const std::string &ref, error_t nr, myf MyFlags)
   my_error(nr, MyFlags, ref.c_str());
 } 
 
-void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
+void my_error(error_t nr, const drizzled::Identifier& id, myf MyFlags)
 {
-  my_error(nr, MyFlags, ref.getSQLPath().c_str());
+  my_error(nr, MyFlags, id.getSQLPath().c_str());
 } 
 
 void my_error(error_t nr)
