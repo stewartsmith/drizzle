@@ -71,12 +71,14 @@
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
+#include <drizzled/system_variables.h>
 
 #include <google/protobuf/stubs/common.h>
 

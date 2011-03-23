@@ -42,21 +42,15 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
-
+#include <drizzled/catalog/instance.h>
 #include <boost/thread/mutex.hpp>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
 
-namespace drizzled
-{
-
-namespace schema
-{
-
-static void change_db_impl(Session &session);
-static void change_db_impl(Session &session, identifier::Schema &schema_identifier);
+namespace drizzled {
+namespace schema {
 
 /*
   Create a database
@@ -212,7 +206,7 @@ bool alter(Session &session,
     ERROR Error
 */
 
-bool drop(Session &session, identifier::Schema &schema_identifier, const bool if_exists)
+bool drop(Session &session, const identifier::Schema &schema_identifier, bool if_exists)
 {
   bool error= false;
 
@@ -271,7 +265,7 @@ bool drop(Session &session, identifier::Schema &schema_identifier, const bool if
     it to 0.
   */
   if (not error and schema_identifier.compare(*session.schema()))
-    change_db_impl(session);
+    session.set_db("");
 
   session.startWaitingGlobalReadLock();
 
@@ -340,7 +334,7 @@ bool drop(Session &session, identifier::Schema &schema_identifier, const bool if
     @retval true  Error
 */
 
-bool change(Session &session, identifier::Schema &schema_identifier)
+bool change(Session &session, const identifier::Schema &schema_identifier)
 {
 
   if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
@@ -365,7 +359,7 @@ bool change(Session &session, identifier::Schema &schema_identifier)
     return true;
   }
 
-  change_db_impl(session, schema_identifier);
+  session.set_db(schema_identifier.getSchemaName());
 
   return false;
 }
@@ -381,37 +375,6 @@ bool change(Session &session, identifier::Schema &schema_identifier)
   @param new_db_charset Character set of the new database.
 */
 
-static void change_db_impl(Session &session, identifier::Schema &schema_identifier)
-{
-  /* 1. Change current database in Session. */
-
-#if 0
-  if (new_db_name == NULL)
-  {
-    /*
-      Session::set_db() does all the job -- it frees previous database name and
-      sets the new one.
-    */
-
-    session->set_db(NULL, 0);
-  }
-  else
-#endif
-  {
-    /*
-      Here we already have a copy of database name to be used in Session. So,
-      we just call Session::reset_db(). Since Session::reset_db() does not releases
-      the previous database name, we should do it explicitly.
-    */
-
-    session.set_db(schema_identifier.getSchemaName());
-  }
-}
-
-static void change_db_impl(Session &session)
-{
-  session.set_db(string());
-}
 
 /*
   Check if database name is valid
@@ -425,13 +388,10 @@ static void change_db_impl(Session &session)
     true ok
 */
 
-bool check(Session &session, identifier::Schema &schema_identifier)
+bool check(Session &session, const identifier::Schema &schema_identifier)
 {
   if (not plugin::Authorization::isAuthorized(*session.user(), schema_identifier))
-  {
     return false;
-  }
-
   return schema_identifier.isValid();
 }
 

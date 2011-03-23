@@ -71,6 +71,9 @@
 #include <drizzled/plugin/xa_resource_manager.h>
 #include <drizzled/plugin/xa_storage_engine.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <vector>
 #include <algorithm>
@@ -80,8 +83,7 @@
 using namespace std;
 using namespace google;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * @defgroup Transactions

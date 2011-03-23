@@ -21,6 +21,7 @@
 #include <drizzled/function/math/int.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
 using namespace drizzled;

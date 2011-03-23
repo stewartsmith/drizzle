@@ -35,15 +35,13 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
-
-static uint32_t used_blob_length(CacheField **ptr);
+namespace drizzled {
 
 static uint32_t used_blob_length(CacheField **ptr)
 {

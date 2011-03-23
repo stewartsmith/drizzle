@@ -52,11 +52,12 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/return_int.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/diagnostics_area.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Store a new message in an error object
@@ -92,7 +93,7 @@ void drizzle_reset_errors(Session *session, bool force)
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;
-    session->warn_list.clear();
+    session->main_da().m_warn_list.clear();
     session->row_count= 1; // by default point to row 1
   }
 }
@@ -145,11 +146,11 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
     return NULL;
 
   DRIZZLE_ERROR *err= NULL;
-  if (session->warn_list.size() < session->variables.max_error_count)
+  if (session->main_da().m_warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
-    session->warn_list.push_back(err, &session->warn_root);
+    session->main_da().m_warn_list.push_back(err, &session->warn_root);
   }
   session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;
@@ -223,7 +224,7 @@ bool show_warnings(Session *session,
 
   unit->set_limit(sel);
 
-  List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
+  List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
   while (DRIZZLE_ERROR* err= it++)
   {
     /* Skip levels that the user is not interested in */

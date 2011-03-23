@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <drizzled/message/schema.h>
+// #include <drizzled/message/schema.h>
 
 namespace drizzled {
 
@@ -30,11 +30,11 @@ namespace identifier { class Schema; }
 
 namespace schema {
 
-bool create(Session &session, const message::Schema &schema_message, const bool is_if_not_exists);
-bool alter(Session &session, const message::Schema &schema_message, const message::Schema &original_schema);
-bool drop(Session &session, identifier::Schema &identifier, const bool if_exists);
-bool change(Session &session, identifier::Schema &identifier);
-bool check(Session &session, identifier::Schema &schema);
+bool create(Session&, const message::Schema&, bool is_if_not_exists);
+bool alter(Session&, const message::Schema&, const message::Schema &original_schema);
+bool drop(Session&, const identifier::Schema&, bool if_exists);
+bool change(Session&, const identifier::Schema&);
+bool check(Session&, const identifier::Schema&);
 
 }
 

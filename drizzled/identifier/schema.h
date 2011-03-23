@@ -31,23 +31,8 @@
 
 #pragma once
 
-#include <drizzled/enum.h>
-#include <drizzled/definitions.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/catalog/local.h>
-#include <string.h>
-
-#include <assert.h>
-
-#include <ostream>
-#include <list>
-#include <algorithm>
-#include <functional>
-#include <iostream>
-
 #include <boost/algorithm/string.hpp>
-
-#include <drizzled/visibility.h>
+#include <ostream>
 
 namespace drizzled {
 namespace identifier {
@@ -62,9 +47,6 @@ public:
   typedef const Schema& const_reference;
 
   Schema(const std::string &db_arg);
-
-  virtual ~Schema()
-  { }
 
   virtual void getSQLPath(std::string &arg) const;
 
@@ -89,7 +71,7 @@ public:
 
   friend bool operator<(Schema::const_reference left, Schema::const_reference right)
   {
-    return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
+    return boost::ilexicographical_compare(left.getSchemaName(), right.getSchemaName());
   }
 
   friend bool operator==(Schema::const_reference left,

@@ -46,6 +46,7 @@
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/select_union.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 namespace drizzled {
 

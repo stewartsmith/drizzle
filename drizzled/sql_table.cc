@@ -37,14 +37,14 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-
 #include <drizzled/definition/cache.h>
-
+#include <drizzled/system_variables.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/diagnostics_area.h>
 
 #include <algorithm>
 #include <sstream>
@@ -53,8 +53,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool is_primary_key(KeyInfo *key_info)
 {
@@ -1811,7 +1810,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.size())
+      if (!session->main_da().m_warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;
@@ -1860,7 +1859,7 @@ send_result:
     session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
+      List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {

@@ -23,14 +23,14 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/typelib.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Create a formated date/time value in a string.

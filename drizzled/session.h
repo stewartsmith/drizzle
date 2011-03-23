@@ -38,18 +38,19 @@
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/session/transactions.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/system_variables.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/string.h>
 #include <drizzled/type/time.h>
 
 namespace drizzled {
+
+namespace catalog
+{
+	class Instance;
+}
 
 namespace plugin
 {
@@ -72,6 +73,7 @@ namespace session
 { 
   class State; 
   class TableMessages;
+  class Transactions;
 }
 
 namespace table 
@@ -99,14 +101,17 @@ class TableShareInstance;
 class Table_ident;
 class Time_zone;
 class select_result;
+class system_status_var;
 class user_var_entry;
 struct Ha_data;
 
 typedef Item COND;
+typedef uint64_t my_xid;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
+extern uint32_t server_id;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -136,6 +141,10 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
 class DRIZZLED_API Session : public Open_tables_state
 {
+private:
+  class impl_c;
+
+  boost::scoped_ptr<impl_c> impl_;
 public:
   // Plugin storage in Session.
   typedef boost::shared_ptr<Session> shared_ptr;
@@ -144,7 +153,7 @@ public:
   typedef const Session* const_pointer;
   typedef Session* pointer;
 
-  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  static shared_ptr make_shared(plugin::Client *client, boost::shared_ptr<catalog::Instance> instance_arg)
   {
     assert(instance_arg);
     return boost::make_shared<Session>(client, instance_arg);
@@ -161,7 +170,7 @@ public:
 			that it needs to update this field in write_row
                         and update_row.
   */
-  enum enum_mark_columns mark_used_columns;
+  enum_mark_columns mark_used_columns;
   inline void* calloc(size_t size)
   {
     void *ptr= mem_root->alloc_root(size);
@@ -275,17 +284,11 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-private:
-  util::string::shared_ptr _schema;
-
 public:
 
   util::string::const_shared_ptr schema() const
   {
-    if (_schema)
-      return _schema;
-
-    return util::string::const_shared_ptr(new std::string);
+    return _schema ? _schema : util::string::const_shared_ptr(new std::string);
   }
 
   /* current cache key */
@@ -322,9 +325,9 @@ public:
     return user_vars;
   }
 
-  drizzle_system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables& variables; /**< Mutable local variables local to the session */
   enum_tx_isolation getTxIsolation();
-  system_status_var status_var;
+  system_status_var& status_var;
 
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
@@ -473,7 +476,7 @@ public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
   ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
-  session::Transactions transaction;
+  session::Transactions& transaction;
 
   Field *dup_field;
   sigset_t signals;
@@ -578,26 +581,14 @@ public:
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
 
-  ulong col_access;
-
-  /* Statement id is thread-wide. This counter is used to generate ids */
-  uint32_t statement_id_counter;
-  uint32_t rand_saved_seed1;
-  uint32_t rand_saved_seed2;
   /**
     Row counter, mainly for errors and warnings. Not increased in
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-
-  uint32_t getRowCount() const
-  {
-    return row_count;
-  }
 
   session_id_t thread_id;
   uint32_t tmp_table;
@@ -684,7 +675,6 @@ public:
   bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
-  bool password;
   /**
     Set to true if execution of the current compound statement
     can not continue. In particular, disables activation of
@@ -753,9 +743,6 @@ public:
   /** Place to store various things */
   void *session_marker;
 
-  /** Keeps a copy of the previous table around in case we are just slamming on particular table */
-  Table *cached_table;
-
   /**
     Points to info-string that we show in SHOW PROCESSLIST
     You are supposed to call Session_SET_PROC_INFO only if you have coded
@@ -812,10 +799,8 @@ public:
   }
 
   /** Returns the current transaction ID for the session's current statement */
-  inline my_xid getTransactionId()
-  {
-    return transaction.xid_state.xid.quick_get_my_xid();
-  }
+  my_xid getTransactionId();
+
   /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
@@ -862,7 +847,7 @@ public:
     return first_successful_insert_id_in_prev_stmt;
   }
 
-  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
+  Session(plugin::Client *client_arg, boost::shared_ptr<catalog::Instance> catalog);
   virtual ~Session();
 
   void cleanup();
@@ -1258,7 +1243,6 @@ public:
     resultset= NULL;
   }
 
-public:
   plugin::EventObserverList *getSessionObservers()
   {
     return session_event_observers;
@@ -1269,21 +1253,8 @@ public:
     session_event_observers= observers;
   }
 
-  /* For schema event observers there is one set of observers per database. */
-  plugin::EventObserverList *getSchemaObservers(const std::string &db_name)
-  {
-    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
-      return *i;
-    return NULL;
-  }
-
-  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers)
-  {
-    schema_event_observers.erase(db_name);
-    if (observers)
-      schema_event_observers[db_name] = observers;
-  }
-
+  plugin::EventObserverList* getSchemaObservers(const std::string& schema);
+  plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
  private:
 
@@ -1414,8 +1385,8 @@ public:
   plugin::StorageEngine *getDefaultStorageEngine();
   void get_xid(DrizzleXid *xid); // Innodb only
 
-  table::Singular *getInstanceTable();
-  table::Singular *getInstanceTable(List<CreateField> &field_list);
+  table::Singular& getInstanceTable();
+  table::Singular& getInstanceTable(std::list<CreateField>&);
 
   void setUsage(bool arg)
   {
@@ -1427,20 +1398,18 @@ public:
     return usage;
   }
 
-  catalog::Instance::const_reference catalog() const
+  const catalog::Instance& catalog() const
   {
     return *_catalog;
   }
 
-  catalog::Instance::reference catalog()
+  catalog::Instance& catalog()
   {
     return *_catalog;
   }
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-	class impl_c;
-
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
@@ -1451,8 +1420,7 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  boost::scoped_ptr<impl_c> impl_;
-  catalog::Instance::shared_ptr _catalog;
+  boost::shared_ptr<catalog::Instance> _catalog;
 
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
@@ -1461,21 +1429,17 @@ private:
   message::Resultset *resultset;
   plugin::EventObserverList *session_event_observers;
 
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
-
   uint64_t xa_id;
   const char *proc_info;
   bool abort_on_warning;
   bool concurrent_execute_allowed;
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  std::vector<table::Singular *> temporary_shares;
   rusage usage;
   identifier::User::shared_ptr security_ctx;
   int32_t scoreboard_index;
   plugin::Client *client;
+  util::string::shared_ptr _schema;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
