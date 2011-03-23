@@ -181,7 +181,7 @@ static int init(drizzled::module::Context &context)
     }
 
     /* Create and initialize the transaction log index */
-    transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
+    transaction_log_index= new TransactionLogIndex(*transaction_log);
       /* Check to see if the index was not created properly */
       if (transaction_log_index->hasError())
       {
