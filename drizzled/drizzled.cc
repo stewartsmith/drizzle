@@ -622,7 +622,7 @@ static void set_root(const char *path)
     session		 Thread handler
 */
 
-void drizzled::Session::unlink(session_id_t &session_id)
+void Session::unlink(session_id_t &session_id)
 {
   Session::shared_ptr session= session::Cache::singleton().find(session_id);
 
@@ -630,7 +630,7 @@ void drizzled::Session::unlink(session_id_t &session_id)
     unlink(session);
 }
 
-void drizzled::Session::unlink(Session::shared_ptr &session)
+void Session::unlink(Session::shared_ptr &session)
 {
   --connection_count;
 
@@ -817,7 +817,7 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
   global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
 
-static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
+static void check_limits_max_join_size(ha_rows in_max_join_size)
 {
   global_system_variables.max_join_size= INT32_MAX;
   if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
@@ -1216,7 +1216,7 @@ int init_basic_variables(int argc, char **argv)
   _("Max number of errors/warnings to store for a statement."))
   ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
   _("Don't allow creation of heap tables bigger than this."))
-  ("max-join-size", po::value<drizzled::ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
+  ("max-join-size", po::value<ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
   _("Joins that are probably going to read more than max_join_size records "
      "return an error."))
   ("max-length-for-sort-data", po::value<uint64_t>(&global_system_variables.max_length_for_sort_data)->default_value(1024)->notifier(&check_limits_mlfsd),

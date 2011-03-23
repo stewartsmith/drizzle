@@ -48,14 +48,14 @@ const ErrorMap::ErrorMessageMap& ErrorMap::get_error_message_map()
   return get_error_map().mapping_;
 }
 
-void add_error_message(drizzled::error_t error_code,
+void add_error_message(error_t error_code,
                        const std::string &error_name,
                        const std::string &message)
 {
   get_error_map().add(error_code, error_name, message);
 }
 
-const char* error_message(drizzled::error_t code)
+const char* error_message(error_t code)
 {
 	const std::string* ptr = get_error_map().find(code);
 	return ptr ? ptr->c_str() : get_error_map().find(ER_UNKNOWN_ERROR)->c_str();
