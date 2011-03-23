@@ -79,11 +79,6 @@ Schema::Schema(const std::string &db_arg) :
   }
 }
 
-void Schema::getSQLPath(std::string &arg) const
-{
-  arg= db;
-}
-
 const std::string &Schema::getPath() const
 {
   return db_path;

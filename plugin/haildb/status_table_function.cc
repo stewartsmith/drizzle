@@ -102,8 +102,7 @@ static LibInnoDBStatusTool *status_tool;
 
 int status_table_function_initialize(drizzled::module::Context &context)
 {
-  status_tool= new(std::nothrow)LibInnoDBStatusTool();
+  status_tool= new LibInnoDBStatusTool();
   context.add(status_tool);
-
-  return 0;
+	return 0;
 }

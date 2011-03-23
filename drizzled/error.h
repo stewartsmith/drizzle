@@ -61,8 +61,7 @@ public:
   // mapping, an error is logged, but the function continues.
   void add(error_t error_num, const std::string &error_name, const std::string &message);
 
-  // If there is no error mapping for the error_num, ErrorStringNotFound is raised.
-  const std::string &find(error_t error_num) const;
+  const std::string* find(error_t error_num) const;
 
   static const ErrorMessageMap& get_error_message_map();
 private:

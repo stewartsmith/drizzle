@@ -128,7 +128,7 @@ int64_t ClearEngineStateHistoryFunction::val_int()
 
 int engine_state_history_table_initialize(drizzled::module::Context &context)
 {
-  context.add(new(std::nothrow)EngineStateHistory());
+  context.add(new EngineStateHistory);
   context.add(new plugin::Create_function<ClearEngineStateHistoryFunction>("SEAPITESTER_CLEAR_ENGINE_STATE_HISTORY"));
 
   return 0;

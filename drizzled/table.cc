@@ -1680,49 +1680,33 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
 }
 
 
-bool Table::fill_item_list(List<Item> *item_list) const
+void Table::fill_item_list(List<Item>& items) const
 {
   /*
     All Item_field's created using a direct pointer to a field
     are fixed in Item_field constructor.
   */
   for (Field **ptr= field; *ptr; ptr++)
-    item_list->push_back(new Item_field(*ptr));
-  return false; // todo: return void
+    items.push_back(new Item_field(*ptr));
 }
 
 
 void Table::filesort_free_buffers(bool full)
 {
-  if (sort.record_pointers)
-  {
-    free((unsigned char*) sort.record_pointers);
-    sort.record_pointers=0;
-  }
+  free(sort.record_pointers);
+  sort.record_pointers=0;
   if (full)
   {
-    if (sort.sort_keys )
-    {
-      if ((unsigned char*) sort.sort_keys)
-        free((unsigned char*) sort.sort_keys);
-      sort.sort_keys= 0;
-    }
-    if (sort.buffpek)
-    {
-      if ((unsigned char*) sort.buffpek)
-        free((unsigned char*) sort.buffpek);
-      sort.buffpek= 0;
-      sort.buffpek_len= 0;
-    }
+    free(sort.sort_keys);
+    sort.sort_keys= 0;
+    free(sort.buffpek);
+    sort.buffpek= 0;
+    sort.buffpek_len= 0;
   }
-
-  if (sort.addon_buf)
-  {
-    free((char *) sort.addon_buf);
-    free((char *) sort.addon_field);
-    sort.addon_buf=0;
-    sort.addon_field=0;
-  }
+  free(sort.addon_buf);
+  free(sort.addon_field);
+  sort.addon_buf=0;
+  sort.addon_field=0;
 }
 
 /*

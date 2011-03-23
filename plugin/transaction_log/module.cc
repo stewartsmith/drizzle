@@ -160,7 +160,7 @@ static int init(drizzled::module::Context &context)
   if (sysvar_transaction_log_enabled)
   {
   
-    transaction_log= new (nothrow) TransactionLog(sysvar_transaction_log_file,
+    transaction_log= new TransactionLog(sysvar_transaction_log_file,
                                                   static_cast<int>(sysvar_transaction_log_flush_frequency),
                                                   sysvar_transaction_log_checksum_enabled);
 
@@ -181,14 +181,7 @@ static int init(drizzled::module::Context &context)
     }
 
     /* Create and initialize the transaction log index */
-    transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
-    if (transaction_log_index == NULL)
-    {
-      sql_perror(_("Failed to allocate the TransactionLogIndex instance"), sysvar_transaction_log_file);
-      return 1;
-    }
-    else
-    {
+    transaction_log_index= new TransactionLogIndex(*transaction_log);
       /* Check to see if the index was not created properly */
       if (transaction_log_index->hasError())
       {
@@ -196,18 +189,12 @@ static int init(drizzled::module::Context &context)
                       transaction_log_index->getErrorMessage().c_str());
         return 1;
       }
-    }
 
     /* Create the applier plugin and register it */
-    transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
+    transaction_log_applier= new TransactionLogApplier("transaction_log_applier",
                                                                  transaction_log, 
                                                                  transaction_log_index, 
                                                                  static_cast<uint32_t>(sysvar_transaction_log_num_write_buffers));
-    if (transaction_log_applier == NULL)
-    {
-      sql_perror(_("Failed to allocate the TransactionLogApplier instance"), sysvar_transaction_log_file);
-      return 1;
-    }
     context.add(transaction_log_applier);
     ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.attachApplier(transaction_log_applier,
@@ -215,11 +202,11 @@ static int init(drizzled::module::Context &context)
 
     /* Setup DATA_DICTIONARY views */
 
-    transaction_log_tool= new (nothrow) TransactionLogTool;
+    transaction_log_tool= new TransactionLogTool;
     context.add(transaction_log_tool);
-    transaction_log_entries_tool= new (nothrow) TransactionLogEntriesTool;
+    transaction_log_entries_tool= new TransactionLogEntriesTool;
     context.add(transaction_log_entries_tool);
-    transaction_log_transactions_tool= new (nothrow) TransactionLogTransactionsTool;
+    transaction_log_transactions_tool= new TransactionLogTransactionsTool;
     context.add(transaction_log_transactions_tool);
 
     /* Setup the module's UDFs */

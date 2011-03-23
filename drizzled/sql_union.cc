@@ -372,19 +372,15 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
     result_table_list.table= table= union_result->table;
 
     session_arg->lex().current_select= lex_select_save;
-    if (!item_list.size())
-    {
-      saved_error= table->fill_item_list(&item_list);
-      if (saved_error)
-        goto err;
-    }
+    if (item_list.is_empty())
+      table->fill_item_list(item_list);
     else
     {
       /*
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      assert(1);
+      assert(1); // Olaf: should this be assert(false)?
     }
   }
 

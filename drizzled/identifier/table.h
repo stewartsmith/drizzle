@@ -200,7 +200,7 @@ public:
     return type;
   }
 
-  virtual void getSQLPath(std::string &sql_path) const;
+  virtual std::string getSQLPath() const;
 
   virtual const std::string &getPath() const;
   const std::string &getKeyPath() const;

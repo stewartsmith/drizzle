@@ -52,7 +52,10 @@ public:
     password_type(NONE)
   { }
 
-  virtual void getSQLPath(std::string &arg) const;
+  virtual std::string getSQLPath() const
+	{
+		return _user.empty() ? "<no user>" : _user;
+	}
 
   bool hasPassword() const
   {

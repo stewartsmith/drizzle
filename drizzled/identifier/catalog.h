@@ -67,9 +67,9 @@ public:
     return _name;
   }
 
-  virtual void getSQLPath(std::string &sql_path) const
+  virtual std::string getSQLPath() const
   {
-    sql_path= _name;
+    return _name;
   }
 
   size_t getHashValue() const

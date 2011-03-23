@@ -244,7 +244,7 @@ public:
 
   void setLineBuff(int max_size, FILE *file=NULL)
   {
-    line_buff= new(std::nothrow) LineBuffer(max_size, file);
+    line_buff= new LineBuffer(max_size, file);
   }
 
   void setLineBuff(LineBuffer *in_line_buff)
@@ -3949,12 +3949,7 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,sql_file);
-  if (line_buff == NULL)
-  {
-    fclose(sql_file);
-    return put_info(_("Can't initialize LineBuffer"), INFO_ERROR, 0, 0);
-  }
+  line_buff= new LineBuffer(opt_max_input_line,sql_file);
 
   /* Save old status */
   old_status=status;
