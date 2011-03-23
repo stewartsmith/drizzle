@@ -75,7 +75,7 @@ void access(drizzled::identifier::User::const_reference user, const drizzled::id
   my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), schema.getSQLPath().c_str());
 } 
 
-void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table)
+void access(drizzled::identifier::User::const_reference user, const drizzled::identifier::Table& table)
 {
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), table.getSQLPath().c_str());
 } 

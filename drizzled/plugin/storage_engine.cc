@@ -360,7 +360,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifie
 }
 
 message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
-                                                          identifier::Table::const_reference identifier,
+                                                          const identifier::Table& identifier,
                                                           bool include_temporary_tables)
 {
   drizzled::error_t error;
@@ -430,13 +430,13 @@ handle_error(drizzled::error_t ,
 class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
 {
   Session::reference session;
-  identifier::Table::const_reference identifier;
+  const identifier::Table& identifier;
   drizzled::error_t &error;
 
 public:
 
   DropTableByIdentifier(Session::reference session_arg,
-                        identifier::Table::const_reference identifier_arg,
+                        const identifier::Table& identifier_arg,
                         drizzled::error_t &error_arg) :
     session(session_arg),
     identifier(identifier_arg),
@@ -470,7 +470,7 @@ public:
 
 
 bool StorageEngine::dropTable(Session::reference session,
-                              identifier::Table::const_reference identifier,
+                              const identifier::Table& identifier,
                               drizzled::error_t &error)
 {
   error= EE_OK;
@@ -508,7 +508,7 @@ bool StorageEngine::dropTable(Session& session,
 
 bool StorageEngine::dropTable(Session::reference session,
                               StorageEngine &engine,
-                              identifier::Table::const_reference identifier,
+                              const identifier::Table& identifier,
                               drizzled::error_t &error)
 {
   error= EE_OK;

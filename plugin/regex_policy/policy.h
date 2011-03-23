@@ -161,7 +161,7 @@ public:
                                const drizzled::identifier::User &session_ctx);
 
   virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table);
+                             const drizzled::identifier::Table& table);
 
   bool loadFile();
   std::stringstream &getError() { return error; }

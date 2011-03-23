@@ -79,10 +79,10 @@ class RestrictTableFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
   identifier::User::const_reference user_ctx;
-  identifier::Table::const_reference table;
+  const identifier::Table& table;
 public:
   RestrictTableFunctor(identifier::User::const_reference user_ctx_arg,
-                       identifier::Table::const_reference table_arg) :
+                       const identifier::Table& table_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
@@ -163,7 +163,7 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_
 }
 
 bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                                         identifier::Table::const_reference table_identifier,
+                                         const identifier::Table& table_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */

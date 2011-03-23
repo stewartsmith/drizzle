@@ -1970,8 +1970,8 @@ err:
   */
 static bool create_table_wrapper(Session &session,
                                  const message::Table& create_table_proto,
-                                 identifier::Table::const_reference destination_identifier,
-                                 identifier::Table::const_reference source_identifier,
+                                 const identifier::Table& destination_identifier,
+                                 const identifier::Table& source_identifier,
                                  bool is_engine_set)
 {
   // We require an additional table message because during parsing we used
@@ -2059,8 +2059,8 @@ static bool create_table_wrapper(Session &session,
 */
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set)

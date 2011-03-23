@@ -2045,7 +2045,7 @@ void TransactionServices::alterSchema(Session::reference session,
 }
 
 void TransactionServices::dropTable(Session::reference session,
-                                    identifier::Table::const_reference identifier,
+                                    const identifier::Table& identifier,
                                     message::table::const_reference table,
                                     bool if_exists)
 {

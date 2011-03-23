@@ -209,7 +209,7 @@ bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
 }
 
 bool Policy::restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table)
+                             const drizzled::identifier::Table& table)
 {
   return restrictObject(user_ctx, table.getTableName(), table_policies, &table_check_cache);
 }

@@ -341,7 +341,7 @@ public:
 
   static bool dropTable(Session& session,
                         StorageEngine &engine,
-                        identifier::Table::const_reference identifier,
+                        const identifier::Table& identifier,
                         drizzled::error_t &error);
 
   static void getIdentifiers(Session &session,
