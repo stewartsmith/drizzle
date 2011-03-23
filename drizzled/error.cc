@@ -70,7 +70,7 @@ void access(drizzled::identifier::User::const_reference user)
   my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), ER(user.hasPassword() ? ER_YES : ER_NO));
 } 
 
-void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema)
+void access(drizzled::identifier::User::const_reference user, const drizzled::identifier::Schema& schema)
 {
   my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), schema.getSQLPath().c_str());
 } 

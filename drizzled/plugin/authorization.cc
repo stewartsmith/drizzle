@@ -59,11 +59,11 @@ class RestrictDbFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
   const identifier::User &user_ctx;
-  identifier::Schema::const_reference schema;
+  const identifier::Schema& schema;
 
 public:
   RestrictDbFunctor(const identifier::User &user_ctx_arg,
-                    identifier::Schema::const_reference schema_arg) :
+                    const identifier::Schema& schema_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     schema(schema_arg)
@@ -132,7 +132,7 @@ public:
 } /* namespace */
 
 bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_ctx,
-                                         identifier::Schema::const_reference schema_identifier,
+                                         const identifier::Schema& schema_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */

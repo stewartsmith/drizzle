@@ -143,7 +143,7 @@ public:
    * @param[in] identifier Identifier for the schema to drop
    */
   void dropSchema(Session::reference session,
-                  identifier::Schema::const_reference identifier,
+                  const identifier::Schema& identifier,
                   message::schema::const_reference schema);
 
   /**

@@ -1975,7 +1975,7 @@ void TransactionServices::createSchema(Session::reference session,
 }
 
 void TransactionServices::dropSchema(Session::reference session,
-                                     identifier::Schema::const_reference identifier,
+                                     const identifier::Schema& identifier,
                                      message::schema::const_reference schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();

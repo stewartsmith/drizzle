@@ -56,7 +56,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              identifier::Schema::const_reference schema)= 0;
+                              const identifier::Schema& schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -84,7 +84,7 @@ public:
 
   /** Server API method for checking schema authorization */
   static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                           identifier::Schema::const_reference schema_identifier,
+                           const identifier::Schema& schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */

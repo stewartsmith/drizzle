@@ -155,7 +155,7 @@ public:
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              drizzled::identifier::Schema::const_reference schema);
+                              const drizzled::identifier::Schema& schema);
 
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);

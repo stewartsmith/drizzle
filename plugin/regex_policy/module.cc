@@ -197,7 +197,7 @@ bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
 }
 
 bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
-                                   drizzled::identifier::Schema::const_reference schema)
+                                   const drizzled::identifier::Schema& schema)
 {
   return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, &schema_check_cache);
 }
