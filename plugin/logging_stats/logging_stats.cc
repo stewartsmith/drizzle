@@ -270,8 +270,12 @@ static void enable(Session *, sql_var_t)
   }
 }
 
-static bool initTable()
+static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  sysvar_logging_stats_enabled= not vm.count("disable");
+
+  logging_stats= new LoggingStats("logging_stats");
   current_commands_tool= new CurrentCommandsTool(logging_stats);
   cumulative_commands_tool= new CumulativeCommandsTool(logging_stats);
   global_statements_tool= new GlobalStatementsTool(logging_stats);
@@ -280,21 +284,6 @@ static bool initTable()
   global_status_tool= new StatusTool(logging_stats, false);
   cumulative_user_stats_tool= new CumulativeUserStatsTool(logging_stats);
   scoreboard_stats_tool= new ScoreboardStatsTool(logging_stats);
-  return false; // todo: return void
-}
-
-static int init(drizzled::module::Context &context)
-{
-  const module::option_map &vm= context.getOptions();
-
-  sysvar_logging_stats_enabled= (vm.count("disable")) ? false : true;
-
-  logging_stats= new LoggingStats("logging_stats");
-
-  if (initTable())
-  {
-    return 1;
-  }
 
   context.add(logging_stats);
   context.add(current_commands_tool);
@@ -307,9 +296,7 @@ static int init(drizzled::module::Context &context)
   context.add(scoreboard_stats_tool);
 
   if (sysvar_logging_stats_enabled)
-  {
     logging_stats->enable();
-  }
 
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("max_user_count", sysvar_logging_stats_max_user_count));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("bucket_count", sysvar_logging_stats_bucket_count));
