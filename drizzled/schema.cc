@@ -208,8 +208,6 @@ bool alter(Session &session,
 
 bool drop(Session &session, const identifier::Schema &schema_identifier, bool if_exists)
 {
-  bool error= false;
-
   /*
     Do not drop database if another thread is holding read lock.
     Wait for global read lock before acquiring session->catalog()->schemaLock().
@@ -227,36 +225,24 @@ bool drop(Session &session, const identifier::Schema &schema_identifier, bool if
     return true;
   }
 
-  do
+  bool error= false;
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
-    message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
-
-    /* See if the schema exists */
-    if (not message)
+    if (message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier))
+		{
+			error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
+		}
+		else if (if_exists)
     {
-      if (if_exists)
-      {
-        std::string path;
-        schema_identifier.getSQLPath(path);
-
-        push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                            path.c_str());
-      }
-      else
-      {
-        error= true;
-        my_error(ER_DB_DROP_EXISTS, schema_identifier);
-        break;
-      }
+      push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+				schema_identifier.getSQLPath().c_str());
     }
     else
     {
-      error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
+      error= true;
+      my_error(ER_DB_DROP_EXISTS, schema_identifier);
     }
-
-  } while (0);
+  };
 
   /*
     If this database was the client's selected database, we silently

@@ -431,7 +431,7 @@ std::ostream& operator<<(std::ostream& output, const CreateField &field)
   output << "CreateField:(";
   output <<  field.field_name;
   output << ", ";
-  output << drizzled::display::type(field.type());
+  output << display::type(field.type());
   output << ", { ";
 
   if (field.flags & NOT_NULL_FLAG)

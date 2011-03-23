@@ -421,13 +421,8 @@ void Session::cleanup()
     transaction_services.rollbackTransaction(*this, true);
   }
 
-  for (UserVars::iterator iter= user_vars.begin();
-       iter != user_vars.end();
-       iter++)
-  {
-    user_var_entry *entry= iter->second;
-    boost::checked_delete(entry);
-  }
+  BOOST_FOREACH(UserVars::reference iter, user_vars)
+    boost::checked_delete(iter.second);
   user_vars.clear();
 
 
@@ -1798,16 +1793,11 @@ void Open_tables_state::close_temporary_table(Table *table)
 
 void Open_tables_state::nukeTable(Table *table)
 {
-  plugin::StorageEngine *table_type= table->getShare()->db_type();
-
+  plugin::StorageEngine& table_type= *table->getShare()->db_type();
   table->free_io_cache();
   table->delete_table();
-
-  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
-  rm_temporary_table(table_type, identifier);
-
+  rm_temporary_table(table_type, identifier::Table(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath()));
   boost::checked_delete(table->getMutableShare());
-
   boost::checked_delete(table);
 }
 
@@ -1991,72 +1981,20 @@ bool Session::openTablesLock(TableList *tables)
 
 bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
-  if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
-  {
-    if (not best_effort)
-    {
-      std::string path;
-      identifier.getSQLPath(path);
-      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
-                    path.c_str(), errno);
-    }
-
-    return true;
-  }
-
-  return false;
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
+		return false;
+  if (not best_effort)
+    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), errno);
+  return true;
 }
 
-bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
-  assert(base);
-
-  if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier, error))
-  {
-    std::string path;
-    identifier.getSQLPath(path);
-    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path.c_str(), error);
-
-    return true;
-  }
-
-  return false;
-}
-
-/**
-  @note this will be removed, I am looking through Hudson to see if it is finding
-  any tables that are missed during cleanup.
-*/
-void Open_tables_state::dumpTemporaryTableNames(const char *foo)
-{
-  Table *table;
-
-  if (not temporary_tables)
-    return;
-
-  cerr << "Begin Run: " << foo << "\n";
-  for (table= temporary_tables; table; table= table->getNext())
-  {
-    bool have_proto= false;
-
-    message::Table *proto= table->getShare()->getTableMessage();
-    if (table->getShare()->getTableMessage())
-      have_proto= true;
-
-    const char *answer= have_proto ? "true" : "false";
-
-    if (have_proto)
-    {
-      cerr << "\tTable Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
-      cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
-    }
-    else
-    {
-      cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
-    }
-  }
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), base, identifier, error))
+		return false;
+  errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), error);
+  return true;
 }
 
 table::Singular& Session::getInstanceTable()
