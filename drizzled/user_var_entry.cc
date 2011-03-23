@@ -183,7 +183,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     true    failure
 */
 
-bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
+void user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
                                  Item_result arg_type, const CHARSET_INFO * const cs, Derivation dv,
                                  bool unsigned_arg)
 {
@@ -204,11 +204,7 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
 
     if (needed_size > size)
     {
-      char *new_ptr;
-
-      new_ptr= (char *)realloc(value, needed_size);
-
-      value= new_ptr;
+			value= (char *)realloc(value, needed_size);
       size= needed_size;
     }
 
@@ -223,8 +219,6 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
     unsigned_flag= unsigned_arg;
   }
   type= arg_type;
-
-  return false; // todo: return void
 }
 
 } /* namespace drizzled */
