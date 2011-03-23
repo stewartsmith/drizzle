@@ -20,28 +20,8 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 typedef int64_t session_id_t;
 
-namespace identifier
-{
-
-class Session 
-{
-  session_id_t _id;
-public:
-
-  Session() :
-    _id(0)
-  {
-  }
-
-  ~Session()
-  {
-  }
-};
-
-} /* namespace identifier */
 } /* namespace drizzled */
