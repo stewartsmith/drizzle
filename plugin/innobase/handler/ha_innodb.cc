@@ -68,6 +68,9 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/cached_directory.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>

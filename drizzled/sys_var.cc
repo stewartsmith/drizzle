@@ -62,6 +62,7 @@
 #include <drizzled/visibility.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <map>

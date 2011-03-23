@@ -45,6 +45,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/util/tokenize.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/foreach.hpp>
 

@@ -68,10 +68,13 @@
 #include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
+#include <drizzled/session/transactions.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 #include <drizzled/statement.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/tmp_table_param.h>
@@ -157,16 +160,22 @@ public:
   */
   LEX lex;
   properties_t properties;
+  system_status_var status_var;
   session::TableMessages table_message_cache;
+  std::vector<table::Singular*> temporary_shares;
+	session::Transactions transaction;
+  drizzle_system_variables variables;
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   Open_tables_state(refresh_version),
+  impl_(new impl_c),
   mem_root(&main_mem_root),
   query(new std::string),
-  _schema(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
+  variables(impl_->variables),
+  status_var(impl_->status_var),
   lock_id(&main_lock_id),
   thread_stack(NULL),
   _where(Session::DEFAULT_WHERE),
@@ -179,6 +188,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   ha_data(plugin::num_trx_monitored_objects),
   query_id(0),
   warn_query_id(0),
+	transaction(impl_->transaction),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
@@ -188,8 +198,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   examined_row_count(0),
   used_tables(0),
   total_warn_count(0),
-  col_access(0),
-  statement_id_counter(0),
   row_count(0),
   thread_id(0),
   tmp_table(0),
@@ -204,9 +212,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   is_fatal_sub_stmt_error(0),
   derived_tables_processing(false),
   m_lip(NULL),
-  cached_table(0),
   arg_of_last_insert_id_function(false),
-  impl_(new impl_c),
   _catalog(catalog_arg),
   transaction_message(NULL),
   statement_message(NULL),
@@ -474,11 +480,9 @@ Session::~Session()
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
- 
-  // Free all schema event observer lists.
-  for (std::map<std::string, plugin::EventObserverList *>::iterator it=schema_event_observers.begin() ; it != schema_event_observers.end(); it++ )
-    plugin::EventObserver::deregisterSchemaEvents(it->second);
 
+	BOOST_FOREACH(schema_event_observers_t::reference it, schema_event_observers)
+    plugin::EventObserver::deregisterSchemaEvents(it.second);
 }
 
 void Session::setClient(plugin::Client *client_arg)
@@ -924,10 +928,8 @@ void Session::cleanup_after_query()
   _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for_each(temporary_shares.begin(),
-           temporary_shares.end(),
-           DeletePtr());
-  temporary_shares.clear();
+  for_each(impl_->temporary_shares.begin(), impl_->temporary_shares.end(), DeletePtr());
+  impl_->temporary_shares.clear();
 }
 
 /**
@@ -2079,15 +2081,10 @@ void Open_tables_state::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-table::Singular *Session::getInstanceTable()
+table::Singular& Session::getInstanceTable()
 {
-  temporary_shares.push_back(new table::Singular()); // This will not go into the tableshare cache, so no key is used.
-
-  table::Singular *tmp_share= temporary_shares.back();
-
-  assert(tmp_share);
-
-  return tmp_share;
+  impl_->temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
+  return *impl_->temporary_shares.back();
 }
 
 
@@ -2109,10 +2106,10 @@ table::Singular *Session::getInstanceTable()
   @return
     0 if out of memory, Table object in case of success
 */
-table::Singular *Session::getInstanceTable(List<CreateField> &field_list)
+table::Singular& Session::getInstanceTable(std::list<CreateField>& field_list)
 {
-  temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
-  return temporary_shares.back();
+  impl_->temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
+  return *impl_->temporary_shares.back();
 }
 
 void Session::clear_error(bool full)
@@ -2197,6 +2194,11 @@ drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
 {
   impl_->properties.setProperty(arg, value);
+}
+
+my_xid Session::getTransactionId()
+{
+  return transaction.xid_state.xid.quick_get_my_xid();
 }
 
 const std::string& display::type(drizzled::Session::global_read_lock_t type)

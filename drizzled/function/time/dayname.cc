@@ -22,9 +22,9 @@
 #include <drizzled/function/time/dayname.h>
 #include <drizzled/session.h>
 #include <drizzled/typelib.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String* Item_func_dayname::val_str(String* str)
 {

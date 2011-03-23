@@ -26,6 +26,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/optimizer/access_method/scan.h>
 #include <drizzled/util/test.h>
+#include <drizzled/statistics_variables.h>
 
 using namespace drizzled;
 

@@ -25,13 +25,13 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/named_savepoint.h>
 #include <drizzled/util/functors.h>
+#include <drizzled/session/transactions.h>
 
 #include <string>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::RollbackToSavepoint::execute()
 {

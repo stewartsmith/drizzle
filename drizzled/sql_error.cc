@@ -52,11 +52,11 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/return_int.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Store a new message in an error object

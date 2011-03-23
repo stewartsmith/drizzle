@@ -27,30 +27,25 @@
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
-
+#include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace table {
 
-namespace table
-{
-
-Singular::Singular(Session *session, List<CreateField> &field_list) :
+Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
   uint32_t field_count= field_list.size();
   uint32_t blob_count= 0;
-  Field **field_arg;
-  CreateField *cdef;                           /* column definition */
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
 
   getMutableShare()->setFields(field_count + 1);
   setFields(getMutableShare()->getFields(true));
-  field_arg= getMutableShare()->getFields(true);
+  Field** field_arg= getMutableShare()->getFields(true);
   getMutableShare()->blob_field.resize(field_count+1);
   getMutableShare()->setFieldSize(field_count);
   getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
@@ -59,28 +54,22 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
-  List<CreateField>::iterator it(field_list.begin());
   message::Table::Field null_field;
-  while ((cdef= it++))
+	BOOST_FOREACH(CreateField& it, field_list)
   {
     *field_arg= getMutableShare()->make_field(null_field,
                                               NULL,
-                                              cdef->length,
-                                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                                              cdef->decimals,
-                                              cdef->sql_type,
-                                              cdef->charset,
-                                              cdef->unireg_check,
-                                              cdef->interval,
-                                              cdef->field_name,
-                                              cdef->flags & UNSIGNED_FLAG ? true : false);
-    if (!*field_arg)
-    {
-      throw "Memory allocation failure";
-    }
-
+                                              it.length,
+                                              (it.flags & NOT_NULL_FLAG) ? false : true,
+                                              (unsigned char *) ((it.flags & NOT_NULL_FLAG) ? 0 : ""),
+                                              (it.flags & NOT_NULL_FLAG) ? 0 : 1,
+                                              it.decimals,
+                                              it.sql_type,
+                                              it.charset,
+                                              it.unireg_check,
+                                              it.interval,
+                                              it.field_name,
+                                              it.flags & UNSIGNED_FLAG ? true : false);
     (*field_arg)->init(this);
     record_length+= (*field_arg)->pack_length();
     if (! ((*field_arg)->flags & NOT_NULL_FLAG))
@@ -310,9 +299,7 @@ void Singular::setup_tmp_table_column_bitmaps()
 
 Singular::~Singular()
 {
-  const char *save_proc_info;
-
-  save_proc_info= in_use->get_proc_info();
+  const char* save_proc_info= in_use->get_proc_info();
   in_use->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time

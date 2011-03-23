@@ -55,6 +55,9 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <limits.h>
 
@@ -67,8 +70,7 @@ using namespace std;
 
 extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);

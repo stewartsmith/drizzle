@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <drizzled/named_savepoint.h>
+
 namespace session_dictionary {
 
 class Savepoints : public drizzled::plugin::TableFunction

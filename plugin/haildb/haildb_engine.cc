@@ -77,6 +77,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/error_message.h>
+#include <drizzled/named_savepoint.h>
 
 #include <fcntl.h>
 #include <stdarg.h>

@@ -48,6 +48,8 @@
 #include <drizzled/global_buffer.h>
 #include <drizzled/sort_field.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
 

@@ -41,6 +41,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
@@ -1011,28 +1012,25 @@ enum Item_result Item_sum_distinct::result_type () const
 */
 bool Item_sum_distinct::setup(Session *session)
 {
-  List<CreateField> field_list;
-  CreateField field_def;                              /* field definition */
   /* It's legal to call setup() more than once when in a subquery */
   if (tree)
-    return(false);
+    return false;
 
   /*
     Virtual table and the tree are created anew on each re-execution of
     PS/SP. Hence all further allocations are performed in the runtime
     mem_root.
   */
-  field_list.push_back(&field_def);
   null_value= maybe_null= 1;
   quick_group= 0;
 
   assert(args[0]->fixed);
 
-  field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
-                               args[0]->decimals, args[0]->maybe_null);
-
-  if (! (table= session->getInstanceTable(field_list)))
-    return(true);
+  std::list<CreateField> field_list;
+  field_list.push_back(CreateField());
+  CreateField& field_def = field_list.back();
+  field_def.init_for_tmp_table(table_field_type, args[0]->max_length, args[0]->decimals, args[0]->maybe_null);
+  table= &session->getInstanceTable(field_list);
 
   /* XXX: check that the case of CHAR(0) works OK */
   tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
@@ -1043,14 +1041,10 @@ bool Item_sum_distinct::setup(Session *session)
     simple_raw_key_cmp because the table contains numbers only; decimals
     are converted to binary representation as well.
   */
-  tree= new Unique(simple_raw_key_cmp, &tree_key_length,
-                   tree_key_length,
-                   (size_t)session->variables.max_heap_table_size);
-
+  tree= new Unique(simple_raw_key_cmp, &tree_key_length, tree_key_length, (size_t)session->variables.max_heap_table_size);
   is_evaluated= false;
-  return(tree == 0);
+  return false;
 }
-
 
 bool Item_sum_distinct::add()
 {

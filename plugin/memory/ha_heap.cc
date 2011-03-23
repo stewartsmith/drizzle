@@ -22,6 +22,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
 #include <drizzled/session/table_messages.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -29,7 +31,6 @@
 #include "ha_heap.h"
 
 #include <string>
-
 
 using namespace drizzled;
 using namespace std;

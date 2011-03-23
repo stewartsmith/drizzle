@@ -30,13 +30,13 @@
 #include <drizzled/util/functors.h>
 #include <drizzled/key.h>
 #include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
