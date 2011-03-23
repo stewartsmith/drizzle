@@ -345,7 +345,7 @@ char client_process(client_st *client, client_con_st *client_con)
             printf("     (NULL)\n");
           else
           {
-            printf("     (%zd) %.*s\n", field_sizes[x], (int32_t)field_sizes[x],
+            printf("     (%"PRIu64") %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x],
                    row[x]);
           }
         }
@@ -409,7 +409,8 @@ char client_process(client_st *client, client_con_st *client_con)
           else if (offset > 0)
             printf("%.*s", (int32_t)length, field);
           else
-            printf("     (%zd) %.*s", total, (int32_t)length, field);
+            printf("     (%" PRIu64 " %.*s", (uint64_t)total,
+			    (int32_t)length, field);
 
           if (offset + length == total)
             printf("\n");
@@ -439,7 +440,7 @@ char client_process(client_st *client, client_con_st *client_con)
         field_sizes= drizzle_row_field_sizes(&(client_con->result));
 
         printf("Row: %" PRId64 "\n",
-               drizzle_row_current(&(client_con->result)));
+               static_cast<uint64_t>(drizzle_row_current(&(client_con->result))));
 
         for (x= 0; x < drizzle_result_column_count(&(client_con->result)); x++)
         {
@@ -447,7 +448,7 @@ char client_process(client_st *client, client_con_st *client_con)
             printf("     (NULL)\n");
           else
           {
-            printf("     (%zd) %.*s\n", field_sizes[x], (int32_t)field_sizes[x],
+            printf("     (%" PRIu64 " %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x],
                    row[x]);
           }
         }
@@ -505,13 +506,13 @@ void column_info(drizzle_column_st *column)
          "        org_name=%s\n"
          "         charset=%u\n"
          "            size=%u\n"
-         "        max_size=%zu\n"
+         "        max_size=%" PRIu64 "\n"
          "            type=%u\n"
          "           flags=%u\n\n",
          drizzle_column_catalog(column), drizzle_column_db(column),
          drizzle_column_table(column), drizzle_column_orig_table(column),
          drizzle_column_name(column), drizzle_column_orig_name(column),
          drizzle_column_charset(column), drizzle_column_size(column),
-         drizzle_column_max_size(column), drizzle_column_type(column),
+         static_cast<uint64_t>(drizzle_column_max_size(column)), drizzle_column_type(column),
          drizzle_column_flags(column));
 }

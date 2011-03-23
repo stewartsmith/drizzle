@@ -154,7 +154,10 @@ class drizzleTree(codeTree):
         ld_lib_paths = []
         if self.source_dist:
             ld_lib_paths = [ os.path.join(self.basedir,"libdrizzleclient/.libs/")
+                           , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle.libs")
                            , os.path.join(self.basedir,"libdrizzle/.libs")
+                           , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle/.libs")
+                           , os.path.join(self.basedir,"libdrizzle-1.0/libdrizzle/.libs")
                            , os.path.join(self.basedir,"mysys/.libs/")
                            , os.path.join(self.basedir,"mystrings/.libs/")
                            , os.path.join(self.basedir,"drizzled/.libs/")

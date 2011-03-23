@@ -53,7 +53,13 @@ unittests_unittests_SOURCES = \
 			      unittests/time_test.cc \
 			      unittests/utf8_test.cc
 
+unittests_unittests_CXXFLAGS= \
+			      ${AM_CXXFLAGS} \
+			      ${LIBDRIZZLE_CPPFLAGS}
+
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-  ${drizzled_drizzled_LDADD} ${BOOST_LIBS} libdrizzle/libdrizzle.la \
+  ${drizzled_drizzled_LDADD} \
+  ${BOOST_LIBS} \
+  libdrizzle-2.0/libdrizzle/libdrizzle.la \
   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
