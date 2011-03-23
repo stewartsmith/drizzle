@@ -87,13 +87,6 @@ public:
     return new ResultSet(field_count);
   }
 
-  // Special case for us (throw is just too damn slow for internal usage, or
-  // almost any).
-  bool isNoThrow() const
-  {
-    return true;
-  }
-
   bool next() const;
 
   const std::string getString(size_t column_number) const ;
@@ -104,10 +97,6 @@ public:
   bool error() const;
   sql::Exception getException() const;
 
-#if 0
-protected:
-  friend class Client;
-#endif
   ResultSet(size_t fields) :
     _has_next_been_called(false),
     _current_row(_results.end()),

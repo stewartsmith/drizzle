@@ -40,15 +40,12 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  Policy *policy= new (nothrow) Policy(fs::path(vm["policy"].as<string>()));
-  if (policy == NULL or not policy->loadFile())
+  Policy *policy= new Policy(fs::path(vm["policy"].as<string>()));
+  if (not policy->loadFile())
   {
     errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
                   (policy ? policy->getError().str().c_str() : _("Unknown")));
-    if (policy)
-    {
-      delete policy;
-    }
+    delete policy;
     return 1;
   }
 

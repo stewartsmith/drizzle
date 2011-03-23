@@ -999,13 +999,11 @@ message::Transaction *TransactionServices::getActiveTransactionMessage(Session::
      * for this Session object.  Session is responsible for
      * deleting transaction message when done with it.
      */
-    transaction= new (nothrow) message::Transaction();
+    transaction= new message::Transaction();
     initTransactionMessage(*transaction, session, should_inc_trx_id);
     session.setTransactionMessage(transaction);
-    return transaction;
   }
-  else
-    return transaction;
+  return transaction;
 }
 
 void TransactionServices::initTransactionMessage(message::Transaction &transaction,
@@ -2154,7 +2152,7 @@ int TransactionServices::sendEvent(Session::reference session,
   if (! replication_services.isActive())
     return 0;
 
-  message::Transaction *transaction= new (nothrow) message::Transaction();
+  message::Transaction *transaction= new message::Transaction();
 
   // set server id, start timestamp
   initTransactionMessage(*transaction, session, true);

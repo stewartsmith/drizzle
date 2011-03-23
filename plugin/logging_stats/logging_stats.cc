@@ -272,63 +272,15 @@ static void enable(Session *, sql_var_t)
 
 static bool initTable()
 {
-  current_commands_tool= new(nothrow)CurrentCommandsTool(logging_stats);
-
-  if (! current_commands_tool)
-  {
-    return true;
-  }
-
-  cumulative_commands_tool= new(nothrow)CumulativeCommandsTool(logging_stats);
-
-  if (! cumulative_commands_tool)
-  {
-    return true;
-  }
-
-  global_statements_tool= new(nothrow)GlobalStatementsTool(logging_stats);
-
-  if (! global_statements_tool)
-  {
-    return true;
-  }
-
-  session_statements_tool= new(nothrow)SessionStatementsTool(logging_stats);
-
-  if (! session_statements_tool)
-  {
-    return true;
-  }
-
-  session_status_tool= new(nothrow)StatusTool(logging_stats, true);
-
-  if (! session_status_tool)
-  {
-    return true;
-  }
-
-  global_status_tool= new(nothrow)StatusTool(logging_stats, false);
-
-  if (! global_status_tool)
-  {
-    return true;
-  }
-
-  cumulative_user_stats_tool= new(nothrow)CumulativeUserStatsTool(logging_stats);
-
-  if (! cumulative_user_stats_tool)
-  {
-    return true;
-  }
-
-  scoreboard_stats_tool= new(nothrow)ScoreboardStatsTool(logging_stats);
-  
-  if (! scoreboard_stats_tool)
-  {
-    return true;
-  }
-
-  return false;
+  current_commands_tool= new CurrentCommandsTool(logging_stats);
+  cumulative_commands_tool= new CumulativeCommandsTool(logging_stats);
+  global_statements_tool= new GlobalStatementsTool(logging_stats);
+  session_statements_tool= new SessionStatementsTool(logging_stats);
+  session_status_tool= new StatusTool(logging_stats, true);
+  global_status_tool= new StatusTool(logging_stats, false);
+  cumulative_user_stats_tool= new CumulativeUserStatsTool(logging_stats);
+  scoreboard_stats_tool= new ScoreboardStatsTool(logging_stats);
+  return false; // todo: return void
 }
 
 static int init(drizzled::module::Context &context)
