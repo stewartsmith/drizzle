@@ -468,7 +468,7 @@ public:
    * @retval
    *  true when out of memory
    */
-  bool fill_item_list(List<Item> *item_list) const;
+  void fill_item_list(List<Item>&) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);

@@ -1840,11 +1840,7 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
   if (not create_if_not_exists)
     return NULL;
 
-  user_var_entry *entry= NULL;
-  entry= new (nothrow) user_var_entry(name.c_str(), query_id);
-
-  if (entry == NULL)
-    return NULL;
+  user_var_entry *entry= new user_var_entry(name.c_str(), query_id);
 
   std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(name, entry));
 

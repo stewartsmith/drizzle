@@ -1139,11 +1139,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         {
           table::Concurrent *new_table= new table::Concurrent;
           table= new_table;
-          if (new_table == NULL)
-          {
-            return NULL;
-          }
-
           error= new_table->open_unireg_entry(this, alias, identifier);
           if (error != 0)
           {

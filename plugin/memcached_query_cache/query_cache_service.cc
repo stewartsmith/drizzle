@@ -50,7 +50,7 @@ message::Resultset *QueryCacheService::setCurrentResultsetMessage(Session *in_se
      * for this Session object.  Session is responsible for
      * deleting Resultset message when done with it.
      */
-    resultset= new (nothrow) message::Resultset();
+    resultset= new message::Resultset();
     in_session->setResultsetMessage(resultset);
 
     /* for Atomic purpose, reserve an entry for the following query

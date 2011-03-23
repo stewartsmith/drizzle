@@ -154,7 +154,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
     return NULL;
   }
 
-  return new (nothrow) module::Library(plugin_name, dl_handle, module_manifest);
+  return new module::Library(plugin_name, dl_handle, module_manifest);
 }
 
 } /* namespace drizzled */
