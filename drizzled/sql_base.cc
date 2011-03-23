@@ -222,13 +222,10 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           after the call to Session::close_old_data_files() i.e. after removal of
           current thread locks.
         */
-        for (table::CacheMap::const_iterator iter= table::getCache().begin();
-             iter != table::getCache().end();
-             iter++)
+        BOOST_FOREACH(table::CacheMap::const_reference iter, table::getCache())
         {
-          Table *table= iter->second;
-          if (table->in_use)
-            table->in_use->some_tables_deleted= false;
+          if (iter.second->in_use)
+            iter.second->in_use->some_tables_deleted= false;
         }
       }
     }

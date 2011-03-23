@@ -236,11 +236,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       std::string table_error;
 
-      for (util::string::vector::iterator iter= wrong_tables.begin();
-           iter != wrong_tables.end();
-           iter++)
+      BOOST_FOREACH(util::string::vector::reference iter, wrong_tables)
       {
-        table_error+= *iter;
+        table_error+= iter;
         table_error+= ',';
       }
       table_error.resize(table_error.size() -1);

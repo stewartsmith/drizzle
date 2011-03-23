@@ -441,10 +441,8 @@ void close_connections(void)
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
     session::Cache::list list= session::Cache::singleton().getCache();
 
-    for (session::Cache::list::iterator it= list.begin(); it != list.end(); ++it )
+    BOOST_FOREACH(session::Cache::list::reference tmp, list)
     {
-      Session::shared_ptr tmp(*it);
-
       tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
@@ -1017,11 +1015,9 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
 
 static void process_defaults_files()
 {
-  for (vector<string>::iterator iter= defaults_file_list.begin();
-       iter != defaults_file_list.end();
-       ++iter)
+	BOOST_FOREACH(vector<string>::reference iter, defaults_file_list)
   {
-    fs::path file_location= *iter;
+    fs::path file_location= iter;
 
     ifstream input_defaults_file(file_location.file_string().c_str());
 
@@ -1037,17 +1033,12 @@ static void process_defaults_files()
       string new_unknown_opt("--");
       new_unknown_opt.append(*it);
       ++it;
-      if (it != file_unknown.end())
+      if (it == file_unknown.end())
+				break;
+      if ((*it) != "true")
       {
-        if ((*it) != "true")
-        {
-          new_unknown_opt.push_back('=');
-          new_unknown_opt.append(*it);
-        }
-      }
-      else
-      {
-        break;
+        new_unknown_opt.push_back('=');
+        new_unknown_opt.append(*it);
       }
       unknown_options.push_back(new_unknown_opt);
     }
@@ -1057,20 +1048,16 @@ static void process_defaults_files()
 
 static void compose_defaults_file_list(vector<string> in_options)
 {
-  for (vector<string>::iterator it= in_options.begin();
-       it != in_options.end();
-       ++it)
+	BOOST_FOREACH(vector<string>::reference it, in_options)
   {
-    fs::path p(*it);
+    fs::path p(it);
     if (fs::is_regular_file(p))
-      defaults_file_list.push_back(*it);
+      defaults_file_list.push_back(it);
     else
     {
-      errmsg_printf(error::ERROR,
-                  _("Defaults file '%s' not found\n"), (*it).c_str());
+      errmsg_printf(error::ERROR, _("Defaults file '%s' not found\n"), it.c_str());
       unireg_abort(1);
     }
-
   }
 }
 
@@ -1346,12 +1333,9 @@ int init_basic_variables(int argc, char **argv)
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
     {
-
-      for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
-           iter != config_conf_d.getEntries().end();
-           ++iter)
+			BOOST_FOREACH(CachedDirectory::Entries::const_reference iter, config_conf_d.getEntries())
       {
-        string file_entry((*iter)->filename);
+        string file_entry(iter->filename);
 
         if (not file_entry.empty()
             && file_entry != "."

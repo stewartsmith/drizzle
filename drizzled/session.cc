@@ -421,13 +421,8 @@ void Session::cleanup()
     transaction_services.rollbackTransaction(*this, true);
   }
 
-  for (UserVars::iterator iter= user_vars.begin();
-       iter != user_vars.end();
-       iter++)
-  {
-    user_var_entry *entry= iter->second;
-    boost::checked_delete(entry);
-  }
+  BOOST_FOREACH(UserVars::reference iter, user_vars)
+    boost::checked_delete(iter.second);
   user_vars.clear();
 
 
