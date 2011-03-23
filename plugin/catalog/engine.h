@@ -42,12 +42,12 @@ public:
     identifiers.push_back(drizzled::catalog::local_identifier());
   }
 
-  drizzled::message::catalog::shared_ptr getMessage(drizzled::identifier::Catalog::const_reference identifier);
+  drizzled::message::catalog::shared_ptr getMessage(const drizzled::identifier::Catalog& identifier);
 
   void getMessages(drizzled::message::catalog::vector &messages);
 
 private:
-  drizzled::message::catalog::shared_ptr readFile(drizzled::identifier::Catalog::const_reference identifier);
+  drizzled::message::catalog::shared_ptr readFile(const drizzled::identifier::Catalog& identifier);
   bool writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
   void prime(drizzled::message::catalog::vector &messages);
 
