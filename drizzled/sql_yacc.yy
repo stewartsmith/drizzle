@@ -4590,10 +4590,7 @@ show_wild:
           /* empty */
         | LIKE TEXT_STRING_sys
           {
-            Lex.wild= new (YYSession->mem_root) String($2.str, $2.length,
-                                                    system_charset_info);
-            if (Lex.wild == NULL)
-              DRIZZLE_YYABORT;
+            Lex.wild= new (YYSession->mem_root) String($2.str, $2.length, system_charset_info);
           }
         | WHERE expr
           {

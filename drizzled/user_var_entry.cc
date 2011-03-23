@@ -208,9 +208,6 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
 
       new_ptr= (char *)realloc(value, needed_size);
 
-      if (new_ptr == NULL)
-        return true;
-
       value= new_ptr;
       size= needed_size;
     }
@@ -227,7 +224,7 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
   }
   type= arg_type;
 
-  return false;
+  return false; // todo: return void
 }
 
 } /* namespace drizzled */

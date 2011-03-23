@@ -2285,7 +2285,7 @@ static void fix_paths()
 
   if (not opt_help)
   {
-    const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
+    const char *tmp_string= getenv("TMPDIR");
     struct stat buf;
     drizzle_tmpdir.clear();
 
