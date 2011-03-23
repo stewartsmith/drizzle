@@ -59,7 +59,7 @@ int64_t ReleaseAndWait::val_int()
   default:
   case locks::SUCCESS:
     {
-      user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
+      user_locks::Storable *list= getSession().getProperty<user_locks::Storable>("user_locks");
       assert(list);
       if (list) // Just in case we ever blow the assert
         list->erase(Key(*user_identifier, res->c_str()));

@@ -23,6 +23,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/field.h>
+#include <drizzled/system_variables.h>
 
 namespace drizzled {
 

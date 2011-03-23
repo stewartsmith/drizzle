@@ -22,9 +22,9 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/session.h>
 #include <drizzled/stored_key.h>
+#include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 StoredKey::StoredKey(Session *session,
                      Field *field_arg, 

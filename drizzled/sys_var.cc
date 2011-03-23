@@ -62,6 +62,8 @@
 #include <drizzled/visibility.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/catalog/instance.h>
 
 #include <cstdio>
 #include <map>
@@ -70,12 +72,11 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace internal
 {
-extern bool timed_mutexes;
+	extern bool timed_mutexes;
 }
 
 extern plugin::StorageEngine *myisam_engine;

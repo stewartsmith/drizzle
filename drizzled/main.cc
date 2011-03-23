@@ -71,6 +71,7 @@
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace drizzled;
 using namespace std;

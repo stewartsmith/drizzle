@@ -29,12 +29,12 @@
 #include <drizzled/identifier/table.h>
 #include <drizzled/identifier/schema.h>
 #include <drizzled/message/schema.h>
+#include <drizzled/message/table.h>
 #include <drizzled/session.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* some forward declarations needed */
 namespace plugin

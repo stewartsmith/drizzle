@@ -22,7 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/session.h>
-
+#include <drizzled/system_variables.h>
 #include <plugin/compression/uncompress.h>
 
 #include <zlib.h>

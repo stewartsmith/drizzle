@@ -54,6 +54,7 @@
 #include <drizzled/item/ref.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <math.h>

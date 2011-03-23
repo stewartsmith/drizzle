@@ -22,9 +22,9 @@
 #include <drizzled/function/str/replace.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Replace all occurences of string2 in string1 with string3.

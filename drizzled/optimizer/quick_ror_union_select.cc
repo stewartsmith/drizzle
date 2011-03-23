@@ -24,14 +24,14 @@
 #include <drizzled/optimizer/quick_range_select.h>
 #include <drizzled/optimizer/quick_ror_union_select.h>
 #include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
                                                     Table *table)

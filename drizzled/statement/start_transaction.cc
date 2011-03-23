@@ -22,9 +22,9 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/start_transaction.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::StartTransaction::execute()
 {

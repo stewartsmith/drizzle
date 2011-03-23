@@ -48,7 +48,7 @@ int64_t Release::val_int()
   default:
   case barriers::SUCCESS:
     {
-      Storable *list= static_cast<Storable *>(getSession().getProperty(property_key));
+      Storable *list= getSession().getProperty<Storable>(property_key);
       assert(list);
       if (not list) // We should have been the owner if it was passed to us, this should never happen
       {

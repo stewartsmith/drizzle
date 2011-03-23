@@ -27,6 +27,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/status_helper.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/catalog/instance.h>
 
 #include <vector>
 #include <string>

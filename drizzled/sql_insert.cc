@@ -37,9 +37,10 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;

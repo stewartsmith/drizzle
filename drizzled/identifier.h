@@ -26,7 +26,8 @@
 
 namespace drizzled {
 
-class DRIZZLED_API Identifier {
+class DRIZZLED_API Identifier 
+{
 public:
   typedef const Identifier& const_reference;
 
@@ -44,6 +45,6 @@ public:
 #include <drizzled/identifier/table.h>
 #include <drizzled/identifier/user.h>
 
-// Constant identifiers user internally
+// Constant identifiers used internally
 #include <drizzled/identifier/constants/schema.h>
 #include <drizzled/identifier/constants/table.h>

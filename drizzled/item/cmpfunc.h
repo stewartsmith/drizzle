@@ -1434,8 +1434,8 @@ public:
   Item_cond(Session *session, Item_cond *item);
   Item_cond(List<Item> &nlist)
     :item::function::Boolean(), list(nlist), abort_on_null(0) {}
-  bool add(Item *item) { return list.push_back(item); }
-  bool add_at_head(Item *item) { return list.push_front(item); }
+  void add(Item *item) { list.push_back(item); }
+  void add_at_head(Item *item) { list.push_front(item); }
   void add_at_head(List<Item> *nlist) { list.prepand(nlist); }
   bool fix_fields(Session *, Item **ref);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);

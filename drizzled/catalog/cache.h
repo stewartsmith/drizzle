@@ -22,6 +22,7 @@
 
 #include <boost/bind.hpp>
 
+#include <drizzled/identifier.h>
 #include <drizzled/error.h>
 #include <drizzled/catalog.h>
 #include <drizzled/plugin/catalog.h>

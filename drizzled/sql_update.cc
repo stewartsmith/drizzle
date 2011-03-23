@@ -37,14 +37,15 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/util/test.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Re-read record if more columns are needed for error message.

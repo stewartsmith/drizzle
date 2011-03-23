@@ -44,6 +44,8 @@
 #include <drizzled/message/alter_table.pb.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/var.h>
+#include <drizzled/system_variables.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -3372,8 +3374,7 @@ join_table:
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             DRIZZLE_YYABORT_UNLESS( not Lex.is_cross );
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3387,8 +3388,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3417,8 +3417,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3453,8 +3452,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -4299,9 +4297,8 @@ insert_field_spec:
         | '(' fields ')' insert_values {}
         | SET_SYM
           {
-            if (not (Lex.insert_list = new List_item) ||
-                Lex.many_values.push_back(Lex.insert_list))
-              DRIZZLE_YYABORT;
+            Lex.insert_list = new List_item;
+            Lex.many_values.push_back(Lex.insert_list);
           }
           ident_eq_list
         ;
@@ -4339,9 +4336,8 @@ ident_eq_list:
 ident_eq_value:
           simple_ident equal expr_or_default
           {
-            if (Lex.field_list.push_back($1) ||
-                Lex.insert_list->push_back($3))
-              DRIZZLE_YYABORT;
+            Lex.field_list.push_back($1);
+            Lex.insert_list->push_back($3);
           }
         ;
 
@@ -4363,8 +4359,7 @@ no_braces:
           }
           opt_values ')'
           {
-            if (Lex.many_values.push_back(Lex.insert_list))
-              DRIZZLE_YYABORT;
+            Lex.many_values.push_back(Lex.insert_list);
           }
         ;
 
@@ -4376,13 +4371,11 @@ opt_values:
 values:
           values ','  expr_or_default
           {
-            if (Lex.insert_list->push_back($3))
-              DRIZZLE_YYABORT;
+            Lex.insert_list->push_back($3);
           }
         | expr_or_default
           {
-            if (Lex.insert_list->push_back($1))
-              DRIZZLE_YYABORT;
+            Lex.insert_list->push_back($1);
           }
         ;
 
@@ -4447,9 +4440,8 @@ insert_update_list:
 insert_update_elem:
           simple_ident equal expr_or_default
           {
-          if (Lex.update_list.push_back($1) ||
-              Lex.value_list.push_back($3))
-              DRIZZLE_YYABORT;
+			Lex.update_list.push_back($1);
+            Lex.value_list.push_back($3);
           }
         ;
 
@@ -4462,10 +4454,7 @@ delete:
             init_select(&Lex);
             Lex.lock_option= TL_WRITE_DEFAULT;
             Lex.select_lex.init_order();
-
-            if (!Lex.current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
-                                           Lex.lock_option))
-              DRIZZLE_YYABORT;
+            Lex.current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING, Lex.lock_option);
           }
           where_clause opt_order_clause
           delete_limit_clause {}

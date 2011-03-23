@@ -22,9 +22,9 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/update.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Update::execute()
 {

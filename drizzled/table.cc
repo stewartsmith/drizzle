@@ -47,25 +47,23 @@
 #include <drizzled/internal/m_string.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-
 #include <drizzled/refresh_version.h>
-
 #include <drizzled/table/singular.h>
-
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -817,8 +815,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Singular *table;
-  table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
+  table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
@@ -1690,12 +1687,8 @@ bool Table::fill_item_list(List<Item> *item_list) const
     are fixed in Item_field constructor.
   */
   for (Field **ptr= field; *ptr; ptr++)
-  {
-    Item_field *item= new Item_field(*ptr);
-    if (!item || item_list->push_back(item))
-      return true;
-  }
-  return false;
+    item_list->push_back(new Item_field(*ptr));
+  return false; // todo: return void
 }
 
 
