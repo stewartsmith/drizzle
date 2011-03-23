@@ -62,6 +62,7 @@ libdrizzle_2_0_libdrizzle_libdrizzle_la_CXXFLAGS= \
 
 libdrizzle_2_0_libdrizzle_libdrizzle_la_LDFLAGS= \
 	$(AM_LDFLAGS) \
+        $(GCOV_LIBS) \
 	-version-info \
 	$(LIBDRIZZLE_LIBRARY_VERSION)
 
