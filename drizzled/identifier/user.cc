@@ -29,10 +29,5 @@ User::shared_ptr User::make_shared()
   return boost::make_shared<User>();
 }
 
-void User::getSQLPath(std::string &arg) const
-{
-  arg += _user.empty() ? "<no user>" : _user;
-}
-
 } /* namespace identifier */
 } /* namespace drizzled */

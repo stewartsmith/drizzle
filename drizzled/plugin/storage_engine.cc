@@ -592,19 +592,11 @@ bool StorageEngine::createTable(Session &session,
     }
 
     if (error == ER_TABLE_PERMISSION_DENIED)
-    {
       my_error(ER_TABLE_PERMISSION_DENIED, identifier);
-    }
     else if (error)
-    {
-      std::string path;
-      identifier.getSQLPath(path);
-      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), path.c_str(), error);
-    }
-
+      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
     table.delete_table();
   }
-
   return(error == EE_OK);
 }
 
@@ -641,27 +633,19 @@ void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &s
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
-  { }
+  { 
+	}
   else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
-  { }
-  else
+  { 
+	}
+  else if (directory.fail())
   {
-    if (directory.fail())
-    {
-      errno= directory.getError();
-      if (errno == ENOENT)
-      {
-        std::string path;
-        schema_identifier.getSQLPath(path);
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), path.c_str());
-      }
-      else
-      {
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
-      }
-
-      return;
-    }
+    errno= directory.getError();
+    if (errno == ENOENT)
+      my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+    else
+      my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
+    return;
   }
 
   std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
@@ -1108,12 +1092,7 @@ int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, 
 
   if (not success)
   {
-    std::string error_message;
-    identifier.getSQLPath(error_message);
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             error_message.c_str(),
-             table_message.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), identifier.getSQLPath().c_str(), table_message.InitializationErrorString().c_str());
     delete output;
 
     if (close(fd) == -1)

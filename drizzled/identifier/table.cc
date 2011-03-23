@@ -310,31 +310,23 @@ const std::string &Table::getPath() const
 
 const std::string &Table::getKeyPath() const
 {
-  if (key_path.empty())
-    return path;
-
-  return key_path;
+  return key_path.empty() ? path : key_path;
 }
 
-void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
+std::string Table::getSQLPath() const  // @todo this is just used for errors, we should find a way to optimize it
 {
-  switch (type) {
+  switch (type) 
+	{
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
-    sql_path.append(getSchemaName());
-    sql_path.append(".");
-    sql_path.append(table_name);
-    break;
+		return getSchemaName() + "." + table_name;
   case message::Table::INTERNAL:
-    sql_path.append("temporary.");
-    sql_path.append(table_name);
-    break;
+		return "temporary." + table_name;
   case message::Table::TEMPORARY:
-    sql_path.append(getSchemaName());
-    sql_path.append(".#");
-    sql_path.append(table_name);
-    break;
+    return getSchemaName() + ".#" + table_name;
   }
+	assert(false);
+	return "<no table>";
 }
 
 bool Table::isValid() const
@@ -343,57 +335,25 @@ bool Table::isValid() const
     return false;
 
   bool error= false;
-  do
+  if (table_name.empty()
+		|| table_name.size() > NAME_LEN
+		|| table_name[table_name.length() - 1] == ' '
+		|| table_name[0] == '.')
   {
-    if (table_name.empty())
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.size() > NAME_LEN)
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(table_name.length() -1) == ' ')
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(0) == '.')
-    {
-      error= true;
-      break;
-    }
-
-    {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-      int well_formed_error;
-      uint32_t res= cs->cset->well_formed_len(cs, table_name.c_str(), table_name.c_str() + table_name.length(),
-                                              NAME_CHAR_LEN, &well_formed_error);
-      if (well_formed_error or table_name.length() != res)
-      {
-        error= true;
-        break;
-      }
-    }
-  } while (0);
-
-  if (error)
-  {
-    std::string name;
-
-    getSQLPath(name);
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), name.c_str());
-
-    return false;
+    error= true;
   }
-
-  return true;
+	else
+  {
+    int well_formed_error;
+    uint32_t res= my_charset_utf8mb4_general_ci.cset->well_formed_len(&my_charset_utf8mb4_general_ci, 
+			table_name.c_str(), table_name.c_str() + table_name.length(), NAME_CHAR_LEN, &well_formed_error);
+    if (well_formed_error or table_name.length() != res)
+      error= true;
+  }
+  if (not error)
+		return true;
+  my_error(ER_WRONG_TABLE_NAME, MYF(0), getSQLPath().c_str());
+  return false;
 }
 
 

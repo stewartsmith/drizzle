@@ -1625,37 +1625,22 @@ rename_table(Session &session,
                    const identifier::Table &from,
                    const identifier::Table &to)
 {
-  int error= 0;
-
-  assert(base);
-
   if (not plugin::StorageEngine::doesSchemaExist(to))
   {
     my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
     return true;
   }
 
-  error= base->renameTable(session, from, to);
-
+  int error= base->renameTable(session, from, to);
   if (error == HA_ERR_WRONG_COMMAND)
-  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
-  }
   else if (error)
   {
-    std::string from_path;
-    std::string to_path;
-
-    from.getSQLPath(from_path);
-    to.getSQLPath(to_path);
-
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
-
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), 
+			from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str(), 
+			to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str(), error);
   }
-
-  return error ? true : false; 
+  return error; 
 }
 
 
@@ -1768,10 +1753,9 @@ static bool admin_table(Session* session, TableList* tables,
   for (table= tables; table; table= table->next_local)
   {
     identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
-    std::string table_name;
     bool fatal_error=0;
 
-    table_identifier.getSQLPath(table_name);
+    std::string table_name = table_identifier.getSQLPath();
 
     table->lock_type= lock_type;
     /* open only one table from local list of command */

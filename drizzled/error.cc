@@ -31,14 +31,9 @@
 #include <drizzled/util/find_ptr.h>
 
 #include <boost/unordered_map.hpp>
-#include <exception>
 
 namespace drizzled {
 namespace {
-
-class ErrorStringNotFound: public std::exception
-{
-};
 
 ErrorMap& get_error_map()
 {
@@ -60,16 +55,10 @@ void add_error_message(drizzled::error_t error_code,
   get_error_map().add(error_code, error_name, message);
 }
 
-const char * error_message(drizzled::error_t code)
+const char* error_message(drizzled::error_t code)
 {
-  try
-  {
-    return get_error_map().find(code).c_str();
-  }
-  catch (ErrorStringNotFound const&)
-  {
-    return get_error_map().find(ER_UNKNOWN_ERROR).c_str();
-  }
+	const std::string* ptr = get_error_map().find(code);
+	return ptr ? ptr->c_str() : get_error_map().find(ER_UNKNOWN_ERROR)->c_str();
 }
 
 error_handler_func error_handler_hook= NULL;
@@ -78,33 +67,17 @@ namespace error {
 
 void access(drizzled::identifier::User::const_reference user)
 {
-  std::string user_string;
-  user.getSQLPath(user_string);
-
-  my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user_string.c_str(),
-           user.hasPassword() ? ER(ER_YES) : ER(ER_NO));
+  my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), ER(user.hasPassword() ? ER_YES : ER_NO));
 } 
 
 void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema)
 {
-  std::string user_string;
-  user.getSQLPath(user_string);
-
-  std::string schema_string;
-  schema.getSQLPath(schema_string);
-
-  my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), schema_string.c_str());
+  my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), schema.getSQLPath().c_str());
 } 
 
 void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table)
 {
-  std::string user_string;
-  user.getSQLPath(user_string);
-
-  std::string table_string;
-  table.getSQLPath(table_string);
-
-  my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user_string.c_str(), table_string.c_str());
+  my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), table.getSQLPath().c_str());
 } 
 
 static error::level_t _verbosity= error::ERROR;
@@ -192,9 +165,7 @@ void my_error(const std::string &ref, error_t nr, myf MyFlags)
 
 void my_error(error_t nr, drizzled::Identifier::const_reference ref, myf MyFlags)
 {
-  std::string temp;
-  ref.getSQLPath(temp);
-  my_error(nr, MyFlags, temp.c_str());
+  my_error(nr, MyFlags, ref.getSQLPath().c_str());
 } 
 
 void my_error(error_t nr)
@@ -204,21 +175,17 @@ void my_error(error_t nr)
 
 void my_error(error_t nr, myf MyFlags, ...)
 {
-  std::string format;
   va_list args;
   char ebuff[ERRMSGSIZE + 20];
 
-  try
-  {
-    format= get_error_map().find(nr);
+  if (const std::string* format= get_error_map().find(nr))
+	{	
     va_start(args,MyFlags);
-    (void) vsnprintf (ebuff, sizeof(ebuff), _(format.c_str()), args);
+    (void) vsnprintf (ebuff, sizeof(ebuff), _(format->c_str()), args);
     va_end(args);
   }
-  catch (ErrorStringNotFound const& e)
-  {
+	else
     (void) snprintf (ebuff, sizeof(ebuff), _("Unknown error %d"), nr);
-  }
   (*error_handler_hook)(nr, ebuff, MyFlags);
 }
 
@@ -277,14 +244,10 @@ void ErrorMap::add(drizzled::error_t error_num,
   }
 }
 
-const std::string &ErrorMap::find(drizzled::error_t error_num) const
+const std::string* ErrorMap::find(drizzled::error_t error_num) const
 {
   const ErrorMessageMap::mapped_type* pos= find_ptr(mapping_, error_num);
-  if (!pos)
-  {
-    throw ErrorStringNotFound();
-  }
-  return pos->second;
+	return pos ? &pos->second : NULL;
 }
 
 #define ADD_ERROR_MESSAGE(code, msg) add(code, STRINGIFY_ARG(code), msg)
@@ -646,19 +609,19 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_ASSERT_NULL, N_("Assertion '%s' failed, the result was NULL."));
 
   // Some old error values use the same strings as some new error values.
-  ADD_ERROR_MESSAGE(EE_FILENOTFOUND, find(ER_FILE_NOT_FOUND));
-  ADD_ERROR_MESSAGE(EE_CANTCREATEFILE, find(ER_CANT_CREATE_FILE));
-  ADD_ERROR_MESSAGE(EE_READ, find(ER_ERROR_ON_READ));
-  ADD_ERROR_MESSAGE(EE_WRITE, find(ER_ERROR_ON_WRITE));
-  ADD_ERROR_MESSAGE(EE_BADCLOSE, find(ER_ERROR_ON_CLOSE));
-  ADD_ERROR_MESSAGE(EE_OUTOFMEMORY, find(ER_OUTOFMEMORY));
-  ADD_ERROR_MESSAGE(EE_DELETE, find(ER_CANT_DELETE_FILE));
-  ADD_ERROR_MESSAGE(EE_LINK, find(ER_ERROR_ON_RENAME));
-  ADD_ERROR_MESSAGE(EE_EOFERR, find(ER_UNEXPECTED_EOF));
-  ADD_ERROR_MESSAGE(EE_CANTLOCK, find(ER_CANT_LOCK));
-  ADD_ERROR_MESSAGE(EE_DIR, find(ER_CANT_READ_DIR));
-  ADD_ERROR_MESSAGE(EE_STAT, find(ER_CANT_GET_STAT));
-  ADD_ERROR_MESSAGE(EE_DISK_FULL, find(ER_DISK_FULL));
+  ADD_ERROR_MESSAGE(EE_FILENOTFOUND, *find(ER_FILE_NOT_FOUND));
+  ADD_ERROR_MESSAGE(EE_CANTCREATEFILE, *find(ER_CANT_CREATE_FILE));
+  ADD_ERROR_MESSAGE(EE_READ, *find(ER_ERROR_ON_READ));
+  ADD_ERROR_MESSAGE(EE_WRITE, *find(ER_ERROR_ON_WRITE));
+  ADD_ERROR_MESSAGE(EE_BADCLOSE, *find(ER_ERROR_ON_CLOSE));
+  ADD_ERROR_MESSAGE(EE_OUTOFMEMORY, *find(ER_OUTOFMEMORY));
+  ADD_ERROR_MESSAGE(EE_DELETE, *find(ER_CANT_DELETE_FILE));
+  ADD_ERROR_MESSAGE(EE_LINK, *find(ER_ERROR_ON_RENAME));
+  ADD_ERROR_MESSAGE(EE_EOFERR, *find(ER_UNEXPECTED_EOF));
+  ADD_ERROR_MESSAGE(EE_CANTLOCK, *find(ER_CANT_LOCK));
+  ADD_ERROR_MESSAGE(EE_DIR, *find(ER_CANT_READ_DIR));
+  ADD_ERROR_MESSAGE(EE_STAT, *find(ER_CANT_GET_STAT));
+  ADD_ERROR_MESSAGE(EE_DISK_FULL, *find(ER_DISK_FULL));
   
   // Catalog related errors
   ADD_ERROR_MESSAGE(ER_CATALOG_CANNOT_CREATE, N_("Cannot create catalog '%s'."));

@@ -31,10 +31,15 @@ class DRIZZLED_API Identifier
 public:
   typedef const Identifier& const_reference;
 
-  virtual void getSQLPath(std::string &arg) const;
-
   virtual ~Identifier()
-  { }
+  { 
+	}
+
+	virtual std::string getSQLPath() const 
+	{ 
+		return "";
+	}
+
 };
 
 } // namespace drizzled

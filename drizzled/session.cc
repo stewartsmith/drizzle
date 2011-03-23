@@ -1993,13 +1993,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
   if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
   {
     if (not best_effort)
-    {
-      std::string path;
-      identifier.getSQLPath(path);
-      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
-                    path.c_str(), errno);
-    }
-
+      errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), errno);
     return true;
   }
 
@@ -2008,20 +2002,12 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
 
 bool Open_tables_state::rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier)
 {
+	// todo: & base
   drizzled::error_t error;
-  assert(base);
-
-  if (not plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier, error))
-  {
-    std::string path;
-    identifier.getSQLPath(path);
-    errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path.c_str(), error);
-
-    return true;
-  }
-
-  return false;
+  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), *base, identifier, error))
+		return false;
+  errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), error);
+  return true;
 }
 
 /**

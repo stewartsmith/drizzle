@@ -48,7 +48,10 @@ public:
 
   Schema(const std::string &db_arg);
 
-  virtual void getSQLPath(std::string &arg) const;
+  virtual std::string getSQLPath() const
+	{
+		return db;
+	}
 
   const std::string &getPath() const;
 
