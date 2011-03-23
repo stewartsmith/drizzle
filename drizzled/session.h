@@ -38,7 +38,6 @@
 #include <drizzled/error.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/visibility.h>
@@ -47,6 +46,11 @@
 #include <drizzled/type/time.h>
 
 namespace drizzled {
+
+namespace catalog
+{
+	class Instance;
+}
 
 namespace plugin
 {
@@ -149,7 +153,7 @@ public:
   typedef const Session* const_pointer;
   typedef Session* pointer;
 
-  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+  static shared_ptr make_shared(plugin::Client *client, boost::shared_ptr<catalog::Instance> instance_arg)
   {
     assert(instance_arg);
     return boost::make_shared<Session>(client, instance_arg);
@@ -577,7 +581,6 @@ public:
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
 
@@ -672,7 +675,6 @@ public:
   bool is_admin_connection;
   bool some_tables_deleted;
   bool no_errors;
-  bool password;
   /**
     Set to true if execution of the current compound statement
     can not continue. In particular, disables activation of
@@ -845,7 +847,7 @@ public:
     return first_successful_insert_id_in_prev_stmt;
   }
 
-  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
+  Session(plugin::Client *client_arg, boost::shared_ptr<catalog::Instance> catalog);
   virtual ~Session();
 
   void cleanup();
@@ -1241,7 +1243,6 @@ public:
     resultset= NULL;
   }
 
-public:
   plugin::EventObserverList *getSessionObservers()
   {
     return session_event_observers;
@@ -1252,21 +1253,8 @@ public:
     session_event_observers= observers;
   }
 
-  /* For schema event observers there is one set of observers per database. */
-  plugin::EventObserverList *getSchemaObservers(const std::string &db_name)
-  {
-    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
-      return *i;
-    return NULL;
-  }
-
-  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers)
-  {
-    schema_event_observers.erase(db_name);
-    if (observers)
-      schema_event_observers[db_name] = observers;
-  }
-
+  plugin::EventObserverList* getSchemaObservers(const std::string& schema);
+  plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
  private:
 
@@ -1410,12 +1398,12 @@ public:
     return usage;
   }
 
-  catalog::Instance::const_reference catalog() const
+  const catalog::Instance& catalog() const
   {
     return *_catalog;
   }
 
-  catalog::Instance::reference catalog()
+  catalog::Instance& catalog()
   {
     return *_catalog;
   }
@@ -1432,7 +1420,7 @@ private:
     return not getrusage(RUSAGE_THREAD, &usage);
   }
 
-  catalog::Instance::shared_ptr _catalog;
+  boost::shared_ptr<catalog::Instance> _catalog;
 
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
@@ -1440,10 +1428,6 @@ private:
   /* Pointer to the current resultset of Select query */
   message::Resultset *resultset;
   plugin::EventObserverList *session_event_observers;
-
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
 
   uint64_t xa_id;
   const char *proc_info;
