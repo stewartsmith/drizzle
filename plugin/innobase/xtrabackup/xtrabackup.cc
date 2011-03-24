@@ -41,10 +41,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define my_progname "xtrabackup"
 
-#define gptr
 #define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
-
-#define G_PTR void*
 
 #include <univ.i>
 #include <os0file.h>
