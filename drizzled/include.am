@@ -298,6 +298,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/message.h \
 			      drizzled/message/cache.h \
 			      drizzled/message/catalog.h \
+			      drizzled/message/replication_options.h \
 			      drizzled/message/schema.h \
 			      drizzled/message/table.h \
 			      drizzled/module/context.h \
