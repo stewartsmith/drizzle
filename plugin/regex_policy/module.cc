@@ -208,7 +208,7 @@ bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
   return restrictObject(user_ctx, session_ctx.username(), process_policies, &process_check_cache);
 }
 
-bool Policy::restrictTable(drizzled::identifier::User::const_reference user_ctx,
+bool Policy::restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table)
 {
   return restrictObject(user_ctx, table.getTableName(), table_policies, &table_check_cache);

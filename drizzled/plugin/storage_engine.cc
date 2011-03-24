@@ -429,13 +429,13 @@ handle_error(drizzled::error_t ,
 
 class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
 {
-  Session::reference session;
+  Session& session;
   const identifier::Table& identifier;
   drizzled::error_t &error;
 
 public:
 
-  DropTableByIdentifier(Session::reference session_arg,
+  DropTableByIdentifier(Session& session_arg,
                         const identifier::Table& identifier_arg,
                         drizzled::error_t &error_arg) :
     session(session_arg),
@@ -469,7 +469,7 @@ public:
 };
 
 
-bool StorageEngine::dropTable(Session::reference session,
+bool StorageEngine::dropTable(Session& session,
                               const identifier::Table& identifier,
                               drizzled::error_t &error)
 {
@@ -506,7 +506,7 @@ bool StorageEngine::dropTable(Session& session,
   return true;
 }
 
-bool StorageEngine::dropTable(Session::reference session,
+bool StorageEngine::dropTable(Session& session,
                               StorageEngine &engine,
                               const identifier::Table& identifier,
                               drizzled::error_t &error)

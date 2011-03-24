@@ -32,11 +32,11 @@ class Session
 {
   session::Cache::list local_list;
   session::Cache::list::const_iterator iter;
-  identifier::User::const_reference user;
+  const identifier::User& user;
 
 public:
 
-  Session(identifier::User::const_reference arg) :
+  Session(const identifier::User& arg) :
     user(arg)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());

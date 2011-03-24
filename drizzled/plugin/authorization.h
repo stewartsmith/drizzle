@@ -67,7 +67,7 @@ public:
    *
    * @returns true if the user cannot access the table
    */
-  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
+  virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
   /**
@@ -83,17 +83,17 @@ public:
                                const drizzled::identifier::User &session_ctx);
 
   /** Server API method for checking schema authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
                            const identifier::Schema& schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
                            const drizzled::identifier::Table& table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
                            const Session &session,
                            bool send_error= true);
 
@@ -101,7 +101,7 @@ public:
    * Server API helper method for applying authorization tests
    * to a set of schema names (for use in the context of getSchemaNames
    */
-  static void pruneSchemaNames(drizzled::identifier::User::const_reference user_ctx,
+  static void pruneSchemaNames(const drizzled::identifier::User& user_ctx,
                                identifier::Schema::vector &set_of_schemas);
   
   /**
@@ -112,7 +112,7 @@ public:
 
 };
 
-inline bool Authorization::restrictTable(drizzled::identifier::User::const_reference user_ctx,
+inline bool Authorization::restrictTable(const drizzled::identifier::User& user_ctx,
                                          const drizzled::identifier::Table& table)
 {
   return restrictSchema(user_ctx, table);

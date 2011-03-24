@@ -362,7 +362,7 @@ public:
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable(identifier::User::const_reference) const;
+  bool isViewable(const identifier::User&) const;
 
 private:
   /**

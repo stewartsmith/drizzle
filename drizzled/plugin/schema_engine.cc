@@ -236,7 +236,7 @@ static bool drop_all_tables_in_schema(Session& session,
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session,
+bool StorageEngine::dropSchema(Session& session,
                                const identifier::Schema& identifier,
                                message::schema::const_reference schema_message)
 {

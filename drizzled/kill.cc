@@ -27,7 +27,7 @@
 
 namespace drizzled {
 
-bool kill(identifier::User::const_reference user, session_id_t id_to_kill, bool only_kill_query)
+bool kill(const identifier::User& user, session_id_t id_to_kill, bool only_kill_query)
 {
   drizzled::Session::shared_ptr session_param= session::Cache::singleton().find(id_to_kill);
 

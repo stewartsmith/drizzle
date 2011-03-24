@@ -160,7 +160,7 @@ public:
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);
 
-  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
+  virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
   bool loadFile();
