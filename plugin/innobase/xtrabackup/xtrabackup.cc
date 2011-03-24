@@ -4952,7 +4952,15 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);		
 	}
 
-        mysql_data_home_arg.assign(vm["datadir"].as<std::string>());
+        if (vm.count("datadir"))
+        {
+          mysql_data_home_arg.assign(vm["datadir"].as<std::string>());
+        }
+        else
+        {
+          mysql_data_home_arg.assign("./");
+        }
+
         mysql_data_home= (char*)malloc(mysql_data_home_arg.length());
         strcpy(mysql_data_home, mysql_data_home_arg.c_str());
 
