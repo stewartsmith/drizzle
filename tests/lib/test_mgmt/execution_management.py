@@ -70,7 +70,7 @@ class executionManager:
         # to 1.
         self.start_and_exit = variables['startandexit']
         self.executors = {}
-        self.executor_name_base = 'testbot'
+        self.executor_name_base = 'bot'
         self.executor_start_count = 0
         self.executor_current_count = 0
         # We will eventually allow this to be set

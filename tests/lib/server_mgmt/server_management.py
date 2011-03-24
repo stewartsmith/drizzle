@@ -46,7 +46,8 @@ class serverManager:
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.initial_run = 1
-        self.server_base_name = 'server'
+        # we try this to shorten things - will see how this works
+        self.server_base_name = 's'
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.logging = system_manager.logging
