@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/global_charset_info.h> // for default_charset_info
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
+#include <drizzled/configmake.h>
+
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
@@ -4958,7 +4960,7 @@ int main(int argc, char **argv)
         }
         else
         {
-          mysql_data_home_arg.assign("./");
+          mysql_data_home_arg.assign(LOCALSTATEDIR);
         }
 
         mysql_data_home= (char*)malloc(mysql_data_home_arg.length());
