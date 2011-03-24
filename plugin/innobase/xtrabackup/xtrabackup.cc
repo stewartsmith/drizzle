@@ -4742,7 +4742,7 @@ int main(int argc, char **argv)
 	po::options_description commandline_options(_("Options used only in command line"));
 	commandline_options.add_options()
 	("target-dir", po::value<char*>(&xtrabackup_target_dir), _("destination directory"))
-	("backup", po::value<bool>(&xtrabackup_backup), _("take backup to target-dir"))
+          ("backup", po::value<bool>(&xtrabackup_backup)->default_value(false)->zero_tokens(), _("take backup to target-dir"))
 	("stats", po::value<bool>(&xtrabackup_stats), _("calc statistic of datadir (offline mysqld is recommended)"))
 	("prepare", po::value<bool>(&xtrabackup_prepare), _("prepare a backup for starting mysql server on the backup."))
 	("export", po::value<bool>(&xtrabackup_export), _("create files to import to another database when prepare."))
