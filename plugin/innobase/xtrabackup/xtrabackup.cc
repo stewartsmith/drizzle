@@ -23,87 +23,87 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define XTRABACKUP_VERSION "undefined"
 #endif
 #ifndef XTRABACKUP_REVISION
- #define XTRABACKUP_REVISION "undefined"
- #endif
+#define XTRABACKUP_REVISION "undefined"
+#endif
 
- #include <config.h>
- #include <drizzled/internal/my_sys.h>
- #include <drizzled/charset_info.h>
- #include <drizzled/charset.h>
- #include <drizzled/global_charset_info.h> // for default_charset_info
+#include <config.h>
+#include <drizzled/internal/my_sys.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
+#include <drizzled/global_charset_info.h> // for default_charset_info
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
- #include "ha_prototypes.h"
+#include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
- #include <boost/program_options.hpp>
+#include <boost/program_options.hpp>
 
- #define my_progname "xtrabackup"
+#define my_progname "xtrabackup"
 
- #define gptr
- #define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
+#define gptr
+#define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
 
- #define G_PTR void*
+#define G_PTR void*
 
- #include <univ.i>
- #include <os0file.h>
- #include <os0thread.h>
- #include <srv0start.h>
- #include <srv0srv.h>
- #include <trx0roll.h>
- #include <trx0trx.h>
- #include <trx0sys.h>
- #include <mtr0mtr.h>
- #include <row0ins.h>
- #include <row0mysql.h>
- #include <row0sel.h>
- #include <row0upd.h>
- #include <log0log.h>
- #include <log0recv.h>
- #include <lock0lock.h>
- #include <dict0crea.h>
- #include <btr0cur.h>
- #include <btr0btr.h>
- #include <btr0sea.h>
- #include <fsp0fsp.h>
- #include <sync0sync.h>
- #include <fil0fil.h>
- #include <trx0xa.h>
+#include <univ.i>
+#include <os0file.h>
+#include <os0thread.h>
+#include <srv0start.h>
+#include <srv0srv.h>
+#include <trx0roll.h>
+#include <trx0trx.h>
+#include <trx0sys.h>
+#include <mtr0mtr.h>
+#include <row0ins.h>
+#include <row0mysql.h>
+#include <row0sel.h>
+#include <row0upd.h>
+#include <log0log.h>
+#include <log0recv.h>
+#include <lock0lock.h>
+#include <dict0crea.h>
+#include <btr0cur.h>
+#include <btr0btr.h>
+#include <btr0sea.h>
+#include <fsp0fsp.h>
+#include <sync0sync.h>
+#include <fil0fil.h>
+#include <trx0xa.h>
 
- #ifdef INNODB_VERSION_SHORT
- #include <ibuf0ibuf.h>
- #else
- #error ENOCOOL
- #endif
+#ifdef INNODB_VERSION_SHORT
+#include <ibuf0ibuf.h>
+#else
+#error ENOCOOL
+#endif
 
- #define IB_INT64 ib_int64_t
- #define LSN64 ib_uint64_t
- #define MACH_READ_64 mach_read_from_8
- #define MACH_WRITE_64 mach_write_to_8
- #define OS_MUTEX_CREATE() os_mutex_create()
- #define ut_dulint_zero 0
- #define ut_dulint_cmp(A, B) (A > B ? 1 : (A == B ? 0 : -1))
- #define ut_dulint_add(A, B) (A + B)
- #define ut_dulint_minus(A, B) (A - B)
- #define ut_dulint_align_down(A, B) (A & ~((ib_int64_t)B - 1))
- #define ut_dulint_align_up(A, B) ((A + B - 1) & ~((ib_int64_t)B - 1))
+#define IB_INT64 ib_int64_t
+#define LSN64 ib_uint64_t
+#define MACH_READ_64 mach_read_from_8
+#define MACH_WRITE_64 mach_write_to_8
+#define OS_MUTEX_CREATE() os_mutex_create()
+#define ut_dulint_zero 0
+#define ut_dulint_cmp(A, B) (A > B ? 1 : (A == B ? 0 : -1))
+#define ut_dulint_add(A, B) (A + B)
+#define ut_dulint_minus(A, B) (A - B)
+#define ut_dulint_align_down(A, B) (A & ~((ib_int64_t)B - 1))
+#define ut_dulint_align_up(A, B) ((A + B - 1) & ~((ib_int64_t)B - 1))
 
- #ifdef __WIN__
- #define SRV_PATH_SEPARATOR	'\\'
- #define SRV_PATH_SEPARATOR_STR	"\\"	
- #else
- #define SRV_PATH_SEPARATOR	'/'
- #define SRV_PATH_SEPARATOR_STR	"/"
- #endif
+#ifdef __WIN__
+#define SRV_PATH_SEPARATOR	'\\'
+#define SRV_PATH_SEPARATOR_STR	"\\"	
+#else
+#define SRV_PATH_SEPARATOR	'/'
+#define SRV_PATH_SEPARATOR_STR	"/"
+#endif
 
- #ifndef UNIV_PAGE_SIZE_MAX
- #define UNIV_PAGE_SIZE_MAX UNIV_PAGE_SIZE
- #endif
- #ifndef UNIV_PAGE_SIZE_SHIFT_MAX
- #define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
- #endif
+#ifndef UNIV_PAGE_SIZE_MAX
+#define UNIV_PAGE_SIZE_MAX UNIV_PAGE_SIZE
+#endif
+#ifndef UNIV_PAGE_SIZE_SHIFT_MAX
+#define UNIV_PAGE_SIZE_SHIFT_MAX UNIV_PAGE_SIZE_SHIFT
+#endif
 
- using namespace drizzled;
- namespace po=boost::program_options;
+using namespace drizzled;
+namespace po=boost::program_options;
 
 namespace drizzled {
   bool errmsg_printf (error::level_t, char const *format, ...);
@@ -556,14 +556,14 @@ typedef struct {
 
 static
 datafiles_iter_t *
-datafiles_iter_new(fil_system_t *system)
+datafiles_iter_new(fil_system_t *f_system)
 {
 	datafiles_iter_t *it;
 
 	it = (datafiles_iter_t*) ut_malloc(sizeof(datafiles_iter_t));
 	it->mutex = OS_MUTEX_CREATE();
 
-	it->system = system;
+	it->system = f_system;
 	it->space = NULL;
 	it->node = NULL;
 	it->started = FALSE;
@@ -734,7 +734,8 @@ thd_is_replication_slave_thread(
 /*============================*/
   drizzled::Session* ) /*!< in: thread handle (Session*) */
 {
-  return false;
+	fprintf(stderr, "xtrabackup: thd_is_replication_slave_thread() is called\n");
+	return(FALSE);
 }
 
 UNIV_INTERN
@@ -743,7 +744,8 @@ thd_has_edited_nontrans_tables(
 /*===========================*/
   drizzled::Session *)  /*!< in: thread handle (Session*) */
 {
-  return(false);
+	fprintf(stderr, "xtrabackup: thd_has_edited_nontrans_tables() is called\n");
+	return(FALSE);
 }
 
 UNIV_INTERN
@@ -759,11 +761,9 @@ thd_is_select(
 UNIV_INTERN
 void
 innobase_mysql_print_thd(
-/*=====================*/
-  FILE* ,    /*!< in: output stream */
-  drizzled::Session *,  /*!< in: pointer to a Drizzle Session object */
-  uint  )   /*!< in: max query length to print, or 0 to
-           use the default max length */
+	FILE*,
+	drizzled::Session*,
+	uint)
 {
 	fprintf(stderr, "xtrabackup: innobase_mysql_print_thd() is called\n");
 }
@@ -1245,8 +1245,7 @@ innodb_init_param(void)
 		if (n_shift >= 12 && n_shift <= UNIV_PAGE_SIZE_SHIFT_MAX) {
 			fprintf(stderr,
 				"InnoDB: Warning: innodb_page_size has been "
-				"changed from default value 16384.\n",
-				innobase_page_size);
+				"changed from default value 16384.\n");
 			srv_page_size_shift = n_shift;
 			srv_page_size = 1 << n_shift;
 			fprintf(stderr,
@@ -1754,6 +1753,8 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 	ulint		zip_size;
 	xb_delta_info_t info;
 
+	info.page_size = 0;
+
 #ifdef XTRADB_BASED
 	if (xtrabackup_tables && (!trx_sys_sys_space(node->space->id)))
 #else
@@ -1761,7 +1762,7 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 #endif
 	{ /* must backup id==0 */
 		char *p;
-		int p_len, regres;
+		int p_len, regres= 0;
 		char *next, *prev;
 		char tmp;
 		int i;
@@ -1976,6 +1977,7 @@ skip_filter:
 		ulint chunk;
 		ulint chunk_offset;
 		ulint retry_count = 10;
+//copy_loop:
 		if ((ulint)(file_size - offset) > COPY_CHUNK * page_size) {
 			chunk = COPY_CHUNK * page_size;
 		} else {
@@ -2049,7 +2051,7 @@ read_retry:
 				if (ut_dulint_cmp(incremental_lsn,
 					MACH_READ_64(page + chunk_offset + FIL_PAGE_LSN)) < 0) {
 	/* ========================================= */
-	IB_INT64 page_offset;
+	IB_INT64 offset_on_page;
 
 	if (page_in_buffer == page_size/4) {
 		/* flush buffer */
@@ -2072,10 +2074,10 @@ read_retry:
 		page_in_buffer++;
 	}
 
-	page_offset = ((offset + (IB_INT64)chunk_offset) >> page_size_shift);
-	ut_a(page_offset >> 32 == 0);
+	offset_on_page = ((offset + (IB_INT64)chunk_offset) >> page_size_shift);
+	ut_a(offset_on_page >> 32 == 0);
 
-	mach_write_to_4(incremental_buffer + page_in_buffer * 4, (ulint)page_offset);
+	mach_write_to_4(incremental_buffer + page_in_buffer * 4, (ulint)offset_on_page);
 	memcpy(incremental_buffer + page_in_buffer * page_size,
 	       page + chunk_offset, page_size);
 
@@ -2862,7 +2864,7 @@ xtrabackup_backup_func(void)
 	}
 
         {
-        fil_system_t*   system = fil_system;
+        fil_system_t*   f_system = fil_system;
 
 	/* definition from recv_recovery_from_checkpoint_start() */
 	log_group_t*	max_cp_group;
@@ -2881,7 +2883,7 @@ xtrabackup_backup_func(void)
 	log_hdr_buf = (unsigned char*)ut_align(log_hdr_buf_, OS_FILE_LOG_BLOCK_SIZE);
 
 	/* log space */
-	//space = UT_LIST_GET_NEXT(space_list, UT_LIST_GET_FIRST(system->space_list));
+	//space = UT_LIST_GET_NEXT(space_list, UT_LIST_GET_FIRST(f_system->space_list));
 	//printf("space: name=%s, id=%d, purpose=%d, size=%d\n",
 	//	space->name, space->id, space->purpose, space->size);
 
@@ -3014,7 +3016,7 @@ reread_log_header:
 			printf("xtrabackup: Starting %u threads for parallel "
 			       "data files transfer\n", parallel);
 
-		it = datafiles_iter_new(system);
+		it = datafiles_iter_new(f_system);
 		if (it == NULL) {
 			fprintf(stderr,
 				"xtrabackup: Error: "
@@ -3051,14 +3053,14 @@ reread_log_header:
 			os_mutex_exit(count_mutex);
 		}
 		/* NOTE: It may not needed at "--backup" for now */
-		/* mutex_enter(&(system->mutex)); */
+		/* mutex_enter(&(f_system->mutex)); */
 
 		os_mutex_free(count_mutex);
 		datafiles_iter_free(it);
 
 	} //if (!xtrabackup_stream)
 
-        //mutex_exit(&(system->mutex));
+        //mutex_exit(&(f_system->mutex));
         }
 
 
@@ -3503,7 +3505,7 @@ loop:
 
 		if (xtrabackup_tables) {
 			char *p;
-			int regres;
+			int regres= 0;
 			int i;
 
 			p = strstr(table->name, SRV_PATH_SEPARATOR_STR);
@@ -3595,6 +3597,7 @@ loop:
 
 		mtr_x_lock(&(index->lock), &local_mtr);
 		root = btr_root_get(index, &local_mtr);
+
 		n = btr_page_get_level(root, &local_mtr);
 
 		xtrabackup_stats_level(index, n);
@@ -4121,11 +4124,11 @@ xtrabackup_apply_delta(
 
 		for (page_in_buffer = 1; page_in_buffer < page_size / 4;
 		     page_in_buffer++) {
-			ulint page_offset;
+			ulint offset_on_page;
 
-			page_offset = mach_read_from_4(incremental_buffer + page_in_buffer * 4);
+			offset_on_page = mach_read_from_4(incremental_buffer + page_in_buffer * 4);
 
-			if (page_offset == 0xFFFFFFFFUL)
+			if (offset_on_page == 0xFFFFFFFFUL)
 				break;
 
 			/* apply blocks in the cluster */
@@ -4138,9 +4141,9 @@ xtrabackup_apply_delta(
 			success = os_file_write(dst_path, dst_file,
 					incremental_buffer +
 						page_in_buffer * page_size,
-					(page_offset << page_size_shift) &
+					(offset_on_page << page_size_shift) &
 						0xFFFFFFFFUL,
-					page_offset >> (32 - page_size_shift),
+					offset_on_page >> (32 - page_size_shift),
 					page_size);
 			if (!success) {
 				goto error;
@@ -4464,13 +4467,13 @@ skip_check:
 	/* TEST: list of datafiles and transaction log files and LSN*/
 /*
 	{
-	fil_system_t*   system = fil_system;
+	fil_system_t*   f_system = fil_system;
 	fil_space_t*	space;
 	fil_node_t*	node;
 
-        mutex_enter(&(system->mutex));
+        mutex_enter(&(f_system->mutex));
 
-        space = UT_LIST_GET_FIRST(system->space_list);
+        space = UT_LIST_GET_FIRST(f_system->space_list);
 
         while (space != NULL) {
 		printf("space: name=%s, id=%d, purpose=%d, size=%d\n",
@@ -4487,16 +4490,16 @@ skip_check:
                 space = UT_LIST_GET_NEXT(space_list, space);
         }
 
-        mutex_exit(&(system->mutex));
+        mutex_exit(&(f_system->mutex));
 	}
 */
 	/* align space sizes along with fsp header */
 	{
-	fil_system_t*	system = fil_system;
+	fil_system_t*	f_system = fil_system;
 	fil_space_t*	space;
 
-	mutex_enter(&(system->mutex));
-	space = UT_LIST_GET_FIRST(system->space_list);
+	mutex_enter(&(f_system->mutex));
+	space = UT_LIST_GET_FIRST(f_system->space_list);
 
 	while (space != NULL) {
 		byte*	header;
@@ -4507,7 +4510,7 @@ skip_check:
 		ulint	flags;
 
 		if (space->purpose == FIL_TABLESPACE) {
-			mutex_exit(&(system->mutex));
+			mutex_exit(&(f_system->mutex));
 
 			mtr_start(&mtr);
 
@@ -4527,13 +4530,13 @@ skip_check:
 
 			fil_extend_space_to_desired_size(&actual_size, space->id, size);
 
-			mutex_enter(&(system->mutex));
+			mutex_enter(&(f_system->mutex));
 		}
 
 		space = UT_LIST_GET_NEXT(space_list, space);
 	}
 
-	mutex_exit(&(system->mutex));
+	mutex_exit(&(f_system->mutex));
 	}
 
 
@@ -4541,7 +4544,7 @@ skip_check:
 	if (xtrabackup_export) {
 		printf("xtrabackup: export option is specified.\n");
 		if (innobase_file_per_table) {
-			fil_system_t*	system = fil_system;
+			fil_system_t*	f_system = fil_system;
 			fil_space_t*	space;
 			fil_node_t*	node;
 			os_file_t	info_file = -1;
@@ -4558,9 +4561,9 @@ skip_check:
 			/* flush insert buffer at shutdwon */
 			innobase_fast_shutdown = 0;
 
-			mutex_enter(&(system->mutex));
+			mutex_enter(&(f_system->mutex));
 
-			space = UT_LIST_GET_FIRST(system->space_list);
+			space = UT_LIST_GET_FIRST(f_system->space_list);
 			while (space != NULL) {
 				/* treat file_per_table only */
 				if (space->purpose != FIL_TABLESPACE
@@ -4602,7 +4605,7 @@ skip_check:
 
 					info_file_path[len - 4] = '.';
 
-					mutex_exit(&(system->mutex));
+					mutex_exit(&(f_system->mutex));
 					mutex_enter(&(dict_sys->mutex));
 
 					table = dict_table_get_low(table_name);
@@ -4635,6 +4638,7 @@ skip_check:
 						mach_write_to_8(page + n_index * 512, index->id);
 						mach_write_to_4(page + n_index * 512 + 8,
 								index->page);
+
 						strncpy((char*)page + n_index * 512 + 12, index->name, 500);
 
 						printf(
@@ -4674,14 +4678,14 @@ next_node:
 						info_file = -1;
 					}
 					mutex_exit(&(dict_sys->mutex));
-					mutex_enter(&(system->mutex));
+					mutex_enter(&(f_system->mutex));
 
 					node = UT_LIST_GET_NEXT(chain, node);
 				}
 
 				space = UT_LIST_GET_NEXT(space_list, space);
 			}
-			mutex_exit(&(system->mutex));
+			mutex_exit(&(f_system->mutex));
 
 			ut_free(buf);
 		} else {
@@ -4952,7 +4956,7 @@ int main(int argc, char **argv)
         mysql_data_home= (char*)malloc(mysql_data_home_arg.length());
         strcpy(mysql_data_home, mysql_data_home_arg.c_str());
 
-	if (strcmp(mysql_data_home, "./") == 0) {
+	if ((!xtrabackup_prepare) && (strcmp(mysql_data_home, "./") == 0)) {
 		if (!xtrabackup_print_param)
 			usage();
 		printf("\nxtrabackup: Error: Please set parameter 'datadir'\n");
