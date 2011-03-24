@@ -44,17 +44,17 @@ public:
     iter= local_list.begin();
   }
 
-  operator drizzled::Session::pointer()
+  operator drizzled::Session*()
   {
     while (iter != local_list.end())
     {
-      drizzled::Session::pointer ret= iter->get();
+      drizzled::Session* ret= iter->get();
       iter++;
 
       if (ret->isViewable(user))
 	      return ret;
     }
-    return drizzled::Session::pointer();
+    return NULL;
   }
 };
 

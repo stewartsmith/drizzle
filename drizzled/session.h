@@ -146,12 +146,7 @@ private:
 
   boost::scoped_ptr<impl_c> impl_;
 public:
-  // Plugin storage in Session.
   typedef boost::shared_ptr<Session> shared_ptr;
-  typedef Session& reference;
-  typedef const Session& const_reference;
-  typedef const Session* const_pointer;
-  typedef Session* pointer;
 
   static shared_ptr make_shared(plugin::Client *client, boost::shared_ptr<catalog::Instance> instance_arg)
   {

@@ -193,7 +193,7 @@ bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_
 }
 
 bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_ctx,
-                                         Session::const_reference session,
+                                         const Session& session,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
