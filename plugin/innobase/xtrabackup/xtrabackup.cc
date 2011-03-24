@@ -117,6 +117,7 @@ namespace drizzled {
     va_start(args, format);
     rv= vfprintf(stderr, format, args);
     va_end(args);
+    fprintf(stderr, "\n");
     return rv;
   }
 
