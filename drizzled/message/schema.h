@@ -34,7 +34,7 @@ typedef message::Schema value_type;
 typedef boost::shared_ptr <message::Schema> shared_ptr;
 typedef const message::Schema const_reference;
 
-shared_ptr make_shared(identifier::Schema::const_reference identifier);
+shared_ptr make_shared(const identifier::Schema& identifier);
 shared_ptr make_shared(const std::string &name_arg);
 void init(drizzled::message::Schema &arg, const std::string &name_arg);
 

@@ -84,7 +84,7 @@ public:
    * @param session The Session object processing this statement
    */
   void finalizeStatementMessage(message::Statement &statement,
-                                Session::reference session);
+                                Session& session);
 
   /**
    * Creates a new InsertRecord GPB message and pushes it to
@@ -96,7 +96,7 @@ public:
    * Grr, returning "true" here on error because of the cursor
    * reversed bool return crap...fix that.
    */
-  bool insertRecord(Session::reference session, Table &in_table);
+  bool insertRecord(Session& session, Table &in_table);
 
   /**
    * Creates a new UpdateRecord GPB message and pushes it to
@@ -107,7 +107,7 @@ public:
    * @param old_record Pointer to the raw bytes representing the old record/row
    * @param new_record Pointer to the raw bytes representing the new record/row 
    */
-  void updateRecord(Session::reference session, 
+  void updateRecord(Session& session, 
                     Table &table, 
                     const unsigned char *old_record, 
                     const unsigned char *new_record);
@@ -120,7 +120,7 @@ public:
    * @param table Table object containing delete information
    * @param use_update_record If true, uses the values from the update row instead
    */
-  void deleteRecord(Session::reference session,
+  void deleteRecord(Session& session,
                     Table &table,
                     bool use_update_record= false);
 
@@ -132,7 +132,7 @@ public:
    * @param[in] session Session object which issued the statement
    * @param[in] schema message::Schema message describing new schema
    */
-  void createSchema(Session::reference session, const message::Schema &schema);
+  void createSchema(Session& session, const message::Schema &schema);
 
   /**
    * Creates a DropSchema Statement GPB message and adds it
@@ -142,8 +142,8 @@ public:
    * @param[in] session Session object which issued the statement
    * @param[in] identifier Identifier for the schema to drop
    */
-  void dropSchema(Session::reference session,
-                  identifier::Schema::const_reference identifier,
+  void dropSchema(Session& session,
+                  const identifier::Schema& identifier,
                   message::schema::const_reference schema);
 
   /**
@@ -155,7 +155,7 @@ public:
    * @param[in] old_schema Original schema definition
    * @param[in] new_schema New schema definition
    */
-  void alterSchema(Session::reference session,
+  void alterSchema(Session& session,
                    const message::Schema &old_schema,
                    const message::Schema &new_schema);
 
@@ -167,7 +167,7 @@ public:
    * @param[in] session Session object which issued the statement
    * @param[in] table message::Table message describing new schema
    */
-  void createTable(Session::reference session, const message::Table &table);
+  void createTable(Session& session, const message::Table &table);
 
   /**
    * Creates a DropTable Statement GPB message and adds it
@@ -178,8 +178,8 @@ public:
    * @param[in] table Identifier for the table being dropped
    * @param[in] if_exists Did the user specify an IF EXISTS clause?
    */
-  void dropTable(Session::reference session,
-                 identifier::Table::const_reference identifier,
+  void dropTable(Session& session,
+                 const identifier::Table& identifier,
                  message::table::const_reference table,
                  bool if_exists);
 
@@ -191,7 +191,7 @@ public:
    * @param[in] session Session object which issued the statement
    * @param[in] table The Table being truncated
    */
-  void truncateTable(Session::reference session, Table &table);
+  void truncateTable(Session& session, Table &table);
 
   /**
    * Creates a new RawSql GPB message and pushes it to 
@@ -206,17 +206,17 @@ public:
    * @param query Query string
    * @param schema Schema for the table affected by the raw SQL.
    */
-  void rawStatement(Session::reference session,
+  void rawStatement(Session& session,
                     const std::string &query,
                     const std::string &schema);
 
-  void rawStatement(Session::reference session, const std::string &query)
+  void rawStatement(Session& session, const std::string &query)
   {
     rawStatement(session, query, "");
   }
 
   /* transactions: interface to plugin::StorageEngine functions */
-  int rollbackTransaction(Session::reference session, bool all);
+  int rollbackTransaction(Session& session, bool all);
 
   /**
    * Commit the current transaction.
@@ -231,7 +231,7 @@ public:
    * stored functions or triggers. So we simply do nothing now.
    * This should be fixed in later ( >= 5.1) releases.
    */
-  int commitTransaction(Session::reference session, bool all);
+  int commitTransaction(Session& session, bool all);
 
   /**
    * This is used to commit or rollback a single statement depending on
@@ -244,12 +244,12 @@ public:
    * the user has used LOCK TABLES then that mechanism does not know to do the
    * commit.
    */
-  int autocommitOrRollback(Session::reference session, int error);
+  int autocommitOrRollback(Session& session, int error);
 
   /* savepoints */
-  int rollbackToSavepoint(Session::reference session, NamedSavepoint &sv);
-  int setSavepoint(Session::reference session, NamedSavepoint &sv);
-  int releaseSavepoint(Session::reference session, NamedSavepoint &sv);
+  int rollbackToSavepoint(Session& session, NamedSavepoint &sv);
+  int setSavepoint(Session& session, NamedSavepoint &sv);
+  int releaseSavepoint(Session& session, NamedSavepoint &sv);
 
   /**
    * Marks a storage engine as participating in a statement
@@ -269,7 +269,7 @@ public:
    * @param[in] monitored Descriptor for the resource which will be participating
    * @param[in] engine Pointer to the TransactionalStorageEngine resource
    */
-  void registerResourceForStatement(Session::reference session,
+  void registerResourceForStatement(Session& session,
                                     plugin::MonitoredInTransaction *monitored,
                                     plugin::TransactionalStorageEngine *engine);
 
@@ -292,7 +292,7 @@ public:
    * @param[in] engine Pointer to the TransactionalStorageEngine resource
    * @param[in] resource_manager Pointer to the XaResourceManager resource manager
    */
-  void registerResourceForStatement(Session::reference session,
+  void registerResourceForStatement(Session& session,
                                     plugin::MonitoredInTransaction *monitored,
                                     plugin::TransactionalStorageEngine *engine,
                                     plugin::XaResourceManager *resource_manager);
@@ -321,11 +321,11 @@ public:
    * time when this method is called except from the
    * TransactionServices::registerResourceForStatement method.
    */
-  void registerResourceForTransaction(Session::reference session,
+  void registerResourceForTransaction(Session& session,
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine);
 
-  void registerResourceForTransaction(Session::reference session,
+  void registerResourceForTransaction(Session& session,
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
@@ -344,7 +344,7 @@ public:
    * @retval true Success
    * @retval false Failure
    */
-  bool sendStartupEvent(Session::reference session);
+  bool sendStartupEvent(Session& session);
 
   /**
    * Send server shutdown event.
@@ -354,7 +354,7 @@ public:
    * @retval true Success
    * @retval false Failure
    */
-  bool sendShutdownEvent(Session::reference session);
+  bool sendShutdownEvent(Session& session);
 
 private:
 
@@ -369,7 +369,7 @@ private:
    * @param session The Session object processing the transaction
    * @param should_inc_trx_id If true, increments the transaction id for a new trx
    */
-  message::Transaction *getActiveTransactionMessage(Session::reference session,
+  message::Transaction *getActiveTransactionMessage(Session& session,
                                                     bool should_inc_trx_id= true);
 
   /** 
@@ -383,7 +383,7 @@ private:
    * @param should_inc_trx_id If true, increments the transaction id for a new trx
    */
   void initTransactionMessage(message::Transaction &transaction,
-                              Session::reference session,
+                              Session& session,
                               bool should_inc_trx_id);
   
   /**
@@ -395,7 +395,7 @@ private:
    */
   void initStatementMessage(message::Statement &statement,
                             message::Statement::Type type,
-                            Session::const_reference session);
+                            const Session& session);
 
   /** 
    * Helper method which finalizes data members for the 
@@ -405,14 +405,14 @@ private:
    * @param session The Session object processing this transaction
    */
   void finalizeTransactionMessage(message::Transaction &transaction,
-                                  Session::const_reference session);
+                                  const Session& session);
 
   /**
    * Helper method which deletes transaction memory and
    * unsets Session's transaction and statement messages.
    */
   void cleanupTransactionMessage(message::Transaction *transaction,
-                                 Session::reference session);
+                                 Session& session);
   
   /** Helper method which returns an initialized Statement message for methods
    * doing insertion of data.
@@ -421,7 +421,7 @@ private:
    * @param[in] table Table object being inserted into
    * @param[out] next_segment_id The next Statement segment id to be used
    */
-  message::Statement &getInsertStatement(Session::reference session,
+  message::Statement &getInsertStatement(Session& session,
                                          Table &table,
                                          uint32_t *next_segment_id);
   
@@ -434,7 +434,7 @@ private:
    * @param[in] table Table object being inserted into
    */
   void setInsertHeader(message::Statement &statement,
-                       Session::const_reference session,
+                       const Session& session,
                        Table &table);
   /**
    * Helper method which returns an initialized Statement
@@ -446,7 +446,7 @@ private:
    * @param[in] new_record Pointer to the new data in the record
    * @param[out] next_segment_id The next Statement segment id to be used
    */
-  message::Statement &getUpdateStatement(Session::reference session,
+  message::Statement &getUpdateStatement(Session& session,
                                          Table &table,
                                          const unsigned char *old_record, 
                                          const unsigned char *new_record,
@@ -462,7 +462,7 @@ private:
    * @param[in] new_record Pointer to the new data in the record
    */
   void setUpdateHeader(message::Statement &statement,
-                       Session::const_reference session,
+                       const Session& session,
                        Table &table,
                        const unsigned char *old_record, 
                        const unsigned char *new_record);
@@ -475,7 +475,7 @@ private:
    * @param[in] table Table object being deleted from
    * @param[out] next_segment_id The next Statement segment id to be used
    */
-  message::Statement &getDeleteStatement(Session::reference session,
+  message::Statement &getDeleteStatement(Session& session,
                                          Table &table,
                                          uint32_t *next_segment_id);
   
@@ -488,7 +488,7 @@ private:
    * @param[in] table Table object being deleted from
    */
   void setDeleteHeader(message::Statement &statement,
-                       Session::const_reference session,
+                       const Session& session,
                        Table &table);
 
   /** 
@@ -497,7 +497,7 @@ private:
    *
    * @param session Session object committing the transaction
    */
-  int commitTransactionMessage(Session::reference session);
+  int commitTransactionMessage(Session& session);
 
   /** 
    * Marks the current active transaction message as being rolled back and
@@ -505,7 +505,7 @@ private:
    *
    * @param session Session object committing the transaction
    */
-  void rollbackTransactionMessage(Session::reference session);
+  void rollbackTransactionMessage(Session& session);
 
   /**
    * Rolls back the current statement, deleting the last Statement out of
@@ -516,7 +516,7 @@ private:
    * @note This depends on having clear statement boundaries (i.e., one
    * Statement message per actual SQL statement).
    */
-  void rollbackStatementMessage(Session::reference session);
+  void rollbackStatementMessage(Session& session);
 
   /**
    * Checks if a field has been updated 
@@ -545,7 +545,7 @@ private:
    *
    * @returns Non-zero on error
    */
-  int sendEvent(Session::reference session, const message::Event &event);
+  int sendEvent(Session& session, const message::Event &event);
 
   /**
    * Makes a given Transaction message segmented.
@@ -559,12 +559,12 @@ private:
    *
    * @returns Returns a pointer to a new Transaction message ready for use.
    */
-  message::Transaction *segmentTransactionMessage(Session::reference session,
+  message::Transaction *segmentTransactionMessage(Session& session,
                                                   message::Transaction *transaction);
 
-  int commitPhaseOne(Session::reference session, bool all);
+  int commitPhaseOne(Session& session, bool all);
 
-  uint64_t getCurrentTransactionId(Session::reference session);
+  uint64_t getCurrentTransactionId(Session& session);
 
   plugin::XaStorageEngine *xa_storage_engine;
 };

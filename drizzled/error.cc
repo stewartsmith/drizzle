@@ -65,17 +65,17 @@ error_handler_func error_handler_hook= NULL;
 
 namespace error {
 
-void access(drizzled::identifier::User::const_reference user)
+void access(const drizzled::identifier::User& user)
 {
   my_error(ER_ACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), ER(user.hasPassword() ? ER_YES : ER_NO));
 } 
 
-void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Schema::const_reference schema)
+void access(const drizzled::identifier::User& user, const drizzled::identifier::Schema& schema)
 {
   my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), schema.getSQLPath().c_str());
 } 
 
-void access(drizzled::identifier::User::const_reference user, drizzled::identifier::Table::const_reference table)
+void access(const drizzled::identifier::User& user, const drizzled::identifier::Table& table)
 {
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), table.getSQLPath().c_str());
 } 

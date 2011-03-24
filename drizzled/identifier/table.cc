@@ -212,14 +212,9 @@ size_t Table::build_tmptable_filename(std::vector<char> &buffer)
 
 size_t Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  bool conversion_error= false;
-
-  conversion_error= util::tablename_to_filename(in_db, in_path);
-  if (conversion_error)
+  if (util::tablename_to_filename(in_db, in_path))
   {
-    errmsg_printf(error::ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
+    errmsg_printf(error::ERROR, _("Schema name cannot be encoded and fit within filesystem name length restrictions."));
     return 0;
   }
 
@@ -229,16 +224,10 @@ size_t Table::build_table_filename(std::string &in_path, const std::string &in_d
   {
     in_path.append(in_table_name);
   }
-  else
+  else if (util::tablename_to_filename(in_table_name, in_path))
   {
-    conversion_error= util::tablename_to_filename(in_table_name, in_path);
-    if (conversion_error)
-    {
-      errmsg_printf(error::ERROR,
-                    _("Table name cannot be encoded and fit within filesystem "
-                      "name length restrictions."));
-      return 0;
-    }
+    errmsg_printf(error::ERROR, _("Table name cannot be encoded and fit within filesystem name length restrictions."));
+    return 0;
   }
    
   return in_path.length();
@@ -293,8 +282,7 @@ void Table::init()
     break;
   }
 
-  util::insensitive_hash hasher;
-  hash_value= hasher(path);
+  hash_value= util::insensitive_hash()(path);
 
   std::string tb_name(getTableName());
   std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
@@ -356,7 +344,6 @@ bool Table::isValid() const
   return false;
 }
 
-
 void Table::copyToTableMessage(message::Table &message) const
 {
   message.set_name(table_name);
@@ -384,22 +371,9 @@ std::size_t hash_value(Table::Key const& b)
   return b.getHashValue();
 }
 
-
-std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+std::ostream& operator<<(std::ostream& output, const Table& identifier)
 {
-  output << "Table:(";
-  output <<  identifier.getSchemaName();
-  output << ", ";
-  output << identifier.getTableName();
-  output << ", ";
-  output << message::type(identifier.getType());
-  output << ", ";
-  output << identifier.getPath();
-  output << ", ";
-  output << identifier.getHashValue();
-  output << ")";
-
-  return output;  // for multiple << operators.
+  return output << "Table:(" <<  identifier.getSchemaName() << ", " << identifier.getTableName() << ", " << message::type(identifier.getType()) << ", " << identifier.getPath() << ", " << identifier.getHashValue() << ")";
 }
 
 } /* namespace identifier */

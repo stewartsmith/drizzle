@@ -669,7 +669,7 @@ bool Session::schedule(Session::shared_ptr &arg)
 /*
   Is this session viewable by the current user?
 */
-bool Session::isViewable(identifier::User::const_reference user_arg) const
+bool Session::isViewable(const identifier::User& user_arg) const
 {
   return plugin::Authorization::isAuthorized(user_arg, *this, false);
 }

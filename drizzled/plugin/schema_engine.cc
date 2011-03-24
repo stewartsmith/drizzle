@@ -200,7 +200,7 @@ public:
 };
 
 static bool drop_all_tables_in_schema(Session& session,
-                                      identifier::Schema::const_reference identifier,
+                                      const identifier::Schema& identifier,
                                       identifier::Table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
@@ -236,8 +236,8 @@ static bool drop_all_tables_in_schema(Session& session,
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session,
-                               identifier::Schema::const_reference identifier,
+bool StorageEngine::dropSchema(Session& session,
+                               const identifier::Schema& identifier,
                                message::schema::const_reference schema_message)
 {
   uint64_t deleted= 0;

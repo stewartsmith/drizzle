@@ -67,7 +67,7 @@ Sessions::Generator::~Generator()
 
 bool Sessions::Generator::populate()
 {
-  drizzled::Session::pointer tmp;
+  drizzled::Session* tmp;
 
   while ((tmp= session_generator))
   {

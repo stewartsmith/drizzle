@@ -315,7 +315,7 @@ TransactionServices::TransactionServices()
   }
 }
 
-void TransactionServices::registerResourceForStatement(Session::reference session,
+void TransactionServices::registerResourceForStatement(Session& session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
 {
@@ -347,7 +347,7 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
   trans->no_2pc|= true;
 }
 
-void TransactionServices::registerResourceForStatement(Session::reference session,
+void TransactionServices::registerResourceForStatement(Session& session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine,
                                                        plugin::XaResourceManager *resource_manager)
@@ -381,7 +381,7 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
   trans->no_2pc|= false;
 }
 
-void TransactionServices::registerResourceForTransaction(Session::reference session,
+void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
@@ -410,7 +410,7 @@ void TransactionServices::registerResourceForTransaction(Session::reference sess
     registerResourceForStatement(session, monitored, engine);
 }
 
-void TransactionServices::registerResourceForTransaction(Session::reference session,
+void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine,
                                                          plugin::XaResourceManager *resource_manager)
@@ -455,7 +455,7 @@ void TransactionServices::allocateNewTransactionId()
   my_session->setXaId(xa_id);
 }
 
-uint64_t TransactionServices::getCurrentTransactionId(Session::reference session)
+uint64_t TransactionServices::getCurrentTransactionId(Session& session)
 {
   if (session.getXaId() == 0)
   {
@@ -465,7 +465,7 @@ uint64_t TransactionServices::getCurrentTransactionId(Session::reference session
   return session.getXaId();
 }
 
-int TransactionServices::commitTransaction(Session::reference session,
+int TransactionServices::commitTransaction(Session& session,
                                            bool normal_transaction)
 {
   int error= 0, cookie= 0;
@@ -558,7 +558,7 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::commitPhaseOne(Session::reference session,
+int TransactionServices::commitPhaseOne(Session& session,
                                         bool normal_transaction)
 {
   int error=0;
@@ -625,7 +625,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
   return error;
 }
 
-int TransactionServices::rollbackTransaction(Session::reference session,
+int TransactionServices::rollbackTransaction(Session& session,
                                              bool normal_transaction)
 {
   int error= 0;
@@ -718,7 +718,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
   return error;
 }
 
-int TransactionServices::autocommitOrRollback(Session::reference session,
+int TransactionServices::autocommitOrRollback(Session& session,
                                               int error)
 {
   /* One GPB Statement message per SQL statement */
@@ -770,7 +770,7 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
   }
 };
 
-int TransactionServices::rollbackToSavepoint(Session::reference session,
+int TransactionServices::rollbackToSavepoint(Session& session,
                                              NamedSavepoint &sv)
 {
   int error= 0;
@@ -900,7 +900,7 @@ int TransactionServices::rollbackToSavepoint(Session::reference session,
   section "4.33.4 SQL-statements and transaction states",
   NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::setSavepoint(Session::reference session,
+int TransactionServices::setSavepoint(Session& session,
                                       NamedSavepoint &sv)
 {
   int error= 0;
@@ -952,7 +952,7 @@ int TransactionServices::setSavepoint(Session::reference session,
   return error;
 }
 
-int TransactionServices::releaseSavepoint(Session::reference session,
+int TransactionServices::releaseSavepoint(Session& session,
                                           NamedSavepoint &sv)
 {
   int error= 0;
@@ -987,7 +987,7 @@ bool TransactionServices::shouldConstructMessages()
   return replication_services.isActive();
 }
 
-message::Transaction *TransactionServices::getActiveTransactionMessage(Session::reference session,
+message::Transaction *TransactionServices::getActiveTransactionMessage(Session& session,
                                                                        bool should_inc_trx_id)
 {
   message::Transaction *transaction= session.getTransactionMessage();
@@ -1007,7 +1007,7 @@ message::Transaction *TransactionServices::getActiveTransactionMessage(Session::
 }
 
 void TransactionServices::initTransactionMessage(message::Transaction &transaction,
-                                                 Session::reference session,
+                                                 Session& session,
                                                  bool should_inc_trx_id)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
@@ -1032,14 +1032,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &transacti
 }
 
 void TransactionServices::finalizeTransactionMessage(message::Transaction &transaction,
-                                                     Session::const_reference session)
+                                                     const Session& session)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
   trx->set_end_timestamp(session.getCurrentTimestamp());
 }
 
 void TransactionServices::cleanupTransactionMessage(message::Transaction *transaction,
-                                                    Session::reference session)
+                                                    Session& session)
 {
   delete transaction;
   session.setStatementMessage(NULL);
@@ -1047,7 +1047,7 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *transa
   session.setXaId(0);
 }
 
-int TransactionServices::commitTransactionMessage(Session::reference session)
+int TransactionServices::commitTransactionMessage(Session& session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -1093,7 +1093,7 @@ int TransactionServices::commitTransactionMessage(Session::reference session)
 
 void TransactionServices::initStatementMessage(message::Statement &statement,
                                                message::Statement::Type type,
-                                               Session::const_reference session)
+                                               const Session& session)
 {
   statement.set_type(type);
   statement.set_start_timestamp(session.getCurrentTimestamp());
@@ -1103,13 +1103,13 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
-                                                   Session::reference session)
+                                                   Session& session)
 {
   statement.set_end_timestamp(session.getCurrentTimestamp());
   session.setStatementMessage(NULL);
 }
 
-void TransactionServices::rollbackTransactionMessage(Session::reference session)
+void TransactionServices::rollbackTransactionMessage(Session& session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -1165,7 +1165,7 @@ void TransactionServices::rollbackTransactionMessage(Session::reference session)
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rollbackStatementMessage(Session::reference session)
+void TransactionServices::rollbackStatementMessage(Session& session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -1231,7 +1231,7 @@ void TransactionServices::rollbackStatementMessage(Session::reference session)
   }
 }
 
-message::Transaction *TransactionServices::segmentTransactionMessage(Session::reference session,
+message::Transaction *TransactionServices::segmentTransactionMessage(Session& session,
                                                                      message::Transaction *transaction)
 {
   uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1249,7 +1249,7 @@ message::Transaction *TransactionServices::segmentTransactionMessage(Session::re
   return transaction;
 }
 
-message::Statement &TransactionServices::getInsertStatement(Session::reference session,
+message::Statement &TransactionServices::getInsertStatement(Session& session,
                                                             Table &table,
                                                             uint32_t *next_segment_id)
 {
@@ -1340,7 +1340,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
 }
 
 void TransactionServices::setInsertHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table)
 {
   initStatementMessage(statement, message::Statement::INSERT, session);
@@ -1377,7 +1377,7 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   }
 }
 
-bool TransactionServices::insertRecord(Session::reference session,
+bool TransactionServices::insertRecord(Session& session,
                                        Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -1436,7 +1436,7 @@ bool TransactionServices::insertRecord(Session::reference session,
   return false;
 }
 
-message::Statement &TransactionServices::getUpdateStatement(Session::reference session,
+message::Statement &TransactionServices::getUpdateStatement(Session& session,
                                                             Table &table,
                                                             const unsigned char *old_record, 
                                                             const unsigned char *new_record,
@@ -1529,7 +1529,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
 }
 
 void TransactionServices::setUpdateHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table,
                                           const unsigned char *old_record, 
                                           const unsigned char *new_record)
@@ -1583,7 +1583,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::updateRecord(Session::reference session,
+void TransactionServices::updateRecord(Session& session,
                                        Table &table, 
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
@@ -1714,7 +1714,7 @@ bool TransactionServices::isFieldUpdated(Field *current_field,
   return isUpdated;
 }  
 
-message::Statement &TransactionServices::getDeleteStatement(Session::reference session,
+message::Statement &TransactionServices::getDeleteStatement(Session& session,
                                                             Table &table,
                                                             uint32_t *next_segment_id)
 {
@@ -1805,7 +1805,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
 }
 
 void TransactionServices::setDeleteHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table)
 {
   initStatementMessage(statement, message::Statement::DELETE, session);
@@ -1846,7 +1846,7 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::deleteRecord(Session::reference session,
+void TransactionServices::deleteRecord(Session& session,
                                        Table &table,
                                        bool use_update_record)
 {
@@ -1906,7 +1906,7 @@ void TransactionServices::deleteRecord(Session::reference session,
   }
 }
 
-void TransactionServices::createTable(Session::reference session,
+void TransactionServices::createTable(Session& session,
                                       const message::Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -1939,7 +1939,7 @@ void TransactionServices::createTable(Session::reference session,
 
 }
 
-void TransactionServices::createSchema(Session::reference session,
+void TransactionServices::createSchema(Session& session,
                                        const message::Schema &schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -1972,8 +1972,8 @@ void TransactionServices::createSchema(Session::reference session,
 
 }
 
-void TransactionServices::dropSchema(Session::reference session,
-                                     identifier::Schema::const_reference identifier,
+void TransactionServices::dropSchema(Session& session,
+                                     const identifier::Schema& identifier,
                                      message::schema::const_reference schema)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -2005,7 +2005,7 @@ void TransactionServices::dropSchema(Session::reference session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::alterSchema(Session::reference session,
+void TransactionServices::alterSchema(Session& session,
                                       const message::Schema &old_schema,
                                       const message::Schema &new_schema)
 {
@@ -2042,8 +2042,8 @@ void TransactionServices::alterSchema(Session::reference session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::dropTable(Session::reference session,
-                                    identifier::Table::const_reference identifier,
+void TransactionServices::dropTable(Session& session,
+                                    const identifier::Table& identifier,
                                     message::table::const_reference table,
                                     bool if_exists)
 {
@@ -2081,7 +2081,7 @@ void TransactionServices::dropTable(Session::reference session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::truncateTable(Session::reference session,
+void TransactionServices::truncateTable(Session& session,
                                         Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -2121,7 +2121,7 @@ void TransactionServices::truncateTable(Session::reference session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rawStatement(Session::reference session,
+void TransactionServices::rawStatement(Session& session,
                                        const string &query,
                                        const string &schema)
 {
@@ -2145,7 +2145,7 @@ void TransactionServices::rawStatement(Session::reference session,
   cleanupTransactionMessage(transaction, session);
 }
 
-int TransactionServices::sendEvent(Session::reference session,
+int TransactionServices::sendEvent(Session& session,
                                    const message::Event &event)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
@@ -2171,7 +2171,7 @@ int TransactionServices::sendEvent(Session::reference session,
   return static_cast<int>(result);
 }
 
-bool TransactionServices::sendStartupEvent(Session::reference session)
+bool TransactionServices::sendStartupEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::STARTUP);
@@ -2180,7 +2180,7 @@ bool TransactionServices::sendStartupEvent(Session::reference session)
   return true;
 }
 
-bool TransactionServices::sendShutdownEvent(Session::reference session)
+bool TransactionServices::sendShutdownEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::SHUTDOWN);

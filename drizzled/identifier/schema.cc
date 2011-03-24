@@ -89,7 +89,7 @@ bool Schema::compare(const std::string &arg) const
   return boost::iequals(arg, db);
 }
 
-bool Schema::compare(Schema::const_reference arg) const
+bool Schema::compare(const Schema& arg) const
 {
   return boost::iequals(arg.getSchemaName(), db);
 }

@@ -171,7 +171,7 @@ bool statement::CreateTable::execute()
   return res;
 }
 
-bool statement::CreateTable::executeInner(identifier::Table::const_reference new_table_identifier)
+bool statement::CreateTable::executeInner(const identifier::Table& new_table_identifier)
 {
   bool res= false;
   Select_Lex *select_lex= &lex().select_lex;

@@ -1473,7 +1473,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select(Session::pointer session)
+bool check_simple_select(Session* session)
 {
   if (session->lex().current_select != &session->lex().select_lex)
   {
