@@ -184,6 +184,7 @@ class serverManager:
         else:
             # manual-gdb issue
             server_retcode = 0
+        
         timer = float(0)
         timeout = float(server.server_start_timeout)
 
@@ -205,6 +206,10 @@ class serverManager:
      
         if server_retcode == 0:
             server.status = 1 # we are running
+            pid_file = open(server.pid_file,'r')
+            pid = pid_file.readline().strip()
+            pid_file.close()
+            server.pid = pid
 
         if server_retcode != 0 and not expect_fail and self.debug:
             self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
