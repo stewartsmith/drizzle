@@ -1676,7 +1676,7 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 	LSN64		flush_lsn;
 	IB_INT64	file_size;
 	IB_INT64	offset;
-	ulint		page_in_buffer;
+	ulint		page_in_buffer= 0;
 	ulint		incremental_buffers = 0;
 	ulint		page_size;
 	ulint		page_size_shift;
