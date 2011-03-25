@@ -432,7 +432,7 @@ public:
   void setTableMessage(const message::Table &arg)
   {
     assert(not getTableMessage());
-    _table_message.reset(new(std::nothrow) message::Table(arg));
+    _table_message.reset(new message::Table(arg));
   }
 
   const message::Table::Field &field(int32_t field_position) const
@@ -443,7 +443,7 @@ public:
 
   inline bool hasComment() const
   {
-    return (getTableMessage()) ?  getTableMessage()->options().has_comment() : false; 
+    return getTableMessage() ?  getTableMessage()->options().has_comment() : false; 
   }
 
   inline const char *getComment()

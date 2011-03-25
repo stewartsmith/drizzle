@@ -48,6 +48,7 @@
 #include <drizzled/field/str.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/util/test.h>
+#include <drizzled/system_variables.h>
 
 namespace drizzled {
 

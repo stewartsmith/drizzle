@@ -55,7 +55,7 @@ public:
 
   static bool addPlugin(plugin::Authentication *auth);
   static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(drizzled::identifier::User::const_reference sctx,
+  static bool isAuthenticated(const drizzled::identifier::User& sctx,
                               const std::string &password);
 };
 

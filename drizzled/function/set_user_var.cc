@@ -98,7 +98,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 }
 
 
-bool
+void
 Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
                                     Item_result res_type,
                                     const CHARSET_INFO * const cs, Derivation dv,
@@ -110,13 +110,7 @@ Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
   */
   if ((null_value= args[0]->null_value) && null_item)
     res_type= entry->type;                      // Don't change type of item
-  if (entry->update_hash((null_value= args[0]->null_value),
-                         ptr, length, res_type, cs, dv, unsigned_arg))
-  {
-    null_value= 1;
-    return 1;
-  }
-  return 0;
+  entry->update_hash((null_value= args[0]->null_value), ptr, length, res_type, cs, dv, unsigned_arg);
 }
 
 /**
@@ -191,22 +185,20 @@ Item_func_set_user_var::check(bool use_result_field)
 
 */
 
-bool
+void
 Item_func_set_user_var::update()
 {
-  bool res= false;
-
   switch (cached_result_type) {
   case REAL_RESULT:
     {
-      res= update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
+      update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
                        REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case INT_RESULT:
     {
-      res= update_hash((void*) &save_result.vint, sizeof(save_result.vint),
+      update_hash((void*) &save_result.vint, sizeof(save_result.vint),
                        INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT,
                        unsigned_flag);
       break;
@@ -215,10 +207,10 @@ Item_func_set_user_var::update()
   case STRING_RESULT:
     {
       if (!save_result.vstr)                                      // Null value
-        res= update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
+        update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
                          DERIVATION_IMPLICIT, 0);
       else
-        res= update_hash((void*) save_result.vstr->ptr(),
+        update_hash((void*) save_result.vstr->ptr(),
                          save_result.vstr->length(), STRING_RESULT,
                          save_result.vstr->charset(),
                          DERIVATION_IMPLICIT, 0);
@@ -228,10 +220,10 @@ Item_func_set_user_var::update()
   case DECIMAL_RESULT:
     {
       if (!save_result.vdec)                                      // Null value
-        res= update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
+        update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
                          DERIVATION_IMPLICIT, 0);
       else
-        res= update_hash((void*) save_result.vdec,
+        update_hash((void*) save_result.vdec,
                          sizeof(type::Decimal), DECIMAL_RESULT,
                          &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
@@ -242,8 +234,6 @@ Item_func_set_user_var::update()
     assert(0);
     break;
   }
-
-  return(res);
 }
 
 double Item_func_set_user_var::val_real()

@@ -661,7 +661,7 @@ INDEX_PARTS	CREATE TABLE `INDEX_PARTS` (
   `IS_NULLABLE` BOOLEAN NOT NULL
 ) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
 show create table REFERENTIAL_CONSTRAINTS ;
-Table	Create Table
+ERROR 42S02: Unknown table 'data_dictionary.REFERENTIAL_CONSTRAINTS'
 show create table SCHEMAS ;
 Table	Create Table
 SCHEMAS	CREATE TABLE `SCHEMAS` (

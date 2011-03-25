@@ -27,13 +27,13 @@
 #include <drizzled/key.h>
 #include <drizzled/table.h>
 #include <drizzled/util/test.h>
+#include <drizzled/system_variables.h>
 
 #include <fcntl.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 
 optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,

@@ -64,7 +64,7 @@ public:
   }
 };
 
-bool plugin::Authentication::isAuthenticated(drizzled::identifier::User::const_reference sctx,
+bool plugin::Authentication::isAuthenticated(const drizzled::identifier::User& sctx,
                                              const std::string &password)
 {
   /* Use find_if instead of foreach so that we can collect return codes */

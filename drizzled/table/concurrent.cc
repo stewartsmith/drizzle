@@ -27,16 +27,12 @@
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
-
 #include <drizzled/table/instance.h>
-
 #include <drizzled/table.h>
+#include <drizzled/table_list.h>
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 /*
   Open table which is already name-locked by this thread.

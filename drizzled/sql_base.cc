@@ -60,13 +60,12 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
-
 #include <drizzled/refresh_version.h>
+#include <drizzled/catalog/local.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern bool volatile shutdown_in_progress;
 
@@ -223,13 +222,10 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           after the call to Session::close_old_data_files() i.e. after removal of
           current thread locks.
         */
-        for (table::CacheMap::const_iterator iter= table::getCache().begin();
-             iter != table::getCache().end();
-             iter++)
+        BOOST_FOREACH(table::CacheMap::const_reference iter, table::getCache())
         {
-          Table *table= iter->second;
-          if (table->in_use)
-            table->in_use->some_tables_deleted= false;
+          if (iter.second->in_use)
+            iter.second->in_use->some_tables_deleted= false;
         }
       }
     }
@@ -979,14 +975,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     }
 
     /*
-      Before we test the global cache, we test our local session cache.
-    */
-    if (cached_table)
-    {
-      assert(false); /* Not implemented yet */
-    }
-
-    /*
       Non pre-locked/LOCK TABLES mode, and the table is not temporary:
       this is the normal use case.
       Now we should:
@@ -1017,8 +1005,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       ppp= table::getCache().equal_range(key);
 
       table= NULL;
-      for (table::CacheMap::const_iterator iter= ppp.first;
-           iter != ppp.second; ++iter, table= NULL)
+      for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter, table= NULL)
       {
         table= iter->second;
 
@@ -1149,11 +1136,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         {
           table::Concurrent *new_table= new table::Concurrent;
           table= new_table;
-          if (new_table == NULL)
-          {
-            return NULL;
-          }
-
           error= new_table->open_unireg_entry(this, alias, identifier);
           if (error != 0)
           {

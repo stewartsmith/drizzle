@@ -61,7 +61,7 @@ performance_dictionary::SessionUsage::Generator::Generator(drizzled::Field **arg
   drizzled::plugin::TableFunction::Generator(arg),
   usage_cache(0)
 { 
-  usage_cache= static_cast<QueryUsage *>(getSession().getProperty("query_usage"));
+  usage_cache= getSession().getProperty<QueryUsage>("query_usage");
   if (usage_cache)
     query_iter= usage_cache->list().rbegin();
 }
@@ -71,10 +71,10 @@ bool performance_dictionary::SessionUsage::Generator::populate()
   if (not usage_cache)
     return false;
 
-  if (query_iter ==  usage_cache->list().rend())
+  if (query_iter == usage_cache->list().rend())
     return false;
 
-  publish((*query_iter).query, (*query_iter).delta());
+  publish(query_iter->query, query_iter->delta());
   query_iter++;
 
   return true;

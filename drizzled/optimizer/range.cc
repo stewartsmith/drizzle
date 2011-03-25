@@ -141,10 +141,11 @@
 #include <drizzled/unique.h>
 #include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
-namespace drizzled
-{
+
+namespace drizzled {
 
 #define HA_END_SPACE_KEY 0
 

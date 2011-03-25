@@ -62,6 +62,8 @@
 #include <drizzled/visibility.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/catalog/instance.h>
 
 #include <cstdio>
 #include <map>
@@ -70,12 +72,11 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace internal
 {
-extern bool timed_mutexes;
+	extern bool timed_mutexes;
 }
 
 extern plugin::StorageEngine *myisam_engine;
@@ -1426,16 +1427,13 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
   if (result)
   {
     drizzle_show_var *show= result;
-
-    SystemVariableMap::const_iterator iter= system_variable_map.begin();
-    while (iter != system_variable_map.end())
+    BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
     {
-      sys_var *var= iter->second;
+      sys_var *var= iter.second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       ++show;
-      ++iter;
     }
 
     /* make last element empty */
@@ -1444,13 +1442,10 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
   return result;
 }
 
-
-
 void add_sys_var_to_list(sys_var *var)
 {
   string lower_name(var->getName());
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
+  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
 
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.count(lower_name))
@@ -1585,8 +1580,7 @@ int sys_var_init()
 sys_var *find_sys_var(const std::string &name)
 {
   string lower_name(name);
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
+  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
 
   sys_var *result= NULL;
 
