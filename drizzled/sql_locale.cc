@@ -22,9 +22,9 @@
 #include <drizzled/sql_locale.h>
 #include <drizzled/typelib.h>
 #include <drizzled/charset_info.h>
+#include <drizzled/definitions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] =

@@ -47,67 +47,6 @@
 
 namespace drizzled {
 
-namespace catalog
-{
-	class Instance;
-}
-
-namespace plugin
-{
-	class Client;
-	class EventObserverList;
-  class MonitoredInTransaction;
-	class Scheduler;
-}
-
-namespace message
-{
-	class Transaction;
-	class Statement;
-	class Resultset;
-}
-
-namespace internal { struct st_my_thread_var; }
-
-namespace session 
-{ 
-  class State; 
-  class TableMessages;
-  class Transactions;
-}
-
-namespace table 
-{ 
-  class Placeholder; 
-  class Singular; 
-}
-
-namespace util
-{
-  class Storable;
-}
-
-class CopyField;
-class CreateField;
-class Diagnostics_area;
-class DrizzleXid;
-class Field;
-class Internal_error_handler;
-class Item;
-class LEX;
-class Lex_input_stream;
-class ResourceContext;
-class TableShareInstance;
-class Table_ident;
-class Time_zone;
-class select_result;
-class system_status_var;
-class user_var_entry;
-struct Ha_data;
-
-typedef Item COND;
-typedef uint64_t my_xid;
-
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;

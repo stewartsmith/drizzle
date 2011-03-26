@@ -23,6 +23,7 @@
 #include <string>
 #include <boost/unordered_map.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error/level_t.h>
 #include <drizzled/error_t.h>
@@ -30,15 +31,6 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-namespace identifier
-{
-	class Schema;
-	class Table;
-	class User;
-}
-
-class Identifier;
 
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256

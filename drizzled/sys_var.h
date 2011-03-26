@@ -22,6 +22,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/set_var.h>
 #include <drizzled/show_type.h>
@@ -33,11 +34,9 @@
 
 namespace drizzled {
 
-class Session;
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
-typedef struct st_typelib TYPELIB;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);

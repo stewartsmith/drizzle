@@ -21,14 +21,14 @@
 
 #include <drizzled/internal/m_string.h>
 #include <drizzled/charset_info.h>
+#include <drizzled/memory/root.h>
 #include <drizzled/typelib.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static const char field_separator=',';
 
-int st_typelib::find_type_or_exit(const char *x, const char *option) const
+int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 {
   int res= find_type(const_cast<char*>(x), 2);
   if (res > 0)
@@ -70,13 +70,13 @@ int st_typelib::find_type_or_exit(const char *x, const char *option) const
 */
 
 
-int st_typelib::find_type(const char *x, uint32_t full_name) const
+int TYPELIB::find_type(const char *x, uint32_t full_name) const
 {
   assert(full_name & 2);
   return find_type(const_cast<char*>(x), full_name);
 }
 
-int st_typelib::find_type(char *x, uint32_t full_name) const
+int TYPELIB::find_type(char *x, uint32_t full_name) const
 {
   if (!count)
     return 0;
@@ -124,7 +124,7 @@ int st_typelib::find_type(char *x, uint32_t full_name) const
 	/* Get name of type nr 'nr' */
 	/* Warning first type is 1, 0 = empty field */
 
-void st_typelib::make_type(char *to, uint32_t nr) const
+void TYPELIB::make_type(char *to, uint32_t nr) const
 {
   if (!nr)
     to[0]= 0;
@@ -136,7 +136,7 @@ void st_typelib::make_type(char *to, uint32_t nr) const
 	/* Get type */
 	/* Warning first type is 0 */
 
-const char *st_typelib::get_type(uint32_t nr) const
+const char *TYPELIB::get_type(uint32_t nr) const
 {
   if (nr < count && type_names)
     return type_names[nr];
@@ -159,7 +159,7 @@ const char *st_typelib::get_type(uint32_t nr) const
     a integer representation of the supplied string
 */
 
-uint64_t st_typelib::find_typeset(const char *x, int *err) const
+uint64_t TYPELIB::find_typeset(const char *x, int *err) const
 {
   if (!count)
     return 0;
@@ -193,7 +193,7 @@ uint64_t st_typelib::find_typeset(const char *x, int *err) const
     NULL otherwise
 */
 
-TYPELIB *st_typelib::copy_typelib(memory::Root *root) const
+TYPELIB *TYPELIB::copy_typelib(memory::Root *root) const
 {
   TYPELIB *to;
   uint32_t i;
