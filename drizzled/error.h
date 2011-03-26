@@ -23,6 +23,7 @@
 #include <string>
 #include <boost/unordered_map.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error/level_t.h>
 #include <drizzled/error_t.h>
