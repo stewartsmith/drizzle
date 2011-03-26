@@ -32,15 +32,6 @@
 
 namespace drizzled {
 
-namespace identifier
-{
-	class Schema;
-	class Table;
-	class User;
-}
-
-class Identifier;
-
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
