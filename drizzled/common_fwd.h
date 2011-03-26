@@ -94,7 +94,6 @@ typedef class Item COND;
 typedef struct charset_info_st CHARSET_INFO;
 typedef struct my_locale_st MY_LOCALE;
 typedef struct system_status_var system_status_var;
-typedef struct st_typelib TYPELIB;
 
 class AlterColumn;
 class AlterDrop;
@@ -149,7 +148,7 @@ class TableShare;
 class TableShareInstance;
 class Time;
 class Time_zone;
-// class TYPELIB;
+class TYPELIB;
 class user_var_entry;
 class var;
 struct CacheField;

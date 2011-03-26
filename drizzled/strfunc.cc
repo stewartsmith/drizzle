@@ -44,7 +44,7 @@ namespace drizzled
 
 static const char field_separator=',';
 
-uint64_t st_typelib::find_set(const char *str, uint32_t length,
+uint64_t TYPELIB::find_set(const char *str, uint32_t length,
                   const CHARSET_INFO * const cs,
                   char **err_pos, uint32_t *err_len, bool *set_warning) const
 {
@@ -98,7 +98,7 @@ uint64_t st_typelib::find_set(const char *str, uint32_t length,
   > 0 position in TYPELIB->type_names +1
 */
 
-uint32_t st_typelib::find_type(const char *find, uint32_t length, bool part_match) const
+uint32_t TYPELIB::find_type(const char *find, uint32_t length, bool part_match) const
 {
   uint32_t found_count=0, found_pos=0;
   const char *end= find+length;
@@ -138,7 +138,7 @@ uint32_t st_typelib::find_type(const char *find, uint32_t length, bool part_matc
     >0  Offset+1 in typelib for matched string
 */
 
-uint32_t st_typelib::find_type2(const char *x, uint32_t length, const CHARSET_INFO *cs) const
+uint32_t TYPELIB::find_type2(const char *x, uint32_t length, const CHARSET_INFO *cs) const
 {
   if (!count)
     return 0;

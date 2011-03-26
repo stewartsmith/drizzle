@@ -19,16 +19,7 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-typedef struct st_typelib TYPELIB;
-class String;
-namespace type {
-class Decimal;
-}
-class Session;
-class Item;
+namespace drizzled {
 
 /*
   Item_type_holder used to store type. name, length of Item for UNIONS &
