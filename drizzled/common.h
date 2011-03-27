@@ -18,7 +18,7 @@
  */
 
 /*
-** Common definition between mysql server & client
+** Common definition between Drizzle server & client
 */
 
 #pragma once
