@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/type/decimal.h>
 #include <drizzled/key_map.h>
@@ -53,8 +54,6 @@ namespace drizzled
 #define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
 #define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
 #endif
-
-typedef struct st_typelib TYPELIB;
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
