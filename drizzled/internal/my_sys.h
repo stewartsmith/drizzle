@@ -328,12 +328,6 @@ extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
 
-
-
-extern void thd_increment_bytes_sent(uint32_t length);
-extern void thd_increment_bytes_received(uint32_t length);
-extern void thd_increment_net_big_packet_count(uint32_t length);
-
 } /* namespace internal */
 } /* namespace drizzled */
 
