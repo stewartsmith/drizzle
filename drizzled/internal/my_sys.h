@@ -252,7 +252,6 @@ DRIZZLED_API size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf M
 DRIZZLED_API int my_rename(const char *from, const char *to,myf MyFlags);
 DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer,
                              size_t Count, myf MyFlags);
-extern int _sanity(const char *sFile, uint32_t uLine);
 
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
