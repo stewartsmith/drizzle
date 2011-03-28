@@ -42,7 +42,7 @@ namespace field
   Field type Int64 int (8 bytes)
  ****************************************************************************/
 
-int Int64::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
+int Int64::store(const char *from,uint32_t len, const charset_info_st * const cs)
 {
   int error= 0;
   char *end;
@@ -148,7 +148,7 @@ int64_t Int64::val_int(void) const
 
 String *Int64::val_str(String *val_buffer, String *) const
 {
-  const CHARSET_INFO * const cs= &my_charset_bin;
+  const charset_info_st * const cs= &my_charset_bin;
   uint32_t length;
   uint32_t mlength= max(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -205,7 +205,7 @@ void Int64::sort_string(unsigned char *to,uint32_t )
 
 void Int64::sql_type(String &res) const
 {
-  const CHARSET_INFO * const cs=res.charset();
+  const charset_info_st * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
 }
 

@@ -31,7 +31,6 @@ namespace field
 {
 
 class TableShare;
-typedef struct charset_info_st CHARSET_INFO;
 
 class Time :public Field_str {
 public:
@@ -48,7 +47,7 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_LONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint32_t length,
-             const CHARSET_INFO * const charset);
+             const charset_info_st * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int  reset(void) { ptr[0]= ptr[1]= ptr[2]= ptr[3]= 0; return 0; }

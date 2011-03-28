@@ -147,7 +147,7 @@ using namespace drizzled;
   drizzled::ha_rkey_function ha_rkey_mode;
   drizzled::enum_tx_isolation tx_isolation;
   drizzled::Cast_target cast_type;
-  const drizzled::CHARSET_INFO *charset;
+  const drizzled::charset_info_st *charset;
   drizzled::thr_lock_type lock_type;
   drizzled::interval_type interval, interval_time_st;
   drizzled::type::timestamp_t date_time_type;
@@ -5123,7 +5123,7 @@ IDENT_sys:
           }
         | IDENT_QUOTED
           {
-            const CHARSET_INFO * const cs= system_charset_info;
+            const charset_info_st * const cs= system_charset_info;
             int dummy_error;
             uint32_t wlen= cs->cset->well_formed_len(cs, $1.str,
                                                  $1.str+$1.length,

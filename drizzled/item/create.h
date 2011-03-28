@@ -157,7 +157,7 @@ protected:
 };
 
 Item*
-create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * const cs);
+create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs);
 
 /**
   Builder for cast expressions.
@@ -171,7 +171,7 @@ create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * c
 Item *
 create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *len, const char *dec,
-                 const CHARSET_INFO * const cs);
+                 const charset_info_st * const cs);
 
 int item_create_init();
 void item_create_cleanup();

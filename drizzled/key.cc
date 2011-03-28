@@ -134,7 +134,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_in
     {
       length= min((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
-      const CHARSET_INFO * const cs= field->charset();
+      const charset_info_st * const cs= field->charset();
       uint32_t bytes= field->get_key_image(to_key, length);
       if (bytes < length)
         cs->cset->fill(cs, (char*) to_key + bytes, length - bytes, ' ');
@@ -296,7 +296,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
     length= min((uint32_t) (key_end-key), store_length);
     if (key_part->field->type() == DRIZZLE_TYPE_VARCHAR)
     {
-      const CHARSET_INFO * const cs= key_part->field->charset();
+      const charset_info_st * const cs= key_part->field->charset();
       uint32_t char_length= key_part->length / cs->mbmaxlen;
       const unsigned char *pos= table->getInsertRecord() + key_part->offset;
       if (length > char_length)
@@ -354,7 +354,7 @@ void key_unpack(String *to, const Table *table, uint32_t idx)
     }
     if ((field= key_part->field))
     {
-      const CHARSET_INFO * const cs= field->charset();
+      const charset_info_st * const cs= field->charset();
       field->setReadSet();
       field->val_str_internal(&tmp);
       if (cs->mbmaxlen > 1 &&

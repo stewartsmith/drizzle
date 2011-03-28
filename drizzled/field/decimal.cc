@@ -137,7 +137,7 @@ bool Field_decimal::store_value(const type::Decimal *decimal_value)
 
 
 int Field_decimal::store(const char *from, uint32_t length,
-                         const CHARSET_INFO * const charset_arg)
+                         const charset_info_st * const charset_arg)
 {
   int err;
   type::Decimal decimal_value;
@@ -323,7 +323,7 @@ void Field_decimal::sort_string(unsigned char *buff,
 
 void Field_decimal::sql_type(String &str) const
 {
-  const CHARSET_INFO * const cs= str.charset();
+  const charset_info_st * const cs= str.charset();
   str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
                                 "decimal(%d,%d)", precision, (int)dec));
 }

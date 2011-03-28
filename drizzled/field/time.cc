@@ -68,7 +68,7 @@ Time::Time(bool maybe_null_arg,
 
 int Time::store(const char *from,
                 uint32_t len,
-                const CHARSET_INFO * const )
+                const charset_info_st * const )
 {
   drizzled::Time temporal;
 

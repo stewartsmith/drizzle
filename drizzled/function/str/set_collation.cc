@@ -39,7 +39,7 @@ String *Item_func_set_collation::val_str(String *str)
 
 void Item_func_set_collation::fix_length_and_dec()
 {
-  const CHARSET_INFO *set_collation;
+  const charset_info_st *set_collation;
   const char *colname;
   String tmp, *str= args[1]->val_str(&tmp);
   colname= str->c_ptr();

@@ -54,7 +54,7 @@ public:
   {
     return DRIZZLE_TYPE_NULL;
   }
-  int  store(const char *, uint32_t, const CHARSET_INFO * const)
+  int  store(const char *, uint32_t, const charset_info_st * const)
   {
     null[0]= 1;
     return 0;

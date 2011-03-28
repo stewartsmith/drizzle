@@ -3127,7 +3127,7 @@ int in_vector::find(Item *item)
   return (int) ((*compare)(collation, base+start*size, result) == 0);
 }
 
-in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs)
+in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const charset_info_st * const cs)
   :in_vector(elements, sizeof(String), cmp_func, cs),
    tmp(buff, sizeof(buff), &my_charset_bin)
 {}
@@ -3157,7 +3157,7 @@ void in_string::set(uint32_t pos,Item *item)
   }
   if (!str->charset())
   {
-    const CHARSET_INFO *cs;
+    const charset_info_st *cs;
     if (!(cs= item->collation.collation))
       cs= &my_charset_bin;		// Should never happen for STR items
     str->set_charset(cs);
@@ -3298,7 +3298,7 @@ unsigned char *in_decimal::get_value(Item *item)
 
 
 cmp_item* cmp_item::get_comparator(Item_result type,
-                                   const CHARSET_INFO * const cs)
+                                   const charset_info_st * const cs)
 {
   switch (type) {
   case STRING_RESULT:
@@ -3569,7 +3569,7 @@ Item_func_in::fix_fields(Session *session, Item **ref)
 }
 
 
-static int srtcmp_in(const CHARSET_INFO * const cs, const String *x,const String *y)
+static int srtcmp_in(const charset_info_st * const cs, const String *x,const String *y)
 {
   return cs->coll->strnncollsp(cs,
                                (unsigned char *) x->ptr(),x->length(),
@@ -4503,7 +4503,7 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
-static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+static unsigned char likeconv(const charset_info_st *cs, unsigned char a)
 {
 #ifdef LIKE_CMP_TOUPPER
   return cs->toupper(a);
@@ -4522,7 +4522,7 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
   int            f = 0;
   int            g = plm1;
   int *const splm1 = suff + plm1;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   *splm1 = pattern_len;
 
@@ -4620,7 +4620,7 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   int *end = bmBc + alphabet_size;
   int j;
   const int plm1 = pattern_len - 1;
-  const CHARSET_INFO *const cs= cmp.cmp_collation.collation;
+  const charset_info_st *const cs= cmp.cmp_collation.collation;
 
   for (i = bmBc; i < end; i++)
     *i = pattern_len;
@@ -4652,7 +4652,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   int shift = pattern_len;
   int j     = 0;
   int u     = 0;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   const int plm1=  pattern_len - 1;
   const int tlmpl= text_len - pattern_len;

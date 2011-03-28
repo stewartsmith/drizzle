@@ -50,7 +50,7 @@ static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t len
 #define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 
 bool
-_hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
+_hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charset,
            uint32_t size, size_t key_offset, size_t key_length,
            hash_get_key get_key,
            hash_free_key free_element, uint32_t flags)

@@ -178,7 +178,7 @@ struct st_test_file
 static boost::array<st_test_file, 16> file_stack;
 static st_test_file* cur_file;
 
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
+static const charset_info_st *charset_info= &my_charset_utf8_general_ci; /* Default charset */
 
 /*
   Timer related variables
@@ -4131,7 +4131,7 @@ static bool end_of_query(int c)
 */
 
 
-static int my_strnncoll_simple(const CHARSET_INFO * const  cs, const unsigned char *s, size_t slen,
+static int my_strnncoll_simple(const charset_info_st * const  cs, const unsigned char *s, size_t slen,
                                const unsigned char *t, size_t tlen,
                                bool t_is_prefix)
 {
