@@ -123,10 +123,6 @@ namespace internal
 #define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
 #define DFLT_INIT_HITS  3
 
-	/* Internal error numbers (for assembler functions) */
-#define MY_ERRNO_EDOM		33
-#define MY_ERRNO_ERANGE		34
-
 typedef uint64_t my_off_t;
 
 extern char *home_dir;			/* Home directory for user */

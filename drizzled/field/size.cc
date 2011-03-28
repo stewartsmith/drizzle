@@ -83,7 +83,7 @@ int Size::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   tmp= cs->cset->strntoull10rnd(cs, from, len, false, &end,&error);
-  if (error == MY_ERRNO_ERANGE)
+  if (error == ERANGE)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;

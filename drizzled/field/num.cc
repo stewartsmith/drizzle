@@ -80,7 +80,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
                          const char *int_end, int error)
 {
   /* Test if we get an empty string or wrong integer */
-  if (str == int_end || error == MY_ERRNO_EDOM)
+  if (str == int_end || error == EDOM)
   {
     char buff[128];
     String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
