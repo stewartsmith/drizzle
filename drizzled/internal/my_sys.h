@@ -264,7 +264,6 @@ extern bool my_init(void);
 extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
-extern char * my_filename(int fd);
 
 extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
