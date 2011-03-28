@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
 
+typedef drizzled::charset_info_st CHARSET_INFO;
+
 #define my_progname "xtrabackup"
 
 #define MYSQL_VERSION_ID 50507 /* Drizzle is much greater */
