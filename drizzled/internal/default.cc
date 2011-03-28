@@ -43,6 +43,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/dynamic_array.h>
 #include <drizzled/cached_directory.h>
+#include <drizzled/memory/root.h>
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
