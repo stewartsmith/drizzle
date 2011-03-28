@@ -311,8 +311,6 @@ extern int get_defaults_options(int argc, char **argv,
 extern int load_defaults(const char *conf_file, const char **groups,
 			 int *argc, char ***argv);
 extern void free_defaults(char **argv);
-extern void my_print_default_files(const char *conf_file);
-extern void print_defaults(const char *conf_file, const char **groups);
 extern void my_sleep(uint32_t m_seconds);
 
 } /* namespace internal */
