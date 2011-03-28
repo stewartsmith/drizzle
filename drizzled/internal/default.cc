@@ -68,20 +68,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 #define MAX_DEFAULT_DIRS 6
 const char *default_directories[MAX_DEFAULT_DIRS + 1];
 
-/*
-   This structure defines the context that we pass to callback
-   function 'handle_default_option' used in search_default_file
-   to process each option. This context is used if search_default_file
-   was called from load_defaults.
-*/
-
-struct handle_option_ctx
-{
-   memory::Root *alloc;
-   DYNAMIC_ARRAY *args;
-   TYPELIB *group;
-};
-
 
 
 } /* namespace internal */
