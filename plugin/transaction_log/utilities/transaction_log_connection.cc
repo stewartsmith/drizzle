@@ -22,7 +22,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace drizzled;
 
 TransactionLogConnection::TransactionLogConnection(string &host, uint16_t port,
                                                    string &username, string &password,

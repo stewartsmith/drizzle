@@ -34,6 +34,8 @@ namespace drizzled
 namespace internal
 {
 
+static size_t strlength(const char *str);
+
 /*
   Formats a filename with possible replace of directory of extension
   Function can handle the case where 'to' == 'name'
@@ -142,7 +144,7 @@ char * fn_format(char * to, const char *name, const char *dir,
   Return length of string with end-space:s not counted.
 */
 
-size_t strlength(const char *str)
+static size_t strlength(const char *str)
 {
   const char* found= str;
   const char* pos= str;

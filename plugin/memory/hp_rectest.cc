@@ -16,6 +16,7 @@
 /* Test if a record has changed since last read */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
 
 int hp_rectest(register HP_INFO *info, register const unsigned char *old_record)
 {

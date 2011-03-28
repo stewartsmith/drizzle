@@ -18,7 +18,8 @@
   a shared library
 */
 
-#include "heap_priv.h"
+#include <config.h>
+#include "heap.h"
 #include <list>
 
 using namespace std;

@@ -49,14 +49,12 @@ TODO:
 
 #include <config.h>
 
+#include <drizzled/definitions.h>
+#include <drizzled/error_t.h>
+#include <drizzled/error.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/drizzled.h>
-#ifdef HAVE_AIOWAIT
-#include <drizzled/error.h>
-#include <drizzled/internal/aio_result.h>
-static void my_aiowait(my_aio_result *result);
-#endif
 #include <drizzled/internal/iocache.h>
 #include <errno.h>
 #include <drizzled/util/test.h>
@@ -286,41 +284,8 @@ int st_io_cache::init_io_cache(int file_arg, size_t cachesize,
   error= 0;
   type= type_arg;
   init_functions();
-#ifdef HAVE_AIOWAIT
-  if (use_async_io && ! my_disable_async_io)
-  {
-    read_length/=2;
-    read_function=_my_b_async_read;
-  }
-  inited= aio_result.pending= 0;
-#endif
   return 0;
 }						/* init_io_cache */
-
-	/* Wait until current request is ready */
-
-#ifdef HAVE_AIOWAIT
-static void my_aiowait(my_aio_result *result)
-{
-  if (result->pending)
-  {
-    struct aio_result_t *tmp;
-    for (;;)
-    {
-      if ((int) (tmp=aiowait((struct timeval *) 0)) == -1)
-      {
-	if (errno == EINTR)
-	  continue;
-	result->pending=0;			/* Assume everythings is ok */
-	break;
-      }
-      ((my_aio_result*) tmp)->pending=0;
-      if ((my_aio_result*) tmp == result)
-	break;
-    }
-  }
-}
-#endif
 
 /**
  * @brief 
@@ -334,7 +299,7 @@ static void my_aiowait(my_aio_result *result)
  */
 bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
                                   my_off_t seek_offset,
-                                  bool use_async_io,
+                                  bool,
                                   bool clear_cache)
 {
   /* One can't do reinit with the following types */
@@ -372,9 +337,6 @@ bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
       write_pos=pos;
     else
       read_pos= pos;
-#ifdef HAVE_AIOWAIT
-    my_aiowait(&aio_result);		/* Wait for outstanding req */
-#endif
   }
   else
   {
@@ -406,18 +368,6 @@ bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
   error=0;
   init_functions();
 
-#ifdef HAVE_AIOWAIT
-  if (use_async_io && ! my_disable_async_io &&
-      ((uint32_t) buffer_length <
-       (uint32_t) (end_of_file - seek_offset)))
-  {
-    read_length=buffer_length/2;
-    read_function=_my_b_async_read;
-  }
-  inited= 0;
-#else
-  (void)use_async_io;
-#endif
   return 0;
 } /* reinit_io_cache */
 
@@ -536,184 +486,6 @@ static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
   memcpy(Buffer, info->buffer, Count);
   return(0);
 }
-
-
-#ifdef HAVE_AIOWAIT
-
-/**
- * @brief
- *   Read from the st_io_cache into a buffer and feed asynchronously from disk when needed.
- *
- * @param info st_io_cache pointer
- * @param Buffer Buffer to retrieve count bytes from file
- * @param Count Number of bytes to read into Buffer
- * 
- * @retval -1 An error has occurred; errno is set.
- * @retval 0 Success
- * @retval 1 An error has occurred; st_io_cache to error state.
- */
-int _my_b_async_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
-{
-  size_t length_local,read_length,diff_length,left_length,use_length,org_Count;
-  size_t max_length;
-  my_off_t next_pos_in_file;
-  unsigned char *read_buffer;
-
-  memcpy(Buffer,info->read_pos,
-	 (left_length= (size_t) (info->read_end-info->read_pos)));
-  Buffer+=left_length;
-  org_Count=Count;
-  Count-=left_length;
-
-  if (info->inited)
-  {						/* wait for read block */
-    info->inited=0;				/* No more block to read */
-    my_aiowait(&info->aio_result);		/* Wait for outstanding req */
-    if (info->aio_result.result.aio_errno)
-    {
-      if (info->myflags & MY_WME)
-	my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
-		 my_filename(info->file),
-		 info->aio_result.result.aio_errno);
-      errno=info->aio_result.result.aio_errno;
-      info->error= -1;
-      return(1);
-    }
-    if (! (read_length= (size_t) info->aio_result.result.aio_return) ||
-	read_length == (size_t) -1)
-    {
-      errno=0;				/* For testing */
-      info->error= (read_length == (size_t) -1 ? -1 :
-		    (int) (read_length+left_length));
-      return(1);
-    }
-    info->pos_in_file+= (size_t) (info->read_end - info->request_pos);
-
-    if (info->request_pos != info->buffer)
-      info->request_pos=info->buffer;
-    else
-      info->request_pos=info->buffer+info->read_length;
-    info->read_pos=info->request_pos;
-    next_pos_in_file=info->aio_read_pos+read_length;
-
-	/* Check if pos_in_file is changed
-	   (_ni_read_cache may have skipped some bytes) */
-
-    if (info->aio_read_pos < info->pos_in_file)
-    {						/* Fix if skipped bytes */
-      if (info->aio_read_pos + read_length < info->pos_in_file)
-      {
-	read_length=0;				/* Skip block */
-	next_pos_in_file=info->pos_in_file;
-      }
-      else
-      {
-	my_off_t offset= (info->pos_in_file - info->aio_read_pos);
-	info->pos_in_file=info->aio_read_pos; /* Whe are here */
-	info->read_pos=info->request_pos+offset;
-	read_length-=offset;			/* Bytes left from read_pos */
-      }
-    }
-	/* Copy found bytes to buffer */
-    length_local=min(Count,read_length);
-    memcpy(Buffer,info->read_pos,(size_t) length_local);
-    Buffer+=length_local;
-    Count-=length_local;
-    left_length+=length_local;
-    info->read_end=info->rc_pos+read_length;
-    info->read_pos+=length_local;
-  }
-  else
-    next_pos_in_file=(info->pos_in_file+ (size_t)
-		      (info->read_end - info->request_pos));
-
-	/* If reading large blocks, or first read or read with skip */
-  if (Count)
-  {
-    if (next_pos_in_file == info->end_of_file)
-    {
-      info->error=(int) (read_length+left_length);
-      return 1;
-    }
-
-    if (lseek(info->file,next_pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
-    {
-      info->error= -1;
-      return (1);
-    }
-
-    read_length=IO_SIZE*2- (size_t) (next_pos_in_file & (IO_SIZE-1));
-    if (Count < read_length)
-    {					/* Small block, read to cache */
-      if ((read_length=my_read(info->file,info->request_pos,
-			       read_length, info->myflags)) == (size_t) -1)
-        return info->error= -1;
-      use_length=min(Count,read_length);
-      memcpy(Buffer,info->request_pos,(size_t) use_length);
-      info->read_pos=info->request_pos+Count;
-      info->read_end=info->request_pos+read_length;
-      info->pos_in_file=next_pos_in_file;	/* Start of block in cache */
-      next_pos_in_file+=read_length;
-
-      if (Count != use_length)
-      {					/* Didn't find hole block */
-	if (info->myflags & (MY_WME | MY_FAE | MY_FNABP) && Count != org_Count)
-	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-		   my_filename(info->file),errno);
-	info->error=(int) (read_length+left_length);
-	return 1;
-      }
-    }
-    else
-    {						/* Big block, don't cache it */
-      if ((read_length= my_read(info->file,Buffer, Count,info->myflags))
-	  != Count)
-      {
-	info->error= read_length == (size_t) -1 ? -1 : read_length+left_length;
-	return 1;
-      }
-      info->read_pos=info->read_end=info->request_pos;
-      info->pos_in_file=(next_pos_in_file+=Count);
-    }
-  }
-
-  /* Read next block with asyncronic io */
-  diff_length=(next_pos_in_file & (IO_SIZE-1));
-  max_length= info->read_length - diff_length;
-  if (max_length > info->end_of_file - next_pos_in_file)
-    max_length= (size_t) (info->end_of_file - next_pos_in_file);
-
-  if (info->request_pos != info->buffer)
-    read_buffer=info->buffer;
-  else
-    read_buffer=info->buffer+info->read_length;
-  info->aio_read_pos=next_pos_in_file;
-  if (max_length)
-  {
-    info->aio_result.result.aio_errno=AIO_INPROGRESS;	/* Marker for test */
-    if (aioread(info->file,read_buffer, max_length,
-		(my_off_t) next_pos_in_file,SEEK_SET,
-		&info->aio_result.result))
-    {						/* Skip async io */
-      errno=errno;
-      if (info->request_pos != info->buffer)
-      {
-        memmove(info->buffer, info->request_pos,
-                (size_t) (info->read_end - info->read_pos));
-	info->request_pos=info->buffer;
-	info->read_pos-=info->read_length;
-	info->read_end-=info->read_length;
-      }
-      info->read_length=info->buffer_length;	/* Use hole buffer */
-      info->read_function=_my_b_read;		/* Use normal IO_READ next */
-    }
-    else
-      info->inited=info->aio_result.pending=1;
-  }
-  return 0;					/* Block read, async in use */
-} /* _my_b_async_read */
-#endif
-
 
 /**
  * @brief
@@ -899,13 +671,6 @@ int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
       return(info->error);
     }
   }
-#ifdef HAVE_AIOWAIT
-  else if (info->type != READ_NET)
-  {
-    my_aiowait(&info->aio_result);		/* Wait for outstanding req */
-    info->inited=0;
-  }
-#endif
   unlock_append_buffer(info, need_append_buffer_lock);
   return(0);
 }

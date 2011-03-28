@@ -26,8 +26,7 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/message/transaction.pb.h>
-#include <drizzled/identifier/table.h>
-#include <drizzled/identifier/schema.h>
+#include <drizzled/identifier.h>
 #include <drizzled/message/schema.h>
 #include <drizzled/message/table.h>
 #include <drizzled/session.h>
