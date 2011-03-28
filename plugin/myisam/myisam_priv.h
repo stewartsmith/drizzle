@@ -757,3 +757,5 @@ void mi_disable_non_unique_index(MI_INFO *info, drizzled::ha_rows rows);
 void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
                         uint32_t sline);
 
+
+#define DFLT_INIT_HITS  3

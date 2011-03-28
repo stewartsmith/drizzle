@@ -117,10 +117,6 @@ namespace internal
 #define MY_RELATIVE_PATH	128	/* name is relative to 'dir' */
 #define MY_APPEND_EXT           256     /* add 'ext' as additional extension*/
 
-
-	/* Some constants */
-#define DFLT_INIT_HITS  3
-
 typedef uint64_t my_off_t;
 
 extern char *home_dir;			/* Home directory for user */
