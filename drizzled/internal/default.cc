@@ -74,9 +74,6 @@ const char *default_directories[MAX_DEFAULT_DIRS + 1];
 
 static const char *f_extensions[]= { ".cnf", 0 };
 
-int handle_default_option(void *in_ctx, const char *group_name,
-                          const char *option);
-
 /*
    This structure defines the context that we pass to callback
    function 'handle_default_option' used in search_default_file
@@ -99,50 +96,6 @@ static int search_default_file_with_ext(Process_option_func func,
 
 
 static char *remove_end_comment(char *ptr);
-
-
-/*
-  The option handler for load_defaults.
-
-  SYNOPSIS
-    handle_deault_option()
-    in_ctx                  Handler context. In this case it is a
-                            handle_option_ctx structure.
-    group_name              The name of the group the option belongs to.
-    option                  The very option to be processed. It is already
-                            prepared to be used in argv (has -- prefix). If it
-                            is NULL, we are handling a new group (section).
-
-  DESCRIPTION
-    This handler checks whether a group is one of the listed and adds an option
-    to the array if yes. Some other handler can record, for instance, all
-    groups and their options, not knowing in advance the names and amount of
-    groups.
-
-  RETURN
-    0 - ok
-    1 - error occured
-*/
-
-int handle_default_option(void *in_ctx, const char *group_name,
-                          const char *option)
-{
-  char *tmp;
-  struct handle_option_ctx *ctx= (struct handle_option_ctx *) in_ctx;
-
-  if (!option)
-    return 0;
-
-  if (ctx->group->find_type(const_cast<char*>(group_name), 3))
-  {
-    if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
-      return 1;
-    ctx->args->push_back(&tmp);
-    strcpy(tmp, option);
-  }
-
-  return 0;
-}
 
 /*
   Skip over keyword and get argument after keyword
