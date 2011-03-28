@@ -206,7 +206,7 @@ public:
     set_name(arg.c_str(), arg.length(), system_charset_info);
   }
 
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs= system_charset_info);
+  void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
   /**
    * Renames item (used for views, cleanup() return original name).
    *
@@ -639,8 +639,8 @@ public:
   virtual const Item *real_item(void) const;
   virtual Item *get_tmp_table_item(Session *session);
 
-  static const CHARSET_INFO *default_charset();
-  virtual const CHARSET_INFO *compare_collation();
+  static const charset_info_st *default_charset();
+  virtual const charset_info_st *compare_collation();
 
   virtual bool walk(Item_processor processor,
                     bool walk_subquery,
@@ -729,7 +729,7 @@ public:
 
   virtual Item *neg_transformer(Session *session);
   virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  virtual Item *safe_charset_converter(const charset_info_st * const tocs);
   void delete_self();
 
   /**
@@ -782,7 +782,7 @@ public:
    * @retval
    *  false otherwise
    */
-  bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
+  bool eq_by_collation(Item *item, bool binary_cmp, const charset_info_st * const cs);
 
   inline uint32_t char_to_byte_length_safe(uint32_t char_length_arg, uint32_t mbmaxlen_arg)
   { 
@@ -792,7 +792,7 @@ public:
 
   uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs);
+  void fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs);
   void fix_char_length(uint32_t max_char_length_arg);
   void fix_char_length_uint64_t(uint64_t max_char_length_arg);
   void fix_length_and_charset_datetime(uint32_t max_char_length_arg);

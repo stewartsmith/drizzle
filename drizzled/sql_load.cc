@@ -62,9 +62,9 @@ public:
   bool error,line_cuted,found_null,enclosed;
   unsigned char	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
-  const CHARSET_INFO *read_charset;
+  const charset_info_st *read_charset;
 
-  READ_INFO(int cursor, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(int cursor, size_t tot_length, const charset_info_st * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -763,7 +763,7 @@ READ_INFO::unescape(char chr)
 
 
 READ_INFO::READ_INFO(int file_par, size_t tot_length,
-                     const CHARSET_INFO * const cs,
+                     const charset_info_st * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
   :cursor(file_par),escape_char(escape)

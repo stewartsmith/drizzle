@@ -2923,7 +2923,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
   if (result->length() > item->max_length)
   {
     int well_formed_error;
-    const CHARSET_INFO * const cs= item->collation.collation;
+    const charset_info_st * const cs= item->collation.collation;
     const char *ptr= result->ptr();
     uint32_t add_length;
     /*

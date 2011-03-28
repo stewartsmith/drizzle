@@ -1566,7 +1566,7 @@ static bool check_simple_equality(Item *left_item,
 
       if (field_item->result_type() == STRING_RESULT)
       {
-        const CHARSET_INFO * const cs= ((Field_str*) field_item->field)->charset();
+        const charset_info_st * const cs= ((Field_str*) field_item->field)->charset();
         if (!item)
         {
           Item_func_eq *eq_item;

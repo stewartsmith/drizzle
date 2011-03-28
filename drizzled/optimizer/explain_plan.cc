@@ -80,7 +80,7 @@ void optimizer::ExplainPlan::printPlan()
   Session *session= join->session;
   select_result *result= join->result;
   Item *item_null= new Item_null();
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
   int quick_type;
   /* Don't log this into the slow query log */
   session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);

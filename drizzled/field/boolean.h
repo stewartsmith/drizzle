@@ -46,7 +46,7 @@ public:
   uint32_t pack_length() const { return sizeof(unsigned char); }
   uint32_t key_length() const { return sizeof(unsigned char); }
 
-  int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to, uint32_t length, const charset_info_st * const charset);
   int store(double );
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const drizzled::type::Decimal*);

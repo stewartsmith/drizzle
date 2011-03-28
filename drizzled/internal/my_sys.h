@@ -32,7 +32,7 @@
 
 #include <drizzled/internal/my_pthread.h>
 
-#include <drizzled/charset_info.h>                    /* for CHARSET_INFO */
+#include <drizzled/charset_info.h>                    /* for charset_info_st */
 #include <stdarg.h>
 #include <drizzled/internal/aio_result.h>
 

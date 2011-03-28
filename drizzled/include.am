@@ -61,6 +61,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
+			      drizzled/common_fwd.h \
 			      drizzled/comp_creator.h \
 			      drizzled/constrained_value.h \
 			      drizzled/copy_field.h \

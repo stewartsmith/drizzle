@@ -30,7 +30,7 @@ class Item_num: public Item_basic_constant
 public:
   Item_num() {}                               /* Remove gcc warning */
   virtual Item_num *neg()= 0;
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 } /* namespace drizzled */

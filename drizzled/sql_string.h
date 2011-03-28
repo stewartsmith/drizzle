@@ -38,21 +38,21 @@ namespace drizzled
 {
 
 class String;
+struct charset_info_st;
 
 extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 namespace memory { class Root; }
-typedef struct charset_info_st CHARSET_INFO;
 
 DRIZZLED_API std::string String_to_std_string(String const& s);
 DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
 
-int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
 int stringcmp(const String *a,const String *b);
 String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
-size_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+size_t well_formed_copy_nchars(const charset_info_st * const to_cs,
                                  char *to, size_t to_length,
-                                 const CHARSET_INFO * const from_cs,
+                                 const charset_info_st * const from_cs,
                                  const char *from, size_t from_length,
                                  size_t nchars,
                                  const char **well_formed_error_pos,
@@ -65,14 +65,14 @@ class DRIZZLED_API String
   char *Ptr;
   size_t str_length,Alloced_length;
   bool alloced;
-  const CHARSET_INFO *str_charset;
+  const charset_info_st *str_charset;
 
 public:
   String();
   String(size_t length_arg);
-  String(const char *str, const CHARSET_INFO * const cs);
-  String(const char *str, size_t len, const CHARSET_INFO * const cs);
-  String(char *str, size_t len, const CHARSET_INFO * const cs);
+  String(const char *str, const charset_info_st * const cs);
+  String(const char *str, size_t len, const charset_info_st * const cs);
+  String(char *str, size_t len, const charset_info_st * const cs);
   String(const String &str);
 
   static void *operator new(size_t size, memory::Root *mem_root);
@@ -82,9 +82,9 @@ public:
   { }
   ~String();
 
-  inline void set_charset(const CHARSET_INFO * const charset_arg)
+  inline void set_charset(const charset_info_st * const charset_arg)
   { str_charset= charset_arg; }
-  inline const CHARSET_INFO *charset() const { return str_charset; }
+  inline const charset_info_st *charset() const { return str_charset; }
   inline size_t length() const { return str_length;}
   inline size_t alloced_length() const { return Alloced_length;}
   inline char& operator [] (size_t i) const { return Ptr[i]; }
@@ -137,13 +137,13 @@ public:
       Alloced_length=0;
     str_charset=str.str_charset;
   }
-  inline void set(char *str,size_t arg_length, const CHARSET_INFO * const cs)
+  inline void set(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     free();
     Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
-  inline void set(const char *str,size_t arg_length, const CHARSET_INFO * const cs)
+  inline void set(const char *str,size_t arg_length, const charset_info_st * const cs)
   {
     free();
     Ptr= const_cast<char*>(str);
@@ -151,7 +151,7 @@ public:
     str_charset=cs;
   }
   bool set_ascii(const char *str, size_t arg_length);
-  inline void set_quick(char *str,size_t arg_length, const CHARSET_INFO * const cs)
+  inline void set_quick(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     if (!alloced)
     {
@@ -159,12 +159,12 @@ public:
     }
     str_charset= cs;
   }
-  bool set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs);
-  bool set(int64_t num, const CHARSET_INFO * const cs)
+  bool set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
+  bool set(int64_t num, const charset_info_st * const cs)
   { return set_int(num, false, cs); }
-  bool set(uint64_t num, const CHARSET_INFO * const cs)
+  bool set(uint64_t num, const charset_info_st * const cs)
   { return set_int(static_cast<int64_t>(num), true, cs); }
-  bool set_real(double num,size_t decimals, const CHARSET_INFO * const cs);
+  bool set_real(double num,size_t decimals, const charset_info_st * const cs);
 
   /*
     PMG 2004.11.12
@@ -248,18 +248,18 @@ public:
 
   bool copy();					// Alloc string if not alloced
   bool copy(const String &s);			// Allocate new string
-  bool copy(const std::string&, const CHARSET_INFO * const cs);	// Allocate new string
-  bool copy(const char *s,size_t arg_length, const CHARSET_INFO * const cs);	// Allocate new string
+  bool copy(const std::string&, const charset_info_st * const cs);	// Allocate new string
+  bool copy(const char *s,size_t arg_length, const charset_info_st * const cs);	// Allocate new string
   static bool needs_conversion(size_t arg_length,
-  			       const CHARSET_INFO * const cs_from, const CHARSET_INFO * const cs_to,
+  			       const charset_info_st * const cs_from, const charset_info_st * const cs_to,
 			       size_t *offset);
-  bool set_or_copy_aligned(const char *s, size_t arg_length, const CHARSET_INFO * const cs);
-  bool copy(const char*s,size_t arg_length, const CHARSET_INFO * const csfrom,
-            const CHARSET_INFO * const csto, size_t *errors);
+  bool set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st * const cs);
+  bool copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
+            const charset_info_st * const csto, size_t *errors);
   bool append(const String &s);
   bool append(const char *s);
   bool append(const char *s,size_t arg_length);
-  bool append(const char *s,size_t arg_length, const CHARSET_INFO * const cs);
+  bool append(const char *s,size_t arg_length, const charset_info_st * const cs);
   bool append_with_prefill(const char *s, size_t arg_length,
 			   size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
@@ -280,7 +280,7 @@ public:
     }
     return 0;
   }
-  friend int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+  friend int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
   size_t numchars();
@@ -339,7 +339,7 @@ public:
   }
 };
 
-bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+bool check_if_only_end_space(const charset_info_st * const cs, char *str,
                              char *end);
 
 std::ostream& operator<<(std::ostream& output, const String &str);

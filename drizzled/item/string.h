@@ -29,7 +29,7 @@ class Item_string :public Item_basic_constant
 {
 public:
   Item_string(const char *str,uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
+              const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -48,7 +48,7 @@ public:
     fixed= 1;
   }
   /* Just create an item and do not fill string representation */
-  Item_string(const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
+  Item_string(const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
     collation.set(cs, dv);
@@ -58,7 +58,7 @@ public:
     fixed= 1;
   }
   Item_string(const char *name_par, const char *str, uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
+              const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
@@ -88,7 +88,7 @@ public:
     return new Item_string(name, str_value.ptr(),
     			   str_value.length(), collation.collation);
   }
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
   inline void append(char *str, uint32_t length)
   {
     str_value.append(str, length);
@@ -145,11 +145,11 @@ class Item_static_string_func :public Item_string
   const char *func_name;
 public:
   Item_static_string_func(const char *name_par, const char *str, uint32_t length,
-                          const CHARSET_INFO * const cs,
+                          const charset_info_st * const cs,
                           Derivation dv= DERIVATION_COERCIBLE)
     :Item_string(NULL, str, length, cs, dv), func_name(name_par)
   {}
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
 
   virtual inline void print(String *str)
   {
