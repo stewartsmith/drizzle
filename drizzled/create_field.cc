@@ -189,7 +189,7 @@ bool CreateField::init(Session *,
                         LEX_STRING *fld_comment,
                         char *fld_change,
                         List<String> *fld_interval_list,
-                        const CHARSET_INFO * const fld_charset,
+                        const charset_info_st * const fld_charset,
                         uint32_t,
                         enum column_format_type column_format_in)
 {

@@ -44,7 +44,7 @@ public:
              unsigned char null_bit_arg,
              const char *field_name_arg,
              TYPELIB *typelib_arg,
-             const CHARSET_INFO * const charset_arg)
+             const charset_info_st * const charset_arg)
     :Field_str(ptr_arg,
                len_arg,
                null_ptr_arg,
@@ -57,7 +57,7 @@ public:
   }
   Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
-  int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
+  int  store(const char *to, uint32_t length, const charset_info_st * const);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void) const;
@@ -102,7 +102,7 @@ public:
     return true;
   }
   /* enum and set are sorted as integers */
-  const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
+  const charset_info_st *sort_charset(void) const { return &my_charset_bin; }
 };
 
 } /* namespace drizzled */

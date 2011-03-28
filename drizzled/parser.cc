@@ -405,7 +405,7 @@ void storeAlterColumnPosition(LEX *lex, const char *position)
   statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
 }
 
-bool buildCollation(LEX *lex, const CHARSET_INFO *arg)
+bool buildCollation(LEX *lex, const charset_info_st *arg)
 {
   statement::CreateTable *statement= (statement::CreateTable *)lex->statement;
 

@@ -105,7 +105,7 @@ public:
   bool set_no_const_sub(unsigned char *arg);
   Item *replace_equal_field(unsigned char *arg);
   uint32_t max_disp_length();
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual void print(String *str);

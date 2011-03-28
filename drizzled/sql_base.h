@@ -50,13 +50,13 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field
                        Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
                        char *change, List<String> *interval_list,
-                       const CHARSET_INFO * const cs);
+                       const charset_info_st * const cs);
 CreateField * new_create_field(Session *session, char *field_name, enum_field_types type,
                                char *length, char *decimals,
                                uint32_t type_modifier,
                                Item *default_value, Item *on_update_value,
                                LEX_STRING *comment, char *change,
-                               List<String> *interval_list, CHARSET_INFO *cs);
+                               List<String> *interval_list, charset_info_st *cs);
 void push_new_name_resolution_context(Session&, TableList& left_op, TableList& right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,

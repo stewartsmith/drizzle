@@ -83,7 +83,7 @@ extern plugin::StorageEngine *myisam_engine;
 extern bool timed_mutexes;
 
 extern struct option my_long_options[];
-extern const CHARSET_INFO *character_set_filesystem;
+extern const charset_info_st *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
 typedef map<string, sys_var *> SystemVariableMap;
@@ -1066,7 +1066,7 @@ unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
 
 bool sys_var_collation_sv::update(Session *session, set_var *var)
 {
-  const CHARSET_INFO *tmp;
+  const charset_info_st *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1120,7 +1120,7 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
                                                sql_var_t type,
                                                const LEX_STRING *)
 {
-  const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
+  const charset_info_st *cs= ((type == OPT_GLOBAL) ?
                            global_system_variables.*offset :
                            session->variables.*offset);
   return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";

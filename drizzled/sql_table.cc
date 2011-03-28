@@ -327,10 +327,10 @@ class typelib_set_member
 {
 public:
   string s;
-  const CHARSET_INFO * const cs;
+  const charset_info_st * const cs;
 
   typelib_set_member(const char* value, unsigned int length,
-                     const CHARSET_INFO * const charset)
+                     const charset_info_st * const charset)
     : s(value, length),
       cs(charset)
   {}
@@ -359,7 +359,7 @@ public:
 
 static bool check_duplicates_in_interval(const char *set_or_name,
                                          const char *name, TYPELIB *typelib,
-                                         const CHARSET_INFO * const cs,
+                                         const charset_info_st * const cs,
                                          unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
@@ -405,7 +405,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-static void calculate_interval_lengths(const CHARSET_INFO * const cs,
+static void calculate_interval_lengths(const charset_info_st * const cs,
                                        TYPELIB *interval,
                                        uint32_t *max_length,
                                        uint32_t *tot_length)
@@ -543,7 +543,7 @@ static int prepare_create_table(Session *session,
 
   for (int32_t field_no=0; (sql_field=it++) ; field_no++)
   {
-    const CHARSET_INFO *save_cs;
+    const charset_info_st *save_cs;
 
     /*
       Initialize length from its original value (number of characters),
@@ -608,7 +608,7 @@ static int prepare_create_table(Session *session,
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
       size_t dummy;
-      const CHARSET_INFO * const cs= sql_field->charset;
+      const charset_info_st * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
       /*
@@ -1732,7 +1732,7 @@ static bool admin_table(Session* session, TableList* tables,
   Item *item;
   int result_code= 0;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;

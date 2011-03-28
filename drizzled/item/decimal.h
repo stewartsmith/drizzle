@@ -30,7 +30,7 @@ class Item_decimal :public Item_num
 protected:
   type::Decimal decimal_value;
 public:
-  Item_decimal(const char *str_arg, uint32_t length, const CHARSET_INFO * const charset);
+  Item_decimal(const char *str_arg, uint32_t length, const charset_info_st * const charset);
   Item_decimal(const char *str, const type::Decimal *val_arg,
                uint32_t decimal_par, uint32_t length);
   Item_decimal(type::Decimal *value_par);

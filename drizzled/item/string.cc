@@ -26,7 +26,7 @@
 namespace drizzled
 {
 
-Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_string::safe_charset_converter(const charset_info_st * const tocs)
 {
   Item_string *conv;
   size_t conv_errors;
@@ -56,7 +56,7 @@ Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 }
 
 
-Item *Item_static_string_func::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_static_string_func::safe_charset_converter(const charset_info_st * const tocs)
 {
   Item_string *conv;
   size_t conv_errors;
@@ -116,7 +116,7 @@ double Item_string::val_real()
   int error;
   char *end, *org_end;
   double tmp;
-  const CHARSET_INFO * const cs= str_value.charset();
+  const charset_info_st * const cs= str_value.charset();
 
   org_end= (char*) str_value.ptr() + str_value.length();
   tmp= my_strntod(cs, (char*) str_value.ptr(), str_value.length(), &end,
@@ -146,7 +146,7 @@ int64_t Item_string::val_int()
   int64_t tmp;
   char *end= (char*) str_value.ptr()+ str_value.length();
   char *org_end= end;
-  const CHARSET_INFO * const cs= str_value.charset();
+  const charset_info_st * const cs= str_value.charset();
 
   tmp= (*(cs->cset->strtoll10))(cs, str_value.ptr(), &end, &err);
   /*

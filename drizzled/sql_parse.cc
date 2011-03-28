@@ -83,7 +83,7 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 */
 
 extern size_t my_thread_stack_size;
-extern const CHARSET_INFO *character_set_filesystem;
+extern const charset_info_st *character_set_filesystem;
 
 namespace
 {
@@ -853,7 +853,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs)
+                       List<String> *interval_list, const charset_info_st * const cs)
 {
   register CreateField *new_field;
   LEX  *lex= &session->lex();
@@ -1637,7 +1637,7 @@ Item *negate_expression(Session *session, Item *expr)
 
 
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint32_t max_char_length, const CHARSET_INFO * const cs,
+                              uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
@@ -1662,7 +1662,7 @@ bool check_identifier_name(LEX_STRING *str, error_t err_code,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+  const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,

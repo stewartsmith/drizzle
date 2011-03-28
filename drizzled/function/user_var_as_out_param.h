@@ -48,8 +48,8 @@ public:
   /* fix_fields() binds variable name with its entry structure */
   bool fix_fields(Session *session, Item **ref);
   virtual void print(String *str);
-  void set_null_value(const CHARSET_INFO * const cs);
-  void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
+  void set_null_value(const charset_info_st * const cs);
+  void set_value(const char *str, uint32_t length, const charset_info_st * const cs);
 };
 
 } /* namespace drizzled */

@@ -43,7 +43,7 @@ namespace drizzled
 
 int Field_datetime::store(const char *from,
                           uint32_t len,
-                          const CHARSET_INFO * const )
+                          const charset_info_st * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 

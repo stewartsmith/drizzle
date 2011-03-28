@@ -54,7 +54,7 @@ public:
 
   virtual void print(String *str);
 
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 class Item_null_result :public Item_null

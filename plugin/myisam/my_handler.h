@@ -44,7 +44,7 @@
 
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
-  const drizzled::CHARSET_INFO *charset;
+  const drizzled::charset_info_st *charset;
   uint32_t start;				/* Start of key in record */
   uint32_t null_pos;			/* position to NULL indicator */
   uint16_t bit_pos;                       /* Position to bit part */
@@ -103,7 +103,7 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(const drizzled::CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
+extern int ha_compare_text(const drizzled::charset_info_st * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
 void my_handler_error_register(void);

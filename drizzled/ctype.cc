@@ -54,8 +54,8 @@ typedef struct my_cs_file_info
   char   comment[MY_CS_CSDESCR_SIZE];
   char   tailoring[MY_CS_TAILORING_SIZE];
   size_t tailoring_length;
-  CHARSET_INFO cs;
-  int (*add_collation)(CHARSET_INFO *cs);
+  charset_info_st cs;
+  int (*add_collation)(charset_info_st *cs);
 } MY_CHARSET_LOADER;
 
 } /* namespace drizzled */

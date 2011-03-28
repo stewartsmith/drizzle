@@ -56,7 +56,7 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
                                  unsigned char *null_ptr_arg,
                                  unsigned char null_bit_arg,
                                  const char *field_name_arg,
-                                 const CHARSET_INFO * const cs) :
+                                 const charset_info_st * const cs) :
   Field_str(ptr_arg,
             len_arg,
             null_ptr_arg,
@@ -69,7 +69,7 @@ length_bytes(length_bytes_arg)
 Field_varstring::Field_varstring(uint32_t len_arg,
                                  bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 const CHARSET_INFO * const cs) :
+                                 const charset_info_st * const cs) :
   Field_str((unsigned char*) 0,
             len_arg,
             maybe_null_arg ? (unsigned char*) "": 0,
@@ -80,7 +80,7 @@ Field_varstring::Field_varstring(uint32_t len_arg,
 {
 }
 
-int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
+int Field_varstring::store(const char *from,uint32_t length, const charset_info_st * const cs)
 {
   uint32_t copy_length;
   const char *well_formed_error_pos;
@@ -283,7 +283,7 @@ enum ha_base_keytype Field_varstring::key_type() const
 
 void Field_varstring::sql_type(String &res) const
 {
-  const CHARSET_INFO * const cs=res.charset();
+  const charset_info_st * const cs=res.charset();
   uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),

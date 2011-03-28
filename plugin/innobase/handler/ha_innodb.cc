@@ -1202,7 +1202,7 @@ innobase_get_cset_width(
   ulint*  mbminlen, /*!< out: minimum length of a char (in bytes) */
   ulint*  mbmaxlen) /*!< out: maximum length of a char (in bytes) */
 {
-  CHARSET_INFO* cs;
+  charset_info_st* cs;
   ut_ad(cset < 256);
   ut_ad(mbminlen);
   ut_ad(mbmaxlen);
@@ -1277,7 +1277,7 @@ innobase_isspace(
   const void *cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+  return my_isspace(static_cast<const charset_info_st *>(cs), char_to_test);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -3626,7 +3626,7 @@ innobase_mysql_cmp(
   const unsigned char* b,   /* in: data field */
   unsigned int  b_length) /* in: data field length, not UNIV_SQL_NULL */
 {
-  const CHARSET_INFO* charset;
+  const charset_info_st* charset;
   enum_field_types  mysql_tp;
   int     ret;
 
@@ -3859,7 +3859,7 @@ ha_innobase::store_key_val_for_row(
       const byte* data;
       ulint   key_len;
       ulint   true_len;
-      const CHARSET_INFO* cs;
+      const charset_info_st* cs;
       int   error=0;
 
       key_len = key_part->length;
@@ -3918,7 +3918,7 @@ ha_innobase::store_key_val_for_row(
 
     } else if (mysql_type == DRIZZLE_TYPE_BLOB) {
 
-      const CHARSET_INFO* cs;
+      const charset_info_st* cs;
       ulint   key_len;
       ulint   true_len;
       int   error=0;
@@ -3991,7 +3991,7 @@ ha_innobase::store_key_val_for_row(
       ulint     key_len;
       const unsigned char*    src_start;
       enum_field_types  real_type;
-      const CHARSET_INFO* cs= field->charset();
+      const charset_info_st* cs= field->charset();
 
       key_len = key_part->length;
 
@@ -8787,7 +8787,7 @@ innobase_get_at_most_n_mbchars(
 {
   ulint char_length;    /*!< character length in bytes */
   ulint n_chars;      /*!< number of characters in prefix */
-  const CHARSET_INFO* charset;  /*!< charset used in the field */
+  const charset_info_st* charset;  /*!< charset used in the field */
 
   charset = get_charset((uint) charset_id);
 

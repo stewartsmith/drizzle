@@ -78,7 +78,7 @@ drizzled::String *Boolean::val_str(drizzled::String *value)
 
 String *Boolean::evaluate(const bool &result, String *val_buffer)
 {
-  const CHARSET_INFO * const cs= &my_charset_bin;
+  const charset_info_st * const cs= &my_charset_bin;
   uint32_t mlength= (5) * cs->mbmaxlen;
 
   val_buffer->alloc(mlength);

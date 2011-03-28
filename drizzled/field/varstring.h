@@ -50,11 +50,11 @@ public:
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const charset_info_st * const cs);
   Field_varstring(uint32_t len_arg,
                   bool maybe_null_arg,
                   const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const charset_info_st * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
@@ -68,7 +68,7 @@ public:
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
                                       length_bytes : 0);
   }
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const charset_info_st * const charset);
 
 
   int  store(int64_t nr, bool unsigned_val);

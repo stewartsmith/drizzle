@@ -330,10 +330,10 @@ drizzle_system_variables global_system_variables;
 drizzle_system_variables max_system_variables;
 global_counters current_global_counters;
 
-DRIZZLED_API const CHARSET_INFO *system_charset_info;
-const CHARSET_INFO *files_charset_info;
-const CHARSET_INFO *table_alias_charset;
-const CHARSET_INFO *character_set_filesystem;
+DRIZZLED_API const charset_info_st *system_charset_info;
+const charset_info_st *files_charset_info;
+const charset_info_st *table_alias_charset;
+const charset_info_st *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
@@ -1493,7 +1493,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   if (default_collation_name)
   {
-    const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
+    const charset_info_st * const default_collation= get_charset_by_name(default_collation_name);
     if (not default_collation)
     {
       errmsg_printf(error::ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);

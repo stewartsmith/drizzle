@@ -69,7 +69,7 @@ int Boolean::cmp(const unsigned char *a, const unsigned char *b)
   return memcmp(a, b, sizeof(unsigned char));
 }
 
-int Boolean::store(const char *from, uint32_t length, const CHARSET_INFO * const )
+int Boolean::store(const char *from, uint32_t length, const charset_info_st * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 

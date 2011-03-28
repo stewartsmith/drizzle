@@ -184,7 +184,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
 */
 
 void user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
-                                 Item_result arg_type, const CHARSET_INFO * const cs, Derivation dv,
+                                 Item_result arg_type, const charset_info_st * const cs, Derivation dv,
                                  bool unsigned_arg)
 {
   if (set_null)

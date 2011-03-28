@@ -228,7 +228,7 @@ public:
 
   int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
 
-  int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
+  int store(uint32_t mask, const char *from, uint32_t length, const charset_info_st * charset);
 
   int store(uint32_t mask, char *str, char **end)
   {
