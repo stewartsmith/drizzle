@@ -135,10 +135,6 @@ extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 extern uint32_t my_file_limit;
 
-/* statistics */
-extern bool	my_init_done;
-
-					/* Executed when comming from shell */
 extern DRIZZLED_API int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
 	   my_recived_signals,	/* Signals we have got */
