@@ -120,11 +120,7 @@ namespace drizzled {
                             (_to_)= (mi_get_mask_all_keys_active(_maxkeys_) & \
                                      (_from_))
 
-namespace drizzled {
-  namespace internal {
-    typedef uint32_t ha_checksum;
-  }
-}
+typedef uint32_t ha_checksum;
 
 	/* Param to/from mi_status */
 typedef struct st_mi_isaminfo		/* Struct from h_info */
@@ -410,7 +406,7 @@ typedef struct st_mi_check_param
   drizzled::internal::my_off_t new_file_pos,key_file_blocks;
   drizzled::internal::my_off_t keydata,totaldata,key_blocks,start_check_pos;
   drizzled::ha_rows total_records,total_deleted;
-  drizzled::internal::ha_checksum record_checksum,glob_crc;
+  ha_checksum record_checksum,glob_crc;
   uint64_t use_buffers;
   size_t read_buffer_length, write_buffer_length,
          sort_buffer_length, sort_key_blocks;
@@ -432,7 +428,7 @@ typedef struct st_mi_check_param
   uint64_t unique_count[MI_MAX_KEY_SEG+1];
   uint64_t notnull_count[MI_MAX_KEY_SEG+1];
 
-  drizzled::internal::ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
+  ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
   ulong rec_per_key_part[MI_MAX_KEY_SEG*HA_MAX_POSSIBLE_KEY];
   void *session;
   const char *db_name, *table_name;

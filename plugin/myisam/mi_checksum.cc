@@ -30,15 +30,15 @@ using namespace drizzled;
       length    length of the block
 */
 
-static internal::ha_checksum my_checksum(internal::ha_checksum crc, const unsigned char *pos, size_t length)
+static ha_checksum my_checksum(ha_checksum crc, const unsigned char *pos, size_t length)
 {
-  return internal::ha_checksum(crc32((uint32_t)crc, pos, uInt(length)));
+  return ha_checksum(crc32((uint32_t)crc, pos, uInt(length)));
 }
 
-internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 {
   uint32_t i;
-  internal::ha_checksum crc=0;
+  ha_checksum crc=0;
   MI_COLUMNDEF *rec=info->s->rec;
 
   for (i=info->s->base.fields ; i-- ; buf+=(rec++)->length)
@@ -75,7 +75,7 @@ internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 }
 
 
-internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
 {
   return my_checksum(0, pos, info->s->base.reclength);
 }

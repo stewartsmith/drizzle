@@ -54,7 +54,7 @@ typedef struct st_mi_status_info
   drizzled::internal::my_off_t key_empty;			/* lost space in indexfile */
   drizzled::internal::my_off_t key_file_length;
   drizzled::internal::my_off_t data_file_length;
-  drizzled::internal::ha_checksum checksum;
+  ha_checksum checksum;
 } MI_STATUS_INFO;
 
 typedef struct st_mi_state_info
@@ -92,7 +92,7 @@ typedef struct st_mi_state_info
   ulong sec_index_changed;		/* Updated when new sec_index */
   ulong sec_index_used;			/* which extra index are in use */
   uint64_t key_map;			/* Which keys are in use */
-  drizzled::internal::ha_checksum checksum;                 /* Table checksum */
+  ha_checksum checksum;                 /* Table checksum */
   ulong version;			/* timestamp of create */
   time_t create_time;			/* Time when created database */
   time_t recover_time;			/* Time for last recover */
@@ -207,7 +207,7 @@ public:
   int (*read_rnd)(struct st_myisam_info*, unsigned char*, drizzled::internal::my_off_t, bool);
   int (*compare_record)(struct st_myisam_info*, const unsigned char *);
   /* Function to use for a row checksum. */
-  drizzled::internal::ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
+  ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
   int (*compare_unique)(struct st_myisam_info*, MI_UNIQUEDEF *,
 			const unsigned char *record, drizzled::internal::my_off_t pos);
   size_t (*file_read)(MI_INFO *, unsigned char *, size_t, drizzled::internal::my_off_t, drizzled::myf);
@@ -284,7 +284,7 @@ struct st_myisam_info {
   drizzled::internal::my_off_t last_keypage;		/* Last key page read */
   drizzled::internal::my_off_t last_search_keypage;		/* Last keypage when searching */
   drizzled::internal::my_off_t dupp_key_pos;
-  drizzled::internal::ha_checksum checksum;                 /* Temp storage for row checksum */
+  ha_checksum checksum;                 /* Temp storage for row checksum */
   /* QQ: the folloing two xxx_length fields should be removed,
      as they are not compatible with parallel repair */
   ulong packed_length,blob_length;	/* Length of found, packed record */
@@ -710,11 +710,11 @@ extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);
 ulong _my_calc_total_blob_length(MI_INFO *info, const unsigned char *record);
-drizzled::internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
-drizzled::internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
 bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
-		     drizzled::internal::ha_checksum unique_hash, drizzled::internal::my_off_t pos);
-drizzled::internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
+		     ha_checksum unique_hash, drizzled::internal::my_off_t pos);
+ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 			   const unsigned char *record, drizzled::internal::my_off_t pos);
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,

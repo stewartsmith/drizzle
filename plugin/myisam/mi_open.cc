@@ -772,7 +772,7 @@ static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *stat
   state->state.empty	= mi_sizekorr(ptr);	ptr +=8;
   state->state.key_empty= mi_sizekorr(ptr);	ptr +=8;
   state->auto_increment=mi_uint8korr(ptr);	ptr +=8;
-  state->state.checksum=(internal::ha_checksum) mi_uint8korr(ptr);	ptr +=8;
+  state->state.checksum=(ha_checksum) mi_uint8korr(ptr);	ptr +=8;
   state->process= mi_uint4korr(ptr);		ptr +=4;
   state->unique = mi_uint4korr(ptr);		ptr +=4;
   state->status = mi_uint4korr(ptr);		ptr +=4;
