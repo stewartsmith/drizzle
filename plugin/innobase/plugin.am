@@ -223,11 +223,11 @@ if BUILD_INNOBASE_PLUGIN
 noinst_LTLIBRARIES+= \
                      plugin/innobase/libinnobase.la \
 		     plugin/innobase/libpars.la
-bin_PROGRAMS+= plugin/innobase/xtrabackup/xtrabackup
+bin_PROGRAMS+= plugin/innobase/xtrabackup/drizzlebackup.innobase
 endif
 
-plugin_innobase_xtrabackup_xtrabackup_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
-plugin_innobase_xtrabackup_xtrabackup_LDADD = \
+plugin_innobase_xtrabackup_drizzlebackup_innobase_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
+plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD = \
 	plugin/innobase/libinnobase.la \
 	drizzled/internal/libinternal.la \
 	drizzled/libcharset.la \
@@ -235,7 +235,7 @@ plugin_innobase_xtrabackup_xtrabackup_LDADD = \
 	${LTLIBAIO} \
 	$(LIBZ)
 
-plugin_innobase_xtrabackup_xtrabackup_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_xtrabackup_drizzlebackup_innobase_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_LDDADD= ${LTLIBAIO}
