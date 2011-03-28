@@ -56,6 +56,7 @@ namespace identifier
 
   namespace table
   {
+    // typedef message::Table::TableType Type;
     typedef std::vector<Table> vector;
   }
 

@@ -58,7 +58,6 @@ class DRIZZLED_API Table : public Schema
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector <Table> vector;
 
   class Key
   {

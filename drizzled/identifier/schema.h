@@ -43,8 +43,6 @@ class DRIZZLED_API Schema : public Identifier
   std::string db_path;
 
 public:
-  typedef std::vector<Schema> vector;
-
   Schema(const std::string &db_arg);
 
   virtual std::string getSQLPath() const

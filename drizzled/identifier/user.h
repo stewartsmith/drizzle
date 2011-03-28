@@ -22,6 +22,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <drizzled/common_fwd.h>
 #include <drizzled/identifier.h>
 #include <drizzled/visibility.h>
 
@@ -36,9 +37,7 @@ namespace identifier {
 class User : public Identifier
 {
 public:
-  typedef boost::shared_ptr<User> shared_ptr;
-  typedef boost::shared_ptr<const User> const_shared_ptr;
-  DRIZZLED_API static shared_ptr make_shared();
+  DRIZZLED_API static user::mptr make_shared();
 
   enum PasswordType
   {
