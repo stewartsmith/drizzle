@@ -63,6 +63,10 @@ const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
 char *my_defaults_extra_file=0;
 
+/* Define the type of function to be passed to process_default_option_files */
+typedef int (*Process_option_func)(void *ctx, const char *group_name,
+                                   const char *option);
+
 /* Which directories are searched for options (and in which order) */
 
 #define MAX_DEFAULT_DIRS 6
@@ -145,9 +149,9 @@ static char *remove_end_comment(char *ptr);
     --defaults_group_suffix
 */
 
-int my_search_option_files(const char *conf_file, int *argc, char ***argv,
-                           uint32_t *args_used, Process_option_func func,
-                           void *func_ctx)
+static int my_search_option_files(const char *conf_file, int *argc, char ***argv,
+                                  uint32_t *args_used, Process_option_func func,
+                                  void *func_ctx)
 {
   const char **dirs, *forced_default_file, *forced_extra_defaults;
   int error= 0;

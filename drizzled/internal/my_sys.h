@@ -227,10 +227,6 @@ public:
 
 typedef uint32_t ha_checksum;
 
-/* Define the type of function to be passed to process_default_option_files */
-typedef int (*Process_option_func)(void *ctx, const char *group_name,
-                                   const char *option);
-
 /* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
@@ -316,9 +312,6 @@ extern int get_defaults_options(int argc, char **argv,
                                 char **group_suffix);
 extern int load_defaults(const char *conf_file, const char **groups,
 			 int *argc, char ***argv);
-extern int my_search_option_files(const char *conf_file, int *argc,
-                                  char ***argv, uint32_t *args_used,
-                                  Process_option_func func, void *func_ctx);
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
