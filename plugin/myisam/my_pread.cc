@@ -20,6 +20,9 @@
 
 using namespace drizzled;
 
+#define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
+#define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
+
 /*
   Read a chunk of bytes from a file from a given position
 

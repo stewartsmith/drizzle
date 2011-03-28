@@ -119,8 +119,6 @@ namespace internal
 
 
 	/* Some constants */
-#define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
-#define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
 #define DFLT_INIT_HITS  3
 
 typedef uint64_t my_off_t;
