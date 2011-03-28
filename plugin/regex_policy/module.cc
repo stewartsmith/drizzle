@@ -40,15 +40,12 @@ static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  Policy *policy= new (nothrow) Policy(fs::path(vm["policy"].as<string>()));
-  if (policy == NULL or not policy->loadFile())
+  Policy *policy= new Policy(fs::path(vm["policy"].as<string>()));
+  if (not policy->loadFile())
   {
     errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
                   (policy ? policy->getError().str().c_str() : _("Unknown")));
-    if (policy)
-    {
-      delete policy;
-    }
+    delete policy;
     return 1;
   }
 
@@ -197,7 +194,7 @@ bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
 }
 
 bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
-                                   drizzled::identifier::Schema::const_reference schema)
+                                   const drizzled::identifier::Schema& schema)
 {
   return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, &schema_check_cache);
 }
@@ -208,8 +205,8 @@ bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
   return restrictObject(user_ctx, session_ctx.username(), process_policies, &process_check_cache);
 }
 
-bool Policy::restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table)
+bool Policy::restrictTable(const drizzled::identifier::User& user_ctx,
+                             const drizzled::identifier::Table& table)
 {
   return restrictObject(user_ctx, table.getTableName(), table_policies, &table_check_cache);
 }

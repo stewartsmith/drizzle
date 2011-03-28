@@ -116,30 +116,14 @@ bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
-  message::schema::shared_ptr schmema_proto;
-
-  schmema_proto= StorageEngine::getSchemaDefinition(identifier);
-
-  if (schmema_proto && schmema_proto->has_collation())
-  {
-    const std::string buffer= schmema_proto->collation();
-    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
-
-    if (not cs)
-    {
-      std::string path;
-      identifier.getSQLPath(path);
-
-      errmsg_printf(error::ERROR,
-                    _("Error while loading database options: '%s':"), path.c_str());
-      errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-
-      return default_charset_info;
-    }
-
-    return cs;
-  }
-
+  message::schema::shared_ptr schmema_proto= StorageEngine::getSchemaDefinition(identifier);
+  if (not schmema_proto || not schmema_proto->has_collation())
+		return default_charset_info;
+  const std::string buffer= schmema_proto->collation();
+  if (const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str()))
+		return cs;
+  errmsg_printf(error::ERROR, _("Error while loading database options: '%s':"), identifier.getSQLPath().c_str());
+  errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
   return default_charset_info;
 }
 
@@ -216,7 +200,7 @@ public:
 };
 
 static bool drop_all_tables_in_schema(Session& session,
-                                      identifier::Schema::const_reference identifier,
+                                      const identifier::Schema& identifier,
                                       identifier::Table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
@@ -252,8 +236,8 @@ static bool drop_all_tables_in_schema(Session& session,
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session,
-                               identifier::Schema::const_reference identifier,
+bool StorageEngine::dropSchema(Session& session,
+                               const identifier::Schema& identifier,
                                message::schema::const_reference schema_message)
 {
   uint64_t deleted= 0;

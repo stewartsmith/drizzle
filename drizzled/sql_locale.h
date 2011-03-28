@@ -19,10 +19,9 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 typedef struct my_locale_st
 {

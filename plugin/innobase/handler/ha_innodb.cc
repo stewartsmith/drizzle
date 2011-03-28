@@ -64,9 +64,13 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/named_savepoint.h>
-
+#include <drizzled/session/table_messages.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/cached_directory.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -2288,43 +2292,27 @@ innobase_change_buffering_inited_ok:
   actuall_engine_ptr->dropTemporarySchema();
 
   context.add(new InnodbStatusTool);
-
   context.add(innodb_engine_ptr);
-
-  context.add(new(std::nothrow)CmpTool(false));
-
-  context.add(new(std::nothrow)CmpTool(true));
-
-  context.add(new(std::nothrow)CmpmemTool(false));
-
-  context.add(new(std::nothrow)CmpmemTool(true));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_TRX"));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCKS"));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS"));
-
-  context.add(new(std::nothrow)InnodbSysTablesTool());
-
-  context.add(new(std::nothrow)InnodbSysTableStatsTool());
-
-  context.add(new(std::nothrow)InnodbSysIndexesTool());
-
-  context.add(new(std::nothrow)InnodbSysColumnsTool());
-
-  context.add(new(std::nothrow)InnodbSysFieldsTool());
-
-  context.add(new(std::nothrow)InnodbSysForeignTool());
-
-  context.add(new(std::nothrow)InnodbSysForeignColsTool());
-
-  context.add(new(std::nothrow)InnodbInternalTables());
-  context.add(new(std::nothrow)InnodbReplicationTable());
+  context.add(new CmpTool(false));
+  context.add(new CmpTool(true));
+  context.add(new CmpmemTool(false));
+  context.add(new CmpmemTool(true));
+  context.add(new InnodbTrxTool("INNODB_TRX"));
+  context.add(new InnodbTrxTool("INNODB_LOCKS"));
+  context.add(new InnodbTrxTool("INNODB_LOCK_WAITS"));
+  context.add(new InnodbSysTablesTool());
+  context.add(new InnodbSysTableStatsTool());
+  context.add(new InnodbSysIndexesTool());
+  context.add(new InnodbSysColumnsTool());
+  context.add(new InnodbSysFieldsTool());
+  context.add(new InnodbSysForeignTool());
+  context.add(new InnodbSysForeignColsTool());
+  context.add(new InnodbInternalTables());
+  context.add(new InnodbReplicationTable());
 
   if (innobase_use_replication_log)
   {
-    ReplicationLog *replication_logger= new(std::nothrow)ReplicationLog();
+    ReplicationLog *replication_logger= new ReplicationLog();
     context.add(replication_logger);
     ReplicationLog::setup(replication_logger);
   }

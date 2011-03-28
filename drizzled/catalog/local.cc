@@ -42,7 +42,7 @@ static void init()
   _local_catalog= plugin::Catalog::getInstance(default_catalog);
 }
 
-identifier::Catalog::const_reference local_identifier()
+const identifier::Catalog& local_identifier()
 {
   return default_catalog;
 }

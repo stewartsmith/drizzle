@@ -38,6 +38,8 @@
 #include <cstdio>
 #include <ctype.h>
 
+#include <drizzled/message/alter_table.pb.h>
+
 union ParserType;
 
 using namespace std;
@@ -297,7 +299,9 @@ void LEX::end()
 
   safe_delete(result);
   safe_delete(_create_table);
+  safe_delete(_alter_table);
   _create_table= NULL;
+  _alter_table= NULL;
   _create_field= NULL;
 
   result= 0;
@@ -1676,7 +1680,8 @@ bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 
 bool Select_Lex::add_item_to_list(Session *, Item *item)
 {
-  return(item_list.push_back(item));
+	item_list.push_back(item);
+  return false;
 }
 
 bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
@@ -1828,6 +1833,7 @@ void Select_Lex::print_limit(Session *, String *str)
 LEX::~LEX()
 {
   delete _create_table;
+  delete _alter_table;
 }
 
 /*
@@ -1891,6 +1897,7 @@ LEX::LEX() :
     cacheable(true),
     sum_expr_used(false),
     _create_table(NULL),
+    _alter_table(NULL),
     _create_field(NULL),
     _exists(false)
 {
@@ -2162,29 +2169,27 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
 {
-  return index_hints->push_front (new (session->mem_root)
-                                 Index_hint(current_index_hint_type,
-                                            current_index_hint_clause,
-                                            str, length));
+  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
 }
 
 bool check_for_sql_keyword(drizzled::lex_string_t const& string)
 {
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
-
-  return false;
+  return sql_reserved_words::in_word_set(string.str, string.length);
 }
 
 bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
 {
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
-
-  return false;
+  return sql_reserved_words::in_word_set(string.str, string.length);
 }
 
+message::AlterTable *LEX::alter_table()
+{
+  if (not _alter_table)
+    _alter_table= new message::AlterTable;
+
+  return _alter_table;
+}
 
 } /* namespace drizzled */

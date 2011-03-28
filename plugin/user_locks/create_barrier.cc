@@ -38,38 +38,17 @@ int64_t CreateBarrier::val_int()
   }
   null_value= false;
 
-  barriers::Storable *list= static_cast<barriers::Storable *>(getSession().getProperty(barriers::property_key));
-
-  bool result;
-
   drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
-  if (arg_count == 2)
-  {
-    int64_t wait_for;
-    wait_for= args[1]->val_int();
-
-    result= Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId(), wait_for);
-  }
-  else
-  {
-    result= Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId());
-  }
-
-
-  if (result)
-  {
-    if (not list)
-    {
-      list= new barriers::Storable(getSession().getSessionId());
-      getSession().setProperty(barriers::property_key, list);
-    }
-
-    list->insert(Key(*user_identifier, res->c_str()));
-
-    return 1;
-  }
-
-  return 0;
+  bool result= arg_count == 2
+    ? Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId(), args[1]->val_int())
+    : Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId());
+  if (not result)
+    return 0;
+  barriers::Storable *list= getSession().getProperty<barriers::Storable>(barriers::property_key);
+  if (not list)
+    list= getSession().setProperty(barriers::property_key, new barriers::Storable(getSession().getSessionId()));
+  list->insert(Key(*user_identifier, res->c_str()));
+  return 1;
 }
 
 } /* namespace barriers */

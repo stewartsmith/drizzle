@@ -11,9 +11,10 @@ SELECT * FROM t1;
 # Might need a proper include file / test later
 --sleep 3 
 --echo Connecting to slave...
-connect (slave_con,127.0.0.1,root,,test, $TESTBOT0_SERVER1);
+connect (slave_con,127.0.0.1,root,,test, $BOT0_S1);
 echo Using connection slave_con...;
 connection slave_con;
+--sleep 3
 --echo Checking slave contents...
 --source include/wait_for_slave_plugin_to_sync.inc
 

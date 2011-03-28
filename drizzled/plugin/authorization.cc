@@ -59,11 +59,11 @@ class RestrictDbFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
   const identifier::User &user_ctx;
-  identifier::Schema::const_reference schema;
+  const identifier::Schema& schema;
 
 public:
   RestrictDbFunctor(const identifier::User &user_ctx_arg,
-                    identifier::Schema::const_reference schema_arg) :
+                    const identifier::Schema& schema_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     schema(schema_arg)
@@ -78,11 +78,11 @@ public:
 class RestrictTableFunctor :
   public std::unary_function<plugin::Authorization *, bool>
 {
-  identifier::User::const_reference user_ctx;
-  identifier::Table::const_reference table;
+  const identifier::User& user_ctx;
+  const identifier::Table& table;
 public:
-  RestrictTableFunctor(identifier::User::const_reference user_ctx_arg,
-                       identifier::Table::const_reference table_arg) :
+  RestrictTableFunctor(const identifier::User& user_ctx_arg,
+                       const identifier::Table& table_arg) :
     std::unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     table(table_arg)
@@ -116,9 +116,9 @@ public:
 class PruneSchemaFunctor :
   public std::unary_function<identifier::Schema&, bool>
 {
-  drizzled::identifier::User::const_reference user_ctx;
+  const drizzled::identifier::User& user_ctx;
 public:
-  PruneSchemaFunctor(drizzled::identifier::User::const_reference user_ctx_arg) :
+  PruneSchemaFunctor(const drizzled::identifier::User& user_ctx_arg) :
     std::unary_function<identifier::Schema&, bool>(),
     user_ctx(user_ctx_arg)
   { }
@@ -131,8 +131,8 @@ public:
 
 } /* namespace */
 
-bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_ctx,
-                                         identifier::Schema::const_reference schema_identifier,
+bool plugin::Authorization::isAuthorized(const identifier::User& user_ctx,
+                                         const identifier::Schema& schema_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -162,8 +162,8 @@ bool plugin::Authorization::isAuthorized(identifier::User::const_reference user_
   return true;
 }
 
-bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                                         identifier::Table::const_reference table_identifier,
+bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_ctx,
+                                         const identifier::Table& table_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -192,8 +192,8 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   return true;
 }
 
-bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                                         Session::const_reference session,
+bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_ctx,
+                                         const Session& session,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -229,7 +229,7 @@ bool plugin::Authorization::isAuthorized(drizzled::identifier::User::const_refer
   return true;
 }
 
-void plugin::Authorization::pruneSchemaNames(drizzled::identifier::User::const_reference user_ctx,
+void plugin::Authorization::pruneSchemaNames(const drizzled::identifier::User& user_ctx,
                                              identifier::Schema::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */

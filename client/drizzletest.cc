@@ -1407,16 +1407,11 @@ static int compare_files2(int fd, const char* filename2)
 
 static int compare_files(const char* filename1, const char* filename2)
 {
-  int fd;
-  int error;
-
-  if ((fd= internal::my_open(filename1, O_RDONLY, MYF(0))) < 0)
+  int fd= internal::my_open(filename1, O_RDONLY, MYF(0));
+  if (fd < 0)
     die("Failed to open first file: '%s'", filename1);
-
-  error= compare_files2(fd, filename2);
-
+  int error= compare_files2(fd, filename2);
   internal::my_close(fd, MYF(0));
-
   return error;
 }
 

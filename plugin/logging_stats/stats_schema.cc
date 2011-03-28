@@ -104,9 +104,8 @@
  */
 
 #include <config.h>
-
+#include <drizzled/statistics_variables.h>
 #include "stats_schema.h"
-
 #include <sstream>
 
 using namespace drizzled;

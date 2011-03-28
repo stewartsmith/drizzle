@@ -28,8 +28,8 @@ static CollationsTool *collations;
 
 static int init(drizzled::module::Context &context)
 {
-  character_sets= new(std::nothrow)CharacterSetsTool;
-  collations= new(std::nothrow)CollationsTool;
+  character_sets= new CharacterSetsTool;
+  collations= new CollationsTool;
 
   context.add(character_sets);
   context.add(collations);

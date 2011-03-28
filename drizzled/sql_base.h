@@ -57,9 +57,7 @@ CreateField * new_create_field(Session *session, char *field_name, enum_field_ty
                                Item *default_value, Item *on_update_value,
                                LEX_STRING *comment, char *change,
                                List<String> *interval_list, CHARSET_INFO *cs);
-bool push_new_name_resolution_context(Session *session,
-                                      TableList *left_op,
-                                      TableList *right_op);
+void push_new_name_resolution_context(Session&, TableList& left_op, TableList& right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);

@@ -24,9 +24,9 @@
 #pragma once
 
 #include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
+#include <string>
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace message
 {

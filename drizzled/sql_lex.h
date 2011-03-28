@@ -38,6 +38,11 @@ namespace drizzled {
 namespace plugin { class Function; }
 namespace statement { class Statement; }
 
+  namespace message
+  {
+    class AlterTable;
+  }
+
 class st_lex_symbol;
 class select_result_interceptor;
 
@@ -668,7 +673,7 @@ public:
    Add a index hint to the tagged list of hints. The type and clause of the
    hint will be the current ones (set by set_index_hint())
   */
-  bool add_index_hint (Session *session, char *str, uint32_t length);
+  void add_index_hint(Session *session, char *str, uint32_t length);
 
   /* make a list to hold index hints */
   void alloc_index_hints (Session *session);
@@ -937,9 +942,9 @@ public:
 
   void cleanup_after_one_table_open();
 
-  bool push_context(Name_resolution_context *context)
+  void push_context(Name_resolution_context *context)
   {
-    return context_stack.push_front(context);
+    context_stack.push_front(context);
   }
 
   void pop_context()
@@ -1012,6 +1017,8 @@ public:
     return _create_table;
   }
 
+  message::AlterTable *alter_table();
+
   message::Table::Field *field()
   {
     return _create_field;
@@ -1036,6 +1043,7 @@ private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::AlterTable *_alter_table;
   message::Table::Field *_create_field;
   bool _exists;
 };

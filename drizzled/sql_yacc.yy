@@ -40,10 +40,12 @@
 #include <drizzled/parser.h>
 #include <drizzled/session.h>
 #include <drizzled/alter_column.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/message/alter_table.pb.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/var.h>
+#include <drizzled/system_variables.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -154,7 +156,6 @@ using namespace drizzled;
   drizzled::st_lex *lex;
   drizzled::index_hint_type index_hint;
   drizzled::enum_filetype filetype;
-  drizzled::ha_build_method build_method;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
   drizzled::execute_string_t execute_string;
 }
@@ -732,8 +733,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %type <boolfunc2creator> comp_op
 
-%type <build_method> build_method
-
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
@@ -869,7 +868,7 @@ create:
           }
         | CREATE build_method
           {
-            Lex.statement= new statement::CreateIndex(YYSession, $2);
+            Lex.statement= new statement::CreateIndex(YYSession);
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
@@ -992,19 +991,19 @@ custom_database_option:
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex.statement;
             statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
           }
-        | REPLICATE opt_equal TRUE_SYM
+        | REPLICATE '=' TRUE_SYM
           {
             parser::buildReplicationOption(&Lex, true);
           }
-        | REPLICATE opt_equal FALSE_SYM
+        | REPLICATE '=' FALSE_SYM
           {
             parser::buildReplicationOption(&Lex, false);
           }
-        | ident_or_text equal ident_or_text
+        | ident_or_text '=' ident_or_text
           {
             parser::buildSchemaOption(&Lex, $1.str, $3);
           }
-        | ident_or_text equal ulonglong_num
+        | ident_or_text '=' ulonglong_num
           {
             parser::buildSchemaOption(&Lex, $1.str, $3);
           }
@@ -1039,7 +1038,7 @@ create_table_option:
           custom_engine_option;
 
 custom_engine_option:
-        ENGINE_SYM equal ident_or_text
+        ENGINE_SYM '=' ident_or_text
           {
             Lex.table()->mutable_engine()->set_name($3.str);
           }
@@ -1051,27 +1050,27 @@ custom_engine_option:
           {
             Lex.table()->mutable_options()->set_auto_increment_value($3);
           }
-        | REPLICATE opt_equal TRUE_SYM
+        | REPLICATE '=' TRUE_SYM
           {
 	    message::set_is_replicated(*Lex.table(), true);
           }
-        | REPLICATE opt_equal FALSE_SYM
+        | REPLICATE '=' FALSE_SYM
           {
 	    message::set_is_replicated(*Lex.table(), false);
           }
-        |  ROW_FORMAT_SYM equal row_format_or_text
+        |  ROW_FORMAT_SYM '=' row_format_or_text
           {
             parser::buildEngineOption(&Lex, "ROW_FORMAT", $3);
           }
-        |  FILE_SYM equal TEXT_STRING_sys
+        |  FILE_SYM '=' TEXT_STRING_sys
           {
             parser::buildEngineOption(&Lex, "FILE", $3);
           }
-        |  ident_or_text equal engine_option_value
+        |  ident_or_text '=' engine_option_value
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
-        | ident_or_text equal ulonglong_num
+        | ident_or_text '=' ulonglong_num
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
@@ -1773,7 +1772,7 @@ string_list:
 alter:
           ALTER_SYM build_method opt_ignore TABLE_SYM table_ident
           {
-            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5, $2);
+            statement::AlterTable *statement= new statement::AlterTable(YYSession, $5);
             Lex.statement= statement;
             Lex.duplicates= DUP_ERROR;
             if (not Lex.select_lex.add_table_to_list(YYSession, $5, NULL, TL_OPTION_UPDATING))
@@ -1803,13 +1802,15 @@ alter_commands:
           /* empty */
         | DISCARD TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->alter_info.tablespace_op= DISCARD_TABLESPACE;
+            message::AlterTable::AlterTableOperation *alter_operation;
+            alter_operation= Lex.alter_table()->add_operations();
+            alter_operation->set_operation(message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
           }
         | IMPORT TABLESPACE
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->alter_info.tablespace_op= IMPORT_TABLESPACE;
+            message::AlterTable::AlterTableOperation *alter_operation;
+            alter_operation= Lex.alter_table()->add_operations();
+            alter_operation->set_operation(message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE);
           }
         | alter_list
         ;
@@ -1817,15 +1818,15 @@ alter_commands:
 build_method:
         /* empty */
           {
-            $$= HA_BUILD_DEFAULT;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_DEFAULT);
           }
         | ONLINE_SYM
           {
-            $$= HA_BUILD_ONLINE;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_ONLINE);
           }
         | OFFLINE_SYM
           {
-            $$= HA_BUILD_OFFLINE;
+            Lex.alter_table()->set_build_method(message::AlterTable::BUILD_OFFLINE);
           }
         ;
 
@@ -1898,8 +1899,11 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex.alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_COLUMN);
+            operation->set_drop_name($3.str);
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
@@ -1917,15 +1921,20 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.keys_onoff= DISABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex.alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(false);
           }
         | ENABLE_SYM KEYS
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.keys_onoff= ENABLE;
             statement->alter_info.flags.set(ALTER_KEYS_ONOFF);
+            message::AlterTable::AlterKeysOnOff *alter_keys_operation;
+            alter_keys_operation= Lex.alter_table()->mutable_alter_keys_onoff();
+            alter_keys_operation->set_enable(true);
           }
         | ALTER_SYM opt_column field_ident SET_SYM DEFAULT signed_literal
           {
@@ -1961,6 +1970,11 @@ alter_list_item:
 
             Lex.name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
+
+            message::AlterTable::RenameTable *rename_operation;
+            rename_operation= Lex.alter_table()->mutable_rename();
+            rename_operation->set_to_schema(Lex.select_lex.db);
+            rename_operation->set_to_name(Lex.name.str);
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
@@ -3360,8 +3374,7 @@ join_table:
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             DRIZZLE_YYABORT_UNLESS( not Lex.is_cross );
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3375,8 +3388,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $3))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$3);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3405,8 +3417,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -3441,8 +3452,7 @@ join_table:
           {
             DRIZZLE_YYABORT_UNLESS($1 && $5);
             /* Change the current name resolution context to a local context. */
-            if (push_new_name_resolution_context(YYSession, $1, $5))
-              DRIZZLE_YYABORT;
+            push_new_name_resolution_context(*YYSession, *$1, *$5);
             Lex.current_select->parsing_place= IN_ON;
           }
           expr
@@ -4151,11 +4161,16 @@ drop:
             statement::DropIndex *statement= new statement::DropIndex(YYSession);
             Lex.statement= statement;
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
-            statement->alter_info.build_method= $2;
-            statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::KEY, $4.str));
+
             if (not Lex.current_select->add_table_to_list(Lex.session, $6, NULL,
                                                           TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+            message::AlterTable::AlterTableOperation *operation;
+            operation= Lex.alter_table()->add_operations();
+            operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
+            operation->set_drop_name($4.str);
+
           }
         | DROP DATABASE if_exists schema_name
           {
@@ -4282,9 +4297,8 @@ insert_field_spec:
         | '(' fields ')' insert_values {}
         | SET_SYM
           {
-            if (not (Lex.insert_list = new List_item) ||
-                Lex.many_values.push_back(Lex.insert_list))
-              DRIZZLE_YYABORT;
+            Lex.insert_list = new List_item;
+            Lex.many_values.push_back(Lex.insert_list);
           }
           ident_eq_list
         ;
@@ -4322,9 +4336,8 @@ ident_eq_list:
 ident_eq_value:
           simple_ident equal expr_or_default
           {
-            if (Lex.field_list.push_back($1) ||
-                Lex.insert_list->push_back($3))
-              DRIZZLE_YYABORT;
+            Lex.field_list.push_back($1);
+            Lex.insert_list->push_back($3);
           }
         ;
 
@@ -4335,7 +4348,7 @@ equal:
 
 opt_equal:
           /* empty */ {}
-        | equal {}
+        | '=' {}
         ;
 
 no_braces:
@@ -4346,8 +4359,7 @@ no_braces:
           }
           opt_values ')'
           {
-            if (Lex.many_values.push_back(Lex.insert_list))
-              DRIZZLE_YYABORT;
+            Lex.many_values.push_back(Lex.insert_list);
           }
         ;
 
@@ -4359,13 +4371,11 @@ opt_values:
 values:
           values ','  expr_or_default
           {
-            if (Lex.insert_list->push_back($3))
-              DRIZZLE_YYABORT;
+            Lex.insert_list->push_back($3);
           }
         | expr_or_default
           {
-            if (Lex.insert_list->push_back($1))
-              DRIZZLE_YYABORT;
+            Lex.insert_list->push_back($1);
           }
         ;
 
@@ -4430,9 +4440,8 @@ insert_update_list:
 insert_update_elem:
           simple_ident equal expr_or_default
           {
-          if (Lex.update_list.push_back($1) ||
-              Lex.value_list.push_back($3))
-              DRIZZLE_YYABORT;
+			Lex.update_list.push_back($1);
+            Lex.value_list.push_back($3);
           }
         ;
 
@@ -4445,10 +4454,7 @@ delete:
             init_select(&Lex);
             Lex.lock_option= TL_WRITE_DEFAULT;
             Lex.select_lex.init_order();
-
-            if (!Lex.current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING,
-                                           Lex.lock_option))
-              DRIZZLE_YYABORT;
+            Lex.current_select->add_table_to_list(YYSession, $4, NULL, TL_OPTION_UPDATING, Lex.lock_option);
           }
           where_clause opt_order_clause
           delete_limit_clause {}
@@ -4584,10 +4590,7 @@ show_wild:
           /* empty */
         | LIKE TEXT_STRING_sys
           {
-            Lex.wild= new (YYSession->mem_root) String($2.str, $2.length,
-                                                    system_charset_info);
-            if (Lex.wild == NULL)
-              DRIZZLE_YYABORT;
+            Lex.wild= new (YYSession->mem_root) String($2.str, $2.length, system_charset_info);
           }
         | WHERE expr
           {

@@ -171,7 +171,7 @@ bool statement::CreateTable::execute()
   return res;
 }
 
-bool statement::CreateTable::executeInner(identifier::Table::const_reference new_table_identifier)
+bool statement::CreateTable::executeInner(const identifier::Table& new_table_identifier)
 {
   bool res= false;
   Select_Lex *select_lex= &lex().select_lex;
@@ -259,11 +259,11 @@ bool statement::CreateTable::executeInner(identifier::Table::const_reference new
       else
       {
 
-        for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
+        for (int32_t x= 0; x < alter_info.added_fields_proto.added_field_size(); x++)
         {
           message::Table::Field *field= createTableMessage().add_field();
 
-          *field= alter_info.alter_proto.added_field(x);
+          *field= alter_info.added_fields_proto.added_field(x);
         }
 
         res= create_table(&session(), 

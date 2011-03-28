@@ -31,23 +31,8 @@
 
 #pragma once
 
-#include <drizzled/enum.h>
-#include <drizzled/definitions.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/catalog/local.h>
-#include <string.h>
-
-#include <assert.h>
-
-#include <ostream>
-#include <list>
-#include <algorithm>
-#include <functional>
-#include <iostream>
-
 #include <boost/algorithm/string.hpp>
-
-#include <drizzled/visibility.h>
+#include <ostream>
 
 namespace drizzled {
 namespace identifier {
@@ -58,15 +43,14 @@ class DRIZZLED_API Schema : public Identifier
   std::string db_path;
 
 public:
-  typedef std::vector <Schema> vector;
-  typedef const Schema& const_reference;
+  typedef std::vector<Schema> vector;
 
   Schema(const std::string &db_arg);
 
-  virtual ~Schema()
-  { }
-
-  virtual void getSQLPath(std::string &arg) const;
+  virtual std::string getSQLPath() const
+	{
+		return db;
+	}
 
   const std::string &getPath() const;
 
@@ -85,15 +69,15 @@ public:
   }
 
   bool compare(const std::string &arg) const;
-  bool compare(Schema::const_reference) const;
+  bool compare(const Schema&) const;
 
-  friend bool operator<(Schema::const_reference left, Schema::const_reference right)
+  friend bool operator<(const Schema& left, const Schema& right)
   {
-    return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
+    return boost::ilexicographical_compare(left.getSchemaName(), right.getSchemaName());
   }
 
-  friend bool operator==(Schema::const_reference left,
-                         Schema::const_reference right)
+  friend bool operator==(const Schema& left,
+                         const Schema& right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }

@@ -25,6 +25,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/table.h>
+#include <drizzled/statistics_variables.h>
 
 #include <unistd.h>
 #include <fcntl.h>

@@ -48,6 +48,7 @@ public:
   template<class T>
   bool setProperty(const std::string &arg, T *value)
   {
+    // assert(not _properties.count(arg));
     _properties[arg]= value;
 
     return true;

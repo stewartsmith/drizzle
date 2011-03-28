@@ -26,11 +26,10 @@ using namespace drizzled;
 static table_cache_dictionary::TableCache *tables_in_cache;
 static table_cache_dictionary::TableDefinitionCache *table_definitions;
 
-
 static int init(drizzled::module::Context &context)
 {
-  table_definitions= new(std::nothrow)table_cache_dictionary::TableDefinitionCache;
-  tables_in_cache= new(std::nothrow)table_cache_dictionary::TableCache;
+  table_definitions= new table_cache_dictionary::TableDefinitionCache;
+  tables_in_cache= new table_cache_dictionary::TableCache;
 
   context.add(table_definitions);
   context.add(tables_in_cache);

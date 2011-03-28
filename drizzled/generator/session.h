@@ -32,11 +32,11 @@ class Session
 {
   session::Cache::list local_list;
   session::Cache::list::const_iterator iter;
-  identifier::User::const_reference user;
+  const identifier::User& user;
 
 public:
 
-  Session(identifier::User::const_reference arg) :
+  Session(const identifier::User& arg) :
     user(arg)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
@@ -44,17 +44,17 @@ public:
     iter= local_list.begin();
   }
 
-  operator drizzled::Session::pointer()
+  operator drizzled::Session*()
   {
     while (iter != local_list.end())
     {
-      drizzled::Session::pointer ret= iter->get();
+      drizzled::Session* ret= iter->get();
       iter++;
 
       if (ret->isViewable(user))
 	      return ret;
     }
-    return drizzled::Session::pointer();
+    return NULL;
   }
 };
 

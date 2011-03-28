@@ -42,23 +42,18 @@ namespace identifier {
 
 class Catalog : public Identifier
 {
-  std::string _name;
-  std::string path;
-
-  void init();
-
 public:
   typedef std::vector<Catalog> vector;
-  typedef const Catalog& const_reference;
-  typedef Catalog& reference;
 
   Catalog(const std::string &name_arg);
   Catalog(const drizzled::lex_string_t &name_arg);
+  bool isValid() const;
+  bool compare(const std::string &arg) const;
 
-  virtual ~Catalog()
-  { }
-
-  const std::string &getPath() const;
+  const std::string &getPath() const
+  {
+    return path;
+  }
 
   const std::string &getName() const
   {
@@ -70,10 +65,10 @@ public:
     return _name;
   }
 
-  virtual void getSQLPath(std::string &sql_path) const;
-
-  bool isValid() const;
-  bool compare(const std::string &arg) const;
+  virtual std::string getSQLPath() const
+  {
+    return _name;
+  }
 
   size_t getHashValue() const
   {
@@ -82,32 +77,30 @@ public:
 
   friend bool operator<(const Catalog &left, const Catalog &right)
   {
-    return  boost::algorithm::to_upper_copy(left.getName()) < boost::algorithm::to_upper_copy(right.getName());
+    return boost::ilexicographical_compare(left.getName(), right.getName());
   }
 
   friend std::ostream& operator<<(std::ostream& output, const Catalog &identifier)
   {
-    output << "Catalog:(";
-    output <<  identifier.getName();
-    output << ", ";
-    output << identifier.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "Catalog:(" <<  identifier.getName() << ", " << identifier.getPath() << ")";
   }
 
-  friend bool operator==(const Catalog &left,
-                         const Catalog &right)
+  friend bool operator==(const Catalog &left, const Catalog &right)
   {
     return boost::iequals(left.getName(), right.getName());
   }
-
 private:
-  size_t hash_value;
+  void init();
 
+  std::string _name;
+  std::string path;
+  size_t hash_value;
 };
 
-std::size_t hash_value(Catalog const& b);
+inline std::size_t hash_value(Catalog const& b)
+{
+  return b.getHashValue();
+}
 
 } /* namespace identifier */
 } /* namespace drizzled */
