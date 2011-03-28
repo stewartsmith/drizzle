@@ -15,8 +15,9 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
+
+namespace drizzled {
 
 #define GET_NO_ARG     1
 #define GET_BOOL       2
@@ -47,8 +48,6 @@ enum loglevel {
 
 enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 
-struct st_typelib;
-
 struct option
 {
   const char *name;                     /* Name of the option */
@@ -56,7 +55,7 @@ struct option
   const char *comment;                  /* option comment, for autom. --help */
   char      **value;                   /* The variable value */
   char      **u_max_value;             /* The user def. max variable value */
-  struct st_typelib *typelib;           /* Pointer to possible values */
+  TYPELIB *typelib;           /* Pointer to possible values */
   uint32_t     var_type;
   enum get_opt_arg_type arg_type;
   int64_t   def_value;                 /* Default value */

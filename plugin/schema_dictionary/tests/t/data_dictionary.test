@@ -27,6 +27,7 @@ SELECT count(*) FROM TABLE_CONSTRAINTS;
 show create table COLUMNS ;
 show create table INDEXES ;
 show create table INDEX_PARTS ;
+--error ER_BAD_TABLE_ERROR
 show create table REFERENTIAL_CONSTRAINTS ;
 show create table SCHEMAS ;
 show create table TABLES ;

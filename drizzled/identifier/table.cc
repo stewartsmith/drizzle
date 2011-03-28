@@ -212,14 +212,9 @@ size_t Table::build_tmptable_filename(std::vector<char> &buffer)
 
 size_t Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  bool conversion_error= false;
-
-  conversion_error= util::tablename_to_filename(in_db, in_path);
-  if (conversion_error)
+  if (util::tablename_to_filename(in_db, in_path))
   {
-    errmsg_printf(error::ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
+    errmsg_printf(error::ERROR, _("Schema name cannot be encoded and fit within filesystem name length restrictions."));
     return 0;
   }
 
@@ -229,16 +224,10 @@ size_t Table::build_table_filename(std::string &in_path, const std::string &in_d
   {
     in_path.append(in_table_name);
   }
-  else
+  else if (util::tablename_to_filename(in_table_name, in_path))
   {
-    conversion_error= util::tablename_to_filename(in_table_name, in_path);
-    if (conversion_error)
-    {
-      errmsg_printf(error::ERROR,
-                    _("Table name cannot be encoded and fit within filesystem "
-                      "name length restrictions."));
-      return 0;
-    }
+    errmsg_printf(error::ERROR, _("Table name cannot be encoded and fit within filesystem name length restrictions."));
+    return 0;
   }
    
   return in_path.length();
@@ -293,8 +282,7 @@ void Table::init()
     break;
   }
 
-  util::insensitive_hash hasher;
-  hash_value= hasher(path);
+  hash_value= util::insensitive_hash()(path);
 
   std::string tb_name(getTableName());
   std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
@@ -310,31 +298,23 @@ const std::string &Table::getPath() const
 
 const std::string &Table::getKeyPath() const
 {
-  if (key_path.empty())
-    return path;
-
-  return key_path;
+  return key_path.empty() ? path : key_path;
 }
 
-void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
+std::string Table::getSQLPath() const  // @todo this is just used for errors, we should find a way to optimize it
 {
-  switch (type) {
+  switch (type) 
+	{
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
-    sql_path.append(getSchemaName());
-    sql_path.append(".");
-    sql_path.append(table_name);
-    break;
+		return getSchemaName() + "." + table_name;
   case message::Table::INTERNAL:
-    sql_path.append("temporary.");
-    sql_path.append(table_name);
-    break;
+		return "temporary." + table_name;
   case message::Table::TEMPORARY:
-    sql_path.append(getSchemaName());
-    sql_path.append(".#");
-    sql_path.append(table_name);
-    break;
+    return getSchemaName() + ".#" + table_name;
   }
+	assert(false);
+	return "<no table>";
 }
 
 bool Table::isValid() const
@@ -343,59 +323,26 @@ bool Table::isValid() const
     return false;
 
   bool error= false;
-  do
+  if (table_name.empty()
+		|| table_name.size() > NAME_LEN
+		|| table_name[table_name.length() - 1] == ' '
+		|| table_name[0] == '.')
   {
-    if (table_name.empty())
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.size() > NAME_LEN)
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(table_name.length() -1) == ' ')
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(0) == '.')
-    {
-      error= true;
-      break;
-    }
-
-    {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-      int well_formed_error;
-      uint32_t res= cs->cset->well_formed_len(cs, table_name.c_str(), table_name.c_str() + table_name.length(),
-                                              NAME_CHAR_LEN, &well_formed_error);
-      if (well_formed_error or table_name.length() != res)
-      {
-        error= true;
-        break;
-      }
-    }
-  } while (0);
-
-  if (error)
-  {
-    std::string name;
-
-    getSQLPath(name);
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), name.c_str());
-
-    return false;
+    error= true;
   }
-
-  return true;
+	else
+  {
+    int well_formed_error;
+    uint32_t res= my_charset_utf8mb4_general_ci.cset->well_formed_len(&my_charset_utf8mb4_general_ci, 
+			table_name.c_str(), table_name.c_str() + table_name.length(), NAME_CHAR_LEN, &well_formed_error);
+    if (well_formed_error or table_name.length() != res)
+      error= true;
+  }
+  if (not error)
+		return true;
+  my_error(ER_WRONG_TABLE_NAME, MYF(0), getSQLPath().c_str());
+  return false;
 }
-
 
 void Table::copyToTableMessage(message::Table &message) const
 {
@@ -424,22 +371,9 @@ std::size_t hash_value(Table::Key const& b)
   return b.getHashValue();
 }
 
-
-std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+std::ostream& operator<<(std::ostream& output, const Table& identifier)
 {
-  output << "Table:(";
-  output <<  identifier.getSchemaName();
-  output << ", ";
-  output << identifier.getTableName();
-  output << ", ";
-  output << message::type(identifier.getType());
-  output << ", ";
-  output << identifier.getPath();
-  output << ", ";
-  output << identifier.getHashValue();
-  output << ")";
-
-  return output;  // for multiple << operators.
+  return output << "Table:(" <<  identifier.getSchemaName() << ", " << identifier.getTableName() << ", " << message::type(identifier.getType()) << ", " << identifier.getPath() << ", " << identifier.getHashValue() << ")";
 }
 
 } /* namespace identifier */

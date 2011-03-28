@@ -83,7 +83,7 @@ public:
    * @param[in] File extensions to allow
    */
   CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
-  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter, bool use_full_path= false);
+  CachedDirectory(const std::string& in_path, CachedDirectory::FILTER filter, bool use_full_path= false);
 
   /**
    * Destructor.  Cleans up any resources we've taken 
@@ -121,7 +121,7 @@ public:
    * @returns
    *   A vector of strings containing the directory entry names.
    */
-  inline const Entries &getEntries()
+  const Entries &getEntries() const
   {
     return entries;
   }
@@ -151,24 +151,9 @@ private:
    * @retval false Failure
    */
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
-  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, enum CachedDirectory::FILTER filter);
+  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, CachedDirectory::FILTER filter);
 
-  friend std::ostream& operator<<(std::ostream& output, CachedDirectory &directory)
-  {
-    output << "CachedDirectory:(Path: " << directory.getPath() << ")\n";
-
-    CachedDirectory::Entries files= directory.getEntries();
-
-    for (CachedDirectory::Entries::iterator fileIter= files.begin();
-         fileIter != files.end(); fileIter++)
-    {
-      CachedDirectory::Entry *entry= *fileIter;
-      output << "\t(" << entry->filename << ")\n";
-    }
-
-    return output;  // for multiple << operators.
-  }
-
+  friend std::ostream& operator<<(std::ostream&, const CachedDirectory&);
 };
 
 } /* namespace drizzled */

@@ -22,11 +22,8 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 class Singular : public Table
 {
@@ -40,9 +37,9 @@ public:
   {
   }
 
-  Singular(Session *session, List<CreateField> &field_list);
+  Singular(Session *session, std::list<CreateField>&);
 
-  TableShare *getMutableShare(void)
+  TableShare *getMutableShare()
   {
     return &_share;
   }
@@ -52,7 +49,7 @@ public:
     assert(0);
   }
 
-  const TableShare *getShare(void) const
+  const TableShare *getShare() const
   {
     return &_share;
   }

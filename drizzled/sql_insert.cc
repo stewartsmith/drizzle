@@ -37,9 +37,10 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -1490,7 +1491,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      identifier::Table::const_reference identifier)
+				      const identifier::Table& identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->size();

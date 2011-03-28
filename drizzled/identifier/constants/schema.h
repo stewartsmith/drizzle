@@ -23,9 +23,9 @@
 namespace drizzled {
 namespace identifier {
 
-identifier::Schema::const_reference data_dictionary();
-identifier::Schema::const_reference information_schema();
-identifier::Schema::const_reference system_schema();
+const identifier::Schema& data_dictionary();
+const identifier::Schema& information_schema();
+const identifier::Schema& system_schema();
 
 } /* namespace identifier */
 } /* namespace drizzled */

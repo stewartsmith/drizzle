@@ -22,6 +22,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
 
 namespace drizzled {
 namespace statement {

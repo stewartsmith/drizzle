@@ -37,14 +37,14 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-
 #include <drizzled/definition/cache.h>
-
+#include <drizzled/system_variables.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/diagnostics_area.h>
 
 #include <algorithm>
 #include <sstream>
@@ -53,8 +53,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool is_primary_key(KeyInfo *key_info)
 {
@@ -237,11 +236,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       std::string table_error;
 
-      for (util::string::vector::iterator iter= wrong_tables.begin();
-           iter != wrong_tables.end();
-           iter++)
+      BOOST_FOREACH(util::string::vector::reference iter, wrong_tables)
       {
-        table_error+= *iter;
+        table_error+= iter;
         table_error+= ',';
       }
       table_error.resize(table_error.size() -1);
@@ -1628,37 +1625,22 @@ rename_table(Session &session,
                    const identifier::Table &from,
                    const identifier::Table &to)
 {
-  int error= 0;
-
-  assert(base);
-
   if (not plugin::StorageEngine::doesSchemaExist(to))
   {
     my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
     return true;
   }
 
-  error= base->renameTable(session, from, to);
-
+  int error= base->renameTable(session, from, to);
   if (error == HA_ERR_WRONG_COMMAND)
-  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
-  }
   else if (error)
   {
-    std::string from_path;
-    std::string to_path;
-
-    from.getSQLPath(from_path);
-    to.getSQLPath(to_path);
-
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
-
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), 
+			from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str(), 
+			to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str(), error);
   }
-
-  return error ? true : false; 
+  return error; 
 }
 
 
@@ -1771,10 +1753,9 @@ static bool admin_table(Session* session, TableList* tables,
   for (table= tables; table; table= table->next_local)
   {
     identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
-    std::string table_name;
     bool fatal_error=0;
 
-    table_identifier.getSQLPath(table_name);
+    std::string table_name = table_identifier.getSQLPath();
 
     table->lock_type= lock_type;
     /* open only one table from local list of command */
@@ -1811,7 +1792,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.size())
+      if (!session->main_da().m_warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;
@@ -1860,7 +1841,7 @@ send_result:
     session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
+      List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
@@ -1989,8 +1970,8 @@ err:
   */
 static bool create_table_wrapper(Session &session,
                                  const message::Table& create_table_proto,
-                                 identifier::Table::const_reference destination_identifier,
-                                 identifier::Table::const_reference source_identifier,
+                                 const identifier::Table& destination_identifier,
+                                 const identifier::Table& source_identifier,
                                  bool is_engine_set)
 {
   // We require an additional table message because during parsing we used
@@ -2078,8 +2059,8 @@ static bool create_table_wrapper(Session &session,
 */
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set)

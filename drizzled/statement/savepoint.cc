@@ -24,14 +24,14 @@
 #include <drizzled/statement/savepoint.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/named_savepoint.h>
+#include <drizzled/session/transactions.h>
 
 #include <string>
 #include <deque>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Savepoint::execute()
 {

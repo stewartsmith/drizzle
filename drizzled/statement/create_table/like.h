@@ -43,7 +43,7 @@ public:
   {
   }
 
-  bool executeInner(identifier::Table::const_reference);
+  bool executeInner(const identifier::Table&);
 };
 
 } /* namespace table */

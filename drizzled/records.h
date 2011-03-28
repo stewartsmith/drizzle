@@ -23,7 +23,7 @@ namespace drizzled {
 
 namespace internal
 {
-  typedef struct st_io_cache IO_CACHE; // can i has common_fwd pls?
+  typedef struct st_io_cache IO_CACHE;
 }
 
 namespace optimizer

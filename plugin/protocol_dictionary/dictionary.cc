@@ -75,10 +75,8 @@ static ProtocolTool *protocols;
 
 static int init(drizzled::module::Context &context)
 {
-  protocols= new(std::nothrow)ProtocolTool;
-
-  context.add(protocols);
-
+  protocols= new ProtocolTool;
+	context.add(protocols);
   return 0;
 }
 

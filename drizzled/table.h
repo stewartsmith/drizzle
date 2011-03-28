@@ -35,12 +35,10 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/table/instance.h>
 #include <drizzled/atomics.h>
-#include <drizzled/query_id.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class COND_EQUAL;
 class Field_blob;
@@ -55,6 +53,7 @@ namespace plugin { class StorageEngine; }
 
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
+typedef uint64_t query_id_t;
 
 /**
  * Class representing a set of records, either in a temporary, 
@@ -469,7 +468,7 @@ public:
    * @retval
    *  true when out of memory
    */
-  bool fill_item_list(List<Item> *item_list) const;
+  void fill_item_list(List<Item>&) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);

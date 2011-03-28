@@ -46,6 +46,7 @@
 #include <drizzled/select_exists_subselect.h>
 #include <drizzled/select_union.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 namespace drizzled {
 
@@ -1870,8 +1871,9 @@ bool Item_in_subselect::init_left_expr_cache()
   for (uint32_t i= 0; i < left_expr->cols(); i++)
   {
     Cached_item *cur_item_cache= new_Cached_item(session, left_expr->element_index(i));
-    if (!cur_item_cache || left_expr_cache->push_front(cur_item_cache))
+    if (!cur_item_cache)
       return true;
+		left_expr_cache->push_front(cur_item_cache);
   }
   return false;
 }

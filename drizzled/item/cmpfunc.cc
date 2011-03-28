@@ -37,14 +37,14 @@
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <math.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const double log_10[309];
 
@@ -4298,8 +4298,7 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
     }
     return res;
   }
-  if (((Item_cond_and*) a)->add((Item*) b))
-    return 0;
+  ((Item_cond_and*) a)->add((Item*) b);
   ((Item_cond_and*) a)->used_tables_cache|= b->used_tables();
   ((Item_cond_and*) a)->not_null_tables_cache|= b->not_null_tables();
   return a;

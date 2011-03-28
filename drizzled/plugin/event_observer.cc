@@ -34,24 +34,16 @@
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
+namespace drizzled {
+namespace plugin {
 
-
-namespace drizzled
-{
-
-namespace plugin
-{
-
-/*============================*/
-  // Basic plugin registration stuff.
   EventObserverVector all_event_plugins;
 
-  const EventObserverVector &EventObserver::getEventObservers(void)
+  const EventObserverVector &EventObserver::getEventObservers()
   {
     return all_event_plugins;
   }
 
-  //---------
   bool EventObserver::addPlugin(EventObserver *handler)
   {
     if (handler != NULL)
@@ -59,7 +51,6 @@ namespace plugin
     return false;
   }
 
-  //---------
   void EventObserver::removePlugin(EventObserver *handler)
   {
     if (handler != NULL)
@@ -218,9 +209,7 @@ namespace plugin
    if (all_event_plugins.empty())
       return;
 
-    EventObserverList *observers;
-
-    observers= table_share.getTableObservers();
+    EventObserverList *observers= table_share.getTableObservers();
 
     if (observers) 
     {
@@ -262,16 +251,9 @@ namespace plugin
   {
     if (all_event_plugins.empty())
       return;
-
-    EventObserverList *observers;
-
-    observers= session.getSchemaObservers(db);
-
+    EventObserverList *observers= session.getSchemaObservers(db);
     if (observers == NULL) 
-    {
-      observers= new EventObserverList();
-      session.setSchemaObservers(db, observers);
-   }
+      observers= session.setSchemaObservers(db, new EventObserverList());
 
     std::for_each(all_event_plugins.begin(), all_event_plugins.end(),
                   RegisterSchemaEventsIterate(db, *observers));

@@ -17,23 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-
 #pragma once
 
-#include <drizzled/memory/sql_alloc.h>
-#include <drizzled/lex_string.h>
-
-#include <drizzled/error_t.h>
-
 #include <bitset>
-
+#include <drizzled/error_t.h>
+#include <drizzled/lex_string.h>
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class DRIZZLE_ERROR: public memory::SqlAlloc
+class DRIZZLE_ERROR : public memory::SqlAlloc
 {
 public:
   static const uint32_t NUM_ERRORS= 4;

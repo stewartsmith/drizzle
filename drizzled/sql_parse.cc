@@ -55,6 +55,9 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <limits.h>
 
@@ -67,8 +70,7 @@ using namespace std;
 
 extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
@@ -409,8 +411,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
   session->make_lex_string(&table, schema_table_name, false);
 
-  if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, table_options, TL_READ))
+  if (not sel->add_table_to_list(session, new Table_ident(db, table), NULL, table_options, TL_READ))
   {
     return true;
   }
@@ -961,7 +962,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                                          List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
-  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= &session->lex();
@@ -1000,8 +1000,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
-  if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;
+  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
 
   if (table->db.str)
   {
@@ -1380,19 +1379,13 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     true   if a memory allocation error occured
 */
 
-bool
-push_new_name_resolution_context(Session *session,
-                                 TableList *left_op, TableList *right_op)
+void push_new_name_resolution_context(Session& session, TableList& left_op, TableList& right_op)
 {
-  Name_resolution_context *on_context;
-  if (!(on_context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context *on_context= new (session.mem_root) Name_resolution_context;
   on_context->init();
-  on_context->first_name_resolution_table=
-    left_op->first_leaf_for_name_resolution();
-  on_context->last_name_resolution_table=
-    right_op->last_leaf_for_name_resolution();
-  return session->lex().push_context(on_context);
+  on_context->first_name_resolution_table= left_op.first_leaf_for_name_resolution();
+  on_context->last_name_resolution_table= right_op.last_leaf_for_name_resolution();
+  session.lex().push_context(on_context);
 }
 
 
@@ -1480,7 +1473,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select(Session::pointer session)
+bool check_simple_select(Session* session)
 {
   if (session->lex().current_select != &session->lex().select_lex)
   {

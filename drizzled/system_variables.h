@@ -26,8 +26,6 @@ class Time_zone;
 
 struct drizzle_system_variables
 {
-  drizzle_system_variables()
-  {}
   /*
     How dynamically allocated system variables are handled:
 

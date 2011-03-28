@@ -21,10 +21,7 @@
 
 #include <drizzled/field.h>
 
-namespace drizzled
-{
-class Item;
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 /**
  * Class representing a field in a CREATE TABLE statement.

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <drizzled/sql_list.h>
+
 namespace drizzled {
 /*
   Maximum length of comments.

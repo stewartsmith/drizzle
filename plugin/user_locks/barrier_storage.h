@@ -21,7 +21,7 @@
 #pragma once
 
 #include <drizzled/session.h>
-
+#include <drizzled/util/storable.h>
 #include <boost/unordered_set.hpp>
 
 namespace user_locks {
