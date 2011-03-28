@@ -19,11 +19,7 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-class TableList;
-class Name_resolution_context;
+namespace drizzled {
 
 /*
   Store and restore the current state of a name resolution context.
