@@ -136,21 +136,6 @@ extern const char *charsets_dir;
 
 extern bool timed_mutexes;
 
-typedef class wild_file_pack	/* Struct to hold info when selecting files */
-{
-public:
-  uint		wilds;		/* How many wildcards */
-  uint		not_pos;	/* Start of not-theese-files */
-  char *	*wild;		/* Pointer to wildcards */
-
-  wild_file_pack():
-    wilds(0),
-    not_pos(0),
-    wild(NULL)
-  {}
-
-} WF_PACK;
-
 enum cache_type
 {
   TYPE_NOT_SET= 0,
@@ -272,9 +257,7 @@ extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
 extern int wild_compare(const char *str,const char *wildstr,
                         bool str_is_pattern);
-extern WF_PACK *wf_comp(char * str);
-extern int wf_test(wild_file_pack *wf_pack,const char *name);
-extern void wf_end(wild_file_pack *buffer);
+
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
