@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #define my_progname "xtrabackup"
 
@@ -325,7 +326,7 @@ namespace drizzled {
 
  /* === xtrabackup specific options === */
  char xtrabackup_real_target_dir[FN_REFLEN] = "./xtrabackup_backupfiles/";
- char *xtrabackup_target_dir= xtrabackup_real_target_dir;
+ const char *xtrabackup_target_dir= xtrabackup_real_target_dir;
  bool xtrabackup_backup = false;
  bool xtrabackup_stats = false;
  bool xtrabackup_prepare = false;
@@ -343,23 +344,23 @@ namespace drizzled {
  os_event_t wait_throttle = NULL;
 
  bool xtrabackup_stream = false;
- char *xtrabackup_incremental = NULL;
+const char *xtrabackup_incremental = NULL;
  LSN64 incremental_lsn;
  LSN64 incremental_to_lsn;
  LSN64 incremental_last_lsn;
  byte* incremental_buffer = NULL;
  byte* incremental_buffer_base = NULL;
 
- char *xtrabackup_incremental_basedir = NULL; /* for --backup */
- char *xtrabackup_extra_lsndir = NULL; /* for --backup with --extra-lsndir */
- char *xtrabackup_incremental_dir = NULL; /* for --prepare */
+const char *xtrabackup_incremental_basedir = NULL; /* for --backup */
+const char *xtrabackup_extra_lsndir = NULL; /* for --backup with --extra-lsndir */
+char *xtrabackup_incremental_dir = NULL; /* for --prepare */
 
  char *xtrabackup_tables = NULL;
  int tables_regex_num;
  regex_t *tables_regex;
  regmatch_t tables_regmatch[1];
 
- char *xtrabackup_tables_file = NULL;
+const char *xtrabackup_tables_file = NULL;
  hash_table_t* tables_hash;
 
  struct xtrabackup_tables_struct{
@@ -408,7 +409,7 @@ namespace drizzled {
 std::string mysql_data_home_arg;
  static char mysql_data_home_buff[2];
 
- char *opt_mysql_tmpdir = NULL;
+const char *opt_mysql_tmpdir = NULL;
 
 /* === static parameters in ha_innodb.cc */
 
@@ -450,8 +451,8 @@ uint64_t innobase_log_file_size_backup;
 are determined in innobase_init below: */
 
 char*	innobase_data_home_dir			= NULL;
-char*	innobase_data_file_path 		= NULL;
-char*	innobase_log_group_home_dir		= NULL;
+const char* innobase_data_file_path 		= NULL;
+char*   innobase_log_group_home_dir		= NULL;
 char*	innobase_log_group_home_dir_backup	= NULL;
 char*	innobase_log_arch_dir			= NULL;/* unused */
 /* The following has a misleading name: starting from 4.0.5, this also
@@ -4307,8 +4308,8 @@ xtrabackup_prepare_func(void)
 	fprintf(stderr, "xtrabackup: cd to %s\n", xtrabackup_real_target_dir);
 
 	xtrabackup_target_dir= mysql_data_home_buff;
-	xtrabackup_target_dir[0]=FN_CURLIB;		// all paths are relative from here
-	xtrabackup_target_dir[1]=0;
+	mysql_data_home_buff[0]=FN_CURLIB;		// all paths are relative from here
+	mysql_data_home_buff[1]=0;
 
 	/* read metadata of target */
 	{
@@ -4742,7 +4743,7 @@ int main(int argc, char **argv)
 {
 	po::options_description commandline_options(_("Options used only in command line"));
 	commandline_options.add_options()
-	("target-dir", po::value<char*>(&xtrabackup_target_dir), _("destination directory"))
+	  ("target-dir", po::value<std::string>(), _("destination directory"))
           ("backup", po::value<bool>(&xtrabackup_backup)->default_value(false)->zero_tokens(), _("take backup to target-dir"))
 	("stats", po::value<bool>(&xtrabackup_stats)->default_value(false)->zero_tokens(), _("calc statistic of datadir (offline mysqld is recommended)"))
 	("prepare", po::value<bool>(&xtrabackup_prepare)->default_value(false)->zero_tokens(), _("prepare a backup for starting mysql server on the backup."))
@@ -4753,35 +4754,35 @@ int main(int argc, char **argv)
 	("suspend-at-end", po::value<bool>(&xtrabackup_suspend_at_end)->default_value(false)->zero_tokens(), _("creates a file 'xtrabackup_suspended' and waits until the user deletes that file at the end of '--backup'"))
 	("throttle", po::value<long>(&xtrabackup_throttle), _("limit count of IO operations (pairs of read&write) per second to IOS values (for '--backup')"))
 	("log-stream", po::value<bool>(&xtrabackup_stream)->default_value(false)->zero_tokens(), _("outputs the contents of 'xtrabackup_logfile' to stdout only until the file 'xtrabackup_suspended' deleted (for '--backup')."))
-	("extra-lsndir", po::value<char*>(&xtrabackup_extra_lsndir), _("(for --backup): save an extra copy of the xtrabackup_checkpoints file in this directory."))
-	("incremental-lsn", po::value<char*>(&xtrabackup_incremental), _("(for --backup): copy only .ibd pages newer than specified LSN 'high:low'. ##ATTENTION##: checkpoint lsn must be used. anyone can detect your mistake. be carefully!"))
-	("incremental-basedir", po::value<char *>(&xtrabackup_incremental_basedir), _("(for --backup): copy only .ibd pages newer than backup at specified directory."))
-	("incremental-dir", po::value<char *>(&xtrabackup_incremental_dir), _("(for --prepare): apply .delta files and logfile in the specified directory."))
-	("tables", po::value<char *>(&xtrabackup_tables), _("filtering by regexp for table names."))
-	("tables-file", po::value<char *>(&xtrabackup_tables_file), _("filtering by list of the exact database.table name in the file."))
+	  ("extra-lsndir", po::value<std::string>(), _("(for --backup): save an extra copy of the xtrabackup_checkpoints file in this directory."))
+	  ("incremental-lsn", po::value<std::string>(), _("(for --backup): copy only .ibd pages newer than specified LSN 'high:low'. ##ATTENTION##: checkpoint lsn must be used. anyone can detect your mistake. be carefully!"))
+	  ("incremental-basedir", po::value<std::string>(), _("(for --backup): copy only .ibd pages newer than backup at specified directory."))
+	  ("incremental-dir", po::value<std::string>(), _("(for --prepare): apply .delta files and logfile in the specified directory."))
+	  ("tables", po::value<std::string>(), _("filtering by regexp for table names."))
+	  ("tables-file", po::value<std::string>(), _("filtering by list of the exact database.table name in the file."))
 	("create-ib-logfile", po::value<bool>(&xtrabackup_create_ib_logfile), _("** not work for now** creates ib_logfile* also after '--prepare'. ### If you want create ib_logfile*, only re-execute this command in same options. ###"))
           ("datadir,h", po::value<std::string>(), _("Path to the database root."))
-	("tmpdir,t", po::value<char *>(&opt_mysql_tmpdir), _("Path for temporary files. Several paths may be specified, separated by a colon (:), in this case they are used in a round-robin fashion."))
+	  ("tmpdir,t", po::value<std::string>(), _("Path for temporary files. Several paths may be specified, separated by a colon (:), in this case they are used in a round-robin fashion."))
 	("parallel", po::value<uint32_t>(&parallel)->default_value(1), _("Number of threads to use for parallel datafiles transfer. Does not have any effect in the stream mode. The default value is 1."))
 	("innodb-adaptive-hash-index", po::value<bool>(&innobase_adaptive_hash_index)->default_value(true), _("Enable InnoDB adaptive hash index (enabled by default).  Disable with --skip-innodb-adaptive-hash-index."))
 	("innodb-additional-mem-pool-size", po::value<long>(&innobase_additional_mem_pool_size)->default_value(1*1024*1024), _("Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures."))
 	("innodb-autoextend-increment", po::value<uint32_t>(&srv_auto_extend_increment)->default_value(8), _("Data file autoextend increment in megabytes"))
 	("innodb-buffer-pool-size", po::value<uint64_t>(&innobase_buffer_pool_size)->default_value(8*1024*1024), _("The size of the memory buffer InnoDB uses to cache data and indexes of its tables."))
 	("innodb-checksums", po::value<bool>(&innobase_use_checksums)->default_value(true), _("Enable InnoDB checksums validation (enabled by default). Disable with --skip-innodb-checksums."))
-	("innodb-data-file-path", po::value<char *>(&innobase_data_file_path), _("Path to individual files and their sizes."))
-	("innodb-data-home-dir", po::value<char *>(&innobase_data_home_dir), _("The common part for InnoDB table spaces."))
+	  ("innodb-data-file-path", po::value<std::string>(), _("Path to individual files and their sizes."))
+	  ("innodb-data-home-dir", po::value<std::string>(), _("The common part for InnoDB table spaces."))
 	("innodb-doublewrite", po::value<bool>(&innobase_use_doublewrite)->default_value(true), _("Enable InnoDB doublewrite buffer (enabled by default). Disable with --skip-innodb-doublewrite."))
 	("innodb-file-io-threads", po::value<long>(&innobase_file_io_threads)->default_value(4), _("Number of file I/O threads in InnoDB."))
 	("innodb-file-per-table", po::value<bool>(&innobase_file_per_table), _("Stores each InnoDB table to an .ibd file in the database dir."))
 	("innodb-flush-log-at-trx-commit", po::value<ulong>(&srv_flush_log_at_trx_commit)->default_value(1), _("Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second)."))
-          ("innodb-flush-method", po::value<char *>(&innobase_unix_file_flush_method), _("With which method to flush data."))
+          ("innodb-flush-method", po::value<std::string>(), _("With which method to flush data."))
 /* ####### Should we use this option? ####### */
          ("innodb-force-recovery", po::value<long>(&innobase_force_recovery)->default_value(0), _("Helps to save your data in case the disk image of the database becomes corrupt."))
 	("innodb-lock-wait-timeout", po::value<long>(&innobase_lock_wait_timeout)->default_value(50), _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back."))
 	("innodb-log-buffer-size", po::value<long>(&innobase_log_buffer_size)->default_value(1024*1024), _("The size of the buffer which InnoDB uses to write log to the log files on disk."))
 	("innodb-log-file-size", po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L), _("Size of each log file in a log group."))
 	("innodb-log-files-in-group", po::value<long>(&innobase_log_files_in_group)->default_value(2), _("Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here."))
-	("innodb-log-group-home-dir", po::value<char *>(&innobase_log_group_home_dir), _("Path to InnoDB log files."))
+	  ("innodb-log-group-home-dir", po::value<std::string>(), _("Path to InnoDB log files."))
 	("innodb-max_dirty-pages-pct", po::value<ulong>(&srv_max_buf_pool_modified_pct)->default_value(90), _("Percentage of dirty pages allowed in bufferpool."))
 	("innodb-open-files", po::value<long>(&innobase_open_files)->default_value(300), _("How many files at the maximum InnoDB keeps open at the same time."))
 #ifdef XTRADB_BASED
@@ -4798,6 +4799,63 @@ int main(int argc, char **argv)
 	int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
 	po::store(po::command_line_parser(argc, argv).options(commandline_options).style(style).run(), vm);
 	po::notify(vm);
+
+	if (vm.count("target-dir"))
+	  xtrabackup_target_dir= vm["target-dir"].as<std::string>().c_str();
+
+	if (vm.count("extra-lsndir"))
+	  xtrabackup_extra_lsndir= vm["extra-lsndir"].as<std::string>().c_str();
+
+	if (vm.count("incremental-lsn"))
+	  xtrabackup_incremental= vm["incremental-lsn"].as<std::string>().c_str();
+
+	if (vm.count("incremental-basedir"))
+	  xtrabackup_incremental_basedir= vm["incremental-basedir"].as<std::string>().c_str();
+
+	boost::scoped_ptr<char> xtrabackup_tables_autoptr(new char[(vm.count("tables")) ? vm["tables"].as<std::string>().length() + 1: 0]);
+	if (vm.count("tables"))
+	{
+	  xtrabackup_tables= xtrabackup_tables_autoptr.get();
+	  strcpy(xtrabackup_tables, vm["tables"].as<std::string>().c_str());
+	}
+
+	if (vm.count("tables-file"))
+	  xtrabackup_tables_file= vm["tables-file"].as<std::string>().c_str();
+
+	if (vm.count("tmpdir"))
+	  opt_mysql_tmpdir= vm["tmpdir"].as<std::string>().c_str();
+
+	if (vm.count("innodb-data-file-path"))
+	  innobase_data_file_path= vm["innodb-data-file-path"].as<std::string>().c_str();
+
+	boost::scoped_ptr<char> xtrabackup_incremental_dir_autoptr(new char[(vm.count("incremental-dir")) ? vm["incremental-dir"].as<std::string>().length() + 1: 0]);
+	if (vm.count("incremental-dir"))
+	{
+	  xtrabackup_incremental_dir= xtrabackup_incremental_dir_autoptr.get();
+	  strcpy(xtrabackup_incremental_dir, vm["incremental-dir"].as<std::string>().c_str());
+	}
+
+	boost::scoped_ptr<char> innobase_data_home_dir_autoptr(new char[(vm.count("innodb-data-home-dir")) ? vm["innodb-data-home-dir"].as<std::string>().length() + 1 : 0]);
+	if (vm.count("innodb-data-home-dir"))
+	{
+	  innobase_data_home_dir= innobase_data_home_dir_autoptr.get();
+	  strcpy(innobase_data_home_dir, vm["innodb-data-home-dir"].as<std::string>().c_str());
+	}
+
+	boost::scoped_ptr<char> innobase_flush_method_autoptr(new char[(vm.count("innodb-flush-method")) ? vm["innodb-flush-method"].as<std::string>().length() + 1 : 0]);
+	if (vm.count("innodb-flush-method"))
+	{
+	  innobase_unix_file_flush_method= innobase_flush_method_autoptr.get();
+	  strcpy(innobase_unix_file_flush_method, vm["innodb-flush-method"].as<std::string>().c_str());
+	}
+
+	boost::scoped_ptr<char> innobase_log_group_home_dir_autoptr(new char[(vm.count("innodb-log-group-home-dir")) ? vm["innodb-log-group-home-dir"].as<std::string>().length() + 1: 0]);
+
+	if (vm.count("innodb-log-group-home-dir"))
+	{
+	  innobase_log_group_home_dir= innobase_log_group_home_dir_autoptr.get();
+	  strcpy(innobase_log_group_home_dir, vm["innodb-log-group-home-dir"].as<std::string>().c_str());
+	}
 
 	xtrabackup_use_memory-= xtrabackup_use_memory % (1024*1024);
 	if (xtrabackup_use_memory < (1024*1024)) {
