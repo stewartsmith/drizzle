@@ -133,7 +133,7 @@ extern DRIZZLED_API int my_umask,		/* Default creation mask  */
 	   my_recived_signals,	/* Signals we have got */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
 	   my_dont_interrupt;	/* call remember_intr when set */
-extern bool mysys_uses_curses, my_use_symdir;
+extern bool my_use_symdir;
 
 extern uint32_t	my_default_record_cache_size;
 extern bool my_disable_async_io,

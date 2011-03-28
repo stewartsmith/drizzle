@@ -58,7 +58,6 @@ uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 bool my_disable_async_io= true;
 bool my_disable_flush_key_blocks=0;
 bool my_disable_symlinks=0;
-bool mysys_uses_curses=0;
 
 } /* namespace internal */
 } /* namespace drizzled */
