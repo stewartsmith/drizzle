@@ -50,19 +50,6 @@ sigset_t my_signals;			/* signals blocked by mf_brkhant */
 	/* from mf_reccache.c */
 uint32_t my_default_record_cache_size=RECORD_CACHE_SIZE;
 
-	/* from safe_malloc */
-uint32_t sf_malloc_prehunc=0,		/* If you have problem with core- */
-     sf_malloc_endhunc=0,		/* dump when malloc-message.... */
-					/* set theese to 64 or 128  */
-     sf_malloc_quick=0;			/* set if no calls to sanity */
-uint32_t sf_malloc_cur_memory= 0L;		/* Current memory usage */
-uint32_t sf_malloc_max_memory= 0L;		/* Maximum memory usage */
-uint32_t  sf_malloc_count= 0;		/* Number of times NEW() was called */
-unsigned char *sf_min_adress= (unsigned char*) ~(unsigned long) 0L,
-     *sf_max_adress= (unsigned char*) 0L;
-/* Root of the linked list of struct st_irem */
-irem *sf_malloc_root = NULL;
-
 	/* from my_alarm */
 int volatile my_have_got_alarm=0;	/* declare variable to reset */
 uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
