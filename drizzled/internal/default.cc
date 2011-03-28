@@ -59,10 +59,6 @@ namespace drizzled
 namespace internal
 {
 
-const char *my_defaults_file=0;
-const char *my_defaults_group_suffix=0;
-char *my_defaults_extra_file=0;
-
 /* Define the type of function to be passed to process_default_option_files */
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);

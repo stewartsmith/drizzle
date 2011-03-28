@@ -133,10 +133,6 @@ extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
-/* from default.c */
-extern char *my_defaults_extra_file;
-extern const char *my_defaults_group_suffix;
-extern const char *my_defaults_file;
 
 extern bool timed_mutexes;
 
