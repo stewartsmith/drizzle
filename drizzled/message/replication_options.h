@@ -1,7 +1,7 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,21 +20,28 @@
 
 #pragma once
 
-#ifdef HAVE_AIOWAIT
-#include <sys/asynch.h>      /* Used by record-cache */
+#include <drizzled/message/replication_options.pb.h>
 
-namespace drizzled
+namespace drizzled {
+namespace message {
+
+template<class T> bool is_replicated(const T& reference)
 {
-namespace internal
+  if (reference.has_replication_options() and
+      reference.replication_options().has_is_replicated())
+  {
+    return reference.replication_options().is_replicated();
+  }
+
+  return true;
+}
+
+template<class T> void set_is_replicated(T& reference, bool arg)
 {
+  message::ReplicationOptions *options= reference.mutable_replication_options();
+  options->set_is_replicated(arg);
+}
 
-typedef struct my_aio_result {
-  aio_result_t result;
-  int         pending;
-} my_aio_result;
-
-} /* namespace internal */
+} /* namespace message */
 } /* namespace drizzled */
-
-#endif
 

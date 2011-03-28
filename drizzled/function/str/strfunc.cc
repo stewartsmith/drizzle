@@ -31,9 +31,6 @@
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
-// For soundex_map
-#include <drizzled/internal/my_static.h>
-
 using namespace std;
 
 namespace drizzled

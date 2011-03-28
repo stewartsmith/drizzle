@@ -65,7 +65,7 @@ typedef struct dt_field_info
 	This is the charater set for non numeric data types including blob data.
 	*/
 #ifdef DRIZZLED
-	const drizzled::CHARSET_INFO *field_charset;
+	const drizzled::charset_info_st *field_charset;
 #else
 	CHARSET_INFO *field_charset;
 #endif

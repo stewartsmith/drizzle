@@ -21,6 +21,8 @@
 
 #include <drizzled/base.h>
 #include <drizzled/error_t.h>
+#include <drizzled/sql_error.h>
+#include <drizzled/sql_list.h>
 
 namespace drizzled {
 
@@ -78,6 +80,8 @@ public:
   uint64_t last_insert_id() const;
   uint32_t total_warn_count() const;
 
+  List<DRIZZLE_ERROR> m_warn_list;
+
   Diagnostics_area() { reset_diagnostics_area(); }
 
 private:
@@ -127,7 +131,7 @@ private:
   enum_diagnostics_status m_status;
   /**
     @todo: the following Session members belong here:
-    - warn_list, warn_count,
+    - warn_count,
   */
 };
 

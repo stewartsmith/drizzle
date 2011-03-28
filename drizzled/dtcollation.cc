@@ -38,7 +38,7 @@ DTCollation::DTCollation()
 }
 
 
-DTCollation::DTCollation(const CHARSET_INFO * const collation_arg,
+DTCollation::DTCollation(const charset_info_st * const collation_arg,
                          Derivation derivation_arg)
 {
   collation= collation_arg;
@@ -53,7 +53,7 @@ void DTCollation::set(DTCollation &dt)
 }
 
 
-void DTCollation::set(const CHARSET_INFO * const collation_arg,
+void DTCollation::set(const charset_info_st * const collation_arg,
                       Derivation derivation_arg)
 {
   collation= collation_arg;
@@ -61,7 +61,7 @@ void DTCollation::set(const CHARSET_INFO * const collation_arg,
 }
 
 
-void DTCollation::set(const CHARSET_INFO * const collation_arg)
+void DTCollation::set(const charset_info_st * const collation_arg)
 {
   collation= collation_arg;
 }
@@ -166,7 +166,7 @@ bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
         set(dt);
         return false;
       }
-      const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname, MY_CS_BINSORT);
+      const charset_info_st * const bin= get_charset_by_csname(collation->csname, MY_CS_BINSORT);
       set(bin, DERIVATION_NONE);
     }
   }

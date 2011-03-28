@@ -47,25 +47,23 @@
 #include <drizzled/internal/m_string.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/storage_engine.h>
-
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-
 #include <drizzled/refresh_version.h>
-
 #include <drizzled/table/singular.h>
-
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -817,8 +815,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  table::Singular *table;
-  table= session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
+  table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
   if (not table->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
@@ -1683,53 +1680,33 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
 }
 
 
-bool Table::fill_item_list(List<Item> *item_list) const
+void Table::fill_item_list(List<Item>& items) const
 {
   /*
     All Item_field's created using a direct pointer to a field
     are fixed in Item_field constructor.
   */
   for (Field **ptr= field; *ptr; ptr++)
-  {
-    Item_field *item= new Item_field(*ptr);
-    if (!item || item_list->push_back(item))
-      return true;
-  }
-  return false;
+    items.push_back(new Item_field(*ptr));
 }
 
 
 void Table::filesort_free_buffers(bool full)
 {
-  if (sort.record_pointers)
-  {
-    free((unsigned char*) sort.record_pointers);
-    sort.record_pointers=0;
-  }
+  free(sort.record_pointers);
+  sort.record_pointers=0;
   if (full)
   {
-    if (sort.sort_keys )
-    {
-      if ((unsigned char*) sort.sort_keys)
-        free((unsigned char*) sort.sort_keys);
-      sort.sort_keys= 0;
-    }
-    if (sort.buffpek)
-    {
-      if ((unsigned char*) sort.buffpek)
-        free((unsigned char*) sort.buffpek);
-      sort.buffpek= 0;
-      sort.buffpek_len= 0;
-    }
+    free(sort.sort_keys);
+    sort.sort_keys= 0;
+    free(sort.buffpek);
+    sort.buffpek= 0;
+    sort.buffpek_len= 0;
   }
-
-  if (sort.addon_buf)
-  {
-    free((char *) sort.addon_buf);
-    free((char *) sort.addon_field);
-    sort.addon_buf=0;
-    sort.addon_field=0;
-  }
+  free(sort.addon_buf);
+  free(sort.addon_field);
+  sort.addon_buf=0;
+  sort.addon_field=0;
 }
 
 /*

@@ -38,7 +38,7 @@ bool TemporalInterval::initFromItem(Item *args,
   int64_t value= 0;
   const char *str= NULL;
   size_t length= 0;
-  const CHARSET_INFO * const cs= str_value->charset();
+  const charset_info_st * const cs= str_value->charset();
 
 
   // Types <= microsecond can be converted as an integer
@@ -295,7 +295,7 @@ null_date:
 
 bool TemporalInterval::getIntervalFromString(const char *str,
                                              uint32_t length,
-                                             const CHARSET_INFO * const cs,
+                                             const charset_info_st * const cs,
                                              uint32_t count, uint64_t *values,
                                              bool transform_msec)
 {

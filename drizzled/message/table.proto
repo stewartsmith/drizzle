@@ -35,7 +35,7 @@ message Table {
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
-    optional bool dont_replicate = 20;
+    optional bool unused = 20;
   }
 
   message ForeignKeyConstraint {
@@ -196,6 +196,6 @@ message Table {
   optional ReplicationOptions replication_options= 16;
 }
 
-message AlterTable {
+message AddedFields {
   repeated Table.Field added_field = 1;
 }

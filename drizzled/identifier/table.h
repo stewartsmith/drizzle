@@ -60,8 +60,6 @@ class DRIZZLED_API Table : public Schema
 public:
   typedef message::Table::TableType Type;
   typedef std::vector <Table> vector;
-  typedef const Table& const_reference;
-  typedef Table& reference;
 
   class Key
   {
@@ -201,7 +199,7 @@ public:
     return type;
   }
 
-  virtual void getSQLPath(std::string &sql_path) const;
+  virtual std::string getSQLPath() const;
 
   virtual const std::string &getPath() const;
   const std::string &getKeyPath() const;
@@ -218,7 +216,7 @@ public:
 
   void copyToTableMessage(message::Table &message) const;
 
-  friend bool operator<(Table::const_reference left, Table::const_reference right)
+  friend bool operator<(const Table& left, const Table& right)
   {
     if (left.getKey() < right.getKey())
     {
@@ -228,7 +226,7 @@ public:
     return false;
   }
 
-  friend bool operator==(Table::const_reference left, Table::const_reference right)
+  friend bool operator==(const Table& left, const Table& right)
   {
     if (left.getHashValue() == right.getHashValue())
     {
@@ -258,7 +256,7 @@ public:
   }
 };
 
-std::ostream& operator<<(std::ostream& output, Table::const_reference identifier);
+std::ostream& operator<<(std::ostream& output, const Table& identifier);
 std::size_t hash_value(Table const& b);
 std::size_t hash_value(Table::Key const& b);
 

@@ -60,8 +60,7 @@ bool statement::DropSchema::execute()
   }
   
   bool res = true;
-  std::string path;
-  schema_identifier.getSQLPath(path);
+  std::string path = schema_identifier.getSQLPath();
   if (unlikely(plugin::EventObserver::beforeDropDatabase(session(), path))) 
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, schema_identifier);

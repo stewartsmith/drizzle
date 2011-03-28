@@ -16,13 +16,29 @@
 /* Calculate a checksum for a row */
 
 #include "myisam_priv.h"
+#include <zlib.h>
 
 using namespace drizzled;
 
-internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
+/*
+  Calculate a long checksum for a memoryblock.
+
+  SYNOPSIS
+    my_checksum()
+      crc       start value for crc
+      pos       pointer to memory block
+      length    length of the block
+*/
+
+static ha_checksum my_checksum(ha_checksum crc, const unsigned char *pos, size_t length)
+{
+  return ha_checksum(crc32((uint32_t)crc, pos, uInt(length)));
+}
+
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 {
   uint32_t i;
-  internal::ha_checksum crc=0;
+  ha_checksum crc=0;
   MI_COLUMNDEF *rec=info->s->rec;
 
   for (i=info->s->base.fields ; i-- ; buf+=(rec++)->length)
@@ -53,13 +69,13 @@ internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
       pos=buf;
       break;
     }
-    crc=internal::my_checksum(crc, pos ? pos : (unsigned char*) "", length);
+    crc=my_checksum(crc, pos ? pos : (unsigned char*) "", length);
   }
   return crc;
 }
 
 
-internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
 {
-  return internal::my_checksum(0, pos, info->s->base.reclength);
+  return my_checksum(0, pos, info->s->base.reclength);
 }

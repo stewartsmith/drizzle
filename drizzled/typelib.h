@@ -16,16 +16,14 @@
 
 #pragma once
 
-#include <drizzled/global_charset_info.h>
-#include <drizzled/memory/root.h>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-typedef struct st_typelib 
+class TYPELIB
 {
 public:
-  st_typelib *copy_typelib(memory::Root *root) const;
+  TYPELIB *copy_typelib(memory::Root *root) const;
   int find_type_or_exit(const char *x, const char *option) const;
   int find_type(const char *x, unsigned int full_name) const;
   int find_type(char *x, unsigned int full_name) const;
@@ -33,16 +31,16 @@ public:
   const char *get_type(unsigned int nr) const;
   void make_type(char *to, unsigned int nr) const;
 
-  uint64_t find_set(const char *x, uint32_t length, const CHARSET_INFO *cs,
+  uint64_t find_set(const char *x, uint32_t length, const charset_info_st *cs,
                     char **err_pos, uint32_t *err_len, bool *set_warning) const;
   uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
-  uint32_t find_type2(const char *find, uint32_t length, const CHARSET_INFO *cs) const;
+  uint32_t find_type2(const char *find, uint32_t length, const charset_info_st *cs) const;
 
   unsigned int count;
   const char *name;
   const char **type_names;
   unsigned int *type_lengths;
-} TYPELIB;
+};
 
 } /* namespace drizzled */
 

@@ -597,7 +597,7 @@ static Item_result field_types_result_type [enum_field_types_size]=
   STRING_RESULT,
 };
 
-bool test_if_important_data(const CHARSET_INFO * const cs, 
+bool test_if_important_data(const charset_info_st * const cs, 
                             const char *str,
                             const char *strend)
 {
@@ -860,7 +860,7 @@ void Field::hash(uint32_t *nr, uint32_t *nr2) const
   else
   {
     uint32_t len= pack_length();
-    const CHARSET_INFO * const cs= charset();
+    const charset_info_st * const cs= charset();
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
 }
@@ -880,7 +880,7 @@ void Field::copy_from_tmp(int row_offset)
 int Field::store_and_check(enum_check_fields check_level,
                            const char *to, 
                            uint32_t length,
-                           const CHARSET_INFO * const cs)
+                           const charset_info_st * const cs)
 
 {
   int res;

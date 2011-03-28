@@ -31,15 +31,8 @@ static drizzled::plugin::StorageEngine *schema_plugin= NULL;
 
 static int init(drizzled::module::Context &context)
 {
-  schema_plugin= new(std::nothrow) Schema();
-
-  if (not schema_plugin)
-  {
-    return 1;
-  }
-
+  schema_plugin= new Schema;
   context.add(schema_plugin);
-
   return 0;
 }
 

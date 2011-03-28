@@ -32,27 +32,21 @@ BOOST_AUTO_TEST_CASE(CreateStandard)
 {
   identifier::Table identifier("test", "a");
   BOOST_REQUIRE_EQUAL("test/a", identifier.getPath());
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.a", path);
+  BOOST_REQUIRE_EQUAL("test.a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateTemporary)
 {
   identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateInternal)
 {
   identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(StaticTmpTable)

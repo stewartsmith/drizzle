@@ -58,13 +58,13 @@ public:
   int64_t val_int_result();
   String *str_result(String *str);
   type::Decimal *val_decimal_result(type::Decimal *);
-  bool update_hash(void *ptr, uint32_t length, enum Item_result type,
-  		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
+  void update_hash(void *ptr, uint32_t length, enum Item_result type,
+  		   const charset_info_st * const cs, Derivation dv, bool unsigned_arg);
   bool send(plugin::Client *client, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
-  bool update();
-  enum Item_result result_type () const { return cached_result_type; }
+  void update();
+  Item_result result_type () const { return cached_result_type; }
   bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec();
   virtual void print(String *str);

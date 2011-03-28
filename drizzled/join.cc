@@ -65,6 +65,8 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 #include <algorithm>
 
 using namespace std;
@@ -3278,8 +3280,9 @@ static bool alloc_group_fields(Join *join, Order *group)
     for (; group ; group=group->next)
     {
       Cached_item *tmp= new_Cached_item(join->session, *group->item);
-      if (!tmp || join->group_fields.push_front(tmp))
+      if (!tmp)
         return true;
+			join->group_fields.push_front(tmp);
     }
   }
   join->sort_and_group=1;     /* Mark for do_select */
@@ -6002,19 +6005,16 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   */
   if (const_count && ! sargables.empty())
   {
-    vector<optimizer::SargableParam>::iterator iter= sargables.begin();
-    while (iter != sargables.end())
+    BOOST_FOREACH(vector<optimizer::SargableParam>::reference iter, sargables)
     {
-      Field *field= iter->getField();
-      JoinTable *join_tab= field->getTable()->reginfo.join_tab;
-      key_map possible_keys= field->key_start;
-      possible_keys&= field->getTable()->keys_in_use_for_query;
+      Field& field= *iter.getField();
+      JoinTable *join_tab= field.getTable()->reginfo.join_tab;
+      key_map possible_keys= field.key_start & field.getTable()->keys_in_use_for_query;
       bool is_const= true;
-      for (uint32_t j= 0; j < iter->getNumValues(); j++)
-        is_const&= iter->isConstItem(j);
+      for (uint32_t j= 0; j < iter.getNumValues(); j++)
+        is_const&= iter.isConstItem(j);
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
-      ++iter;
     }
   }
 
@@ -6324,7 +6324,6 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   Item_cond_and *cond=new Item_cond_and();
   Table *table=join_tab->table;
-  int error;
   if (!cond)
     return(true);
 
@@ -6339,16 +6338,16 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   if (!cond->fixed)
     cond->fix_fields(session, (Item**)&cond);
+  int error = 0;
   if (join_tab->select)
   {
-    error=(int) cond->add(join_tab->select->cond);
+    cond->add(join_tab->select->cond);
     join_tab->select_cond=join_tab->select->cond=cond;
   }
-  else if ((join_tab->select= optimizer::make_select(join_tab->table, 0, 0, cond, 0,
-                                                     &error)))
+  else if ((join_tab->select= optimizer::make_select(join_tab->table, 0, 0, cond, 0, &error)))
     join_tab->select_cond=cond;
 
-  return(error ? true : false);
+  return error;
 }
 
 static void free_blobs(Field **ptr)

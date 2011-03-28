@@ -19,7 +19,7 @@
  */
 
 #include <config.h>
-
+#include <drizzled/session/transactions.h>
 #include <plugin/session_dictionary/dictionary.h>
 
 namespace session_dictionary {

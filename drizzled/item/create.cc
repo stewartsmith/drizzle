@@ -24,6 +24,7 @@
 #include <drizzled/item/create.h>
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>
+#include <drizzled/system_variables.h>
 
 #include <drizzled/function_container.h>
 
@@ -90,8 +91,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item;
 
@@ -1854,7 +1854,7 @@ Create_func_space::create(Session *session, Item *arg1)
     The parsed item tree should not depend on
     <code>session->variables.collation_connection</code>.
   */
-  const CHARSET_INFO * const cs= session->variables.getCollation();
+  const charset_info_st * const cs= session->variables.getCollation();
   Item *sp;
 
   if (cs->mbminlen > 1)
@@ -2074,9 +2074,9 @@ find_native_function_builder(LEX_STRING name)
 
 
 Item*
-create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * const cs)
+create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs)
 {
-  const CHARSET_INFO * const real_cs= (cs ? cs : session->variables.getCollation());
+  const charset_info_st * const real_cs= (cs ? cs : session->variables.getCollation());
   return new (session->mem_root) Item_char_typecast(a, len, real_cs);
 }
 
@@ -2084,7 +2084,7 @@ create_func_char_cast(Session *session, Item *a, int len, const CHARSET_INFO * c
 Item *
 create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
-                 const CHARSET_INFO * const cs)
+                 const charset_info_st * const cs)
 {
   Item *res= NULL;
   uint32_t len;

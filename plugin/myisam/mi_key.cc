@@ -65,7 +65,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     enum drizzled::ha_base_keytype type=(enum drizzled::ha_base_keytype) keyseg->type;
     uint32_t length=keyseg->length;
     uint32_t char_length;
-    const drizzled::CHARSET_INFO * const cs=keyseg->charset;
+    const drizzled::charset_info_st * const cs=keyseg->charset;
 
     if (keyseg->null_bit)
     {
@@ -181,7 +181,7 @@ uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     uint32_t length= keyseg->length;
     uint32_t char_length;
     unsigned char *pos;
-    const drizzled::CHARSET_INFO * const cs=keyseg->charset;
+    const drizzled::charset_info_st * const cs=keyseg->charset;
     keypart_map>>= 1;
     if (keyseg->null_bit)
     {

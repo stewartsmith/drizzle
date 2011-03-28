@@ -189,7 +189,7 @@ bool CreateField::init(Session *,
                         LEX_STRING *fld_comment,
                         char *fld_change,
                         List<String> *fld_interval_list,
-                        const CHARSET_INFO * const fld_charset,
+                        const charset_info_st * const fld_charset,
                         uint32_t,
                         enum column_format_type column_format_in)
 {
@@ -431,7 +431,7 @@ std::ostream& operator<<(std::ostream& output, const CreateField &field)
   output << "CreateField:(";
   output <<  field.field_name;
   output << ", ";
-  output << drizzled::display::type(field.type());
+  output << display::type(field.type());
   output << ", { ";
 
   if (field.flags & NOT_NULL_FLAG)

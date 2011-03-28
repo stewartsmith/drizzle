@@ -26,9 +26,10 @@
  */
 
 #include <config.h>
-
+#include <dirent.h>
 #include <drizzled/definitions.h>
 
+#include <boost/foreach.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -41,8 +42,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 CachedDirectory::CachedDirectory() : 
   error(0)
@@ -79,17 +79,13 @@ CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FI
 
 CachedDirectory::~CachedDirectory()
 {
-  for (Entries::iterator iter= entries.begin(); iter != entries.end(); ++iter)
-  {
-    delete *iter;
-  }
-  entries.clear();
+	BOOST_FOREACH(Entries::reference iter, entries)
+    delete iter;
 }
 
 bool CachedDirectory::open(const string &in_path)
 {
   set<string> empty;
-
   return open(in_path, empty);
 }
 
@@ -197,6 +193,14 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
   error= retcode;
 
   return error == 0;
+}
+
+std::ostream& operator<<(std::ostream& output, const CachedDirectory &directory)
+{
+  output << "CachedDirectory:(Path: " << directory.getPath() << ")\n";
+  BOOST_FOREACH(const CachedDirectory::Entry* iter, directory.getEntries())
+    output << "\t(" << iter->filename << ")\n";
+  return output;
 }
 
 } /* namespace drizzled */

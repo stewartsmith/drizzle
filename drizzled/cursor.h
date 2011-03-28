@@ -679,8 +679,8 @@ bool create_table_no_lock(Session *session,
                           bool is_if_not_exists);
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set);

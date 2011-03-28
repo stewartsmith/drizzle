@@ -65,10 +65,6 @@ extern char curr_dir[FN_REFLEN], home_dir_buff[FN_REFLEN];
 
 extern volatile int _my_signals;
 
-extern unsigned char	*sf_min_adress,*sf_max_adress;
-extern uint	sf_malloc_count;
-extern class irem *sf_malloc_root;
-
 extern uint64_t query_performance_frequency, query_performance_offset;
 
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */

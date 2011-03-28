@@ -62,6 +62,8 @@ ShowCreateTable::Generator::Generator(Field **arg) :
 
     if (table_message)
       is_primed= true;
+    else
+      my_error(ER_BAD_TABLE_ERROR, identifier);
   }
 }
 

@@ -72,7 +72,7 @@ public:
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
   uint32_t  convert_blob_length;
 
-  const CHARSET_INFO *table_charset;
+  const charset_info_st *table_charset;
 
   Tmp_Table_Param() :
     keyinfo(0),

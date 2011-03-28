@@ -19,12 +19,9 @@
 
 #pragma once
 
-
-#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/plugin.h>
@@ -39,9 +36,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
+class CachedDirectory;
 class TableList;
 class Session;
 class Cursor;
@@ -344,7 +341,7 @@ public:
 
   static bool dropTable(Session& session,
                         StorageEngine &engine,
-                        identifier::Table::const_reference identifier,
+                        const identifier::Table& identifier,
                         drizzled::error_t &error);
 
   static void getIdentifiers(Session &session,
@@ -359,10 +356,10 @@ public:
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
-  static const CHARSET_INFO *getSchemaCollation(const drizzled::identifier::Schema &identifier);
+  static const charset_info_st *getSchemaCollation(const drizzled::identifier::Schema &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(Session &session,
-                         identifier::Schema::const_reference identifier,
+                         const identifier::Schema& identifier,
                          message::schema::const_reference schema_message);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 

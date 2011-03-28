@@ -45,7 +45,7 @@ public:
   enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
   virtual void print(String *str);
   bool eq(const Item *item, bool binary_cmp) const;
-  virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  virtual Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 } /* namespace drizzled */

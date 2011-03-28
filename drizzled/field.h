@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/type/decimal.h>
 #include <drizzled/key_map.h>
@@ -53,8 +54,6 @@ namespace drizzled
 #define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
 #define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
 #endif
-
-typedef struct st_typelib TYPELIB;
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
@@ -201,14 +200,14 @@ public:
   /* Store functions returns 1 on overflow and -1 on fatal error */
   virtual int store(const char *to,
                     uint32_t length,
-                    const CHARSET_INFO * const cs)=0;
+                    const charset_info_st * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
   virtual int store_decimal(const type::Decimal *d)=0;
   int store_and_check(enum_check_fields check_level,
                       const char *to,
                       uint32_t length,
-                      const CHARSET_INFO * const cs);
+                      const charset_info_st * const cs);
   /**
     This is called when storing a date in a string.
 
@@ -408,15 +407,15 @@ public:
     if (null_ptr)
       null_ptr= ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
-  virtual void get_image(unsigned char *buff, uint32_t length, const CHARSET_INFO * const)
+  virtual void get_image(unsigned char *buff, uint32_t length, const charset_info_st * const)
   {
     memcpy(buff,ptr,length);
   }
-  virtual void get_image(std::basic_string<unsigned char> &buff, uint32_t length, const CHARSET_INFO * const)
+  virtual void get_image(std::basic_string<unsigned char> &buff, uint32_t length, const charset_info_st * const)
   {
     buff.append(ptr,length);
   }
-  virtual void set_image(const unsigned char *buff,uint32_t length, const CHARSET_INFO * const)
+  virtual void set_image(const unsigned char *buff,uint32_t length, const charset_info_st * const)
   {
     memcpy(ptr,buff,length);
   }
@@ -597,10 +596,10 @@ public:
   uint32_t fill_cache_field(CacheField *copy);
   virtual bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
   virtual bool get_time(type::Time &ltime) const;
-  virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
-  virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
+  virtual const charset_info_st *charset(void) const { return &my_charset_bin; }
+  virtual const charset_info_st *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(const CHARSET_INFO * const)
+  virtual void set_charset(const charset_info_st * const)
   {}
   virtual enum Derivation derivation(void) const
   {
@@ -850,7 +849,7 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
  * @retval
  *  true  - If string has some important data
  */
-bool test_if_important_data(const CHARSET_INFO * const cs,
+bool test_if_important_data(const charset_info_st * const cs,
                             const char *str,
                             const char *strend);
 

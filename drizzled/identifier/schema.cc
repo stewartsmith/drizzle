@@ -25,9 +25,10 @@
 #include <drizzled/identifier.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
-
+#include <drizzled/catalog/local.h>
 #include <drizzled/util/tablename_to_filename.h>
 #include <drizzled/util/backtrace.h>
+#include <drizzled/charset_info.h>
 
 #include <algorithm>
 #include <sstream>
@@ -37,11 +38,8 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-namespace identifier
-{
+namespace drizzled {
+namespace identifier {
 
 extern string drizzle_tmpdir;
 
@@ -63,8 +61,7 @@ static size_t build_schema_filename(string &path, const string &db)
 }
 
 Schema::Schema(const std::string &db_arg) :
-  db(db_arg),
-  db_path("")
+  db(db_arg)
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -83,11 +80,6 @@ Schema::Schema(const std::string &db_arg) :
   }
 }
 
-void Schema::getSQLPath(std::string &arg) const
-{
-  arg= db;
-}
-
 const std::string &Schema::getPath() const
 {
   return db_path;
@@ -98,7 +90,7 @@ bool Schema::compare(const std::string &arg) const
   return boost::iequals(arg, db);
 }
 
-bool Schema::compare(Schema::const_reference arg) const
+bool Schema::compare(const Schema& arg) const
 {
   return boost::iequals(arg.getSchemaName(), db);
 }
@@ -134,7 +126,7 @@ bool Schema::isValid() const
     }
 
     {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+      const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
       int well_formed_error;
       uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
@@ -164,15 +156,7 @@ const std::string &Schema::getCatalogName() const
 
 std::ostream& operator<<(std::ostream& output, const Schema&identifier)
 {
-  output << "identifier::Schema:(";
-  output <<  catalog::local_identifier();
-  output << ", ";
-  output <<  identifier.getSchemaName().c_str();
-  output << ", ";
-  output << identifier.getPath().c_str();
-  output << ")";
-
-  return output;  // for multiple << operators.
+  return output << "identifier::Schema:(" <<  catalog::local_identifier() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
 }
 
 } /* namespace identifier */

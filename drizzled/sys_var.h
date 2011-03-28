@@ -22,6 +22,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/set_var.h>
 #include <drizzled/show_type.h>
@@ -33,11 +34,10 @@
 
 namespace drizzled {
 
-class Session;
 class sys_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
-typedef struct st_typelib TYPELIB;
+class charset_info_st;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -1030,12 +1030,12 @@ public:
 
 class DRIZZLED_API sys_var_collation_sv :public sys_var_collation
 {
-  const CHARSET_INFO *drizzle_system_variables::*offset;
-  const CHARSET_INFO **global_default;
+  const charset_info_st *drizzle_system_variables::*offset;
+  const charset_info_st **global_default;
 public:
   sys_var_collation_sv(const char *name_arg,
-                       const CHARSET_INFO *drizzle_system_variables::*offset_arg,
-                       const CHARSET_INFO **global_default_arg)
+                       const charset_info_st *drizzle_system_variables::*offset_arg,
+                       const charset_info_st **global_default_arg)
     :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
   {
@@ -1134,7 +1134,7 @@ void add_sys_var_to_list(sys_var *var, struct option *long_options);
 void add_sys_var_to_list(sys_var *var);
 sys_var *find_sys_var(const std::string &name);
 extern sys_var_session_bit sys_autocommit;
-const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
+const charset_info_st *get_old_charset_by_name(const char *old_name);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 

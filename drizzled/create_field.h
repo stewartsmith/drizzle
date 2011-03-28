@@ -21,10 +21,7 @@
 
 #include <drizzled/field.h>
 
-namespace drizzled
-{
-class Item;
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 /**
  * Class representing a field in a CREATE TABLE statement.
@@ -64,7 +61,7 @@ public:
   Field::utype unireg_check; /**< See Field::unireg_check */
   TYPELIB *interval; /**< Which interval to use (ENUM types..) */
   List<String> interval_list;
-  const CHARSET_INFO *charset; /**< Character set for the column -- @TODO should be deleted */
+  const charset_info_st *charset; /**< Character set for the column -- @TODO should be deleted */
   Field *field; // For alter table
 
   uint8_t interval_id;	// For rea_create_table
@@ -123,7 +120,7 @@ public:
             LEX_STRING *comment,
             char *change,
             List<String> *interval_list,
-            const CHARSET_INFO * const cs,
+            const charset_info_st * const cs,
             uint32_t uint_geom_type,
             enum column_format_type column_format);
 

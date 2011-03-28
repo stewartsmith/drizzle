@@ -56,7 +56,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              identifier::Schema::const_reference schema)= 0;
+                              const identifier::Schema& schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -67,8 +67,8 @@ public:
    *
    * @returns true if the user cannot access the table
    */
-  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table);
+  virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
+                             const drizzled::identifier::Table& table);
 
   /**
    * Should we restrict the current user's access to see this process?
@@ -83,17 +83,17 @@ public:
                                const drizzled::identifier::User &session_ctx);
 
   /** Server API method for checking schema authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                           identifier::Schema::const_reference schema_identifier,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
+                           const identifier::Schema& schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
-                           drizzled::identifier::Table::const_reference table_identifier,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
+                           const drizzled::identifier::Table& table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
-  static bool isAuthorized(drizzled::identifier::User::const_reference user_ctx,
+  static bool isAuthorized(const drizzled::identifier::User& user_ctx,
                            const Session &session,
                            bool send_error= true);
 
@@ -101,7 +101,7 @@ public:
    * Server API helper method for applying authorization tests
    * to a set of schema names (for use in the context of getSchemaNames
    */
-  static void pruneSchemaNames(drizzled::identifier::User::const_reference user_ctx,
+  static void pruneSchemaNames(const drizzled::identifier::User& user_ctx,
                                identifier::Schema::vector &set_of_schemas);
   
   /**
@@ -112,8 +112,8 @@ public:
 
 };
 
-inline bool Authorization::restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                                         drizzled::identifier::Table::const_reference table)
+inline bool Authorization::restrictTable(const drizzled::identifier::User& user_ctx,
+                                         const drizzled::identifier::Table& table)
 {
   return restrictSchema(user_ctx, table);
 }

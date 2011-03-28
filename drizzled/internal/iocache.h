@@ -124,15 +124,6 @@ struct st_io_cache    /* Used when cacheing files */
     somewhere else
   */
   bool alloced_buffer;
-#ifdef HAVE_AIOWAIT
-  /*
-    As inidicated by ifdef, this is for async I/O, which is not currently
-    used (because it's not reliable on all systems)
-  */
-  uint32_t inited;
-  my_off_t aio_read_pos;
-  my_aio_result aio_result;
-#endif
 
   st_io_cache() :
     pos_in_file(0),
@@ -164,12 +155,6 @@ struct st_io_cache    /* Used when cacheing files */
     read_length(0),
     myflags(0),
     alloced_buffer(0)
-#ifdef HAVE_AIOWAIT
-    ,
-    inited(0),
-    aio_read_pos(0),
-    aio_result(0)
-#endif
   { }
 
   ~st_io_cache()

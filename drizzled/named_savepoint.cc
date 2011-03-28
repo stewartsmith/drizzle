@@ -29,8 +29,7 @@ namespace drizzled
   {
     name.assign(other.getName());
     const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
-    resource_contexts.assign(other_resource_contexts.begin(),
-                             other_resource_contexts.end());
+    resource_contexts.assign(other_resource_contexts.begin(), other_resource_contexts.end());
     if (other.getTransactionMessage() != NULL)
     {
       transaction_message= new message::Transaction(*other.getTransactionMessage());

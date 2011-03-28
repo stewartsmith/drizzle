@@ -52,14 +52,14 @@ private:
 
 } /* namespace constants */
 
-identifier::Schema::const_reference data_dictionary()
+const identifier::Schema& data_dictionary()
 {
   static drizzled::identifier::Schema _tmp("DATA_DICTIONARY");
 
   return _tmp;
 }
 
-identifier::Schema::const_reference information_schema()
+const identifier::Schema& information_schema()
 {
   static drizzled::identifier::Schema _tmp("INFORMATION_SCHEMA");
 
