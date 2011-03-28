@@ -356,7 +356,7 @@ public:
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
-  static const CHARSET_INFO *getSchemaCollation(const drizzled::identifier::Schema &identifier);
+  static const charset_info_st *getSchemaCollation(const drizzled::identifier::Schema &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(Session &session,
                          const identifier::Schema& identifier,

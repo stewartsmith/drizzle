@@ -73,7 +73,7 @@ bool Catalog::isValid() const
     || _name.size() > NAME_LEN
     || _name.at(_name.length() -1 ) == ' ')
     return false;
-  const CHARSET_INFO& cs= my_charset_utf8mb4_general_ci;
+  const charset_info_st& cs= my_charset_utf8mb4_general_ci;
   int well_formed_error;
   uint32_t res= cs.cset->well_formed_len(&cs, _name.c_str(), _name.c_str() + _name.length(), NAME_CHAR_LEN, &well_formed_error);
   if (well_formed_error)

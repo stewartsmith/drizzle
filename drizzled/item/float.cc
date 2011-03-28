@@ -30,7 +30,7 @@
 namespace drizzled
 {
 
-extern const CHARSET_INFO *system_charset_info;
+extern const charset_info_st *system_charset_info;
 
 static uint32_t nr_of_decimals(const char *str, const char *end)
 {
@@ -154,7 +154,7 @@ bool Item_float::eq(const Item *arg, bool) const
   return false;
 }
 
-Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const)
+Item *Item_static_float_func::safe_charset_converter(const charset_info_st * const)
 {
   Item_string *conv;
   char buf[64];

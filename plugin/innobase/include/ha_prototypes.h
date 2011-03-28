@@ -32,7 +32,7 @@ namespace drizzled { class Session; }
 
 #include "trx0types.h"
 #if !defined(BUILD_DRIZZLE)
-# include "m_ctype.h" /* CHARSET_INFO */
+# include "m_ctype.h" /* charset_info_st */
 
 /*********************************************************************//**
 Wrapper around MySQL's copy_and_convert function.

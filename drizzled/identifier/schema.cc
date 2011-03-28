@@ -125,7 +125,7 @@ bool Schema::isValid() const
     }
 
     {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+      const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
       int well_formed_error;
       uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),

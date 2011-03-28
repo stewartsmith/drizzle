@@ -825,7 +825,7 @@ void SortParam::make_sortkey(unsigned char *to, unsigned char *ref_pos)
       switch (sort_field->result_type) {
       case STRING_RESULT:
         {
-          const CHARSET_INFO * const cs=item->collation.collation;
+          const charset_info_st * const cs=item->collation.collation;
           char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
           int diff;
           uint32_t sort_field_length;
@@ -1477,7 +1477,7 @@ static uint32_t suffix_length(uint32_t string_length)
 uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *multi_byte_charset)
 {
   uint32_t length;
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
   *multi_byte_charset= 0;
 
   length=0;

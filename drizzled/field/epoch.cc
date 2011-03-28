@@ -156,7 +156,7 @@ timestamp_auto_set_type Epoch::get_auto_set_type() const
 
 int Epoch::store(const char *from,
                  uint32_t len,
-                 const CHARSET_INFO * const )
+                 const charset_info_st * const )
 {
   Timestamp temporal;
 

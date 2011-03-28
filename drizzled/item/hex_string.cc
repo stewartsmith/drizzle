@@ -139,7 +139,7 @@ bool Item_hex_string::eq(const Item *arg, bool binary_cmp) const
   return false;
 }
 
-Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_hex_string::safe_charset_converter(const charset_info_st * const tocs)
 {
   Item_string *conv;
   String tmp, *str= val_str(&tmp);

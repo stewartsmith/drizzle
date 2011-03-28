@@ -397,7 +397,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   unsigned char c,sep;
   bool found_escape= false;
-  const CHARSET_INFO * const cs= lip->m_session->charset();
+  const charset_info_st * const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
   sep= lip->yyGetLast();                        // String should end with this
@@ -679,7 +679,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
   LEX *lex= &session->lex();
-  const CHARSET_INFO * const cs= session->charset();
+  const charset_info_st * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
 
@@ -1303,7 +1303,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   }
 }
 
-void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
+void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str)
 {
   /*
     TODO:

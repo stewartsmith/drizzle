@@ -68,7 +68,7 @@ class user_var_entry
   DTCollation collation;
 
   void update_hash(bool set_null, void *ptr, uint32_t length,
-                   Item_result type, const CHARSET_INFO * const cs, Derivation dv,
+                   Item_result type, const charset_info_st * const cs, Derivation dv,
                    bool unsigned_arg);
 };
 

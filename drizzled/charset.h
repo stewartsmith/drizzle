@@ -27,35 +27,35 @@
 namespace drizzled
 {
 
-typedef struct charset_info_st CHARSET_INFO;
+struct charset_info_st;
 
-extern DRIZZLED_API CHARSET_INFO *all_charsets[256];
-extern CHARSET_INFO compiled_charsets[];
+extern DRIZZLED_API charset_info_st *all_charsets[256];
+extern charset_info_st compiled_charsets[];
 
 extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
 extern uint32_t get_collation_number(const char *name);
 extern const char *get_charset_name(uint32_t cs_number);
 
-DRIZZLED_API const CHARSET_INFO *get_charset(uint32_t cs_number);
-DRIZZLED_API const CHARSET_INFO *get_charset_by_name(const char *cs_name);
-DRIZZLED_API const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
+DRIZZLED_API const charset_info_st *get_charset(uint32_t cs_number);
+DRIZZLED_API const charset_info_st *get_charset_by_name(const char *cs_name);
+DRIZZLED_API const charset_info_st *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
 
 extern bool resolve_charset(const char *cs_name,
-			    const CHARSET_INFO *default_cs,
-			    const CHARSET_INFO **cs);
+			    const charset_info_st *default_cs,
+			    const charset_info_st **cs);
 extern bool resolve_collation(const char *cl_name,
-			     const CHARSET_INFO *default_cl,
-			     const CHARSET_INFO **cl);
+			     const charset_info_st *default_cl,
+			     const charset_info_st **cl);
 
 extern void free_charsets(void);
 extern char *get_charsets_dir(char *buf);
-extern bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2);
+extern bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2);
 extern bool init_compiled_charsets(myf flags);
-extern void add_compiled_collation(CHARSET_INFO *cs);
-extern size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
+extern void add_compiled_collation(charset_info_st *cs);
+extern size_t escape_string_for_drizzle(const charset_info_st *charset_info,
 					char *to, size_t to_length,
 					const char *from, size_t length);
-extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
+extern size_t escape_quotes_for_drizzle(const charset_info_st *charset_info,
 					char *to, size_t to_length,
 					const char *from, size_t length);
 

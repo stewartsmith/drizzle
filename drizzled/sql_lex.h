@@ -843,7 +843,7 @@ public:
   unsigned char* yacc_yyss, *yacc_yyvs;
   /* The owning Session of this LEX */
   Session *session;
-  const CHARSET_INFO *charset;
+  const charset_info_st *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
   TableList *leaf_tables_insert;
@@ -1049,7 +1049,7 @@ private:
 };
 
 extern void lex_start(Session *session);
-extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
+extern void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 bool check_for_sql_keyword(drizzled::st_lex_symbol const&);

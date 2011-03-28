@@ -39,12 +39,12 @@ static vector<unsigned char*> memory_vector;
 
     - Initializing charset related structures
     - Loading dynamic charsets
-    - Searching for a proper CHARSET_INFO
+    - Searching for a proper charset_info_st
       using charset name, collation name or collation ID
     - Setting server default character set
 */
 
-bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
+bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -53,7 +53,7 @@ bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
 static uint
 get_collation_number_internal(const char *name)
 {
-  for (CHARSET_INFO **cs= all_charsets;
+  for (charset_info_st **cs= all_charsets;
        cs < all_charsets+array_elements(all_charsets)-1;
        cs++)
   {
@@ -71,7 +71,7 @@ static unsigned char *cs_alloc(size_t size)
   return memory_vector.back();
 }
 
-static bool init_state_maps(CHARSET_INFO *cs)
+static bool init_state_maps(charset_info_st *cs)
 {
   if (!(cs->state_map= cs_alloc(256)))
     return 1;
@@ -129,10 +129,10 @@ static bool init_state_maps(CHARSET_INFO *cs)
 
 static bool charset_initialized= false;
 
-DRIZZLED_API CHARSET_INFO *all_charsets[256];
-const DRIZZLED_API CHARSET_INFO *default_charset_info = &my_charset_utf8_general_ci;
+DRIZZLED_API charset_info_st *all_charsets[256];
+const DRIZZLED_API charset_info_st *default_charset_info = &my_charset_utf8_general_ci;
 
-void add_compiled_collation(CHARSET_INFO * cs)
+void add_compiled_collation(charset_info_st * cs)
 {
   all_charsets[cs->number]= cs;
   cs->state|= MY_CS_AVAILABLE;
@@ -147,7 +147,7 @@ static bool init_available_charsets(myf myflags)
   */
   if (charset_initialized == false)
   {
-    CHARSET_INFO **cs;
+    charset_info_st **cs;
     memset(&all_charsets, 0, sizeof(all_charsets));
     init_compiled_charsets(myflags);
 
@@ -193,7 +193,7 @@ uint32_t get_collation_number(const char *name)
 
 uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
-  CHARSET_INFO **cs;
+  charset_info_st **cs;
   init_available_charsets(MYF(0));
 
   for (cs= all_charsets;
@@ -211,7 +211,7 @@ const char *get_charset_name(uint32_t charset_number)
 {
   init_available_charsets(MYF(0));
 
-  const CHARSET_INFO *cs= all_charsets[charset_number];
+  const charset_info_st *cs= all_charsets[charset_number];
   if (cs && (cs->number == charset_number) && cs->name )
     return cs->name;
 
@@ -219,9 +219,9 @@ const char *get_charset_name(uint32_t charset_number)
 }
 
 
-static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
+static const charset_info_st *get_internal_charset(uint32_t cs_number)
 {
-  CHARSET_INFO *cs;
+  charset_info_st *cs;
   /*
     To make things thread safe we are not allowing other threads to interfere
     while we may changing the cs_info_table
@@ -247,9 +247,9 @@ static const CHARSET_INFO *get_internal_charset(uint32_t cs_number)
 }
 
 
-const CHARSET_INFO *get_charset(uint32_t cs_number)
+const charset_info_st *get_charset(uint32_t cs_number)
 {
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
   if (cs_number == default_charset_info->number)
     return default_charset_info;
 
@@ -263,10 +263,10 @@ const CHARSET_INFO *get_charset(uint32_t cs_number)
   return cs;
 }
 
-const CHARSET_INFO *get_charset_by_name(const char *cs_name)
+const charset_info_st *get_charset_by_name(const char *cs_name)
 {
   uint32_t cs_number;
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
   cs_number= get_collation_number(cs_name);
@@ -276,10 +276,10 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name)
 }
 
 
-const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags)
+const charset_info_st *get_charset_by_csname(const char *cs_name, uint32_t cs_flags)
 {
   uint32_t cs_number;
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -315,7 +315,7 @@ const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags
     >=0         The length of the escaped string
 */
 
-size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
+size_t escape_quotes_for_drizzle(const charset_info_st *charset_info,
                                  char *to, size_t to_length,
                                  const char *from, size_t length)
 {

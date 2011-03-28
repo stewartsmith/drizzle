@@ -27,7 +27,7 @@ namespace drizzled
 {
 
 Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
-                           const CHARSET_INFO * const charset)
+                           const charset_info_st * const charset)
 {
   decimal_value.store(E_DEC_FATAL_ERROR, str_arg, length, charset);
   name= (char*) str_arg;

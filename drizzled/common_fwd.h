@@ -91,7 +91,6 @@ namespace util
 }
 
 typedef class Item COND;
-typedef struct charset_info_st CHARSET_INFO;
 typedef struct my_locale_st MY_LOCALE;
 typedef struct system_status_var system_status_var;
 
@@ -101,8 +100,8 @@ class AlterInfo;
 class Arg_comparator;
 class CachedDirectory;
 class CopyField;
-class Create_func;
 class CreateField;
+class Create_func;
 class Date;
 class DateTime;
 class Diagnostics_area;
@@ -133,27 +132,30 @@ class ResourceContext;
 class SecurityContext;
 class Select_Lex;
 class Select_Lex_Unit;
-class select_result;
 class SendField;
 class Session;
 class SortField;
 class SortParam;
 class String;
-class sys_var_str;
-class system_status_var;
+class TYPELIB;
 class Table;
-class Table_ident;
 class TableList;
 class TableShare;
 class TableShareInstance;
+class Table_ident;
 class Time;
 class Time_zone;
-class TYPELIB;
+class select_result;
+class sys_var_str;
+class system_status_var;
 class user_var_entry;
 class var;
+
 struct CacheField;
 struct Ha_data;
+struct charset_info_st;
 struct option;
+
 struct Order;
 
 typedef Item COND;

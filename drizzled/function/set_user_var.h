@@ -59,7 +59,7 @@ public:
   String *str_result(String *str);
   type::Decimal *val_decimal_result(type::Decimal *);
   void update_hash(void *ptr, uint32_t length, enum Item_result type,
-  		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
+  		   const charset_info_st * const cs, Derivation dv, bool unsigned_arg);
   bool send(plugin::Client *client, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
