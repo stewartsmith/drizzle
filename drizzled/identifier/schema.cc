@@ -155,7 +155,7 @@ const std::string &Schema::getCatalogName() const
 
 std::ostream& operator<<(std::ostream& output, const Schema&identifier)
 {
-  return output << "identifier::Schema:(" <<  catalog::local_identifier() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
+  return output << "identifier::Schema:(" <<  drizzled::catalog::local_identifier() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
 }
 
 } /* namespace identifier */

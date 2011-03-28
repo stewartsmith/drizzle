@@ -230,7 +230,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/identifier/constants/schema.h \
 			      drizzled/identifier/constants/table.h \
 			      drizzled/identifier/schema.h \
-			      drizzled/identifier/session.h \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \

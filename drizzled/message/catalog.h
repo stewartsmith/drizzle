@@ -21,13 +21,10 @@
 #pragma once
 
 #include <boost/shared_ptr.hpp>
+#include <drizzled/common_fwd.h>
 #include <drizzled/message/catalog.pb.h>
 
 namespace drizzled {
-
-namespace identifier {
-class Catalog;
-} /* namespace identifier */
 
 namespace message {
 namespace catalog {
