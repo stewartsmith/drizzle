@@ -41,7 +41,6 @@ char curr_dir[FN_REFLEN]= {0},
      home_dir_buff[FN_REFLEN]= {0};
 DRIZZLED_API int my_umask=0664;
 int my_umask_dir=0777;
-uint32_t   my_file_limit= MY_NFILE;
 
 	/* From mf_brkhant */
 int my_dont_interrupt=0;
