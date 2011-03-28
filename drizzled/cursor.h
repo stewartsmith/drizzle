@@ -36,28 +36,11 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
-
-class AlterInfo;
-class CreateField;
-class ForeignKeyInfo;
-class Item;
-class Item_ident;
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
-class String;
-class Table;
-class TableList;
-class TableShare;
-class select_result;
-class sys_var_str;
-struct Order;
 
 typedef List<Item> List_item;
 extern KEY_CREATE_INFO default_key_create_info;

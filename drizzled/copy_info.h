@@ -23,10 +23,7 @@
 #include <drizzled/base.h>
 #include <drizzled/sql_list.h>
 
-namespace drizzled
-{
-
-class Item;
+namespace drizzled {
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
