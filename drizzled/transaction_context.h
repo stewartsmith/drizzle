@@ -20,10 +20,9 @@
 #pragma once
 
 #include <vector>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
-class ResourceContext;
+namespace drizzled {
 
 class TransactionContext
 {

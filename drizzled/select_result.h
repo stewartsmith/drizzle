@@ -22,11 +22,7 @@
 
 #include <drizzled/current_session.h>
 
-namespace drizzled
-{
-
-class Join;
-class Select_Lex_Unit;
+namespace drizzled {
 
 class select_result :public memory::SqlAlloc {
 protected:

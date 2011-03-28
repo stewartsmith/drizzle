@@ -35,10 +35,6 @@
 
 namespace drizzled {
 
-class Session;
-class Item;
-struct charset_info_st;
-
 /*************************************************************************
   Plugin API. Common for all plugin types.
 */

@@ -19,20 +19,11 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
+
 namespace drizzled {
 
-namespace internal
-{
-  typedef struct st_io_cache IO_CACHE;
-}
-
-namespace optimizer
-{
-  class SqlSelect;
-}
-
-class Cursor;
-class JoinTable;
+class Cursor; // todo: common fwd
 
 struct ReadRecord {			/* Parameter to read_record */
   Table *table;			/* Head-form */

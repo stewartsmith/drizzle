@@ -111,19 +111,6 @@
 #include <drizzled/statement/update.h>
 
 namespace drizzled {
-
-class Session;
-class Table_ident;
-class Item;
-class Item_num;
-
-namespace item
-{
-class Boolean;
-class True;
-class False;
-}
-
 namespace parser {
 
 Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal, Item *expr);

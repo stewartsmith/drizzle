@@ -21,12 +21,7 @@
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-class Field;
-class TableList;
-class Item;
+namespace drizzled {
 
 /*
   Column reference of a NATURAL/USING join. Since column references in

@@ -24,12 +24,6 @@
 
 namespace drizzled {
 
-namespace plugin { class StorageEngine; }
-
-typedef uint64_t query_id_t;
-
-class CachedDirectory;
-
 /**
   Class that holds information about tables which were opened and locked
   by the thread. It is also used to save/restore this information in

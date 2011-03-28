@@ -176,6 +176,7 @@ class Item;
 class Item_bool_func2;
 class Item_equal;
 class Item_field;
+class Item_func_set_user_var;
 class Item_ident;
 class Item_in_subselect;
 class Item_row;
@@ -204,6 +205,7 @@ class Table_ident;
 class Time;
 class Time_zone;
 class select_result;
+class sys_var;
 class sys_var_str;
 class system_status_var;
 class user_var_entry;
@@ -217,6 +219,7 @@ struct option;
 struct Order;
 
 typedef Item COND;
+typedef uint64_t query_id_t;
 typedef int64_t session_id_t;
 typedef uint64_t my_xid;
 

@@ -26,10 +26,7 @@
 
 #include <vector>
 
-namespace drizzled
-{
-
-class var;
+namespace drizzled {
 
 class select_dumpvar :public select_result_interceptor {
   ha_rows row_count;
