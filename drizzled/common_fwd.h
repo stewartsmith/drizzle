@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <vector>
+
 namespace drizzled {
 
 namespace catalog
@@ -31,11 +34,35 @@ namespace internal
   struct st_my_thread_var;
 }
 
-namespace identifier 
-{ 
+namespace identifier
+{
+  class Catalog;
   class Schema;
   class Table;
   class User;
+
+  typedef int64_t Session;
+
+  namespace catalog
+  {
+    typedef std::vector<Catalog> vector;
+  }
+
+  namespace schema
+  {
+    typedef std::vector<Schema> vector;
+  }
+
+  namespace table
+  {
+    typedef std::vector<Table> vector;
+  }
+
+  namespace user
+  {
+    typedef boost::shared_ptr<const User> ptr;
+    typedef boost::shared_ptr<User> mptr;
+  }
 }
 
 namespace item
@@ -176,6 +203,7 @@ struct option;
 struct Order;
 
 typedef Item COND;
+typedef int64_t session_id_t;
 typedef uint64_t my_xid;
 
 } // namespace drizzled
