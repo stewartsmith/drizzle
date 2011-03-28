@@ -33,17 +33,8 @@
 
 namespace drizzled {
 
-class Session;
-class Table;
-class SortField;
-
-namespace optimizer {
-class SqlSelect;
-}
-
-class SortParam;
-
-class FileSort {
+class FileSort 
+{
   Session &_session;
 
   uint32_t sortlength(SortField *sortorder, uint32_t s_length, bool *multi_byte_charset);

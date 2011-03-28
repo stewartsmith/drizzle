@@ -45,20 +45,11 @@ typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 typedef List<Item> List_item;
 extern KEY_CREATE_INFO default_key_create_info;
 
-/* Forward declaration for condition pushdown to storage engine */
-typedef class Item COND;
-
-typedef struct system_status_var system_status_var;
-
-namespace optimizer { class CostVector; }
-namespace plugin { class StorageEngine; }
-
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
 */
-template<class T>
-inline key_part_map make_keypart_map(T a)
+inline key_part_map make_keypart_map(int a)
 {
   return (((key_part_map)2 << a) - 1);
 }
@@ -67,8 +58,7 @@ inline key_part_map make_keypart_map(T a)
   bitmap with first N bits set
   (keypart_map for a key prefix of [0..N-1] keyparts)
 */
-template<class T>
-inline key_part_map make_prev_keypart_map(T a)
+inline key_part_map make_prev_keypart_map(int a)
 {
   return (((key_part_map)1 << a) - 1);
 }
@@ -621,7 +611,6 @@ extern const char *ha_row_type[];
 /* basic stuff */
 void ha_init_errors(void);
 
-class SortField;
 SortField *make_unireg_sortorder(Order *order, uint32_t *length,
                                  SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,

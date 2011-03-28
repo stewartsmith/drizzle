@@ -22,13 +22,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace sql
-{
-  class ResultSet;
-}
+namespace drizzled {
 
 class DRIZZLED_API Execute
 {

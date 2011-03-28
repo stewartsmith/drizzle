@@ -27,9 +27,6 @@
 
 namespace drizzled {
 
-class Table;
-class TableList;
-
 /*
   Iterator over the fields of a generic table reference.
 */

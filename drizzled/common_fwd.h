@@ -119,6 +119,11 @@ namespace session
   class Transactions;
 }
 
+namespace sql
+{
+  class ResultSet;
+}
+
 namespace table 
 { 
   class Placeholder; 

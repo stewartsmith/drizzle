@@ -19,8 +19,9 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
+
+namespace drizzled {
 
 /** The states in which a nested loop join can be in */
 enum enum_nested_loop_state
@@ -32,9 +33,6 @@ enum enum_nested_loop_state
   NESTED_LOOP_QUERY_LIMIT= 3,
   NESTED_LOOP_CURSOR_LIMIT= 4
 };
-
-class Join;
-class JoinTable;
 
 typedef enum_nested_loop_state (*Next_select_func)(Join *, JoinTable *, bool);
 typedef int (*Read_record_func)(JoinTable *tab);
