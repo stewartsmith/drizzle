@@ -40,7 +40,6 @@ drizzled_internal_libinternal_la_LIBADD= \
 
 drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/bmove_upp.cc \
-					  drizzled/internal/checksum.cc \
 					  drizzled/internal/default.cc \
 					  drizzled/internal/int2str.cc \
 					  drizzled/internal/iocache.cc \

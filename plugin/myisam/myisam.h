@@ -120,8 +120,13 @@ namespace drizzled {
                             (_to_)= (mi_get_mask_all_keys_active(_maxkeys_) & \
                                      (_from_))
 
-	/* Param to/from mi_status */
+namespace drizzled {
+  namespace internal {
+    typedef uint32_t ha_checksum;
+  }
+}
 
+	/* Param to/from mi_status */
 typedef struct st_mi_isaminfo		/* Struct from h_info */
 {
   drizzled::ha_rows records;			/* Records in database */

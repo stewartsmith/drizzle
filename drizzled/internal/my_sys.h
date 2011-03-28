@@ -225,8 +225,6 @@ public:
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)
 
-typedef uint32_t ha_checksum;
-
 /* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
@@ -315,8 +313,6 @@ extern int load_defaults(const char *conf_file, const char **groups,
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
-extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
-                               size_t count);
 extern void my_sleep(uint32_t m_seconds);
 
 } /* namespace internal */
