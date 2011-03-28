@@ -259,11 +259,6 @@ void *memory::Root::multi_alloc_root(int unused, ...)
   return((void*) start);
 }
 
-static void trash_mem(memory::internal::UsedMemory *)
-{
-  TRASH(((char*)(x) + (x->size - x->left)), x->left);
-}
-
 /**
  * @brief
  * Mark all data in blocks free for reusage 
@@ -278,7 +273,6 @@ void memory::Root::mark_blocks_free()
   for (next= free; next; next= *(last= &next->next))
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    trash_mem(next);
   }
 
   /* Combine the free and the used list */
@@ -288,7 +282,6 @@ void memory::Root::mark_blocks_free()
   for (; next; next= next->next)
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    trash_mem(next);
   }
 
   /* Now everything is set; Indicate that nothing is used anymore */
@@ -341,7 +334,6 @@ void memory::Root::free_root(myf MyFlags)
   {
     this->free=this->pre_alloc;
     this->free->left=this->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    trash_mem(this->pre_alloc);
     this->free->next=0;
   }
   this->block_num= 4;

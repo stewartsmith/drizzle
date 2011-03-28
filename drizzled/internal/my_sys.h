@@ -129,8 +129,6 @@ namespace internal
 
 typedef uint64_t my_off_t;
 
-#define TRASH(A,B) /* nothing */
-
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 extern uint32_t my_file_limit;
