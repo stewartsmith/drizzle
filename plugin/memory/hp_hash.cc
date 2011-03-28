@@ -16,7 +16,7 @@
 /* The hash functions used for saveing keys */
 
 #include "heap_priv.h"
-
+#include <drizzled/error_t.h>
 #include <drizzled/charset_info.h>
 #include <drizzled/util/test.h>
 

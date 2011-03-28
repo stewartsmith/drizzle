@@ -16,6 +16,7 @@
 /* Update current record in heap-database */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
 
 using namespace drizzled;
 
