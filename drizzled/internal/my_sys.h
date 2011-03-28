@@ -305,9 +305,6 @@ DRIZZLED_API void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t
 DRIZZLED_API my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
-extern int get_defaults_options(int argc, char **argv,
-                                char **defaults, char **extra_defaults,
-                                char **group_suffix);
 extern int load_defaults(const char *conf_file, const char **groups,
 			 int *argc, char ***argv);
 extern void free_defaults(char **argv);

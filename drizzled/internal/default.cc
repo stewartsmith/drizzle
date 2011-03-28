@@ -74,6 +74,11 @@ const char *default_directories[MAX_DEFAULT_DIRS + 1];
 
 static const char *f_extensions[]= { ".cnf", 0 };
 
+static int get_defaults_options(int argc, char **argv,
+                                char **defaults,
+                                char **extra_defaults,
+                                char **group_suffix);
+
 int handle_default_option(void *in_ctx, const char *group_name,
                           const char *option);
 
@@ -321,10 +326,10 @@ int handle_default_option(void *in_ctx, const char *group_name,
       items of argv array, or to NULL if there are no such options
 */
 
-int get_defaults_options(int argc, char **argv,
-                         char **defaults,
-                         char **extra_defaults,
-                         char **group_suffix)
+static int get_defaults_options(int argc, char **argv,
+                                char **defaults,
+                                char **extra_defaults,
+                                char **group_suffix)
 {
   int org_argc= argc, prev_argc= 0;
   *defaults= *extra_defaults= *group_suffix= 0;
