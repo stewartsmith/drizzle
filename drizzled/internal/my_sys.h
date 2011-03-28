@@ -29,6 +29,7 @@
 #endif
 
 #include <errno.h>
+#include <sys/types.h>
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/my_pthread.h>
