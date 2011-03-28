@@ -253,7 +253,6 @@ DRIZZLED_API int my_rename(const char *from, const char *to,myf MyFlags);
 DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer,
                              size_t Count, myf MyFlags);
 
-extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
 
 DRIZZLED_API int my_sync(int fd, myf my_flags);
