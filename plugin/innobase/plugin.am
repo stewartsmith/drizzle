@@ -227,7 +227,13 @@ bin_PROGRAMS+= plugin/innobase/xtrabackup/xtrabackup
 endif
 
 plugin_innobase_xtrabackup_xtrabackup_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
-plugin_innobase_xtrabackup_xtrabackup_LDADD = ${LTLIBAIO} plugin/innobase/libinnobase.la $(BOOST_LIBS) drizzled/internal/libinternal.la drizzled/libcharset.la
+plugin_innobase_xtrabackup_xtrabackup_LDADD = \
+	plugin/innobase/libinnobase.la \
+	drizzled/internal/libinternal.la \
+	drizzled/libcharset.la \
+	$(BOOST_LIBS) \
+	${LTLIBAIO} \
+	$(LIBZ)
 
 plugin_innobase_xtrabackup_xtrabackup_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 
