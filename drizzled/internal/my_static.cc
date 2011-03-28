@@ -50,11 +50,6 @@ sigset_t my_signals;			/* signals blocked by mf_brkhant */
 	/* from mf_reccache.c */
 uint32_t my_default_record_cache_size=RECORD_CACHE_SIZE;
 
-	/* from soundex.c */
-				/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-				/* :::::::::::::::::::::::::: */
-const char *soundex_map=	  "01230120022455012623010202";
-
 	/* from safe_malloc */
 uint32_t sf_malloc_prehunc=0,		/* If you have problem with core- */
      sf_malloc_endhunc=0,		/* dump when malloc-message.... */
