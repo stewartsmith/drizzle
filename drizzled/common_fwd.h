@@ -17,7 +17,8 @@
 
 #pragma once
 
-#include <boost/smart_ptr/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+#include <string>
 #include <vector>
 
 namespace drizzled {
@@ -132,6 +133,13 @@ namespace type
 namespace util
 {
   class Storable;
+
+  namespace string
+  {
+    typedef boost::shared_ptr<const std::string> ptr;
+    typedef boost::shared_ptr<std::string> mptr;
+    typedef std::vector<std::string> vector;
+  }
 }
 
 typedef class Item COND;

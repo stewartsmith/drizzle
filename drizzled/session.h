@@ -273,12 +273,12 @@ public:
    */
   char *thread_stack;
 
-  identifier::User::const_shared_ptr user() const
+  identifier::user::ptr user() const
   {
-    return security_ctx ? security_ctx : identifier::User::const_shared_ptr();
+    return security_ctx ? security_ctx : identifier::user::ptr();
   }
 
-  void setUser(identifier::User::shared_ptr arg)
+  void setUser(identifier::user::mptr arg)
   {
     security_ctx= arg;
   }
@@ -1370,7 +1370,7 @@ private:
   bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
   rusage usage;
-  identifier::User::shared_ptr security_ctx;
+  identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
   plugin::Client *client;
   util::string::shared_ptr _schema;

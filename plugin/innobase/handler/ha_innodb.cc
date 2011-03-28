@@ -1178,7 +1178,7 @@ innobase_mysql_print_thd(
   uint  )   /*!< in: max query length to print, or 0 to
            use the default max length */
 {
-  drizzled::identifier::User::const_shared_ptr user_identifier(in_session->user());
+  drizzled::identifier::user::ptr user_identifier(in_session->user());
 
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",

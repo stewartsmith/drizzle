@@ -37,7 +37,7 @@ int64_t ReleaseLock::val_int()
   }
   null_value= false;
 
-  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+  drizzled::identifier::user::ptr user_identifier(getSession().user());
   drizzled::session_id_t id= getSession().getSessionId();
   locks::return_t result;
   {

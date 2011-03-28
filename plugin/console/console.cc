@@ -116,7 +116,7 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    identifier::User::shared_ptr user= identifier::User::make_shared();
+    identifier::user::mptr user= identifier::User::make_shared();
     user->setUser(username);
     session->setUser(user);
 

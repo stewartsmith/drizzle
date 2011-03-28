@@ -40,7 +40,7 @@ static void error_handler_func_stub(drizzled::error_t my_err, const char *str, m
 class AuthenticationTest : public ::testing::Test
 {
 public:
-  identifier::User::const_shared_ptr sctx;
+  identifier::user::ptr sctx;
   std::string passwd;
   AuthenticationStub stub1;
   AuthenticationStub stub2;

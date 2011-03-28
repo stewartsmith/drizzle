@@ -202,7 +202,7 @@ bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_
   
   // To make sure we hold the user structure we need to have a shred_ptr so
   // that we increase the count on the object.
-  drizzled::identifier::User::const_shared_ptr session_ctx= session.user();
+  drizzled::identifier::user::ptr session_ctx= session.user();
 
 
   /* Use find_if instead of foreach so that we can collect return codes */
