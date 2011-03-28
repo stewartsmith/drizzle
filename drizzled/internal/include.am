@@ -51,7 +51,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/mf_dirname.cc \
 					  drizzled/internal/mf_fn_ext.cc \
 					  drizzled/internal/mf_format.cc \
-					  drizzled/internal/mf_getdate.cc \
 					  drizzled/internal/mf_iocache.cc \
 					  drizzled/internal/mf_loadpath.cc \
 					  drizzled/internal/mf_pack.cc \

@@ -96,7 +96,6 @@ namespace internal
 #define MY_COPYTIME	64	/* my_redel() copys time */
 #define MY_DELETE_OLD	256	/* my_create_with_symlink() */
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
-#define MY_REDEL_MAKE_BACKUP 256
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
@@ -127,14 +126,6 @@ namespace internal
 	/* Internal error numbers (for assembler functions) */
 #define MY_ERRNO_EDOM		33
 #define MY_ERRNO_ERANGE		34
-
-	/* Bits for get_date timeflag */
-#define GETDATE_DATE_TIME	1
-#define GETDATE_SHORT_DATE	2
-#define GETDATE_HHMMSSTIME	4
-#define GETDATE_GMT		8
-#define GETDATE_FIXEDLENGTH	16
-
 
 typedef uint64_t my_off_t;
 
@@ -323,7 +314,6 @@ extern int wf_test(wild_file_pack *wf_pack,const char *name);
 extern void wf_end(wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
-extern void get_date(char * to,int timeflag,time_t use_time);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);

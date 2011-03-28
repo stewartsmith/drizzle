@@ -332,7 +332,6 @@ extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
 
 #define T_AUTO_INC              1
 #define T_AUTO_REPAIR           2              /* QQ to be removed */
-#define T_BACKUP_DATA           4
 #define T_CALC_CHECKSUM         8
 #define T_CHECK                 16             /* QQ to be removed */
 #define T_CHECK_ONLY_CHANGED    32             /* QQ to be removed */
