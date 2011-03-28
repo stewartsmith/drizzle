@@ -35,7 +35,6 @@
 #include <drizzled/internal/my_pthread.h>
 
 #include <stdarg.h>
-#include <drizzled/internal/aio_result.h>
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -174,10 +173,6 @@ public:
   uint	rc_length,read_length,reclength;
   my_off_t rc_record_pos,end_of_file;
   unsigned char *rc_buff,*rc_buff2,*rc_pos,*rc_end,*rc_request_pos;
-#ifdef HAVE_AIOWAIT
-  int	use_async_io;
-  my_aio_result aio_result;
-#endif
   enum cache_type type;
 
   record_cache():

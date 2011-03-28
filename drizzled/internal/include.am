@@ -18,7 +18,6 @@ noinst_LTLIBRARIES+= drizzled/internal/libinternal.la
 
 EXTRA_DIST+= drizzled/internal/CHARSET_INFO.txt
 noinst_HEADERS+= \
-		drizzled/internal/aio_result.h \
 		drizzled/internal/iocache.h \
 		drizzled/internal/m_string.h \
 		drizzled/internal/my_bit.h \
