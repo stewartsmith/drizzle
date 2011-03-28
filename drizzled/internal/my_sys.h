@@ -276,7 +276,6 @@ extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
 DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir,
                               const char *form, uint32_t flag);
-extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
