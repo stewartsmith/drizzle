@@ -81,6 +81,7 @@ namespace memory
 
 namespace message
 {
+  class AlterTable;
   class Resultset;
   class Schema;
   class Statement;
@@ -96,6 +97,7 @@ namespace plugin
 { 
   class Client;
   class EventObserverList;
+  class Function;
   class MonitoredInTransaction;
   class Scheduler;
   class StorageEngine;
@@ -122,6 +124,11 @@ namespace session
 namespace sql
 {
   class ResultSet;
+}
+
+namespace statement 
+{ 
+  class Statement; 
 }
 
 namespace table 
@@ -158,8 +165,10 @@ class AlterInfo;
 class Arg_comparator;
 class CachedDirectory;
 class CopyField;
+class CopyInfo;
 class CreateField;
 class Create_func;
+class Cursor;
 class Date;
 class DateTime;
 class Diagnostics_area;
@@ -167,6 +176,7 @@ class DrizzleLock;
 class DrizzleXid;
 class Field;
 class Field_blob;
+class file_exchange;
 class ForeignKeyInfo;
 class Hybrid_type;
 class Hybrid_type_traits;
@@ -176,6 +186,7 @@ class Item;
 class Item_bool_func2;
 class Item_equal;
 class Item_field;
+class Item_func;
 class Item_func_set_user_var;
 class Item_ident;
 class Item_in_subselect;

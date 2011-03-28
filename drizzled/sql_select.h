@@ -33,13 +33,7 @@
 
 #include <vector>
 
-namespace drizzled
-{
-
-class Item_func;
-class Select_Lex_Unit;
-class select_result;
-class st_dynamic_array;
+namespace drizzled {
 
 /**
  * @file API and Classes to use when handling where clause

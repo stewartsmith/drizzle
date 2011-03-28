@@ -27,10 +27,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class TableShare;
-class Name_resolution_context;
+namespace drizzled {
 
 void table_cache_free(void);
 bool table_cache_init(void);

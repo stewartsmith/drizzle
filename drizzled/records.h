@@ -23,8 +23,7 @@
 
 namespace drizzled {
 
-class Cursor; // todo: common fwd
-
+ 
 struct ReadRecord {			/* Parameter to read_record */
   Table *table;			/* Head-form */
   Cursor *cursor;

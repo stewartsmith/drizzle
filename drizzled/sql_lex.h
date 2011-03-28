@@ -35,14 +35,6 @@
 
 namespace drizzled {
 
-namespace plugin { class Function; }
-namespace statement { class Statement; }
-
-  namespace message
-  {
-    class AlterTable;
-  }
-
 class st_lex_symbol;
 class select_result_interceptor;
 
@@ -230,9 +222,6 @@ enum olap_type
     Base class for Select_Lex (Select_Lex) &
     Select_Lex_Unit (Select_Lex_Unit)
 */
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
 class Select_Lex_Node {
 protected:
   Select_Lex_Node *next, **prev,   /* neighbor list */
@@ -304,10 +293,6 @@ private:
    Select_Lex_Unit - unit of selects (UNION, INTERSECT, ...) group
    Select_Lexs
 */
-class Session;
-class select_result;
-class Join;
-class select_union;
 class Select_Lex_Unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;

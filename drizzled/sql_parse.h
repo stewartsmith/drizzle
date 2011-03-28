@@ -30,17 +30,7 @@
 #include <drizzled/error_t.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-class TableList;
-class Lex_input_stream;
-class Item;
-class LEX;
-class Table_ident;
-class Select_Lex;
-struct charset_info_st;
+namespace drizzled {
 
 DRIZZLED_API const std::string &getCommandName(const enum_server_command& command);
 
