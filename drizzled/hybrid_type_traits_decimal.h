@@ -21,16 +21,7 @@
 
 #include <drizzled/hybrid_type_traits.h>
 
-namespace drizzled
-{
-
-class Item;
-class Field;
-class Hybrid_type;
-namespace type {
-class Decimal;
-}
-class String;
+namespace drizzled {
 
 class Hybrid_type_traits_decimal: public Hybrid_type_traits
 {

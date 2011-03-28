@@ -21,8 +21,7 @@
 
 #include <drizzled/type/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*************************************************************************/
 /*
@@ -30,8 +29,6 @@ namespace drizzled
   (hybrid item is an item whose operand can be of any type, e.g. integer,
   real, decimal).
 */
-
-class Hybrid_type_traits;
 
 class Hybrid_type
 {

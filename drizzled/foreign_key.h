@@ -27,13 +27,7 @@
 #include <drizzled/cursor.h> /* for default_key_create_info */
 #include <drizzled/message/table.pb.h>
 
-namespace drizzled
-{
-
-class Item;
-class Table_ident;
-
-namespace memory { class Root; }
+namespace drizzled {
 
 void add_foreign_key_to_table_message(
     message::Table *table_message,

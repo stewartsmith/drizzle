@@ -35,15 +35,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/structs.h>
 
-namespace drizzled
-{
-
-struct charset_info_st;
-
-namespace plugin
-{
-class StorageEngine;
-}
+namespace drizzled {
 
 typedef struct st_ha_create_information
 {
