@@ -41,15 +41,7 @@
 namespace drizzled {
 
 class COND_EQUAL;
-class Field_blob;
-class Item;
-class Item_subselect;
-class SecurityContext;
-class Select_Lex;
-class Select_Lex_Unit;
-class TableList;
 namespace field { class Epoch; }
-namespace plugin { class StorageEngine; }
 
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
@@ -807,8 +799,6 @@ private:
     List<LEX_STRING> referenced_fields;
 };
 
-class TableList;
-
 #define JOIN_TYPE_LEFT  1
 #define JOIN_TYPE_RIGHT 2
 
@@ -823,9 +813,6 @@ uint32_t convert_month_to_period(uint32_t month);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-
-namespace optimizer { class SqlSelect; }
-
 void change_double_for_sort(double nr,unsigned char *to);
 int get_quick_record(optimizer::SqlSelect *select);
 

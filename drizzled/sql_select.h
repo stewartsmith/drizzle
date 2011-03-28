@@ -46,8 +46,6 @@ namespace drizzled {
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
 
-class Join;
-
 enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);

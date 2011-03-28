@@ -67,17 +67,11 @@
 #define DRIZZLE_YY_PART_YEAR  70
 
 #include <drizzled/calendar.h>
-
+#include <drizzled/common_fwd.h>
 #include <cassert>
 #include <ostream>
 
-/* Outside forward declarations */
-namespace type {
-class Decimal;
-}
-
-namespace drizzled
-{
+namespace drizzled {
 
 /* Forward declaration needed */
 class TemporalInterval;
@@ -196,11 +190,6 @@ public:
    */
   friend class TemporalFormat;
 };
-
-/* Forward declaration needed */
-class DateTime;
-class Timestamp;
-class Time;
 
 /**
  * Class representing temporal components in a valid

@@ -29,17 +29,8 @@
 
 namespace drizzled {
 
-class KeyInfo;
-class Session;
-class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
-class Table;
 typedef struct st_ha_create_information HA_CREATE_INFO;
-class AlterInfo;
-class Cursor;
-
-namespace message { class Table; }
-namespace identifier { class Table; }
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);

@@ -27,13 +27,6 @@
 #include <drizzled/show.h>
 
 namespace drizzled {
-
-class Session;
-class TableList;
-class Item;
-
-namespace session { class Transactions; }
-
 namespace statement {
 
 /**

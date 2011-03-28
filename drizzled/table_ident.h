@@ -26,8 +26,6 @@
 
 namespace drizzled {
 
-class Select_Lex_Unit;
-
 extern char empty_c_string[1];
 extern char internal_table_name[2];
 

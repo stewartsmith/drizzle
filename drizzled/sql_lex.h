@@ -41,8 +41,6 @@ class select_result_interceptor;
 /* YACC and LEX Definitions */
 
 /* These may not be declared yet */
-class Table_ident;
-class file_exchange;
 class Lex_Column;
 class Item_outer_ref;
 

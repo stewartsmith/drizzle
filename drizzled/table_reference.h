@@ -30,11 +30,7 @@
 #include <drizzled/base.h>
 #include <drizzled/definitions.h>
 
-namespace drizzled
-{
-
-class StoredKey;
-class Item;
+namespace drizzled {
 
 struct table_reference_st
 {
