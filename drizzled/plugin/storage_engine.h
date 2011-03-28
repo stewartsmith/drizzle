@@ -288,7 +288,7 @@ protected:
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     identifier::Table::vector &set_of_identifiers)= 0;
+                                     identifier::table::vector &set_of_identifiers)= 0;
 
   virtual bool doDoesTableExist(Session& session, const drizzled::identifier::Table &identifier);
 
@@ -346,13 +346,13 @@ public:
 
   static void getIdentifiers(Session &session,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::identifier::Table &identifier);
 
   // @note All schema methods defined here
-  static void getIdentifiers(Session &session, identifier::Schema::vector &schemas);
+  static void getIdentifiers(Session &session, identifier::schema::vector &schemas);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
@@ -365,7 +365,7 @@ public:
 
   // @note make private/protected
 protected:
-  virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
+  virtual void doGetSchemaIdentifiers(identifier::schema::vector&)
   { }
 
   virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)

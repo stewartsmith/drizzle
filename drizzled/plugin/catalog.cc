@@ -170,7 +170,7 @@ bool plugin::Catalog::exist(const identifier::Catalog& identifier)
   return false;
 }
 
-void plugin::Catalog::getIdentifiers(identifier::Catalog::vector &identifiers)
+void plugin::Catalog::getIdentifiers(identifier::catalog::vector &identifiers)
 {
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {

@@ -103,7 +103,7 @@ void Schema::startup(drizzled::Session &)
 {
 }
 
-void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
+void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
   {
@@ -341,6 +341,6 @@ bool Schema::readSchemaFile(std::string db_opt_path, drizzled::message::Schema &
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
-                                   drizzled::identifier::Table::vector&)
+                                   drizzled::identifier::table::vector&)
 {
 }

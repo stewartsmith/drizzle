@@ -53,7 +53,7 @@ protected:
 
   // Get Meta information
   virtual bool exist(const identifier::Catalog& identifier)= 0;
-  virtual void getIdentifiers(identifier::Catalog::vector &identifiers)= 0;
+  virtual void getIdentifiers(identifier::catalog::vector &identifiers)= 0;
   virtual message::catalog::shared_ptr getMessage(const identifier::Catalog&)= 0;
   virtual void getMessages(message::catalog::vector &messages)= 0;
 };

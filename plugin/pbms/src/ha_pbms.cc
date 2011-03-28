@@ -145,7 +145,7 @@ public:
 	
         void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
                                    const drizzled::identifier::Schema &schema,
-                                   drizzled::identifier::Table::vector &set_of_identifiers) 
+                                   drizzled::identifier::table::vector &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
 		

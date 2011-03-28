@@ -493,7 +493,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -522,7 +522,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            const drizzled::identifier::Schema &schema_identifier,
-                                           drizzled::identifier::Table::vector &set_of_identifiers)
+                                           drizzled::identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 

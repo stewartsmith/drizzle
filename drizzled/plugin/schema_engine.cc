@@ -37,11 +37,11 @@ namespace plugin
 class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>
 {
-  identifier::Schema::vector &schemas;
+  identifier::schema::vector &schemas;
 
 public:
 
-  AddSchemaNames(identifier::Schema::vector &of_names) :
+  AddSchemaNames(identifier::schema::vector &of_names) :
     schemas(of_names)
   {
   }
@@ -52,7 +52,7 @@ public:
   }
 };
 
-void StorageEngine::getIdentifiers(Session &session, identifier::Schema::vector &schemas)
+void StorageEngine::getIdentifiers(Session &session, identifier::schema::vector &schemas)
 {
   // Add hook here for engines to register schema.
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -201,14 +201,14 @@ public:
 
 static bool drop_all_tables_in_schema(Session& session,
                                       const identifier::Schema& identifier,
-                                      identifier::Table::vector &dropped_tables,
+                                      identifier::table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   plugin::StorageEngine::getIdentifiers(session, identifier, dropped_tables);
 
-  for (identifier::Table::vector::iterator it= dropped_tables.begin();
+  for (identifier::table::vector::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {
@@ -242,7 +242,7 @@ bool StorageEngine::dropSchema(Session& session,
 {
   uint64_t deleted= 0;
   bool error= false;
-  identifier::Table::vector dropped_tables;
+  identifier::table::vector dropped_tables;
 
   do
   {
@@ -250,10 +250,10 @@ bool StorageEngine::dropSchema(Session& session,
     // shadowing (ie temp over standard table)
     {
       // Lets delete the temporary tables first outside of locks.
-      identifier::Table::vector set_of_identifiers;
+      identifier::table::vector set_of_identifiers;
       session.doGetTableIdentifiers(identifier, set_of_identifiers);
 
-      for (identifier::Table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
+      for (identifier::table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
       {
         if (session.drop_temporary_table(*iter))
         {

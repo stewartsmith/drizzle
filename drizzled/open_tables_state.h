@@ -166,9 +166,9 @@ public:
 
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
   void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 
   int doGetTableDefinition(const drizzled::identifier::Table &identifier,
                            message::Table &table_proto);

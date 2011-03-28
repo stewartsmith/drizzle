@@ -610,11 +610,11 @@ class AddTableIdentifier :
 {
   CachedDirectory &directory;
   const identifier::Schema &identifier;
-  identifier::Table::vector &set_of_identifiers;
+  identifier::table::vector &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, identifier::Table::vector &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, identifier::table::vector &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -628,7 +628,7 @@ public:
 };
 
 
-void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::Table::vector &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
@@ -676,11 +676,11 @@ public:
 class DropTables: public std::unary_function<StorageEngine *, void>
 {
   Session &session;
-  identifier::Table::vector &table_identifiers;
+  identifier::table::vector &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, identifier::Table::vector &table_identifiers_arg) :
+  DropTables(Session &session_arg, identifier::table::vector &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -704,7 +704,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  identifier::Table::vector table_identifiers;
+  identifier::table::vector table_identifiers;
 
   if (dir.fail())
   {

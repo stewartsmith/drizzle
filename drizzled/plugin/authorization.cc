@@ -230,7 +230,7 @@ bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_
 }
 
 void plugin::Authorization::pruneSchemaNames(const drizzled::identifier::User& user_ctx,
-                                             identifier::Schema::vector &set_of_schemas)
+                                             identifier::schema::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
