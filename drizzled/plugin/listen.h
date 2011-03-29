@@ -28,7 +28,6 @@
 namespace drizzled {
 namespace plugin {
 
-class Listen;
 typedef std::vector<Listen *> ListenVector;
 typedef std::pair<std::string*, drizzled::atomic<uint64_t>*> ListenCounter;
 /**

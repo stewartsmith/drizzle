@@ -40,7 +40,6 @@ namespace drizzled {
 
 struct HASH;
 
-class TableShare;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);

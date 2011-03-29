@@ -41,8 +41,6 @@
 namespace drizzled {
 namespace plugin {
 
-class TransactionApplier;
-
 /**
  * Class which replicates Transaction messages
  */

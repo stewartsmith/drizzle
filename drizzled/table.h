@@ -18,10 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-
-
 #pragma once
 
 #include <string>
@@ -39,12 +35,6 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-class COND_EQUAL;
-namespace field { class Epoch; }
-
-typedef enum_table_category TABLE_CATEGORY;
-typedef struct st_columndef MI_COLUMNDEF;
 
 /**
  * Class representing a set of records, either in a temporary, 
@@ -800,10 +790,6 @@ private:
 
 #define JOIN_TYPE_LEFT  1
 #define JOIN_TYPE_RIGHT 2
-
-struct st_lex;
-class select_union;
-class Tmp_Table_Param;
 
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);

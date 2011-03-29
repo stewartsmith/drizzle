@@ -21,16 +21,10 @@
 #pragma once
 
 #include <boost/unordered_set.hpp>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class XID;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * An abstract interface class which exposes the participation

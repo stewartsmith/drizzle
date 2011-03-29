@@ -25,8 +25,6 @@
 
 namespace drizzled {
 
-class COND_EQUAL;
-
 /**
  * A Table referenced in the FROM clause.
  *

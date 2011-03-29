@@ -24,13 +24,8 @@
 #include <drizzled/util/string.h>
 #include <boost/unordered_map.hpp>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 class PropertyMap {
 private:

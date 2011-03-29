@@ -73,13 +73,6 @@
 
 namespace drizzled {
 
-/* Forward declaration needed */
-class TemporalInterval;
-class TemporalIntervalYear;
-class TemporalIntervalDayOrLess;
-class TemporalIntervalDayOrWeek;
-class TemporalIntervalYearMonth;
-
 /**
  * Base class for all temporal data classes.
  */

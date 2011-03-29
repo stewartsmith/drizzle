@@ -33,19 +33,6 @@
 #include <bitset>
 #include <string>
 
-namespace drizzled {
-
-class st_lex_symbol;
-class select_result_interceptor;
-
-/* YACC and LEX Definitions */
-
-/* These may not be declared yet */
-class Lex_Column;
-class Item_outer_ref;
-
-} /* namespace drizzled */
-
 /*
   The following hack is needed because mysql_yacc.cc does not define
   YYSTYPE before including this file

@@ -23,13 +23,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 class DRIZZLED_API Cache 
 {

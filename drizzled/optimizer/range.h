@@ -48,11 +48,7 @@ typedef struct st_key_part
 } KEY_PART;
 
 
-namespace optimizer
-{
-
-class Parameter;
-class SEL_ARG;
+namespace optimizer {
 
 /**
   Quick select interface.
@@ -251,10 +247,6 @@ public:
    */
   virtual bool is_keys_used(const boost::dynamic_bitset<>& fields);
 };
-
-struct st_qsel_param;
-class QuickRange;
-class QuickRangeSelect;
 
 /**
  * MRR range sequence, array<QuickRange> implementation: sequence traversal

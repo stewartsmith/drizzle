@@ -35,9 +35,6 @@
 #include <drizzled/sys_var.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace table {
 
 CacheMap &getCache(void)

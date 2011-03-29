@@ -30,15 +30,14 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
+
 #include PCRE_HEADER
 
 /* Output vector size for pcre matching.  Should be multiple of 3. */
 #define OUT_VECTOR_SIZE 30
 
 namespace drizzled {
-
-/* Forward declaration needed */
-class Temporal;
 
 class TemporalFormat
 {

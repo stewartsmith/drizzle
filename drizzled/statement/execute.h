@@ -22,16 +22,8 @@
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace plugin {
-class NullClient;
-}
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Execute : public Statement
 {

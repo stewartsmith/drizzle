@@ -39,8 +39,6 @@
 namespace drizzled {
 namespace sql {
 
-class ResultSet;
-
 class Exception :  public std::runtime_error
 {
 public:

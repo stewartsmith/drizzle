@@ -51,10 +51,6 @@
 namespace drizzled {
 namespace plugin {
 
-class EventObserverList;
-class EventData;
-class EventObserver;
-
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;
 

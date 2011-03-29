@@ -22,12 +22,8 @@
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class ReplaceSelect : public Statement
 {

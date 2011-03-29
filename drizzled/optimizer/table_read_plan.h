@@ -22,16 +22,8 @@
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class Parameter;
-class SEL_ARG;
-class SEL_TREE;
-class RorScanInfo;
+namespace drizzled {
+namespace optimizer {
 
 /*
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived

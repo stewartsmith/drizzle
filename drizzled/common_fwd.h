@@ -36,6 +36,7 @@ namespace catalog
 
 namespace field 
 {
+  class Epoch;
   class TableShare;
 }
 
@@ -141,9 +142,13 @@ namespace plugin
 { 
   class Catalog;
   class Client;
+  class EventData;
+  class EventObserver;
   class EventObserverList;
   class Function;
+  class Listen;
   class MonitoredInTransaction;
+  class NullClient;
   class Scheduler;
   class StorageEngine;
   class TransactionApplier;
@@ -157,8 +162,17 @@ namespace optimizer
 { 
   class compare_functor;
   class CostVector; 
+  class Parameter;
   class Position;
+  class QuickRange;
+  class QuickRangeSelect;
+  class RangeParameter;
+  class RorScanInfo;
+  class SEL_ARG;
+  class SEL_IMERGE;
+  class SEL_TREE;
   class SqlSelect;
+  struct st_qsel_param;
 }
 
 namespace session 
@@ -180,8 +194,14 @@ namespace statement
 
 namespace table 
 { 
+  class Concurrent;
   class Placeholder; 
   class Singular; 
+
+  namespace instance
+  {
+    class Shared;
+  }
 }
 
 namespace type 
@@ -193,6 +213,8 @@ namespace type
 namespace util
 {
   class Storable;
+  struct insensitive_equal_to;
+  struct insensitive_hash;
 
   namespace string
   {
@@ -204,6 +226,7 @@ namespace util
 
 typedef class Item COND;
 typedef struct my_locale_st MY_LOCALE;
+typedef struct st_columndef MI_COLUMNDEF;
 typedef struct system_status_var system_status_var;
 
 class AlterColumn;
@@ -212,6 +235,7 @@ class AlterInfo;
 class Arg_comparator;
 class Cached_item;
 class CachedDirectory;
+class COND_EQUAL;
 class CopyField;
 class CopyInfo;
 class Create_func;
@@ -244,6 +268,7 @@ class Item_ident;
 class Item_in_optimizer;
 class Item_in_subselect;
 class Item_maxmin_subselect;
+class Item_outer_ref;
 class Item_row;
 class Item_subselect;
 class Item_sum;
@@ -255,6 +280,7 @@ class Join;
 class JoinTable;
 class KeyInfo;
 class LEX;
+class Lex_Column;
 class Lex_input_stream;
 class lex_string_t;
 class Name_resolution_context;
@@ -273,6 +299,7 @@ class Session;
 class SortField;
 class SortParam;
 class StoredKey;
+class st_lex_symbol;
 class String;
 class subselect_engine;
 class subselect_hash_sj_engine;
@@ -285,6 +312,11 @@ class TableList;
 class TableShare;
 class TableShareInstance;
 class Temporal;
+class TemporalInterval;
+class TemporalIntervalDayOrLess;
+class TemporalIntervalDayOrWeek;
+class TemporalIntervalYear;
+class TemporalIntervalYearMonth;
 class Time;
 class Time_zone;
 class Timestamp;
@@ -293,6 +325,7 @@ class TYPELIB;
 class Unique;
 class user_var_entry;
 class var;
+class XID;
 
 struct CacheField;
 struct Ha_data;
