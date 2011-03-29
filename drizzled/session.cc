@@ -943,7 +943,7 @@ int Session::send_explain_fields(select_result *result)
 {
   List<Item> field_list;
   Item *item;
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
   field_list.push_back(new Item_return_int("id",3, DRIZZLE_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("select_type", 19, cs));
   field_list.push_back(item= new Item_empty_string("table", NAME_CHAR_LEN, cs));
@@ -1258,8 +1258,8 @@ bool select_export::send_data(List<Item> &items)
           escape_char != -1)
       {
         char *pos, *start, *end;
-        const CHARSET_INFO * const res_charset= res->charset();
-        const CHARSET_INFO * const character_set_client= default_charset_info;
+        const charset_info_st * const res_charset= res->charset();
+        const charset_info_st * const character_set_client= default_charset_info;
 
         bool check_second_byte= (res_charset == &my_charset_bin) &&
           character_set_client->

@@ -73,7 +73,7 @@ public:
     str->append(func_name);
   }
 
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 } /* namespace drizzled */

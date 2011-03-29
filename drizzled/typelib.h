@@ -31,10 +31,10 @@ public:
   const char *get_type(unsigned int nr) const;
   void make_type(char *to, unsigned int nr) const;
 
-  uint64_t find_set(const char *x, uint32_t length, const CHARSET_INFO *cs,
+  uint64_t find_set(const char *x, uint32_t length, const charset_info_st *cs,
                     char **err_pos, uint32_t *err_len, bool *set_warning) const;
   uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
-  uint32_t find_type2(const char *find, uint32_t length, const CHARSET_INFO *cs) const;
+  uint32_t find_type2(const char *find, uint32_t length, const charset_info_st *cs) const;
 
   unsigned int count;
   const char *name;

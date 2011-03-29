@@ -25,7 +25,7 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/identifier/schema.h>
 
-extern const drizzled::CHARSET_INFO *default_charset_info;
+extern const drizzled::charset_info_st *default_charset_info;
 
 static const char *function_exts[] = {
   NULL

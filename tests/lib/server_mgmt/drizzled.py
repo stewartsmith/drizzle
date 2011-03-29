@@ -198,12 +198,13 @@ class drizzleServer(Server):
 
        """
 
-       config_data = [ "master-host=127.0.0.1"
+       config_data = [ "[master1]"
+                     , "master-host=127.0.0.1"
                      , "master-port=%d" %self.master_port
                      , "master-user=root"
                      , "master-pass=''"
                      , "max-reconnects=100"
-                     , "seconds-between-reconnects=20"
+                     #, "seconds-between-reconnects=20"
                      ]
        outfile = open(self.slave_config_file,'w')
        for line in config_data:

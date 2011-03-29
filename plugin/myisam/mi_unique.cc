@@ -23,7 +23,7 @@ using namespace drizzled;
 bool mi_check_unique(MI_INFO *info,
                      MI_UNIQUEDEF *def,
                      unsigned char *record,
-                     internal::ha_checksum unique_hash,
+                     ha_checksum unique_hash,
                      internal::my_off_t disk_pos)
 {
   internal::my_off_t lastpos=info->lastpos;
@@ -76,10 +76,10 @@ bool mi_check_unique(MI_INFO *info,
     Add support for bit fields
 */
 
-internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
+ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *record)
 {
   const unsigned char *pos, *end;
-  internal::ha_checksum crc= 0;
+  ha_checksum crc= 0;
   uint32_t seed1=0, seed2= 4;
   HA_KEYSEG *keyseg;
 
@@ -98,7 +98,7 @@ internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *rec
 	  done)
 	*/
 	crc=((crc << 8) + 511+
-	     (crc >> (8*sizeof(internal::ha_checksum)-8)));
+	     (crc >> (8*sizeof(ha_checksum)-8)));
 	continue;
       }
     }
@@ -131,7 +131,7 @@ internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *rec
       while (pos != end)
 	crc=((crc << 8) +
 	     (((unsigned char)  *(unsigned char*) pos++))) +
-	  (crc >> (8*sizeof(internal::ha_checksum)-8));
+	  (crc >> (8*sizeof(ha_checksum)-8));
   }
   return crc;
 }

@@ -45,10 +45,10 @@ namespace drizzled
 static const char field_separator=',';
 
 uint64_t TYPELIB::find_set(const char *str, uint32_t length,
-                  const CHARSET_INFO * const cs,
+                  const charset_info_st * const cs,
                   char **err_pos, uint32_t *err_len, bool *set_warning) const
 {
-  const CHARSET_INFO * const strip= cs ? cs : &my_charset_utf8_general_ci;
+  const charset_info_st * const strip= cs ? cs : &my_charset_utf8_general_ci;
   const char *end= str + strip->cset->lengthsp(strip, str, length);
   uint64_t found= 0;
   *err_pos= 0;                  // No error yet
@@ -138,7 +138,7 @@ uint32_t TYPELIB::find_type(const char *find, uint32_t length, bool part_match) 
     >0  Offset+1 in typelib for matched string
 */
 
-uint32_t TYPELIB::find_type2(const char *x, uint32_t length, const CHARSET_INFO *cs) const
+uint32_t TYPELIB::find_type2(const char *x, uint32_t length, const charset_info_st *cs) const
 {
   if (!count)
     return 0;

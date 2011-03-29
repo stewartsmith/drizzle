@@ -20,6 +20,8 @@
 #include <fcntl.h>
 #endif
 
+#include <drizzled/error_t.h>
+
 #define LOWFIND 1
 #define LOWUSED 2
 #define HIGHFIND 4

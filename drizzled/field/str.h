@@ -27,15 +27,13 @@
 namespace drizzled
 {
 
-typedef struct charset_info_st CHARSET_INFO;
-
 /* base class for all string related classes */
 
 class DRIZZLED_API Field_str :
   public Field
 {
 protected:
-  const CHARSET_INFO *field_charset;
+  const charset_info_st *field_charset;
   enum Derivation field_derivation;
   int  report_if_important_data(const char *ptr, const char *end);
 public:
@@ -44,7 +42,7 @@ public:
             unsigned char *null_ptr_arg,
             unsigned char null_bit_arg,
             const char *field_name_arg,
-            const CHARSET_INFO * const charset);
+            const charset_info_st * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint32_t decimals() const { return NOT_FIXED_DEC; }
 
@@ -52,11 +50,11 @@ public:
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val)=0;
   int  store_decimal(const type::Decimal *);
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const cs)=0;
+  int  store(const char *to,uint32_t length, const charset_info_st * const cs)=0;
 
   uint32_t size_of() const { return sizeof(*this); }
-  const CHARSET_INFO *charset(void) const { return field_charset; }
-  void set_charset(const CHARSET_INFO * const charset_arg)
+  const charset_info_st *charset(void) const { return field_charset; }
+  void set_charset(const charset_info_st * const charset_arg)
   { field_charset= charset_arg; }
   enum Derivation derivation(void) const { return field_derivation; }
   virtual void set_derivation(enum Derivation derivation_arg)
@@ -99,7 +97,7 @@ bool check_string_copy_error(Field_str *field,
                              const char *well_formed_error_pos,
                              const char *cannot_convert_error_pos,
                              const char *end,
-                             const CHARSET_INFO * const cs);
+                             const charset_info_st * const cs);
 
 
 } /* namespace drizzled */

@@ -524,7 +524,7 @@ bool fill_table_proto(const identifier::Table& identifier,
         else
           collation_id= table_proto.options().collation_id();
 
-        const CHARSET_INFO *cs= get_charset(collation_id);
+        const charset_info_st *cs= get_charset(collation_id);
 
         mbmaxlen= cs->mbmaxlen;
       }

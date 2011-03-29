@@ -27,6 +27,8 @@
 #include <boost/program_options.hpp>
 #include <pthread.h>
 
+#include <drizzled/definitions.h>
+#include <drizzled/internal/my_sys.h>
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 #include <drizzled/configmake.h>

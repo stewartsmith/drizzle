@@ -19,6 +19,7 @@
   database remains open.
 */
 
+#include <drizzled/error_t.h>
 #include "heap_priv.h"
 
 using namespace drizzled;

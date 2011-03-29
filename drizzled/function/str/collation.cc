@@ -28,7 +28,7 @@ String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
   size_t dummy_errors;
-  const CHARSET_INFO * const cs= args[0]->collation.collation;
+  const charset_info_st * const cs= args[0]->collation.collation;
 
   null_value= 0;
   str->copy(cs->name, strlen(cs->name),

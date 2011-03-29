@@ -26,7 +26,7 @@ namespace drizzled
 {
 
 
-size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
+size_t my_caseup_str_mb(const charset_info_st * const  cs, char *str)
 {
   uint32_t l;
   unsigned char *map= cs->to_upper;
@@ -47,7 +47,7 @@ size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
 }
 
 
-size_t my_casedn_str_mb(const CHARSET_INFO * const  cs, char *str)
+size_t my_casedn_str_mb(const charset_info_st * const  cs, char *str)
 {
   uint32_t l;
   unsigned char *map= cs->to_lower;
@@ -68,7 +68,7 @@ size_t my_casedn_str_mb(const CHARSET_INFO * const  cs, char *str)
 }
 
 
-size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
+size_t my_caseup_mb(const charset_info_st * const  cs, char *src, size_t srclen,
                     char *dst, size_t dstlen)
 {
 #ifdef NDEBUG
@@ -94,7 +94,7 @@ size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
 }
 
 
-size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
+size_t my_casedn_mb(const charset_info_st * const  cs, char *src, size_t srclen,
                     char *dst, size_t dstlen)
 {
 #ifdef NDEBUG
@@ -124,7 +124,7 @@ size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
   my_strcasecmp_mb() returns 0 if strings are equal, non-zero otherwise.
  */
 
-int my_strcasecmp_mb(const CHARSET_INFO * const  cs,const char *s, const char *t)
+int my_strcasecmp_mb(const charset_info_st * const  cs,const char *s, const char *t)
 {
   uint32_t l;
   unsigned char *map=cs->to_upper;
@@ -164,7 +164,7 @@ inline static int likeconv(const charset_info_st *cs, const char c)
   return (unsigned char) cs->sort_order[(unsigned char) c];
 }
     
-int my_wildcmp_mb(const CHARSET_INFO * const cs,
+int my_wildcmp_mb(const charset_info_st * const cs,
 		  const char *str,const char *str_end,
 		  const char *wildstr,const char *wildend,
 		  int escape, int w_one, int w_many)
@@ -272,7 +272,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_numchars_mb(const CHARSET_INFO * const cs,
+size_t my_numchars_mb(const charset_info_st * const cs,
 		      const char *pos, const char *end)
 {
   size_t count= 0;
@@ -286,7 +286,7 @@ size_t my_numchars_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_charpos_mb(const CHARSET_INFO * const cs,
+size_t my_charpos_mb(const charset_info_st * const cs,
 		     const char *pos, const char *end, size_t length)
 {
   const char *start= pos;
@@ -301,7 +301,7 @@ size_t my_charpos_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const char *e,
+size_t my_well_formed_len_mb(const charset_info_st * const cs, const char *b, const char *e,
                              size_t pos, int *error)
 {
   const char *b_start= b;
@@ -323,7 +323,7 @@ size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const
 }
 
 
-uint32_t my_instr_mb(const CHARSET_INFO * const cs,
+uint32_t my_instr_mb(const charset_info_st * const cs,
                  const char *b, size_t b_length,
                  const char *s, size_t s_length,
                  my_match_t *match, uint32_t nmatch)
@@ -380,7 +380,7 @@ uint32_t my_instr_mb(const CHARSET_INFO * const cs,
 
 /* BINARY collations handlers for MB charsets */
 
-int my_strnncoll_mb_bin(const CHARSET_INFO * const,
+int my_strnncoll_mb_bin(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
@@ -416,7 +416,7 @@ int my_strnncoll_mb_bin(const CHARSET_INFO * const,
     0 if strings are equal
 */
 
-int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
+int my_strnncollsp_mb_bin(const charset_info_st * const,
                           const unsigned char *a, size_t a_length,
                           const unsigned char *b, size_t b_length,
                           bool diff_if_only_endspace_difference)
@@ -495,7 +495,7 @@ int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
   cp932, euckr, gb2312, sjis, eucjpms, ujis.
 */
 size_t
-my_strnxfrm_mb(const CHARSET_INFO * const cs,
+my_strnxfrm_mb(const charset_info_st * const cs,
                unsigned char *dst, size_t dstlen, uint32_t nweights,
                const unsigned char *src, size_t srclen, uint32_t flags)
 {
@@ -570,14 +570,14 @@ pad:
 }
 
 
-int my_strcasecmp_mb_bin(const CHARSET_INFO * const,
+int my_strcasecmp_mb_bin(const charset_info_st * const,
                          const char *s, const char *t)
 {
   return strcmp(s,t);
 }
 
 
-void my_hash_sort_mb_bin(const CHARSET_INFO * const,
+void my_hash_sort_mb_bin(const charset_info_st * const,
                          const unsigned char *key, size_t len,
                          uint32_t *nr1, uint32_t *nr2)
 {
@@ -614,7 +614,7 @@ void my_hash_sort_mb_bin(const CHARSET_INFO * const,
         create a buffer with multibyte representation of the max_sort_char
         character, and copy it into max_str in a loop.
 */
-static void pad_max_char(const CHARSET_INFO * const cs, char *str, char *end)
+static void pad_max_char(const charset_info_st * const cs, char *str, char *end)
 {
   char buf[10];
   char buflen;
@@ -668,7 +668,7 @@ static void pad_max_char(const CHARSET_INFO * const cs, char *str, char *end)
 ** optimized !
 */
 
-bool my_like_range_mb(const CHARSET_INFO * const cs,
+bool my_like_range_mb(const charset_info_st * const cs,
                          const char *ptr,size_t ptr_length,
                          char escape, char w_one, char w_many,
                          size_t res_length,
@@ -800,7 +800,7 @@ fill_max_and_min:
 }
 
 
-int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
+int my_wildcmp_mb_bin(const charset_info_st * const cs,
                       const char *str,const char *str_end,
                       const char *wildstr,const char *wildend,
                       int escape, int w_one, int w_many)
@@ -1119,7 +1119,7 @@ public:
 };
 
 
-size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *e)
+size_t my_numcells_mb(const charset_info_st * const cs, const char *b, const char *e)
 {
   my_wc_t wc;
   size_t clen= 0;
@@ -1149,7 +1149,7 @@ size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *
 
 
 
-int my_mb_ctype_mb(const CHARSET_INFO * const cs, int *ctype,
+int my_mb_ctype_mb(const charset_info_st * const cs, int *ctype,
                    const unsigned char *s, const unsigned char *e)
 {
   my_wc_t wc;

@@ -120,7 +120,7 @@ public:
     }
 
   public:
-    const CHARSET_INFO *scs;
+    const charset_info_st *scs;
 
     Generator(Field **arg);
     virtual ~Generator()

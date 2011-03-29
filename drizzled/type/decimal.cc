@@ -283,7 +283,7 @@ int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) 
    @retval E_DEC_OOM
 */
 
-int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset)
+int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const charset_info_st * charset)
 {
   char *end, *from_end;
   int err;

@@ -52,7 +52,7 @@ Field_blob::Field_blob(unsigned char *ptr_arg,
                        unsigned char null_bit_arg,
 		                   const char *field_name_arg,
                        TableShare *share,
-                       const CHARSET_INFO * const cs)
+                       const charset_info_st * const cs)
   :Field_str(ptr_arg,
              blob_pack_length_to_max_length(sizeof(uint32_t)),
              null_ptr_arg,
@@ -142,7 +142,7 @@ void Field_blob::put_length(unsigned char *pos, uint32_t length)
 }
 
 
-int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
+int Field_blob::store(const char *from,uint32_t length, const charset_info_st * const cs)
 {
   uint32_t copy_length, new_length;
   const char *well_formed_error_pos;
@@ -209,7 +209,7 @@ oom_error:
 
 int Field_blob::store(double nr)
 {
-  const CHARSET_INFO * const cs=charset();
+  const charset_info_st * const cs=charset();
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
@@ -218,7 +218,7 @@ int Field_blob::store(double nr)
 
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
-  const CHARSET_INFO * const cs=charset();
+  const charset_info_st * const cs=charset();
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_int(nr, unsigned_val, cs);
   return Field_blob::store(value.ptr(), (uint32_t) value.length(), cs);
@@ -230,7 +230,7 @@ double Field_blob::val_real(void) const
   int not_used;
   char *end_not_used, *blob;
   uint32_t length;
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -408,7 +408,7 @@ int Field_blob::key_cmp(const unsigned char *key_ptr, uint32_t max_key_length)
   unsigned char *blob1;
   uint32_t blob_length=get_length(ptr);
   memcpy(&blob1,ptr+sizeof(uint32_t),sizeof(char*));
-  const CHARSET_INFO * const cs= charset();
+  const charset_info_st * const cs= charset();
   uint32_t local_char_length= max_key_length / cs->mbmaxlen;
   local_char_length= my_charpos(cs, blob1, blob1+blob_length,
                                 local_char_length);

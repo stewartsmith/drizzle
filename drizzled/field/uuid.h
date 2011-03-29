@@ -31,7 +31,7 @@ namespace field
 {
 
 class Uuid :public Field {
-  const CHARSET_INFO *field_charset;
+  const charset_info_st *field_charset;
   bool is_set;
 
 public:
@@ -48,7 +48,7 @@ public:
   uint32_t pack_length() const { return type::Uuid::LENGTH; }
   uint32_t key_length() const { return type::Uuid::LENGTH; }
 
-  int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to, uint32_t length, const charset_info_st * const charset);
   int store(int64_t nr, bool unsigned_val);
   double val_real() const;
   int64_t val_int() const;

@@ -114,13 +114,13 @@ bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 }
 
 
-const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
+const charset_info_st *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
   message::schema::shared_ptr schmema_proto= StorageEngine::getSchemaDefinition(identifier);
   if (not schmema_proto || not schmema_proto->has_collation())
 		return default_charset_info;
   const std::string buffer= schmema_proto->collation();
-  if (const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str()))
+  if (const charset_info_st* cs= get_charset_by_name(buffer.c_str()))
 		return cs;
   errmsg_printf(error::ERROR, _("Error while loading database options: '%s':"), identifier.getSQLPath().c_str());
   errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());

@@ -976,7 +976,7 @@ public:
   void fatal_error();
   bool is_error() const;
 
-  inline const CHARSET_INFO *charset() { return default_charset_info; }
+  inline const charset_info_st *charset() { return default_charset_info; }
 
   /**
     Cleanup statement parse state (parse tree, lex) and execution

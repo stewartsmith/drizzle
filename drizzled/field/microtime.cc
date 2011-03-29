@@ -67,7 +67,7 @@ Microtime::Microtime(bool maybe_null_arg,
 
 int Microtime::store(const char *from,
                      uint32_t len,
-                     const CHARSET_INFO * const )
+                     const charset_info_st * const )
 {
   MicroTimestamp temporal;
 

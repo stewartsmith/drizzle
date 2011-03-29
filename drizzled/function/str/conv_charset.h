@@ -29,10 +29,10 @@ class Item_func_conv_charset :public Item_str_func
   bool use_cached_value;
 public:
   bool safe;
-  const CHARSET_INFO *conv_charset; // keep it public
-  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs) :Item_str_func(a)
+  const charset_info_st *conv_charset; // keep it public
+  Item_func_conv_charset(Item *a, const charset_info_st * const cs) :Item_str_func(a)
   { conv_charset= cs; use_cached_value= 0; safe= 0; }
-  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs, bool cache_if_const)
+  Item_func_conv_charset(Item *a, const charset_info_st * const cs, bool cache_if_const)
     :Item_str_func(a)
   {
     assert(args[0]->fixed);

@@ -6762,7 +6762,7 @@ typedef struct my_uca_scanner_st
   uint16_t implicit[2];
   int page;
   int code;
-  const CHARSET_INFO * cs;
+  const charset_info_st * cs;
 } my_uca_scanner;
 
 /*
@@ -6771,7 +6771,7 @@ typedef struct my_uca_scanner_st
 */
 typedef struct my_uca_scanner_handler_st
 {
-  void (*init)(my_uca_scanner *scanner, const CHARSET_INFO * const cs,
+  void (*init)(my_uca_scanner *scanner, const charset_info_st * const cs,
                const unsigned char *str, size_t length);
   int (*next)(my_uca_scanner *scanner);
 } my_uca_scanner_handler;
@@ -6784,7 +6784,7 @@ static uint16_t nochar[]= {0,0};
   The same two functions for any character set
 */
 static void my_uca_scanner_init_any(my_uca_scanner *scanner,
-				    const CHARSET_INFO * const cs,
+				    const charset_info_st * const cs,
 				    const unsigned char *str, size_t length)
 {
   /* Note, no needs to initialize scanner->wbeg */
@@ -6928,7 +6928,7 @@ static my_uca_scanner_handler my_any_uca_scanner_handler=
     positive number - means the first string is bigger
 */
 
-static int my_strnncoll_uca(const CHARSET_INFO * const cs,
+static int my_strnncoll_uca(const charset_info_st * const cs,
                             my_uca_scanner_handler *scanner_handler,
 			    const unsigned char *s, size_t slen,
                             const unsigned char *t, size_t tlen,
@@ -6999,7 +6999,7 @@ static int my_strnncoll_uca(const CHARSET_INFO * const cs,
     positive number - means the first string is bigger
 */
 
-static int my_strnncollsp_uca(const CHARSET_INFO * const cs,
+static int my_strnncollsp_uca(const charset_info_st * const cs,
                               my_uca_scanner_handler *scanner_handler,
                               const unsigned char *s, size_t slen,
                               const unsigned char *t, size_t tlen,
@@ -7077,7 +7077,7 @@ static int my_strnncollsp_uca(const CHARSET_INFO * const cs,
     N/A
 */
 
-static void my_hash_sort_uca(const CHARSET_INFO * const cs,
+static void my_hash_sort_uca(const charset_info_st * const cs,
                              my_uca_scanner_handler *scanner_handler,
 			     const unsigned char *s, size_t slen,
 			     uint32_t *n1, uint32_t *n2)
@@ -7129,7 +7129,7 @@ static void my_hash_sort_uca(const CHARSET_INFO * const cs,
     Number of bytes that have been written into the binary image.
 */
 
-static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
+static size_t my_strnxfrm_uca(const charset_info_st * const cs,
                            my_uca_scanner_handler *scanner_handler,
                            unsigned char *dst, size_t dstlen, uint32_t nweights,
                            const unsigned char *src, size_t srclen, uint32_t flags)
@@ -7171,7 +7171,7 @@ static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
   little-endian and big-endian machines.
 */
 
-static int my_uca_charcmp(const CHARSET_INFO * const cs, my_wc_t wc1, my_wc_t wc2)
+static int my_uca_charcmp(const charset_info_st * const cs, my_wc_t wc1, my_wc_t wc2)
 {
   size_t page1= wc1 >> MY_UCA_PSHIFT;
   size_t page2= wc2 >> MY_UCA_PSHIFT;
@@ -7201,7 +7201,7 @@ static int my_uca_charcmp(const CHARSET_INFO * const cs, my_wc_t wc1, my_wc_t wc
 **	 1 if matched with wildcard
 */
 
-int my_wildcmp_uca(const CHARSET_INFO * const cs,
+int my_wildcmp_uca(const charset_info_st * const cs,
 		   const char *str,const char *str_end,
 		   const char *wildstr,const char *wildend,
 		   int escape, int w_one, int w_many)
@@ -7705,7 +7705,7 @@ static int my_coll_rule_parse(MY_COLL_RULE *rule, size_t mitems,
   default weights.
 */
 
-static bool create_tailoring(CHARSET_INFO *cs, cs_alloc_func alloc)
+static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
 {
   MY_COLL_RULE rule[MY_MAX_COLL_RULE];
   char errstr[128];
@@ -7858,18 +7858,18 @@ static bool create_tailoring(CHARSET_INFO *cs, cs_alloc_func alloc)
 
 
 /*
-  Universal CHARSET_INFO compatible wrappers
+  Universal charset_info_st compatible wrappers
   for the above internal functions.
   Should work for any character set.
 */
 
-bool my_coll_init_uca(CHARSET_INFO *cs, cs_alloc_func alloc)
+bool my_coll_init_uca(charset_info_st *cs, cs_alloc_func alloc)
 {
   cs->pad_char= ' ';
   return create_tailoring(cs, alloc);
 }
 
-int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
+int my_strnncoll_any_uca(const charset_info_st * const cs,
                          const unsigned char *s, size_t slen,
                          const unsigned char *t, size_t tlen,
                          bool t_is_prefix)
@@ -7878,7 +7878,7 @@ int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
                           s, slen, t, tlen, t_is_prefix);
 }
 
-int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
+int my_strnncollsp_any_uca(const charset_info_st * const cs,
                            const unsigned char *s, size_t slen,
                            const unsigned char *t, size_t tlen,
                            bool diff_if_only_endspace_difference)
@@ -7888,14 +7888,14 @@ int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
                             diff_if_only_endspace_difference);
 }
 
-void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
+void my_hash_sort_any_uca(const charset_info_st * const cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2)
 {
   my_hash_sort_uca(cs, &my_any_uca_scanner_handler, s, slen, n1, n2);
 }
 
-size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
+size_t my_strnxfrm_any_uca(const charset_info_st * const cs,
                            unsigned char *dst, size_t dstlen, uint32_t nweights,
                            const unsigned char *src, size_t srclen,
                            uint32_t flags)
@@ -7950,7 +7950,7 @@ MY_COLLATION_HANDLER my_collation_any_uca_handler =
 
 extern MY_CHARSET_HANDLER my_charset_utf8mb4_handler;
 
-CHARSET_INFO my_charset_utf8mb4_unicode_ci=
+charset_info_st my_charset_utf8mb4_unicode_ci=
 {
     224,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -7985,7 +7985,7 @@ CHARSET_INFO my_charset_utf8mb4_unicode_ci=
 };
 
 
-CHARSET_INFO my_charset_utf8mb4_icelandic_uca_ci=
+charset_info_st my_charset_utf8mb4_icelandic_uca_ci=
 {
     225,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8019,7 +8019,7 @@ CHARSET_INFO my_charset_utf8mb4_icelandic_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_latvian_uca_ci=
+charset_info_st my_charset_utf8mb4_latvian_uca_ci=
 {
     226,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8053,7 +8053,7 @@ CHARSET_INFO my_charset_utf8mb4_latvian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_romanian_uca_ci=
+charset_info_st my_charset_utf8mb4_romanian_uca_ci=
 {
     227,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8087,7 +8087,7 @@ CHARSET_INFO my_charset_utf8mb4_romanian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_slovenian_uca_ci=
+charset_info_st my_charset_utf8mb4_slovenian_uca_ci=
 {
     228,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8121,7 +8121,7 @@ CHARSET_INFO my_charset_utf8mb4_slovenian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_polish_uca_ci=
+charset_info_st my_charset_utf8mb4_polish_uca_ci=
 {
     229,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8155,7 +8155,7 @@ CHARSET_INFO my_charset_utf8mb4_polish_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_estonian_uca_ci=
+charset_info_st my_charset_utf8mb4_estonian_uca_ci=
 {
     230,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8189,7 +8189,7 @@ CHARSET_INFO my_charset_utf8mb4_estonian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_spanish_uca_ci=
+charset_info_st my_charset_utf8mb4_spanish_uca_ci=
 {
     231,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8223,7 +8223,7 @@ CHARSET_INFO my_charset_utf8mb4_spanish_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_swedish_uca_ci=
+charset_info_st my_charset_utf8mb4_swedish_uca_ci=
 {
     232,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8257,7 +8257,7 @@ CHARSET_INFO my_charset_utf8mb4_swedish_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_turkish_uca_ci=
+charset_info_st my_charset_utf8mb4_turkish_uca_ci=
 {
     233,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8291,7 +8291,7 @@ CHARSET_INFO my_charset_utf8mb4_turkish_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_czech_uca_ci=
+charset_info_st my_charset_utf8mb4_czech_uca_ci=
 {
     234,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8326,7 +8326,7 @@ CHARSET_INFO my_charset_utf8mb4_czech_uca_ci=
 };
 
 
-CHARSET_INFO my_charset_utf8mb4_danish_uca_ci=
+charset_info_st my_charset_utf8mb4_danish_uca_ci=
 {
     235,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8360,7 +8360,7 @@ CHARSET_INFO my_charset_utf8mb4_danish_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_lithuanian_uca_ci=
+charset_info_st my_charset_utf8mb4_lithuanian_uca_ci=
 {
     236,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8394,7 +8394,7 @@ CHARSET_INFO my_charset_utf8mb4_lithuanian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_slovak_uca_ci=
+charset_info_st my_charset_utf8mb4_slovak_uca_ci=
 {
     237,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8428,7 +8428,7 @@ CHARSET_INFO my_charset_utf8mb4_slovak_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_spanish2_uca_ci=
+charset_info_st my_charset_utf8mb4_spanish2_uca_ci=
 {
     238,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8462,7 +8462,7 @@ CHARSET_INFO my_charset_utf8mb4_spanish2_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_roman_uca_ci=
+charset_info_st my_charset_utf8mb4_roman_uca_ci=
 {
     239,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8496,7 +8496,7 @@ CHARSET_INFO my_charset_utf8mb4_roman_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_persian_uca_ci=
+charset_info_st my_charset_utf8mb4_persian_uca_ci=
 {
     240,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8530,7 +8530,7 @@ CHARSET_INFO my_charset_utf8mb4_persian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_esperanto_uca_ci=
+charset_info_st my_charset_utf8mb4_esperanto_uca_ci=
 {
     241,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8564,7 +8564,7 @@ CHARSET_INFO my_charset_utf8mb4_esperanto_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_hungarian_uca_ci=
+charset_info_st my_charset_utf8mb4_hungarian_uca_ci=
 {
     242,0,0,             /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,
@@ -8598,7 +8598,7 @@ CHARSET_INFO my_charset_utf8mb4_hungarian_uca_ci=
     &my_collation_any_uca_handler
 };
 
-CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci=
+charset_info_st my_charset_utf8mb4_sinhala_uca_ci=
 {
     243,0,0,            /* number       */
     MY_CS_COMPILED|MY_CS_STRNXFRM|MY_CS_UNICODE,

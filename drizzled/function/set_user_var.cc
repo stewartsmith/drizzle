@@ -101,7 +101,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 void
 Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
                                     Item_result res_type,
-                                    const CHARSET_INFO * const cs, Derivation dv,
+                                    const charset_info_st * const cs, Derivation dv,
                                     bool unsigned_arg)
 {
   /*
@@ -390,7 +390,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
       (result_type() == REAL_RESULT && field->result_type() == STRING_RESULT))
   {
     String *result;
-    const CHARSET_INFO * const cs= collation.collation;
+    const charset_info_st * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];         // Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result= entry->val_str(&null_value, &str_value, decimals);

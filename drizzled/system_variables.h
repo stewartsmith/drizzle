@@ -79,12 +79,12 @@ struct drizzle_system_variables
   plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
-  const CHARSET_INFO  *character_set_filesystem;
+  const charset_info_st  *character_set_filesystem;
 
   /* Both charset and collation parts of these variables are important */
-  const CHARSET_INFO	*collation_server;
+  const charset_info_st	*collation_server;
 
-  inline const CHARSET_INFO  *getCollation(void) 
+  inline const charset_info_st  *getCollation(void) 
   {
     return collation_server;
   }

@@ -1594,8 +1594,7 @@ err:
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
-			    (param->testflag & T_BACKUP_DATA ?
-			     MYF(MY_REDEL_MAKE_BACKUP): MYF(0))) ||
+			    MYF(0)) ||
 	  mi_open_datafile(info,share,-1))
 	got_error=1;
     }
@@ -2279,8 +2278,7 @@ err:
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
-			    (param->testflag & T_BACKUP_DATA ?
-			     MYF(MY_REDEL_MAKE_BACKUP): MYF(0))) ||
+			    MYF(0)) ||
 	  mi_open_datafile(info,share,-1))
 	got_error=1;
     }
