@@ -1458,8 +1458,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   /* Inverted Booleans */
 
-  global_system_variables.optimizer_prune_level=
-    vm.count("disable-optimizer-prune") ? false : true;
+  global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
   if (! vm["help"].as<bool>())
   {

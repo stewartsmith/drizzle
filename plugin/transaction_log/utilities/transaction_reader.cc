@@ -709,11 +709,11 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  bool do_checksum= vm.count("checksum") ? true : false;
-  bool use_innodb_replication_log= vm.count("use-innodb-replication-log") ? true : false;
-  bool ignore_events= vm.count("ignore-events") ? true : false;
-  bool print_as_raw= vm.count("raw") ? true : false;
-  bool summarize= vm.count("summarize") ? true : false;
+  bool do_checksum= vm.count("checksum");
+  bool use_innodb_replication_log= vm.count("use-innodb-replication-log");
+  bool ignore_events= vm.count("ignore-events");
+  bool print_as_raw= vm.count("raw");
+  bool summarize= vm.count("summarize");
 
   /*
    * InnoDB transaction log processing
