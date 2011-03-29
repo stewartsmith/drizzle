@@ -32,15 +32,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Item_func;
-
-namespace memory
-{
-  class Root;
-}
+namespace drizzled {
 
 namespace util
 {
@@ -48,8 +40,7 @@ struct insensitive_hash;
 struct insensitive_equal_to;
 }
 
-namespace plugin
-{
+namespace plugin {
 
 /**
  * Functions in the server: AKA UDF

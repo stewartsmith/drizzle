@@ -43,9 +43,8 @@ namespace drizzled {
 class COND_EQUAL;
 namespace field { class Epoch; }
 
-typedef enum enum_table_category TABLE_CATEGORY;
+typedef enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
-typedef uint64_t query_id_t;
 
 /**
  * Class representing a set of records, either in a temporary, 

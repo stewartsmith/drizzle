@@ -37,13 +37,7 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-namespace statement { class Statement; }
-
-class LEX;
-
-namespace plugin
-{
+namespace plugin {
 
 #define TABLE_FUNCTION_BLOB_SIZE 2049
 

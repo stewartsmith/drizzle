@@ -25,12 +25,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Daemon : public Plugin
 {

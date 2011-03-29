@@ -38,18 +38,8 @@
  * An applier is responsible for applying events, not a replicator...
  */
 
-namespace drizzled
-{
-namespace message
-{ 
-  class Transaction;
-  class Statement;
-}
-
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class TransactionApplier;
 

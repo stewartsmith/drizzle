@@ -38,10 +38,6 @@
 
 namespace drizzled {
 
-class CachedDirectory;
-class TableList;
-class Session;
-class Cursor;
 struct HASH;
 
 class TableShare;
@@ -109,11 +105,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
-class Table;
-class NamedSavepoint;
-
-namespace plugin
-{
+namespace plugin {
 
 typedef std::vector<StorageEngine *> EngineVector;
 

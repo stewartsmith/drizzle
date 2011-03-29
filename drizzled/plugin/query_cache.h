@@ -26,13 +26,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-class select_result;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /* 
   This is the API that a qcache plugin must implement.

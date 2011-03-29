@@ -48,15 +48,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace plugin {
 
-class Table;
-class TableShare;
-class Session;
-
-namespace plugin
-{
 class EventObserverList;
 class EventData;
 class EventObserver;
