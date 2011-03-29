@@ -48,18 +48,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Table;
-class TableShare;
-class Session;
-
-namespace plugin
-{
-class EventObserverList;
-class EventData;
-class EventObserver;
+namespace drizzled {
+namespace plugin {
 
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;

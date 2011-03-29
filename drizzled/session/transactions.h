@@ -25,9 +25,6 @@
 #include <drizzled/xid.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace session {
 
 /**

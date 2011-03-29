@@ -20,14 +20,7 @@
 #pragma once
 
 namespace drizzled {
-
-class Join;
-class Session;
-class Select_Lex_Unit;
-class select_result;
-
-namespace optimizer
-{
+namespace optimizer {
 
 /** select type for EXPLAIN */
 enum select_type

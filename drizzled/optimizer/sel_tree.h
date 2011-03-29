@@ -21,16 +21,8 @@
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class RangeParameter;
-class SEL_IMERGE;
-class SEL_ARG;
-class RorScanInfo;
+namespace drizzled {
+namespace optimizer {
 
 class SEL_TREE : public drizzled::memory::SqlAlloc
 {

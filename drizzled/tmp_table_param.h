@@ -22,10 +22,7 @@
 
 #include <plugin/myisam/myisam.h>
 
-namespace drizzled
-{
-
-class CopyField;
+namespace drizzled {
 
 /*
   Param to create temporary tables when doing SELECT:s

@@ -34,13 +34,8 @@
  * A command reader is a class which is able to read Transaction messages from some source
  */
 
-namespace drizzled
-{
-namespace message { class Transaction; }
-
-namespace plugin
-{
-
+namespace drizzled {
+namespace plugin {
 
 /**
  * Class which can read Transaction messages from some source

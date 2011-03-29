@@ -25,16 +25,8 @@
 
 #include <boost/unordered_map.hpp>
 
-namespace drizzled
-{
-
-namespace identifier { class Table; }
-namespace message { class Table; }
-namespace util { struct insensitive_hash; }
-namespace util { struct insensitive_equal_to; }
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 class DRIZZLED_API TableMessages
 {

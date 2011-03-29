@@ -39,7 +39,7 @@ int64_t Release::val_int()
   }
 
 
-  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+  drizzled::identifier::user::ptr user_identifier(getSession().user());
 
   barriers::return_t result= Barriers::getInstance().release(Key(*user_identifier, res->c_str()), getSession().getSessionId());
 

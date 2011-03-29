@@ -35,8 +35,6 @@
 
 namespace drizzled {
 
-class CreateField;
-
 enum enum_alter_info_flags
 {
   ALTER_ADD_COLUMN= 0,

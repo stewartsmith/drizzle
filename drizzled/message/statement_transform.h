@@ -31,35 +31,14 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
+#include <drizzled/common.h>
 #include <drizzled/message/table.pb.h>
 #include <string>
 #include <vector>
 
-#include <drizzled/common.h>
-
-namespace drizzled
-{
-namespace message
-{
-/* some forward declarations */
-class Transaction;
-class Statement;
-class InsertHeader;
-class InsertData;
-class InsertRecord;
-class UpdateHeader;
-class UpdateData;
-class UpdateRecord;
-class DeleteHeader;
-class DeleteData;
-class DeleteRecord;
-class DropTableStatement;
-class CreateTableStatement;
-class TruncateTableStatement;
-class CreateSchemaStatement;
-class DropSchemaStatement;
-class AlterSchemaStatement;
-class SetVariableStatement;
+namespace drizzled {
+namespace message {
 
 /** A Variation of SQL to be output during transformation */
 enum TransformSqlVariant

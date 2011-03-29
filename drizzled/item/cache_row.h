@@ -21,12 +21,7 @@
 
 #include <drizzled/item/cache.h>
 
-namespace drizzled
-{
-
-class Item_cache;
-class Item;
-class SendField;
+namespace drizzled {
 
 class Item_cache_row: public Item_cache
 {

@@ -22,16 +22,10 @@
 
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/xa_resource_manager.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class XID;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * A type of storage engine which supports distributed

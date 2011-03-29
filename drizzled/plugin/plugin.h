@@ -27,18 +27,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace module
-{
-class Module;
-}
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Plugin
 {

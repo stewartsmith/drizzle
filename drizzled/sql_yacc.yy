@@ -153,7 +153,7 @@ using namespace drizzled;
   drizzled::type::timestamp_t date_time_type;
   drizzled::Select_Lex *select_lex;
   drizzled::chooser_compare_func_creator boolfunc2creator;
-  drizzled::st_lex *lex;
+  drizzled::LEX *lex;
   drizzled::index_hint_type index_hint;
   drizzled::enum_filetype filetype;
   drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;

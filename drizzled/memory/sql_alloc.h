@@ -26,12 +26,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace memory
-{
+namespace drizzled {
+namespace memory {
 
 void init_sql_alloc(Root *root, size_t block_size, size_t pre_alloc_size);
 void *sql_alloc(size_t);

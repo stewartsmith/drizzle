@@ -23,12 +23,7 @@
 #include <drizzled/thr_lock.h>
 #include <drizzled/locking/global.h>
 
-namespace drizzled
-{
-
-class Session;
-class Table;
-class TableList;
+namespace drizzled {
 
 class DrizzleLock
 {

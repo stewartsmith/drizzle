@@ -21,19 +21,10 @@
 
 #include <unistd.h>
 #include <drizzled/base.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/qsort_cmp.h>
 
-namespace drizzled
-{
-
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
-
-class Field;
-class Table;
-class SortField;
+namespace drizzled {
 
 /*
    The structure sort_addon_field describes a fixed layout

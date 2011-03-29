@@ -21,12 +21,7 @@
 
 #include <drizzled/field.h>
 
-namespace drizzled
-{
-
-class Item;
-
-/* Order clause list element */
+namespace drizzled {
 
 /* Order clause list element */
 class Order{

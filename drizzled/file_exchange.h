@@ -24,8 +24,7 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/enum.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const charset_info_st *default_charset_info;
 

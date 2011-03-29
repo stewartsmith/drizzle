@@ -23,13 +23,8 @@
 
 #include <vector>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class compare_functor;
+namespace drizzled {
+namespace optimizer {
 
 /**
   Rowid-Ordered Retrieval index union select.

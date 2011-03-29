@@ -27,16 +27,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/thr_lock.h>
 
-namespace drizzled
-{
-
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
-
-class Table;
-class Field;
+namespace drizzled {
 
 class KeyPartInfo 
 {	/* Info about a key part */
@@ -92,8 +83,6 @@ public:
 };
 
 
-class JoinTable;
-
 class RegInfo 
 {
 public:		/* Extra info about reg */
@@ -112,10 +101,6 @@ public:		/* Extra info about reg */
     impossible_range= false;
   }
 };
-
-class Session;
-class Cursor;
-namespace optimizer { class SqlSelect; }
 
 typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 

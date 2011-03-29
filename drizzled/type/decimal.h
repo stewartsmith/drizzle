@@ -145,10 +145,6 @@ inline int decimal_string_size(const decimal_t *dec)
 */
 #define DECIMAL_MAX_STR_LENGTH (DECIMAL_MAX_POSSIBLE_PRECISION + 2)
 
-namespace type {
-class Decimal;
-}
-
 inline int class_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);

@@ -82,6 +82,8 @@ drizzled/function_hash.h
 drizzled/gen_lex_hash
 drizzled/generated_probes.h
 drizzled/lex_hash.h
+drizzled/message/alter_table.pb.cc
+drizzled/message/alter_table.pb.h
 drizzled/message/binary_log.pb.cc
 drizzled/message/binary_log.pb.h
 drizzled/message/binlog_reader

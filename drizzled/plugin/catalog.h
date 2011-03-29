@@ -65,7 +65,7 @@ public:
 
   // Get Meta information
   static bool exist(const identifier::Catalog&);
-  static void getIdentifiers(identifier::Catalog::vector &identifiers);
+  static void getIdentifiers(identifier::catalog::vector &identifiers);
   static void getMessages(message::catalog::vector &messages);
   static message::catalog::shared_ptr getMessage(const identifier::Catalog&);
 

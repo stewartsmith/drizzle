@@ -24,8 +24,6 @@
 
 namespace drizzled {
 
-class charset_info_st;
-
 /*
   External variables
 */

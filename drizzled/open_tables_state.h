@@ -24,12 +24,6 @@
 
 namespace drizzled {
 
-namespace plugin { class StorageEngine; }
-
-typedef uint64_t query_id_t;
-
-class CachedDirectory;
-
 /**
   Class that holds information about tables which were opened and locked
   by the thread. It is also used to save/restore this information in
@@ -166,9 +160,9 @@ public:
 
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
   void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 
   int doGetTableDefinition(const drizzled::identifier::Table &identifier,
                            message::Table &table_proto);

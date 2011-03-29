@@ -38,7 +38,7 @@ int64_t CreateBarrier::val_int()
   }
   null_value= false;
 
-  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+  drizzled::identifier::user::ptr user_identifier(getSession().user());
   bool result= arg_count == 2
     ? Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId(), args[1]->val_int())
     : Barriers::getInstance().create(Key(*user_identifier, res->c_str()), getSession().getSessionId());

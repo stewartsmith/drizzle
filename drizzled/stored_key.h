@@ -25,10 +25,6 @@
 
 namespace drizzled {
 
-class Field;
-class Session;
-class Item;
-
 /** class to store an field/item as a key struct */
 class StoredKey :public memory::SqlAlloc
 {

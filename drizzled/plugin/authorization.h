@@ -102,7 +102,7 @@ public:
    * to a set of schema names (for use in the context of getSchemaNames
    */
   static void pruneSchemaNames(const drizzled::identifier::User& user_ctx,
-                               identifier::Schema::vector &set_of_schemas);
+                               identifier::schema::vector &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks

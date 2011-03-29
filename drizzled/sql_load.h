@@ -23,14 +23,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class TableList;
-class file_exchange;
-class Session;
-class Table;
-class CopyInfo;
+namespace drizzled {
 
 int load(Session *session, file_exchange *ex, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,

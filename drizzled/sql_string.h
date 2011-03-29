@@ -34,15 +34,10 @@
 #define NOT_FIXED_DEC			(uint8_t)31
 #endif
 
-namespace drizzled
-{
-
-class String;
-struct charset_info_st;
+namespace drizzled {
 
 extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
-namespace memory { class Root; }
 
 DRIZZLED_API std::string String_to_std_string(String const& s);
 DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);

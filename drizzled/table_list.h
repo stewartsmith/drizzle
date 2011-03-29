@@ -23,23 +23,7 @@
 #include <drizzled/nested_join.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
-
-class Index_hint;
-class COND_EQUAL;
-class Natural_join_column;
-class select_union;
-class Select_Lex_Unit;
-class Select_Lex;
-class Tmp_Table_Param;
-class Item_subselect;
-class Table;
-
-namespace plugin
-{
-  class StorageEngine;
-}
+namespace drizzled {
 
 /**
  * A Table referenced in the FROM clause.

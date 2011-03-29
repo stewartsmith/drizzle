@@ -37,15 +37,8 @@
 
 #include <bitset>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Table;
-
-namespace optimizer
-{
-  class Position;
-}
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2

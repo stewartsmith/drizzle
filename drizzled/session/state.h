@@ -24,9 +24,6 @@
 #include <vector>
 
 namespace drizzled {
-
-class Session;
-
 namespace session {
 
 class State 

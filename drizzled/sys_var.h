@@ -34,11 +34,6 @@
 
 namespace drizzled {
 
-class sys_var;
-class Time_zone;
-typedef struct my_locale_st MY_LOCALE;
-class charset_info_st;
-
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
 typedef void (*sys_after_update_func)(Session *, sql_var_t);

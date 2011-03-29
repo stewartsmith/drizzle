@@ -24,9 +24,6 @@
 #include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace generator {
 
 class Schema
@@ -34,8 +31,8 @@ class Schema
   Session &session;
   message::schema::shared_ptr schema;
 
-  identifier::Schema::vector schema_names;
-  identifier::Schema::vector::const_iterator schema_iterator;
+  identifier::schema::vector schema_names;
+  identifier::schema::vector::const_iterator schema_iterator;
 
 public:
 

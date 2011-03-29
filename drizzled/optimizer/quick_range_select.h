@@ -25,13 +25,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <vector>
 
-namespace drizzled
-{
-
-class Cursor;
-
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * Quick select that does a range scan on a single key. 

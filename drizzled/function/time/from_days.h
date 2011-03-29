@@ -21,11 +21,7 @@
 
 #include <drizzled/function/time/date.h>
 
-namespace drizzled
-{
-
-/* forward declarations */
-class Date;
+namespace drizzled {
 
 class Item_func_from_days :public Item_date
 {

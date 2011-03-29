@@ -21,12 +21,8 @@
 
 #include <drizzled/module/vertex.h>
 
-
-namespace drizzled
-{
-
-namespace module
-{
+namespace drizzled {
+namespace module {
 
 class VertexHandle
 {

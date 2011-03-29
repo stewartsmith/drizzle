@@ -22,17 +22,7 @@
 #include <drizzled/common.h>
 #include <drizzled/item_result.h>
 
-namespace drizzled
-{
-
-class Item;
-class Field;
-class Hybrid_type;
-class String;
-
-namespace type {
-class Decimal;
-}
+namespace drizzled {
 
 /* Hybryd_type_traits interface + default implementation for REAL_RESULT */
 

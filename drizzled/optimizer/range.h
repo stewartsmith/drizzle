@@ -29,17 +29,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-namespace drizzled
-{
-
-class Join;
-class RorIntersectReadPlan; 
-typedef class Item COND;
-
-namespace internal
-{
-  typedef struct st_io_cache IO_CACHE;
-}
+namespace drizzled {
 
 typedef struct st_key_part
 {
@@ -58,11 +48,7 @@ typedef struct st_key_part
 } KEY_PART;
 
 
-namespace optimizer
-{
-
-class Parameter;
-class SEL_ARG;
+namespace optimizer {
 
 /**
   Quick select interface.
@@ -261,10 +247,6 @@ public:
    */
   virtual bool is_keys_used(const boost::dynamic_bitset<>& fields);
 };
-
-struct st_qsel_param;
-class QuickRange;
-class QuickRangeSelect;
 
 /**
  * MRR range sequence, array<QuickRange> implementation: sequence traversal

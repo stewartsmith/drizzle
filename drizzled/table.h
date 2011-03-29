@@ -18,10 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-
-
 #pragma once
 
 #include <string>
@@ -39,21 +35,6 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-class COND_EQUAL;
-class Field_blob;
-class Item;
-class Item_subselect;
-class SecurityContext;
-class Select_Lex;
-class Select_Lex_Unit;
-class TableList;
-namespace field { class Epoch; }
-namespace plugin { class StorageEngine; }
-
-typedef enum enum_table_category TABLE_CATEGORY;
-typedef struct st_columndef MI_COLUMNDEF;
-typedef uint64_t query_id_t;
 
 /**
  * Class representing a set of records, either in a temporary, 
@@ -807,14 +788,8 @@ private:
     List<LEX_STRING> referenced_fields;
 };
 
-class TableList;
-
 #define JOIN_TYPE_LEFT  1
 #define JOIN_TYPE_RIGHT 2
-
-struct st_lex;
-class select_union;
-class Tmp_Table_Param;
 
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
@@ -823,9 +798,6 @@ uint32_t convert_month_to_period(uint32_t month);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-
-namespace optimizer { class SqlSelect; }
-
 void change_double_for_sort(double nr,unsigned char *to);
 int get_quick_record(optimizer::SqlSelect *select);
 

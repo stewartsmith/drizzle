@@ -26,18 +26,10 @@
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/identifier.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace identifier {
-class User;
-} 
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Authentication : public Plugin
 {

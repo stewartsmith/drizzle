@@ -35,21 +35,11 @@
 
 namespace drizzled {
 
-class Session;
-class Item;
-struct charset_info_st;
-
 /*************************************************************************
   Plugin API. Common for all plugin types.
 */
 
-
-class sys_var;
-struct option;
-
 extern boost::filesystem::path plugin_dir;
-
-namespace plugin { class StorageEngine; }
 
 /*
   Macros for beginning and ending plugin declarations. Between

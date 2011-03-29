@@ -22,8 +22,6 @@
 
 namespace drizzled {
 
-class Time_zone;
-
 struct drizzle_system_variables
 {
   /*

@@ -23,14 +23,11 @@
 
 #include <drizzled/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-typedef class Item COND;
 typedef struct st_key_part KEY_PART;
 
-namespace optimizer
-{
+namespace optimizer {
 
 class RorScanInfo
 {

@@ -30,12 +30,7 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/handler_structs.h>
 
-namespace drizzled
-{
-
-namespace memory { class Root; }
-
-class Item;
+namespace drizzled {
 
 class Key :public memory::SqlAlloc {
 public:

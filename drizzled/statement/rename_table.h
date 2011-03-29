@@ -22,13 +22,8 @@
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-class TableList;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class RenameTable : public Statement
 {

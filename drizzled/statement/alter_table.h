@@ -22,18 +22,8 @@
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-class TableList;
-
-namespace message
-{
-  class Table;
-}
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class AlterTable : public CreateTable
 {

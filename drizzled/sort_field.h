@@ -21,11 +21,7 @@
 
 #include <drizzled/item_result.h>
 
-namespace drizzled
-{
-
-class Field;
-class Item;
+namespace drizzled {
 
 /**
  * A structure used to describe sort information

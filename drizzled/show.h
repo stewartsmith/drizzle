@@ -31,13 +31,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-/* Forward declarations */
-class Session;
-class Table_ident;
-struct charset_info_st;
+namespace drizzled {
 
 int wild_case_compare(const charset_info_st * const cs, 
                       const char *str,const char *wildstr);

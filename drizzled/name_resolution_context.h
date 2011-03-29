@@ -21,13 +21,7 @@
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class TableList;
-class SecurityContext;
-class Session;
-class Select_Lex;
+namespace drizzled {
 
 /**
  * Instances of Name_resolution_context store the information necesary for

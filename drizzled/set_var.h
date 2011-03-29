@@ -21,22 +21,11 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/enum.h>
 #include <drizzled/lex_string.h>
 
 namespace drizzled {
-
-namespace plugin
-{
-  class StorageEngine;
-}
-
-class Session;
-class sys_var;
-class Item;
-class Item_func_set_user_var;
-class Time_zone;
-typedef struct my_locale_st MY_LOCALE;
 
 /* Classes to support the SET command */
 

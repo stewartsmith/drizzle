@@ -37,15 +37,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace message { class Transaction; }
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * Base class for appliers of Transaction messages

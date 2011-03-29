@@ -23,12 +23,7 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/type/time.h>
 
-#include <drizzled/type/time.h>
-
-namespace drizzled
-{
-
-class String;
+namespace drizzled {
 
 /**
   This class represents abstract time zone and provides

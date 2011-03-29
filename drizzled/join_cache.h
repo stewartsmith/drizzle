@@ -19,11 +19,7 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-class Field_blob;
-typedef JoinTable JoinTable;
+namespace drizzled {
 
 /**
   CacheField and JoinCache is used on full join to cache records in outer

@@ -76,7 +76,7 @@ public:
                            const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector&);
+  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::identifier::Table &identifier);
 
@@ -89,6 +89,6 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 

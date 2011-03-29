@@ -33,16 +33,6 @@
 #include <map>
 #include <vector>
 
-namespace drizzled
-{
-class TableList;
-class Item;
-
-namespace message
-{
-class Resultset;
-}
-
 class QueryCacheService
 {
 public:
