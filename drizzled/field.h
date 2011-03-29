@@ -46,13 +46,8 @@ namespace drizzled {
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
-#ifdef DEBUG // todo: remove non-debug
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
-#else
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
-#endif
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable() && (not getTable()->read_set || isReadSet()))
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable() && (not getTable()->write_set || isWriteSet()))
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
