@@ -35,19 +35,6 @@
 
 namespace drizzled {
 
-/* some forward declarations needed */
-namespace plugin
-{
-  class MonitoredInTransaction;
-  class XaResourceManager;
-  class XaStorageEngine;
-  class TransactionalStorageEngine;
-}
-
-class Session;
-class NamedSavepoint;
-class Field;
-
 /**
  * This is a class which manages the XA transaction processing
  * in the server

@@ -39,13 +39,7 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-class sys_var;
-
 namespace module {
-
-class Module;
-class option_map;
 
 class DRIZZLED_API Context : boost::noncopyable
 {

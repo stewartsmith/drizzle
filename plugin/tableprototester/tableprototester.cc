@@ -101,12 +101,12 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 
 void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                                    const drizzled::identifier::Schema &schema_identifier,
-                                                   drizzled::identifier::Table::vector &set_of_identifiers)
+                                                   drizzled::identifier::table::vector &set_of_identifiers)
 {
   if (schema_identifier.compare("test"))
   {

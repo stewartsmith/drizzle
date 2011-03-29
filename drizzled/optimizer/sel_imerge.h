@@ -21,15 +21,8 @@
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class RangeParameter;
-class SEL_TREE;
-class SEL_ARG;
+namespace drizzled {
+namespace optimizer {
 
 /*
   SEL_IMERGE is a list of possible ways to do index merge, i.e. it is

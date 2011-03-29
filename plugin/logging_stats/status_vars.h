@@ -29,11 +29,7 @@
 
 #pragma once
 
-namespace drizzled 
-{ 
-  class Session;
-  class system_status_var;
-}
+#include <drizzled/common_fwd.h>
 
 class StatusVars
 {

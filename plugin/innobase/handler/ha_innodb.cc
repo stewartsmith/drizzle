@@ -324,14 +324,13 @@ public:
 
   virtual ~InnobaseEngine()
   {
-    int err= 0;
     if (innodb_inited) {
       srv_fast_shutdown = (ulint) innobase_fast_shutdown;
       innodb_inited = 0;
       hash_table_free(innobase_open_tables);
       innobase_open_tables = NULL;
       if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-        err = 1;
+        // Throw here?
       }
       srv_free_paths_and_sizes();
       if (internal_innobase_data_file_path)
@@ -493,7 +492,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -522,7 +521,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            const drizzled::identifier::Schema &schema_identifier,
-                                           drizzled::identifier::Table::vector &set_of_identifiers)
+                                           drizzled::identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -1178,7 +1177,7 @@ innobase_mysql_print_thd(
   uint  )   /*!< in: max query length to print, or 0 to
            use the default max length */
 {
-  drizzled::identifier::User::const_shared_ptr user_identifier(in_session->user());
+  drizzled::identifier::user::ptr user_identifier(in_session->user());
 
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
@@ -3990,7 +3989,6 @@ ha_innobase::store_key_val_for_row(
       ulint     true_len;
       ulint     key_len;
       const unsigned char*    src_start;
-      enum_field_types  real_type;
       const charset_info_st* cs= field->charset();
 
       key_len = key_part->length;
@@ -4002,7 +4000,6 @@ ha_innobase::store_key_val_for_row(
       }
 
       src_start = record + key_part->offset;
-      real_type = field->real_type();
       true_len = key_len;
 
       /* Character set for the field is defined only
@@ -6552,6 +6549,10 @@ InnobaseEngine::doDropSchema(
 
   innobase_commit_low(trx);
   trx_free_for_mysql(trx);
+
+  if (error) {
+    // What do we do here?
+  }
 
   return false; // We are just a listener since we lack control over DDL, so we give no positive acknowledgement. 
 }

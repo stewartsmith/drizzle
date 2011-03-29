@@ -23,18 +23,10 @@
 #include <drizzled/statement/create_table.h>
 #include <drizzled/foreign_key.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
-
-namespace create
-{
-
-namespace table
-{
+namespace drizzled {
+namespace statement {
+namespace create {
+namespace table {
 
 class Select : public CreateTable
 {

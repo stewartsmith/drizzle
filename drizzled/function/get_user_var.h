@@ -22,10 +22,7 @@
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-class user_var_entry;
+namespace drizzled {
 
 class Item_func_get_user_var :public Item_func
 {

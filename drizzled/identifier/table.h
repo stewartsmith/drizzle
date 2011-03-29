@@ -51,15 +51,12 @@
 #include <drizzled/identifier/schema.h>
 
 namespace drizzled {
-class Table;
-
 namespace identifier {
 
 class DRIZZLED_API Table : public Schema
 {
 public:
   typedef message::Table::TableType Type;
-  typedef std::vector <Table> vector;
 
   class Key
   {

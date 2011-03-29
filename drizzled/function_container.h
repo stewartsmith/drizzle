@@ -26,8 +26,6 @@
 
 namespace drizzled {
 
-class Create_func;
-
 class FunctionContainer {
 public:
   typedef boost::unordered_map<std::string, Create_func *, util::insensitive_hash, util::insensitive_equal_to> Map;

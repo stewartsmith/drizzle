@@ -25,10 +25,7 @@
 
 #include <bitset>
 
-namespace drizzled
-{
-class TableList;
-class JoinTable;
+namespace drizzled {
 
 class NestedJoin
 {

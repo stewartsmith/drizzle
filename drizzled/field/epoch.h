@@ -22,13 +22,8 @@
 
 #include <drizzled/field/str.h>
 
-namespace drizzled
-{
-
-namespace field
-{
-
-class TableShare;
+namespace drizzled {
+namespace field {
 
 class Epoch :public Field_str {
 public:

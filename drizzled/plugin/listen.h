@@ -25,13 +25,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
-class Client;
-class Listen;
 typedef std::vector<Listen *> ListenVector;
 typedef std::pair<std::string*, drizzled::atomic<uint64_t>*> ListenCounter;
 /**

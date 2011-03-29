@@ -25,13 +25,9 @@
 #include <vector>
 #include <algorithm>
 
-class Session;
-
-namespace drizzled
-{
+namespace drizzled {
 
 std::vector<plugin::Logging *> all_loggers;
-
 
 bool plugin::Logging::addPlugin(plugin::Logging *handler)
 {

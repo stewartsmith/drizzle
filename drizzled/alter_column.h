@@ -21,14 +21,10 @@
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
+namespace drizzled {
+
+class AlterColumn : public memory::SqlAlloc 
 {
-
-namespace memory { class Root; }
-
-class Item;
-
-class AlterColumn :public memory::SqlAlloc {
 public:
   const char *name;
   Item *def;

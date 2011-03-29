@@ -351,12 +351,6 @@ void optimizer::ExplainPlan::printPlan()
       }
       else
       {
-        uint32_t keyno= MAX_KEY;
-        if (tab->ref.key_parts)
-          keyno= tab->ref.key;
-        else if (tab->select && tab->select->quick)
-          keyno = tab->select->quick->index;
-
         if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE)

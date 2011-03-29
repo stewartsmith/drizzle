@@ -23,19 +23,10 @@
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
-
-#include <string>
-#include <vector>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class should be used by scheduler plugins to implement custom session

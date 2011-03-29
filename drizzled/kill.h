@@ -20,12 +20,12 @@
 
 #pragma once
 
-#include <drizzled/identifier.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/visibility.h>
 
 namespace drizzled {
 
-bool kill(const identifier::User& user, session_id_t id_to_kill, bool only_kill_query);
+bool kill(const identifier::User&, session_id_t, bool only_kill_query);
 
 } // namespace drizzled
 

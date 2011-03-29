@@ -37,8 +37,6 @@
 namespace drizzled {
 namespace sql {
 
-class ResultSet;
-
 class ResultSetMetaData
 {
 public:

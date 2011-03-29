@@ -24,16 +24,10 @@
 #include <drizzled/error_t.h>
 #include <drizzled/item.h>
 #include <drizzled/sql_list.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-class String;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class allows new client sources to be written. This could be through

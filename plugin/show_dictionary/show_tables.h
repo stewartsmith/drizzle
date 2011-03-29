@@ -28,8 +28,8 @@ public:
   class Generator : public show_dictionary::Show::Generator
   {
     bool is_primed;
-    drizzled::identifier::Table::vector set_of_identifiers;
-    drizzled::identifier::Table::vector::iterator table_iterator;
+    drizzled::identifier::table::vector set_of_identifiers;
+    drizzled::identifier::table::vector::iterator table_iterator;
     std::string schema_name;
 
     void fill();

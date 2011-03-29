@@ -24,9 +24,6 @@
 #include <drizzled/sql_lex.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace statement {
 
 class Savepoint : public Statement

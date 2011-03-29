@@ -346,12 +346,6 @@ static enum enum_thr_lock_result thr_lock(Session &session, THR_LOCK_DATA *data,
     {
       if (!lock->write_wait.data)
       {						/* no scheduled write locks */
-        bool concurrent_insert= 0;
-	if (lock_type == TL_WRITE_CONCURRENT_INSERT)
-        {
-          concurrent_insert= 1;
-        }
-
 	if (!lock->read.data ||
 	    (lock_type <= TL_WRITE_CONCURRENT_INSERT &&
 	     ((lock_type != TL_WRITE_CONCURRENT_INSERT &&
@@ -604,23 +598,6 @@ thr_multi_lock(Session &session, THR_LOCK_DATA **data, uint32_t count, THR_LOCK_
       return(result);
     }
   }
-  /*
-    Ensure that all get_locks() have the same status
-    If we lock the same table multiple times, we must use the same
-    status_param!
-  */
-#if !defined(DONT_USE_RW_LOCKS)
-  if (count > 1)
-  {
-    THR_LOCK_DATA *last_lock= end[-1];
-    pos=end-1;
-    do
-    {
-      pos--;
-      last_lock=(*pos);
-    } while (pos != data);
-  }
-#endif
   return(THR_LOCK_SUCCESS);
 }
 

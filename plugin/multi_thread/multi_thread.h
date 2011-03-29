@@ -23,10 +23,6 @@
 #include <drizzled/sql_parse.h>
 #include <string>
 
-namespace drizzled {
-class Session;
-}
-
 namespace multi_thread {
 
 class MultiThreadScheduler: public drizzled::plugin::Scheduler

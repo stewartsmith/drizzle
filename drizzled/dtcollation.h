@@ -22,11 +22,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Item;
-struct charset_info_st;
+namespace drizzled {
 
 class DRIZZLED_API DTCollation
 {

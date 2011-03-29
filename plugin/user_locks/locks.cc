@@ -75,10 +75,9 @@ void Locks::waitCreate(int64_t wait_for)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
   boost::system_time timeout= boost::get_system_time() + boost::posix_time::seconds(wait_for);
-  bool timed_out;
 
   try {
-    timed_out= create_cond.timed_wait(scope, timeout);
+    create_cond.timed_wait(scope, timeout);
   }
   catch(boost::thread_interrupted const& error)
   {

@@ -30,23 +30,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Field;
-class Item_equal;
-class Item_field;
-class Item_ident;
-class Item_in_subselect;
-class Item_sum;
-class Select_Lex;
-class SendField;
-class Table;
-class user_var_entry;
-
-namespace plugin { class Client; }
-namespace type { class Time; }
-namespace type { class Decimal; }
+namespace drizzled {
 
 /**
   Dummy error processor used by default by Name_resolution_context.

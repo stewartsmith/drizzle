@@ -25,16 +25,7 @@
 #include <drizzled/identifier.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace table {
-
-namespace instance {
-class Shared;
-} 
-
-class Concurrent;
 
 typedef boost::unordered_multimap< identifier::Table::Key, Concurrent *> CacheMap;
 typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;

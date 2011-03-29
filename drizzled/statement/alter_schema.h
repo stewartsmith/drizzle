@@ -22,12 +22,8 @@
 
 #include <drizzled/statement/create_schema.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class AlterSchema : public CreateSchema
 {

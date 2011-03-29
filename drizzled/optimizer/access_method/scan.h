@@ -22,12 +22,8 @@
 
 #include <drizzled/optimizer/access_method.h>
 
-class Session;
-
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class Scan

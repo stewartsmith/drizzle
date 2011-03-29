@@ -22,17 +22,10 @@
 #pragma once
 
 #include <drizzled/plugin/plugin.h>
-
-#include <string>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Logging : public Plugin
 {

@@ -23,12 +23,7 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/type/decimal.h>
 
-namespace drizzled
-{
-
-class Item;
-class Session;
-class Field;
+namespace drizzled {
 
 class Cached_item :public memory::SqlAlloc
 {

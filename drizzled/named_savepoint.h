@@ -23,15 +23,10 @@
 
 #pragma once
 
-#include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
+#include <drizzled/transaction_context.h>
 #include <string>
 
 namespace drizzled {
-
-namespace message
-{
-class Transaction;
-}
 
 /**
  * This is a class which stores information about

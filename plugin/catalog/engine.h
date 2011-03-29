@@ -37,7 +37,7 @@ public:
     return drizzled::catalog::local_identifier() == identifier;
   }
 
-  void getIdentifiers(drizzled::identifier::Catalog::vector &identifiers)
+  void getIdentifiers(drizzled::identifier::catalog::vector &identifiers)
   {
     identifiers.push_back(drizzled::catalog::local_identifier());
   }

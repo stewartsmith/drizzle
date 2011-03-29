@@ -36,31 +36,14 @@
 #include <drizzled/memory/root.h>
 #include <drizzled/message.h>
 #include <drizzled/util/string.h>
-
 #include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
- 
 #include <drizzled/table/cache.h>
- 
 #include <drizzled/field.h>
 
-
-namespace drizzled
-{
+namespace drizzled {
 
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
-
-namespace plugin
-{
-class EventObserverList;
-class StorageEngine;
-}
-
-namespace table {
-class Singular;
-}
-
-class Field_blob;
 
 class TableShare
 {

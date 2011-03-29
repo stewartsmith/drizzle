@@ -22,10 +22,7 @@
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-class sys_var;
+namespace drizzled {
 
 Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component);

@@ -701,7 +701,7 @@ bool ClientMySQLProtocol::checkConnection(void)
   uint32_t pkt_len= 0;
   char *end;
   char scramble[SCRAMBLE_LENGTH];
-  identifier::User::shared_ptr user_identifier= identifier::User::make_shared();
+  identifier::user::mptr user_identifier= identifier::User::make_shared();
 
   makeScramble(scramble);
 

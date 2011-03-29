@@ -57,7 +57,7 @@ public:
     return NULL;
   }
 
-  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector &set_of_names);
+  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector &set_of_names);
   drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
@@ -111,6 +111,6 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 

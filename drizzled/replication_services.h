@@ -33,22 +33,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-/* some forward declarations needed */
-class Session;
-class Table;
-
-namespace plugin
-{
-  class TransactionReplicator;
-  class TransactionApplier;
-}
-namespace message
-{
-  class Transaction;
-}
+namespace drizzled {
 
 /**
  * This is a class which manages transforming internal 

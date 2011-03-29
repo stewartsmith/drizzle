@@ -26,8 +26,6 @@
 
 namespace drizzled {
 
-class Session;
-
 /**
   Stores status of the currently executed statement.
   Cleared at the beginning of the statement, and then

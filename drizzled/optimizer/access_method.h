@@ -26,16 +26,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 
-
-namespace drizzled
-{
-
-/* Forward declarations */
-class Table;
-class JoinTable;
-
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class AccessMethod

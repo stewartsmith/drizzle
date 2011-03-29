@@ -38,13 +38,8 @@
 
 namespace drizzled {
 
-class CachedDirectory;
-class TableList;
-class Session;
-class Cursor;
 struct HASH;
 
-class TableShare;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -109,11 +104,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
-class Table;
-class NamedSavepoint;
-
-namespace plugin
-{
+namespace plugin {
 
 typedef std::vector<StorageEngine *> EngineVector;
 
@@ -288,7 +279,7 @@ protected:
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     identifier::Table::vector &set_of_identifiers)= 0;
+                                     identifier::table::vector &set_of_identifiers)= 0;
 
   virtual bool doDoesTableExist(Session& session, const drizzled::identifier::Table &identifier);
 
@@ -346,13 +337,13 @@ public:
 
   static void getIdentifiers(Session &session,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::identifier::Table &identifier);
 
   // @note All schema methods defined here
-  static void getIdentifiers(Session &session, identifier::Schema::vector &schemas);
+  static void getIdentifiers(Session &session, identifier::schema::vector &schemas);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
@@ -365,7 +356,7 @@ public:
 
   // @note make private/protected
 protected:
-  virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
+  virtual void doGetSchemaIdentifiers(identifier::schema::vector&)
   { }
 
   virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)

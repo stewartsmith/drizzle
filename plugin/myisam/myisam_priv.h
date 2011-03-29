@@ -171,8 +171,6 @@ typedef struct st_mi_isam_pack {
 
 #define MAX_NONMAPPED_INSERTS 1000
 
-namespace drizzled { class Session; }
-
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;
   MI_BASE_INFO base;

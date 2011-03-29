@@ -32,12 +32,7 @@
 #include <drizzled/tmp_table_param.h>
 #include <bitset>
 
-namespace drizzled
-{
-
-class DrizzleLock;
-class Session;
-class SortField;
+namespace drizzled {
 
 class Join :public memory::SqlAlloc
 {

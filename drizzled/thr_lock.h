@@ -183,8 +183,6 @@ public:
   }
 };
 
-class Session; 
-
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 DRIZZLED_API void thr_lock_init(THR_LOCK *lock);
 enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,

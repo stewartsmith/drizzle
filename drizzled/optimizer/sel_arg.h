@@ -22,8 +22,6 @@
 namespace drizzled {
 namespace optimizer {
 
-class RangeParameter;
-
 /*
   A construction block of the SEL_ARG-graph.
 

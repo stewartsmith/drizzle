@@ -23,17 +23,14 @@
 #include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace generator {
 
 class Table
 {
   Session &session;
 
-  identifier::Table::vector table_names;
-  identifier::Table::vector::const_iterator table_iterator;
+  identifier::table::vector table_names;
+  identifier::table::vector::const_iterator table_iterator;
 
 public:
 

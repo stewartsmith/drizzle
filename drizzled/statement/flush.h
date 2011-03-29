@@ -24,9 +24,6 @@
 #include <drizzled/statement.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace statement {
 
 class Flush : public Statement

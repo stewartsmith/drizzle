@@ -21,12 +21,9 @@
 
 #include <drizzled/function/func.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Handling of user definable variables */
-
-class user_var_entry;
 
 class Item_func_set_user_var :public Item_func
 {

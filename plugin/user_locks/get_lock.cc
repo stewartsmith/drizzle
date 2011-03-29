@@ -47,7 +47,7 @@ int64_t GetLock::val_int()
   if (list) // To be compatible with MySQL, we will now release all other locks we might have.
     list->erase_all();
 
-  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+  drizzled::identifier::user::ptr user_identifier(getSession().user());
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
 

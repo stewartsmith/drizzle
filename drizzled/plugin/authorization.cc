@@ -202,7 +202,7 @@ bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_
   
   // To make sure we hold the user structure we need to have a shred_ptr so
   // that we increase the count on the object.
-  drizzled::identifier::User::const_shared_ptr session_ctx= session.user();
+  drizzled::identifier::user::ptr session_ctx= session.user();
 
 
   /* Use find_if instead of foreach so that we can collect return codes */
@@ -230,7 +230,7 @@ bool plugin::Authorization::isAuthorized(const drizzled::identifier::User& user_
 }
 
 void plugin::Authorization::pruneSchemaNames(const drizzled::identifier::User& user_ctx,
-                                             identifier::Schema::vector &set_of_schemas)
+                                             identifier::schema::vector &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())

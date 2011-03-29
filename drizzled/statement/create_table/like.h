@@ -22,18 +22,10 @@
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
-
-namespace create
-{
-
-namespace table
-{
+namespace drizzled {
+namespace statement {
+namespace create {
+namespace table {
 
 class Like : public CreateTable
 {

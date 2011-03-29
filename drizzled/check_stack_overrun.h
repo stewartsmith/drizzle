@@ -19,10 +19,9 @@
 
 #pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
-class Session;
+namespace drizzled { 
 
 /**
   @note

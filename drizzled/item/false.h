@@ -21,13 +21,8 @@
 
 #include <drizzled/item/boolean.h>
 
-namespace drizzled
-{
-
-namespace item
-{
-
-class Boolean;
+namespace drizzled {
+namespace item {
 
 class False: public Boolean
 {

@@ -20,14 +20,7 @@
 
 #pragma once
 
-// #include <drizzled/message/schema.h>
-
 namespace drizzled {
-
-class Session;
-namespace message { class Schema; }
-namespace identifier { class Schema; }
-
 namespace schema {
 
 bool create(Session&, const message::Schema&, bool is_if_not_exists);

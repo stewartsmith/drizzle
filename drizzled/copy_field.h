@@ -26,8 +26,6 @@
 
 namespace drizzled {
 
-class Field;
-
 /**
  * A class for quick copying data to fields
  */

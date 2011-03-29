@@ -19,13 +19,8 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-namespace item
-{
-
-class Boolean;
+namespace drizzled {
+namespace item {
 
 class True: public Boolean
 {

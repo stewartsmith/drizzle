@@ -27,23 +27,15 @@
  * or more plugin::Plugin objects. 
  */
 
+#include <drizzled/common_fwd.h>
 #include <string>
 #include <vector>
 
 namespace drizzled {
 
-class set_var;
-class sys_var;
-
-namespace module { class Registry; }
-
 void module_shutdown(module::Registry&);
 
 namespace module {
-
-class Library;
-class Manifest;
-class VertexHandle;
 
 /* A plugin module */
 class Module

@@ -721,7 +721,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 {
   int flag;
   uint32_t used_length,comp_flag,nod_flag,key_length=0;
-  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*old_keypos,*endpos;
+  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*endpos;
   my_off_t next_page,record;
   char llbuff[22];
   uint32_t diff_pos[2];
@@ -765,7 +765,6 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
                          temp_buff,keys,key_checksum,level+1))
 	goto err;
     }
-    old_keypos=keypos;
     if (keypos >= endpos ||
 	(key_length=(*keyinfo->get_key)(keyinfo,nod_flag,&keypos,key)) == 0)
       break;
@@ -874,7 +873,7 @@ static uint32_t isam_key_length(MI_INFO *info, register MI_KEYDEF *keyinfo)
 int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 {
   int	error,got_error,flag;
-  uint	key, left_length= 0, b_type,field;
+  uint	key, left_length= 0, b_type;
   ha_rows records, del_blocks;
   my_off_t used, empty, pos, splits, start_recpos= 0,
            del_length, link_used, start_block;
@@ -882,7 +881,6 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   char llbuff[22],llbuff2[22],llbuff3[22];
   ha_checksum intern_record_checksum;
   ha_checksum key_checksum[HA_MAX_POSSIBLE_KEY];
-  bool static_row_size;
   MI_KEYDEF *keyinfo;
   MI_BLOCK_INFO block_info;
 
@@ -904,21 +902,6 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   intern_record_checksum=param->glob_crc=0;
   got_error=error=0;
   empty=info->s->pack.header_length;
-
-  /* Check how to calculate checksum of rows */
-  static_row_size=1;
-  if (info->s->data_file_type == COMPRESSED_RECORD)
-  {
-    for (field=0 ; field < info->s->base.fields ; field++)
-    {
-      if (info->s->rec[field].base_type == FIELD_BLOB ||
-	  info->s->rec[field].base_type == FIELD_VARCHAR)
-      {
-	static_row_size=0;
-	break;
-      }
-    }
-  }
 
   pos=my_b_tell(&param->read_cache);
   memset(key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));

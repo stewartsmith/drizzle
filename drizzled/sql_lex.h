@@ -33,29 +33,6 @@
 #include <bitset>
 #include <string>
 
-namespace drizzled {
-
-namespace plugin { class Function; }
-namespace statement { class Statement; }
-
-  namespace message
-  {
-    class AlterTable;
-  }
-
-class st_lex_symbol;
-class select_result_interceptor;
-
-/* YACC and LEX Definitions */
-
-/* These may not be declared yet */
-class Table_ident;
-class file_exchange;
-class Lex_Column;
-class Item_outer_ref;
-
-} /* namespace drizzled */
-
 /*
   The following hack is needed because mysql_yacc.cc does not define
   YYSTYPE before including this file
@@ -230,9 +207,6 @@ enum olap_type
     Base class for Select_Lex (Select_Lex) &
     Select_Lex_Unit (Select_Lex_Unit)
 */
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
 class Select_Lex_Node {
 protected:
   Select_Lex_Node *next, **prev,   /* neighbor list */
@@ -304,10 +278,6 @@ private:
    Select_Lex_Unit - unit of selects (UNION, INTERSECT, ...) group
    Select_Lexs
 */
-class Session;
-class select_result;
-class Join;
-class select_union;
 class Select_Lex_Unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;

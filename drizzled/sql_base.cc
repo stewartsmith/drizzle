@@ -539,7 +539,7 @@ void Open_tables_state::doGetTableNames(CachedDirectory &,
 }
 
 void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                                              identifier::Table::vector &set_of_identifiers)
+                                              identifier::table::vector &set_of_identifiers)
 {
   for (Table *table= getTemporaryTables() ; table ; table= table->getNext())
   {
@@ -554,7 +554,7 @@ void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_i
 
 void Open_tables_state::doGetTableIdentifiers(CachedDirectory &,
                                               const identifier::Schema &schema_identifier,
-                                              identifier::Table::vector &set_of_identifiers)
+                                              identifier::table::vector &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }

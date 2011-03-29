@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <drizzled/common_fwd.h>
+
 /**
  *
  * DRIZZLED_API is used for the public API symbols. It either DLL imports or

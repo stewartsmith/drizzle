@@ -38,9 +38,6 @@
 #include <queue>
 
 namespace drizzled {
-
-namespace plugin { class Client; }
-
 namespace sql {
 
 class DRIZZLED_API ResultSet

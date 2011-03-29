@@ -22,12 +22,8 @@
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class CreateIndex : public CreateTable
 {

@@ -23,12 +23,8 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class DropIndex : public Statement
 {

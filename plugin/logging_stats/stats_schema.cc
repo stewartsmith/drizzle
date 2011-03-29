@@ -133,9 +133,6 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *in_loggin
   std::vector<ScoreboardSlot* > *scoreboard_vector=
      current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
 
-  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
-  std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
-
   ScoreboardSlot *scoreboard_slot= NULL;
   for (std::vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
        it != scoreboard_vector->end(); ++it)

@@ -20,16 +20,9 @@
 
 #pragma once
 
-#include <cstddef>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
-
-namespace plugin
-{
-  class MonitoredInTransaction;
-  class TransactionalStorageEngine;
-  class XaResourceManager;
-}
 
 /**
  * Either statement transaction or normal transaction - related

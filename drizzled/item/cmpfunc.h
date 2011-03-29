@@ -34,16 +34,9 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/qsort_cmp.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
-
-class Item_bool_func2;
-class Arg_comparator;
-class Item_sum_hybrid;
-class Item_row;
-class Session;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 
@@ -212,7 +205,6 @@ public:
 };
 
 
-class Item_cache;
 #define UNKNOWN ((bool)-1)
 
 
@@ -387,8 +379,6 @@ public:
   Item *neg_transformer(Session *session);
   virtual void print(String *str);
 };
-
-class Item_maxmin_subselect;
 
 /*
   trigcond<param>(arg) ::= param? arg : TRUE
@@ -1322,8 +1312,6 @@ public:
 
 /* Functions used by HAVING for rewriting IN subquery */
 
-class Item_in_subselect;
-
 /*
   This is like IS NOT NULL but it also remembers if it ever has
   encountered a NULL.
@@ -1408,8 +1396,6 @@ public:
   void cleanup();
 };
 
-
-typedef class Item COND;
 
 class Item_cond :public item::function::Boolean
 {

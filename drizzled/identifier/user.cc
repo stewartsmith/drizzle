@@ -24,7 +24,7 @@
 namespace drizzled {
 namespace identifier {
 
-User::shared_ptr User::make_shared()
+user::mptr User::make_shared()
 {
   return boost::make_shared<User>();
 }

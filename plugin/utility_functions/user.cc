@@ -33,7 +33,7 @@ namespace utility_functions
 String *User::val_str(String *str)
 {
   assert(fixed == 1);
-  identifier::User::const_shared_ptr user= getSession().user();
+  identifier::user::ptr user= getSession().user();
   assert(user);
   if (user->username().empty())
   {

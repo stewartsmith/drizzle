@@ -23,12 +23,7 @@
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-namespace memory { class Root; }
-
-class Item;
+namespace drizzled {
 
 class Key_part_spec :public memory::SqlAlloc {
 public:

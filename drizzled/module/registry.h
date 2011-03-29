@@ -33,15 +33,8 @@
 #include <drizzled/plugin/plugin.h>
 
 
-namespace drizzled
-{
-
-namespace module
-{
-class Module;
-class Library;
-class Graph;
-
+namespace drizzled {
+namespace module {
 
 class Registry
 {

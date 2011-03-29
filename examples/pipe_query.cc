@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
   char *password= NULL;
   char *buffer= NULL;
   size_t buffer_size= 0;
-  size_t buffer_total= 0;
   ssize_t read_size= 0;
   drizzle_st drizzle;
   drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
@@ -148,7 +147,6 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    buffer_total= buffer_size + BUFFER_CHUNK;
   } while ((read_size= read(0, buffer + buffer_size, BUFFER_CHUNK)) != 0);
 
   (void)drizzle_query(con, &result, buffer, buffer_size, &ret);

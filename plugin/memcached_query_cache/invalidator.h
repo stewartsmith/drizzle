@@ -37,10 +37,6 @@
 
 #include <string>
 
-namespace drizzled
-{
-  class Session;
-}
 class Invalidator : public drizzled::plugin::TransactionApplier 
 {
 public:

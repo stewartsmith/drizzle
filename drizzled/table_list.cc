@@ -27,11 +27,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-class Item;
-class Item_field;
+namespace drizzled {
 
 bool TableList::set_insert_values(memory::Root *)
 {
