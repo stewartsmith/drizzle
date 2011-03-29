@@ -23,16 +23,9 @@
 
 #include <drizzled/table/instance/base.h>
 
-namespace drizzled
-{
-
-namespace identifier { class Table; }
-
-namespace table
-{
-
-namespace instance
-{
+namespace drizzled {
+namespace table {
+namespace instance {
 
 class Singular : public drizzled::TableShare
 {

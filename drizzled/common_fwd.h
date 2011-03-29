@@ -103,16 +103,38 @@ namespace memory
 
 namespace message
 {
+  class AlterSchemaStatement;
   class AlterTable;
+  class CreateSchemaStatement;
+  class CreateTableStatement;
+  class DeleteData;
+  class DeleteHeader;
+  class DeleteRecord;
+  class DropSchemaStatement;
+  class DropTableStatement;
+  class InsertData;
+  class InsertHeader;
+  class InsertRecord;
   class Resultset;
   class Schema;
+  class SetVariableStatement;
   class Statement;
   class Transaction;
+  class TruncateTableStatement;
+  class UpdateData;
+  class UpdateHeader;
+  class UpdateRecord;
 }
 
 namespace module
 {
+  class Graph;
+  class Library;
+  class Manifest;
+  class Module;
+  class option_map;
   class Registry;
+  class VertexHandle;
 }
 
 namespace plugin 
@@ -133,6 +155,7 @@ namespace plugin
 
 namespace optimizer 
 { 
+  class compare_functor;
   class CostVector; 
   class Position;
   class SqlSelect;
@@ -187,15 +210,17 @@ class AlterColumn;
 class AlterDrop;
 class AlterInfo;
 class Arg_comparator;
+class Cached_item;
 class CachedDirectory;
 class CopyField;
 class CopyInfo;
-class CreateField;
 class Create_func;
+class CreateField;
 class Cursor;
 class Date;
 class DateTime;
 class Diagnostics_area;
+class DRIZZLE_ERROR;
 class DrizzleLock;
 class DrizzleXid;
 class Field;
@@ -209,29 +234,39 @@ class Index_hint;
 class Internal_error_handler;
 class Item;
 class Item_bool_func2;
+class Item_cache;
 class Item_equal;
 class Item_field;
 class Item_func;
+class Item_func_not_all;
 class Item_func_set_user_var;
 class Item_ident;
+class Item_in_optimizer;
 class Item_in_subselect;
+class Item_maxmin_subselect;
 class Item_row;
 class Item_subselect;
 class Item_sum;
+class Item_sum_avg;
 class Item_sum_hybrid;
+class Item_sum_std;
+class Item_sum_variance;
 class Join;
 class JoinTable;
 class KeyInfo;
 class LEX;
 class Lex_input_stream;
 class lex_string_t;
-class NamedSavepoint;
 class Name_resolution_context;
+class NamedSavepoint;
 class Natural_join_column;
 class ResourceContext;
+class RorIntersectReadPlan; 
 class SecurityContext;
 class Select_Lex;
 class Select_Lex_Unit;
+class select_result;
+class select_result_interceptor;
 class select_union;
 class SendField;
 class Session;
@@ -239,21 +274,23 @@ class SortField;
 class SortParam;
 class StoredKey;
 class String;
-class TYPELIB;
-class Table;
-class TableList;
-class TableShare;
-class TableShareInstance;
-class Table_ident;
-class Temporal;
-class Time;
-class Timestamp;
-class Time_zone;
-class Tmp_Table_Param;
-class select_result;
+class subselect_engine;
+class subselect_hash_sj_engine;
 class sys_var;
 class sys_var_str;
 class system_status_var;
+class Table;
+class Table_ident;
+class TableList;
+class TableShare;
+class TableShareInstance;
+class Temporal;
+class Time;
+class Time_zone;
+class Timestamp;
+class Tmp_Table_Param;
+class TYPELIB;
+class Unique;
 class user_var_entry;
 class var;
 
@@ -261,7 +298,6 @@ struct CacheField;
 struct Ha_data;
 struct charset_info_st;
 struct option;
-
 struct Order;
 
 typedef Item COND;

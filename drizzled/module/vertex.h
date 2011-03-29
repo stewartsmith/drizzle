@@ -39,12 +39,8 @@ namespace boost
   };
 }
 
-namespace drizzled
-{
-
-namespace module
-{
-class Module;
+namespace drizzled {
+namespace module {
 
 class Vertex
 {

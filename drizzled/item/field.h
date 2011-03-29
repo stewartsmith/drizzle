@@ -21,11 +21,9 @@
 
 #include <drizzled/item/ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class COND_EQUAL;
-class Item;
 
 extern Item **not_found_item;
 

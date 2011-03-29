@@ -36,9 +36,6 @@
 
 namespace drizzled {
 
-class Item_cache;
-class Item_maxmin_subselect;
-
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 
 typedef int (Arg_comparator::*arg_cmp_func)();
