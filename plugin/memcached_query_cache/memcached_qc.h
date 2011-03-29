@@ -33,13 +33,6 @@
 #include <drizzled/atomics.h>
 #include <libmemcached/memcached.hpp>
 
-namespace drizzled 
-{
-  class Session;
-  class select_result;
-  class String;
-  class TableList;
-}
 class MemcachedQueryCache : public drizzled::plugin::QueryCache
 {
 private:
