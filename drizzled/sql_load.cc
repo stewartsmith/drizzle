@@ -149,7 +149,6 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
@@ -399,8 +398,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
-  if (error)
+  if (error) 
   {
     error= -1;				// Error on read
     goto err;
@@ -439,10 +437,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
   List<Item>::iterator it(fields_vars.begin());
   Item_field *sql_field;
   Table *table= table_list->table;
-  uint64_t id;
   bool err;
-
-  id= 0;
 
   while (!read_info.read_fixed_length())
   {
@@ -561,11 +556,9 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   Item *item;
   Table *table= table_list->table;
   uint32_t enclosed_length;
-  uint64_t id;
   bool err;
 
   enclosed_length=enclosed.length();
-  id= 0;
 
   for (;;it= fields_vars.begin())
   {

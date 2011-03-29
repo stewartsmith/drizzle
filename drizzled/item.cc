@@ -176,11 +176,9 @@ type::Decimal *Item::val_decimal_from_int(type::Decimal *decimal_value)
 type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
 {
   String *res;
-  char *end_ptr;
   if (!(res= val_str(&str_value)))
     return NULL;
 
-  end_ptr= (char*) res->ptr()+ res->length();
   if (decimal_value->store(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 

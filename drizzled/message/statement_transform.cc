@@ -403,10 +403,6 @@ transformInsertRecordToSql(const InsertHeader &header,
                                                            destination,
                                                            sql_variant);
 
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
   destination.append(") VALUES (");
 
   /* Add insert values */
@@ -475,10 +471,6 @@ transformInsertStatementToSql(const InsertHeader &header,
   enum TransformSqlError error= transformInsertHeaderToSql(header,
                                                            destination,
                                                            sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
 
   destination.append(") VALUES (", 10);
 

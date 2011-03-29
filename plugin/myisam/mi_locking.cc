@@ -34,7 +34,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   int error;
   uint32_t count;
   MYISAM_SHARE *share=info->s;
+#if defined(FULL_LOG) || defined(_lint)
   uint32_t flag;
+#endif
 
   if (!info->s->in_use)
     info->s->in_use= new list<Session *>;
@@ -47,8 +49,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     info->s->in_use->push_front(info->in_use);
     return(0);
   }
+#if defined(FULL_LOG) || defined(_lint)
+  flag=0;
+#endif
 
-  flag=error=0;
+  error=0;
   if (share->kfile >= 0)		/* May only be false on windows */
   {
     switch (lock_type) {
@@ -98,6 +103,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	    mi_mark_crashed(info);
           }
 	}
+#if defined(FULL_LOG) || defined(_lint)
 	if (info->lock_type != F_EXTRA_LCK)
 	{
 	  if (share->r_locks)
@@ -109,6 +115,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	    flag=1;
 	  }
 	}
+#endif
       }
       info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
       info->lock_type= F_UNLCK;
@@ -123,10 +130,12 @@ int mi_lock_database(MI_INFO *info, int lock_type)
           mysqld does not turn write locks to read locks,
           so we're never here in mysqld.
         */
+#if defined(FULL_LOG) || defined(_lint)
 	if (share->w_locks == 1)
 	{
 	  flag=1;
 	}
+#endif
 	share->w_locks--;
 	share->r_locks++;
 	info->lock_type=lock_type;
@@ -134,7 +143,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       if (!share->r_locks && !share->w_locks)
       {
+#if defined(FULL_LOG) || defined(_lint)
 	flag=1;
+#endif
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=errno;
@@ -158,7 +169,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {						/* Change READONLY to RW */
 	if (share->r_locks == 1)
 	{
+#if defined(FULL_LOG) || defined(_lint)
 	  flag=1;
+#endif
 	  share->r_locks--;
 	  share->w_locks++;
 	  info->lock_type=lock_type;
@@ -169,7 +182,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {
 	if (!share->w_locks)
 	{
+#if defined(FULL_LOG) || defined(_lint)
 	  flag=1;
+#endif
 	  if (!share->r_locks)
 	  {
 	    if (mi_state_info_read_dsk(share->kfile, &share->state, 1))

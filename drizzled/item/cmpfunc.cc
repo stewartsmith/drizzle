@@ -789,7 +789,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
                                      int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
-  Item *str_arg= 0, *date_arg= 0;
+  Item *str_arg= 0;
 
   if (in_a->type() == Item::ROW_ITEM || in_b->type() == Item::ROW_ITEM)
     return CMP_DATE_DFLT;
@@ -803,14 +803,12 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
-      date_arg= in_a;
       str_arg= in_b;
     }
   }
   else if (in_b->is_datetime() && in_a->result_type() == STRING_RESULT)
   {
     cmp_type= CMP_STR_WITH_DATE;
-    date_arg= in_b;
     str_arg= in_a;
   }
 

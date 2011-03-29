@@ -252,7 +252,6 @@ bool insert_query(Session *session,TableList *table_list,
   List_item *values;
   Name_resolution_context *context;
   Name_resolution_context_state ctx_state;
-  thr_lock_type lock_type;
   Item *unused_conds= 0;
 
 
@@ -268,8 +267,6 @@ bool insert_query(Session *session,TableList *table_list,
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
   }
-
-  lock_type= table_list->lock_type;
 
   session->set_proc_info("init");
   session->used_tables=0;
