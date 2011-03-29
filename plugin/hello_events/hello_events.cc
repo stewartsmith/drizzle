@@ -248,8 +248,6 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
 /* The event observer.*/
 bool HelloEvents::observeEventDo(EventData &data)
 {
-  bool result= false;
-  
   switch (data.event) {
   case AFTER_DROP_TABLE:
     observeAfterDropTable((AfterDropTableEventData &)data);
@@ -260,7 +258,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;
     
   case BEFORE_INSERT_RECORD:
-     result = observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
+    observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
     break;
     
   case AFTER_INSERT_RECORD:
@@ -268,7 +266,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
        
   case BEFORE_UPDATE_RECORD:
-    result = observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
+    observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
     break;
              
   case AFTER_UPDATE_RECORD:
@@ -276,7 +274,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
     
   case BEFORE_DELETE_RECORD:
-    result = observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
+    observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
     break;
 
   case AFTER_DELETE_RECORD:

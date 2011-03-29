@@ -324,14 +324,13 @@ public:
 
   virtual ~InnobaseEngine()
   {
-    int err= 0;
     if (innodb_inited) {
       srv_fast_shutdown = (ulint) innobase_fast_shutdown;
       innodb_inited = 0;
       hash_table_free(innobase_open_tables);
       innobase_open_tables = NULL;
       if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-        err = 1;
+        // Throw here?
       }
       srv_free_paths_and_sizes();
       if (internal_innobase_data_file_path)
@@ -3990,7 +3989,6 @@ ha_innobase::store_key_val_for_row(
       ulint     true_len;
       ulint     key_len;
       const unsigned char*    src_start;
-      enum_field_types  real_type;
       const CHARSET_INFO* cs= field->charset();
 
       key_len = key_part->length;
@@ -4002,7 +4000,6 @@ ha_innobase::store_key_val_for_row(
       }
 
       src_start = record + key_part->offset;
-      real_type = field->real_type();
       true_len = key_len;
 
       /* Character set for the field is defined only
@@ -6552,6 +6549,10 @@ InnobaseEngine::doDropSchema(
 
   innobase_commit_low(trx);
   trx_free_for_mysql(trx);
+
+  if (error) {
+    // What do we do here?
+  }
 
   return false; // We are just a listener since we lack control over DDL, so we give no positive acknowledgement. 
 }

@@ -26,11 +26,9 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
 {
   unsigned char *pos;
   HP_SHARE *share=info->getShare();
-  HP_KEYDEF *keyinfo;
 
   if (info->lastinx < 0)
     return(errno=HA_ERR_WRONG_INDEX);
-  keyinfo = share->keydef + info->lastinx;
   {
     if (info->current_ptr || (info->update & HA_STATE_NEXT_FOUND))
     {

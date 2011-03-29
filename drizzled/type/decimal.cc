@@ -2082,8 +2082,7 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 int decimal_intg(const decimal_t *from)
 {
   int res;
-  dec1 *tmp_res;
-  tmp_res= remove_leading_zeroes(from, &res);
+  remove_leading_zeroes(from, &res);
   return res;
 }
 

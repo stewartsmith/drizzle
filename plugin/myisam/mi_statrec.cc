@@ -196,11 +196,9 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
 			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;
-  uint32_t cache_length;
   MYISAM_SHARE *share=info->s;
 
   cache_read=0;
-  cache_length=0;
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
       flush_io_cache(&info->rec_cache))
@@ -211,7 +209,6 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
 	(skip_deleted_blocks || !filepos))
     {
       cache_read=1;				/* Read record using cache */
-      cache_length=(uint) (info->rec_cache.read_end - info->rec_cache.read_pos);
     }
     else
       info->rec_cache.seek_not_done=1;		/* Filepos is changed */

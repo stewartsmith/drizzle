@@ -284,8 +284,6 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   if (opt_autocommit)
     os << "START TRANSACTION;" << std::endl;
 
-  std::streampos out_position= os.tellp();
-
   while((row= drizzle_row_next(obj.result)))
   {
     rownr++;

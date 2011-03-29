@@ -1619,7 +1619,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, sql_var_t type)
 {
-  plugin::StorageEngine *old_value, *new_value, **value;
+  plugin::StorageEngine *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -1631,7 +1631,6 @@ void sys_var_session_storage_engine::set_default(Session *session, sql_var_t typ
     new_value= global_system_variables.*offset;
   }
   assert(new_value);
-  old_value= *value;
   *value= new_value;
 }
 

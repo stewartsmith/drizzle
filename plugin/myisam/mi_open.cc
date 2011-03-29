@@ -83,7 +83,7 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
-    key_parts,unique_key_parts,fulltext_keys,uniques;
+    key_parts,unique_key_parts,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
        data_name[FN_REFLEN], rp_buff[PATH_MAX];
   unsigned char *disk_cache= NULL;
@@ -184,7 +184,6 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
     len=mi_uint2korr(share->state.header.state_info_length);
     keys=    (uint) share->state.header.keys;
     uniques= (uint) share->state.header.uniques;
-    fulltext_keys= (uint) share->state.header.fulltext_keys;
     key_parts= mi_uint2korr(share->state.header.key_parts);
     unique_key_parts= mi_uint2korr(share->state.header.unique_key_parts);
     share->state_diff_length=len-MI_STATE_INFO_SIZE;

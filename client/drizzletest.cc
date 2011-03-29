@@ -3815,7 +3815,6 @@ static void do_connect(struct st_command *command)
 {
   uint32_t con_port= opt_port;
   const char *con_options;
-  bool con_ssl= 0;
   struct st_connection* con_slot;
 
   string ds_connection_name;
@@ -3879,11 +3878,8 @@ static void do_connect(struct st_command *command)
     end= con_options;
     while (*end && !my_isspace(charset_info, *end))
       end++;
-    if (!strncmp(con_options, "SSL", 3))
-      con_ssl= 1;
-    else
-      die("Illegal option to connect: %.*s",
-          (int) (end - con_options), con_options);
+    die("Illegal option to connect: %.*s",
+        (int) (end - con_options), con_options);
     /* Process next option */
     con_options= end;
   }

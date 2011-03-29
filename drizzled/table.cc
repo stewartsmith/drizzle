@@ -760,7 +760,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
   bool  using_unique_constraint= false;
-  bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   unsigned char	*pos, *group_buff;
   unsigned char *null_flags;
@@ -1055,9 +1054,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   reclength+=null_pack_length;
   if (!reclength)
     reclength=1;				// Dummy select
-  /* Use packed rows if there is blobs or a lot of space to gain */
-  if (blob_count || ((string_total_length >= STRING_TOTAL_LENGTH_TO_PACK_ROWS) && (reclength / string_total_length <= RATIO_TO_PACK_ROWS || (string_total_length / string_count) >= AVG_STRING_LENGTH_TO_PACK_ROWS)))
-    use_packed_rows= 1;
 
   table->getMutableShare()->setRecordLength(reclength);
   {
