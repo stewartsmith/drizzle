@@ -26,6 +26,28 @@ namespace drizzled {
 namespace catalog
 {
   class Instance;
+
+  namespace lock 
+  {
+    class Create;
+    class Erase;
+  }
+}
+
+namespace field 
+{
+  class TableShare;
+}
+
+namespace generator 
+{
+  class TableDefinitionCache;
+
+  namespace catalog 
+  {
+    class Cache;
+    class Instance;
+  }
 }
 
 namespace internal
@@ -95,6 +117,7 @@ namespace module
 
 namespace plugin 
 { 
+  class Catalog;
   class Client;
   class EventObserverList;
   class Function;
@@ -201,6 +224,7 @@ class JoinTable;
 class KeyInfo;
 class LEX;
 class Lex_input_stream;
+class lex_string_t;
 class NamedSavepoint;
 class Name_resolution_context;
 class Natural_join_column;

@@ -25,10 +25,6 @@
 
 namespace drizzled {
 
-namespace type { class Decimal; }
-
-typedef uint64_t query_id_t;
-
 class user_var_entry
 {
  public:

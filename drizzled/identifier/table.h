@@ -51,8 +51,6 @@
 #include <drizzled/identifier/schema.h>
 
 namespace drizzled {
-class Table;
-
 namespace identifier {
 
 class DRIZZLED_API Table : public Schema

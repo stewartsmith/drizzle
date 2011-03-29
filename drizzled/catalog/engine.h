@@ -25,11 +25,6 @@
 #include <drizzled/message/catalog.h>
 
 namespace drizzled {
-namespace plugin {
-
-class Catalog;
-
-} // namespace plugin
 namespace catalog {
 
 class Engine

@@ -22,15 +22,8 @@
 
 #include <drizzled/field/str.h>
 
-namespace drizzled
-{
-
-class Time;
-
-namespace field
-{
-
-class TableShare;
+namespace drizzled {
+namespace field {
 
 class Time :public Field_str {
 public:

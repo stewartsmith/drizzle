@@ -42,16 +42,12 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-class Table;
+namespace drizzled {
 
 extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 namespace identifier {
-class Schema;
 
 static const char hexchars[]= "0123456789abcdef";
 

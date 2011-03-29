@@ -22,13 +22,8 @@
 
 #include <drizzled/field/epoch.h>
 
-namespace drizzled
-{
-
-namespace field
-{
-
-class TableShare;
+namespace drizzled {
+namespace field {
 
 class Microtime :public Epoch {
 public:

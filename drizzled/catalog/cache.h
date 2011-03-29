@@ -31,25 +31,7 @@
 #include <boost/thread/mutex.hpp>
 
 namespace drizzled {
-
-namespace plugin {
-class Catalog;
-}
-namespace generator {
-namespace catalog {
-class Cache;
-class Instance;
-
-} //namespace catalog
-} //namespace generator
-
-namespace catalog {
-
-namespace lock {
-class Create;
-class Erase;
-
-} //namespace lock
+namespace catalog  {
 
 class Cache
 {

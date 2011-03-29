@@ -23,9 +23,6 @@
 #include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace generator {
 
 class Table

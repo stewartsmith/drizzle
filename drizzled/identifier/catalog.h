@@ -35,9 +35,6 @@
 #include <boost/algorithm/string.hpp>
 
 namespace drizzled {
-
-class lex_string_t;
-
 namespace identifier {
 
 class Catalog : public Identifier

@@ -93,9 +93,6 @@ using namespace std;
 
 namespace drizzled {
 
-class Item;
-
-
 /*
 =============================================================================
   LOCAL DECLARATIONS

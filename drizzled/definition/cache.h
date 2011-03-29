@@ -23,11 +23,6 @@
 #include <drizzled/table/instance.h>
 
 namespace drizzled {
-
-namespace generator {
-class TableDefinitionCache;
-}
-
 namespace definition {
 
 class Cache
