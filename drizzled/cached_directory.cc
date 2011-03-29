@@ -39,8 +39,12 @@
 
 #include <drizzled/cached_directory.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/error_t.h>
+#include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 
 using namespace std;
+using namespace drizzled;
 
 namespace drizzled {
 
@@ -155,7 +159,12 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
 
           buffered_fullpath.append(result->d_name);
 
-          int err= stat(buffered_fullpath.c_str(), &entrystat); 
+          int err= stat(buffered_fullpath.c_str(), &entrystat);
+
+          if (err != 0)
+            errmsg_printf(error::WARN, ER(ER_CANT_GET_STAT),
+                          buffered_fullpath.c_str(),
+                          errno);
 
           if (err == 0 && S_ISDIR(entrystat.st_mode))
           {
