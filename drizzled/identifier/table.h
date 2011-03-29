@@ -48,6 +48,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <drizzled/visibility.h>
+#include <drizzled/identifier/schema.h>
 
 namespace drizzled {
 class Table;

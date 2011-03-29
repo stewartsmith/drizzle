@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <drizzled/error.h>
 #include <plugin/schema_engine/schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_table.h>

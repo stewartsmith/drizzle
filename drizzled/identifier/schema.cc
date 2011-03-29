@@ -28,6 +28,7 @@
 #include <drizzled/catalog/local.h>
 #include <drizzled/util/tablename_to_filename.h>
 #include <drizzled/util/backtrace.h>
+#include <drizzled/charset_info.h>
 
 #include <algorithm>
 #include <sstream>

@@ -159,7 +159,22 @@ pair<string, string> parse_password_arg(string s)
       return make_pair("password", PASSWORD_SENTINEL);
     }
   }
-
+  
+  else if (s.find("-P") == 0)
+  {
+    if (s == "-P")
+    {
+      tty_password= true;
+      //check if no argument is passed.
+      return make_pair("password", PASSWORD_SENTINEL);
+    } 
+    
+    if (s.substr(2,2) == "\"\"" || s.substr(2,2) == "''")
+    {
+      // Check if -P"" or -P''
+      return make_pair("password", PASSWORD_SENTINEL);
+    }  
+  }
   return make_pair(string(""), string(""));
 }
 

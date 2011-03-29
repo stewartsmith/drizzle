@@ -13,7 +13,6 @@ Every build of Drizzle is currently tested on:
  * RedHat (or CentOS) 5 and 6
  * Debian Squeeze (6.0)
  * Ubuntu 10.04 and 10.10
- * FreeBSD 8.0 and 8.1
  * Apple OSX 10.6.4
 
 We recommend using these platforms with Drizzle. Older platforms may have various
