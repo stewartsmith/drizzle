@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/configmake.h>
+#include <drizzled/error/level_t.h>
 
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
