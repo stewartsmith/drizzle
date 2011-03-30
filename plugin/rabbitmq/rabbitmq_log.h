@@ -61,8 +61,6 @@ public:
    * @param[in] mqHandler name of the plugin, typically rabbitmq_log.
    */
   RabbitMQLog(const std::string &name,
-              const std::string &exchange,
-              const std::string &routingkey,
               RabbitMQHandler* mqHandler);
   ~RabbitMQLog();
 

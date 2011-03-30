@@ -50,17 +50,16 @@ static port_constraint sysvar_rabbitmq_port;
 
 
 RabbitMQLog::RabbitMQLog(const string &name, 
-                         const std::string &exchange,
-                         const std::string &routingkey,
                          RabbitMQHandler* mqHandler) :
   plugin::TransactionApplier(name),
-  _rabbitMQHandler(mqHandler),
-  _exchange(exchange),
-  _routingkey(routingkey)
+  _rabbitMQHandler(mqHandler)
 { }
 
 RabbitMQLog::~RabbitMQLog() 
-{ }
+{ 
+  _rabbitMQHandler->disconnect();
+  delete _rabbitMQHandler;
+}
 
 plugin::ReplicationReturnCode
 RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
@@ -75,25 +74,37 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   }
 
   to_apply.SerializeWithCachedSizesToArray(buffer);
-  try
-  {
-    _rabbitMQHandler->publish(buffer, 
-                             int(message_byte_length), 
-                             _exchange,
-                             _routingkey);
+  short tries = 3;
+  bool sent = false;
+  while (!sent && tries > 0) {
+    tries--;
+    try
+    {
+      _rabbitMQHandler->publish(buffer, int(message_byte_length));
+      sent = true;
+    } 
+    catch(exception& e)
+    {
+      errmsg_printf(error::ERROR, _(e.what()));
+      try {
+  	_rabbitMQHandler->reconnect();
+      } catch(exception &e) {
+  	errmsg_printf(error::ERROR, _("Could not reconnect, trying again.. - waiting 10 seconds for server to come back"));
+  	sleep(10);
+      } // 
+    }
   }
-  catch(exception& e)
-  {
-    errmsg_printf(error::ERROR, _(e.what()));
-    deactivate();
-    return plugin::UNKNOWN_ERROR;
-  }
+
   delete[] buffer;
-  return plugin::SUCCESS;
+  if(sent) return plugin::SUCCESS;
+  errmsg_printf(error::ERROR, _("RabbitMQ server has disappeared, failing transaction."));
+  deactivate();
+  return plugin::UNKNOWN_ERROR;
 }
 
 static RabbitMQLog *rabbitmqLogger; ///< the actual plugin
 static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
+
 
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
@@ -110,7 +121,9 @@ static int init(drizzled::module::Context &context)
                                          sysvar_rabbitmq_port, 
                                          vm["username"].as<string>(), 
                                          vm["password"].as<string>(), 
-                                         vm["virtualhost"].as<string>());
+                                         vm["virtualhost"].as<string>(),
+					 vm["exchange"].as<string>(),
+					 vm["routingkey"].as<string>());
   } 
   catch (exception& e) 
   {
@@ -121,8 +134,6 @@ static int init(drizzled::module::Context &context)
   try 
   {
     rabbitmqLogger= new RabbitMQLog("rabbit_log_applier",
-                                    vm["exchange"].as<string>(),
-                                    vm["routingkey"].as<string>(),
                                     rabbitmqHandler);
   } 
   catch (exception& e) 
