@@ -9,11 +9,7 @@ A type query:
 
    INSERT INTO A VALUES ("1");
 
-.. todo::
-
-   multi row inserts, performance thereof.
-
-INSERT statements that use VALUES syntax can insert multiple rows. To do this, use the multirow VALUES syntax (include multiple lists of column values, each enclosed within parentheses and separated by commas):
+INSERT statements that use VALUES syntax can insert multiple rows. To do this, use the multi row VALUES syntax (include multiple lists of column values, each enclosed within parentheses and separated by commas):
 
 .. code-block:: mysql
 
