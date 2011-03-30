@@ -20,10 +20,11 @@
 
 #include <config.h>
 #include <plugin/slave/queue_consumer.h>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/execute.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/sql/result_set.h>
-#include <drizzled/execute.h>
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
@@ -51,9 +52,25 @@ void QueueConsumer::shutdown()
 
 bool QueueConsumer::process()
 {
+  for (size_t index= 0; index < _master_ids.size(); index++)
+  {
+    /* We go ahead and get the string version of the master ID
+     * so we don't have to keep converting it from int to string.
+     */
+    const string master_id= boost::lexical_cast<string>(_master_ids[index]);
+
+    if (not processSingleMaster(master_id))
+      return false;
+  }
+
+  return true;
+}
+
+bool QueueConsumer::processSingleMaster(const string &master_id)
+{
   TrxIdList completedTransactionIds;
 
-  getListOfCompletedTransactions(completedTransactionIds);
+  getListOfCompletedTransactions(master_id, completedTransactionIds);
 
   for (size_t x= 0; x < completedTransactionIds.size(); x++)
   {
@@ -66,7 +83,7 @@ bool QueueConsumer::process()
     message::Transaction transaction;
     uint32_t segment_id= 1;
 
-    while (getMessage(transaction, commit_id, trx_id, segment_id++))
+    while (getMessage(transaction, commit_id, master_id, trx_id, segment_id++))
     {
       convertToSQL(transaction, aggregate_sql, segmented_sql);
       transaction.Clear();
@@ -115,12 +132,29 @@ bool QueueConsumer::process()
       }
     }
 
-    if (not executeSQLWithCommitId(aggregate_sql, commit_id))
+    if (not executeSQLWithCommitId(aggregate_sql, commit_id, master_id))
     {
-      return false;
+      if (_ignore_errors)
+      {
+        clearErrorState();
+
+        /* Still need to record that we handled this trx */
+        vector<string> sql;
+        string tmp("UPDATE `sys_replication`.`applier_state`"
+                   " SET `last_applied_commit_id` = ");
+        tmp.append(commit_id);
+        tmp.append(" WHERE `master_id` = ");
+        tmp.append(master_id);
+        sql.push_back(tmp);
+        executeSQL(sql);
+      }
+      else
+      {
+        return false;
+      }
     }
 
-    if (not deleteFromQueue(trx_id))
+    if (not deleteFromQueue(master_id, trx_id))
     {
       return false;
     }
@@ -132,6 +166,7 @@ bool QueueConsumer::process()
 
 bool QueueConsumer::getMessage(message::Transaction &transaction,
                               string &commit_id,
+                              const string &master_id,
                               uint64_t trx_id,
                               uint32_t segment_id)
 {
@@ -140,6 +175,8 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
   sql.append(boost::lexical_cast<string>(trx_id));
   sql.append(" AND `seg_id` = ", 16);
   sql.append(boost::lexical_cast<string>(segment_id));
+  sql.append(" AND `master_id` = ", 19),
+  sql.append(master_id);
 
   sql::ResultSet result_set(2);
   Execute execute(*(_session.get()), true);
@@ -174,13 +211,16 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
   return true;
 }
 
-bool QueueConsumer::getListOfCompletedTransactions(TrxIdList &list)
+bool QueueConsumer::getListOfCompletedTransactions(const string &master_id,
+                                                   TrxIdList &list)
 {
   Execute execute(*(_session.get()), true);
   
   string sql("SELECT `trx_id` FROM `sys_replication`.`queue`"
              " WHERE `commit_order` IS NOT NULL AND `commit_order` > 0"
-             " ORDER BY `commit_order` ASC");
+             " AND `master_id` = "
+             + master_id
+             + " ORDER BY `commit_order` ASC");
   
   /* ResultSet size must match column count */
   sql::ResultSet result_set(1);
@@ -314,6 +354,13 @@ bool QueueConsumer::isEndStatement(const message::Statement &statement)
 }
 
 
+/*
+ * TODO: This currently updates every row in the applier_state table.
+ * This use to be a single row. With multi-master support, we now need
+ * a row for every master so we can track the last applied commit ID
+ * value for each. Eventually, we may want multiple consumer threads,
+ * so then we'd need to update each row independently.
+ */
 void QueueConsumer::setApplierState(const string &err_msg, bool status)
 {
   vector<string> statements;
@@ -356,21 +403,26 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 
 
 bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
-                                           const string &commit_id)
+                                           const string &commit_id,
+                                           const string &master_id)
 {
   string tmp("UPDATE `sys_replication`.`applier_state`"
              " SET `last_applied_commit_id` = ");
   tmp.append(commit_id);
+  tmp.append(" WHERE `master_id` = ");
+  tmp.append(master_id);
   sql.push_back(tmp);
   
   return executeSQL(sql);
 }
 
 
-bool QueueConsumer::deleteFromQueue(uint64_t trx_id)
+bool QueueConsumer::deleteFromQueue(const string &master_id, uint64_t trx_id)
 {
   string sql("DELETE FROM `sys_replication`.`queue` WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<std::string>(trx_id));
+  sql.append(" AND `master_id` = ");
+  sql.append(master_id);
 
   vector<string> sql_vect;
   sql_vect.push_back(sql);

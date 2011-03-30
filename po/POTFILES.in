@@ -14,7 +14,6 @@ drizzled/ha_commands.cc
 drizzled/identifier/catalog.cc
 drizzled/identifier/schema.cc
 drizzled/identifier/table.cc
-drizzled/internal/default.cc
 drizzled/main.cc
 drizzled/message/transaction_writer.cc
 drizzled/module/library.cc

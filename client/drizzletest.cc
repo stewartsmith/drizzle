@@ -68,6 +68,10 @@
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
+
+#include <drizzled/definitions.h>
+#include <drizzled/charset_info.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/type/time.h>
 #include <drizzled/charset.h>
 #include <drizzled/typelib.h>
