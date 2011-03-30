@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <boost/lexical_cast.hpp>
 #include <drizzled/field.h>
 #include <drizzled/plugin/client/concurrent.h>
 #include <drizzled/sql/result_set.h>

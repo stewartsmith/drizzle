@@ -65,7 +65,7 @@ int64_t Item_func_find_in_set::val_int()
   if ((diff=buffer->length() - find->length()) >= 0)
   {
     my_wc_t wc;
-    const CHARSET_INFO * const cs= cmp_collation.collation;
+    const charset_info_st * const cs= cmp_collation.collation;
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();

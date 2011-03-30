@@ -29,7 +29,7 @@
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/thread_var.h>
-
+#include <drizzled/session/state.h>
 #include <set>
 
 using namespace std;
@@ -57,7 +57,7 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::Session::pointer tmp;
+  drizzled::Session* tmp;
 
   while ((tmp= session_generator))
   {

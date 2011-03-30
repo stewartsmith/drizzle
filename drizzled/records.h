@@ -19,8 +19,20 @@
 
 #pragma once
 
-namespace drizzled
+namespace drizzled {
+
+namespace internal
 {
+  typedef struct st_io_cache IO_CACHE;
+}
+
+namespace optimizer
+{
+  class SqlSelect;
+}
+
+class Cursor;
+class JoinTable;
 
 struct ReadRecord {			/* Parameter to read_record */
   Table *table;			/* Head-form */

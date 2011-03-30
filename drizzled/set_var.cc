@@ -28,6 +28,7 @@
 #include <drizzled/item/string.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 
@@ -235,13 +236,8 @@ int set_var_user::check(Session *session)
 
 int set_var_user::update(Session *)
 {
-  if (user_var_item->update())
-  {
-    /* Give an error if it's not given already */
-    my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY), MYF(0));
-    return -1;
-  }
-  return 0;
+  user_var_item->update();
+	return 0;
 }
 
 void set_var::setValue(const std::string &new_value)

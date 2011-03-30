@@ -37,7 +37,7 @@ class select_create: public select_insert {
   DrizzleLock *m_lock;
   /* m_lock or session->extra_lock */
   DrizzleLock **m_plock;
-  identifier::Table::const_reference identifier;
+  const identifier::Table& identifier;
 
 public:
   select_create (TableList *table_arg,
@@ -47,7 +47,7 @@ public:
                  AlterInfo *alter_info_arg,
                  List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg,
-                 identifier::Table::const_reference identifier_arg)
+                 const identifier::Table& identifier_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
     is_if_not_exists(is_if_not_exists_arg),

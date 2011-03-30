@@ -24,8 +24,4 @@
 
 namespace drizzled {
 
-void Identifier::getSQLPath(std::string &) const
-{
-}
-
 } // namespace Identifier

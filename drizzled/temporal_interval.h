@@ -179,7 +179,7 @@ private:
    */
   bool getIntervalFromString(const char *str,
                              uint32_t length, 
-                             const CHARSET_INFO * const cs,
+                             const charset_info_st * const cs,
                              uint32_t count, 
                              uint64_t *values,
                              bool transform_msec);

@@ -29,7 +29,6 @@ namespace field
 {
 
 class TableShare;
-typedef struct charset_info_st CHARSET_INFO;
 
 class Microtime :public Epoch {
 public:
@@ -50,7 +49,7 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   enum Item_result cmp_type () const { return STRING_RESULT; }
   int store(const char *to,uint32_t length,
-            const CHARSET_INFO * const charset);
+            const charset_info_st * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t t_type);

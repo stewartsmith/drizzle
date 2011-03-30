@@ -41,7 +41,7 @@ public:
 
   bool execute();
 
-  identifier::Catalog::const_reference identifier() const
+  const identifier::Catalog& identifier() const
   {
     return _identifier;
   }

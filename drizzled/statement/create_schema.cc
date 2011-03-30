@@ -28,6 +28,7 @@
 #include <drizzled/message.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/plugin/authorization.h>
 
 #include <string>
 
@@ -54,8 +55,7 @@ bool statement::CreateSchema::execute()
   drizzled::message::schema::init(schema_message, lex().name.str);
 
   bool res = false;
-  std::string path;
-  schema_identifier.getSQLPath(path);
+  std::string path = schema_identifier.getSQLPath();
 
   if (unlikely(plugin::EventObserver::beforeCreateDatabase(session(), path)))
   {

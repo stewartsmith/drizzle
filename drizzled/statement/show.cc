@@ -21,11 +21,11 @@
 #include <config.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
 
-namespace drizzled
-{
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 Show::Show(Session *in_session) :
   Select(in_session),

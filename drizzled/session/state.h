@@ -20,20 +20,17 @@
 
 #pragma once
 
-#include <drizzled/util/string.h>
-#include <boost/unordered_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <vector>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Session;
 
-namespace session
+namespace session {
+
+class State 
 {
-
-class State {
-  std::vector <char> _query;
-
 public:
   typedef boost::shared_ptr<State> shared_ptr;
   typedef boost::shared_ptr<State> const_shared_ptr;
@@ -46,6 +43,8 @@ public:
 
 protected:
   friend class Session;
+private:
+  std::vector<char> _query;
 };
 
 } /* namespace session */

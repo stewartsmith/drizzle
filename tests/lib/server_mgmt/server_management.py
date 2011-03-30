@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -46,7 +46,8 @@ class serverManager:
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.initial_run = 1
-        self.server_base_name = 'server'
+        # we try this to shorten things - will see how this works
+        self.server_base_name = 's'
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.logging = system_manager.logging
@@ -184,6 +185,7 @@ class serverManager:
         else:
             # manual-gdb issue
             server_retcode = 0
+        
         timer = float(0)
         timeout = float(server.server_start_timeout)
 
@@ -205,6 +207,11 @@ class serverManager:
      
         if server_retcode == 0:
             server.status = 1 # we are running
+            if os.path.exists(server.pid_file):
+                pid_file = open(server.pid_file,'r')
+                pid = pid_file.readline().strip()
+                pid_file.close()
+                server.pid = pid
 
         if server_retcode != 0 and not expect_fail and self.debug:
             self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
@@ -258,10 +265,12 @@ class serverManager:
         for server in self.get_server_list(requester):
             self.stop_server(server)
 
-    def stop_server_list(self, server_list):
+    def stop_server_list(self, server_list, free_ports=False):
         """ Stop the servers in an arbitrary list of them """
         for server in server_list:
             self.stop_server(server)
+        if free_ports:
+            server.cleanup()
 
     def stop_all_servers(self):
         """ Stop all running servers """
@@ -386,7 +395,7 @@ class serverManager:
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]
-            self.stop_server_list(retired_servers)
+            self.stop_server_list(retired_servers, free_ports=True)
             self.set_server_list(requester, good_servers)
             
          

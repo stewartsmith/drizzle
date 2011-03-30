@@ -155,13 +155,13 @@ public:
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              drizzled::identifier::Schema::const_reference schema);
+                              const drizzled::identifier::Schema& schema);
 
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);
 
-  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table);
+  virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
+                             const drizzled::identifier::Table& table);
 
   bool loadFile();
   std::stringstream &getError() { return error; }

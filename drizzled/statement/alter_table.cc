@@ -44,9 +44,10 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/message.h>
+#include <drizzled/message/alter_table.pb.h>
 #include <drizzled/alter_column.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 
@@ -63,25 +64,36 @@ static int copy_data_between_tables(Session *session,
                                     Order *order,
                                     ha_rows *copied,
                                     ha_rows *deleted,
-                                    enum enum_enable_or_disable keys_onoff,
+                                    message::AlterTable &alter_table_message,
                                     bool error_if_not_empty);
 
 static bool prepare_alter_table(Session *session,
-                                      Table *table,
-                                      HA_CREATE_INFO *create_info,
-                                      const message::Table &original_proto,
-                                      message::Table &table_message,
-                                      AlterInfo *alter_info);
+                                Table *table,
+                                HA_CREATE_INFO *create_info,
+                                const message::Table &original_proto,
+                                message::Table &table_message,
+                                message::AlterTable &alter_table_message,
+                                AlterInfo *alter_info);
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier);
 
+static int apply_online_alter_keys_onoff(Session *session,
+                                         Table* table,
+                                         const message::AlterTable::AlterKeysOnOff &op);
+
+static int apply_online_rename_table(Session *session,
+                                     Table *table,
+                                     plugin::StorageEngine *original_engine,
+                                     identifier::Table &original_table_identifier,
+                                     identifier::Table &new_table_identifier,
+                                     const message::AlterTable::RenameTable &alter_operation);
+
 namespace statement {
 
-AlterTable::AlterTable(Session *in_session, Table_ident *, drizzled::ha_build_method build_arg) :
+AlterTable::AlterTable(Session *in_session, Table_ident *) :
   CreateTable(in_session)
 {
   set_command(SQLCOM_ALTER_TABLE);
-  alter_info.build_method= build_arg;
 }
 
 } // namespace statement
@@ -246,9 +258,37 @@ static bool prepare_alter_table(Session *session,
                                 HA_CREATE_INFO *create_info,
                                 const message::Table &original_proto,
                                 message::Table &table_message,
+                                message::AlterTable &alter_table_message,
                                 AlterInfo *alter_info)
 {
   uint32_t used_fields= create_info->used_fields;
+  vector<string> drop_keys;
+  vector<string> drop_columns;
+  vector<string> drop_fkeys;
+
+  /* we use drop_(keys|columns|fkey) below to check that we can do all
+     operations we've been asked to do */
+  for (int operationnr= 0; operationnr < alter_table_message.operations_size();
+       operationnr++)
+  {
+    const message::AlterTable::AlterTableOperation &operation=
+      alter_table_message.operations(operationnr);
+
+    switch (operation.operation())
+    {
+    case message::AlterTable::AlterTableOperation::DROP_KEY:
+      drop_keys.push_back(operation.drop_name());
+      break;
+    case message::AlterTable::AlterTableOperation::DROP_COLUMN:
+      drop_columns.push_back(operation.drop_name());
+      break;
+    case message::AlterTable::AlterTableOperation::DROP_FOREIGN_KEY:
+      drop_fkeys.push_back(operation.drop_name());
+      break;
+    default:
+      break;
+    }
+  }
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options= table_message.mutable_options();
@@ -274,11 +314,10 @@ static bool prepare_alter_table(Session *session,
   for (Field **f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
-    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
-    for (; drop != alter_info->drop_list.end(); drop++)
+    vector<string>::iterator it= drop_columns.begin();
+    while ((it != drop_columns.end()))
     {
-      if (drop->type == AlterDrop::COLUMN &&
-          ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
+      if (! my_strcasecmp(system_charset_info, field->field_name, (*it).c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -289,11 +328,12 @@ static bool prepare_alter_table(Session *session,
         }
         break;
       }
+      it++;
     }
 
-    if (drop != alter_info->drop_list.end())
+    if (it != drop_columns.end())
     {
-      alter_info->drop_list.erase(drop);
+      drop_columns.erase(it);
       continue;
     }
 
@@ -338,21 +378,8 @@ static bool prepare_alter_table(Session *session,
 
       if (alter != alter_info->alter_list.end())
       {
-        if (def->sql_type == DRIZZLE_TYPE_BLOB)
-        {
-          my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
-          return true;
-        }
+        def->setDefaultValue(alter->def, NULL);
 
-        if ((def->def= alter->def))
-        {
-          /* Use new default */
-          def->flags&= ~NO_DEFAULT_VALUE_FLAG;
-        }
-        else
-        {
-          def->flags|= NO_DEFAULT_VALUE_FLAG;
-        }
         alter_info->alter_list.erase(alter);
       }
     }
@@ -411,12 +438,11 @@ static bool prepare_alter_table(Session *session,
         TODO: detect the situation in compare_tables, behave based
         on engine capabilities.
       */
-      if (alter_info->build_method == HA_BUILD_ONLINE)
+      if (alter_table_message.build_method() == message::AlterTable::BUILD_ONLINE)
       {
         my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
         return true;
       }
-      alter_info->build_method= HA_BUILD_OFFLINE;
     }
   }
 
@@ -440,17 +466,18 @@ static bool prepare_alter_table(Session *session,
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
-    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
-    for (; drop != alter_info->drop_list.end(); drop++)
+
+    vector<string>::iterator it= drop_keys.begin();
+    while ((it != drop_keys.end()))
     {
-      if (drop->type == AlterDrop::KEY &&
-          not my_strcasecmp(system_charset_info, key_name, drop->name))
+      if (! my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
         break;
+      it++;
     }
 
-    if (drop != alter_info->drop_list.end())
+    if (it != drop_keys.end())
     {
-      alter_info->drop_list.erase(drop);
+      drop_keys.erase(it);
       continue;
     }
 
@@ -544,18 +571,19 @@ static bool prepare_alter_table(Session *session,
   /* Copy over existing foreign keys */
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
-    AlterInfo::drop_list_t::iterator drop(alter_info->drop_list.begin());
-    for (; drop != alter_info->drop_list.end(); drop++)
+    vector<string>::iterator it= drop_fkeys.begin();
+    while ((it != drop_fkeys.end()))
     {
-      if (drop->type == AlterDrop::FOREIGN_KEY &&
-          not my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
+      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), (*it).c_str()))
       {
         break;
       }
+      it++;
     }
-    if (drop != alter_info->drop_list.end())
+
+    if (it != drop_fkeys.end())
     {
-      alter_info->drop_list.erase(drop);
+      drop_fkeys.erase(it);
       continue;
     }
 
@@ -616,11 +644,27 @@ static bool prepare_alter_table(Session *session,
     }
   }
 
-  if (not alter_info->drop_list.empty())
+  if (drop_keys.size())
   {
     my_error(ER_CANT_DROP_FIELD_OR_KEY,
              MYF(0),
-             alter_info->drop_list.front().name);
+             drop_keys.front().c_str());
+    return true;
+  }
+
+  if (drop_columns.size())
+  {
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
+             drop_columns.front().c_str());
+    return true;
+  }
+
+  if (drop_fkeys.size())
+  {
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
+             drop_fkeys.front().c_str());
     return true;
   }
 
@@ -679,7 +723,9 @@ static bool prepare_alter_table(Session *session,
 }
 
 /* table_list should contain just one table */
-static int discard_or_import_tablespace(Session *session, TableList *table_list, tablespace_op_type tablespace_op)
+static int discard_or_import_tablespace(Session *session,
+                                        TableList *table_list,
+                                        bool discard)
 {
   /*
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
@@ -702,7 +748,7 @@ static int discard_or_import_tablespace(Session *session, TableList *table_list,
 
   int error;
   do {
-    error= table->cursor->ha_discard_or_import_tablespace(tablespace_op == DISCARD_TABLESPACE);
+    error= table->cursor->ha_discard_or_import_tablespace(discard);
 
     session->set_proc_info("end");
 
@@ -753,18 +799,19 @@ static int discard_or_import_tablespace(Session *session, TableList *table_list,
 */
 static bool alter_table_manage_keys(Session *session,
                                     Table *table, int indexes_were_disabled,
-                                    enum enum_enable_or_disable keys_onoff)
+                                    const message::AlterTable &alter_table_message)
 {
   int error= 0;
-  switch (keys_onoff) {
-  case ENABLE:
+  if (alter_table_message.has_alter_keys_onoff()
+      && alter_table_message.alter_keys_onoff().enable())
+  {
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-    break;
-  case LEAVE_AS_IS:
-    if (not indexes_were_disabled)
-      break;
-    /* fall-through: disabled indexes */
-  case DISABLE:
+  }
+
+  if ((! alter_table_message.has_alter_keys_onoff() && indexes_were_disabled)
+      || (alter_table_message.has_alter_keys_onoff()
+          && ! alter_table_message.alter_keys_onoff().enable()))
+  {
     error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
   }
 
@@ -880,6 +927,7 @@ static bool internal_alter_table(Session *session,
                                  HA_CREATE_INFO *create_info,
                                  const message::Table &original_proto,
                                  message::Table &create_proto,
+                                 message::AlterTable &alter_table_message,
                                  TableList *table_list,
                                  AlterInfo *alter_info,
                                  uint32_t order_num,
@@ -940,10 +988,19 @@ static bool internal_alter_table(Session *session,
 
   session->set_proc_info("setup");
 
-  /*
-   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
- */
+  /* First we try for operations that do not require a copying
+     ALTER TABLE.
+
+     In future there should be more operations, currently it's just a couple.
+  */
+
+  if ((alter_table_message.has_rename()
+       || alter_table_message.has_alter_keys_onoff())
+      && alter_table_message.operations_size() == 0)
   {
+    /*
+     * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+     */
     bitset<32> tmp;
 
     tmp.set();
@@ -951,97 +1008,38 @@ static bool internal_alter_table(Session *session,
     tmp.reset(ALTER_KEYS_ONOFF);
     tmp&= alter_info->flags;
 
-    if (not (tmp.any()) && not table->getShare()->getType()) // no need to touch frm
+    if((not (tmp.any()) && not table->getShare()->getType())) // no need to touch frm
     {
-      switch (alter_info->keys_onoff)
+      if (alter_table_message.has_alter_keys_onoff())
       {
-      case LEAVE_AS_IS:
-        break;
+        error= apply_online_alter_keys_onoff(session, table,
+                                       alter_table_message.alter_keys_onoff());
 
-      case ENABLE:
-        /*
-          wait_while_table_is_used() ensures that table being altered is
-          opened only by this thread and that Table::TableShare::version
-          of Table object corresponding to this table is 0.
-          The latter guarantees that no DML statement will open this table
-          until ALTER Table finishes (i.e. until close_thread_tables())
-          while the fact that the table is still open gives us protection
-          from concurrent DDL statements.
-        */
+        if (error == HA_ERR_WRONG_COMMAND)
         {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
-          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        }
-        error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-
-        /* COND_refresh will be signaled in close_thread_tables() */
-        break;
-
-      case DISABLE:
-        {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
-          wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        }
-        error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-
-        /* COND_refresh will be signaled in close_thread_tables() */
-        break;
-      }
-
-      if (error == HA_ERR_WRONG_COMMAND)
-      {
-        error= EE_OK;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->getAlias());
-      }
-
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
-      /*
-        Unlike to the above case close_cached_table() below will remove ALL
-        instances of Table from table cache (it will also remove table lock
-        held by this thread). So to make actual table renaming and writing
-        to binlog atomic we have to put them into the same critical section
-        protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
-        access() and rename_table() calls.
-      */
-
-      if (not error &&  not (original_table_identifier == new_table_identifier))
-      {
-        session->set_proc_info("rename");
-        /*
-          Then do a 'simple' rename of the table. First we need to close all
-          instances of 'source' table.
-        */
-        session->close_cached_table(table);
-        /*
-          Then, we want check once again that target table does not exist.
-          Actually the order of these two steps does not matter since
-          earlier we took name-lock on the target table, so we do them
-          in this particular order only to be consistent with 5.0, in which
-          we don't take this name-lock and where this order really matters.
-          @todo Investigate if we need this access() check at all.
-        */
-        if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
-        {
-          my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
-          error= -1;
-        }
-        else
-        {
-          if (rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
-          {
-            error= -1;
-          }
+          error= EE_OK;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                              table->getAlias());
         }
       }
 
-      if (error == HA_ERR_WRONG_COMMAND)
+      if (alter_table_message.has_rename())
       {
-        error= EE_OK;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->getAlias());
+        error= apply_online_rename_table(session,
+                                         table,
+                                         original_engine,
+                                         original_table_identifier,
+                                         new_table_identifier,
+                                         alter_table_message.rename());
+
+        if (error == HA_ERR_WRONG_COMMAND)
+        {
+          error= EE_OK;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                              table->getAlias());
+        }
       }
 
       if (not error)
@@ -1064,17 +1062,21 @@ static bool internal_alter_table(Session *session,
     }
   }
 
+  if (alter_table_message.build_method() == message::AlterTable::BUILD_ONLINE)
+  {
+    my_error(*session->getQueryString(), ER_NOT_SUPPORTED_YET);
+    return true;
+  }
+
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
-  if (prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
+  if (prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_table_message, alter_info))
   {
     return true;
   }
 
   set_table_default_charset(create_info, new_table_identifier.getSchemaName().c_str());
-
-  alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
 
@@ -1135,7 +1137,7 @@ static bool internal_alter_table(Session *session,
                                     order,
                                     &copied,
                                     &deleted,
-                                    alter_info->keys_onoff,
+                                    alter_table_message,
                                     alter_info->error_if_not_empty);
 
     /* We must not ignore bad input! */
@@ -1344,6 +1346,99 @@ static bool internal_alter_table(Session *session,
   return false;
 }
 
+static int apply_online_alter_keys_onoff(Session *session,
+                                         Table* table,
+                                         const message::AlterTable::AlterKeysOnOff &op)
+{
+  int error= 0;
+
+  if (op.enable())
+  {
+    /*
+      wait_while_table_is_used() ensures that table being altered is
+      opened only by this thread and that Table::TableShare::version
+      of Table object corresponding to this table is 0.
+      The latter guarantees that no DML statement will open this table
+      until ALTER Table finishes (i.e. until close_thread_tables())
+      while the fact that the table is still open gives us protection
+      from concurrent DDL statements.
+    */
+    {
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+    }
+    error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+
+    /* COND_refresh will be signaled in close_thread_tables() */
+  }
+  else
+  {
+    {
+      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+    }
+    error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+
+    /* COND_refresh will be signaled in close_thread_tables() */
+  }
+
+  return error;
+}
+
+static int apply_online_rename_table(Session *session,
+                                     Table *table,
+                                     plugin::StorageEngine *original_engine,
+                                     identifier::Table &original_table_identifier,
+                                     identifier::Table &new_table_identifier,
+                                     const message::AlterTable::RenameTable &alter_operation)
+{
+  int error= 0;
+
+  boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
+  /*
+    Unlike to the above case close_cached_table() below will remove ALL
+    instances of Table from table cache (it will also remove table lock
+    held by this thread). So to make actual table renaming and writing
+    to binlog atomic we have to put them into the same critical section
+    protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
+    access() and rename_table() calls.
+  */
+
+  if (not (original_table_identifier == new_table_identifier))
+  {
+    assert(alter_operation.to_name() == new_table_identifier.getTableName());
+    assert(alter_operation.to_schema() == new_table_identifier.getSchemaName());
+
+    session->set_proc_info("rename");
+    /*
+      Then do a 'simple' rename of the table. First we need to close all
+      instances of 'source' table.
+    */
+    session->close_cached_table(table);
+    /*
+      Then, we want check once again that target table does not exist.
+      Actually the order of these two steps does not matter since
+      earlier we took name-lock on the target table, so we do them
+      in this particular order only to be consistent with 5.0, in which
+      we don't take this name-lock and where this order really matters.
+      @todo Investigate if we need this access() check at all.
+    */
+    if (plugin::StorageEngine::doesTableExist(*session, new_table_identifier))
+    {
+      my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
+      error= -1;
+    }
+    else
+    {
+      if (rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
+      {
+        error= -1;
+      }
+    }
+  }
+  return error;
+}
+
 bool alter_table(Session *session,
                  identifier::Table &original_table_identifier,
                  identifier::Table &new_table_identifier,
@@ -1358,11 +1453,22 @@ bool alter_table(Session *session,
 {
   bool error;
   Table *table;
+  message::AlterTable *alter_table_message= session->lex().alter_table();
 
-  if (alter_info->tablespace_op != NO_TABLESPACE_OP)
+  alter_table_message->set_catalog(original_table_identifier.getCatalogName());
+  alter_table_message->set_schema(original_table_identifier.getSchemaName());
+  alter_table_message->set_name(original_table_identifier.getTableName());
+
+  if (alter_table_message->operations_size()
+      && (alter_table_message->operations(0).operation()
+          == message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE
+          || alter_table_message->operations(0).operation()
+          == message::AlterTable::AlterTableOperation::IMPORT_TABLESPACE))
   {
+    bool discard= (alter_table_message->operations(0).operation() ==
+                   message::AlterTable::AlterTableOperation::DISCARD_TABLESPACE);
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
-    return discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
+    return discard_or_import_tablespace(session, table_list, discard);
   }
 
   session->set_proc_info("init");
@@ -1391,6 +1497,7 @@ bool alter_table(Session *session,
                                 create_info,
                                 original_proto,
                                 create_proto,
+                                *alter_table_message,
                                 table_list,
                                 alter_info,
                                 order_num,
@@ -1416,7 +1523,7 @@ copy_data_between_tables(Session *session,
                          uint32_t order_num, Order *order,
                          ha_rows *copied,
                          ha_rows *deleted,
-                         enum enum_enable_or_disable keys_onoff,
+                         message::AlterTable &alter_table_message,
                          bool error_if_not_empty)
 {
   int error= 0;
@@ -1456,7 +1563,8 @@ copy_data_between_tables(Session *session,
     return -1;
 
   /* We need external lock before we can disable/enable keys */
-  alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(), keys_onoff);
+  alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(),
+                          alter_table_message);
 
   /* We can abort alter table for any table type */
   session->setAbortOnWarning(not ignore);

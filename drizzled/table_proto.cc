@@ -25,6 +25,7 @@
 
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/typelib.h>
+#include <drizzled/util/test.h>
 
 /* For proto */
 #include <string>
@@ -46,7 +47,7 @@ using namespace std;
 namespace drizzled {
 
 static
-bool fill_table_proto(identifier::Table::const_reference identifier,
+bool fill_table_proto(const identifier::Table& identifier,
                       message::Table &table_proto,
                       List<CreateField> &create_fields,
                       HA_CREATE_INFO *create_info,
@@ -523,7 +524,7 @@ bool fill_table_proto(identifier::Table::const_reference identifier,
         else
           collation_id= table_proto.options().collation_id();
 
-        const CHARSET_INFO *cs= get_charset(collation_id);
+        const charset_info_st *cs= get_charset(collation_id);
 
         mbmaxlen= cs->mbmaxlen;
       }

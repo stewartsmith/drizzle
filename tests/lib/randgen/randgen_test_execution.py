@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -59,6 +59,7 @@ class randgenTestExecutor(test_execution.testExecutor):
         # analyze results
         self.current_test_status = self.process_randgen_output()
         self.set_server_status(self.current_test_status)
+        self.server_manager.reset_servers(self.name)
  
 
     
@@ -89,7 +90,8 @@ class randgenTestExecutor(test_execution.testExecutor):
         randgen_output.close()
         randgen_file = open(randgen_outfile,'r')
         output = ''.join(randgen_file.readlines())
-        #print output
+        if self.debug:
+            self.logging.debug(output)
         randgen_file.close()
 
         if self.debug:

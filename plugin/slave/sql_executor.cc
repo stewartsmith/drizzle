@@ -26,6 +26,7 @@
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/plugin.h>
 
 using namespace std;
 using namespace drizzled;

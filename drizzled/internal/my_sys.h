@@ -29,15 +29,13 @@
 #endif
 
 #include <errno.h>
+#include <sys/types.h>
 
+#include <drizzled/definitions.h>
 #include <drizzled/internal/my_pthread.h>
 
-#include <drizzled/charset_info.h>                    /* for CHARSET_INFO */
+#include <drizzled/charset_info.h>                    /* for charset_info_st */
 #include <stdarg.h>
-#include <drizzled/internal/aio_result.h>
-
-#include <drizzled/memory/root.h>
-#include <drizzled/error.h>
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -98,7 +96,6 @@ namespace internal
 #define MY_COPYTIME	64	/* my_redel() copys time */
 #define MY_DELETE_OLD	256	/* my_create_with_symlink() */
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
-#define MY_REDEL_MAKE_BACKUP 256
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
@@ -120,71 +117,25 @@ namespace internal
 #define MY_RELATIVE_PATH	128	/* name is relative to 'dir' */
 #define MY_APPEND_EXT           256     /* add 'ext' as additional extension*/
 
-
-	/* Some constants */
-#define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
-#define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
-#define DFLT_INIT_HITS  3
-
-	/* Internal error numbers (for assembler functions) */
-#define MY_ERRNO_EDOM		33
-#define MY_ERRNO_ERANGE		34
-
-	/* Bits for get_date timeflag */
-#define GETDATE_DATE_TIME	1
-#define GETDATE_SHORT_DATE	2
-#define GETDATE_HHMMSSTIME	4
-#define GETDATE_GMT		8
-#define GETDATE_FIXEDLENGTH	16
-
-
 typedef uint64_t my_off_t;
-
-#define TRASH(A,B) /* nothing */
 
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
-extern uint32_t my_file_limit;
 
-/* statistics */
-extern uint	mysys_usage_id;
-extern bool	my_init_done;
-
-					/* Executed when comming from shell */
 extern DRIZZLED_API int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
 	   my_recived_signals,	/* Signals we have got */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
 	   my_dont_interrupt;	/* call remember_intr when set */
-extern bool mysys_uses_curses, my_use_symdir;
-extern uint32_t sf_malloc_cur_memory, sf_malloc_max_memory;
+extern bool my_use_symdir;
 
 extern uint32_t	my_default_record_cache_size;
 extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
-/* from default.c */
-extern char *my_defaults_extra_file;
-extern const char *my_defaults_group_suffix;
-extern const char *my_defaults_file;
 
 extern bool timed_mutexes;
-
-typedef class wild_file_pack	/* Struct to hold info when selecting files */
-{
-public:
-  uint		wilds;		/* How many wildcards */
-  uint		not_pos;	/* Start of not-theese-files */
-  char *	*wild;		/* Pointer to wildcards */
-
-  wild_file_pack():
-    wilds(0),
-    not_pos(0),
-    wild(NULL)
-  {}
-
-} WF_PACK;
 
 enum cache_type
 {
@@ -204,10 +155,6 @@ public:
   uint	rc_length,read_length,reclength;
   my_off_t rc_record_pos,end_of_file;
   unsigned char *rc_buff,*rc_buff2,*rc_pos,*rc_end,*rc_request_pos;
-#ifdef HAVE_AIOWAIT
-  int	use_async_io;
-  my_aio_result aio_result;
-#endif
   enum cache_type type;
 
   record_cache():
@@ -260,12 +207,6 @@ public:
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)
 
-typedef uint32_t ha_checksum;
-
-/* Define the type of function to be passed to process_default_option_files */
-typedef int (*Process_option_func)(void *ctx, const char *group_name,
-                                   const char *option);
-
 /* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
@@ -287,9 +228,7 @@ DRIZZLED_API size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf M
 DRIZZLED_API int my_rename(const char *from, const char *to,myf MyFlags);
 DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer,
                              size_t Count, myf MyFlags);
-extern int _sanity(const char *sFile, uint32_t uLine);
 
-extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
 
 DRIZZLED_API int my_sync(int fd, myf my_flags);
@@ -299,7 +238,6 @@ extern bool my_init(void);
 extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
-extern char * my_filename(int fd);
 
 extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
@@ -312,7 +250,6 @@ extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
 DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir,
                               const char *form, uint32_t flag);
-extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
@@ -321,12 +258,9 @@ extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
 extern int wild_compare(const char *str,const char *wildstr,
                         bool str_is_pattern);
-extern WF_PACK *wf_comp(char * str);
-extern int wf_test(wild_file_pack *wf_pack,const char *name);
-extern void wf_end(wild_file_pack *buffer);
+
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
-extern void get_date(char * to,int timeflag,time_t use_time);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);
@@ -350,27 +284,6 @@ extern qsort2_cmp get_ptr_compare(size_t);
 DRIZZLED_API void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 DRIZZLED_API my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
-
-extern int get_defaults_options(int argc, char **argv,
-                                char **defaults, char **extra_defaults,
-                                char **group_suffix);
-extern int load_defaults(const char *conf_file, const char **groups,
-			 int *argc, char ***argv);
-extern int my_search_option_files(const char *conf_file, int *argc,
-                                  char ***argv, uint32_t *args_used,
-                                  Process_option_func func, void *func_ctx);
-extern void free_defaults(char **argv);
-extern void my_print_default_files(const char *conf_file);
-extern void print_defaults(const char *conf_file, const char **groups);
-extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
-                               size_t count);
-extern void my_sleep(uint32_t m_seconds);
-
-
-
-extern void thd_increment_bytes_sent(uint32_t length);
-extern void thd_increment_bytes_received(uint32_t length);
-extern void thd_increment_net_big_packet_count(uint32_t length);
 
 } /* namespace internal */
 } /* namespace drizzled */

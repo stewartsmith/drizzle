@@ -43,7 +43,6 @@ DTRACEFILES= \
 nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
-			      drizzled/alter_drop.h \
 			      drizzled/alter_info.h \
 			      drizzled/atomic/gcc_traits.h \
 			      drizzled/atomic/pthread_traits.h \
@@ -62,6 +61,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
+			      drizzled/common_fwd.h \
 			      drizzled/comp_creator.h \
 			      drizzled/constrained_value.h \
 			      drizzled/copy_field.h \
@@ -299,6 +299,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/message.h \
 			      drizzled/message/cache.h \
 			      drizzled/message/catalog.h \
+			      drizzled/message/replication_options.h \
 			      drizzled/message/schema.h \
 			      drizzled/message/table.h \
 			      drizzled/module/context.h \

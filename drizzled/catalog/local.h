@@ -25,12 +25,10 @@
 #include <drizzled/catalog/instance.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace catalog
-{
+namespace drizzled {
+namespace catalog {
 
-DRIZZLED_API identifier::Catalog::const_reference local_identifier();
+DRIZZLED_API const identifier::Catalog& local_identifier();
 DRIZZLED_API Instance::shared_ptr local();
 
 } /* namespace catalog */

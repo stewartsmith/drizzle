@@ -20,8 +20,7 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern struct global_counters current_global_counters;
 

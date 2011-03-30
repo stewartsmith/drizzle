@@ -60,6 +60,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/table_list.h>
 #include <drizzled/key.h>
+#include <drizzled/error.h>
 
 namespace drizzled
 {

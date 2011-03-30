@@ -16,6 +16,7 @@
 /* re-read current record */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
 
 	/* If inx != -1 the new record is read according to index
 	   (for next/prev). Record must in this case point to last record

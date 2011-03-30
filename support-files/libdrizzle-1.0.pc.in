@@ -2,9 +2,9 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
-libdrizzleincludedir=@libdrizzleincludedir@
+libdrizzleincludedir=@oldlibdrizzleincludedir@
 
-Name: libdrizzle
+Name: libdrizzle-1.0
 Description: Drizzle Client & Protocol Library
 Version: @PANDORA_RELEASE_VERSION@
 Libs: -L${libdir} -ldrizzle

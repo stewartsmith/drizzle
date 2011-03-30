@@ -17,8 +17,11 @@
 
 #include <config.h>
 
+#include <drizzled/definitions.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
+#include <drizzled/memory/root.h>
+#include <drizzled/charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/global_charset_info.h>
 
@@ -68,7 +71,7 @@ String::String(size_t length_arg)
   (void) real_alloc(length_arg);
 }
 
-String::String(const char *str, const CHARSET_INFO * const cs)
+String::String(const char *str, const charset_info_st * const cs)
   : Ptr(const_cast<char *>(str)),
     str_length(static_cast<size_t>(strlen(str))),
     Alloced_length(0),
@@ -77,7 +80,7 @@ String::String(const char *str, const CHARSET_INFO * const cs)
 { }
 
 
-String::String(const char *str, size_t len, const CHARSET_INFO * const cs)
+String::String(const char *str, size_t len, const charset_info_st * const cs)
   : Ptr(const_cast<char *>(str)),
     str_length(len),
     Alloced_length(0),
@@ -86,7 +89,7 @@ String::String(const char *str, size_t len, const CHARSET_INFO * const cs)
 { }
 
 
-String::String(char *str, size_t len, const CHARSET_INFO * const cs)
+String::String(char *str, size_t len, const charset_info_st * const cs)
   : Ptr(str),
     str_length(len),
     Alloced_length(len),
@@ -166,7 +169,7 @@ bool String::realloc(size_t alloc_length)
   return false;
 }
 
-bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs)
+bool String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
 {
   size_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
@@ -178,7 +181,7 @@ bool String::set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const
   return false;
 }
 
-bool String::set_real(double num,size_t decimals, const CHARSET_INFO * const cs)
+bool String::set_real(double num,size_t decimals, const charset_info_st * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
   size_t dummy_errors;
@@ -219,7 +222,7 @@ bool String::copy(const String &str)
   return false;
 }
 
-bool String::copy(const std::string& arg, const CHARSET_INFO * const cs)	// Allocate new string
+bool String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
 {
   if (alloc(arg.size()))
     return true;
@@ -233,7 +236,7 @@ bool String::copy(const std::string& arg, const CHARSET_INFO * const cs)	// Allo
   return false;
 }
 
-bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const cs)
+bool String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
 {
   if (alloc(arg_length))
     return true;
@@ -267,8 +270,8 @@ bool String::copy(const char *str,size_t arg_length, const CHARSET_INFO * const 
 */
 
 bool String::needs_conversion(size_t arg_length,
-			      const CHARSET_INFO * const from_cs,
-			      const CHARSET_INFO * const to_cs,
+			      const charset_info_st * const from_cs,
+			      const charset_info_st * const to_cs,
 			      size_t *offset)
 {
   *offset= 0;
@@ -286,7 +289,7 @@ bool String::needs_conversion(size_t arg_length,
 
 
 bool String::set_or_copy_aligned(const char *str,size_t arg_length,
-                                 const CHARSET_INFO * const cs)
+                                 const charset_info_st * const cs)
 {
   /* How many bytes are in incomplete character */
   size_t offset= (arg_length % cs->mbminlen);
@@ -300,8 +303,8 @@ bool String::set_or_copy_aligned(const char *str,size_t arg_length,
 	/* Copy with charset conversion */
 
 bool String::copy(const char *str, size_t arg_length,
-		          const CHARSET_INFO * const,
-				  const CHARSET_INFO * const to_cs, size_t *errors)
+		          const charset_info_st * const,
+				  const charset_info_st * const to_cs, size_t *errors)
 {
   *errors= 0;
   return copy(str, arg_length, to_cs);
@@ -386,7 +389,7 @@ bool String::append(const char *s)
   with character set recoding
 */
 
-bool String::append(const char *s,size_t arg_length, const CHARSET_INFO * const)
+bool String::append(const char *s,size_t arg_length, const charset_info_st * const)
 {
   if (realloc(str_length + arg_length))
     return true;
@@ -546,7 +549,7 @@ bool String::replace(size_t offset,size_t arg_length,
 */
 
 
-int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
+int sortcmp(const String *s,const String *t, const charset_info_st * const cs)
 {
  return cs->coll->strnncollsp(cs,
                               (unsigned char *) s->ptr(),s->length(),
@@ -630,9 +633,9 @@ String *copy_if_not_alloced(String *to,String *from,size_t from_length)
 
 
 size_t
-well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+well_formed_copy_nchars(const charset_info_st * const to_cs,
                         char *to, size_t to_length,
-                        const CHARSET_INFO * const from_cs,
+                        const charset_info_st * const from_cs,
                         const char *from, size_t from_length,
                         size_t nchars,
                         const char **well_formed_error_pos,
@@ -745,7 +748,7 @@ void String::print(String *str)
 */
 
 /* Factor the extern out */
-extern const CHARSET_INFO *system_charset_info, *files_charset_info;
+extern const charset_info_st *system_charset_info, *files_charset_info;
 
 void String::append_identifier(const char *name, size_t in_length)
 {
@@ -827,7 +830,7 @@ void String::write_at_position(int position, size_t value)
 {
   int8store(Ptr + position,value);
 }
-bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+bool check_if_only_end_space(const charset_info_st * const cs, char *str,
                              char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;

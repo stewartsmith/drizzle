@@ -22,10 +22,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-typedef struct charset_info_st CHARSET_INFO;
+class charset_info_st;
 
 /*
   External variables

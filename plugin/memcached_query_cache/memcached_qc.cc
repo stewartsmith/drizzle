@@ -334,11 +334,11 @@ static int init(module::Context &context)
   context.add(query_cache_flush_func);
 
   /* Setup the module Data dict and status infos */
-  query_cache_tool= new (nothrow) QueryCacheTool();
+  query_cache_tool= new QueryCacheTool();
   context.add(query_cache_tool);
-  query_cache_status= new (nothrow) QueryCacheStatusTool();
+  query_cache_status= new QueryCacheStatusTool();
   context.add(query_cache_status);
-  query_cached_tables= new (nothrow) CachedTables();
+  query_cached_tables= new CachedTables();
   context.add(query_cached_tables);
   
   context.registerVariable(new sys_var_constrained_value<uint64_t>("expiry", expiry_time));

@@ -39,7 +39,7 @@ Field_str::Field_str(unsigned char *ptr_arg,
                      unsigned char *null_ptr_arg,
                      unsigned char null_bit_arg,
                      const char *field_name_arg,
-                     const CHARSET_INFO * const charset_arg)
+                     const charset_info_st * const charset_arg)
   :Field(ptr_arg, len_arg,
          null_ptr_arg,
          null_bit_arg,
@@ -154,7 +154,7 @@ bool check_string_copy_error(Field_str *field,
                              const char *well_formed_error_pos,
                              const char *cannot_convert_error_pos,
                              const char *end,
-                             const CHARSET_INFO * const cs)
+                             const charset_info_st * const cs)
 {
   const char *pos, *end_orig;
   char tmp[64], *t;

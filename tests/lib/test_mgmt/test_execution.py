@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -139,6 +139,9 @@ class testExecutor():
             for server in self.current_servers:
                 variable_name = "%s_%s" %(self.name.upper(), server.name.upper())
                 variable_value = str(server.master_port)
+                extra_reqs[variable_name] = variable_value
+                variable_name = variable_name + "_PID"
+                variable_value = str(server.pid)
                 extra_reqs[variable_name] = variable_value
             self.working_environment.update(extra_reqs)
         return 

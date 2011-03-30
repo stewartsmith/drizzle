@@ -53,11 +53,11 @@ public:
              unsigned char null_bit_arg,
              const char *field_name_arg,
              TableShare *share,
-             const CHARSET_INFO * const cs);
+             const charset_info_st * const cs);
   Field_blob(uint32_t len_arg,
              bool maybe_null_arg,
              const char *field_name_arg,
-             const CHARSET_INFO * const cs)
+             const charset_info_st * const cs)
     :Field_str((unsigned char*) NULL,
                len_arg,
                maybe_null_arg ? (unsigned char *) "": 0,
@@ -72,7 +72,7 @@ public:
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
   int  store(const char *to,uint32_t length,
-             const CHARSET_INFO * const charset);
+             const charset_info_st * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
 

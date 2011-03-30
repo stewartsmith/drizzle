@@ -29,7 +29,6 @@ namespace field
 {
 
 class TableShare;
-typedef struct charset_info_st CHARSET_INFO;
 
 class Epoch :public Field_str {
 public:
@@ -51,7 +50,7 @@ public:
   enum Item_result cmp_type () const { return INT_RESULT; }
 
   int store(const char *to,uint32_t length,
-            const CHARSET_INFO * const charset);
+            const charset_info_st * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const type::Decimal *value);

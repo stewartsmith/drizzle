@@ -16,7 +16,7 @@
 /* The hash functions used for saveing keys */
 
 #include "heap_priv.h"
-
+#include <drizzled/error_t.h>
 #include <drizzled/charset_info.h>
 #include <drizzled/util/test.h>
 
@@ -194,7 +194,7 @@ static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned ch
     }
     if (seg->type == HA_KEYTYPE_TEXT)
     {
-       const CHARSET_INFO * const cs= seg->charset;
+       const charset_info_st * const cs= seg->charset;
        uint32_t length= seg->length;
        if (cs->mbmaxlen > 1)
        {
@@ -206,7 +206,7 @@ static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned ch
     }
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
-       const CHARSET_INFO * const cs= seg->charset;
+       const charset_info_st * const cs= seg->charset;
        uint32_t pack_length= 2;                     /* Key packing is constant */
        uint32_t length= uint2korr(pos);
        if (cs->mbmaxlen > 1)
@@ -252,7 +252,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     }
     if (seg->type == HA_KEYTYPE_TEXT)
     {
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       uint32_t char_length= seg->length;
       if (cs->mbmaxlen > 1)
       {
@@ -264,7 +264,7 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
     }
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       uint32_t pack_length= seg->bit_start;
       uint32_t length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
       if (cs->mbmaxlen > 1)
@@ -326,7 +326,7 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
     }
     if (seg->type == HA_KEYTYPE_TEXT)
     {
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       uint32_t char_length1;
       uint32_t char_length2;
       unsigned char *pos1= (unsigned char*)rec1 + seg->start;
@@ -354,7 +354,7 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
       unsigned char *pos2= (unsigned char*) rec2 + seg->start;
       uint32_t char_length1, char_length2;
       uint32_t pack_length= seg->bit_start;
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       if (pack_length == 1)
       {
         char_length1= (uint) *(unsigned char*) pos1++;
@@ -419,7 +419,7 @@ static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigne
     }
     if (seg->type == HA_KEYTYPE_TEXT)
     {
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       uint32_t char_length_key;
       uint32_t char_length_rec;
       unsigned char *pos= (unsigned char*) rec + seg->start;
@@ -445,7 +445,7 @@ static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigne
     else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
     {
       unsigned char *pos= (unsigned char*) rec + seg->start;
-      const CHARSET_INFO * const cs= seg->charset;
+      const charset_info_st * const cs= seg->charset;
       uint32_t pack_length= seg->bit_start;
       uint32_t char_length_rec= (pack_length == 1 ? (uint) *(unsigned char*) pos :
                              uint2korr(pos));
@@ -486,7 +486,7 @@ void hp_make_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *rec
 
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
   {
-    const CHARSET_INFO * const cs= seg->charset;
+    const charset_info_st * const cs= seg->charset;
     uint32_t char_length= seg->length;
     unsigned char *pos= (unsigned char*) rec + seg->start;
     if (seg->null_bit)

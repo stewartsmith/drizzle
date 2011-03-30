@@ -932,7 +932,7 @@ error:
   return true;
 }
 
-Item *Item_field::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_field::safe_charset_converter(const charset_info_st * const tocs)
 {
   no_const_subst= 1;
   return Item::safe_charset_converter(tocs);

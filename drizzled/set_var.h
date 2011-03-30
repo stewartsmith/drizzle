@@ -37,7 +37,6 @@ class Item;
 class Item_func_set_user_var;
 class Time_zone;
 typedef struct my_locale_st MY_LOCALE;
-typedef struct charset_info_st CHARSET_INFO;
 
 /* Classes to support the SET command */
 

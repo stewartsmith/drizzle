@@ -32,9 +32,11 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Implement DELETE SQL word.
@@ -181,7 +183,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ha_rows) session->rowCount());
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -347,7 +349,7 @@ cleanup:
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;

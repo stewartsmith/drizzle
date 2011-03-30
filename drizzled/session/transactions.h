@@ -21,6 +21,7 @@
 #pragma once
 
 #include <deque>
+#include <drizzled/named_savepoint.h>
 #include <drizzled/xid.h>
 
 namespace drizzled {

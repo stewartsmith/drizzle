@@ -54,6 +54,7 @@
 #include <drizzled/item/ref.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <math.h>
@@ -417,7 +418,7 @@ bool Item::check_cols(uint32_t c)
   return false;
 }
 
-void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs)
+void Item::set_name(const char *str, uint32_t length, const charset_info_st * const cs)
 {
   if (!length)
   {
@@ -467,7 +468,7 @@ bool Item::eq(const Item *item, bool) const
          ! my_strcasecmp(system_charset_info, name, item->name);
 }
 
-Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item::safe_charset_converter(const charset_info_st * const tocs)
 {
   Item_func_conv_charset *conv= new Item_func_conv_charset(this, tocs, 1);
   return conv->safe ? conv : NULL;
@@ -594,12 +595,12 @@ Item *Item::get_tmp_table_item(Session *session)
   return copy_or_same(session);
 }
 
-const CHARSET_INFO *Item::default_charset()
+const charset_info_st *Item::default_charset()
 {
   return current_session->variables.getCollation();
 }
 
-const CHARSET_INFO *Item::compare_collation()
+const charset_info_st *Item::compare_collation()
 {
   return NULL;
 }
@@ -1095,7 +1096,7 @@ bool Item::is_datetime()
 String *Item::check_well_formed_result(String *str, bool send_error)
 {
   /* Check whether we got a well-formed string */
-  const CHARSET_INFO * const cs= str->charset();
+  const charset_info_st * const cs= str->charset();
   int well_formed_error;
   uint32_t wlen= cs->cset->well_formed_len(cs,
                                        str->ptr(), str->ptr() + str->length(),
@@ -1124,10 +1125,10 @@ String *Item::check_well_formed_result(String *str, bool send_error)
   return str;
 }
 
-bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs)
+bool Item::eq_by_collation(Item *item, bool binary_cmp, const charset_info_st * const cs)
 {
-  const CHARSET_INFO *save_cs= 0;
-  const CHARSET_INFO *save_item_cs= 0;
+  const charset_info_st *save_cs= 0;
+  const charset_info_st *save_item_cs= 0;
   if (collation.collation != cs)
   {
     save_cs= collation.collation;
@@ -1242,7 +1243,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   if (result_type() == STRING_RESULT)
   {
     String *result;
-    const CHARSET_INFO * const cs= collation.collation;
+    const charset_info_st * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];		// Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result=val_str(&str_value);
@@ -1432,7 +1433,7 @@ uint32_t Item::max_char_length() const
   return max_length / collation.collation->mbmaxlen;
 }
 
-void Item::fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs)
+void Item::fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs)
 { 
   max_length= char_to_byte_length_safe(max_char_length_arg, cs->mbmaxlen);
   collation.collation= cs;

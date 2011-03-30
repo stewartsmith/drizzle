@@ -57,7 +57,7 @@ void Field_enum::store_type(uint64_t value)
  * and stores the found key.  Upon not finding an entry in the typelib,
  * we always throw an error.
  */
-int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const)
+int Field_enum::store(const char *from, uint32_t length, const charset_info_st * const)
 {
   uint32_t tmp;
 

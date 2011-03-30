@@ -21,9 +21,9 @@
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/copy_field.h>
+#include <drizzled/item.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Field;
 class Session;

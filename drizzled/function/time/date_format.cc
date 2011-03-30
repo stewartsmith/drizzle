@@ -23,14 +23,14 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/typelib.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Create a formated date/time value in a string.
@@ -269,7 +269,7 @@ void Item_func_date_format::fix_length_and_dec()
   Item *arg1= args[1];
 
   decimals=0;
-  const CHARSET_INFO * const cs= getSession().variables.getCollation();
+  const charset_info_st * const cs= getSession().variables.getCollation();
   collation.set(cs, arg1->collation.derivation);
   if (arg1->type() == STRING_ITEM)
   {                                             // Optimize the normal case

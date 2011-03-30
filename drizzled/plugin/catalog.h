@@ -52,25 +52,25 @@ public:
 
   virtual catalog::Engine::shared_ptr engine()= 0;
 
-  static bool create(identifier::Catalog::const_reference);
-  static bool create(identifier::Catalog::const_reference, message::catalog::shared_ptr &);
-  static bool drop(identifier::Catalog::const_reference);
+  static bool create(const identifier::Catalog&);
+  static bool create(const identifier::Catalog&, message::catalog::shared_ptr &);
+  static bool drop(const identifier::Catalog&);
 
-  static bool lock(identifier::Catalog::const_reference);
-  static bool unlock(identifier::Catalog::const_reference);
+  static bool lock(const identifier::Catalog&);
+  static bool unlock(const identifier::Catalog&);
 
   // Required for plugin interface
   static bool addPlugin(plugin::Catalog *plugin);
   static void removePlugin(plugin::Catalog *plugin);
 
   // Get Meta information
-  static bool exist(identifier::Catalog::const_reference);
+  static bool exist(const identifier::Catalog&);
   static void getIdentifiers(identifier::Catalog::vector &identifiers);
   static void getMessages(message::catalog::vector &messages);
-  static message::catalog::shared_ptr getMessage(identifier::Catalog::const_reference);
+  static message::catalog::shared_ptr getMessage(const identifier::Catalog&);
 
   // Get Instance
-  static catalog::Instance::shared_ptr getInstance(identifier::Catalog::const_reference);
+  static catalog::Instance::shared_ptr getInstance(const identifier::Catalog&);
 };
 
 } /* namespace plugin */

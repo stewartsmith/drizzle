@@ -298,20 +298,15 @@ void TableList::print(Session *session, String *str)
         str->append(' ');
 
         string t_alias(alias);
-        transform(t_alias.begin(), t_alias.end(),
-                  t_alias.begin(), ::tolower);
-
+        transform(t_alias.begin(), t_alias.end(), t_alias.begin(), ::tolower);
         str->append_identifier(t_alias.c_str(), t_alias.length());
       }
-
     }
 
     if (index_hints)
     {
       List<Index_hint>::iterator it(index_hints->begin());
-      Index_hint *hint;
-
-      while ((hint= it++))
+      while (Index_hint* hint= it++)
       {
         str->append (STRING_WITH_LEN(" "));
         hint->print (session, str);

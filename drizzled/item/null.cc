@@ -65,7 +65,7 @@ void Item_null::print(String *str)
 }
 
 
-Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_null::safe_charset_converter(const charset_info_st * const tocs)
 {
   collation.set(tocs);
   return this;

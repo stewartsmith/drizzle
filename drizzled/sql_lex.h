@@ -38,6 +38,11 @@ namespace drizzled {
 namespace plugin { class Function; }
 namespace statement { class Statement; }
 
+  namespace message
+  {
+    class AlterTable;
+  }
+
 class st_lex_symbol;
 class select_result_interceptor;
 
@@ -668,7 +673,7 @@ public:
    Add a index hint to the tagged list of hints. The type and clause of the
    hint will be the current ones (set by set_index_hint())
   */
-  bool add_index_hint (Session *session, char *str, uint32_t length);
+  void add_index_hint(Session *session, char *str, uint32_t length);
 
   /* make a list to hold index hints */
   void alloc_index_hints (Session *session);
@@ -838,7 +843,7 @@ public:
   unsigned char* yacc_yyss, *yacc_yyvs;
   /* The owning Session of this LEX */
   Session *session;
-  const CHARSET_INFO *charset;
+  const charset_info_st *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
   TableList *leaf_tables_insert;
@@ -937,9 +942,9 @@ public:
 
   void cleanup_after_one_table_open();
 
-  bool push_context(Name_resolution_context *context)
+  void push_context(Name_resolution_context *context)
   {
-    return context_stack.push_front(context);
+    context_stack.push_front(context);
   }
 
   void pop_context()
@@ -1012,6 +1017,8 @@ public:
     return _create_table;
   }
 
+  message::AlterTable *alter_table();
+
   message::Table::Field *field()
   {
     return _create_field;
@@ -1036,12 +1043,13 @@ private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::AlterTable *_alter_table;
   message::Table::Field *_create_field;
   bool _exists;
 };
 
 extern void lex_start(Session *session);
-extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
+extern void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str);
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 bool check_for_sql_keyword(drizzled::st_lex_symbol const&);

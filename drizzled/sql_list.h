@@ -132,38 +132,25 @@ public:
     last= elements ? tmp.last : &first;
   }
   base_list(bool) { }
-  bool push_back(void *info)
+  void push_back(void *info)
   {
-    if (((*last)=new list_node(info, &end_of_list)))
-    {
-      last= &(*last)->next;
-      elements++;
-      return 0;
-    }
-    return 1;
+    *last = new list_node(info, &end_of_list);
+    last= &(*last)->next;
+    elements++;
   }
-  bool push_back(void *info, memory::Root *mem_root)
+  void push_back(void *info, memory::Root *mem_root)
   {
-    if (((*last)=new (mem_root) list_node(info, &end_of_list)))
-    {
-      last= &(*last)->next;
-      elements++;
-      return 0;
-    }
-    return 1;
+    *last = new (mem_root) list_node(info, &end_of_list);
+    last= &(*last)->next;
+    elements++;
   }
-  bool push_front(void *info)
+  void push_front(void *info)
   {
     list_node *node=new list_node(info,first);
-    if (node)
-    {
-      if (last == &first)
-	last= &node->next;
+    if (last == &first)
+			last= &node->next;
       first=node;
       elements++;
-      return 0;
-    }
-    return 1;
   }
   void remove(list_node **prev)
   {
@@ -345,9 +332,9 @@ public:
   List() {}
   List(const List<T> &tmp) : base_list(tmp) {}
   List(const List<T> &tmp, memory::Root *mem_root) : base_list(tmp, mem_root) {}
-  bool push_back(T *a) { return base_list::push_back(a); }
-  bool push_back(T *a, memory::Root *mem_root) { return base_list::push_back(a, mem_root); }
-  bool push_front(T *a) { return base_list::push_front(a); }
+  void push_back(T *a) { base_list::push_back(a); }
+  void push_back(T *a, memory::Root *mem_root) { base_list::push_back(a, mem_root); }
+  void push_front(T *a) { base_list::push_front(a); }
   T& front() {return *static_cast<T*>(first->info); }
   T* pop()  {return static_cast<T*>(base_list::pop()); }
   void concat(List<T> *list) { base_list::concat(list); }

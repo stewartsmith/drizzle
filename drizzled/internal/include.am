@@ -18,7 +18,6 @@ noinst_LTLIBRARIES+= drizzled/internal/libinternal.la
 
 EXTRA_DIST+= drizzled/internal/CHARSET_INFO.txt
 noinst_HEADERS+= \
-		drizzled/internal/aio_result.h \
 		drizzled/internal/iocache.h \
 		drizzled/internal/m_string.h \
 		drizzled/internal/my_bit.h \
@@ -41,8 +40,6 @@ drizzled_internal_libinternal_la_LIBADD= \
 
 drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/bmove_upp.cc \
-					  drizzled/internal/checksum.cc \
-					  drizzled/internal/default.cc \
 					  drizzled/internal/int2str.cc \
 					  drizzled/internal/iocache.cc \
 					  drizzled/internal/llstr.cc \
@@ -51,7 +48,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 					  drizzled/internal/mf_dirname.cc \
 					  drizzled/internal/mf_fn_ext.cc \
 					  drizzled/internal/mf_format.cc \
-					  drizzled/internal/mf_getdate.cc \
 					  drizzled/internal/mf_iocache.cc \
 					  drizzled/internal/mf_loadpath.cc \
 					  drizzled/internal/mf_pack.cc \

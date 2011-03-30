@@ -24,9 +24,9 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/charset_info.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * String with names of SYSTEM time zone.

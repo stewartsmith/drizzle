@@ -23,9 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
 #include <drizzled/statement/load.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Load::execute()
 {

@@ -27,9 +27,9 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/statistics_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Flush::execute()
 {

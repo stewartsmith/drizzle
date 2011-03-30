@@ -21,10 +21,12 @@
 #pragma once
 
 #include <drizzled/lock.h>
-#include <drizzled/query_id.h>
 
-namespace drizzled
-{
+namespace drizzled {
+
+namespace plugin { class StorageEngine; }
+
+typedef uint64_t query_id_t;
 
 class CachedDirectory;
 
@@ -88,7 +90,7 @@ public:
 
   void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(const drizzled::identifier::Table &identifier);
-  bool rm_temporary_table(plugin::StorageEngine *base, const identifier::Table &identifier);
+  bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
   bool rm_temporary_table(const drizzled::identifier::Table &identifier, bool best_effort= false);
   Table *open_temporary_table(const drizzled::identifier::Table &identifier,
                               bool link_in_list= true);

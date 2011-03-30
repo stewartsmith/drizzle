@@ -19,7 +19,7 @@
 
 CLIENT_LDADD= \
 	      drizzled/internal/libinternal.la \
-	      libdrizzle/libdrizzle.la \
+	      libdrizzle-2.0/libdrizzle/libdrizzle.la \
 	      $(LIBINTL) \
 	      $(LIBZ) \
 	      client/libgetpassword.la
@@ -61,20 +61,22 @@ noinst_HEADERS+= \
                  client/wakeup.h
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
+client_drizzle_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
-				libdrizzle/libdrizzle.la \
+				libdrizzle-2.0/libdrizzle/libdrizzle.la \
 				$(LIBINTL) \
 				$(LIBZ) \
 				client/libgetpassword.la
 
-client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} -DDRIZZLE_ADMIN_TOOL
+client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS} -DDRIZZLE_ADMIN_TOOL
 client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
 client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
-                                libdrizzle/libdrizzle.la \
+                                libdrizzle-2.0/libdrizzle/libdrizzle.la \
                                 $(LIBINTL) \
                                 $(LIBZ) \
                                 client/libgetpassword.la
 
+client_drizzledump_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \
 			    client/drizzledump_data.cc \
@@ -84,13 +86,15 @@ client_drizzledump_SOURCES= \
 client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
+client_drizzleimport_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
-client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
+client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS} ${LIBDRIZZLE_CPPFLAGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
+client_drizzletest_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
  
 

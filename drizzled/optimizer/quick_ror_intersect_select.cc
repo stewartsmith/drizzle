@@ -26,14 +26,13 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/key.h>
 #include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 
 using namespace std;
 
-namespace drizzled
-{
-
+namespace drizzled {
 
 optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
                                                             Table *table,

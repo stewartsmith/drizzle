@@ -132,7 +132,7 @@ int64_t Item_func_numhybrid::val_int()
         return 0;
 
       char *end= (char*) res->ptr() + res->length();
-      const CHARSET_INFO * const cs= str_value.charset();
+      const charset_info_st * const cs= str_value.charset();
       return (*(cs->cset->strtoll10))(cs, res->ptr(), &end, &err_not_used);
     }
   case ROW_RESULT:

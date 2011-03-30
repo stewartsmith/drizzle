@@ -22,7 +22,8 @@
 #include <drizzled/session.h>
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
-#include <drizzled/alter_drop.h>
+
+#include <drizzled/message/alter_table.pb.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
 
@@ -392,8 +393,8 @@ void buildCreateFieldIdent(LEX *lex)
   lex->charset= NULL;
   statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-  message::AlterTable &alter_proto= ((statement::CreateTable *)lex->statement)->alter_info.alter_proto;
-  lex->setField(alter_proto.add_added_field());
+  message::AddedFields &added_fields_proto= ((statement::CreateTable *)lex->statement)->alter_info.added_fields_proto;
+  lex->setField(added_fields_proto.add_added_field());
 }
 
 void storeAlterColumnPosition(LEX *lex, const char *position)
@@ -404,7 +405,7 @@ void storeAlterColumnPosition(LEX *lex, const char *position)
   statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
 }
 
-bool buildCollation(LEX *lex, const CHARSET_INFO *arg)
+bool buildCollation(LEX *lex, const charset_info_st *arg)
 {
   statement::CreateTable *statement= (statement::CreateTable *)lex->statement;
 
@@ -656,15 +657,19 @@ void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
+  message::AlterTable::AlterTableOperation *operation;
+  operation= lex->alter_table()->add_operations();
+  operation->set_drop_name(name);
+
   statement->alter_info.flags.set(ALTER_DROP_INDEX);
   if (is_foreign_key)
   {
     statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
-    statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::FOREIGN_KEY, name));
+    operation->set_operation(message::AlterTable::AlterTableOperation::DROP_FOREIGN_KEY);
   }
   else
   {
-    statement->alter_info.drop_list.push_back(AlterDrop(AlterDrop::KEY, name));
+    operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
   }
 }
 

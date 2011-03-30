@@ -25,6 +25,8 @@
 #include <drizzled/abort_exception.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/gettext.h>
+#include <drizzled/plugin.h>
+#include <drizzled/statistics_variables.h>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>

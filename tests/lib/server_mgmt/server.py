@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010,2011 Patrick Crews
@@ -77,6 +77,7 @@ class Server(object):
         self.tried_start = 0
         self.failed_test = 0 # was the last test a failure?  our state is suspect
         self.server_start_timeout = 60 * self.valgrind_time_buffer
+        self.pid = None
 
     def initialize_databases(self):
         """ Call schemawriter to make db.opt files """

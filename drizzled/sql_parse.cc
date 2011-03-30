@@ -53,6 +53,11 @@
 #include <drizzled/kill.h>
 #include <drizzled/schema.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/table_ident.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <limits.h>
 
@@ -65,8 +70,7 @@ using namespace std;
 
 extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
@@ -79,7 +83,7 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 */
 
 extern size_t my_thread_stack_size;
-extern const CHARSET_INFO *character_set_filesystem;
+extern const charset_info_st *character_set_filesystem;
 
 namespace
 {
@@ -246,7 +250,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->main_da.disable_status();              // Don't send anything back
+    session->main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
   case COM_KILL:
@@ -289,10 +293,10 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* If commit fails, we should be able to reset the OK status. */
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
   transaction_services.autocommitOrRollback(*session, session->is_error());
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
 
@@ -300,7 +304,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   /* report error issued during command execution */
   if (session->killed_errno())
   {
-    if (! session->main_da.is_set())
+    if (! session->main_da().is_set())
       session->send_kill_message();
   }
   if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
@@ -310,14 +314,14 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* Can not be true, but do not take chances in production. */
-  assert(! session->main_da.is_sent);
+  assert(! session->main_da().is_sent);
 
-  switch (session->main_da.status())
+  switch (session->main_da().status())
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->getClient()->sendError(session->main_da.sql_errno(),
-                               session->main_da.message());
+    session->getClient()->sendError(session->main_da().sql_errno(),
+                               session->main_da().message());
     break;
 
   case Diagnostics_area::DA_EOF:
@@ -337,7 +341,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     break;
   }
 
-  session->main_da.is_sent= true;
+  session->main_da().is_sent= true;
 
   session->set_proc_info("closing tables");
   /* Free tables */
@@ -407,8 +411,7 @@ static bool _schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
   session->make_lex_string(&table, schema_table_name, false);
 
-  if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, table_options, TL_READ))
+  if (not sel->add_table_to_list(session, new Table_ident(db, table), NULL, table_options, TL_READ))
   {
     return true;
   }
@@ -850,7 +853,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs)
+                       List<String> *interval_list, const charset_info_st * const cs)
 {
   register CreateField *new_field;
   LEX  *lex= &session->lex();
@@ -918,10 +921,11 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return true;
   }
 
-  if (!(new_field= new CreateField()) ||
-      new_field->init(session, field_name->str, type, length, decimals, type_modifier,
-                      default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format))
+  if (!(new_field= new CreateField())
+      || new_field->init(session, field_name->str, type, length, decimals,
+                         type_modifier, comment, change, interval_list,
+                         cs, 0, column_format)
+      || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
   statement->alter_info.create_list.push_back(new_field);
@@ -958,7 +962,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                                          List<Index_hint> *index_hints_arg,
                                          LEX_STRING *option)
 {
-  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= &session->lex();
@@ -997,8 +1000,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
-  if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;
+  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
 
   if (table->db.str)
   {
@@ -1377,19 +1379,13 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     true   if a memory allocation error occured
 */
 
-bool
-push_new_name_resolution_context(Session *session,
-                                 TableList *left_op, TableList *right_op)
+void push_new_name_resolution_context(Session& session, TableList& left_op, TableList& right_op)
 {
-  Name_resolution_context *on_context;
-  if (!(on_context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context *on_context= new (session.mem_root) Name_resolution_context;
   on_context->init();
-  on_context->first_name_resolution_table=
-    left_op->first_leaf_for_name_resolution();
-  on_context->last_name_resolution_table=
-    right_op->last_leaf_for_name_resolution();
-  return session->lex().push_context(on_context);
+  on_context->first_name_resolution_table= left_op.first_leaf_for_name_resolution();
+  on_context->last_name_resolution_table= right_op.last_leaf_for_name_resolution();
+  session.lex().push_context(on_context);
 }
 
 
@@ -1477,7 +1473,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select(Session::pointer session)
+bool check_simple_select(Session* session)
 {
   if (session->lex().current_select != &session->lex().select_lex)
   {
@@ -1641,7 +1637,7 @@ Item *negate_expression(Session *session, Item *expr)
 
 
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint32_t max_char_length, const CHARSET_INFO * const cs,
+                              uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
@@ -1666,7 +1662,7 @@ bool check_identifier_name(LEX_STRING *str, error_t err_code,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+  const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,

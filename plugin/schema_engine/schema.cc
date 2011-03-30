@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <drizzled/error.h>
 #include <plugin/schema_engine/schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_table.h>
@@ -34,6 +35,7 @@
 #include <drizzled/execute.h>
 
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/cached_directory.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
