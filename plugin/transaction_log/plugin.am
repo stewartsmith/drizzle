@@ -16,7 +16,7 @@
 
 
 if BUILD_TRANSACTION_LOG_PLUGIN
-bin_PROGRAMS += plugin/transaction_log/utilities/drizzle_trx_reader
+bin_PROGRAMS += plugin/transaction_log/utilities/drizzletrx
 endif
 
 noinst_HEADERS += \
@@ -24,13 +24,13 @@ noinst_HEADERS += \
     plugin/transaction_log/utilities/transaction_manager.h \
     plugin/transaction_log/utilities/transaction_log_connection.h
 
-plugin_transaction_log_utilities_drizzle_trx_reader_SOURCES = \
+plugin_transaction_log_utilities_drizzletrx_SOURCES = \
     plugin/transaction_log/utilities/transaction_reader.cc \
     plugin/transaction_log/utilities/transaction_file_reader.cc \
     plugin/transaction_log/utilities/transaction_manager.cc \
     plugin/transaction_log/utilities/transaction_log_connection.cc
 
-plugin_transaction_log_utilities_drizzle_trx_reader_LDADD = \
+plugin_transaction_log_utilities_drizzletrx_LDADD = \
     $(top_builddir)/drizzled/message/libdrizzledmessage.la \
     ${top_builddir}/drizzled/internal/libinternal.la \
     ${top_builddir}/drizzled/algorithm/libhash.la \
@@ -41,4 +41,4 @@ plugin_transaction_log_utilities_drizzle_trx_reader_LDADD = \
     ${LTLIBINTL} \
     $(GCOV_LIBS)
 
-plugin_transaction_log_utilities_drizzle_trx_reader_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS} ${NO_WERROR}
+plugin_transaction_log_utilities_drizzletrx_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS} ${NO_WERROR}
