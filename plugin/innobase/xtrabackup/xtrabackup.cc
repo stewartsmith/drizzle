@@ -1403,14 +1403,14 @@ mem_free_and_error:
 	srv_use_doublewrite_buf = (ibool) innobase_use_doublewrite;
 	srv_use_checksums = (ibool) innobase_use_checksums;
 
-	btr_search_enabled = (ibool) innobase_adaptive_hash_index;
+	btr_search_enabled = innobase_adaptive_hash_index ? true : false;
 
 	os_use_large_pages = (ibool) innobase_use_large_pages;
 	os_large_page_size = (ulint) innobase_large_page_size;
 
 	row_rollback_on_timeout = (ibool) innobase_rollback_on_timeout;
 
-	srv_file_per_table = (ibool) innobase_file_per_table;
+	srv_file_per_table = innobase_file_per_table ? true : false;
 
         srv_locks_unsafe_for_binlog = (ibool) innobase_locks_unsafe_for_binlog;
 
