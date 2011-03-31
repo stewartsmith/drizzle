@@ -183,6 +183,7 @@ class testExecutor(test_execution.testExecutor):
                                                    , self.master_server.master_port)
                    ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
                                                          , self.master_server.master_port)
+                   ,  'DRIZZLE_TRX_READER' : self.system_manager.code_tree.drizzle_trx_reader
                    }     
 
         self.working_environment = self.system_manager.create_working_environment(env_reqs)
