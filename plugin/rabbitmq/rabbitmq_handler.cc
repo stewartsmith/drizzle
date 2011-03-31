@@ -50,11 +50,13 @@ RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost,
     exchange(rabbitMQExchange), 
     routingKey(rabbitMQRoutingKey)
 {
+  pthread_mutex_init(&publishLock, NULL);
   connect();
 }
 
 RabbitMQHandler::~RabbitMQHandler()
 {
+  pthread_mutex_destroy(&publishLock);
   disconnect();
 }
 
@@ -62,6 +64,7 @@ void RabbitMQHandler::publish(void *message,
                               const int length)
 throw(rabbitmq_handler_exception)
 {
+  pthread_mutex_lock(&publishLock);
   amqp_bytes_t b;
   b.bytes= message;
   b.len= length;
@@ -75,8 +78,10 @@ throw(rabbitmq_handler_exception)
                          NULL,
                          b) < 0)
   {
+    pthread_mutex_unlock(&publishLock);
     throw rabbitmq_handler_exception("Could not publish message");
   }
+  pthread_mutex_unlock(&publishLock);
 
 }
 

@@ -68,6 +68,7 @@ private:
   const std::string &virtualhost;
   const std::string &exchange;
   const std::string &routingKey;
+  pthread_mutex_t publishLock;
 public:
   /**
    * @brief
