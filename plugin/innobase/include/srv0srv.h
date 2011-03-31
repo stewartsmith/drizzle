@@ -222,6 +222,11 @@ extern ulong	srv_max_buf_pool_modified_pct;
 extern ulong	srv_max_purge_lag;
 
 extern ulong	srv_replication_delay;
+
+extern ibool    srv_read_only;
+extern ibool    srv_fake_write;
+extern ibool    srv_apply_log_only;
+
 /*-------------------------------------------*/
 
 extern ulint	srv_n_rows_inserted;

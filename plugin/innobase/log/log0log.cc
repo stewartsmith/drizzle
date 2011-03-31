@@ -1356,7 +1356,7 @@ log_write_up_to(
 #endif /* UNIV_DEBUG */
 	ulint		unlock;
 
-	if (recv_no_ibuf_operations) {
+	if (recv_no_ibuf_operations || srv_fake_write) {
 		/* Recovery is running and no operations on the log files are
 		allowed yet (the variable name .._no_ibuf_.. is misleading) */
 
@@ -3116,6 +3116,7 @@ loop:
 	for the 'very fast' shutdown, because the InnoDB layer may have
 	committed or prepared transactions and we don't want to lose them. */
 
+        if (! srv_apply_log_only) {
 	if (trx_n_mysql_transactions > 0
 	    || UT_LIST_GET_LEN(trx_sys->trx_list) > 0) {
 
@@ -3123,6 +3124,7 @@ loop:
 
 		goto loop;
 	}
+        }
 
 	if (srv_fast_shutdown == 2) {
 		/* In this fastest shutdown we do not flush the buffer pool:

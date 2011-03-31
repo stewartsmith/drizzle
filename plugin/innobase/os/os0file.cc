@@ -652,6 +652,10 @@ os_file_lock(
 	const char*	name)	/*!< in: file name */
 {
 	struct flock lk;
+
+        if (srv_read_only)
+          return 0;
+
 	lk.l_type = F_WRLCK;
 	lk.l_whence = SEEK_SET;
 	lk.l_start = lk.l_len = 0;
@@ -1495,7 +1499,10 @@ try_again:
 	if (create_mode == OS_FILE_OPEN || create_mode == OS_FILE_OPEN_RAW
 	    || create_mode == OS_FILE_OPEN_RETRY) {
 		mode_str = "OPEN";
-		create_flag = O_RDWR;
+		if (srv_read_only)
+                  create_flag = O_RDONLY;
+                else
+                  create_flag = O_RDWR;
 	} else if (create_mode == OS_FILE_CREATE) {
 		mode_str = "CREATE";
 		create_flag = O_RDWR | O_CREAT | O_EXCL;
@@ -2291,6 +2298,9 @@ os_file_pwrite(
 		}
 	}
 
+        if (srv_fake_write)
+          return(TRUE);
+
 	os_n_file_writes++;
 
 #if defined(HAVE_PWRITE) && !defined(HAVE_BROKEN_PREAD)
@@ -2672,6 +2682,9 @@ os_file_write_func(
 	no more than 32 bits. */
 	ut_a((offset & 0xFFFFFFFFUL) == offset);
 	ut_a((n & 0xFFFFFFFFUL) == n);
+
+        if (srv_fake_write)
+          return(TRUE);
 
 	os_n_file_writes++;
 
