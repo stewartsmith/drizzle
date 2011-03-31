@@ -33,7 +33,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-lib_LTLIBRARIES+= libdrizzle-2.0/libdrizzle/libdrizzle.la
+lib_LTLIBRARIES+= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 if HAVE_LIBSQLITE3
 SQLITE_PROGS= examples/sqlite_server
@@ -42,7 +42,7 @@ endif
 noinst_PROGRAMS+= \
 		  libdrizzle-2.0/libdrizzle/mysql_password_hash
 libdrizzle_2_0_libdrizzle_mysql_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
-libdrizzle_2_0_libdrizzle_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+libdrizzle_2_0_libdrizzle_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 libdrizzle_2_0_libdrizzle_mysql_password_hash_SOURCES= libdrizzle-2.0/libdrizzle/mysql_password_hash.cc
 
 noinst_PROGRAMS+= \
@@ -54,13 +54,13 @@ noinst_PROGRAMS+= \
 	examples/proxy \
 	$(SQLITE_PROGS)
 
-libdrizzle_2_0_libdrizzle_libdrizzle_la_CXXFLAGS= \
+libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_CXXFLAGS= \
 	${AM_CXXFLAGS} \
         ${LIBDRIZZLE_CPPFLAGS} \
         ${CFLAG_VISIBILITY} \
 	-DBUILDING_LIBDRIZZLE
 
-libdrizzle_2_0_libdrizzle_libdrizzle_la_LDFLAGS= \
+libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_LDFLAGS= \
 	$(AM_LDFLAGS) \
         $(GCOV_LIBS) \
 	-version-info \
@@ -70,7 +70,7 @@ libdrizzlepkgconfigdir= $(libdir)/pkgconfig
 libdrizzlepkgconfig_DATA= \
                           support-files/libdrizzle-2.0.pc
 
-libdrizzle_2_0_libdrizzle_libdrizzle_la_SOURCES= \
+libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_SOURCES= \
 	libdrizzle-2.0/libdrizzle/column.cc \
 	libdrizzle-2.0/libdrizzle/command.cc \
 	libdrizzle-2.0/libdrizzle/conn.cc \
@@ -89,44 +89,44 @@ examples_server_CXXFLAGS= \
                           $(AM_CXXFLAGS) \
                           ${LIBDRIZZLE_CPPFLAGS}
 examples_server_SOURCES= examples/server.cc
-examples_server_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_server_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 examples_proxy_CXXFLAGS= \
                          $(AM_CXXFLAGS) \
                          ${LIBDRIZZLE_CPPFLAGS}
 examples_proxy_SOURCES= examples/proxy.cc
-examples_proxy_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_proxy_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 examples_client_CXXFLAGS= \
                           $(AM_CXXFLAGS) \
                           ${LIBDRIZZLE_CPPFLAGS}
 examples_client_SOURCES= examples/client.cc
-examples_client_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_client_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 examples_simple_CXXFLAGS= \
                           $(AM_CXXFLAGS) \
                           ${LIBDRIZZLE_CPPFLAGS}
 examples_simple_SOURCES= examples/simple.cc
-examples_simple_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_simple_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 examples_simple_multi_CXXFLAGS= \
                                 $(AM_CXXFLAGS) \
                                 ${LIBDRIZZLE_CPPFLAGS}
 examples_simple_multi_SOURCES= examples/simple_multi.cc
-examples_simple_multi_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_simple_multi_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 examples_pipe_query_CXXFLAGS= \
                               $(AM_CXXFLAGS) \
                               ${LIBDRIZZLE_CPPFLAGS}
 examples_pipe_query_SOURCES= examples/pipe_query.cc
-examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 
 if HAVE_LIBSQLITE3
 examples_sqlite_server_CXXFLAGS= \
                                  $(AM_CXXFLAGS) \
                                  ${LIBDRIZZLE_CPPFLAGS}
-examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle/libdrizzle.la $(LTLIBSQLITE3)
-examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle/libdrizzle.la
+examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la $(LTLIBSQLITE3)
+examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.cc
 endif
 
@@ -166,7 +166,7 @@ noinst_HEADERS+= \
                  libdrizzle-2.0/libdrizzle/sha1.h
 
 
-libdrizzle: libdrizzle-2.0/libdrizzle/libdrizzle.la
+libdrizzle: libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 install-libdrizzle: libdrizzle install-dist_libdrizzleinstallHEADERS install-libdrizzlepkgconfigDATA
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
-	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-2.0/libdrizzle/libdrizzle.la "$(DESTDIR)$(libdir)"
+	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la "$(DESTDIR)$(libdir)"
