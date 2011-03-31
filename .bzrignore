@@ -220,7 +220,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 plugin/storage_engine_api_tester/cursor_states_to_dot
 plugin/storage_engine_api_tester/engine_states_to_dot
-plugin/transaction_log/utilities/drizzle_trx_reader
+plugin/transaction_log/utilities/drizzletrx
 po/POTFILES
 po/drizzle7.pot
 po/remove-potcdate.sed
