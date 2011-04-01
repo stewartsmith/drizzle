@@ -1503,6 +1503,7 @@ sub environment_setup () {
   $ENV{'PBMS_PORT'}=          $opt_pbms_myport;
   $ENV{'RABBITMQ_NODE_PORT'}= $opt_rabbitmq_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=   $drizzled_variables{'drizzle-protocol.port'};
+  $ENV{'DRIZZLE_TRX_READER'} = $opt_top_builddir.'/plugin/transaction_log/utilities/drizzletrx';
 
   $ENV{'DTR_BUILD_THREAD'}=      $opt_dtr_build_thread;
 

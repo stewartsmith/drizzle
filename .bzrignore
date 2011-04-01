@@ -113,7 +113,6 @@ drizzled/message/table_reader
 drizzled/message/table_writer
 drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
-drizzled/message/transaction_reader
 drizzled/message/transaction_writer
 drizzled/module/load_list.h
 drizzled/plugin/version.h
@@ -221,7 +220,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 plugin/storage_engine_api_tester/cursor_states_to_dot
 plugin/storage_engine_api_tester/engine_states_to_dot
-plugin/transaction_log/utilities/transaction_reader
+plugin/transaction_log/utilities/drizzletrx
 po/POTFILES
 po/drizzle7.pot
 po/remove-potcdate.sed
