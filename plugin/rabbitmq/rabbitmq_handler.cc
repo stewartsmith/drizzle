@@ -128,7 +128,8 @@ void RabbitMQHandler::connect() throw(rabbitmq_handler_exception) {
   /* open the channel */
   amqp_channel_open(rabbitmqConnection, 1);
   handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
-  amqp_exchange_declare(rabbitmqConnection, 1, amqp_cstring_bytes(exchange.c_str()), amqp_cstring_bytes("fanout"), 0, 0, amqp_empty_table);
+  amqp_table_t empty_table = { 0, NULL }; // for users of old librabbitmq users - amqp_empty_table did not exist
+  amqp_exchange_declare(rabbitmqConnection, 1, amqp_cstring_bytes(exchange.c_str()), amqp_cstring_bytes("fanout"), 0, 0, empty_table);
   handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
 }
 
