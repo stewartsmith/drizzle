@@ -33,7 +33,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-noinst_LTLIBRARIES+= libdrizzle-1.0/libdrizzle/libdrizzle.la
+lib_LTLIBRARIES+= libdrizzle-1.0/libdrizzle/libdrizzle.la
 
 libdrizzle_1_0_libdrizzle_libdrizzle_la_CFLAGS= \
 	${AM_CFLAGS} \
@@ -100,3 +100,7 @@ noinst_HEADERS+= \
 
 libdrizzle-1.0: libdrizzle-1.0/libdrizzle/libdrizzle.la
 install-libdrizzle-1.0: libdrizzle-1.0 install-dist_oldlibdrizzleinstallHEADERS install-oldlibdrizzlepkgconfigDATA
+	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+	echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-1.0/libdrizzle/libdrizzle.la '$(DESTDIR)$(libdir)'";
+	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-1.0/libdrizzle/libdrizzle.la "$(DESTDIR)$(libdir)";
+

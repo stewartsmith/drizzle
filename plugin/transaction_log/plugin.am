@@ -35,7 +35,7 @@ plugin_transaction_log_utilities_transaction_reader_LDADD = \
     drizzled/internal/libinternal.la \
     drizzled/algorithm/libhash.la \
     drizzled/util/libutil.la \
-    libdrizzle-2.0/libdrizzle/libdrizzle.la \
+    libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
     ${LIBPROTOBUF} \
     ${LIBUUID} \
     ${LTLIBINTL} \

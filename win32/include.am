@@ -19,7 +19,7 @@
 
 
 if BUILD_WIN32
-libdrizzle_2_0_libdrizzle_libdrizzle_la_SOURCES+= \
+libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_SOURCES+= \
 						  win32/conn_uds.cc
 libdrizzle_1_0_libdrizzle_libdrizzle_la_SOURCES+= \
 						  win32/conn_uds.cc
