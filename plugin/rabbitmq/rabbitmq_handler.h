@@ -66,6 +66,9 @@ private:
   const std::string &username;
   const std::string &password;
   const std::string &virtualhost;
+  const std::string &exchange;
+  const std::string &routingKey;
+  pthread_mutex_t publishLock;
 public:
   /**
    * @brief
@@ -87,7 +90,9 @@ public:
                   const in_port_t port, 
                   const std::string &username, 
                   const std::string &password, 
-                  const std::string &virtualhost)
+                  const std::string &virtualhost,
+		  const std::string &exchange,
+		  const std::string &routingKey)
     throw(rabbitmq_handler_exception);
 
   ~RabbitMQHandler();
@@ -101,16 +106,14 @@ public:
    *
    * @param[in] message the message to send
    * @param[in] length the length of the message
-   * @param[in] exchangeName name of the exchange to publish to
-   * @param[in] routingKey the routing key to use
    * @throw exception if there is a problem publishing
    */
   void publish(void *message, 
-               const int length, 
-               const std::string &exchangeName, 
-               const std::string &routingKey)
+               const int length)
     throw(rabbitmq_handler_exception);
 
+  void reconnect() throw(rabbitmq_handler_exception);
+  void disconnect() throw(rabbitmq_handler_exception);
 
 private:
   /**
@@ -126,6 +129,9 @@ private:
    * @throw exception with the message unless the command was successful
    */
   void handleAMQPError(amqp_rpc_reply_t x, std::string context) throw(rabbitmq_handler_exception);
+
+  void connect() throw(rabbitmq_handler_exception);
+
 };
 
 } /* namespace drizzle_plugin */

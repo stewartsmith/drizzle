@@ -37,17 +37,79 @@ RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost,
                                  const in_port_t rabbitMQPort, 
                                  const std::string &rabbitMQUsername, 
                                  const std::string &rabbitMQPassword, 
-                                 const std::string &rabbitMQVirtualhost) 
+                                 const std::string &rabbitMQVirtualhost, 
+				 const std::string &rabbitMQExchange, 
+				 const std::string &rabbitMQRoutingKey) 
   throw(rabbitmq_handler_exception) :
     rabbitmqConnection(amqp_new_connection()),
-    sockfd(amqp_open_socket(rabbitMQHost.c_str(), rabbitMQPort)),
     hostname(rabbitMQHost),
     port(rabbitMQPort),
     username(rabbitMQUsername),
     password(rabbitMQPassword),
-    virtualhost(rabbitMQVirtualhost)
+    virtualhost(rabbitMQVirtualhost),
+    exchange(rabbitMQExchange), 
+    routingKey(rabbitMQRoutingKey)
 {
-  /* open the socket to the rabbitmq server */
+  pthread_mutex_init(&publishLock, NULL);
+  connect();
+}
+
+RabbitMQHandler::~RabbitMQHandler()
+{
+  pthread_mutex_destroy(&publishLock);
+  disconnect();
+}
+
+void RabbitMQHandler::publish(void *message, 
+                              const int length)
+throw(rabbitmq_handler_exception)
+{
+  pthread_mutex_lock(&publishLock);
+  amqp_bytes_t b;
+  b.bytes= message;
+  b.len= length;
+  
+  if (amqp_basic_publish(rabbitmqConnection,
+                         1,
+                         amqp_cstring_bytes(exchange.c_str()),
+                         amqp_cstring_bytes(routingKey.c_str()),
+                         0,
+                         0,
+                         NULL,
+                         b) < 0)
+  {
+    pthread_mutex_unlock(&publishLock);
+    throw rabbitmq_handler_exception("Could not publish message");
+  }
+  pthread_mutex_unlock(&publishLock);
+
+}
+
+void RabbitMQHandler::reconnect() throw(rabbitmq_handler_exception)
+{
+  disconnect();
+  connect();
+}
+
+void RabbitMQHandler::disconnect() throw(rabbitmq_handler_exception) 
+{
+  try
+  {
+    handleAMQPError(amqp_channel_close(rabbitmqConnection, 
+				       1, 
+				       AMQP_REPLY_SUCCESS),
+		    "close channel");
+    handleAMQPError(amqp_connection_close(rabbitmqConnection, 
+					  AMQP_REPLY_SUCCESS),
+		    "close connection");
+    amqp_destroy_connection(rabbitmqConnection);
+  }
+  catch(exception& e) {} // do not throw in destructorn 
+  close(sockfd);
+}
+
+void RabbitMQHandler::connect() throw(rabbitmq_handler_exception) {
+  sockfd = amqp_open_socket(hostname.c_str(), port);
   if(sockfd < 0) 
   {
     throw rabbitmq_handler_exception(_("Could not open socket, is rabbitmq running?"));
@@ -65,48 +127,10 @@ RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost,
                   "rabbitmq login");
   /* open the channel */
   amqp_channel_open(rabbitmqConnection, 1);
-}
-
-RabbitMQHandler::~RabbitMQHandler()
-{
-  try
-  {
-    handleAMQPError(amqp_channel_close(rabbitmqConnection, 
-				       1, 
-				       AMQP_REPLY_SUCCESS),
-		    "close channel");
-    handleAMQPError(amqp_connection_close(rabbitmqConnection, 
-					  AMQP_REPLY_SUCCESS),
-		    "close connection");
-    amqp_destroy_connection(rabbitmqConnection);
-  }
-  catch(exception& e) {} // do not throw in destructorn 
-  
-  close(sockfd);
-}
-
-void RabbitMQHandler::publish(void *message, 
-                              const int length, 
-                              const std::string &exchangeName, 
-                              const std::string &routingKey)
-throw(rabbitmq_handler_exception)
-{
-  amqp_bytes_t b;
-  b.bytes= message;
-  b.len= length;
-  
-  if (amqp_basic_publish(rabbitmqConnection,
-                         1,
-                         amqp_cstring_bytes(exchangeName.c_str()),
-                         amqp_cstring_bytes(routingKey.c_str()),
-                         0,
-                         0,
-                         NULL,
-                         b) < 0)
-  {
-    throw rabbitmq_handler_exception("Could not publish message");
-  }
-
+  handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
+  amqp_table_t empty_table = { 0, NULL }; // for users of old librabbitmq users - amqp_empty_table did not exist
+  amqp_exchange_declare(rabbitmqConnection, 1, amqp_cstring_bytes(exchange.c_str()), amqp_cstring_bytes("fanout"), 0, 0, empty_table);
+  handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
 }
 
 void RabbitMQHandler::handleAMQPError(amqp_rpc_reply_t x, string context) throw(rabbitmq_handler_exception)
