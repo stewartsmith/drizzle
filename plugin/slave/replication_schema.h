@@ -44,13 +44,9 @@ public:
    * another event from the master (which causes persistence of the value).
    * An edge case, but still possible.
    *
-   * @param[in] master_id Unique master identifier.
    * @param[in] value The initial value.
    */
-  bool setInitialMaxCommitId(uint32_t master_id, uint64_t value);
-
-  bool createInitialApplierRow(uint32_t master_id);
-  bool createInitialIORow(uint32_t master_id);
+  bool setInitialMaxCommitId(uint64_t value);
 };
 
 } /* namespace slave */

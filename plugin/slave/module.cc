@@ -45,6 +45,8 @@ static int init(module::Context &context)
   const module::option_map &vm= context.getOptions();
 
   ReplicationSlave *slave= new ReplicationSlave(vm["config-file"].as<string>());
+  if (vm.count("max-commit-id"))
+    slave->setMaxCommitId(vm["max-commit-id"].as<uint64_t>());
   context.add(slave);
   return 0;
 }
@@ -54,6 +56,9 @@ static void init_options(drizzled::module::option_context &context)
   context("config-file",
           po::value<string>()->default_value(DEFAULT_SLAVE_CFG_FILE.string()),
           N_("Path to the slave configuration file"));
+  context("max-commit-id",
+          po::value<uint64_t>(),
+          N_("Value to use as the maximum commit ID stored on the slave"));
 }
 
 } /* namespace slave */
