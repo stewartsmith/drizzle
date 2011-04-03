@@ -47,7 +47,6 @@
 
 const char *drizzle_con_uds(const drizzle_con_st *)
 {
-  (void)con;
   return (const char *)NULL;
 }
 
