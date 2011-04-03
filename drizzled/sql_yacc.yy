@@ -235,6 +235,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  CATALOG_SYM
 %token  CHAIN_SYM                     /* SQL-2003-N */
 %token  CHANGE_SYM
+%token  CHARSET
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
@@ -468,7 +469,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  SERIAL_SYM
 %token  SESSION_SYM                   /* SQL-2003-N */
 %token  SERVER_SYM
-%token  SET_SYM                           /* SQL-2003-R */
+%token  SET_SYM                       /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
@@ -535,6 +536,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
 %token  UTC_TIMESTAMP_SYM
+%token  UTF8_SYM
 %token  UUID_SYM
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
@@ -1074,8 +1076,24 @@ custom_engine_option:
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
+        | default_charset
         | default_collation
         ;
+
+charset:
+          CHAR_SYM SET_SYM {}
+        | CHARSET {}
+        ;
+
+charset_name_or_default:
+          UTF8_SYM { } 
+        | DEFAULT    { }
+        ;
+
+default_charset:
+          opt_default charset opt_equal charset_name_or_default
+        {
+        }
 
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
