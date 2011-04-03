@@ -1,0 +1,21 @@
+# Make sure we parse/toss errrors on character sets
+--error ER_PARSE_ERROR
+CREATE TABLE `test1` (
+  `c1` varchar(10) NOT NULL
+  ) DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE `test2` (
+  `c1` varchar(10) NOT NULL
+  ) DEFAULT CHARSET=utf8;
+DROP TABLE test2;
+
+CREATE TABLE `test2` (
+  `c1` varchar(10) NOT NULL
+  ) DEFAULT CHARSET utf8;
+DROP TABLE test2;
+
+CREATE TABLE `test2` (
+  `c1` varchar(10) NOT NULL
+  ) DEFAULT CHARSET DEFAULT;
+DROP TABLE test2;
