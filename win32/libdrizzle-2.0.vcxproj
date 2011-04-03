@@ -60,7 +60,6 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wsock32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
