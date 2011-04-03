@@ -54,6 +54,8 @@ bool statement::CreateSchema::execute()
 
   drizzled::message::schema::init(schema_message, lex().name.str);
 
+  message::set_definer(schema_message, *session().user());
+
   bool res = false;
   std::string path;
   schema_identifier.getSQLPath(path);

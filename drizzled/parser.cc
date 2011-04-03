@@ -321,6 +321,19 @@ void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value)
   opt->set_state(value.str, value.length);
 }
 
+void buildSchemaDefiner(LEX *lex, const LEX_STRING &value)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  identifier::User user(value.str);
+  message::set_definer(statement->schema_message, user);
+}
+
+void buildSchemaDefiner(LEX *lex, const identifier::User &user)
+{
+  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  message::set_definer(statement->schema_message, user);
+}
+
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;

@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,33 +18,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+
 #pragma once
 
-#include <string>
-
-#include <drizzled/visibility.h>
+#include <drizzled/message/replication_options.pb.h>
 
 namespace drizzled {
+namespace message {
 
-class DRIZZLED_API Identifier {
-public:
-  typedef const Identifier& const_reference;
+template<class T> bool is_replicated(const T& reference)
+{
+  if (reference.has_replication_options() and
+      reference.replication_options().has_is_replicated())
+  {
+    return reference.replication_options().is_replicated();
+  }
 
-  virtual void getSQLPath(std::string &arg) const;
+  return true;
+}
 
-  virtual ~Identifier()
-  { }
-};
+template<class T> void set_is_replicated(T& reference, bool arg)
+{
+  message::ReplicationOptions *options= reference.mutable_replication_options();
+  options->set_is_replicated(arg);
+}
 
-} // namespace drizzled
-
-#include <drizzled/identifier/catalog.h>
-#include <drizzled/identifier/schema.h>
-#include <drizzled/identifier/session.h>
-#include <drizzled/identifier/table.h>
-#include <drizzled/identifier/user.h>
-
-// Constant identifiers user internally
-#include <drizzled/identifier/constants/schema.h>
-#include <drizzled/identifier/constants/table.h>
-#include <drizzled/identifier/constants/user.h>
+} /* namespace message */
+} /* namespace drizzled */

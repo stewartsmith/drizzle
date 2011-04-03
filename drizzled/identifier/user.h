@@ -56,6 +56,12 @@ public:
     _address("")
   { }
 
+  User(const std::string username_arg):
+    password_type(NONE),
+    _user(username_arg),
+    _address("")
+  { }
+
   virtual void getSQLPath(std::string &arg) const;
 
   bool hasPassword() const

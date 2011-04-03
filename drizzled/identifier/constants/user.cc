@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#pragma once
+#include <config.h>
 
-#include <string>
-
-#include <drizzled/visibility.h>
+#include <drizzled/identifier.h>
 
 namespace drizzled {
+namespace identifier {
+namespace constants {
 
-class DRIZZLED_API Identifier {
+// Please note, UTF8 id's should not be used with this class
+class User : public identifier::User
+{
 public:
-  typedef const Identifier& const_reference;
+  User(const std::string &name) :
+    identifier::User(name)
+  {
+  }
 
-  virtual void getSQLPath(std::string &arg) const;
+  const std::string &getPath() const
+  {
+    return _path;
+  }
 
-  virtual ~Identifier()
-  { }
+private:
+  std::string _path;
 };
 
-} // namespace drizzled
+} /* namespace constants */
 
-#include <drizzled/identifier/catalog.h>
-#include <drizzled/identifier/schema.h>
-#include <drizzled/identifier/session.h>
-#include <drizzled/identifier/table.h>
-#include <drizzled/identifier/user.h>
+identifier::User::const_reference system_user()
+{
+  static drizzled::identifier::User _tmp("SYSTEM");
 
-// Constant identifiers user internally
-#include <drizzled/identifier/constants/schema.h>
-#include <drizzled/identifier/constants/table.h>
-#include <drizzled/identifier/constants/user.h>
+  return _tmp;
+}
+
+} /* namespace identifier */
+} /* namespace drizzled */

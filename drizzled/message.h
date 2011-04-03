@@ -20,15 +20,12 @@
 
 #pragma once
 
-#include <drizzled/message/table.h>
+#include <drizzled/message/access.h>
+#include <drizzled/message/replication_options.h>
 #include <drizzled/message/schema.h>
-#if 0
-#include <drizzled/message/transaction.pb.h>
-#include <google/protobuf/text_format.h>
-#endif
-#include <drizzled/identifier.h>
+#include <drizzled/message/table.h>
 
-#include <boost/shared_ptr.hpp>
+#include <drizzled/identifier.h>
 
 namespace drizzled {
 namespace message {
@@ -45,23 +42,6 @@ const std::string &type(bool type);
 const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
 const std::string &type(drizzled::message::Table::TableType type);
-
-template<class T> bool is_replicated(const T& reference)
-{
-  if (reference.has_replication_options() and
-      reference.replication_options().has_is_replicated())
-  {
-    return reference.replication_options().is_replicated();
-  }
-
-  return true;
-}
-
-template<class T> void set_is_replicated(T& reference, bool arg)
-{
-  message::ReplicationOptions *options= reference.mutable_replication_options();
-  options->set_is_replicated(arg);
-}
 
 #if 0
 std::ostream& operator<<(std::ostream& output, const message::Transaction &message);

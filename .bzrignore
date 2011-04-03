@@ -348,3 +348,5 @@ drizzled/message/catalog_reader
 drizzled/message/catalog_writer
 drizzled/message/replication_options.pb.cc
 drizzled/message/replication_options.pb.h
+drizzled/message/access.pb.cc
+drizzled/message/access.pb.h
