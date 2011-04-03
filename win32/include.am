@@ -34,8 +34,10 @@ EXTRA_DIST+= \
 	     win32/conn_uds.c \
 	     win32/conn_uds.cc \
 	     win32/drizzle.sln \
-	     win32/libdrizzle.vcxproj \
-	     win32/libdrizzle.vcxproj.filters \
+	     win32/libdrizzle-1.0.vcxproj \
+	     win32/libdrizzle-1.0.vcxproj.filters \
+	     win32/libdrizzle-2.0.vcxproj \
+	     win32/libdrizzle-2.0.vcxproj.filters \
 	     win32/windows/inttypes.h \
 	     win32/windows/stdint.h
 
