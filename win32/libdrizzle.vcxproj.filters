@@ -18,9 +18,6 @@
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="windows\errno.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="windows\inttypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
