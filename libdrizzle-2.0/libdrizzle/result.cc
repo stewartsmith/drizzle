@@ -145,7 +145,7 @@ void drizzle_result_free(drizzle_result_st *result)
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {
     for (x= 0; x < result->row_count; x++)
-      drizzle_row_free(result, result->row_list->at(x));
+      drizzle_row_free(result, result->row_list->at(static_cast<size_t>(x)));
 
     delete result->row_list;
     delete result->field_sizes_list;
@@ -179,7 +179,7 @@ drizzle_con_st *drizzle_result_drizzle_con(drizzle_result_st *result)
 
 bool drizzle_result_eof(drizzle_result_st *result)
 {
-  return result->options & DRIZZLE_RESULT_EOF_PACKET;
+  return (result->options & DRIZZLE_RESULT_EOF_PACKET) ? true : false;
 }
 
 const char *drizzle_result_info(drizzle_result_st *result)

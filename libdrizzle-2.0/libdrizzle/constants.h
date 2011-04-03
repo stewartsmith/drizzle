@@ -42,11 +42,14 @@
 #ifndef __DRIZZLE_CONSTANTS_H
 #define __DRIZZLE_CONSTANTS_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 
 #include <vector>
 
 extern "C" {
+
 #endif
 
 /**
@@ -450,6 +453,7 @@ typedef enum
  */
 
 /* Types. */
+#ifndef __cplusplus
 typedef struct drizzle_st drizzle_st;
 typedef struct drizzle_con_tcp_st drizzle_con_tcp_st;
 typedef struct drizzle_con_uds_st drizzle_con_uds_st;
@@ -457,6 +461,15 @@ typedef struct drizzle_con_st drizzle_con_st;
 typedef struct drizzle_query_st drizzle_query_st;
 typedef struct drizzle_result_st drizzle_result_st;
 typedef struct drizzle_column_st drizzle_column_st;
+#else
+class drizzle_st;
+class drizzle_con_tcp_st;
+class drizzle_con_uds_st;
+class drizzle_con_st;
+class drizzle_query_st;
+class drizzle_result_st;
+class drizzle_column_st;
+#endif
 typedef char drizzle_field_t_type;
 typedef drizzle_field_t_type *drizzle_field_t;
 typedef drizzle_field_t drizzle_row_t_type;
