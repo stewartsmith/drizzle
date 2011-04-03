@@ -37,7 +37,7 @@ public:
     List of regular tables in use by this thread. Contains temporary and
     base tables that were opened with @see open_tables().
   */
-  Table *open_tables;
+  Table *open_tables_;
 
   /**
     List of temporary tables used by this thread. Contains user-level
@@ -142,7 +142,7 @@ public:
     which are used as backup storage.
   */
   Open_tables_state() :
-    open_tables(0),
+    open_tables_(0),
     temporary_tables(0),
     derived_tables(0),
     lock(0),
@@ -150,24 +150,14 @@ public:
     version(0),
     current_tablenr(0)
   { }
+
   virtual ~Open_tables_state() {}
-
-  void doGetTableNames(CachedDirectory &directory,
-                       const identifier::Schema &schema_identifier,
-                       std::set<std::string>& set_of_names);
-  void doGetTableNames(const identifier::Schema &schema_identifier,
-                       std::set<std::string>& set_of_names);
-
-  void doGetTableIdentifiers(CachedDirectory &directory,
-                             const identifier::Schema &schema_identifier,
-                             identifier::table::vector &set_of_identifiers);
-  void doGetTableIdentifiers(const identifier::Schema &schema_identifier,
-                             identifier::table::vector &set_of_identifiers);
-
-  int doGetTableDefinition(const drizzled::identifier::Table &identifier,
-                           message::Table &table_proto);
-  bool doDoesTableExist(const drizzled::identifier::Table &identifier);
-
+  void doGetTableNames(CachedDirectory&, const identifier::Schema&, std::set<std::string>&);
+  void doGetTableNames(const identifier::Schema&, std::set<std::string>&);
+  void doGetTableIdentifiers(CachedDirectory&, const identifier::Schema&, identifier::table::vector&);
+  void doGetTableIdentifiers(const identifier::Schema&, identifier::table::vector&);
+  int doGetTableDefinition(const drizzled::identifier::Table&, message::Table&);
+  bool doDoesTableExist(const drizzled::identifier::Table&);
 
   Open_tables_state(uint64_t version_arg);
 };

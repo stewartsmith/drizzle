@@ -301,7 +301,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       result= session->reopen_tables();
 
       /* Set version for table */
-      for (Table *table= session->open_tables; table ; table= table->getNext())
+      for (Table *table= session->open_tables_; table ; table= table->getNext())
       {
         /*
           Preserve the version (0) of write locked tables so that a impending
@@ -335,13 +335,13 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
 
   (void)scopedLock;
 
-  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables);
+  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables_);
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
   assert(table->key_read == 0);
   assert(!table->cursor || table->cursor->inited == Cursor::NONE);
 
-  open_tables= table->getNext();
+  open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
       version != refresh_version || !table->db_stat)
@@ -384,7 +384,7 @@ void Session::close_open_tables()
 
   boost_unique_lock_t scoped_lock(table::Cache::singleton().mutex()); /* Close all open tables on Session */
 
-  while (open_tables)
+  while (open_tables_)
   {
     found_old_table|= free_cached_table(scoped_lock);
   }
@@ -675,7 +675,7 @@ void Session::unlink_open_table(Table *find)
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  for (prev= &open_tables; *prev; )
+  for (prev= &open_tables_; *prev; )
   {
     Table *list= *prev;
 
@@ -852,8 +852,8 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
     return true;
   }
   (*table)->open_placeholder= true;
-  (*table)->setNext(open_tables);
-  open_tables= *table;
+  (*table)->setNext(open_tables_);
+  open_tables_= *table;
 
   return false;
 }
@@ -960,7 +960,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
       Note-> refresh_version is currently changed only during FLUSH TABLES.
     */
-    if (!open_tables)
+    if (!open_tables_)
     {
       version= refresh_version;
     }
@@ -1124,8 +1124,8 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
               by other trying to take name-lock.
             */
             table->open_placeholder= true;
-            table->setNext(open_tables);
-            open_tables= table;
+            table->setNext(open_tables_);
+            open_tables_= table;
 
             return table ;
           }
@@ -1149,8 +1149,8 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
     if (refresh)
     {
-      table->setNext(open_tables); /* Link into simple list */
-      open_tables= table;
+      table->setNext(open_tables_); /* Link into simple list */
+      open_tables_= table;
     }
     table->reginfo.lock_type= TL_READ; /* Assume read */
 
@@ -1223,7 +1223,7 @@ void Session::close_data_files_and_morph_locks(const identifier::Table &identifi
     for target table name if we process ALTER Table ... RENAME.
     So loop below makes sense even if we are not under LOCK TABLES.
   */
-  for (Table *table= open_tables; table ; table=table->getNext())
+  for (Table *table= open_tables_; table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
@@ -1264,7 +1264,7 @@ bool Session::reopen_tables()
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
     DRIZZLE_LOCK_IGNORE_FLUSH;
 
-  if (open_tables == NULL)
+  if (open_tables_ == NULL)
     return false;
 
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
@@ -1275,7 +1275,7 @@ bool Session::reopen_tables()
     */
     uint32_t opens= 0;
 
-    for (table= open_tables; table ; table=table->getNext())
+    for (table= open_tables_; table ; table=table->getNext())
     {
       opens++;
     }
@@ -1284,8 +1284,8 @@ bool Session::reopen_tables()
 
   tables_ptr =tables;
 
-  prev= &open_tables;
-  for (table= open_tables; table ; table=next)
+  prev= &open_tables_;
+  for (table= open_tables_; table ; table=next)
   {
     next= table->getNext();
 
@@ -1347,7 +1347,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 {
   bool found= send_refresh;
 
-  Table *table= open_tables;
+  Table *table= open_tables_;
 
   for (; table ; table=table->getNext())
   {
@@ -1442,7 +1442,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table,*next,**prev, *found= 0;
-  prev= &session->open_tables;
+  prev= &session->open_tables_;
 
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
@@ -1451,7 +1451,7 @@ Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &i
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  for (table= session->open_tables; table ; table=next)
+  for (table= session->open_tables_; table ; table=next)
   {
     next=table->getNext();
     if (table->getShare()->getCacheKey() == identifier.getKey())
@@ -1498,7 +1498,7 @@ Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &i
 void abort_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table;
-  for (table= session->open_tables; table ; table= table->getNext())
+  for (table= session->open_tables_; table ; table= table->getNext())
   {
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
