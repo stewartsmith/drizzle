@@ -834,6 +834,43 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
   return DRIZZLE_RETURN_OK;
 }
 
+#ifdef _WIN32
+/*Mapping windows specific error codes to Posix*/
+static int drizzle_get_windows_errno()
+{
+  int windows_error = WSAGetLastError();
+    switch(windows_error) {
+    case WSAEINVAL:
+    case WSAEALREADY:
+    case WSAECONNREFUSED:
+    case WSAEWOULDBLOCK:
+      return EINPROGRESS;
+      break;
+    case WSAENETUNREACH:
+      return ENETUNREACH;
+      break;
+    case WSAETIMEDOUT:
+      return ETIMEDOUT;
+      break;
+    case WSAECONNRESET:
+      return ECONNRESET;
+      break;
+    case WSAEADDRINUSE:
+      return EADDRINUSE;
+      break;
+    case WSAEOPNOTSUPP:
+      return EOPNOTSUPP;
+      break;
+    case WSAENOPROTOOPT:
+      return ENOPROTOOPT;
+      break;
+    default:
+      return windows_error;
+      break;
+    }
+}
+#endif
+
 drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 {
   int ret;
@@ -879,17 +916,7 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
                  con->addrinfo_next->ai_addrlen);
 
 #ifdef _WIN32
-    /*Mapping windows specific error codes to Posix*/
-    errno = WSAGetLastError();
-    switch(errno) {
-    case WSAEINVAL:
-    case WSAEALREADY:
-    case WSAEWOULDBLOCK:
-      errno = EINPROGRESS;
-      break;
-    default:
-      break;
-    }
+    errno = drizzle_get_windows_errno();
 #endif /* _WIN32 */
 	
     drizzle_log_crazy(con->drizzle, "connect return=%d errno=%d", ret, errno);
@@ -995,17 +1022,9 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
                      available_buffer, 0);
 #ifdef _WIN32
-    /*Get windows error codes and map it to Posix*/
-    errno = WSAGetLastError();
-    switch(errno) {
-    case WSAEWOULDBLOCK:
-    case 10057:
-      errno = EAGAIN;
-      break;
-    default:
-      break;
-    }
+    errno = drizzle_get_windows_errno();
 #endif /* _WIN32 */	
+
     drizzle_log_crazy(con->drizzle, "read fd=%d return=%zd errno=%d", con->fd,
                       read_size, errno);
 

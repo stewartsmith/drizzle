@@ -264,6 +264,7 @@ uint8_t *drizzle_pack_auth(drizzle_con_st *con, uint8_t *ptr,
 static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
                                             uint8_t *buffer)
 {
+  uint32_t x;
   SHA1_CTX ctx;
   uint8_t hash_tmp1[SHA1_DIGEST_LENGTH];
   uint8_t hash_tmp2[SHA1_DIGEST_LENGTH];
@@ -300,7 +301,7 @@ static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
   SHA1Final(buffer, &ctx);
 
   /* Fourth, xor the last hash against the first password hash. */
-  for (uint32_t x= 0; x < SHA1_DIGEST_LENGTH; x++)
+  for (x= 0; x < SHA1_DIGEST_LENGTH; x++)
     buffer[x]= buffer[x] ^ hash_tmp1[x];
 
   return DRIZZLE_RETURN_OK;
