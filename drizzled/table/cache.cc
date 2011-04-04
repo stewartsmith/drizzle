@@ -211,7 +211,7 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
           open_tables list. Aborting the MERGE lock after a child was
           closed and before the parent is closed would be fatal.
         */
-        for (Table *session_table= in_use->open_tables_;
+        for (Table *session_table= in_use->open_tables.open_tables_;
              session_table ;
              session_table= session_table->getNext())
         {

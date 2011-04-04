@@ -1779,8 +1779,7 @@ RETURN
 #  Table object
 */
 
-Table *Open_tables_state::open_temporary_table(const identifier::Table &identifier,
-                                               bool link_in_list)
+Table* Session::open_temporary_table(const identifier::Table &identifier, bool link_in_list)
 {
   assert(identifier.isTmp());
 
@@ -1814,13 +1813,13 @@ Table *Open_tables_state::open_temporary_table(const identifier::Table &identifi
   if (link_in_list)
   {
     /* growing temp list at the head */
-    new_tmp_table->setNext(this->temporary_tables);
+    new_tmp_table->setNext(open_tables.temporary_tables);
     if (new_tmp_table->getNext())
     {
       new_tmp_table->getNext()->setPrev(new_tmp_table);
     }
-    this->temporary_tables= new_tmp_table;
-    this->temporary_tables->setPrev(0);
+    open_tables.temporary_tables= new_tmp_table;
+    open_tables.temporary_tables->setPrev(0);
   }
   new_tmp_table->pos_in_table_list= 0;
 

@@ -1272,6 +1272,7 @@ public:
    * The lock will automaticaly be freed by close_thread_tables()
    */
   bool openTablesLock(TableList *tables);
+  Table *open_temporary_table(const drizzled::identifier::Table &identifier, bool link_in_list= true);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 

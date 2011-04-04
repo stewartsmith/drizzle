@@ -80,7 +80,7 @@ bool statement::ReplaceSelect::execute()
          the unlock procedure.
        */
       if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          session().lock)
+          session().open_tables.lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
