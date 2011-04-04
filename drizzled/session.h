@@ -411,6 +411,7 @@ public:
   ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
   session::Transactions& transaction;
+  Open_tables_state& open_tables;
 
   Field *dup_field;
   sigset_t signals;

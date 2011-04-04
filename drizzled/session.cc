@@ -191,6 +191,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   query_id(0),
   warn_query_id(0),
 	transaction(impl_->transaction),
+  open_tables(*this),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
