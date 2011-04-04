@@ -13,7 +13,7 @@ DROP SCHEMA bar;
 We should only see the 'bar' schema in the log
 
 SET AUTOCOMMIT=0;
-CREATE SCHEMA `bar` COLLATE utf8_general_ci;
+CREATE SCHEMA `bar` COLLATE utf8_general_ci DEFINER root;
 COMMIT;
 SET AUTOCOMMIT=0;
 DROP SCHEMA `bar`;

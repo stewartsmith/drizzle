@@ -35,6 +35,9 @@ statement {
       UPDATE_TIMESTAMP
       UUID
       version: 1
+      access {
+        definer: "root"
+      }
     }
   }
 }
@@ -199,6 +202,9 @@ statement {
       UPDATE_TIMESTAMP
       UUID
       version: 1
+      access {
+        definer: "root"
+      }
     }
     after {
       name: "my_test_schema"

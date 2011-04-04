@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,29 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #pragma once
 
-#include <drizzled/message/replication_options.pb.h>
+#include <drizzled/identifier.h>
+#include <drizzled/message/access.pb.h>
 
 namespace drizzled {
 namespace message {
 
-template<class T> bool is_replicated(const T& reference)
+template<class T> void set_definer(T& reference, const identifier::User &arg)
 {
-  if (reference.has_replication_options() and
-      reference.replication_options().has_is_replicated())
-  {
-    return reference.replication_options().is_replicated();
-  }
-
-  return true;
+  message::Access *access= reference.mutable_access();
+  access->set_definer(arg.username());
 }
 
-template<class T> void set_is_replicated(T& reference, bool arg)
+template<class T> bool has_definer(const T& reference)
 {
-  message::ReplicationOptions *options= reference.mutable_replication_options();
-  options->set_is_replicated(arg);
+  if (reference.has_access() and reference.access().has_definer() and (not reference.access().definer().empty()))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+template<class T> const char *definer(const T& reference)
+{
+  if (reference.has_access() and reference.access().has_definer())
+  {
+    return reference.access().definer().c_str();
+  }
+
+  return ""; // Hardcoded because of dependency issue with message library on identifier
 }
 
 } /* namespace message */
