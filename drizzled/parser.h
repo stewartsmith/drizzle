@@ -128,6 +128,8 @@ void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value);
 void buildEngineOption(LEX *lex, const char *key, uint64_t value);
 void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value);
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
+void buildSchemaDefiner(LEX *lex, const LEX_STRING &value);
+void buildSchemaDefiner(LEX *lex, const identifier::User &user);
 bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
 Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);

@@ -50,10 +50,16 @@ public:
     password_type(NONE)
   { }
 
+  User(const std::string username_arg):
+    password_type(NONE),
+    _user(username_arg),
+    _address("")
+  { }
+
   virtual std::string getSQLPath() const
-	{
-		return _user.empty() ? "<no user>" : _user;
-	}
+  {
+    return _user.empty() ? "<no user>" : _user;
+  }
 
   bool hasPassword() const
   {
