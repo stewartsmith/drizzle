@@ -383,7 +383,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
-			      drizzled/refresh_version.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
 			      drizzled/schema.h \
@@ -806,7 +805,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/xa_storage_engine.cc \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
-			   drizzled/refresh_version.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
 			   drizzled/select_dumpvar.cc \

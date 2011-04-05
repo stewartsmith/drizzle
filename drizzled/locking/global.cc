@@ -88,7 +88,6 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
 

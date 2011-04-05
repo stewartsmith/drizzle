@@ -82,8 +82,6 @@
 
 #include <google/protobuf/stubs/common.h>
 
-#include <drizzled/refresh_version.h>
-
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>

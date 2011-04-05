@@ -54,7 +54,6 @@
 #include <drizzled/probes.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/schema.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_exists_subselect.h>
@@ -104,6 +103,8 @@ char internal_table_name[2]= "*";
 char empty_c_string[1]= {0};    /* used for not defined db */
 
 const char * const Session::DEFAULT_WHERE= "field list";
+
+uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
