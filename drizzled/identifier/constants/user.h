@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2011 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,33 +20,12 @@
 
 #pragma once
 
-#include <string>
-
-#include <drizzled/visibility.h>
-
 namespace drizzled {
+namespace identifier {
 
-class DRIZZLED_API Identifier 
-{
-public:
-  virtual ~Identifier()
-  { 
-	}
+const identifier::User& system_user();
 
-	virtual std::string getSQLPath() const 
-	{ 
-		return "";
-	}
-};
+} /* namespace identifier */
+} /* namespace drizzled */
 
-} // namespace drizzled
-
-#include <drizzled/identifier/catalog.h>
-#include <drizzled/identifier/schema.h>
-#include <drizzled/identifier/table.h>
-#include <drizzled/identifier/user.h>
-
-// Constant identifiers used internally
-#include <drizzled/identifier/constants/schema.h>
-#include <drizzled/identifier/constants/table.h>
-#include <drizzled/identifier/constants/user.h>
+#define SYSTEM_USER drizzled::identifier::system_user()

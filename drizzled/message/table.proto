@@ -8,6 +8,7 @@ option java_package = "org.drizzle.messages";
 option java_outer_classname = "TableMessage";
 
 import "engine.proto";
+import "access.proto";
 import "replication_options.proto";
 
 message Table {
@@ -194,6 +195,7 @@ message Table {
   optional uint64 version = 15;
 
   optional ReplicationOptions replication_options= 16;
+  optional Access access= 17;
 }
 
 message AddedFields {
