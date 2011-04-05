@@ -174,12 +174,6 @@ page_zip_rec_needs_ext(
 	ut_ad(ut_is_2pow(zip_size));
 	ut_ad(comp || !zip_size);
 
-#if UNIV_PAGE_SIZE > REC_MAX_DATA_SIZE
-	if (UNIV_UNLIKELY(rec_size >= REC_MAX_DATA_SIZE)) {
-		return(TRUE);
-	}
-#endif
-
 	if (UNIV_UNLIKELY(zip_size)) {
 		ut_ad(comp);
 		/* On a compressed page, there is a two-byte entry in

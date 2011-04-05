@@ -269,7 +269,7 @@ rec_get_next_ptr_const(
 	}
 
 	if (UNIV_EXPECT(comp, REC_OFFS_COMPACT)) {
-#if UNIV_PAGE_SIZE <= 32768
+
 		/* Note that for 64 KiB pages, field_value can 'wrap around'
 		and the debug assertion is not valid */
 
@@ -279,12 +279,13 @@ rec_get_next_ptr_const(
 		the expression could be written simpler as
 		(int16_t) field_value + ut_align_offset(...) < UNIV_PAGE_SIZE
 		*/
-		ut_ad((field_value >= 32768
-		       ? field_value - 65536
-		       : field_value)
-		      + ut_align_offset(rec, UNIV_PAGE_SIZE)
-		      < UNIV_PAGE_SIZE);
-#endif
+		ut_ad((UNIV_PAGE_SIZE > 32768)
+		      || ((field_value >= 32768
+			   ? field_value - 65536
+			   : field_value)
+			  + ut_align_offset(rec, UNIV_PAGE_SIZE)
+			  < UNIV_PAGE_SIZE));
+
 		/* There must be at least REC_N_NEW_EXTRA_BYTES + 1
 		between each record. */
 		ut_ad((field_value > REC_N_NEW_EXTRA_BYTES
@@ -337,7 +338,7 @@ rec_get_next_offs(
 	field_value = mach_read_from_2(rec - REC_NEXT);
 
 	if (UNIV_EXPECT(comp, REC_OFFS_COMPACT)) {
-#if UNIV_PAGE_SIZE <= 32768
+
 		/* Note that for 64 KiB pages, field_value can 'wrap around'
 		and the debug assertion is not valid */
 
@@ -347,12 +348,13 @@ rec_get_next_offs(
 		the expression could be written simpler as
 		(int16_t) field_value + ut_align_offset(...) < UNIV_PAGE_SIZE
 		*/
-		ut_ad((field_value >= 32768
-		       ? field_value - 65536
-		       : field_value)
+		ut_ad((UNIV_PAGE_SIZE > 32768)
+		      || (field_value >= 32768
+			  ? field_value - 65536
+			  : field_value)
 		      + ut_align_offset(rec, UNIV_PAGE_SIZE)
 		      < UNIV_PAGE_SIZE);
-#endif
+
 		if (UNIV_UNLIKELY(field_value == 0)) {
 
 			return(0);

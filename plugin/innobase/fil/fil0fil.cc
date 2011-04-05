@@ -640,7 +640,7 @@ fil_node_open_file(
 	fil_system_t*	system,	/*!< in: tablespace memory cache */
 	fil_space_t*	space)	/*!< in: space */
 {
-	ib_int64_t	size_bytes;
+	uint64_t	size_bytes;
 	ulint		size_low;
 	ulint		size_high;
 	ibool		ret;
@@ -682,11 +682,10 @@ fil_node_open_file(
 
 		os_file_get_size(node->handle, &size_low, &size_high);
 
-		size_bytes = (((ib_int64_t)size_high) << 32)
-			+ (ib_int64_t)size_low;
+		size_bytes = (((uint64_t)size_high) << 32) + size_low;
 #ifdef UNIV_HOTBACKUP
 		if (space->id == 0) {
-			node->size = (ulint) (size_bytes / UNIV_PAGE_SIZE);
+			node->size = size_bytes / UNIV_PAGE_SIZE;
 			os_file_close(node->handle);
 			goto add_size;
 		}
@@ -763,7 +762,7 @@ fil_node_open_file(
 		}
 
 		if (!(flags & DICT_TF_ZSSIZE_MASK)) {
-			node->size = (ulint) (size_bytes / UNIV_PAGE_SIZE);
+			node->size = (ulint)size_bytes / UNIV_PAGE_SIZE;
 		} else {
 			node->size = (ulint)
 				(size_bytes
@@ -3185,7 +3184,7 @@ fil_load_single_table_tablespace(
 	ulint		flags;
 	ulint		size_low;
 	ulint		size_high;
-	ib_int64_t	size;
+	uint64_t	size;
 #ifdef UNIV_HOTBACKUP
 	fil_space_t*	space;
 #endif
@@ -4305,9 +4304,6 @@ fil_io(
 	ut_ad(ut_is_2pow(zip_size));
 	ut_ad(buf);
 	ut_ad(len > 0);
-#if (1 << UNIV_PAGE_SIZE_SHIFT) != UNIV_PAGE_SIZE
-# error "(1 << UNIV_PAGE_SIZE_SHIFT) != UNIV_PAGE_SIZE"
-#endif
 	ut_ad(fil_validate());
 #ifndef UNIV_HOTBACKUP
 # ifndef UNIV_LOG_DEBUG

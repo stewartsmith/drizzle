@@ -74,6 +74,7 @@ enum buf_io_fix {
 					sizeof(buf_page_t) */
 #define BUF_BUDDY_SIZES		(UNIV_PAGE_SIZE_SHIFT - BUF_BUDDY_LOW_SHIFT)
 					/*!< number of buddy sizes */
+#define BUF_BUDDY_SIZES_MAX	(UNIV_PAGE_SIZE_SHIFT_MAX - BUF_BUDDY_LOW_SHIFT)
 
 /** twice the maximum block size of the buddy system;
 the underlying memory is aligned by this amount:

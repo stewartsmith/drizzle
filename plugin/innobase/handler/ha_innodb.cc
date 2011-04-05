@@ -182,6 +182,14 @@ typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constr
 static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<uint32_t, MAX_BUFFER_POOLS, 1> buffer_pool_instances_constraint;
 static buffer_pool_instances_constraint innobase_buffer_pool_instances;
+typedef constrained_check<uint32_t,
+			  (1 << UNIV_PAGE_SIZE_SHIFT_MAX),
+				(1 << 12)> page_size_constraint;
+static page_size_constraint innobase_page_size;
+typedef constrained_check<uint32_t,
+			  (1 << UNIV_PAGE_SIZE_SHIFT_MAX),
+				(1 << 9)> log_block_size_constraint;
+static log_block_size_constraint innobase_log_block_size;
 typedef constrained_check<uint32_t, UINT32_MAX, 100> io_capacity_constraint;
 static io_capacity_constraint innodb_io_capacity;
 typedef constrained_check<uint32_t, 5000, 1> purge_batch_constraint;
@@ -2088,6 +2096,67 @@ innobase_init(
   }
 #endif /* UNIV_DEBUG */
 
+  srv_page_size = 0;
+  srv_page_size_shift = 0;
+
+  uint32_t page_size = innobase_page_size.get();
+  uint32_t log_block_size = innobase_log_block_size.get();
+
+  if (innobase_page_size != (1 << 14)) {
+    uint n_shift;
+
+    errmsg_printf(error::WARN,
+		  "InnoDB: Warning: innodb_page_size has been changed from default value 16384. (###EXPERIMENTAL### operation)\n");
+    for (n_shift = 12; n_shift <= UNIV_PAGE_SIZE_SHIFT_MAX; n_shift++) {
+      if (innobase_page_size == (1UL << n_shift)) {
+	srv_page_size_shift = n_shift;
+	srv_page_size = (1 << srv_page_size_shift);
+	errmsg_printf(error::WARN,
+		      "InnoDB: The universal page size of the database is set to %lu.\n",
+		      srv_page_size);
+	break;
+      }
+    }
+  } else {
+    srv_page_size_shift = 14;
+    srv_page_size = (1 << srv_page_size_shift);
+  }
+
+  if (!srv_page_size_shift) {
+    errmsg_printf(error::ERROR,
+		  "InnoDB: Error: %"PRIu32" is not a valid value for innodb_page_size.\n"
+		  "InnoDB: Error: Valid values are 4096, 8192, and 16384 (default=16384).\n",
+		  page_size);
+    goto error;
+  }
+
+  srv_log_block_size = 0;
+  if (log_block_size != (1 << 9)) { /*!=512*/
+    uint	n_shift;
+
+    errmsg_printf(error::WARN,
+		  "InnoDB: Warning: innodb_log_block_size has been changed from default value 512. (###EXPERIMENTAL### operation)\n");
+    for (n_shift = 9; n_shift <= UNIV_PAGE_SIZE_SHIFT_MAX; n_shift++) {
+      if (log_block_size == (1UL << n_shift)) {
+	srv_log_block_size = (1 << n_shift);
+	errmsg_printf(error::WARN, "InnoDB: The log block size is set to %"PRIu32".\n",
+		      srv_log_block_size);
+	break;
+      }
+    }
+  } else {
+    srv_log_block_size = 512;
+  }
+
+  if (!srv_log_block_size) {
+    errmsg_printf(error::ERROR,
+		  "InnoDB: Error: %"PRIu32" is not a valid value for innodb_log_block_size.\n"
+		  "InnoDB: Error: A valid value for innodb_log_block_size is\n"
+		  "InnoDB: Error: a power of 2 from 512 to 16384.\n",
+		  log_block_size);
+    goto error;
+  }
+
   os_innodb_umask = (ulint)internal::my_umask;
 
 
@@ -2363,6 +2432,8 @@ innobase_change_buffering_inited_ok:
                                                   innodb_file_format_max_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<size_t>("buffer_pool_size", innobase_buffer_pool_size));
   context.registerVariable(new sys_var_constrained_value_readonly<int64_t>("log_file_size", innobase_log_file_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("page_size", innobase_page_size));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("log_block_size", innobase_log_block_size));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit",
                                                   innodb_flush_log_at_trx_commit));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("max_dirty_pages_pct",
@@ -6114,9 +6185,6 @@ InnobaseEngine::doCreateTable(
       | DICT_TF_COMPACT
       | DICT_TF_FORMAT_ZIP
       << DICT_TF_FORMAT_SHIFT;
-#if DICT_TF_ZSSIZE_MAX < 1
-# error "DICT_TF_ZSSIZE_MAX < 1"
-#endif
 
     if (strict_mode)
     {
@@ -9200,6 +9268,12 @@ static void init_options(drizzled::module::option_context &context)
   context("log-file-size",
           po::value<log_file_constraint>(&innobase_log_file_size)->default_value(20*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
+  context("page-size",
+	  po::value<page_size_constraint>(&innobase_page_size)->default_value(1 << 14),
+	  "###EXPERIMENTAL###: The universal page size of the database. Changing for created database is not supported. Use on your own risk!");
+  context("log-block-size",
+	  po::value<log_block_size_constraint>(&innobase_log_block_size)->default_value(1 << 9),
+	  "###EXPERIMENTAL###: The log block size of the transaction log file. Changing for created log file is not supported. Use on your own risk!");
   context("log-files-in-group",
           po::value<log_files_in_group_constraint>(&innobase_log_files_in_group)->default_value(2),
           "Number of log files in the log group. InnoDB writes to the files in a circular fashion.");

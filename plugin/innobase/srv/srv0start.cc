@@ -1330,9 +1330,11 @@ innobase_start_or_create_for_mysql(void)
 	}
 #endif /* UNIV_LOG_ARCHIVE */
 
-	if (srv_n_log_files * srv_log_file_size >= 262144) {
-          drizzled::errmsg_printf(drizzled::error::ERROR,
-                                  "InnoDB: Error: combined size of log files must be < 4 GB");
+	if (sizeof(ulint) == 4
+	    && srv_n_log_files * srv_log_file_size
+	    >= (1UL << (32 - UNIV_PAGE_SIZE_SHIFT))) {
+		drizzled::errmsg_printf(drizzled::error::ERROR,
+				  "InnoDB: Error: combined size of log files must be < 4 GB on 32-bit systems\n");
 
 		return(DB_ERROR);
 	}
@@ -1341,7 +1343,7 @@ innobase_start_or_create_for_mysql(void)
 
 	for (i = 0; i < srv_n_data_files; i++) {
 #ifndef __WIN__
-		if (sizeof(off_t) < 5 && srv_data_file_sizes[i] >= 262144) {
+		if (sizeof(off_t) < 5 && srv_data_file_sizes[i] >= (1UL << (32 - UNIV_PAGE_SIZE_SHIFT))) {
                   drizzled::errmsg_printf(drizzled::error::ERROR,
                                           "InnoDB: Error: file size must be < 4 GB with this MySQL binary and operating system combination,"
                                           " in some OS's < 2 GB\n");
