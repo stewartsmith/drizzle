@@ -1710,7 +1710,7 @@ void Table::filesort_free_buffers(bool full)
 */
 bool Table::needs_reopen_or_name_lock() const
 { 
-  return getShare()->getVersion() != refresh_version;
+  return getShare()->getVersion() != g_refresh_version;
 }
 
 uint32_t Table::index_flags(uint32_t idx) const

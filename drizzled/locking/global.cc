@@ -193,7 +193,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
 	break;
       }
 
-      if (open_tables.version != refresh_version)
+      if (open_tables.version != g_refresh_version)
       {
         /* Clear the lock type of all lock data to avoid reusage. */
         reset_lock_data_and_free(&sql_lock);
@@ -1032,7 +1032,7 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
                             "Waiting for release of readlock");
 
     while (must_wait(is_not_commit) && not getKilled() &&
-	   (!abort_on_refresh || open_tables.version == refresh_version))
+	   (!abort_on_refresh || open_tables.version == g_refresh_version))
     {
       boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);

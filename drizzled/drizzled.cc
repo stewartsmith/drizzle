@@ -2053,7 +2053,7 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  refresh_version= 1L;	/* Increments on each reload */
+  g_refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
   session::Cache::singleton().getCache().clear();
 

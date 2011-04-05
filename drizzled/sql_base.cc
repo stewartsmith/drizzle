@@ -81,7 +81,7 @@ uint32_t cached_open_tables(void)
 
 void table_cache_free(void)
 {
-  refresh_version++;				// Force close of open tables
+  g_refresh_version++;				// Force close of open tables
 
   table::getUnused().clear();
   table::getCache().clear();
@@ -179,7 +179,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
     if (tables == NULL)
     {
-      refresh_version++;				// Force close of open tables
+      g_refresh_version++;				// Force close of open tables
 
       table::getUnused().clear();
 
@@ -344,7 +344,7 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
   open_tables.open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
-      open_tables.version != refresh_version || !table->db_stat)
+      open_tables.version != g_refresh_version || !table->db_stat)
   {
     table::remove_table(table);
     found_old_table= true;
@@ -962,9 +962,9 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     */
     if (!open_tables.open_tables_)
     {
-      open_tables.version= refresh_version;
+      open_tables.version= g_refresh_version;
     }
-    else if ((open_tables.version != refresh_version) &&
+    else if ((open_tables.version != g_refresh_version) &&
              ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
     {
       /* Someone did a refresh while thread was opening tables */

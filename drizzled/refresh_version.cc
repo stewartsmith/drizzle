@@ -22,13 +22,12 @@
 
 #include <config.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
-uint64_t refresh_version;  /* Increments on each reload */
+uint64_t g_refresh_version;  /* Increments on each reload */
 
 } /* namespace drizzled */
 

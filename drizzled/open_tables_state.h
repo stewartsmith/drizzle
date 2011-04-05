@@ -26,8 +26,7 @@ namespace drizzled {
 
 /**
   Class that holds information about tables which were opened and locked
-  by the thread. It is also used to save/restore this information in
-  push_open_tables_state()/pop_open_tables_state().
+  by the thread.
 */
 
 class Open_tables_state
@@ -106,8 +105,7 @@ public:
 
   void clearDerivedTables()
   {
-    if (derived_tables)
-      derived_tables= NULL; // They should all be invalid by this point
+    derived_tables= NULL; // They should all be invalid by this point
   }
 
   /*
@@ -135,20 +133,7 @@ public:
   uint64_t version;
   uint32_t current_tablenr;
 
-  /*
-    This constructor serves for creation of Open_tables_state instances
-    which are used as backup storage.
-  */
-  Open_tables_state() :
-    open_tables_(0),
-    temporary_tables(0),
-    derived_tables(0),
-    lock(0),
-    extra_lock(0),
-    version(0),
-    current_tablenr(0)
-  { }
-
+  Open_tables_state(uint64_t version_arg);
   virtual ~Open_tables_state() {}
   void doGetTableNames(CachedDirectory&, const identifier::Schema&, std::set<std::string>&);
   void doGetTableNames(const identifier::Schema&, std::set<std::string>&);
@@ -156,8 +141,6 @@ public:
   void doGetTableIdentifiers(const identifier::Schema&, identifier::table::vector&);
   int doGetTableDefinition(const drizzled::identifier::Table&, message::Table&);
   bool doDoesTableExist(const drizzled::identifier::Table&);
-
-  Open_tables_state(uint64_t version_arg);
 };
 
 } /* namespace drizzled */

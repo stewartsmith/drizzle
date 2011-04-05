@@ -170,7 +170,7 @@ public:
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
-  Open_tables_state(refresh_version),
+  Open_tables_state(g_refresh_version),
   impl_(new impl_c),
   mem_root(&main_mem_root),
   query(new std::string),
@@ -578,7 +578,7 @@ void Session::prepareForQueries()
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
 
-  version= refresh_version;
+  version= g_refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
