@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #pragma once
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/lock.h>
 
 namespace drizzled {
+
+extern uint64_t g_refresh_version;
 
 /**
   Class that holds information about tables which were opened and locked
@@ -66,25 +68,11 @@ public:
   */
   void mark_temp_tables_as_free_for_reuse();
 
-protected:
-  void close_temporary_tables();
-
-public:
-  void close_temporary_table(Table *table);
-  
-private:
-  // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed.
-  void nukeTable(Table *table);
-
 public:
   /* Work with temporary tables */
   Table *find_temporary_table(const identifier::Table &identifier);
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::identifier::Table &identifier);
-  bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
-  bool rm_temporary_table(const drizzled::identifier::Table &identifier, bool best_effort= false);
 
   virtual query_id_t getQueryId()  const= 0;
 

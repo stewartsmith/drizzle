@@ -632,7 +632,7 @@ Table *Open_tables_state::find_temporary_table(const identifier::Table &identifi
   @retval -1  the table is in use by a outer query
 */
 
-int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &identifier)
+int Session::drop_temporary_table(const drizzled::identifier::Table &identifier)
 {
   Table *table;
 
@@ -722,7 +722,7 @@ void Session::drop_open_table(Table *table, const identifier::Table &identifier)
 {
   if (table->getShare()->getType())
   {
-    open_tables.close_temporary_table(table);
+    close_temporary_table(table);
   }
   else
   {

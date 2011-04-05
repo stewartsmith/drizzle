@@ -138,7 +138,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
 
-      error= session->open_tables.drop_temporary_table(tmp_identifier);
+      error= session->drop_temporary_table(tmp_identifier);
 
       switch (error) {
       case  0:
@@ -1365,7 +1365,7 @@ static bool locked_create_event(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->open_tables.rm_temporary_table(identifier);
+      (void) session->rm_temporary_table(identifier);
       return error;
     }
   }
@@ -2089,12 +2089,12 @@ bool create_like_table(Session* session,
                                              is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else
       {

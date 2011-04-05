@@ -1162,7 +1162,7 @@ static bool internal_alter_table(Session *session,
       if (new_table)
       {
         /* close_temporary_table() frees the new_table pointer. */
-        session->open_tables.close_temporary_table(new_table);
+        session->close_temporary_table(new_table);
       }
       else
       {
@@ -1206,7 +1206,7 @@ static bool internal_alter_table(Session *session,
     }
 
     /* Remove link to old table and rename the new one */
-    session->open_tables.close_temporary_table(table);
+    session->close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
     new_table->getMutableShare()->setIdentifier(new_table_identifier);

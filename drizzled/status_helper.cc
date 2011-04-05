@@ -19,20 +19,17 @@
  */
 
 #include <config.h>
-#include <boost/lexical_cast.hpp>
 #include "status_helper.h"
+#include <boost/lexical_cast.hpp>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/set_var.h>
 #include <drizzled/drizzled.h>
 #include <plugin/myisam/myisam.h>
-
-#include <drizzled/refresh_version.h>
-
 #include <sstream>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern time_t server_start_time;
 extern time_t flush_status_time;
