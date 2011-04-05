@@ -46,7 +46,7 @@ private:
 
 } /* namespace constants */
 
-identifier::User::const_reference system_user()
+const identifier::User& system_user()
 {
   static drizzled::identifier::User _tmp("SYSTEM");
 
