@@ -82,7 +82,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
   getMutableShare()->resetVersion();
   in_use = session;
 
-  tablenr= session->current_tablenr++;
+  tablenr= session->open_tables.current_tablenr++;
   used_fields= 0;
   const_table= 0;
   null_row= false;

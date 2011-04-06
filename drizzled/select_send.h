@@ -48,10 +48,10 @@ public:
     plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
-    if (session->lock)
+    if (session->open_tables.lock)
     {
-      session->unlockTables(session->lock);
-      session->lock= 0;
+      session->unlockTables(session->open_tables.lock);
+      session->open_tables.lock= 0;
     }
     session->my_eof();
     is_result_set_started= 0;

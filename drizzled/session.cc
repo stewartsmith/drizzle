@@ -115,7 +115,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 Open_tables_state::Open_tables_state(uint64_t version_arg) :
   version(version_arg)
 {
-  open_tables= temporary_tables= derived_tables= NULL;
+  open_tables_= temporary_tables= derived_tables= NULL;
   extra_lock= lock= NULL;
 }
 
@@ -191,6 +191,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   query_id(0),
   warn_query_id(0),
 	transaction(impl_->transaction),
+  open_tables(*this),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
@@ -1933,7 +1934,7 @@ void Session::close_thread_tables()
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  if (open_tables)
+  if (open_tables_)
     close_open_tables();
 }
 

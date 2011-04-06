@@ -91,7 +91,7 @@ bool statement::CreateIndex::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= session().find_temporary_table(catch22);
+    Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
