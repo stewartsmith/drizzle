@@ -336,7 +336,7 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
 {
   if (include_temporary_tables)
   {
-    if (session.doDoesTableExist(identifier))
+    if (session.open_tables.doDoesTableExist(identifier))
       return true;
   }
 
@@ -368,7 +368,7 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
 
   if (include_temporary_tables)
   {
-    Table *table= session.find_temporary_table(identifier);
+    Table *table= session.open_tables.find_temporary_table(identifier);
     if (table)
     {
       return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
@@ -651,7 +651,7 @@ void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &s
   std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
                 AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
 
-  session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
+  session.open_tables.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
 
 class DropTable: public std::unary_function<identifier::Table&, bool>

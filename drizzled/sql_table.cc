@@ -138,7 +138,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
 
-      error= session->drop_temporary_table(tmp_identifier);
+      error= session->open_tables.drop_temporary_table(tmp_identifier);
 
       switch (error) {
       case  0:
@@ -1365,7 +1365,7 @@ static bool locked_create_event(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(identifier);
+      (void) session->open_tables.rm_temporary_table(identifier);
       return error;
     }
   }
@@ -1700,10 +1700,10 @@ void Session::close_cached_table(Table *table)
 
   wait_while_table_is_used(this, table, HA_EXTRA_FORCE_REOPEN);
   /* Close lock if this is not got with LOCK TABLES */
-  if (lock)
+  if (open_tables.lock)
   {
-    unlockTables(lock);
-    lock= NULL;			// Start locked threads
+    unlockTables(open_tables.lock);
+    open_tables.lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(table);
@@ -2076,7 +2076,7 @@ bool create_like_table(Session* session,
   */
   if (destination_identifier.isTmp())
   {
-    if (session->find_temporary_table(destination_identifier))
+    if (session->open_tables.find_temporary_table(destination_identifier))
     {
       table_exists= true;
     }
@@ -2089,12 +2089,12 @@ bool create_like_table(Session* session,
                                              is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else
       {

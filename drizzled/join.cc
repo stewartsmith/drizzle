@@ -196,7 +196,7 @@ Join::Join(Session *session_arg,
   having_history(NULL),
   select_options(select_options_arg),
   result(result_arg),
-  lock(session_arg->lock),
+  lock(session_arg->open_tables.lock),
   tmp_join(NULL),
   all_fields(fields_arg),
   error(0),
@@ -286,7 +286,7 @@ void Join::reset(Session *session_arg,
   having_history= NULL;
   select_options= select_options_arg;
   result= result_arg;
-  lock= session_arg->lock;
+  lock= session_arg->open_tables.lock;
   tmp_join= NULL;
   all_fields= fields_arg;
   error= 0;
@@ -2037,7 +2037,7 @@ void Join::join_free()
     We are not using tables anymore
     Unlock all tables. We may be in an INSERT .... SELECT statement.
   */
-  if (can_unlock && lock && session->lock &&
+  if (can_unlock && lock && session->open_tables.lock &&
       !(select_options & SELECT_NO_UNLOCK) &&
       !select_lex->subquery_in_having &&
       (select_lex == (session->lex().unit.fake_select_lex ?
