@@ -40,6 +40,7 @@ Created 10/25/1995 Heikki Tuuri
 #include "dict0dict.h"
 #include "page0page.h"
 #include "page0zip.h"
+#include "xtrabackup_api.h"
 #ifndef UNIV_HOTBACKUP
 # include "buf0lru.h"
 # include "ibuf0ibuf.h"
@@ -297,7 +298,7 @@ struct fil_system_struct {
 
 /** The tablespace memory cache. This variable is NULL before the module is
 initialized. */
-static fil_system_t*	fil_system	= NULL;
+fil_system_t*	fil_system	= NULL;
 
 
 /********************************************************************//**
@@ -3447,7 +3448,6 @@ directory. We retry 100 times if os_file_readdir_next_file() returns -1. The
 idea is to read as much good data as we can and jump over bad data.
 @return 0 if ok, -1 if error even after the retries, 1 if at the end
 of the directory */
-static
 int
 fil_file_readdir_next_file(
 /*=======================*/

@@ -19,7 +19,7 @@
 
 CLIENT_LDADD= \
 	      drizzled/internal/libinternal.la \
-	      libdrizzle-2.0/libdrizzle/libdrizzle.la \
+	      libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
 	      $(LIBINTL) \
 	      $(LIBZ) \
 	      client/libgetpassword.la
@@ -63,7 +63,7 @@ noinst_HEADERS+= \
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
-				libdrizzle-2.0/libdrizzle/libdrizzle.la \
+				libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
 				$(LIBINTL) \
 				$(LIBZ) \
 				client/libgetpassword.la
@@ -71,7 +71,7 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS} -DDRIZZLE_ADMIN_TOOL
 client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
 client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
-                                libdrizzle-2.0/libdrizzle/libdrizzle.la \
+                                libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
                                 $(LIBINTL) \
                                 $(LIBZ) \
                                 client/libgetpassword.la

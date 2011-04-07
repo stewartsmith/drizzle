@@ -18,6 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <plugin/slave/queue_producer.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/sql/result_set.h>
@@ -26,8 +27,6 @@
 #include <drizzled/message/transaction.pb.h>
 #include <boost/lexical_cast.hpp>
 #include <google/protobuf/text_format.h>
-#include <string>
-#include <vector>
 
 using namespace std;
 using namespace drizzled;
@@ -200,12 +199,8 @@ bool QueueProducer::queryForMaxCommitId(uint64_t *max_commit_id)
    */
   string sql("SELECT MAX(x.cid) FROM"
              " (SELECT MAX(`commit_order`) AS cid FROM `sys_replication`.`queue`"
-             "  WHERE `master_id` = "
-             + boost::lexical_cast<string>(masterId())
-             + "  UNION ALL SELECT `last_applied_commit_id` AS cid"
-             + "  FROM `sys_replication`.`applier_state` WHERE `master_id` = "
-             + boost::lexical_cast<string>(masterId())
-             + ") AS x");
+             "  UNION ALL SELECT `last_applied_commit_id` AS cid"
+             "  FROM `sys_replication`.`applier_state`) AS x");
 
   sql::ResultSet result_set(1);
   Execute execute(*(_session.get()), true);
@@ -307,9 +302,7 @@ bool QueueProducer::queueInsert(const char *trx_id,
    * The SQL to insert our results into the local queue.
    */
   string sql= "INSERT INTO `sys_replication`.`queue`"
-              " (`master_id`, `trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
-  sql.append(boost::lexical_cast<string>(masterId()));
-  sql.append(", ", 2);
+              " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
@@ -488,8 +481,7 @@ void QueueProducer::setIOState(const string &err_msg, bool status)
   }
   
   sql.append(msg);
-  sql.append("' WHERE `master_id` = ");
-  sql.append(boost::lexical_cast<string>(masterId()));
+  sql.append("'", 1);
 
   statements.push_back(sql);
   executeSQL(statements);

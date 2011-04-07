@@ -52,7 +52,7 @@ select * from data_dictionary.seapitester_engine_state_history;
 select seapitester_clear_engine_state_history();
 
 --replace_result $DRIZZLETEST_VARDIR VARDIR
---exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
+--exec $DRIZZLE_TRX_READER $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

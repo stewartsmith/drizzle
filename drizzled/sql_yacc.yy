@@ -180,7 +180,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
   Currently there are 70 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 79
+%expect 80
 
 /*
    Comments for TOKENS.
@@ -201,8 +201,8 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 
 %token  ABORT_SYM                     /* INTERNAL (used in lex) */
 %token  ACTION                        /* SQL-2003-N */
-%token  ADD_SYM                           /* SQL-2003-R */
 %token  ADDDATE_SYM                   /* MYSQL-FUNC */
+%token  ADD_SYM                           /* SQL-2003-R */
 %token  AFTER_SYM                     /* SQL-2003-N */
 %token  AGGREGATE_SYM
 %token  ALL                           /* SQL-2003-R */
@@ -237,6 +237,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  CATALOG_SYM
 %token  CHAIN_SYM                     /* SQL-2003-N */
 %token  CHANGE_SYM
+%token  CHARSET
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
@@ -282,6 +283,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
+%token  DEFINER
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
@@ -290,8 +292,8 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  DISCARD
 %token  DISTINCT                      /* SQL-2003-R */
 %token  DIV_SYM
-%token  DO_SYM
 %token  DOUBLE_SYM                    /* SQL-2003-R */
+%token  DO_SYM
 %token  DROP                          /* SQL-2003-R */
 %token  DUMPFILE
 %token  DUPLICATE_SYM
@@ -329,8 +331,8 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  FULL                          /* SQL-2003-R */
 %token  GE
 %token  GLOBAL_SYM                    /* SQL-2003-R */
-%token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
+%token  GROUP_SYM                     /* SQL-2003-R */
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
@@ -355,6 +357,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  INTERVAL_SYM                  /* SQL-2003-R */
 %token  INTO                          /* SQL-2003-R */
 %token  INT_SYM                       /* SQL-2003-R */
+%token  INVOKER
 %token  IN_SYM                        /* SQL-2003-R */
 %token  IS                            /* SQL-2003-R */
 %token  ISOLATION                     /* SQL-2003-R */
@@ -439,8 +442,8 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  READ_WRITE_SYM
 %token  REAL                          /* SQL-2003-R */
 %token  REDUNDANT_SYM
-%token  REGEXP_SYM
 %token  REFERENCES                    /* SQL-2003-R */
+%token  REGEXP_SYM
 %token  RELEASE_SYM                   /* SQL-2003-R */
 %token  RENAME
 %token  REPEATABLE_SYM                /* SQL-2003-N */
@@ -468,9 +471,9 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  SEPARATOR_SYM
 %token  SERIALIZABLE_SYM              /* SQL-2003-N */
 %token  SERIAL_SYM
-%token  SESSION_SYM                   /* SQL-2003-N */
 %token  SERVER_SYM
-%token  SET_SYM                           /* SQL-2003-R */
+%token  SESSION_SYM                   /* SQL-2003-N */
+%token  SET_SYM                       /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
@@ -510,10 +513,10 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  TEXT_STRING
 %token  TEXT_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
-%token  TIME_SYM                 /* SQL-2003-R */
-%token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
+%token  TIMESTAMP_SYM                 /* SQL-2003-R */
+%token  TIME_SYM                 /* SQL-2003-R */
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
@@ -537,6 +540,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
 %token  UTC_TIMESTAMP_SYM
+%token  UTF8_SYM
 %token  UUID_SYM
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
@@ -999,6 +1003,14 @@ custom_database_option:
           {
             parser::buildReplicationOption(&Lex, false);
           }
+        | DEFINER TEXT_STRING_sys
+          {
+            parser::buildSchemaDefiner(&Lex, $2);
+          }
+        | DEFINER CURRENT_USER optional_braces
+          {
+            parser::buildSchemaDefiner(&Lex, *session->user());
+          }
         | ident_or_text '=' ident_or_text
           {
             parser::buildSchemaOption(&Lex, $1.str, $3);
@@ -1058,6 +1070,15 @@ custom_engine_option:
           {
 	    message::set_is_replicated(*Lex.table(), false);
           }
+        | DEFINER TEXT_STRING_sys
+          {
+	    drizzled::identifier::User user($2.str);
+            message::set_definer(*Lex.table(), user);
+          }
+        | DEFINER CURRENT_USER optional_braces
+          {
+            message::set_definer(*Lex.table(), *session->user());
+          }
         |  ROW_FORMAT_SYM '=' row_format_or_text
           {
             parser::buildEngineOption(&Lex, "ROW_FORMAT", $3);
@@ -1074,8 +1095,24 @@ custom_engine_option:
           {
             parser::buildEngineOption(&Lex, $1.str, $3);
           }
+        | default_charset
         | default_collation
         ;
+
+charset:
+          CHAR_SYM SET_SYM {}
+        | CHARSET {}
+        ;
+
+charset_name_or_default:
+          UTF8_SYM { } 
+        | DEFAULT    { }
+        ;
+
+default_charset:
+          opt_default charset opt_equal charset_name_or_default
+        {
+        }
 
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default

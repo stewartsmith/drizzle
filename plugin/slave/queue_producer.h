@@ -37,7 +37,6 @@ public:
     SQLExecutor("slave", "replication"),
     _check_interval(5),
     _master_port(3306),
-    _master_id(0),
     _last_return(DRIZZLE_RETURN_OK),
     _is_connected(false),
     _saved_max_commit_id(0),
@@ -96,21 +95,6 @@ public:
     _saved_max_commit_id= value;
   }
 
-  uint64_t cachedMaxCommitId()
-  {
-    return _saved_max_commit_id;
-  }
-
-  void setMasterId(uint32_t value)
-  {
-    _master_id= value;
-  }
-
-  uint32_t masterId()
-  {
-    return _master_id;
-  }
-
 private:
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
@@ -120,8 +104,6 @@ private:
   uint16_t    _master_port;
   std::string _master_user;
   std::string _master_pass;
-
-  uint32_t _master_id;
 
   drizzle_st _drizzle;
   drizzle_con_st _connection;

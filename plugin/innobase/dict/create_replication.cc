@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <drizzled/message.h>
 #include "read_replication.h"
 #include "create_replication.h"
 

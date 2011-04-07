@@ -128,9 +128,9 @@ drizzle_row_t drizzle_row_next(drizzle_result_st *result)
   if (result->row_current == result->row_count)
     return NULL;
 
-  result->field_sizes= result->field_sizes_list->at(result->row_current);
+  result->field_sizes= result->field_sizes_list->at(static_cast<size_t>(result->row_current));
   result->row_current++;
-  return result->row_list->at(result->row_current - 1);
+  return result->row_list->at(static_cast<size_t>(result->row_current) - 1);
 }
 
 drizzle_row_t drizzle_row_prev(drizzle_result_st *result)
@@ -139,8 +139,8 @@ drizzle_row_t drizzle_row_prev(drizzle_result_st *result)
     return NULL;
 
   result->row_current--;
-  result->field_sizes= result->field_sizes_list->at(result->row_current);
-  return result->row_list->at(result->row_current);
+  result->field_sizes= result->field_sizes_list->at(static_cast<size_t>(result->row_current));
+  return result->row_list->at(static_cast<size_t>(result->row_current));
 }
 
 void drizzle_row_seek(drizzle_result_st *result, uint64_t row)
@@ -154,7 +154,7 @@ drizzle_row_t drizzle_row_index(drizzle_result_st *result, uint64_t row)
   if (row >= result->row_count)
     return NULL;
 
-  return (*result->row_list)[row];
+  return (*result->row_list)[static_cast<size_t>(row)];
 }
 
 uint64_t drizzle_row_current(drizzle_result_st *result)

@@ -61,5 +61,5 @@ unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} \
   ${BOOST_LIBS} \
-  libdrizzle-2.0/libdrizzle/libdrizzle.la \
+  libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}

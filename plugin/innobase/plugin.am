@@ -1,4 +1,4 @@
-# vim:ft=automake
+ vim:ft=automake
 # Copyright (C) 2001, 2004, 2006 MySQL AB & Innobase Oy
 # Copyright (C) 2010 Brian Aker, Joe Daly, Monty Taylor
 #
@@ -209,6 +209,7 @@ noinst_HEADERS+= \
                  plugin/innobase/include/ut0wqueue.h \
                  plugin/innobase/include/ha_prototypes.h \
                  plugin/innobase/include/handler0alter.h \
+		 plugin/innobase/include/xtrabackup_api.h \
                  plugin/innobase/mem/mem0dbg.cc \
                  plugin/innobase/handler/ha_innodb.h \
                  plugin/innobase/handler/handler0vars.h \
@@ -222,7 +223,19 @@ if BUILD_INNOBASE_PLUGIN
 noinst_LTLIBRARIES+= \
                      plugin/innobase/libinnobase.la \
 		     plugin/innobase/libpars.la
+bin_PROGRAMS+= plugin/innobase/xtrabackup/drizzlebackup.innobase
 endif
+
+plugin_innobase_xtrabackup_drizzlebackup_innobase_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
+plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD = \
+	plugin/innobase/libinnobase.la \
+	drizzled/internal/libinternal.la \
+	drizzled/libcharset.la \
+	$(BOOST_LIBS) \
+	${LTLIBAIO} \
+	$(LIBZ)
+
+plugin_innobase_xtrabackup_drizzlebackup_innobase_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I${top_builddir}/plugin/innobase/include -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_LDDADD= ${LTLIBAIO}

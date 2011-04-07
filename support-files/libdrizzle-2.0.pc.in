@@ -7,5 +7,5 @@ libdrizzleincludedir=@libdrizzleincludedir@
 Name: libdrizzle-2.0
 Description: Drizzle Client & Protocol Library
 Version: @PANDORA_RELEASE_VERSION@
-Libs: -L${libdir} -ldrizzle
+Libs: -L${libdir} -ldrizzle-2.0
 Cflags: -I${libdrizzleincludedir}
