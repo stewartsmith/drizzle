@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
 #include <boost/program_options.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 
 typedef drizzled::charset_info_st CHARSET_INFO;
@@ -2805,7 +2806,8 @@ xtrabackup_backup_func(void)
 	log_group_t*	max_cp_group;
 	ulint		max_cp_field;
 	byte*		buf;
-	byte		log_hdr_buf_[LOG_FILE_HDR_SIZE + OS_FILE_LOG_BLOCK_SIZE];
+	boost::scoped_array<byte>	log_hdr_buf_(
+		new byte[LOG_FILE_HDR_SIZE + OS_FILE_LOG_BLOCK_SIZE]);
 	byte*		log_hdr_buf;
 	ulint		err;
 
@@ -2815,7 +2817,8 @@ xtrabackup_backup_func(void)
 	os_thread_id_t log_copying_thread_id;
 	datafiles_iter_t *it;
 
-	log_hdr_buf = (unsigned char*)ut_align(log_hdr_buf_, OS_FILE_LOG_BLOCK_SIZE);
+	log_hdr_buf = (byte*)ut_align(log_hdr_buf_.get(),
+				      OS_FILE_LOG_BLOCK_SIZE);
 
 	/* log space */
 	//space = UT_LIST_GET_NEXT(space_list, UT_LIST_GET_FIRST(f_system->space_list));
