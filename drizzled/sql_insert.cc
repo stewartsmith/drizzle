@@ -1625,7 +1625,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(identifier);
+          session->open_tables.drop_temporary_table(identifier);
         }
       }
     }
@@ -1684,7 +1684,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     if (identifier.isTmp())
       m_plock= &m_lock;
     else
-      m_plock= &session->extra_lock;
+      m_plock= &session->open_tables.extra_lock;
 
     *m_plock= extra_lock;
   }

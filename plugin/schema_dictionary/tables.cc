@@ -59,6 +59,7 @@ TablesTool::TablesTool() :
   add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
   add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("TABLE_DEFINER", plugin::TableFunction::STRING, 64, true);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -192,4 +193,14 @@ void TablesTool::Generator::fill()
 
   /* IS_REPLICATED */
   push(message::is_replicated(getTableMessage()));
+
+  /* _DEFINER */
+  if (message::has_definer(getTableMessage()))
+  {
+    push(message::definer(getTableMessage()));
+  }
+  else
+  {
+    push();
+  }
 }

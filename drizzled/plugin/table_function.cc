@@ -41,6 +41,7 @@ void plugin::TableFunction::init()
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
   message::set_is_replicated(proto, false);
+  message::set_definer(proto, SYSTEM_USER);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)

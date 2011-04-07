@@ -20,16 +20,16 @@
 
 #pragma once
 
-#include <drizzled/message/table.h>
-#include <drizzled/message/schema.h>
+#include <drizzled/message/access.h>
 #include <drizzled/message/replication_options.h>
+#include <drizzled/message/schema.h>
+#include <drizzled/message/table.h>
 #if 0
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/text_format.h>
 #endif
-#include <drizzled/identifier.h>
 
-#include <boost/shared_ptr.hpp>
+#include <drizzled/identifier.h>
 
 namespace drizzled {
 namespace message {

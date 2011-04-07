@@ -70,7 +70,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
       table_list.push_back(iter->second);
     }
 
-    for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
+    for (drizzled::Table *tmp_table= getSession().open_tables.getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
     {
       if (tmp_table->getShare())
       {

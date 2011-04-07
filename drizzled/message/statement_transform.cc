@@ -39,6 +39,7 @@
 #include <drizzled/message.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/access.h>
 
 #include <string>
 #include <vector>
@@ -892,6 +893,12 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
     destination.append(" REPLICATE = FALSE");
   }
 
+  if (message::has_definer(schema))
+  {
+    destination.append(" DEFINER ");
+    destination.append(message::definer(schema));
+  }
+
   return NONE;
 }
 
@@ -1088,6 +1095,12 @@ transformTableDefinitionToSql(const Table &table,
   if (not message::is_replicated(table))
   {
     destination.append(" REPLICATE = FALSE");
+  }
+
+  if (message::has_definer(table))
+  {
+    destination.append(" DEFINER ");
+    destination.append(message::definer(table));
   }
 
   return NONE;

@@ -181,7 +181,7 @@ bool statement::AlterTable::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= session().find_temporary_table(catch22);
+    Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
@@ -841,7 +841,7 @@ static bool lockTableIfDifferent(Session &session,
     if (original_table_identifier.isTmp())
     {
 
-      if (session.find_temporary_table(new_table_identifier))
+      if (session.open_tables.find_temporary_table(new_table_identifier))
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
         return false;
@@ -1162,7 +1162,7 @@ static bool internal_alter_table(Session *session,
       if (new_table)
       {
         /* close_temporary_table() frees the new_table pointer. */
-        session->close_temporary_table(new_table);
+        session->open_tables.close_temporary_table(new_table);
       }
       else
       {
@@ -1199,14 +1199,14 @@ static bool internal_alter_table(Session *session,
   else if (original_table_identifier.isTmp())
   {
     /* Close lock if this is a transactional table */
-    if (session->lock)
+    if (session->open_tables.lock)
     {
-      session->unlockTables(session->lock);
-      session->lock= 0;
+      session->unlockTables(session->open_tables.lock);
+      session->open_tables.lock= 0;
     }
 
     /* Remove link to old table and rename the new one */
-    session->close_temporary_table(table);
+    session->open_tables.close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
     new_table->getMutableShare()->setIdentifier(new_table_identifier);
