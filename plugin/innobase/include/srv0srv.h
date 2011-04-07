@@ -223,6 +223,14 @@ extern ulong	srv_max_purge_lag;
 
 extern ulong	srv_replication_delay;
 
+extern uint64_t	srv_ibuf_max_size;
+extern uint32_t	srv_ibuf_active_contract;
+extern uint32_t srv_ibuf_accel_rate;
+extern uint32_t srv_checkpoint_age_target;
+extern uint32_t srv_flush_neighbor_pages;
+extern uint32_t	srv_read_ahead;
+extern uint32_t srv_adaptive_flushing_method;
+
 extern ibool    srv_read_only;
 extern ibool    srv_fake_write;
 extern ibool    srv_apply_log_only;
@@ -399,8 +407,9 @@ enum {
 				when writing data files, but do flush
 				after writing to log files */
 	SRV_UNIX_NOSYNC,	/*!< do not flush after writing */
-	SRV_UNIX_O_DIRECT	/*!< invoke os_file_set_nocache() on
+	SRV_UNIX_O_DIRECT,	/*!< invoke os_file_set_nocache() on
 				data files */
+	SRV_UNIX_ALL_O_DIRECT	/*!< Open log file also with O_DIRECT */
 };
 
 /** Alternatives for file i/o in Windows */
