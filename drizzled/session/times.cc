@@ -21,18 +21,19 @@
 #include <drizzled/statistics_variables.h>
 
 namespace drizzled {
+namespace session {
 
-type::Time::epoch_t session::Times::getCurrentTimestamp(bool actual) const
+type::Time::epoch_t Times::getCurrentTimestamp(bool actual) const
 {
   return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
 }
 
-type::Time::epoch_t session::Times::getCurrentTimestampEpoch() const
+type::Time::epoch_t Times::getCurrentTimestampEpoch() const
 {
 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
 }
 
-type::Time::epoch_t session::Times::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+type::Time::epoch_t Times::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
 {
   if (not _user_time.is_not_a_date_time())
   {
@@ -44,56 +45,57 @@ type::Time::epoch_t session::Times::getCurrentTimestampEpoch(type::Time::usec_t 
   return (_start_timer - _epoch).total_seconds();
 }
 
-uint64_t Session::getElapsedTime() const
+uint64_t Times::getElapsedTime() const
 {
-  return (times._end_timer - times._start_timer).total_microseconds();
+  return (_end_timer - _start_timer).total_microseconds();
 }
 
-void Session::resetUserTime()
+void Times::resetUserTime()
 {
-  times._user_time= boost::posix_time::not_a_date_time;
+  _user_time= boost::posix_time::not_a_date_time;
 }
 
-boost::posix_time::ptime Session::start_timer() const
+boost::posix_time::ptime Times::start_timer() const
 {
-  return times._start_timer;
+  return _start_timer;
 }
 
-void Session::set_time()
+void Times::set_time()
 {
-  times._end_timer= times._start_timer= boost::posix_time::microsec_clock::universal_time();
-  times.utime_after_lock= (times._start_timer - times._epoch).total_microseconds();
+  _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
+  utime_after_lock= (_start_timer - _epoch).total_microseconds();
 }
 
-void Session::set_time_after_lock()
+void Times::set_time_after_lock()
 {
-  times.utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - times._epoch).total_microseconds();
+  utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
 }
 
-type::Time::epoch_t Session::query_start()
+type::Time::epoch_t Times::query_start()
 {
-  return times.getCurrentTimestampEpoch();
+  return getCurrentTimestampEpoch();
 }
 
-void Session::set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
+void Times::set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
 {
-  times._user_time= boost::posix_time::from_time_t(t);
+  _user_time= boost::posix_time::from_time_t(t);
 }
 
-uint64_t Session::getConnectMicroseconds() const
+uint64_t Times::getConnectMicroseconds() const
 {
-  return (times._connect_time - times._epoch).total_microseconds();
+  return (_connect_time - _epoch).total_microseconds();
 }
 
-uint64_t Session::getConnectSeconds() const
+uint64_t Times::getConnectSeconds() const
 {
-  return (times._connect_time - times._epoch).total_seconds();
+  return (_connect_time - _epoch).total_seconds();
 }
 
-void Session::set_end_timer()
+void Times::set_end_timer(Session& session)
 {
-  times._end_timer= boost::posix_time::microsec_clock::universal_time();
-  status_var.execution_time_nsec+= (times._end_timer - times._start_timer).total_microseconds();
+  _end_timer= boost::posix_time::microsec_clock::universal_time();
+  session.status_var.execution_time_nsec+= (_end_timer - _start_timer).total_microseconds();
 }
 
+}
 }

@@ -241,7 +241,7 @@ public:
     */
     uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
-    if (session->getElapsedTime() < sysvar_logging_query_threshold_slow.get())
+    if (session->times.getElapsedTime() < sysvar_logging_query_threshold_slow.get())
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -269,16 +269,14 @@ public:
 
     // to avoid trying to printf %s something that is potentially NULL
     util::string::const_shared_ptr schema(session->schema());
-    const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";
-
     formatter % t_mark
               % session->thread_id
               % session->getQueryId()
-              % dbs
+              % (schema ? schema->c_str() : "")
               % qs
               % getCommandName(session->command)
-              % (t_mark - session->getConnectMicroseconds())
-              % session->getElapsedTime()
+              % (t_mark - session->times.getConnectMicroseconds())
+              % session->times.getElapsedTime()
               % (t_mark - session->times.utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count

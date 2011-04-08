@@ -1131,14 +1131,14 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)
 {
-  session->set_time(time_t(var->getInteger()));
+  session->times.set_time(time_t(var->getInteger()));
   return 0;
 }
 
 
 void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
-  session->resetUserTime();
+  session->times.resetUserTime();
 }
 
 

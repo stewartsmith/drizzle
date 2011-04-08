@@ -580,7 +580,7 @@ void Session::prepareForQueries()
   version= refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
-  set_time();
+  times.set_time();
 
   mem_root->reset_root_defaults(variables.query_alloc_block_size,
                                 variables.query_prealloc_size);

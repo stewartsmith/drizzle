@@ -83,6 +83,7 @@
 #include <drizzled/error.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
@@ -274,9 +275,9 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     }
   }
 
-  set_time_after_lock();
+  times.set_time_after_lock();
 
-  return (sql_lock);
+  return sql_lock;
 }
 
 
@@ -288,8 +289,8 @@ int Session::lock_external(Table **tables, uint32_t count)
     assert((*tables)->reginfo.lock_type >= TL_READ);
     lock_type=F_WRLCK;				/* Lock exclusive */
     if ((*tables)->db_stat & HA_READ_ONLY ||
-	((*tables)->reginfo.lock_type >= TL_READ &&
-	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
+      ((*tables)->reginfo.lock_type >= TL_READ &&
+      (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
 
     if ((error=(*tables)->cursor->ha_external_lock(this,lock_type)))
@@ -298,8 +299,8 @@ int Session::lock_external(Table **tables, uint32_t count)
       while (--i)
       {
         tables--;
-	(*tables)->cursor->ha_external_lock(this, F_UNLCK);
-	(*tables)->current_lock=F_UNLCK;
+        (*tables)->cursor->ha_external_lock(this, F_UNLCK);
+        (*tables)->current_lock=F_UNLCK;
       }
       return error;
     }

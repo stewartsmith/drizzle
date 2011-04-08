@@ -358,11 +358,6 @@ public:
    */
   enum_server_command command;
 
-public:
-
-  void resetUserTime();
-  boost::posix_time::ptime start_timer() const;
-
   thr_lock_type update_lock_default;
 
   /*
@@ -864,13 +859,6 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  type::Time::epoch_t query_start();
-  void set_time();
-  void set_time(time_t); // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
-  void set_time_after_lock();
-  void set_end_timer();
-  uint64_t getElapsedTime() const;
-
   uint64_t found_rows() const
   {
     return limit_found_rows;
@@ -1014,13 +1002,6 @@ public:
    * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
-
-  /**
-   * Returns the timestamp (in microseconds) of when the Session
-   * connected to the server.
-   */
-  uint64_t getConnectMicroseconds() const;
-  uint64_t getConnectSeconds() const;
 
   /**
    * Returns a pointer to the active Transaction message for this

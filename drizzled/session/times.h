@@ -16,25 +16,36 @@
  */
 
 #include <boost/date_time.hpp>
+#include <drizzled/common_fwd.h>
 #include <drizzled/type/time.h>
 
 namespace drizzled {
 namespace session {
 
-class Times
+class DRIZZLED_API Times
 {
 public:
-	Times()
-    : _epoch(boost::gregorian::date(1970, 1 ,1))
+	Times() :
+    _epoch(boost::gregorian::date(1970, 1 ,1))
 	{
     
     _connect_time = boost::posix_time::microsec_clock::universal_time();
 		utime_after_lock = 0;
 	}
 
+  uint64_t getConnectMicroseconds() const;
+  uint64_t getConnectSeconds() const;
+  void resetUserTime();
+  void set_time();
+  void set_time(time_t); // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
+  void set_time_after_lock();
+  void set_end_timer(Session&);
+  uint64_t getElapsedTime() const;
   type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
   type::Time::epoch_t getCurrentTimestampEpoch() const;
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t& fraction_arg) const;
+  type::Time::epoch_t query_start();
+  boost::posix_time::ptime start_timer() const;
 
   boost::posix_time::ptime _epoch;
   boost::posix_time::ptime _connect_time;

@@ -57,6 +57,7 @@
 #include <drizzled/table_ident.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 
 #include <limits.h>
@@ -193,7 +194,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   session->command= command;
   session->lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
-  session->set_time();
+  session->times.set_time();
   session->setQueryId(query_id.value());
 
   switch( command ) {
@@ -784,59 +785,40 @@ void create_select_for_variable(Session *session, const char *var_name)
 void parse(Session *session, const char *inBuf, uint32_t length)
 {
   session->lex().start(session);
-
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
    * by setting the query_safe_cache param to TRUE
    */
-  bool res= true;
-  if (plugin::QueryCache::isCached(session))
-  {
-    res= plugin::QueryCache::sendCachedResultset(session);
-  }
-  if (not res)
-  {
-    return;
-  }
-  LEX *lex= &session->lex();
+  if (plugin::QueryCache::isCached(session) && not plugin::QueryCache::sendCachedResultset(session))
+      return;
   Lex_input_stream lip(session, inBuf, length);
-  bool err= parse_sql(session, &lip);
-  if (!err)
-  {
-    {
-      if (not session->is_error())
-      {
-        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
-                                 session->thread_id,
-                                 const_cast<const char *>(session->schema()->c_str()));
-        // Implement Views here --Brian
-        /* Actually execute the query */
-        try
-        {
-          execute_command(session);
-        }
-        catch (...)
-        {
-          // Just try to catch any random failures that could have come
-          // during execution.
-          DRIZZLE_ABORT;
-        }
-        DRIZZLE_QUERY_EXEC_DONE(0);
-      }
-    }
-  }
-  else
-  {
+  if (parse_sql(session, &lip))
     assert(session->is_error());
+  else if (not session->is_error())
+  {
+    DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(), session->thread_id,
+                             const_cast<const char *>(session->schema()->c_str()));
+    // Implement Views here --Brian
+    /* Actually execute the query */
+    try
+    {
+      execute_command(session);
+    }
+    catch (...)
+    {
+      // Just try to catch any random failures that could have come
+      // during execution.
+      DRIZZLE_ABORT;
+    }
+    DRIZZLE_QUERY_EXEC_DONE(0);
   }
-  lex->unit.cleanup();
+  session->lex().unit.cleanup();
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-  session->set_end_timer();
+  session->times.set_end_timer(*session);
 }
-
 
 
 /**
