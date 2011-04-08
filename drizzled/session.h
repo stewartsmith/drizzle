@@ -78,8 +78,6 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class Session_times;
-
 class DRIZZLED_API Session : public Open_tables_state
 {
 private:
@@ -402,7 +400,7 @@ public:
 
   session::Transactions& transaction;
   Open_tables_state& open_tables;
-	Session_times& times;
+	session::Times& times;
 
   Field *dup_field;
   sigset_t signals;
@@ -903,36 +901,11 @@ public:
   void set_time_after_lock();
   void set_end_timer();
 
-  uint64_t getElapsedTime() const
-  {
-    return (_end_timer - _start_timer).total_microseconds();
-  }
+  uint64_t getElapsedTime() const;
 
-  /**
-   * Returns the current micro-timestamp
-   */
-  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
-  {
-    return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
-  }
-
-  // We may need to set user on this
-  type::Time::epoch_t getCurrentTimestampEpoch() const
-  {
-	 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
-  }
-
-  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
-  {
-    if (not _user_time.is_not_a_date_time())
-    {
-      fraction_arg= 0;
-      return (_user_time - _epoch).total_seconds();
-    }
-
-    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
-    return (_start_timer - _epoch).total_seconds();
-  }
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
+  type::Time::epoch_t getCurrentTimestampEpoch() const;
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const;
 
   uint64_t found_rows() const
   {

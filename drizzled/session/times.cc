@@ -16,10 +16,37 @@
  */
 
 #include <config.h>
-#include <drizzled/session_times.h>
+#include <drizzled/session/times.h>
 #include <drizzled/session.h>
 
 namespace drizzled {
+
+type::Time::epoch_t Session::getCurrentTimestamp(bool actual) const
+{
+  return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
+}
+
+type::Time::epoch_t Session::getCurrentTimestampEpoch() const
+{
+	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
+}
+
+type::Time::epoch_t Session::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+{
+  if (not _user_time.is_not_a_date_time())
+  {
+    fraction_arg= 0;
+    return (_user_time - _epoch).total_seconds();
+  }
+
+  fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
+  return (_start_timer - _epoch).total_seconds();
+}
+
+uint64_t Session::getElapsedTime() const
+{
+  return (_end_timer - _start_timer).total_microseconds();
+}
 
 void Session::resetUserTime()
 {

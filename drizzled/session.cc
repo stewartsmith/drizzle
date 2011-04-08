@@ -66,9 +66,9 @@
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
 #include <drizzled/session/property_map.h>
-// #include <drizzled/session/state.h>
-#include <drizzled/session_times.h>
+#include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
+#include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
@@ -166,7 +166,7 @@ public:
   system_status_var status_var;
   session::TableMessages table_message_cache;
   std::vector<table::Singular*> temporary_shares;
-	Session_times times;
+	session::Times times;
 	session::Transactions transaction;
   drizzle_system_variables variables;
 };
@@ -566,7 +566,7 @@ bool Session::storeGlobals()
   */
   lock_info.init();
 
-  return false;
+  return false; // todo: return void
 }
 
 /*
@@ -782,7 +782,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
   }
   query.reset(new_query);
-  // _state.reset(new session::State(in_packet, in_packet_length));
+  _state.reset(new session::State(in_packet, in_packet_length));
 
   return true;
 }

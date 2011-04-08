@@ -179,6 +179,7 @@ namespace session
 { 
   class State; 
   class TableMessages;
+  class Times;
   class Transactions;
 }
 

@@ -16,11 +16,12 @@
  */
 
 namespace drizzled {
+namespace session {
 
-class Session_times
+class Times
 {
 public:
-	Session_times()
+	Times()
 	{
 		utime_after_lock_ = 0;
 	}
@@ -28,4 +29,5 @@ public:
 	uint64_t utime_after_lock_;
 };
 
+}
 }

@@ -57,11 +57,9 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::Session* tmp;
-
-  while ((tmp= session_generator))
+  while (Session* tmp= session_generator)
   {
-    drizzled::session::State::const_shared_ptr state(tmp->state());
+    boost::shared_ptr<session::State> state(tmp->state());
     identifier::user::ptr tmp_sctx= tmp->user();
 
     /* ID */
@@ -77,7 +75,7 @@ bool ProcesslistTool::Generator::populate()
     push(tmp_sctx->address());
 
     /* DB */
-    drizzled::util::string::const_shared_ptr schema(tmp->schema());
+    util::string::const_shared_ptr schema(tmp->schema());
     if (schema and not schema->empty())
     {
       push(*schema);
@@ -88,10 +86,9 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* COMMAND */
-    const char *val= tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : NULL;
-    if (val)
+    if (tmp->getKilled() == Session::KILL_CONNECTION)
     {
-      push(val);
+      push("Killed");
     }
     else
     {
