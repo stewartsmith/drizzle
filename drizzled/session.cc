@@ -166,6 +166,7 @@ public:
   system_status_var status_var;
   session::TableMessages table_message_cache;
   util::string::mptr schema;
+  boost::shared_ptr<session::State> state;
   std::vector<table::Singular*> temporary_shares;
 	session::Times times;
 	session::Transactions transaction;
@@ -585,28 +586,20 @@ void Session::prepareForQueries()
     resetUsage();
 }
 
-bool Session::initGlobals()
-{
-  storeGlobals();
-  return false; // return void
-}
-
 void Session::run()
 {
-  if (initGlobals() || authenticate())
+  storeGlobals();
+  if (authenticate())
   {
     disconnect();
     return;
   }
-
   prepareForQueries();
-
   while (not client->haveError() && getKilled() != KILL_CONNECTION)
   {
     if (not executeStatement())
       break;
   }
-
   disconnect();
 }
 
@@ -769,9 +762,9 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
   }
   query.reset(new_query);
-  _state.reset(new session::State(in_packet, in_packet_length));
+  impl_->state.reset(new session::State(in_packet, in_packet_length));
 
-  return true;
+  return true; // return void
 }
 
 bool Session::endTransaction(enum enum_mysql_completiontype completion)
@@ -2105,6 +2098,31 @@ util::string::ptr Session::schema() const
 {
   return impl_->schema ? impl_->schema : boost::make_shared<std::string>();
 }
+
+void Session::resetQueryString()
+{
+  query.reset();
+  impl_->state.reset();
+}
+
+const boost::shared_ptr<session::State>& Session::state()
+{
+  return impl_->state;
+}
+
+/*
+const char* Session::getQueryStringCopy(size_t &length)
+{
+  QueryString tmp_string(getQueryString());
+  if (not tmp_string)
+  {
+    length= 0;
+    return NULL;
+  }
+  length= tmp_string->length();
+  return strmake(tmp_string->c_str(), tmp_string->length());
+}
+*/
 
 const std::string& display::type(drizzled::Session::global_read_lock_t type)
 {

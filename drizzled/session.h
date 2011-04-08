@@ -165,60 +165,27 @@ private:
   // requires under some setup non const, you must copy the QueryString in
   // order to use it.
 public:
+  // QueryString getQueryString() const;
+  void resetQueryString();
+  // const char* getQueryStringCopy(size_t&length);
+  const boost::shared_ptr<session::State>& state();
+
   QueryString getQueryString() const
   {
     return query;
   }
 
-  void resetQueryString()
-  {
-    query.reset();
-    _state.reset();
-  }
-
-  /*
-    We need to copy the lock on the string in order to make sure we have a stable string.
-    Once this is done we can use it to build a const char* which can be handed off for
-    a method to use (Innodb is currently the only engine using this).
-  */
-  const char *getQueryStringCopy(size_t &length)
+  const char* getQueryStringCopy(size_t &length)
   {
     QueryString tmp_string(getQueryString());
-
     if (not tmp_string)
     {
       length= 0;
       return NULL;
     }
-
     length= tmp_string->length();
-    char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
-    return to_return;
+    return strmake(tmp_string->c_str(), tmp_string->length());
   }
-
-private:
-  boost::shared_ptr<session::State> _state;
-
-public:
-
-  const boost::shared_ptr<session::State>& state()
-  {
-    return _state;
-  }
-
-  /**
-    Name of the current (default) database.
-
-    If there is the current (default) database, "db" contains its name. If
-    there is no current (default) database, "db" is NULL and "db_length" is
-    0. In other words, "db", "db_length" must either be NULL, or contain a
-    valid database name.
-
-    @note this attribute is set and alloced by the slave SQL thread (for
-    the Session of that thread); that thread is (and must remain, for now) the
-    only responsible for freeing this member.
-  */
-public:
 
   util::string::ptr schema() const;
 
@@ -771,16 +738,6 @@ public:
   void cleanup_after_query();
   void storeGlobals();
   void awake(Session::killed_state_t state_to_set);
-  /**
-   * Pulls thread-specific variables into Session state.
-   *
-   * Returns true most times, or false if there was a problem
-   * allocating resources for thread-specific storage.
-   *
-   * @TODO Kill this.  It's not necessary once my_thr_init() is bye bye.
-   *
-   */
-  bool initGlobals();
 
   /**
     Initialize memory roots necessary for query processing and (!)
