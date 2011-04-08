@@ -165,9 +165,7 @@ private:
   // requires under some setup non const, you must copy the QueryString in
   // order to use it.
 public:
-  // QueryString getQueryString() const;
   void resetQueryString();
-  // const char* getQueryStringCopy(size_t&length);
   const boost::shared_ptr<session::State>& state();
 
   QueryString getQueryString() const

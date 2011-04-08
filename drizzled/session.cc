@@ -2110,20 +2110,6 @@ const boost::shared_ptr<session::State>& Session::state()
   return impl_->state;
 }
 
-/*
-const char* Session::getQueryStringCopy(size_t &length)
-{
-  QueryString tmp_string(getQueryString());
-  if (not tmp_string)
-  {
-    length= 0;
-    return NULL;
-  }
-  length= tmp_string->length();
-  return strmake(tmp_string->c_str(), tmp_string->length());
-}
-*/
-
 const std::string& display::type(drizzled::Session::global_read_lock_t type)
 {
   static const std::string NONE= "NONE";
