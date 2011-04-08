@@ -22,26 +22,26 @@
 
 namespace drizzled {
 
-type::Time::epoch_t Session::getCurrentTimestamp(bool actual) const
+type::Time::epoch_t session::Times::getCurrentTimestamp(bool actual) const
 {
-  return ((actual ? boost::posix_time::microsec_clock::universal_time() : times._end_timer) - times._epoch).total_microseconds();
+  return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
 }
 
-type::Time::epoch_t Session::getCurrentTimestampEpoch() const
+type::Time::epoch_t session::Times::getCurrentTimestampEpoch() const
 {
-	return ((times._user_time.is_not_a_date_time() ? times._start_timer : times._user_time) - times._epoch).total_seconds();
+	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
 }
 
-type::Time::epoch_t Session::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+type::Time::epoch_t session::Times::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
 {
-  if (not times._user_time.is_not_a_date_time())
+  if (not _user_time.is_not_a_date_time())
   {
     fraction_arg= 0;
-    return (times._user_time - times._epoch).total_seconds();
+    return (_user_time - _epoch).total_seconds();
   }
 
-  fraction_arg= times._start_timer.time_of_day().fractional_seconds() % 1000000;
-  return (times._start_timer - times._epoch).total_seconds();
+  fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
+  return (_start_timer - _epoch).total_seconds();
 }
 
 uint64_t Session::getElapsedTime() const
@@ -72,7 +72,7 @@ void Session::set_time_after_lock()
 
 type::Time::epoch_t Session::query_start()
 {
-  return getCurrentTimestampEpoch();
+  return times.getCurrentTimestampEpoch();
 }
 
 void Session::set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time

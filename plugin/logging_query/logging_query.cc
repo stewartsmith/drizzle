@@ -239,9 +239,9 @@ public:
       inside itself, so be more accurate, and so this doesnt have to
       keep calling current_utime, which can be slow.
     */
-    uint64_t t_mark= session->getCurrentTimestamp(false);
+    uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
-    if (session->getElapsedTime() < (sysvar_logging_query_threshold_slow.get()))
+    if (session->getElapsedTime() < sysvar_logging_query_threshold_slow.get())
       return false;
 
     Session::QueryString query_string(session->getQueryString());

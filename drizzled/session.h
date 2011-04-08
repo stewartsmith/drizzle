@@ -870,9 +870,6 @@ public:
   void set_time_after_lock();
   void set_end_timer();
   uint64_t getElapsedTime() const;
-  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
-  type::Time::epoch_t getCurrentTimestampEpoch() const;
-  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const;
 
   uint64_t found_rows() const
   {

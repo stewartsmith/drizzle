@@ -16,6 +16,7 @@
  */
 
 #include <boost/date_time.hpp>
+#include <drizzled/type/time.h>
 
 namespace drizzled {
 namespace session {
@@ -30,6 +31,10 @@ public:
     _connect_time = boost::posix_time::microsec_clock::universal_time();
 		utime_after_lock = 0;
 	}
+
+  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
+  type::Time::epoch_t getCurrentTimestampEpoch() const;
+  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t& fraction_arg) const;
 
   boost::posix_time::ptime _epoch;
   boost::posix_time::ptime _connect_time;

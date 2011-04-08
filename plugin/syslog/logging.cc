@@ -84,7 +84,7 @@ bool logging::Syslog::post(drizzled::Session *session)
     inside itself, so be more accurate, and so this doesnt have to
     keep calling current_utime, which can be slow.
   */
-  uint64_t t_mark= session->getCurrentTimestamp(false);
+  uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
   // return if query was not too slow
   if (session->getElapsedTime() < _threshold_slow)
