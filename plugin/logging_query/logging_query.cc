@@ -268,7 +268,7 @@ public:
     quotify(*query_string, qs);
 
     // to avoid trying to printf %s something that is potentially NULL
-    util::string::const_shared_ptr schema(session->schema());
+    util::string::ptr schema(session->schema());
     formatter % t_mark
               % session->thread_id
               % session->getQueryId()

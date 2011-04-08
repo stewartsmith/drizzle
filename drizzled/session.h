@@ -220,10 +220,7 @@ public:
   */
 public:
 
-  util::string::const_shared_ptr schema() const
-  {
-    return _schema ? _schema : util::string::const_shared_ptr(new std::string);
-  }
+  util::string::ptr schema() const;
 
   /* current cache key */
   std::string query_cache_key;
@@ -772,7 +769,7 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool storeGlobals();
+  void storeGlobals();
   void awake(Session::killed_state_t state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
@@ -1269,7 +1266,6 @@ private:
   identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
   plugin::Client *client;
-  util::string::shared_ptr _schema;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape

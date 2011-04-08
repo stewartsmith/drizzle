@@ -237,7 +237,7 @@ public:
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    drizzled::util::string::const_shared_ptr dbs(session->schema());
+    drizzled::util::string::ptr dbs(session->schema());
   
     msgbuf_len=
       snprintf(msgbuf.get(), MAX_MSG_LEN,

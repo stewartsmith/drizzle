@@ -88,7 +88,7 @@ bool Sessions::Generator::populate()
     push(tmp->catalog().name());
 
     /* SCHEMA */
-    util::string::const_shared_ptr schema(tmp->schema());
+    util::string::ptr schema(tmp->schema());
     if (schema and not schema->empty())
     {
       push(*schema);

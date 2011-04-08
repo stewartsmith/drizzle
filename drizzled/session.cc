@@ -165,6 +165,7 @@ public:
   schema_event_observers_t schema_event_observers;
   system_status_var status_var;
   session::TableMessages table_message_cache;
+  util::string::mptr schema;
   std::vector<table::Singular*> temporary_shares;
 	session::Times times;
 	session::Transactions transaction;
@@ -535,21 +536,17 @@ void Session::awake(Session::killed_state_t state_to_set)
   Remember the location of thread info, the structure needed for
   memory::sql_alloc() and the structure for the net buffer
 */
-bool Session::storeGlobals()
+void Session::storeGlobals()
 {
   /*
     Assert that thread_stack is initialized: it's necessary to be able
     to track stack overrun.
   */
   assert(thread_stack);
-
-  currentSession().release();
   currentSession().reset(this);
-
-  currentMemRoot().release();
   currentMemRoot().reset(&mem_root);
 
-  mysys_var=my_thread_var;
+  mysys_var= my_thread_var;
 
   /*
     Let mysqld define the thread id (not mysys)
@@ -562,8 +559,6 @@ bool Session::storeGlobals()
     created in another thread
   */
   lock_info.init();
-
-  return false; // todo: return void
 }
 
 /*
@@ -592,13 +587,8 @@ void Session::prepareForQueries()
 
 bool Session::initGlobals()
 {
-  if (storeGlobals())
-  {
-    disconnect(ER_OUT_OF_RESOURCES);
-    status_var.aborted_connects++;
-    return true;
-  }
-  return false;
+  storeGlobals();
+  return false; // return void
 }
 
 void Session::run()
@@ -774,9 +764,9 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
 
   std::string *new_query= new std::string(in_packet, in_packet_length);
   // We can not be entirely sure _schema has a value
-  if (_schema)
+  if (impl_->schema)
   {
-    plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
+    plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
   }
   query.reset(new_query);
   _state.reset(new session::State(in_packet, in_packet_length));
@@ -1082,7 +1072,7 @@ static int create_file(Session *session,
   if (not to_file.has_root_directory())
   {
     target_path= fs::system_complete(getDataHomeCatalog());
-    util::string::const_shared_ptr schema(session->schema());
+    util::string::ptr schema(session->schema());
     if (schema and not schema->empty())
     {
       int count_elements= 0;
@@ -1597,21 +1587,15 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  assert(_schema);
-  if (_schema and _schema->empty())
+  assert(impl_->schema);
+  if (not impl_->schema || impl_->schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  else if (not _schema)
-  {
-    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-    return true;
-  }
-  assert(_schema);
 
-  *p_db= strmake(_schema->c_str(), _schema->size());
-  *p_db_length= _schema->size();
+  *p_db= strmake(impl_->schema->c_str(), impl_->schema->size());
+  *p_db_length= impl_->schema->size();
 
   return false;
 }
@@ -1652,17 +1636,9 @@ void Session::set_status_var_init()
 }
 
 
-void Session::set_db(const std::string &new_db)
+void Session::set_db(const std::string& new_db)
 {
-  /* Do not reallocate memory if current chunk is big enough. */
-  if (new_db.length())
-  {
-    _schema.reset(new std::string(new_db));
-  }
-  else
-  {
-    _schema.reset(new std::string(""));
-  }
+  impl_->schema = boost::make_shared<std::string>(new_db);
 }
 
 
@@ -1678,7 +1654,7 @@ void Session::markTransactionForRollback(bool all)
   transaction_rollback_request= all;
 }
 
-void Session::disconnect(enum error_t errcode)
+void Session::disconnect(error_t errcode)
 {
   /* Allow any plugins to cleanup their session variables */
   plugin_sessionvar_cleanup(this);
@@ -1695,7 +1671,7 @@ void Session::disconnect(enum error_t errcode)
     {
       errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
-                  , (_schema->empty() ? "unconnected" : _schema->c_str())
+                  , (impl_->schema->empty() ? "unconnected" : impl_->schema->c_str())
                   , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
                   , security_ctx->address().c_str()
                   , (main_da().is_error() ? main_da().message() : ER(ER_UNKNOWN_ERROR)));
@@ -2123,6 +2099,11 @@ plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_nam
 my_xid Session::getTransactionId()
 {
   return transaction.xid_state.xid.quick_get_my_xid();
+}
+
+util::string::ptr Session::schema() const
+{
+  return impl_->schema ? impl_->schema : boost::make_shared<std::string>();
 }
 
 const std::string& display::type(drizzled::Session::global_read_lock_t type)

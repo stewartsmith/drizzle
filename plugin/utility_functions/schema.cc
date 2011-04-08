@@ -23,16 +23,13 @@
 #include <drizzled/session.h>
 #include <plugin/utility_functions/functions.h>
 
-namespace drizzled
-{
-
-namespace utility_functions
-{
+namespace drizzled {
+namespace utility_functions {
 
 String *Schema::val_str(String *str)
 {
   assert(fixed == 1);
-  util::string::const_shared_ptr schema= getSession().schema();
+  util::string::ptr schema= getSession().schema();
   if (not schema or schema->empty())
   {
     null_value= 1;

@@ -76,7 +76,7 @@ bool ProcesslistTool::Generator::populate()
     push(tmp_sctx->address());
 
     /* DB */
-    util::string::const_shared_ptr schema(tmp->schema());
+    util::string::ptr schema(tmp->schema());
     if (schema and not schema->empty())
     {
       push(*schema);

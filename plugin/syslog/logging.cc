@@ -91,7 +91,7 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
 
   drizzled::Session::QueryString query_string(session->getQueryString());
-  drizzled::util::string::const_shared_ptr schema(session->schema());
+  drizzled::util::string::ptr schema(session->schema());
 
   WrapSyslog::singleton()
     .log(_facility, _priority,
