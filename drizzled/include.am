@@ -404,6 +404,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/select_to_file.h \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
+			      drizzled/session_times.h \
 			      drizzled/session/cache.h \
 			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
@@ -814,6 +815,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/resource_context.cc \
 			   drizzled/select_dumpvar.cc \
 			   drizzled/session.cc \
+			   drizzled/session_times.cc \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \
 			   drizzled/session/table_messages.cc \

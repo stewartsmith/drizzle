@@ -902,22 +902,14 @@ public:
     return getCurrentTimestampEpoch();
   }
 
-  void set_time()
-  {
-    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
-    utime_after_lock= (_start_timer - _epoch).total_microseconds();
-  }
+  void set_time();
 
   void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
   {
     _user_time= boost::posix_time::from_time_t(t);
   }
 
-  void set_time_after_lock()
-  {
-    utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
-  }
-
+  void set_time_after_lock();
   void set_end_timer();
 
   uint64_t getElapsedTime() const
