@@ -22,6 +22,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_parse.h>
 #include PCRE_HEADER
 #include <limits.h>
@@ -278,7 +279,7 @@ public:
               % getCommandName(session->command)
               % (t_mark - session->getConnectMicroseconds())
               % session->getElapsedTime()
-              % (t_mark - session->utime_after_lock)
+              % (t_mark - session->times.utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count
               % session->tmp_table

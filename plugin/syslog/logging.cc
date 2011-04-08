@@ -30,14 +30,14 @@
 
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/plugin.h>
 
 #include "logging.h"
 #include "wrap.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 logging::Syslog::Syslog(const std::string &facility,
                         const std::string &priority,
@@ -112,7 +112,7 @@ bool logging::Syslog::post(drizzled::Session *session)
          drizzled::getCommandName(session->command).c_str(),
          (unsigned long long) (t_mark - session->getConnectMicroseconds()),
          (unsigned long long) (session->getElapsedTime()),
-         (unsigned long long) (t_mark - session->utime_after_lock),
+         (unsigned long long) (t_mark - session->times.utime_after_lock),
          (unsigned long) session->sent_row_count,
          (unsigned long) session->examined_row_count,
          (unsigned long) session->tmp_table,

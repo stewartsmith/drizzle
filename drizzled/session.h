@@ -357,19 +357,8 @@ public:
    * first byte of the packet in executeStatement()
    */
   enum_server_command command;
-  // uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Client */
-  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
 
-private:
-  boost::posix_time::ptime _epoch;
-  boost::posix_time::ptime _connect_time;
-  boost::posix_time::ptime _end_timer;
-
-  boost::posix_time::ptime _user_time;
 public:
-  boost::posix_time::ptime _start_timer;
-  uint64_t utime_after_lock; // This used by Innodb.
 
   void resetUserTime();
   boost::posix_time::ptime start_timer() const;
@@ -862,20 +851,9 @@ public:
    * Returns true on success, or false on failure.
    */
   bool authenticate();
-
-  /**
-   * Run a session.
-   *
-   * This will initialize the session and begin the command loop.
-   */
   void run();
-
-  /**
-   * Schedule a session to be run on the default scheduler.
-   */
   static bool schedule(Session::shared_ptr&);
-
-  static void unlink(session_id_t &session_id);
+  static void unlink(session_id_t&);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -886,23 +864,12 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  type::Time::epoch_t query_start()
-  {
-    return getCurrentTimestampEpoch();
-  }
-
+  type::Time::epoch_t query_start();
   void set_time();
-
-  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
-  {
-    _user_time= boost::posix_time::from_time_t(t);
-  }
-
+  void set_time(time_t); // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
   void set_time_after_lock();
   void set_end_timer();
-
   uint64_t getElapsedTime() const;
-
   type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
   type::Time::epoch_t getCurrentTimestampEpoch() const;
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const;
@@ -933,7 +900,7 @@ public:
   void fatal_error();
   bool is_error() const;
 
-  inline const charset_info_st *charset() { return default_charset_info; }
+  static const charset_info_st *charset() { return default_charset_info; }
 
   /**
     Cleanup statement parse state (parse tree, lex) and execution
@@ -1055,15 +1022,8 @@ public:
    * Returns the timestamp (in microseconds) of when the Session
    * connected to the server.
    */
-  uint64_t getConnectMicroseconds() const
-  {
-    return (_connect_time - _epoch).total_microseconds();
-  }
-
-  uint64_t getConnectSeconds() const
-  {
-    return (_connect_time - _epoch).total_seconds();
-  }
+  uint64_t getConnectMicroseconds() const;
+  uint64_t getConnectSeconds() const;
 
   /**
    * Returns a pointer to the active Transaction message for this

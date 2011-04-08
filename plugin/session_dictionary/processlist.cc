@@ -30,6 +30,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/thread_var.h>
 #include <drizzled/session/state.h>
+#include <drizzled/session/times.h>
 #include <set>
 
 using namespace std;
@@ -96,7 +97,7 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* type::Time */
-    boost::posix_time::time_duration duration_result= getSession().start_timer() - getSession()._start_timer;
+    boost::posix_time::time_duration duration_result= getSession().start_timer() - getSession().times._start_timer;
     push(static_cast<uint64_t>(duration_result.is_negative() ? 0 : duration_result.total_seconds()));
 
     /* STATE */

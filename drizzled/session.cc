@@ -185,9 +185,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _where(Session::DEFAULT_WHERE),
   mysys_var(0),
   command(COM_CONNECT),
-  _epoch(boost::gregorian::date(1970,1,1)),
-  _connect_time(boost::posix_time::microsec_clock::universal_time()),
-  utime_after_lock(0),
   ha_data(plugin::num_trx_monitored_objects),
   query_id(0),
   warn_query_id(0),
@@ -775,7 +772,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  std::string *new_query= new std::string(in_packet, in_packet + in_packet_length);
+  std::string *new_query= new std::string(in_packet, in_packet_length);
   // We can not be entirely sure _schema has a value
   if (_schema)
   {
@@ -2087,12 +2084,6 @@ void Session::my_ok(ha_rows affected_rows, ha_rows found_rows_arg, uint64_t pass
 void Session::my_eof()
 {
   main_da().set_eof_status(this);
-}
-
-void Session::set_end_timer()
-{
-  _end_timer= boost::posix_time::microsec_clock::universal_time();
-  status_var.execution_time_nsec+= (_end_timer - _start_timer).total_microseconds();
 }
 
 plugin::StorageEngine* Session::getDefaultStorageEngine()

@@ -15,6 +15,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/date_time.hpp>
+
 namespace drizzled {
 namespace session {
 
@@ -22,11 +24,19 @@ class Times
 {
 public:
 	Times()
+    : _epoch(boost::gregorian::date(1970, 1 ,1))
 	{
-		utime_after_lock_ = 0;
+    
+    _connect_time = boost::posix_time::microsec_clock::universal_time();
+		utime_after_lock = 0;
 	}
 
-	uint64_t utime_after_lock_;
+  boost::posix_time::ptime _epoch;
+  boost::posix_time::ptime _connect_time;
+  boost::posix_time::ptime _end_timer;
+  boost::posix_time::ptime _user_time;
+  boost::posix_time::ptime _start_timer;
+	uint64_t utime_after_lock;
 };
 
 }
