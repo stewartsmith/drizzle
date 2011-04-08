@@ -99,9 +99,8 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* type::Time */
-    boost::posix_time::time_duration duration_result;
-    getSession().getTimeDifference(duration_result, getSession().start_timer());
-    duration_result.is_negative() ? push(static_cast<uint64_t>(0)) : push(static_cast<uint64_t>(duration_result.total_seconds()));
+    boost::posix_time::time_duration duration_result= getSession().start_timer() - getSession()._start_timer;
+    push(static_cast<uint64_t>(duration_result.is_negative() ? 0 : duration_result.total_seconds()));
 
     /* STATE */
     const char *step= tmp->get_proc_info();

@@ -26,6 +26,6 @@ public:
 	}
 
 	uint64_t utime_after_lock_;
-}
+};
 
 }

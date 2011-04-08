@@ -78,6 +78,8 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
+class Session_times;
+
 class DRIZZLED_API Session : public Open_tables_state
 {
 private:
@@ -356,35 +358,23 @@ public:
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
    */
-  enum enum_server_command command;
-  uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
+  enum_server_command command;
+  // uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
 
 private:
   boost::posix_time::ptime _epoch;
   boost::posix_time::ptime _connect_time;
-  boost::posix_time::ptime _start_timer;
   boost::posix_time::ptime _end_timer;
 
   boost::posix_time::ptime _user_time;
 public:
+  boost::posix_time::ptime _start_timer;
   uint64_t utime_after_lock; // This used by Innodb.
 
-  void resetUserTime()
-  {
-    _user_time= boost::posix_time::not_a_date_time;
-  }
-
-  const boost::posix_time::ptime &start_timer() const
-  {
-    return _start_timer;
-  }
-
-  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
-  {
-    result_arg=  arg - _start_timer;
-  }
+  void resetUserTime();
+  boost::posix_time::ptime start_timer() const;
 
   thr_lock_type update_lock_default;
 
@@ -412,6 +402,7 @@ public:
 
   session::Transactions& transaction;
   Open_tables_state& open_tables;
+	Session_times& times;
 
   Field *dup_field;
   sigset_t signals;

@@ -16,9 +16,20 @@
  */
 
 #include <config.h>
+#include <drizzled/session_times.h>
 #include <drizzled/session.h>
 
 namespace drizzled {
+
+void Session::resetUserTime()
+{
+  _user_time= boost::posix_time::not_a_date_time;
+}
+
+boost::posix_time::ptime Session::start_timer() const
+{
+  return _start_timer;
+}
 
 void Session::set_time()
 {

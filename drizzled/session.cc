@@ -66,7 +66,8 @@
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
 #include <drizzled/session/property_map.h>
-#include <drizzled/session/state.h>
+// #include <drizzled/session/state.h>
+#include <drizzled/session_times.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/show.h>
@@ -165,6 +166,7 @@ public:
   system_status_var status_var;
   session::TableMessages table_message_cache;
   std::vector<table::Singular*> temporary_shares;
+	Session_times times;
 	session::Transactions transaction;
   drizzle_system_variables variables;
 };
@@ -183,7 +185,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _where(Session::DEFAULT_WHERE),
   mysys_var(0),
   command(COM_CONNECT),
-  file_id(0),
   _epoch(boost::gregorian::date(1970,1,1)),
   _connect_time(boost::posix_time::microsec_clock::universal_time()),
   utime_after_lock(0),
@@ -192,6 +193,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   warn_query_id(0),
 	transaction(impl_->transaction),
   open_tables(*this),
+	times(impl_->times),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
@@ -780,7 +782,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     plugin::QueryRewriter::rewriteQuery(*_schema, *new_query);
   }
   query.reset(new_query);
-  _state.reset(new session::State(in_packet, in_packet_length));
+  // _state.reset(new session::State(in_packet, in_packet_length));
 
   return true;
 }
