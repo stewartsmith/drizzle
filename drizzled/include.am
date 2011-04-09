@@ -227,6 +227,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/hybrid_type_traits_integer.h \
 			      drizzled/identifier.h \
 			      drizzled/identifier/catalog.h \
+			      drizzled/identifier/constants/user.h \
 			      drizzled/identifier/constants/schema.h \
 			      drizzled/identifier/constants/table.h \
 			      drizzled/identifier/schema.h \
@@ -296,6 +297,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/message.h \
+			      drizzled/message/access.h \
 			      drizzled/message/cache.h \
 			      drizzled/message/catalog.h \
 			      drizzled/message/replication_options.h \
@@ -695,6 +697,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/identifier/catalog.cc \
 			   drizzled/identifier/constants/schema.cc \
 			   drizzled/identifier/constants/table.cc \
+			   drizzled/identifier/constants/user.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
 			   drizzled/identifier/user.cc \

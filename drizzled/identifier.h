@@ -49,3 +49,4 @@ public:
 // Constant identifiers used internally
 #include <drizzled/identifier/constants/schema.h>
 #include <drizzled/identifier/constants/table.h>
+#include <drizzled/identifier/constants/user.h>

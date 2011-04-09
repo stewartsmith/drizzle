@@ -42,7 +42,10 @@ libdrizzle_1_0_libdrizzle_libdrizzle_la_CFLAGS= \
 	-DBUILDING_LIBDRIZZLE
 
 libdrizzle_1_0_libdrizzle_libdrizzle_la_LDFLAGS= \
-	$(AM_LDFLAGS)
+	$(AM_LDFLAGS) \
+        $(GCOV_LIBS) \
+	-version-info \
+	$(OLDLIBDRIZZLE_LIBRARY_VERSION)
 
 oldlibdrizzlepkgconfigdir= $(libdir)/pkgconfig
 oldlibdrizzlepkgconfig_DATA= \

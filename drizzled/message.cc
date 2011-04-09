@@ -26,9 +26,6 @@
 #include <drizzled/plugin/event_observer.h>
 #include <drizzled/message.h>
 
-#include <drizzled/message/table.pb.h>
-#include <drizzled/message/schema.pb.h>
-
 #include <string>
 
 namespace drizzled {

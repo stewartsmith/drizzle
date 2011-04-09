@@ -22,7 +22,7 @@ if BUILD_WIN32
 libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_SOURCES+= \
 						  win32/conn_uds.cc
 libdrizzle_1_0_libdrizzle_libdrizzle_la_SOURCES+= \
-						  win32/conn_uds.cc
+						  win32/conn_uds.c
 endif
 
 noinst_HEADERS+= \
@@ -31,11 +31,13 @@ noinst_HEADERS+= \
 
 EXTRA_DIST+= \
 	     win32/config.h \
+	     win32/conn_uds.c \
 	     win32/conn_uds.cc \
 	     win32/drizzle.sln \
-	     win32/libdrizzle.vcxproj \
-	     win32/libdrizzle.vcxproj.filters \
-	     win32/windows/errno.h \
+	     win32/libdrizzle-1.0.vcxproj \
+	     win32/libdrizzle-1.0.vcxproj.filters \
+	     win32/libdrizzle-2.0.vcxproj \
+	     win32/libdrizzle-2.0.vcxproj.filters \
 	     win32/windows/inttypes.h \
 	     win32/windows/stdint.h
 
