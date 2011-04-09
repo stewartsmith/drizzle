@@ -638,7 +638,7 @@ int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &i
     return 1;
 
   /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != getQueryId())
+  if (table->query_id && table->query_id != session_.getQueryId())
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
@@ -718,7 +718,7 @@ void Session::drop_open_table(Table *table, const identifier::Table &identifier)
 {
   if (table->getShare()->getType())
   {
-    close_temporary_table(table);
+    open_tables.close_temporary_table(table);
   }
   else
   {

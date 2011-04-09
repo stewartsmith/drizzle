@@ -80,8 +80,6 @@ public:
   bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
   bool rm_temporary_table(const identifier::Table &identifier, bool best_effort= false);
 
-  virtual query_id_t getQueryId()  const= 0;
-
 private:
   Table *derived_tables;
 public:
@@ -128,7 +126,6 @@ public:
   uint32_t current_tablenr;
 
   Open_tables_state(Session&, uint64_t version_arg);
-  virtual ~Open_tables_state() {}
   void doGetTableNames(CachedDirectory&, const identifier::Schema&, std::set<std::string>&);
   void doGetTableNames(const identifier::Schema&, std::set<std::string>&);
   void doGetTableIdentifiers(CachedDirectory&, const identifier::Schema&, identifier::table::vector&);

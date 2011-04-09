@@ -154,6 +154,11 @@ public:
   typedef session::PropertyMap properties_t;
   typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
 
+  impl_c(Session& session) :
+    open_tables(session, g_refresh_version)
+  {
+  }
+
   Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
@@ -162,6 +167,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  Open_tables_state open_tables;
   properties_t properties;
   schema_event_observers_t schema_event_observers;
   system_status_var status_var;
@@ -172,8 +178,7 @@ public:
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
-  Open_tables_state(*this, g_refresh_version),
-  impl_(new impl_c),
+  impl_(new impl_c(*this)),
   mem_root(&main_mem_root),
   query(new std::string),
   scheduler(NULL),
@@ -193,7 +198,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   query_id(0),
   warn_query_id(0),
 	transaction(impl_->transaction),
-  open_tables(*this),
+  open_tables(impl_->open_tables),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
   limit_found_rows(0),
@@ -429,7 +434,7 @@ void Session::cleanup()
   user_vars.clear();
 
 
-  close_temporary_tables();
+  open_tables.close_temporary_tables();
 
   if (global_read_lock)
   {
@@ -580,7 +585,7 @@ void Session::prepareForQueries()
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
 
-  version= g_refresh_version;
+  open_tables.version= g_refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
@@ -1862,7 +1867,7 @@ void Open_tables_state::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->query_id == getQueryId())
+    if (table->query_id == session_.getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1893,12 +1898,12 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  clearDerivedTables();
+  open_tables.clearDerivedTables();
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
   */
-  mark_temp_tables_as_free_for_reuse();
+  open_tables.mark_temp_tables_as_free_for_reuse();
   /*
     Let us commit transaction for statement. Since in 5.0 we only have
     one statement transaction and don't allow several nested statement
@@ -1915,7 +1920,7 @@ void Session::close_thread_tables()
     transaction.stmt.reset();
   }
 
-  if (lock)
+  if (open_tables.lock)
   {
     /*
       For RBR we flush the pending event just before we unlock all the
@@ -1926,8 +1931,8 @@ void Session::close_thread_tables()
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    unlockTables(lock);
-    lock= 0;
+    unlockTables(open_tables.lock);
+    open_tables.lock= 0;
   }
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
@@ -1936,7 +1941,7 @@ void Session::close_thread_tables()
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  if (open_tables_)
+  if (open_tables.open_tables_)
     close_open_tables();
 }
 
