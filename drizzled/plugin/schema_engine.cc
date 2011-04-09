@@ -255,7 +255,7 @@ bool StorageEngine::dropSchema(Session& session,
 
       for (identifier::table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
       {
-        if (session.drop_temporary_table(*iter))
+        if (session.open_tables.drop_temporary_table(*iter))
         {
           my_error(ER_TABLE_DROP, *iter);
           error= true;

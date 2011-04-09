@@ -78,7 +78,7 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class DRIZZLED_API Session : private Open_tables_state
+class DRIZZLED_API Session : public Open_tables_state
 {
 private:
   class impl_c;
@@ -1271,11 +1271,7 @@ public:
    *
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  void close_temporary_table(Table*);
-  int drop_temporary_table(const identifier::Table&);
   bool openTablesLock(TableList*);
-  bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
-  bool rm_temporary_table(const identifier::Table &identifier, bool best_effort= false);
   Table *open_temporary_table(const identifier::Table &identifier, bool link_in_list= true);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
@@ -1350,12 +1346,9 @@ public:
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-  void close_temporary_tables();
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
-  void nukeTable(Table*);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
-
 
   bool resetUsage()
   {

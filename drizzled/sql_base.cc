@@ -631,11 +631,10 @@ Table *Open_tables_state::find_temporary_table(const identifier::Table &identifi
   @retval -1  the table is in use by a outer query
 */
 
-int Session::drop_temporary_table(const drizzled::identifier::Table &identifier)
+int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &identifier)
 {
-  Table *table;
-
-  if (not (table= find_temporary_table(identifier)))
+  Table* table= find_temporary_table(identifier);
+  if (not table)
     return 1;
 
   /* Table might be in use by some outer statement. */
@@ -644,9 +643,7 @@ int Session::drop_temporary_table(const drizzled::identifier::Table &identifier)
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
   }
-
   close_temporary_table(table);
-
   return 0;
 }
 

@@ -1737,7 +1737,7 @@ void Session::reset_for_next_command()
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
 */
 
-void Session::close_temporary_tables()
+void Open_tables_state::close_temporary_tables()
 {
   Table *table;
   Table *tmp_next;
@@ -1757,7 +1757,7 @@ void Session::close_temporary_tables()
   unlink from session->temporary tables and close temporary table
 */
 
-void Session::close_temporary_table(Table *table)
+void Open_tables_state::close_temporary_table(Table *table)
 {
   if (table->getPrev())
   {
@@ -1793,7 +1793,7 @@ void Session::close_temporary_table(Table *table)
   If this is needed, use close_temporary_table()
 */
 
-void Session::nukeTable(Table *table)
+void Open_tables_state::nukeTable(Table *table)
 {
   plugin::StorageEngine& table_type= *table->getShare()->db_type();
   table->free_io_cache();
@@ -1981,19 +1981,19 @@ bool Session::openTablesLock(TableList *tables)
   might be an issue (lame engines).
 */
 
-bool Session::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
+bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
-  if (plugin::StorageEngine::dropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session*>(this), identifier))
 		return false;
   if (not best_effort)
     errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), errno);
   return true;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine& base, const identifier::Table &identifier)
+bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
-  if (plugin::StorageEngine::dropTable(*this, base, identifier, error))
+  if (plugin::StorageEngine::dropTable(*static_cast<Session*>(this), base, identifier, error))
 		return false;
   errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), error);
   return true;

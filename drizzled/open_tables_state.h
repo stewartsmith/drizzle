@@ -67,12 +67,18 @@ public:
             is not reset until the HANDLER is closed.
   */
   void mark_temp_tables_as_free_for_reuse();
+  void close_temporary_tables();
+  void close_temporary_table(Table*);
+  void nukeTable(Table*);
 
 public:
   /* Work with temporary tables */
   Table *find_temporary_table(const identifier::Table &identifier);
 
   void dumpTemporaryTableNames(const char *id);
+  int drop_temporary_table(const identifier::Table&);
+  bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
+  bool rm_temporary_table(const identifier::Table &identifier, bool best_effort= false);
 
   virtual query_id_t getQueryId()  const= 0;
 
