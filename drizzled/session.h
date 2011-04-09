@@ -78,7 +78,7 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class DRIZZLED_API Session : public Open_tables_state
+class DRIZZLED_API Session : private Open_tables_state
 {
 private:
   class impl_c;

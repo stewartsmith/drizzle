@@ -113,8 +113,9 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
     !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(uint64_t version_arg) :
-  version(version_arg)
+Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
+  version(version_arg),
+  session_(session)
 {
   open_tables_= temporary_tables= derived_tables= NULL;
   extra_lock= lock= NULL;
@@ -171,7 +172,7 @@ public:
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
-  Open_tables_state(g_refresh_version),
+  Open_tables_state(*this, g_refresh_version),
   impl_(new impl_c),
   mem_root(&main_mem_root),
   query(new std::string),
@@ -1983,7 +1984,7 @@ bool Session::openTablesLock(TableList *tables)
 
 bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
-  if (plugin::StorageEngine::dropTable(*static_cast<Session*>(this), identifier))
+  if (plugin::StorageEngine::dropTable(session_, identifier))
 		return false;
   if (not best_effort)
     errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), errno);
@@ -1993,7 +1994,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
 bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
-  if (plugin::StorageEngine::dropTable(*static_cast<Session*>(this), base, identifier, error))
+  if (plugin::StorageEngine::dropTable(session_, base, identifier, error))
 		return false;
   errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), error);
   return true;

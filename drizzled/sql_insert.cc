@@ -1625,7 +1625,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(identifier);
+          session->open_tables.drop_temporary_table(identifier);
         }
       }
     }

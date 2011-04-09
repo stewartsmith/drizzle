@@ -127,7 +127,7 @@ public:
   uint64_t version;
   uint32_t current_tablenr;
 
-  Open_tables_state(uint64_t version_arg);
+  Open_tables_state(Session&, uint64_t version_arg);
   virtual ~Open_tables_state() {}
   void doGetTableNames(CachedDirectory&, const identifier::Schema&, std::set<std::string>&);
   void doGetTableNames(const identifier::Schema&, std::set<std::string>&);
@@ -135,6 +135,8 @@ public:
   void doGetTableIdentifiers(const identifier::Schema&, identifier::table::vector&);
   int doGetTableDefinition(const drizzled::identifier::Table&, message::Table&);
   bool doDoesTableExist(const drizzled::identifier::Table&);
+private:
+  Session& session_;
 };
 
 } /* namespace drizzled */
