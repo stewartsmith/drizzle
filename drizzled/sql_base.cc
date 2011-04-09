@@ -799,15 +799,8 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
-
-  if (not table::Cache::singleton().insert(table))
-  {
-    safe_delete(table);
-
-    return NULL;
-  }
-
-  return table;
+  table::Cache::singleton().insert(table);
+  return table; // return ref
 }
 
 
