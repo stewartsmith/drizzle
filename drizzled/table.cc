@@ -59,6 +59,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 

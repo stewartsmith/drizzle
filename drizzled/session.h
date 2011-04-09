@@ -36,7 +36,7 @@
 #include <drizzled/global_charset_info.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
-#include <drizzled/open_tables_state.h>
+#include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
@@ -77,6 +77,8 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
+
+class Open_tables_state;
 
 class DRIZZLED_API Session
 {

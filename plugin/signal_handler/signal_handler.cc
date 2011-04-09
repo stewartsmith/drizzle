@@ -29,6 +29,7 @@
 #include <drizzled/session/cache.h>
 #include <drizzled/debug.h>
 #include <drizzled/drizzled.h>
+#include <drizzled/open_tables_state.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>

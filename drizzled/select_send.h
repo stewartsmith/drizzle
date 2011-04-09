@@ -25,9 +25,9 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_result.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class select_send :public select_result {
   /**

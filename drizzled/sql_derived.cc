@@ -23,6 +23,7 @@
 #include <drizzled/select_union.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/session.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled
 {

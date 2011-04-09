@@ -43,6 +43,7 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/lock.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>

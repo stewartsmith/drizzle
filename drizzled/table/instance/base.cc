@@ -84,6 +84,7 @@
 #include <drizzled/definition/cache.h>
 #include <drizzled/typelib.h>
 #include <drizzled/key.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 

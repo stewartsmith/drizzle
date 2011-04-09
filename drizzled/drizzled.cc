@@ -79,6 +79,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 #include <google/protobuf/stubs/common.h>
 

@@ -61,6 +61,7 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 

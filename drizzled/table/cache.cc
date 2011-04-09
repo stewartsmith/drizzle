@@ -33,6 +33,7 @@
 #include <drizzled/table/unused.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/sys_var.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled {
 namespace table {

@@ -90,6 +90,7 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
+#include <drizzled/open_tables_state.h>
 
 #include <set>
 #include <vector>
