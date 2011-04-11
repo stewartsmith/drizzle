@@ -790,7 +790,7 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
+table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
 {
   safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
 
@@ -798,9 +798,9 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
     Create a table entry with the right key and with an old refresh version
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
-  table::Placeholder *table= new table::Placeholder(this, identifier);
+  table::Placeholder* table= new table::Placeholder(this, identifier);
   table::Cache::singleton().insert(table);
-  return table; // return ref
+  return *table;
 }
 
 
@@ -837,15 +837,12 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
     return false;
   }
 
-  if (not (*table= table_cache_insert_placeholder(identifier)))
-  {
-    return true;
-  }
+  *table= &table_cache_insert_placeholder(identifier);
   (*table)->open_placeholder= true;
   (*table)->setNext(open_tables.open_tables_);
   open_tables.open_tables_= *table;
 
-  return false;
+  return false; //return void
 }
 
 /*
@@ -1091,7 +1088,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       else
       {
         /* Insert a new Table instance into the open cache */
-        int error;
         /* Free cache if too big */
         table::getUnused().cull();
 
@@ -1104,10 +1100,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             /*
               Table to be created, so we need to create placeholder in table-cache.
             */
-            if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
-            {
-              return NULL;
-            }
+            table= &table_cache_insert_placeholder(lock_table_identifier);
             /*
               Link placeholder to the open tables list so it will be automatically
               removed once tables are closed. Also mark it so it won't be ignored
@@ -1126,8 +1119,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         {
           table::Concurrent *new_table= new table::Concurrent;
           table= new_table;
-          error= new_table->open_unireg_entry(this, alias, identifier);
-          if (error != 0)
+          if (new_table->open_unireg_entry(this, alias, identifier))
           {
             delete new_table;
             return NULL;
