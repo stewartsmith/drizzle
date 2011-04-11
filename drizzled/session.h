@@ -36,7 +36,7 @@
 #include <drizzled/global_charset_info.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
-#include <drizzled/open_tables_state.h>
+#include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
@@ -78,7 +78,9 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class DRIZZLED_API Session : public Open_tables_state
+class Open_tables_state;
+
+class DRIZZLED_API Session
 {
 private:
   class impl_c;
@@ -1271,8 +1273,8 @@ public:
    *
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  bool openTablesLock(TableList *tables);
-  Table *open_temporary_table(const drizzled::identifier::Table &identifier, bool link_in_list= true);
+  bool openTablesLock(TableList*);
+  Table *open_temporary_table(const identifier::Table &identifier, bool link_in_list= true);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 
@@ -1349,7 +1351,6 @@ private:
   bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
-
 
   bool resetUsage()
   {

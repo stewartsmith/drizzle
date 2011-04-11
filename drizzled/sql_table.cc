@@ -45,6 +45,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/diagnostics_area.h>
+#include <drizzled/open_tables_state.h>
 
 #include <algorithm>
 #include <sstream>

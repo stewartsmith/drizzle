@@ -120,6 +120,7 @@ namespace message
   class Schema;
   class SetVariableStatement;
   class Statement;
+  class Table;
   class Transaction;
   class TruncateTableStatement;
   class UpdateData;

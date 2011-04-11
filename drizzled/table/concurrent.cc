@@ -26,6 +26,7 @@
 
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/table/instance.h>
 #include <drizzled/table.h>

@@ -56,7 +56,7 @@ public:
   void removeSchema(const identifier::Schema &schema_identifier);
   bool removeTable(Session *session, identifier::Table &identifier, uint32_t flags);
   void release(table::instance::Shared *share);
-  bool insert(table::Concurrent *arg);
+  void insert(table::Concurrent*);
 
   boost::mutex &mutex()
   {

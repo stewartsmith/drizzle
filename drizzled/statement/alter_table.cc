@@ -48,6 +48,7 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_info.h>
 #include <drizzled/util/test.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 

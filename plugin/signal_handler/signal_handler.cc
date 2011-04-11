@@ -16,7 +16,6 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <config.h>
-
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
@@ -26,15 +25,11 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/signal_handler.h>
-
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-
 #include <drizzled/debug.h>
-
 #include <drizzled/drizzled.h>
-
-#include <drizzled/refresh_version.h>
+#include <drizzled/open_tables_state.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>
@@ -212,7 +207,7 @@ void signal_hand()
     case SIGHUP:
       if (!abort_loop)
       {
-        refresh_version++;
+        g_refresh_version++;
         drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
       break;

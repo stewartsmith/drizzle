@@ -33,6 +33,7 @@
 #include <drizzled/table/unused.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/sys_var.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled {
 namespace table {
@@ -277,11 +278,10 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
 }
 
 
-bool Cache::insert(table::Concurrent *arg)
+void Cache::insert(table::Concurrent* arg)
 {
   CacheMap::iterator returnable= cache.insert(std::make_pair(arg->getShare()->getCacheKey(), arg));
 	assert(returnable != cache.end());
-  return returnable != cache.end();
 }
 
 } /* namespace table */
