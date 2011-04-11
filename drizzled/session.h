@@ -1287,7 +1287,7 @@ public:
 
   /* Create a lock in the cache */
   table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
-  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
+  Table* lock_table_name_if_not_cached(const identifier::Table&);
 
   session::TableMessages &getMessageCache();
 
