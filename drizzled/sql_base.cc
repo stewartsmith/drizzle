@@ -62,6 +62,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/catalog/local.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 

@@ -27,6 +27,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 

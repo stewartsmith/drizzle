@@ -25,15 +25,12 @@
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/open_tables_state.h>
-
+#include <drizzled/table/cache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>

@@ -22,6 +22,7 @@
 
 #include <plugin/table_cache_dictionary/dictionary.h>
 #include <drizzled/table.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/pthread_globals.h>
 
 using namespace drizzled;

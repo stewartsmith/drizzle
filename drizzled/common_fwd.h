@@ -195,6 +195,7 @@ namespace statement
 
 namespace table 
 { 
+  class Cache;
   class Concurrent;
   class Placeholder; 
   class Singular; 

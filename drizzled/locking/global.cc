@@ -91,6 +91,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 #include <set>
 #include <vector>
