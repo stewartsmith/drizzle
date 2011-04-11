@@ -76,15 +76,12 @@ SQL Language:
    administrative
    resources/index
 
-User Level Topics:
-------------------
+Replication:
+------------
 .. toctree::
    :maxdepth: 2
 
-   storage_engines
-   using_replication
-   logging
-   authentication
+   replication
 
 Configuration:
 --------------
@@ -94,20 +91,21 @@ Configuration:
    configuration
    options
 
+Administrative:
+---------------
+.. toctree::
+   :maxdepth: 2
+
+   logging
+   authentication
+   storage_engines
+
 Plugins:
 ^^^^^^^^
 .. toctree::
    :maxdepth: 2
 
    plugins/list
-
-Architecture:
--------------
-.. toctree::
-   :maxdepth: 2
-
-   protocol
-   replication
 
 Clients:
 --------
@@ -126,6 +124,7 @@ libdrizzle:
 
    libdrizzle/api.rst
    libdrizzle/developer.rst
+   protocol
 
 Testing:
 --------
