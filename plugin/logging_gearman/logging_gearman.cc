@@ -25,6 +25,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
@@ -39,9 +40,7 @@
 #include <cerrno>
 #include <memory>
 
-
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 namespace po= boost::program_options;
 
@@ -230,7 +229,7 @@ public:
       inside itself, so be more accurate, and so this doesnt have to
       keep calling current_utime, which can be slow.
     */
-    uint64_t t_mark= session->getCurrentTimestamp(false);
+    uint64_t t_mark= session->times.getCurrentTimestamp(false);
   
 
     // buffer to quotify the query
@@ -256,9 +255,9 @@ public:
                (int)drizzled::getCommandName(session->command).size(),
                drizzled::getCommandName(session->command).c_str(),
                // counters are at end, to make it easier to add more
-               (t_mark - session->getConnectMicroseconds()),
-               (session->getElapsedTime()),
-               (t_mark - session->utime_after_lock),
+               (t_mark - session->times.getConnectMicroseconds()),
+               (session->times.getElapsedTime()),
+               (t_mark - session->times.utime_after_lock),
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,

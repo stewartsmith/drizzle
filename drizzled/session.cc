@@ -157,7 +157,8 @@ public:
   typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
 
   impl_c(Session& session) :
-    open_tables(session, g_refresh_version)
+    open_tables(session, g_refresh_version),
+    schema(boost::make_shared<std::string>())
   {
   }
 
