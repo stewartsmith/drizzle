@@ -657,7 +657,7 @@ int Session::lock_table_name(TableList *table_list)
   table_list->table= reinterpret_cast<Table *>(table);
 
   /* Return 1 if table is in use */
-  return(test(table::Cache::singleton().removeTable(this, identifier, RTFC_NO_FLAG)));
+  return(test(table::Cache::singleton().removeTable(*this, identifier, RTFC_NO_FLAG)));
 }
 
 

@@ -32,17 +32,14 @@ typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRan
 
 class Cache 
 {
-  CacheMap cache;
-
 public:
-  static inline Cache &singleton()
+  static Cache& singleton()
   {
     static Cache open_cache;
-
     return open_cache;
   }
 
-  CacheMap &getCache()
+  CacheMap& getCache()
   {
     return cache;
   }
@@ -52,10 +49,10 @@ public:
     cache.rehash(arg);
   }
 
-  bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const identifier::Schema &schema_identifier);
-  bool removeTable(Session *session, identifier::Table &identifier, uint32_t flags);
-  void release(table::instance::Shared *share);
+  bool areTablesUsed(Table*, bool wait_for_name_lock);
+  void removeSchema(const identifier::Schema&);
+  bool removeTable(Session&, const identifier::Table&, uint32_t flags);
+  void release(table::instance::Shared*);
   void insert(table::Concurrent*);
 
   boost::mutex &mutex()
@@ -64,11 +61,12 @@ public:
   }
 
 private:
+  CacheMap cache;
   boost::mutex _mutex;
 };
 
-CacheMap &getCache(void);
-void remove_table(table::Concurrent *arg);
+CacheMap& getCache();
+void remove_table(table::Concurrent*);
 
 } /* namepsace table */
 } /* namepsace drizzled */

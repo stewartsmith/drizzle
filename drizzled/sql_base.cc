@@ -235,9 +235,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        identifier::Table identifier(table->getSchemaName(), table->getTableName());
-        if (table::Cache::singleton().removeTable(session, identifier,
-                                    RTFC_OWNED_BY_Session_FLAG))
+        if (table::Cache::singleton().removeTable(*session, identifier::Table(table->getSchemaName(), table->getTableName()), RTFC_OWNED_BY_Session_FLAG))
         {
           found= true;
         }
