@@ -60,8 +60,8 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 
@@ -81,7 +81,7 @@ uint32_t cached_open_tables(void)
 
 void table_cache_free(void)
 {
-  refresh_version++;				// Force close of open tables
+  g_refresh_version++;				// Force close of open tables
 
   table::getUnused().clear();
   table::getCache().clear();
@@ -179,7 +179,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
     if (tables == NULL)
     {
-      refresh_version++;				// Force close of open tables
+      g_refresh_version++;				// Force close of open tables
 
       table::getUnused().clear();
 
@@ -344,7 +344,7 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
   open_tables.open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
-      open_tables.version != refresh_version || !table->db_stat)
+      open_tables.version != g_refresh_version || !table->db_stat)
   {
     table::remove_table(table);
     found_old_table= true;
@@ -634,20 +634,17 @@ Table *Open_tables_state::find_temporary_table(const identifier::Table &identifi
 
 int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &identifier)
 {
-  Table *table;
-
-  if (not (table= find_temporary_table(identifier)))
+  Table* table= find_temporary_table(identifier);
+  if (not table)
     return 1;
 
   /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != getQueryId())
+  if (table->query_id && table->query_id != session_.getQueryId())
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
   }
-
   close_temporary_table(table);
-
   return 0;
 }
 
@@ -802,15 +799,8 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder *table= new table::Placeholder(this, identifier);
-
-  if (not table::Cache::singleton().insert(table))
-  {
-    safe_delete(table);
-
-    return NULL;
-  }
-
-  return table;
+  table::Cache::singleton().insert(table);
+  return table; // return ref
 }
 
 
@@ -962,9 +952,9 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     */
     if (!open_tables.open_tables_)
     {
-      open_tables.version= refresh_version;
+      open_tables.version= g_refresh_version;
     }
-    else if ((open_tables.version != refresh_version) &&
+    else if ((open_tables.version != g_refresh_version) &&
              ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
     {
       /* Someone did a refresh while thread was opening tables */

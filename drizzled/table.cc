@@ -53,13 +53,13 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 
@@ -1710,7 +1710,7 @@ void Table::filesort_free_buffers(bool full)
 */
 bool Table::needs_reopen_or_name_lock() const
 { 
-  return getShare()->getVersion() != refresh_version;
+  return getShare()->getVersion() != g_refresh_version;
 }
 
 uint32_t Table::index_flags(uint32_t idx) const

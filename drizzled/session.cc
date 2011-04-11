@@ -43,6 +43,7 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/lock.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>
@@ -54,7 +55,6 @@
 #include <drizzled/probes.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/query_id.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/schema.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_exists_subselect.h>
@@ -106,6 +106,8 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 
 const char * const Session::DEFAULT_WHERE= "field list";
 
+uint64_t g_refresh_version = 1;
+
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
@@ -113,8 +115,9 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
     !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(uint64_t version_arg) :
-  version(version_arg)
+Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
+  version(version_arg),
+  session_(session)
 {
   open_tables_= temporary_tables= derived_tables= NULL;
   extra_lock= lock= NULL;
@@ -153,6 +156,11 @@ public:
   typedef session::PropertyMap properties_t;
   typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
 
+  impl_c(Session& session) :
+    open_tables(session, g_refresh_version)
+  {
+  }
+
   Diagnostics_area diagnostics;
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
@@ -161,6 +169,7 @@ public:
     the same lex. (@see mysql_parse for details).
   */
   LEX lex;
+  Open_tables_state open_tables;
   properties_t properties;
   schema_event_observers_t schema_event_observers;
   system_status_var status_var;
@@ -174,8 +183,7 @@ public:
 };
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
-  Open_tables_state(refresh_version),
-  impl_(new impl_c),
+  impl_(new impl_c(*this)),
   mem_root(&main_mem_root),
   query(new std::string),
   scheduler(NULL),
@@ -191,7 +199,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   query_id(0),
   warn_query_id(0),
 	transaction(impl_->transaction),
-  open_tables(*this),
+  open_tables(impl_->open_tables),
 	times(impl_->times),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
@@ -428,7 +436,7 @@ void Session::cleanup()
   user_vars.clear();
 
 
-  close_temporary_tables();
+  open_tables.close_temporary_tables();
 
   if (global_read_lock)
   {
@@ -573,7 +581,7 @@ void Session::prepareForQueries()
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
 
-  version= refresh_version;
+  open_tables.version= g_refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
   times.set_time();
@@ -1828,7 +1836,7 @@ void Open_tables_state::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->query_id == getQueryId())
+    if (table->query_id == session_.getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();
@@ -1859,12 +1867,12 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  clearDerivedTables();
+  open_tables.clearDerivedTables();
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
   */
-  mark_temp_tables_as_free_for_reuse();
+  open_tables.mark_temp_tables_as_free_for_reuse();
   /*
     Let us commit transaction for statement. Since in 5.0 we only have
     one statement transaction and don't allow several nested statement
@@ -1881,7 +1889,7 @@ void Session::close_thread_tables()
     transaction.stmt.reset();
   }
 
-  if (lock)
+  if (open_tables.lock)
   {
     /*
       For RBR we flush the pending event just before we unlock all the
@@ -1892,8 +1900,8 @@ void Session::close_thread_tables()
       handled either before writing a query log event (inside
       binlog_query()) or when preparing a pending event.
      */
-    unlockTables(lock);
-    lock= 0;
+    unlockTables(open_tables.lock);
+    open_tables.lock= 0;
   }
   /*
     Note that we need to hold table::Cache::singleton().mutex() while changing the
@@ -1902,7 +1910,7 @@ void Session::close_thread_tables()
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  if (open_tables_)
+  if (open_tables.open_tables_)
     close_open_tables();
 }
 
@@ -1950,7 +1958,7 @@ bool Session::openTablesLock(TableList *tables)
 
 bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, bool best_effort)
 {
-  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), identifier))
+  if (plugin::StorageEngine::dropTable(session_, identifier))
 		return false;
   if (not best_effort)
     errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), errno);
@@ -1960,7 +1968,7 @@ bool Open_tables_state::rm_temporary_table(const identifier::Table &identifier, 
 bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const identifier::Table &identifier)
 {
   drizzled::error_t error;
-  if (plugin::StorageEngine::dropTable(*static_cast<Session *>(this), base, identifier, error))
+  if (plugin::StorageEngine::dropTable(session_, base, identifier, error))
 		return false;
   errmsg_printf(error::WARN, _("Could not remove temporary table: '%s', error: %d"), identifier.getSQLPath().c_str(), error);
   return true;

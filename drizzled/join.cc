@@ -45,6 +45,7 @@
 #include <drizzled/join_cache.h>
 #include <drizzled/show.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/optimizer/position.h>
 #include <drizzled/optimizer/sargable_param.h>
 #include <drizzled/optimizer/key_use.h>

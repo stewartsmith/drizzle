@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/pthread_globals.h>
 
 using namespace drizzled;

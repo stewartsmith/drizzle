@@ -25,6 +25,7 @@
 #include <drizzled/statement/create_index.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled
 {

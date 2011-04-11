@@ -17,17 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #pragma once
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/lock.h>
 
 namespace drizzled {
 
+extern uint64_t g_refresh_version;
+
 /**
   Class that holds information about tables which were opened and locked
-  by the thread. It is also used to save/restore this information in
-  push_open_tables_state()/pop_open_tables_state().
+  by the thread.
 */
 
 class Open_tables_state
@@ -66,28 +67,18 @@ public:
             is not reset until the HANDLER is closed.
   */
   void mark_temp_tables_as_free_for_reuse();
-
-protected:
   void close_temporary_tables();
-
-public:
-  void close_temporary_table(Table *table);
-  
-private:
-  // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed.
-  void nukeTable(Table *table);
+  void close_temporary_table(Table*);
+  void nukeTable(Table*);
 
 public:
   /* Work with temporary tables */
   Table *find_temporary_table(const identifier::Table &identifier);
 
   void dumpTemporaryTableNames(const char *id);
-  int drop_temporary_table(const drizzled::identifier::Table &identifier);
+  int drop_temporary_table(const identifier::Table&);
   bool rm_temporary_table(plugin::StorageEngine&, const identifier::Table&);
-  bool rm_temporary_table(const drizzled::identifier::Table &identifier, bool best_effort= false);
-
-  virtual query_id_t getQueryId()  const= 0;
+  bool rm_temporary_table(const identifier::Table &identifier, bool best_effort= false);
 
 private:
   Table *derived_tables;
@@ -106,8 +97,7 @@ public:
 
   void clearDerivedTables()
   {
-    if (derived_tables)
-      derived_tables= NULL; // They should all be invalid by this point
+    derived_tables= NULL; // They should all be invalid by this point
   }
 
   /*
@@ -135,29 +125,15 @@ public:
   uint64_t version;
   uint32_t current_tablenr;
 
-  /*
-    This constructor serves for creation of Open_tables_state instances
-    which are used as backup storage.
-  */
-  Open_tables_state() :
-    open_tables_(0),
-    temporary_tables(0),
-    derived_tables(0),
-    lock(0),
-    extra_lock(0),
-    version(0),
-    current_tablenr(0)
-  { }
-
-  virtual ~Open_tables_state() {}
+  Open_tables_state(Session&, uint64_t version_arg);
   void doGetTableNames(CachedDirectory&, const identifier::Schema&, std::set<std::string>&);
   void doGetTableNames(const identifier::Schema&, std::set<std::string>&);
   void doGetTableIdentifiers(CachedDirectory&, const identifier::Schema&, identifier::table::vector&);
   void doGetTableIdentifiers(const identifier::Schema&, identifier::table::vector&);
   int doGetTableDefinition(const drizzled::identifier::Table&, message::Table&);
   bool doDoesTableExist(const drizzled::identifier::Table&);
-
-  Open_tables_state(uint64_t version_arg);
+private:
+  Session& session_;
 };
 
 } /* namespace drizzled */

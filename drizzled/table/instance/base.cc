@@ -83,16 +83,14 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/typelib.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/key.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern size_t table_def_size;
-
 
 static enum_field_types proto_field_type_to_drizzle_type(const message::Table::Field &field)
 {
@@ -538,7 +536,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
 
-    version= refresh_version;
+    version= g_refresh_version;
   }
   else
   {
@@ -2046,7 +2044,7 @@ Field *TableShare::make_field(const message::Table::Field &,
 
 void TableShare::refreshVersion()
 {
-  version= refresh_version;
+  version= g_refresh_version;
 }
 
 

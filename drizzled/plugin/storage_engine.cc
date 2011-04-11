@@ -55,6 +55,7 @@
 #include <drizzled/message/cache.h>
 #include <drizzled/key.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/open_tables_state.h>
 
 #include <boost/algorithm/string/compare.hpp>
 
