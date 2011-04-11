@@ -338,6 +338,9 @@ extern ulint srv_buf_pool_flushed;
 reading of a disk page */
 extern ulint srv_buf_pool_reads;
 
+/** Time in seconds between automatic buffer pool dumps */
+extern uint32_t srv_auto_lru_dump;
+
 /** Status variables to be passed to MySQL */
 typedef struct export_var_struct export_struc;
 
@@ -633,6 +636,16 @@ UNIV_INTERN
 os_thread_ret_t
 srv_error_monitor_thread(
 /*=====================*/
+	void*	arg);	/*!< in: a dummy parameter required by
+			os_thread_create */
+/*********************************************************************//**
+A thread which restores the buffer pool from a dump file on startup and does
+periodic buffer pool dumps.
+@return	a dummy parameter */
+UNIV_INTERN
+os_thread_ret_t
+srv_LRU_dump_restore_thread(
+/*====================*/
 	void*	arg);	/*!< in: a dummy parameter required by
 			os_thread_create */
 /******************************************************************//**

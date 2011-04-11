@@ -208,6 +208,8 @@ static log_file_constraint innobase_log_file_size;
 
 static uint64_constraint innodb_replication_delay;
 
+static uint32_constraint buffer_pool_restore_at_startup;
+
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
 typedef constrained_check<uint32_t, 95, 5> old_blocks_constraint;
@@ -1868,6 +1870,10 @@ static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
   srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
 }
 
+static void auto_lru_dump_update(Session *, sql_var_t)
+{
+  srv_auto_lru_dump= buffer_pool_restore_at_startup.get();
+}
 
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
@@ -2036,6 +2042,7 @@ innobase_init(
   srv_spin_wait_delay= innodb_spin_wait_delay.get();
   srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
   srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
+  srv_auto_lru_dump= buffer_pool_restore_at_startup.get();
 
   /* Inverted Booleans */
 
@@ -2397,6 +2404,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("read_ahead_threshold",
                                                                    innodb_read_ahead_threshold,
                                                                    innodb_read_ahead_threshold_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("auto_lru_dump",
+                                                                   buffer_pool_restore_at_startup,
+                                                                   auto_lru_dump_update));
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
@@ -9237,6 +9247,10 @@ static void init_options(drizzled::module::option_context &context)
   context("read-ahead-threshold",
           po::value<read_ahead_threshold_constraint>(&innodb_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
+  context("auto-lru-dump",
+	  po::value<uint32_constraint>(&buffer_pool_restore_at_startup)->default_value(0),
+	  "Time in seconds between automatic buffer pool dumps. "
+	  "0 (the default) disables automatic dumps.");
   context("disable-xa",
           "Disable InnoDB support for the XA two-phase commit");
   context("disable-table-locks",
