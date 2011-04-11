@@ -436,6 +436,21 @@ UNIV_INTERN ibool	srv_use_checksums = TRUE;
 
 UNIV_INTERN ulong	srv_replication_delay		= 0;
 
+UNIV_INTERN uint64_t	srv_ibuf_max_size = 0;
+UNIV_INTERN uint32_t	srv_ibuf_active_contract = 0;
+UNIV_INTERN uint32_t	srv_ibuf_accel_rate = 100;
+
+#define PCT_IBUF_IO(pct) (srv_io_capacity * srv_ibuf_accel_rate \
+			  * (pct / 10000.0))
+
+UNIV_INTERN uint32_t	srv_checkpoint_age_target = 0;
+UNIV_INTERN uint32_t	srv_flush_neighbor_pages = 1;
+
+UNIV_INTERN uint32_t	srv_read_ahead = 3; /* 1: random, 2: linear, 3: both */
+UNIV_INTERN uint32_t	srv_adaptive_flushing_method = 0; /* 0: native,
+							     1: estimate,
+							     2: keep_average */
+
 UNIV_INTERN ibool srv_read_only = FALSE;
 UNIV_INTERN ibool srv_fake_write = FALSE;
 UNIV_INTERN ibool srv_apply_log_only = FALSE;
@@ -2696,6 +2711,7 @@ srv_master_thread(
 	ulint		n_pages_purged	= 0;
 	ulint		n_bytes_merged;
 	ulint		n_pages_flushed;
+	uint32_t	n_pages_flushed_prev = 0;
 	ulint		n_bytes_archived;
 	ulint		n_tables_to_drop;
 	ulint		n_ios;
@@ -2703,7 +2719,20 @@ srv_master_thread(
 	ulint		n_ios_very_old;
 	ulint		n_pend_ios;
 	ulint		next_itr_time;
+	uint32_t	prev_adaptive_flushing_method = ULINT32_UNDEFINED;
+	uint32_t	inner_loop = 0;
+	bool		skip_sleep = false;
 	ulint		i;
+
+	struct t_prev_flush_info_struct {
+	    uint32_t	count;
+	    uint32_t	space;
+	    uint32_t	offset;
+	    uint64_t	oldest_modification;
+	} prev_flush_info[MAX_BUFFER_POOLS];
+
+	uint64_t	lsn_old;
+	uint64_t	oldest_lsn;
 
 #ifdef UNIV_DEBUG_THREAD_CREATION
 	fprintf(stderr, "Master thread starts, id %lu\n",
@@ -2725,6 +2754,9 @@ srv_master_thread(
 
 	mutex_exit(&kernel_mutex);
 
+	mutex_enter(&(log_sys->mutex));
+	lsn_old = log_sys->lsn;
+	mutex_exit(&(log_sys->mutex));
 loop:
 	/*****************************************************************/
 	/* ---- When there is database activity by users, we cycle in this
@@ -2755,8 +2787,12 @@ loop:
 	/* Sleep for 1 second on entrying the for loop below the first time. */
 	next_itr_time = ut_time_ms() + 1000;
 
+	skip_sleep = false;
+
 	for (i = 0; i < 10; i++) {
 		ulint	cur_time = ut_time_ms();
+
+		n_pages_flushed = 0;
 
 		/* ALTER TABLE in MySQL requires on Unix that the table handler
 		can drop tables lazily after there no longer are SELECT
@@ -2781,20 +2817,39 @@ loop:
 		srv_main_thread_op_info = "sleeping";
 		srv_main_1_second_loops++;
 
-		if (next_itr_time > cur_time
-		    && srv_shutdown_state == SRV_SHUTDOWN_NONE) {
+		if (skip_sleep == false) {
+		    if (next_itr_time > cur_time
+			&& srv_shutdown_state == SRV_SHUTDOWN_NONE) {
 
 			/* Get sleep interval in micro seconds. We use
-			ut_min() to avoid long sleep in case of
-			wrap around. */
+			   ut_min() to avoid long sleep in case of
+			   wrap around. */
 			os_thread_sleep(ut_min(1000000,
-					(next_itr_time - cur_time)
-					 * 1000));
+					       (next_itr_time - cur_time)
+					       * 1000));
 			srv_main_sleeps++;
+
+			/*
+			  TODO: tracing code unported to Drizzle
+			  mutex_enter(&(log_sys->mutex));
+			  oldest_lsn = buf_pool_get_oldest_modification();
+			  ib_uint64_t	lsn = log_sys->lsn;
+			  mutex_exit(&(log_sys->mutex));
+
+			  if(oldest_lsn)
+			      fprintf(stderr,
+			              "InnoDB flush: age pct: %lu, lsn progress: %lu\n",
+			              (lsn - oldest_lsn) * 100 / log_sys->max_checkpoint_age,
+			              lsn - lsn_old);
+			*/
+
+		    }
+
+		    /* Each iteration should happen at 1 second interval. */
+		    next_itr_time = ut_time_ms() + 1000;
 		}
 
-		/* Each iteration should happen at 1 second interval. */
-		next_itr_time = ut_time_ms() + 1000;
+		skip_sleep = false;
 
 		/* Flush logs if needed */
 		srv_sync_log_buffer_in_background();
@@ -2814,7 +2869,7 @@ loop:
 		if (n_pend_ios < SRV_PEND_IO_THRESHOLD
 		    && (n_ios - n_ios_old < SRV_RECENT_IO_ACTIVITY)) {
 			srv_main_thread_op_info = "doing insert buffer merge";
-			ibuf_contract_for_n_pages(FALSE, PCT_IO(5));
+			ibuf_contract_for_n_pages(FALSE, PCT_IBUF_IO(5));
 
 			/* Flush logs if needed */
 			srv_sync_log_buffer_in_background();
@@ -2831,7 +2886,12 @@ loop:
 			n_pages_flushed = buf_flush_list(
 				PCT_IO(100), IB_ULONGLONG_MAX);
 
-		} else if (srv_adaptive_flushing) {
+			mutex_enter(&(log_sys->mutex));
+			lsn_old = log_sys->lsn;
+			mutex_exit(&(log_sys->mutex));
+			prev_adaptive_flushing_method = ULINT32_UNDEFINED;
+		} else if (srv_adaptive_flushing
+			   && srv_adaptive_flushing_method == 0) {
 
 			/* Try to keep the rate of flushing of dirty
 			pages such that redo log generation does not
@@ -2847,6 +2907,224 @@ loop:
 						n_flush,
 						IB_ULONGLONG_MAX);
 			}
+
+			mutex_enter(&(log_sys->mutex));
+			lsn_old = log_sys->lsn;
+			mutex_exit(&(log_sys->mutex));
+			prev_adaptive_flushing_method = ULINT32_UNDEFINED;
+		} else if (srv_adaptive_flushing
+			   && srv_adaptive_flushing_method == 1) {
+
+			/* Try to keep modified age not to exceed
+			   max_checkpoint_age * 7/8 line */
+
+			mutex_enter(&(log_sys->mutex));
+
+			oldest_lsn = buf_pool_get_oldest_modification();
+			if (oldest_lsn == 0) {
+				lsn_old = log_sys->lsn;
+				mutex_exit(&(log_sys->mutex));
+
+			} else {
+				if ((log_sys->lsn - oldest_lsn)
+				    > (log_sys->max_checkpoint_age)
+				    - ((log_sys->max_checkpoint_age) / 8)) {
+					/* LOG_POOL_PREFLUSH_RATIO_ASYNC is exceeded. */
+					/* We should not flush from here. */
+					lsn_old = log_sys->lsn;
+					mutex_exit(&(log_sys->mutex));
+				} else if ((log_sys->lsn - oldest_lsn)
+					   > (log_sys->max_checkpoint_age)/4) {
+
+					/* defence line (max_checkpoint_age * 1/2) */
+					uint64_t	lsn = log_sys->lsn;
+
+					uint64_t	level, bpl;
+					buf_page_t*	bpage;
+					ulint		j;
+
+					mutex_exit(&(log_sys->mutex));
+
+					bpl = 0;
+
+					for (j = 0; j < srv_buf_pool_instances; j++) {
+						buf_pool_t*	buf_pool;
+						uint32_t	n_blocks = 0;
+
+						buf_pool = buf_pool_from_array(j);
+
+						/* The scanning flush_list is optimistic here */
+
+						level = 0;
+						bpage = UT_LIST_GET_FIRST(buf_pool->flush_list);
+
+						while (bpage != NULL) {
+							uint64_t	oldest_modification = bpage->oldest_modification;
+							if (oldest_modification != 0) {
+								level += log_sys->max_checkpoint_age
+									- (lsn - oldest_modification);
+							}
+							bpage = UT_LIST_GET_NEXT(list, bpage);
+							n_blocks++;
+						}
+
+						if (level) {
+							bpl += ((ib_uint64_t) n_blocks * n_blocks
+								* (lsn - lsn_old)) / level;
+						}
+
+					}
+
+					if (!srv_use_doublewrite_buf) {
+						/* flush is faster than when doublewrite */
+						bpl = (bpl * 7) / 8;
+					}
+
+					if (bpl) {
+retry_flush_batch:
+						n_pages_flushed = buf_flush_list(bpl,
+										 oldest_lsn + (lsn - lsn_old));
+						if (n_pages_flushed == ULINT32_UNDEFINED) {
+							os_thread_sleep(5000);
+							goto retry_flush_batch;
+						}
+					}
+
+					lsn_old = lsn;
+					/*
+					  TODO: tracing code unported to Drizzle
+					  fprintf(stderr,
+					          "InnoDB flush: age pct: %lu, lsn progress: %lu, blocks to flush:%llu\n",
+						  (lsn - oldest_lsn) * 100 / log_sys->max_checkpoint_age,
+						  lsn - lsn_old, bpl);
+					*/
+				} else {
+					lsn_old = log_sys->lsn;
+					mutex_exit(&(log_sys->mutex));
+				}
+			}
+			prev_adaptive_flushing_method = 1;
+		} else if (srv_adaptive_flushing && srv_adaptive_flushing_method == 2) {
+			buf_pool_t*	buf_pool;
+			buf_page_t*	bpage;
+			uint64_t	lsn;
+			ulint		j;
+
+			mutex_enter(&(log_sys->mutex));
+			oldest_lsn = buf_pool_get_oldest_modification();
+			lsn = log_sys->lsn;
+			mutex_exit(&(log_sys->mutex));
+
+			/* upper loop/sec. (x10) */
+			next_itr_time -= 900; /* 1000 - 900 == 100 */
+			inner_loop++;
+			if (inner_loop < 10) {
+				i--;
+			} else {
+				inner_loop = 0;
+			}
+
+			if (prev_adaptive_flushing_method == 2) {
+				int32_t		n_flush;
+				int32_t		blocks_sum = 0;
+				uint32_t	new_blocks_sum = 0;
+				uint32_t flushed_blocks_sum = 0;
+
+				/* prev_flush_info[j] should be the previous loop's */
+				for (j = 0; j < srv_buf_pool_instances; j++) {
+					int32_t	blocks_num, new_blocks_num, flushed_blocks_num;
+					bool	found = false;
+
+					buf_pool = buf_pool_from_array(j);
+
+					blocks_num = UT_LIST_GET_LEN(buf_pool->flush_list);
+					bpage = UT_LIST_GET_FIRST(buf_pool->flush_list);
+					new_blocks_num = 0;
+
+					while (bpage != NULL) {
+						if (prev_flush_info[j].space == bpage->space
+						    && prev_flush_info[j].offset == bpage->offset
+						    && prev_flush_info[j].oldest_modification
+						    == bpage->oldest_modification) {
+							found = true;
+							break;
+						}
+						bpage = UT_LIST_GET_NEXT(list, bpage);
+						new_blocks_num++;
+					}
+					if (!found) {
+						new_blocks_num = blocks_num;
+					}
+					flushed_blocks_num = new_blocks_num
+						+ prev_flush_info[j].count
+						- blocks_num;
+					if (flushed_blocks_num < 0) {
+						flushed_blocks_num = 0;
+					}
+
+					bpage = UT_LIST_GET_FIRST(buf_pool->flush_list);
+
+					prev_flush_info[j].count = UT_LIST_GET_LEN(buf_pool->flush_list);
+					if (bpage) {
+						prev_flush_info[j].space = bpage->space;
+						prev_flush_info[j].offset = bpage->offset;
+						prev_flush_info[j].oldest_modification = bpage->oldest_modification;
+					} else {
+						prev_flush_info[j].space = 0;
+						prev_flush_info[j].offset = 0;
+						prev_flush_info[j].oldest_modification = 0;
+					}
+
+					new_blocks_sum += new_blocks_num;
+					flushed_blocks_sum += flushed_blocks_num;
+					blocks_sum += blocks_num;
+				}
+
+				n_flush = blocks_sum * (lsn - lsn_old) / log_sys->max_modified_age_async;
+				if (flushed_blocks_sum > n_pages_flushed_prev) {
+					n_flush -= (flushed_blocks_sum - n_pages_flushed_prev);
+				}
+
+				if (n_flush > 0) {
+					n_flush++;
+					n_pages_flushed = buf_flush_list(n_flush, oldest_lsn + (lsn - lsn_old));
+				} else {
+					n_pages_flushed = 0;
+				}
+			} else {
+				/* store previous first pages of the flush_list */
+				for (j = 0; j < srv_buf_pool_instances; j++) {
+					buf_pool = buf_pool_from_array(j);
+
+					bpage = UT_LIST_GET_FIRST(buf_pool->flush_list);
+
+					prev_flush_info[j].count = UT_LIST_GET_LEN(buf_pool->flush_list);
+					if (bpage) {
+						prev_flush_info[j].space = bpage->space;
+						prev_flush_info[j].offset = bpage->offset;
+						prev_flush_info[j].oldest_modification =  bpage->oldest_modification;
+					} else {
+						prev_flush_info[j].space = 0;
+						prev_flush_info[j].offset = 0;
+						prev_flush_info[j].oldest_modification = 0;
+					}
+				}
+				n_pages_flushed = 0;
+			}
+
+			lsn_old = lsn;
+			prev_adaptive_flushing_method = 2;
+		} else {
+			mutex_enter(&(log_sys->mutex));
+			lsn_old = log_sys->lsn;
+			mutex_exit(&(log_sys->mutex));
+			prev_adaptive_flushing_method = ULINT32_UNDEFINED;
+		}
+
+		if (n_pages_flushed == ULINT_UNDEFINED) {
+			n_pages_flushed_prev = 0;
+		} else {
+			n_pages_flushed_prev = n_pages_flushed;
 		}
 
 		if (srv_activity_count == old_activity_count) {
@@ -2895,7 +3173,7 @@ loop:
 	even if the server were active */
 
 	srv_main_thread_op_info = "doing insert buffer merge";
-	ibuf_contract_for_n_pages(FALSE, PCT_IO(5));
+	ibuf_contract_for_n_pages(FALSE, PCT_IBUF_IO(5));
 
 	/* Flush logs if needed */
 	srv_sync_log_buffer_in_background();
@@ -3003,7 +3281,7 @@ background_loop:
 		buf_flush_list below. Otherwise, the system favors
 		clean pages over cleanup throughput. */
 		n_bytes_merged = ibuf_contract_for_n_pages(FALSE,
-							   PCT_IO(100));
+							   PCT_IBUF_IO(100));
 	}
 
 	srv_main_thread_op_info = "reserving kernel mutex";
@@ -3152,6 +3430,7 @@ srv_purge_thread(
 	srv_slot_t*	slot;
 	ulint		slot_no = ULINT_UNDEFINED;
 	ulint		n_total_purged = ULINT_UNDEFINED;
+	ulint		next_itr_time;
 
 	ut_a(srv_n_purge_threads == 1);
 
@@ -3170,9 +3449,12 @@ srv_purge_thread(
 
 	mutex_exit(&kernel_mutex);
 
+	next_itr_time = ut_time_ms();
+
 	while (srv_shutdown_state != SRV_SHUTDOWN_EXIT_THREADS) {
 
 		ulint	n_pages_purged;
+		ulint	cur_time;
 
 		/* If there are very few records to purge or the last
 		purge didn't purge any records then wait for activity.
@@ -3213,6 +3495,16 @@ srv_purge_thread(
 		} while (n_pages_purged > 0 && !srv_fast_shutdown);
 
 		srv_sync_log_buffer_in_background();
+
+		cur_time = ut_time_ms();
+		if (next_itr_time > cur_time) {
+			os_thread_sleep(ut_min(1000000,
+					       (next_itr_time - cur_time)
+					       * 1000));
+			next_itr_time = ut_time_ms() + 1000;
+		} else {
+			next_itr_time = cur_time + 1000;
+		}
 	}
 
 	mutex_enter(&kernel_mutex);
