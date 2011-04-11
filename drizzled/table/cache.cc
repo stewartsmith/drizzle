@@ -38,7 +38,10 @@
 namespace drizzled {
 namespace table {
 
-CacheMap &getCache(void)
+CacheMap Cache::cache;
+boost::mutex Cache::_mutex;
+
+CacheMap& getCache()
 {
   return Cache::singleton().getCache();
 }

@@ -39,30 +39,29 @@ public:
     return open_cache;
   }
 
-  CacheMap& getCache()
+  static CacheMap& getCache()
   {
     return cache;
   }
 
-  void rehash(size_t arg)
+  static void rehash(size_t arg)
   {
     cache.rehash(arg);
   }
 
-  bool areTablesUsed(Table*, bool wait_for_name_lock);
-  void removeSchema(const identifier::Schema&);
-  bool removeTable(Session&, const identifier::Table&, uint32_t flags);
-  void release(table::instance::Shared*);
-  void insert(table::Concurrent*);
-
-  boost::mutex &mutex()
+  static boost::mutex& mutex()
   {
     return _mutex;
   }
 
+  static bool areTablesUsed(Table*, bool wait_for_name_lock);
+  static void removeSchema(const identifier::Schema&);
+  static bool removeTable(Session&, const identifier::Table&, uint32_t flags);
+  static void release(table::instance::Shared*);
+  static void insert(table::Concurrent*);
 private:
-  CacheMap cache;
-  boost::mutex _mutex;
+  static CacheMap cache;
+  static boost::mutex _mutex;
 };
 
 CacheMap& getCache();
