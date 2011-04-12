@@ -38,7 +38,10 @@
 namespace drizzled {
 namespace table {
 
-CacheMap &getCache(void)
+CacheMap Cache::cache;
+boost::mutex Cache::_mutex;
+
+CacheMap& getCache()
 {
   return Cache::singleton().getCache();
 }
@@ -167,7 +170,7 @@ void Cache::removeSchema(const identifier::Schema &schema_identifier)
   1  Table is in use by another thread
 */
 
-bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_t flags)
+bool Cache::removeTable(Session& session, const identifier::Table &identifier, uint32_t flags)
 {
   const identifier::Table::Key &key(identifier.getKey());
   bool result= false;
@@ -191,7 +194,7 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
       {
         table::getUnused().relink(table);
       }
-      else if (in_use != session)
+      else if (in_use != &session)
       {
         /*
           Mark that table is going to be deleted from cache. This will
@@ -218,7 +221,7 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
         {
           /* Do not handle locks of MERGE children. */
           if (session_table->db_stat)	// If table is open
-            signalled|= session->abortLockForThread(session_table);
+            signalled|= session.abortLockForThread(session_table);
         }
       }
       else
@@ -239,7 +242,7 @@ bool Cache::removeTable(Session *session, identifier::Table &identifier, uint32_
         reopen their tables
       */
       locking::broadcast_refresh();
-      if (not (flags & RTFC_CHECK_KILLED_FLAG) || not session->getKilled())
+      if (not (flags & RTFC_CHECK_KILLED_FLAG) || not session.getKilled())
       {
         dropping_tables++;
         if (likely(signalled))

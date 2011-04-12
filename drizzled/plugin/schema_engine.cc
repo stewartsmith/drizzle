@@ -25,15 +25,12 @@
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/open_tables_state.h>
-
+#include <drizzled/table/cache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>
@@ -222,9 +219,7 @@ static bool drop_all_tables_in_schema(Session& session,
       return false;
     }
 
-    table::Cache::singleton().removeTable(&session, *it,
-                                          RTFC_WAIT_OTHER_THREAD_FLAG |
-                                          RTFC_CHECK_KILLED_FLAG);
+    table::Cache::singleton().removeTable(session, *it, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
     if (not plugin::StorageEngine::dropTable(session, *it))
     {
       my_error(ER_TABLE_DROP, *it);

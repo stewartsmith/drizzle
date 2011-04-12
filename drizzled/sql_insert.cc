@@ -40,6 +40,7 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 

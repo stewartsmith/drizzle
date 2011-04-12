@@ -46,6 +46,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 #include <algorithm>
 #include <sstream>
@@ -155,16 +156,14 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (drop_temporary == false)
       {
-        Table *locked_table;
         abort_locked_tables(session, tmp_identifier);
-        table::Cache::singleton().removeTable(session, tmp_identifier,
-                                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                                              RTFC_CHECK_KILLED_FLAG);
+        table::Cache::singleton().removeTable(*session, tmp_identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
         /*
           If the table was used in lock tables, remember it so that
           unlock_table_names can free it
         */
-        if ((locked_table= drop_locked_tables(session, tmp_identifier)))
+        Table *locked_table= drop_locked_tables(session, tmp_identifier);
+        if (locked_table)
           table->table= locked_table;
 
         if (session->getKilled())
@@ -1676,7 +1675,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   /* Wait until all there are no other threads that has this table open */
   identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
-  table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
+  table::Cache::singleton().removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1828,7 +1827,7 @@ static bool admin_table(Session* session, TableList* tables,
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
       identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-      table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
+      table::Cache::singleton().removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->getKilled())
 	goto err;
@@ -1929,8 +1928,8 @@ send_result:
         else
         {
           boost::unique_lock<boost::mutex> lock(table::Cache::singleton().mutex());
-	  identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-          table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
+          identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+          table::Cache::singleton().removeTable(*session, identifier, RTFC_NO_FLAG);
         }
       }
     }

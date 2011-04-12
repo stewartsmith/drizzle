@@ -49,11 +49,11 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern pid_t current_pid;
 
