@@ -28,8 +28,6 @@
 #include <string>
 
 #include <drizzled/session.h>
-#include <drizzled/util/string.h>
-
 
 #pragma once
 

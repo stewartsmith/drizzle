@@ -54,6 +54,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/transaction_services.h>
@@ -1024,7 +1025,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &transacti
     trx->set_transaction_id(0);
   }
 
-  trx->set_start_timestamp(session.getCurrentTimestamp());
+  trx->set_start_timestamp(session.times.getCurrentTimestamp());
   
   /* segment info may get set elsewhere as needed */
   transaction.set_segment_id(1);
@@ -1035,7 +1036,7 @@ void TransactionServices::finalizeTransactionMessage(message::Transaction &trans
                                                      const Session& session)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
-  trx->set_end_timestamp(session.getCurrentTimestamp());
+  trx->set_end_timestamp(session.times.getCurrentTimestamp());
 }
 
 void TransactionServices::cleanupTransactionMessage(message::Transaction *transaction,
@@ -1096,7 +1097,7 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
                                                const Session& session)
 {
   statement.set_type(type);
-  statement.set_start_timestamp(session.getCurrentTimestamp());
+  statement.set_start_timestamp(session.times.getCurrentTimestamp());
 
   if (session.variables.replicate_query)
     statement.set_sql(session.getQueryString()->c_str());
@@ -1105,7 +1106,7 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
                                                    Session& session)
 {
-  statement.set_end_timestamp(session.getCurrentTimestamp());
+  statement.set_end_timestamp(session.times.getCurrentTimestamp());
   session.setStatementMessage(NULL);
 }
 
