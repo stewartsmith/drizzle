@@ -940,10 +940,8 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
-      return 0;
-  if (!(lex_str->str= mem_root->strmake_root(str, length)))
-    return 0;
+    lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
+  lex_str->str= mem_root->strmake_root(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1655,12 +1653,6 @@ void Session::send_kill_message() const
     my_message(err, ER(err), MYF(0));
 }
 
-void Session::set_status_var_init()
-{
-  memset(&status_var, 0, sizeof(status_var));
-}
-
-
 void Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
@@ -1869,18 +1861,6 @@ void Open_tables_state::mark_temp_tables_as_free_for_reuse()
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (table->query_id == session_.getQueryId())
-    {
-      table->query_id= 0;
-      table->cursor->ha_reset();
-    }
-  }
-}
-
-void Session::mark_used_tables_as_free_for_reuse(Table *table)
-{
-  for (; table ; table= table->getNext())
-  {
-    if (table->query_id == getQueryId())
     {
       table->query_id= 0;
       table->cursor->ha_reset();

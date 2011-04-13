@@ -1207,26 +1207,6 @@ public:
   */
   memory::Root main_mem_root;
 
-  /**
-   * Marks all tables in the list which were used by current substatement
-   * as free for reuse.
-   *
-   * @param Head of the list of tables
-   *
-   * @note
-   *
-   * The reason we reset query_id is that it's not enough to just test
-   * if table->query_id != session->query_id to know if a table is in use.
-   *
-   * For example
-   *
-   *  SELECT f1_that_uses_t1() FROM t1;
-   *
-   * In f1_that_uses_t1() we will see one instance of t1 where query_id is
-   * set to query_id of original query.
-   */
-  void mark_used_tables_as_free_for_reuse(Table *table);
-
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
   void my_eof();
