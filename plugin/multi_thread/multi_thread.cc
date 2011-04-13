@@ -167,7 +167,7 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 
 void MultiThreadScheduler::killSession(Session *session)
 {
-  boost_thread_shared_ptr thread(session->getThread());
+  thread_ptr thread(session->getThread());
 
   if (thread)
   {
