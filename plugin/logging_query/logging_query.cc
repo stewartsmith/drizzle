@@ -297,10 +297,9 @@ public:
 
 static int logging_query_plugin_init(drizzled::module::Context &context)
 {
-
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("filename") > 0)
+  if (vm.count("filename"))
   {
     context.add(new Logging_query(vm["filename"].as<string>(),
                                   vm["pcre"].as<string>()));
