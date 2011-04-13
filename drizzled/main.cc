@@ -422,7 +422,7 @@ int main(int argc, char **argv)
   }
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     select_thread_in_use= false;			// For close_connections
   }
   COND_thread_count.notify_all();

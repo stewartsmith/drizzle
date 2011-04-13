@@ -19,9 +19,10 @@
 
 #pragma once
 
-#include <list>
-
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
 #include <drizzled/visibility.h>
+#include <list>
 
 namespace drizzled {
 namespace session {
@@ -49,7 +50,7 @@ public:
     return cache;
   }
 
-  boost::mutex &mutex()
+  static boost::mutex &mutex()
   {
     return _mutex;
   }
@@ -71,7 +72,7 @@ public:
 private:
   bool volatile _ready_to_exit;
   list cache;
-  boost::mutex _mutex;
+  static boost::mutex _mutex;
   boost::condition_variable _end;
 };
 

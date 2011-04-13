@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
 #include <drizzled/identifier.h>
 
