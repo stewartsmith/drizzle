@@ -1338,7 +1338,7 @@ static bool locked_create_event(Session *session,
       /*
         @todo improve this error condition.
       */
-      if (definition::Cache::singleton().find(identifier.getKey()))
+      if (definition::Cache::find(identifier.getKey()))
       {
         my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
