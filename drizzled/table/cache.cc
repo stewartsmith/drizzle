@@ -247,7 +247,7 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
         dropping_tables++;
         if (likely(signalled))
         {
-          boost_unique_lock_t scoped(table::Cache::mutex(), boost::adopt_lock_t());
+          boost::mutex::scoped_lock scoped(table::Cache::mutex(), boost::adopt_lock_t());
           COND_refresh.wait(scoped);
           scoped.release();
         }
@@ -266,7 +266,7 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
           boost::xtime xt;
           xtime_get(&xt, boost::TIME_UTC);
           xt.sec += 10;
-          boost_unique_lock_t scoped(table::Cache::mutex(), boost::adopt_lock_t());
+          boost::mutex::scoped_lock scoped(table::Cache::mutex(), boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();
         }

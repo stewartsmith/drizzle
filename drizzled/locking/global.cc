@@ -946,7 +946,7 @@ bool Session::lockGlobalReadLock()
                             "Waiting to get readlock");
 
     waiting_for_read_lock++;
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     while (protect_against_global_read_lock && not getKilled())
       COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
@@ -981,7 +981,7 @@ void Session::unlockGlobalReadLock(void)
     return;
 
   {
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock);
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
     if (isGlobalReadLock() == Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
       --global_read_lock_blocks_commit;
@@ -1035,7 +1035,7 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
     while (must_wait(is_not_commit) && not getKilled() &&
 	   (!abort_on_refresh || open_tables.version == g_refresh_version))
     {
-      boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
+      boost::mutex::scoped_lock scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);
       scoped.release();
     }
@@ -1096,7 +1096,7 @@ bool Session::makeGlobalReadLockBlockCommit()
                           "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && not getKilled())
   {
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     COND_global_read_lock.wait(scopedLock);
     scopedLock.release();
   }

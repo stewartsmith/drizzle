@@ -1448,7 +1448,7 @@ bool create_table_no_lock(Session *session,
                                &key_info_buffer, &key_count,
                                select_field_count))
   {
-    boost_unique_lock_t lock(table::Cache::mutex()); /* CREATE TABLE (some confussion on naming, double check) */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1514,7 +1514,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost_unique_lock_t lock(table::Cache::mutex()); /* Lock for removing name_lock during table create */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -2110,7 +2110,7 @@ bool create_like_table(Session* session,
     {
       if (name_lock)
       {
-        boost_unique_lock_t lock(table::Cache::mutex()); /* unlink open tables for create table like*/
+        boost::mutex::scoped_lock lock(table::Cache::mutex()); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
       }
 
@@ -2129,7 +2129,7 @@ bool create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost_unique_lock_t lock(table::Cache::mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost::mutex::scoped_lock lock(table::Cache::mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                           source_identifier, is_engine_set);
       }
@@ -2148,7 +2148,7 @@ bool create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost_unique_lock_t lock(table::Cache::mutex()); /* unlink open tables for create table like*/
+      boost::mutex::scoped_lock lock(table::Cache::mutex()); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }

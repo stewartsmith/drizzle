@@ -29,7 +29,6 @@
 namespace drizzled {
 
 typedef boost::shared_ptr<boost::thread> thread_ptr;
-typedef boost::mutex::scoped_lock boost_unique_lock_t;
 
 extern boost::condition_variable_any COND_refresh;
 extern DRIZZLED_API boost::condition_variable COND_thread_count;

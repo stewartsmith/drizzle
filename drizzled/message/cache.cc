@@ -28,7 +28,7 @@ namespace message {
 
 table::shared_ptr Cache::find(const identifier::Table &identifier)
 {
-  boost_unique_lock_t scoped_lock(_access);
+  boost::mutex::scoped_lock scoped_lock(_access);
   if (Map::mapped_type* ptr= find_ptr(cache, identifier.getKey()))
     return *ptr;
   return table::shared_ptr();
@@ -36,13 +36,13 @@ table::shared_ptr Cache::find(const identifier::Table &identifier)
 
 void Cache::erase(const identifier::Table &identifier)
 {
-  boost_unique_lock_t scoped_lock(_access);
+  boost::mutex::scoped_lock scoped_lock(_access);
   cache.erase(identifier.getKey());
 }
 
 bool Cache::insert(const identifier::Table &identifier, table::shared_ptr share)
 {
-  boost_unique_lock_t scoped_lock(_access);
+  boost::mutex::scoped_lock scoped_lock(_access);
   return cache.insert(std::make_pair(identifier.getKey(), share)).second;
 }
 

@@ -314,7 +314,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    boost_unique_lock_t scopedLock(session->mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -381,7 +381,7 @@ void Session::close_open_tables()
 
   safe_mutex_assert_not_owner(table::Cache::mutex().native_handle());
 
-  boost_unique_lock_t scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
+  boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
 
   while (open_tables.open_tables_)
   {
@@ -722,7 +722,7 @@ void Session::drop_open_table(Table *table, const identifier::Table &identifier)
   }
   else
   {
-    boost_unique_lock_t scoped_lock(table::Cache::mutex()); /* Close and drop a table (AUX routine) */
+    boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
@@ -763,13 +763,13 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       condition variables that are guranteed to not disapper (freed) even if this
       mutex is unlocked
     */
-    boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(mutex, boost::adopt_lock_t());
     if (not getKilled())
     {
       cond.wait(scopedLock);
     }
   }
-  boost_unique_lock_t mysys_scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock mysys_scopedLock(mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
@@ -828,7 +828,7 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
 {
   const identifier::Table::Key &key(identifier.getKey());
 
-  boost_unique_lock_t scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost::mutex::scoped_lock scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   if (find_ptr(table::getCache(), key))
   {
