@@ -161,18 +161,12 @@ plugin::TableFunction::Generator::Generator(Field **arg) :
 
 bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
-  bool ret;
-  uint64_t difference;
-
   columns_iterator= columns;
-  ret= populate();
-  difference= columns_iterator - columns;
+  bool ret= populate();
+  uint64_t difference= columns_iterator - columns;
 
-  if (ret == true)
-  {
+  if (ret)
     assert(difference == field_size);
-  }
-
   return ret;
 }
 
@@ -221,27 +215,15 @@ void plugin::TableFunction::Generator::push(const std::string& arg)
 void plugin::TableFunction::Generator::push(bool arg)
 {
   if (arg)
-  {
     (*columns_iterator)->store("YES", 3, scs);
-  }
   else
-  {
     (*columns_iterator)->store("NO", 2, scs);
-  }
-
   columns_iterator++;
 }
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not lex().wild)
-    return false;
-
-  bool match= wild_case_compare(system_charset_info,
-                                predicate.c_str(),
-                                lex().wild->ptr());
-
-  return match;
+  return lex().wild ? wild_case_compare(system_charset_info, predicate.c_str(), lex().wild->ptr()) : false;
 }
 
 } /* namespace drizzled */

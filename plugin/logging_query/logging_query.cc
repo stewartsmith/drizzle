@@ -22,6 +22,7 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_parse.h>
 #include PCRE_HEADER
 #include <limits.h>
@@ -238,9 +239,9 @@ public:
       inside itself, so be more accurate, and so this doesnt have to
       keep calling current_utime, which can be slow.
     */
-    uint64_t t_mark= session->getCurrentTimestamp(false);
+    uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
-    if (session->getElapsedTime() < (sysvar_logging_query_threshold_slow.get()))
+    if (session->times.getElapsedTime() < sysvar_logging_query_threshold_slow.get())
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -267,18 +268,16 @@ public:
     quotify(*query_string, qs);
 
     // to avoid trying to printf %s something that is potentially NULL
-    util::string::const_shared_ptr schema(session->schema());
-    const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";
-
+    util::string::ptr schema(session->schema());
     formatter % t_mark
               % session->thread_id
               % session->getQueryId()
-              % dbs
+              % (schema ? schema->c_str() : "")
               % qs
               % getCommandName(session->command)
-              % (t_mark - session->getConnectMicroseconds())
-              % session->getElapsedTime()
-              % (t_mark - session->utime_after_lock)
+              % (t_mark - session->times.getConnectMicroseconds())
+              % session->times.getElapsedTime()
+              % (t_mark - session->times.utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count
               % session->tmp_table

@@ -57,7 +57,7 @@ void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
     Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
     
     // We set the current schema.  @todo do the same with catalog
-    util::string::const_shared_ptr schema(_session.schema());
+    util::string::ptr schema(_session.schema());
     if (not schema->empty())
       new_session->set_db(*schema);
     
@@ -118,7 +118,7 @@ void Execute::run(std::string &execution_string)
     Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
 
     // We set the current schema.  @todo do the same with catalog
-    util::string::const_shared_ptr schema(_session.schema());
+    util::string::ptr schema(_session.schema());
     if (not schema->empty())
       new_session->set_db(*schema);
 

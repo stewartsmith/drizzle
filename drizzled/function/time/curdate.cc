@@ -23,6 +23,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/temporal.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/current_session.h>
 
 namespace drizzled
@@ -55,10 +56,7 @@ void Item_func_curdate::fix_length_and_dec()
 */
 void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 {
-  Session *session= current_session;
-  time_t tmp= session->getCurrentTimestampEpoch();
-
-  (void) cached_temporal.from_time_t(tmp);
+  (void) cached_temporal.from_time_t(current_session->times.getCurrentTimestampEpoch());
 
   now_time->year= cached_temporal.years();
   now_time->month= cached_temporal.months();
@@ -75,10 +73,7 @@ void Item_func_curdate_local::store_now_in_TIME(type::Time *now_time)
 */
 void Item_func_curdate_utc::store_now_in_TIME(type::Time *now_time)
 {
-  Session *session= current_session;
-  time_t tmp= session->getCurrentTimestampEpoch();
-
-  (void) cached_temporal.from_time_t(tmp);
+  (void) cached_temporal.from_time_t(current_session->times.getCurrentTimestampEpoch());
 
   now_time->year= cached_temporal.years();
   now_time->month= cached_temporal.months();
