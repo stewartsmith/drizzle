@@ -600,7 +600,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
   @param check_in_use           Do we need to check if table already in use by us
 
   @note
-    One must have a lock on table::Cache::singleton().mutex()!
+    One must have a lock on table::Cache::mutex()!
 
   @warning
     If you are going to update the table, you should use
@@ -657,7 +657,7 @@ int Session::lock_table_name(TableList *table_list)
   table_list->table= reinterpret_cast<Table *>(table);
 
   /* Return 1 if table is in use */
-  return(test(table::Cache::singleton().removeTable(*this, identifier, RTFC_NO_FLAG)));
+  return(test(table::Cache::removeTable(*this, identifier, RTFC_NO_FLAG)));
 }
 
 
@@ -681,7 +681,7 @@ static bool locked_named_table(TableList *table_list)
       Table *save_next= table->getNext();
       bool result;
       table->setNext(NULL);
-      result= table::Cache::singleton().areTablesUsed(table_list->table, 0);
+      result= table::Cache::areTablesUsed(table_list->table, 0);
       table->setNext(save_next);
       if (result)
         return 1;
@@ -696,7 +696,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   bool result= false;
 
 #if 0
-  assert(ownership of table::Cache::singleton().mutex());
+  assert(ownership of table::Cache::mutex());
 #endif
 
   while (locked_named_table(table_list))
@@ -706,8 +706,8 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
       result=1;
       break;
     }
-    wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
-    table::Cache::singleton().mutex().lock(); /* Wait for a table to unlock and then lock it */
+    wait_for_condition(table::Cache::mutex(), COND_refresh);
+    table::Cache::mutex().lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
 }
@@ -717,7 +717,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   Lock all tables in list with a name lock.
 
   REQUIREMENTS
-  - One must have a lock on table::Cache::singleton().mutex() when calling this
+  - One must have a lock on table::Cache::mutex() when calling this
 
   @param table_list		Names of tables to lock
 
@@ -763,7 +763,7 @@ bool Session::lock_table_names(TableList *table_list)
   @param table_list Names of tables to lock.
 
   @note
-    This function needs to be protected by table::Cache::singleton().mutex(). If we're
+    This function needs to be protected by table::Cache::mutex(). If we're
     under LOCK TABLES, this function does not work as advertised. Namely,
     it does not exclude other threads from using this table and does not
     put an exclusive name lock on this table into the table cache.
@@ -802,7 +802,7 @@ bool Session::lock_table_names_exclusively(TableList *table_list)
 			        (default 0, which will unlock all tables)
 
   @note
-    One must have a lock on table::Cache::singleton().mutex() when calling this.
+    One must have a lock on table::Cache::mutex() when calling this.
 
   @note
     This function will broadcast refresh signals to inform other threads
@@ -877,12 +877,12 @@ static void print_lock_error(int error, const char *table)
 
   access to them is protected with a mutex LOCK_global_read_lock
 
-  (XXX: one should never take table::Cache::singleton().mutex() if LOCK_global_read_lock is
+  (XXX: one should never take table::Cache::mutex() if LOCK_global_read_lock is
   taken, otherwise a deadlock may occur. Other mutexes could be a
   problem too - grep the code for global_read_lock if you want to use
-  any other mutex here) Also one must not hold table::Cache::singleton().mutex() when calling
+  any other mutex here) Also one must not hold table::Cache::mutex() when calling
   wait_if_global_read_lock(). When the thread with the global read lock
-  tries to close its tables, it needs to take table::Cache::singleton().mutex() in
+  tries to close its tables, it needs to take table::Cache::mutex() in
   close_thread_table().
 
   How blocking of threads by global read lock is achieved: that's
@@ -1007,11 +1007,11 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
   bool result= 0, need_exit_cond;
 
   /*
-    Assert that we do not own table::Cache::singleton().mutex(). If we would own it, other
+    Assert that we do not own table::Cache::mutex(). If we would own it, other
     threads could not close their tables. This would make a pretty
     deadlock.
   */
-  safe_mutex_assert_not_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_not_owner(table::Cache::mutex().native_handle());
 
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
@@ -1121,9 +1121,9 @@ bool Session::makeGlobalReadLockBlockCommit()
     Due to a bug in a threading library it could happen that a signal
     did not reach its target. A condition for this was that the same
     condition variable was used with different mutexes in
-    pthread_cond_wait(). Some time ago we changed table::Cache::singleton().mutex() to
+    pthread_cond_wait(). Some time ago we changed table::Cache::mutex() to
     LOCK_global_read_lock in global read lock handling. So COND_refresh
-    was used with table::Cache::singleton().mutex() and LOCK_global_read_lock.
+    was used with table::Cache::mutex() and LOCK_global_read_lock.
 
     We did now also change from COND_refresh to COND_global_read_lock
     in global read lock handling. But now it is necessary to signal

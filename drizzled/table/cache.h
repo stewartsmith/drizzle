@@ -27,18 +27,12 @@
 namespace drizzled {
 namespace table {
 
-typedef boost::unordered_multimap< identifier::Table::Key, Concurrent *> CacheMap;
-typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
+typedef boost::unordered_multimap<identifier::Table::Key, Concurrent*> CacheMap;
+typedef std::pair<CacheMap::const_iterator, CacheMap::const_iterator> CacheRange;
 
 class Cache 
 {
 public:
-  static Cache& singleton()
-  {
-    static Cache open_cache;
-    return open_cache;
-  }
-
   static CacheMap& getCache()
   {
     return cache;

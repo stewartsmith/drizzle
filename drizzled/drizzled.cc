@@ -1547,7 +1547,7 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
-  table::Cache::singleton().rehash(table_def_size);
+  table::Cache::rehash(table_def_size);
   definition::Cache::singleton().rehash(table_def_size);
   message::Cache::singleton().rehash(table_def_size);
 

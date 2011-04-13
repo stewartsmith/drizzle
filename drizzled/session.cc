@@ -1936,9 +1936,9 @@ void Session::close_thread_tables()
     open_tables.lock= 0;
   }
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
