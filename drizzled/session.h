@@ -735,9 +735,6 @@ public:
     return server_id;
   }
 
-  /** Returns the current transaction ID for the session's current statement */
-  my_xid getTransactionId();
-
   /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
@@ -976,7 +973,6 @@ public:
 
   void clear_error(bool full= false);
   void clearDiagnostics();
-  void fatal_error();
   bool is_error() const;
 
   inline const charset_info_st *charset() { return default_charset_info; }

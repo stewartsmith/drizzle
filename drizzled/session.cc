@@ -2034,17 +2034,6 @@ void Session::clearDiagnostics()
 }
 
 /**
-  Mark the current error as fatal. Warning: this does not
-  set any error, it sets a property of the error, so must be
-  followed or prefixed with my_error().
-*/
-void Session::fatal_error()
-{
-  assert(main_da().is_error());
-  is_fatal_error= true;
-}
-
-/**
   true if there is an error in the error stack.
 
   Please use this method instead of direct access to
@@ -2114,10 +2103,6 @@ plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_nam
   if (observers)
     impl_->schema_event_observers[db_name] = observers;
 	return observers;
-}
-my_xid Session::getTransactionId()
-{
-  return transaction.xid_state.xid.quick_get_my_xid();
 }
 
 const std::string& display::type(drizzled::Session::global_read_lock_t type)

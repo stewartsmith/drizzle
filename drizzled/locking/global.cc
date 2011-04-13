@@ -162,12 +162,11 @@ static drizzled::error_t thr_lock_errno_to_mysql[]=
         lock request will set its lock type properly.
 */
 
-static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
+static void reset_lock_data_and_free(DrizzleLock*& lock)
 {
-  DrizzleLock *sql_lock= *mysql_lock;
-  sql_lock->reset();
-  delete sql_lock;
-  *mysql_lock= 0;
+  lock->reset();
+  delete lock;
+  lock= NULL;
 }
 
 DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
@@ -190,14 +189,14 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
       if (wait_if_global_read_lock(1, 1))
       {
         /* Clear the lock type of all lock data to avoid reusage. */
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	break;
       }
 
       if (open_tables.version != g_refresh_version)
       {
         /* Clear the lock type of all lock data to avoid reusage. */
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	break;
       }
     }
@@ -239,7 +238,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     if (sql_lock->sizeTable() && lock_external(sql_lock->getTable(), sql_lock->sizeTable()))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
-      reset_lock_data_and_free(&sql_lock);
+      reset_lock_data_and_free(sql_lock);
       break;
     }
     set_proc_info("Table lock");
@@ -259,7 +258,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     {
       if (sql_lock->sizeTable())
         unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
-      reset_lock_data_and_free(&sql_lock);
+      reset_lock_data_and_free(sql_lock);
       my_error(rc, MYF(0));
     }
   } while(0);
@@ -558,7 +557,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
         sql_lock->setLock(locks - sql_lock->getLocks());
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	return NULL;
       }
     }
