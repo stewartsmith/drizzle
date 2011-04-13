@@ -32,19 +32,14 @@
 #include <algorithm>
 
 using namespace std;
-namespace drizzled
-{
+
+namespace drizzled {
 
   typedef void (*init_func_p)(const struct option *option, char **variable,
       int64_t value);
 
   void default_reporter(enum loglevel level, const char *format, ...);
   my_error_reporter my_getopt_error_reporter= &default_reporter;
-
-  static void init_variables(const struct option *options,
-      init_func_p init_one_value);
-  static void fini_one_value(const struct option *option, char **variable,
-      int64_t value);
 
   /*
      The following three variables belong to same group and the number and
@@ -77,8 +72,6 @@ namespace drizzled
     fputc('\n', stderr);
     fflush(stderr);
   }
-
-static getopt_get_addr_func getopt_get_addr;
 
   /*
 function: compare_strings
@@ -231,72 +224,7 @@ values.
     return num;
   }
 
-  /*
-     Init one value to it's default values
-
-     SYNOPSIS
-     init_one_value()
-     option		Option to initialize
-     value		Pointer to variable
-   */
-
-  static void fini_one_value(const struct option *option, char **variable,
-      int64_t)
-  {
-    switch ((option->var_type & GET_TYPE_MASK)) {
-      case GET_STR_ALLOC:
-        free((*(char**) variable));
-        *((char**) variable)= NULL;
-        break;
-      default: /* dummy default to avoid compiler warnings */
-        break;
-    }
-    return;
-  }
-
-
-  void my_cleanup_options(const struct option *options)
-  {
-    init_variables(options, fini_one_value);
-  }
-
-
-  /*
-     initialize all variables to their default values
-
-     SYNOPSIS
-     init_variables()
-     options		Array of options
-
-     NOTES
-     We will initialize the value that is pointed to by options->value.
-     If the value is of type GET_ASK_ADDR, we will also ask for the address
-     for a value and initialize.
-   */
-
-  static void init_variables(const struct option *options,
-      init_func_p init_one_value)
-  {
-    for (; options->name; options++)
-    {
-      char* *variable;
-      /*
-         We must set u_max_value first as for some variables
-         options->u_max_value == options->value and in this case we want to
-         set the value to default value.
-       */
-      if (options->u_max_value)
-        init_one_value(options, options->u_max_value, options->max_value);
-      if (options->value)
-        init_one_value(options, options->value, options->def_value);
-      if (options->var_type & GET_ASK_ADDR &&
-          (variable= (*getopt_get_addr)("", 0, options)))
-        init_one_value(options, variable, options->def_value);
-    }
-    return;
-  }
-
-
+  
   /*
 function: my_print_options
 
