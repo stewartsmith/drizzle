@@ -30,6 +30,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/thread_var.h>
 #include <drizzled/session/state.h>
+#include <drizzled/session/times.h>
 #include <set>
 
 using namespace std;
@@ -57,11 +58,9 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 
 bool ProcesslistTool::Generator::populate()
 {
-  drizzled::Session* tmp;
-
-  while ((tmp= session_generator))
+  while (Session* tmp= session_generator)
   {
-    drizzled::session::State::const_shared_ptr state(tmp->state());
+    boost::shared_ptr<session::State> state(tmp->state());
     identifier::user::ptr tmp_sctx= tmp->user();
 
     /* ID */
@@ -77,7 +76,7 @@ bool ProcesslistTool::Generator::populate()
     push(tmp_sctx->address());
 
     /* DB */
-    drizzled::util::string::const_shared_ptr schema(tmp->schema());
+    util::string::ptr schema(tmp->schema());
     if (schema and not schema->empty())
     {
       push(*schema);
@@ -88,10 +87,9 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* COMMAND */
-    const char *val= tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : NULL;
-    if (val)
+    if (tmp->getKilled() == Session::KILL_CONNECTION)
     {
-      push(val);
+      push("Killed");
     }
     else
     {
@@ -99,9 +97,8 @@ bool ProcesslistTool::Generator::populate()
     }
 
     /* type::Time */
-    boost::posix_time::time_duration duration_result;
-    getSession().getTimeDifference(duration_result, getSession().start_timer());
-    duration_result.is_negative() ? push(static_cast<uint64_t>(0)) : push(static_cast<uint64_t>(duration_result.total_seconds()));
+    boost::posix_time::time_duration duration_result= getSession().times.start_timer() - getSession().times._start_timer;
+    push(static_cast<uint64_t>(duration_result.is_negative() ? 0 : duration_result.total_seconds()));
 
     /* STATE */
     const char *step= tmp->get_proc_info();

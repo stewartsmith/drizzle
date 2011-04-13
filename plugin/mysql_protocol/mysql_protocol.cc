@@ -788,7 +788,7 @@ bool ClientMySQLProtocol::checkConnection(void)
   }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
-  session->max_client_packet_length= uint4korr(net.read_pos + 4);
+  // session->max_client_packet_length= uint4korr(net.read_pos + 4);
   end= (char*) net.read_pos + 32;
 
   /*

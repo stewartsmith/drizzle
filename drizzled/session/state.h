@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 
 namespace drizzled {
@@ -29,14 +28,10 @@ namespace session {
 class State 
 {
 public:
-  typedef boost::shared_ptr<State> shared_ptr;
-  typedef boost::shared_ptr<State> const_shared_ptr;
+  State(const char*, size_t);
 
-  State(const char *in_packet, size_t in_packet_length);
-
-  const char *query() const;
-
-  const char *query(size_t &size) const;
+  const char* query() const;
+  const char* query(size_t&) const;
 
 protected:
   friend class Session;
@@ -46,4 +41,3 @@ private:
 
 } /* namespace session */
 } /* namespace drizzled */
-

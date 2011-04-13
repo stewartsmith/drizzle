@@ -30,13 +30,11 @@
 #include <drizzled/plugin/client/concurrent.h>
 #include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-void parse(drizzled::Session *session, const char *inBuf, uint32_t length);
+void parse(drizzled::Session&, const char *inBuf, uint32_t length);
 
-namespace statement
-{
+namespace statement {
 
 Execute::Execute(Session *in_session,
                  drizzled::execute_string_t to_execute_arg,
@@ -176,25 +174,13 @@ bool statement::Execute::execute_shell()
           std::string final_sql;
           if (is_savepoint)
           {
-            if (error_occured)
-            {
-              final_sql.append("ROLLBACK TO SAVEPOINT execute_internal_savepoint");
-            }
-            else
-            {
-              final_sql.append("RELEASE SAVEPOINT execute_internal_savepoint");
-            }
+            final_sql.append(error_occured ? 
+              "ROLLBACK TO SAVEPOINT execute_internal_savepoint" : 
+              "RELEASE SAVEPOINT execute_internal_savepoint");
           }
           else
           {
-            if (error_occured)
-            {
-              final_sql.append("ROLLBACK");
-            }
-            else
-            {
-              final_sql.append("COMMIT");
-            }
+            final_sql.append(error_occured ? "ROLLBACK" : "COMMIT");
           }
 
           // Run the cleanup command, we currently ignore if an error occurs
@@ -220,7 +206,7 @@ bool statement::Execute::execute_shell()
     }
     else
     {
-      parse(&session(), to_execute.str, to_execute.length);
+      parse(session(), to_execute.str, to_execute.length);
     }
   }
 

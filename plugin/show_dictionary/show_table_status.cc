@@ -55,7 +55,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   schema_predicate.append(select.getShowSchema());
 
-  util::string::const_shared_ptr schema(getSession().schema());
+  util::string::ptr schema(getSession().schema());
   if (schema_predicate.empty() and schema)
   {
     schema_predicate.append(*schema);
