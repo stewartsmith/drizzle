@@ -24,11 +24,8 @@
 #include <drizzled/session/cache.h>
 #include <plugin/utility_functions/functions.h>
 
-namespace drizzled
-{
-
-namespace utility_functions
-{
+namespace drizzled {
+namespace utility_functions {
 
 bool Execute::val_bool()
 {
