@@ -798,7 +798,7 @@ table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::iden
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
   table::Placeholder* table= new table::Placeholder(this, identifier);
-  table::Cache::singleton().insert(table);
+  table::Cache::insert(table);
   return *table;
 }
 
