@@ -776,7 +776,7 @@ public:
    * @param The packet pointer to read from
    * @param The length of the query to read
    */
-  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+  void readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
 
   /**
    * Ends the current transaction and (maybe) begins the next.
@@ -1108,7 +1108,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   session::TableMessages &getMessageCache();

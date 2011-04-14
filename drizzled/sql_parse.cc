@@ -226,12 +226,7 @@ bool dispatch_command(enum_server_command command, Session *session,
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
       break;
     }
-
-    string tmp(packet, packet_length);
-
-    identifier::Schema identifier(tmp);
-
-    if (not schema::change(*session, identifier))
+    if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
     {
       session->my_ok();
     }
@@ -239,14 +234,9 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (not session->readAndStoreQuery(packet, packet_length))
-      break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
-                        session->thread_id,
-                        const_cast<const char *>(session->schema()->c_str()));
-
+    session->readAndStoreQuery(packet, packet_length);
+    DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
     parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
-
     break;
   }
   case COM_QUIT:

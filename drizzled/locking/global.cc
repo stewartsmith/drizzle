@@ -622,23 +622,14 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 int Session::lock_table_name(TableList *table_list)
 {
   identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
-  const identifier::Table::Key &key(identifier.getKey());
-
   {
     /* Only insert the table if we haven't insert it already */
-    table::CacheRange ppp;
-
-    ppp= table::getCache().equal_range(key);
-
-    for (table::CacheMap::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+    table::CacheRange ppp= table::getCache().equal_range(identifier.getKey());
+    for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter)
     {
       Table *table= iter->second;
       if (table->reginfo.lock_type < TL_WRITE)
-      {
         continue;
-      }
-
       if (table->in_use == this)
       {
         table->getMutableShare()->resetVersion();                  // Ensure no one can use this
@@ -648,16 +639,11 @@ int Session::lock_table_name(TableList *table_list)
     }
   }
 
-  table::Placeholder *table= NULL;
-  if (!(table= table_cache_insert_placeholder(identifier)))
-  {
-    return -1;
-  }
-
-  table_list->table= reinterpret_cast<Table *>(table);
+  table::Placeholder *table= &table_cache_insert_placeholder(identifier);
+  table_list->table= reinterpret_cast<Table*>(table);
 
   /* Return 1 if table is in use */
-  return(test(table::Cache::removeTable(*this, identifier, RTFC_NO_FLAG)));
+  return (test(table::Cache::removeTable(*this, identifier, RTFC_NO_FLAG)));
 }
 
 
