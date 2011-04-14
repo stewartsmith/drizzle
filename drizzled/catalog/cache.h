@@ -35,38 +35,21 @@ namespace catalog  {
 
 class Cache
 {
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
+public:
   static size_t size()
   {
     return cache.size();
   }
 
-  static void rehash(size_t arg)
-  {
-    cache.rehash(arg);
-  }
+  static Instance::shared_ptr find(const identifier::Catalog&, error_t&);
+  static bool exist(const identifier::Catalog&);
+  static bool erase(const identifier::Catalog&, error_t&);
+  static bool insert(const identifier::Catalog&, Instance::shared_ptr, error_t&);
+  static bool lock(const identifier::Catalog&, error_t&);
+  static bool unlock(const identifier::Catalog&, error_t&);
+  static void copy(catalog::Instance::vector&);
 
-  static Instance::shared_ptr find(const identifier::Catalog &identifier, drizzled::error_t &error);
-  static bool exist(const identifier::Catalog &identifier);
-  static bool erase(const identifier::Catalog &identifier, drizzled::error_t &error);
-  static bool insert(const identifier::Catalog &identifier, Instance::shared_ptr instance, drizzled::error_t &error);
-  static bool lock(const identifier::Catalog &identifier, drizzled::error_t &error);
-  static bool unlock(const identifier::Catalog &identifier, drizzled::error_t &error);
-
-  friend class drizzled::generator::catalog::Cache;
-  friend class drizzled::plugin::Catalog;
-  friend class drizzled::catalog::lock::Erase;
-  friend class drizzled::catalog::lock::Create;
-
-  static void copy(catalog::Instance::vector &vector);
-
-  typedef boost::unordered_map< identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
+  typedef boost::unordered_map<identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
 
   static unordered_map cache;
   static boost::mutex _mutex;
@@ -79,7 +62,7 @@ class Erase
 {
   bool _locked;
   const identifier::Catalog &identifier;
-  drizzled::error_t error;
+  error_t error;
 
 public:
   Erase(const identifier::Catalog &identifier_arg) :
@@ -125,7 +108,7 @@ class Create
 {
   bool _locked;
   const identifier::Catalog &identifier;
-  drizzled::error_t error;
+  error_t error;
 
 public:
   Create(const identifier::Catalog &identifier_arg) :
