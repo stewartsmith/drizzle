@@ -33,16 +33,17 @@ public:
   /*
     This constructor serves for creation of NestedJoin instances
   */
-  NestedJoin() :
-    join_list(),
-    used_tables(),
-    not_null_tables(),
-    first_nested(NULL),
-    counter_(0),
-    nj_map(),
-    sj_depends_on(),
-    sj_corr_tables(),
-    sj_outer_expr_list()      
+  NestedJoin() 
+  :
+  join_list(),
+  used_tables(),
+  not_null_tables(),
+  first_nested(NULL),
+  counter_(0),
+  nj_map(),
+  sj_depends_on(),
+  sj_corr_tables(),
+  sj_outer_expr_list()      
   { }    
 
   /* list of elements in the nested join */
@@ -70,28 +71,15 @@ public:
   /* Bit used to identify this nested join*/
   std::bitset<64> nj_map;
 
-private:
   /*
-    (Valid only for semi-join nests) Bitmap of tables outside the semi-join
-    that are used within the semi-join's ON condition.
-  */
-  table_map sj_depends_on;
-  /* Outer non-trivially correlated tables */
-
-  table_map sj_corr_tables;
-
-  List<Item> sj_outer_expr_list;
-
-  /**
      True if this join nest node is completely covered by the query execution
      plan. This means two things.
 
      1. All tables on its @c join_list are covered by the plan.
-y
+
      2. All child join nest nodes are fully covered.
    */
 
-public:
   bool is_fully_covered() const { return join_list.size() == counter_; }
 
   /* To get the table_map sj_depends_on */
@@ -101,7 +89,7 @@ public:
   }
 
   /* To set the table_map sj_depends_on */
-  void setSjDependsOn(table_map in_sj_depends_on)
+  void setSjDependsOn(const table_map &in_sj_depends_on)
   {
     sj_depends_on= in_sj_depends_on;
   }
@@ -113,7 +101,7 @@ public:
   }
   
   /* To set the table_map sj_corr_tables */
-  void getSjCorrTables(table_map in_sj_corr_tables) 
+  void setSjCorrTables(const table_map &in_sj_corr_tables) 
   {
     sj_corr_tables= in_sj_corr_tables;
   }
@@ -125,10 +113,22 @@ public:
   }
   
   /* To set the List sj_outer_expr_list */
-  void setSjOuterExprList(List<Item> in_sj_outer_expr_list)
+  void setSjOuterExprList(const List<Item> &in_sj_outer_expr_list)
   {
     sj_outer_expr_list= in_sj_outer_expr_list;
   }
+
+private:
+  /*
+    (Valid only for semi-join nests) Bitmap of tables outside the semi-join
+    that are used within the semi-join's ON condition.
+  */
+  table_map sj_depends_on;
+  
+  /* Outer non-trivially correlated tables */
+  table_map sj_corr_tables;
+
+  List<Item> sj_outer_expr_list;
 
 };
 
