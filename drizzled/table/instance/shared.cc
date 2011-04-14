@@ -107,7 +107,7 @@ Shared::shared_ptr Shared::foundTableShare(Shared::shared_ptr share)
   If it doesn't exist, create a new from the table definition file.
 
   NOTES
-  We must have wrlock on table::Cache::singleton().mutex() when we come here
+  We must have wrlock on table::Cache::mutex() when we come here
   (To be changed later)
 
   RETURN
@@ -184,7 +184,7 @@ Shared::~Shared()
 void release(TableShare *share)
 {
   bool to_be_deleted= false;
-  //safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
+  //safe_mutex_assert_owner(table::Cache::mutex().native_handle);
 
   share->lock();
   if (not share->decrementTableCount())
@@ -203,7 +203,7 @@ void release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
 #if 0
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle);
 #endif
 
   share->lock();

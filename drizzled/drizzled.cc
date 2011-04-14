@@ -413,7 +413,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
     while (select_thread_in_use)
     {
@@ -438,7 +438,7 @@ void close_connections(void)
   */
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     session::Cache::list list= session::Cache::singleton().getCache();
 
     BOOST_FOREACH(session::Cache::list::reference tmp, list)
@@ -461,7 +461,7 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     session::Cache::list list= session::Cache::singleton().getCache();
 
     if (list.empty())
@@ -636,7 +636,7 @@ void Session::unlink(Session::shared_ptr &session)
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
@@ -1546,7 +1546,7 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
-  table::Cache::singleton().rehash(table_def_size);
+  table::Cache::rehash(table_def_size);
   definition::Cache::singleton().rehash(table_def_size);
   message::Cache::singleton().rehash(table_def_size);
 

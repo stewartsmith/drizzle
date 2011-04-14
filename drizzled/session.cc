@@ -394,7 +394,7 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  boost_unique_lock_t scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
     mysys_var->current_mutex->lock();
@@ -512,7 +512,7 @@ void Session::awake(Session::killed_state_t state_to_set)
 
   if (mysys_var)
   {
-    boost_unique_lock_t scopedLock(mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
     /*
       "
       This broadcast could be up in the air if the victim thread
@@ -686,7 +686,7 @@ void Session::exit_cond(const char* old_msg)
     does a Session::awake() on you).
   */
   mysys_var->current_mutex->unlock();
-  boost_unique_lock_t scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);
@@ -1885,9 +1885,9 @@ void Session::close_thread_tables()
     open_tables.lock= 0;
   }
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */

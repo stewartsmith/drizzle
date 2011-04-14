@@ -48,7 +48,7 @@ void Execute::run(const char *arg, size_t length)
 
 void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
 {
-  boost_thread_shared_ptr thread;
+  thread_ptr thread;
   
   if (_session.isConcurrentExecuteAllowed())
   {
@@ -109,7 +109,7 @@ void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
 
 void Execute::run(std::string &execution_string)
 {
-  boost_thread_shared_ptr thread;
+  thread_ptr thread;
 
   if (_session.isConcurrentExecuteAllowed())
   {

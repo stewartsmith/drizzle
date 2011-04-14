@@ -167,7 +167,7 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 
 void MultiThreadScheduler::killSession(Session *session)
 {
-  boost_thread_shared_ptr thread(session->getThread());
+  thread_ptr thread(session->getThread());
 
   if (thread)
   {
@@ -188,7 +188,7 @@ void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::mutex());
   while (thread_count)
   {
     COND_thread_count.wait(scopedLock);

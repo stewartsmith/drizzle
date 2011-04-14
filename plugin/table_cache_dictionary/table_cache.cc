@@ -45,7 +45,7 @@ table_cache_dictionary::TableCache::TableCache() :
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();
