@@ -367,14 +367,8 @@ public:
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  const string username(vm.count("username") ? vm["username"].as<string>() : "");
-  const string password(vm.count("password") ? vm["password"].as<string>() : "");
-  const string schema(vm.count("schema") ? vm["schema"].as<string>() : "");
-
-  const std::string catalog(vm.count("catalog") ? vm["catalog"].as<string>() : "LOCAL");
-
-  context.add(new ListenConsole("console", username, password, schema, catalog));
-
+  context.add(new ListenConsole("console", vm["username"].as<string>(), 
+    vm["password"].as<string>(), vm["schema"].as<string>(), vm["catalog"].as<string>()));
   return 0;
 }
 
@@ -387,16 +381,16 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
   context("username",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("User to use for auth."));
   context("password",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("Password to use for auth."));
   context("catalog",
-          po::value<string>(),
+          po::value<string>()->default_value("LOCAL"),
           N_("Default catalog to use."));
   context("schema",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("Default schema to use."));
 }
 
