@@ -26,6 +26,9 @@
 namespace drizzled {
 namespace catalog {
 
+Cache::unordered_map Cache::cache;
+boost::mutex Cache::_mutex;
+
 Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, drizzled::error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
@@ -121,7 +124,7 @@ void Cache::copy(catalog::Instance::vector &vector)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
-  vector.reserve(catalog::Cache::singleton().size());
+  vector.reserve(catalog::Cache::size());
 
   std::transform(cache.begin(),
                  cache.end(),

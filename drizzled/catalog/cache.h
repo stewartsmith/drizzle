@@ -42,34 +42,34 @@ class Cache
     return open_cache;
   }
 
-  size_t size() const
+  static size_t size()
   {
     return cache.size();
   }
 
-  void rehash(size_t arg)
+  static void rehash(size_t arg)
   {
     cache.rehash(arg);
   }
 
-  Instance::shared_ptr find(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool exist(const identifier::Catalog &identifier);
-  bool erase(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool insert(const identifier::Catalog &identifier, Instance::shared_ptr instance, drizzled::error_t &error);
-  bool lock(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool unlock(const identifier::Catalog &identifier, drizzled::error_t &error);
+  static Instance::shared_ptr find(const identifier::Catalog &identifier, drizzled::error_t &error);
+  static bool exist(const identifier::Catalog &identifier);
+  static bool erase(const identifier::Catalog &identifier, drizzled::error_t &error);
+  static bool insert(const identifier::Catalog &identifier, Instance::shared_ptr instance, drizzled::error_t &error);
+  static bool lock(const identifier::Catalog &identifier, drizzled::error_t &error);
+  static bool unlock(const identifier::Catalog &identifier, drizzled::error_t &error);
 
   friend class drizzled::generator::catalog::Cache;
   friend class drizzled::plugin::Catalog;
   friend class drizzled::catalog::lock::Erase;
   friend class drizzled::catalog::lock::Create;
 
-  void copy(catalog::Instance::vector &vector);
+  static void copy(catalog::Instance::vector &vector);
 
   typedef boost::unordered_map< identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
 
-  unordered_map cache;
-  boost::mutex _mutex;
+  static unordered_map cache;
+  static boost::mutex _mutex;
 };
 
 
@@ -98,7 +98,7 @@ public:
   {
     if (_locked)
     {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
+      if (not catalog::Cache::unlock(identifier, error))
       {
         my_error(error, identifier);
         assert(0);
@@ -110,7 +110,7 @@ private:
   void init()
   {
     // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
+    if (not catalog::Cache::lock(identifier, error))
     {
       assert(0);
       return;
@@ -144,7 +144,7 @@ public:
   {
     if (_locked)
     {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
+      if (not catalog::Cache::unlock(identifier, error))
       {
         my_error(error, identifier);
         assert(0);
@@ -157,7 +157,7 @@ private:
   void init()
   {
     // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
+    if (not catalog::Cache::lock(identifier, error))
     {
       my_error(error, identifier);
       return;
