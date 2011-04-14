@@ -28,16 +28,14 @@
 #include <drizzled/identifier.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/set_var.h>
-
+#include <drizzled/table/cache.h>
 #include <drizzled/table/unused.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern uint64_t table_cache_size;
 
-namespace table
-{
+namespace table {
 
 UnusedTables &getUnused(void)
 {

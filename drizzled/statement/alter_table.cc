@@ -49,11 +49,11 @@
 #include <drizzled/alter_info.h>
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern pid_t current_pid;
 
@@ -867,7 +867,7 @@ static bool lockTableIfDifferent(Session &session,
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
 
         {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+          boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
           session.unlink_open_table(name_lock);
         }
 
@@ -1189,7 +1189,7 @@ static bool internal_alter_table(Session *session,
         delete new_table;
       }
 
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
       plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
 
@@ -1239,7 +1239,7 @@ static bool internal_alter_table(Session *session,
     }
 
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* ALTER TABLE */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* ALTER TABLE */
       /*
         Data is copied. Now we:
         1) Wait until all other threads close old version of table.
@@ -1365,7 +1365,7 @@ static int apply_online_alter_keys_onoff(Session *session,
       from concurrent DDL statements.
     */
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
     }
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -1375,7 +1375,7 @@ static int apply_online_alter_keys_onoff(Session *session,
   else
   {
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
     }
     error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -1395,13 +1395,13 @@ static int apply_online_rename_table(Session *session,
 {
   int error= 0;
 
-  boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
+  boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Lock to remove all instances of table from table cache before ALTER */
   /*
     Unlike to the above case close_cached_table() below will remove ALL
     instances of Table from table cache (it will also remove table lock
     held by this thread). So to make actual table renaming and writing
     to binlog atomic we have to put them into the same critical section
-    protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
+    protected by table::Cache::mutex() mutex. This also removes gap for races between
     access() and rename_table() calls.
   */
 
@@ -1507,7 +1507,7 @@ bool alter_table(Session *session,
 
     if (name_lock)
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
       session->unlink_open_table(name_lock);
     }
   }

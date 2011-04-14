@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 // Converstion functions to and from std::string.
 
@@ -122,13 +121,12 @@ bool String::real_alloc(size_t arg_length)
   {
     if (Alloced_length > 0)
       free();
-    if (!(Ptr=(char*) malloc(arg_length)))
-      return true;
+    Ptr=(char*) malloc(arg_length);
     Alloced_length=arg_length;
     alloced=1;
   }
   Ptr[0]=0;
-  return false;
+  return false; // return void
 }
 
 
@@ -145,28 +143,23 @@ bool String::realloc(size_t alloc_length)
     char *new_ptr;
     if (alloced)
     {
-      if ((new_ptr= (char*) ::realloc(Ptr,len)))
-      {
-	Ptr=new_ptr;
-	Alloced_length=len;
-      }
-      else
-	return true;				// Signal error
+      new_ptr= (char*) ::realloc(Ptr,len);
+      Ptr=new_ptr;
+      Alloced_length=len;
     }
-    else if ((new_ptr= (char*) malloc(len)))
+    else 
     {
+      new_ptr= (char*) malloc(len);
       if (str_length)				// Avoid bugs in memcpy on AIX
-	memcpy(new_ptr,Ptr,str_length);
+        memcpy(new_ptr,Ptr,str_length);
       new_ptr[str_length]=0;
       Ptr=new_ptr;
       Alloced_length=len;
       alloced=1;
     }
-    else
-      return true;			// Signal error
   }
   Ptr[alloc_length]=0;			// This make other funcs shorter
-  return false;
+  return false; // return void
 }
 
 bool String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
@@ -785,51 +778,6 @@ void String::append_identifier(const char *name, size_t in_length)
   append(&quote_char, 1, system_charset_info);
 }
 
-
-/*
-  Exchange state of this object and argument.
-
-  SYNOPSIS
-    String::swap()
-
-  RETURN
-    Target string will contain state of this object and vice versa.
-*/
-
-void String::swap(String &s)
-{
-  std::swap(Ptr, s.Ptr);
-  std::swap(str_length, s.str_length);
-  std::swap(Alloced_length, s.Alloced_length);
-  std::swap(alloced, s.alloced);
-  std::swap(str_charset, s.str_charset);
-}
-
-void String::q_append(const size_t n)
-{
-  int8store(Ptr + str_length, n);
-  str_length += 4;
-}
-void String::q_append(double d)
-{
-  float8store(Ptr + str_length, d);
-  str_length += 8;
-}
-void String::q_append(double *d)
-{
-  float8store(Ptr + str_length, *d);
-  str_length += 8;
-}
-void String::q_append(const char *data, size_t data_len)
-{
-  memcpy(Ptr + str_length, data, data_len);
-  str_length += data_len;
-}
-
-void String::write_at_position(int position, size_t value)
-{
-  int8store(Ptr + position,value);
-}
 bool check_if_only_end_space(const charset_info_st * const cs, char *str,
                              char *end)
 {

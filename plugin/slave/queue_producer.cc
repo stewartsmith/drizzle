@@ -399,6 +399,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   }
 
   sql.append(")", 1);
+  sql.append(" ORDER BY `commit_id` ASC");
 
   drizzle_return_t ret;
   drizzle_result_st result;
