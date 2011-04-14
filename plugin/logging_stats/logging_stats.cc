@@ -217,7 +217,9 @@ bool LoggingStats::postEnd(Session *session)
   }
 
   scoreboard_slot->getStatusVars()->logStatusVar(session);
-  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= session->getConnectSeconds(); 
+  boost::posix_time::ptime end(boost::posix_time::microsec_clock::universal_time());
+  uint64_t end_time= (end - session->epoch()).total_seconds();
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= end_time - session->getConnectSeconds();
 
   cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
   cumulative_stats->logGlobalStats(scoreboard_slot);

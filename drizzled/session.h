@@ -383,6 +383,11 @@ public:
     return _start_timer;
   }
 
+  const boost::posix_time::ptime &epoch() const
+  {
+    return _epoch;
+  }
+
   void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
   {
     result_arg=  arg - _start_timer;
