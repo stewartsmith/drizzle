@@ -39,6 +39,8 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 
@@ -1594,7 +1596,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+        boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
         if (create_table->table)
         {

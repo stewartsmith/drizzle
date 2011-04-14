@@ -72,6 +72,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
@@ -79,10 +80,9 @@
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 #include <google/protobuf/stubs/common.h>
-
-#include <drizzled/refresh_version.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -413,7 +413,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
     while (select_thread_in_use)
     {
@@ -438,7 +438,7 @@ void close_connections(void)
   */
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     session::Cache::list list= session::Cache::singleton().getCache();
 
     BOOST_FOREACH(session::Cache::list::reference tmp, list)
@@ -461,7 +461,7 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     session::Cache::list list= session::Cache::singleton().getCache();
 
     if (list.empty())
@@ -636,7 +636,7 @@ void Session::unlink(Session::shared_ptr &session)
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
@@ -1458,8 +1458,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   /* Inverted Booleans */
 
-  global_system_variables.optimizer_prune_level=
-    vm.count("disable-optimizer-prune") ? false : true;
+  global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
   if (! vm["help"].as<bool>())
   {
@@ -1547,8 +1546,8 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
-  table::Cache::singleton().rehash(table_def_size);
-  definition::Cache::singleton().rehash(table_def_size);
+  table::Cache::rehash(table_def_size);
+  definition::Cache::rehash(table_def_size);
   message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
@@ -2053,7 +2052,7 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  refresh_version= 1L;	/* Increments on each reload */
+  g_refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
   session::Cache::singleton().getCache().clear();
 

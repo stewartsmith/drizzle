@@ -26,6 +26,7 @@
 #include <drizzled/statement/insert_select.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled {
 

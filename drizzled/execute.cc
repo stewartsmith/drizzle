@@ -27,8 +27,7 @@
 #include <drizzled/catalog/local.h>
 #include <drizzled/execute.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Execute::Execute(Session &arg, bool wait_arg) :
   wait(wait_arg),
@@ -36,28 +35,26 @@ Execute::Execute(Session &arg, bool wait_arg) :
 {
 }
 
-Execute::~Execute()
-{
-}
-
 void Execute::run(const char *arg, size_t length)
 {
-  std::string execution_string(arg, length);
-  run(execution_string);
+  run(std::string(arg, length));
 }
 
-void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
+void Execute::run(const std::string &execution_string, sql::ResultSet &result_set)
 {
-  boost_thread_shared_ptr thread;
-  
-  if (_session.isConcurrentExecuteAllowed())
+  if (not _session.isConcurrentExecuteAllowed())
+  {
+    my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
+    return;
+  }
+  thread_ptr thread;
   {
     plugin::client::Cached *client= new plugin::client::Cached(result_set);
     client->pushSQL(execution_string);
     Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
     
     // We set the current schema.  @todo do the same with catalog
-    util::string::const_shared_ptr schema(_session.schema());
+    util::string::ptr schema(_session.schema());
     if (not schema->empty())
       new_session->set_db(*schema);
     
@@ -76,11 +73,6 @@ void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
     {
       thread= new_session->getThread();
     }
-  }
-  else
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
-    return;
   }
   
   if (wait && thread && thread->joinable())
@@ -107,18 +99,21 @@ void Execute::run(std::string &execution_string, sql::ResultSet &result_set)
   }
 }
 
-void Execute::run(std::string &execution_string)
+void Execute::run(const std::string &execution_string)
 {
-  boost_thread_shared_ptr thread;
-
-  if (_session.isConcurrentExecuteAllowed())
+  if (not _session.isConcurrentExecuteAllowed())
+  {
+    my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
+    return;
+  }
+  thread_ptr thread;
   {
     plugin::client::Concurrent *client= new plugin::client::Concurrent;
     client->pushSQL(execution_string);
     Session::shared_ptr new_session= Session::make_shared(client, catalog::local());
 
     // We set the current schema.  @todo do the same with catalog
-    util::string::const_shared_ptr schema(_session.schema());
+    util::string::ptr schema(_session.schema());
     if (not schema->empty())
       new_session->set_db(*schema);
 
@@ -137,11 +132,6 @@ void Execute::run(std::string &execution_string)
     {
       thread= new_session->getThread();
     }
-  }
-  else
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "A Concurrent Execution Session can not launch another session.");
-    return;
   }
 
   if (wait && thread && thread->joinable())

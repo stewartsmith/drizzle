@@ -385,7 +385,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
-			      drizzled/refresh_version.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
 			      drizzled/schema.h \
@@ -408,6 +407,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
+			      drizzled/session/times.h \
 			      drizzled/session/transactions.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
@@ -809,7 +809,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/xa_storage_engine.cc \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
-			   drizzled/refresh_version.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
 			   drizzled/select_dumpvar.cc \
@@ -817,6 +816,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \
 			   drizzled/session/table_messages.cc \
+			   drizzled/session/times.cc \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \

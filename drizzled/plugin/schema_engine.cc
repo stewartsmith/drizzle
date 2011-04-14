@@ -24,15 +24,13 @@
 #include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
-
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>
@@ -212,7 +210,7 @@ static bool drop_all_tables_in_schema(Session& session,
        it != dropped_tables.end();
        it++)
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
     message::table::shared_ptr message= StorageEngine::getTableMessage(session, *it, false);
     if (not message)
@@ -221,9 +219,7 @@ static bool drop_all_tables_in_schema(Session& session,
       return false;
     }
 
-    table::Cache::singleton().removeTable(&session, *it,
-                                          RTFC_WAIT_OTHER_THREAD_FLAG |
-                                          RTFC_CHECK_KILLED_FLAG);
+    table::Cache::removeTable(session, *it, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
     if (not plugin::StorageEngine::dropTable(session, *it))
     {
       my_error(ER_TABLE_DROP, *it);
@@ -265,7 +261,7 @@ bool StorageEngine::dropSchema(Session& session,
     }
 
     /* After deleting database, remove all cache entries related to schema */
-    table::Cache::singleton().removeSchema(identifier);
+    table::Cache::removeSchema(identifier);
 
     if (not drop_all_tables_in_schema(session, identifier, dropped_tables, deleted))
     {

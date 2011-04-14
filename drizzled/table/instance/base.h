@@ -38,7 +38,6 @@
 #include <drizzled/util/string.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
-#include <drizzled/table/cache.h>
 #include <drizzled/field.h>
 
 namespace drizzled {

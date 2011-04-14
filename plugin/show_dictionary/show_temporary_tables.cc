@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 using namespace drizzled;
