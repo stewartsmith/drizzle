@@ -98,14 +98,4 @@ uint32_t XID::length() const
     gtrid_length+bqual_length;
 }
 
-const unsigned char *XID::key() const
-{
-  return (unsigned char *)&gtrid_length;
-}
-
-uint32_t XID::key_length() const
-{
-  return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
-}
-
 } /* namespace drizzled */

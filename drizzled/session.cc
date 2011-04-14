@@ -923,10 +923,8 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
-      return 0;
-  if (!(lex_str->str= mem_root->strmake_root(str, length)))
-    return 0;
+    lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
+  lex_str->str= mem_root->strmake_root(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1632,12 +1630,6 @@ void Session::send_kill_message() const
     my_message(err, ER(err), MYF(0));
 }
 
-void Session::set_status_var_init()
-{
-  memset(&status_var, 0, sizeof(status_var));
-}
-
-
 void Session::set_db(const std::string& new_db)
 {
   impl_->schema = boost::make_shared<std::string>(new_db);
@@ -1845,18 +1837,6 @@ void Open_tables_state::mark_temp_tables_as_free_for_reuse()
   }
 }
 
-void Session::mark_used_tables_as_free_for_reuse(Table *table)
-{
-  for (; table ; table= table->getNext())
-  {
-    if (table->query_id == getQueryId())
-    {
-      table->query_id= 0;
-      table->cursor->ha_reset();
-    }
-  }
-}
-
 /*
   Unlocks tables and frees derived tables.
   Put all normal tables used by thread in free list.
@@ -2023,17 +2003,6 @@ void Session::clearDiagnostics()
 }
 
 /**
-  Mark the current error as fatal. Warning: this does not
-  set any error, it sets a property of the error, so must be
-  followed or prefixed with my_error().
-*/
-void Session::fatal_error()
-{
-  assert(main_da().is_error());
-  is_fatal_error= true;
-}
-
-/**
   true if there is an error in the error stack.
 
   Please use this method instead of direct access to
@@ -2097,10 +2066,6 @@ plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_nam
   if (observers)
     impl_->schema_event_observers[db_name] = observers;
 	return observers;
-}
-my_xid Session::getTransactionId()
-{
-  return transaction.xid_state.xid.quick_get_my_xid();
 }
 
 util::string::ptr Session::schema() const
