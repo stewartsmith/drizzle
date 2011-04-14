@@ -29,7 +29,7 @@ namespace catalog {
 Cache::unordered_map Cache::cache;
 boost::mutex Cache::_mutex;
 
-Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, drizzled::error_t &error)
+Instance::shared_ptr Cache::find(const identifier::Catalog &identifier, error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
@@ -47,7 +47,7 @@ bool Cache::exist(const identifier::Catalog &identifier)
   return find_ptr(cache, identifier);
 }
 
-bool Cache::erase(const identifier::Catalog &identifier, drizzled::error_t &error)
+bool Cache::erase(const identifier::Catalog &identifier, error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   if (find_ptr(cache, identifier))
@@ -60,7 +60,7 @@ bool Cache::erase(const identifier::Catalog &identifier, drizzled::error_t &erro
   return false;
 }
 
-bool Cache::unlock(const identifier::Catalog &identifier, drizzled::error_t &error)
+bool Cache::unlock(const identifier::Catalog &identifier, error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   if (const unordered_map::mapped_type* ptr= find_ptr(cache, identifier))
@@ -80,56 +80,29 @@ bool Cache::unlock(const identifier::Catalog &identifier, drizzled::error_t &err
   return false;
 }
 
-bool Cache::lock(const identifier::Catalog &identifier, drizzled::error_t &error)
+bool Cache::lock(const identifier::Catalog &identifier, error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   std::pair<unordered_map::iterator, bool> ret= cache.insert(std::make_pair(identifier, catalog::Instance::shared_ptr()));
-
-  if (ret.second == false)
-  {
-    if (ret.first->second)
-    {
-      error= EE_OK;
-    }
-    else
-    {
-      error= ER_CATALOG_NO_LOCK;
-    }
-  }
-
+  if (not ret.second)
+    error= ret.first->second ? EE_OK : ER_CATALOG_NO_LOCK;
   return ret.second;
 }
 
-bool Cache::insert(const identifier::Catalog &identifier, catalog::Instance::shared_ptr instance, drizzled::error_t &error)
+bool Cache::insert(const identifier::Catalog &identifier, catalog::Instance::shared_ptr instance, error_t &error)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   std::pair<unordered_map::iterator, bool> ret= cache.insert(std::make_pair(identifier, instance));
-
-  if (ret.second == false)
-  {
-    if (ret.first->second)
-    {
-      error= EE_OK;
-    }
-    else
-    {
-      error= ER_CATALOG_NO_LOCK;
-    }
-  }
-
+  if (not ret.second)
+    error= ret.first->second ? EE_OK : ER_CATALOG_NO_LOCK;
   return ret.second;
 }
 
 void Cache::copy(catalog::Instance::vector &vector)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
   vector.reserve(catalog::Cache::size());
-
-  std::transform(cache.begin(),
-                 cache.end(),
-                 std::back_inserter(vector),
-                 boost::bind(&unordered_map::value_type::second, _1) );
+  std::transform(cache.begin(), cache.end(), std::back_inserter(vector), boost::bind(&unordered_map::value_type::second, _1));
   assert(vector.size() == cache.size());
 }
 
