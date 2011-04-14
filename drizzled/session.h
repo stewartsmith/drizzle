@@ -776,7 +776,7 @@ public:
    * @param The packet pointer to read from
    * @param The length of the query to read
    */
-  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+  void readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
 
   /**
    * Ends the current transaction and (maybe) begins the next.

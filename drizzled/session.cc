@@ -749,7 +749,7 @@ bool Session::executeStatement()
   return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
-bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
+void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
 {
   /* Remove garbage at start and end of query */
   while (in_packet_length > 0 && my_isspace(charset(), in_packet[0]))
@@ -764,19 +764,13 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  std::string *new_query= new std::string(in_packet, in_packet_length);
-  // We can not be entirely sure _schema has a value
-  if (impl_->schema)
-  {
-    plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
-  }
-  query.reset(new_query);
-  impl_->state.reset(new session::State(in_packet, in_packet_length));
-
-  return true; // return void
+  util::string::mptr new_query= boost::make_shared<std::string>(in_packet, in_packet_length);
+  plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
+  query= new_query;
+  impl_->state= boost::make_shared<session::State>(in_packet, in_packet_length);
 }
 
-bool Session::endTransaction(enum enum_mysql_completiontype completion)
+bool Session::endTransaction(enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   bool result= true;
@@ -825,11 +819,11 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       return false;
   }
 
-  if (result == false)
+  if (not result)
   {
     my_error(static_cast<drizzled::error_t>(killed_errno()), MYF(0));
   }
-  else if ((result == true) && do_release)
+  else if (result && do_release)
   {
     setKilled(Session::KILL_CONNECTION);
   }
@@ -859,19 +853,14 @@ bool Session::endActiveTransaction()
 
 bool Session::startTransaction(start_transaction_option_t opt)
 {
-  bool result= true;
-
-  assert(! inTransaction());
+  assert(not inTransaction());
 
   options|= OPTION_BEGIN;
   server_status|= SERVER_STATUS_IN_TRANS;
 
   if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
-  {
-    result= false;
-  }
-
-  return result;
+    return false;
+  return true;
 }
 
 void Session::cleanup_after_query()
@@ -1073,7 +1062,7 @@ static int create_file(Session *session,
   {
     target_path= fs::system_complete(getDataHomeCatalog());
     util::string::ptr schema(session->schema());
-    if (schema and not schema->empty())
+    if (not schema->empty())
     {
       int count_elements= 0;
       for (fs::path::iterator iter= to_file.begin();
@@ -1587,16 +1576,13 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  assert(impl_->schema);
-  if (not impl_->schema || impl_->schema->empty())
+  if (impl_->schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-
   *p_db= strmake(impl_->schema->c_str(), impl_->schema->size());
   *p_db_length= impl_->schema->size();
-
   return false;
 }
 
@@ -1666,7 +1652,7 @@ void Session::disconnect(error_t errcode)
       errmsg_printf(error::WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (impl_->schema->empty() ? "unconnected" : impl_->schema->c_str())
-                  , security_ctx->username().empty() == false ? security_ctx->username().c_str() : "unauthenticated"
+                  , security_ctx->username().empty() ? "unauthenticated" : security_ctx->username().c_str()
                   , security_ctx->address().c_str()
                   , (main_da().is_error() ? main_da().message() : ER(ER_UNKNOWN_ERROR)));
     }
@@ -2070,7 +2056,7 @@ plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_nam
 
 util::string::ptr Session::schema() const
 {
-  return impl_->schema ? impl_->schema : boost::make_shared<std::string>();
+  return impl_->schema;
 }
 
 void Session::resetQueryString()
