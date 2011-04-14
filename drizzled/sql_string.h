@@ -199,13 +199,12 @@ public:
       str_length=0;				/* Safety */
     }
   }
-  inline bool alloc(size_t arg_length)
+  inline void alloc(size_t arg_length)
   {
-    if (arg_length < Alloced_length)
-      return 0;
-    return real_alloc(arg_length);
+    if (arg_length >= Alloced_length)
+      real_alloc(arg_length);
   }
-  bool real_alloc(size_t arg_length);			// Empties old string
+  void real_alloc(size_t arg_length);			// Empties old string
   bool realloc(size_t arg_length);
   inline void shrink(size_t arg_length)		// Shrink buffer
   {

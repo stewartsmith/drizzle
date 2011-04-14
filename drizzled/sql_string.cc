@@ -113,7 +113,7 @@ void *String::operator new(size_t size, memory::Root *mem_root)
 
 String::~String() { free(); }
 
-bool String::real_alloc(size_t arg_length)
+void String::real_alloc(size_t arg_length)
 {
   arg_length=ALIGN_SIZE(arg_length+1);
   str_length=0;
@@ -126,7 +126,6 @@ bool String::real_alloc(size_t arg_length)
     alloced=1;
   }
   Ptr[0]=0;
-  return false; // return void
 }
 
 
@@ -167,11 +166,10 @@ bool String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * co
   size_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
 
-  if (alloc(l))
-    return true;
+  alloc(l);
   str_length=(size_t) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
   str_charset=cs;
-  return false;
+  return false; // return void
 }
 
 bool String::set_real(double num,size_t decimals, const charset_info_st * const cs)
@@ -206,19 +204,17 @@ bool String::copy()
 
 bool String::copy(const String &str)
 {
-  if (alloc(str.str_length))
-    return true;
+  alloc(str.str_length);
   str_length=str.str_length;
   memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
   str_charset=str.str_charset;
-  return false;
+  return false; // return void
 }
 
 bool String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
 {
-  if (alloc(arg.size()))
-    return true;
+  alloc(arg.size());
 
   if ((str_length= arg.size()))
     memcpy(Ptr, arg.c_str(), arg.size());
@@ -226,18 +222,17 @@ bool String::copy(const std::string& arg, const charset_info_st * const cs)	// A
   Ptr[arg.size()]= 0;
   str_charset= cs;
 
-  return false;
+  return false; // return void
 }
 
 bool String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
 {
-  if (alloc(arg_length))
-    return true;
+  alloc(arg_length);
   if ((str_length=arg_length))
     memcpy(Ptr,str,arg_length);
   Ptr[arg_length]=0;
   str_charset=cs;
-  return false;
+  return false; // return void
 }
 
 /*

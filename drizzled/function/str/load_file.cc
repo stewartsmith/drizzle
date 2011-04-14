@@ -102,8 +102,7 @@ String *Item_load_file::val_str(String *str)
     goto err;
   }
 
-  if (tmp_value.alloc((size_t)stat_info.st_size))
-    goto err;
+  tmp_value.alloc((size_t)stat_info.st_size);
   if ((file = internal::my_open(target_path.file_string().c_str(), O_RDONLY, MYF(0))) < 0)
     goto err;
   if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
