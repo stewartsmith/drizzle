@@ -195,37 +195,18 @@ uint64_t TYPELIB::find_typeset(const char *x, int *err) const
 
 TYPELIB *TYPELIB::copy_typelib(memory::Root *root) const
 {
-  TYPELIB *to;
-  uint32_t i;
-
-  if (!this)
-    return NULL;
-
-  if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
-    return NULL;
-
-  if (!(to->type_names= (const char **)
-        root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1))))
-    return NULL; // leaking
-  to->type_lengths= (unsigned int *)(to->type_names + count + 1);
+  TYPELIB* to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB));
+  to->type_names= (const char**)root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
+  to->type_lengths= (unsigned int*)(to->type_names + count + 1);
   to->count= count;
-  if (name)
+  to->name= name ? root->strdup_root(name) : NULL;
+  for (uint32_t i= 0; i < count; i++)
   {
-    if (!(to->name= root->strdup_root(name)))
-      return NULL; // leaking
-  }
-  else
-    to->name= NULL;
-
-  for (i= 0; i < count; i++)
-  {
-    if (!(to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i])))
-      return NULL; // leaking
+    to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i]);
     to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;
   to->type_lengths[to->count]= 0;
-
   return to;
 }
 

@@ -46,7 +46,7 @@ ShowTableStatus::ShowTableStatus() :
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
   if (not isShowQuery())
    return;

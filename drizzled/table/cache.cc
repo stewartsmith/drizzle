@@ -19,21 +19,21 @@
  */
 
 #include <config.h>
+#include <drizzled/table/cache.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #include <drizzled/identifier.h>
-#include <drizzled/table.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/pthread_globals.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/table/concurrent.h>
-#include <drizzled/table/cache.h>
-#include <drizzled/table/unused.h>
-#include <drizzled/pthread_globals.h>
 #include <drizzled/sys_var.h>
-#include <drizzled/open_tables_state.h>
+#include <drizzled/table.h>
+#include <drizzled/table/concurrent.h>
+#include <drizzled/table/unused.h>
 
 namespace drizzled {
 namespace table {
@@ -43,7 +43,7 @@ boost::mutex Cache::_mutex;
 
 CacheMap& getCache()
 {
-  return Cache::singleton().getCache();
+  return Cache::getCache();
 }
 
 /*
@@ -54,7 +54,7 @@ CacheMap& getCache()
   entry		Table to remove
 
   NOTE
-  We need to have a lock on table::Cache::singleton().mutex() when calling this
+  We need to have a lock on table::Cache::mutex() when calling this
 */
 
 static void free_cache_entry(table::Concurrent *table)
@@ -162,7 +162,7 @@ void Cache::removeSchema(const identifier::Schema &schema_identifier)
   close_thread_tables() is called.
 
   PREREQUISITES
-  Lock on table::Cache::singleton().mutex()()
+  Lock on table::Cache::mutex()()
 
   RETURN
   0  This thread now have exclusive access to this table and no other thread
@@ -209,9 +209,9 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
         /*
           Now we must abort all tables locks used by this thread
           as the thread may be waiting to get a lock for another table.
-          Note that we need to hold table::Cache::singleton().mutex() while going through the
+          Note that we need to hold table::Cache::mutex() while going through the
           list. So that the other thread cannot change it. The other
-          thread must also hold table::Cache::singleton().mutex() whenever changing the
+          thread must also hold table::Cache::mutex() whenever changing the
           open_tables list. Aborting the MERGE lock after a child was
           closed and before the parent is closed would be fatal.
         */
@@ -247,7 +247,7 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
         dropping_tables++;
         if (likely(signalled))
         {
-          boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
+          boost::mutex::scoped_lock scoped(table::Cache::mutex(), boost::adopt_lock_t());
           COND_refresh.wait(scoped);
           scoped.release();
         }
@@ -261,12 +261,12 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
             ensure that the thread actually hears our signal
             before we go to sleep. Thus we wait for a short time
             and then we retry another loop in the
-            table::Cache::singleton().removeTable routine.
+            table::Cache::removeTable routine.
           */
           boost::xtime xt;
           xtime_get(&xt, boost::TIME_UTC);
           xt.sec += 10;
-          boost_unique_lock_t scoped(table::Cache::singleton().mutex(), boost::adopt_lock_t());
+          boost::mutex::scoped_lock scoped(table::Cache::mutex(), boost::adopt_lock_t());
           COND_refresh.timed_wait(scoped, xt);
           scoped.release();
         }

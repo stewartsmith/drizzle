@@ -394,7 +394,7 @@ void Session::lockOnSys()
     return;
 
   setAbort(true);
-  boost_unique_lock_t scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   if (mysys_var->current_cond)
   {
     mysys_var->current_mutex->lock();
@@ -512,7 +512,7 @@ void Session::awake(Session::killed_state_t state_to_set)
 
   if (mysys_var)
   {
-    boost_unique_lock_t scopedLock(mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
     /*
       "
       This broadcast could be up in the air if the victim thread
@@ -686,7 +686,7 @@ void Session::exit_cond(const char* old_msg)
     does a Session::awake() on you).
   */
   mysys_var->current_mutex->unlock();
-  boost_unique_lock_t scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock scopedLock(mysys_var->mutex);
   mysys_var->current_mutex = 0;
   mysys_var->current_cond = 0;
   this->set_proc_info(old_msg);
@@ -923,10 +923,8 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    if (!(lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING))))
-      return 0;
-  if (!(lex_str->str= mem_root->strmake_root(str, length)))
-    return 0;
+    lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
+  lex_str->str= mem_root->strmake_root(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1632,12 +1630,6 @@ void Session::send_kill_message() const
     my_message(err, ER(err), MYF(0));
 }
 
-void Session::set_status_var_init()
-{
-  memset(&status_var, 0, sizeof(status_var));
-}
-
-
 void Session::set_db(const std::string& new_db)
 {
   impl_->schema = boost::make_shared<std::string>(new_db);
@@ -1845,18 +1837,6 @@ void Open_tables_state::mark_temp_tables_as_free_for_reuse()
   }
 }
 
-void Session::mark_used_tables_as_free_for_reuse(Table *table)
-{
-  for (; table ; table= table->getNext())
-  {
-    if (table->query_id == getQueryId())
-    {
-      table->query_id= 0;
-      table->cursor->ha_reset();
-    }
-  }
-}
-
 /*
   Unlocks tables and frees derived tables.
   Put all normal tables used by thread in free list.
@@ -1905,9 +1885,9 @@ void Session::close_thread_tables()
     open_tables.lock= 0;
   }
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -2023,17 +2003,6 @@ void Session::clearDiagnostics()
 }
 
 /**
-  Mark the current error as fatal. Warning: this does not
-  set any error, it sets a property of the error, so must be
-  followed or prefixed with my_error().
-*/
-void Session::fatal_error()
-{
-  assert(main_da().is_error());
-  is_fatal_error= true;
-}
-
-/**
   true if there is an error in the error stack.
 
   Please use this method instead of direct access to
@@ -2097,10 +2066,6 @@ plugin::EventObserverList* Session::setSchemaObservers(const std::string &db_nam
   if (observers)
     impl_->schema_event_observers[db_name] = observers;
 	return observers;
-}
-my_xid Session::getTransactionId()
-{
-  return transaction.xid_state.xid.quick_get_my_xid();
 }
 
 util::string::ptr Session::schema() const
