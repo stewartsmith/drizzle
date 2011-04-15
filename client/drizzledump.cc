@@ -639,12 +639,12 @@ try
 
   /* Inverted Booleans */
 
-  opt_drop= (vm.count("skip-drop-table")) ? false : true;
-  opt_comments= (vm.count("skip-comments")) ? false : true;
-  extended_insert= (vm.count("skip-extended-insert")) ? false : true;
-  opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
-  opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
-  opt_quoted= (vm.count("skip-quote-names")) ? false : true;
+  opt_drop= not vm.count("skip-drop-table");
+  opt_comments= not vm.count("skip-comments");
+  extended_insert= not vm.count("skip-extended-insert");
+  opt_dump_date= not vm.count("skip-dump-date");
+  opt_disable_keys= not vm.count("skip-disable-keys");
+  opt_quoted= not vm.count("skip-quote-names");
 
   if (vm.count("protocol"))
   {
@@ -675,7 +675,7 @@ try
     }
   }
 
-  if(vm.count("password"))
+  if (vm.count("password"))
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -786,14 +786,14 @@ try
     dump_all_databases();
     dump_all_tables();
   }
-  if (vm.count("database-used") && vm.count("Table-used") && ! opt_databases)
+  if (vm.count("database-used") && vm.count("Table-used") && not opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
     dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("Table-used") and opt_databases)
+  if (vm.count("Table-used") && opt_databases)
   {
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
@@ -809,7 +809,7 @@ try
     dump_all_tables();
   }
 
-  if (vm.count("database-used") && ! vm.count("Table-used"))
+  if (vm.count("database-used") && not vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();

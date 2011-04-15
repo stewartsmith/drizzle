@@ -407,6 +407,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
+			      drizzled/session/times.h \
 			      drizzled/session/transactions.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
@@ -815,6 +816,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \
 			   drizzled/session/table_messages.cc \
+			   drizzled/session/times.cc \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \

@@ -1612,10 +1612,10 @@ try
 
   /* Inverted Booleans */
 
-  line_numbers= (vm.count("disable-line-numbers")) ? false : true;
-  column_names= (vm.count("disable-column-names")) ? false : true;
-  opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
-  opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
+  line_numbers= not vm.count("disable-line-numbers");
+  column_names= not vm.count("disable-column-names");
+  opt_rehash= not vm.count("disable-auto-rehash");
+  opt_reconnect= not vm.count("disable-reconnect");
 
   /* Don't rehash with --shutdown */
   if (vm.count("shutdown"))

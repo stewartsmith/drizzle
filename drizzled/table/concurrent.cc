@@ -51,7 +51,7 @@ namespace table {
   pointer.
 
   NOTE
-  This function assumes that its caller already acquired table::Cache::singleton().mutex() mutex.
+  This function assumes that its caller already acquired table::Cache::mutex() mutex.
 
   RETURN VALUE
   false - Success
@@ -60,7 +60,7 @@ namespace table {
 
 bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *session)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   if (session->getKilled())
     return true;
@@ -109,7 +109,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 
   NOTES
   Extra argument for open is taken from session->open_options
-  One must have a lock on table::Cache::singleton().mutex() when calling this function
+  One must have a lock on table::Cache::mutex() when calling this function
 
   RETURN
   0	ok
@@ -124,7 +124,7 @@ int table::Concurrent::open_unireg_entry(Session *session,
   TableShare::shared_ptr share;
   uint32_t discover_retry_count= 0;
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 retry:
   if (not (share= table::instance::Shared::make_shared(session, identifier, error)))
   {

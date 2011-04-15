@@ -144,7 +144,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   const char *tdb= (schema and not schema->empty()) ? schema->c_str() : table_list->getSchemaName(); // Result should never be null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;

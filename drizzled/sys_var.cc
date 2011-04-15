@@ -46,6 +46,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/item/uint.h>
@@ -1130,21 +1131,21 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)
 {
-  session->set_time(time_t(var->getInteger()));
+  session->times.set_time(time_t(var->getInteger()));
   return 0;
 }
 
 
 void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
-  session->resetUserTime();
+  session->times.resetUserTime();
 }
 
 
 unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
                                             const LEX_STRING *)
 {
-  session->sys_var_tmp.int32_t_value= (int32_t) session->getCurrentTimestampEpoch();
+  session->sys_var_tmp.int32_t_value= (int32_t) session->times.getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
 }
 

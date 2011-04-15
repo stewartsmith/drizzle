@@ -46,7 +46,7 @@ ShowTableStatus::ShowTableStatus() :
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
   if (not isShowQuery())
    return;
@@ -55,7 +55,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   schema_predicate.append(select.getShowSchema());
 
-  util::string::const_shared_ptr schema(getSession().schema());
+  util::string::ptr schema(getSession().schema());
   if (schema_predicate.empty() and schema)
   {
     schema_predicate.append(*schema);

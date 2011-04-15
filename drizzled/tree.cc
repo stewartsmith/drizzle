@@ -83,7 +83,6 @@ static void left_rotate(TREE_ELEMENT **parent,TREE_ELEMENT *leaf);
 static void right_rotate(TREE_ELEMENT **parent, TREE_ELEMENT *leaf);
 static void rb_insert(TREE *tree,TREE_ELEMENT ***parent,
 		      TREE_ELEMENT *leaf);
-static void rb_delete_fixup(TREE *tree,TREE_ELEMENT ***parent);
 
 
 void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
@@ -263,70 +262,6 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size,
   return element;
 }
 
-int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg)
-{
-  int remove_colour;
-  TREE_ELEMENT *element,***parent, ***org_parent, *nod;
-  if (!tree->with_delete)
-    return 1;					/* not allowed */
-
-  parent= tree->parents;
-  *parent= &tree->root; element= tree->root;
-  for (;;)
-  {
-    int cmp;
-
-    if (element == &tree->null_element)
-      return 1;				/* Was not in tree */
-    if ((cmp = (*tree->compare)(custom_arg, ELEMENT_KEY(tree,element),
-                                key)) == 0)
-      break;
-    if (cmp < 0)
-    {
-      *++parent= &element->right; element= element->right;
-    }
-    else
-    {
-      *++parent = &element->left; element= element->left;
-    }
-  }
-  if (element->left == &tree->null_element)
-  {
-    (**parent)= element->right;
-    remove_colour= element->colour;
-  }
-  else if (element->right == &tree->null_element)
-  {
-    (**parent)= element->left;
-    remove_colour= element->colour;
-  }
-  else
-  {
-    org_parent= parent;
-    *++parent= &element->right; nod= element->right;
-    while (nod->left != &tree->null_element)
-    {
-      *++parent= &nod->left; nod= nod->left;
-    }
-    (**parent)= nod->right;		/* unlink nod from tree */
-    remove_colour= nod->colour;
-    org_parent[0][0]= nod;		/* put y in place of element */
-    org_parent[1]= &nod->right;
-    nod->left= element->left;
-    nod->right= element->right;
-    nod->colour= element->colour;
-  }
-  if (remove_colour == BLACK)
-    rb_delete_fixup(tree,parent);
-  if (tree->free)
-    (*tree->free)(ELEMENT_KEY(tree,element), free_free, tree->custom_arg);
-  tree->allocated-= sizeof(TREE_ELEMENT) + tree->size_of_element + key_size;
-  free((unsigned char*) element);
-  tree->elements_in_tree--;
-
-  return 0;
-}
-
 void *tree_search_key(TREE *tree, const void *key,
                       TREE_ELEMENT **parents, TREE_ELEMENT ***last_pos,
                       enum ha_rkey_function flag, void *custom_arg)
@@ -401,25 +336,6 @@ void *tree_search_key(TREE *tree, const void *key,
   }
 
   return *last_pos ? ELEMENT_KEY(tree, **last_pos) : NULL;
-}
-
-/*
-  Search first (the most left) or last (the most right) tree element
-*/
-void *tree_search_edge(TREE *tree, TREE_ELEMENT **parents,
-		       TREE_ELEMENT ***last_pos, int child_offs)
-{
-  TREE_ELEMENT *element= tree->root;
-
-  *parents= &tree->null_element;
-  while (element != &tree->null_element)
-  {
-    *++parents= element;
-    element= ELEMENT_CHILD(element, child_offs);
-  }
-  *last_pos= parents;
-  return **last_pos != &tree->null_element ?
-    ELEMENT_KEY(tree, **last_pos) : NULL;
 }
 
 void *tree_search_next(TREE *tree, TREE_ELEMENT ***last_pos, int l_offs,
@@ -629,87 +545,6 @@ static void rb_insert(TREE *tree, TREE_ELEMENT ***parent, TREE_ELEMENT *leaf)
     }
   }
   tree->root->colour=BLACK;
-}
-
-static void rb_delete_fixup(TREE *tree, TREE_ELEMENT ***parent)
-{
-  TREE_ELEMENT *x,*w,*par;
-
-  x= **parent;
-  while (x != tree->root && x->colour == BLACK)
-  {
-    if (x == (par=parent[-1][0])->left)
-    {
-      w= par->right;
-      if (w->colour == RED)
-      {
-	w->colour= BLACK;
-	par->colour= RED;
-	left_rotate(parent[-1],par);
-	parent[0]= &w->left;
-	*++parent= &par->left;
-	w= par->right;
-      }
-      if (w->left->colour == BLACK && w->right->colour == BLACK)
-      {
-	w->colour= RED;
-	x= par;
-	parent--;
-      }
-      else
-      {
-	if (w->right->colour == BLACK)
-	{
-	  w->left->colour= BLACK;
-	  w->colour= RED;
-	  right_rotate(&par->right,w);
-	  w= par->right;
-	}
-	w->colour= par->colour;
-	par->colour= BLACK;
-	w->right->colour= BLACK;
-	left_rotate(parent[-1],par);
-	x= tree->root;
-	break;
-      }
-    }
-    else
-    {
-      w=par->left;
-      if (w->colour == RED)
-      {
-	w->colour= BLACK;
-	par->colour= RED;
-	right_rotate(parent[-1],par);
-	parent[0]= &w->right;
-	*++parent= &par->right;
-	w= par->left;
-      }
-      if (w->right->colour == BLACK && w->left->colour == BLACK)
-      {
-	w->colour= RED;
-	x= par;
-	parent--;
-      }
-      else
-      {
-	if (w->left->colour == BLACK)
-	{
-	  w->right->colour= BLACK;
-	  w->colour= RED;
-	  left_rotate(&par->left,w);
-	  w= par->left;
-	}
-	w->colour= par->colour;
-	par->colour= BLACK;
-	w->left->colour= BLACK;
-	right_rotate(parent[-1],par);
-	x= tree->root;
-	break;
-      }
-    }
-  }
-  x->colour= BLACK;
 }
 
 } /* namespace drizzled */
