@@ -206,6 +206,7 @@ String *Item_func_lpad::val_str(String *str)
   }
 
   if (args[2]->null_value || !pad_char_length)
+    goto err;
   str->alloc((uint32_t) byte_count);
   str->length(0);
   str->set_charset(collation.collation);
