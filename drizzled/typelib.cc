@@ -30,7 +30,7 @@ static const char field_separator=',';
 
 int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 {
-  int res= find_type(const_cast<char*>(x), 2);
+  int res= find_type(x, e_dont_complete);
   if (res > 0)
     return res;
   if (!*x)
@@ -70,13 +70,13 @@ int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 */
 
 
-int TYPELIB::find_type(const char *x, uint32_t full_name) const
+int TYPELIB::find_type(const char *x, e_find_options full_name) const
 {
   assert(full_name & 2);
   return find_type(const_cast<char*>(x), full_name);
 }
 
-int TYPELIB::find_type(char *x, uint32_t full_name) const
+int TYPELIB::find_type(char *x, e_find_options full_name) const
 {
   if (!count)
     return 0;
@@ -143,16 +143,16 @@ const char *TYPELIB::get_type(uint32_t nr) const
     NULL otherwise
 */
 
-TYPELIB *TYPELIB::copy_typelib(memory::Root *root) const
+TYPELIB *TYPELIB::copy_typelib(memory::Root& root) const
 {
-  TYPELIB* to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB));
-  to->type_names= (const char**)root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
+  TYPELIB* to= (TYPELIB*) root.alloc_root(sizeof(TYPELIB));
+  to->type_names= (const char**)root.alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
   to->type_lengths= (unsigned int*)(to->type_names + count + 1);
   to->count= count;
-  to->name= name ? root->strdup_root(name) : NULL;
+  to->name= name ? root.strdup_root(name) : NULL;
   for (uint32_t i= 0; i < count; i++)
   {
-    to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i]);
+    to->type_names[i]= root.strmake_root(type_names[i], type_lengths[i]);
     to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;

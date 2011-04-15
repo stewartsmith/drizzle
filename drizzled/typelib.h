@@ -23,10 +23,21 @@ namespace drizzled {
 class TYPELIB
 {
 public:
-  TYPELIB *copy_typelib(memory::Root *root) const;
-  int find_type_or_exit(const char *x, const char *option) const;
-  int find_type(const char *x, unsigned int full_name) const;
-  int find_type(char *x, unsigned int full_name) const;
+  enum e_find_options
+  {
+    e_none = 0,
+    e_match_full = 1,
+    e_dont_complete = 2,
+    e_allow_int = 4,
+    e_use_comma = 8,
+
+    e_default = 3
+  };
+
+  TYPELIB* copy_typelib(memory::Root&) const;
+  int find_type_or_exit(const char*, const char* option) const;
+  int find_type(const char*, e_find_options) const;
+  int find_type(char*, e_find_options) const;
   const char *get_type(unsigned int nr) const;
 
   uint64_t find_set(const char *x, uint32_t length, const charset_info_st *cs,
