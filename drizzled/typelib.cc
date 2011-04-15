@@ -120,19 +120,6 @@ int TYPELIB::find_type(char *x, uint32_t full_name) const
   return findpos + 1;
 } /* find_type */
 
-
-	/* Get name of type nr 'nr' */
-	/* Warning first type is 1, 0 = empty field */
-
-void TYPELIB::make_type(char *to, uint32_t nr) const
-{
-  if (!nr)
-    to[0]= 0;
-  else
-    strcpy(to, get_type(nr - 1));
-} /* make_type */
-
-
 	/* Get type */
 	/* Warning first type is 0 */
 
@@ -142,43 +129,6 @@ const char *TYPELIB::get_type(uint32_t nr) const
     return type_names[nr];
   return "?";
 }
-
-
-/*
-  Create an integer value to represent the supplied comma-seperated
-  string where each string in the TYPELIB denotes a bit position.
-
-  SYNOPSIS
-    find_typeset()
-    x		string to decompose
-    lib		TYPELIB (struct of pointer to values + count)
-    err		index (not char position) of string element which was not
-                found or 0 if there was no error
-
-  RETURN
-    a integer representation of the supplied string
-*/
-
-uint64_t TYPELIB::find_typeset(const char *x, int *err) const
-{
-  if (!count)
-    return 0;
-  uint64_t result= 0;
-  *err= 0;
-  while (*x)
-  {
-    (*err)++;
-    const char *i= x;
-    while (*x && *x != field_separator) x++;
-    int find= find_type(i, 2 | 8) - 1;
-    if (find < 0)
-      return 0;
-    result|= (1ULL << find);
-  }
-  *err= 0;
-  return result;
-} /* find_set */
-
 
 /*
   Create a copy of a specified TYPELIB structure.

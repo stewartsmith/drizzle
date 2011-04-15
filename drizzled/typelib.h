@@ -27,9 +27,7 @@ public:
   int find_type_or_exit(const char *x, const char *option) const;
   int find_type(const char *x, unsigned int full_name) const;
   int find_type(char *x, unsigned int full_name) const;
-  uint64_t find_typeset(const char *x, int *error_position) const;
   const char *get_type(unsigned int nr) const;
-  void make_type(char *to, unsigned int nr) const;
 
   uint64_t find_set(const char *x, uint32_t length, const charset_info_st *cs,
                     char **err_pos, uint32_t *err_len, bool *set_warning) const;
