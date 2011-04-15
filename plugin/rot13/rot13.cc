@@ -30,8 +30,6 @@ using namespace drizzled;
 
 namespace rot13 {
 
-char const* name= "rot13";
-
 namespace {
 
 std::string rot13(std::string const& s)
@@ -62,14 +60,15 @@ static String* set_String_from_std_string(String* s, std::string const& cs)
 class Function : public Item_str_func
 {
 public:
-  Function() : Item_str_func() {}
-  const char *func_name() const { return rot13::name; }
+  const char* func_name() const 
+  { 
+    return "rot13"; 
+  }
 
   String *val_str(String *s)
   {
     String val;
     String *other= args[0]->val_str(&val);
-    ;
     return set_String_from_std_string(s, rot13(std::string(other->ptr(), other->length())));
   };
 
@@ -80,19 +79,13 @@ public:
 
   bool check_argument_count(int n)
   {
-    return (n == 1);
+    return n == 1;
   }
 };
 
-using plugin::Create_function;
-using module::Context;
-typedef Create_function<Function> PluginFunction;
-PluginFunction *rot13_func= NULL;
-
-static int init(Context &context)
+static int init(module::Context& context)
 {
-  rot13_func= new PluginFunction(rot13::name);
-  context.add(rot13_func);
+  context.add(new plugin::Create_function<Function>("rot13"));
   return 0;
 }
 
