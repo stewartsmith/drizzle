@@ -28,13 +28,11 @@
 
 using namespace drizzled;
 
-namespace rot13
-{
+namespace rot13 {
 
 char const* name= "rot13";
 
-namespace
-{
+namespace {
 
 std::string rot13(std::string const& s)
 {
@@ -54,6 +52,13 @@ std::string rot13(std::string const& s)
 
 } // anon namespace
 
+static String* set_String_from_std_string(String* s, std::string const& cs)
+{
+   s->set_ascii(cs.c_str(), cs.length());
+   s->copy();
+   return s;
+}
+
 class Function : public Item_str_func
 {
 public:
@@ -64,8 +69,8 @@ public:
   {
     String val;
     String *other= args[0]->val_str(&val);
-    std::string to_rot= String_to_std_string(*other);
-    return set_String_from_std_string(s, rot13(to_rot));
+    ;
+    return set_String_from_std_string(s, rot13(std::string(other->ptr(), other->length())));
   };
 
   void fix_length_and_dec()

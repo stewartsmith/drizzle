@@ -39,9 +39,6 @@ namespace drizzled {
 extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 
-DRIZZLED_API std::string String_to_std_string(String const& s);
-DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
-
 int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
 int stringcmp(const String *a,const String *b);
 String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
