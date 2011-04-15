@@ -1520,7 +1520,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
   NOTES
   This function is called when the table definition is not cached in
-  definition::Cache::singleton().getCache()
+  definition::Cache::getCache()
   The data is returned in 'share', which is alloced by
   alloc_table_share().. The code assumes that share is initialized.
 

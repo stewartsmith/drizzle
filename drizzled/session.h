@@ -289,13 +289,13 @@ public:
 
 private:
   boost::thread::id boost_thread_id;
-  boost_thread_shared_ptr _thread;
+  thread_ptr _thread;
   boost::this_thread::disable_interruption *interrupt;
 
   internal::st_my_thread_var *mysys_var;
 
 public:
-  boost_thread_shared_ptr &getThread()
+  thread_ptr &getThread()
   {
     return _thread;
   }
@@ -1108,7 +1108,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
+  table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
   bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
 
   session::TableMessages &getMessageCache();
