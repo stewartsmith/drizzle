@@ -107,7 +107,7 @@ public:
   }
 
   /* To get the List sj_outer_expr_list */
-  List<Item> getSjOuterExprList() const
+  const List<Item>& getSjOuterExprList() const
   {
     return sj_outer_expr_list;
   }
