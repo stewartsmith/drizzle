@@ -155,27 +155,6 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
   return array->buffer + ((array->size() - 1) * array->size_of_element);
 }
 
-
-/*
-  Pop last element from array.
-
-  SYNOPSIS
-    pop_dynamic()
-      array
-
-  RETURN VALUE
-    pointer	Ok
-    0		Array is empty
-*/
-
-unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
-{
-  if (!array->size())
-    return 0;
-  array->set_size(array->size() - 1);
-  return array->buffer+(array->size() * array->size_of_element);
-}
-
 /*
   Empty array by freeing all memory
 
