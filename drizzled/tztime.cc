@@ -47,46 +47,8 @@ static const String tz_SYSTEM_name("SYSTEM", 6, &my_charset_utf8_general_ci);
 class Time_zone_system : public Time_zone
 {
 public:
-  Time_zone_system() {}                       /* Remove gcc warning */
-  virtual type::Time::epoch_t TIME_to_gmt_sec(const type::Time &t,
-                                              bool *in_dst_time_gap) const;
   virtual void gmt_sec_to_TIME(type::Time &tmp, type::Time::epoch_t t) const;
-  virtual const String * get_name() const;
 };
-
-
-/**
- * @brief
- * Converts local time in system time zone in type::Time representation
- * to its type::Time::epoch_t representation.
- *
- * @details
- * This method uses system function (localtime_r()) for conversion
- * local time in system time zone in type::Time structure to its type::Time::epoch_t
- * representation. Unlike the same function for Time_zone_db class
- * it it won't handle unnormalized input properly. Still it will
- * return lowest possible type::Time::epoch_t in case of ambiguity or if we
- * provide time corresponding to the time-gap.
- *
- * You should call init_time() function before using this function.
- *
- * @param   t               pointer to type::Time structure with local time in
- *                          broken-down representation.
- * @param   in_dst_time_gap pointer to bool which is set to true if datetime
- *                          value passed doesn't really exist (i.e. falls into
- *                          spring time-gap) and is not touched otherwise.
- *
- * @return
- * Corresponding type::Time::epoch_t value or 0 in case of error
- */
-type::Time::epoch_t
-Time_zone_system::TIME_to_gmt_sec(const type::Time &t, bool *in_dst_time_gap) const
-{
-  long not_used;
-  type::Time::epoch_t tmp;
-  t.convert(tmp, &not_used, in_dst_time_gap);
-  return tmp;
-}
 
 
 /**
@@ -109,19 +71,6 @@ Time_zone_system::gmt_sec_to_TIME(type::Time &tmp, type::Time::epoch_t t) const
   tmp.store(t);
 }
 
-
-/**
- * @brief
- * Get name of time zone
- *
- * @return
- * Name of time zone as String
- */
-const String *
-Time_zone_system::get_name() const
-{
-  return &tz_SYSTEM_name;
-}
 
 static Time_zone_system tz_SYSTEM;
 
