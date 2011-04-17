@@ -777,8 +777,7 @@ bool ClientMySQLProtocol::checkConnection(void)
       return false;
     }
   }
-  if (packet.alloc(buffer_length.get()))
-    return false; /* The error is set by alloc(). */
+  packet.alloc(buffer_length.get());
 
   client_capabilities= uint2korr(net.read_pos);
   if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))

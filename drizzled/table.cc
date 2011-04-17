@@ -308,18 +308,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
   res->append('\'');
 }
 
-
-int rename_file_ext(const char * from,const char * to,const char * ext)
-{
-  string from_s, to_s;
-
-  from_s.append(from);
-  from_s.append(ext);
-  to_s.append(to);
-  to_s.append(ext);
-  return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
 /*
   Allow anything as a table name, as long as it doesn't contain an
   ' ' at the end

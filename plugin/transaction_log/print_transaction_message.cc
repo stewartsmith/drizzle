@@ -180,14 +180,7 @@ String *PrintTransactionMessageFunction::val_str(String *str)
   string transaction_text;
   protobuf::TextFormat::PrintToString(transaction_message, &transaction_text);
 
-  if (str->alloc(transaction_text.length()))
-  {
-    delete coded_input;
-    delete file_input;
-    null_value= true;
-    return NULL;
-  }
-
+  str->alloc(transaction_text.length());
   str->length(transaction_text.length());
 
   strncpy(str->ptr(), transaction_text.c_str(), transaction_text.length());

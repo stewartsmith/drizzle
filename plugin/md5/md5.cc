@@ -61,11 +61,12 @@ String *Md5Function::val_str(String *str)
   assert(fixed == true);
 
   String *sptr= args[0]->val_str(str);
-  if (sptr == NULL || str->alloc(32)) 
+  if (sptr == NULL) 
   {
     null_value= true;
     return 0;
   }
+  str->alloc(32);
 
   null_value= false;
 
