@@ -46,6 +46,7 @@ public:
   type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t& fraction_arg) const;
   type::Time::epoch_t query_start();
   boost::posix_time::ptime start_timer() const;
+  boost::posix_time::ptime epoch() const;
 
   boost::posix_time::ptime _epoch;
   boost::posix_time::ptime _connect_time;
