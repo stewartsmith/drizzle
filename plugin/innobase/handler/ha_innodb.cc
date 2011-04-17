@@ -2094,7 +2094,7 @@ read_ahead_validate(
   set_var*    var)
 {
   const char *read_ahead_input = var->value->str_value.ptr();
-  int res = read_ahead_typelib.find_type(read_ahead_input, 0);
+  int res = read_ahead_typelib.find_type(read_ahead_input, TYPELIB::e_none); // e_none is wrong
 
   if (res > 0) {
     srv_read_ahead = res - 1;
@@ -2116,7 +2116,7 @@ adaptive_flushing_method_validate(
   set_var*    var)
 {
   const char *adaptive_flushing_method_input = var->value->str_value.ptr();
-  int res = adaptive_flushing_method_typelib.find_type(adaptive_flushing_method_input, 0);
+  int res = adaptive_flushing_method_typelib.find_type(adaptive_flushing_method_input, TYPELIB::e_none); // e_none is wrong
 
   if (res > 0) {
     srv_adaptive_flushing_method = res - 1;

@@ -60,6 +60,11 @@ boost::posix_time::ptime Times::start_timer() const
   return _start_timer;
 }
 
+boost::posix_time::ptime Times::epoch() const
+{
+  return _epoch;
+}
+
 void Times::set_time()
 {
   _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();

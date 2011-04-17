@@ -127,8 +127,7 @@ String *Item_func_concat::val_str(String *str)
         {
           if (tmp_value.alloced_length() == 0)
           {
-            if (tmp_value.alloc(concat_len))
-              goto null;
+            tmp_value.alloc(concat_len);
           }
           else
           {
@@ -297,8 +296,7 @@ String *Item_func_concat_ws::val_str(String *str)
       {
         if (tmp_value.alloced_length() == 0)
         {
-          if (tmp_value.alloc(concat_len))
-            goto null;
+          tmp_value.alloc(concat_len);
         }
         else
         {
