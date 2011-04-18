@@ -65,7 +65,6 @@
 #include <drizzled/select_to_file.h>
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-#include <drizzled/session/property_map.h>
 #include <drizzled/session/state.h>
 #include <drizzled/session/table_messages.h>
 #include <drizzled/session/times.h>
@@ -84,6 +83,7 @@
 #include <drizzled/util/backtrace.h>
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/functors.h>
+#include <drizzled/util/storable.h>
 #include <plugin/myisam/myisam.h>
 
 #include <algorithm>
@@ -153,13 +153,19 @@ int64_t session_test_options(const Session *session, int64_t test_options)
 class Session::impl_c
 {
 public:
-  typedef session::PropertyMap properties_t;
+  typedef boost::unordered_map<std::string, util::Storable*, util::insensitive_hash, util::insensitive_equal_to> properties_t;
   typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
 
   impl_c(Session& session) :
     open_tables(session, g_refresh_version),
     schema(boost::make_shared<std::string>())
   {
+  }
+
+  ~impl_c()
+  {
+    BOOST_FOREACH(properties_t::reference it, properties)
+      delete it.second;
   }
 
   Diagnostics_area diagnostics;
@@ -2031,12 +2037,13 @@ enum_tx_isolation Session::getTxIsolation()
 
 drizzled::util::Storable* Session::getProperty0(const std::string& arg)
 {
-  return impl_->properties.getProperty(arg);
+  return impl_->properties[arg];
 }
 
 void Session::setProperty0(const std::string& arg, drizzled::util::Storable* value)
 {
-  impl_->properties.setProperty(arg, value);
+  // assert(not _properties.count(arg));
+  impl_->properties[arg]= value;
 }
 
 plugin::EventObserverList* Session::getSchemaObservers(const std::string &db_name)
