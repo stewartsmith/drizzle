@@ -47,10 +47,7 @@ public:
     or for an intermediate table used in ALTER.
     XXX Why are internal temporary tables added to this list?
   */
-// private:
   Table *temporary_tables;
-
-public:
 
   Table *getTemporaryTables()
   {
@@ -70,8 +67,9 @@ public:
   void close_temporary_tables();
   void close_temporary_table(Table*);
   void nukeTable(Table*);
+  void close_open_tables(Session&);
+  bool free_cached_table();
 
-public:
   /* Work with temporary tables */
   Table *find_temporary_table(const identifier::Table &identifier);
 

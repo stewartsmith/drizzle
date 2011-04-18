@@ -109,14 +109,7 @@ bool StatusVars::hasBeenFlushed(Session *session)
   /* check bytes received if its lower then a flush has occurred */
   uint64_t current_bytes_received= current_status_var->bytes_received;
   uint64_t my_bytes_received= status_var_counters->bytes_received;
-  if (current_bytes_received < my_bytes_received)
-  {
-    return true;
-  }
-  else 
-  {
-    return false;
-  }
+  return current_bytes_received < my_bytes_received;
 }
 
 void StatusVars::copyGlobalVariables(StatusVars *global_status_vars)
