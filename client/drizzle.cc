@@ -1650,7 +1650,7 @@ try
     else
       init_tee(vm["tee"].as<string>().c_str());
   }
-  if (vm["disable-tee"].as<bool>() == true)
+  if (vm["disable-tee"].as<bool>())
   {
     if (opt_outfile)
       end_tee();

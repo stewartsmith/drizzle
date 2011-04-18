@@ -42,10 +42,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
@@ -61,20 +59,11 @@ boost::mutex THR_LOCK_threads;
     1  error (Couldn't create THR_KEY_mysys)
 */
 
-bool my_thread_global_init(void)
+bool my_thread_global_init()
 {
-  if (my_thread_init())
-  {
-    my_thread_global_end();			/* Clean up */
-    return 1;
-  }
-  return 0;
+  return my_thread_init();
 }
 
-
-void my_thread_global_end(void)
-{
-}
 
 static uint64_t thread_id= 0;
 
@@ -89,23 +78,15 @@ static uint64_t thread_id= 0;
     1  Fatal error; mysys/dbug functions can't be used
 */
 
-bool my_thread_init(void)
+bool my_thread_init()
 {
   // We should mever see my_thread_init()  called twice
   if (THR_KEY_mysys.get())
-    return 0;
-
-  st_my_thread_var *tmp= new st_my_thread_var;
-  if (tmp == NULL)
-  {
-    return true;
-  }
-  THR_KEY_mysys.reset(tmp);
-
+    return false;
+  THR_KEY_mysys.reset(new st_my_thread_var);
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
-  tmp->id= ++thread_id;
-
-  return false;
+  THR_KEY_mysys->id= ++thread_id;
+  return false; // return void
 }
 
 

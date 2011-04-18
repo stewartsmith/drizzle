@@ -88,10 +88,7 @@ bool my_init(void)
 void my_end()
 {
   free_charsets();
-
   my_thread_end();
-  my_thread_global_end();
-
   my_init_done= false;
 } /* my_end */
 
