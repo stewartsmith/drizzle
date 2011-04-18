@@ -643,8 +643,6 @@ int my_wc_mb_bin(const charset_info_st * const, my_wc_t wc,
 void my_hash_sort_8bit_bin(const charset_info_st * const,
                            const unsigned char *key, size_t len,
                            uint32_t *nr1, uint32_t *nr2);
-bool my_coll_init_8bit_bin(charset_info_st *cs,
-                           cs_alloc_func);
 int my_strnncoll_binary(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,

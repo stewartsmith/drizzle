@@ -80,13 +80,6 @@ static unsigned char bin_char_array[] =
 };
 
 
-bool my_coll_init_8bit_bin(charset_info_st *cs,
-                           cs_alloc_func)
-{
-  cs->max_sort_char=255;
-  return false;
-}
-
 int my_strnncoll_binary(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
