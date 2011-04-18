@@ -73,11 +73,10 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
   @return
     always 0
 */
-int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
+void TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
 {
   BOOST_FOREACH(TransactionalStorageEngine* it, g_engines) 
     it->doReleaseTemporaryLatches(session);
-  return 0;
 }
 
 int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)

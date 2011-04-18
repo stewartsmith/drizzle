@@ -125,7 +125,7 @@ public:
   /**
    * @todo Kill this one entirely.  It's implementation, not interface...
    */
-  static int releaseTemporaryLatches(Session *session);
+  static void releaseTemporaryLatches(Session *session);
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::TransactionalStorageEngine *engine);
@@ -211,14 +211,12 @@ private:
    * and 'real commit' mean the same event.
    */
   virtual int doRollback(Session *session, bool normal_transaction)= 0;
-  virtual int doReleaseTemporaryLatches(Session *session)
+  virtual int doReleaseTemporaryLatches(Session*)
   {
-    (void) session;
     return 0;
   }
-  virtual int doStartConsistentSnapshot(Session *session)
+  virtual int doStartConsistentSnapshot(Session*)
   {
-    (void) session;
     return 0;
   }
 };
