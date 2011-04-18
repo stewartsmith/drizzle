@@ -88,24 +88,7 @@ bool my_thread_init()
   return false; // return void
 }
 
-
-/*
-  Deallocate memory used by the thread for book-keeping
-
-  SYNOPSIS
-    my_thread_end()
-
-  NOTE
-    This may be called multiple times for a thread.
-    This happens for example when one calls 'server_init()'
-    server_end() and then ends with a end().
-*/
-
-void my_thread_end(void)
-{
-}
-
-struct st_my_thread_var *_my_thread_var(void)
+st_my_thread_var* _my_thread_var()
 {
   return THR_KEY_mysys.get();
 }

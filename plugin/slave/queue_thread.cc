@@ -25,16 +25,14 @@
 
 using namespace drizzled;
 
-namespace slave
-{
+namespace slave {
 
-void QueueThread::run(void)
+void QueueThread::run()
 {
   boost::posix_time::seconds duration(getSleepInterval());
 
   /* thread setup needed to do things like create a Session */
   internal::my_thread_init();
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
 
   if (not init())
     return;
