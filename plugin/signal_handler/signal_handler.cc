@@ -119,7 +119,6 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((drizzled::getDebug().test(drizzled::debug::ALLOW_SIGINT)))

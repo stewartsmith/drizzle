@@ -108,9 +108,7 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #endif
 
 extern bool my_thread_global_init(void);
-extern void my_thread_global_end(void);
 DRIZZLED_API bool my_thread_init(void);
-DRIZZLED_API void my_thread_end(void);
 extern const char *my_thread_name(void);
 
 /* All thread specific variables are in the following struct */

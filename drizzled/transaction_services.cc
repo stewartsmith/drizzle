@@ -305,15 +305,7 @@ namespace drizzled {
  */
 TransactionServices::TransactionServices()
 {
-  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
-  if (engine)
-  {
-    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
-  }
-  else 
-  {
-    xa_storage_engine= NULL;
-  }
+  xa_storage_engine= static_cast<plugin::XaStorageEngine*>(plugin::StorageEngine::findByName("InnoDB"));
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,

@@ -108,36 +108,6 @@ Lex_input_stream::Lex_input_stream(Session *session,
   m_cpp_ptr= m_cpp_buf;
 }
 
-Lex_input_stream::~Lex_input_stream()
-{}
-
-/**
-  The operation is called from the parser in order to
-  1) designate the intention to have utf8 body;
-  1) Indicate to the lexer that we will need a utf8 representation of this
-     statement;
-  2) Determine the beginning of the body.
-
-  @param session        Thread context.
-  @param begin_ptr  Pointer to the start of the body in the pre-processed
-                    buffer.
-*/
-void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
-{
-  assert(begin_ptr);
-  assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
-
-  uint32_t body_utf8_length=
-    (m_buf_length / default_charset_info->mbminlen) *
-    my_charset_utf8_bin.mbmaxlen;
-
-  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
-  m_body_utf8_ptr= m_body_utf8;
-  *m_body_utf8_ptr= 0;
-
-  m_cpp_utf8_processed_ptr= begin_ptr;
-}
-
 /**
   @brief The operation appends unprocessed part of pre-processed buffer till
   the given pointer (ptr) and sets m_cpp_utf8_processed_ptr to end_ptr.
@@ -331,12 +301,6 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   }
 
   return 0;
-}
-
-bool is_lex_native_function(const LEX_STRING *name)
-{
-  assert(name != NULL);
-  return (lookup_symbol(name->str, name->length, 1) != 0);
 }
 
 /* make a copy of token before ptr and set yytoklen */
@@ -1303,29 +1267,6 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   }
 }
 
-void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str)
-{
-  /*
-    TODO:
-    This code assumes that there are no multi-bytes characters
-    that can be considered white-space.
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[0])))
-  {
-    str->length--;
-    str->str++;
-  }
-
-  /*
-    FIXME:
-    Also, parsing backward is not safe with multi bytes characters
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[str->length-1])))
-  {
-    str->length--;
-  }
-}
-
 /*
   Select_Lex structures initialisations
 */
@@ -2172,16 +2113,6 @@ void Select_Lex::alloc_index_hints (Session *session)
 void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
 {
   index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
-}
-
-bool check_for_sql_keyword(drizzled::lex_string_t const& string)
-{
-  return sql_reserved_words::in_word_set(string.str, string.length);
-}
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
-{
-  return sql_reserved_words::in_word_set(string.str, string.length);
 }
 
 message::AlterTable *LEX::alter_table()

@@ -28,21 +28,14 @@
 #include <algorithm>
 #include <functional>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace plugin {
 
-namespace plugin
-{
-
-static std::vector<TransactionalStorageEngine *> vector_of_transactional_engines;
+static std::vector<TransactionalStorageEngine*> g_engines;
 
 TransactionalStorageEngine::TransactionalStorageEngine(const std::string name_arg,
                                                        const std::bitset<HTON_BIT_SIZE> &flags_arg)
     : StorageEngine(name_arg, flags_arg)
-{
-}
-
-TransactionalStorageEngine::~TransactionalStorageEngine()
 {
 }
 
@@ -80,56 +73,32 @@ void TransactionalStorageEngine::setTransactionReadWrite(Session& session)
   @return
     always 0
 */
-int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
+void TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
 {
-  std::for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-                std::bind2nd(std::mem_fun(&TransactionalStorageEngine::doReleaseTemporaryLatches),session));
-  return 0;
+  BOOST_FOREACH(TransactionalStorageEngine* it, g_engines) 
+    it->doReleaseTemporaryLatches(session);
 }
-
-struct StartTransactionFunc :public std::unary_function<TransactionalStorageEngine *, int>
-{
-  Session *session;
-  start_transaction_option_t options;
-  StartTransactionFunc(Session *in_session, start_transaction_option_t in_options) :
-    session(in_session),
-    options(in_options)
-  {}
-  result_type operator()(argument_type engine) const
-  {
-    return engine->startTransaction(session, options);
-  }
-};
 
 int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)
 {
-  if (vector_of_transactional_engines.empty())
-  {
+  if (g_engines.empty())
     return 0;
-  }
-  else
-  {
-    StartTransactionFunc functor(session, options);
-    std::vector<int> results;
-    results.reserve(vector_of_transactional_engines.size());
-    transform(vector_of_transactional_engines.begin(),
-              vector_of_transactional_engines.end(),
-              results.begin(),
-              functor);
-    return *std::max_element(results.begin(), results.end());
-  }
+  std::vector<int> results;
+  results.reserve(g_engines.size());
+  BOOST_FOREACH(TransactionalStorageEngine* it, g_engines)
+    results.push_back(it->startTransaction(session, options));
+  return *std::max_element(results.begin(), results.end());
 }
 
 bool TransactionalStorageEngine::addPlugin(TransactionalStorageEngine *engine)
 {
-  vector_of_transactional_engines.push_back(engine);
-
+  g_engines.push_back(engine);
   return StorageEngine::addPlugin(engine);
 }
 
-void TransactionalStorageEngine::removePlugin(TransactionalStorageEngine *)
+void TransactionalStorageEngine::removePlugin(TransactionalStorageEngine*)
 {
-  vector_of_transactional_engines.clear();
+  g_engines.clear();
 }
 
 } /* namespace plugin */
