@@ -80,37 +80,15 @@ int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
   return 0;
 }
 
-struct StartTransactionFunc :public std::unary_function<TransactionalStorageEngine *, int>
-{
-  Session *session;
-  start_transaction_option_t options;
-  StartTransactionFunc(Session *in_session, start_transaction_option_t in_options) :
-    session(in_session),
-    options(in_options)
-  {}
-  result_type operator()(argument_type engine) const
-  {
-    return engine->startTransaction(session, options);
-  }
-};
-
 int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)
 {
   if (g_engines.empty())
-  {
     return 0;
-  }
-  else
-  {
-    StartTransactionFunc functor(session, options);
-    std::vector<int> results;
-    results.reserve(g_engines.size());
-    transform(g_engines.begin(),
-              g_engines.end(),
-              results.begin(),
-              functor);
-    return *std::max_element(results.begin(), results.end());
-  }
+  std::vector<int> results;
+  results.reserve(g_engines.size());
+  BOOST_FOREACH(TransactionalStorageEngine* it, g_engines)
+    results.push_back(it->startTransaction(session, options));
+  return *std::max_element(results.begin(), results.end());
 }
 
 bool TransactionalStorageEngine::addPlugin(TransactionalStorageEngine *engine)
