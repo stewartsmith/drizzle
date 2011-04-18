@@ -73,8 +73,6 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
     }
     else
     {
-      boost::this_thread::at_thread_exit(&internal::my_thread_end);
-
       session->thread_stack= (char*) &stack_dummy;
       session->run();
     }
