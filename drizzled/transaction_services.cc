@@ -606,7 +606,7 @@ int TransactionServices::commitPhaseOne(Session& session,
     }
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
 
     if (normal_transaction)
     {
@@ -686,7 +686,7 @@ int TransactionServices::rollbackTransaction(Session& session,
       rollbackStatementMessage(session);
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
     if (normal_transaction)
     {
       session.variables.tx_isolation=session.session_tx_isolation;

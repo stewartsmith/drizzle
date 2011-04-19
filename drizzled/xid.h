@@ -56,19 +56,13 @@ public:
   {
     memset(data, 0, DRIZZLE_XIDDATASIZE);
   }
-  bool eq(XID *xid);
-  bool eq(long g, long b, const char *d);
-  void set(XID *xid);
-  void set(long f, const char *g, long gl, const char *b, long bl);
   void set(uint64_t xid);
   void set(long g, long b, const char *d);
   bool is_null();
-  void null();
+  void set_null();
   my_xid quick_get_my_xid();
   my_xid get_my_xid();
   uint32_t length() const;
-  const unsigned char* key() const;
-  uint32_t key_length() const;
 };
 
 /**

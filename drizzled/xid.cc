@@ -50,7 +50,7 @@ bool XID::is_null()
   return formatID == -1;
 }
 
-void XID::null()
+void XID::set_null()
 {
   formatID= -1;
 }
