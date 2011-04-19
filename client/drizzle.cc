@@ -540,7 +540,7 @@ static Commands commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
     N_("Use another schema. Takes schema name as argument.") ),
-  Commands( "shutdown",    'u', com_shutdown,    1,
+  Commands( "shutdown",    'Q', com_shutdown,    1,
     N_("Shutdown the instance you are connected too.") ),
   Commands( "warnings", 'W', com_warnings,  0,
     N_("Show warnings after every statement.") ),
