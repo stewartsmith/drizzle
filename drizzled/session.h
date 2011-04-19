@@ -894,11 +894,6 @@ public:
   bool copy_db_to(char **p_db, size_t *p_db_length);
 
 public:
-  /**
-    Add an internal error handler to the thread execution context.
-    @param handler the exception handler to add
-  */
-  void push_internal_handler(Internal_error_handler *handler);
 
   /**
     Handle an error condition.
@@ -909,10 +904,6 @@ public:
   virtual bool handle_error(error_t sql_errno, const char *message,
                             DRIZZLE_ERROR::enum_warning_level level);
 
-  /**
-    Remove the error handler last pushed.
-  */
-  void pop_internal_handler();
 
   /**
     Resets Session part responsible for command processing state.

@@ -368,16 +368,6 @@ void Session::free_items()
   }
 }
 
-void Session::push_internal_handler(Internal_error_handler *handler)
-{
-  /*
-    TODO: The current implementation is limited to 1 handler at a time only.
-    Session and sp_rcontext need to be modified to use a common handler stack.
-  */
-  assert(m_internal_handler == NULL);
-  m_internal_handler= handler;
-}
-
 bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
                            DRIZZLE_ERROR::enum_warning_level level)
 {
@@ -409,12 +399,6 @@ void Session::lockOnSys()
   }
 }
 
-void Session::pop_internal_handler()
-{
-  assert(m_internal_handler != NULL);
-  m_internal_handler= NULL;
-}
-
 void Session::get_xid(DrizzleXid *xid)
 {
   *xid = *(DrizzleXid *) &transaction.xid_state.xid;
@@ -424,7 +408,7 @@ void Session::get_xid(DrizzleXid *xid)
 
 void Session::cleanup()
 {
-  assert(cleanup_done == false);
+  assert(not cleanup_done);
 
   setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
@@ -442,13 +426,10 @@ void Session::cleanup()
     boost::checked_delete(iter.second);
   user_vars.clear();
 
-
   open_tables.close_temporary_tables();
 
   if (global_read_lock)
-  {
     unlockGlobalReadLock();
-  }
 
   cleanup_done= true;
 }
@@ -477,7 +458,7 @@ Session::~Session()
     client= NULL;
   }
 
-  if (cleanup_done == false)
+  if (not cleanup_done)
     cleanup();
 
   plugin::StorageEngine::closeConnection(this);
@@ -505,7 +486,7 @@ void Session::setClient(plugin::Client *client_arg)
 
 void Session::awake(Session::killed_state_t state_to_set)
 {
-  if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
+  if (state_to_set == Session::KILL_QUERY && command == COM_SLEEP)
     return;
 
   setKilled(state_to_set);
