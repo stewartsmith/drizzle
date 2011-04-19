@@ -1079,14 +1079,6 @@ int init_basic_variables(int argc, char **argv)
 
   find_plugin_dir(argv[0]);
 
-  /*
-    We set SYSTEM time zone as reasonable default and
-    also for failure of my_tz_init() and bootstrap mode.
-    If user explicitly set time zone with --default-time-zone
-    option we will change this value in my_tz_init().
-  */
-  global_system_variables.time_zone= my_tz_SYSTEM;
-
   char ret_hostname[FN_REFLEN];
   if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
