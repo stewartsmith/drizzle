@@ -21,15 +21,11 @@
 #pragma once
 
 #include <drizzled/field/str.h>
-
 #include <drizzled/global_charset_info.h>
-
 #include <string>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * Class representing a BLOB data type column
@@ -166,14 +162,10 @@ public:
   {
     unsigned char *tmp;
     get_ptr(&tmp);
-    if (value.copy((char*) tmp, get_length(), charset()))
-    {
-      Field_blob::reset();
-      return 1;
-    }
+    value.copy((char*) tmp, get_length(), charset());
     tmp=(unsigned char*) value.ptr();
     memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
-    return 0;
+    return 0; // return void
   }
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
                       uint32_t max_length, bool low_byte_first);

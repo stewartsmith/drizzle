@@ -211,14 +211,13 @@ bool String::copy(const std::string& arg, const charset_info_st * const cs)	// A
   return false; // return void
 }
 
-bool String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
+void String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
 {
   alloc(arg_length);
   if ((str_length=arg_length))
     memcpy(Ptr,str,arg_length);
   Ptr[arg_length]=0;
   str_charset=cs;
-  return false; // return void
 }
 
 /*
@@ -281,7 +280,8 @@ bool String::copy(const char *str, size_t arg_length,
 				  const charset_info_st * const to_cs, size_t *errors)
 {
   *errors= 0;
-  return copy(str, arg_length, to_cs);
+  copy(str, arg_length, to_cs);
+  return false; // return void
 }
 
 
