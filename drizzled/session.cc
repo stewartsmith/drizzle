@@ -36,7 +36,6 @@
 #include <drizzled/identifier.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/internal/thread_var.h>
-#include <drizzled/internal_error_handler.h>
 #include <drizzled/item/cache.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/float.h>
@@ -169,6 +168,8 @@ public:
   }
 
   Diagnostics_area diagnostics;
+  memory::Root mem_root;
+
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
     Whereas for prepared and stored procedure statements we use an own lex
@@ -191,7 +192,7 @@ public:
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   impl_(new impl_c(*this)),
-  mem_root(&main_mem_root),
+  mem_root(&impl_->mem_root),
   query(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -249,7 +250,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
   lex().current_select= 0;
@@ -290,8 +291,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
-
-  m_internal_handler= NULL;
 
   plugin::EventObserver::registerSessionEvents(*this);
 }
@@ -366,17 +365,6 @@ void Session::free_items()
     next= free_list->next;
     free_list->delete_self();
   }
-}
-
-bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
-                           DRIZZLE_ERROR::enum_warning_level level)
-{
-  if (m_internal_handler)
-  {
-    return m_internal_handler->handle_error(sql_errno, message, level, this);
-  }
-
-  return false;
 }
 
 void Session::setAbort(bool arg)
@@ -467,7 +455,7 @@ Session::~Session()
   warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
 
-  main_mem_root.free_root(MYF(0));
+  impl_->mem_root.free_root(MYF(0));
   currentMemRoot().release();
   currentSession().release();
 
