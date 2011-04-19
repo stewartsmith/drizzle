@@ -65,17 +65,9 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
       return;
     }
     session->pushInterrupt(&disable_by_default);
-
-    if (drizzled::internal::my_thread_init())
-    {
-      session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
-      session->status_var.aborted_connects++;
-    }
-    else
-    {
-      session->thread_stack= (char*) &stack_dummy;
-      session->run();
-    }
+    drizzled::internal::my_thread_init();
+    session->thread_stack= (char*) &stack_dummy;
+    session->run();
 
     killSessionNow(session);
   }

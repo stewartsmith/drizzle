@@ -396,14 +396,7 @@ int main(int argc, char **argv)
   plugin::Client *client;
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::shared_ptr session;
-    session= Session::make_shared(client, client->catalog());
-
-    if (not session)
-    {
-      delete client;
-      continue;
-    }
+    Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
