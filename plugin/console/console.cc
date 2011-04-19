@@ -27,6 +27,8 @@
 
 #include <boost/program_options.hpp>
 
+#include <client/user_detect.h>
+
 using namespace std;
 using namespace drizzled;
 
@@ -380,8 +382,10 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
+  UserDetect *detected_user= new UserDetect();
+  const char* shell_user= detected_user->getUser();
   context("username",
-          po::value<string>()->default_value(""),
+          po::value<string>()->default_value(shell_user ? shell_user : ""),
           N_("User to use for auth."));
   context("password",
           po::value<string>()->default_value(""),
