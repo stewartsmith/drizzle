@@ -224,7 +224,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _global_read_lock(NONE),
   count_cuted_fields(CHECK_FIELD_ERROR_FOR_NULL),
   _killed(NOT_KILLED),
-  some_tables_deleted(false),
   no_errors(false),
   is_fatal_error(false),
   transaction_rollback_request(false),

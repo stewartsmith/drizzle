@@ -177,58 +177,10 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
-
-    if (tables == NULL)
+    if (not tables)
     {
       g_refresh_version++;				// Force close of open tables
-
       table::getUnused().clear();
-
-      if (wait_for_refresh)
-      {
-        /*
-          Other threads could wait in a loop in open_and_lock_tables(),
-          trying to lock one or more of our tables.
-
-          If they wait for the locks in thr_multi_lock(), their lock
-          request is aborted. They loop in open_and_lock_tables() and
-          enter open_table(). Here they notice the table is refreshed and
-          wait for COND_refresh. Then they loop again in
-          openTablesLock() and this time open_table() succeeds. At
-          this moment, if we (the FLUSH TABLES thread) are scheduled and
-          on another FLUSH TABLES enter close_cached_tables(), they could
-          awake while we sleep below, waiting for others threads (us) to
-          close their open tables. If this happens, the other threads
-          would find the tables unlocked. They would get the locks, one
-          after the other, and could do their destructive work. This is an
-          issue if we have LOCK TABLES in effect.
-
-          The problem is that the other threads passed all checks in
-          open_table() before we refresh the table.
-
-          The fix for this problem is to set some_tables_deleted for all
-          threads with open tables. These threads can still get their
-          locks, but will immediately release them again after checking
-          this variable. They will then loop in openTablesLock()
-          again. There they will wait until we update all tables version
-          below.
-
-          Setting some_tables_deleted is done by table::Cache::removeTable()
-          in the other branch.
-
-          In other words (reviewer suggestion): You need this setting of
-          some_tables_deleted for the case when table was opened and all
-          related checks were passed before incrementing refresh_version
-          (which you already have) but attempt to lock the table happened
-          after the call to Session::close_old_data_files() i.e. after removal of
-          current thread locks.
-        */
-        BOOST_FOREACH(table::CacheMap::const_reference iter, table::getCache())
-        {
-          if (iter.second->in_use)
-            iter.second->in_use->some_tables_deleted= false;
-        }
-      }
     }
     else
     {
@@ -387,7 +339,6 @@ void Session::close_open_tables()
   {
     found_old_table|= free_cached_table(scoped_lock);
   }
-  some_tables_deleted= false;
 
   if (found_old_table)
   {
@@ -1278,19 +1229,13 @@ bool Session::reopen_tables()
 
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    DrizzleLock *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire table::Cache::mutex(), which is
       already locked.
     */
-    some_tables_deleted= false;
 
-    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables), flags)))
-    {
-      /* unused */
-    }
-    else
+    if (not lockTables(tables, (uint32_t) (tables_ptr - tables), flags))
     {
       /*
         This case should only happen if there is a bug in the reopen logic.
