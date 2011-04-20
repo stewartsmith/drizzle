@@ -33,13 +33,6 @@ class DRIZZLED_API Cache
 public:
   typedef std::list<session_shared_ptr> list;
 
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
   static list &getCache()
   {
     return cache;
