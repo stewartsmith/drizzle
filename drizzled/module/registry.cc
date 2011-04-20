@@ -76,14 +76,12 @@ module::Registry::~Registry()
   plugin_registry.clear();
 
 #if 0
+  /*
   @TODO When we delete modules here, we segfault on a bad string. Why?
-   ModuleMap::iterator module_iter= module_registry_.begin();
+   */
 
-  while (module_iter != module_registry_.end())
-  {
-    delete (*module_iter).second;
-    ++module_iter;
-  }
+  BOOST_FOREACH(ModuleMap::reference it, module_registry_)
+    delete it.second;
   module_registry_.clear();
 #endif
   BOOST_FOREACH(LibraryMap::reference it, library_registry_)
