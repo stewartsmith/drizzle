@@ -36,13 +36,12 @@
 namespace drizzled {
 namespace module {
 
-class Registry
+class Registry : boost::noncopyable
 {
 public:
-
-  typedef std::map<std::string, Library *> LibraryMap;
-  typedef std::map<std::string, Module *> ModuleMap;
-  typedef std::vector<Module *> ModuleList;
+  typedef std::map<std::string, Library*> LibraryMap;
+  typedef std::map<std::string, Module*> ModuleMap;
+  typedef std::vector<Module*> ModuleList;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
@@ -53,8 +52,6 @@ private:
   bool deps_built_;
 
   Registry();
-  Registry(const Registry&);
-  Registry& operator=(const Registry&);
   ~Registry();
 
   void buildDeps();
