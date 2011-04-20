@@ -34,8 +34,6 @@ namespace drizzled
 #define MY_CS_SORT_ORDER_TABLE_SIZE	256
 #define MY_CS_TO_UNI_TABLE_SIZE		256
 
-#define CHARSET_DIR	"charsets/"
-
 #define my_wc_t unsigned long
 
 typedef struct unicase_info_st
@@ -65,8 +63,6 @@ extern MY_UNI_CTYPE my_uni_ctype[256];
 #define MY_CS_TOOSMALL3 -103  /* Need at least three bytes: wc_mb and mb_wc */
 /* These following three are currently not really used */
 #define MY_CS_TOOSMALL4 -104  /* Need at least 4 bytes: wc_mb and mb_wc */
-#define MY_CS_TOOSMALL5 -105  /* Need at least 5 bytes: wc_mb and mb_wc */
-#define MY_CS_TOOSMALL6 -106  /* Need at least 6 bytes: wc_mb and mb_wc */
 
 /* A helper function for "need at least n bytes" */
 inline static int my_cs_toosmalln(int n)
@@ -79,8 +75,6 @@ inline static int my_cs_toosmalln(int n)
 
         /* My charsets_list flags */
 #define MY_CS_COMPILED  1      /* compiled-in sets               */
-#define MY_CS_CONFIG    2      /* sets that have a *.conf file   */
-#define MY_CS_INDEX     4      /* sets listed in the Index file  */
 #define MY_CS_LOADED    8      /* sets that are currently loaded */
 #define MY_CS_BINSORT	16     /* if binary sort order           */
 #define MY_CS_PRIMARY	32     /* if primary collation           */
@@ -88,41 +82,18 @@ inline static int my_cs_toosmalln(int n)
 #define MY_CS_UNICODE	128    /* is a charset is full unicode   */
 #define MY_CS_READY	256    /* if a charset is initialized    */
 #define MY_CS_AVAILABLE	512    /* If either compiled-in or loaded*/
-#define MY_CS_CSSORT	1024   /* if case sensitive sort order   */
 #define MY_CS_HIDDEN	2048   /* don't display in SHOW          */
-#define MY_CS_NONASCII  8192   /* if not ASCII-compatible        */
-#define MY_CHARSET_UNDEFINED 0
 
 /* Flags for strxfrm */
-#define MY_STRXFRM_LEVEL1          0x00000001 /* for primary weights   */
-#define MY_STRXFRM_LEVEL2          0x00000002 /* for secondary weights */
-#define MY_STRXFRM_LEVEL3          0x00000004 /* for tertiary weights  */
-#define MY_STRXFRM_LEVEL4          0x00000008 /* fourth level weights  */
-#define MY_STRXFRM_LEVEL5          0x00000010 /* fifth level weights   */
-#define MY_STRXFRM_LEVEL6          0x00000020 /* sixth level weights   */
 #define MY_STRXFRM_LEVEL_ALL       0x0000003F /* Bit OR for the above six */
 #define MY_STRXFRM_NLEVELS         6          /* Number of possible levels*/
 
 #define MY_STRXFRM_PAD_WITH_SPACE  0x00000040 /* if pad result with spaces */
-#define MY_STRXFRM_UNUSED_00000080 0x00000080 /* for future extensions     */
 
 #define MY_STRXFRM_DESC_LEVEL1     0x00000100 /* if desc order for level1 */
-#define MY_STRXFRM_DESC_LEVEL2     0x00000200 /* if desc order for level2 */
-#define MY_STRXFRM_DESC_LEVEL3     0x00000300 /* if desc order for level3 */
-#define MY_STRXFRM_DESC_LEVEL4     0x00000800 /* if desc order for level4 */
-#define MY_STRXFRM_DESC_LEVEL5     0x00001000 /* if desc order for level5 */
-#define MY_STRXFRM_DESC_LEVEL6     0x00002000 /* if desc order for level6 */
 #define MY_STRXFRM_DESC_SHIFT      8
 
-#define MY_STRXFRM_UNUSED_00004000 0x00004000 /* for future extensions     */
-#define MY_STRXFRM_UNUSED_00008000 0x00008000 /* for future extensions     */
-
 #define MY_STRXFRM_REVERSE_LEVEL1  0x00010000 /* if reverse order for level1 */
-#define MY_STRXFRM_REVERSE_LEVEL2  0x00020000 /* if reverse order for level2 */
-#define MY_STRXFRM_REVERSE_LEVEL3  0x00040000 /* if reverse order for level3 */
-#define MY_STRXFRM_REVERSE_LEVEL4  0x00080000 /* if reverse order for level4 */
-#define MY_STRXFRM_REVERSE_LEVEL5  0x00100000 /* if reverse order for level5 */
-#define MY_STRXFRM_REVERSE_LEVEL6  0x00200000 /* if reverse order for level6 */
 #define MY_STRXFRM_REVERSE_SHIFT   16
 
 
@@ -319,9 +290,6 @@ struct charset_info_st
   MY_COLLATION_HANDLER *coll;
 
 };
-
-#define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
-
 
 extern DRIZZLED_API charset_info_st my_charset_bin;
 extern DRIZZLED_API charset_info_st my_charset_utf8mb4_bin;
