@@ -94,7 +94,7 @@ void module::Registry::shutdown()
   delete &singleton();
 }
 
-module::Module* module::Registry::find(std::string name)
+module::Module* module::Registry::find(const std::string& name)
 {
   return find_ptr2(module_registry_, boost::to_lower_copy(name));
 }
@@ -115,14 +115,6 @@ void module::Registry::add(module::Module *handle)
 void module::Registry::remove(module::Module *handle)
 {
   module_registry_.erase(boost::to_lower_copy(handle->getName()));
-}
-
-void module::Registry::copy(plugin::Plugin::vector &arg)
-{    
-  arg.reserve(plugin_registry.size());
-  BOOST_FOREACH(plugin::Plugin::map::reference it, plugin_registry)
-    arg.push_back(it.second);
-  assert(arg.size() == plugin_registry.size());
 }
 
 void module::Registry::buildDeps()
