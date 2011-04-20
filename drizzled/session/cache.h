@@ -33,11 +33,6 @@ class DRIZZLED_API Cache
 public:
   typedef std::list<session_shared_ptr> list;
 
-  Cache() :
-    _ready_to_exit(false)
-  {
-  }
-
   static inline Cache &singleton()
   {
     static Cache open_cache;
@@ -45,7 +40,7 @@ public:
     return open_cache;
   }
 
-  list &getCache()
+  static list &getCache()
   {
     return cache;
   }
@@ -55,25 +50,25 @@ public:
     return _mutex;
   }
 
-  boost::condition_variable &cond()
+  static boost::condition_variable &cond()
   {
     return _end;
   }
 
-  void shutdownFirst();
-  void shutdownSecond();
+  static void shutdownFirst();
+  static void shutdownSecond();
 
-  void erase(session_shared_ptr&);
-  size_t count();
-  void insert(session_shared_ptr &arg);
+  static void erase(session_shared_ptr&);
+  static size_t count();
+  static void insert(session_shared_ptr &arg);
 
-  session_shared_ptr find(const session_id_t &id);
+  static session_shared_ptr find(const session_id_t &id);
 
 private:
-  bool volatile _ready_to_exit;
-  list cache;
+  static bool volatile _ready_to_exit;
+  static list cache;
   static boost::mutex _mutex;
-  boost::condition_variable _end;
+  static boost::condition_variable _end;
 };
 
 } /* namespace session */
