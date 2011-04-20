@@ -75,18 +75,7 @@ extern boost::filesystem::path plugin_dir;
 */
 
 
-#define PLUGIN_VAR_BOOL         0x0001
-#define PLUGIN_VAR_INT          0x0002
-#define PLUGIN_VAR_LONG         0x0003
-#define PLUGIN_VAR_LONGLONG     0x0004
-#define PLUGIN_VAR_STR          0x0005
-#define PLUGIN_VAR_UNSIGNED     0x0080
-#define PLUGIN_VAR_SessionLOCAL     0x0100 /* Variable is per-connection */
 #define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
-#define PLUGIN_VAR_NOSYSVAR     0x0400 /* Not a server variable */
-#define PLUGIN_VAR_NOCMDOPT     0x0800 /* Not a command line option */
-#define PLUGIN_VAR_NOCMDARG     0x1000 /* No argument for cmd line */
-#define PLUGIN_VAR_RQCMDARG     0x0000 /* Argument required for cmd line */
 #define PLUGIN_VAR_OPCMDARG     0x2000 /* Argument optional for cmd line */
 #define PLUGIN_VAR_MEMALLOC     0x8000 /* String needs memory allocated */
 
