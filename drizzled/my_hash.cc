@@ -24,7 +24,6 @@
 #include <config.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <vector>
 
 namespace drizzled {

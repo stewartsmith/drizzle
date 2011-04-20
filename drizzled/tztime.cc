@@ -24,7 +24,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 namespace drizzled {
 

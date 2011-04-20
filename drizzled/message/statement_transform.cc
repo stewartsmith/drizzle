@@ -34,8 +34,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/message.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/message/transaction.pb.h>

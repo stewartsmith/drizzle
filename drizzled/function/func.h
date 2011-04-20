@@ -23,7 +23,7 @@
 
 /// TODO: Rename this file - func.h is stupid.
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item.h>
 #include <drizzled/item/bin_string.h>
 #include <drizzled/lex_string.h>
