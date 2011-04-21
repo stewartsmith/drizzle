@@ -105,7 +105,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "function run_query()\n"
                 "{"
                 "var url = document.getElementById(\"baseurl\").innerHTML;\n"
-                "var query= document.getElementById(\"query\").innerHTML;\n"
+                "var query= document.getElementById(\"query\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
                 "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
