@@ -101,6 +101,11 @@ public:
   {
   }
 
+  void setColumnCount(size_t fields)
+  {
+    _meta_data.setColumnCount(fields);
+  }
+
   ~ResultSet();
 
   void createRow();
