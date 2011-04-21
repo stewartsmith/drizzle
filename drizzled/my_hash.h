@@ -83,7 +83,5 @@ unsigned char *hash_next(const HASH *info, const unsigned char *key,
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
 
-#define hash_inited(H) ((H)->array.buffer != 0)
-
 } /* namespace drizzled */
 

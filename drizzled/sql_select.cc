@@ -1209,9 +1209,6 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
   return tmp;
 }
 
-#define ICP_COND_USES_INDEX_ONLY 10
-
-
 /**
   cleanup JoinTable.
 */

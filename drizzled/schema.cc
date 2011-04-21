@@ -45,8 +45,6 @@
 #include <drizzled/catalog/instance.h>
 #include <boost/thread/mutex.hpp>
 
-#define MAX_DROP_TABLE_Q_LEN      1024
-
 using namespace std;
 
 namespace drizzled {
