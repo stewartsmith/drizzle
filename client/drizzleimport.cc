@@ -418,6 +418,8 @@ try
   "User for login if not current user.")
   ;
 
+  delete detected_user;
+
   po::options_description long_options("Allowed Options");
   long_options.add(commandline_options).add(import_options).add(client_options);
 

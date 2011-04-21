@@ -387,6 +387,7 @@ static void init_options(drizzled::module::option_context &context)
   context("username",
           po::value<string>()->default_value(shell_user ? shell_user : ""),
           N_("User to use for auth."));
+  delete detected_user;
   context("password",
           po::value<string>()->default_value(""),
           N_("Password to use for auth."));

@@ -1496,7 +1496,9 @@ try
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
   ;
-
+#ifndef DRIZZLE_ADMIN_TOOL
+  delete detected_user;
+#endif
   po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 

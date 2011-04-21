@@ -43,7 +43,7 @@ class UserDetect
       }
       else
       {
-        user= new char[strlen(pw_struct.pw_name)];
+        user= new char[strlen(pw_struct.pw_name)+1];
         strcpy(user, pw_struct.pw_name);
       }
 

@@ -552,6 +552,8 @@ try
   _("The protocol of connection (mysql or drizzle)."))
   ;
 
+  delete detected_user;
+
   po::options_description hidden_options(_("Hidden Options"));
   hidden_options.add_options()
   ("database-used", po::value<vector<string> >(), _("Used to select the database"))
