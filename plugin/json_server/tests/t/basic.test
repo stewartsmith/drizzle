@@ -1,0 +1,1 @@
+--exec curl http://localhost:8765/ 2>/dev/null
