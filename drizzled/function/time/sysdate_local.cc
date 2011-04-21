@@ -33,7 +33,7 @@ namespace drizzled {
 */
 void Item_func_sysdate_local::store_now_in_TIME(type::Time &now_time)
 {
-  getSession().variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
+  now_time.store(time(NULL));
 }
 
 
