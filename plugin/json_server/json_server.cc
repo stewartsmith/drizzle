@@ -39,6 +39,9 @@
 #include <evhttp.h>
 #include <pthread.h>
 
+#include <drizzled/version.h>
+#include <plugin/json_server/json/json.h>
+
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
@@ -59,6 +62,7 @@ static in_port_t getPort(void)
 
 extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
+extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -72,7 +76,29 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
-  evbuffer_add_printf(buf, "Handling root request for URI %s\n", evhttp_request_uri(req));
+
+  Json::Value root;
+  root["latest_api_version"]= 0.1;
+
+  Json::StyledWriter writer;
+  std::string output= writer.write(root);
+
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
+{
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  Json::Value root;
+  root["version"]= ::drizzled::version();
+
+  Json::StyledWriter writer;
+  std::string output= writer.write(root);
+
+  evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
@@ -100,6 +126,7 @@ static int json_server_init(drizzled::module::Context &context)
     return -2;
 
   evhttp_set_cb(httpd, "/", process_root_request, NULL);
+  evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
   evhttp_set_gencb(httpd, process_request, NULL);
 
   pthread_t libevent_loop_thread;
