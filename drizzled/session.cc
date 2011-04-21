@@ -635,7 +635,7 @@ bool Session::schedule(Session::shared_ptr &arg)
   current_global_counters.connections++;
   arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  session::Cache::singleton().insert(arg);
+  session::Cache::insert(arg);
 
   if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {

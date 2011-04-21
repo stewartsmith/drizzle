@@ -54,7 +54,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
   char stack_dummy;
   boost::this_thread::disable_interruption disable_by_default;
 
-  Session::shared_ptr session(session::Cache::singleton().find(id));
+  Session::shared_ptr session(session::Cache::find(id));
 
   try
   {

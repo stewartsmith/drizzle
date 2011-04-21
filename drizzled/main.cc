@@ -428,7 +428,7 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  session::Cache::singleton().shutdownSecond();
+  session::Cache::shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();
