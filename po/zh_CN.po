@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-11-12 01:45+0000\n"
-"Last-Translator: 蚂蚁 <Unknown>\n"
+"PO-Revision-Date: 2011-04-20 12:02+0000\n"
+"Last-Translator: Wei Fan <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-11-13 04:55+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-04-21 04:38+0000\n"
+"X-Generator: Launchpad (build 12758)\n"
 
 msgid "Synonym for `help'."
 msgstr "同\"help\"命令。"
@@ -257,7 +257,7 @@ msgid ""
 msgstr "当连接断开时自动重新连接。可以通过 --disable-reconnect 来禁止该功能。该功能默认启用。"
 
 msgid "Shutdown the server"
-msgstr ""
+msgstr "关闭服务器"
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
@@ -291,7 +291,7 @@ msgid "Use MySQL Protocol."
 msgstr "使用 MySQL 协议"
 
 msgid "Connect to host"
-msgstr ""
+msgstr "连接主机"
 
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
@@ -385,13 +385,13 @@ msgid ""
 msgstr ""
 
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "连接失败.请重新连接"
 
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "不能连接服务器\n"
 
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "列出所有Drizzle的命令"
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
@@ -403,7 +403,7 @@ msgid "Ignoring query to other database"
 msgstr ""
 
 msgid "Empty set"
-msgstr ""
+msgstr "空集"
 
 #, c-format
 msgid "%ld row in set"
@@ -412,13 +412,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "Query OK"
-msgstr ""
+msgstr "查询成功"
 
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "查询成功，总共 %ld 行"
 
 #, c-format
 msgid "Got errno %d on write"
@@ -458,11 +457,11 @@ msgstr ""
 
 #, c-format
 msgid "-- Connecting to %s...\n"
-msgstr ""
+msgstr "-- 连接到 %s...\n"
 
 #, c-format
 msgid "-- Disconnecting from %s...\n"
-msgstr ""
+msgstr "-- 从%s 断开...\n"
 
 msgid "Couldn't allocate memory"
 msgstr ""
@@ -4798,11 +4797,11 @@ msgstr ""
 
 #, c-format
 msgid "Failed to sync log file. Got error: %s\n"
-msgstr ""
+msgstr "同步日志文件失败. 错误原因: %s\n"
 
 #, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
-msgstr ""
+msgstr "同步日志文件 %s 失败. 错误原因: %s\n"
 
 #, c-format
 msgid "Raw buffer read: %s.\n"
@@ -4824,3 +4823,25 @@ msgstr "缓冲区： %s\n"
 
 #~ msgid "Set the default character set."
 #~ msgstr "设置默认字符集。"
+
+#~ msgid "Shutdown the server."
+#~ msgstr "关闭服务器。"
+
+#~ msgid "Socket file to use for connection."
+#~ msgstr "供连接用的 Socket 文件。"
+
+#, c-format
+#~ msgid "Usage: %s [OPTIONS] [database]\n"
+#~ msgstr "用法: %s [选项] [数据库]\n"
+
+#~ msgid "Synonym for -?"
+#~ msgstr "同-?。"
+
+#~ msgid "Check memory and open file usage at exit ."
+#~ msgstr "退出时检查物理内存和已开启文件的使用情况。"
+
+#~ msgid "built-in default"
+#~ msgstr "内建默认值"
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "给出的端口值不合法。"
