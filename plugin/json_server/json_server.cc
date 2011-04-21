@@ -37,7 +37,14 @@
 #include <drizzled/module/option_map.h>
 #include <drizzled/constrained_value.h>
 #include <evhttp.h>
+#include <event.h>
 #include <pthread.h>
+#include <drizzled/execute.h>
+#include <drizzled/sql/result_set.h>
+
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/catalog/local.h>
 
 #include <drizzled/version.h>
 #include <plugin/json_server/json/json.h>
@@ -63,6 +70,7 @@ static in_port_t getPort(void)
 extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
 extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
+extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
 
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -102,10 +110,73 @@ extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
+extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
+{
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  std::string input;
+  char buffer[1024];
+  int l=0;
+  do {
+    l= evbuffer_remove(req->input_buffer, buffer, 1024);
+    input.append(buffer, l);
+  }while(l);
+
+  drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                           drizzled::catalog::local());
+  drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+  user_id->setUser("");
+  _session->setUser(user_id);
+  _session->set_db("test");
+
+  drizzled::Execute execute(*(_session.get()), true);
+
+  drizzled::sql::ResultSet result_set(1);
+
+  /* Execute wraps the SQL to run within a transaction */
+  execute.run(input, result_set);
+  drizzled::sql::Exception exception= result_set.getException();
+
+  drizzled::error_t err= exception.getErrorCode();
+
+  Json::Value root;
+  root["sqlstate"]= exception.getSQLState();
+
+  if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
+  {
+    root["error_message"]= exception.getErrorMessage();
+    root["error_code"]= exception.getErrorCode();
+  }
+
+  while (result_set.next())
+  {
+    Json::Value json_row;
+    for (size_t x= 0; x < result_set.getMetaData().getColumnCount(); x++)
+    {
+      if (not result_set.isNull(x))
+      {
+        json_row[x]= result_set.getString(x);
+      }
+    }
+    root["result_set"].append(json_row);
+  }
+
+  root["query"]= input;
+
+  Json::StyledWriter writer;
+  std::string output= writer.write(root);
+
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
 extern "C" void *libevent_thread(void*);
 
 extern "C" void *libevent_thread(void*)
 {
+  internal::my_thread_init();
+
   event_base_dispatch(base);
   evhttp_free(httpd);
   return NULL;
@@ -127,6 +198,7 @@ static int json_server_init(drizzled::module::Context &context)
 
   evhttp_set_cb(httpd, "/", process_root_request, NULL);
   evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
+  evhttp_set_cb(httpd, "/0.1/sql", process_api01_sql_req, NULL);
   evhttp_set_gencb(httpd, process_request, NULL);
 
   pthread_t libevent_loop_thread;
