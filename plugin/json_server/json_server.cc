@@ -85,11 +85,62 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
 
-  Json::Value root;
-  root["latest_api_version"]= 0.1;
+  std::string output;
 
-  Json::StyledWriter writer;
-  std::string output= writer.write(root);
+  output.append("<html><head><title>JSON DATABASE interface demo</title></head>"
+                "<body>"
+                "<script lang=\"javascript\">"
+                "function to_table(obj) {"
+                " var str = '<table>';"
+                "for (var r=0; r< obj.length; r++) {"
+                " str+='<tr>';"
+                "  for (var c=0; c < obj[r].length; c++) {"
+                "    str+= '<td>' + obj[r][c] + '</td>';"
+                "  }"
+                " str+='</tr>';"
+                "}"
+                "str+='</table>';"
+                "return str;"
+                "}"
+                "function run_query()\n"
+                "{"
+                "var url = document.getElementById(\"baseurl\").innerHTML;\n"
+                "var query= document.getElementById(\"query\").innerHTML;\n"
+                "var xmlHttp = new XMLHttpRequest();\n"
+                "xmlHttp.onreadystatechange = function () {\n"
+                "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
+                "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
+                "document.getElementById( \"resultset\").innerHTML= to_table(info.result_set);\n"
+                "}\n"
+                "};\n"
+                "xmlHttp.open(\"POST\", url + \"/0.1/sql\", true);"
+                "xmlHttp.send(query);"
+                "}"
+                "\n\n"
+                "function update_version()\n"
+                "{drizzle_version(document.getElementById(\"baseurl\").innerHTML);}\n\n"
+                "function drizzle_version($url)"
+                "{"
+                "var xmlHttp = new XMLHttpRequest();\n"
+                "xmlHttp.onreadystatechange = function () {\n"
+                "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
+                "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
+                "document.getElementById( \"drizzleversion\").innerHTML= info.version;\n"
+                "}\n"
+                "};\n"
+                "xmlHttp.open(\"GET\", $url + \"/0.1/version\", true);"
+                "xmlHttp.send(null);"
+                "}"
+                "</script>"
+                "<p>Drizzle Server at: <a id=\"baseurl\">http://localhost:8765</a></p>"
+                "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>"
+                "<p><textarea rows=\"3\" cols=\"40\" id=\"query\">"
+                "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;"
+                "</textarea>"
+                "<button type=\"button\" onclick=\"run_query();\">Execute Query</button>"
+                "<div id=\"resultset\"/>"
+                "<script lang=\"javascript\">update_version(); run_query();</script>"
+                "</body></html>");
 
   evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
