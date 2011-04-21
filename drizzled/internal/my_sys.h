@@ -102,7 +102,6 @@ namespace internal
 
 #define ME_OLDWIN	2	/* Use old window */
 #define ME_BELL		4	/* Ring bell then printing message */
-#define ME_HOLDTANG	8	/* Don't delete last keys */
 #define ME_WAITTANG	32	/* Wait for a user action  */
 #define ME_NOREFRESH	64	/* Dont refresh screen */
 #define ME_NOINPUT	128	/* Dont use the input libary */
