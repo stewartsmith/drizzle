@@ -53,26 +53,40 @@ NULL	p	ZAZJK	TSIEI	1	how	120061952	s	SDADP	-704184320	can	a	w	40	388407320363034
 8990592231115063296	f	v	OGNJD	NULL	KPOBP	-579731456	i	u	NULL	that's	really	i	48	3	-621150208	9	-7248262125276102656	y	l	but
 NULL	t	good	HEFMW	9	PNINW	7	k	d	463863808	m	a	t	49	3	1192755200	9	-2311753983724617728	KEVRQ	l	HZMCU
 8	z	some	w	NULL	KUJES	-2143551488	u	EOYYW	5	FIUID	s	n	50	6	4	8	721138890332700672	q	l	OLIZZ
-DESC A;
-Field	Type	Null	Default	Default_is_NULL	On_Update
-col_bigint	BIGINT	YES		YES	
-col_enum	ENUM	YES		YES	
-col_char_10	VARCHAR	YES		YES	
-col_char_1024	VARCHAR	YES		YES	
-col_int	INTEGER	YES		YES	
-col_char_10_not_null	VARCHAR	NO		NO	
-col_int_not_null_key	INTEGER	NO		NO	
-col_enum_not_null	ENUM	NO		NO	
-col_char_1024_not_null_key	VARCHAR	NO		NO	
-col_int_key	INTEGER	YES		YES	
-col_char_10_key	VARCHAR	YES		YES	
-col_char_1024_not_null	VARCHAR	NO		NO	
-col_enum_not_null_key	ENUM	NO		NO	
-pk	INTEGER	NO		NO	
-col_bigint_key	BIGINT	YES		YES	
-col_int_not_null	INTEGER	NO		NO	
-col_bigint_not_null	BIGINT	NO		NO	
-col_bigint_not_null_key	BIGINT	NO		NO	
-col_char_10_not_null_key	VARCHAR	NO		NO	
-col_enum_key	ENUM	YES		YES	
-col_char_1024_key	VARCHAR	YES		YES	
+SHOW CREATE TABLE A;
+Table	Create Table
+A	CREATE TABLE `A` (
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_enum` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_char_10` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_1024` VARCHAR(1024) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_int` INT DEFAULT NULL,
+  `col_char_10_not_null` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
+  `col_int_not_null_key` INT NOT NULL,
+  `col_enum_not_null` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `col_char_1024_not_null_key` VARCHAR(1024) COLLATE utf8_general_ci NOT NULL,
+  `col_int_key` INT DEFAULT NULL,
+  `col_char_10_key` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `col_char_1024_not_null` VARCHAR(1024) COLLATE utf8_general_ci NOT NULL,
+  `col_enum_not_null_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+  `pk` INT NOT NULL AUTO_INCREMENT,
+  `col_bigint_key` BIGINT DEFAULT NULL,
+  `col_int_not_null` INT NOT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_bigint_not_null_key` BIGINT NOT NULL,
+  `col_char_10_not_null_key` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
+  `col_enum_key` ENUM('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') DEFAULT NULL,
+  `col_char_1024_key` VARCHAR(1024) COLLATE utf8_general_ci DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_not_null_key` (`col_int_not_null_key`),
+  KEY `col_char_1024_not_null_key` (`col_char_1024_not_null_key`(255)),
+  KEY `col_int_key` (`col_int_key`),
+  KEY `col_char_10_key` (`col_char_10_key`),
+  KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_bigint_not_null_key` (`col_bigint_not_null_key`),
+  KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+  KEY `col_enum_key` (`col_enum_key`),
+  KEY `col_char_1024_key` (`col_char_1024_key`(255))
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+DROP TABLE A;

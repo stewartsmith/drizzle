@@ -330,9 +330,10 @@ class serverManager:
         # special per-server magic for setting up more
         # complex scenario-based testing (eg we use a certain datadir)
         if cnf_path: 
-            print cnf_path,'*'*80
             config_reader = RawConfigParser()
             config_reader.read(cnf_path)
+        else:
+            config_reader = None
         # A list that holds tuples of src,tgt pairs
         # for using a pre-loaded-datadirs on a test server
         datadir_requests = []
@@ -344,7 +345,7 @@ class serverManager:
             desired_server_options = desired_server_options + self.user_server_opts
 
             # Do our checking for config-specific madness we need to do
-            if config_reader.has_section(server.name):
+            if config_reader and config_reader.has_section(server.name):
                 # mark server for restart in case it hasn't yet
                 if '--restart' not in desired_server_options:
                     desired_server_options.append('--restart')
