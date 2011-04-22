@@ -121,11 +121,6 @@ trunk can be obtained by doing:
 
    bzr branch lp:drizzle
 
-.. note::
-
-   If you are planning on using the bzr source for writing contributions please
-   follow the bzr instructions in :doc:`/contributing/code` instead.
-
 .. _compile-source:
 
 Compiling The Source

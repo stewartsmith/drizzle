@@ -20,11 +20,8 @@
 
 #pragma once
 
-namespace drizzled
-{
-
-namespace util
-{
+namespace drizzled {
+namespace util {
 
 bool tablename_to_filename(const std::string &from, std::string &to);
 

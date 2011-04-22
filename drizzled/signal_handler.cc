@@ -73,7 +73,7 @@ void drizzled_end_thread_signal(int )
   Session *session= current_session;
   if (session)
   {
-    Session::shared_ptr session_ptr(session::Cache::singleton().find(session->getSessionId()));
+    Session::shared_ptr session_ptr(session::Cache::find(session->getSessionId()));
     if (not session_ptr) // We need to make we have a lock on session before we do anything with it.
       return;
 

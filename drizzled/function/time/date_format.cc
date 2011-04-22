@@ -420,8 +420,7 @@ String *Item_func_date_format::val_str(String *str)
   if (format == str)
     str= &value;				// Save result here
 
-  if (str->alloc(size))
-    goto null_date;
+  str->alloc(size);
 
   /* Create the result string */
   str->set_charset(collation.collation);

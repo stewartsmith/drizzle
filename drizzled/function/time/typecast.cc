@@ -258,9 +258,9 @@ String *Item_date_typecast::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (!get_arg0_date(ltime, TIME_FUZZY_DATE) &&
-      !str->alloc(type::Time::MAX_STRING_LENGTH))
+  if (!get_arg0_date(ltime, TIME_FUZZY_DATE))
   {
+    str->alloc(type::Time::MAX_STRING_LENGTH);
     ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
 
     return str;

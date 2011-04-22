@@ -26,11 +26,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * A type of storage engine which supports SQL transactions.
@@ -57,14 +54,12 @@ namespace plugin
  * kill two_phase_commit member. Use an HTON flag if
  * absolutely needed to keep.
  */
-class DRIZZLED_API TransactionalStorageEngine :public StorageEngine
+class DRIZZLED_API TransactionalStorageEngine : public StorageEngine
 {
   friend class SEAPITester;
 public:
   TransactionalStorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
-
-  virtual ~TransactionalStorageEngine();
 
   virtual int startTransaction(Session *session, start_transaction_option_t options)
   {
@@ -130,7 +125,7 @@ public:
   /**
    * @todo Kill this one entirely.  It's implementation, not interface...
    */
-  static int releaseTemporaryLatches(Session *session);
+  static void releaseTemporaryLatches(Session *session);
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::TransactionalStorageEngine *engine);
@@ -216,14 +211,12 @@ private:
    * and 'real commit' mean the same event.
    */
   virtual int doRollback(Session *session, bool normal_transaction)= 0;
-  virtual int doReleaseTemporaryLatches(Session *session)
+  virtual int doReleaseTemporaryLatches(Session*)
   {
-    (void) session;
     return 0;
   }
-  virtual int doStartConsistentSnapshot(Session *session)
+  virtual int doStartConsistentSnapshot(Session*)
   {
-    (void) session;
     return 0;
   }
 };

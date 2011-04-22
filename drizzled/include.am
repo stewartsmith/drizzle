@@ -234,7 +234,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
-			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
@@ -404,9 +403,9 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
 			      drizzled/session/cache.h \
-			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
+			      drizzled/session/times.h \
 			      drizzled/session/transactions.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
@@ -815,6 +814,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \
 			   drizzled/session/table_messages.cc \
+			   drizzled/session/times.cc \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \

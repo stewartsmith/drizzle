@@ -21,54 +21,46 @@
 
 #pragma once
 
+#include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
 #include <drizzled/identifier.h>
 
 namespace drizzled {
 namespace table {
 
-typedef boost::unordered_multimap< identifier::Table::Key, Concurrent *> CacheMap;
-typedef std::pair< CacheMap::const_iterator, CacheMap::const_iterator > CacheRange;
+typedef boost::unordered_multimap<identifier::Table::Key, Concurrent*> CacheMap;
+typedef std::pair<CacheMap::const_iterator, CacheMap::const_iterator> CacheRange;
 
 class Cache 
 {
-  CacheMap cache;
-
 public:
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
-  CacheMap &getCache()
+  static CacheMap& getCache()
   {
     return cache;
   }
 
-  void rehash(size_t arg)
+  static void rehash(size_t arg)
   {
     cache.rehash(arg);
   }
 
-  bool areTablesUsed(Table *table, bool wait_for_name_lock);
-  void removeSchema(const identifier::Schema &schema_identifier);
-  bool removeTable(Session *session, identifier::Table &identifier, uint32_t flags);
-  void release(table::instance::Shared *share);
-  void insert(table::Concurrent*);
-
-  boost::mutex &mutex()
+  static boost::mutex& mutex()
   {
     return _mutex;
   }
 
+  static bool areTablesUsed(Table*, bool wait_for_name_lock);
+  static void removeSchema(const identifier::Schema&);
+  static bool removeTable(Session&, const identifier::Table&, uint32_t flags);
+  static void release(table::instance::Shared*);
+  static void insert(table::Concurrent*);
 private:
-  boost::mutex _mutex;
+  static CacheMap cache;
+  static boost::mutex _mutex;
 };
 
-CacheMap &getCache(void);
-void remove_table(table::Concurrent *arg);
+CacheMap& getCache();
+void remove_table(table::Concurrent*);
 
 } /* namepsace table */
 } /* namepsace drizzled */

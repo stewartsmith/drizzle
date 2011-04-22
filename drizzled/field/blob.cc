@@ -174,8 +174,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
   }
 
   new_length= min(max_data_length(), field_charset->mbmaxlen * length);
-  if (value.alloc(new_length))
-    goto oom_error;
+  value.alloc(new_length);
 
   /*
     "length" is OK as "nchars" argument to well_formed_copy_nchars as this

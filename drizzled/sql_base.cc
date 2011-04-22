@@ -62,6 +62,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/catalog/local.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 
@@ -159,7 +160,7 @@ void Table::free_io_cache()
 
   @param session Thread context (may be NULL)
   @param tables List of tables to remove from the cache
-  @param have_lock If table::Cache::singleton().mutex() is locked
+  @param have_lock If table::Cache::mutex() is locked
   @param wait_for_refresh Wait for a impending flush
   @param wait_for_placeholders Wait for tables being reopened so that the GRL
   won't proceed while write-locked tables are being reopened by other
@@ -175,7 +176,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   Session *session= this;
 
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
 
     if (tables == NULL)
     {
@@ -212,7 +213,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
           again. There they will wait until we update all tables version
           below.
 
-          Setting some_tables_deleted is done by table::Cache::singleton().removeTable()
+          Setting some_tables_deleted is done by table::Cache::removeTable()
           in the other branch.
 
           In other words (reviewer suggestion): You need this setting of
@@ -234,9 +235,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        identifier::Table identifier(table->getSchemaName(), table->getTableName());
-        if (table::Cache::singleton().removeTable(session, identifier,
-                                    RTFC_OWNED_BY_Session_FLAG))
+        if (table::Cache::removeTable(*session, identifier::Table(table->getSchemaName(), table->getTableName()), RTFC_OWNED_BY_Session_FLAG))
         {
           found= true;
         }
@@ -251,7 +250,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
         If there is any table that has a lower refresh_version, wait until
         this is closed (or this thread is killed) before returning
       */
-      session->mysys_var->current_mutex= &table::Cache::singleton().mutex();
+      session->mysys_var->current_mutex= &table::Cache::mutex();
       session->mysys_var->current_cond= &COND_refresh;
       session->set_proc_info("Flushing tables");
 
@@ -315,7 +314,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    boost_unique_lock_t scopedLock(session->mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -337,7 +336,7 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
 
   table::Concurrent *table= static_cast<table::Concurrent *>(open_tables.open_tables_);
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   assert(table->key_read == 0);
   assert(!table->cursor || table->cursor->inited == Cursor::NONE);
 
@@ -380,9 +379,9 @@ void Session::close_open_tables()
 {
   bool found_old_table= false;
 
-  safe_mutex_assert_not_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_not_owner(table::Cache::mutex().native_handle());
 
-  boost_unique_lock_t scoped_lock(table::Cache::singleton().mutex()); /* Close all open tables on Session */
+  boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
 
   while (open_tables.open_tables_)
   {
@@ -663,12 +662,12 @@ void Session::unlink_open_table(Table *find)
 {
   const identifier::Table::Key find_key(find->getShare()->getCacheKey());
   Table **prev;
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
@@ -723,7 +722,7 @@ void Session::drop_open_table(Table *table, const identifier::Table &identifier)
   }
   else
   {
-    boost_unique_lock_t scoped_lock(table::Cache::singleton().mutex()); /* Close and drop a table (AUX routine) */
+    boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
@@ -764,13 +763,13 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       condition variables that are guranteed to not disapper (freed) even if this
       mutex is unlocked
     */
-    boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(mutex, boost::adopt_lock_t());
     if (not getKilled())
     {
       cond.wait(scopedLock);
     }
   }
-  boost_unique_lock_t mysys_scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock mysys_scopedLock(mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
@@ -790,17 +789,17 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
+table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
-  table::Placeholder *table= new table::Placeholder(this, identifier);
-  table::Cache::singleton().insert(table);
-  return table; // return ref
+  table::Placeholder* table= new table::Placeholder(this, identifier);
+  table::Cache::insert(table);
+  return *table;
 }
 
 
@@ -829,7 +828,7 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
 {
   const identifier::Table::Key &key(identifier.getKey());
 
-  boost_unique_lock_t scope_lock(table::Cache::singleton().mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost::mutex::scoped_lock scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   if (find_ptr(table::getCache(), key))
   {
@@ -837,15 +836,12 @@ bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier,
     return false;
   }
 
-  if (not (*table= table_cache_insert_placeholder(identifier)))
-  {
-    return true;
-  }
+  *table= &table_cache_insert_placeholder(identifier);
   (*table)->open_placeholder= true;
   (*table)->setNext(open_tables.open_tables_);
   open_tables.open_tables_= *table;
 
-  return false;
+  return false; //return void
 }
 
 /*
@@ -974,13 +970,13 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       until no one holds a name lock on the table.
       - if there is no such Table in the name cache, read the table definition
       and insert it into the cache.
-      We perform all of the above under table::Cache::singleton().mutex() which currently protects
+      We perform all of the above under table::Cache::mutex() which currently protects
       the open cache (also known as table cache) and table definitions stored
       on disk.
     */
 
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
       /*
         Actually try to find the table in the open_cache.
@@ -1063,8 +1059,8 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           */
           if (table->in_use != this)
           {
-            /* wait_for_conditionwill unlock table::Cache::singleton().mutex() for us */
-            wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
+            /* wait_for_conditionwill unlock table::Cache::mutex() for us */
+            wait_for_condition(table::Cache::mutex(), COND_refresh);
             scopedLock.release();
           }
           else
@@ -1091,7 +1087,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       else
       {
         /* Insert a new Table instance into the open cache */
-        int error;
         /* Free cache if too big */
         table::getUnused().cull();
 
@@ -1104,10 +1099,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             /*
               Table to be created, so we need to create placeholder in table-cache.
             */
-            if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
-            {
-              return NULL;
-            }
+            table= &table_cache_insert_placeholder(lock_table_identifier);
             /*
               Link placeholder to the open tables list so it will be automatically
               removed once tables are closed. Also mark it so it won't be ignored
@@ -1126,13 +1118,12 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         {
           table::Concurrent *new_table= new table::Concurrent;
           table= new_table;
-          error= new_table->open_unireg_entry(this, alias, identifier);
-          if (error != 0)
+          if (new_table->open_unireg_entry(this, alias, identifier))
           {
             delete new_table;
             return NULL;
           }
-          (void)table::Cache::singleton().insert(new_table);
+          (void)table::Cache::insert(new_table);
         }
       }
     }
@@ -1196,7 +1187,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
 void Session::close_data_files_and_morph_locks(const identifier::Table &identifier)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
 
   if (open_tables.lock)
   {
@@ -1239,7 +1230,7 @@ void Session::close_data_files_and_morph_locks(const identifier::Table &identifi
   combination when one needs tables to be reopened (for
   example see openTablesLock()).
 
-  @note One should have lock on table::Cache::singleton().mutex() when calling this.
+  @note One should have lock on table::Cache::mutex() when calling this.
 
   @return false in case of success, true - otherwise.
 */
@@ -1257,7 +1248,7 @@ bool Session::reopen_tables()
   if (open_tables.open_tables_ == NULL)
     return false;
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   {
     /*
       The ptr is checked later
@@ -1290,7 +1281,7 @@ bool Session::reopen_tables()
     DrizzleLock *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
-      wait_for_tables() as it tries to acquire table::Cache::singleton().mutex(), which is
+      wait_for_tables() as it tries to acquire table::Cache::mutex(), which is
       already locked.
     */
     some_tables_deleted= false;
@@ -1435,9 +1426,9 @@ Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &i
   prev= &session->open_tables.open_tables_;
 
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */

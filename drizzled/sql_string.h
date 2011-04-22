@@ -39,9 +39,6 @@ namespace drizzled {
 extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 
-DRIZZLED_API std::string String_to_std_string(String const& s);
-DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
-
 int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
 int stringcmp(const String *a,const String *b);
 String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
@@ -199,13 +196,12 @@ public:
       str_length=0;				/* Safety */
     }
   }
-  inline bool alloc(size_t arg_length)
+  inline void alloc(size_t arg_length)
   {
-    if (arg_length < Alloced_length)
-      return 0;
-    return real_alloc(arg_length);
+    if (arg_length >= Alloced_length)
+      real_alloc(arg_length);
   }
-  bool real_alloc(size_t arg_length);			// Empties old string
+  void real_alloc(size_t arg_length);			// Empties old string
   bool realloc(size_t arg_length);
   inline void shrink(size_t arg_length)		// Shrink buffer
   {

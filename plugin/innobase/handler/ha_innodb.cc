@@ -70,6 +70,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/cached_directory.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/typelib.h>
 
@@ -988,7 +989,7 @@ thd_set_lock_wait_time(
 	ulint	value)	/*!< in: time waited for the lock */
 {
   if (in_session)
-    in_session->utime_after_lock+= value;
+    in_session->times.utime_after_lock+= value;
 }
 
 /********************************************************************//**
@@ -2093,7 +2094,7 @@ read_ahead_validate(
   set_var*    var)
 {
   const char *read_ahead_input = var->value->str_value.ptr();
-  int res = read_ahead_typelib.find_type(read_ahead_input, 0);
+  int res = read_ahead_typelib.find_type(read_ahead_input, TYPELIB::e_none); // e_none is wrong
 
   if (res > 0) {
     srv_read_ahead = res - 1;
@@ -2115,7 +2116,7 @@ adaptive_flushing_method_validate(
   set_var*    var)
 {
   const char *adaptive_flushing_method_input = var->value->str_value.ptr();
-  int res = adaptive_flushing_method_typelib.find_type(adaptive_flushing_method_input, 0);
+  int res = adaptive_flushing_method_typelib.find_type(adaptive_flushing_method_input, TYPELIB::e_none); // e_none is wrong
 
   if (res > 0) {
     srv_adaptive_flushing_method = res - 1;
@@ -2170,25 +2171,16 @@ innobase_init(
 
   /* Inverted Booleans */
 
-  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
-  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
-  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-  srv_use_native_aio= (vm.count("disable-native-aio")) ? false : true;
-  support_xa= (vm.count("disable-xa")) ? false : true;
-  btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
-
+  innobase_use_checksums= not vm.count("disable-checksums");
+  innobase_use_doublewrite= not vm.count("disable-doublewrite");
+  srv_adaptive_flushing= not vm.count("disable-adaptive-flushing");
+  srv_use_sys_malloc= not vm.count("use-internal-malloc");
+  srv_use_native_aio= not vm.count("disable-native-aio");
+  support_xa= not vm.count("disable-xa");
+  btr_search_enabled= not vm.count("disable-adaptive-hash-index");
 
   /* Hafta do this here because we need to late-bind the default value */
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= vm["data-home-dir"].as<string>();
-  }
-  else
-  {
-    innobase_data_home_dir= getDataHome().file_string();
-  }
-
+  innobase_data_home_dir= vm.count("data-home-dir") ? vm["data-home-dir"].as<string>() : getDataHome().file_string();
 
   if (vm.count("data-file-path"))
   {
