@@ -28,6 +28,7 @@ import thread
 import time
 import os
 import subprocess
+from ConfigParser import RawConfigParser
 
 class serverManager:
     """ code that handles the server objects
@@ -66,7 +67,7 @@ class serverManager:
         if self.debug:
             self.logging.debug_class(self)
 
-    def request_servers( self, requester, workdir, server_requirements
+    def request_servers( self, requester, workdir, cnf_path, server_requirements
                        , working_environ, expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
@@ -88,7 +89,7 @@ class serverManager:
                                  , workdir, server_requirements)
 
         # Make sure we are running with the correct options 
-        self.evaluate_existing_servers(requester, server_requirements)
+        self.evaluate_existing_servers(requester, cnf_path, server_requirements)
 
         # Fire our servers up
         bad_start = self.start_servers( requester, working_environ
@@ -316,7 +317,7 @@ class serverManager:
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
 
-    def evaluate_existing_servers( self, requester, server_requirements):
+    def evaluate_existing_servers( self, requester, cnf_path, server_requirements):
         """ See if the requester has any servers and if they
             are suitable for the current test
 
@@ -325,19 +326,45 @@ class serverManager:
         """
         current_servers = self.servers[requester]
 
+        # We have a config reader so we can do
+        # special per-server magic for setting up more
+        # complex scenario-based testing (eg we use a certain datadir)
+        if cnf_path: 
+            print cnf_path,'*'*80
+            config_reader = RawConfigParser()
+            config_reader.read(cnf_path)
+        # A list that holds tuples of src,tgt pairs
+        # for using a pre-loaded-datadirs on a test server
+        datadir_requests = []
+
         for index,server in enumerate(current_servers):
-            server_options = server_requirements[index]
+           
+            desired_server_options = server_requirements[index]
             # We add in any user-supplied options here
-            server_options = server_options + self.user_server_opts
+            desired_server_options = desired_server_options + self.user_server_opts
+
+            # Do our checking for config-specific madness we need to do
+            if config_reader.has_section(server.name):
+                # mark server for restart in case it hasn't yet
+                if '--restart' not in desired_server_options:
+                    desired_server_options.append('--restart')
+                # We handle various scenarios
+                server_config_data = config_reader.items(server.name)
+                for cnf_option, data in server_config_data:
+                    if cnf_option == 'load-datadir':
+                        datadir_path = data
+                        datadir_requests.append((datadir_path,server))
+
             if self.compare_options( server.server_options
-                                   , server_options):
+                                   , desired_server_options):
                 return 1
             else:
                 # We need to reset what is running and change the server
                 # options
-                server_options = self.filter_server_options(server_options)
+                desired_server_options = self.filter_server_options(desired_server_options)
                 self.reset_server(server)
-                self.update_server_options(server, server_options)
+                self.update_server_options(server, desired_server_options)
+            self.load_datadirs(datadir_requests)
 
 
        
@@ -374,6 +401,13 @@ class serverManager:
     def reset_servers(self, requester):
         for server in self.servers[requester]:
             self.reset_server(server)
+
+    def load_datadirs(self, datadir_requests):
+        """ We load source_dir to the server's datadir """
+        for source_dir, server in datadir_requests:
+            source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
+            self.system_manager.remove_dir(server.datadir)
+            self.system_manager.copy_dir(source_dir_path, server.datadir)
 
 
     def process_server_count(self, requester, desired_count, workdir, server_reqs):
