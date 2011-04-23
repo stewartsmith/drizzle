@@ -40,7 +40,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/probes.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/query_rewrite.h>
 #include <drizzled/plugin/query_cache.h>

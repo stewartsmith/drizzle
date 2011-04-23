@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/memory/root.h>
 #include <drizzled/typelib.h>
 

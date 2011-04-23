@@ -48,7 +48,7 @@
 #include <drizzled/field/epoch.h>
 #include <drizzled/field/null.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>

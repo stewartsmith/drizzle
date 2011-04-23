@@ -45,7 +45,6 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/xid.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table_proto.h>

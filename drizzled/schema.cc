@@ -38,7 +38,6 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>

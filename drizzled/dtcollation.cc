@@ -22,7 +22,6 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/conv_charset.h>
 #include <drizzled/session.h>

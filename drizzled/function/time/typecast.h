@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/field.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/temporal.h>

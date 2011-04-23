@@ -23,7 +23,7 @@
 
 #include <drizzled/sql_string.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 namespace drizzled
 {

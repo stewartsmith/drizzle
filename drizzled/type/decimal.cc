@@ -107,7 +107,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>

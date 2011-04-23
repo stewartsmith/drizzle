@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/error.h>
 #include <drizzled/function/cast/unsigned.h>
 #include <drizzled/lex_string.h>

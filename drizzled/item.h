@@ -22,7 +22,7 @@
 #pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
