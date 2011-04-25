@@ -51,6 +51,7 @@ extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
 extern uint32_t server_id;
+extern std::string server_uuid;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -667,6 +668,11 @@ public:
   {
     /* We return the global server ID. */
     return server_id;
+  }
+
+  inline std::string &getServerUUID() const
+  {
+    return server_uuid;
   }
 
   /**
