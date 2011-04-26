@@ -272,7 +272,7 @@ ulint insert_replication_message(const char *message, size_t size,
   }
 
   dfield = dtuple_get_nth_field(dtuple, 4);
-  dfield_set_data(dfield, originating_server_uuid, 37);
+  dfield_set_data(dfield, originating_server_uuid, 36);
 
   dfield = dtuple_get_nth_field(dtuple, 5);
   data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
