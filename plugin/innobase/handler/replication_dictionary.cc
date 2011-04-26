@@ -79,6 +79,8 @@ InnodbReplicationTable::InnodbReplicationTable() :
   add_field("TRANSACTION_SEGMENT_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("COMMIT_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("END_TIMESTAMP", plugin::TableFunction::NUMBER, 0, false);
+  add_field("ORIGINATING_SERVER_UUID", plugin::TableFunction::STRING, 37, false);
+  add_field("ORIGINATING_COMMIT_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TRANSACTION_MESSAGE_STRING", plugin::TableFunction::STRING, transaction_message_threshold, false);
   add_field("TRANSACTION_LENGTH", plugin::TableFunction::NUMBER, 0, false);
 }
@@ -110,6 +112,10 @@ bool InnodbReplicationTable::Generator::populate()
   push(static_cast<uint64_t>(ret.commit_id));
 
   push(static_cast<uint64_t>(ret.end_timestamp));
+
+  push(ret.originating_server_uuid);
+
+  push(static_cast<uint64_t>(ret.originating_commit_id));
   
   /* Message in viewable format */
   bool result= message.ParseFromArray(ret.message, ret.message_length);

@@ -240,6 +240,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   tablespace_op(false),
   use_usage(false),
   security_ctx(identifier::User::make_shared()),
+  originating_server_uuid_set(false),
   client(client_arg)
 {
   client->setSession(this);
@@ -255,6 +256,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lex().current_select= 0;
   memset(&variables, 0, sizeof(variables));
   scoreboard_index= -1;
+  originating_server_uuid= "";
+  originating_commit_id= 0;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
 
   /* query_cache init */

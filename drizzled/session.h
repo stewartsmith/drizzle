@@ -258,6 +258,32 @@ public:
     scoreboard_index= in_scoreboard_index;
   }
 
+  bool isOriginatingServerUUIDSet()
+  {
+    return originating_server_uuid_set;
+  }
+
+  void setOriginatingServerUUID(std::string in_originating_server_uuid)
+  {
+    originating_server_uuid= in_originating_server_uuid;
+    originating_server_uuid_set= true;
+  }
+
+  std::string &getOriginatingServerUUID()
+  {
+    return originating_server_uuid;
+  }
+
+  void setOriginatingCommitID(uint64_t in_originating_commit_id)
+  {
+    originating_commit_id= in_originating_commit_id;
+  }
+
+  uint64_t getOriginatingCommitID()
+  {
+    return originating_commit_id;
+  }
+
   /**
    * Is this session viewable by the current user?
    */
@@ -1168,6 +1194,9 @@ private:
   rusage usage;
   identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
+  bool originating_server_uuid_set;
+  std::string originating_server_uuid;
+  uint64_t originating_commit_id;
   plugin::Client *client;
 };
 

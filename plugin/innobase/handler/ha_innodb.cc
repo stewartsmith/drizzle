@@ -1019,8 +1019,17 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   uint64_t end_timestamp= message.transaction_context().end_timestamp();
   bool is_end_segment= message.end_segment();
   trx->log_commit_id= TRUE;
+
+  string server_uuid= session.getServerUUID();
+  string originating_server_uuid= session.getOriginatingServerUUID();
+  uint64_t originating_commit_id= session.getOriginatingCommitID();
+  bool use_originating_server_uuid= session.isOriginatingServerUUIDSet();
+
   ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
-               end_timestamp, is_end_segment, seg_id);
+               end_timestamp, is_end_segment, seg_id, server_uuid.c_str(),
+               use_originating_server_uuid, originating_server_uuid.c_str(),
+               originating_commit_id);
+
   (void)error;
 
   delete[] data;
