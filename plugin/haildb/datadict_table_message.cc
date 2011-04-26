@@ -22,7 +22,7 @@
 
 #include "haildb_engine.h"
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/message/table.pb.h>
 
 using namespace drizzled;

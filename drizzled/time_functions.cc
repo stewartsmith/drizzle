@@ -26,7 +26,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/system_variables.h>
 
 namespace drizzled {

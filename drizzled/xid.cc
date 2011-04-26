@@ -22,8 +22,6 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h>
-#include <drizzled/charset_info.h>
 
 namespace drizzled {
 
