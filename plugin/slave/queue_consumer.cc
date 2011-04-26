@@ -58,6 +58,8 @@ bool QueueConsumer::process()
   for (size_t x= 0; x < completedTransactionIds.size(); x++)
   {
     string commit_id;
+    string originating_server_uuid;
+    uint64_t originating_commit_id= 0;
     uint64_t trx_id= completedTransactionIds[x];
 
     vector<string> aggregate_sql;  /* final SQL to execute */
@@ -66,7 +68,8 @@ bool QueueConsumer::process()
     message::Transaction transaction;
     uint32_t segment_id= 1;
 
-    while (getMessage(transaction, commit_id, trx_id, segment_id++))
+    while (getMessage(transaction, commit_id, trx_id, originating_server_uuid,
+                      originating_commit_id, segment_id++))
     {
       convertToSQL(transaction, aggregate_sql, segmented_sql);
       transaction.Clear();
@@ -115,7 +118,9 @@ bool QueueConsumer::process()
       }
     }
 
-    if (not executeSQLWithCommitId(aggregate_sql, commit_id))
+    if (not executeSQLWithCommitId(aggregate_sql, commit_id, 
+                                   originating_server_uuid, 
+                                   originating_commit_id))
     {
       return false;
     }
@@ -133,20 +138,23 @@ bool QueueConsumer::process()
 bool QueueConsumer::getMessage(message::Transaction &transaction,
                               string &commit_id,
                               uint64_t trx_id,
+                              string &originating_server_uuid,
+                              uint64_t &originating_commit_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT `msg`, `commit_order` FROM `sys_replication`.`queue`"
+  string sql("SELECT `msg`, `commit_order`, `originating_server_id`, "
+             "`originating_commit_uuid` FROM `sys_replication`.`queue`"
              " WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<string>(trx_id));
   sql.append(" AND `seg_id` = ", 16);
   sql.append(boost::lexical_cast<string>(segment_id));
 
-  sql::ResultSet result_set(2);
+  sql::ResultSet result_set(4);
   Execute execute(*(_session.get()), true);
   
   execute.run(sql, result_set);
   
-  assert(result_set.getMetaData().getColumnCount() == 2);
+  assert(result_set.getMetaData().getColumnCount() == 4);
 
   /* Really should only be 1 returned row */
   uint32_t found_rows= 0;
@@ -154,17 +162,24 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
   {
     string msg= result_set.getString(0);
     string com_id= result_set.getString(1);
+    string orig_server_uuid= result_set.getString(2);
+    string orig_commit_id= result_set.getString(3);
 
     if ((msg == "") || (found_rows == 1))
       break;
 
-    /* Neither column should be NULL */
+    /* No columns should be NULL */
     assert(result_set.isNull(0) == false);
     assert(result_set.isNull(1) == false);
+    assert(result_set.isNull(2) == false);
+    assert(result_set.isNull(3) == false);
+
 
     google::protobuf::TextFormat::ParseFromString(msg, &transaction);
 
     commit_id= com_id;
+    originating_server_uuid= orig_server_uuid;
+    originating_commit_id= boost::lexical_cast<uint64_t>(orig_commit_id);
     found_rows++;
   }
 
@@ -356,13 +371,23 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
 
 
 bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
-                                           const string &commit_id)
+                                           const string &commit_id, 
+                                           const string &originating_server_uuid, 
+                                           uint64_t originating_commit_id)
 {
   string tmp("UPDATE `sys_replication`.`applier_state`"
              " SET `last_applied_commit_id` = ");
   tmp.append(commit_id);
+  tmp.append(", `originating_server_uuid` = ");
+  tmp.append(originating_server_uuid);
+  tmp.append(", `originating_commit_id` = ");
+  tmp.append(boost::lexical_cast<string>(originating_commit_id));
+
   sql.push_back(tmp);
-  
+ 
+  _session->setOriginatingServerUUID(originating_server_uuid);
+  _session->setOriginatingCommitID(originating_commit_id);
+ 
   return executeSQL(sql);
 }
 

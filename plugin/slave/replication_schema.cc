@@ -82,13 +82,21 @@ bool ReplicationSchema::create()
    * Create our applier thread state information table if we need to.
    */
 
+  /*
+   * Table: applier_state
+   * Version 1.0: Initial definition
+   * Version 1.1: Added originating_server_uuid and originating_commit_id
+   */
+
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`applier_state`"
                 " (`last_applied_commit_id` BIGINT NOT NULL PRIMARY KEY,"
+                " `originating_server_uuid` BIGINT NOT NULL,"
+                " `originating_commit_id` BIGINT NOT NULL,"
                 " `status` VARCHAR(20) NOT NULL,"
                 " `error_msg` VARCHAR(250))"
-                " COMMENT = 'VERSION 1.0'");
+                " COMMENT = 'VERSION 1.1'");
 
   if (not executeSQL(sql))
     return false;
@@ -108,7 +116,8 @@ bool ReplicationSchema::create()
     {
       sql.clear();
       sql.push_back("INSERT INTO `sys_replication`.`applier_state`"
-                    " (`last_applied_commit_id`, `status`)"
+                    " (`last_applied_commit_id`, `originating_server_id`,"
+                    "  `originating_commit_id`, `status`)"
                     " VALUES (0, 'STOPPED')");
       if (not executeSQL(sql))
         return false;
@@ -117,15 +126,20 @@ bool ReplicationSchema::create()
 
   /*
    * Create our message queue table if we need to.
+   * Version 1.0: Initial definition
+   * Version 1.1: Added originating_server_uuid and originating_commit_id
    */
 
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`queue`"
                 " (`trx_id` BIGINT NOT NULL, `seg_id` INT NOT NULL,"
-                " `commit_order` BIGINT, `msg` BLOB,"
+                " `commit_order` BIGINT,"
+                " `originating_server_uuid` INT NOT NULL,"
+                " `originating_commit_id` BIGINT NOT NULL,"
+                " `msg` BLOB,"
                 " PRIMARY KEY(`trx_id`, `seg_id`))"
-                " COMMENT = 'VERSION 1.0'");
+                " COMMENT = 'VERSION 1.1'");
   if (not executeSQL(sql))
     return false;
 
