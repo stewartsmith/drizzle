@@ -57,8 +57,14 @@
 #include <stdint.h>
 
 #include <drizzled/execute/symbol.h>
+#include <drizzled/execute/context.h>
+
+using namespace drizzled;
 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+
+#define YYENABLE_NLS 0
+#define YYLTYPE_IS_TRIVIAL 0
 
 int execute_lex(YYSTYPE* lvalp, void* scanner);
 

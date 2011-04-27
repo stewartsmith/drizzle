@@ -34,7 +34,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+#include <drizzled/error_t.h>
 #pragma once
 
 
@@ -82,6 +82,7 @@ public:
   size_t pos;
   size_t length;
   drizzled::error_t &rc;
+  bool _is_server;
 
 protected:
   void init_scanner();   

@@ -41,7 +41,7 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-#define YY_EXTRA_TYPE Context*
+#define YY_EXTRA_TYPE Context *
 
 }
 
@@ -49,6 +49,8 @@
 %{
 #include <cstdlib>
 #include <cstring>
+#include <drizzled/execute/context.h>
+using namespace drizzled;
 
 #define PARAM yyget_extra(yyscanner)
 
