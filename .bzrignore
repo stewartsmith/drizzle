@@ -353,3 +353,8 @@ drizzled/message/replication_options.pb.cc
 drizzled/message/replication_options.pb.h
 drizzled/message/access.pb.cc
 drizzled/message/access.pb.h
+drizzled/execute/parser.cc
+drizzled/execute/parser.h
+drizzled/execute/parser.output
+drizzled/execute/scanner.cc
+drizzled/execute/scanner.h
