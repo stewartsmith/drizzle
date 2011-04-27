@@ -305,15 +305,15 @@ bool QueueProducer::queueInsert(const char *trx_id,
    */
   string sql= "INSERT INTO `sys_replication`.`queue`"
               " (`trx_id`, `seg_id`, `commit_order`,"
-              "  `originating_server_id`, `originating_commit_id`, `msg`) VALUES (";
+              "  `originating_server_uuid`, `originating_commit_id`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
   sql.append(", ", 2);
   sql.append(commit_id);
-  sql.append(", ", 2);
+  sql.append(", '", 3);
   sql.append(originating_server_uuid);
-  sql.append(", ", 2);
+  sql.append("' , ", 4);
   sql.append(originating_commit_id);
   sql.append(", '", 3);
 
@@ -395,7 +395,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   /*
    * The SQL to pull everything we need from the master.
    */
-  string sql= "SELECT `id`, `segid`, `commit_id`, `originating_server_id`,"
+  string sql= "SELECT `id`, `segid`, `commit_id`, `originating_server_uuid`,"
               " `originating_commit_id`, `message`, `message_len` "
               " FROM `data_dictionary`.`sys_replication_log` WHERE `id` IN (";
 

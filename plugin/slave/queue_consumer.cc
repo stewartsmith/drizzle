@@ -142,8 +142,8 @@ bool QueueConsumer::getMessage(message::Transaction &transaction,
                               uint64_t &originating_commit_id,
                               uint32_t segment_id)
 {
-  string sql("SELECT `msg`, `commit_order`, `originating_server_id`, "
-             "`originating_commit_uuid` FROM `sys_replication`.`queue`"
+  string sql("SELECT `msg`, `commit_order`, `originating_server_uuid`, "
+             "`originating_commit_id` FROM `sys_replication`.`queue`"
              " WHERE `trx_id` = ");
   sql.append(boost::lexical_cast<string>(trx_id));
   sql.append(" AND `seg_id` = ", 16);
@@ -378,9 +378,9 @@ bool QueueConsumer::executeSQLWithCommitId(vector<string> &sql,
   string tmp("UPDATE `sys_replication`.`applier_state`"
              " SET `last_applied_commit_id` = ");
   tmp.append(commit_id);
-  tmp.append(", `originating_server_uuid` = ");
+  tmp.append(", `originating_server_uuid` = '");
   tmp.append(originating_server_uuid);
-  tmp.append(", `originating_commit_id` = ");
+  tmp.append("' , `originating_commit_id` = ");
   tmp.append(boost::lexical_cast<string>(originating_commit_id));
 
   sql.push_back(tmp);

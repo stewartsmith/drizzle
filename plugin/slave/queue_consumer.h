@@ -110,7 +110,7 @@ private:
    */
   bool executeSQLWithCommitId(std::vector<std::string> &sql,
                               const std::string &commit_id,
-                              const std::string &originating_server_id,
+                              const std::string &originating_server_uuid,
                               uint64_t originating_commit_id);
   
   /**

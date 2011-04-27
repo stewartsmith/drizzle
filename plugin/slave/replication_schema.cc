@@ -92,7 +92,7 @@ bool ReplicationSchema::create()
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`applier_state`"
                 " (`last_applied_commit_id` BIGINT NOT NULL PRIMARY KEY,"
-                " `originating_server_uuid` BIGINT NOT NULL,"
+                " `originating_server_uuid` VARCHAR(36) NOT NULL,"
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `status` VARCHAR(20) NOT NULL,"
                 " `error_msg` VARCHAR(250))"
@@ -116,9 +116,9 @@ bool ReplicationSchema::create()
     {
       sql.clear();
       sql.push_back("INSERT INTO `sys_replication`.`applier_state`"
-                    " (`last_applied_commit_id`, `originating_server_id`,"
+                    " (`last_applied_commit_id`, `originating_server_uuid`,"
                     "  `originating_commit_id`, `status`)"
-                    " VALUES (0, 'STOPPED')");
+                    " VALUES (0, '', 0, 'STOPPED')");
       if (not executeSQL(sql))
         return false;
     }
@@ -135,7 +135,7 @@ bool ReplicationSchema::create()
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`queue`"
                 " (`trx_id` BIGINT NOT NULL, `seg_id` INT NOT NULL,"
                 " `commit_order` BIGINT,"
-                " `originating_server_uuid` INT NOT NULL,"
+                " `originating_server_uuid` VARCHAR(36) NOT NULL,"
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `msg` BLOB,"
                 " PRIMARY KEY(`trx_id`, `seg_id`))"

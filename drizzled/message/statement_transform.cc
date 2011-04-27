@@ -896,7 +896,9 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
   if (message::has_definer(schema))
   {
     destination.append(" DEFINER ");
+    destination.push_back(quoted_identifier);
     destination.append(message::definer(schema));
+    destination.push_back(quoted_identifier);
   }
 
   return NONE;
