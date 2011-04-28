@@ -34,6 +34,14 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+%{
+
+#include <config.h>
+#include <drizzled/execute/symbol.h>
+#include <drizzled/execute/context.h>
+
+using namespace drizzled;
+}%
 
 %error-verbose
 %debug
@@ -55,11 +63,6 @@
 #include <config.h>
 
 #include <stdint.h>
-
-#include <drizzled/execute/symbol.h>
-#include <drizzled/execute/context.h>
-
-using namespace drizzled;
 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
