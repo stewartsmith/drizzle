@@ -45,7 +45,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/plugin.h>

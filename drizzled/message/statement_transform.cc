@@ -34,8 +34,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/message.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/message/transaction.pb.h>
@@ -896,9 +894,9 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
   if (message::has_definer(schema))
   {
     destination.append(" DEFINER ");
-    destination.push_back(quoted_identifier);
+    destination.push_back('\'');
     destination.append(message::definer(schema));
-    destination.push_back(quoted_identifier);
+    destination.push_back('\'');
   }
 
   return NONE;
@@ -1102,7 +1100,9 @@ transformTableDefinitionToSql(const Table &table,
   if (message::has_definer(table))
   {
     destination.append(" DEFINER ");
+    destination.push_back('\'');
     destination.append(message::definer(table));
+    destination.push_back('\'');
   }
 
   return NONE;

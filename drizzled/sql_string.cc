@@ -21,9 +21,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/memory/root.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h>
 
 #include <algorithm>
 

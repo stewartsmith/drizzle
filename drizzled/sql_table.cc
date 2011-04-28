@@ -35,7 +35,6 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/system_variables.h>

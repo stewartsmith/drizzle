@@ -22,7 +22,7 @@
 
 #include <limits>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 #include <drizzled/table.h>
 
