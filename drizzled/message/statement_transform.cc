@@ -894,7 +894,9 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
   if (message::has_definer(schema))
   {
     destination.append(" DEFINER ");
+    destination.push_back('\'');
     destination.append(message::definer(schema));
+    destination.push_back('\'');
   }
 
   return NONE;
@@ -1098,7 +1100,9 @@ transformTableDefinitionToSql(const Table &table,
   if (message::has_definer(table))
   {
     destination.append(" DEFINER ");
+    destination.push_back('\'');
     destination.append(message::definer(table));
+    destination.push_back('\'');
   }
 
   return NONE;
