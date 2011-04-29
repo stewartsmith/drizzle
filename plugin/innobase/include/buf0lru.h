@@ -220,6 +220,20 @@ void
 buf_LRU_stat_update(void);
 /*=====================*/
 
+/********************************************************************//**
+Dump the LRU page list to the specific file. */
+UNIV_INTERN
+bool
+buf_LRU_file_dump(void);
+/*===================*/
+
+/********************************************************************//**
+Read the pages based on the specific file.*/
+UNIV_INTERN
+bool
+buf_LRU_file_restore(void);
+/*======================*/
+
 #if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
 /**********************************************************************//**
 Validates the LRU list.

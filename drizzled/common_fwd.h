@@ -18,6 +18,8 @@
 #pragma once
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
 #include <string>
 #include <vector>
 
@@ -180,6 +182,7 @@ namespace session
 { 
   class State; 
   class TableMessages;
+  class Times;
   class Transactions;
 }
 
@@ -195,6 +198,7 @@ namespace statement
 
 namespace table 
 { 
+  class Cache;
   class Concurrent;
   class Placeholder; 
   class Singular; 

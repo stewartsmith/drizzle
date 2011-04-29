@@ -23,7 +23,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/type/decimal.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 namespace drizzled {
 

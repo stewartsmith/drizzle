@@ -21,6 +21,7 @@
 #define CLIENT_SERVER_DETECT_H
 
 #include <boost/regex.hpp>
+#include <iostream>
 
 class ServerDetect
 {
@@ -46,11 +47,18 @@ class ServerDetect
       version= drizzle_con_server_version(connection);
 
       if (regex_search(version, mysql_regex, flags))
+      {
         type= SERVER_MYSQL_FOUND;
+      }
       else if (regex_search(version, drizzle_regex, flags))
+      {
         type= SERVER_DRIZZLE_FOUND;
+      }
       else
-        type= SERVER_UNKNOWN_FOUND;
+      {
+        std::cerr << "Server version not detectable" << std::endl;
+        abort();
+      }
     }
 
   private:

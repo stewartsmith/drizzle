@@ -980,12 +980,15 @@ stored_select:
 
 opt_create_database_options:
           /* empty */ {}
-        | default_collation_schema {}
-        | opt_database_custom_options {}
+        | default_collation_schema
+        | default_collation_schema opt_database_custom_options
+        | default_collation_schema ',' opt_database_custom_options
+        | opt_database_custom_options
         ;
 
 opt_database_custom_options:
         custom_database_option
+        | custom_database_option opt_database_custom_options
         | custom_database_option ',' opt_database_custom_options
         ;
 
@@ -4157,9 +4160,8 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             Lex.setCacheable(false);
-            if (!(Lex.exchange= new file_exchange($2.str, 0)) ||
-                !(Lex.result= new select_export(Lex.exchange)))
-              DRIZZLE_YYABORT;
+            Lex.exchange= new file_exchange($2.str, 0);
+            Lex.result= new select_export(Lex.exchange);
           }
           opt_field_term opt_line_term
         | DUMPFILE TEXT_STRING_filesystem
@@ -4167,10 +4169,8 @@ into_destination:
             if (not Lex.describe)
             {
               Lex.setCacheable(false);
-              if (not (Lex.exchange= new file_exchange($2.str,1)))
-                DRIZZLE_YYABORT;
-              if (not (Lex.result= new select_dump(Lex.exchange)))
-                DRIZZLE_YYABORT;
+              Lex.exchange= new file_exchange($2.str,1);
+              Lex.result= new select_dump(Lex.exchange);
             }
           }
         | select_var_list_init
@@ -4768,8 +4768,7 @@ load:
             Lex.lock_option= $4;
             Lex.duplicates= DUP_ERROR;
             Lex.ignore= 0;
-            if (not (Lex.exchange= new file_exchange($6.str, 0, $2)))
-              DRIZZLE_YYABORT;
+            Lex.exchange= new file_exchange($6.str, 0, $2);
           }
           opt_duplicate INTO
           {

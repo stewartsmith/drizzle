@@ -161,14 +161,9 @@ static int visit_tables(void* arg_param, const char *name, int len)
 }
 String *HailDBDatadictDumpFunction::val_str(String *str)
 {
-  assert(fixed == true);
+  assert(fixed);
 
-  if (str->alloc(50))
-  {
-    null_value= true;
-    return 0;
-  }
-
+  str->alloc(50);
   null_value= false;
 
   string dict_dump("HailDB Data Dictionary Contents\n"

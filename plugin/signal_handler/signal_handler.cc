@@ -119,7 +119,6 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((drizzled::getDebug().test(drizzled::debug::ALLOW_SIGINT)))
@@ -163,8 +162,8 @@ void signal_hand()
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  session::Cache::singleton().mutex().lock();
-  session::Cache::singleton().mutex().unlock();
+  session::Cache::mutex().lock();
+  session::Cache::mutex().unlock();
   COND_thread_count.notify_all();
 
   if (pthread_sigmask(SIG_BLOCK, &set, NULL))
@@ -229,7 +228,7 @@ public:
     drizzled::plugin::Daemon("Signal Handler")
   {
     // @todo fix spurious wakeup issue
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     thread= boost::thread(signal_hand);
     signal_thread= thread.native_handle();
     COND_thread_count.wait(scopedLock);

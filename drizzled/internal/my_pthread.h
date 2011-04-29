@@ -45,10 +45,6 @@ namespace drizzled
 namespace internal
 {
 
-#define pthread_key(T,V) pthread_key_t V
-#define pthread_handler_t void *
-typedef void *(* pthread_handler)(void *);
-
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
 #ifdef HAVE_SCHED_YIELD
@@ -107,11 +103,9 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define ESRCH 1
 #endif
 
-extern bool my_thread_global_init(void);
-extern void my_thread_global_end(void);
-DRIZZLED_API bool my_thread_init(void);
-DRIZZLED_API void my_thread_end(void);
-extern const char *my_thread_name(void);
+extern void my_thread_global_init();
+DRIZZLED_API void my_thread_init();
+extern const char *my_thread_name();
 
 /* All thread specific variables are in the following struct */
 

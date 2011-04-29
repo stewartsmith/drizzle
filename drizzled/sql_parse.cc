@@ -40,7 +40,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/probes.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/query_rewrite.h>
 #include <drizzled/plugin/query_cache.h>
@@ -57,6 +57,7 @@
 #include <drizzled/table_ident.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 
 #include <limits.h>
@@ -75,7 +76,7 @@ namespace drizzled {
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void parse(Session *session, const char *inBuf, uint32_t length);
+void parse(Session&, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -193,7 +194,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   session->command= command;
   session->lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
-  session->set_time();
+  session->times.set_time();
   session->setQueryId(query_id.value());
 
   switch( command ) {
@@ -225,12 +226,7 @@ bool dispatch_command(enum_server_command command, Session *session,
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
       break;
     }
-
-    string tmp(packet, packet_length);
-
-    identifier::Schema identifier(tmp);
-
-    if (not schema::change(*session, identifier))
+    if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
     {
       session->my_ok();
     }
@@ -238,14 +234,9 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
   case COM_QUERY:
   {
-    if (not session->readAndStoreQuery(packet, packet_length))
-      break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
-                        session->thread_id,
-                        const_cast<const char *>(session->schema()->c_str()));
-
-    parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
-
+    session->readAndStoreQuery(packet, packet_length);
+    DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
+    parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
     break;
   }
   case COM_QUIT:
@@ -748,24 +739,22 @@ new_select(LEX *lex, bool move_down)
 
 void create_select_for_variable(Session *session, const char *var_name)
 {
-  LEX *lex;
-  LEX_STRING tmp, null_lex_string;
-  Item *var;
-  char buff[MAX_SYS_VAR_LENGTH*2+4+8];
-  char *end= buff;
-
-  lex= &session->lex();
-  init_select(lex);
-  lex->sql_command= SQLCOM_SELECT;
+  LEX& lex= session->lex();
+  init_select(&lex);
+  lex.sql_command= SQLCOM_SELECT;
+  LEX_STRING tmp;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
+  LEX_STRING null_lex_string;
   memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
   */
-  if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
+  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string))
   {
+    char buff[MAX_SYS_VAR_LENGTH*2+4+8];
+    char *end= buff;
     end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
@@ -781,62 +770,43 @@ void create_select_for_variable(Session *session, const char *var_name)
   @param       length  Length of the query text
 */
 
-void parse(Session *session, const char *inBuf, uint32_t length)
+void parse(Session& session, const char *inBuf, uint32_t length)
 {
-  session->lex().start(session);
-
-  session->reset_for_next_command();
+  session.lex().start(&session);
+  session.reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
    * by setting the query_safe_cache param to TRUE
    */
-  bool res= true;
-  if (plugin::QueryCache::isCached(session))
+  if (plugin::QueryCache::isCached(&session) && not plugin::QueryCache::sendCachedResultset(&session))
+      return;
+  Lex_input_stream lip(&session, inBuf, length);
+  if (parse_sql(&session, &lip))
+    assert(session.is_error());
+  else if (not session.is_error())
   {
-    res= plugin::QueryCache::sendCachedResultset(session);
-  }
-  if (not res)
-  {
-    return;
-  }
-  LEX *lex= &session->lex();
-  Lex_input_stream lip(session, inBuf, length);
-  bool err= parse_sql(session, &lip);
-  if (!err)
-  {
+    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id,
+                             const_cast<const char *>(session.schema()->c_str()));
+    // Implement Views here --Brian
+    /* Actually execute the query */
+    try
     {
-      if (not session->is_error())
-      {
-        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
-                                 session->thread_id,
-                                 const_cast<const char *>(session->schema()->c_str()));
-        // Implement Views here --Brian
-        /* Actually execute the query */
-        try
-        {
-          execute_command(session);
-        }
-        catch (...)
-        {
-          // Just try to catch any random failures that could have come
-          // during execution.
-          DRIZZLE_ABORT;
-        }
-        DRIZZLE_QUERY_EXEC_DONE(0);
-      }
+      execute_command(&session);
     }
+    catch (...)
+    {
+      // Just try to catch any random failures that could have come
+      // during execution.
+      DRIZZLE_ABORT;
+    }
+    DRIZZLE_QUERY_EXEC_DONE(0);
   }
-  else
-  {
-    assert(session->is_error());
-  }
-  lex->unit.cleanup();
-  session->set_proc_info("freeing items");
-  session->end_statement();
-  session->cleanup_after_query();
-  session->set_end_timer();
+  session.lex().unit.cleanup();
+  session.set_proc_info("freeing items");
+  session.end_statement();
+  session.cleanup_after_query();
+  session.times.set_end_timer(session);
 }
-
 
 
 /**

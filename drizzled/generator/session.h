@@ -39,8 +39,8 @@ public:
   Session(const identifier::User& arg) :
     user(arg)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    local_list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    local_list= session::Cache::getCache();
     iter= local_list.begin();
   }
 

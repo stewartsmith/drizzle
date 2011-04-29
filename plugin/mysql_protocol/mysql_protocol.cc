@@ -777,8 +777,7 @@ bool ClientMySQLProtocol::checkConnection(void)
       return false;
     }
   }
-  if (packet.alloc(buffer_length.get()))
-    return false; /* The error is set by alloc(). */
+  packet.alloc(buffer_length.get());
 
   client_capabilities= uint2korr(net.read_pos);
   if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
@@ -788,7 +787,7 @@ bool ClientMySQLProtocol::checkConnection(void)
   }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
-  session->max_client_packet_length= uint4korr(net.read_pos + 4);
+  // session->max_client_packet_length= uint4korr(net.read_pos + 4);
   end= (char*) net.read_pos + 32;
 
   /*

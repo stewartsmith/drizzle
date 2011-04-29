@@ -24,7 +24,6 @@
 #include <config.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <vector>
 
 namespace drizzled {
@@ -208,34 +207,6 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key,
   *current_record= NO_RECORD;
   return(0);
 }
-
-/* Get next record with identical key */
-/* Can only be called if previous calls was hash_search */
-
-unsigned char* hash_next(const HASH *hash, const unsigned char *key,
-                         size_t length,
-                         HASH_SEARCH_STATE *current_record)
-{
-  HASH_LINK *pos;
-  uint32_t idx;
-
-  if (*current_record != NO_RECORD)
-  {
-    HASH_LINK *data=dynamic_element(&hash->array,0,HASH_LINK*);
-    for (idx=data[*current_record].next; idx != NO_RECORD ; idx=pos->next)
-    {
-      pos=data+idx;
-      if (!hashcmp(hash,pos,key,length))
-      {
-        *current_record= idx;
-        return pos->data;
-      }
-    }
-    *current_record= NO_RECORD;
-  }
-  return 0;
-}
-
 
 /* Change link from pos to new_link */
 
@@ -422,106 +393,6 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   if (++info->records == info->blength)
     info->blength+= info->blength;
   return(0);
-}
-
-
-/******************************************************************************
- ** Remove one record from hash-table. The record with the same record
- ** ptr is removed.
- ** if there is a free-function it's called for record if found
- *****************************************************************************/
-
-bool hash_delete(HASH *hash,unsigned char *record)
-{
-  uint32_t blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
-  HASH_LINK *data,*lastpos,*gpos,*pos,*pos3,*empty;
-  if (!hash->records)
-    return(1);
-
-  blength=hash->blength;
-  data=dynamic_element(&hash->array,0,HASH_LINK*);
-  /* Search after record with key */
-  pos=data+ hash_mask(rec_hashnr(hash,record),blength,hash->records);
-  gpos = 0;
-
-  while (pos->data != record)
-  {
-    gpos=pos;
-    if (pos->next == NO_RECORD)
-      /* Key not found */
-      return(1);
-
-    pos=data+pos->next;
-  }
-
-  if ( --(hash->records) < hash->blength >> 1) hash->blength>>=1;
-  lastpos=data+hash->records;
-
-  /* Remove link to record */
-  empty=pos; empty_index=(uint32_t) (empty-data);
-  if (gpos)
-    /* unlink current ptr */
-    gpos->next=pos->next;
-  else if (pos->next != NO_RECORD)
-  {
-    empty=data+(empty_index=pos->next);
-    pos->data=empty->data;
-    pos->next=empty->next;
-  }
-
-  /* last key at wrong pos or no next link */
-  if (empty == lastpos)
-    goto exit;
-
-  /* Move the last key (lastpos) */
-  lastpos_hashnr=rec_hashnr(hash,lastpos->data);
-  /* pos is where lastpos should be */
-  pos=data+hash_mask(lastpos_hashnr,hash->blength,hash->records);
-  /* Move to empty position. */
-  if (pos == empty)
-  {
-    empty[0]=lastpos[0];
-    goto exit;
-  }
-  pos_hashnr=rec_hashnr(hash,pos->data);
-  /* pos3 is where the pos should be */
-  pos3= data+hash_mask(pos_hashnr,hash->blength,hash->records);
-  if (pos != pos3)
-  {					/* pos is on wrong posit */
-    empty[0]=pos[0];			/* Save it here */
-    pos[0]=lastpos[0];			/* This should be here */
-    movelink(data,(uint32_t) (pos-data),(uint32_t) (pos3-data),empty_index);
-    goto exit;
-  }
-  pos2= hash_mask(lastpos_hashnr,blength,hash->records+1);
-  if (pos2 == hash_mask(pos_hashnr,blength,hash->records+1))
-  {					/* Identical key-positions */
-    if (pos2 != hash->records)
-    {
-      empty[0]=lastpos[0];
-      movelink(data,(uint32_t) (lastpos-data),(uint32_t) (pos-data),empty_index);
-      goto exit;
-    }
-    idx= (uint32_t) (pos-data);		/* Link pos->next after lastpos */
-  }
-  else idx= NO_RECORD;		/* Different positions merge */
-
-  empty[0]=lastpos[0];
-  movelink(data,idx,empty_index,pos->next);
-  pos->next=empty_index;
-
-exit:
-  pop_dynamic(&hash->array);
-  if (hash->free)
-    (*hash->free)((unsigned char*) record);
-  return(0);
-}
-
-unsigned char *hash_element(HASH *hash,uint32_t idx)
-{
-  if (idx < hash->records)
-    return dynamic_element(&hash->array,idx,HASH_LINK*)->data;
-  return 0;
 }
 
 } /* namespace drizzled */

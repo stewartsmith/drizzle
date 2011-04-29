@@ -21,7 +21,7 @@
 #include <config.h>
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 
@@ -79,13 +79,6 @@ static unsigned char bin_char_array[] =
   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
 };
 
-
-bool my_coll_init_8bit_bin(charset_info_st *cs,
-                           cs_alloc_func)
-{
-  cs->max_sort_char=255;
-  return false;
-}
 
 int my_strnncoll_binary(const charset_info_st * const,
                         const unsigned char *s, size_t slen,

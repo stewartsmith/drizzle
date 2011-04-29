@@ -54,7 +54,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
   char stack_dummy;
   boost::this_thread::disable_interruption disable_by_default;
 
-  Session::shared_ptr session(session::Cache::singleton().find(id));
+  Session::shared_ptr session(session::Cache::find(id));
 
   try
   {
@@ -65,19 +65,9 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
       return;
     }
     session->pushInterrupt(&disable_by_default);
-
-    if (drizzled::internal::my_thread_init())
-    {
-      session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
-      session->status_var.aborted_connects++;
-    }
-    else
-    {
-      boost::this_thread::at_thread_exit(&internal::my_thread_end);
-
-      session->thread_stack= (char*) &stack_dummy;
-      session->run();
-    }
+    drizzled::internal::my_thread_init();
+    session->thread_stack= (char*) &stack_dummy;
+    session->run();
 
     killSessionNow(session);
   }
@@ -167,7 +157,7 @@ bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
 
 void MultiThreadScheduler::killSession(Session *session)
 {
-  boost_thread_shared_ptr thread(session->getThread());
+  thread_ptr thread(session->getThread());
 
   if (thread)
   {
@@ -188,7 +178,7 @@ void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(drizzled::session::Cache::mutex());
   while (thread_count)
   {
     COND_thread_count.wait(scopedLock);

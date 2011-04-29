@@ -45,12 +45,10 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/xid.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
-#include <drizzled/internal_error_handler.h>
 #include <drizzled/table/shell.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/key.h>
@@ -61,11 +59,8 @@
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 static EngineVector vector_of_engines;
 static EngineVector vector_of_schema_engines;
@@ -396,36 +391,6 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
   drizzled::message::Cache::singleton().insert(identifier, table_message);
 
   return table_message;
-}
-
-/**
-  An interceptor to hijack the text of the error message without
-  setting an error in the thread. We need the text to present it
-  in the form of a warning to the user.
-*/
-
-class Ha_delete_table_error_handler: public Internal_error_handler
-{
-public:
-  Ha_delete_table_error_handler() : Internal_error_handler() {}
-  virtual bool handle_error(drizzled::error_t sql_errno,
-                            const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level,
-                            Session *session);
-  char buff[DRIZZLE_ERRMSG_SIZE];
-};
-
-
-bool
-Ha_delete_table_error_handler::
-handle_error(drizzled::error_t ,
-             const char *message,
-             DRIZZLE_ERROR::enum_warning_level ,
-             Session *)
-{
-  /* Grab the error message */
-  strncpy(buff, message, sizeof(buff)-1);
-  return true;
 }
 
 class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>

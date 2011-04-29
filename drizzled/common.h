@@ -77,12 +77,6 @@
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
 
-/**
-  Maximum length of time zone name that we support
-  (Time zone name is char(64) in db). mysqlbinlog needs it.
-*/
-#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
-
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
 #define USERNAME_CHAR_LENGTH 16

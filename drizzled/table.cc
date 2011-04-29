@@ -308,18 +308,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
   res->append('\'');
 }
 
-
-int rename_file_ext(const char * from,const char * to,const char * ext)
-{
-  string from_s, to_s;
-
-  from_s.append(from);
-  from_s.append(ext);
-  to_s.append(to);
-  to_s.append(ext);
-  return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
-}
-
 /*
   Allow anything as a table name, as long as it doesn't contain an
   ' ' at the end
@@ -741,10 +729,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
   @param table_alias          possible name of the temporary table that can
                               be used for name resolving; can be "".
 */
-
-#define STRING_TOTAL_LENGTH_TO_PACK_ROWS 128
-#define AVG_STRING_LENGTH_TO_PACK_ROWS   64
-#define RATIO_TO_PACK_ROWS	       2
 
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,

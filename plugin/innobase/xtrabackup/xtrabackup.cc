@@ -29,9 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <config.h>
 #include <string>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h> // for default_charset_info
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/configmake.h>
@@ -1678,7 +1676,6 @@ xtrabackup_copy_datafile(fil_node_t* node, uint thread_n)
 	ibool		success;
 	byte*		page;
 	byte*		buf2 = NULL;
-	LSN64		flush_lsn;
 	IB_INT64	file_size;
 	IB_INT64	offset;
 	ulint		page_in_buffer= 0;
@@ -1900,11 +1897,6 @@ skip_filter:
 	if (!success) {
 		goto error;
 	}
-	flush_lsn = MACH_READ_64(page + FIL_PAGE_FILE_FLUSH_LSN);
-		/* check current flush lsn newer than checkpoint@start */
-//	if (ut_dulint_cmp(backup_start_checkpoint, flush_lsn) >= 0) {
-//		goto error;
-//	}
 
 	file_size = os_file_get_size_as_iblonglong(src_file);
 
@@ -2111,8 +2103,6 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 {
 	/* definition from recv_recovery_from_checkpoint_start() */
 	log_group_t*	group;
-	log_group_t*	up_to_date_group;
-	LSN64		old_scanned_lsn;
 	LSN64		group_scanned_lsn;
 	LSN64		contiguous_lsn;
 
@@ -2134,8 +2124,6 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 		LSN64	start_lsn;
 		LSN64	end_lsn;
 
-
-		old_scanned_lsn = from_lsn;
 
 		/* reference recv_group_scan_log_recs() */
 	finished = FALSE;
@@ -2159,7 +2147,6 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 	ulint	no;
 	LSN64	scanned_lsn;
 	ulint	data_len;
-	ibool	more_data;
 
 	ulint	scanned_checkpoint_no = 0;
 
@@ -2167,7 +2154,6 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 	
 	log_block = log_sys->buf;
 	scanned_lsn = start_lsn;
-	more_data = FALSE;
 
 	while (log_block < log_sys->buf + RECV_SCAN_SIZE && !finished) {
 
@@ -2325,11 +2311,6 @@ xtrabackup_copy_logfile(LSN64 from_lsn, bool is_last)
 
 		group->scanned_lsn = group_scanned_lsn;
 		
-		if (ut_dulint_cmp(old_scanned_lsn, group_scanned_lsn) < 0) {
-			/* We found a more up-to-date group */
-
-			up_to_date_group = group;
-		}
 
 		fprintf(stderr, ">> log scanned up to (%"PRIu64")\n",group->scanned_lsn);
 
@@ -3232,7 +3213,6 @@ loop:
 					ulint	space_id;
 					ulint	page_no;
 					ulint	offset;
-					ulint	extern_len;
 					byte*	blob_header;
 					ulint	part_len;
 					mtr_t	local_mtr;
@@ -3248,7 +3228,6 @@ loop:
 					space_id = mach_read_from_4(data + local_len + BTR_EXTERN_SPACE_ID);
 					page_no = mach_read_from_4(data + local_len + BTR_EXTERN_PAGE_NO);
 					offset = mach_read_from_4(data + local_len + BTR_EXTERN_OFFSET);
-					extern_len = mach_read_from_4(data + local_len + BTR_EXTERN_LEN + 4);
 
 					if (offset != FIL_PAGE_DATA)
 						fprintf(stderr, "\nWarning: several record may share same external page.\n");
@@ -3605,7 +3584,6 @@ xtrabackup_init_temp_log(void)
 
 	LSN64	max_no;
 	LSN64	max_lsn;
-	ulint	max_field;
 	LSN64	checkpoint_no;
 
 	ulint	fold;
@@ -3735,7 +3713,6 @@ retry:
 		if (ut_dulint_cmp(checkpoint_no, max_no) >= 0) {
 			max_no = checkpoint_no;
 			max_lsn = MACH_READ_64(log_buf + field + LOG_CHECKPOINT_LSN);
-			max_field = field;
 /*
 			mach_write_to_4(log_buf + field + LOG_CHECKPOINT_OFFSET,
 					LOG_FILE_HDR_SIZE + ut_dulint_minus(max_lsn,

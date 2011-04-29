@@ -72,6 +72,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/statistics_variables.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
 #include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
@@ -412,7 +413,7 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
     while (select_thread_in_use)
     {
@@ -437,8 +438,8 @@ void close_connections(void)
   */
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    session::Cache::list list= session::Cache::getCache();
 
     BOOST_FOREACH(session::Cache::list::reference tmp, list)
     {
@@ -450,7 +451,7 @@ void close_connections(void)
     }
   }
 
-  if (session::Cache::singleton().count())
+  if (session::Cache::count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -460,8 +461,8 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    session::Cache::list list= session::Cache::getCache();
 
     if (list.empty())
     {
@@ -512,7 +513,7 @@ void clean_up(bool print_message)
   if (print_message && server_start_time)
     errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
 
-  session::Cache::singleton().shutdownFirst();
+  session::Cache::shutdownFirst();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -623,7 +624,7 @@ static void set_root(const char *path)
 
 void Session::unlink(session_id_t &session_id)
 {
-  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+  Session::shared_ptr session= session::Cache::find(session_id);
 
   if (session)
     unlink(session);
@@ -635,13 +636,13 @@ void Session::unlink(Session::shared_ptr &session)
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-  session::Cache::singleton().erase(session);
+  session::Cache::erase(session);
 }
 
 
@@ -1078,14 +1079,6 @@ int init_basic_variables(int argc, char **argv)
 
   find_plugin_dir(argv[0]);
 
-  /*
-    We set SYSTEM time zone as reasonable default and
-    also for failure of my_tz_init() and bootstrap mode.
-    If user explicitly set time zone with --default-time-zone
-    option we will change this value in my_tz_init().
-  */
-  global_system_variables.time_zone= my_tz_SYSTEM;
-
   char ret_hostname[FN_REFLEN];
   if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
@@ -1457,8 +1450,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   /* Inverted Booleans */
 
-  global_system_variables.optimizer_prune_level=
-    vm.count("disable-optimizer-prune") ? false : true;
+  global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
   if (! vm["help"].as<bool>())
   {
@@ -1546,8 +1538,8 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
-  table::Cache::singleton().rehash(table_def_size);
-  definition::Cache::singleton().rehash(table_def_size);
+  table::Cache::rehash(table_def_size);
+  definition::Cache::rehash(table_def_size);
   message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
@@ -2054,7 +2046,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   g_refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session::Cache::singleton().getCache().clear();
+  session::Cache::getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
