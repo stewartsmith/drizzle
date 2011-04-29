@@ -40,7 +40,7 @@
 #include <drizzled/execute/symbol.h>
 #include <drizzled/execute/context.h>
 
-using namespace drizzled
+using namespace drizzled;
 }%
 
 %error-verbose
