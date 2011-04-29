@@ -211,7 +211,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     if (usable_index == MAX_KEY)
     {
       FileSort filesort(*session);
-      table->sort.io_cache= new internal::IO_CACHE;
+      table->sort.io_cache= new internal::io_cache_st;
 
 
       if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
