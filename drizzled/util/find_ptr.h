@@ -30,3 +30,17 @@ const typename T::mapped_type* find_ptr(const T& c, U v)
 	typename T::const_iterator i = c.find(v);
 	return i == c.end() ? NULL : &i->second;
 }
+
+template <class T, class U>
+typename T::mapped_type find_ptr2(T& c, U v)
+{
+	typename T::mapped_type* i = find_ptr(c, v);
+	return i ? *i : NULL;
+}
+
+template <class T, class U>
+const typename T::mapped_type find_ptr2(const T& c, U v)
+{
+	const typename T::mapped_type* i = find_ptr(c, v);
+	return i ? *i : NULL;
+}

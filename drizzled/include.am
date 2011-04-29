@@ -58,7 +58,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/catalog/instance.h \
 			      drizzled/catalog/local.h \
 			      drizzled/charset.h \
-			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
 			      drizzled/common_fwd.h \
@@ -217,7 +216,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
 			      drizzled/global_buffer.h \
-			      drizzled/global_charset_info.h \
 			      drizzled/ha_data.h \
 			      drizzled/ha_statistics.h \
 			      drizzled/handler_structs.h \
@@ -234,7 +232,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
-			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
@@ -404,7 +401,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
 			      drizzled/session/cache.h \
-			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
 			      drizzled/session/times.h \

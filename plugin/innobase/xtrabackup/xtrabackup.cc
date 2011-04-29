@@ -29,9 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <config.h>
 #include <string>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h> // for default_charset_info
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/configmake.h>

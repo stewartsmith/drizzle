@@ -16,7 +16,7 @@
 /* key handling functions */
 
 #include "myisam_priv.h"
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/test.h>
 

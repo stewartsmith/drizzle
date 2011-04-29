@@ -439,7 +439,6 @@ template<class T> inline void safe_delete(T*& ptr)
 #define FN_LIBCHAR  '/'
 #define FN_ROOTDIR  "/"
 #endif
-#define MY_NFILE  64  /* This is only used to save filenames */
 #ifndef OS_FILE_LIMIT
 #define OS_FILE_LIMIT  65535
 #endif

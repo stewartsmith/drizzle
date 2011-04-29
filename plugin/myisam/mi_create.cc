@@ -20,7 +20,7 @@
 #include <drizzled/internal/my_sys.h>
 
 #include <drizzled/util/test.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/error.h>
 
 #include <cassert>
