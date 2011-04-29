@@ -415,7 +415,7 @@ typedef struct st_mi_check_param
   char temp_filename[FN_REFLEN],*isam_file_name;
   int tmpfile_createflag;
   drizzled::myf myf_rw;
-  drizzled::internal::IO_CACHE read_cache;
+  drizzled::internal::io_cache_st read_cache;
 
   /*
     The next two are used to collect statistics, see update_key_parts for

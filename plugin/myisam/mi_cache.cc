@@ -28,7 +28,7 @@
   Allows "partial read" errors in the record header (when READING_HEADER flag
   is set) - unread part is zero'ed
 
-  Note: out-of-cache reads are enabled for shared IO_CACHE's too,
+  Note: out-of-cache reads are enabled for shared io_cache_st's too,
   as these reads will be cached by OS cache (and my_pread is always atomic)
 */
 
@@ -41,7 +41,7 @@ using namespace std;
 using namespace drizzled;
 
 
-int _mi_read_cache(internal::IO_CACHE *info, unsigned char *buff, internal::my_off_t pos, uint32_t length,
+int _mi_read_cache(internal::io_cache_st *info, unsigned char *buff, internal::my_off_t pos, uint32_t length,
 		   int flag)
 {
   uint32_t read_length,in_buff_length;

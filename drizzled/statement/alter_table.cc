@@ -1605,7 +1605,7 @@ copy_data_between_tables(Session *session,
       else
       {
         FileSort filesort(*session);
-        from->sort.io_cache= new internal::IO_CACHE;
+        from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
         tables.setTableName(from->getMutableShare()->getTableName());

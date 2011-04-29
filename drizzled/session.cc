@@ -987,7 +987,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
+    cache(static_cast<internal::io_cache_st *>(memory::sql_calloc(sizeof(internal::io_cache_st)))),
     row_count(0L)
 {
   path= "";
@@ -1027,7 +1027,7 @@ select_export::~select_export()
 static int create_file(Session *session,
                        fs::path &target_path,
                        file_exchange *exchange,
-                       internal::IO_CACHE *cache)
+                       internal::io_cache_st *cache)
 {
   fs::path to_file(exchange->file_name);
   int file;

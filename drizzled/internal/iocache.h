@@ -94,12 +94,12 @@ struct st_io_cache    /* Used when cacheing files */
     Callbacks when the actual read I/O happens. These were added and
     are currently used for binary logging of LOAD DATA INFILE - when a
     block is read from the file, we create a block create/append event, and
-    when IO_CACHE is closed, we create an end event. These functions could,
+    when io_cache_st is closed, we create an end event. These functions could,
     of course be used for other things
   */
-  IO_CACHE_CALLBACK pre_read;
-  IO_CACHE_CALLBACK post_read;
-  IO_CACHE_CALLBACK pre_close;
+  io_cache_st_CALLBACK pre_read;
+  io_cache_st_CALLBACK post_read;
+  io_cache_st_CALLBACK pre_close;
   void* arg;        /* for use by pre/post_read */
   char *file_name;      /* if used with 'open_cached_file' */
   char *dir,*prefix;

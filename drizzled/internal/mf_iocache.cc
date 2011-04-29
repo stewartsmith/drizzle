@@ -494,7 +494,7 @@ static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
 int _my_b_get(st_io_cache *info)
 {
   unsigned char buff;
-  IO_CACHE_CALLBACK pre_read,post_read;
+  io_cache_st_CALLBACK pre_read,post_read;
   if ((pre_read = info->pre_read))
     (*pre_read)(info);
   if ((*(info)->read_function)(info,&buff,1))
