@@ -67,7 +67,7 @@ public:
   void close_temporary_tables();
   void close_temporary_table(Table*);
   void nukeTable(Table*);
-  void close_open_tables(Session&);
+  void close_open_tables();
   bool free_cached_table();
 
   /* Work with temporary tables */

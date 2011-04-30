@@ -319,7 +319,7 @@ bool Open_tables_state::free_cached_table()
   @remark It should not ordinarily be called directly.
 */
 
-void Open_tables_state::close_open_tables(Session&) // todo: remove param
+void Open_tables_state::close_open_tables()
 {
   bool found_old_table= false;
 
