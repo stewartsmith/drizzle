@@ -21,6 +21,7 @@
 #pragma once
 
 #include <vector>
+#include <cstring>
 
 namespace drizzled {
 namespace session {

@@ -81,7 +81,7 @@ int ReadRecord::init_read_record(Session *session_arg,
                                  int use_record_cache,
                                  bool print_error_arg)
 {
-  internal::IO_CACHE *tempfile;
+  internal::io_cache_st *tempfile;
   int error= 0;
 
   session= session_arg;

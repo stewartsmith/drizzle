@@ -36,7 +36,6 @@
 #include <drizzled/identifier.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/internal/thread_var.h>
-#include <drizzled/internal_error_handler.h>
 #include <drizzled/item/cache.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/float.h>
@@ -169,6 +168,8 @@ public:
   }
 
   Diagnostics_area diagnostics;
+  memory::Root mem_root;
+
   /**
     The lex to hold the parsed tree of conventional (non-prepared) queries.
     Whereas for prepared and stored procedure statements we use an own lex
@@ -191,7 +192,7 @@ public:
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   impl_(new impl_c(*this)),
-  mem_root(&main_mem_root),
+  mem_root(&impl_->mem_root),
   query(new std::string),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -223,7 +224,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   _global_read_lock(NONE),
   count_cuted_fields(CHECK_FIELD_ERROR_FOR_NULL),
   _killed(NOT_KILLED),
-  some_tables_deleted(false),
   no_errors(false),
   is_fatal_error(false),
   transaction_rollback_request(false),
@@ -249,7 +249,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
   lex().current_select= 0;
@@ -290,8 +290,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
-
-  m_internal_handler= NULL;
 
   plugin::EventObserver::registerSessionEvents(*this);
 }
@@ -368,27 +366,6 @@ void Session::free_items()
   }
 }
 
-void Session::push_internal_handler(Internal_error_handler *handler)
-{
-  /*
-    TODO: The current implementation is limited to 1 handler at a time only.
-    Session and sp_rcontext need to be modified to use a common handler stack.
-  */
-  assert(m_internal_handler == NULL);
-  m_internal_handler= handler;
-}
-
-bool Session::handle_error(drizzled::error_t sql_errno, const char *message,
-                           DRIZZLE_ERROR::enum_warning_level level)
-{
-  if (m_internal_handler)
-  {
-    return m_internal_handler->handle_error(sql_errno, message, level, this);
-  }
-
-  return false;
-}
-
 void Session::setAbort(bool arg)
 {
   mysys_var->abort= arg;
@@ -409,12 +386,6 @@ void Session::lockOnSys()
   }
 }
 
-void Session::pop_internal_handler()
-{
-  assert(m_internal_handler != NULL);
-  m_internal_handler= NULL;
-}
-
 void Session::get_xid(DrizzleXid *xid)
 {
   *xid = *(DrizzleXid *) &transaction.xid_state.xid;
@@ -424,7 +395,7 @@ void Session::get_xid(DrizzleXid *xid)
 
 void Session::cleanup()
 {
-  assert(cleanup_done == false);
+  assert(not cleanup_done);
 
   setKilled(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
@@ -442,13 +413,10 @@ void Session::cleanup()
     boost::checked_delete(iter.second);
   user_vars.clear();
 
-
   open_tables.close_temporary_tables();
 
   if (global_read_lock)
-  {
     unlockGlobalReadLock();
-  }
 
   cleanup_done= true;
 }
@@ -477,7 +445,7 @@ Session::~Session()
     client= NULL;
   }
 
-  if (cleanup_done == false)
+  if (not cleanup_done)
     cleanup();
 
   plugin::StorageEngine::closeConnection(this);
@@ -486,7 +454,7 @@ Session::~Session()
   warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
 
-  main_mem_root.free_root(MYF(0));
+  impl_->mem_root.free_root(MYF(0));
   currentMemRoot().release();
   currentSession().release();
 
@@ -505,7 +473,7 @@ void Session::setClient(plugin::Client *client_arg)
 
 void Session::awake(Session::killed_state_t state_to_set)
 {
-  if ((state_to_set == Session::KILL_QUERY) and (command == COM_SLEEP))
+  if (state_to_set == Session::KILL_QUERY && command == COM_SLEEP)
     return;
 
   setKilled(state_to_set);
@@ -635,7 +603,7 @@ bool Session::schedule(Session::shared_ptr &arg)
   current_global_counters.connections++;
   arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  session::Cache::singleton().insert(arg);
+  session::Cache::insert(arg);
 
   if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
@@ -1019,7 +987,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
+    cache(static_cast<internal::io_cache_st *>(memory::sql_calloc(sizeof(internal::io_cache_st)))),
     row_count(0L)
 {
   path= "";
@@ -1059,7 +1027,7 @@ select_export::~select_export()
 static int create_file(Session *session,
                        fs::path &target_path,
                        file_exchange *exchange,
-                       internal::IO_CACHE *cache)
+                       internal::io_cache_st *cache)
 {
   fs::path to_file(exchange->file_name);
   int file;

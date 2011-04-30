@@ -25,24 +25,24 @@
 #include <algorithm>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <drizzled/gettext.h>
 #include <drizzled/unireg.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/plugin/plugin.h>
-
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 namespace module {
 
-class Registry
+class Registry : boost::noncopyable
 {
 public:
-
-  typedef std::map<std::string, Library *> LibraryMap;
-  typedef std::map<std::string, Module *> ModuleMap;
-  typedef std::vector<Module *> ModuleList;
+  typedef std::map<std::string, Library*> LibraryMap;
+  typedef std::map<std::string, Module*> ModuleMap;
+  typedef std::vector<Module*> ModuleList;
 private:
   LibraryMap library_registry_;
   ModuleMap module_registry_;
@@ -53,8 +53,6 @@ private:
   bool deps_built_;
 
   Registry();
-  Registry(const Registry&);
-  Registry& operator=(const Registry&);
   ~Registry();
 
   void buildDeps();
@@ -62,21 +60,18 @@ public:
 
   static Registry& singleton()
   {
-    static Registry *registry= new Registry();
+    static Registry* registry= new Registry();
     return *registry;
   }
 
-  void copy(plugin::Plugin::vector &arg);
-
   static void shutdown();
 
-  Module *find(std::string name);
+  Module* find(const std::string&);
 
-  void add(Module *module);
+  void add(Module*);
+  void remove(Module*);
 
-  void remove(Module *module);
-
-  std::vector<Module *> getList();
+  ModuleList getList();
 
   const plugin::Plugin::map &getPluginsMap() const
   {
@@ -98,32 +93,21 @@ public:
   void add(T *plugin)
   {
     bool failed= false;
-    std::string plugin_type(plugin->getTypeName());
-    std::transform(plugin_type.begin(), plugin_type.end(),
-                   plugin_type.begin(), ::tolower);
-    std::string plugin_name(plugin->getName());
-    std::transform(plugin_name.begin(), plugin_name.end(),
-                   plugin_name.begin(), ::tolower);
-    if (plugin_registry.find(std::make_pair(plugin_type, plugin_name)) != plugin_registry.end())
+    std::string plugin_type(boost::to_lower_copy(plugin->getTypeName()));
+    std::string plugin_name(boost::to_lower_copy(plugin->getName()));
+    if (find_ptr(plugin_registry, std::make_pair(plugin_type, plugin_name)))
     {
-      errmsg_printf(error::ERROR,
-                    _("Loading plugin %s failed: a %s plugin by that name "
-                      "already exists.\n"),
-                    plugin->getTypeName().c_str(),
-                    plugin->getName().c_str());
+      errmsg_printf(error::ERROR, _("Loading plugin %s failed: a %s plugin by that name already exists.\n"), 
+        plugin->getTypeName().c_str(), plugin->getName().c_str());
       failed= true;
     }
-    if (T::addPlugin(plugin))
-    {
-      failed= true;
-    }
+    if (T::addPlugin(plugin)) // Olaf: Should addPlugin be called when failed is already true?
+      failed= true; 
 
     if (failed)
     {
-      errmsg_printf(error::ERROR,
-                    _("Fatal error: Failed initializing %s::%s plugin.\n"),
-                    plugin->getTypeName().c_str(),
-                    plugin->getName().c_str());
+      errmsg_printf(error::ERROR, _("Fatal error: Failed initializing %s::%s plugin.\n"), 
+        plugin->getTypeName().c_str(), plugin->getName().c_str());
       unireg_abort(1);
     }
     plugin_registry.insert(std::make_pair(std::make_pair(plugin_type, plugin_name), plugin));
@@ -132,12 +116,8 @@ public:
   template<class T>
   void remove(T *plugin)
   {
-    std::string plugin_type(plugin->getTypeName());
-    std::transform(plugin_type.begin(), plugin_type.end(),
-                   plugin_type.begin(), ::tolower);
-    std::string plugin_name(plugin->getName());
-    std::transform(plugin_name.begin(), plugin_name.end(),
-                   plugin_name.begin(), ::tolower);
+    std::string plugin_type(boost::to_lower_copy(plugin->getTypeName()));
+    std::string plugin_name(boost::to_lower_copy(plugin->getName()));
     T::removePlugin(plugin);
     plugin_registry.erase(std::make_pair(plugin_type, plugin_name));
   }

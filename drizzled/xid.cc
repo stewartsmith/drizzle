@@ -22,32 +22,8 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h>
-#include <drizzled/charset_info.h>
 
 namespace drizzled {
-
-bool XID::eq(XID *xid)
-{
-  return eq(xid->gtrid_length, xid->bqual_length, xid->data);
-}
-
-bool XID::eq(long g, long b, const char *d)
-{
-  return g == gtrid_length && b == bqual_length && !memcmp(d, data, g+b);
-}
-
-void XID::set(XID *xid)
-{
-  memcpy(this, xid, xid->length());
-}
-
-void XID::set(long f, const char *g, long gl, const char *b, long bl)
-{
-  formatID= f;
-  memcpy(data, g, gtrid_length= gl);
-  memcpy(data+gl, b, bqual_length= bl);
-}
 
 void XID::set(uint64_t xid)
 {

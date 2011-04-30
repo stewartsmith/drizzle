@@ -29,14 +29,14 @@ namespace internal
 {
 
 /*
-** Open tempfile cached by st_io_cache
+** Open tempfile cached by io_cache_st
 ** Should be used when no seeks are done (only reinit_io_buff)
 ** Return false if cache is inited ok
-** The actual file is created when the st_io_cache buffer gets filled
+** The actual file is created when the io_cache_st buffer gets filled
 ** If dir is not given, use TMPDIR.
 */
 
-bool st_io_cache::open_cached_file(const char *dir_arg, const char *prefix_arg,
+bool io_cache_st::open_cached_file(const char *dir_arg, const char *prefix_arg,
 		      size_t cache_size_arg, myf cache_myflags)
 {
   dir=	 dir_arg ? strdup(dir_arg) : (char*) 0;
@@ -59,7 +59,7 @@ bool st_io_cache::open_cached_file(const char *dir_arg, const char *prefix_arg,
 
 /* Create the temporary file */
 
-bool st_io_cache::real_open_cached_file()
+bool io_cache_st::real_open_cached_file()
 {
   char name_buff[FN_REFLEN];
 
@@ -73,7 +73,7 @@ bool st_io_cache::real_open_cached_file()
 }
 
 
-void st_io_cache::close_cached_file()
+void io_cache_st::close_cached_file()
 {
   if (my_b_inited(this))
   {

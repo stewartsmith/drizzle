@@ -24,9 +24,7 @@
 #include <plugin/schema_engine/schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/data_home.h>
 

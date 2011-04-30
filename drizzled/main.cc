@@ -88,12 +88,12 @@ extern bool opt_daemon;
 */
 static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
-  Session *session;
+  Session* session= current_session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((session= current_session))
+  if (session)
   {
     if (MyFlags & ME_FATALERROR)
       session->is_fatal_error= 1;
@@ -101,9 +101,10 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
-    */
+
     if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;
+    */
 
     /*
       session->lex().current_select == 0 if lex structure is not inited
@@ -395,14 +396,7 @@ int main(int argc, char **argv)
   plugin::Client *client;
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::shared_ptr session;
-    session= Session::make_shared(client, client->catalog());
-
-    if (not session)
-    {
-      delete client;
-      continue;
-    }
+    Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
@@ -428,7 +422,7 @@ int main(int argc, char **argv)
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  session::Cache::singleton().shutdownSecond();
+  session::Cache::shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();

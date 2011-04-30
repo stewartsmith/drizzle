@@ -28,7 +28,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_table.h>
@@ -1342,8 +1342,6 @@ static bool internal_alter_table(Session *session,
            (ulong) (copied + deleted), (ulong) deleted,
            (ulong) session->cuted_fields);
   session->my_ok(copied + deleted, 0, 0L, tmp_name);
-  session->some_tables_deleted= false;
-
   return false;
 }
 
@@ -1607,7 +1605,7 @@ copy_data_between_tables(Session *session,
       else
       {
         FileSort filesort(*session);
-        from->sort.io_cache= new internal::IO_CACHE;
+        from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
         tables.setTableName(from->getMutableShare()->getTableName());

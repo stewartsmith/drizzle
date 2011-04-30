@@ -33,7 +33,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
 #include <drizzled/lock.h>
@@ -545,7 +545,6 @@ public:
   }
 
   bool is_admin_connection;
-  bool some_tables_deleted;
   bool no_errors;
   /**
     Set to true if execution of the current compound statement
@@ -866,7 +865,6 @@ public:
   void setAbort(bool arg);
   void lockOnSys();
   void set_status_var_init();
-
   /**
     Set the current database; use deep copy of C-string.
 
@@ -884,7 +882,7 @@ public:
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
   */
-  void set_db(const std::string &new_db);
+  void set_db(const std::string&);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -894,25 +892,6 @@ public:
   bool copy_db_to(char **p_db, size_t *p_db_length);
 
 public:
-  /**
-    Add an internal error handler to the thread execution context.
-    @param handler the exception handler to add
-  */
-  void push_internal_handler(Internal_error_handler *handler);
-
-  /**
-    Handle an error condition.
-    @param sql_errno the error number
-    @param level the error level
-    @return true if the error is handled
-  */
-  virtual bool handle_error(error_t sql_errno, const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level);
-
-  /**
-    Remove the error handler last pushed.
-  */
-  void pop_internal_handler();
 
   /**
     Resets Session part responsible for command processing state.
@@ -1034,20 +1013,6 @@ public:
 
   plugin::EventObserverList* getSchemaObservers(const std::string& schema);
   plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
-
- private:
-
-  /** The current internal error handler for this thread, or NULL. */
-  Internal_error_handler *m_internal_handler;
-  /**
-    This memory root is used for two purposes:
-    - for conventional queries, to allocate structures stored in main_lex
-    during parsing, and allocate runtime data (execution plan, etc.)
-    during execution.
-    - for prepared queries, only to allocate runtime data. The parsed
-    tree itself is reused between executions and thus is stored elsewhere.
-  */
-  memory::Root main_mem_root;
 
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);

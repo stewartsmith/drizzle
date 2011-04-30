@@ -45,7 +45,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/plugin.h>
@@ -2171,25 +2170,16 @@ innobase_init(
 
   /* Inverted Booleans */
 
-  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
-  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
-  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-  srv_use_native_aio= (vm.count("disable-native-aio")) ? false : true;
-  support_xa= (vm.count("disable-xa")) ? false : true;
-  btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
-
+  innobase_use_checksums= not vm.count("disable-checksums");
+  innobase_use_doublewrite= not vm.count("disable-doublewrite");
+  srv_adaptive_flushing= not vm.count("disable-adaptive-flushing");
+  srv_use_sys_malloc= not vm.count("use-internal-malloc");
+  srv_use_native_aio= not vm.count("disable-native-aio");
+  support_xa= not vm.count("disable-xa");
+  btr_search_enabled= not vm.count("disable-adaptive-hash-index");
 
   /* Hafta do this here because we need to late-bind the default value */
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= vm["data-home-dir"].as<string>();
-  }
-  else
-  {
-    innobase_data_home_dir= getDataHome().file_string();
-  }
-
+  innobase_data_home_dir= vm.count("data-home-dir") ? vm["data-home-dir"].as<string>() : getDataHome().file_string();
 
   if (vm.count("data-file-path"))
   {
