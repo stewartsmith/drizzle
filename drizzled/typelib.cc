@@ -94,10 +94,10 @@ int TYPELIB::find_type(char *x, e_find_options full_name) const
     {
       while (*i == ' ')
 	i++;					/* skip_end_space */
-      if (! *i || ((false) && *i == field_separator))
+      if (not *i)
 	return(pos+1);
     }
-    if ((!*i && (!(false) || *i != field_separator)) &&
+    if ((!*i && *i != field_separator) &&
         (!*j || !(full_name & e_match_full)))
     {
       find++;
@@ -105,13 +105,9 @@ int TYPELIB::find_type(char *x, e_find_options full_name) const
     }
   }
   if (find == 0 || not x[0])
-  {
-    return(0);
-  }
-  else if (find != 1 || (full_name & e_match_full))
-  {
-    return(-1);
-  }
+    return 0;
+  if (find != 1 || (full_name & e_match_full))
+    return -1;
   if (!(full_name & 2))
     strcpy(x, type_names[findpos]);
   return findpos + 1;
