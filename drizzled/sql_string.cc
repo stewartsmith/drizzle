@@ -185,14 +185,13 @@ bool String::copy()
   return false;
 }
 
-bool String::copy(const String &str)
+void String::copy(const String &str)
 {
   alloc(str.str_length);
   str_length=str.str_length;
   memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
   str_charset=str.str_charset;
-  return false; // return void
 }
 
 bool String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string

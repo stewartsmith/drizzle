@@ -86,8 +86,7 @@ String *Item_func_make_set::val_str(String *str)
 	    result=res;				// Use original string
 	  else
 	  {
-	    if (tmp_str.copy(*res))		// Don't use 'str'
-	      return &my_empty_string;
+	    tmp_str.copy(*res);
 	    result= &tmp_str;
 	  }
 	}
@@ -96,8 +95,7 @@ String *Item_func_make_set::val_str(String *str)
 	  if (result != &tmp_str)
 	  {					// Copy data to tmp_str
       tmp_str.alloc(result->length()+res->length()+1);
-	    if (tmp_str.copy(*result))
-	      return &my_empty_string;
+	    tmp_str.copy(*result);
 	    result= &tmp_str;
 	  }
 	  if (tmp_str.append(STRING_WITH_LEN(","), &my_charset_bin) || tmp_str.append(*res))
