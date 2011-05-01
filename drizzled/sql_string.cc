@@ -145,7 +145,7 @@ bool String::realloc(size_t alloc_length)
   return false; // return void
 }
 
-bool String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
+void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
 {
   size_t l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
@@ -153,7 +153,6 @@ bool String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * co
   alloc(l);
   str_length=(size_t) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
   str_charset=cs;
-  return false; // return void
 }
 
 bool String::set_real(double num,size_t decimals, const charset_info_st * const cs)
