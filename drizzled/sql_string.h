@@ -239,7 +239,7 @@ public:
 
   bool copy();					// Alloc string if not alloced
   void copy(const String &s);			// Allocate new string
-  bool copy(const std::string&, const charset_info_st * const cs);	// Allocate new string
+  void copy(const std::string&, const charset_info_st * const cs);	// Allocate new string
   bool copy(const char *s,size_t arg_length, const charset_info_st * const cs);	// Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const charset_info_st * const cs_from, const charset_info_st * const cs_to,

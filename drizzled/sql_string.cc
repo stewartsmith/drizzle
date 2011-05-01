@@ -194,7 +194,7 @@ void String::copy(const String &str)
   str_charset=str.str_charset;
 }
 
-bool String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
+void String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
 {
   alloc(arg.size());
 
@@ -203,8 +203,6 @@ bool String::copy(const std::string& arg, const charset_info_st * const cs)	// A
 
   Ptr[arg.size()]= 0;
   str_charset= cs;
-
-  return false; // return void
 }
 
 bool String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
