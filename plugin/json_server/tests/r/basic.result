@@ -1,0 +1,27 @@
+create table t1 (a int primary key auto_increment, b varchar(100));
+{
+   "query" : "select * from t1;",
+   "result_set" : [
+      [ "", "" ]
+   ],
+   "sqlstate" : "00000"
+}
+insert into t1 (b) values ("from MySQL protocol");
+{
+   "query" : "select * from t1;",
+   "result_set" : [
+      [ "1", "from MySQL protocol" ],
+      [ "", "" ]
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "error_code" : 1064,
+   "error_message" : "You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'from http' at line 1",
+   "query" : "insert into t1 (b) values (\"from http\";",
+   "sqlstate" : "00000"
+}
+SELECT * from t1;
+a	b
+1	from MySQL protocol
+drop table t1;
