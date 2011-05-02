@@ -841,7 +841,6 @@ static bool lockTableIfDifferent(Session &session,
   {
     if (original_table_identifier.isTmp())
     {
-
       if (session.open_tables.find_temporary_table(new_table_identifier))
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
@@ -850,11 +849,7 @@ static bool lockTableIfDifferent(Session &session,
     }
     else
     {
-      if (session.lock_table_name_if_not_cached(new_table_identifier, &name_lock))
-      {
-        return false;
-      }
-
+      name_lock= session.lock_table_name_if_not_cached(new_table_identifier);
       if (not name_lock)
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);

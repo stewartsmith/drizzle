@@ -775,24 +775,17 @@ table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::iden
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
-bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table)
+Table* Session::lock_table_name_if_not_cached(const identifier::Table &identifier)
 {
   const identifier::Table::Key &key(identifier.getKey());
-
   boost::mutex::scoped_lock scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
-
   if (find_ptr(table::getCache(), key))
-  {
-    *table= 0;
-    return false;
-  }
-
-  *table= &table_cache_insert_placeholder(identifier);
-  (*table)->open_placeholder= true;
-  (*table)->setNext(open_tables.open_tables_);
-  open_tables.open_tables_= *table;
-
-  return false; //return void
+    return NULL;
+  Table& table= table_cache_insert_placeholder(identifier);
+  table.open_placeholder= true;
+  table.setNext(open_tables.open_tables_);
+  open_tables.open_tables_= &table;
+  return &table;
 }
 
 /*
