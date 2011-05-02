@@ -293,6 +293,25 @@ int main(int argc, char **argv)
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
+
+    ifstream old_uuid_file ("server.uuid");
+    if (old_uuid_file.is_open())
+    {
+      getline (old_uuid_file, server_uuid);
+      old_uuid_file.close();
+    } 
+    else 
+    {
+      uuid_t uu;
+      char uuid_string[37];
+      uuid_generate_random(uu);
+      uuid_unparse(uu, uuid_string);
+      ofstream new_uuid_file ("server.uuid");
+      new_uuid_file << uuid_string;
+      new_uuid_file.close();
+      server_uuid= string(uuid_string);
+    }
+
     if (mkdir("local", 0700))
     {
       /* We don't actually care */
@@ -309,8 +328,6 @@ int main(int argc, char **argv)
     full_data_home= boost::filesystem::system_complete(getDataHome());
     errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
-
-
 
   if (server_id == 0)
   {

@@ -258,6 +258,7 @@ uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 back_log_constraints back_log(50);
 DRIZZLED_API uint32_t server_id;
+DRIZZLED_API string server_uuid;
 uint64_t table_cache_size;
 size_t table_def_size;
 uint32_t global_thread_id= 1UL;

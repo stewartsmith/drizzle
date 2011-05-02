@@ -218,6 +218,8 @@ static sys_var_const_str_ptr sys_scheduler("scheduler",
 static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
                                            fix_server_id);
 
+static sys_var_const_string sys_server_uuid("server_uuid", server_uuid);
+
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
 
@@ -1536,6 +1538,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
     add_sys_var_to_list(&sys_server_id, my_long_options);
+    add_sys_var_to_list(&sys_server_uuid, my_long_options);
     add_sys_var_to_list(&sys_sort_buffer, my_long_options);
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
