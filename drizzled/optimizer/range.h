@@ -277,7 +277,7 @@ class SqlSelect : public memory::SqlAlloc
   QuickSelectInterface *quick; /**< If quick-select used */
   COND *cond; /**< where condition */
   Table	*head;
-  internal::IO_CACHE *file; /**< Positions to used records */
+  internal::io_cache_st *file; /**< Positions to used records */
   ha_rows records; /**< Records in use if read from file */
   double read_time; /**< Time to read rows */
   key_map quick_keys; /**< Possible quick keys */

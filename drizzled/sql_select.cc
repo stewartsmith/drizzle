@@ -4949,7 +4949,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     return(-1);
   }
 
-  table->sort.io_cache= new internal::IO_CACHE;
+  table->sort.io_cache= new internal::io_cache_st;
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select

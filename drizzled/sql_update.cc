@@ -322,7 +322,7 @@ int update_query(Session *session, TableList *table_list,
       ha_rows examined_rows;
       FileSort filesort(*session);
 
-      table->sort.io_cache= new internal::IO_CACHE;
+      table->sort.io_cache= new internal::io_cache_st;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
 	  (table->sort.found_records= filesort.run(table, sortorder, length,
@@ -345,7 +345,7 @@ int update_query(Session *session, TableList *table_list,
 	update these in a separate loop based on the pointer.
       */
 
-      internal::IO_CACHE tempfile;
+      internal::io_cache_st tempfile;
       if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
       {
 	goto err;
