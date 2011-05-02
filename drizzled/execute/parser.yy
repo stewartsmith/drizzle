@@ -34,14 +34,6 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-%{
-
-#include <config.h>
-#include <drizzled/execute/symbol.h>
-#include <drizzled/execute/context.h>
-
-using namespace drizzled;
-}%
 
 %error-verbose
 %debug
@@ -51,7 +43,7 @@ using namespace drizzled;
 %defines "drizzled/execute/parser.h"
 %lex-param { yyscan_t *scanner }
 %name-prefix="execute_"
-%parse-param { Context *context }
+%parse-param { ::drizzled::execute::Context *context }
 %parse-param { yyscan_t *scanner }
 %pure-parser
 %require "2.2"
@@ -63,6 +55,9 @@ using namespace drizzled;
 #include <config.h>
 
 #include <stdint.h>
+#include <drizzled/execute/symbol.h>
+#include <drizzled/execute/scanner.h>
+#include <drizzled/execute/context.h>
 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
@@ -73,10 +68,15 @@ int execute_lex(YYSTYPE* lvalp, void* scanner);
 
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0) 
 
-inline void execute_error(Context *context, yyscan_t *scanner, const char *error)
+inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scanner, const char *error)
 {
   if (not context->end())
-    context->abort(context, error);
+  {
+    /* TODO: FIX ME!!! */
+    /*
+    context->abort(context, error);*/
+    (void)scanner; (void)error;
+  }
 }
 
 %}
