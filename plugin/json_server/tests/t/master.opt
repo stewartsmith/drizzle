@@ -1,1 +1,1 @@
---plugin-add=json-server --json-server.port=$PBMS_PORT
+--plugin-add=json-server --json-server.port=$JSON_SERVER_PORT
