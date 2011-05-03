@@ -84,6 +84,7 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 
 %token <string> STRING
 %token <string> QUOTED_STRING
+%token UNKNOWN
 
 %%
 
