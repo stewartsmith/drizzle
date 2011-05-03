@@ -38,14 +38,19 @@
 %top{
 
 #include <config.h>
+#include <drizzled/execute/parser.h>  
 #include <drizzled/execute/context.h>
+#include <drizzled/execute/symbol.h>
+#include <drizzled/lex_string.h>
+
 using namespace drizzled;
 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
 
-#define YY_EXTRA_TYPE Context*
+#define YY_EXTRA_TYPE ::drizzled::execute::Context*
 
 }
 
@@ -86,14 +91,13 @@ using namespace drizzled;
 %option perf-report
 %option prefix="execute_"
 %option reentrant
-
 %%
 
 
 [\t\r\n] ; /* skip whitespace */
 
 [[:alnum:]]["."[:alnum:]_-]+[[:alnum:]] {
-      yylval->string.c_str = yytext;
+      yylval->string.str = yytext;
       yylval->string.length = yyleng;
 
       return STRING;

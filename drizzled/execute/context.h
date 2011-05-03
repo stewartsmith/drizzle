@@ -35,9 +35,11 @@
  *
  */
 
-#include <config.h>
-#include <drizzled/error_t.h>
 #pragma once
+
+#include <config.h>
+#include <cstdlib>
+#include <drizzled/error_t.h>
 
 
 namespace drizzled {
