@@ -1855,7 +1855,7 @@ void Session::close_thread_tables()
     other thread tries to abort the MERGE lock in between.
   */
   if (open_tables.open_tables_)
-    close_open_tables();
+    open_tables.close_open_tables();
 }
 
 void Session::close_tables_for_reopen(TableList **tables)

@@ -280,42 +280,34 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   move one table to free list
 */
 
-bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
+bool Open_tables_state::free_cached_table()
 {
-  bool found_old_table= false;
-
-  (void)scopedLock;
-
-  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables.open_tables_);
+  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables_);
 
   safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   assert(table->key_read == 0);
-  assert(!table->cursor || table->cursor->inited == Cursor::NONE);
+  assert(not table->cursor || table->cursor->inited == Cursor::NONE);
 
-  open_tables.open_tables_= table->getNext();
+  open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
-      open_tables.version != g_refresh_version || !table->db_stat)
+      version != g_refresh_version || !table->db_stat)
   {
     table::remove_table(table);
-    found_old_table= true;
+    return true;
   }
-  else
-  {
-    /*
-      Open placeholders have Table::db_stat set to 0, so they should be
-      handled by the first alternative.
-    */
-    assert(not table->open_placeholder);
+  /*
+    Open placeholders have Table::db_stat set to 0, so they should be
+    handled by the first alternative.
+  */
+  assert(not table->open_placeholder);
 
-    /* Free memory and reset for next loop */
-    table->cursor->ha_reset();
-    table->in_use= NULL;
+  /* Free memory and reset for next loop */
+  table->cursor->ha_reset();
+  table->in_use= NULL;
 
-    table::getUnused().link(table);
-  }
-
-  return found_old_table;
+  table::getUnused().link(table);
+  return false;
 }
 
 
@@ -327,7 +319,7 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
   @remark It should not ordinarily be called directly.
 */
 
-void Session::close_open_tables()
+void Open_tables_state::close_open_tables()
 {
   bool found_old_table= false;
 
@@ -335,11 +327,10 @@ void Session::close_open_tables()
 
   boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
 
-  while (open_tables.open_tables_)
+  while (open_tables_)
   {
-    found_old_table|= free_cached_table(scoped_lock);
+    found_old_table|= free_cached_table();
   }
-
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */

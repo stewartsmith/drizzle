@@ -1066,7 +1066,6 @@ public:
   void close_thread_tables();
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
-  void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
   /**
@@ -1167,7 +1166,6 @@ public:
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
 
