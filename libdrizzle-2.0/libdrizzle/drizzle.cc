@@ -676,7 +676,7 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
                        const char *format, ...)
 {
   size_t size;
-  size_t written;
+  int written;
   char *ptr;
   char log_buffer[DRIZZLE_MAX_ERROR_SIZE];
   va_list args;
@@ -689,7 +689,7 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
   ptr++;
 
   va_start(args, format);
-  written= (size_t)vsnprintf(ptr, DRIZZLE_MAX_ERROR_SIZE - size, format, args);
+  written= vsnprintf(ptr, DRIZZLE_MAX_ERROR_SIZE - size, format, args);
   va_end(args);
 
   if (written < 0) size= DRIZZLE_MAX_ERROR_SIZE;
