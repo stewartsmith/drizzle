@@ -26,7 +26,7 @@
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 namespace drizzled {
 

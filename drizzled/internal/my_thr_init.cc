@@ -82,7 +82,9 @@ void my_thread_init()
 {
   // We should mever see my_thread_init()  called twice
   if (THR_KEY_mysys.get())
-    return;
+  {
+    abort();
+  }
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
   THR_KEY_mysys.reset(new st_my_thread_var(++thread_id));
 }

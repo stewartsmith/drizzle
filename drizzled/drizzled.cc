@@ -258,6 +258,7 @@ uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 back_log_constraints back_log(50);
 DRIZZLED_API uint32_t server_id;
+DRIZZLED_API string server_uuid;
 uint64_t table_cache_size;
 size_t table_def_size;
 uint32_t global_thread_id= 1UL;
@@ -439,7 +440,7 @@ void close_connections(void)
 
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    session::Cache::list list= session::Cache::getCache();
 
     BOOST_FOREACH(session::Cache::list::reference tmp, list)
     {
@@ -451,7 +452,7 @@ void close_connections(void)
     }
   }
 
-  if (session::Cache::singleton().count())
+  if (session::Cache::count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -462,7 +463,7 @@ void close_connections(void)
   for (;;)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    session::Cache::list list= session::Cache::getCache();
 
     if (list.empty())
     {
@@ -513,7 +514,7 @@ void clean_up(bool print_message)
   if (print_message && server_start_time)
     errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
 
-  session::Cache::singleton().shutdownFirst();
+  session::Cache::shutdownFirst();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -624,7 +625,7 @@ static void set_root(const char *path)
 
 void Session::unlink(session_id_t &session_id)
 {
-  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+  Session::shared_ptr session= session::Cache::find(session_id);
 
   if (session)
     unlink(session);
@@ -642,7 +643,7 @@ void Session::unlink(Session::shared_ptr &session)
   {
     // We should do something about an error...
   }
-  session::Cache::singleton().erase(session);
+  session::Cache::erase(session);
 }
 
 
@@ -2046,7 +2047,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   g_refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session::Cache::singleton().getCache().clear();
+  session::Cache::getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";

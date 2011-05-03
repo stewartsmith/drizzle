@@ -32,9 +32,9 @@
 #include <drizzled/key_map.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/structs.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <string>
 #include <vector>

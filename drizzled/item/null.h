@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item/basic_constant.h>
 
 namespace drizzled

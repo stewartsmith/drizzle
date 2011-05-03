@@ -29,15 +29,10 @@ namespace drizzled {
 #define GET_ULL        8
 #define GET_STR        9
 #define GET_STR_ALLOC 10
-#define GET_DISABLED  11
-#define GET_ENUM      12
-#define GET_SET       13
-#define GET_DOUBLE    14
 #define GET_SIZE      15
 #define GET_UINT64    16
 #define GET_ULONG_IS_FAIL 17
 
-#define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
 
 enum loglevel {

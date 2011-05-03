@@ -40,7 +40,7 @@ public:
     user(arg)
   {
     boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
-    local_list= session::Cache::singleton().getCache();
+    local_list= session::Cache::getCache();
     iter= local_list.begin();
   }
 

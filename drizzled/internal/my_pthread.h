@@ -45,10 +45,6 @@ namespace drizzled
 namespace internal
 {
 
-#define pthread_key(T,V) pthread_key_t V
-#define pthread_handler_t void *
-typedef void *(* pthread_handler)(void *);
-
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
 #ifdef HAVE_SCHED_YIELD

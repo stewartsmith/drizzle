@@ -28,7 +28,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_table.h>
@@ -841,7 +841,6 @@ static bool lockTableIfDifferent(Session &session,
   {
     if (original_table_identifier.isTmp())
     {
-
       if (session.open_tables.find_temporary_table(new_table_identifier))
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
@@ -850,11 +849,7 @@ static bool lockTableIfDifferent(Session &session,
     }
     else
     {
-      if (session.lock_table_name_if_not_cached(new_table_identifier, &name_lock))
-      {
-        return false;
-      }
-
+      name_lock= session.lock_table_name_if_not_cached(new_table_identifier);
       if (not name_lock)
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
@@ -1605,7 +1600,7 @@ copy_data_between_tables(Session *session,
       else
       {
         FileSort filesort(*session);
-        from->sort.io_cache= new internal::IO_CACHE;
+        from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
         tables.setTableName(from->getMutableShare()->getTableName());

@@ -33,7 +33,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
 #include <drizzled/lock.h>
@@ -51,6 +51,7 @@ extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
 extern uint32_t server_id;
+extern std::string server_uuid;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -255,6 +256,32 @@ public:
   void setScoreboardIndex(int32_t in_scoreboard_index)
   {
     scoreboard_index= in_scoreboard_index;
+  }
+
+  bool isOriginatingServerUUIDSet()
+  {
+    return originating_server_uuid_set;
+  }
+
+  void setOriginatingServerUUID(std::string in_originating_server_uuid)
+  {
+    originating_server_uuid= in_originating_server_uuid;
+    originating_server_uuid_set= true;
+  }
+
+  std::string &getOriginatingServerUUID()
+  {
+    return originating_server_uuid;
+  }
+
+  void setOriginatingCommitID(uint64_t in_originating_commit_id)
+  {
+    originating_commit_id= in_originating_commit_id;
+  }
+
+  uint64_t getOriginatingCommitID()
+  {
+    return originating_commit_id;
   }
 
   /**
@@ -669,6 +696,11 @@ public:
     return server_id;
   }
 
+  inline std::string &getServerUUID() const
+  {
+    return server_uuid;
+  }
+
   /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
@@ -865,6 +897,23 @@ public:
   void setAbort(bool arg);
   void lockOnSys();
   void set_status_var_init();
+  /**
+    Set the current database; use deep copy of C-string.
+
+    @param new_db     a pointer to the new database name.
+    @param new_db_len length of the new database name.
+
+    Initialize the current database from a NULL-terminated string with
+    length. If we run out of memory, we free the current database and
+    return true.  This way the user will notice the error as there will be
+    no current database selected (in addition to the error message set by
+    malloc).
+
+    @note This operation just sets {db, db_length}. Switching the current
+    database usually involves other actions, like switching other database
+    attributes including security context. In the future, this operation
+    will be made private and more convenient interface will be provided.
+  */
   void set_db(const std::string&);
 
   /*
@@ -1057,7 +1106,7 @@ public:
 
   /* Create a lock in the cache */
   table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
-  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
+  Table* lock_table_name_if_not_cached(const identifier::Table&);
 
   session::TableMessages &getMessageCache();
 
@@ -1145,6 +1194,9 @@ private:
   rusage usage;
   identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
+  bool originating_server_uuid_set;
+  std::string originating_server_uuid;
+  uint64_t originating_commit_id;
   plugin::Client *client;
 };
 

@@ -240,6 +240,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   tablespace_op(false),
   use_usage(false),
   security_ctx(identifier::User::make_shared()),
+  originating_server_uuid_set(false),
   client(client_arg)
 {
   client->setSession(this);
@@ -255,6 +256,8 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   lex().current_select= 0;
   memset(&variables, 0, sizeof(variables));
   scoreboard_index= -1;
+  originating_server_uuid= "";
+  originating_commit_id= 0;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
 
   /* query_cache init */
@@ -603,7 +606,7 @@ bool Session::schedule(Session::shared_ptr &arg)
   current_global_counters.connections++;
   arg->thread_id= arg->variables.pseudo_thread_id= global_thread_id++;
 
-  session::Cache::singleton().insert(arg);
+  session::Cache::insert(arg);
 
   if (unlikely(plugin::EventObserver::connectSession(*arg)))
   {
@@ -987,7 +990,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
+    cache(static_cast<internal::io_cache_st *>(memory::sql_calloc(sizeof(internal::io_cache_st)))),
     row_count(0L)
 {
   path= "";
@@ -1027,7 +1030,7 @@ select_export::~select_export()
 static int create_file(Session *session,
                        fs::path &target_path,
                        file_exchange *exchange,
-                       internal::IO_CACHE *cache)
+                       internal::io_cache_st *cache)
 {
   fs::path to_file(exchange->file_name);
   int file;

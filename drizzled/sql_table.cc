@@ -35,7 +35,6 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/system_variables.h>
@@ -1477,14 +1476,9 @@ static bool drizzle_create_table(Session *session,
                                  uint32_t select_field_count,
                                  bool is_if_not_exists)
 {
-  Table *name_lock= NULL;
+  Table *name_lock= session->lock_table_name_if_not_cached(identifier);
   bool result;
-
-  if (session->lock_table_name_if_not_cached(identifier, &name_lock))
-  {
-    result= true;
-  }
-  else if (name_lock == NULL)
+  if (name_lock == NULL)
   {
     if (is_if_not_exists)
     {
@@ -2104,19 +2098,7 @@ bool create_like_table(Session* session,
   }
   else // Standard table which will require locks.
   {
-    Table *name_lock= 0;
-
-    if (session->lock_table_name_if_not_cached(destination_identifier, &name_lock))
-    {
-      if (name_lock)
-      {
-        boost::mutex::scoped_lock lock(table::Cache::mutex()); /* unlink open tables for create table like*/
-        session->unlink_open_table(name_lock);
-      }
-
-      return res;
-    }
-
+    Table *name_lock= session->lock_table_name_if_not_cached(destination_identifier);
     if (not name_lock)
     {
       table_exists= true;

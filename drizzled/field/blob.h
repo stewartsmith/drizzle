@@ -21,7 +21,7 @@
 #pragma once
 
 #include <drizzled/field/str.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <string>
 #include <drizzled/visibility.h>
 

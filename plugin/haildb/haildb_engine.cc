@@ -91,7 +91,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
 
-#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"

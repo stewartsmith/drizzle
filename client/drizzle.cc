@@ -443,26 +443,24 @@ private:
   const char *name;        /* User printable name of the function. */
   char cmd_char;        /* msql command character */
 public:
-Commands(const char *in_name,
-         char in_cmd_char,
-         int (*in_func)(string *str,const char *name),
-         bool in_takes_params,
-         const char *in_doc)
-  :
-  name(in_name),
-  cmd_char(in_cmd_char),
-  func(in_func),
-  takes_params(in_takes_params),
-  doc(in_doc)
+  Commands(const char *in_name,
+           char in_cmd_char,
+           int (*in_func)(string *str,const char *name),
+           bool in_takes_params,
+           const char *in_doc) :
+    name(in_name),
+    cmd_char(in_cmd_char),
+    func(in_func),
+    takes_params(in_takes_params),
+    doc(in_doc)
   {}
 
-  Commands()
-  :
-  name(),
-  cmd_char(),
-  func(NULL),
-  takes_params(false),
-  doc()
+  Commands() :
+    name(),
+    cmd_char(),
+    func(NULL),
+    takes_params(false),
+    doc()
   {}
 
   int (*func)(string *str,const char *);/* Function to call to do the job. */
@@ -540,9 +538,9 @@ static Commands commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
     N_("Use another schema. Takes schema name as argument.") ),
-  Commands( "shutdown",    'u', com_shutdown,    1,
+  Commands( "shutdown",    'Q', com_shutdown,    false,
     N_("Shutdown the instance you are connected too.") ),
-  Commands( "warnings", 'W', com_warnings,  0,
+  Commands( "warnings", 'W', com_warnings,  false,
     N_("Show warnings after every statement.") ),
   Commands( "nowarning", 'w', com_nowarnings, 0,
     N_("Don't show warnings after every statement.") ),
