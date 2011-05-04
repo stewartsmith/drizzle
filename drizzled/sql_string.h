@@ -237,7 +237,7 @@ public:
     return *this;
   }
 
-  bool copy();					// Alloc string if not alloced
+  void copy();					// Alloc string if not alloced
   void copy(const String&);			// Allocate new string
   void copy(const std::string&, const charset_info_st*);	// Allocate new string
   void copy(const char*, size_t, const charset_info_st*); // Allocate new string
@@ -247,11 +247,11 @@ public:
   bool set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st * const cs);
   bool copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
             const charset_info_st * const csto, size_t *errors);
-  bool append(const String &s);
-  bool append(const char *s);
-  bool append(const char *s,size_t arg_length);
-  bool append(const char *s,size_t arg_length, const charset_info_st * const cs);
-  bool append_with_prefill(const char *s, size_t arg_length,
+  void append(const String &s);
+  void append(const char *s);
+  void append(const char *s,size_t arg_length);
+  void append(const char *s,size_t arg_length, const charset_info_st * const cs);
+  void append_with_prefill(const char *s, size_t arg_length,
 			   size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1

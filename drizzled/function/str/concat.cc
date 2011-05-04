@@ -83,8 +83,7 @@ String *Item_func_concat::val_str(String *str)
       }
       else if (res == &tmp_value)
       {
-        if (res->append(*res2))			// Must be a blob
-          goto null;
+        res->append(*res2);
       }
       else if (res2 == &tmp_value)
       {						// This can happend only 1 time
@@ -139,8 +138,7 @@ String *Item_func_concat::val_str(String *str)
         }
 
         tmp_value.copy(*res);
-        if (tmp_value.append(*res2))
-          goto null;
+        tmp_value.append(*res2);
 
         res= &tmp_value;
         use_as_buff=str;
@@ -252,8 +250,8 @@ String *Item_func_concat_ws::val_str(String *str)
     }
     else if (res == &tmp_value)
     {
-      if (res->append(*sep_str) || res->append(*res2))
-        goto null; // Must be a blob
+      res->append(*sep_str);
+      res->append(*res2);
     }
     else if (res2 == &tmp_value)
     {						// This can happend only 1 time
@@ -309,9 +307,8 @@ String *Item_func_concat_ws::val_str(String *str)
       }
 
       tmp_value.copy(*res);
-      if (tmp_value.append(*sep_str) ||
-          tmp_value.append(*res2))
-        goto null;
+      tmp_value.append(*sep_str);
+      tmp_value.append(*res2);
       res= &tmp_value;
       use_as_buff=str;
     }

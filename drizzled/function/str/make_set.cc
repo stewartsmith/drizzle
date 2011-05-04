@@ -98,8 +98,8 @@ String *Item_func_make_set::val_str(String *str)
 	    tmp_str.copy(*result);
 	    result= &tmp_str;
 	  }
-	  if (tmp_str.append(STRING_WITH_LEN(","), &my_charset_bin) || tmp_str.append(*res))
-	    return &my_empty_string;
+	  tmp_str.append(STRING_WITH_LEN(","), &my_charset_bin);
+    tmp_str.append(*res);
 	}
       }
     }

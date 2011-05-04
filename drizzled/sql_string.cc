@@ -175,14 +175,13 @@ bool String::set_real(double num,size_t decimals, const charset_info_st * const 
 }
 
 
-bool String::copy()
+void String::copy()
 {
   if (!alloced)
   {
     Alloced_length=0;				// Force realloc
-    return realloc(str_length);
+    realloc(str_length);
   }
-  return false;
 }
 
 void String::copy(const String &str)
@@ -309,16 +308,14 @@ bool String::set_ascii(const char *str, size_t arg_length)
   return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
 }
 
-bool String::append(const String &s)
+void String::append(const String &s)
 {
   if (s.length())
   {
-    if (realloc(str_length+s.length()))
-      return true;
+    realloc(str_length+s.length());
     memcpy(Ptr+str_length,s.ptr(),s.length());
     str_length+=s.length();
   }
-  return false;
 }
 
 
@@ -326,19 +323,17 @@ bool String::append(const String &s)
   Append an ASCII string to the a string of the current character set
 */
 
-bool String::append(const char *s,size_t arg_length)
+void String::append(const char *s,size_t arg_length)
 {
   if (!arg_length)
-    return false;
+    return;
 
   /*
     For an ASCII compatinble string we can just append.
   */
-  if (realloc(str_length+arg_length))
-    return true;
+  realloc(str_length+arg_length);
   memcpy(Ptr+str_length,s,arg_length);
   str_length+=arg_length;
-  return false;
 }
 
 
@@ -346,9 +341,9 @@ bool String::append(const char *s,size_t arg_length)
   Append a 0-terminated ASCII string
 */
 
-bool String::append(const char *s)
+void String::append(const char *s)
 {
-  return append(s, strlen(s));
+  append(s, strlen(s));
 }
 
 
@@ -357,24 +352,20 @@ bool String::append(const char *s)
   with character set recoding
 */
 
-bool String::append(const char *s,size_t arg_length, const charset_info_st * const)
+void String::append(const char *s,size_t arg_length, const charset_info_st * const)
 {
-  if (realloc(str_length + arg_length))
-    return true;
+  realloc(str_length + arg_length);
   memcpy(Ptr + str_length, s, arg_length);
   str_length+= arg_length;
-
-  return false;
 }
 
 
-bool String::append_with_prefill(const char *s,size_t arg_length,
+void String::append_with_prefill(const char *s,size_t arg_length,
 		 size_t full_length, char fill_char)
 {
   int t_length= arg_length > full_length ? arg_length : full_length;
 
-  if (realloc(str_length + t_length))
-    return true;
+  realloc(str_length + t_length);
   t_length= full_length - arg_length;
   if (t_length > 0)
   {
@@ -382,7 +373,6 @@ bool String::append_with_prefill(const char *s,size_t arg_length,
     str_length=str_length + t_length;
   }
   append(s, arg_length);
-  return false;
 }
 
 size_t String::numchars()
