@@ -52,8 +52,7 @@ String *Item_func_conv::val_str(String *str)
                                  from_base, &endptr, &err);
 
   ptr= internal::int64_t2str(dec, ans, to_base);
-  if (str->copy(ans, (uint32_t) (ptr-ans), default_charset()))
-    return &my_empty_string;
+  str->copy(ans, (uint32_t) (ptr-ans), default_charset());
   return str;
 }
 

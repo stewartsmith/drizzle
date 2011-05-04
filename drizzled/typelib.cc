@@ -78,8 +78,6 @@ int TYPELIB::find_type(const char *x, e_find_options full_name) const
 
 int TYPELIB::find_type(char *x, e_find_options full_name) const
 {
-  assert(~full_name & e_allow_int);
-  assert(~full_name & e_use_comma);
   if (!count)
     return 0;
   int find= 0;
@@ -89,48 +87,31 @@ int TYPELIB::find_type(char *x, e_find_options full_name) const
   {
     const char *i;
     for (i= x;
-    	*i && (!(full_name & e_use_comma) || *i != field_separator) &&
+    	*i && *i != field_separator &&
         my_toupper(&my_charset_utf8_general_ci,*i) ==
     		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
     if (! *j)
     {
       while (*i == ' ')
 	i++;					/* skip_end_space */
-      if (! *i || ((full_name & e_use_comma) && *i == field_separator))
+      if (not *i)
 	return(pos+1);
     }
-    if ((!*i && (!(full_name & e_use_comma) || *i != field_separator)) &&
+    if ((!*i && *i != field_separator) &&
         (!*j || !(full_name & e_match_full)))
     {
       find++;
       findpos=pos;
     }
   }
-  if (find == 0 && (full_name & e_allow_int) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
-      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < count)
-    find=1;
-  else if (find == 0 || ! x[0])
-  {
-    return(0);
-  }
-  else if (find != 1 || (full_name & e_match_full))
-  {
-    return(-1);
-  }
+  if (find == 0 || not x[0])
+    return 0;
+  if (find != 1 || (full_name & e_match_full))
+    return -1;
   if (!(full_name & 2))
     strcpy(x, type_names[findpos]);
   return findpos + 1;
 } /* find_type */
-
-	/* Get type */
-	/* Warning first type is 0 */
-
-const char *TYPELIB::get_type(uint32_t nr) const
-{
-  if (nr < count && type_names)
-    return type_names[nr];
-  return "?";
-}
 
 /*
   Create a copy of a specified TYPELIB structure.

@@ -83,13 +83,11 @@ String *Item_func_concat::val_str(String *str)
       }
       else if (res == &tmp_value)
       {
-        if (res->append(*res2))			// Must be a blob
-          goto null;
+        res->append(*res2);
       }
       else if (res2 == &tmp_value)
       {						// This can happend only 1 time
-        if (tmp_value.replace(0,0,*res))
-          goto null;
+        tmp_value.replace(0,0,*res);
         res= &tmp_value;
         use_as_buff=str;			// Put next arg here
       }
@@ -105,9 +103,7 @@ String *Item_func_concat::val_str(String *str)
         tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
                          res2->length());
         /* Place res2 at start of tmp_value, remove chars before res2 */
-        if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
-                              *res))
-          goto null;
+        tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()), *res);
         res= &tmp_value;
         use_as_buff=str;			// Put next arg here
       }
@@ -138,8 +134,8 @@ String *Item_func_concat::val_str(String *str)
           }
         }
 
-        if (tmp_value.copy(*res) || tmp_value.append(*res2))
-          goto null;
+        tmp_value.copy(*res);
+        tmp_value.append(*res2);
 
         res= &tmp_value;
         use_as_buff=str;
@@ -251,13 +247,13 @@ String *Item_func_concat_ws::val_str(String *str)
     }
     else if (res == &tmp_value)
     {
-      if (res->append(*sep_str) || res->append(*res2))
-        goto null; // Must be a blob
+      res->append(*sep_str);
+      res->append(*res2);
     }
     else if (res2 == &tmp_value)
     {						// This can happend only 1 time
-      if (tmp_value.replace(0,0,*sep_str) || tmp_value.replace(0,0,*res))
-        goto null;
+      tmp_value.replace(0,0,*sep_str);
+      tmp_value.replace(0,0,*res);
       res= &tmp_value;
       use_as_buff=str;				// Put next arg here
     }
@@ -273,10 +269,8 @@ String *Item_func_concat_ws::val_str(String *str)
       tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
                        res2->length());
       /* Place res2 at start of tmp_value, remove chars before res2 */
-      if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
-                            *res) ||
-          tmp_value.replace(res->length(),0, *sep_str))
-        goto null;
+      tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()), *res);
+      tmp_value.replace(res->length(),0, *sep_str);
       res= &tmp_value;
       use_as_buff=str;			// Put next arg here
     }
@@ -307,10 +301,9 @@ String *Item_func_concat_ws::val_str(String *str)
         }
       }
 
-      if (tmp_value.copy(*res) ||
-          tmp_value.append(*sep_str) ||
-          tmp_value.append(*res2))
-        goto null;
+      tmp_value.copy(*res);
+      tmp_value.append(*sep_str);
+      tmp_value.append(*res2);
       res= &tmp_value;
       use_as_buff=str;
     }
