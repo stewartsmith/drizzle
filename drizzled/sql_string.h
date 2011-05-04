@@ -151,11 +151,11 @@ public:
     }
     str_charset= cs;
   }
-  bool set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
-  bool set(int64_t num, const charset_info_st * const cs)
-  { return set_int(num, false, cs); }
-  bool set(uint64_t num, const charset_info_st * const cs)
-  { return set_int(static_cast<int64_t>(num), true, cs); }
+  void set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
+  void set(int64_t num, const charset_info_st * const cs)
+  { set_int(num, false, cs); }
+  void set(uint64_t num, const charset_info_st * const cs)
+  { set_int(static_cast<int64_t>(num), true, cs); }
   bool set_real(double num,size_t decimals, const charset_info_st * const cs);
 
   /*
@@ -238,9 +238,9 @@ public:
   }
 
   bool copy();					// Alloc string if not alloced
-  bool copy(const String &s);			// Allocate new string
-  bool copy(const std::string&, const charset_info_st * const cs);	// Allocate new string
-  void copy(const char *s,size_t arg_length, const charset_info_st * const); // Allocate new string
+  void copy(const String&);			// Allocate new string
+  void copy(const std::string&, const charset_info_st*);	// Allocate new string
+  void copy(const char*, size_t, const charset_info_st*); // Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const charset_info_st * const cs_from, const charset_info_st * const cs_to,
 			       size_t *offset);

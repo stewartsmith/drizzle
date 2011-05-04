@@ -138,7 +138,8 @@ String *Item_func_concat::val_str(String *str)
           }
         }
 
-        if (tmp_value.copy(*res) || tmp_value.append(*res2))
+        tmp_value.copy(*res);
+        if (tmp_value.append(*res2))
           goto null;
 
         res= &tmp_value;
@@ -307,8 +308,8 @@ String *Item_func_concat_ws::val_str(String *str)
         }
       }
 
-      if (tmp_value.copy(*res) ||
-          tmp_value.append(*sep_str) ||
+      tmp_value.copy(*res);
+      if (tmp_value.append(*sep_str) ||
           tmp_value.append(*res2))
         goto null;
       res= &tmp_value;

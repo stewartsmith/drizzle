@@ -337,7 +337,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setTransactionalStorageEngine(engine);
   trans->registerResource(&resource_context);
 
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -370,8 +370,6 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setTransactionalStorageEngine(engine);
   resource_context.setXaResourceManager(resource_manager);
   trans->registerResource(&resource_context);
-
-  trans->no_2pc|= false;
 }
 
 void TransactionServices::registerResourceForTransaction(Session& session,
@@ -393,7 +391,7 @@ void TransactionServices::registerResourceForTransaction(Session& session,
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -423,7 +421,7 @@ void TransactionServices::registerResourceForTransaction(Session& session,
   resource_context.setMonitored(monitored);
   resource_context.setXaResourceManager(resource_manager);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
