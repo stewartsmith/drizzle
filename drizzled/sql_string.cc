@@ -450,12 +450,12 @@ skip:
   If wrong parameter or not enough memory, do nothing
 */
 
-bool String::replace(size_t offset,size_t arg_length,const String &to)
+void String::replace(size_t offset,size_t arg_length,const String &to)
 {
-  return replace(offset,arg_length,to.ptr(),to.length());
+  replace(offset,arg_length,to.ptr(),to.length());
 }
 
-bool String::replace(size_t offset,size_t arg_length,
+void String::replace(size_t offset,size_t arg_length,
                      const char *to, size_t to_length)
 {
   long diff = (long) to_length-(long) arg_length;
@@ -472,8 +472,7 @@ bool String::replace(size_t offset,size_t arg_length,
     {
       if (diff)
       {
-	if (realloc(str_length+(size_t) diff))
-	  return true;
+	realloc(str_length+(size_t) diff);
 	internal::bmove_upp((unsigned char*) Ptr+str_length+diff,
                             (unsigned char*) Ptr+str_length,
                             str_length-offset-arg_length);
@@ -483,7 +482,6 @@ bool String::replace(size_t offset,size_t arg_length,
     }
     str_length+=(size_t) diff;
   }
-  return false;
 }
 
 

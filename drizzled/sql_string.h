@@ -255,9 +255,10 @@ public:
 			   size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
-  bool replace(size_t offset,size_t arg_length,const char *to,size_t length);
-  bool replace(size_t offset,size_t arg_length,const String &to);
-  inline bool append(char chr)
+  void replace(size_t offset,size_t arg_length,const char *to,size_t length);
+  void replace(size_t offset,size_t arg_length,const String &to);
+
+  inline void append(char chr)
   {
     if (str_length < Alloced_length)
     {
@@ -265,11 +266,9 @@ public:
     }
     else
     {
-      if (realloc(str_length+1))
-        return 1;
+      realloc(str_length+1);
       Ptr[str_length++]=chr;
     }
-    return 0;
   }
   friend int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
   friend int stringcmp(const String *a,const String *b);
