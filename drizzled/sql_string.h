@@ -142,7 +142,7 @@ public:
     str_length=arg_length; Alloced_length=0 ; alloced=0;
     str_charset=cs;
   }
-  bool set_ascii(const char *str, size_t arg_length);
+  void set_ascii(const char *str, size_t arg_length);
   inline void set_quick(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     if (!alloced)
@@ -156,7 +156,7 @@ public:
   { set_int(num, false, cs); }
   void set(uint64_t num, const charset_info_st * const cs)
   { set_int(static_cast<int64_t>(num), true, cs); }
-  bool set_real(double num,size_t decimals, const charset_info_st * const cs);
+  void set_real(double num,size_t decimals, const charset_info_st* cs);
 
   /*
     PMG 2004.11.12

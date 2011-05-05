@@ -26,8 +26,8 @@
 
 #include "net_serv.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+
 void compose_ip_addresses(std::vector<std::string> options);
 
 class ProtocolCounters
