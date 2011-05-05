@@ -27,8 +27,7 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {
@@ -99,13 +98,12 @@ String *Item_char_typecast::val_str(String *str)
   {
     // Convert character set if differ
     size_t dummy_errors;
-    if (!(res= args[0]->val_str(&tmp_value)) ||
-        str->copy(res->ptr(), res->length(), from_cs,
-        cast_cs, &dummy_errors))
+    if (!(res= args[0]->val_str(&tmp_value)))
     {
       null_value= 1;
       return 0;
     }
+		str->copy(res->ptr(), res->length(), from_cs, cast_cs, &dummy_errors);
     res= str;
   }
 

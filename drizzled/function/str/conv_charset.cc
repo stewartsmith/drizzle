@@ -21,8 +21,7 @@
 
 #include <drizzled/function/str/conv_charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String *Item_func_conv_charset::val_str(String *str)
 {
@@ -36,8 +35,8 @@ String *Item_func_conv_charset::val_str(String *str)
     null_value=1;
     return 0;
   }
-  null_value= str_value.copy(arg->ptr(),arg->length(),arg->charset(),
-                             conv_charset, &dummy_errors);
+  null_value= false;
+  str_value.copy(arg->ptr(),arg->length(),arg->charset(), conv_charset, &dummy_errors);
   return null_value ? 0 : check_well_formed_result(&str_value);
 }
 

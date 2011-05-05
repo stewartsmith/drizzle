@@ -639,7 +639,8 @@ bool ClientMySQLProtocol::store(void)
 {
   char buff[1];
   buff[0]= (char)251;
-  return packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
+  packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
+	return false; // return void
 }
 
 bool ClientMySQLProtocol::store(int32_t from)

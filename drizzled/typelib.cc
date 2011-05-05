@@ -72,7 +72,7 @@ int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 
 int TYPELIB::find_type(const char *x, e_find_options full_name) const
 {
-  assert(full_name & 2);
+  assert(full_name & e_dont_complete);
   return find_type(const_cast<char*>(x), full_name);
 }
 
@@ -108,7 +108,7 @@ int TYPELIB::find_type(char *x, e_find_options full_name) const
     return 0;
   if (find != 1 || (full_name & e_match_full))
     return -1;
-  if (!(full_name & 2))
+  if (!(full_name & e_dont_complete))
     strcpy(x, type_names[findpos]);
   return findpos + 1;
 } /* find_type */

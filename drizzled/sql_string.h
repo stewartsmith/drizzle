@@ -242,10 +242,10 @@ public:
   void copy(const std::string&, const charset_info_st*);	// Allocate new string
   void copy(const char*, size_t, const charset_info_st*); // Allocate new string
   static bool needs_conversion(size_t arg_length,
-  			       const charset_info_st * const cs_from, const charset_info_st * const cs_to,
+  			       const charset_info_st* cs_from, const charset_info_st* cs_to,
 			       size_t *offset);
-  bool set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st * const cs);
-  bool copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
+  void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
+  void copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
             const charset_info_st * const csto, size_t *errors);
   void append(const String &s);
   void append(const char *s);
@@ -309,15 +309,15 @@ public:
     return Ptr+ old_length;			/* Area to use */
   }
 
-  inline bool append(const char *s, size_t arg_length, size_t step_alloc)
+  inline void append(const char *s, size_t arg_length, size_t step_alloc)
   {
     size_t new_length= arg_length + str_length;
-    if (new_length > Alloced_length && realloc(new_length + step_alloc))
-      return true;
+    if (new_length > Alloced_length)
+			realloc(new_length + step_alloc);
     memcpy(Ptr+str_length, s, arg_length);
     str_length+= arg_length;
-    return false;
   }
+
   void print(String *print);
 
   /* Swap two string objects. Efficient way to exchange data without memcpy. */
