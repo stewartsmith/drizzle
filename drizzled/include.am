@@ -505,7 +505,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
 			      drizzled/typelib.h \
-			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
 			      drizzled/user_var_entry.h \
@@ -897,7 +896,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/type/boolean.cc \
 			   drizzled/type/decimal.cc \
 			   drizzled/type/time.cc \
-			   drizzled/tztime.cc \
 			   drizzled/unique.cc \
 			   drizzled/user_var_entry.cc \
 			   drizzled/version.cc \
