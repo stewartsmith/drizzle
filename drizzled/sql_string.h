@@ -245,8 +245,7 @@ public:
   			       const charset_info_st* cs_from, const charset_info_st* cs_to,
 			       size_t *offset);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
-  void copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
-            const charset_info_st * const csto, size_t *errors);
+  void copy(const char*s,size_t arg_length, const charset_info_st& csto);
   void append(const String &s);
   void append(const char *s);
   void append(const char *s,size_t arg_length);

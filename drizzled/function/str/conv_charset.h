@@ -38,15 +38,14 @@ public:
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {
-      size_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
       if (!str)
         null_value= 1;
       else
-        str_value.copy(str->ptr(), str->length(), str->charset(), conv_charset, &errors);
+        str_value.copy(str->ptr(), str->length(), conv_charset);
       use_cached_value= 1;
       str_value.mark_as_const();
-      safe= (errors == 0);
+      safe= true;
     }
     else
     {

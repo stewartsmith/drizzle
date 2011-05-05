@@ -190,11 +190,10 @@ void Field_enum::sql_type(String &res) const
   uint32_t *len= typelib->type_lengths;
   for (const char **pos= typelib->type_names; *pos; pos++, len++)
   {
-    size_t dummy_errors;
     if (flag)
       res.append(',');
     /* convert to res.charset() == utf8, then quote */
-    enum_item.copy(*pos, *len, charset(), res.charset(), &dummy_errors);
+    enum_item.copy(*pos, *len, res.charset());
     append_unescaped(&res, enum_item.c_ptr(), enum_item.length());
     flag= 1;
   }

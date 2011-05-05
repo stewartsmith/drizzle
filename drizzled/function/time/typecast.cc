@@ -97,13 +97,12 @@ String *Item_char_typecast::val_str(String *str)
   else
   {
     // Convert character set if differ
-    size_t dummy_errors;
     if (!(res= args[0]->val_str(&tmp_value)))
     {
       null_value= 1;
       return 0;
     }
-		str->copy(res->ptr(), res->length(), from_cs, cast_cs, &dummy_errors);
+		str->copy(res->ptr(), res->length(), cast_cs);
     res= str;
   }
 
