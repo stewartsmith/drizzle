@@ -2136,48 +2136,37 @@ void TransactionServices::rawStatement(Session& session,
   cleanupTransactionMessage(transaction, session);
 }
 
-int TransactionServices::sendEvent(Session& session,
-                                   const message::Event &event)
+int TransactionServices::sendEvent(Session& session, const message::Event &event)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (not replication_services.isActive())
     return 0;
-
-  message::Transaction *transaction= new message::Transaction();
+  message::Transaction transaction;
 
   // set server id, start timestamp
-  initTransactionMessage(*transaction, session, true);
+  initTransactionMessage(transaction, session, true);
 
   // set end timestamp
-  finalizeTransactionMessage(*transaction, session);
+  finalizeTransactionMessage(transaction, session);
 
-  message::Event *trx_event= transaction->mutable_event();
-
+  message::Event *trx_event= transaction.mutable_event();
   trx_event->CopyFrom(event);
-
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
-
-  delete transaction;
-
-  return static_cast<int>(result);
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, transaction);
+  return result;
 }
 
 bool TransactionServices::sendStartupEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::STARTUP);
-  if (sendEvent(session, event) != 0)
-    return false;
-  return true;
+  return not sendEvent(session, event);
 }
 
 bool TransactionServices::sendShutdownEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::SHUTDOWN);
-  if (sendEvent(session, event) != 0)
-    return false;
-  return true;
+  return not sendEvent(session, event);
 }
 
 } /* namespace drizzled */

@@ -377,18 +377,10 @@ int main(int argc, char **argv)
 
   /* Send server startup event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-
-
-      transaction_services.sendStartupEvent(*session);
-
-      plugin_startup_window(modules, *(session.get()));
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    currentSession().reset(session.get());
+    transaction_services.sendStartupEvent(*session);
+    plugin_startup_window(modules, *session.get());
   }
 
   if (opt_daemon)
@@ -399,8 +391,7 @@ int main(int argc, char **argv)
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown.
    */
-  plugin::Client *client;
-  while ((client= plugin::Listen::getClient()) != NULL)
+  while (plugin::Client* client= plugin::Listen::getClient())
   {
     Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
@@ -411,14 +402,9 @@ int main(int argc, char **argv)
 
   /* Send server shutdown event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(*session.get());
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    currentSession().reset(session.get());
+    transaction_services.sendShutdownEvent(*session.get());
   }
 
   {
