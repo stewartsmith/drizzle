@@ -369,19 +369,8 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables())
-  {
-    abort_loop= true;
-    select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, SIGTERM);
-
-    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
-
-    unireg_abort(1);
-  }
-
-  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
-                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
+  drizzle_rm_tmp_tables();
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname, PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
   TransactionServices &transaction_services= TransactionServices::singleton();

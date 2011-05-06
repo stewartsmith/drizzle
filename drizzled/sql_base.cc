@@ -3800,20 +3800,13 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 }
 
 
-bool drizzle_rm_tmp_tables()
+void drizzle_rm_tmp_tables()
 {
-
   assert(drizzle_tmpdir.size());
   Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-
-  if (not session)
-    return true;
   session->thread_stack= (char*) session.get();
   session->storeGlobals();
-
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
-
-  return false;
 }
 
 
