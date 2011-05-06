@@ -194,29 +194,25 @@ StorageEngine *StorageEngine::findByName(Session& session, const std::string &pr
   @note
     don't bother to rollback here, it's done already
 */
-void StorageEngine::closeConnection(Session* session)
+void StorageEngine::closeConnection(Session& session)
 {
   BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    if (*session->getEngineData(it))
-      it->close_connection(session);
+    if (*session.getEngineData(it))
+      it->close_connection(&session);
   }
 }
 
 bool StorageEngine::flushLogs(StorageEngine *engine)
 {
-  if (engine == NULL)
+  if (not engine)
   {
-    if (std::find_if(g_engines.begin(), g_engines.end(),
-                     std::mem_fun(&StorageEngine::flush_logs))
-        != g_engines.begin())
+    if (std::find_if(g_engines.begin(), g_engines.end(), std::mem_fun(&StorageEngine::flush_logs))
+        != g_engines.begin()) // Shouldn't this be .end()?
       return true;
   }
-  else
-  {
-    if (engine->flush_logs())
-      return true;
-  }
+  else if (engine->flush_logs())
+    return true;
   return false;
 }
 
@@ -377,13 +373,7 @@ bool StorageEngine::dropTable(Session& session,
                               const identifier::Table &identifier)
 {
   drizzled::error_t error;
-
-  if (not dropTable(session, identifier, error))
-  {
-    return false;
-  }
-
-  return true;
+  return dropTable(session, identifier, error);
 }
 
 bool StorageEngine::dropTable(Session& session,
@@ -409,15 +399,8 @@ bool StorageEngine::dropTable(Session& session,
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
   }
-
   drizzled::message::Cache::singleton().erase(identifier);
-
-  if (error)
-  {
-    return false;
-  }
-
-  return true;
+  return not error;
 }
 
 
@@ -485,29 +468,6 @@ Cursor *StorageEngine::getCursor(Table &arg)
   return create(arg);
 }
 
-class AddTableIdentifier : 
-  public std::unary_function<StorageEngine *, void>
-{
-  CachedDirectory &directory;
-  const identifier::Schema &identifier;
-  identifier::table::vector &set_of_identifiers;
-
-public:
-
-  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, identifier::table::vector &of_names) :
-    directory(directory_arg),
-    identifier(identifier_arg),
-    set_of_identifiers(of_names)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    engine->doGetTableIdentifiers(directory, identifier, set_of_identifiers);
-  }
-};
-
-
 void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
@@ -528,8 +488,8 @@ void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &s
     return;
   }
 
-  std::for_each(g_engines.begin(), g_engines.end(),
-                AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+    it->doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 
   session.open_tables.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
