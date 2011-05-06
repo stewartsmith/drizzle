@@ -94,25 +94,14 @@ void StorageEngine::setTransactionReadWrite(Session& session)
   statement_ctx.markModifiedNonTransData();
 }
 
-
 int StorageEngine::renameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
-  int error;
   setTransactionReadWrite(session);
-
   if (unlikely(plugin::EventObserver::beforeRenameTable(session, from, to)))
-  {
+    return ER_EVENT_OBSERVER_PLUGIN;
+  int error= doRenameTable(session, from, to);
+  if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
     error= ER_EVENT_OBSERVER_PLUGIN;
-  }
-  else
-  {
-    error =  doRenameTable(session, from, to);
-    if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
-    {
-      error= ER_EVENT_OBSERVER_PLUGIN;
-    }
-  }
-  
   return error;
 }
 
@@ -132,7 +121,6 @@ int StorageEngine::renameTable(Session &session, const identifier::Table &from, 
     !0  Error
 */
 int StorageEngine::doDropTable(Session&, const identifier::Table &identifier)
-                               
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -159,7 +147,6 @@ int StorageEngine::doDropTable(Session&, const identifier::Table &identifier)
 
 bool StorageEngine::addPlugin(StorageEngine *engine)
 {
-
   g_engines.push_back(engine);
 
   if (engine->getTableDefinitionFileExtension().length())
@@ -203,30 +190,17 @@ StorageEngine *StorageEngine::findByName(Session& session, const std::string &pr
   return findByName(predicate);
 }
 
-class StorageEngineCloseConnection : public std::unary_function<StorageEngine *, void>
-{
-  Session *session;
-public:
-  StorageEngineCloseConnection(Session *session_arg) : session(session_arg) {}
-  /*
-    there's no need to rollback here as all transactions must
-    be rolled back already
-  */
-  inline result_type operator() (argument_type engine)
-  {
-    if (*session->getEngineData(engine))
-      engine->close_connection(session);
-  }
-};
-
 /**
   @note
     don't bother to rollback here, it's done already
 */
 void StorageEngine::closeConnection(Session* session)
 {
-  std::for_each(g_engines.begin(), g_engines.end(),
-                StorageEngineCloseConnection(session));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+  {
+    if (*session->getEngineData(it))
+      it->close_connection(session);
+  }
 }
 
 bool StorageEngine::flushLogs(StorageEngine *engine)
