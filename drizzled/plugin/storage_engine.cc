@@ -63,7 +63,7 @@ namespace drizzled {
 namespace plugin {
 
 static EngineVector g_engines;
-static EngineVector vector_of_schema_engines;
+static EngineVector g_schema_engines;
 
 const std::string DEFAULT_STRING("default");
 const std::string UNKNOWN_STRING("UNKNOWN");
@@ -73,7 +73,7 @@ static std::set<std::string> set_of_table_definition_ext;
 
 EngineVector &StorageEngine::getSchemaEngines()
 {
-  return vector_of_schema_engines;
+  return g_schema_engines;
 }
 
 StorageEngine::StorageEngine(const std::string name_arg,
@@ -169,51 +169,30 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
   }
 
   if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
-    vector_of_schema_engines.push_back(engine);
+    g_schema_engines.push_back(engine);
 
   return false;
 }
 
 void StorageEngine::removePlugin(StorageEngine *)
 {
-  if (shutdown_has_begun == false)
-  {
-    g_engines.clear();
-    vector_of_schema_engines.clear();
-
-    shutdown_has_begun= true;
-  }
+  if (shutdown_has_begun)
+    return;
+  shutdown_has_begun= true;
+  g_engines.clear();
+  g_schema_engines.clear();
 }
-
-class FindEngineByName
-  : public std::unary_function<StorageEngine *, bool>
-{
-  const std::string &predicate;
-
-public:
-  explicit FindEngineByName(const std::string &target_arg) :
-    predicate(target_arg)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    return boost::iequals(engine->getName(), predicate);
-  }
-};
 
 StorageEngine *StorageEngine::findByName(const std::string &predicate)
 {
-  EngineVector::iterator iter= std::find_if(g_engines.begin(),
-                                            g_engines.end(),
-                                            FindEngineByName(predicate));
-  if (iter != g_engines.end())
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    StorageEngine *engine= *iter;
-    if (engine->is_user_selectable())
-      return engine;
+    if (not boost::iequals(it->getName(), predicate))
+      continue;
+    if (it->is_user_selectable())
+      return it;
+    break;
   }
-
   return NULL;
 }
 
@@ -221,18 +200,7 @@ StorageEngine *StorageEngine::findByName(Session& session, const std::string &pr
 {
   if (boost::iequals(predicate, DEFAULT_STRING))
     return session.getDefaultStorageEngine();
-
-  EngineVector::iterator iter= std::find_if(g_engines.begin(),
-                                            g_engines.end(),
-                                            FindEngineByName(predicate));
-  if (iter != g_engines.end())
-  {
-    StorageEngine *engine= *iter;
-    if (engine->is_user_selectable())
-      return engine;
-  }
-
-  return NULL;
+  return findByName(predicate);
 }
 
 class StorageEngineCloseConnection : public std::unary_function<StorageEngine *, void>
