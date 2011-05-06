@@ -25,16 +25,15 @@
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/scheduler.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern size_t my_thread_stack_size;
 
-std::vector<plugin::Scheduler *> all_schedulers;
+typedef std::vector<plugin::Scheduler*> schedulers_t;
+schedulers_t g_schedulers;
 
 /* Globals (TBK) */
-static plugin::Scheduler *scheduler= NULL;
-
+static plugin::Scheduler* g_scheduler= NULL;
 
 class FindSchedulerByName : public std::unary_function<plugin::Scheduler *, bool>
 {
@@ -51,11 +50,11 @@ public:
 
 bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 {
-  std::vector<plugin::Scheduler *>::iterator iter=
-    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
+  schedulers_t::iterator iter=
+    std::find_if(g_schedulers.begin(), g_schedulers.end(), 
             FindSchedulerByName(&sched->getName()));
 
-  if (iter != all_schedulers.end())
+  if (iter != g_schedulers.end())
   {
     errmsg_printf(error::ERROR,
                   _("Attempted to register a scheduler %s, but a scheduler "
@@ -65,7 +64,7 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
   }
 
   sched->deactivate();
-  all_schedulers.push_back(sched);
+  g_schedulers.push_back(sched);
 
   return false;
 }
@@ -73,24 +72,24 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 
 void plugin::Scheduler::removePlugin(plugin::Scheduler *sched)
 {
-  all_schedulers.erase(std::find(all_schedulers.begin(),
-                            all_schedulers.end(),
+  g_schedulers.erase(std::find(g_schedulers.begin(),
+                            g_schedulers.end(),
                             sched));
 }
 
 
 bool plugin::Scheduler::setPlugin(const std::string& name)
 {
-  std::vector<plugin::Scheduler *>::iterator iter=
-    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
+  schedulers_t::iterator iter=
+    std::find_if(g_schedulers.begin(), g_schedulers.end(), 
             FindSchedulerByName(&name));
 
-  if (iter != all_schedulers.end())
+  if (iter != g_schedulers.end())
   {
-    if (scheduler != NULL)
-      scheduler->deactivate();
-    scheduler= *iter;
-    scheduler->activate();
+    if (g_scheduler)
+      g_scheduler->deactivate();
+    g_scheduler= *iter;
+    g_scheduler->activate();
     return false;
   }
 
@@ -103,7 +102,7 @@ bool plugin::Scheduler::setPlugin(const std::string& name)
 
 plugin::Scheduler *plugin::Scheduler::getScheduler()
 {
-  return scheduler;
+  return g_scheduler;
 }
 
 } /* namespace drizzled */
