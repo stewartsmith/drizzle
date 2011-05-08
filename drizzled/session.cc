@@ -451,7 +451,7 @@ Session::~Session()
   if (not cleanup_done)
     cleanup();
 
-  plugin::StorageEngine::closeConnection(this);
+  plugin::StorageEngine::closeConnection(*this);
   plugin_sessionvar_cleanup(this);
 
   warn_root.free_root(MYF(0));
