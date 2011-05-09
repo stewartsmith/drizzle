@@ -23,7 +23,6 @@
 #include <drizzled/catalog/local.h>
 #include <drizzled/error_t.h>
 #include <drizzled/item.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/visibility.h>
 
 namespace drizzled {
