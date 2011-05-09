@@ -21,8 +21,7 @@
 
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_func_conv_charset :public Item_str_func
 {
@@ -41,16 +40,17 @@ public:
     {
       size_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
-      if (!str || str_value.copy(str->ptr(), str->length(),
-                                 str->charset(), conv_charset, &errors))
+      if (!str)
         null_value= 1;
+      else
+        str_value.copy(str->ptr(), str->length(), str->charset(), conv_charset, &errors);
       use_cached_value= 1;
       str_value.mark_as_const();
       safe= (errors == 0);
     }
     else
     {
-      use_cached_value= 0;
+      use_cached_value= false;
       /*
         Conversion from and to "binary" is safe.
         Conversion to Unicode is safe.

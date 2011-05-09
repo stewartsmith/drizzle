@@ -63,7 +63,6 @@
 #include <drizzled/session/cache.h>
 #include <drizzled/signal_handler.h>
 #include <drizzled/transaction_services.h>
-#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>

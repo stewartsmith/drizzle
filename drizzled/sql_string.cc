@@ -167,11 +167,12 @@ bool String::set_real(double num,size_t decimals, const charset_info_st * const 
     len= internal::my_gcvt(num,
                            internal::MY_GCVT_ARG_DOUBLE,
                            sizeof(buff) - 1, buff, NULL);
-    return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
+    copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
+		return false; // return void
   }
   len= internal::my_fcvt(num, decimals, buff, NULL);
-  return copy(buff, (size_t) len, &my_charset_utf8_general_ci, cs,
-              &dummy_errors);
+  copy(buff, (size_t) len, &my_charset_utf8_general_ci, cs, &dummy_errors);
+	return false;
 }
 
 
@@ -204,7 +205,7 @@ void String::copy(const std::string& arg, const charset_info_st * const cs)	// A
   str_charset= cs;
 }
 
-void String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
+void String::copy(const char *str,size_t arg_length, const charset_info_st* cs)
 {
   alloc(arg_length);
   if ((str_length=arg_length))
@@ -254,8 +255,7 @@ bool String::needs_conversion(size_t arg_length,
 
 
 
-bool String::set_or_copy_aligned(const char *str,size_t arg_length,
-                                 const charset_info_st * const cs)
+void String::set_or_copy_aligned(const char *str,size_t arg_length, const charset_info_st* cs)
 {
   /* How many bytes are in incomplete character */
   size_t offset= (arg_length % cs->mbminlen);
@@ -263,18 +263,16 @@ bool String::set_or_copy_aligned(const char *str,size_t arg_length,
   assert(!offset); /* All characters are complete, just copy */
 
   set(str, arg_length, cs);
-  return false;
 }
 
 	/* Copy with charset conversion */
 
-bool String::copy(const char *str, size_t arg_length,
-		          const charset_info_st * const,
-				  const charset_info_st * const to_cs, size_t *errors)
+void String::copy(const char *str, size_t arg_length,
+		          const charset_info_st*,
+				  const charset_info_st* to_cs, size_t *errors)
 {
-  *errors= 0;
+  *errors= 0; // remove param
   copy(str, arg_length, to_cs);
-  return false; // return void
 }
 
 
@@ -305,7 +303,8 @@ bool String::set_ascii(const char *str, size_t arg_length)
     return 0;
   }
   size_t dummy_errors;
-  return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
+  copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
+	return false;
 }
 
 void String::append(const String &s)

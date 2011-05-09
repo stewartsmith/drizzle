@@ -42,7 +42,6 @@
 #include <drizzled/option.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
