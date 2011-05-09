@@ -29,14 +29,13 @@ String *Item_func_conv_charset::val_str(String *str)
   if (use_cached_value)
     return null_value ? 0 : &str_value;
   String *arg= args[0]->val_str(str);
-  size_t dummy_errors;
   if (!arg)
   {
     null_value=1;
     return 0;
   }
   null_value= false;
-  str_value.copy(arg->ptr(),arg->length(),arg->charset(), conv_charset, &dummy_errors);
+  str_value.copy(arg->ptr(),arg->length(), conv_charset);
   return null_value ? 0 : check_well_formed_result(&str_value);
 }
 

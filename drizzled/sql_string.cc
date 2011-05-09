@@ -155,24 +155,20 @@ void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * co
   str_charset=cs;
 }
 
-bool String::set_real(double num,size_t decimals, const charset_info_st * const cs)
+void String::set_real(double num,size_t decimals, const charset_info_st * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
-  size_t dummy_errors;
   size_t len;
 
   str_charset=cs;
   if (decimals >= NOT_FIXED_DEC)
   {
-    len= internal::my_gcvt(num,
-                           internal::MY_GCVT_ARG_DOUBLE,
-                           sizeof(buff) - 1, buff, NULL);
-    copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
-		return false; // return void
+    len= internal::my_gcvt(num, internal::MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
+    copy(buff, len, cs);
+    return;
   }
   len= internal::my_fcvt(num, decimals, buff, NULL);
-  copy(buff, (size_t) len, &my_charset_utf8_general_ci, cs, &dummy_errors);
-	return false;
+  copy(buff, len, cs);
 }
 
 
@@ -265,17 +261,6 @@ void String::set_or_copy_aligned(const char *str,size_t arg_length, const charse
   set(str, arg_length, cs);
 }
 
-	/* Copy with charset conversion */
-
-void String::copy(const char *str, size_t arg_length,
-		          const charset_info_st*,
-				  const charset_info_st* to_cs, size_t *errors)
-{
-  *errors= 0; // remove param
-  copy(str, arg_length, to_cs);
-}
-
-
 /*
   Set a string to the value of a latin1-string, keeping the original charset
 
@@ -295,16 +280,14 @@ void String::copy(const char *str, size_t arg_length,
 
 */
 
-bool String::set_ascii(const char *str, size_t arg_length)
+void String::set_ascii(const char *str, size_t arg_length)
 {
   if (str_charset->mbminlen == 1)
   {
     set(str, arg_length, str_charset);
-    return 0;
+    return;
   }
-  size_t dummy_errors;
-  copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
-	return false;
+  copy(str, arg_length, str_charset);
 }
 
 void String::append(const String &s)
