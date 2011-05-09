@@ -118,7 +118,7 @@ void String::real_alloc(size_t arg_length)
 ** (for C functions)
 */
 
-bool String::realloc(size_t alloc_length)
+void String::realloc(size_t alloc_length)
 {
   size_t len=ALIGN_SIZE(alloc_length+1);
   if (Alloced_length < len)
@@ -142,7 +142,6 @@ bool String::realloc(size_t alloc_length)
     }
   }
   Ptr[alloc_length]=0;			// This make other funcs shorter
-  return false; // return void
 }
 
 void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
@@ -530,8 +529,7 @@ String *copy_if_not_alloced(String *to,String *from,size_t from_length)
     (void) from->realloc(from_length);
     return from;
   }
-  if (to->realloc(from_length))
-    return from;				// Actually an error
+  to->realloc(from_length);
   if ((to->str_length= min(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;

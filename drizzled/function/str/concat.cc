@@ -129,8 +129,7 @@ String *Item_func_concat::val_str(String *str)
           {
             uint32_t new_len= max(tmp_value.alloced_length() * 2, concat_len);
 
-            if (tmp_value.realloc(new_len))
-              goto null;
+            tmp_value.realloc(new_len);
           }
         }
 
@@ -296,8 +295,7 @@ String *Item_func_concat_ws::val_str(String *str)
         {
           uint32_t new_len= max(tmp_value.alloced_length() * 2, concat_len);
 
-          if (tmp_value.realloc(new_len))
-            goto null;
+          tmp_value.realloc(new_len);
         }
       }
 

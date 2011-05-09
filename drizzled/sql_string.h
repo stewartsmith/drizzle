@@ -202,7 +202,7 @@ public:
       real_alloc(arg_length);
   }
   void real_alloc(size_t arg_length);			// Empties old string
-  bool realloc(size_t arg_length);
+  void realloc(size_t arg_length);
   inline void shrink(size_t arg_length)		// Shrink buffer
   {
     if (arg_length < Alloced_length)
@@ -220,7 +220,7 @@ public:
       }
     }
   }
-  bool is_alloced() { return alloced; }
+  bool is_alloced() { return alloced; } const
   inline String& operator = (const String &s)
   {
     if (&s != this)
@@ -275,11 +275,11 @@ public:
   size_t numchars();
   int charpos(int i,size_t offset=0);
 
-  int reserve(size_t space_needed)
+  void reserve(size_t space_needed)
   {
-    return realloc(str_length + space_needed);
+    realloc(str_length + space_needed);
   }
-  int reserve(size_t space_needed, size_t grow_by);
+  void reserve(size_t space_needed, size_t grow_by);
 
   /*
     The following append operations do NOT check alloced memory
@@ -299,10 +299,7 @@ public:
   {
     size_t new_length= arg_length + str_length;
     if (new_length > Alloced_length)
-    {
-      if (realloc(new_length + step_alloc))
-        return 0;
-    }
+      realloc(new_length + step_alloc);
     size_t old_length= str_length;
     str_length+= arg_length;
     return Ptr+ old_length;			/* Area to use */

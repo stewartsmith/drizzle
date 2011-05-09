@@ -52,12 +52,8 @@ String *ReverseFunction::val_str(String *str)
   /* An empty string is a special case as the string pointer may be null */
   if (!res->length())
     return &my_empty_string;
-  if (tmp_value.alloced_length() < res->length() &&
-      tmp_value.realloc(res->length()))
-  {
-    null_value= 1;
-    return 0;
-  }
+  if (tmp_value.alloced_length() < res->length())
+      tmp_value.realloc(res->length());
   tmp_value.length(res->length());
   tmp_value.set_charset(res->charset());
   ptr= (char *) res->ptr();
