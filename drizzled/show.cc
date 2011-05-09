@@ -185,7 +185,7 @@ bool buildTables(Session *session, const char *ident)
 
   std::string column_name= "Tables_in_";
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (ident)
   {
     identifier::Schema identifier(ident);
@@ -258,7 +258,7 @@ bool buildTableStatus(Session *session, const char *ident)
 
   std::string column_name= "Tables_in_";
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (ident)
   {
     session->lex().select_lex.db= const_cast<char *>(ident);
@@ -309,7 +309,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   drizzled::statement::Show *select= new statement::Show(session);
   session->lex().statement= select;
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (schema_ident)
   {
     select->setShowPredicate(schema_ident, table_ident->table.str);
@@ -375,7 +375,7 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
   drizzled::statement::Show *select= new statement::Show(session);
   session->lex().statement= select;
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (schema_ident)
   {
     select->setShowPredicate(schema_ident, table_ident->table.str);
@@ -461,7 +461,7 @@ bool buildCreateTable(Session *session, Table_ident *ident)
   if (prepare_new_schema_table(session, session->lex(), "TABLE_SQL_DEFINITION"))
     return false;
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (ident->db.str)
   {
     select->setShowPredicate(ident->db.str, ident->table.str);
@@ -557,7 +557,7 @@ bool buildCreateSchema(Session *session, LEX_STRING &ident)
   if (prepare_new_schema_table(session, session->lex(), "SCHEMA_SQL_DEFINITION"))
     return false;
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (ident.str)
   {
     select->setShowPredicate(ident.str);
@@ -602,7 +602,7 @@ bool buildDescribe(Session *session, Table_ident *ident)
   session->lex().statement= select;
   session->lex().select_lex.db= 0;
 
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   if (ident->db.str)
   {
     select->setShowPredicate(ident->db.str, ident->table.str);

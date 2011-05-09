@@ -28,7 +28,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_table.h>
@@ -48,11 +48,12 @@
 #include <drizzled/alter_column.h>
 #include <drizzled/alter_info.h>
 #include <drizzled/util/test.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern pid_t current_pid;
 
@@ -181,7 +182,7 @@ bool statement::AlterTable::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= session().find_temporary_table(catch22);
+    Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
@@ -840,8 +841,7 @@ static bool lockTableIfDifferent(Session &session,
   {
     if (original_table_identifier.isTmp())
     {
-
-      if (session.find_temporary_table(new_table_identifier))
+      if (session.open_tables.find_temporary_table(new_table_identifier))
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
         return false;
@@ -849,11 +849,7 @@ static bool lockTableIfDifferent(Session &session,
     }
     else
     {
-      if (session.lock_table_name_if_not_cached(new_table_identifier, &name_lock))
-      {
-        return false;
-      }
-
+      name_lock= session.lock_table_name_if_not_cached(new_table_identifier);
       if (not name_lock)
       {
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
@@ -866,7 +862,7 @@ static bool lockTableIfDifferent(Session &session,
         my_error(ER_TABLE_EXISTS_ERROR, new_table_identifier);
 
         {
-          boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+          boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
           session.unlink_open_table(name_lock);
         }
 
@@ -1162,7 +1158,7 @@ static bool internal_alter_table(Session *session,
       if (new_table)
       {
         /* close_temporary_table() frees the new_table pointer. */
-        session->close_temporary_table(new_table);
+        session->open_tables.close_temporary_table(new_table);
       }
       else
       {
@@ -1188,7 +1184,7 @@ static bool internal_alter_table(Session *session,
         delete new_table;
       }
 
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
       plugin::StorageEngine::dropTable(*session, new_table_as_temporary);
 
@@ -1199,14 +1195,14 @@ static bool internal_alter_table(Session *session,
   else if (original_table_identifier.isTmp())
   {
     /* Close lock if this is a transactional table */
-    if (session->lock)
+    if (session->open_tables.lock)
     {
-      session->unlockTables(session->lock);
-      session->lock= 0;
+      session->unlockTables(session->open_tables.lock);
+      session->open_tables.lock= 0;
     }
 
     /* Remove link to old table and rename the new one */
-    session->close_temporary_table(table);
+    session->open_tables.close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
     new_table->getMutableShare()->setIdentifier(new_table_identifier);
@@ -1238,7 +1234,7 @@ static bool internal_alter_table(Session *session,
     }
 
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* ALTER TABLE */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* ALTER TABLE */
       /*
         Data is copied. Now we:
         1) Wait until all other threads close old version of table.
@@ -1341,8 +1337,6 @@ static bool internal_alter_table(Session *session,
            (ulong) (copied + deleted), (ulong) deleted,
            (ulong) session->cuted_fields);
   session->my_ok(copied + deleted, 0, 0L, tmp_name);
-  session->some_tables_deleted= false;
-
   return false;
 }
 
@@ -1364,7 +1358,7 @@ static int apply_online_alter_keys_onoff(Session *session,
       from concurrent DDL statements.
     */
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
     }
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -1374,7 +1368,7 @@ static int apply_online_alter_keys_onoff(Session *session,
   else
   {
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* DDL wait for/blocker */
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
     }
     error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -1394,13 +1388,13 @@ static int apply_online_rename_table(Session *session,
 {
   int error= 0;
 
-  boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Lock to remove all instances of table from table cache before ALTER */
+  boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Lock to remove all instances of table from table cache before ALTER */
   /*
     Unlike to the above case close_cached_table() below will remove ALL
     instances of Table from table cache (it will also remove table lock
     held by this thread). So to make actual table renaming and writing
     to binlog atomic we have to put them into the same critical section
-    protected by table::Cache::singleton().mutex() mutex. This also removes gap for races between
+    protected by table::Cache::mutex() mutex. This also removes gap for races between
     access() and rename_table() calls.
   */
 
@@ -1506,7 +1500,7 @@ bool alter_table(Session *session,
 
     if (name_lock)
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
       session->unlink_open_table(name_lock);
     }
   }
@@ -1606,7 +1600,7 @@ copy_data_between_tables(Session *session,
       else
       {
         FileSort filesort(*session);
-        from->sort.io_cache= new internal::IO_CACHE;
+        from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
         tables.setTableName(from->getMutableShare()->getTableName());

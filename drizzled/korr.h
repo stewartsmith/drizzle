@@ -76,7 +76,6 @@ do { doubleget_union _tmp; \
 #define doublestore(T,V) do { *((long *) T) = ((doubleget_union *)&V)->m[0]; \
 			     *(((long *) T)+1) = ((doubleget_union *)&V)->m[1]; \
                          } while (0)
-#define float4get(V,M)   do { *((float *) &(V)) = *((float*) (M)); } while(0)
 #define float8get(V,M)   doubleget((V),(M))
 #define floatstore(T,V)  memcpy((T), (&V), sizeof(float))
 #define float8store(V,M) doublestore((V),(M))
@@ -88,14 +87,6 @@ do { doubleget_union _tmp; \
 */
 #define sint2korr(A)	(int16_t) (((int16_t) ((unsigned char) (A)[0])) +\
 				 ((int16_t) ((int16_t) (A)[1]) << 8))
-#define sint3korr(A)	((int32_t) ((((unsigned char) (A)[2]) & 128) ? \
-				  (((uint32_t) 255L << 24) | \
-				   (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				   (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				   ((uint32_t) (unsigned char) (A)[0])) : \
-				  (((uint32_t) (unsigned char) (A)[2]) << 16) |\
-				  (((uint32_t) (unsigned char) (A)[1]) << 8) | \
-				  ((uint32_t) (unsigned char) (A)[0])))
 #define sint4korr(A)	(int32_t) (((int32_t) ((unsigned char) (A)[0])) +\
 				(((int32_t) ((unsigned char) (A)[1]) << 8)) +\
 				(((int32_t) ((unsigned char) (A)[2]) << 16)) +\

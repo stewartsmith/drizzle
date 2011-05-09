@@ -48,6 +48,7 @@ Created 12/9/1995 Heikki Tuuri
 #include "srv0start.h"
 #include "trx0sys.h"
 #include "trx0trx.h"
+#include "ha_prototypes.h"
 
 #include <drizzled/errmsg_print.h>
 
@@ -361,6 +362,39 @@ part_loop:
 }
 
 /************************************************************//**
+*/
+UNIV_INLINE
+ulint
+log_max_modified_age_async()
+/*========================*/
+{
+  if (srv_checkpoint_age_target) {
+    return(ut_min(log_sys->max_modified_age_async,
+		  srv_checkpoint_age_target
+		  - srv_checkpoint_age_target / 8));
+  } else {
+    return(log_sys->max_modified_age_async);
+  }
+}
+
+/************************************************************//**
+*/
+UNIV_INLINE
+ulint
+log_max_checkpoint_age_async()
+/*==========================*/
+{
+  if (srv_checkpoint_age_target) {
+    return(ut_min(log_sys->max_checkpoint_age_async,
+		  srv_checkpoint_age_target));
+  } else {
+    return(log_sys->max_checkpoint_age_async);
+  }
+}
+
+
+
+/************************************************************//**
 Closes the log.
 @return	lsn */
 UNIV_INTERN
@@ -429,7 +463,7 @@ log_close(void)
 		}
 	}
 
-	if (checkpoint_age <= log->max_modified_age_async) {
+	if (checkpoint_age <= log_max_modified_age_async()) {
 
 		goto function_exit;
 	}
@@ -437,8 +471,8 @@ log_close(void)
 	oldest_lsn = buf_pool_get_oldest_modification();
 
 	if (!oldest_lsn
-	    || lsn - oldest_lsn > log->max_modified_age_async
-	    || checkpoint_age > log->max_checkpoint_age_async) {
+	    || lsn - oldest_lsn > log_max_modified_age_async()
+	    || checkpoint_age > log_max_checkpoint_age_async()) {
 
 		log->check_flush_or_checkpoint = TRUE;
 	}
@@ -1102,6 +1136,7 @@ log_io_complete(
 		group = (log_group_t*)((ulint)group - 1);
 
 		if (srv_unix_file_flush_method != SRV_UNIX_O_DSYNC
+		    && srv_unix_file_flush_method != SRV_UNIX_ALL_O_DIRECT
 		    && srv_unix_file_flush_method != SRV_UNIX_NOSYNC) {
 
 			fil_flush(group->space_id);
@@ -1123,6 +1158,7 @@ log_io_complete(
 			logs and cannot end up here! */
 
 	if (srv_unix_file_flush_method != SRV_UNIX_O_DSYNC
+	    && srv_unix_file_flush_method != SRV_UNIX_ALL_O_DIRECT
 	    && srv_unix_file_flush_method != SRV_UNIX_NOSYNC
 	    && srv_flush_log_at_trx_commit != 2) {
 
@@ -1503,7 +1539,8 @@ loop:
 
 	mutex_exit(&(log_sys->mutex));
 
-	if (srv_unix_file_flush_method == SRV_UNIX_O_DSYNC) {
+	if (srv_unix_file_flush_method == SRV_UNIX_O_DSYNC
+	    || srv_unix_file_flush_method == SRV_UNIX_ALL_O_DIRECT) {
 		/* O_DSYNC means the OS did not buffer the log file at all:
 		so we have also flushed to disk what we have written */
 
@@ -2122,10 +2159,10 @@ loop:
 
 		sync = TRUE;
 		advance = 2 * (age - log->max_modified_age_sync);
-	} else if (age > log->max_modified_age_async) {
+	} else if (age > log_max_modified_age_async()) {
 
 		/* A flush is not urgent: we do an asynchronous preflush */
-		advance = age - log->max_modified_age_async;
+		advance = age - log_max_modified_age_async();
 	} else {
 		advance = 0;
 	}
@@ -2139,7 +2176,7 @@ loop:
 
 		do_checkpoint = TRUE;
 
-	} else if (checkpoint_age > log->max_checkpoint_age_async) {
+	} else if (checkpoint_age > log_max_checkpoint_age_async()) {
 		/* A checkpoint is not urgent: do it asynchronously */
 
 		do_checkpoint = TRUE;
@@ -3350,6 +3387,16 @@ log_print(
 		log_sys->lsn,
 		log_sys->flushed_to_disk_lsn,
 		log_sys->last_checkpoint_lsn);
+
+	fprintf(file,
+		"Max checkpoint age    %lu\n"
+		"Checkpoint age target %lu\n"
+		"Modified age          %"PRIu64"\n"
+		"Checkpoint age        %"PRIu64"\n",
+		log_sys->max_checkpoint_age,
+		log_max_checkpoint_age_async(),
+		log_sys->lsn - log_buf_pool_get_oldest_modification(),
+		log_sys->lsn - log_sys->last_checkpoint_lsn);
 
 	current_time = time(NULL);
 

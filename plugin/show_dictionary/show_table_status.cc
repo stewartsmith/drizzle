@@ -21,6 +21,8 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/pthread_globals.h>
 
 using namespace drizzled;
@@ -44,7 +46,7 @@ ShowTableStatus::ShowTableStatus() :
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
   if (not isShowQuery())
    return;
@@ -53,7 +55,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   schema_predicate.append(select.getShowSchema());
 
-  util::string::const_shared_ptr schema(getSession().schema());
+  util::string::ptr schema(getSession().schema());
   if (schema_predicate.empty() and schema)
   {
     schema_predicate.append(*schema);
@@ -70,7 +72,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
       table_list.push_back(iter->second);
     }
 
-    for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
+    for (drizzled::Table *tmp_table= getSession().open_tables.getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
     {
       if (tmp_table->getShare())
       {

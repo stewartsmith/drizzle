@@ -19,26 +19,20 @@
  */
 
 #include <config.h>
-
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/epoch.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/current_session.h>
-
-#include <math.h>
-
+#include <drizzled/temporal.h>
+#include <cmath>
 #include <sstream>
 
-#include <drizzled/temporal.h>
-
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
@@ -349,7 +343,7 @@ void Epoch::sql_type(String &res) const
 void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
-  time_t tmp= session->getCurrentTimestampEpoch();
+  time_t tmp= session->times.getCurrentTimestampEpoch();
 
   set_notnull();
   pack_num(static_cast<uint32_t>(tmp));

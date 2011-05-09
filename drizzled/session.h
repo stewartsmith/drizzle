@@ -33,10 +33,10 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
-#include <drizzled/open_tables_state.h>
+#include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
@@ -51,6 +51,7 @@ extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
 extern uint32_t server_id;
+extern std::string server_uuid;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -78,7 +79,9 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class DRIZZLED_API Session : public Open_tables_state
+class Open_tables_state;
+
+class DRIZZLED_API Session
 {
 private:
   class impl_c;
@@ -165,65 +168,27 @@ private:
   // requires under some setup non const, you must copy the QueryString in
   // order to use it.
 public:
+  void resetQueryString();
+  const boost::shared_ptr<session::State>& state();
+
   QueryString getQueryString() const
   {
     return query;
   }
 
-  void resetQueryString()
-  {
-    query.reset();
-    _state.reset();
-  }
-
-  /*
-    We need to copy the lock on the string in order to make sure we have a stable string.
-    Once this is done we can use it to build a const char* which can be handed off for
-    a method to use (Innodb is currently the only engine using this).
-  */
-  const char *getQueryStringCopy(size_t &length)
+  const char* getQueryStringCopy(size_t &length)
   {
     QueryString tmp_string(getQueryString());
-
     if (not tmp_string)
     {
       length= 0;
       return NULL;
     }
-
     length= tmp_string->length();
-    char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
-    return to_return;
+    return strmake(tmp_string->c_str(), tmp_string->length());
   }
 
-private:
-  boost::shared_ptr<session::State> _state;
-
-public:
-
-  const boost::shared_ptr<session::State>& state()
-  {
-    return _state;
-  }
-
-  /**
-    Name of the current (default) database.
-
-    If there is the current (default) database, "db" contains its name. If
-    there is no current (default) database, "db" is NULL and "db_length" is
-    0. In other words, "db", "db_length" must either be NULL, or contain a
-    valid database name.
-
-    @note this attribute is set and alloced by the slave SQL thread (for
-    the Session of that thread); that thread is (and must remain, for now) the
-    only responsible for freeing this member.
-  */
-public:
-
-  util::string::const_shared_ptr schema() const
-  {
-    return _schema ? _schema : util::string::const_shared_ptr(new std::string);
-  }
+  util::string::ptr schema() const;
 
   /* current cache key */
   std::string query_cache_key;
@@ -293,6 +258,32 @@ public:
     scoreboard_index= in_scoreboard_index;
   }
 
+  bool isOriginatingServerUUIDSet()
+  {
+    return originating_server_uuid_set;
+  }
+
+  void setOriginatingServerUUID(std::string in_originating_server_uuid)
+  {
+    originating_server_uuid= in_originating_server_uuid;
+    originating_server_uuid_set= true;
+  }
+
+  std::string &getOriginatingServerUUID()
+  {
+    return originating_server_uuid;
+  }
+
+  void setOriginatingCommitID(uint64_t in_originating_commit_id)
+  {
+    originating_commit_id= in_originating_commit_id;
+  }
+
+  uint64_t getOriginatingCommitID()
+  {
+    return originating_commit_id;
+  }
+
   /**
    * Is this session viewable by the current user?
    */
@@ -325,13 +316,13 @@ public:
 
 private:
   boost::thread::id boost_thread_id;
-  boost_thread_shared_ptr _thread;
+  thread_ptr _thread;
   boost::this_thread::disable_interruption *interrupt;
 
   internal::st_my_thread_var *mysys_var;
 
 public:
-  boost_thread_shared_ptr &getThread()
+  thread_ptr &getThread()
   {
     return _thread;
   }
@@ -356,35 +347,7 @@ public:
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
    */
-  enum enum_server_command command;
-  uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Client */
-  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
-
-private:
-  boost::posix_time::ptime _epoch;
-  boost::posix_time::ptime _connect_time;
-  boost::posix_time::ptime _start_timer;
-  boost::posix_time::ptime _end_timer;
-
-  boost::posix_time::ptime _user_time;
-public:
-  uint64_t utime_after_lock; // This used by Innodb.
-
-  void resetUserTime()
-  {
-    _user_time= boost::posix_time::not_a_date_time;
-  }
-
-  const boost::posix_time::ptime &start_timer() const
-  {
-    return _start_timer;
-  }
-
-  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
-  {
-    result_arg=  arg - _start_timer;
-  }
+  enum_server_command command;
 
   thr_lock_type update_lock_default;
 
@@ -411,6 +374,8 @@ public:
   ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
   session::Transactions& transaction;
+  Open_tables_state& open_tables;
+	session::Times& times;
 
   Field *dup_field;
   sigset_t signals;
@@ -607,7 +572,6 @@ public:
   }
 
   bool is_admin_connection;
-  bool some_tables_deleted;
   bool no_errors;
   /**
     Set to true if execution of the current compound statement
@@ -732,8 +696,10 @@ public:
     return server_id;
   }
 
-  /** Returns the current transaction ID for the session's current statement */
-  my_xid getTransactionId();
+  inline std::string &getServerUUID() const
+  {
+    return server_uuid;
+  }
 
   /**
     There is BUG#19630 where statement-based replication of stored
@@ -798,18 +764,8 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool storeGlobals();
+  void storeGlobals();
   void awake(Session::killed_state_t state_to_set);
-  /**
-   * Pulls thread-specific variables into Session state.
-   *
-   * Returns true most times, or false if there was a problem
-   * allocating resources for thread-specific storage.
-   *
-   * @TODO Kill this.  It's not necessary once my_thr_init() is bye bye.
-   *
-   */
-  bool initGlobals();
 
   /**
     Initialize memory roots necessary for query processing and (!)
@@ -851,7 +807,7 @@ public:
    * @param The packet pointer to read from
    * @param The length of the query to read
    */
-  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+  void readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
 
   /**
    * Ends the current transaction and (maybe) begins the next.
@@ -872,20 +828,9 @@ public:
    * Returns true on success, or false on failure.
    */
   bool authenticate();
-
-  /**
-   * Run a session.
-   *
-   * This will initialize the session and begin the command loop.
-   */
   void run();
-
-  /**
-   * Schedule a session to be run on the default scheduler.
-   */
   static bool schedule(Session::shared_ptr&);
-
-  static void unlink(session_id_t &session_id);
+  static void unlink(session_id_t&);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -895,60 +840,6 @@ public:
   */
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
-
-  type::Time::epoch_t query_start()
-  {
-    return getCurrentTimestampEpoch();
-  }
-
-  void set_time()
-  {
-    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
-    utime_after_lock= (_start_timer - _epoch).total_microseconds();
-  }
-
-  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
-  {
-    _user_time= boost::posix_time::from_time_t(t);
-  }
-
-  void set_time_after_lock()
-  {
-    utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
-  }
-
-  void set_end_timer();
-
-  uint64_t getElapsedTime() const
-  {
-    return (_end_timer - _start_timer).total_microseconds();
-  }
-
-  /**
-   * Returns the current micro-timestamp
-   */
-  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
-  {
-    return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
-  }
-
-  // We may need to set user on this
-  type::Time::epoch_t getCurrentTimestampEpoch() const
-  {
-	 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
-  }
-
-  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
-  {
-    if (not _user_time.is_not_a_date_time())
-    {
-      fraction_arg= 0;
-      return (_user_time - _epoch).total_seconds();
-    }
-
-    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
-    return (_start_timer - _epoch).total_seconds();
-  }
 
   uint64_t found_rows() const
   {
@@ -973,10 +864,9 @@ public:
 
   void clear_error(bool full= false);
   void clearDiagnostics();
-  void fatal_error();
   bool is_error() const;
 
-  inline const charset_info_st *charset() { return default_charset_info; }
+  static const charset_info_st *charset() { return default_charset_info; }
 
   /**
     Cleanup statement parse state (parse tree, lex) and execution
@@ -1007,7 +897,6 @@ public:
   void setAbort(bool arg);
   void lockOnSys();
   void set_status_var_init();
-
   /**
     Set the current database; use deep copy of C-string.
 
@@ -1025,7 +914,7 @@ public:
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
   */
-  void set_db(const std::string &new_db);
+  void set_db(const std::string&);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -1035,25 +924,6 @@ public:
   bool copy_db_to(char **p_db, size_t *p_db_length);
 
 public:
-  /**
-    Add an internal error handler to the thread execution context.
-    @param handler the exception handler to add
-  */
-  void push_internal_handler(Internal_error_handler *handler);
-
-  /**
-    Handle an error condition.
-    @param sql_errno the error number
-    @param level the error level
-    @return true if the error is handled
-  */
-  virtual bool handle_error(error_t sql_errno, const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level);
-
-  /**
-    Remove the error handler last pushed.
-  */
-  void pop_internal_handler();
 
   /**
     Resets Session part responsible for command processing state.
@@ -1093,20 +963,6 @@ public:
    * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
-
-  /**
-   * Returns the timestamp (in microseconds) of when the Session
-   * connected to the server.
-   */
-  uint64_t getConnectMicroseconds() const
-  {
-    return (_connect_time - _epoch).total_microseconds();
-  }
-
-  uint64_t getConnectSeconds() const
-  {
-    return (_connect_time - _epoch).total_seconds();
-  }
 
   /**
    * Returns a pointer to the active Transaction message for this
@@ -1190,40 +1046,6 @@ public:
   plugin::EventObserverList* getSchemaObservers(const std::string& schema);
   plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
- private:
-
-  /** The current internal error handler for this thread, or NULL. */
-  Internal_error_handler *m_internal_handler;
-  /**
-    This memory root is used for two purposes:
-    - for conventional queries, to allocate structures stored in main_lex
-    during parsing, and allocate runtime data (execution plan, etc.)
-    during execution.
-    - for prepared queries, only to allocate runtime data. The parsed
-    tree itself is reused between executions and thus is stored elsewhere.
-  */
-  memory::Root main_mem_root;
-
-  /**
-   * Marks all tables in the list which were used by current substatement
-   * as free for reuse.
-   *
-   * @param Head of the list of tables
-   *
-   * @note
-   *
-   * The reason we reset query_id is that it's not enough to just test
-   * if table->query_id != session->query_id to know if a table is in use.
-   *
-   * For example
-   *
-   *  SELECT f1_that_uses_t1() FROM t1;
-   *
-   * In f1_that_uses_t1() we will see one instance of t1 where query_id is
-   * set to query_id of original query.
-   */
-  void mark_used_tables_as_free_for_reuse(Table *table);
-
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
   void my_eof();
@@ -1244,7 +1066,6 @@ public:
   void close_thread_tables();
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
-  void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
   /**
@@ -1270,7 +1091,8 @@ public:
    *
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  bool openTablesLock(TableList *tables);
+  bool openTablesLock(TableList*);
+  Table *open_temporary_table(const identifier::Table &identifier, bool link_in_list= true);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 
@@ -1282,8 +1104,8 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
-  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
+  table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
+  Table* lock_table_name_if_not_cached(const identifier::Table&);
 
   session::TableMessages &getMessageCache();
 
@@ -1344,10 +1166,8 @@ public:
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
-
 
   bool resetUsage()
   {
@@ -1372,8 +1192,10 @@ private:
   rusage usage;
   identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
+  bool originating_server_uuid_set;
+  std::string originating_server_uuid;
+  uint64_t originating_commit_id;
   plugin::Client *client;
-  util::string::shared_ptr _schema;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape

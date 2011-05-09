@@ -1571,6 +1571,11 @@ try_again:
 		os_file_set_nocache(file, name, mode_str);
 	}
 
+	/* With ALL_O_DIRECT we disable OS caching for trx log file too */
+	if (srv_unix_file_flush_method == SRV_UNIX_ALL_O_DIRECT) {
+		os_file_set_nocache(file, name, mode_str);
+	}
+
 #ifdef USE_FILE_LOCK
 	if (create_mode != OS_FILE_OPEN_RAW && os_file_lock(file, name)) {
 

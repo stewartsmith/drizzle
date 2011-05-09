@@ -25,6 +25,7 @@
 #include <drizzled/statement/replace_select.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled {
 
@@ -80,7 +81,7 @@ bool statement::ReplaceSelect::execute()
          the unlock procedure.
        */
       if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          session().lock)
+          session().open_tables.lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;

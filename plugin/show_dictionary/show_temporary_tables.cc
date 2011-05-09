@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 using namespace drizzled;
@@ -39,7 +40,7 @@ ShowTemporaryTables::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
   session(getSession())
 {
-  table= session.getTemporaryTables();
+  table= session.open_tables.getTemporaryTables();
 }
 
 bool ShowTemporaryTables::Generator::populate()

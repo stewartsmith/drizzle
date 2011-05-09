@@ -88,12 +88,12 @@ extern bool opt_daemon;
 */
 static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
-  Session *session;
+  Session* session= current_session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((session= current_session))
+  if (session)
   {
     if (MyFlags & ME_FATALERROR)
       session->is_fatal_error= 1;
@@ -101,9 +101,10 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
-    */
+
     if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;
+    */
 
     /*
       session->lex().current_select == 0 if lex structure is not inited
@@ -292,6 +293,25 @@ int main(int argc, char **argv)
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
+
+    ifstream old_uuid_file ("server.uuid");
+    if (old_uuid_file.is_open())
+    {
+      getline (old_uuid_file, server_uuid);
+      old_uuid_file.close();
+    } 
+    else 
+    {
+      uuid_t uu;
+      char uuid_string[37];
+      uuid_generate_random(uu);
+      uuid_unparse(uu, uuid_string);
+      ofstream new_uuid_file ("server.uuid");
+      new_uuid_file << uuid_string;
+      new_uuid_file.close();
+      server_uuid= string(uuid_string);
+    }
+
     if (mkdir("local", 0700))
     {
       /* We don't actually care */
@@ -308,8 +328,6 @@ int main(int argc, char **argv)
     full_data_home= boost::filesystem::system_complete(getDataHome());
     errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
-
-
 
   if (server_id == 0)
   {
@@ -395,14 +413,7 @@ int main(int argc, char **argv)
   plugin::Client *client;
   while ((client= plugin::Listen::getClient()) != NULL)
   {
-    Session::shared_ptr session;
-    session= Session::make_shared(client, client->catalog());
-
-    if (not session)
-    {
-      delete client;
-      continue;
-    }
+    Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
@@ -422,13 +433,13 @@ int main(int argc, char **argv)
   }
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     select_thread_in_use= false;			// For close_connections
   }
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  session::Cache::singleton().shutdownSecond();
+  session::Cache::shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();

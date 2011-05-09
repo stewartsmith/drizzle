@@ -54,6 +54,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/transaction_services.h>
@@ -304,15 +305,7 @@ namespace drizzled {
  */
 TransactionServices::TransactionServices()
 {
-  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
-  if (engine)
-  {
-    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
-  }
-  else 
-  {
-    xa_storage_engine= NULL;
-  }
+  xa_storage_engine= static_cast<plugin::XaStorageEngine*>(plugin::StorageEngine::findByName("InnoDB"));
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -344,7 +337,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setTransactionalStorageEngine(engine);
   trans->registerResource(&resource_context);
 
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -377,8 +370,6 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setTransactionalStorageEngine(engine);
   resource_context.setXaResourceManager(resource_manager);
   trans->registerResource(&resource_context);
-
-  trans->no_2pc|= false;
 }
 
 void TransactionServices::registerResourceForTransaction(Session& session,
@@ -400,7 +391,7 @@ void TransactionServices::registerResourceForTransaction(Session& session,
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -430,7 +421,7 @@ void TransactionServices::registerResourceForTransaction(Session& session,
   resource_context.setMonitored(monitored);
   resource_context.setXaResourceManager(resource_manager);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  trans->no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -613,7 +604,7 @@ int TransactionServices::commitPhaseOne(Session& session,
     }
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
 
     if (normal_transaction)
     {
@@ -693,7 +684,7 @@ int TransactionServices::rollbackTransaction(Session& session,
       rollbackStatementMessage(session);
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
     if (normal_transaction)
     {
       session.variables.tx_isolation=session.session_tx_isolation;
@@ -1024,7 +1015,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &transacti
     trx->set_transaction_id(0);
   }
 
-  trx->set_start_timestamp(session.getCurrentTimestamp());
+  trx->set_start_timestamp(session.times.getCurrentTimestamp());
   
   /* segment info may get set elsewhere as needed */
   transaction.set_segment_id(1);
@@ -1035,7 +1026,7 @@ void TransactionServices::finalizeTransactionMessage(message::Transaction &trans
                                                      const Session& session)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
-  trx->set_end_timestamp(session.getCurrentTimestamp());
+  trx->set_end_timestamp(session.times.getCurrentTimestamp());
 }
 
 void TransactionServices::cleanupTransactionMessage(message::Transaction *transaction,
@@ -1096,7 +1087,7 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
                                                const Session& session)
 {
   statement.set_type(type);
-  statement.set_start_timestamp(session.getCurrentTimestamp());
+  statement.set_start_timestamp(session.times.getCurrentTimestamp());
 
   if (session.variables.replicate_query)
     statement.set_sql(session.getQueryString()->c_str());
@@ -1105,7 +1096,7 @@ void TransactionServices::initStatementMessage(message::Statement &statement,
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
                                                    Session& session)
 {
-  statement.set_end_timestamp(session.getCurrentTimestamp());
+  statement.set_end_timestamp(session.times.getCurrentTimestamp());
   session.setStatementMessage(NULL);
 }
 

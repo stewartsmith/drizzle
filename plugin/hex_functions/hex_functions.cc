@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/plugin/function.h>
@@ -102,19 +102,19 @@ String *HexFunction::val_str(String *str)
     if ((null_value= args[0]->null_value))
       return 0;
     ptr= internal::int64_t2str(dec,ans,16);
-    if (str->copy(ans,(uint32_t) (ptr-ans),default_charset()))
-      return &my_empty_string;			// End of memory
+    str->copy(ans,(uint32_t) (ptr-ans),default_charset());
     return str;
   }
 
   /* Convert given string to a hex string, character by character */
   res= args[0]->val_str(str);
-  if (!res || tmp_value.alloc(res->length()*2+1))
+  if (!res)
   {
     null_value=1;
     return 0;
   }
   null_value=0;
+  tmp_value.alloc(res->length()*2+1);
   tmp_value.length(res->length()*2);
 
   (void) drizzled_string_to_hex((char*) tmp_value.ptr(), res->ptr(),
@@ -133,11 +133,12 @@ String *UnHexFunction::val_str(String *str)
   assert(fixed == 1);
 
   res= args[0]->val_str(str);
-  if (!res || tmp_value.alloc(length= (1+res->length())/2))
+  if (!res)
   {
     null_value=1;
     return 0;
   }
+  tmp_value.alloc(length= (1+res->length())/2);
 
   from= res->ptr();
   null_value= 0;

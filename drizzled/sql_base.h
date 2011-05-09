@@ -131,7 +131,7 @@ TableList *find_table_in_list(TableList *table,
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
 
-/* bits for last argument to table::Cache::singleton().removeTable() */
+/* bits for last argument to table::Cache::removeTable() */
 #define RTFC_NO_FLAG                0x0000
 #define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002

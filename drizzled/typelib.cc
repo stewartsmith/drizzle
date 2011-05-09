@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/memory/root.h>
 #include <drizzled/typelib.h>
 
@@ -30,7 +30,7 @@ static const char field_separator=',';
 
 int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 {
-  int res= find_type(const_cast<char*>(x), 2);
+  int res= find_type(x, e_dont_complete);
   if (res > 0)
     return res;
   if (!*x)
@@ -54,10 +54,10 @@ int TYPELIB::find_type_or_exit(const char *x, const char *option) const
    x			String to find
    lib			TYPELIB (struct of pointer to values + count)
    full_name		bitmap of what to do
-			If & 1 accept only whole names
-			If & 2 don't expand if half field
-			If & 4 allow #number# as type
-			If & 8 use ',' as string terminator
+			If & 1 accept only whole names - e_match_full
+			If & 2 don't expand if half field - e_dont_complete
+			If & 4 allow #number# as type - e_allow_int
+			If & 8 use ',' as string terminator - e_use_comma
 
   NOTES
     If part, uniq field is found and full_name == 0 then x is expanded
@@ -70,13 +70,13 @@ int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 */
 
 
-int TYPELIB::find_type(const char *x, uint32_t full_name) const
+int TYPELIB::find_type(const char *x, e_find_options full_name) const
 {
   assert(full_name & 2);
   return find_type(const_cast<char*>(x), full_name);
 }
 
-int TYPELIB::find_type(char *x, uint32_t full_name) const
+int TYPELIB::find_type(char *x, e_find_options full_name) const
 {
   if (!count)
     return 0;
@@ -87,98 +87,31 @@ int TYPELIB::find_type(char *x, uint32_t full_name) const
   {
     const char *i;
     for (i= x;
-    	*i && (!(full_name & 8) || *i != field_separator) &&
+    	*i && *i != field_separator &&
         my_toupper(&my_charset_utf8_general_ci,*i) ==
     		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
     if (! *j)
     {
       while (*i == ' ')
 	i++;					/* skip_end_space */
-      if (! *i || ((full_name & 8) && *i == field_separator))
+      if (not *i)
 	return(pos+1);
     }
-    if ((!*i && (!(full_name & 8) || *i != field_separator)) &&
-        (!*j || !(full_name & 1)))
+    if ((!*i && *i != field_separator) &&
+        (!*j || !(full_name & e_match_full)))
     {
       find++;
       findpos=pos;
     }
   }
-  if (find == 0 && (full_name & 4) && x[0] == '#' && strchr(x, '\0')[-1] == '#' &&
-      (findpos=atoi(x+1)-1) >= 0 && (uint32_t) findpos < count)
-    find=1;
-  else if (find == 0 || ! x[0])
-  {
-    return(0);
-  }
-  else if (find != 1 || (full_name & 1))
-  {
-    return(-1);
-  }
+  if (find == 0 || not x[0])
+    return 0;
+  if (find != 1 || (full_name & e_match_full))
+    return -1;
   if (!(full_name & 2))
     strcpy(x, type_names[findpos]);
   return findpos + 1;
 } /* find_type */
-
-
-	/* Get name of type nr 'nr' */
-	/* Warning first type is 1, 0 = empty field */
-
-void TYPELIB::make_type(char *to, uint32_t nr) const
-{
-  if (!nr)
-    to[0]= 0;
-  else
-    strcpy(to, get_type(nr - 1));
-} /* make_type */
-
-
-	/* Get type */
-	/* Warning first type is 0 */
-
-const char *TYPELIB::get_type(uint32_t nr) const
-{
-  if (nr < count && type_names)
-    return type_names[nr];
-  return "?";
-}
-
-
-/*
-  Create an integer value to represent the supplied comma-seperated
-  string where each string in the TYPELIB denotes a bit position.
-
-  SYNOPSIS
-    find_typeset()
-    x		string to decompose
-    lib		TYPELIB (struct of pointer to values + count)
-    err		index (not char position) of string element which was not
-                found or 0 if there was no error
-
-  RETURN
-    a integer representation of the supplied string
-*/
-
-uint64_t TYPELIB::find_typeset(const char *x, int *err) const
-{
-  if (!count)
-    return 0;
-  uint64_t result= 0;
-  *err= 0;
-  while (*x)
-  {
-    (*err)++;
-    const char *i= x;
-    while (*x && *x != field_separator) x++;
-    int find= find_type(i, 2 | 8) - 1;
-    if (find < 0)
-      return 0;
-    result|= (1ULL << find);
-  }
-  *err= 0;
-  return result;
-} /* find_set */
-
 
 /*
   Create a copy of a specified TYPELIB structure.
@@ -193,39 +126,20 @@ uint64_t TYPELIB::find_typeset(const char *x, int *err) const
     NULL otherwise
 */
 
-TYPELIB *TYPELIB::copy_typelib(memory::Root *root) const
+TYPELIB *TYPELIB::copy_typelib(memory::Root& root) const
 {
-  TYPELIB *to;
-  uint32_t i;
-
-  if (!this)
-    return NULL;
-
-  if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
-    return NULL;
-
-  if (!(to->type_names= (const char **)
-        root->alloc_root((sizeof(char *) + sizeof(int)) * (count + 1))))
-    return NULL; // leaking
-  to->type_lengths= (unsigned int *)(to->type_names + count + 1);
+  TYPELIB* to= (TYPELIB*) root.alloc_root(sizeof(TYPELIB));
+  to->type_names= (const char**)root.alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
+  to->type_lengths= (unsigned int*)(to->type_names + count + 1);
   to->count= count;
-  if (name)
+  to->name= name ? root.strdup_root(name) : NULL;
+  for (uint32_t i= 0; i < count; i++)
   {
-    if (!(to->name= root->strdup_root(name)))
-      return NULL; // leaking
-  }
-  else
-    to->name= NULL;
-
-  for (i= 0; i < count; i++)
-  {
-    if (!(to->type_names[i]= root->strmake_root(type_names[i], type_lengths[i])))
-      return NULL; // leaking
+    to->type_names[i]= root.strmake_root(type_names[i], type_lengths[i]);
     to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;
   to->type_lengths[to->count]= 0;
-
   return to;
 }
 

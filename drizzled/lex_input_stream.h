@@ -33,14 +33,12 @@
   should be seen once out-of-bound data is removed.
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Lex_input_stream
 {
 public:
   Lex_input_stream(Session *session, const char* buff, unsigned int length);
-  ~Lex_input_stream();
 
   /**
     Set the echo mode.
@@ -267,7 +265,6 @@ public:
     return m_body_utf8_ptr - m_body_utf8;
   }
 
-  void body_utf8_start(Session *session, const char *begin_ptr);
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
   void body_utf8_append_literal(const LEX_STRING *txt,

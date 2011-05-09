@@ -83,14 +83,16 @@
 #include <drizzled/error.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/util/test.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 #include <set>
 #include <vector>
@@ -161,12 +163,11 @@ static drizzled::error_t thr_lock_errno_to_mysql[]=
         lock request will set its lock type properly.
 */
 
-static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
+static void reset_lock_data_and_free(DrizzleLock*& lock)
 {
-  DrizzleLock *sql_lock= *mysql_lock;
-  sql_lock->reset();
-  delete sql_lock;
-  *mysql_lock= 0;
+  lock->reset();
+  delete lock;
+  lock= NULL;
 }
 
 DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
@@ -189,14 +190,14 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
       if (wait_if_global_read_lock(1, 1))
       {
         /* Clear the lock type of all lock data to avoid reusage. */
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	break;
       }
 
-      if (version != refresh_version)
+      if (open_tables.version != g_refresh_version)
       {
         /* Clear the lock type of all lock data to avoid reusage. */
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	break;
       }
     }
@@ -238,7 +239,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     if (sql_lock->sizeTable() && lock_external(sql_lock->getTable(), sql_lock->sizeTable()))
     {
       /* Clear the lock type of all lock data to avoid reusage. */
-      reset_lock_data_and_free(&sql_lock);
+      reset_lock_data_and_free(sql_lock);
       break;
     }
     set_proc_info("Table lock");
@@ -258,7 +259,7 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     {
       if (sql_lock->sizeTable())
         unlock_external(sql_lock->getTable(), sql_lock->sizeTable());
-      reset_lock_data_and_free(&sql_lock);
+      reset_lock_data_and_free(sql_lock);
       my_error(rc, MYF(0));
     }
   } while(0);
@@ -274,9 +275,9 @@ DrizzleLock *Session::lockTables(Table **tables, uint32_t count, uint32_t flags)
     }
   }
 
-  set_time_after_lock();
+  times.set_time_after_lock();
 
-  return (sql_lock);
+  return sql_lock;
 }
 
 
@@ -288,8 +289,8 @@ int Session::lock_external(Table **tables, uint32_t count)
     assert((*tables)->reginfo.lock_type >= TL_READ);
     lock_type=F_WRLCK;				/* Lock exclusive */
     if ((*tables)->db_stat & HA_READ_ONLY ||
-	((*tables)->reginfo.lock_type >= TL_READ &&
-	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
+      ((*tables)->reginfo.lock_type >= TL_READ &&
+      (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
 
     if ((error=(*tables)->cursor->ha_external_lock(this,lock_type)))
@@ -298,8 +299,8 @@ int Session::lock_external(Table **tables, uint32_t count)
       while (--i)
       {
         tables--;
-	(*tables)->cursor->ha_external_lock(this, F_UNLCK);
-	(*tables)->current_lock=F_UNLCK;
+        (*tables)->cursor->ha_external_lock(this, F_UNLCK);
+        (*tables)->current_lock=F_UNLCK;
       }
       return error;
     }
@@ -557,7 +558,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
         sql_lock->setLock(locks - sql_lock->getLocks());
-        reset_lock_data_and_free(&sql_lock);
+        reset_lock_data_and_free(sql_lock);
 	return NULL;
       }
     }
@@ -599,7 +600,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
   @param check_in_use           Do we need to check if table already in use by us
 
   @note
-    One must have a lock on table::Cache::singleton().mutex()!
+    One must have a lock on table::Cache::mutex()!
 
   @warning
     If you are going to update the table, you should use
@@ -621,23 +622,14 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 int Session::lock_table_name(TableList *table_list)
 {
   identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
-  const identifier::Table::Key &key(identifier.getKey());
-
   {
     /* Only insert the table if we haven't insert it already */
-    table::CacheRange ppp;
-
-    ppp= table::getCache().equal_range(key);
-
-    for (table::CacheMap::const_iterator iter= ppp.first;
-         iter != ppp.second; ++iter)
+    table::CacheRange ppp= table::getCache().equal_range(identifier.getKey());
+    for (table::CacheMap::const_iterator iter= ppp.first; iter != ppp.second; ++iter)
     {
       Table *table= iter->second;
       if (table->reginfo.lock_type < TL_WRITE)
-      {
         continue;
-      }
-
       if (table->in_use == this)
       {
         table->getMutableShare()->resetVersion();                  // Ensure no one can use this
@@ -647,16 +639,11 @@ int Session::lock_table_name(TableList *table_list)
     }
   }
 
-  table::Placeholder *table= NULL;
-  if (!(table= table_cache_insert_placeholder(identifier)))
-  {
-    return -1;
-  }
-
-  table_list->table= reinterpret_cast<Table *>(table);
+  table::Placeholder *table= &table_cache_insert_placeholder(identifier);
+  table_list->table= reinterpret_cast<Table*>(table);
 
   /* Return 1 if table is in use */
-  return(test(table::Cache::singleton().removeTable(this, identifier, RTFC_NO_FLAG)));
+  return (test(table::Cache::removeTable(*this, identifier, RTFC_NO_FLAG)));
 }
 
 
@@ -680,7 +667,7 @@ static bool locked_named_table(TableList *table_list)
       Table *save_next= table->getNext();
       bool result;
       table->setNext(NULL);
-      result= table::Cache::singleton().areTablesUsed(table_list->table, 0);
+      result= table::Cache::areTablesUsed(table_list->table, 0);
       table->setNext(save_next);
       if (result)
         return 1;
@@ -695,7 +682,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   bool result= false;
 
 #if 0
-  assert(ownership of table::Cache::singleton().mutex());
+  assert(ownership of table::Cache::mutex());
 #endif
 
   while (locked_named_table(table_list))
@@ -705,8 +692,8 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
       result=1;
       break;
     }
-    wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
-    table::Cache::singleton().mutex().lock(); /* Wait for a table to unlock and then lock it */
+    wait_for_condition(table::Cache::mutex(), COND_refresh);
+    table::Cache::mutex().lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
 }
@@ -716,7 +703,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   Lock all tables in list with a name lock.
 
   REQUIREMENTS
-  - One must have a lock on table::Cache::singleton().mutex() when calling this
+  - One must have a lock on table::Cache::mutex() when calling this
 
   @param table_list		Names of tables to lock
 
@@ -762,7 +749,7 @@ bool Session::lock_table_names(TableList *table_list)
   @param table_list Names of tables to lock.
 
   @note
-    This function needs to be protected by table::Cache::singleton().mutex(). If we're
+    This function needs to be protected by table::Cache::mutex(). If we're
     under LOCK TABLES, this function does not work as advertised. Namely,
     it does not exclude other threads from using this table and does not
     put an exclusive name lock on this table into the table cache.
@@ -801,7 +788,7 @@ bool Session::lock_table_names_exclusively(TableList *table_list)
 			        (default 0, which will unlock all tables)
 
   @note
-    One must have a lock on table::Cache::singleton().mutex() when calling this.
+    One must have a lock on table::Cache::mutex() when calling this.
 
   @note
     This function will broadcast refresh signals to inform other threads
@@ -876,12 +863,12 @@ static void print_lock_error(int error, const char *table)
 
   access to them is protected with a mutex LOCK_global_read_lock
 
-  (XXX: one should never take table::Cache::singleton().mutex() if LOCK_global_read_lock is
+  (XXX: one should never take table::Cache::mutex() if LOCK_global_read_lock is
   taken, otherwise a deadlock may occur. Other mutexes could be a
   problem too - grep the code for global_read_lock if you want to use
-  any other mutex here) Also one must not hold table::Cache::singleton().mutex() when calling
+  any other mutex here) Also one must not hold table::Cache::mutex() when calling
   wait_if_global_read_lock(). When the thread with the global read lock
-  tries to close its tables, it needs to take table::Cache::singleton().mutex() in
+  tries to close its tables, it needs to take table::Cache::mutex() in
   close_thread_table().
 
   How blocking of threads by global read lock is achieved: that's
@@ -945,7 +932,7 @@ bool Session::lockGlobalReadLock()
                             "Waiting to get readlock");
 
     waiting_for_read_lock++;
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     while (protect_against_global_read_lock && not getKilled())
       COND_global_read_lock.wait(scopedLock);
     waiting_for_read_lock--;
@@ -980,7 +967,7 @@ void Session::unlockGlobalReadLock(void)
     return;
 
   {
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock);
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock);
     tmp= --global_read_lock;
     if (isGlobalReadLock() == Session::MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
       --global_read_lock_blocks_commit;
@@ -1006,11 +993,11 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
   bool result= 0, need_exit_cond;
 
   /*
-    Assert that we do not own table::Cache::singleton().mutex(). If we would own it, other
+    Assert that we do not own table::Cache::mutex(). If we would own it, other
     threads could not close their tables. This would make a pretty
     deadlock.
   */
-  safe_mutex_assert_not_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_not_owner(table::Cache::mutex().native_handle());
 
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
@@ -1032,9 +1019,9 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
                             "Waiting for release of readlock");
 
     while (must_wait(is_not_commit) && not getKilled() &&
-	   (!abort_on_refresh || version == refresh_version))
+	   (!abort_on_refresh || open_tables.version == g_refresh_version))
     {
-      boost_unique_lock_t scoped(LOCK_global_read_lock, boost::adopt_lock_t());
+      boost::mutex::scoped_lock scoped(LOCK_global_read_lock, boost::adopt_lock_t());
       COND_global_read_lock.wait(scoped);
       scoped.release();
     }
@@ -1095,7 +1082,7 @@ bool Session::makeGlobalReadLockBlockCommit()
                           "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && not getKilled())
   {
-    boost_unique_lock_t scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(LOCK_global_read_lock, boost::adopt_lock_t());
     COND_global_read_lock.wait(scopedLock);
     scopedLock.release();
   }
@@ -1120,9 +1107,9 @@ bool Session::makeGlobalReadLockBlockCommit()
     Due to a bug in a threading library it could happen that a signal
     did not reach its target. A condition for this was that the same
     condition variable was used with different mutexes in
-    pthread_cond_wait(). Some time ago we changed table::Cache::singleton().mutex() to
+    pthread_cond_wait(). Some time ago we changed table::Cache::mutex() to
     LOCK_global_read_lock in global read lock handling. So COND_refresh
-    was used with table::Cache::singleton().mutex() and LOCK_global_read_lock.
+    was used with table::Cache::mutex() and LOCK_global_read_lock.
 
     We did now also change from COND_refresh to COND_global_read_lock
     in global read lock handling. But now it is necessary to signal

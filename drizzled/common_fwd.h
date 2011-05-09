@@ -18,6 +18,8 @@
 #pragma once
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
 #include <string>
 #include <vector>
 
@@ -53,7 +55,7 @@ namespace generator
 
 namespace internal
 {
-  typedef struct st_io_cache IO_CACHE;
+  struct io_cache_st;
   
   struct st_my_thread_var;
 }
@@ -120,6 +122,7 @@ namespace message
   class Schema;
   class SetVariableStatement;
   class Statement;
+  class Table;
   class Transaction;
   class TruncateTableStatement;
   class UpdateData;
@@ -179,6 +182,7 @@ namespace session
 { 
   class State; 
   class TableMessages;
+  class Times;
   class Transactions;
 }
 
@@ -194,6 +198,7 @@ namespace statement
 
 namespace table 
 { 
+  class Cache;
   class Concurrent;
   class Placeholder; 
   class Singular; 

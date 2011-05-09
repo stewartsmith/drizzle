@@ -31,8 +31,10 @@
 #include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
-
 namespace definition {
+
+Cache::Map Cache::cache;
+boost::mutex Cache::_mutex;
 
 table::instance::Shared::shared_ptr Cache::find(const identifier::Table::Key &key)
 {
@@ -62,7 +64,7 @@ void Cache::CopyFrom(drizzled::table::instance::Shared::vector &vector)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
-  vector.reserve(definition::Cache::singleton().size());
+  vector.reserve(definition::Cache::size());
 
   std::transform(cache.begin(),
                  cache.end(),

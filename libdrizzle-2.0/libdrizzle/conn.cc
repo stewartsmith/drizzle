@@ -792,6 +792,7 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
       snprintf(port, NI_MAXSERV, "%u", DRIZZLE_DEFAULT_TCP_PORT_MYSQL);
     else
       snprintf(port, NI_MAXSERV, "%u", DRIZZLE_DEFAULT_TCP_PORT);
+    port[NI_MAXSERV-1]= 0;
 
     ai.ai_socktype= SOCK_STREAM;
     ai.ai_protocol= IPPROTO_TCP;
@@ -834,43 +835,6 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
   return DRIZZLE_RETURN_OK;
 }
 
-#ifdef _WIN32
-/*Mapping windows specific error codes to Posix*/
-static int drizzle_get_windows_errno()
-{
-  int windows_error = WSAGetLastError();
-    switch(windows_error) {
-    case WSAEINVAL:
-    case WSAEALREADY:
-    case WSAECONNREFUSED:
-    case WSAEWOULDBLOCK:
-      return EINPROGRESS;
-      break;
-    case WSAENETUNREACH:
-      return ENETUNREACH;
-      break;
-    case WSAETIMEDOUT:
-      return ETIMEDOUT;
-      break;
-    case WSAECONNRESET:
-      return ECONNRESET;
-      break;
-    case WSAEADDRINUSE:
-      return EADDRINUSE;
-      break;
-    case WSAEOPNOTSUPP:
-      return EOPNOTSUPP;
-      break;
-    case WSAENOPROTOOPT:
-      return ENOPROTOOPT;
-      break;
-    default:
-      return windows_error;
-      break;
-    }
-}
-#endif
-
 drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 {
   int ret;
@@ -880,7 +844,7 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 
   if (con->fd != -1)
   {
-    (void)close(con->fd);
+    (void)closesocket(con->fd);
     con->fd= -1;
   }
 
@@ -916,7 +880,37 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
                  con->addrinfo_next->ai_addrlen);
 
 #ifdef _WIN32
-    errno = drizzle_get_windows_errno();
+    errno = WSAGetLastError();
+    switch(errno) {
+    case WSAEINVAL:
+    case WSAEALREADY:
+    case WSAEWOULDBLOCK:
+      errno= EINPROGRESS;
+      break;
+    case WSAECONNREFUSED:
+      errno= ECONNREFUSED;
+      break;
+    case WSAENETUNREACH:
+      errno= ENETUNREACH;
+      break;
+    case WSAETIMEDOUT:
+      errno= ETIMEDOUT;
+      break;
+    case WSAECONNRESET:
+      errno= ECONNRESET;
+      break;
+    case WSAEADDRINUSE:
+      errno= EADDRINUSE;
+      break;
+    case WSAEOPNOTSUPP:
+      errno= EOPNOTSUPP;
+      break;
+    case WSAENOPROTOOPT:
+      errno= ENOPROTOOPT;
+      break;
+    default:
+      break;
+    }
 #endif /* _WIN32 */
 	
     drizzle_log_crazy(con->drizzle, "connect return=%d errno=%d", ret, errno);
@@ -1022,7 +1016,40 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
                      available_buffer, 0);
 #ifdef _WIN32
-    errno = drizzle_get_windows_errno();
+    errno = WSAGetLastError();
+    switch(errno) {
+    case WSAENOTCONN:
+    case WSAEWOULDBLOCK:
+      errno= EAGAIN;
+      break;
+    case WSAEINVAL:
+    case WSAEALREADY:
+      errno= EINPROGRESS;
+      break;
+    case WSAECONNREFUSED:
+      errno= ECONNREFUSED;
+      break;
+    case WSAENETUNREACH:
+      errno= ENETUNREACH;
+      break;
+    case WSAETIMEDOUT:
+      errno= ETIMEDOUT;
+      break;
+    case WSAECONNRESET:
+      errno= ECONNRESET;
+      break;
+    case WSAEADDRINUSE:
+      errno= EADDRINUSE;
+      break;
+    case WSAEOPNOTSUPP:
+      errno= EOPNOTSUPP;
+      break;
+    case WSAENOPROTOOPT:
+      errno= ENOPROTOOPT;
+      break;
+    default:
+      break;
+    }
 #endif /* _WIN32 */	
 
     drizzle_log_crazy(con->drizzle, "read fd=%d return=%zd errno=%d", con->fd,
@@ -1096,6 +1123,43 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
   {
   
     write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
+
+#ifdef _WIN32
+    errno = WSAGetLastError();
+    switch(errno) {
+    case WSAENOTCONN:
+    case WSAEWOULDBLOCK:
+      errno= EAGAIN;
+      break;
+    case WSAEINVAL:
+    case WSAEALREADY:
+      errno= EINPROGRESS;
+      break;
+    case WSAECONNREFUSED:
+      errno= ECONNREFUSED;
+      break;
+    case WSAENETUNREACH:
+      errno= ENETUNREACH;
+      break;
+    case WSAETIMEDOUT:
+      errno= ETIMEDOUT;
+      break;
+    case WSAECONNRESET:
+      errno= ECONNRESET;
+      break;
+    case WSAEADDRINUSE:
+      errno= EADDRINUSE;
+      break;
+    case WSAEOPNOTSUPP:
+      errno= EOPNOTSUPP;
+      break;
+    case WSAENOPROTOOPT:
+      errno= ENOPROTOOPT;
+      break;
+    default:
+      break;
+    }
+#endif /* _WIN32 */	
 
     drizzle_log_crazy(con->drizzle, "write fd=%d return=%zd errno=%d", con->fd,
                       write_size, errno);
@@ -1190,7 +1254,7 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
 #endif /* _WIN32 */
     if (ret == -1)
     {
-      close(fd);
+      closesocket(fd);
       drizzle_set_error(con->drizzle, "drizzle_state_listen", "setsockopt:%d",
                         errno);
       return DRIZZLE_RETURN_ERRNO;
@@ -1199,7 +1263,7 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
     ret= bind(fd, con->addrinfo_next->ai_addr, con->addrinfo_next->ai_addrlen);
     if (ret == -1)
     {
-      close(fd);
+      closesocket(fd);
       drizzle_set_error(con->drizzle, "drizzle_state_listen", "bind:%d", errno);
       if (errno == EADDRINUSE)
       {
@@ -1217,7 +1281,7 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
 
     if (listen(fd, con->backlog) == -1)
     {
-      close(fd);
+      closesocket(fd);
       drizzle_set_error(con->drizzle, "drizzle_state_listen", "listen:%d",
                         errno);
       return DRIZZLE_RETURN_ERRNO;
@@ -1233,7 +1297,7 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
       new_con= drizzle_con_clone(con->drizzle, NULL, con);
       if (new_con == NULL)
       {
-        close(fd);
+        closesocket(fd);
         return DRIZZLE_RETURN_MEMORY;
       }
 

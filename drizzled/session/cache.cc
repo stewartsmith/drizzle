@@ -18,34 +18,30 @@
  */
 
 #include <config.h>
-
-#include <vector>
-
-#include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-#include <drizzled/current_session.h>
-#include <drizzled/plugin/authorization.h>
 
 #include <boost/foreach.hpp>
+#include <drizzled/current_session.h>
+#include <drizzled/plugin/authorization.h>
+#include <drizzled/session.h>
+#include <vector>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace session {
 
-namespace session
-{
+bool volatile Cache::_ready_to_exit= false;
+Cache::list Cache::cache;
+boost::mutex Cache::_mutex;
+boost::condition_variable Cache::_end;
 
 Cache::session_shared_ptr Cache::find(const session_id_t &id)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-
   BOOST_FOREACH(list::const_reference it, cache)
   {
     if (it->thread_id == id)
-    {
       return it;
-    }
   }
-
   return session_shared_ptr();
 }
 

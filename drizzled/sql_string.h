@@ -39,9 +39,6 @@ namespace drizzled {
 extern DRIZZLED_API String my_empty_string;
 extern const String my_null_string;
 
-DRIZZLED_API std::string String_to_std_string(String const& s);
-DRIZZLED_API String* set_String_from_std_string(String* s, std::string const& cs);
-
 int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
 int stringcmp(const String *a,const String *b);
 String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
@@ -154,11 +151,11 @@ public:
     }
     str_charset= cs;
   }
-  bool set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
-  bool set(int64_t num, const charset_info_st * const cs)
-  { return set_int(num, false, cs); }
-  bool set(uint64_t num, const charset_info_st * const cs)
-  { return set_int(static_cast<int64_t>(num), true, cs); }
+  void set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
+  void set(int64_t num, const charset_info_st * const cs)
+  { set_int(num, false, cs); }
+  void set(uint64_t num, const charset_info_st * const cs)
+  { set_int(static_cast<int64_t>(num), true, cs); }
   bool set_real(double num,size_t decimals, const charset_info_st * const cs);
 
   /*
@@ -199,13 +196,12 @@ public:
       str_length=0;				/* Safety */
     }
   }
-  inline bool alloc(size_t arg_length)
+  inline void alloc(size_t arg_length)
   {
-    if (arg_length < Alloced_length)
-      return 0;
-    return real_alloc(arg_length);
+    if (arg_length >= Alloced_length)
+      real_alloc(arg_length);
   }
-  bool real_alloc(size_t arg_length);			// Empties old string
+  void real_alloc(size_t arg_length);			// Empties old string
   bool realloc(size_t arg_length);
   inline void shrink(size_t arg_length)		// Shrink buffer
   {
@@ -241,27 +237,28 @@ public:
     return *this;
   }
 
-  bool copy();					// Alloc string if not alloced
-  bool copy(const String &s);			// Allocate new string
-  bool copy(const std::string&, const charset_info_st * const cs);	// Allocate new string
-  bool copy(const char *s,size_t arg_length, const charset_info_st * const cs);	// Allocate new string
+  void copy();					// Alloc string if not alloced
+  void copy(const String&);			// Allocate new string
+  void copy(const std::string&, const charset_info_st*);	// Allocate new string
+  void copy(const char*, size_t, const charset_info_st*); // Allocate new string
   static bool needs_conversion(size_t arg_length,
   			       const charset_info_st * const cs_from, const charset_info_st * const cs_to,
 			       size_t *offset);
   bool set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st * const cs);
   bool copy(const char*s,size_t arg_length, const charset_info_st * const csfrom,
             const charset_info_st * const csto, size_t *errors);
-  bool append(const String &s);
-  bool append(const char *s);
-  bool append(const char *s,size_t arg_length);
-  bool append(const char *s,size_t arg_length, const charset_info_st * const cs);
-  bool append_with_prefill(const char *s, size_t arg_length,
+  void append(const String &s);
+  void append(const char *s);
+  void append(const char *s,size_t arg_length);
+  void append(const char *s,size_t arg_length, const charset_info_st * const cs);
+  void append_with_prefill(const char *s, size_t arg_length,
 			   size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
-  bool replace(size_t offset,size_t arg_length,const char *to,size_t length);
-  bool replace(size_t offset,size_t arg_length,const String &to);
-  inline bool append(char chr)
+  void replace(size_t offset,size_t arg_length,const char *to,size_t length);
+  void replace(size_t offset,size_t arg_length,const String &to);
+
+  inline void append(char chr)
   {
     if (str_length < Alloced_length)
     {
@@ -269,11 +266,9 @@ public:
     }
     else
     {
-      if (realloc(str_length+1))
-        return 1;
+      realloc(str_length+1);
       Ptr[str_length++]=chr;
     }
-    return 0;
   }
   friend int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
   friend int stringcmp(const String *a,const String *b);

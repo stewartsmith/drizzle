@@ -53,13 +53,13 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/table/singular.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/typelib.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 
@@ -306,18 +306,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
     }
   }
   res->append('\'');
-}
-
-
-int rename_file_ext(const char * from,const char * to,const char * ext)
-{
-  string from_s, to_s;
-
-  from_s.append(from);
-  from_s.append(ext);
-  to_s.append(to);
-  to_s.append(ext);
-  return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
 }
 
 /*
@@ -741,10 +729,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
   @param table_alias          possible name of the temporary table that can
                               be used for name resolving; can be "".
 */
-
-#define STRING_TOTAL_LENGTH_TO_PACK_ROWS 128
-#define AVG_STRING_LENGTH_TO_PACK_ROWS   64
-#define RATIO_TO_PACK_ROWS	       2
 
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
@@ -1710,7 +1694,7 @@ void Table::filesort_free_buffers(bool full)
 */
 bool Table::needs_reopen_or_name_lock() const
 { 
-  return getShare()->getVersion() != refresh_version;
+  return getShare()->getVersion() != g_refresh_version;
 }
 
 uint32_t Table::index_flags(uint32_t idx) const

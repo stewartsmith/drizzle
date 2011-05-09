@@ -39,6 +39,8 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 
@@ -1594,7 +1596,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+        boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
         if (create_table->table)
         {
@@ -1625,7 +1627,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(identifier);
+          session->open_tables.drop_temporary_table(identifier);
         }
       }
     }
@@ -1684,7 +1686,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     if (identifier.isTmp())
       m_plock= &m_lock;
     else
-      m_plock= &session->extra_lock;
+      m_plock= &session->open_tables.extra_lock;
 
     *m_plock= extra_lock;
   }

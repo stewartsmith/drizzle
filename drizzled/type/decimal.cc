@@ -107,7 +107,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>
@@ -214,8 +214,7 @@ int class_decimal2string(const type::Decimal *d,
                     ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
-  if (str->alloc(length))
-    return check_result(mask, E_DEC_OOM);
+  str->alloc(length);
 
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
                          &length, (int)0, fixed_dec,

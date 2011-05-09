@@ -15,7 +15,6 @@
 
 #include <config.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 
 namespace drizzled
 {
