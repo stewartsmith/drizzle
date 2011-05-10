@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-04-25 23:26-0700\n"
+"POT-Creation-Date: 2011-05-10 14:14+0000\n"
 "PO-Revision-Date: 2010-07-30 09:02+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -250,7 +250,7 @@ msgid "Error: Invalid Value for max_input_line"
 msgstr "Erreur : valeur invalide pour max_input_line"
 
 #: ../client/drizzle.cc:1380 ../client/drizzledump.cc:469
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4750
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4748
 msgid "Options used only in command line"
 msgstr ""
 
@@ -576,7 +576,7 @@ msgstr "DELIMITER ne peut contenir le caractère backslash"
 
 #: ../client/drizzle.cc:1725 ../client/drizzledump.cc:660
 #: ../client/drizzleimport.cc:475 ../client/drizzleslap.cc:623
-#: ../client/drizzletest.cc:5610
+#: ../client/drizzletest.cc:5609
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "Protocole inconnu ou erroné"
@@ -1291,7 +1291,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "OR %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 #: ../client/drizzledump.cc:673 ../client/drizzleimport.cc:488
-#: ../client/drizzleslap.cc:633 ../client/drizzletest.cc:5622
+#: ../client/drizzleslap.cc:633 ../client/drizzletest.cc:5621
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "La valeur fournie pour le port n'est pas valide.\n"
@@ -1372,24 +1372,24 @@ msgstr "-- Lecture des lignes...\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:5366
+#: ../client/drizzletest.cc:5365
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr "Erreur : valeur invalide pour opt_max_connect_retries"
 
-#: ../client/drizzletest.cc:5376
+#: ../client/drizzletest.cc:5375
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "Erreur : valeur invalide pour opt_tail_lines"
 
-#: ../client/drizzletest.cc:5386
+#: ../client/drizzletest.cc:5385
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "Erreur : valeur invalide pour opt_sleep"
 
-#: ../client/drizzletest.cc:5574
+#: ../client/drizzletest.cc:5573
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "Impossible d'ouvrir '%s' pour la lecture : errno = %d"
 
-#: ../client/drizzletest.cc:5579
+#: ../client/drizzletest.cc:5578
 #, c-format
 msgid "Out of memory"
 msgstr "Mémoire insuffisante"
@@ -1686,7 +1686,7 @@ msgid "Write core on errors."
 msgstr "Écrit le core en cas d'erreur."
 
 #: ../drizzled/drizzled.cc:1145 ../drizzled/drizzled.cc:1728
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4770
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4768
 msgid "Path to the database root."
 msgstr "Chemin à la racine de la base de donnée."
 
@@ -3988,7 +3988,7 @@ msgid ""
 "restrictions."
 msgstr ""
 
-#: ../drizzled/main.cc:175
+#: ../drizzled/main.cc:174
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
@@ -3996,29 +3996,29 @@ msgstr ""
 "setrlimit n'a pas pu changer la taille des fichiers core à 'infini'; il se "
 "peut que nous ne puissions pas produire les fichiers core demandés"
 
-#: ../drizzled/main.cc:292
+#: ../drizzled/main.cc:291
 #, c-format
 msgid "Data directory %s does not exist\n"
 msgstr "Le dossier de données %s n'existe pas\n"
 
-#: ../drizzled/main.cc:303
+#: ../drizzled/main.cc:321
 #, fuzzy, c-format
 msgid "Local catalog %s/local does not exist\n"
 msgstr "Le dossier de données %s n'existe pas\n"
 
-#: ../drizzled/main.cc:328 ../plugin/multi_thread/multi_thread.cc:76
+#: ../drizzled/main.cc:344 ../plugin/multi_thread/multi_thread.cc:76
 msgid "Drizzle has receieved an abort event."
 msgstr ""
 
-#: ../drizzled/main.cc:329 ../plugin/multi_thread/multi_thread.cc:77
+#: ../drizzled/main.cc:345 ../plugin/multi_thread/multi_thread.cc:77
 msgid "In Function: "
 msgstr ""
 
-#: ../drizzled/main.cc:330 ../plugin/multi_thread/multi_thread.cc:78
+#: ../drizzled/main.cc:346 ../plugin/multi_thread/multi_thread.cc:78
 msgid "In File: "
 msgstr ""
 
-#: ../drizzled/main.cc:331 ../plugin/multi_thread/multi_thread.cc:79
+#: ../drizzled/main.cc:347 ../plugin/multi_thread/multi_thread.cc:79
 msgid "On Line: "
 msgstr ""
 
@@ -4215,7 +4215,7 @@ msgstr "L'enregistrement '%s' postEnd() a échoué"
 msgid "logging '%s' resetCurrentScoreboard() failed"
 msgstr "L'enregistrement '%s' postEnd() a échoué"
 
-#: ../drizzled/plugin/scheduler.cc:61
+#: ../drizzled/plugin/scheduler.cc:38
 #, c-format
 msgid ""
 "Attempted to register a scheduler %s, but a scheduler has already been "
@@ -4224,13 +4224,13 @@ msgstr ""
 "Tentative d'enregistrement du programmateur %s, mais un programmateur a déjà "
 "été enregistré avec ce nom.\n"
 
-#: ../drizzled/plugin/scheduler.cc:98
+#: ../drizzled/plugin/scheduler.cc:63
 #, c-format
 msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
 msgstr ""
 "Tentative de configuration de %s comme programmateur, qui n'existe pas.\n"
 
-#: ../drizzled/plugin/schema_engine.cc:123
+#: ../drizzled/plugin/schema_engine.cc:122
 #, c-format
 msgid "Error while loading database options: '%s':"
 msgstr "Erreur lors du chargement des options de la base de données: '%s':"
@@ -4290,7 +4290,7 @@ msgstr ""
 "'%s'.\n"
 "Nous avons désactivé le TransactionApplier '%s'.\n"
 
-#: ../drizzled/session.cc:1905 ../drizzled/session.cc:1914
+#: ../drizzled/session.cc:1908 ../drizzled/session.cc:1917
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "La table temporaire '%s' n'a pas pu être supprimée, erreur: %d"
@@ -4355,12 +4355,12 @@ msgstr ""
 "variables de cette équation.\n"
 "\n"
 
-#: ../drizzled/sql_table.cc:1908
+#: ../drizzled/sql_table.cc:1901
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Erreur interne %d inconnue durant l'opération"
 
-#: ../drizzled/statement/alter_table.cc:1599
+#: ../drizzled/statement/alter_table.cc:1594
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -4369,17 +4369,17 @@ msgstr ""
 "order_st BY ignoré, car il y a un index utilisateur en cluster défini pour "
 "la table '%-.192s'"
 
-#: ../drizzled/sys_var.cc:1454
+#: ../drizzled/sys_var.cc:1455
 #, c-format
 msgid "Variable named %s already exists!\n"
 msgstr "La variable %s existe déjà!\n"
 
-#: ../drizzled/sys_var.cc:1463
+#: ../drizzled/sys_var.cc:1464
 #, c-format
 msgid "Could not add Variable: %s\n"
 msgstr "Impossible d'ajouter la variable : %s\n"
 
-#: ../drizzled/sys_var.cc:1563
+#: ../drizzled/sys_var.cc:1565
 #, fuzzy
 msgid "Failed to initialize system variables"
 msgstr "Échec à l'initialisation des plugins."
@@ -4574,57 +4574,57 @@ msgstr "Expression rationnelles à appliquer aux schémas à filtrer"
 msgid "Regular expression to apply to tables to exclude"
 msgstr "Expression rationnelles à appliquer aux tables à filtrer"
 
-#: ../plugin/haildb/haildb_engine.cc:1087
-#: ../plugin/haildb/haildb_engine.cc:1224
-#: ../plugin/haildb/haildb_engine.cc:1254
+#: ../plugin/haildb/haildb_engine.cc:1086
+#: ../plugin/haildb/haildb_engine.cc:1223
+#: ../plugin/haildb/haildb_engine.cc:1253
 #, fuzzy, c-format
 msgid "Cannot create table %s. HailDB Error %d (%s)\n"
 msgstr "Impossible de créer la table '%-.200s' (numéro d'erreur : %d)"
 
-#: ../plugin/haildb/haildb_engine.cc:1106
+#: ../plugin/haildb/haildb_engine.cc:1105
 #, fuzzy, c-format
 msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
 msgstr "Ne peux créer le lien symbolique '%s' pointant sur '%s' (Erreur %d)"
 
-#: ../plugin/haildb/haildb_engine.cc:1203
-#: ../plugin/haildb/haildb_engine.cc:1316
-#: ../plugin/haildb/haildb_engine.cc:1497
-#: ../plugin/haildb/haildb_engine.cc:2163
+#: ../plugin/haildb/haildb_engine.cc:1202
+#: ../plugin/haildb/haildb_engine.cc:1315
+#: ../plugin/haildb/haildb_engine.cc:1496
+#: ../plugin/haildb/haildb_engine.cc:2162
 #, fuzzy, c-format
 msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
 msgstr "Impossible de créer la table '%-.200s' (numéro d'erreur : %d)"
 
-#: ../plugin/haildb/haildb_engine.cc:1355
-#: ../plugin/haildb/haildb_engine.cc:1371
+#: ../plugin/haildb/haildb_engine.cc:1354
+#: ../plugin/haildb/haildb_engine.cc:1370
 #, fuzzy, c-format
 msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
 msgstr "Impossible de créer la table '%-.200s' (numéro d'erreur : %d)"
 
-#: ../plugin/haildb/haildb_engine.cc:3411
+#: ../plugin/haildb/haildb_engine.cc:3410
 #, c-format
 msgid "Error starting HailDB %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3440
+#: ../plugin/haildb/haildb_engine.cc:3439
 msgid "Disable HailDB adaptive hash index (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3442
+#: ../plugin/haildb/haildb_engine.cc:3441
 msgid "Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3445
+#: ../plugin/haildb/haildb_engine.cc:3444
 msgid ""
 "Size of a memory pool HailDB uses to store data dictionary information and "
 "other internal data structures."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3448
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4775
+#: ../plugin/haildb/haildb_engine.cc:3447
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
 msgid "Data file autoextend increment in megabytes"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3451
+#: ../plugin/haildb/haildb_engine.cc:3450
 #, fuzzy
 msgid ""
 "The size of the memory buffer HailDB uses to cache data and indexes of its "
@@ -4632,83 +4632,83 @@ msgid ""
 msgstr ""
 "La taille du buffer qui est utilisée pour réaliser des jointures complètes."
 
-#: ../plugin/haildb/haildb_engine.cc:3454
+#: ../plugin/haildb/haildb_engine.cc:3453
 msgid "The common part for HailDB table spaces."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3456
+#: ../plugin/haildb/haildb_engine.cc:3455
 msgid "Disable HailDB checksums validation (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3458
+#: ../plugin/haildb/haildb_engine.cc:3457
 msgid "Disable HailDB doublewrite buffer (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3461
+#: ../plugin/haildb/haildb_engine.cc:3460
 msgid "Number of IOPs the server can do. Tunes the background IO rate"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3464
+#: ../plugin/haildb/haildb_engine.cc:3463
 msgid ""
 "Speeds up the shutdown process of the HailDB storage engine. Possible values "
 "are 0, 1 (faster) or 2 (fastest - crash-like)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3467
+#: ../plugin/haildb/haildb_engine.cc:3466
 msgid "Stores each HailDB table to an .ibd file in the database dir."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3470
+#: ../plugin/haildb/haildb_engine.cc:3469
 msgid "File format to use for new tables in .ibd files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3473
+#: ../plugin/haildb/haildb_engine.cc:3472
 msgid ""
 "Set to 0 (write and flush once per second),1 (write and flush at each "
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3476
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
+#: ../plugin/haildb/haildb_engine.cc:3475
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
 msgid "With which method to flush data."
 msgstr ""
 
 #. ####### Should we use this option? #######
-#: ../plugin/haildb/haildb_engine.cc:3479
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4786
+#: ../plugin/haildb/haildb_engine.cc:3478
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
 msgid ""
 "Helps to save your data in case the disk image of the database becomes "
 "corrupt."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3482
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4778
+#: ../plugin/haildb/haildb_engine.cc:3481
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
 msgid "Path to individual files and their sizes."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3485
+#: ../plugin/haildb/haildb_engine.cc:3484
 #, fuzzy
 msgid "Path to HailDB log files."
 msgstr "Chemin pour les fichiers temporaires."
 
-#: ../plugin/haildb/haildb_engine.cc:3488
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4789
+#: ../plugin/haildb/haildb_engine.cc:3487
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
 msgid "Size of each log file in a log group."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3491
+#: ../plugin/haildb/haildb_engine.cc:3490
 msgid ""
 "Number of log files in the log group. HailDB writes to the files in a "
 "circular fashion. Value 3 is recommended here."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3494
+#: ../plugin/haildb/haildb_engine.cc:3493
 msgid ""
 "Timeout in seconds an HailDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3497
+#: ../plugin/haildb/haildb_engine.cc:3496
 #, fuzzy
 msgid ""
 "The size of the buffer which HailDB uses to write log to the log files on "
@@ -4716,60 +4716,60 @@ msgid ""
 msgstr ""
 "La taille du buffer qui est utilisée pour réaliser des jointures complètes."
 
-#: ../plugin/haildb/haildb_engine.cc:3500
+#: ../plugin/haildb/haildb_engine.cc:3499
 msgid ""
 "Sets the point in the LRU list from where all pages are classified as old "
 "(Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3503
+#: ../plugin/haildb/haildb_engine.cc:3502
 msgid ""
 "Milliseconds between accesses to a block at which it is made young. "
 "0=disabled (Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3506
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4792
+#: ../plugin/haildb/haildb_engine.cc:3505
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
 msgid "Percentage of dirty pages allowed in bufferpool."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3509
+#: ../plugin/haildb/haildb_engine.cc:3508
 msgid "Desired maximum length of the purge queue (0 = no limit)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3512
+#: ../plugin/haildb/haildb_engine.cc:3511
 msgid ""
 "Roll back the complete transaction on lock wait timeout, for 4.x "
 "compatibility (disabled by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3515
+#: ../plugin/haildb/haildb_engine.cc:3514
 msgid "How many files at the maximum HailDB keeps open at the same time."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3518
+#: ../plugin/haildb/haildb_engine.cc:3517
 msgid "Number of background read I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3521
+#: ../plugin/haildb/haildb_engine.cc:3520
 msgid "Number of background write I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3523
+#: ../plugin/haildb/haildb_engine.cc:3522
 msgid ""
 "Disable if you want to reduce the number of messages written to the log "
 "(default: enabled)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3526
+#: ../plugin/haildb/haildb_engine.cc:3525
 msgid "Enable SHOW HAILDB STATUS output in the log"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3529
+#: ../plugin/haildb/haildb_engine.cc:3528
 msgid "Count of spin-loop rounds in HailDB mutexes (30 by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3531
+#: ../plugin/haildb/haildb_engine.cc:3530
 msgid ""
 "Use HailDB's internal memory allocator instead of the OS memory allocator"
 msgstr ""
@@ -4805,51 +4805,51 @@ msgstr ""
 msgid "Warning: data in %s truncated due to memory limit of %d bytes\n"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:1959
+#: ../plugin/innobase/handler/ha_innodb.cc:1967
 msgid ""
 "Once InnoDB is running, innodb_commit_concurrency must not change between "
 "zero and nonzero."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:2269
+#: ../plugin/innobase/handler/ha_innodb.cc:2277
 msgid ""
 "syntax error in innodb_log_group_home_dir, or a wrong number of mirrored log "
 "groups"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:2313
+#: ../plugin/innobase/handler/ha_innodb.cc:2321
 #, c-format
 msgid ""
 "InnoDB: invalid innodb_file_format_max value: should be any value up to %s "
 "or its equivalent numeric id"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9382
+#: ../plugin/innobase/handler/ha_innodb.cc:9390
 msgid "Do not use Native AIO library for IO, even if available"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9423
+#: ../plugin/innobase/handler/ha_innodb.cc:9431
 #, fuzzy
 msgid "Enable internal replication log."
 msgstr "Active le log de transactions"
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9426
+#: ../plugin/innobase/handler/ha_innodb.cc:9434
 msgid ""
 "Timeout in seconds an InnoDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9429
+#: ../plugin/innobase/handler/ha_innodb.cc:9437
 msgid "Percentage of the buffer pool to reserve for 'old' blocks."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9432
+#: ../plugin/innobase/handler/ha_innodb.cc:9440
 msgid ""
 "ove blocks to the 'new' end of the buffer pool if the first access was at "
 "least this many milliseconds ago. The timeout is disabled if 0 (the default)."
 msgstr ""
 
-#: ../plugin/innobase/handler/replication_dictionary.cc:119
+#: ../plugin/innobase/handler/replication_dictionary.cc:125
 #: ../plugin/transaction_log/hexdump_transaction_message.cc:168
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
@@ -4910,121 +4910,121 @@ msgstr ""
 msgid "InnoDB: Using Linux native AIO"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4752
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4750
 msgid "destination directory"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4753
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4751
 msgid "take backup to target-dir"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4754
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4752
 msgid "calc statistic of datadir (offline mysqld is recommended)"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4755
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4753
 msgid "prepare a backup for starting mysql server on the backup."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4756
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4754
 msgid "create files to import to another database when prepare."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4757
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4755
 msgid ""
 "stop recovery process not to progress LSN after applying log when prepare."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4758
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4756
 msgid "print parameter of mysqld needed for copyback."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4759
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4757
 #, fuzzy
 msgid "The value is used instead of buffer_pool_size"
 msgstr "Valeur de buffer_length invalide\n"
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4760
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4758
 msgid ""
 "creates a file 'xtrabackup_suspended' and waits until the user deletes that "
 "file at the end of '--backup'"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4761
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4759
 msgid ""
 "limit count of IO operations (pairs of read&write) per second to IOS values "
 "(for '--backup')"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4762
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4760
 msgid ""
 "outputs the contents of 'xtrabackup_logfile' to stdout only until the file "
 "'xtrabackup_suspended' deleted (for '--backup')."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4763
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4761
 msgid ""
 "(for --backup): save an extra copy of the xtrabackup_checkpoints file in "
 "this directory."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4764
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4762
 msgid ""
 "(for --backup): copy only .ibd pages newer than specified LSN 'high:low'. "
 "##ATTENTION##: checkpoint lsn must be used. anyone can detect your mistake. "
 "be carefully!"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4765
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4763
 msgid ""
 "(for --backup): copy only .ibd pages newer than backup at specified "
 "directory."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4766
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4764
 msgid ""
 "(for --prepare): apply .delta files and logfile in the specified directory."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4767
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4765
 msgid "filtering by regexp for table names."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4768
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4766
 msgid "filtering by list of the exact database.table name in the file."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4769
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4767
 msgid ""
 "** not work for now** creates ib_logfile* also after '--prepare'. ### If you "
 "want create ib_logfile*, only re-execute this command in same options. ###"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4771
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4769
 msgid ""
 "Path for temporary files. Several paths may be specified, separated by a "
 "colon (:), in this case they are used in a round-robin fashion."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4772
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4770
 msgid ""
 "Number of threads to use for parallel datafiles transfer. Does not have any "
 "effect in the stream mode. The default value is 1."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4771
 msgid ""
 "Enable InnoDB adaptive hash index (enabled by default).  Disable with --skip-"
 "innodb-adaptive-hash-index."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4774
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4772
 msgid ""
 "Size of a memory pool InnoDB uses to store data dictionary information and "
 "other internal data structures."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4774
 #, fuzzy
 msgid ""
 "The size of the memory buffer InnoDB uses to cache data and indexes of its "
@@ -5032,43 +5032,43 @@ msgid ""
 msgstr ""
 "La taille du buffer qui est utilisée pour réaliser des jointures complètes."
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4777
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4775
 msgid ""
 "Enable InnoDB checksums validation (enabled by default). Disable with --skip-"
 "innodb-checksums."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4779
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4777
 msgid "The common part for InnoDB table spaces."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4780
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4778
 msgid ""
 "Enable InnoDB doublewrite buffer (enabled by default). Disable with --skip-"
 "innodb-doublewrite."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4781
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4779
 msgid "Number of file I/O threads in InnoDB."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4780
 msgid "Stores each InnoDB table to an .ibd file in the database dir."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4783
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4781
 msgid ""
 "Set to 0 (write and flush once per second), 1 (write and flush at each "
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4785
 msgid ""
 "Timeout in seconds an InnoDB transaction may wait for a lock before being "
 "rolled back."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4788
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4786
 #, fuzzy
 msgid ""
 "The size of the buffer which InnoDB uses to write log to the log files on "
@@ -5076,44 +5076,44 @@ msgid ""
 msgstr ""
 "La taille du buffer qui est utilisée pour réaliser des jointures complètes."
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4788
 msgid ""
 "Number of log files in the log group. InnoDB writes to the files in a "
 "circular fashion. Value 3 is recommended here."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4791
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4789
 #, fuzzy
 msgid "Path to InnoDB log files."
 msgstr "Chemin pour les fichiers temporaires."
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4793
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4791
 msgid "How many files at the maximum InnoDB keeps open at the same time."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4795
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4793
 msgid "The universal page size of the database."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4796
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4794
 msgid ""
 "###EXPERIMENTAL###: The log block size of the transaction log file. Changing "
 "for created log file is not supported. Use on your own risk!"
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4797
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4795
 msgid ""
 "Change the algorithm of checksum for the whole of datapage to 4-bytes word "
 "based."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4798
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4796
 msgid ""
 "Enable to use about 4000 undo slots instead of default 1024. Not recommended "
 "to use, Because it is not change back to disable, once it is used."
 msgstr ""
 
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4799
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4797
 msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
@@ -5195,7 +5195,7 @@ msgstr "Activation du log en fichier CSV"
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:101
+#: ../plugin/md5/md5.cc:100
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -5994,12 +5994,12 @@ msgstr "Pas de connexion. Tentative de reconnexion..."
 #: ../plugin/slave/queue_producer.cc:140 ../plugin/slave/queue_producer.cc:149
 #: ../plugin/slave/queue_producer.cc:163 ../plugin/slave/queue_producer.cc:251
 #: ../plugin/slave/queue_producer.cc:263 ../plugin/slave/queue_producer.cc:280
-#: ../plugin/slave/queue_producer.cc:413 ../plugin/slave/queue_producer.cc:427
+#: ../plugin/slave/queue_producer.cc:421 ../plugin/slave/queue_producer.cc:435
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: ../plugin/slave/queue_producer.cc:439
+#: ../plugin/slave/queue_producer.cc:447
 msgid "Replication slave: Unable to insert into queue."
 msgstr ""
 
