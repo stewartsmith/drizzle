@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-05-08 05:02+0000\n"
+"PO-Revision-Date: 2011-05-09 11:20+0000\n"
 "Last-Translator: Wei Fan <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-05-09 04:36+0000\n"
+"X-Launchpad-Export-Date: 2011-05-10 04:36+0000\n"
 "X-Generator: Launchpad (build 12959)\n"
 
 msgid "Synonym for `help'."
@@ -238,7 +238,7 @@ msgid ""
 msgstr ""
 
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
-msgstr ""
+msgstr "关闭pager,打印至标准输出.请看帮助菜单(\\h)"
 
 msgid "Set the drizzle prompt to this value."
 msgstr "设置drizzle提示符为这个值"
@@ -268,9 +268,10 @@ msgid ""
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
+"添加所有到外部文件。请看帮助菜单(\\h). 不能在批处理模式下工作. 使用选项 --disable-tee关闭这项功能. 默认状态下该选项处于关闭状态"
 
 msgid "Disable outfile. See interactive help (\\h) also."
-msgstr ""
+msgstr "关闭外部文件.请参看帮助菜单(\\h)."
 
 msgid "Wait and retry if connection is down."
 msgstr "断开连接时等待并重试。"
@@ -282,10 +283,10 @@ msgid "Max length of input line"
 msgstr "输入行的最大长度"
 
 msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
+msgstr "当使用 --safe-updates时，自动限制 SELECT语句"
 
 msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr ""
+msgstr "当使用 --safe-updates 时, 自动限制链接不同行"
 
 msgid "Use MySQL Protocol."
 msgstr "使用 MySQL 协议"
@@ -296,7 +297,7 @@ msgstr "连接主机"
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
-msgstr ""
+msgstr "使用密码登录服务器.如果没有密码，请询问tty"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -307,7 +308,7 @@ msgid "User for login if not current user."
 msgstr "无当前用户时的登陆用户"
 
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "连接协议(tcp,socket,pipe,memory)"
 
 #, c-format
 msgid ""
@@ -315,11 +316,11 @@ msgid ""
 msgstr "构建初始提示符时内存分配失败。正在退出。\n"
 
 msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgstr "界定符不能包含反斜线"
 
 #, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
-msgstr ""
+msgstr "错误: 提供的端口号 %<PRIu32> 不正确.\n"
 
 #, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
