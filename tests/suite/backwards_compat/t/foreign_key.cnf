@@ -1,0 +1,5 @@
+[test_servers]
+servers = [[]]
+
+[s0]
+load-datadir=backwards_compat/foreign_key
