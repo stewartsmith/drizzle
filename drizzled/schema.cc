@@ -38,7 +38,6 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
@@ -227,13 +226,13 @@ bool drop(Session &session, const identifier::Schema &schema_identifier, bool if
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
     if (message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier))
-		{
-			error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
-		}
-		else if (if_exists)
+    {
+      error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
+    }
+    else if (if_exists)
     {
       push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-				schema_identifier.getSQLPath().c_str());
+                          schema_identifier.getSQLPath().c_str());
     }
     else
     {

@@ -366,7 +366,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 
   if (head->sort.io_cache)
   {
-    memcpy(select->file, head->sort.io_cache, sizeof(internal::IO_CACHE));
+    memcpy(select->file, head->sort.io_cache, sizeof(internal::io_cache_st));
     select->records=(ha_rows) (select->file->end_of_file/
 			       head->cursor->ref_length);
     delete head->sort.io_cache;
@@ -380,7 +380,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    file(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
+    file(static_cast<internal::io_cache_st *>(memory::sql_calloc(sizeof(internal::io_cache_st)))),
     free_cond(false)
 {
   quick_keys.reset();

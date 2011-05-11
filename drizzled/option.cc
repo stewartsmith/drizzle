@@ -15,7 +15,7 @@
 
 #include <config.h>
 #include <drizzled/definitions.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/gettext.h>
 

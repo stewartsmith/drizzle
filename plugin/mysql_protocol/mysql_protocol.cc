@@ -510,9 +510,9 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         store(field.table_name) ||
         store(field.org_table_name) ||
         store(field.col_name) ||
-        store(field.org_col_name) ||
-        packet.realloc(packet.length()+12))
+        store(field.org_col_name))
       goto err;
+    packet.realloc(packet.length()+12);
 
     /* Store fixed length fields */
     pos= (char*) packet.ptr()+packet.length();
@@ -639,7 +639,8 @@ bool ClientMySQLProtocol::store(void)
 {
   char buff[1];
   buff[0]= (char)251;
-  return packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
+  packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
+	return false; // return void
 }
 
 bool ClientMySQLProtocol::store(int32_t from)
@@ -908,13 +909,12 @@ bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
      The +9 comes from that strings of length longer than 16M require
      9 bytes to be stored (see storeLength).
   */
-  if (packet_length+9+length > packet.alloced_length() &&
-      packet.realloc(packet_length+9+length))
-    return 1;
+  if (packet_length+9+length > packet.alloced_length())
+      packet.realloc(packet_length+9+length);
   unsigned char *to= storeLength((unsigned char*) packet.ptr()+packet_length, length);
   memcpy(to,from,length);
   packet.length((size_t) (to+length-(unsigned char*) packet.ptr()));
-  return 0;
+  return 0; // return void
 }
 
 /**

@@ -77,7 +77,7 @@ UNIV_INTERN ulint dict_create_sys_replication_log(void)
   error = que_eval_sql(info,
                        "PROCEDURE CREATE_SYS_REPLICATION_LOG_PROC () IS\n"
                        "BEGIN\n"
-                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), MESSAGE_LEN INT, MESSAGE BLOB);\n" 
+                       "CREATE TABLE SYS_REPLICATION_LOG(ID INT(8), SEGID INT, COMMIT_ID INT(8), END_TIMESTAMP INT(8), ORIGINATING_SERVER_UUID BLOB, ORIGINATING_COMMIT_ID INT(8), MESSAGE_LEN INT, MESSAGE BLOB);\n" 
                        "CREATE UNIQUE CLUSTERED INDEX PRIMARY ON SYS_REPLICATION_LOG (ID, SEGID);\n"
                        "CREATE INDEX COMMIT_IDX ON SYS_REPLICATION_LOG (COMMIT_ID, ID);\n"
                        "END;\n"
@@ -148,6 +148,14 @@ UNIV_INTERN int read_replication_log_table_message(const char* table_name, drizz
   field->set_type(drizzled::message::Table::Field::BIGINT);
 
   field= table_message->add_field();
+  field->set_name("ORIGINATING_SERVER_UUID");
+  field->set_type(drizzled::message::Table::Field::BLOB);
+
+  field= table_message->add_field();
+  field->set_name("ORIGINATING_COMMIT_ID");
+  field->set_type(drizzled::message::Table::Field::BIGINT);
+
+  field= table_message->add_field();
   field->set_name("MESSAGE_LEN");
   field->set_type(drizzled::message::Table::Field::INTEGER);
 
@@ -192,7 +200,10 @@ extern dtuple_t* row_get_prebuilt_insert_row(row_prebuilt_t*	prebuilt);
 ulint insert_replication_message(const char *message, size_t size, 
                                  trx_t *trx, uint64_t trx_id, 
                                  uint64_t end_timestamp, bool is_end_segment, 
-                                 uint32_t seg_id) 
+                                 uint32_t seg_id, const char *server_uuid,
+                                 bool use_originating_server_uuid,
+                                 const char *originating_server_uuid,
+                                 uint64_t originating_commit_id)
 {
   ulint error;
   row_prebuilt_t*	prebuilt;	/* For reading rows */
@@ -252,12 +263,28 @@ ulint insert_replication_message(const char *message, size_t size,
   row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&end_timestamp, 8, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 8);
 
+  if (not use_originating_server_uuid)
+  {
+    /* This transaction originated from this server, rather then being
+       replicated to this server reset the values to reflect that */
+    originating_server_uuid= server_uuid;
+    originating_commit_id= commit_id;
+  }
+
   dfield = dtuple_get_nth_field(dtuple, 4);
+  dfield_set_data(dfield, originating_server_uuid, 36);
+
+  dfield = dtuple_get_nth_field(dtuple, 5);
+  data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 8));
+  row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&originating_commit_id, 8, dict_table_is_comp(prebuilt->table));
+  dfield_set_data(dfield, data, 8);
+
+  dfield = dtuple_get_nth_field(dtuple, 6);
   data= static_cast<byte*>(mem_heap_alloc(prebuilt->heap, 4));
   row_mysql_store_col_in_innobase_format(dfield, data, TRUE, (byte*)&size, 4, dict_table_is_comp(prebuilt->table));
   dfield_set_data(dfield, data, 4);
 
-  dfield = dtuple_get_nth_field(dtuple, 5);
+  dfield = dtuple_get_nth_field(dtuple, 7);
   dfield_set_data(dfield, message, size);
 
   ins_node_t*	node		= prebuilt->ins_node;
@@ -356,8 +383,16 @@ UNIV_INTERN struct read_replication_return_st replication_read_next(struct read_
     convert_to_mysql_format(timestampbyte, field, 8);
     ret.end_timestamp= *(uint64_t *)timestampbyte;
 
-    // Handler message
+    field = rec_get_nth_field_old(rec, 6, &len);
+    ret.originating_server_uuid= (char *)field;
+
     field = rec_get_nth_field_old(rec, 7, &len);
+    byte originatingcommitbyte[8];
+    convert_to_mysql_format(originatingcommitbyte, field, 8);
+    ret.originating_commit_id= *(uint64_t *)originatingcommitbyte;
+
+    // Handler message
+    field = rec_get_nth_field_old(rec, 9, &len);
     ret.message= (char *)field;
     ret.message_length= len;
 

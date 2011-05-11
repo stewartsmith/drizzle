@@ -25,8 +25,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 String* Item_func_export_set::val_str(String* str)
 {
@@ -73,9 +72,7 @@ String* Item_func_export_set::val_str(String* str)
     break;
   case 3:
     {
-      /* errors is not checked - assume "," can always be converted */
-      size_t errors;
-      sep_buf.copy(STRING_WITH_LEN(","), &my_charset_bin, collation.collation, &errors);
+      sep_buf.copy(STRING_WITH_LEN(","), collation.collation);
       sep = &sep_buf;
     }
     break;

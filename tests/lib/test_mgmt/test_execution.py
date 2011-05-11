@@ -87,17 +87,18 @@ class testExecutor():
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
             for i in range(self.testcase_repeat_count):
-                self.handle_system_reqs()
-                self.handle_server_reqs()
-                self.handle_utility_reqs()
-                self.handle_start_and_exit(start_and_exit)
-                if self.current_test_status != 'fail':
-                    self.execute_testCase()
-                self.record_test_result()
-                if self.current_test_status == 'fail' and not self.execution_manager.force:
-                    self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
-                    keep_running = 0
-                self.current_test_status = None # reset ourselves
+                if keep_running:
+                    self.handle_system_reqs()
+                    self.handle_server_reqs()
+                    self.handle_utility_reqs()
+                    self.handle_start_and_exit(start_and_exit)
+                    if self.current_test_status != 'fail':
+                        self.execute_testCase()
+                    self.record_test_result()
+                    if self.current_test_status == 'fail' and not self.execution_manager.force:
+                        self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
+                        keep_running = 0
+                    self.current_test_status = None # reset ourselves
         self.status = 0
 
     def get_testCase(self):

@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/plugin/function.h>
@@ -102,8 +102,7 @@ String *HexFunction::val_str(String *str)
     if ((null_value= args[0]->null_value))
       return 0;
     ptr= internal::int64_t2str(dec,ans,16);
-    if (str->copy(ans,(uint32_t) (ptr-ans),default_charset()))
-      return &my_empty_string;			// End of memory
+    str->copy(ans,(uint32_t) (ptr-ans),default_charset());
     return str;
   }
 

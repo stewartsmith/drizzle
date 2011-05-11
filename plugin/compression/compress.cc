@@ -58,12 +58,12 @@ String *Item_func_compress::val_str(String *str)
   new_size= res->length() + res->length() / 5 + 12;
 
   // Check new_size overflow: new_size <= res->length()
-  if (((uint32_t) (new_size+5) <= res->length()) ||
-      buffer.realloc((uint32_t) new_size + 4 + 1))
+  if ((uint32_t) (new_size+5) <= res->length())
   {
     null_value= 1;
     return 0;
   }
+  buffer.realloc((uint32_t) new_size + 4 + 1);
 
   body= ((Byte*)buffer.ptr()) + 4;
 
