@@ -23,7 +23,6 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
 #include <drizzled/charset.h>

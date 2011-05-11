@@ -118,7 +118,7 @@ void String::real_alloc(size_t arg_length)
 ** (for C functions)
 */
 
-bool String::realloc(size_t alloc_length)
+void String::realloc(size_t alloc_length)
 {
   size_t len=ALIGN_SIZE(alloc_length+1);
   if (Alloced_length < len)
@@ -142,7 +142,6 @@ bool String::realloc(size_t alloc_length)
     }
   }
   Ptr[alloc_length]=0;			// This make other funcs shorter
-  return false; // return void
 }
 
 void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
@@ -155,23 +154,20 @@ void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * co
   str_charset=cs;
 }
 
-bool String::set_real(double num,size_t decimals, const charset_info_st * const cs)
+void String::set_real(double num,size_t decimals, const charset_info_st * const cs)
 {
   char buff[FLOATING_POINT_BUFFER];
-  size_t dummy_errors;
   size_t len;
 
   str_charset=cs;
   if (decimals >= NOT_FIXED_DEC)
   {
-    len= internal::my_gcvt(num,
-                           internal::MY_GCVT_ARG_DOUBLE,
-                           sizeof(buff) - 1, buff, NULL);
-    return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
+    len= internal::my_gcvt(num, internal::MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
+    copy(buff, len, cs);
+    return;
   }
   len= internal::my_fcvt(num, decimals, buff, NULL);
-  return copy(buff, (size_t) len, &my_charset_utf8_general_ci, cs,
-              &dummy_errors);
+  copy(buff, len, cs);
 }
 
 
@@ -204,7 +200,7 @@ void String::copy(const std::string& arg, const charset_info_st * const cs)	// A
   str_charset= cs;
 }
 
-void String::copy(const char *str,size_t arg_length, const charset_info_st * const cs)
+void String::copy(const char *str,size_t arg_length, const charset_info_st* cs)
 {
   alloc(arg_length);
   if ((str_length=arg_length))
@@ -254,8 +250,7 @@ bool String::needs_conversion(size_t arg_length,
 
 
 
-bool String::set_or_copy_aligned(const char *str,size_t arg_length,
-                                 const charset_info_st * const cs)
+void String::set_or_copy_aligned(const char *str,size_t arg_length, const charset_info_st* cs)
 {
   /* How many bytes are in incomplete character */
   size_t offset= (arg_length % cs->mbminlen);
@@ -263,20 +258,7 @@ bool String::set_or_copy_aligned(const char *str,size_t arg_length,
   assert(!offset); /* All characters are complete, just copy */
 
   set(str, arg_length, cs);
-  return false;
 }
-
-	/* Copy with charset conversion */
-
-bool String::copy(const char *str, size_t arg_length,
-		          const charset_info_st * const,
-				  const charset_info_st * const to_cs, size_t *errors)
-{
-  *errors= 0;
-  copy(str, arg_length, to_cs);
-  return false; // return void
-}
-
 
 /*
   Set a string to the value of a latin1-string, keeping the original charset
@@ -297,15 +279,14 @@ bool String::copy(const char *str, size_t arg_length,
 
 */
 
-bool String::set_ascii(const char *str, size_t arg_length)
+void String::set_ascii(const char *str, size_t arg_length)
 {
   if (str_charset->mbminlen == 1)
   {
     set(str, arg_length, str_charset);
-    return 0;
+    return;
   }
-  size_t dummy_errors;
-  return copy(str, arg_length, &my_charset_utf8_general_ci, str_charset, &dummy_errors);
+  copy(str, arg_length, str_charset);
 }
 
 void String::append(const String &s)
@@ -548,8 +529,7 @@ String *copy_if_not_alloced(String *to,String *from,size_t from_length)
     (void) from->realloc(from_length);
     return from;
   }
-  if (to->realloc(from_length))
-    return from;				// Actually an error
+  to->realloc(from_length);
   if ((to->str_length= min(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;

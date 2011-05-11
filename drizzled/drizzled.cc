@@ -74,7 +74,6 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table/cache.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
-#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
