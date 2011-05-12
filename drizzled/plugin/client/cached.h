@@ -57,6 +57,7 @@ public:
       item->make_field(&field);
       max_column++;
     }
+    _result_set->setColumnCount(max_column);
     _result_set->createRow();
 
     return false;
