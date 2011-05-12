@@ -134,6 +134,7 @@ Testing:
    testing/test-run.rst
    testing/dbqp.rst
    testing/randgen.rst
+   testing/writing_tests.rst
 
 Indices and tables
 ==================
