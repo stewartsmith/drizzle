@@ -43,7 +43,6 @@ namespace drizzled
 
 
 Item_func::Item_func(void):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(0),
   const_item_cache(false)
   {
@@ -52,7 +51,6 @@ Item_func::Item_func(void):
   }
 
 Item_func::Item_func(Item *a):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(1),
   const_item_cache(false)
   {
@@ -63,7 +61,6 @@ Item_func::Item_func(Item *a):
   }
 
 Item_func::Item_func(Item *a,Item *b):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(2),
   const_item_cache(false)
   {
@@ -74,7 +71,6 @@ Item_func::Item_func(Item *a,Item *b):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -89,7 +85,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -105,7 +100,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -141,7 +135,6 @@ void Item_func::set_arguments(List<Item> &list)
 }
 
 Item_func::Item_func(List<Item> &list) :
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
 {
@@ -151,7 +144,6 @@ Item_func::Item_func(List<Item> &list) :
 
 Item_func::Item_func(Session *session, Item_func *item) :
   Item_result_field(session, item),
-  _session(*current_session),
   allowed_arg_cols(item->allowed_arg_cols),
   arg_count(item->arg_count),
   used_tables_cache(item->used_tables_cache),

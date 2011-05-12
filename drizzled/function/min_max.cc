@@ -92,11 +92,11 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
   {
     Item **arg= args + i;
     bool is_null_unused;
-    uint64_t res= get_datetime_value(getSessionPtr(), &arg, 0, datetime_item,
+    uint64_t res= get_datetime_value(&getSession(), &arg, 0, datetime_item,
                                      &is_null_unused);
 
     /* Check if we need to stop (because of error or KILL)  and stop the loop */
-    if (getSessionPtr()->is_error())
+    if (getSession().is_error())
     {
       null_value= 1;
       return 0;
