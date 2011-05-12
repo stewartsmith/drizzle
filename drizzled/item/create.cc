@@ -1856,9 +1856,8 @@ Create_func_space::create(Session *session, Item *arg1)
 
   if (cs->mbminlen > 1)
   {
-    size_t dummy_errors;
     sp= new (session->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE);
-    sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
+    sp->str_value.copy(" ", 1, cs);
   }
   else
   {

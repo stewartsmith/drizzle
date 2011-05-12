@@ -22,7 +22,6 @@
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/epoch.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/session/times.h>

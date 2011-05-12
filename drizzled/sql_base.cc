@@ -48,7 +48,7 @@
 #include <drizzled/field/epoch.h>
 #include <drizzled/field/null.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>
@@ -177,58 +177,10 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
-
-    if (tables == NULL)
+    if (not tables)
     {
       g_refresh_version++;				// Force close of open tables
-
       table::getUnused().clear();
-
-      if (wait_for_refresh)
-      {
-        /*
-          Other threads could wait in a loop in open_and_lock_tables(),
-          trying to lock one or more of our tables.
-
-          If they wait for the locks in thr_multi_lock(), their lock
-          request is aborted. They loop in open_and_lock_tables() and
-          enter open_table(). Here they notice the table is refreshed and
-          wait for COND_refresh. Then they loop again in
-          openTablesLock() and this time open_table() succeeds. At
-          this moment, if we (the FLUSH TABLES thread) are scheduled and
-          on another FLUSH TABLES enter close_cached_tables(), they could
-          awake while we sleep below, waiting for others threads (us) to
-          close their open tables. If this happens, the other threads
-          would find the tables unlocked. They would get the locks, one
-          after the other, and could do their destructive work. This is an
-          issue if we have LOCK TABLES in effect.
-
-          The problem is that the other threads passed all checks in
-          open_table() before we refresh the table.
-
-          The fix for this problem is to set some_tables_deleted for all
-          threads with open tables. These threads can still get their
-          locks, but will immediately release them again after checking
-          this variable. They will then loop in openTablesLock()
-          again. There they will wait until we update all tables version
-          below.
-
-          Setting some_tables_deleted is done by table::Cache::removeTable()
-          in the other branch.
-
-          In other words (reviewer suggestion): You need this setting of
-          some_tables_deleted for the case when table was opened and all
-          related checks were passed before incrementing refresh_version
-          (which you already have) but attempt to lock the table happened
-          after the call to Session::close_old_data_files() i.e. after removal of
-          current thread locks.
-        */
-        BOOST_FOREACH(table::CacheMap::const_reference iter, table::getCache())
-        {
-          if (iter.second->in_use)
-            iter.second->in_use->some_tables_deleted= false;
-        }
-      }
     }
     else
     {
@@ -328,42 +280,34 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   move one table to free list
 */
 
-bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
+bool Open_tables_state::free_cached_table()
 {
-  bool found_old_table= false;
-
-  (void)scopedLock;
-
-  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables.open_tables_);
+  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables_);
 
   safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   assert(table->key_read == 0);
-  assert(!table->cursor || table->cursor->inited == Cursor::NONE);
+  assert(not table->cursor || table->cursor->inited == Cursor::NONE);
 
-  open_tables.open_tables_= table->getNext();
+  open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
-      open_tables.version != g_refresh_version || !table->db_stat)
+      version != g_refresh_version || !table->db_stat)
   {
     table::remove_table(table);
-    found_old_table= true;
+    return true;
   }
-  else
-  {
-    /*
-      Open placeholders have Table::db_stat set to 0, so they should be
-      handled by the first alternative.
-    */
-    assert(not table->open_placeholder);
+  /*
+    Open placeholders have Table::db_stat set to 0, so they should be
+    handled by the first alternative.
+  */
+  assert(not table->open_placeholder);
 
-    /* Free memory and reset for next loop */
-    table->cursor->ha_reset();
-    table->in_use= NULL;
+  /* Free memory and reset for next loop */
+  table->cursor->ha_reset();
+  table->in_use= NULL;
 
-    table::getUnused().link(table);
-  }
-
-  return found_old_table;
+  table::getUnused().link(table);
+  return false;
 }
 
 
@@ -375,7 +319,7 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
   @remark It should not ordinarily be called directly.
 */
 
-void Session::close_open_tables()
+void Open_tables_state::close_open_tables()
 {
   bool found_old_table= false;
 
@@ -383,12 +327,10 @@ void Session::close_open_tables()
 
   boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
 
-  while (open_tables.open_tables_)
+  while (open_tables_)
   {
-    found_old_table|= free_cached_table(scoped_lock);
+    found_old_table|= free_cached_table();
   }
-  some_tables_deleted= false;
-
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
@@ -824,24 +766,17 @@ table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::iden
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
-bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table)
+Table* Session::lock_table_name_if_not_cached(const identifier::Table &identifier)
 {
   const identifier::Table::Key &key(identifier.getKey());
-
   boost::mutex::scoped_lock scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
-
   if (find_ptr(table::getCache(), key))
-  {
-    *table= 0;
-    return false;
-  }
-
-  *table= &table_cache_insert_placeholder(identifier);
-  (*table)->open_placeholder= true;
-  (*table)->setNext(open_tables.open_tables_);
-  open_tables.open_tables_= *table;
-
-  return false; //return void
+    return NULL;
+  Table& table= table_cache_insert_placeholder(identifier);
+  table.open_placeholder= true;
+  table.setNext(open_tables.open_tables_);
+  open_tables.open_tables_= &table;
+  return &table;
 }
 
 /*
@@ -1278,19 +1213,13 @@ bool Session::reopen_tables()
 
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    DrizzleLock *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire table::Cache::mutex(), which is
       already locked.
     */
-    some_tables_deleted= false;
 
-    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables), flags)))
-    {
-      /* unused */
-    }
-    else
+    if (not lockTables(tables, (uint32_t) (tables_ptr - tables), flags))
     {
       /*
         This case should only happen if there is a bug in the reopen logic.
@@ -3871,20 +3800,13 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 }
 
 
-bool drizzle_rm_tmp_tables()
+void drizzle_rm_tmp_tables()
 {
-
   assert(drizzle_tmpdir.size());
   Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-
-  if (not session)
-    return true;
   session->thread_stack= (char*) session.get();
   session->storeGlobals();
-
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
-
-  return false;
 }
 
 

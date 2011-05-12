@@ -16,7 +16,7 @@
 #include <config.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -1513,70 +1513,6 @@ bool my_propagate_complex(const charset_info_st * const, const unsigned char *,
                           size_t)
 {
   return 0;
-}
-
-
-
-/*
-  Normalize strxfrm flags
-
-  SYNOPSIS:
-    my_strxfrm_flag_normalize()
-    flags    - non-normalized flags
-    nlevels  - number of levels
-
-  NOTES:
-    If levels are omitted, then 1-maximum is assumed.
-    If any level number is greater than the maximum,
-    it is treated as the maximum.
-
-  RETURN
-    normalized flags
-*/
-
-uint32_t my_strxfrm_flag_normalize(uint32_t flags, uint32_t maximum)
-{
-  assert(maximum >= 1 && maximum <= MY_STRXFRM_NLEVELS);
-
-  /* If levels are omitted, then 1-maximum is assumed*/
-  if (!(flags & MY_STRXFRM_LEVEL_ALL))
-  {
-    static uint32_t def_level_flags[]= {0, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F };
-    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
-    flags= def_level_flags[maximum] | flag_pad;
-  }
-  else
-  {
-    uint32_t i;
-    uint32_t flag_lev= flags & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_dsc= (flags >> MY_STRXFRM_DESC_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_rev= (flags >> MY_STRXFRM_REVERSE_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
-
-    /*
-      If any level number is greater than the maximum,
-      it is treated as the maximum.
-    */
-    for (maximum--, flags= 0, i= 0; i < MY_STRXFRM_NLEVELS; i++)
-    {
-      uint32_t src_bit= 1 << i;
-      uint32_t dst_bit= 1 << min(i, maximum);
-      if (flag_lev & src_bit)
-      {
-        flags|= dst_bit;
-        flags|= (flag_dsc & dst_bit) << MY_STRXFRM_DESC_SHIFT;
-        flags|= (flag_rev & dst_bit) << MY_STRXFRM_REVERSE_SHIFT;
-      }
-      else
-      {
-        /* Check that there are no DESC or REVERSE flag for skipped level */
-        assert(!(flag_dsc & src_bit) && !(flag_rev & src_bit));
-      }
-    }
-    flags|= flag_pad;
-  }
-
-  return flags;
 }
 
 /*

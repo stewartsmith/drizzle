@@ -20,7 +20,6 @@
 #include <config.h>
 
 #include <drizzled/function/time/sysdate_local.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/field.h>
 #include <drizzled/system_variables.h>

@@ -34,7 +34,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/internal/my_pthread.h>
 
-#include <drizzled/charset_info.h>                    /* for charset_info_st */
+#include <drizzled/charset.h>                    /* for charset_info_st */
 #include <stdarg.h>
 
 #ifndef errno				/* did we already get it? */
@@ -233,8 +233,8 @@ extern int check_if_legal_tablename(const char *path);
 DRIZZLED_API int my_sync(int fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
-extern bool my_init(void);
-extern void my_end(void);
+extern void my_init();
+extern void my_end();
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
 

@@ -59,9 +59,9 @@ boost::mutex THR_LOCK_threads;
     1  error (Couldn't create THR_KEY_mysys)
 */
 
-bool my_thread_global_init()
+void my_thread_global_init()
 {
-  return my_thread_init();
+  my_thread_init();
 }
 
 
@@ -78,14 +78,15 @@ static uint64_t thread_id= 0;
     1  Fatal error; mysys/dbug functions can't be used
 */
 
-bool my_thread_init()
+void my_thread_init()
 {
   // We should mever see my_thread_init()  called twice
   if (THR_KEY_mysys.get())
-    return false;
+  {
+    abort();
+  }
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
   THR_KEY_mysys.reset(new st_my_thread_var(++thread_id));
-  return false; // return void
 }
 
 st_my_thread_var* _my_thread_var()

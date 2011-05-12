@@ -53,7 +53,6 @@ drizzled/sys_var.cc
 drizzled/table.cc
 drizzled/table/instance/base.cc
 drizzled/transaction_services.cc
-drizzled/tztime.cc
 plugin/auth_all/auth_all.cc
 plugin/auth_file/auth_file.cc
 plugin/auth_http/auth_http.cc

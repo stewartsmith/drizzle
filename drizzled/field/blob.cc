@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
@@ -168,8 +167,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
       memmove(ptr+sizeof(uint32_t), &from, sizeof(char*));
       return 0;
     }
-    if (tmpstr.copy(from, length, cs))
-      goto oom_error;
+    tmpstr.copy(from, length, cs);
     from= tmpstr.ptr();
   }
 
@@ -198,13 +196,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
     return 2;
 
   return report_if_important_data(from_end_pos, from + length);
-
-oom_error:
-  /* Fatal OOM error */
-  memset(ptr, 0, Field_blob::pack_length());
-  return -1;
 }
-
 
 int Field_blob::store(double nr)
 {
@@ -213,7 +205,6 @@ int Field_blob::store(double nr)
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
 }
-
 
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {

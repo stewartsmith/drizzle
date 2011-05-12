@@ -103,9 +103,9 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define ESRCH 1
 #endif
 
-extern bool my_thread_global_init(void);
-DRIZZLED_API bool my_thread_init(void);
-extern const char *my_thread_name(void);
+extern void my_thread_global_init();
+DRIZZLED_API void my_thread_init();
+extern const char *my_thread_name();
 
 /* All thread specific variables are in the following struct */
 

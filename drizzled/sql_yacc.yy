@@ -980,12 +980,15 @@ stored_select:
 
 opt_create_database_options:
           /* empty */ {}
-        | default_collation_schema {}
-        | opt_database_custom_options {}
+        | default_collation_schema
+        | default_collation_schema opt_database_custom_options
+        | default_collation_schema ',' opt_database_custom_options
+        | opt_database_custom_options
         ;
 
 opt_database_custom_options:
         custom_database_option
+        | custom_database_option opt_database_custom_options
         | custom_database_option ',' opt_database_custom_options
         ;
 
