@@ -55,7 +55,6 @@ void Item_func_min_max::fix_length_and_dec()
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     if (datetime_found)
     {
-      session= getSessionPtr();
       compare_as_dates= true;
     }
   }
@@ -93,11 +92,11 @@ uint32_t Item_func_min_max::cmp_datetimes(uint64_t *value)
   {
     Item **arg= args + i;
     bool is_null_unused;
-    uint64_t res= get_datetime_value(session, &arg, 0, datetime_item,
+    uint64_t res= get_datetime_value(getSessionPtr(), &arg, 0, datetime_item,
                                      &is_null_unused);
 
     /* Check if we need to stop (because of error or KILL)  and stop the loop */
-    if (session->is_error())
+    if (getSessionPtr()->is_error())
     {
       null_value= 1;
       return 0;
