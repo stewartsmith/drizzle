@@ -89,7 +89,7 @@ type::Decimal *Item_decimal_typecast::val_decimal(type::Decimal *dec)
   return dec;
 
 err:
-  push_warning_printf(getSessionPtr(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+  push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                       ER_WARN_DATA_OUT_OF_RANGE,
                       ER(ER_WARN_DATA_OUT_OF_RANGE),
                       name, 1);
