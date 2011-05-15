@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-05-09 11:20+0000\n"
+"PO-Revision-Date: 2011-05-14 10:23+0000\n"
 "Last-Translator: Wei Fan <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-05-10 04:36+0000\n"
+"X-Launchpad-Export-Date: 2011-05-15 04:39+0000\n"
 "X-Generator: Launchpad (build 12959)\n"
 
 msgid "Synonym for `help'."
@@ -435,7 +435,7 @@ msgstr "%s: 你必须同时使用选项 --tab --fields-...\n"
 msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
-msgstr ""
+msgstr "%s: 你不能同时使用 --single-transaction 和 --lock-all-tables.\n"
 
 #, c-format
 msgid ""
@@ -470,7 +470,7 @@ msgid "-- Disconnecting from %s...\n"
 msgstr "-- 从%s 断开...\n"
 
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "不能分配内存"
 
 #, c-format
 msgid ""
@@ -480,7 +480,7 @@ msgstr "-- 警告: '%s' 无法使用延时插入因为它的格式是 %s\n"
 
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- 检索表%s的结构...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
@@ -492,19 +492,19 @@ msgstr "%s: 不能得到表 %s 的键\n"
 
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "错误: 不能读取表%s的状态信息\n"
 
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
-msgstr ""
+msgstr "检索表%s的结构错误"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
-msgstr ""
+msgstr "跳过转储表'%s'的数据， --没有数据被使用\n"
 
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
-msgstr ""
+msgstr "-- 警告: 忽略表 '%s'的数据，因为数据类型是%s\n"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
@@ -541,7 +541,7 @@ msgstr ""
 
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
-msgstr ""
+msgstr "表 %s 空间不足! 取消操作\n"
 
 msgid "when doing refresh"
 msgstr ""
@@ -551,16 +551,16 @@ msgstr ""
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "找不到表: \"%s\""
 
 #, c-format
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
-msgstr ""
+msgstr "警告: 不能从表 %s 读取键值; 数据没有排序 (%s)\n"
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
-msgstr ""
+msgstr "错误: 没有足够空间用于储存指令 ORDER BY 的结果\n"
 
 msgid ""
 "Number of rows before each output progress report (requires --verbose)."
@@ -568,11 +568,11 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
+msgstr "使用: %s [OPTIONS] database [tables]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "或者使用  %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
