@@ -118,8 +118,10 @@ class testExecutor():
         """
 
         server_requirements = self.current_testcase.server_requirements
+        cnf_path = self.current_testcase.cnf_path
         (self.current_servers,bad_start) = self.server_manager.request_servers( self.name
                                                               , self.workdir
+                                                              , cnf_path
                                                               , server_requirements
                                                               , self.working_environment)
         if self.current_servers == 0 or bad_start:

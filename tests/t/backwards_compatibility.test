@@ -1,0 +1,12 @@
+# This test uses a pre-created / loaded datadir
+# And is populated via t/backwards_compatibility.cnf
+# It is meant to signal an issue with compatibility
+# If we have an issue reading this pre-created tables
+# from an earlier version, then we may need to reconsider
+# what is happening and handle things accordingly
+
+SHOW TABLES;
+SELECT * FROM A;
+SHOW CREATE TABLE A;
+# cleanup
+DROP TABLE A;
