@@ -21,9 +21,13 @@
 
 #include <drizzled/plugin/client.h>
 #include <boost/tokenizer.hpp>
+#include <drizzled/execute/context.h>
+#include <drizzled/execute/parser.h>
 #include <vector>
 #include <queue>
 #include <string>
+
+using namespace std;
 
 namespace drizzled
 {
@@ -111,9 +115,11 @@ public:
   void pushSQL(const std::string &arg)
   {
     Bytes byte;
-    typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
-    Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
-
+    ::drizzled::error_t err_msg;
+    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
+    std::vector<std::string> parsed_tokens= context->start();
+    cout << parsed_tokens.size() << endl << endl;
+    
     {
       byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       byte[0]= COM_QUERY;
@@ -121,11 +127,12 @@ public:
       to_execute.push(byte);
     }
 
-    for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
+    for (size_t i= 0; i < parsed_tokens.size(); i ++)
     {
-      byte.resize(iter->size() +1); // +1 for the COM_QUERY
+      byte.resize(parsed_tokens[i].length() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
-      memcpy(&byte[1], iter->c_str(), iter->size());
+      const char *token= parsed_tokens[i].c_str();
+      memcpy(&byte[1], &token, parsed_tokens[i].length());
       to_execute.push(byte);
     }
 

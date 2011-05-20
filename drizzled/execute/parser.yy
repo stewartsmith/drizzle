@@ -53,11 +53,12 @@
 %{
 
 #include <config.h>
-
+#include <iostream>
 #include <stdint.h>
 #include <drizzled/execute/symbol.h>
 #include <drizzled/execute/scanner.h>
 #include <drizzled/execute/context.h>
+#include <vector>
 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
@@ -65,6 +66,7 @@
 #define YYLTYPE_IS_TRIVIAL 0
 
 int execute_lex(YYSTYPE* lvalp, void* scanner);
+std::vector<std::string> parsed_tokens;
 
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0) 
 
@@ -89,18 +91,20 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 %%
 
 begin:
-          STRING ';'
+          STRING ';' {parsed_tokens.push_back(yylval.string.str);}
         ;
 
 
 %% 
 
+
 namespace drizzled {
 namespace execute {
 
-void Context::start() 
+std::vector<std::string> Context::start() 
 {
   execute_parse(this, (void **)scanner);
+  return parsed_tokens;
 }
 
 } // namespace execute

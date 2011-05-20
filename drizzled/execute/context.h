@@ -39,6 +39,8 @@
 
 #include <config.h>
 #include <cstdlib>
+#include <vector>
+#include <string>
 #include <drizzled/error_t.h>
 
 
@@ -67,7 +69,7 @@ public:
     return _end;
   }
 
-  void start();
+  std::vector<std::string> start();
 
   void set_end()
   {
