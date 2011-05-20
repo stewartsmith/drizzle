@@ -44,6 +44,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/shared_ptr.hpp>
 
+#define drizzle_literal_parameter(X) (X), size_t((sizeof(X) - 1))
+
 namespace drizzled {
 namespace util {
 
@@ -75,6 +77,82 @@ struct sensitive_hash : std::unary_function< std::vector<char>, std::size_t>
       boost::hash_combine(seed, it);
     return seed;
   }
+};
+
+class String
+{
+public:
+
+  String()
+  {
+    _bytes.resize(1);
+  }
+
+  const char *c_str() const
+  {
+    return &_bytes[0];
+  }
+
+  char *c_str()
+  {
+    return &_bytes[0];
+  }
+
+  void assign(const size_t repeat, const char arg)
+  {
+    _bytes.resize(repeat +1); // inserts NULL at end
+    memset(&_bytes[0], int(arg), repeat);
+    _bytes[repeat]= 0;
+  }
+
+  void assign(const char *arg, const size_t arg_size)
+  {
+    _bytes.resize(arg_size +1); // +1 for NULL
+    memcpy(&_bytes[0], arg, arg_size);
+    _bytes[arg_size]= 0;
+  }
+
+  void append(const char *arg, const size_t arg_size)
+  {
+    if (not arg or not arg_size)
+      return;
+
+    size_t original_size= size();
+    if (original_size)
+    {
+      _bytes.resize(original_size +arg_size +1); // inserts NULL since string will already have a NULL
+      memcpy(&_bytes[original_size], arg, arg_size);
+      _bytes[original_size +arg_size]= 0;
+    }
+    else
+    {
+      assign(arg, arg_size);
+    }
+  }
+
+  const char& operator[] (size_t arg) const
+  {
+    return _bytes[arg];
+  }
+
+  char& operator[] (size_t arg)
+  {
+    return _bytes[arg];
+  }
+
+  void clear()
+  {
+    _bytes.resize(1);
+    _bytes[0]= 0;
+  }
+
+  size_t size() const
+  {
+    return _bytes.size() -1;
+  }
+
+private:
+  std::vector<char> _bytes;
 };
 
 } /* namespace util */
