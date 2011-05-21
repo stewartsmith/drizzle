@@ -58,7 +58,7 @@ public:
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
 
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
+  virtual bool readCommand(char **packet, uint32_t& packet_length)
   {
     while(not to_execute.empty())
     {
@@ -66,7 +66,7 @@ public:
       packet_buffer.assign(next.c_str(), next.size());
 
       *packet= packet_buffer.c_str();
-      *packet_length= next.size();
+      packet_length= next.size();
 
       to_execute.pop();
 
@@ -76,14 +76,14 @@ public:
     if (not is_dead)
     {
       packet_buffer.clear();
-      *packet_length= 1;
+      packet_length= 1;
       *packet= packet_buffer.c_str();
       is_dead= true;
 
       return true;
     }
 
-    *packet_length= 0;
+    packet_length= 0;
     return false;
   }
 

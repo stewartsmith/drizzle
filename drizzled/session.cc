@@ -708,7 +708,7 @@ bool Session::executeStatement()
   main_da().reset_diagnostics_area();
   char *l_packet= 0;
   uint32_t packet_length;
-  if (not client->readCommand(&l_packet, &packet_length))
+  if (not client->readCommand(&l_packet, packet_length))
     return false;
 
   if (getKilled() == KILL_CONNECTION)
