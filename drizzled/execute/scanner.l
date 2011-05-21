@@ -81,6 +81,25 @@ using namespace drizzled;
 
 %}
 
+UTF8_BYTE_ORDER_MARK   [\xEF][\xBB][\xBF]
+
+DIGITS    [0-9]
+ASCII     [\x0-\xFF]
+
+U1          [a-zA-Z_]
+U2          [\xC2-\xDF][\x80-\xBF]
+U3          [\xE0][\xA0-\xBF][\x80-\xBF]
+U4          [\xE1-\xEC][\x80-\xBF][\x80-\xBF]
+U5          [\xED][\x80-\x9F][\x80-\xBF]
+U6          [\xEE-\xEF][\x80-\xBF][\x80-\xBF]
+U7          [\nxF0][\x90-\xBF][\x80-\xBF][\x80-\xBF]
+U8          [\xF1-\xF3][\x80-\xBF][\x80-\xBF][\x80-\xBF]
+U9          [\xF4][\x80-\x8F][\x80-\xBF][\x80-\xBF]
+
+LETTERS     {ASCII}|{U2}|{U3}|{U4}|{U5}|{U6}|{U7}|{U8}|{U9} 
+ALNUM       {LETTERS}|{DIGITS}
+
+%option nounistd
 %option 8bit
 %option bison-bridge
 %option case-insensitive
@@ -93,10 +112,11 @@ using namespace drizzled;
 %option reentrant
 %%
 
+{UTF8_BYTE_ORDER_MARK}  ; /*ignore byte order marks*/
 
 [\t\r\n] ; /* skip whitespace */
 
-[[:alnum:]]["."[:alnum:]_-]+[[:alnum:]] {
+[[ALNUM]]["."[ALNUM]_-]+[[ALNUM]] {
       yylval->string.str = yytext;
       yylval->string.length = yyleng;
 
