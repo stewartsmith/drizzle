@@ -128,10 +128,11 @@ const std::string &getCommandName(const enum_server_command& command)
 
 void init_update_queries(void)
 {
-  uint32_t x;
-
-  for (x= 0; x <= SQLCOM_END; x++)
+  for (uint32_t x= uint32_t(SQLCOM_SELECT); 
+       x <= uint32_t(SQLCOM_END); x++)
+  {
     sql_command_flags[x].reset();
+  }
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -219,7 +220,7 @@ bool dispatch_command(enum_server_command command, Session *session,
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
   switch (command) {
-  case COM_INIT_DB:
+  case COM_USE_SCHEMA:
   {
     if (packet_length == 0)
     {
@@ -232,6 +233,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     }
     break;
   }
+
   case COM_QUERY:
   {
     session->readAndStoreQuery(packet, packet_length);
@@ -239,11 +241,13 @@ bool dispatch_command(enum_server_command command, Session *session,
     parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
     break;
   }
+
   case COM_QUIT:
     /* We don't calculate statistics for this command */
     session->main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
+
   case COM_KILL:
     {
       if (packet_length != 4)
@@ -262,6 +266,7 @@ bool dispatch_command(enum_server_command command, Session *session,
       session->my_ok();
       break;
     }
+
   case COM_SHUTDOWN:
   {
     session->status_var.com_other++;
@@ -271,10 +276,12 @@ bool dispatch_command(enum_server_command command, Session *session,
     error= true;
     break;
   }
+
   case COM_PING:
     session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
+
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
   case COM_END:
@@ -295,7 +302,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   /* report error issued during command execution */
   if (session->killed_errno())
   {
-    if (! session->main_da().is_set())
+    if (not session->main_da().is_set())
       session->send_kill_message();
   }
   if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
