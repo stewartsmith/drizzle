@@ -188,7 +188,7 @@ void init_update_queries(void)
 bool dispatch_command(enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length)
 {
-  bool error= 0;
+  bool error= false;
   Query_id &query_id= Query_id::get_query_id();
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
@@ -198,10 +198,12 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->times.set_time();
   session->setQueryId(query_id.value());
 
-  switch( command ) {
+  switch (command)
+  {
   /* Ignore these statements. */
   case COM_PING:
     break;
+
   /* Increase id and count all other statements. */
   default:
     session->status_var.questions++;
@@ -219,28 +221,29 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
-  switch (command) {
-  case COM_USE_SCHEMA:
+  switch (command)
   {
-    if (packet_length == 0)
+  case COM_USE_SCHEMA:
     {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+      if (packet_length == 0)
+      {
+        my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+        break;
+      }
+      if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
+      {
+        session->my_ok();
+      }
       break;
     }
-    if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
-    {
-      session->my_ok();
-    }
-    break;
-  }
 
   case COM_QUERY:
-  {
-    session->readAndStoreQuery(packet, packet_length);
-    DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
-    parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
-    break;
-  }
+    {
+      session->readAndStoreQuery(packet, packet_length);
+      DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
+      parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
+      break;
+    }
 
   case COM_QUIT:
     /* We don't calculate statistics for this command */
@@ -268,14 +271,14 @@ bool dispatch_command(enum_server_command command, Session *session,
     }
 
   case COM_SHUTDOWN:
-  {
-    session->status_var.com_other++;
-    session->my_eof();
-    session->close_thread_tables();			// Free before kill
-    kill_drizzle();
-    error= true;
-    break;
-  }
+    {
+      session->status_var.com_other++;
+      session->my_eof();
+      session->close_thread_tables();			// Free before kill
+      kill_drizzle();
+      error= true;
+      break;
+    }
 
   case COM_PING:
     session->status_var.com_other++;
