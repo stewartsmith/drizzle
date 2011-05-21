@@ -186,7 +186,7 @@ void init_update_queries(void)
         COM_QUIT/COM_SHUTDOWN
 */
 bool dispatch_command(enum_server_command command, Session *session,
-                      char* packet, uint32_t packet_length)
+                      const char* packet, uint32_t packet_length)
 {
   bool error= false;
   Query_id &query_id= Query_id::get_query_id();
