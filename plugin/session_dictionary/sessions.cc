@@ -42,7 +42,7 @@ Sessions::Sessions() :
   plugin::TableFunction("DATA_DICTIONARY", "SESSIONS")
 {
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("SESION_USERNAME", 16);
+  add_field("SESSION_USERNAME", 16);
   add_field("SESSION_HOST", NI_MAXHOST);
   add_field("SESSION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SESSION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
