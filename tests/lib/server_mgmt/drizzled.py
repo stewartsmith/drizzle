@@ -63,13 +63,13 @@ class drizzleServer(Server):
         # Get our ports
         self.port_block = self.system_manager.port_manager.get_port_block( self.name
                                                                          , self.preferred_base_port
-                                                                         , 5 )
+                                                                         , 6 )
         self.master_port = self.port_block[0]
         self.drizzle_tcp_port = self.port_block[1]
         self.mc_port = self.port_block[2]
         self.pbms_port = self.port_block[3]
         self.rabbitmq_node_port = self.port_block[4]
-        
+        self.json_server_port = self.port_block[5]
 
         # Generate our working directories
         self.dirset = { self.name : { 'var': {'std_data_ln':( os.path.join(self.code_tree.testdir,'std_data'))

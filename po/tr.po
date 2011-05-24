@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-10 14:14+0000\n"
+"POT-Creation-Date: 2011-05-24 16:21+0000\n"
 "PO-Revision-Date: 2011-03-24 17:55+0000\n"
 "Last-Translator: Angel Spy <melissadilara@yahoo.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
-"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: tr\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Launchpad-Export-Date: 2011-03-25 04:39+0000\n"
 "X-Generator: Launchpad (build 12559)\n"
@@ -897,8 +897,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -3270,8 +3270,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -4740,6 +4740,13 @@ msgstr ""
 msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
+
+#: ../plugin/json_server/json_server.cc:266
+#, fuzzy
+msgid "Port number to use for connection or 0 for default (port 80) "
+msgstr ""
+"Bağlantı için kullanılacak port numarası ya da öntanımlı değerin kullanıması "
+"için 0,  erişilme önceliğine göre, drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
 msgid "fail gearman_client_create()"

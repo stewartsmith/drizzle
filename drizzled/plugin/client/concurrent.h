@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Vijay Samuel, vjsamuel1990@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -131,8 +132,6 @@ public:
     {
       byte.resize(iter->length() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
-   //   fprintf(stderr, "%d\n", int(byte.size()));
-     // fprintf(stderr, "%swas inserted\n", iter->c_str());
       memcpy(&byte[1], iter->c_str(), iter->size());
       to_execute.push(byte);
     }

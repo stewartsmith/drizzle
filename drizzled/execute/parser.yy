@@ -3,6 +3,8 @@
  *  Drizzle Execute Parser
  *
  *  Copyright (C) 2011 Data Differential, http://datadifferential.com/
+ *  Copyright (C) 2011 Vijay Samuel, vjsamuel1990@gmail.com
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -127,8 +129,6 @@ std::vector<std::string> Context::start()
   }
   parsed_queries.push_back(query); 
   query.clear();
-  for (std::vector<std::string>::iterator iter= parsed_queries.begin(); iter != parsed_queries.end(); ++  iter)
-    std::cout << iter->c_str() << std::endl; 
   return parsed_queries;
 }
 

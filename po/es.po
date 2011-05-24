@@ -7,17 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-10 14:14+0000\n"
-"PO-Revision-Date: 2011-04-07 22:58+0000\n"
+"POT-Creation-Date: 2011-05-24 16:21+0000\n"
+"PO-Revision-Date: 2011-05-10 11:29+0000\n"
 "Last-Translator: nerjamartin <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
-"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-04-09 04:48+0000\n"
-"X-Generator: Launchpad (build 12735)\n"
+"X-Launchpad-Export-Date: 2011-05-11 04:35+0000\n"
+"X-Generator: Launchpad (build 12959)\n"
 
 #: ../client/drizzle.cc:330
 msgid "Sun"
@@ -918,8 +917,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1353,11 +1352,11 @@ msgstr ""
 
 #: ../client/drizzletest.cc:5375
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../client/drizzletest.cc:5385
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Error: Valor inválido para opt_sleep"
 
 #: ../client/drizzletest.cc:5573
 #, c-format
@@ -1447,7 +1446,7 @@ msgstr "Error: Valor no válido para max_input_line"
 #: ../drizzled/drizzled.cc:733
 #, fuzzy
 msgid "Error: Invalid Value for completion_type"
-msgstr "Error: Valor no válido para connect_timeout"
+msgstr "Error: Valor inválido para opt_sleep"
 
 #: ../drizzled/drizzled.cc:745
 #, fuzzy
@@ -1457,7 +1456,7 @@ msgstr "Error: Valor no válido para connect_timeout"
 #: ../drizzled/drizzled.cc:756
 #, fuzzy
 msgid "Error: Invalid Value for group_concat_max_len"
-msgstr "Error: Valor no válido para connect_timeout"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:767
 #, fuzzy
@@ -1507,7 +1506,7 @@ msgstr "Error: Valor no válido para max_input_line"
 #: ../drizzled/drizzled.cc:869
 #, fuzzy
 msgid "Error: Invalid Value for optimizer_search_depth"
-msgstr "Error: Valor no válido para connect_timeout"
+msgstr "Error: Valor inválido para opt_sleep"
 
 #: ../drizzled/drizzled.cc:880
 #, fuzzy
@@ -1517,17 +1516,17 @@ msgstr "Error: Valor no válido para max_input_line"
 #: ../drizzled/drizzled.cc:891
 #, fuzzy
 msgid "Error: Invalid Value for query_alloc_block_size"
-msgstr "Error: Valor no válido para connect_timeout"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:903
 #, fuzzy
 msgid "Error: Invalid Value for query_prealloc_size"
-msgstr "Error: Valor no válido para max_input_line"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:915
 #, fuzzy
 msgid "Error: Invalid Value for range_alloc_block_size"
-msgstr "Error: Valor no válido para max_input_line"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:927
 #, fuzzy
@@ -1542,17 +1541,17 @@ msgstr "Error: Valor no válido para max_input_line"
 #: ../drizzled/drizzled.cc:950
 #, fuzzy
 msgid "Error: Invalid Value for sort_buff_size"
-msgstr "Error: Valor no válido para max_input_line"
+msgstr "Error: Valor inválido para opt_sleep"
 
 #: ../drizzled/drizzled.cc:961
 #, fuzzy
 msgid "Error: Invalid Value for table_def_size"
-msgstr "Error: Valor no válido para max_input_line"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:972
 #, fuzzy
 msgid "Error: Invalid Value for table_cache_size"
-msgstr "Error: Valor no válido para max_input_line"
+msgstr "Error: Valor inválido para opt_tail_lines"
 
 #: ../drizzled/drizzled.cc:983 ../drizzled/drizzled.cc:999
 #, fuzzy
@@ -2470,8 +2469,8 @@ msgstr "Demasiadas partes de llave especificadas, max %d partes permitidas."
 #, c-format
 msgid "Specified key was too long; max key length is %d bytes"
 msgstr ""
-"La llave especificada es demasiado larga; la longitud máxima de la clave es "
-"%d bytes"
+"La llave especificada es demasiado larga; la longitud máxima de la clave es %"
+"d bytes"
 
 #: ../drizzled/error.cc:332
 #, c-format
@@ -3530,8 +3529,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 "La defensa de las restricciones de clave para la tabla '%.192s', entrada  "
 "%'-.192s', la clave %d daría lugar a una entrada duplicada"
@@ -3800,8 +3799,8 @@ msgstr "No puede leer el valor para el symlink '%s' (Codigo de error: %d)"
 #, c-format
 msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
 msgstr ""
-"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: "
-"%d)"
+"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: %"
+"d)"
 
 #: ../drizzled/error.cc:592
 #, c-format
@@ -3878,7 +3877,7 @@ msgstr ""
 #: ../drizzled/error.cc:629
 #, fuzzy, c-format
 msgid "Cannot drop catalog '%s'."
-msgstr "no se puede abir archivo: %s\n"
+msgstr "No se puede reabrir la tabla: '%-.192s'"
 
 #: ../drizzled/error.cc:630
 #, c-format
@@ -4533,8 +4532,8 @@ msgstr "No se puede crear la tabla '%-.200s' (errno: %d)"
 #, fuzzy, c-format
 msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
 msgstr ""
-"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: "
-"%d)"
+"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: %"
+"d)"
 
 #: ../plugin/haildb/haildb_engine.cc:1202
 #: ../plugin/haildb/haildb_engine.cc:1315
@@ -5060,6 +5059,13 @@ msgstr ""
 msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
+
+#: ../plugin/json_server/json_server.cc:266
+#, fuzzy
+msgid "Port number to use for connection or 0 for default (port 80) "
+msgstr ""
+"Número de puerto para la conexión o 0 para usar el puerto establecido en "
+"drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
 #, fuzzy
@@ -6035,13 +6041,13 @@ msgstr ""
 #~ "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 #~ "type %s\n"
 #~ msgstr ""
-#~ "--Advertencia: No se pudo utilizar inserciones retrasadas para la tabla "
-#~ "'%s' debido a su tipo %s\n"
+#~ "--Advertencia: No se pudo utilizar inserciones retrasadas para la tabla '%"
+#~ "s' debido a su tipo %s\n"
 
 #~ msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 #~ msgstr ""
-#~ "%s: Advertencia: No se pudo establecer la opción SQL_QUOTE_SHOW_CREATE "
-#~ "(%s)\n"
+#~ "%s: Advertencia: No se pudo establecer la opción SQL_QUOTE_SHOW_CREATE (%"
+#~ "s)\n"
 
 #~ msgid "%s: Can't get keys for table %s\n"
 #~ msgstr "%s: No se pudo obtener las claves para la tabla %s\n"
@@ -6149,8 +6155,8 @@ msgstr ""
 
 #~ msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
 #~ msgstr ""
-#~ "Error borrando la base de datos (no se puede eliminar '%-.192s', errno: "
-#~ "%d)"
+#~ "Error borrando la base de datos (no se puede eliminar '%-.192s', errno: %"
+#~ "d)"
 
 #~ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 #~ msgstr ""
@@ -6825,8 +6831,8 @@ msgstr ""
 
 #~ msgid "Binary logging and replication forbid changing the global server %s"
 #~ msgstr ""
-#~ "El registro binario y la replicación prohíbe cambiar el servidor mundial "
-#~ "%s"
+#~ "El registro binario y la replicación prohíbe cambiar el servidor mundial %"
+#~ "s"
 
 #~ msgid "Can't map file: %-.200s, errno: %d"
 #~ msgstr "No puede asignar el archivo: %-.200s, Error: %d"
@@ -7390,8 +7396,8 @@ msgstr ""
 #~ "Column count of drizzle.%s is wrong. Expected %d, found %d. The table is "
 #~ "probably corrupted"
 #~ msgstr ""
-#~ "contador de columnas de drizzle.%s  es invalida. Experado %d, encontrado "
-#~ "%d. la tabla esta probablemente corrupta"
+#~ "contador de columnas de drizzle.%s  es invalida. Experado %d, encontrado %"
+#~ "d. la tabla esta probablemente corrupta"
 
 #~ msgid "Cannot load from drizzle.%s. The table is probably corrupted"
 #~ msgstr ""
@@ -8528,15 +8534,15 @@ msgstr ""
 
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-#~ "%<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+#~ "<PRIu64> K\n"
 #~ "bytes of memory\n"
 #~ "Hope that's ok; if not, decrease some variables in the equation.\n"
 #~ "\n"
 #~ msgstr ""
 #~ "Es posible que drizzled pueda llegar a usar hasta \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-#~ "%<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+#~ "<PRIu64> K\n"
 #~ "bytes de memoria\n"
 #~ "Espero que esto esté bien; si no, reduzca algunas variables en la "
 #~ "ecuación.\n"
@@ -8917,8 +8923,8 @@ msgstr ""
 #~ "bytes.\n"
 
 #~ msgid ""
-#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of "
-#~ "%<PRIu64> bytes.\n"
+#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of %"
+#~ "<PRIu64> bytes.\n"
 #~ msgstr ""
 #~ "No se pudo leer la transacción completa. Leer %<PRIu64> bytes en lugar de "
 #~ "%<PRIu64> bytes.\n"
@@ -8939,16 +8945,16 @@ msgstr ""
 #~ "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 #~ msgstr ""
 #~ "Falló al escribir el  tamaño completo de la orden. Se intentaron escribir "
-#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
-#~ "%<PRId64> bytes. Error: %s\n"
+#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron %"
+#~ "<PRId64> bytes. Error: %s\n"
 
 #~ msgid ""
 #~ "Failed to write full serialized command.  Tried to write %<PRId64> bytes "
 #~ "at offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 #~ msgstr ""
-#~ "Falló al escribir la orden completa serializada. Se intentaron escribir "
-#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
-#~ "%<PRId64> bytes. Error: %s\n"
+#~ "Falló al escribir la orden completa serializada. Se intentaron escribir %"
+#~ "<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron %"
+#~ "<PRId64> bytes. Error: %s\n"
 
 #~ msgid ""
 #~ "Failed to parse command message at offset %<PRId64>.  Got error: %s\n"

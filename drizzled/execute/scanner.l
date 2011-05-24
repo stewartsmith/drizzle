@@ -3,6 +3,8 @@
  *  Drizzle Execute Parser
  *
  *  Copyright (C) 2011 Data Differential, http://datadifferential.com/
+ *  Copyright (C) 2011 Vijay Samuel, vjsamuel1990@gmail.com
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -83,6 +85,24 @@ using namespace drizzled;
 %}
 
 
+UTF8_BYTE_ORDER_MARK   [\xEF][\xBB][\xBF]
+
+DIGITS    [0-9]
+ASCII     [\x0-\xFF]
+
+U1          [a-zA-Z_]
+U2          [\xC2-\xDF][\x80-\xBF]
+U3          [\xE0][\xA0-\xBF][\x80-\xBF]
+U4          [\xE1-\xEC][\x80-\xBF][\x80-\xBF]
+U5          [\xED][\x80-\x9F][\x80-\xBF]
+U6          [\xEE-\xEF][\x80-\xBF][\x80-\xBF]
+U7          [\nxF0][\x90-\xBF][\x80-\xBF][\x80-\xBF]
+U8          [\xF1-\xF3][\x80-\xBF][\x80-\xBF][\x80-\xBF]
+U9          [\xF4][\x80-\x8F][\x80-\xBF][\x80-\xBF]
+
+LETTERS     {ASCII}|{U2}|{U3}|{U4}|{U5}|{U6}|{U7}|{U8}|{U9} 
+ALNUM       {LETTERS}|{DIGITS}
+
 %option nounistd
 %option 8bit
 %option bison-bridge
@@ -100,7 +120,7 @@ using namespace drizzled;
 [\t\r\n ] ; /* skip whitespace */
 
 
-[[:punct:]]?[[:alnum:][:punct:]]*["."[:alnum:][:punct:]_-]*[[:alnum:][:punct:]]*[[:punct:]]? {
+[[:punct:]]?{ALNUM}*["."{ALNUM}_-]*{ALNUM}*[[:punct:]]? {
       yylval->string.str = yytext;
       yylval->string.length = yyleng;
       return STRING;
