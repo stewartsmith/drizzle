@@ -7,16 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-10 14:14+0000\n"
-"PO-Revision-Date: 2011-05-09 11:20+0000\n"
+"POT-Creation-Date: 2011-05-24 16:21+0000\n"
+"PO-Revision-Date: 2011-05-14 10:23+0000\n"
 "Last-Translator: Wei Fan <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-05-10 04:36+0000\n"
+"X-Launchpad-Export-Date: 2011-05-15 04:39+0000\n"
 "X-Generator: Launchpad (build 12959)\n"
 
 #: ../client/drizzle.cc:330
@@ -870,8 +869,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -943,7 +942,7 @@ msgstr "写入时错误%d"
 msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
-msgstr ""
+msgstr "%s: 你不能同时使用 --single-transaction 和 --lock-all-tables.\n"
 
 #: ../client/drizzledump.cc:284
 #, c-format
@@ -951,8 +950,9 @@ msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr "%s: --databases 或者 --all-databases 不能和 --tab 同时使用.\n"
 
 #: ../client/drizzledump.cc:352
+#, fuzzy
 msgid "-- Retrieving database structures..."
-msgstr ""
+msgstr "-- 检索表%s的结构...\n"
 
 #: ../client/drizzledump.cc:472
 msgid ""
@@ -1191,12 +1191,12 @@ msgstr ""
 #: ../client/drizzledump.cc:629
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
+msgstr "使用: %s [OPTIONS] database [tables]\n"
 
 #: ../client/drizzledump.cc:630
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "或者使用  %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 
 #: ../client/drizzledump.cc:632
 #, c-format
@@ -1215,8 +1215,9 @@ msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr ""
 
 #: ../client/drizzledump_data.cc:264
+#, fuzzy
 msgid "-- Retrieving data for "
-msgstr ""
+msgstr "-- 检索表%s的结构...\n"
 
 #: ../client/drizzledump_data.cc:294
 msgid " rows dumped for table "
@@ -1256,8 +1257,9 @@ msgstr "-- 从%s 断开...\n"
 
 #: ../client/drizzledump_drizzle.cc:41 ../client/drizzledump_drizzle.cc:100
 #: ../client/drizzledump_mysql.cc:42 ../client/drizzledump_mysql.cc:104
+#, fuzzy
 msgid "-- Retrieving table structures for "
-msgstr ""
+msgstr "-- 检索表%s的结构...\n"
 
 #: ../client/drizzledump_drizzle.cc:175 ../client/drizzledump_mysql.cc:168
 msgid "-- Retrieving fields for "
@@ -3229,8 +3231,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -4002,9 +4004,9 @@ msgid "Allow anonymous access"
 msgstr ""
 
 #: ../plugin/auth_file/auth_file.cc:227
-#, c-format
+#, fuzzy, c-format
 msgid "Could not load auth file: %s\n"
-msgstr ""
+msgstr "找不到表: \"%s\""
 
 #: ../plugin/auth_file/auth_file.cc:244
 msgid "File to load for usernames and passwords"
@@ -4693,6 +4695,11 @@ msgstr ""
 msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
+
+#: ../plugin/json_server/json_server.cc:266
+#, fuzzy
+msgid "Port number to use for connection or 0 for default (port 80) "
+msgstr "用以连接的端口号或者设置0使用MySQL协议"
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
 msgid "fail gearman_client_create()"
@@ -5598,6 +5605,9 @@ msgstr ""
 #~ msgid "Couldn't execute '%s': %s (%d)"
 #~ msgstr "不能够执行 '%s': %s (%d)"
 
+#~ msgid "Couldn't allocate memory"
+#~ msgstr "不能分配内存"
+
 #~ msgid ""
 #~ "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 #~ "type %s\n"
@@ -5608,6 +5618,28 @@ msgstr ""
 
 #~ msgid "%s: Can't get keys for table %s\n"
 #~ msgstr "%s: 不能得到表 %s 的键\n"
+
+#~ msgid "Error: Couldn't read status information for table %s\n"
+#~ msgstr "错误: 不能读取表%s的状态信息\n"
+
+#~ msgid "Error retrieving table structure for table: \"%s\""
+#~ msgstr "检索表%s的结构错误"
+
+#~ msgid "-- Skipping dump data for table '%s', --no-data was used\n"
+#~ msgstr "跳过转储表'%s'的数据， --没有数据被使用\n"
+
+#~ msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
+#~ msgstr "-- 警告: 忽略表 '%s'的数据，因为数据类型是%s\n"
+
+#~ msgid "Not enough fields from table %s! Aborting.\n"
+#~ msgstr "表 %s 空间不足! 取消操作\n"
+
+#~ msgid ""
+#~ "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
+#~ msgstr "警告: 不能从表 %s 读取键值; 数据没有排序 (%s)\n"
+
+#~ msgid "Error: Not enough memory to store ORDER BY clause\n"
+#~ msgstr "错误: 没有足够空间用于储存指令 ORDER BY 的结果\n"
 
 #~ msgid "Unable to create background worker thread. Got error %s.\n"
 #~ msgstr "无法创建后台进程。获得错误：%s。\n"
