@@ -115,6 +115,7 @@ public:
 
   void pushSQL(const std::string &arg)
   {
+    cout << arg << endl;
     Bytes byte;
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
@@ -127,21 +128,13 @@ public:
       to_execute.push(byte);
     }
     
-    string query;
-    for (size_t i= 0; i < parsed_tokens.size(); i ++)
+    for (vector<string>::iterator iter= parsed_tokens.begin(); iter != parsed_tokens.end(); ++iter)
     {
-      query.append(parsed_tokens[i]);
-      query.push_back(' ');
-    }
-    
-    
-    query= query.substr(0, query.length() - 1);
-    cout << query << endl;
-    {
-      byte.resize(query.length() +1); // +1 for the COM_QUERY
+      byte.resize(iter->length() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
       fprintf(stderr, "%d\n", int(byte.size()));
-      memcpy(&byte[1], query.c_str(), query.size());
+      fprintf(stderr, "%swas inserted\n", iter->c_str());
+      memcpy(&byte[1], iter->c_str(), iter->size());
       to_execute.push(byte);
     }
 

@@ -66,8 +66,9 @@
 #define YYLTYPE_IS_TRIVIAL 0
 
 int execute_lex(YYSTYPE* lvalp, void* scanner);
-std::vector<std::string> parsed_tokens;
-
+std::vector<std::string> parsed_queries;
+std::string query;
+size_t pos= std::string::npos;
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0) 
 
 inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scanner, const char *error)
@@ -90,10 +91,29 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 
 %%
 
-begin:    STRING   {parsed_tokens.push_back(std::string($1.str, $1.length));}
+begin:    STRING ";"{
+                    query.append(std::string($1.str, $1.length));
+                    std::cout << "There\n";                     
+                    parsed_queries.push_back(query);
+                    query.clear();
+                    }
+
+          STRING   {
+                     query.append(std::string($1.str, $1.length));
+                     std::cout << "Everywhere\n"; 
+                     parsed_queries.push_back(query);
+                     query.clear();
+                   }
           |
                          
-          begin STRING {parsed_tokens.push_back(std::string($2.str, $2.length));}
+          begin STRING {
+                         query.append(std::string($2.str, $2.length));
+                       if ((pos=query.find(';')) != std::string::npos)
+                     {
+                       std::cout << "Here" << std::endl;
+                     }                   
+                         query.push_back(' ');
+                       }
         ;
 
 
@@ -106,7 +126,7 @@ namespace execute {
 std::vector<std::string> Context::start() 
 {
   execute_parse(this, (void **)scanner);
-  return parsed_tokens;
+  return parsed_queries;
 }
 
 } // namespace execute
