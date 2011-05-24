@@ -91,27 +91,16 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 
 %%
 
-begin:    STRING ";"{
-                    query.append(std::string($1.str, $1.length));
-                    std::cout << "There\n";                     
-                    parsed_queries.push_back(query);
-                    query.clear();
-                    }
+begin:    
 
-          STRING   {
-                     query.append(std::string($1.str, $1.length));
-                     std::cout << "Everywhere\n"; 
-                     parsed_queries.push_back(query);
-                     query.clear();
+          STRING   {   
+                       query.append( std::string($1.str, $1.length));
+                       query.push_back(' ');
                    }
           |
                          
           begin STRING {
                          query.append(std::string($2.str, $2.length));
-                       if ((pos=query.find(';')) != std::string::npos)
-                     {
-                       std::cout << "Here" << std::endl;
-                     }                   
                          query.push_back(' ');
                        }
         ;
@@ -126,6 +115,20 @@ namespace execute {
 std::vector<std::string> Context::start() 
 {
   execute_parse(this, (void **)scanner);
+  parsed_queries.clear();
+  while ((pos= query.find(';')) != std::string::npos)
+  {
+    std::cout << pos << std::endl;
+    parsed_queries.push_back(query.substr(0, pos));
+    if (query[pos+1] == ' ')
+      query= query.substr(pos + 2, query.length());
+    else
+      query= query.substr(pos + 1, query.length());
+  }
+  parsed_queries.push_back(query); 
+  query.clear();
+  for (std::vector<std::string>::iterator iter= parsed_queries.begin(); iter != parsed_queries.end(); ++  iter)
+    std::cout << iter->c_str() << std::endl; 
   return parsed_queries;
 }
 

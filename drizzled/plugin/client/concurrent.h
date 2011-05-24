@@ -115,7 +115,6 @@ public:
 
   void pushSQL(const std::string &arg)
   {
-    cout << arg << endl;
     Bytes byte;
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
@@ -132,8 +131,8 @@ public:
     {
       byte.resize(iter->length() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
-      fprintf(stderr, "%d\n", int(byte.size()));
-      fprintf(stderr, "%swas inserted\n", iter->c_str());
+   //   fprintf(stderr, "%d\n", int(byte.size()));
+     // fprintf(stderr, "%swas inserted\n", iter->c_str());
       memcpy(&byte[1], iter->c_str(), iter->size());
       to_execute.push(byte);
     }
