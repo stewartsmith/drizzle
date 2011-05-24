@@ -90,8 +90,10 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 
 %%
 
-begin:
-          STRING ';' {parsed_tokens.push_back(std::string($1.str, $1.length));}
+begin:    STRING   {parsed_tokens.push_back(std::string($1.str, $1.length));}
+          |
+                         
+          begin STRING {parsed_tokens.push_back(std::string($2.str, $2.length));}
         ;
 
 

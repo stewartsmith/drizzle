@@ -26,6 +26,7 @@
 #include <vector>
 #include <queue>
 #include <string>
+#include <cstdio>
 
 using namespace std;
 
@@ -118,7 +119,6 @@ public:
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
     std::vector<std::string> parsed_tokens= context->start();
-    cout << parsed_tokens.size() << endl << endl;
     
     {
       byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
@@ -126,13 +126,22 @@ public:
       memcpy(&byte[1], "START TRANSACTION", sizeof("START TRANSACTION") -1);
       to_execute.push(byte);
     }
-
+    
+    string query;
     for (size_t i= 0; i < parsed_tokens.size(); i ++)
     {
-      byte.resize(parsed_tokens[i].length() +1); // +1 for the COM_QUERY
+      query.append(parsed_tokens[i]);
+      query.push_back(' ');
+    }
+    
+    
+    query= query.substr(0, query.length() - 1);
+    cout << query << endl;
+    {
+      byte.resize(query.length() +1); // +1 for the COM_QUERY
       byte[0]= COM_QUERY;
-      const char *token= parsed_tokens[i].c_str();
-      memcpy(&byte[1], &token, parsed_tokens[i].length());
+      fprintf(stderr, "%d\n", int(byte.size()));
+      memcpy(&byte[1], query.c_str(), query.size());
       to_execute.push(byte);
     }
 
