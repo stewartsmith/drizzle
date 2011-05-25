@@ -346,6 +346,7 @@ class serverManager:
             # We handle a reset in case we need it:
             if server.need_reset:
                 self.reset_server(server)
+                server.need_reset = False
 
             # Do our checking for config-specific madness we need to do
             if config_reader and config_reader.has_section(server.name):
