@@ -21,7 +21,6 @@
 #pragma once
 
 #include <drizzled/plugin/client.h>
-#include <boost/tokenizer.hpp>
 #include <drizzled/execute/context.h>
 #include <drizzled/execute/parser.h>
 #include <vector>
