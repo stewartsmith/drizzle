@@ -120,7 +120,6 @@ std::vector<std::string> Context::start()
   parsed_queries.clear();
   while ((pos= query.find(';')) != std::string::npos)
   {
-    std::cout << pos << std::endl;
     parsed_queries.push_back(query.substr(0, pos));
     if (query[pos+1] == ' ')
       query= query.substr(pos + 2, query.length());
