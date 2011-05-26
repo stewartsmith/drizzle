@@ -34,7 +34,7 @@ static const std::string PROGRAM_ERROR("PROGRAM_ERROR");
 
 static const std::string COM_SLEEP("COM_SLEEP"); 
 static const std::string COM_QUIT("COM_QUIT"); 
-static const std::string COM_INIT_DB("COM_INIT_DB"); 
+static const std::string COM_USE_SCHEMA("COM_USE_SCHEMA"); 
 static const std::string COM_QUERY("COM_QUERY"); 
 static const std::string COM_SHUTDOWN("COM_SHUTDOWN"); 
 static const std::string COM_CONNECT("COM_CONNECT"); 
@@ -134,23 +134,31 @@ const std::string &type(drizzled::enum_server_command type)
   {
   case drizzled::COM_SLEEP : 
     return COM_SLEEP;
+
   case drizzled::COM_KILL : 
     {
       static std::string COM_KILL("COM_KILL");
       return COM_KILL;
     }
+
   case drizzled::COM_QUIT : 
     return COM_QUIT;
-  case drizzled::COM_INIT_DB : 
-    return COM_INIT_DB;
+
+  case drizzled::COM_USE_SCHEMA : 
+    return COM_USE_SCHEMA;
+
   case drizzled::COM_QUERY : 
     return COM_QUERY;
+
   case drizzled::COM_SHUTDOWN : 
     return COM_SHUTDOWN;
+
   case drizzled::COM_CONNECT : 
     return COM_CONNECT;
+
   case drizzled::COM_PING : 
     return COM_PING;
+
   case drizzled::COM_END : 
     return COM_END;
   }

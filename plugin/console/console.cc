@@ -123,7 +123,7 @@ public:
     return session->checkUser(password, schema);
   }
 
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
+  virtual bool readCommand(char **packet, uint32_t& packet_length)
   {
     uint32_t length;
 
@@ -136,7 +136,7 @@ public:
     *packet= NULL;
 
     /* Start with 1 byte offset so we can set command. */
-    *packet_length= 1;
+    packet_length= 1;
 
     do
     {
@@ -145,19 +145,19 @@ public:
         return false;
 
       cin.clear();
-      cin.getline(*packet + *packet_length, length - *packet_length, ';');
-      *packet_length+= cin.gcount();
+      cin.getline(*packet + packet_length, length - packet_length, ';');
+      packet_length+= cin.gcount();
       length*= 2;
     }
     while (cin.eof() == false && cin.fail() == true);
 
-    if ((*packet_length == 1 && cin.eof() == true) or
+    if ((packet_length == 1 && cin.eof() == true) or
         not strncasecmp(*packet + 1, "quit", 4) or
         not strncasecmp(*packet + 1, "exit", 4) or
         not strncasecmp(*packet + 1, "shutdown", sizeof("shutdown") -1))
     {
       is_dead= true;
-      *packet_length= 1;
+      packet_length= 1;
       (*packet)[0]= COM_SHUTDOWN;
 
       return true;
