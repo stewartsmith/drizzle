@@ -58,7 +58,7 @@ ListenDrizzleProtocol::~ListenDrizzleProtocol()
 {
 }
 
-in_port_t ListenDrizzleProtocol::getPort(void) const
+in_port_t ListenDrizzleProtocol::getPort() const
 {
   return port;
 }
@@ -73,12 +73,9 @@ void ClientDrizzleProtocol::drizzle_compose_ip_addresses(vector<string> options)
   }
 }
 
-bool ClientDrizzleProtocol::isAdminAllowed(void)
+bool ClientDrizzleProtocol::isAdminAllowed()
 {
-  if (std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->user()->address()) != drizzle_admin_ip_addresses.end())
-    return true;
-
-  return false;
+  return std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->user()->address()) != drizzle_admin_ip_addresses.end();
 }
 
 plugin::Client *ListenDrizzleProtocol::getClient(int fd)

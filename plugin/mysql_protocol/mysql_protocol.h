@@ -82,7 +82,7 @@ protected:
   bool _is_interactive;
 
   bool checkConnection(void);
-  bool netStoreData(const unsigned char *from, size_t length);
+  void netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
   void makeScramble(char *scramble);

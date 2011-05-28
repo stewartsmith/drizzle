@@ -45,8 +45,7 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
@@ -632,10 +631,11 @@ bool ClientMySQLProtocol::store(Field *from)
 
   from->val_str_internal(&str);
 
-  return netStoreData((const unsigned char *)str.ptr(), str.length());
+  netStoreData((const unsigned char *)str.ptr(), str.length());
+  return 0; // return void
 }
 
-bool ClientMySQLProtocol::store(void)
+bool ClientMySQLProtocol::store()
 {
   char buff[1];
   buff[0]= (char)251;
@@ -646,40 +646,46 @@ bool ClientMySQLProtocol::store(void)
 bool ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
-  return netStoreData((unsigned char*) buff,
+  netStoreData((unsigned char*) buff,
                       (size_t) (internal::int10_to_str(from, buff, -10) - buff));
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
-  return netStoreData((unsigned char*) buff,
+  netStoreData((unsigned char*) buff,
                       (size_t) (internal::int10_to_str(from, buff, 10) - buff));
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
-  return netStoreData((unsigned char*) buff,
+  netStoreData((unsigned char*) buff,
                       (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
-  return netStoreData((unsigned char*) buff,
+  netStoreData((unsigned char*) buff,
                       (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
-  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
+  netStoreData((unsigned char*) buffer->ptr(), buffer->length());
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::store(const char *from, size_t length)
 {
-  return netStoreData((const unsigned char *)from, length);
+  netStoreData((const unsigned char *)from, length);
+  return 0; // return void
 }
 
 bool ClientMySQLProtocol::wasAborted(void)
@@ -894,15 +900,12 @@ bool ClientMySQLProtocol::checkConnection(void)
 
 }
 
-bool ClientMySQLProtocol::isAdminAllowed(void)
+bool ClientMySQLProtocol::isAdminAllowed()
 {
-  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end())
-    return true;
-
-  return false;
+  return std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end();
 }
 
-bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
+void ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
 {
   size_t packet_length= packet.length();
   /*
@@ -914,7 +917,6 @@ bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
   unsigned char *to= storeLength((unsigned char*) packet.ptr()+packet_length, length);
   memcpy(to,from,length);
   packet.length((size_t) (to+length-(unsigned char*) packet.ptr()));
-  return 0; // return void
 }
 
 /**
