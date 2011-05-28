@@ -131,9 +131,11 @@ public:
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr, bool low_byte_first) const;
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr_arg) const;
   void put_length(unsigned char *pos, uint32_t length);
-  inline void get_ptr(unsigned char **str)
+  inline unsigned char* get_ptr() const
     {
-      memcpy(str,ptr+sizeof(uint32_t),sizeof(unsigned char*));
+      unsigned char* str;
+      memcpy(&str, ptr + sizeof(uint32_t), sizeof(unsigned char*));
+      return str;
     }
   inline void get_ptr(unsigned char **str, uint32_t row_offset)
     {
@@ -157,11 +159,10 @@ public:
   uint32_t get_key_image(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(std::basic_string<unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
-  void sql_type(String &str) const;
+  void sql_type(String&) const;
   inline void copy()
   {
-    unsigned char *tmp;
-    get_ptr(&tmp);
+    unsigned char* tmp= get_ptr();
     value.copy((char*) tmp, get_length(), charset());
     tmp=(unsigned char*) value.ptr();
     memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
