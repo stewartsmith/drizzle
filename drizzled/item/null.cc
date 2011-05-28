@@ -110,10 +110,9 @@ int Item_null::save_safe_in_field(Field *field)
   Pack data in buffer for sending.
 */
 
-bool Item_null::send(plugin::Client *client, String *)
+void Item_null::send(plugin::Client *client, String *)
 {
   client->store();
-  return false; // return void
 }
 
 } /* namespace drizzled */

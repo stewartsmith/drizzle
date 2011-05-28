@@ -311,16 +311,16 @@ void Item_func_set_user_var::print(String *str)
   str->append(')');
 }
 
-bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
+void Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)
   {
     check(1);
     update();
     client->store(result_field);
-    return false;
+    return;
   }
-  return Item::send(client, str_arg);
+  Item::send(client, str_arg);
 }
 
 void Item_func_set_user_var::make_field(SendField *tmp_field)

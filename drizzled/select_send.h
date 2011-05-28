@@ -104,14 +104,9 @@ public:
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    Item *item;
-    while ((item=li++))
+    while (Item* item= li++)
     {
-      if (item->send(session->getClient(), &buffer))
-      {
-        my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-        break;
-      }
+      item->send(session->getClient(), &buffer);
     }
     /* Insert this record to the Resultset into the cache */
     if (session->query_cache_key != "" && session->getResultsetMessage() != NULL)
