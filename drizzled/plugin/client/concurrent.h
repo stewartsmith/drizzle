@@ -25,12 +25,9 @@
 #include <queue>
 #include <string>
 
-namespace drizzled
-{
-namespace plugin
-{
-namespace client
-{
+namespace drizzled {
+namespace plugin {
+namespace client {
 
 /**
  * This class is an empty client implementation for internal used.
@@ -93,17 +90,17 @@ public:
   virtual void sendEOF(void) {}
   virtual void sendError(const drizzled::error_t, const char*) {}
   virtual bool sendFields(List<Item>*) { return false; }
-  virtual bool store(Field *) { return false; }
-  virtual bool store(void) { return false; }
-  virtual bool store(int32_t) { return false; }
-  virtual bool store(uint32_t) { return false; }
-  virtual bool store(int64_t) { return false; }
-  virtual bool store(uint64_t) { return false; }
-  virtual bool store(double, uint32_t, String*) { return false; }
-  virtual bool store(const type::Time*) { return false; }
-  virtual bool store(const char*) { return false; }
-  virtual bool store(const char*, size_t) { return false; }
-  virtual bool store(const std::string &) { return false; }
+  virtual void store(Field *) {}
+  virtual void store() {}
+  virtual void store(int32_t) {}
+  virtual void store(uint32_t) {}
+  virtual void store(int64_t) {}
+  virtual void store(uint64_t) {}
+  virtual void store(double, uint32_t, String*) {}
+  virtual void store(const type::Time*) {}
+  virtual void store(const char*) {}
+  virtual void store(const char*, size_t) {}
+  virtual void store(const std::string &) {}
   virtual bool haveMoreData(void) { return false;}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }

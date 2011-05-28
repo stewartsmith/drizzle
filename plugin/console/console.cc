@@ -215,7 +215,7 @@ public:
 
   using Client::store;
 
-  virtual bool store(Field *from)
+  virtual void store(Field *from)
   {
     if (from->is_null())
       return store();
@@ -226,68 +226,62 @@ public:
     return store(str.ptr(), str.length());
   }
 
-  virtual bool store(void)
+  virtual void store(void)
   {
     cout << "NULL" << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(int32_t from)
+  virtual void store(int32_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(uint32_t from)
+  virtual void store(uint32_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(int64_t from)
+  virtual void store(int64_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(uint64_t from)
+  virtual void store(uint64_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(double from, uint32_t decimals, String *buffer)
+  virtual void store(double from, uint32_t decimals, String *buffer)
   {
     buffer->set_real(from, decimals, &my_charset_bin);
-    return store(buffer->ptr(), buffer->length());
+    store(buffer->ptr(), buffer->length());
   }
 
-  virtual bool store(const char *from, size_t length)
+  virtual void store(const char *from, size_t length)
   {
     cout.write(from, length);
     cout << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool haveMoreData(void)
+  virtual bool haveMoreData()
   {
     printDebug("haveMoreData");
     return false;
   }
 
-  virtual bool haveError(void)
+  virtual bool haveError()
   {
     printDebug("haveError");
     return false;
   }
 
-  virtual bool wasAborted(void)
+  virtual bool wasAborted()
   {
     printDebug("wasAborted");
     return false;
