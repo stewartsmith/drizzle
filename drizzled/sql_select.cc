@@ -107,10 +107,9 @@ static bool copy_blobs(Field **ptr)
   for (; *ptr ; ptr++)
   {
     if ((*ptr)->flags & BLOB_FLAG)
-      if (((Field_blob *) (*ptr))->copy())
-	return 1;				// Error
+      ((Field_blob *) (*ptr))->copy();
   }
-  return 0;
+  return 0; // return void
 }
 
 /**
