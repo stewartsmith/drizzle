@@ -137,10 +137,6 @@ public:
       memcpy(&str, ptr + sizeof(uint32_t), sizeof(unsigned char*));
       return str;
     }
-  inline void get_ptr(unsigned char **str, uint32_t row_offset)
-    {
-      memcpy(str,ptr+sizeof(uint32_t)+row_offset,sizeof(char*));
-    }
   inline void set_ptr(unsigned char *length, unsigned char *data)
     {
       memcpy(ptr,length,sizeof(uint32_t));
