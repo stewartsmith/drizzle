@@ -58,6 +58,7 @@ noinst_HEADERS+= \
                  client/statement.h \
                  client/stats.h \
                  client/thread_context.h \
+                 client/user_detect.h \
                  client/wakeup.h
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc

@@ -31,6 +31,8 @@
 #include <drizzled/gettext.h>
 #include <drizzled/configmake.h>
 
+#include "user_detect.h"
+
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
@@ -397,7 +399,8 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
-  const char* unix_user= getlogin();
+  UserDetect *detected_user= new UserDetect();
+  const char* shell_user= detected_user->getUser();
 
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
@@ -409,7 +412,7 @@ try
   "Port number to use for connection") 
   ("protocol", po::value<string>(&opt_protocol)->default_value("mysql"),
   "The protocol of connection (mysql or drizzle).")
-  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
+  ("user,u", po::value<string>(&current_user)->default_value((shell_user ? shell_user : "")),
   "User for login if not current user.")
   ;
 
