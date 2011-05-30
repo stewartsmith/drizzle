@@ -1,4 +1,6 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* 
+   Copyright (C) 2010-2011 Brian Aker
+   Copyright (C) 2000-2003 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -580,7 +582,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %nonassoc IN_SYM
 %nonassoc IS NULL_SYM TRUE_SYM FALSE_SYM
 
-%nonassoc CONCAT
+%left CONCAT
 %nonassoc '|'
 %nonassoc '&'
 %nonassoc SHIFT_LEFT SHIFT_RIGHT
