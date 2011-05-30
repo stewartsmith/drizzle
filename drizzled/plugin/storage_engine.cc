@@ -512,30 +512,6 @@ public:
   } 
 };
 
-/* This will later be converted to identifier::Tables */
-class DropTables: public std::unary_function<StorageEngine *, void>
-{
-  Session &session;
-  identifier::table::vector &table_identifiers;
-
-public:
-
-  DropTables(Session &session_arg, identifier::table::vector &table_identifiers_arg) :
-    session(session_arg),
-    table_identifiers(table_identifiers_arg)
-  { }
-
-  result_type operator() (argument_type engine)
-  {
-    // True returning from DropTable means the table has been successfully
-    // deleted, so it should be removed from the list of tables to drop
-    table_identifiers.erase(std::remove_if(table_identifiers.begin(),
-                                           table_identifiers.end(),
-                                           DropTable(session, engine)),
-                            table_identifiers.end());
-  }
-};
-
 /*
   This only works for engines which use file based DFE.
 
@@ -578,8 +554,11 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     }
   }
 
-  std::for_each(g_engines.begin(), g_engines.end(),
-                DropTables(session, table_identifiers));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+  {
+    table_identifiers.erase(std::remove_if(table_identifiers.begin(), table_identifiers.end(), DropTable(session, it)),
+      table_identifiers.end());
+  }
 
   /*
     Now we just clean up anything that might left over.
@@ -971,37 +950,17 @@ int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, 
   return 0;
 }
 
-class CanCreateTable: public std::unary_function<StorageEngine *, bool>
-{
-  const identifier::Table &identifier;
-
-public:
-  CanCreateTable(const identifier::Table &identifier_arg) :
-    identifier(identifier_arg)
-  { }
-
-  result_type operator() (argument_type engine)
-  {
-    return not engine->doCanCreateTable(identifier);
-  }
-};
-
-
 /**
   @note on success table can be created.
 */
 bool StorageEngine::canCreateTable(const identifier::Table &identifier)
 {
-  EngineVector::iterator iter=
-    std::find_if(g_engines.begin(), g_engines.end(),
-                 CanCreateTable(identifier));
-
-  if (iter == g_engines.end())
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    return true;
+    if (not it->doCanCreateTable(identifier))
+      return false;
   }
-
-  return false;
+  return true;
 }
 
 bool StorageEngine::readTableFile(const std::string &path, message::Table &table_message)
@@ -1033,11 +992,7 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
 
 std::ostream& operator<<(std::ostream& output, const StorageEngine &engine)
 {
-  output << "StorageEngine:(";
-  output <<  engine.getName();
-  output << ")";
-
-  return output;
+  return output << "StorageEngine:(" <<  engine.getName() << ")";
 }
 
 } /* namespace plugin */
