@@ -160,7 +160,7 @@ enum enum_server_command
 {
   COM_SLEEP,
   COM_QUIT,
-  COM_INIT_DB,
+  COM_USE_SCHEMA,
   COM_QUERY,
   COM_SHUTDOWN,
   COM_CONNECT,

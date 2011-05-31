@@ -116,6 +116,7 @@ ALNUM       {LETTERS}|{DIGITS}
 %option reentrant
 %%
 
+{UTF8_BYTE_ORDER_MARK}       {  /*  Byte Order Mark */   } 
 
 [\t\r\n ] ; /* skip whitespace */
 

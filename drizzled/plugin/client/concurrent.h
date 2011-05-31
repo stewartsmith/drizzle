@@ -23,6 +23,7 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/execute/context.h>
 #include <drizzled/execute/parser.h>
+#include <drizzled/util/string.h>
 #include <vector>
 #include <queue>
 #include <string>
@@ -42,11 +43,10 @@ namespace client
  */
 class Concurrent: public Client
 {
-  typedef std::vector<char> Bytes;
-  typedef std::queue <Bytes> Queue;
+  typedef std::queue < drizzled::util::String > Queue;
   Queue to_execute;
   bool is_dead;
-  Bytes packet_buffer;
+  drizzled::util::String packet_buffer;
 
 public:
 
@@ -63,17 +63,15 @@ public:
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
 
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
+  virtual bool readCommand(char **packet, uint32_t& packet_length)
   {
     while(not to_execute.empty())
     {
       Queue::value_type next= to_execute.front();
-      packet_buffer.resize(next.size());
-      memcpy(&packet_buffer[0], &next[0], next.size());
+      packet_buffer.assign(next.c_str(), next.size());
 
-      *packet= &packet_buffer[0];
-
-      *packet_length= next.size();
+      *packet= packet_buffer.c_str();
+      packet_length= next.size();
 
       to_execute.pop();
 
@@ -82,15 +80,15 @@ public:
 
     if (not is_dead)
     {
-      packet_buffer.resize(1);
-      *packet_length= 1;
-      *packet= &packet_buffer[0];
+      packet_buffer.clear();
+      packet_length= 1;
+      *packet= packet_buffer.c_str();
       is_dead= true;
 
       return true;
     }
 
-    *packet_length= 0;
+    packet_length= 0;
     return false;
   }
 
@@ -115,30 +113,29 @@ public:
 
   void pushSQL(const std::string &arg)
   {
-    Bytes byte;
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
     std::vector<std::string> parsed_tokens= context->start();
-    
+
     {
-      byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], "START TRANSACTION", sizeof("START TRANSACTION") -1);
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(drizzle_literal_parameter("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
     
     for (vector<string>::iterator iter= parsed_tokens.begin(); iter != parsed_tokens.end(); ++iter)
     {
-      byte.resize(iter->length() +1); // +1 for the COM_QUERY
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], iter->c_str(), iter->size());
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(iter->c_str(), iter->size());
       to_execute.push(byte);
     }
 
     {
-      byte.resize(sizeof("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], "COMMIT", sizeof("COMMIT") -1);
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(drizzle_literal_parameter("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
   }

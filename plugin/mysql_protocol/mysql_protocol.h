@@ -111,7 +111,7 @@ public:
   virtual void close(void);
 
   virtual bool authenticate(void);
-  virtual bool readCommand(char **packet, uint32_t *packet_length);
+  virtual bool readCommand(char **packet, uint32_t& packet_length);
 
   virtual void sendOK(void);
   virtual void sendEOF(void);

@@ -215,7 +215,7 @@ bool ClientMySQLProtocol::authenticate()
   return true;
 }
 
-bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
+bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -232,8 +232,8 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 
   net.pkt_nr=0;
 
-  *packet_length= drizzleclient_net_read(&net);
-  if (*packet_length == packet_error)
+  packet_length= drizzleclient_net_read(&net);
+  if (packet_length == packet_error)
   {
     /* Check if we can continue without closing the connection */
 
@@ -261,11 +261,11 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
     it sets packet[packet_length]= 0, but only for non-zero packets.
   */
 
-  if (*packet_length == 0)                       /* safety */
+  if (packet_length == 0)                       /* safety */
   {
     /* Initialize with COM_SLEEP packet */
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
-    *packet_length= 1;
+    packet_length= 1;
   }
   else if (_using_mysql41_protocol)
   {
@@ -294,13 +294,13 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
     default:
       /* Respond with unknown command for MySQL commands we don't support. */
       (*l_packet)[0]= (unsigned char) COM_END;
-      *packet_length= 1;
+      packet_length= 1;
       break;
     }
   }
 
   /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
-  (*l_packet)[*packet_length]= '\0';                  /* safety */
+  (*l_packet)[packet_length]= '\0';                  /* safety */
 
 #ifdef NEVER
   /* See comment above. */
