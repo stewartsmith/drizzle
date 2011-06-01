@@ -339,14 +339,19 @@ class serverManager:
         datadir_requests = []
 
         for index,server in enumerate(current_servers):
-           
             desired_server_options = server_requirements[index]
             # We add in any user-supplied options here
             desired_server_options = desired_server_options + self.user_server_opts
 
+            # We handle a reset in case we need it:
+            if server.need_reset:
+                self.reset_server(server)
+                server.need_reset = False
+
             # Do our checking for config-specific madness we need to do
             if config_reader and config_reader.has_section(server.name):
                 # mark server for restart in case it hasn't yet
+                # this method is a bit hackish - need better method later
                 if '--restart' not in desired_server_options:
                     desired_server_options.append('--restart')
                 # We handle various scenarios
@@ -409,6 +414,9 @@ class serverManager:
             source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
             self.system_manager.remove_dir(server.datadir)
             self.system_manager.copy_dir(source_dir_path, server.datadir)
+            # We need to signal that the server will need to be reset as we're
+            # using a non-standard datadir
+            server.need_reset = True
 
 
     def process_server_count(self, requester, desired_count, workdir, server_reqs):

@@ -78,6 +78,7 @@ class Server(object):
         self.failed_test = 0 # was the last test a failure?  our state is suspect
         self.server_start_timeout = 60 * self.valgrind_time_buffer
         self.pid = None
+        self.need_reset = False
 
     def initialize_databases(self):
         """ Call schemawriter to make db.opt files """
