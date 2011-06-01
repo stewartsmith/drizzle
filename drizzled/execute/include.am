@@ -40,7 +40,12 @@ drizzled_drizzled_SOURCES+= \
 EXTRA_DIST+= \
       drizzled/execute/parser.yy\
       drizzled/execute/scanner.l
-      
+
+BUILT_SOURCES+= \
+      drizzled/execute/scanner.cc\
+      drizzled/execute/parser.h\
+      drizzled/execute/parser.cc
+           
 drizzled/execute/parser.h: drizzled/execute/parser.cc
 
 drizzled/execute/parser.cc: drizzled/execute/parser.yy drizzled/execute/scanner.l drizzled/execute/scanner.h
