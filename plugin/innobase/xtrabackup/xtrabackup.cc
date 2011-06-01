@@ -3583,7 +3583,7 @@ xtrabackup_init_temp_log(void)
 	IB_INT64	file_size;
 
 	LSN64	max_no;
-	LSN64	max_lsn= -1;
+	LSN64	max_lsn= 0;
 	LSN64	checkpoint_no;
 
 	ulint	fold;
