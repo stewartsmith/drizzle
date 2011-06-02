@@ -154,8 +154,6 @@ typedef Function drizzle_compentry_func_t;
 #include <boost/scoped_ptr.hpp>
 #include <drizzled/program_options/config_file.h>
 
-#include "user_detect.h"
-
 using namespace std;
 namespace po=boost::program_options;
 namespace dpo=drizzled::program_options;
@@ -1476,8 +1474,7 @@ try
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
 #ifndef DRIZZLE_ADMIN_TOOL
-  UserDetect *detected_user= new UserDetect();
-  const char* shell_user= detected_user->getUser();
+  const char* unix_user= getlogin();
 #endif
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
@@ -1490,7 +1487,7 @@ try
 #ifdef DRIZZLE_ADMIN_TOOL
   ("user,u", po::value<string>(&current_user)->default_value("root"),
 #else
-  ("user,u", po::value<string>(&current_user)->default_value(shell_user ? shell_user : ""),
+  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
 #endif
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
