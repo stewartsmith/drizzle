@@ -49,7 +49,7 @@ struct option
   int        id;                        /* unique id or short option */
   const char *comment;                  /* option comment, for autom. --help */
   char      **value;                   /* The variable value */
-  char      **u_max_value;             /* The user def. max variable value */
+  char      **u_max_value_unused;             /* The user def. max variable value */
   TYPELIB *typelib;           /* Pointer to possible values */
   uint32_t     var_type;
   enum get_opt_arg_type arg_type;

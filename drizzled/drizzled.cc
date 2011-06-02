@@ -378,8 +378,7 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
-namespace
-{
+namespace {
 
 std::string &getGlobHostname()
 {
@@ -472,7 +471,6 @@ void close_connections(void)
 
 void unireg_abort(int exit_code)
 {
-
   if (exit_code)
   {
     errmsg_printf(error::ERROR, _("Aborting"));
@@ -482,7 +480,7 @@ void unireg_abort(int exit_code)
     usage();
   }
 
-  clean_up(!opt_help && (exit_code));
+  clean_up(!opt_help && exit_code);
   internal::my_end();
   exit(exit_code);
 }
