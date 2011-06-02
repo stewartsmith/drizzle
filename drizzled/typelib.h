@@ -35,13 +35,12 @@ public:
   TYPELIB* copy_typelib(memory::Root&) const;
   int find_type_or_exit(const char*, const char* option) const;
   int find_type(const char*, e_find_options) const;
-  int find_type(char*, e_find_options) const;
   const char *get_type(unsigned int nr) const;
 
-  uint64_t find_set(const char *x, uint32_t length, const charset_info_st *cs,
+  uint64_t find_set(const char *x, uint32_t length, const charset_info_st*,
                     char **err_pos, uint32_t *err_len, bool *set_warning) const;
   uint32_t find_type(const char *find, uint32_t length, bool part_match) const;
-  uint32_t find_type2(const char *find, uint32_t length, const charset_info_st *cs) const;
+  uint32_t find_type2(const char *find, uint32_t length, const charset_info_st*) const;
 
   unsigned int count;
   const char *name;
