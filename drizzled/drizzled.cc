@@ -160,8 +160,7 @@ namespace dpo=drizzled::program_options;
 
 bool opt_daemon= false;
 
-namespace drizzled
-{
+namespace drizzled {
 
 inline void setup_fpu()
 {
@@ -201,12 +200,9 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 
 #define GET_HA_ROWS GET_ULL
 
-const char *tx_isolation_names[] =
-{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NULL};
+const char *tx_isolation_names[] = {"READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE", NULL};
 
-TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-                               tx_isolation_names, NULL};
+TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names) - 1, "", tx_isolation_names, NULL};
 
 /*
   Used with --help for detailed option
@@ -588,7 +584,7 @@ err:
 void set_user(const char *user, passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-  initgroups((char*) user, user_info_arg->pw_gid);
+  initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror(_("Set process group ID failed"));
@@ -2211,7 +2207,7 @@ static void get_options()
   /* @TODO Make this all strings */
   if (vm.count("default-storage-engine"))
   {
-    default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
+    default_storage_engine_str= vm["default-storage-engine"].as<string>().c_str();
   }
 
   /* Skip unknown options so that they may be processed later by plugins */

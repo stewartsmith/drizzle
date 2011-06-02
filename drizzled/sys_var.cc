@@ -1387,22 +1387,21 @@ static unsigned char *get_tmpdir(Session *)
     ptr		pointer to option structure
 */
 
-static struct option *find_option(struct option *opt, const char *name)
+static option* find_option(struct option *opt, const char *name)
 {
-  uint32_t length=strlen(name);
+  uint32_t length= strlen(name);
   for (; opt->name; opt++)
   {
-    if (!getopt_compare_strings(opt->name, name, length) &&
-	!opt->name[length])
+    if (!getopt_compare_strings(opt->name, name, length) && !opt->name[length])
     {
       /*
-	Only accept the option if one can set values through it.
-	If not, there is no default value or limits in the option.
+      Only accept the option if one can set values through it.
+      If not, there is no default value or limits in the option.
       */
-      return (opt->value) ? opt : 0;
+      return opt->value ? opt : NULL;
     }
   }
-  return 0;
+  return NULL;
 }
 
 
