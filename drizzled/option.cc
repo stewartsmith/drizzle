@@ -35,29 +35,12 @@ using namespace std;
 
 namespace drizzled {
 
-  typedef void (*init_func_p)(const struct option *option, char **variable,
-      int64_t value);
+  typedef void (*init_func_p)(const struct option *option, char **variable, int64_t value);
 
   void default_reporter(enum loglevel level, const char *format, ...);
   my_error_reporter my_getopt_error_reporter= &default_reporter;
 
-  /*
-     The following three variables belong to same group and the number and
-     order of their arguments must correspond to each other.
-   */
-  static const uint32_t special_opt_prefix_lengths[]=
-  { 4,      7,         6,        7,         5,      0};
-  enum enum_special_opt
-  { OPT_SKIP, OPT_DISABLE, OPT_ENABLE, OPT_MAXIMUM, OPT_LOOSE};
-
-  char *disabled_my_option= (char*) "0";
-
-  /*
-     This is a flag that can be set in client programs. 1 means that
-     my_getopt will skip over options it does not know how to handle.
-   */
-
-  bool my_getopt_skip_unknown= 0;
+  bool my_getopt_skip_unknown= false;
 
   void default_reporter(enum loglevel level, const char *format, ...)
   {
@@ -105,7 +88,7 @@ Returns "fixed" value.
     int64_t old= num;
     bool adjusted= false;
     char buf1[255], buf2[255];
-    uint64_t block_size= (optp->block_size ? (uint64_t) optp->block_size : 1L);
+    uint64_t block_size= optp->block_size ? optp->block_size : 1;
 
     if (num > 0 && ((uint64_t) num > (uint64_t) optp->max_value) &&
         optp->max_value) /* if max value is not set -> no upper limit */
@@ -173,39 +156,38 @@ values.
       adjusted= true;
     }
 
-    switch ((optp->var_type & GET_TYPE_MASK)) {
+    switch (optp->var_type & GET_TYPE_MASK)
+    {
       case GET_UINT:
-        if (num > (uint64_t) UINT_MAX)
+        if (num > UINT_MAX)
         {
-          num= ((uint64_t) UINT_MAX);
+          num= UINT_MAX;
           adjusted= true;
         }
         break;
       case GET_UINT32:
       case GET_ULONG_IS_FAIL:
-        if (num > (uint64_t) UINT32_MAX)
+        if (num > UINT32_MAX)
         {
-          num= ((uint64_t) UINT32_MAX);
+          num= UINT32_MAX;
           adjusted= true;
         }
         break;
       case GET_SIZE:
-        if (num > (uint64_t) SIZE_MAX)
+        if (num > SIZE_MAX)
         {
-          num= ((uint64_t) SIZE_MAX);
+          num= SIZE_MAX;
           adjusted= true;
         }
         break;
       default:
-        assert(((optp->var_type & GET_TYPE_MASK) == GET_ULL)
-            || ((optp->var_type & GET_TYPE_MASK) == GET_UINT64));
-        break;
+        assert((optp->var_type & GET_TYPE_MASK) == GET_ULL || (optp->var_type & GET_TYPE_MASK) == GET_UINT64);
     }
 
     if (optp->block_size > 1)
     {
-      num/= (uint64_t) optp->block_size;
-      num*= (uint64_t) optp->block_size;
+      num/= optp->block_size;
+      num*= optp->block_size;
     }
 
     if (num < (uint64_t) optp->min_value)
@@ -217,8 +199,7 @@ values.
     if (fix)
       *fix= adjusted;
     else if (adjusted)
-      my_getopt_error_reporter(WARNING_LEVEL,
-          "option '%s': unsigned value %s adjusted to %s",
+      my_getopt_error_reporter(WARNING_LEVEL, "option '%s': unsigned value %s adjusted to %s",
           optp->name, internal::ullstr(old, buf1), internal::ullstr(num, buf2));
 
     return num;
