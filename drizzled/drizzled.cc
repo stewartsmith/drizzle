@@ -224,21 +224,21 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 static bool opt_debugging= false;
 static uint32_t wake_thread;
-static char *drizzled_chroot;
+static const char *drizzled_chroot;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
-static char *lc_time_names_name;
-static char *default_collation_name;
-static char *default_storage_engine_str;
+static const char *lc_time_names_name;
+static const char *default_collation_name;
+static const char *default_storage_engine_str;
 static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-char *drizzled_user;
+const char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 DRIZZLED_API bool volatile shutdown_in_progress;
-char *opt_scheduler_default;
+const char *opt_scheduler_default;
 const char *opt_scheduler= NULL;
 
 DRIZZLED_API size_t my_thread_stack_size= 0;
