@@ -41,11 +41,11 @@ SELECT SLEEP(0.5);
 # only 1 event, i.e. that the sleep(0.4) really wasn't logged.
 # The extra sed line here accounts for the query ids becoming double-digit
 # when the whole test suite is ran; it's single when only this test file is run.
---system sed -i '' 's/[0-9]/0/g' $DRIZZLETEST_VARDIR/query.log
---system sed -i '' 's/query_id=00/query_id=0/g' $DRIZZLETEST_VARDIR/query.log
+--system sed -e 's/[0-9]/0/g' -i.bak $DRIZZLETEST_VARDIR/query.log
+--system sed -e 's/query_id=00/query_id=0/g' -i.bak $DRIZZLETEST_VARDIR/query.log
 --cat_file $DRIZZLETEST_VARDIR/query.log
 
-# query_log doesn't like when sed modifies the log file in-place (-i).
+# query_log doesn't like when sed modifies the log file in-place (-i.bak).
 # Unless we re-open the log file, no more queries will be logged.
 SET GLOBAL query_log_file_enabled=FALSE;
 SET GLOBAL query_log_file_enabled=TRUE;
@@ -56,7 +56,7 @@ SELECT @@query_log_threshold_execution_time;
 --exec echo "" > $DRIZZLETEST_VARDIR/query.log
 SELECT 'one';
 --exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log arg equals "SELECT 'one';"
---system sed -i '' 's/[0-9]/0/g' $DRIZZLETEST_VARDIR/query.log
+--system sed -e 's/[0-9]/0/g' -i.bak $DRIZZLETEST_VARDIR/query.log
 --cat_file $DRIZZLETEST_VARDIR/query.log
 
 # ###########################################################################
