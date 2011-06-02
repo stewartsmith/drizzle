@@ -35,14 +35,7 @@ using namespace std;
 
 namespace drizzled {
 
-  typedef void (*init_func_p)(const struct option *option, char **variable, int64_t value);
-
-  void default_reporter(enum loglevel level, const char *format, ...);
-  my_error_reporter my_getopt_error_reporter= &default_reporter;
-
-  bool my_getopt_skip_unknown= false;
-
-  void default_reporter(enum loglevel level, const char *format, ...)
+  static void default_reporter(enum loglevel level, const char *format, ...)
   {
     va_list args;
     va_start(args, format);
@@ -82,22 +75,21 @@ Applies min/max/block_size to a numeric value of an option.
 Returns "fixed" value.
    */
 
-  int64_t getopt_ll_limit_value(int64_t num, const struct option *optp,
-      bool *fix)
+  int64_t getopt_ll_limit_value(int64_t num, const option& optp, bool *fix)
   {
     int64_t old= num;
     bool adjusted= false;
     char buf1[255], buf2[255];
-    uint64_t block_size= optp->block_size ? optp->block_size : 1;
+    uint64_t block_size= optp.block_size ? optp.block_size : 1;
 
-    if (num > 0 && ((uint64_t) num > (uint64_t) optp->max_value) &&
-        optp->max_value) /* if max value is not set -> no upper limit */
+    if (num > 0 && ((uint64_t) num > (uint64_t) optp.max_value) &&
+        optp.max_value) /* if max value is not set -> no upper limit */
     {
-      num= (uint64_t) optp->max_value;
+      num= (uint64_t) optp.max_value;
       adjusted= true;
     }
 
-    switch ((optp->var_type & GET_TYPE_MASK)) {
+    switch ((optp.var_type & GET_TYPE_MASK)) {
       case GET_INT:
         if (num > (int64_t) INT_MAX)
         {
@@ -113,25 +105,25 @@ Returns "fixed" value.
         }
         break;
       default:
-        assert((optp->var_type & GET_TYPE_MASK) == GET_LL);
+        assert((optp.var_type & GET_TYPE_MASK) == GET_LL);
         break;
     }
 
-    num= ((num - optp->sub_size) / block_size);
+    num= ((num - optp.sub_size) / block_size);
     num= (int64_t) (num * block_size);
 
-    if (num < optp->min_value)
+    if (num < optp.min_value)
     {
-      num= optp->min_value;
+      num= optp.min_value;
       adjusted= true;
     }
 
     if (fix)
       *fix= adjusted;
     else if (adjusted)
-      my_getopt_error_reporter(WARNING_LEVEL,
+      default_reporter(WARNING_LEVEL,
           "option '%s': signed value %s adjusted to %s",
-          optp->name, internal::llstr(old, buf1), internal::llstr(num, buf2));
+          optp.name, internal::llstr(old, buf1), internal::llstr(num, buf2));
     return num;
   }
 
@@ -142,21 +134,20 @@ This is the same as getopt_ll, but is meant for uint64_t
 values.
    */
 
-  uint64_t getopt_ull_limit_value(uint64_t num, const struct option *optp,
-      bool *fix)
+  uint64_t getopt_ull_limit_value(uint64_t num, const option& optp, bool *fix)
   {
     bool adjusted= false;
     uint64_t old= num;
     char buf1[255], buf2[255];
 
-    if ((uint64_t) num > (uint64_t) optp->max_value &&
-        optp->max_value) /* if max value is not set -> no upper limit */
+    if ((uint64_t) num > (uint64_t) optp.max_value &&
+        optp.max_value) /* if max value is not set -> no upper limit */
     {
-      num= (uint64_t) optp->max_value;
+      num= (uint64_t) optp.max_value;
       adjusted= true;
     }
 
-    switch (optp->var_type & GET_TYPE_MASK)
+    switch (optp.var_type & GET_TYPE_MASK)
     {
       case GET_UINT:
         if (num > UINT_MAX)
@@ -181,26 +172,26 @@ values.
         }
         break;
       default:
-        assert((optp->var_type & GET_TYPE_MASK) == GET_ULL || (optp->var_type & GET_TYPE_MASK) == GET_UINT64);
+        assert((optp.var_type & GET_TYPE_MASK) == GET_ULL || (optp.var_type & GET_TYPE_MASK) == GET_UINT64);
     }
 
-    if (optp->block_size > 1)
+    if (optp.block_size > 1)
     {
-      num/= optp->block_size;
-      num*= optp->block_size;
+      num/= optp.block_size;
+      num*= optp.block_size;
     }
 
-    if (num < (uint64_t) optp->min_value)
+    if (num < (uint64_t) optp.min_value)
     {
-      num= (uint64_t) optp->min_value;
+      num= (uint64_t) optp.min_value;
       adjusted= true;
     }
 
     if (fix)
       *fix= adjusted;
     else if (adjusted)
-      my_getopt_error_reporter(WARNING_LEVEL, "option '%s': unsigned value %s adjusted to %s",
-          optp->name, internal::ullstr(old, buf1), internal::ullstr(num, buf2));
+      default_reporter(WARNING_LEVEL, "option '%s': unsigned value %s adjusted to %s",
+          optp.name, internal::ullstr(old, buf1), internal::ullstr(num, buf2));
 
     return num;
   }
@@ -212,7 +203,7 @@ function: my_print_options
 Print help for all options and variables.
    */
 
-  void my_print_help(const struct option *options)
+  void my_print_help(const option* options)
   {
     uint32_t col, name_space= 22, comment_space= 57;
     const char *line_end;

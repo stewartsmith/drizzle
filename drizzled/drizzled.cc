@@ -2208,9 +2208,6 @@ static void get_options()
     default_storage_engine_str= vm["default-storage-engine"].as<string>().c_str();
   }
 
-  /* Skip unknown options so that they may be processed later by plugins */
-  my_getopt_skip_unknown= true;
-
 
 #if defined(HAVE_BROKEN_REALPATH)
   internal::my_use_symdir=0;

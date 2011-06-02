@@ -67,7 +67,7 @@ extern bool opt_readonly;
 extern const char *opt_scheduler;
 extern size_t transaction_message_threshold;
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
+uint64_t fix_unsigned(Session*, uint64_t, const option&);
 
 DRIZZLED_API const std::string &getServerHostname();
 int sys_var_init();

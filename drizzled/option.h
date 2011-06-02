@@ -66,18 +66,13 @@ typedef int (* my_get_one_option) (int, const struct option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct option *);
 
-extern bool my_getopt_skip_unknown;
-
-extern int handle_options (int *argc, char ***argv,
-			   const struct option *longopts, my_get_one_option);
+extern int handle_options (int *argc, char ***argv, const option*, my_get_one_option);
 extern void my_cleanup_options(const struct option *options);
 extern void my_print_help(const struct option *options);
 extern void my_print_variables(const struct option *options);
 
-uint64_t getopt_ull_limit_value(uint64_t num, const struct option *optp,
-                                 bool *fix);
-int64_t getopt_ll_limit_value(int64_t, const struct option *,
-                               bool *fix);
+uint64_t getopt_ull_limit_value(uint64_t num, const option&, bool* fix);
+int64_t getopt_ll_limit_value(int64_t, const option&, bool* fix);
 bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 } /* namespace drizzled */

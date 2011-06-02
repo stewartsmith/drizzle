@@ -114,8 +114,7 @@ static void fix_completion_type(Session *session, sql_var_t type);
 static void fix_max_join_size(Session *session, sql_var_t type);
 static void fix_session_mem_root(Session *session, sql_var_t type);
 static void fix_server_id(Session *session, sql_var_t type);
-bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const std::string &name, int64_t val);
+void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val);
 static unsigned char *get_error_count(Session *session);
 static unsigned char *get_warning_count(Session *session);
 static unsigned char *get_tmpdir(Session *session);
@@ -437,43 +436,37 @@ static void fix_server_id(Session *, sql_var_t)
 }
 
 
-bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const std::string &name, int64_t val)
+void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val)
 {
-  if (fixed)
-  {
-    char buf[DECIMAL_LONGLONG_DIGITS];
+  if (not fixed)
+    return;
+  char buf[DECIMAL_LONGLONG_DIGITS];
 
-    if (unsignd)
-      internal::ullstr((uint64_t) val, buf);
-    else
-      internal::llstr(val, buf);
+  if (unsignd)
+    internal::ullstr((uint64_t) val, buf);
+  else
+    internal::llstr(val, buf);
 
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                        ER_TRUNCATED_WRONG_VALUE,
-                        ER(ER_TRUNCATED_WRONG_VALUE), name.c_str(), buf);
-  }
-  return false;
+  push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    ER_TRUNCATED_WRONG_VALUE, ER(ER_TRUNCATED_WRONG_VALUE), name.c_str(), buf);
 }
 
-uint64_t fix_unsigned(Session *session, uint64_t num,
-                              const struct option *option_limits)
+uint64_t fix_unsigned(Session *session, uint64_t num, const option& option_limits)
 {
   bool fixed= false;
   uint64_t out= getopt_ull_limit_value(num, option_limits, &fixed);
 
-  throw_bounds_warning(session, fixed, true, option_limits->name, (int64_t) num);
+  throw_bounds_warning(session, fixed, true, option_limits.name, (int64_t) num);
   return out;
 }
 
 
-static size_t fix_size_t(Session *session, size_t num,
-                           const struct option *option_limits)
+static size_t fix_size_t(Session *session, size_t num, const option& option_limits)
 {
   bool fixed= false;
   size_t out= (size_t)getopt_ull_limit_value(num, option_limits, &fixed);
 
-  throw_bounds_warning(session, fixed, true, option_limits->name, (int64_t) num);
+  throw_bounds_warning(session, fixed, true, option_limits.name, (int64_t) num);
   return out;
 }
 
@@ -490,8 +483,8 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 
   if (option_limits)
   {
-    uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, option_limits);
-    if(static_cast<uint64_t>(newvalue) == tmp)
+    uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, *option_limits);
+    if (static_cast<uint64_t>(newvalue) == tmp)
       *value= newvalue;
   }
   else
@@ -507,8 +500,7 @@ void sys_var_uint32_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
   boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-  *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value,
-                                           option_limits, &not_used);
+  *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value, *option_limits, &not_used);
 }
 
 
@@ -519,8 +511,8 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 
   if (option_limits)
   {
-    uint64_t newvalue= fix_unsigned(session, tmp, option_limits);
-    if(newvalue==tmp)
+    uint64_t newvalue= fix_unsigned(session, tmp, *option_limits);
+    if (newvalue==tmp)
       *value= newvalue;
   }
   else
@@ -542,8 +534,7 @@ void sys_var_uint64_t_ptr::set_default(Session *session, sql_var_t)
   {
     bool not_used;
     boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
-                                   option_limits, &not_used);
+    *value= getopt_ull_limit_value((uint64_t) option_limits->def_value, *option_limits, &not_used);
   }
 }
 
@@ -555,7 +546,7 @@ bool sys_var_size_t_ptr::update(Session *session, set_var *var)
   boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
 
   if (option_limits)
-    *value= fix_size_t(session, tmp, option_limits);
+    *value= fix_size_t(session, tmp, *option_limits);
   else
     *value= tmp;
 
@@ -567,8 +558,7 @@ void sys_var_size_t_ptr::set_default(Session *session, sql_var_t)
 {
   bool not_used;
   boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-  *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
-                                         option_limits, &not_used);
+  *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value, *option_limits, &not_used);
 }
 
 bool sys_var_bool_ptr::check(Session *session, set_var *var)
@@ -610,7 +600,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
   }
 
   if (option_limits)
-    tmp= (uint32_t) fix_unsigned(session, tmp, option_limits);
+    tmp= (uint32_t) fix_unsigned(session, tmp, *option_limits);
   else if (tmp > UINT32_MAX)
   {
     tmp= UINT32_MAX;
@@ -633,8 +623,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
      bool not_used;
      /* We will not come here if option_limits is not set */
      global_system_variables.*offset=
-       (uint32_t) getopt_ull_limit_value((uint32_t) option_limits->def_value,
-                                      option_limits, &not_used);
+       (uint32_t) getopt_ull_limit_value((uint32_t) option_limits->def_value, *option_limits, &not_used);
    }
    else
      session->variables.*offset= global_system_variables.*offset;
@@ -660,7 +649,7 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
     tmp= max_system_variables.*offset;
 
   if (option_limits)
-    tmp= (ha_rows) fix_unsigned(session, tmp, option_limits);
+    tmp= (ha_rows) fix_unsigned(session, tmp, *option_limits);
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
@@ -684,8 +673,7 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
     /* We will not come here if option_limits is not set */
     boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
-      (ha_rows) getopt_ull_limit_value((ha_rows) option_limits->def_value,
-                                       option_limits, &not_used);
+      (ha_rows) getopt_ull_limit_value((ha_rows) option_limits->def_value, *option_limits, &not_used);
   }
   else
   {
@@ -720,7 +708,7 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   }
 
   if (option_limits)
-    tmp= fix_unsigned(session, tmp, option_limits);
+    tmp= fix_unsigned(session, tmp, *option_limits);
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
@@ -743,8 +731,7 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
     bool not_used;
     boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
-      getopt_ull_limit_value((uint64_t) option_limits->def_value,
-                             option_limits, &not_used);
+      getopt_ull_limit_value((uint64_t) option_limits->def_value, *option_limits, &not_used);
   }
   else
   {
@@ -776,7 +763,7 @@ bool sys_var_session_size_t::update(Session *session,  set_var *var)
     tmp= max_system_variables.*offset;
 
   if (option_limits)
-    tmp= fix_size_t(session, tmp, option_limits);
+    tmp= fix_size_t(session, tmp, *option_limits);
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
@@ -799,8 +786,7 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
     bool not_used;
     boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
     global_system_variables.*offset=
-      (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
-                                     option_limits, &not_used);
+      (size_t)getopt_ull_limit_value((size_t) option_limits->def_value, *option_limits, &not_used);
   }
   else
   {
