@@ -20,8 +20,8 @@
 #pragma once
 
 #include <drizzled/plugin/event_observer.h>
-#include "file.h";
-#include "event.h";
+#include "file.h"
+#include "event.h"
 
 namespace drizzled
 {
