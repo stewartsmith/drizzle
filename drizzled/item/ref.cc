@@ -389,7 +389,10 @@ void Item_ref::print(String *str)
 bool Item_ref::send(plugin::Client *client, String *tmp)
 {
   if (result_field)
-    return client->store(result_field);
+  {
+    client->store(result_field);
+    return false; // return void
+  }
   return (*ref)->send(client, tmp);
 }
 

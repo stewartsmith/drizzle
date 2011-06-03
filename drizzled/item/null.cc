@@ -112,7 +112,8 @@ int Item_null::save_safe_in_field(Field *field)
 
 bool Item_null::send(plugin::Client *client, String *)
 {
-  return client->store();
+  client->store();
+  return false; // return void
 }
 
 } /* namespace drizzled */

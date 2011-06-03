@@ -317,7 +317,8 @@ bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
   {
     check(1);
     update();
-    return client->store(result_field);
+    client->store(result_field);
+    return false;
   }
   return Item::send(client, str_arg);
 }

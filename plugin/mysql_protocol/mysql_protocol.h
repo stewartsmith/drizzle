@@ -120,14 +120,14 @@ public:
   virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 
   using Client::store;
-  virtual bool store(drizzled::Field *from);
-  virtual bool store(void);
-  virtual bool store(int32_t from);
-  virtual bool store(uint32_t from);
-  virtual bool store(int64_t from);
-  virtual bool store(uint64_t from);
-  virtual bool store(double from, uint32_t decimals, drizzled::String *buffer);
-  virtual bool store(const char *from, size_t length);
+  virtual void store(drizzled::Field *from);
+  virtual void store();
+  virtual void store(int32_t from);
+  virtual void store(uint32_t from);
+  virtual void store(int64_t from);
+  virtual void store(uint64_t from);
+  virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
+  virtual void store(const char *from, size_t length);
 
   virtual bool haveError(void);
   virtual bool haveMoreData(void);

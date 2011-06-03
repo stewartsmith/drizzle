@@ -137,19 +137,19 @@ public:
   virtual bool sendFields(List<Item> *list)= 0;
 
   /* Send result fields in various forms. */
-  virtual bool store(Field *from)= 0;
-  virtual bool store(void)= 0;
-  virtual bool store(int32_t from)= 0;
-  virtual bool store(uint32_t from)= 0;
-  virtual bool store(int64_t from)= 0;
-  virtual bool store(uint64_t from)= 0;
-  virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
-  virtual bool store(const type::Time *from);
-  virtual bool store(const char *from);
-  virtual bool store(const char *from, size_t length)= 0;
-  virtual bool store(const std::string &from)
+  virtual void store(Field *from)= 0;
+  virtual void store()= 0;
+  virtual void store(int32_t from)= 0;
+  virtual void store(uint32_t from)= 0;
+  virtual void store(int64_t from)= 0;
+  virtual void store(uint64_t from)= 0;
+  virtual void store(double from, uint32_t decimals, String *buffer)= 0;
+  virtual void store(const type::Time *from);
+  virtual void store(const char *from);
+  virtual void store(const char *from, size_t length)= 0;
+  virtual void store(const std::string &from)
   {
-    return store(from.c_str(), from.size());
+    store(from.c_str(), from.size());
   }
 
   /* Try to remove these. */
