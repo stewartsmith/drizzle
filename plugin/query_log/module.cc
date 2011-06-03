@@ -33,6 +33,17 @@ using namespace drizzled;
 
 namespace drizzle_plugin
 {
+/**
+ * Forward declarations.
+ * Mac OS X 10.6 with gcc 4.2.1 misses this warning (but still compiles):
+ *   configure:23893: g++ -c -Werror -pedantic -Wmissing-declarations \
+ *     -std=gnu++98  -O0 -DDEBUG   conftest.cpp >&5
+ *   cc1plus: warnings being treated as errors
+ *   cc1plus: warning: command line option "-Wmissing-declarations" is valid
+ *     for C/ObjC but not for C++
+ */
+bool update_file(Session *, set_var *var);
+void update_file_enabled(Session *, sql_var_t);
 
 /**
  * An instance of our class, QueryLog, which implements the query_log plugin,
