@@ -22,8 +22,7 @@
 #include <drizzled/charset.h>
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_null :public Item_basic_constant
 {
@@ -45,7 +44,7 @@ public:
   type::Decimal *val_decimal(type::Decimal *);
   int save_in_field(Field *field, bool no_conversions);
   int save_safe_in_field(Field *field);
-  bool send(plugin::Client *client, String *str);
+  void send(plugin::Client *client, String *str);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum_field_types field_type() const   { return DRIZZLE_TYPE_NULL; }
   bool basic_const_item() const { return 1; }

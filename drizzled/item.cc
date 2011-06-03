@@ -1353,12 +1353,10 @@ Item* Item::cache_const_expr_transformer(unsigned char *arg)
   return this;
 }
 
-bool Item::send(plugin::Client *client, String *buffer)
+void Item::send(plugin::Client *client, String *buffer)
 {
-  bool result= false;
-  enum_field_types f_type;
-
-  switch ((f_type=field_type())) {
+  switch (field_type())
+  {
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
@@ -1419,7 +1417,6 @@ bool Item::send(plugin::Client *client, String *buffer)
   }
   if (null_value)
     client->store();
-  return result; // return void
 }
 
 uint32_t Item::max_char_length() const
