@@ -336,9 +336,7 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
 uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
-  unsigned char *blob;
-
-  get_ptr(&blob);
+  unsigned char *blob= get_ptr();
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   local_char_length= my_charpos(field_charset, blob, blob + blob_length,
                           local_char_length);
@@ -358,13 +356,10 @@ uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
   return HA_KEY_BLOB_LENGTH+length;
 }
 
-
 uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
-  unsigned char *blob;
-
-  get_ptr(&blob);
+  unsigned char* blob= get_ptr();
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   local_char_length= my_charpos(field_charset, blob, blob + blob_length,
                                 local_char_length);
@@ -481,7 +476,7 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
    */
   if (length > 0)
   {
-    get_ptr((unsigned char**) &from);
+    from= get_ptr();
     memcpy(to+sizeof(uint32_t), from,length);
   }
 
@@ -530,7 +525,7 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
                            max_length/field_charset->mbmaxlen : max_length);
   if (length)
-    get_ptr((unsigned char**) &from);
+    from= get_ptr();
   if (length > local_char_length)
     local_char_length= my_charpos(field_charset, from, from+length,
                                   local_char_length);
