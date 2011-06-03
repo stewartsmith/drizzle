@@ -251,10 +251,26 @@ class serverManager:
             if self.verbose:
                 self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
             stop_cmd = server.get_stop_cmd()
-            retcode, output = self.system_manager.execute_cmd(stop_cmd)
-            if retcode:
+            #retcode, output = self.system_manager.execute_cmd(stop_cmd)
+            shutdown_subproc = subprocess.Popen( stop_cmd
+                                               , shell=True
+                                               )
+            shutdown_subproc.wait()
+            shutdown_retcode = shutdown_subproc.returncode
+            # We do some monitoring for the server PID and kill it
+            # if need be.  This is a bit of a band-aid for the 
+            # zombie-server bug on Natty : (  Need to find the cause.
+            attempts_remain = 3
+            while self.system_manager.find_pid(server.pid) and attempts_remain:
+                time.sleep(1)
+                attempts_remain = attempts_remain - 1
+                if not attempts_remain: # we kill the pid
+                    if self.verbose:
+                        self.logging.warning("Forcing kill of server pid: %s" %(server.pid))
+                        self.system_manager.kill_pid(server.pid)
+            if shutdown_retcode:
                 self.logging.error("Problem shutting down server:")
-                self.logging.error("%s : %s" %(retcode, output))
+                self.logging.error("%s : %s" %(shutdown_retcode))
             else:
                 server.status = 0 # indicate we are shutdown
         else:
