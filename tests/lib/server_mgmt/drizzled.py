@@ -167,7 +167,7 @@ class drizzleServer(Server):
     def get_stop_cmd(self):
         """ Return the command that will shut us down """
         
-        return "%s --user=root --port=%d --shutdown " %(self.drizzle_client_path, self.master_port)
+        return "%s --user=root --port=%d --connect-timeout=5 --silent --password= --shutdown " %(self.drizzle_client_path, self.master_port)
            
 
     def get_ping_cmd(self):
