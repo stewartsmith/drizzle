@@ -47,10 +47,12 @@
 
 using namespace drizzled;
 
+#ifndef __INTEL_COMPILER
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
+#endif
 
 #define YY_EXTRA_TYPE ::drizzled::execute::Context*
 

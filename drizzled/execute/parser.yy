@@ -62,7 +62,9 @@
 #include <drizzled/execute/context.h>
 #include <vector>
 
+#ifndef __INTEL_COMPILER
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
 
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
