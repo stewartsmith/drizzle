@@ -895,21 +895,20 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   return lex_str;
 }
 
-int Session::send_explain_fields(select_result *result)
+void Session::send_explain_fields(select_result *result)
 {
   List<Item> field_list;
   Item *item;
-  const charset_info_st * const cs= system_charset_info;
+  const charset_info_st* cs= system_charset_info;
   field_list.push_back(new Item_return_int("id",3, DRIZZLE_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("select_type", 19, cs));
   field_list.push_back(item= new Item_empty_string("table", NAME_CHAR_LEN, cs));
   item->maybe_null= 1;
   field_list.push_back(item= new Item_empty_string("type", 10, cs));
   item->maybe_null= 1;
-  field_list.push_back(item=new Item_empty_string("possible_keys",
-						  NAME_CHAR_LEN*MAX_KEY, cs));
+  field_list.push_back(item= new Item_empty_string("possible_keys", NAME_CHAR_LEN*MAX_KEY, cs));
   item->maybe_null=1;
-  field_list.push_back(item=new Item_empty_string("key", NAME_CHAR_LEN, cs));
+  field_list.push_back(item= new Item_empty_string("key", NAME_CHAR_LEN, cs));
   item->maybe_null=1;
   field_list.push_back(item=
     new Item_empty_string("key_len",
@@ -931,7 +930,6 @@ int Session::send_explain_fields(select_result *result)
   item->maybe_null= 1;
   field_list.push_back(new Item_empty_string("Extra", 255, cs));
   result->send_fields(field_list);
-  return false; // return void
 }
 
 void select_result::send_error(drizzled::error_t errcode, const char *err)
