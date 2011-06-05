@@ -29,15 +29,9 @@
 
 namespace drizzled {
 
-class select_send :public select_result {
-  /**
-    True if we have sent result set metadata to the client.
-    In this case the client always expects us to end the result
-    set with an eof or error packet
-  */
-  bool is_result_set_started;
+class select_send : public select_result 
+{
 public:
-  select_send() : is_result_set_started(false) {}
   bool send_eof()
   {
     /*
@@ -54,36 +48,18 @@ public:
       session->open_tables.lock= 0;
     }
     session->my_eof();
-    is_result_set_started= 0;
     return false;
   }
 
   bool send_fields(List<Item>& list)
   {
     session->getClient()->sendFields(list);
-    is_result_set_started= 1;
     return false; // return void
-  }
-
-  void abort()
-  {
-  }
-
-
-  /**
-    Cleanup an instance of this class for re-use
-    at next execution of a prepared statement/
-    stored procedure statement.
-  */
-
-  virtual void cleanup()
-  {
-    is_result_set_started= false;
   }
 
   /* Send data to client. Returns 0 if ok */
 
-  bool send_data(List<Item> &items)
+  bool send_data(List<Item>& items)
   {
     if (unit->offset_limit_cnt)
     {						// using limit offset,count
