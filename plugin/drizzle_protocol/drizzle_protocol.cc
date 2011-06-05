@@ -50,7 +50,7 @@ static buffer_constraint buffer_length;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 
-ProtocolCounters *ListenDrizzleProtocol::drizzle_counters= new ProtocolCounters();
+ProtocolCounters ListenDrizzleProtocol::drizzle_counters;
 
 in_port_t ListenDrizzleProtocol::getPort(void) const
 {
@@ -90,7 +90,7 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("retry_count", retry_count));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("buffer_length", buffer_length));
   context.registerVariable(new sys_var_const_string_val("bind_address", vm["bind-address"].as<std::string>()));
-  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenDrizzleProtocol::drizzle_counters->max_connections));
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenDrizzleProtocol::drizzle_counters.max_connections));
 
   return 0;
 }
@@ -120,7 +120,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<std::string>()->default_value("localhost"),
           N_("Address to bind to."));
   context("max-connections",
-          po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters->max_connections)->default_value(1000),
+          po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters.max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
   context("admin-ip-addresses",
           po::value<vector<string> >()->composing()->notifier(&drizzle_compose_ip_addresses),

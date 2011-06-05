@@ -37,8 +37,8 @@ public:
   { }
 
   in_port_t getPort() const;
-  static ProtocolCounters *drizzle_counters;
-  virtual ProtocolCounters *getCounters() const { return drizzle_counters; }
+  static ProtocolCounters drizzle_counters;
+  virtual ProtocolCounters *getCounters() const { return &drizzle_counters; }
   drizzled::plugin::Client *getClient(int fd);
 };
 
