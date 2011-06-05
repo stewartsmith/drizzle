@@ -134,7 +134,7 @@ public:
   /**
    * Send field list for result set.
    */
-  virtual bool sendFields(List<Item> *list)= 0;
+  virtual void sendFields(List<Item>&)= 0;
 
   /* Send result fields in various forms. */
   virtual void store(Field *from)= 0;

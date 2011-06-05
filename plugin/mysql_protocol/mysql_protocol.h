@@ -28,20 +28,19 @@
 
 namespace drizzle_plugin {
 
-void compose_ip_addresses(std::vector<std::string> options);
-
 class ProtocolCounters
 {
-  public:
-    ProtocolCounters() :
+public:
+  ProtocolCounters() :
       max_connections(1000)
-    { }
-    drizzled::atomic<uint64_t> connectionCount;
-    drizzled::atomic<uint64_t> adminConnectionCount;
-    drizzled::atomic<uint64_t> failedConnections;
-    drizzled::atomic<uint64_t> connected;
-    drizzled::atomic<uint64_t> adminConnected;
-    uint32_t max_connections;
+  { }
+
+  drizzled::atomic<uint64_t> connectionCount;
+  drizzled::atomic<uint64_t> adminConnectionCount;
+  drizzled::atomic<uint64_t> failedConnections;
+  drizzled::atomic<uint64_t> connected;
+  drizzled::atomic<uint64_t> adminConnected;
+  uint32_t max_connections;
 };
 
 typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
@@ -116,7 +115,7 @@ public:
   virtual void sendEOF(void);
   virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
-  virtual bool sendFields(drizzled::List<drizzled::Item> *list);
+  virtual void sendFields(drizzled::List<drizzled::Item>&);
 
   using Client::store;
   virtual void store(drizzled::Field *from);

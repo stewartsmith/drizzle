@@ -137,8 +137,7 @@ bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)
     return false;
-  bool ret= drizzleclient_net_write(&net, (unsigned char*) packet.ptr(),
-                           packet.length());
+  bool ret= drizzleclient_net_write(&net, (unsigned char*) packet.ptr(), packet.length());
   packet.length(0);
   return ret;
 }
@@ -478,19 +477,17 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ClientMySQLProtocol::sendFields(List<Item> *list)
+void ClientMySQLProtocol::sendFields(List<Item>& list)
 {
-  List<Item>::iterator it(list->begin());
-  Item *item;
+  List<Item>::iterator it(list.begin());
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  unsigned char *row_pos= storeLength(buff, list->size());
+  unsigned char *row_pos= storeLength(buff, list.size());
   (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
 
-  while ((item=it++))
+  while (Item* item=it++)
   {
-    char *pos;
     SendField field;
     item->make_field(&field);
 
@@ -505,7 +502,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
     packet.realloc(packet.length()+12);
 
     /* Store fixed length fields */
-    pos= (char*) packet.ptr()+packet.length();
+    char* pos= (char*) packet.ptr()+packet.length();
     *pos++= 12;                // Length of packed fields
     /* No conversion */
     int2store(pos, field.charsetnr);
@@ -600,7 +597,6 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
     Send no warning information, as it will be sent at statement end.
   */
   writeEOFPacket(session->server_status, session->total_warn_count);
-  return 0; // return void
 }
 
 void ClientMySQLProtocol::store(Field *from)

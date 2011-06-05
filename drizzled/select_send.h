@@ -37,7 +37,7 @@ class select_send :public select_result {
   */
   bool is_result_set_started;
 public:
-  select_send() :is_result_set_started(false) {}
+  select_send() : is_result_set_started(false) {}
   bool send_eof()
   {
     /*
@@ -58,17 +58,15 @@ public:
     return false;
   }
 
-  bool send_fields(List<Item> &list)
+  bool send_fields(List<Item>& list)
   {
-    bool res;
-    if (! (res= session->getClient()->sendFields(&list)))
-      is_result_set_started= 1;
-    return res;
+    session->getClient()->sendFields(list);
+    is_result_set_started= 1;
+    return false; // return void
   }
 
   void abort()
   {
-    return;
   }
 
 
