@@ -930,7 +930,8 @@ int Session::send_explain_fields(select_result *result)
   }
   item->maybe_null= 1;
   field_list.push_back(new Item_empty_string("Extra", 255, cs));
-  return (result->send_fields(field_list));
+  result->send_fields(field_list);
+  return false; // return void
 }
 
 void select_result::send_error(drizzled::error_t errcode, const char *err)

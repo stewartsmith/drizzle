@@ -51,10 +51,9 @@ public:
     return false;
   }
 
-  bool send_fields(List<Item>& list)
+  void send_fields(List<Item>& list)
   {
     session->getClient()->sendFields(list);
-    return false; // return void
   }
 
   /* Send data to client. Returns 0 if ok */

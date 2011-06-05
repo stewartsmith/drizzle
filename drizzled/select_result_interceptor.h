@@ -31,14 +31,13 @@ namespace drizzled
   sending of result set metadata should be suppressed as well.
 */
 
-class select_result_interceptor: public select_result
+class select_result_interceptor : public select_result
 {
 public:
-  select_result_interceptor() {}              /* Remove gcc warning */
-  uint32_t field_count(List<Item> &) const
+  uint32_t field_count(List<Item>&) const
   { return 0; }
-  bool send_fields(List<Item> &)
-  { return false; }
+  void send_fields(List<Item>&)
+  { }
 };
 
 
