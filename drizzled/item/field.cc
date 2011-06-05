@@ -1201,9 +1201,9 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
 }
 
 
-bool Item_field::send(plugin::Client *client, String *)
+void Item_field::send(plugin::Client *client, String *)
 {
-  return client->store(result_field);
+  client->store(result_field);
 }
 
 

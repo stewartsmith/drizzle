@@ -81,7 +81,7 @@ protected:
   bool _is_interactive;
 
   bool checkConnection();
-  bool netStoreData(const unsigned char *from, size_t length);
+  void netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
   void makeScramble(char *scramble);
@@ -119,14 +119,14 @@ public:
   virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 
   using Client::store;
-  virtual bool store(drizzled::Field *from);
-  virtual bool store(void);
-  virtual bool store(int32_t from);
-  virtual bool store(uint32_t from);
-  virtual bool store(int64_t from);
-  virtual bool store(uint64_t from);
-  virtual bool store(double from, uint32_t decimals, drizzled::String *buffer);
-  virtual bool store(const char *from, size_t length);
+  virtual void store(drizzled::Field *from);
+  virtual void store();
+  virtual void store(int32_t from);
+  virtual void store(uint32_t from);
+  virtual void store(int64_t from);
+  virtual void store(uint64_t from);
+  virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
+  virtual void store(const char *from, size_t length);
 
   virtual bool haveError(void);
   virtual bool haveMoreData(void);

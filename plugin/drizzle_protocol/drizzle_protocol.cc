@@ -52,7 +52,7 @@ static const uint32_t DRIZZLE_TCP_PORT= 4427;
 
 ProtocolCounters ListenDrizzleProtocol::drizzle_counters;
 
-in_port_t ListenDrizzleProtocol::getPort(void) const
+in_port_t ListenDrizzleProtocol::getPort() const
 {
   return port;
 }

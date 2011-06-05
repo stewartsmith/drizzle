@@ -1353,12 +1353,10 @@ Item* Item::cache_const_expr_transformer(unsigned char *arg)
   return this;
 }
 
-bool Item::send(plugin::Client *client, String *buffer)
+void Item::send(plugin::Client *client, String *buffer)
 {
-  bool result= false;
-  enum_field_types f_type;
-
-  switch ((f_type=field_type())) {
+  switch (field_type())
+  {
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
@@ -1368,29 +1366,26 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_DECIMAL:
     {
-      String *res;
-      if ((res=val_str(buffer)))
-        result= client->store(res->ptr(),res->length());
+      if (String* res=val_str(buffer))
+        client->store(res->ptr(), res->length());
       break;
     }
   case DRIZZLE_TYPE_LONG:
     {
-      int64_t nr;
-      nr= val_int();
+      int64_t nr= val_int();
       if (!null_value)
-        result= client->store((int32_t)nr);
+        client->store((int32_t)nr);
       break;
     }
   case DRIZZLE_TYPE_LONGLONG:
     {
-      int64_t nr;
-      nr= val_int();
+      int64_t nr= val_int();
       if (!null_value)
       {
         if (unsigned_flag)
-          result= client->store((uint64_t)nr);
+          client->store((uint64_t)nr);
         else
-          result= client->store((int64_t)nr);
+          client->store((int64_t)nr);
       }
       break;
     }
@@ -1398,7 +1393,7 @@ bool Item::send(plugin::Client *client, String *buffer)
     {
       double nr= val_real();
       if (!null_value)
-        result= client->store(nr, decimals, buffer);
+        client->store(nr, decimals, buffer);
       break;
     }
   case DRIZZLE_TYPE_TIME:
@@ -1406,7 +1401,7 @@ bool Item::send(plugin::Client *client, String *buffer)
       type::Time tm;
       get_time(tm);
       if (not null_value)
-        result= client->store(&tm);
+        client->store(&tm);
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
@@ -1416,14 +1411,12 @@ bool Item::send(plugin::Client *client, String *buffer)
       type::Time tm;
       get_date(tm, TIME_FUZZY_DATE);
       if (!null_value)
-        result= client->store(&tm);
+        client->store(&tm);
       break;
     }
   }
   if (null_value)
-    result= client->store();
-
-  return result;
+    client->store();
 }
 
 uint32_t Item::max_char_length() const

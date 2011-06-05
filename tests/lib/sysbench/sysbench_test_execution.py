@@ -19,48 +19,84 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-""" dtr_test_execution:
-    code related to the execution of dtr test cases 
+""" sysbench_test_execution:
+    code related to the execution of sysbench test cases 
     
     We are provided access to a testManager with 
-    randgen-specific testCases.  We contact the executionManager
-    to produce the system and server configurations we need
-    to execute a test.
+    sysbench-specific testCases.  
 
 """
 
 # imports
 import os
+import re
 import sys
 import subprocess
 import commands
 
 import lib.test_mgmt.test_execution as test_execution
 
-class randgenTestExecutor(test_execution.testExecutor):
-    """ randgen-specific testExecutor 
-
+class sysbenchTestExecutor(test_execution.testExecutor):
+    """ sysbench-specific testExecutor 
+        
     """
   
     def execute_testCase (self):
-        """ Execute a randgen testCase
+        """ Execute a sysbench testCase
 
         """
         test_execution.testExecutor.execute_testCase(self)
         self.status = 0
 
-        # execute the randgen
-        self.execute_randgen()
+        # prepare the server for sysbench
+        self.prepare_sysbench()
+
+        # execute sysbench
+        self.execute_sysbench()
 
         # analyze results
-        self.current_test_status = self.process_randgen_output()
+        self.current_test_status = self.process_sysbench_output()
         self.set_server_status(self.current_test_status)
         self.server_manager.reset_servers(self.name)
  
+    def prepare_sysbench(self):
+        """ Prepare the server for a sysbench run
+            We use subprocess as we can pass os.environ dicts and whatnot 
+
+        """
+      
+        sysbench_outfile = os.path.join(self.logdir,'sysbench.out')
+        sysbench_output = open(sysbench_outfile,'w')
+        sysbench_cmd = ' '.join([self.current_testcase.test_command,'prepare'])      
+        self.logging.info("Preparing database for sysbench run...")
+        if self.debug:
+            self.logging.debug(sysbench_cmd)
+        sysbench_subproc = subprocess.Popen( sysbench_cmd
+                                         , shell=True
+                                         #, cwd=os.getcwd()
+                                         , env=self.working_environment
+                                         , stdout = sysbench_output
+                                         , stderr = subprocess.STDOUT
+                                         )
+        sysbench_subproc.wait()
+        retcode = sysbench_subproc.returncode
+
+        sysbench_output.close()
+        sysbench_file = open(sysbench_outfile,'r')
+        output = ''.join(sysbench_file.readlines())
+        sysbench_file.close()
+        if self.debug:
+            self.logging.debug("sysbench_retcode: %d" %(retcode))
+            self.logging.debug(output)
+        if retcode:
+            self.logging.error("sysbench_prepare failed with retcode %d:" %(retcode))
+            self.logging.error(output)   
+            sys.exit(1)
+            
 
     
 
-    def execute_randgen(self):
+    def execute_sysbench(self):
         """ Execute the commandline and return the result.
             We use subprocess as we can pass os.environ dicts and whatnot 
 
@@ -68,38 +104,62 @@ class randgenTestExecutor(test_execution.testExecutor):
       
         testcase_name = self.current_testcase.fullname
         self.time_manager.start(testcase_name,'test')
-        randgen_outfile = os.path.join(self.logdir,'randgen.out')
-        randgen_output = open(randgen_outfile,'w')
-        dsn = "--dsn=dbi:drizzle:host=localhost:port=%d:user=root:password="":database=test" %(self.master_server.master_port)
-        randgen_cmd = " ".join([self.current_testcase.test_command, dsn])
-        randgen_subproc = subprocess.Popen( randgen_cmd
+        sysbench_outfile = os.path.join(self.logdir,'sysbench.out')
+        sysbench_output = open(sysbench_outfile,'w')
+        sysbench_cmd = ' '.join([self.current_testcase.test_command, 'run'])
+        self.logging.info("Executing sysbench:  %s" %(sysbench_cmd))
+        
+        sysbench_subproc = subprocess.Popen( sysbench_cmd
                                          , shell=True
-                                         , cwd=self.system_manager.randgen_path
+                                         #, cwd=self.system_manager.sysbench_path
                                          , env=self.working_environment
-                                         , stdout = randgen_output
+                                         , stdout = sysbench_output
                                          , stderr = subprocess.STDOUT
                                          )
-        randgen_subproc.wait()
-        retcode = randgen_subproc.returncode     
+        sysbench_subproc.wait()
+        retcode = sysbench_subproc.returncode     
         execution_time = int(self.time_manager.stop(testcase_name)*1000) # millisec
 
-        randgen_output.close()
-        randgen_file = open(randgen_outfile,'r')
-        output = ''.join(randgen_file.readlines())
+        sysbench_output.close()
+        sysbench_file = open(sysbench_outfile,'r')
+        output = ''.join(sysbench_file.readlines())
         if self.debug:
             self.logging.debug(output)
-        randgen_file.close()
+        sysbench_file.close()
 
         if self.debug:
-            self.logging.debug("randgen_retcode: %d" %(retcode))
+            self.logging.debug("sysbench_retcode: %d" %(retcode))
         self.current_test_retcode = retcode
         self.current_test_output = output
         self.current_test_exec_time = execution_time
 
-    def process_randgen_output(self):
-        """ randgen has run, we now check out what we have """
-        retcode = self.current_test_retcode
-        if retcode == 0:
+    def process_sysbench_output(self):
+        """ sysbench has run, we now check out what we have 
+            We also output the data from the run
+        
+        """
+        # This slice code taken from drizzle-automation's sysbench handling
+        # Slice up the output report into a matrix and insert into the DB.
+        regexes= {
+          'tps': re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
+        , 'deadlocksps': re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
+        , 'rwreqps': re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
+        , 'min_req_lat_ms': re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
+        , 'max_req_lat_ms': re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
+        , 'avg_req_lat_ms': re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
+        , '95p_req_lat_ms': re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
+        }
+        run= {}
+        for line in self.current_test_output.split("\n"):
+            for key in regexes.keys():
+                result= regexes[key].match(line)
+                if result:
+                    run[key]= float(result.group(1)) # group(0) is entire match...
+        # we set our test output to the regex'd-up data
+        # we also make it a single string, separated by newlines
+        self.current_test_output = str(run)[1:-1].replace(',','\n').replace("'",'')
+                    
+        if self.current_test_retcode == 0:
             return 'pass'
         else:
             return 'fail'
