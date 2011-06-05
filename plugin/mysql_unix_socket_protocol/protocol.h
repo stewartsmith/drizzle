@@ -46,8 +46,8 @@ public:
   bool getFileDescriptors(std::vector<int> &fds);
 
   in_port_t getPort(void) const;
-  static ProtocolCounters *mysql_unix_counters;
-  virtual ProtocolCounters *getCounters(void) const {return mysql_unix_counters; }
+  static ProtocolCounters mysql_unix_counters;
+  virtual ProtocolCounters *getCounters(void) const {return &mysql_unix_counters; }
   drizzled::plugin::Client *getClient(int fd);
 private:
   const boost::filesystem::path _unix_socket_path;
