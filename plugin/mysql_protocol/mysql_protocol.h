@@ -87,7 +87,7 @@ protected:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
+  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters&);
   virtual ~ClientMySQLProtocol();
 
   bool isInteractive() const
@@ -100,7 +100,7 @@ public:
     return is_admin_connection;
   }
 
-  ProtocolCounters *counters;
+  ProtocolCounters& counters;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();
@@ -132,8 +132,6 @@ public:
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
   virtual bool isAdminAllowed() const;
-  static std::vector<std::string> mysql_admin_ip_addresses;
-  static void mysql_compose_ip_addresses(std::vector<std::string> options);
 };
 
 } /* namespace drizzle_plugin */

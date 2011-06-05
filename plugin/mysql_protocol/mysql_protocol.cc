@@ -47,7 +47,7 @@ using namespace drizzled;
 
 namespace drizzle_plugin {
 
-std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
+std::vector<std::string> g_mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 
 static port_constraint port;
@@ -84,10 +84,10 @@ in_port_t ListenMySQLProtocol::getPort(void) const
 plugin::Client *ListenMySQLProtocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, &getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, getCounters());
 }
 
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters& set_counters):
   is_admin_connection(false),
   _using_mysql41_protocol(using_mysql41_protocol),
   _is_interactive(false),
@@ -151,11 +151,11 @@ void ClientMySQLProtocol::close(void)
     drizzleclient_net_end(&net);
     if (is_admin_connection)
     {
-      counters->adminConnected.decrement();
+      counters.adminConnected.decrement();
     }
     else
     {
-      counters->connected.decrement();
+      counters.connected.decrement();
     }
   }
 }
@@ -165,13 +165,13 @@ bool ClientMySQLProtocol::authenticate()
   bool connection_is_valid;
   if (is_admin_connection)
   {
-    counters->adminConnectionCount.increment();
-    counters->adminConnected.increment();
+    counters.adminConnectionCount.increment();
+    counters.adminConnected.increment();
   }
   else
   {
-    counters->connectionCount.increment();
-    counters->connected.increment();
+    counters.connectionCount.increment();
+    counters.connected.increment();
   }
 
   /* Use "connect_timeout" value during connection phase */
@@ -182,11 +182,11 @@ bool ClientMySQLProtocol::authenticate()
 
   if (connection_is_valid)
   {
-    if (not is_admin_connection and (counters->connected > counters->max_connections))
+    if (not is_admin_connection and (counters.connected > counters.max_connections))
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
-      counters->failedConnections.increment();
+      counters.failedConnections.increment();
     }
     else
     {
@@ -196,7 +196,7 @@ bool ClientMySQLProtocol::authenticate()
   else
   {
     sendError(session->main_da().sql_errno(), session->main_da().message());
-    counters->failedConnections.increment();
+    counters.failedConnections.increment();
     return false;
   }
 
@@ -886,7 +886,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
 bool ClientMySQLProtocol::isAdminAllowed() const
 {
-  return std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end();
+  return std::find(g_mysql_admin_ip_addresses.begin(), g_mysql_admin_ip_addresses.end(), session->user()->address()) != g_mysql_admin_ip_addresses.end();
 }
 
 bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
@@ -990,13 +990,11 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   }
 }
 
-void ClientMySQLProtocol::mysql_compose_ip_addresses(vector<string> options)
+static void mysql_compose_ip_addresses(const vector<string>& options)
 {
-  for (vector<string>::iterator it= options.begin();
-       it != options.end();
-       ++it)
+  BOOST_FOREACH(const string& it, options)
   {
-    tokenize(*it, mysql_admin_ip_addresses, ",", true);
+    tokenize(it, g_mysql_admin_ip_addresses, ",", true);
   }
 }
 
@@ -1058,7 +1056,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters.max_connections)->default_value(1000),
           _("Maximum simultaneous connections."));
   context("admin-ip-addresses",
-          po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
+          po::value<vector<string> >()->composing()->notifier(&mysql_compose_ip_addresses),
           _("A restrictive IP address list for incoming admin connections."));
 }
 
