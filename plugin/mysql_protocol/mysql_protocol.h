@@ -62,12 +62,11 @@ public:
    _hostname(hostname),
    _using_mysql41_protocol(using_mysql41_protocol)
   { }
-  virtual ~ListenMySQLProtocol();
   virtual const std::string getHost() const;
   virtual in_port_t getPort() const;
   virtual drizzled::plugin::Client *getClient(int fd);
   static ProtocolCounters mysql_counters;
-  virtual ProtocolCounters *getCounters() const { return &mysql_counters; }
+  virtual ProtocolCounters& getCounters() const { return mysql_counters; }
   void addCountersToTable();
 };
 

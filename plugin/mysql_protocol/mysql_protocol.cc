@@ -45,8 +45,7 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
@@ -63,17 +62,13 @@ static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
-
 ProtocolCounters ListenMySQLProtocol::mysql_counters;
-
-ListenMySQLProtocol::~ListenMySQLProtocol()
-{ }
 
 void ListenMySQLProtocol::addCountersToTable()
 {
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connection_count"), &getCounters()->connectionCount));
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connected"), &getCounters()->connected));
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters()->failedConnections));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connection_count"), &getCounters().connectionCount));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connected"), &getCounters().connected));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters().failedConnections));
 }
 
 const std::string ListenMySQLProtocol::getHost(void) const
@@ -89,7 +84,7 @@ in_port_t ListenMySQLProtocol::getPort(void) const
 plugin::Client *ListenMySQLProtocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, &getCounters());
 }
 
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):

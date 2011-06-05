@@ -73,7 +73,7 @@ bool ClientDrizzleProtocol::isAdminAllowed() const
 plugin::Client *ListenDrizzleProtocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientDrizzleProtocol(new_fd, getCounters());
+  return new_fd == -1 ? NULL : new ClientDrizzleProtocol(new_fd, &getCounters());
 }
 
 static int init(drizzled::module::Context &context)

@@ -148,7 +148,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 plugin::Client *Protocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientMySQLUnixSocketProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLUnixSocketProtocol(new_fd, _using_mysql41_protocol, &getCounters());
 }
 
 static void init_options(drizzled::module::option_context &context)
