@@ -33,7 +33,7 @@ void compose_ip_addresses(std::vector<std::string> options);
 class ProtocolCounters
 {
   public:
-    ProtocolCounters():
+    ProtocolCounters() :
       max_connections(1000)
     { }
     drizzled::atomic<uint64_t> connectionCount;
@@ -63,12 +63,12 @@ public:
    _using_mysql41_protocol(using_mysql41_protocol)
   { }
   virtual ~ListenMySQLProtocol();
-  virtual const std::string getHost(void) const;
-  virtual in_port_t getPort(void) const;
+  virtual const std::string getHost() const;
+  virtual in_port_t getPort() const;
   virtual drizzled::plugin::Client *getClient(int fd);
-  static ProtocolCounters *mysql_counters;
-  virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
-  void addCountersToTable(void);
+  static ProtocolCounters mysql_counters;
+  virtual ProtocolCounters *getCounters() const { return &mysql_counters; }
+  void addCountersToTable();
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -81,7 +81,7 @@ protected:
   bool _using_mysql41_protocol;
   bool _is_interactive;
 
-  bool checkConnection(void);
+  bool checkConnection();
   bool netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
@@ -132,7 +132,7 @@ public:
   virtual bool haveError(void);
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
-  virtual bool isAdminAllowed(void);
+  virtual bool isAdminAllowed() const;
   static std::vector<std::string> mysql_admin_ip_addresses;
   static void mysql_compose_ip_addresses(std::vector<std::string> options);
 };

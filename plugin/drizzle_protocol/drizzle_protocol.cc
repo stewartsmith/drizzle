@@ -37,12 +37,10 @@ namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
 
-namespace drizzle_plugin
-{
-namespace drizzle_protocol
-{
+namespace drizzle_plugin {
+namespace drizzle_protocol {
 
-std::vector<std::string> ClientDrizzleProtocol::drizzle_admin_ip_addresses;
+std::vector<std::string> g_drizzle_admin_ip_addresses;
 static port_constraint port;
 static timeout_constraint connect_timeout;
 static timeout_constraint read_timeout;
@@ -54,41 +52,28 @@ static const uint32_t DRIZZLE_TCP_PORT= 4427;
 
 ProtocolCounters *ListenDrizzleProtocol::drizzle_counters= new ProtocolCounters();
 
-ListenDrizzleProtocol::~ListenDrizzleProtocol()
-{
-}
-
 in_port_t ListenDrizzleProtocol::getPort(void) const
 {
   return port;
 }
 
-void ClientDrizzleProtocol::drizzle_compose_ip_addresses(vector<string> options)
+static void drizzle_compose_ip_addresses(const vector<string>& options)
 {
-  for (vector<string>::iterator it= options.begin();
-       it != options.end();
-       ++it)
+  BOOST_FOREACH(const string& it, options)
   {
-    tokenize(*it, drizzle_admin_ip_addresses, ",", true);
+    tokenize(it, g_drizzle_admin_ip_addresses, "," , true);
   }
 }
 
-bool ClientDrizzleProtocol::isAdminAllowed(void)
+bool ClientDrizzleProtocol::isAdminAllowed() const
 {
-  if (std::find(drizzle_admin_ip_addresses.begin(), drizzle_admin_ip_addresses.end(), session->user()->address()) != drizzle_admin_ip_addresses.end())
-    return true;
-
-  return false;
+  return std::find(g_drizzle_admin_ip_addresses.begin(), g_drizzle_admin_ip_addresses.end(), session->user()->address()) != g_drizzle_admin_ip_addresses.end();
 }
 
 plugin::Client *ListenDrizzleProtocol::getClient(int fd)
 {
-  int new_fd;
-  new_fd= acceptTcp(fd);
-  if (new_fd == -1)
-    return NULL;
-
-  return new ClientDrizzleProtocol(new_fd, getCounters());
+  int new_fd= acceptTcp(fd);
+  return new_fd == -1 ? NULL : new ClientDrizzleProtocol(new_fd, getCounters());
 }
 
 static int init(drizzled::module::Context &context)
@@ -104,9 +89,7 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("write_timeout", write_timeout));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("retry_count", retry_count));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("buffer_length", buffer_length));
-  context.registerVariable(new sys_var_const_string_val("bind_address",
-                                                        vm["bind-address"].as<std::string>()));
-
+  context.registerVariable(new sys_var_const_string_val("bind_address", vm["bind-address"].as<std::string>()));
   context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenDrizzleProtocol::drizzle_counters->max_connections));
 
   return 0;
@@ -140,7 +123,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint32_t>(&ListenDrizzleProtocol::drizzle_counters->max_connections)->default_value(1000),
           N_("Maximum simultaneous connections."));
   context("admin-ip-addresses",
-          po::value<vector<string> >()->composing()->notifier(&ClientDrizzleProtocol::drizzle_compose_ip_addresses),
+          po::value<vector<string> >()->composing()->notifier(&drizzle_compose_ip_addresses),
           N_("A restrictive IP address list for incoming admin connections."));
 }
 

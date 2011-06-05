@@ -25,19 +25,14 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/table_function.h>
-
 #include <boost/filesystem.hpp>
-
 #include <plugin/mysql_protocol/mysql_protocol.h>
 
-namespace drizzle_plugin
-{
-namespace mysql_unix_socket_protocol
-{
+namespace drizzle_plugin {
+namespace mysql_unix_socket_protocol {
 
-class Protocol: public ListenMySQLProtocol
+class Protocol : public ListenMySQLProtocol
 {
-  const boost::filesystem::path _unix_socket_path;
 public:
   Protocol(std::string name,
            bool using_mysql41_protocol,
@@ -54,15 +49,17 @@ public:
   static ProtocolCounters *mysql_unix_counters;
   virtual ProtocolCounters *getCounters(void) const {return mysql_unix_counters; }
   drizzled::plugin::Client *getClient(int fd);
+private:
+  const boost::filesystem::path _unix_socket_path;
 };
 
 class ClientMySQLUnixSocketProtocol: public ClientMySQLProtocol
 {
 public:
-  ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
+  ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters *set_counters) : ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
 
   /* Unix socket protocol is for MySQL compatibility so do not allow admin connections */
-  bool isAdminAllowed(void) { return false; }
+  bool isAdminAllowed() const { return false; }
 };
 
 
