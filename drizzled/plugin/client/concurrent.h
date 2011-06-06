@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Vijay Samuel, vjsamuel1990@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,11 +21,15 @@
 #pragma once
 
 #include <drizzled/plugin/client.h>
+#include <drizzled/execute/context.h>
+#include <drizzled/execute/parser.h>
 #include <drizzled/util/string.h>
-#include <boost/tokenizer.hpp>
 #include <vector>
 #include <queue>
 #include <string>
+#include <cstdio>
+
+using namespace std;
 
 namespace drizzled {
 namespace plugin {
@@ -105,8 +110,9 @@ public:
 
   void pushSQL(const std::string &arg)
   {
-    typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
-    Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
+    ::drizzled::error_t err_msg;
+    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
+    std::vector<std::string> parsed_tokens= context->start();
 
     {
       drizzled::util::String byte;
@@ -114,8 +120,8 @@ public:
       byte.append(drizzle_literal_parameter("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
-
-    for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
+    
+    for (vector<string>::iterator iter= parsed_tokens.begin(); iter != parsed_tokens.end(); ++iter)
     {
       drizzled::util::String byte;
       byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY

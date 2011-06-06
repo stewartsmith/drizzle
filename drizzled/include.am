@@ -18,6 +18,11 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+# We will be using this to build the drizzled server
+drizzled_drizzled_SOURCES=
+
+include drizzled/execute/include.am
+
 drizzled/sql_yacc.cc: drizzled/sql_yacc.yy
 	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
 	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
@@ -543,7 +548,7 @@ drizzled_drizzled_DEPENDENCIES= \
                                       ${noinst_LTLIBRARIES} \
                                       $(pandora_plugin_libs)
 
-drizzled_drizzled_SOURCES= \
+drizzled_drizzled_SOURCES+= \
 			   drizzled/alter_info.cc \
 			   drizzled/cached_item.cc \
 			   drizzled/catalog.cc \
