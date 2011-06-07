@@ -116,22 +116,9 @@ public:
    */
   int get_fd() const;
 
-  /**
-   * Returns the current read position.
-   */
-  char *get_read_pos() const;
-
-  /**
-   * Returns the current write position.
-   */
-  char *get_read_end() const;
-
 private:
-  bool closed;
   int sd;
   int fcntl_mode; /* Buffered fcntl(sd,F_GETFL) */
-  sockaddr_storage local; /* Local internet address */
-  sockaddr_storage remote; /* Remote internet address */
 };
 
 } /* namespace drizzle_plugin */

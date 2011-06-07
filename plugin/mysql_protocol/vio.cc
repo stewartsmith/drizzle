@@ -43,11 +43,7 @@ using namespace std;
 namespace drizzle_plugin {
 
 Vio::Vio(int nsd) :
-  closed(false),
-  sd(nsd),
-  fcntl_mode(0),
-  local(),
-  remote()
+  sd(nsd)
 {
   /*
     We call fcntl() to set the flags and then immediately read them back
@@ -70,18 +66,16 @@ Vio::~Vio()
 
 int Vio::close()
 {
-  int r=0;
-  if (!closed)
+  int r= 0;
+  if (sd != -1)
   {
     assert(sd >= 0);
     if (shutdown(sd, SHUT_RDWR))
       r= -1;
     if (::close(sd))
       r= -1;
+    sd=   -1;
   }
-  closed= true;
-  sd=   -1;
-
   return r;
 }
 
@@ -159,6 +153,7 @@ bool Vio::was_interrupted() const
 bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
 {
   char port_buf[NI_MAXSERV];
+  sockaddr_storage remote;
   socklen_t al = sizeof(remote);
 
   if (getpeername(sd, (sockaddr *) (&remote), &al) != 0)
@@ -176,17 +171,13 @@ bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
 
 void Vio::timeout(bool is_sndtimeo, int32_t t)
 {
-  int error;
-
-  /* POSIX specifies time as struct timeval. */
-  struct timeval wait_timeout;
+  timeval wait_timeout;
   wait_timeout.tv_sec= t;
   wait_timeout.tv_usec= 0;
 
   assert(t >= 0 && t <= INT32_MAX);
   assert(sd != -1);
-  error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
-                    &wait_timeout,
+  int error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO, &wait_timeout,
                     (socklen_t)sizeof(struct timeval));
   if (error == -1 && errno != ENOPROTOOPT)
   {
@@ -203,16 +194,6 @@ int Vio::get_errno() const
 int Vio::get_fd() const
 {
   return sd;
-}
-
-char *Vio::get_read_pos() const
-{
-  return NULL;
-}
-
-char *Vio::get_read_end() const
-{
-  return NULL;
 }
 
 } /* namespace drizzle_plugin */

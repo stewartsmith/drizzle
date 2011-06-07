@@ -152,41 +152,30 @@ int drizzleclient_net_get_sd(NET *net)
 
 bool drizzleclient_net_more_data(NET *net)
 {
-  return (net->vio == 0 || net->vio->get_read_pos() < net->vio->get_read_end());
+  return net->vio == 0; // bug?
 }
 
 /** Realloc the packet buffer. */
 
 static bool drizzleclient_net_realloc(NET *net, size_t length)
 {
-  unsigned char *buff;
-  size_t pkt_length;
-
   if (length >= net->max_packet_size)
   {
     /* @todo: 1 and 2 codes are identical. */
     net->error= 3;
     net->last_errno= ER_NET_PACKET_TOO_LARGE;
     my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    return(1);
+    return 1;
   }
-  pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1);
+  size_t pkt_length = (length + IO_SIZE - 1) & ~(IO_SIZE - 1);
   /*
     We must allocate some extra bytes for the end 0 and to be able to
     read big compressed blocks
   */
-  if (!(buff= (unsigned char*) realloc((char*) net->buff, pkt_length +
-                               NET_HEADER_SIZE + COMP_HEADER_SIZE)))
-  {
-    /* @todo: 1 and 2 codes are identical. */
-    net->error= 1;
-    net->last_errno= CR_OUT_OF_MEMORY;
-    /* In the server the error is reported by MY_WME flag. */
-    return(1);
-  }
-  net->buff=net->write_pos=buff;
-  net->buff_end=buff+(net->max_packet= (uint32_t) pkt_length);
-  return(0);
+  unsigned char* buff= (unsigned char*)realloc((char*) net->buff, pkt_length + NET_HEADER_SIZE + COMP_HEADER_SIZE);
+  net->buff=net->write_pos= buff;
+  net->buff_end= buff + (net->max_packet= (uint32_t) pkt_length);
+  return 0;
 }
 
 
@@ -205,12 +194,11 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
 
 static bool net_data_is_ready(int sd)
 {
-  struct pollfd ufds;
-  int res;
-
+  pollfd ufds;
   ufds.fd= sd;
   ufds.events= POLLIN | POLLPRI;
-  if (!(res= poll(&ufds, 1, 0)))
+  int res= poll(&ufds, 1, 0);
+  if (not res)
     return 0;
   if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
     return 0;

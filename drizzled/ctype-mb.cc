@@ -1163,20 +1163,4 @@ int my_mb_ctype_mb(const charset_info_st * const cs, int *ctype,
   return res;
 }
 
-
-MY_COLLATION_HANDLER my_collation_mb_bin_handler =
-{
-    NULL,              /* init */
-    my_strnncoll_mb_bin,
-    my_strnncollsp_mb_bin,
-    my_strnxfrm_mb,
-    my_strnxfrmlen_simple,
-    my_like_range_mb,
-    my_wildcmp_mb_bin,
-    my_strcasecmp_mb_bin,
-    my_instr_mb,
-    my_hash_sort_mb_bin,
-    my_propagate_simple
-};
-
 } /* namespace drizzled */
