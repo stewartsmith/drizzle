@@ -41,8 +41,7 @@
 #include "vio.h"
 #include "net_serv.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 using namespace std;
 using namespace drizzled;
@@ -146,86 +145,18 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
   return 0;
 }
 
-
-/**
-   Check if there is any data to be read from the socket.
-
-   @param sd   socket descriptor
-
-   @retval
-   0  No data to read
-   @retval
-   1  Data or EOF to read
-   @retval
-   -1   Don't know if data is ready or not
-*/
-
-static bool net_data_is_ready(int sd)
-{
-  pollfd ufds;
-  ufds.fd= sd;
-  ufds.events= POLLIN | POLLPRI;
-  int res= poll(&ufds, 1, 0);
-  if (not res)
-    return 0;
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
-    return 0;
-  return 1;
-}
-
-/**
-   Remove unwanted characters from connection
-   and check if disconnected.
-
-   Read from socket until there is nothing more to read. Discard
-   what is read.
-
-   If there is anything when to read 'drizzleclient_net_clear' is called this
-   normally indicates an error in the protocol.
-
-   When connection is properly closed (for TCP it means with
-   a FIN packet), then select() considers a socket "ready to read",
-   in the sense that there's EOF to read, but read() returns 0.
-
-   @param net            NET handler
-   @param clear_buffer           if <> 0, then clear all data from comm buff
-*/
-
-void drizzleclient_net_clear(NET *net, bool clear_buffer)
-{
-  if (clear_buffer)
-  {
-    while (net_data_is_ready(net->vio->get_fd()) > 0)
-    {
-      /* The socket is ready */
-      if (net->vio->read(net->buff, (size_t) net->max_packet) <= 0)
-      {
-        net->error= 2;
-        break;
-      }
-    }
-  }
-  net->pkt_nr=net->compress_pkt_nr=0;        /* Ready for new command */
-  net->write_pos=net->buff;
-  return;
-}
-
-
-/** Flush write_buffer if not empty. */
-
 bool drizzleclient_net_flush(NET *net)
 {
   bool error= 0;
   if (net->buff != net->write_pos)
   {
-    error=drizzleclient_net_real_write(net, net->buff,
-                         (size_t) (net->write_pos - net->buff)) ? 1 : 0;
-    net->write_pos=net->buff;
+    error= drizzleclient_net_real_write(net, net->buff, (size_t) (net->write_pos - net->buff)) ? 1 : 0;
+    net->write_pos= net->buff;
   }
   /* Sync packet number if using compression */
   if (net->compress)
     net->pkt_nr=net->compress_pkt_nr;
-  return(error);
+  return error;
 }
 
 
@@ -857,18 +788,6 @@ void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
     net->vio->timeout(1, timeout);
 #endif
   return;
-}
-/**
-  Clear possible error state of struct NET
-
-  @param net  clear the state of the argument
-*/
-
-void drizzleclient_drizzleclient_net_clear_error(NET *net)
-{
-  net->last_errno= 0;
-  net->last_error[0]= '\0';
-  strcpy(net->sqlstate, not_error_sqlstate);
 }
 
 } /* namespace drizzle_plugin */

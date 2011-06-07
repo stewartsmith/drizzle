@@ -67,7 +67,6 @@ typedef struct st_net {
 
 void drizzleclient_net_init(NET*, Vio* vio, uint32_t buffer_length);
 void drizzleclient_net_end(NET*);
-void drizzleclient_net_clear(NET*, bool clear_buffer);
 bool drizzleclient_net_flush(NET*);
 bool drizzleclient_net_write(NET*, const unsigned char *packet, size_t len);
 bool drizzleclient_net_write_command(NET*, unsigned char command,
@@ -82,7 +81,6 @@ int drizzleclient_net_get_sd(NET*);
 
 void drizzleclient_net_set_write_timeout(NET*, uint32_t timeout);
 void drizzleclient_net_set_read_timeout(NET*, uint32_t timeout);
-void drizzleclient_drizzleclient_net_clear_error(NET*);
 
 } /* namespace drizzle_plugin */
 
