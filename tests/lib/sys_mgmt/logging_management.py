@@ -89,7 +89,8 @@ class loggingManager():
 
 
     def test_report( self, test_name, test_status
-                   , execution_time, additional_output=None):
+                   , execution_time, additional_output = None
+                   , report_output = False):
         """ We use this method to deal with writing out the test report
 
         """
@@ -100,7 +101,7 @@ class loggingManager():
         msg = self.report_fmt.format( test_name, test_status
                                     , execution_time)
         self._write_message("", msg)
-        if additional_output and test_status != '[ pass ]':
+        if additional_output and report_output:
             additional_output=additional_output.split('\n')
             for line in additional_output:
                 line = line.strip()

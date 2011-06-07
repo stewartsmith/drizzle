@@ -198,9 +198,15 @@ class testManager(object):
             self.executed_tests[test_status] = [test_case]
         else:
             self.executed_tests[test_status].append(test_case)
-        # report
+        # report.  If the test failed, we print any additional
+        # output returned by the test executor
+        # We may want to report additional output at other times
+        if test_status != 'pass':
+            report_output = True
+        else:
+            report_output = False
         self.logging.test_report( test_case.fullname, test_status
-                                , exec_time, output)
+                                , exec_time, output, report_output)
 
 
     def print_test_list(self):

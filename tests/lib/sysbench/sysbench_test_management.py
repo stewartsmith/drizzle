@@ -18,12 +18,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-""" randgen_test_management:
+""" sysbench_test_management:
     code related to the gathering / analysis / management of 
     the test cases
     ie - collecting the list of tests in each suite, then
-    gathering additional, relevant information for randgen
-    mode. (stocastic model-based testing)
+    gathering additional, relevant information for sysbench mode
 
 """
 
@@ -38,7 +37,7 @@ import lib.test_mgmt.test_management as test_management
 
     
 class testCase:
-    """Holds info on a single randgen test
+    """Holds info on a single sysbench test
  
     """
     def __init__( self, system_manager, name=None
@@ -50,7 +49,7 @@ class testCase:
         self.skip_keys = ['system_manager','logging']
         self.name = name
         self.fullname = fullname
-        self.suitename = 'randgen_tests'
+        self.suitename = 'sysbench_tests'
         self.master_sh = None
         self.comment = comment
         self.server_requirements = server_requirements
@@ -84,19 +83,19 @@ class testManager(test_management.testManager):
                                          , dotest, skiptest, reorder
                                          , suitelist, suitepaths
                                          , system_manager, test_cases, mode)
-        self.suitepaths = [os.path.join(self.testdir,'randgen_tests')]
+        self.suitepaths = [os.path.join(self.testdir,'sysbench_tests')]
         if suitelist is None:
-            self.suitelist = ['main']
+            self.suitelist = ['readonly']
         else:
             self.suitelist = suitelist
 
     def process_suite(self,suite_dir):
         """Process a test suite.
-           Look for randgen tests, which are nice clean conf files
+           Look for sysbench tests, which are nice clean conf files
         
         """
 
-        # We know this based on how we organize randgen test conf files
+        # We know this based on how we organize sysbench test conf files
         suite_name = os.path.basename(suite_dir) 
         if self.verbose:
                 self.system_manager.logging.verbose("Processing suite: %s" %(suite_name))
@@ -150,3 +149,17 @@ class testManager(test_management.testManager):
         for option_set in option_sets:
             server_reqs.append([option_set[1:-1].strip()])
         return server_reqs
+
+    def record_test_result(self, test_case, test_status, output, exec_time):
+        """ Accept the results of an executed testCase for further
+            processing.
+ 
+        """
+        if test_status not in self.executed_tests:
+            self.executed_tests[test_status] = [test_case]
+        else:
+            self.executed_tests[test_status].append(test_case)
+        # report
+        self.logging.test_report( test_case.fullname, test_status
+                                , str(exec_time), output
+                                , report_output= True)
