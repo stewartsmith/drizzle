@@ -1471,9 +1471,7 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-#ifndef DRIZZLE_ADMIN_TOOL
   const char* unix_user= getlogin();
-#endif
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1482,11 +1480,7 @@ try
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
-#ifdef DRIZZLE_ADMIN_TOOL
-  ("user,u", po::value<string>(&current_user)->default_value("root"),
-#else
   ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
-#endif
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
@@ -1546,15 +1540,9 @@ try
 
   po::notify(vm);
 
-#ifdef DRIZZLE_ADMIN_TOOL
-  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
-                         getenv("DRIZZLE_PS1") :
-                         "drizzleadmin> ");
-#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -4214,10 +4202,6 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
-
-#ifdef DRIZZLE_ADMIN_TOOL
-  global_con_options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | global_con_options);
-#endif
 
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
                           opt_drizzle_port, (char *)user.c_str(),

@@ -507,9 +507,6 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   if (!(con->options & DRIZZLE_CON_FOUND_ROWS))
     capabilities&= ~DRIZZLE_CAPABILITIES_FOUND_ROWS;
 
-  if (con->options & DRIZZLE_CON_ADMIN)
-    capabilities|= DRIZZLE_CAPABILITIES_ADMIN;
-
   if (con->options & DRIZZLE_CON_INTERACTIVE)
   {
     capabilities|= DRIZZLE_CAPABILITIES_INTERACTIVE;

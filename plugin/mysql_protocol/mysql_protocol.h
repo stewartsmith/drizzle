@@ -37,10 +37,8 @@ class ProtocolCounters
       max_connections(1000)
     { }
     drizzled::atomic<uint64_t> connectionCount;
-    drizzled::atomic<uint64_t> adminConnectionCount;
     drizzled::atomic<uint64_t> failedConnections;
     drizzled::atomic<uint64_t> connected;
-    drizzled::atomic<uint64_t> adminConnected;
     uint32_t max_connections;
 };
 
@@ -77,7 +75,6 @@ protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool is_admin_connection;
   bool _using_mysql41_protocol;
   bool _is_interactive;
 
@@ -94,11 +91,6 @@ public:
   bool isInteractive() const
   {
     return _is_interactive;
-  }
-
-  bool isAdmin() const
-  {
-    return is_admin_connection;
   }
 
   ProtocolCounters *counters;
@@ -132,9 +124,6 @@ public:
   virtual bool haveError(void);
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
-  virtual bool isAdminAllowed(void);
-  static std::vector<std::string> mysql_admin_ip_addresses;
-  static void mysql_compose_ip_addresses(std::vector<std::string> options);
 };
 
 } /* namespace drizzle_plugin */

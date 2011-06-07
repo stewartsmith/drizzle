@@ -169,7 +169,6 @@ typedef enum
   DRIZZLE_CON_LISTEN=           (1 << 7),
   DRIZZLE_CON_EXPERIMENTAL=     (1 << 8),
   DRIZZLE_CON_FOUND_ROWS=       (1 << 9),
-  DRIZZLE_CON_ADMIN=            (1 << 10),
   DRIZZLE_CON_INTERACTIVE=      (1 << 11),
   DRIZZLE_CON_MULTI_STATEMENTS= (1 << 12),
   DRIZZLE_CON_AUTH_PLUGIN=      (1 << 13)
@@ -231,7 +230,6 @@ typedef enum
   DRIZZLE_CAPABILITIES_MULTI_RESULTS=          (1 << 17),
   DRIZZLE_CAPABILITIES_PS_MULTI_RESULTS=       (1 << 18),
   DRIZZLE_CAPABILITIES_PLUGIN_AUTH=            (1 << 19),
-  DRIZZLE_CAPABILITIES_ADMIN=                  (1 << 25),
   DRIZZLE_CAPABILITIES_SSL_VERIFY_SERVER_CERT= (1 << 30),
   DRIZZLE_CAPABILITIES_REMEMBER_OPTIONS=       (1 << 31),
   DRIZZLE_CAPABILITIES_CLIENT= (DRIZZLE_CAPABILITIES_LONG_PASSWORD |
@@ -241,8 +239,7 @@ typedef enum
                                 DRIZZLE_CAPABILITIES_PLUGIN_AUTH |
                                 DRIZZLE_CAPABILITIES_TRANSACTIONS |
                                 DRIZZLE_CAPABILITIES_PROTOCOL_41 |
-                                DRIZZLE_CAPABILITIES_SECURE_CONNECTION |
-                                DRIZZLE_CAPABILITIES_ADMIN)
+                                DRIZZLE_CAPABILITIES_SECURE_CONNECTION)
 } drizzle_capabilities_t;
 
 /**

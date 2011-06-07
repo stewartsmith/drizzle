@@ -61,8 +61,6 @@ class ClientMySQLUnixSocketProtocol: public ClientMySQLProtocol
 public:
   ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
 
-  /* Unix socket protocol is for MySQL compatibility so do not allow admin connections */
-  bool isAdminAllowed(void) { return false; }
 };
 
 
