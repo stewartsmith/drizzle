@@ -68,15 +68,13 @@ static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, s
 
 /** Init with packet info. */
 
-bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
+void drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
 {
   net->vio = vio;
   net->max_packet= (uint32_t) buffer_length;
   net->max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
 
-  if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
-                                          NET_HEADER_SIZE + COMP_HEADER_SIZE)))
-    return(1);
+  net->buff=(unsigned char*) malloc((size_t) net->max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
   net->buff_end=net->buff+net->max_packet;
   net->error=0; net->return_status=0;
   net->pkt_nr=net->compress_pkt_nr=0;
@@ -92,42 +90,17 @@ bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
     net->fd  = vio->get_fd();            /* For perl DBI/DBD */
     vio->fastsend();
   }
-  return(0);
 }
 
-bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
+void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
 {
-  Vio *vio_tmp= new Vio(sock);
-  if (vio_tmp == NULL)
-  {
-    return true;
-  }
-  else
-    if (drizzleclient_net_init(net, vio_tmp, buffer_length))
-    {
-      /* Only delete the temporary vio if we didn't already attach it to the
-       * NET object.
-       */
-      if (vio_tmp && (net->vio != vio_tmp))
-      {
-        delete vio_tmp;
-      }
-      else
-      {
-        (void) shutdown(sock, SHUT_RDWR);
-        (void) close(sock);
-      }
-      return true;
-    }
-  return false;
+  drizzleclient_net_init(net, new Vio(sock), buffer_length);
 }
 
 void drizzleclient_net_end(NET *net)
 {
-  if (net->buff != NULL)
-    free(net->buff);
+  free(net->buff);
   net->buff= NULL;
-  return;
 }
 
 void drizzleclient_net_close(NET *net)
@@ -629,9 +602,7 @@ my_real_read(NET *net, size_t *complen)
         }
         len= packet_error;
         net->error= 2;                /* Close socket */
-        net->last_errno= (net->vio->was_interrupted() ?
-                          CR_NET_READ_INTERRUPTED :
-                          CR_NET_READ_ERROR);
+        net->last_errno= net->vio->was_interrupted() ? CR_NET_READ_INTERRUPTED : CR_NET_READ_ERROR;
         goto end;
       }
       remain -= (uint32_t) length;

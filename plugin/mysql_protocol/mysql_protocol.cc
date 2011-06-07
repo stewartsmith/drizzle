@@ -99,9 +99,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, Pr
   if (fd == -1)
     return;
 
-  if (drizzleclient_net_init_sock(&net, fd, buffer_length.get()))
-    throw bad_alloc();
-
+  drizzleclient_net_init_sock(&net, fd, buffer_length.get());
   drizzleclient_net_set_read_timeout(&net, read_timeout.get());
   drizzleclient_net_set_write_timeout(&net, write_timeout.get());
   net.retry_count=retry_count.get();
@@ -113,7 +111,7 @@ ClientMySQLProtocol::~ClientMySQLProtocol()
     net.vio->close();
 }
 
-int ClientMySQLProtocol::getFileDescriptor(void)
+int ClientMySQLProtocol::getFileDescriptor()
 {
   return drizzleclient_net_get_sd(&net);
 }
@@ -123,12 +121,12 @@ bool ClientMySQLProtocol::isConnected()
   return net.vio != 0;
 }
 
-bool ClientMySQLProtocol::isReading(void)
+bool ClientMySQLProtocol::isReading()
 {
   return net.reading_or_writing == 1;
 }
 
-bool ClientMySQLProtocol::isWriting(void)
+bool ClientMySQLProtocol::isWriting()
 {
   return net.reading_or_writing == 2;
 }
@@ -142,7 +140,7 @@ bool ClientMySQLProtocol::flush()
   return ret;
 }
 
-void ClientMySQLProtocol::close(void)
+void ClientMySQLProtocol::close()
 {
   if (net.vio)
   { 
