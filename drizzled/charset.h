@@ -353,12 +353,6 @@ extern uint32_t my_instr_simple(const charset_info_st * const,
                             my_match_t *match, uint32_t nmatch);
 extern MY_CHARSET_HANDLER my_charset_8bit_handler;
 extern MY_CHARSET_HANDLER my_charset_ucs2_handler;
-extern size_t my_caseup_str_mb(const charset_info_st * const, char *);
-extern size_t my_casedn_str_mb(const charset_info_st * const, char *);
-extern size_t my_caseup_mb(const charset_info_st * const, char *src, size_t srclen,
-                                         char *dst, size_t dstlen);
-extern size_t my_casedn_mb(const charset_info_st * const, char *src, size_t srclen,
-                                         char *dst, size_t dstlen);
 extern int my_strcasecmp_mb(const charset_info_st * const  cs, const char *s, const char *t);
 extern bool my_parse_charset_xml(const char *bug, size_t len,
 				    int (*add)(charset_info_st *cs));

@@ -99,7 +99,6 @@ public:
   virtual void store(const char*) {}
   virtual void store(const char*, size_t) {}
   virtual void store(const std::string &) {}
-  virtual bool haveMoreData(void) { return false;}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 

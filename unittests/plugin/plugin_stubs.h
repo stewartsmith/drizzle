@@ -194,7 +194,6 @@ public:
   }
 
   /* Try to remove these. */
-  virtual bool haveMoreData(void) { return false; };
   virtual bool haveError(void) { return false; };
   virtual bool wasAborted(void) { return false;};
 };

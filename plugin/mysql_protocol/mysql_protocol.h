@@ -128,7 +128,6 @@ public:
   virtual void store(const char *from, size_t length);
 
   virtual bool haveError(void);
-  virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
   virtual bool isAdminAllowed() const;
 };

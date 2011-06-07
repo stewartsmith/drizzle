@@ -150,11 +150,6 @@ int drizzleclient_net_get_sd(NET *net)
   return net->vio->get_fd();
 }
 
-bool drizzleclient_net_more_data(NET *net)
-{
-  return net->vio == 0; // bug?
-}
-
 /** Realloc the packet buffer. */
 
 static bool drizzleclient_net_realloc(NET *net, size_t length)

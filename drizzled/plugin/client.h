@@ -153,7 +153,6 @@ public:
   }
 
   /* Try to remove these. */
-  virtual bool haveMoreData(void)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
 

@@ -265,12 +265,6 @@ public:
     checkRowEnd();
   }
 
-  virtual bool haveMoreData()
-  {
-    printDebug("haveMoreData");
-    return false;
-  }
-
   virtual bool haveError()
   {
     printDebug("haveError");

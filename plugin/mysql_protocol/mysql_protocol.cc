@@ -667,11 +667,6 @@ bool ClientMySQLProtocol::wasAborted()
   return net.error && net.vio != 0;
 }
 
-bool ClientMySQLProtocol::haveMoreData()
-{
-  return drizzleclient_net_more_data(&net);
-}
-
 bool ClientMySQLProtocol::haveError()
 {
   return net.error || net.vio == 0;
