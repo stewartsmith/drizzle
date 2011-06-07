@@ -1730,9 +1730,7 @@ static bool admin_table(Session* session, TableList* tables,
   if (! session->endActiveTransaction())
     return 1;
 
-  field_list.push_back(item = new Item_empty_string("Table",
-                                                    NAME_CHAR_LEN * 2,
-                                                    cs));
+  field_list.push_back(item = new Item_empty_string("Table", NAME_CHAR_LEN * 2, cs));
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Op", 10, cs));
   item->maybe_null = 1;
@@ -1740,8 +1738,7 @@ static bool admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (session->getClient()->sendFields(&field_list))
-    return true;
+  session->getClient()->sendFields(field_list);
 
   for (table= tables; table; table= table->next_local)
   {

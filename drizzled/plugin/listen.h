@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include <boost/foreach.hpp>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/atomics.h>
 #include <vector>
-
 #include <drizzled/visibility.h>
 
 namespace drizzled {
@@ -36,21 +36,17 @@ typedef std::pair<std::string*, drizzled::atomic<uint64_t>*> ListenCounter;
  */
 class DRIZZLED_API Listen : public Plugin
 {
-  Listen();
-  Listen(const Listen&);
-  Listen& operator=(const Listen&);
 protected:
   std::vector<ListenCounter*> counters;
 public:
   explicit Listen(std::string name_arg)
     : Plugin(name_arg, "Listen")
   {}
+
   virtual ~Listen()
   {
-    std::vector<ListenCounter*>::iterator it;
-    for (it= counters.begin(); it < counters.end(); ++it)
+    BOOST_FOREACH(ListenCounter* counter, counters)
     {
-      ListenCounter* counter= *it;
       delete counter->first;
       delete counter;
     }
@@ -80,12 +76,12 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  static bool addPlugin(Listen *listen_obj);
+  static bool addPlugin(Listen*);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  static void removePlugin(Listen *listen_obj);
+  static void removePlugin(Listen*);
 
   /**
    * Setup all configured listen plugins.
@@ -96,18 +92,18 @@ public:
    * Accept a new connection (Client object) on one of the configured
    * listener interfaces.
    */
-  static plugin::Client *getClient(void);
+  static plugin::Client *getClient();
 
   /**
    * Some internal functions drizzled require a temporary Client object to
    * create a valid session object, this just returns a dummy client object.
    */
-  static plugin::Client *getNullClient(void);
+  static plugin::Client *getNullClient();
 
   /**
    * Shutdown and cleanup listen loop for server shutdown.
    */
-  static void shutdown(void);
+  static void shutdown();
 
 };
 

@@ -87,8 +87,8 @@ public:
   virtual void sendOK(void) {}
   virtual void sendEOF(void) {}
   virtual void sendError(const drizzled::error_t, const char*) {}
-  virtual bool sendFields(List<Item>*) { return false; }
-  virtual void store(Field *) {}
+  virtual void sendFields(List<Item>&) {}
+  virtual void store(Field*) {}
   virtual void store() {}
   virtual void store(int32_t) {}
   virtual void store(uint32_t) {}
