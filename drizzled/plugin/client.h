@@ -77,13 +77,13 @@ public:
    * Check to see if the client is actively reading.
    * @retval Boolean value representing reading state.
    */
-  virtual bool isReading(void)= 0;
+  virtual bool isReading(void)= 0; // todo: delete
 
   /**
    * Check to see if the client is actively writing.
    * @retval Boolean value representing writing state.
    */
-  virtual bool isWriting(void)= 0;
+  virtual bool isWriting(void)= 0; // todo: delete
 
   /**
    * Flush all data that has been buffered with store() methods.

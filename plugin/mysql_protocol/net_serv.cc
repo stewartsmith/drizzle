@@ -357,10 +357,6 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
 static int
 drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
-  size_t length;
-  const unsigned char *pos, *end;
-  uint32_t retry_count= 0;
-
   /* Backup of the original SO_RCVTIMEO timeout */
 
   if (net->error == 2)
@@ -369,44 +365,27 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
   net->reading_or_writing=2;
   if (net->compress)
   {
-    size_t complen;
-    unsigned char *b;
     const uint32_t header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
-    if (!(b= (unsigned char*) malloc(len + NET_HEADER_SIZE +
-                             COMP_HEADER_SIZE)))
-    {
-      net->error= 2;
-      net->last_errno= CR_OUT_OF_MEMORY;
-      /* In the server, the error is reported by MY_WME flag. */
-      net->reading_or_writing= 0;
-      return(1);
-    }
+    unsigned char* b= (unsigned char*) malloc(len + NET_HEADER_SIZE + COMP_HEADER_SIZE);
     memcpy(b+header_length,packet,len);
 
-    complen= len * 120 / 100 + 12;
-    unsigned char * compbuf= (unsigned char *) malloc(complen);
-    if (compbuf != NULL)
-    {
-      uLongf tmp_complen= complen;
-      int res= compress((Bytef*) compbuf, &tmp_complen,
-                        (Bytef*) (b+header_length),
-                        len);
-      complen= tmp_complen;
+    size_t complen= len * 120 / 100 + 12;
+    unsigned char* compbuf= new unsigned char[complen];
+    uLongf tmp_complen= complen;
+    int res= compress((Bytef*) compbuf, &tmp_complen,
+      (Bytef*) (b+header_length),
+      len);
+    complen= tmp_complen;
 
-      free(compbuf);
+    delete[] compbuf;
 
-      if ((res != Z_OK) || (complen >= len))
-        complen= 0;
-      else
-      {
-        size_t tmplen= complen;
-        complen= len;
-        len= tmplen;
-      }
-    }
+    if (res != Z_OK || complen >= len)
+      complen= 0;
     else
     {
-      complen=0;
+      size_t tmplen= complen;
+      complen= len;
+      len= tmplen;
     }
     int3store(&b[NET_HEADER_SIZE],complen);
     int3store(b,len);
@@ -415,13 +394,15 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     packet= b;
   }
 
-  pos= packet;
-  end=pos+len;
+  uint32_t retry_count= 0;
+  const unsigned char* pos= packet;
+  const unsigned char* end= pos + len;
   /* Loop until we have read everything */
   while (pos != end)
   {
     assert(pos);
     // TODO - see bug comment below - will we crash now?
+    size_t length;
     if ((long) (length= net->vio->write( pos, (size_t) (end-pos))) <= 0)
     {
      /*
@@ -438,10 +419,9 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
         we need to switch to blocking mode and wait until the timeout
         on the socket kicks in.
       */
-      if ((interrupted || length == 0))
+      if (interrupted || length == 0)
       {
         bool old_mode;
-
         while (net->vio->blocking(true, &old_mode) < 0)
         {
           if (net->vio->should_retry() && retry_count++ < net->retry_count)
@@ -465,22 +445,21 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
         continue;
       }
       net->error= 2;                /* Close socket */
-      net->last_errno= (interrupted ? CR_NET_WRITE_INTERRUPTED :
-                        CR_NET_ERROR_ON_WRITE);
+      net->last_errno= interrupted ? CR_NET_WRITE_INTERRUPTED : CR_NET_ERROR_ON_WRITE;
       break;
     }
-    pos+=length;
+    pos+= length;
 
     /* If this is an error we may not have a current_session any more */
     if (current_session)
       current_session->status_var.bytes_sent+= length;
   }
 end:
-  if ((net->compress) && (packet != NULL))
-    free((char*) packet);
+  if (net->compress)
+    free((char*)packet);
   net->reading_or_writing=0;
 
-  return(((int) (pos != end)));
+  return (int) (pos != end);
 }
 
 
