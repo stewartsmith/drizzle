@@ -63,6 +63,14 @@ def handle_mode(variables, system_manager):
         from sysbench.sysbench_test_management import testManager
         from sysbench.sysbench_test_execution import sysbenchTestExecutor as testExecutor
 
+    elif test_mode == 'sqlbench':
+        # sqlbench mode - we have a standard server setup 
+        # and a variety of concurrencies we want to run
+
+        # get manager and executor
+        from sqlbench.sqlbench_test_management import testManager
+        from sqlbench.sqlbench_test_execution import sqlbenchTestExecutor as testExecutor
+
     elif test_mode == 'cleanup':
         # cleanup mode - we try to kill any servers whose pid's we detect
         # in our workdir.  Might extend to other things (file cleanup, etc)
