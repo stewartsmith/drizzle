@@ -1,5 +1,5 @@
 # Swedish translation for drizzle
-# Copyright (C) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
@@ -7,17 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-24 16:21+0000\n"
-"PO-Revision-Date: 2010-07-04 18:15+0000\n"
-"Last-Translator: Morten Frisch <Unknown>\n"
+"POT-Creation-Date: 2011-06-07 12:46+0000\n"
+"PO-Revision-Date: 2011-06-05 09:38+0000\n"
+"Last-Translator: Arve Eriksson <Unknown>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: sv\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-07-05 03:46+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-06-06 04:36+0000\n"
+"X-Generator: Launchpad (build 12959)\n"
 
 #: ../client/drizzle.cc:330
 msgid "Sun"
@@ -234,11 +233,11 @@ msgstr ""
 
 #: ../client/drizzle.cc:1350
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../client/drizzle.cc:1361
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../client/drizzle.cc:1380 ../client/drizzledump.cc:469
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4748
@@ -246,15 +245,15 @@ msgid "Options used only in command line"
 msgstr ""
 
 #: ../client/drizzle.cc:1382
-#, fuzzy
 msgid "Displays this help and exit."
-msgstr "Visa den här hjälpen och avsluta."
+msgstr "Visar den här hjälpen och avslutar."
 
 #: ../client/drizzle.cc:1383
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"Använd inte historiefil. Avaktivera interaktivt läge. (Aktiverar --silent)"
+"Använd inte historikfil. Avaktivera interaktivt beteende. (Aktiverar --"
+"silent)"
 
 #: ../client/drizzle.cc:1385
 msgid "Display column type information."
@@ -265,6 +264,8 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Bevara kommentarer. Skicka kommentarer till servern. Standardinställningen "
+"är --skip-comments (släng kommentarer), aktivera med --comments"
 
 #: ../client/drizzle.cc:1389
 msgid "Print the output of a query (rows) vertically."
@@ -332,7 +333,7 @@ msgstr "Synonym för valet --safe-updates, -U."
 
 #: ../client/drizzle.cc:1409
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
-msgstr ""
+msgstr "-v vvv antyder verbose= 3, Används för att specificera utförlighet"
 
 #: ../client/drizzle.cc:1410 ../client/drizzledump.cc:489
 #: ../drizzled/drizzled.cc:1186
@@ -347,25 +348,30 @@ msgstr ""
 
 #: ../client/drizzle.cc:1416
 msgid "Number of lines before each import progress report."
-msgstr ""
+msgstr "Antal rader innan varje importerings förloppsrapport."
 
 #: ../client/drizzle.cc:1418
 msgid "Ping the server to check if it's alive."
-msgstr ""
+msgstr "Pinga servern för att kontrollera att den är aktiv."
 
 #: ../client/drizzle.cc:1420 ../drizzled/drizzled.cc:1105
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
+"Konfigurationsfilens standardalternativ används inte om no-defaults anges"
 
 #: ../client/drizzle.cc:1423 ../client/drizzledump.cc:497
 msgid "Options specific to the drizzle client"
 msgstr ""
 
 #: ../client/drizzle.cc:1426
+#, fuzzy
 msgid ""
 "Disable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time."
 msgstr ""
+"Aktivera automatisk omhashning. Man behöver inte använda 'rehash' för att få "
+"tabell- och fältkompletteringar, men uppstart och återanslutning kan ta lite "
+"längre tid. Avaktivera med --disable-auto-rehash."
 
 #: ../client/drizzle.cc:1428
 msgid ""
@@ -422,9 +428,8 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzle.cc:1448
-#, fuzzy
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
-msgstr "Inaktivera pager, skriv till stdout"
+msgstr ""
 
 #: ../client/drizzle.cc:1450
 msgid "Set the drizzle prompt to this value."
@@ -448,9 +453,8 @@ msgid "Do not reconnect if the connection is lost."
 msgstr "Vänta och försök igen om anslutningen avbryts."
 
 #: ../client/drizzle.cc:1457
-#, fuzzy
 msgid "Shutdown the server"
-msgstr "Stäng av servern"
+msgstr ""
 
 #: ../client/drizzle.cc:1458
 msgid ""
@@ -469,11 +473,8 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzle.cc:1464
-#, fuzzy
 msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
-"Avaktivera utfil. Se även interaktiv hjälp (\\h). VARNING: detta val är "
-"föråldrat; använd --disable-tee istället."
 
 #: ../client/drizzle.cc:1466
 msgid "Number of seconds before connection timeout."
@@ -496,9 +497,8 @@ msgid "Options specific to the client"
 msgstr ""
 
 #: ../client/drizzle.cc:1480
-#, fuzzy
 msgid "Connect to host"
-msgstr "Anslut till värddator"
+msgstr ""
 
 #: ../client/drizzle.cc:1482
 msgid ""
@@ -543,9 +543,9 @@ msgid "Error: Unknown protocol"
 msgstr ""
 
 #: ../client/drizzle.cc:1739
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
-msgstr "Portnummer angett är inte korrekt"
+msgstr ""
 
 #: ../client/drizzle.cc:1785 ../client/drizzle.cc:4264
 #, c-format
@@ -781,9 +781,8 @@ msgid "USE must be followed by a schema name"
 msgstr ""
 
 #: ../client/drizzle.cc:4086
-#, fuzzy
 msgid "Schema changed"
-msgstr "Databas att använda"
+msgstr ""
 
 #: ../client/drizzle.cc:4132
 #, fuzzy
@@ -1151,7 +1150,6 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzledump.cc:541
-#, fuzzy
 msgid "Connect to host."
 msgstr "Anslut till värddator"
 
@@ -1374,104 +1372,129 @@ msgid "Process chroot failed"
 msgstr ""
 
 #: ../drizzled/drizzled.cc:711
+#, fuzzy
 msgid "Error: Invalid Value for auto_increment_increment"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:722
+#, fuzzy
 msgid "Error: Invalid Value for auto_increment_offset"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:733
+#, fuzzy
 msgid "Error: Invalid Value for completion_type"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:745
+#, fuzzy
 msgid "Error: Invalid Value for div-precision-increment"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:756
+#, fuzzy
 msgid "Error: Invalid Value for group_concat_max_len"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:767
+#, fuzzy
 msgid "Error: Invalid Value for join_buffer_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:779
+#, fuzzy
 msgid "Error: Invalid Value for max_allowed_packet"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:791
+#, fuzzy
 msgid "Error: Invalid Value for max_error_count"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:802
+#, fuzzy
 msgid "Error: Invalid Value for max_heap_table_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:814
+#, fuzzy
 msgid "Error: Invalid Value for min_examined_row_limit"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:825
+#, fuzzy
 msgid "Error: Invalid Value for max_join_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:836
+#, fuzzy
 msgid "Error: Invalid Value for max_length_for_sort_data"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:847
+#, fuzzy
 msgid "Error: Invalid Value for max_seeks_for_key"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:858
+#, fuzzy
 msgid "Error: Invalid Value for max_sort_length"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:869
+#, fuzzy
 msgid "Error: Invalid Value for optimizer_search_depth"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:880
+#, fuzzy
 msgid "Error: Invalid Value for preload_buff_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:891
+#, fuzzy
 msgid "Error: Invalid Value for query_alloc_block_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:903
+#, fuzzy
 msgid "Error: Invalid Value for query_prealloc_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:915
+#, fuzzy
 msgid "Error: Invalid Value for range_alloc_block_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:927
+#, fuzzy
 msgid "Error: Invalid Value for read_buff_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:939
+#, fuzzy
 msgid "Error: Invalid Value for read_rnd_buff_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:950
+#, fuzzy
 msgid "Error: Invalid Value for sort_buff_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:961
+#, fuzzy
 msgid "Error: Invalid Value for table_def_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:972
+#, fuzzy
 msgid "Error: Invalid Value for table_cache_size"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för max_input_line"
 
 #: ../drizzled/drizzled.cc:983 ../drizzled/drizzled.cc:999
+#, fuzzy
 msgid "Error: Invalid Value for table_lock_wait_timeout"
-msgstr ""
+msgstr "Fel: Ogiltigt värde för connect_timeout"
 
 #: ../drizzled/drizzled.cc:1010
 msgid ""
@@ -2513,9 +2536,9 @@ msgid "Plugin '%-.192s' already exists"
 msgstr ""
 
 #: ../drizzled/error.cc:380
-#, fuzzy, c-format
+#, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %s)"
-msgstr "Kan inte skapa  trådavbrott (error %d, errno: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:381
 #, c-format
@@ -3338,9 +3361,9 @@ msgid "Unknown table '%s'"
 msgstr "Okänt kommando '\\%c'."
 
 #: ../drizzled/error.cc:552
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot create schema '%s'"
-msgstr "Kan inte skapa  trådavbrott (error %d, errno: %d)"
+msgstr ""
 
 #: ../drizzled/error.cc:553
 #, c-format
@@ -4051,81 +4074,81 @@ msgstr ""
 msgid "How often to empty the users cache, 0 to disable"
 msgstr ""
 
-#: ../plugin/console/console.cc:349
+#: ../plugin/console/console.cc:343
 #, c-format
 msgid "pipe() failed with errno %d"
 msgstr ""
 
-#: ../plugin/console/console.cc:379
+#: ../plugin/console/console.cc:373
 msgid "Enable the console."
 msgstr ""
 
-#: ../plugin/console/console.cc:382
+#: ../plugin/console/console.cc:376
 msgid "Turn on extra debugging."
 msgstr ""
 
-#: ../plugin/console/console.cc:385
+#: ../plugin/console/console.cc:379
 msgid "User to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:388
+#: ../plugin/console/console.cc:382
 msgid "Password to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:391
+#: ../plugin/console/console.cc:385
 #, fuzzy
 msgid "Default catalog to use."
 msgstr "Databas att använda"
 
-#: ../plugin/console/console.cc:394
+#: ../plugin/console/console.cc:388
 #, fuzzy
 msgid "Default schema to use."
 msgstr "Databas att använda"
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:120
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:117
 msgid ""
 "Port number to use for connection or 0 for default to with Drizzle/MySQL "
 "protocol."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:123
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1056
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:120
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1044
 msgid "Connect Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:126
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1059
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:123
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1047
 msgid "Read Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:129
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1062
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:126
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1050
 msgid "Write Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:132
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1065
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:129
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1053
 msgid "Retry Count."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:135
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1068
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:132
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1056
 msgid "Buffer length."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:138
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1071
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:135
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1059
 msgid "Address to bind to."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:141
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1074
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:138
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1062
 #: ../plugin/mysql_unix_socket_protocol/protocol.cc:172
 msgid "Maximum simultaneous connections."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:144
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1077
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:141
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1065
 msgid "A restrictive IP address list for incoming admin connections."
 msgstr ""
 
@@ -4164,7 +4187,7 @@ msgstr ""
 #: ../plugin/haildb/haildb_engine.cc:1202
 #: ../plugin/haildb/haildb_engine.cc:1315
 #: ../plugin/haildb/haildb_engine.cc:1496
-#: ../plugin/haildb/haildb_engine.cc:2162
+#: ../plugin/haildb/haildb_engine.cc:2161
 #, c-format
 msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
 msgstr ""
@@ -4175,171 +4198,171 @@ msgstr ""
 msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3410
+#: ../plugin/haildb/haildb_engine.cc:3409
 #, c-format
 msgid "Error starting HailDB %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3439
+#: ../plugin/haildb/haildb_engine.cc:3438
 msgid "Disable HailDB adaptive hash index (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3441
+#: ../plugin/haildb/haildb_engine.cc:3440
 msgid "Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3444
+#: ../plugin/haildb/haildb_engine.cc:3443
 msgid ""
 "Size of a memory pool HailDB uses to store data dictionary information and "
 "other internal data structures."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3447
+#: ../plugin/haildb/haildb_engine.cc:3446
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
 msgid "Data file autoextend increment in megabytes"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3450
+#: ../plugin/haildb/haildb_engine.cc:3449
 msgid ""
 "The size of the memory buffer HailDB uses to cache data and indexes of its "
 "tables."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3453
+#: ../plugin/haildb/haildb_engine.cc:3452
 msgid "The common part for HailDB table spaces."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3455
+#: ../plugin/haildb/haildb_engine.cc:3454
 msgid "Disable HailDB checksums validation (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3457
+#: ../plugin/haildb/haildb_engine.cc:3456
 msgid "Disable HailDB doublewrite buffer (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3460
+#: ../plugin/haildb/haildb_engine.cc:3459
 msgid "Number of IOPs the server can do. Tunes the background IO rate"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3463
+#: ../plugin/haildb/haildb_engine.cc:3462
 msgid ""
 "Speeds up the shutdown process of the HailDB storage engine. Possible values "
 "are 0, 1 (faster) or 2 (fastest - crash-like)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3466
+#: ../plugin/haildb/haildb_engine.cc:3465
 msgid "Stores each HailDB table to an .ibd file in the database dir."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3469
+#: ../plugin/haildb/haildb_engine.cc:3468
 msgid "File format to use for new tables in .ibd files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3472
+#: ../plugin/haildb/haildb_engine.cc:3471
 msgid ""
 "Set to 0 (write and flush once per second),1 (write and flush at each "
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3475
+#: ../plugin/haildb/haildb_engine.cc:3474
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
 msgid "With which method to flush data."
 msgstr ""
 
 #. ####### Should we use this option? #######
-#: ../plugin/haildb/haildb_engine.cc:3478
+#: ../plugin/haildb/haildb_engine.cc:3477
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
 msgid ""
 "Helps to save your data in case the disk image of the database becomes "
 "corrupt."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3481
+#: ../plugin/haildb/haildb_engine.cc:3480
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
 msgid "Path to individual files and their sizes."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3484
+#: ../plugin/haildb/haildb_engine.cc:3483
 msgid "Path to HailDB log files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3487
+#: ../plugin/haildb/haildb_engine.cc:3486
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
 msgid "Size of each log file in a log group."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3490
+#: ../plugin/haildb/haildb_engine.cc:3489
 msgid ""
 "Number of log files in the log group. HailDB writes to the files in a "
 "circular fashion. Value 3 is recommended here."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3493
+#: ../plugin/haildb/haildb_engine.cc:3492
 msgid ""
 "Timeout in seconds an HailDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3496
+#: ../plugin/haildb/haildb_engine.cc:3495
 msgid ""
 "The size of the buffer which HailDB uses to write log to the log files on "
 "disk."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3499
+#: ../plugin/haildb/haildb_engine.cc:3498
 msgid ""
 "Sets the point in the LRU list from where all pages are classified as old "
 "(Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3502
+#: ../plugin/haildb/haildb_engine.cc:3501
 msgid ""
 "Milliseconds between accesses to a block at which it is made young. "
 "0=disabled (Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3505
+#: ../plugin/haildb/haildb_engine.cc:3504
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
 msgid "Percentage of dirty pages allowed in bufferpool."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3508
+#: ../plugin/haildb/haildb_engine.cc:3507
 msgid "Desired maximum length of the purge queue (0 = no limit)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3511
+#: ../plugin/haildb/haildb_engine.cc:3510
 msgid ""
 "Roll back the complete transaction on lock wait timeout, for 4.x "
 "compatibility (disabled by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3514
+#: ../plugin/haildb/haildb_engine.cc:3513
 msgid "How many files at the maximum HailDB keeps open at the same time."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3517
+#: ../plugin/haildb/haildb_engine.cc:3516
 msgid "Number of background read I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3520
+#: ../plugin/haildb/haildb_engine.cc:3519
 msgid "Number of background write I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3522
+#: ../plugin/haildb/haildb_engine.cc:3521
 msgid ""
 "Disable if you want to reduce the number of messages written to the log "
 "(default: enabled)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3525
+#: ../plugin/haildb/haildb_engine.cc:3524
 msgid "Enable SHOW HAILDB STATUS output in the log"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3528
+#: ../plugin/haildb/haildb_engine.cc:3527
 msgid "Count of spin-loop rounds in HailDB mutexes (30 by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3530
+#: ../plugin/haildb/haildb_engine.cc:3529
 msgid ""
 "Use HailDB's internal memory allocator instead of the OS memory allocator"
 msgstr ""
@@ -4682,9 +4705,8 @@ msgid ""
 msgstr ""
 
 #: ../plugin/json_server/json_server.cc:266
-#, fuzzy
 msgid "Port number to use for connection or 0 for default (port 80) "
-msgstr "Antal sekunder innan anslutningsförsöket avbryts."
+msgstr ""
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
 msgid "fail gearman_client_create()"
@@ -5071,7 +5093,7 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1052
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1040
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
@@ -5096,9 +5118,8 @@ msgid "Clobber socket file if one is there already."
 msgstr ""
 
 #: ../plugin/pbms/src/parameters_ms.cc:427
-#, fuzzy
 msgid "Port number to use for connection or 0 for default PBMS port "
-msgstr "Antal sekunder innan anslutningsförsöket avbryts."
+msgstr ""
 
 #: ../plugin/pbms/src/parameters_ms.cc:430
 msgid "The maximum size of a BLOB repository file."
@@ -5181,9 +5202,8 @@ msgid "Host name to connect to"
 msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:169
-#, fuzzy
 msgid "Port to connect to"
-msgstr "Antal sekunder innan anslutningsförsöket avbryts."
+msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_log.cc:172
 msgid "RabbitMQ virtualhost"
@@ -5543,27 +5563,43 @@ msgstr ""
 msgid "Object %s NOT restricted by regex %s (%s)\n"
 msgstr ""
 
-#, fuzzy
-#~ msgid "--help           :  Display help and exit\n"
-#~ msgstr "Visa den här hjälpen och avsluta."
-
 #~ msgid "Use compression in server/client protocol."
 #~ msgstr "Använd komprimering i server/klient-protokollet"
 
-#, fuzzy
-#~ msgid "Deprecated. Use --skip-set-charset instead."
+#~ msgid ""
+#~ "Named commands are disabled. Use \\* form only, or use named commands "
+#~ "only in the beginning of a line ending with a semicolon (;) Since version "
+#~ "10.9 the client now starts with this option ENABLED by default! Disable "
+#~ "with '-G'. Long format commands still work from the first line. WARNING: "
+#~ "option deprecated; use --disable-named-commands instead."
 #~ msgstr ""
-#~ "VARNING: valmöjligheten är föråldrad; använd --disable-pager istället.\n"
-
-#~ msgid "Unknown Drizzle error"
-#~ msgstr "Okänt Drizzle fel"
-
-#, fuzzy
-#~ msgid "Can't create completion port thread (error %d)"
-#~ msgstr "Kan inte skapa  trådavbrott (error %d, errno: %d)"
+#~ "Namngivna kommandon har avaktiverats. Använd bara formen \\*, eller "
+#~ "använd namngivna kommandon bara i början av en rad som slutar med "
+#~ "semikolon (;). Sedan version 10.9 startar klienten med det här "
+#~ "alternativet AKTIVERAT som standard! Avaktivera med '-G'. "
+#~ "Långformskommandon fungerar fortfarande från den första raden. VARNING: "
+#~ "alternativet övergivet; använd --disable-named-commands istället."
 
 #~ msgid "Ignore space after function names."
 #~ msgstr "Ignorera mellanrum efter funktionsnamn."
+
+#~ msgid ""
+#~ "Don't write line number for errors. WARNING: -L is deprecated, use long "
+#~ "version of this option instead."
+#~ msgstr ""
+#~ "Visa inte radnummer för fel. VARNING: -L är föråldrat, använd lång "
+#~ "version av detta alternativ istället."
+
+#~ msgid ""
+#~ "No automatic rehashing. One has to use 'rehash' to get table and field "
+#~ "completion. This gives a quicker start of drizzle_st and disables "
+#~ "rehashing on reconnect. WARNING: options deprecated; use --disable-auto-"
+#~ "rehash instead."
+#~ msgstr ""
+#~ "Ingen automatisk omhashning. Man måste använda 'rehash' för att få "
+#~ "tabell- och fältkompletteringar. Det gör att drizzle_st startar snabbare, "
+#~ "och avaktiverar omhasning vid återanslutning. VARNING: alternativ "
+#~ "övergivna; använd --disable-auto-rehash istället."
 
 #~ msgid ""
 #~ "Reconnect if the connection is lost. Disable with --disable-reconnect. "
@@ -5572,16 +5608,17 @@ msgstr ""
 #~ "Återanslut om anslutningen bryts. Avaktivera med --disable-reconnect. "
 #~ "Denna funktion används som standard."
 
-#, fuzzy
-#~ msgid "Print the default settings and exit"
-#~ msgstr "Visa debug information vid avslut"
-
-#, fuzzy
-#~ msgid "Writing a core file\n"
-#~ msgstr "Skriver historie-fil %s\n"
+#~ msgid "Unknown Drizzle error"
+#~ msgstr "Okänt Drizzle fel"
 
 #~ msgid "Synonym for -?"
 #~ msgstr "Synonym för -?"
+
+#~ msgid "Print some debug info at exit."
+#~ msgstr "Visa debug information vid avslut"
+
+#~ msgid "Check memory and open file usage at exit ."
+#~ msgstr "Kontrollera minnes- och filanvändning vid avslut."
 
 #~ msgid "built-in default"
 #~ msgstr "Inbyggt standardvärde"
@@ -5589,10 +5626,33 @@ msgstr ""
 #~ msgid "Write more. (-v -v -v gives the table output format)."
 #~ msgstr "Skriv ut mer. (-v -v -v ger utskrift i tabellformat)."
 
-#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgid ""
+#~ "Disable outfile. See interactive help (\\h) also. WARNING: option "
+#~ "deprecated; use --disable-tee instead"
 #~ msgstr ""
-#~ "VARNING: valmöjligheten är föråldrad; använd --disable-tee istället.\n"
+#~ "Avaktivera utfil. Se även interaktiv hjälp (\\h). VARNING: detta val är "
+#~ "föråldrat; använd --disable-tee istället."
 
 #~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 #~ msgstr ""
 #~ "VARNING: valmöjligheten --server-arg stöds inte i denna konfiguration.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+#~ msgstr ""
+#~ "VARNING: valmöjligheten är föråldrad; använd --disable-pager istället.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgstr ""
+#~ "VARNING: valmöjligheten är föråldrad; använd --disable-tee istället.\n"
+
+#~ msgid "Shutdown the server."
+#~ msgstr "Stäng av servern"
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "Portnummer angett är inte korrekt"
+
+#~ msgid "libevent_thread_proc: my_thread_init() failed\n"
+#~ msgstr "libevent_thread_proc: my_thread_init() misslyckades\n"
+
+#~ msgid "Size of Pool."
+#~ msgstr "Storlek på poolen"
