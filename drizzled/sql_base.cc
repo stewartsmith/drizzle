@@ -70,17 +70,7 @@ namespace drizzled {
 
 extern bool volatile shutdown_in_progress;
 
-bool table_cache_init(void)
-{
-  return false;
-}
-
-uint32_t cached_open_tables(void)
-{
-  return table::getCache().size();
-}
-
-void table_cache_free(void)
+void table_cache_free()
 {
   g_refresh_version++;				// Force close of open tables
 

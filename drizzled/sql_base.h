@@ -29,14 +29,11 @@
 
 namespace drizzled {
 
-void table_cache_free(void);
-bool table_cache_init(void);
-uint32_t cached_open_tables(void);
-uint32_t cached_table_definitions(void);
+void table_cache_free();
 
 table::Cache &get_open_cache();
 
-DRIZZLED_API void kill_drizzle(void);
+DRIZZLED_API void kill_drizzle();
 
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);

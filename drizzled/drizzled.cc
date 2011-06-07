@@ -234,8 +234,7 @@ const char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 DRIZZLED_API bool volatile shutdown_in_progress;
-const char *opt_scheduler_default;
-const char *opt_scheduler= NULL;
+const char* opt_scheduler= "multi_thread";
 
 DRIZZLED_API size_t my_thread_stack_size= 0;
 
@@ -1525,11 +1524,6 @@ int init_server_components(module::Registry &plugins)
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init())
-  {
-    errmsg_printf(error::ERROR, _("Could not initialize table cache\n"));
-    unireg_abort(1);
-  }
 
   // Resize the definition Cache at startup
   table::Cache::rehash(table_def_size);
@@ -1541,7 +1535,6 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-
   if (opt_help)
     unireg_abort(0);
 
@@ -1550,21 +1543,9 @@ int init_server_components(module::Registry &plugins)
     unireg_abort(1);
   }
 
-  string scheduler_name;
-  if (opt_scheduler)
+  if (plugin::Scheduler::setPlugin(opt_scheduler))
   {
-    scheduler_name= opt_scheduler;
-  }
-  else
-  {
-    scheduler_name= opt_scheduler_default;
-    opt_scheduler= opt_scheduler_default;
-  }
-
-  if (plugin::Scheduler::setPlugin(scheduler_name))
-  {
-      errmsg_printf(error::ERROR,
-                   _("No scheduler found, cannot continue!\n"));
+      errmsg_printf(error::ERROR, _("No scheduler found, cannot continue!\n"));
       unireg_abort(1);
   }
 
@@ -1572,24 +1553,18 @@ int init_server_components(module::Registry &plugins)
     This is entirely for legacy. We will create a new "disk based" engine and a
     "memory" engine which will be configurable longterm.
   */
-  const std::string myisam_engine_name("MyISAM");
-  const std::string heap_engine_name("MEMORY");
-  myisam_engine= plugin::StorageEngine::findByName(myisam_engine_name);
-  heap_engine= plugin::StorageEngine::findByName(heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName("MyISAM");
+  heap_engine= plugin::StorageEngine::findByName("MEMORY");
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    const std::string name(default_storage_engine_str);
-    plugin::StorageEngine *engine;
-
-    engine= plugin::StorageEngine::findByName(name);
+    plugin::StorageEngine *engine= plugin::StorageEngine::findByName(default_storage_engine_str);
     if (engine == NULL)
     {
-      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"),
-                    default_storage_engine_str);
+      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"), default_storage_engine_str);
       unireg_abort(1);
     }
     global_system_variables.storage_engine= engine;
@@ -2081,8 +2056,6 @@ static void drizzle_init_variables(void)
   max_system_variables.read_rnd_buff_size= UINT32_MAX;
   max_system_variables.sortbuff_size= SIZE_MAX;
   max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
-
-  opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
