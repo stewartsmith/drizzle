@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-24 16:21+0000\n"
+"POT-Creation-Date: 2011-06-07 12:46+0000\n"
 "PO-Revision-Date: 2010-12-14 00:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bengali <bn@li.org>\n"
@@ -4000,79 +4000,79 @@ msgstr ""
 msgid "How often to empty the users cache, 0 to disable"
 msgstr ""
 
-#: ../plugin/console/console.cc:349
+#: ../plugin/console/console.cc:343
 #, c-format
 msgid "pipe() failed with errno %d"
 msgstr ""
 
-#: ../plugin/console/console.cc:379
+#: ../plugin/console/console.cc:373
 msgid "Enable the console."
 msgstr ""
 
-#: ../plugin/console/console.cc:382
+#: ../plugin/console/console.cc:376
 msgid "Turn on extra debugging."
 msgstr ""
 
-#: ../plugin/console/console.cc:385
+#: ../plugin/console/console.cc:379
 msgid "User to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:388
+#: ../plugin/console/console.cc:382
 msgid "Password to use for auth."
 msgstr ""
 
-#: ../plugin/console/console.cc:391
+#: ../plugin/console/console.cc:385
 msgid "Default catalog to use."
 msgstr ""
 
-#: ../plugin/console/console.cc:394
+#: ../plugin/console/console.cc:388
 msgid "Default schema to use."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:120
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:117
 msgid ""
 "Port number to use for connection or 0 for default to with Drizzle/MySQL "
 "protocol."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:123
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1056
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:120
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1044
 msgid "Connect Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:126
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1059
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:123
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1047
 msgid "Read Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:129
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1062
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:126
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1050
 msgid "Write Timeout."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:132
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1065
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:129
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1053
 msgid "Retry Count."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:135
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1068
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:132
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1056
 msgid "Buffer length."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:138
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1071
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:135
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1059
 msgid "Address to bind to."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:141
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1074
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:138
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1062
 #: ../plugin/mysql_unix_socket_protocol/protocol.cc:172
 msgid "Maximum simultaneous connections."
 msgstr ""
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:144
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1077
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:141
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1065
 msgid "A restrictive IP address list for incoming admin connections."
 msgstr ""
 
@@ -4111,7 +4111,7 @@ msgstr ""
 #: ../plugin/haildb/haildb_engine.cc:1202
 #: ../plugin/haildb/haildb_engine.cc:1315
 #: ../plugin/haildb/haildb_engine.cc:1496
-#: ../plugin/haildb/haildb_engine.cc:2162
+#: ../plugin/haildb/haildb_engine.cc:2161
 #, c-format
 msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
 msgstr ""
@@ -4122,171 +4122,171 @@ msgstr ""
 msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3410
+#: ../plugin/haildb/haildb_engine.cc:3409
 #, c-format
 msgid "Error starting HailDB %d (%s)\n"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3439
+#: ../plugin/haildb/haildb_engine.cc:3438
 msgid "Disable HailDB adaptive hash index (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3441
+#: ../plugin/haildb/haildb_engine.cc:3440
 msgid "Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3444
+#: ../plugin/haildb/haildb_engine.cc:3443
 msgid ""
 "Size of a memory pool HailDB uses to store data dictionary information and "
 "other internal data structures."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3447
+#: ../plugin/haildb/haildb_engine.cc:3446
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
 msgid "Data file autoextend increment in megabytes"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3450
+#: ../plugin/haildb/haildb_engine.cc:3449
 msgid ""
 "The size of the memory buffer HailDB uses to cache data and indexes of its "
 "tables."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3453
+#: ../plugin/haildb/haildb_engine.cc:3452
 msgid "The common part for HailDB table spaces."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3455
+#: ../plugin/haildb/haildb_engine.cc:3454
 msgid "Disable HailDB checksums validation (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3457
+#: ../plugin/haildb/haildb_engine.cc:3456
 msgid "Disable HailDB doublewrite buffer (enabled by default)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3460
+#: ../plugin/haildb/haildb_engine.cc:3459
 msgid "Number of IOPs the server can do. Tunes the background IO rate"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3463
+#: ../plugin/haildb/haildb_engine.cc:3462
 msgid ""
 "Speeds up the shutdown process of the HailDB storage engine. Possible values "
 "are 0, 1 (faster) or 2 (fastest - crash-like)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3466
+#: ../plugin/haildb/haildb_engine.cc:3465
 msgid "Stores each HailDB table to an .ibd file in the database dir."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3469
+#: ../plugin/haildb/haildb_engine.cc:3468
 msgid "File format to use for new tables in .ibd files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3472
+#: ../plugin/haildb/haildb_engine.cc:3471
 msgid ""
 "Set to 0 (write and flush once per second),1 (write and flush at each "
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3475
+#: ../plugin/haildb/haildb_engine.cc:3474
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
 msgid "With which method to flush data."
 msgstr ""
 
 #. ####### Should we use this option? #######
-#: ../plugin/haildb/haildb_engine.cc:3478
+#: ../plugin/haildb/haildb_engine.cc:3477
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
 msgid ""
 "Helps to save your data in case the disk image of the database becomes "
 "corrupt."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3481
+#: ../plugin/haildb/haildb_engine.cc:3480
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
 msgid "Path to individual files and their sizes."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3484
+#: ../plugin/haildb/haildb_engine.cc:3483
 msgid "Path to HailDB log files."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3487
+#: ../plugin/haildb/haildb_engine.cc:3486
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
 msgid "Size of each log file in a log group."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3490
+#: ../plugin/haildb/haildb_engine.cc:3489
 msgid ""
 "Number of log files in the log group. HailDB writes to the files in a "
 "circular fashion. Value 3 is recommended here."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3493
+#: ../plugin/haildb/haildb_engine.cc:3492
 msgid ""
 "Timeout in seconds an HailDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3496
+#: ../plugin/haildb/haildb_engine.cc:3495
 msgid ""
 "The size of the buffer which HailDB uses to write log to the log files on "
 "disk."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3499
+#: ../plugin/haildb/haildb_engine.cc:3498
 msgid ""
 "Sets the point in the LRU list from where all pages are classified as old "
 "(Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3502
+#: ../plugin/haildb/haildb_engine.cc:3501
 msgid ""
 "Milliseconds between accesses to a block at which it is made young. "
 "0=disabled (Advanced users)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3505
+#: ../plugin/haildb/haildb_engine.cc:3504
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
 msgid "Percentage of dirty pages allowed in bufferpool."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3508
+#: ../plugin/haildb/haildb_engine.cc:3507
 msgid "Desired maximum length of the purge queue (0 = no limit)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3511
+#: ../plugin/haildb/haildb_engine.cc:3510
 msgid ""
 "Roll back the complete transaction on lock wait timeout, for 4.x "
 "compatibility (disabled by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3514
+#: ../plugin/haildb/haildb_engine.cc:3513
 msgid "How many files at the maximum HailDB keeps open at the same time."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3517
+#: ../plugin/haildb/haildb_engine.cc:3516
 msgid "Number of background read I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3520
+#: ../plugin/haildb/haildb_engine.cc:3519
 msgid "Number of background write I/O threads in HailDB."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3522
+#: ../plugin/haildb/haildb_engine.cc:3521
 msgid ""
 "Disable if you want to reduce the number of messages written to the log "
 "(default: enabled)."
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3525
+#: ../plugin/haildb/haildb_engine.cc:3524
 msgid "Enable SHOW HAILDB STATUS output in the log"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3528
+#: ../plugin/haildb/haildb_engine.cc:3527
 msgid "Count of spin-loop rounds in HailDB mutexes (30 by default)"
 msgstr ""
 
-#: ../plugin/haildb/haildb_engine.cc:3530
+#: ../plugin/haildb/haildb_engine.cc:3529
 msgid ""
 "Use HailDB's internal memory allocator instead of the OS memory allocator"
 msgstr ""
@@ -5017,7 +5017,7 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
-#: ../plugin/mysql_protocol/mysql_protocol.cc:1052
+#: ../plugin/mysql_protocol/mysql_protocol.cc:1040
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
