@@ -19,8 +19,7 @@
 #include <sys/socket.h>
 #include <cerrno>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 /**
  *@brief Virtual I/O layer, only used with TCP/IP sockets at the moment.
@@ -131,11 +130,8 @@ private:
   bool closed;
   int sd;
   int fcntl_mode; /* Buffered fcntl(sd,F_GETFL) */
-  struct sockaddr_storage local; /* Local internet address */
-  struct sockaddr_storage remote; /* Remote internet address */
-  char *read_pos; /* start of unfetched data in the read buffer */
-  char *read_end; /* end of unfetched data */
-
+  sockaddr_storage local; /* Local internet address */
+  sockaddr_storage remote; /* Remote internet address */
 };
 
 } /* namespace drizzle_plugin */

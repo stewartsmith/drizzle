@@ -40,17 +40,14 @@
 
 using namespace std;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 Vio::Vio(int nsd) :
   closed(false),
   sd(nsd),
   fcntl_mode(0),
   local(),
-  remote(),
-  read_pos(NULL),
-  read_end(NULL)
+  remote()
 {
   /*
     We call fcntl() to set the flags and then immediately read them back
@@ -68,8 +65,7 @@ Vio::Vio(int nsd) :
 
 Vio::~Vio()
 {
- if (!closed)
-    close();
+  close();
 }
 
 int Vio::close()
@@ -91,22 +87,12 @@ int Vio::close()
 
 size_t Vio::read(unsigned char* buf, size_t size)
 {
-  size_t r;
-
-  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
-  assert(read_end == read_pos);
-  r= ::read(sd, buf, size);
-
-  return r;
+  return ::read(sd, buf, size);
 }
 
 size_t Vio::write(const unsigned char* buf, size_t size)
 {
-  size_t r;
-
-  r = ::write(sd, buf, size);
-
-  return r;
+  return ::write(sd, buf, size);
 }
 
 int Vio::blocking(bool set_blocking_mode, bool *old_mode)
@@ -140,66 +126,45 @@ int Vio::blocking(bool set_blocking_mode, bool *old_mode)
 int Vio::fastsend()
 {
   int nodelay = 1;
-  int error;
-
-  error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY,
-                    &nodelay, sizeof(nodelay));
-  if (error != 0)
-  {
+  int error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
+  if (error)
     perror("setsockopt");
-  }
-
   return error;
 }
 
 int32_t Vio::keepalive(bool set_keep_alive)
 {
-  int r= 0;
-  uint32_t opt= 0;
-
-  if (set_keep_alive)
-    opt= 1;
-
-  r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
-  if (r != 0)
+  uint32_t opt= set_keep_alive;
+  int r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
+  if (r)
   {
     perror("setsockopt");
-    assert(r == 0);
+    assert(false);
   }
-
   return r;
 }
 
 bool Vio::should_retry() const
 {
   int en = errno;
-  return (en == EAGAIN || en == EINTR ||
-          en == EWOULDBLOCK);
+  return en == EAGAIN || en == EINTR || en == EWOULDBLOCK;
 }
 
 bool Vio::was_interrupted() const
 {
   int en= errno;
-  return (en == EAGAIN || en == EINTR ||
-          en == EWOULDBLOCK || en == ETIMEDOUT);
+  return en == EAGAIN || en == EINTR || en == EWOULDBLOCK || en == ETIMEDOUT;
 }
 
 bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
 {
-  int error;
   char port_buf[NI_MAXSERV];
   socklen_t al = sizeof(remote);
 
-  if (getpeername(sd, (struct sockaddr *) (&remote),
-                  &al) != 0)
-  {
+  if (getpeername(sd, (sockaddr *) (&remote), &al) != 0)
     return true;
-  }
 
-  if ((error= getnameinfo((struct sockaddr *)(&remote),
-                          al,
-                          buf, buflen,
-                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
+  if (getnameinfo((struct sockaddr *)(&remote), al, buf, buflen, port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV))
   {
     return true;
   }
@@ -240,15 +205,14 @@ int Vio::get_fd() const
   return sd;
 }
 
-
 char *Vio::get_read_pos() const
 {
-  return read_pos;
+  return NULL;
 }
 
 char *Vio::get_read_end() const
 {
-  return read_end;
+  return NULL;
 }
 
 } /* namespace drizzle_plugin */
