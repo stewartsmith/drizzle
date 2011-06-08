@@ -59,6 +59,7 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/crashme_tests \
 	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/dbqp_data \
 	${srcdir}/tests/randgen_tests \
