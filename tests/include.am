@@ -62,6 +62,9 @@ EXTRA_DIST += \
 	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/dbqp_data \
 	${srcdir}/tests/randgen_tests \
+	${srcdir}/tests/sql-bench \
+	${srcdir}/tests/sqlbench_tests \
+	${srcdir}/tetss/sysbench_tests \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -78,6 +81,8 @@ EXTRA_DIST += \
 	${srcdir}/tests/lib/My/*.pm \
 	${srcdir}/tests/lib/randgen/*.py \
         ${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sqlbench/*py \
+	${srcdir}/tests/lib/sysbench/*py \
 	${srcdir}/tests/lib/sys_mgmt/*py \
 	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind

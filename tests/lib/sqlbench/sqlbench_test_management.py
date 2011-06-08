@@ -43,13 +43,14 @@ class testCase:
     def __init__( self, system_manager, name=None
                 , fullname = None, server_requirements=[[]]
                 , comment=None, test_command=None, cnf_path=None
+                , suitename = 'sqlbench_tests'
                 , debug=False ):
         self.system_manager = system_manager
         self.logging = self.system_manager.logging
         self.skip_keys = ['system_manager','logging']
         self.name = name
         self.fullname = fullname
-        self.suitename = 'sqlbench_tests'
+        self.suitename = suitename
         self.master_sh = None
         self.comment = comment
         self.server_requirements = server_requirements
@@ -149,6 +150,40 @@ class testManager(test_management.testManager):
         for option_set in option_sets:
             server_reqs.append([option_set[1:-1].strip()])
         return server_reqs
+
+    def record_test_result(self, test_case, test_status, output, exec_time):
+        """ Accept the results of an executed testCase for further
+            processing.
+ 
+        """
+        if test_status not in self.executed_tests:
+            self.executed_tests[test_status] = [test_case]
+        else:
+            self.executed_tests[test_status].append(test_case)
+        # report
+        self.logging.test_report( test_case.fullname, test_status
+                                , str(exec_time), output
+                                , report_output= True)
+
+class crashmeTestManager(testManager):
+    """Deals with scanning test directories, gathering test cases, and 
+       collecting per-test information (opt files, etc) for use by the
+       test-runner
+
+    """
+
+    def __init__(self, verbose, debug, default_engine, dotest, skiptest
+                , reorder, suitelist, suitepaths, system_manager
+                , test_cases, mode):
+        super(testManager, self).__init__( verbose, debug, default_engine
+                                         , dotest, skiptest, reorder
+                                         , suitelist, suitepaths
+                                         , system_manager, test_cases, mode)
+        self.suitepaths = [os.path.join(self.testdir,'crashme_tests')]
+        if suitelist is None:
+            self.suitelist = ['main']
+        else:
+            self.suitelist = suitelist
 
     def record_test_result(self, test_case, test_status, output, exec_time):
         """ Accept the results of an executed testCase for further
