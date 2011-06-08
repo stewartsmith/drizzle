@@ -9,6 +9,7 @@ client/drizzletest.cc
 drizzled/cursor.cc
 drizzled/drizzled.cc
 drizzled/error.cc
+drizzled/execute/parser.cc
 drizzled/gettext.h
 drizzled/ha_commands.cc
 drizzled/identifier/catalog.cc
