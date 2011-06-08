@@ -54,9 +54,6 @@ class ClientDrizzleProtocol: public ClientMySQLProtocol
 public:
   ClientDrizzleProtocol(int fd, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, true, set_counters) {}
 
-  static std::vector<std::string> drizzle_admin_ip_addresses;
-  static void drizzle_compose_ip_addresses(std::vector<std::string> options);
-  bool isAdminAllowed(void);
 };
 
 } /* namespace drizzle_protocol */
