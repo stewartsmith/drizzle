@@ -115,7 +115,6 @@ int ClientMySQLProtocol::getFileDescriptor()
 
 bool ClientMySQLProtocol::isConnected()
 {
-  assert(net.vio); // Olaf: Can net.vio be NULL?
   return net.vio != 0;
 }
 
@@ -123,7 +122,7 @@ bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)
     return false;
-  bool ret= drizzleclient_net_write(&net, (unsigned char*) packet.ptr(), packet.length());
+  bool ret= drizzleclient_net_write(&net, packet.ptr(), packet.length());
   packet.length(0);
   return ret;
 }

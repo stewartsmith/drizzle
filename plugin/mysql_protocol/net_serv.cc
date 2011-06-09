@@ -62,7 +62,7 @@ using namespace drizzled;
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
 const char  *not_error_sqlstate= "00000";
 
-static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
+static bool net_write_buff(NET*, const void*, uint32_t len);
 static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
 
 /** Init with packet info. */
@@ -170,8 +170,9 @@ bool drizzleclient_net_flush(NET *net)
 */
 
 bool
-drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
+drizzleclient_net_write(NET* net, const void* packet0, size_t len)
 {
+  const unsigned char* packet= reinterpret_cast<const unsigned char*>(packet0);
   unsigned char buff[NET_HEADER_SIZE];
   if (unlikely(!net->vio)) /* nowhere to write */
     return 0;
@@ -185,8 +186,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
     const uint32_t z_size = MAX_PACKET_LENGTH;
     int3store(buff, z_size);
     buff[3]= (unsigned char) net->pkt_nr++;
-    if (net_write_buff(net, buff, NET_HEADER_SIZE) ||
-        net_write_buff(net, packet, z_size))
+    if (net_write_buff(net, buff, NET_HEADER_SIZE) || net_write_buff(net, packet, z_size))
       return 1;
     packet += z_size;
     len-=     z_size;
@@ -194,9 +194,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
   /* Write last packet */
   int3store(buff,len);
   buff[3]= (unsigned char) net->pkt_nr++;
-  if (net_write_buff(net, buff, NET_HEADER_SIZE))
-    return 1;
-  return net_write_buff(net,packet,len) ? 1 : 0;
+  return net_write_buff(net, buff, NET_HEADER_SIZE) || net_write_buff(net, packet, len);
 }
 
 /**
@@ -259,9 +257,9 @@ drizzleclient_net_write_command(NET *net,unsigned char command,
   }
   int3store(buff,length);
   buff[3]= (unsigned char) net->pkt_nr++;
-  return((net_write_buff(net, buff, header_size) ||
+  return (net_write_buff(net, buff, header_size) ||
           (head_len && net_write_buff(net, header, head_len)) ||
-          net_write_buff(net, packet, len) || drizzleclient_net_flush(net)) ? 1 : 0 );
+          net_write_buff(net, packet, len) || drizzleclient_net_flush(net));
 }
 
 /**
@@ -291,8 +289,9 @@ drizzleclient_net_write_command(NET *net,unsigned char command,
 */
 
 static bool
-net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
+net_write_buff(NET* net, const void* packet0, uint32_t len)
 {
+  const unsigned char* packet= reinterpret_cast<const unsigned char*>(packet0);
   uint32_t left_length;
   if (net->compress && net->max_packet > MAX_PACKET_LENGTH)
     left_length= MAX_PACKET_LENGTH - (net->write_pos - net->buff);

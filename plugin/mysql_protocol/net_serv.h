@@ -64,7 +64,7 @@ typedef struct st_net
 
 void drizzleclient_net_end(NET*);
 bool drizzleclient_net_flush(NET*);
-bool drizzleclient_net_write(NET*, const unsigned char *packet, size_t len);
+bool drizzleclient_net_write(NET*, const void*, size_t);
 bool drizzleclient_net_write_command(NET*, unsigned char command,
                                      const unsigned char *header, size_t head_len,
                                      const unsigned char *packet, size_t len);
