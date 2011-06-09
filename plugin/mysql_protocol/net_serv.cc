@@ -75,7 +75,7 @@ void drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
 
   net->buff=(unsigned char*) malloc((size_t) net->max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
   net->buff_end=net->buff+net->max_packet;
-  net->error=0; net->return_status=0;
+  net->error=0;
   net->pkt_nr=net->compress_pkt_nr=0;
   net->write_pos=net->read_pos = net->buff;
   net->last_error[0]=0;

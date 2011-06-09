@@ -43,7 +43,6 @@ typedef struct st_net
   unsigned int write_timeout;
   unsigned int read_timeout;
   unsigned int retry_count;
-  unsigned int *return_status;
   char save_char;
   bool compress;
   /*

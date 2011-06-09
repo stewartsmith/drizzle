@@ -580,7 +580,7 @@ void ClientMySQLProtocol::store(Field *from)
 
   from->val_str_internal(&str);
 
-  netStoreData((const unsigned char *)str.ptr(), str.length());
+  netStoreData(str.ptr(), str.length());
 }
 
 void ClientMySQLProtocol::store()
@@ -593,40 +593,36 @@ void ClientMySQLProtocol::store()
 void ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
-  netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, (internal::int10_to_str(from, buff, -10) - buff));
 }
 
 void ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
-  netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, (size_t) (internal::int10_to_str(from, buff, 10) - buff));
 }
 
 void ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
-  netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
 }
 
 void ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
-  netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
 }
 
 void ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
-  netStoreData((unsigned char*) buffer->ptr(), buffer->length());
+  netStoreData(buffer->ptr(), buffer->length());
 }
 
 void ClientMySQLProtocol::store(const char *from, size_t length)
 {
-  netStoreData((const unsigned char *)from, length);
+  netStoreData(from, length);
 }
 
 bool ClientMySQLProtocol::wasAborted()
@@ -641,8 +637,6 @@ bool ClientMySQLProtocol::haveError()
 
 bool ClientMySQLProtocol::checkConnection()
 {
-  uint32_t pkt_len= 0;
-  char *end;
   char scramble[SCRAMBLE_LENGTH];
   identifier::user::mptr user_identifier= identifier::User::make_shared();
 
@@ -663,6 +657,8 @@ bool ClientMySQLProtocol::checkConnection()
   }
   drizzleclient_net_keepalive(&net, true);
 
+  char* end;
+  uint32_t pkt_len= 0;
   uint32_t server_capabilites;
   {
     /* buff[] needs to big enough to hold the server_version variable */
@@ -744,8 +740,6 @@ bool ClientMySQLProtocol::checkConnection()
     my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
-
-  net.return_status= &session->server_status;
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;
