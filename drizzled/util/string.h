@@ -88,26 +88,26 @@ public:
     _bytes.resize(1);
   }
 
-  const char *c_str() const
+  const char* data() const
   {
     return &_bytes[0];
   }
 
-  char *c_str()
+  char* data()
   {
     return &_bytes[0];
   }
 
   void assign(const size_t repeat, const char arg)
   {
-    _bytes.resize(repeat +1); // inserts NULL at end
-    memset(&_bytes[0], int(arg), repeat);
+    _bytes.resize(repeat + 1); // inserts \0 at end
+    memset(&_bytes[0], arg, repeat);
     _bytes[repeat]= 0;
   }
 
   void assign(const char *arg, const size_t arg_size)
   {
-    _bytes.resize(arg_size +1); // +1 for NULL
+    _bytes.resize(arg_size + 1); // +1 for \0
     memcpy(&_bytes[0], arg, arg_size);
     _bytes[arg_size]= 0;
   }
@@ -120,9 +120,9 @@ public:
     size_t original_size= size();
     if (original_size)
     {
-      _bytes.resize(original_size +arg_size +1); // inserts NULL since string will already have a NULL
+      _bytes.resize(original_size + arg_size + 1); // inserts NULL since string will already have a NULL
       memcpy(&_bytes[original_size], arg, arg_size);
-      _bytes[original_size +arg_size]= 0;
+      _bytes[original_size + arg_size]= 0;
     }
     else
     {

@@ -63,9 +63,9 @@ public:
     while(not to_execute.empty())
     {
       Queue::value_type next= to_execute.front();
-      packet_buffer.assign(next.c_str(), next.size());
+      packet_buffer= next;
 
-      *packet= packet_buffer.c_str();
+      *packet= packet_buffer.data();
       packet_length= next.size();
 
       to_execute.pop();
@@ -77,7 +77,7 @@ public:
     {
       packet_buffer.clear();
       packet_length= 1;
-      *packet= packet_buffer.c_str();
+      *packet= packet_buffer.data();
       is_dead= true;
 
       return true;
@@ -108,27 +108,27 @@ public:
   void pushSQL(const std::string &arg)
   {
     ::drizzled::error_t err_msg;
-    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
+    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.data(), arg.size(), err_msg);
     std::vector<std::string> parsed_tokens= context->start();
 
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
       byte.append(drizzle_literal_parameter("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
     
-    for (vector<string>::iterator iter= parsed_tokens.begin(); iter != parsed_tokens.end(); ++iter)
+    BOOST_FOREACH(const string& iter, parsed_tokens)
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
-      byte.append(iter->c_str(), iter->size());
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
+      byte.append(iter.data(), iter.size());
       to_execute.push(byte);
     }
 
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
       byte.append(drizzle_literal_parameter("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
