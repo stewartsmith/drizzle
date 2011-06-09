@@ -916,9 +916,6 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   }
 }
 
-static ListenMySQLProtocol* listen_obj= NULL;
-plugin::Create_function<MySQLPassword>* mysql_password= NULL;
-
 static int init(drizzled::module::Context &context)
 {  
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
@@ -928,10 +925,9 @@ static int init(drizzled::module::Context &context)
 
   const module::option_map &vm= context.getOptions();
 
-  mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
-  context.add(mysql_password);
+  context.add(new plugin::Create_function<MySQLPassword>(MySQLPasswordName));
 
-  listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
+  ListenMySQLProtocol* listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
   listen_obj->addCountersToTable();
   context.add(listen_obj); 
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
