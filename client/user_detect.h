@@ -27,36 +27,26 @@
 class UserDetect
 {
   public:
-    const char* getUser() { return user; }
+    const char* getUser() { return user.empty() ? NULL : &user[0]; }
 
-    UserDetect() :
-      user(NULL)
+    UserDetect()
     {
       long pw_len= sysconf(_SC_GETPW_R_SIZE_MAX);
       struct passwd pw_struct;
       struct passwd* pw_tmp_struct;
       char *pw_buffer= new char[pw_len];
 
-      if (getpwuid_r(geteuid(), &pw_struct, pw_buffer, pw_len, &pw_tmp_struct) != 0)
+      if (getpwuid_r(geteuid(), &pw_struct, pw_buffer, pw_len, &pw_tmp_struct) == 0)
       {
-        user= NULL;
-      }
-      else
-      {
-        user= new char[strlen(pw_struct.pw_name)+1];
-        strcpy(user, pw_struct.pw_name);
+        user.resize(strlen(pw_struct.pw_name)+1);
+        strcpy(&user[0], pw_struct.pw_name);
       }
 
       delete[] pw_buffer;
     }
 
-    ~UserDetect()
-    {
-      delete[] user;
-    }
-
   private:
-    char* user;
+    std::vector<char> user;
 };
 
 #endif /* CLIENT_USER_DETECT_H */
