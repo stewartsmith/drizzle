@@ -62,7 +62,6 @@ typedef struct st_net
   void *extension;
 } NET;
 
-void drizzleclient_net_init(NET*, Vio* vio, uint32_t buffer_length);
 void drizzleclient_net_end(NET*);
 bool drizzleclient_net_flush(NET*);
 bool drizzleclient_net_write(NET*, const unsigned char *packet, size_t len);

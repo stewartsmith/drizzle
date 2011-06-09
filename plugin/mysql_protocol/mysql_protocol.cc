@@ -115,6 +115,7 @@ int ClientMySQLProtocol::getFileDescriptor()
 
 bool ClientMySQLProtocol::isConnected()
 {
+  assert(net.vio); // Olaf: Can net.vio be NULL?
   return net.vio != 0;
 }
 

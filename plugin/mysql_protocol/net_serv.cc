@@ -67,9 +67,9 @@ static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, s
 
 /** Init with packet info. */
 
-void drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
+void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
 {
-  net->vio = vio;
+  net->vio = new Vio(sock);
   net->max_packet= (uint32_t) buffer_length;
   net->max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
 
@@ -84,16 +84,11 @@ void drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
   net->last_errno=0;
   net->unused= 0;
 
-  if (vio != 0)                    /* If real connection */
+  if (net->vio)                    /* If real connection */
   {
-    net->fd  = vio->get_fd();            /* For perl DBI/DBD */
-    vio->fastsend();
+    net->fd= net->vio->get_fd();            /* For perl DBI/DBD */
+    net->vio->fastsend();
   }
-}
-
-void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
-{
-  drizzleclient_net_init(net, new Vio(sock), buffer_length);
 }
 
 void drizzleclient_net_end(NET *net)
