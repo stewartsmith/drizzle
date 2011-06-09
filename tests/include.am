@@ -65,7 +65,7 @@ EXTRA_DIST += \
 	${srcdir}/tests/randgen_tests \
 	${srcdir}/tests/sql-bench \
 	${srcdir}/tests/sqlbench_tests \
-	${srcdir}/tetss/sysbench_tests \
+	${srcdir}/tests/sysbench_tests \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
