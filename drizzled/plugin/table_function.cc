@@ -21,7 +21,7 @@
 
 #include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>

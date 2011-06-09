@@ -21,8 +21,7 @@
 
 #include <config.h>
 #include <drizzled/message/table.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/catalog/local.h>
 
 namespace drizzled {

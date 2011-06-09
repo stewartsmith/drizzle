@@ -21,6 +21,7 @@
 #define CLIENT_SERVER_DETECT_H
 
 #include <boost/regex.hpp>
+#include <iostream>
 
 class ServerDetect
 {
@@ -40,17 +41,24 @@ class ServerDetect
     {
       boost::match_flag_type flags = boost::match_default;
 
-      boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
-      boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
+      boost::regex mysql_regex("^([3-9]\\.[0-9]+\\.[0-9]+)");
+      boost::regex drizzle_regex("^(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
 
       version= drizzle_con_server_version(connection);
 
-      if (regex_search(version, mysql_regex, flags))
-        type= SERVER_MYSQL_FOUND;
-      else if (regex_search(version, drizzle_regex, flags))
+      if (regex_search(version, drizzle_regex, flags))
+      {
         type= SERVER_DRIZZLE_FOUND;
+      }
+      else if (regex_search(version, mysql_regex, flags))
+      {
+        type= SERVER_MYSQL_FOUND;
+      }
       else
-        type= SERVER_UNKNOWN_FOUND;
+      {
+        std::cerr << "Server version not detectable. Assuming MySQL." << std::endl;
+        type= SERVER_MYSQL_FOUND;
+      }
     }
 
   private:

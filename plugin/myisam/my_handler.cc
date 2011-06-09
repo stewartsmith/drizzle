@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <plugin/myisam/my_handler.h>
 #include <drizzled/internal/my_sys.h>

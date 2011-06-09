@@ -169,6 +169,7 @@ class testExecutor(test_execution.testExecutor):
                    ,  'MASTER_MYPORT': str(self.master_server.master_port)
                    ,  'MC_PORT': str(self.master_server.mc_port)
                    ,  'PBMS_PORT': str(self.master_server.pbms_port)
+                   ,  'JSON_SERVER_PORT': str(self.master_server.json_server_port)
                    ,  'RABBITMQ_NODE_PORT': str(self.master_server.rabbitmq_node_port)
                    ,  'DRIZZLE_TCP_PORT': str(self.master_server.drizzle_tcp_port)
                    ,  'EXE_DRIZZLE': self.master_server.drizzle_client

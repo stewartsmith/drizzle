@@ -28,8 +28,6 @@ public:
     e_none = 0,
     e_match_full = 1,
     e_dont_complete = 2,
-    e_allow_int = 4,
-    e_use_comma = 8,
 
     e_default = 3
   };

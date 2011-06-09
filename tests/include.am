@@ -135,6 +135,9 @@ test-mem:
 test-drizzle: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
 
+gdb-drizzled: 
+	./libtool --mode=execute gdb ./drizzled/drizzled
+
 test-valgrind: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
 

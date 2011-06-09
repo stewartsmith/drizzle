@@ -32,13 +32,14 @@
 #include <drizzled/show.h>
 #include <drizzled/cursor.h>
 #include <drizzled/abort_exception.h>
+#include <drizzled/util/find_ptr.h>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 module::Registry::Registry() :
   module_registry_(),
@@ -57,78 +58,50 @@ module::Registry::~Registry()
    * This can be used if shutdown code references
    * other plugins.
    */
-  plugin_iter= plugin_registry.begin();
-  while (plugin_iter != plugin_registry.end())
-  {
-    (*plugin_iter).second->shutdownPlugin();
-    ++plugin_iter;
-  }
+  BOOST_FOREACH(plugin::Plugin::map::reference it, plugin_registry)
+    it.second->shutdownPlugin();
 
   plugin::Plugin::vector error_plugins;
-  plugin_iter= plugin_registry.begin();
-  while (plugin_iter != plugin_registry.end())
+  BOOST_FOREACH(plugin::Plugin::map::reference it, plugin_registry)
   {
-    if ((*plugin_iter).second->removeLast())
-    {
-      error_plugins.push_back((*plugin_iter).second);
-    }
+    if (it.second->removeLast())
+      error_plugins.push_back(it.second);
     else
-    {
-      delete (*plugin_iter).second;
-    }
-    ++plugin_iter;
+      delete it.second;
   }
 
-  for (plugin::Plugin::vector::iterator iter= error_plugins.begin();
-       iter != error_plugins.end(); iter++)
-  {
-    delete *iter;
-  }
+  BOOST_FOREACH(plugin::Plugin::vector::reference it, error_plugins)
+    delete it;
 
   plugin_registry.clear();
 
 #if 0
+  /*
   @TODO When we delete modules here, we segfault on a bad string. Why?
-   ModuleMap::iterator module_iter= module_registry_.begin();
+   */
 
-  while (module_iter != module_registry_.end())
-  {
-    delete (*module_iter).second;
-    ++module_iter;
-  }
+  BOOST_FOREACH(ModuleMap::reference it, module_registry_)
+    delete it.second;
   module_registry_.clear();
 #endif
-  LibraryMap::iterator library_iter= library_registry_.begin();
-  while (library_iter != library_registry_.end())
-  {
-    delete (*library_iter).second;
-    ++library_iter;
-  }
+  BOOST_FOREACH(LibraryMap::reference it, library_registry_)
+    delete it.second;
   library_registry_.clear();
 }
 
 void module::Registry::shutdown()
 {
-  module::Registry& registry= singleton();
-  delete &registry;
+  delete &singleton();
 }
 
-module::Module *module::Registry::find(std::string name)
+module::Module* module::Registry::find(const std::string& name)
 {
-  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-
-  ModuleMap::iterator map_iter;
-  map_iter= module_registry_.find(name);
-  if (map_iter != module_registry_.end())
-    return (*map_iter).second;
-  return NULL;
+  return find_ptr2(module_registry_, boost::to_lower_copy(name));
 }
 
 void module::Registry::add(module::Module *handle)
 {
-  std::string add_str(handle->getName());
-  transform(add_str.begin(), add_str.end(),
-            add_str.begin(), ::tolower);
+  std::string add_str(boost::to_lower_copy(handle->getName()));
 
   module_registry_[add_str]= handle;
 
@@ -137,45 +110,23 @@ void module::Registry::add(module::Module *handle)
   depend_graph_->properties(handle_vertex)= vertex_info;
 
   handle->setVertexHandle(new VertexHandle(handle_vertex));
-
 }
 
 void module::Registry::remove(module::Module *handle)
 {
-  std::string remove_str(handle->getName());
-  std::transform(remove_str.begin(), remove_str.end(),
-                 remove_str.begin(), ::tolower);
-
-  module_registry_.erase(remove_str);
-}
-
-void module::Registry::copy(plugin::Plugin::vector &arg)
-{    
-  arg.reserve(plugin_registry.size());
-
-  std::transform(plugin_registry.begin(),
-                 plugin_registry.end(),
-                 std::back_inserter(arg),
-                 boost::bind(&plugin::Plugin::map::value_type::second, _1) );
-  assert(arg.size() == plugin_registry.size());
+  module_registry_.erase(boost::to_lower_copy(handle->getName()));
 }
 
 void module::Registry::buildDeps()
 {
-  ModuleMap::iterator map_iter= module_registry_.begin();
-  while (map_iter != module_registry_.end())
+  BOOST_FOREACH(ModuleMap::reference map_iter, module_registry_)
   {
-    Module *handle= (*map_iter).second;
-    Module::Depends::const_iterator handle_deps= handle->getDepends().begin();
-    while (handle_deps != handle->getDepends().end())
+    Module* handle= map_iter.second;
+    BOOST_FOREACH(Module::Depends::const_reference handle_deps, handle->getDepends())
     {
-      std::string dep_str((*handle_deps));
-      transform(dep_str.begin(), dep_str.end(),
-                dep_str.begin(), ::tolower);
-
+      std::string dep_str(boost::to_lower_copy(handle_deps));
       bool found_dep= false;
-      vertex_iter it= boost::vertices(depend_graph_->getGraph()).first;
-      while (it != vertices(depend_graph_->getGraph()).second)
+      for (vertex_iter it= boost::vertices(depend_graph_->getGraph()).first; it != vertices(depend_graph_->getGraph()).second; it++)
       {
         if (depend_graph_->properties(*it).getName() == dep_str)
         {
@@ -183,7 +134,6 @@ void module::Registry::buildDeps()
           add_edge(handle->getVertexHandle()->getVertexDesc(), *it, depend_graph_->getGraph());
           break;
         }
-        ++it;
       }
       if (not found_dep)
       {
@@ -194,10 +144,7 @@ void module::Registry::buildDeps()
                       dep_str.c_str(), dep_str.c_str());
         DRIZZLE_ABORT;
       }
-
-      ++handle_deps;
     }
-    ++map_iter;
   }
   deps_built_= true;
 }
@@ -205,26 +152,15 @@ void module::Registry::buildDeps()
 module::Registry::ModuleList module::Registry::getList()
 {
   if (not deps_built_)
-  {
     buildDeps();
-  }
-
-  std::vector<module::Module *> plugins;
-
   VertexList vertex_list;
-
   boost::topological_sort(depend_graph_->getGraph(), std::back_inserter(vertex_list));
-
-  for (VertexList::iterator i = vertex_list.begin();
-       i != vertex_list.end(); ++i)
+  ModuleList plugins;
+  BOOST_FOREACH(VertexList::reference it, vertex_list)
   {
-    Module *mod_ptr= depend_graph_->properties(*i).getModule();
-    if (mod_ptr != NULL)
-    {
+    if (Module* mod_ptr= depend_graph_->properties(it).getModule())
       plugins.push_back(mod_ptr);
-    }  
   }
-
   return plugins;
 }
 
@@ -234,25 +170,21 @@ module::Library *module::Registry::addLibrary(const std::string &plugin_name,
 
   /* If this dll is already loaded just return it */
   module::Library *library= findLibrary(plugin_name);
-  if (library != NULL)
-  {
+  if (library)
     return library;
-  }
 
   library= module::Library::loadLibrary(plugin_name, builtin);
-  if (library != NULL)
+  if (library)
   {
     /* Add this dll to the map */
     library_registry_.insert(make_pair(plugin_name, library));
   }
-
   return library;
 }
 
 void module::Registry::removeLibrary(const std::string &plugin_name)
 {
-  std::map<std::string, module::Library *>::iterator iter=
-    library_registry_.find(plugin_name);
+  LibraryMap::iterator iter= library_registry_.find(plugin_name);
   if (iter != library_registry_.end())
   {
     library_registry_.erase(iter);
@@ -262,10 +194,7 @@ void module::Registry::removeLibrary(const std::string &plugin_name)
 
 module::Library *module::Registry::findLibrary(const std::string &plugin_name) const
 {
-  LibraryMap::const_iterator iter= library_registry_.find(plugin_name);
-  if (iter != library_registry_.end())
-    return iter->second;
-  return NULL;
+  return find_ptr2(library_registry_, plugin_name);
 }
 
 void module::Registry::shutdownModules()

@@ -631,7 +631,7 @@ drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
       con= drizzle_con_create(drizzle, con);
       if (con == NULL)
       {
-        (void)close(fd);
+        (void)closesocket(fd);
         *ret_ptr= DRIZZLE_RETURN_MEMORY;
         return NULL;
       }
@@ -639,7 +639,7 @@ drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
       *ret_ptr= drizzle_con_set_fd(con, fd);
       if (*ret_ptr != DRIZZLE_RETURN_OK)
       {
-        (void)close(fd);
+        (void)closesocket(fd);
         return NULL;
       }
 
@@ -676,6 +676,7 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
                        const char *format, ...)
 {
   size_t size;
+  int written;
   char *ptr;
   char log_buffer[DRIZZLE_MAX_ERROR_SIZE];
   va_list args;
@@ -688,16 +689,17 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
   ptr++;
 
   va_start(args, format);
-  size+= (size_t)vsnprintf(ptr, DRIZZLE_MAX_ERROR_SIZE - size, format, args);
+  written= vsnprintf(ptr, DRIZZLE_MAX_ERROR_SIZE - size, format, args);
   va_end(args);
 
-  if (drizzle->log_fn == NULL)
-  {
-    if (size >= DRIZZLE_MAX_ERROR_SIZE)
-      size= DRIZZLE_MAX_ERROR_SIZE - 1;
+  if (written < 0) size= DRIZZLE_MAX_ERROR_SIZE;
+  else size+= written;
+  if (size >= DRIZZLE_MAX_ERROR_SIZE)
+    size= DRIZZLE_MAX_ERROR_SIZE - 1;
+  log_buffer[size]= 0;
 
+  if (drizzle->log_fn == NULL)
     memcpy(drizzle->last_error, log_buffer, size + 1);
-  }
   else
     drizzle->log_fn(log_buffer, DRIZZLE_VERBOSE_ERROR, drizzle->log_context);
 }
@@ -716,6 +718,7 @@ void drizzle_log(drizzle_st *drizzle, drizzle_verbose_t verbose,
   else
   {
     vsnprintf(log_buffer, DRIZZLE_MAX_ERROR_SIZE, format, args);
+    log_buffer[DRIZZLE_MAX_ERROR_SIZE-1]= 0;
     drizzle->log_fn(log_buffer, verbose, drizzle->log_context);
   }
 }

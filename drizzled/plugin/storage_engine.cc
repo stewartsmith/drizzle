@@ -45,12 +45,10 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/xid.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
-#include <drizzled/internal_error_handler.h>
 #include <drizzled/table/shell.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/key.h>
@@ -61,14 +59,11 @@
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
-namespace drizzled
-{
+namespace drizzled {
+namespace plugin {
 
-namespace plugin
-{
-
-static EngineVector vector_of_engines;
-static EngineVector vector_of_schema_engines;
+static EngineVector g_engines;
+static EngineVector g_schema_engines;
 
 const std::string DEFAULT_STRING("default");
 const std::string UNKNOWN_STRING("UNKNOWN");
@@ -78,7 +73,7 @@ static std::set<std::string> set_of_table_definition_ext;
 
 EngineVector &StorageEngine::getSchemaEngines()
 {
-  return vector_of_schema_engines;
+  return g_schema_engines;
 }
 
 StorageEngine::StorageEngine(const std::string name_arg,
@@ -99,25 +94,14 @@ void StorageEngine::setTransactionReadWrite(Session& session)
   statement_ctx.markModifiedNonTransData();
 }
 
-
 int StorageEngine::renameTable(Session &session, const identifier::Table &from, const identifier::Table &to)
 {
-  int error;
   setTransactionReadWrite(session);
-
   if (unlikely(plugin::EventObserver::beforeRenameTable(session, from, to)))
-  {
+    return ER_EVENT_OBSERVER_PLUGIN;
+  int error= doRenameTable(session, from, to);
+  if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
     error= ER_EVENT_OBSERVER_PLUGIN;
-  }
-  else
-  {
-    error =  doRenameTable(session, from, to);
-    if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
-    {
-      error= ER_EVENT_OBSERVER_PLUGIN;
-    }
-  }
-  
   return error;
 }
 
@@ -137,7 +121,6 @@ int StorageEngine::renameTable(Session &session, const identifier::Table &from, 
     !0  Error
 */
 int StorageEngine::doDropTable(Session&, const identifier::Table &identifier)
-                               
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -164,8 +147,7 @@ int StorageEngine::doDropTable(Session&, const identifier::Table &identifier)
 
 bool StorageEngine::addPlugin(StorageEngine *engine)
 {
-
-  vector_of_engines.push_back(engine);
+  g_engines.push_back(engine);
 
   if (engine->getTableDefinitionFileExtension().length())
   {
@@ -174,51 +156,30 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
   }
 
   if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
-    vector_of_schema_engines.push_back(engine);
+    g_schema_engines.push_back(engine);
 
   return false;
 }
 
 void StorageEngine::removePlugin(StorageEngine *)
 {
-  if (shutdown_has_begun == false)
-  {
-    vector_of_engines.clear();
-    vector_of_schema_engines.clear();
-
-    shutdown_has_begun= true;
-  }
+  if (shutdown_has_begun)
+    return;
+  shutdown_has_begun= true;
+  g_engines.clear();
+  g_schema_engines.clear();
 }
-
-class FindEngineByName
-  : public std::unary_function<StorageEngine *, bool>
-{
-  const std::string &predicate;
-
-public:
-  explicit FindEngineByName(const std::string &target_arg) :
-    predicate(target_arg)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    return boost::iequals(engine->getName(), predicate);
-  }
-};
 
 StorageEngine *StorageEngine::findByName(const std::string &predicate)
 {
-  EngineVector::iterator iter= std::find_if(vector_of_engines.begin(),
-                                            vector_of_engines.end(),
-                                            FindEngineByName(predicate));
-  if (iter != vector_of_engines.end())
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    StorageEngine *engine= *iter;
-    if (engine->is_user_selectable())
-      return engine;
+    if (not boost::iequals(it->getName(), predicate))
+      continue;
+    if (it->is_user_selectable())
+      return it;
+    break;
   }
-
   return NULL;
 }
 
@@ -226,60 +187,32 @@ StorageEngine *StorageEngine::findByName(Session& session, const std::string &pr
 {
   if (boost::iequals(predicate, DEFAULT_STRING))
     return session.getDefaultStorageEngine();
-
-  EngineVector::iterator iter= std::find_if(vector_of_engines.begin(),
-                                            vector_of_engines.end(),
-                                            FindEngineByName(predicate));
-  if (iter != vector_of_engines.end())
-  {
-    StorageEngine *engine= *iter;
-    if (engine->is_user_selectable())
-      return engine;
-  }
-
-  return NULL;
+  return findByName(predicate);
 }
-
-class StorageEngineCloseConnection : public std::unary_function<StorageEngine *, void>
-{
-  Session *session;
-public:
-  StorageEngineCloseConnection(Session *session_arg) : session(session_arg) {}
-  /*
-    there's no need to rollback here as all transactions must
-    be rolled back already
-  */
-  inline result_type operator() (argument_type engine)
-  {
-    if (*session->getEngineData(engine))
-      engine->close_connection(session);
-  }
-};
 
 /**
   @note
     don't bother to rollback here, it's done already
 */
-void StorageEngine::closeConnection(Session* session)
+void StorageEngine::closeConnection(Session& session)
 {
-  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
-                StorageEngineCloseConnection(session));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+  {
+    if (*session.getEngineData(it))
+      it->close_connection(&session);
+  }
 }
 
 bool StorageEngine::flushLogs(StorageEngine *engine)
 {
-  if (engine == NULL)
+  if (not engine)
   {
-    if (std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
-                     std::mem_fun(&StorageEngine::flush_logs))
-        != vector_of_engines.begin())
+    if (std::find_if(g_engines.begin(), g_engines.end(), std::mem_fun(&StorageEngine::flush_logs))
+        != g_engines.begin()) // Shouldn't this be .end()?
       return true;
   }
-  else
-  {
-    if (engine->flush_logs())
-      return true;
-  }
+  else if (engine->flush_logs())
+    return true;
   return false;
 }
 
@@ -311,23 +244,6 @@ public:
   }
 };
 
-class StorageEngineDoesTableExist: public std::unary_function<StorageEngine *, bool>
-{
-  Session& session;
-  const identifier::Table &identifier;
-
-public:
-  StorageEngineDoesTableExist(Session& session_arg, const identifier::Table &identifier_arg) :
-    session(session_arg), 
-    identifier(identifier_arg) 
-  { }
-
-  result_type operator() (argument_type engine)
-  {
-    return engine->doDoesTableExist(session, identifier);
-  }
-};
-
 /**
   Utility method which hides some of the details of getTableDefinition()
 */
@@ -335,22 +251,14 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
                                            const identifier::Table &identifier,
                                            bool include_temporary_tables)
 {
-  if (include_temporary_tables)
+  if (include_temporary_tables && session.open_tables.doDoesTableExist(identifier))
+      return true;
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    if (session.open_tables.doDoesTableExist(identifier))
+    if (it->doDoesTableExist(session, identifier))
       return true;
   }
-
-  EngineVector::iterator iter=
-    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
-                 StorageEngineDoesTableExist(session, identifier));
-
-  if (iter == vector_of_engines.end())
-  {
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifier::Table&)
@@ -364,13 +272,10 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
                                                           const identifier::Table& identifier,
                                                           bool include_temporary_tables)
 {
-  drizzled::error_t error;
-  error= static_cast<drizzled::error_t>(ENOENT);
-
+  drizzled::error_t error= static_cast<drizzled::error_t>(ENOENT);
   if (include_temporary_tables)
   {
-    Table *table= session.open_tables.find_temporary_table(identifier);
-    if (table)
+    if (Table *table= session.open_tables.find_temporary_table(identifier))
     {
       return message::table::shared_ptr(new message::Table(*table->getShare()->getTableMessage()));
     }
@@ -384,10 +289,10 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
 
   message::Table message;
   EngineVector::iterator iter=
-    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+    std::find_if(g_engines.begin(), g_engines.end(),
                  StorageEngineGetTableDefinition(session, identifier, message, error));
 
-  if (iter == vector_of_engines.end())
+  if (iter == g_engines.end())
   {
     return message::table::shared_ptr();
   }
@@ -396,36 +301,6 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
   drizzled::message::Cache::singleton().insert(identifier, table_message);
 
   return table_message;
-}
-
-/**
-  An interceptor to hijack the text of the error message without
-  setting an error in the thread. We need the text to present it
-  in the form of a warning to the user.
-*/
-
-class Ha_delete_table_error_handler: public Internal_error_handler
-{
-public:
-  Ha_delete_table_error_handler() : Internal_error_handler() {}
-  virtual bool handle_error(drizzled::error_t sql_errno,
-                            const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level,
-                            Session *session);
-  char buff[DRIZZLE_ERRMSG_SIZE];
-};
-
-
-bool
-Ha_delete_table_error_handler::
-handle_error(drizzled::error_t ,
-             const char *message,
-             DRIZZLE_ERROR::enum_warning_level ,
-             Session *)
-{
-  /* Grab the error message */
-  strncpy(buff, message, sizeof(buff)-1);
-  return true;
 }
 
 class DropTableByIdentifier: public std::unary_function<EngineVector::value_type, bool>
@@ -476,14 +351,14 @@ bool StorageEngine::dropTable(Session& session,
 {
   error= EE_OK;
 
-  EngineVector::const_iterator iter= std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
+  EngineVector::const_iterator iter= std::find_if(g_engines.begin(), g_engines.end(),
                                                   DropTableByIdentifier(session, identifier, error));
 
   if (error)
   {
     return false;
   }
-  else if (iter == vector_of_engines.end())
+  else if (iter == g_engines.end())
   {
     error= ER_BAD_TABLE_ERROR;
     return false;
@@ -498,13 +373,7 @@ bool StorageEngine::dropTable(Session& session,
                               const identifier::Table &identifier)
 {
   drizzled::error_t error;
-
-  if (not dropTable(session, identifier, error))
-  {
-    return false;
-  }
-
-  return true;
+  return dropTable(session, identifier, error);
 }
 
 bool StorageEngine::dropTable(Session& session,
@@ -530,15 +399,8 @@ bool StorageEngine::dropTable(Session& session,
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
   }
-
   drizzled::message::Cache::singleton().erase(identifier);
-
-  if (error)
-  {
-    return false;
-  }
-
-  return true;
+  return not error;
 }
 
 
@@ -606,29 +468,6 @@ Cursor *StorageEngine::getCursor(Table &arg)
   return create(arg);
 }
 
-class AddTableIdentifier : 
-  public std::unary_function<StorageEngine *, void>
-{
-  CachedDirectory &directory;
-  const identifier::Schema &identifier;
-  identifier::table::vector &set_of_identifiers;
-
-public:
-
-  AddTableIdentifier(CachedDirectory &directory_arg, const identifier::Schema &identifier_arg, identifier::table::vector &of_names) :
-    directory(directory_arg),
-    identifier(identifier_arg),
-    set_of_identifiers(of_names)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    engine->doGetTableIdentifiers(directory, identifier, set_of_identifiers);
-  }
-};
-
-
 void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &schema_identifier, identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
@@ -649,8 +488,8 @@ void StorageEngine::getIdentifiers(Session &session, const identifier::Schema &s
     return;
   }
 
-  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
-                AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+    it->doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 
   session.open_tables.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
@@ -671,30 +510,6 @@ public:
   {
     return engine->doDropTable(session, identifier) == 0;
   } 
-};
-
-/* This will later be converted to identifier::Tables */
-class DropTables: public std::unary_function<StorageEngine *, void>
-{
-  Session &session;
-  identifier::table::vector &table_identifiers;
-
-public:
-
-  DropTables(Session &session_arg, identifier::table::vector &table_identifiers_arg) :
-    session(session_arg),
-    table_identifiers(table_identifiers_arg)
-  { }
-
-  result_type operator() (argument_type engine)
-  {
-    // True returning from DropTable means the table has been successfully
-    // deleted, so it should be removed from the list of tables to drop
-    table_identifiers.erase(std::remove_if(table_identifiers.begin(),
-                                           table_identifiers.end(),
-                                           DropTable(session, engine)),
-                            table_identifiers.end());
-  }
 };
 
 /*
@@ -739,8 +554,11 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     }
   }
 
-  std::for_each(vector_of_engines.begin(), vector_of_engines.end(),
-                DropTables(session, table_identifiers));
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
+  {
+    table_identifiers.erase(std::remove_if(table_identifiers.begin(), table_identifiers.end(), DropTable(session, it)),
+      table_identifiers.end());
+  }
 
   /*
     Now we just clean up anything that might left over.
@@ -750,8 +568,8 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
   */
   std::set<std::string> all_exts= set_of_table_definition_ext;
 
-  for (EngineVector::iterator iter= vector_of_engines.begin();
-       iter != vector_of_engines.end() ; iter++)
+  for (EngineVector::iterator iter= g_engines.begin();
+       iter != g_engines.end() ; iter++)
   {
     for (const char **ext= (*iter)->bas_ext(); *ext ; ext++)
       all_exts.insert(*ext);
@@ -1132,37 +950,17 @@ int StorageEngine::writeDefinitionFromPath(const identifier::Table &identifier, 
   return 0;
 }
 
-class CanCreateTable: public std::unary_function<StorageEngine *, bool>
-{
-  const identifier::Table &identifier;
-
-public:
-  CanCreateTable(const identifier::Table &identifier_arg) :
-    identifier(identifier_arg)
-  { }
-
-  result_type operator() (argument_type engine)
-  {
-    return not engine->doCanCreateTable(identifier);
-  }
-};
-
-
 /**
   @note on success table can be created.
 */
 bool StorageEngine::canCreateTable(const identifier::Table &identifier)
 {
-  EngineVector::iterator iter=
-    std::find_if(vector_of_engines.begin(), vector_of_engines.end(),
-                 CanCreateTable(identifier));
-
-  if (iter == vector_of_engines.end())
+  BOOST_FOREACH(EngineVector::reference it, g_engines)
   {
-    return true;
+    if (not it->doCanCreateTable(identifier))
+      return false;
   }
-
-  return false;
+  return true;
 }
 
 bool StorageEngine::readTableFile(const std::string &path, message::Table &table_message)
@@ -1194,11 +992,7 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
 
 std::ostream& operator<<(std::ostream& output, const StorageEngine &engine)
 {
-  output << "StorageEngine:(";
-  output <<  engine.getName();
-  output << ")";
-
-  return output;
+  return output << "StorageEngine:(" <<  engine.getName() << ")";
 }
 
 } /* namespace plugin */

@@ -57,6 +57,7 @@ public:
       item->make_field(&field);
       max_column++;
     }
+    _result_set->setColumnCount(max_column);
     _result_set->createRow();
 
     return false;
@@ -77,7 +78,7 @@ public:
 
   using Client::store;
 
-  virtual bool store(Field *from)
+  virtual void store(Field *from)
   {
     if (from->is_null())
       return store();
@@ -89,59 +90,46 @@ public:
     return store(str.ptr(), str.length());
   }
 
-  virtual bool store()
+  virtual void store()
   {
     _result_set->setColumnNull(currentColumn());
-
     checkRowEnd();
-
-    return false;
   }
 
-  virtual bool store(int32_t from)
+  virtual void store(int32_t from)
   {
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
-
-    return false;
   }
 
-  virtual bool store(uint32_t from)
+  virtual void store(uint32_t from)
   {
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
-
-    return false;
   }
 
-  virtual bool store(int64_t from)
+  virtual void store(int64_t from)
   {
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
-
-    return false;
   }
 
-  virtual bool store(uint64_t from)
+  virtual void store(uint64_t from)
   {
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
-
-    return false;
   }
 
-  virtual bool store(double from, uint32_t decimals, String *buffer)
+  virtual void store(double from, uint32_t decimals, String *buffer)
   {
     buffer->set_real(from, decimals, &my_charset_bin);
     return store(buffer->ptr(), buffer->length());
   }
 
-  virtual bool store(const char *from, size_t length)
+  virtual void store(const char *from, size_t length)
   {
     _result_set->setColumn(currentColumn(), std::string(from, length));
     checkRowEnd();
-
-    return false;
   }
   
   inline uint32_t currentColumn() const

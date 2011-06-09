@@ -142,9 +142,6 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
     level= DRIZZLE_ERROR::WARN_LEVEL_ERROR;
   }
 
-  if (session->handle_error(code, msg, level))
-    return NULL;
-
   DRIZZLE_ERROR *err= NULL;
   if (session->main_da().m_warn_list.size() < session->variables.max_error_count)
   {

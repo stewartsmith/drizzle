@@ -1,0 +1,4 @@
+PANDORA_HAVE_LIBCURL
+AS_IF([test "x$ac_cv_libcurl" = "xno"],
+  AC_MSG_WARN([libcurl not found: not building http_functions]))
+PANDORA_ADD_PLUGIN_DEP_LIB([${LIBCURL}])

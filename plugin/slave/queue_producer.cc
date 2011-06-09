@@ -291,6 +291,8 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
 bool QueueProducer::queueInsert(const char *trx_id,
                                 const char *seg_id,
                                 const char *commit_id,
+                                const char *originating_server_uuid,
+                                const char *originating_commit_id,
                                 const char *msg,
                                 const char *msg_length)
 {
@@ -302,12 +304,17 @@ bool QueueProducer::queueInsert(const char *trx_id,
    * The SQL to insert our results into the local queue.
    */
   string sql= "INSERT INTO `sys_replication`.`queue`"
-              " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
+              " (`trx_id`, `seg_id`, `commit_order`,"
+              "  `originating_server_uuid`, `originating_commit_id`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
   sql.append(", ", 2);
   sql.append(commit_id);
+  sql.append(", '", 3);
+  sql.append(originating_server_uuid);
+  sql.append("' , ", 4);
+  sql.append(originating_commit_id);
   sql.append(", '", 3);
 
   /*
@@ -388,7 +395,8 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   /*
    * The SQL to pull everything we need from the master.
    */
-  string sql= "SELECT `id`, `segid`, `commit_id`, `message`, `message_len` "
+  string sql= "SELECT `id`, `segid`, `commit_id`, `originating_server_uuid`,"
+              " `originating_commit_id`, `message`, `message_len` "
               " FROM `data_dictionary`.`sys_replication_log` WHERE `id` IN (";
 
   for (size_t x= 0; x < trx_id_list.size(); x++)
@@ -433,7 +441,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
 
   while ((row= drizzle_row_next(&result)) != NULL)
   {
-    if (not queueInsert(row[0], row[1], row[2], row[3], row[4]))
+    if (not queueInsert(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
     {
       errmsg_printf(error::ERROR,
                     _("Replication slave: Unable to insert into queue."));

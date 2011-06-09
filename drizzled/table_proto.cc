@@ -18,7 +18,6 @@
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/message/statement_transform.h>
 
 #include <drizzled/plugin/storage_engine.h>

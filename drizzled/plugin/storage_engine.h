@@ -320,7 +320,7 @@ public:
   static plugin::StorageEngine *findByName(const std::string &find_str);
   static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
 
-  static void closeConnection(Session* session);
+  static void closeConnection(Session&);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
 

@@ -166,6 +166,8 @@ private:
   bool queueInsert(const char *trx_id,
                    const char *seg_id,
                    const char *commit_id,
+                   const char *originating_server_uuid,
+                   const char *originating_commit_id,
                    const char *msg,
                    const char *msg_length);
 

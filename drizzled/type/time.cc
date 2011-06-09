@@ -20,7 +20,7 @@
 #include <drizzled/util/gmtime.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/util/test.h>
 #include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>

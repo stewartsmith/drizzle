@@ -28,7 +28,7 @@
 #include <drizzled/show_type.h>
 #include <drizzled/item_result.h>
 #include <drizzled/base.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/visibility.h>
 

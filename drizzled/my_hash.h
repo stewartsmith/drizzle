@@ -73,17 +73,11 @@ _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charse
            hash_free_key free_element, uint32_t flags);
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H)
 void hash_free(HASH *tree);
-unsigned char *hash_element(HASH *hash,uint32_t idx);
 unsigned char *hash_search(const HASH *info, const unsigned char *key,
                            size_t length);
-unsigned char *hash_first(const HASH *info, const unsigned char *key,
-                          size_t length, HASH_SEARCH_STATE *state);
-unsigned char *hash_next(const HASH *info, const unsigned char *key,
-                         size_t length, HASH_SEARCH_STATE *state);
+unsigned char *hash_first(const HASH *info, const unsigned char *key, size_t length, HASH_SEARCH_STATE *state);
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
-
-#define hash_inited(H) ((H)->array.buffer != 0)
 
 } /* namespace drizzled */
 

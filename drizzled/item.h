@@ -22,7 +22,7 @@
 #pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
@@ -239,7 +239,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(plugin::Client *client, String *str);
+  virtual void send(plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's
     are functionally equal.

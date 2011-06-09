@@ -87,7 +87,7 @@ static void change_cond_ref_to_const(Session *session,
                                      Item *cond,
                                      Item *field,
                                      Item *value);
-static bool copy_blobs(Field **ptr);
+static void copy_blobs(Field **ptr);
 
 static bool eval_const_cond(COND *cond)
 {
@@ -102,15 +102,13 @@ static bool eval_const_cond(COND *cond)
 const char *subq_sj_cond_name=
   "0123456789ABCDEF0123456789abcdef0123456789ABCDEF0123456789abcdef-sj-cond";
 
-static bool copy_blobs(Field **ptr)
+static void copy_blobs(Field **ptr)
 {
   for (; *ptr ; ptr++)
   {
     if ((*ptr)->flags & BLOB_FLAG)
-      if (((Field_blob *) (*ptr))->copy())
-	return 1;				// Error
+      ((Field_blob *) (*ptr))->copy();
   }
-  return 0;
 }
 
 /**
@@ -1208,9 +1206,6 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
   }
   return tmp;
 }
-
-#define ICP_COND_USES_INDEX_ONLY 10
-
 
 /**
   cleanup JoinTable.
@@ -4952,7 +4947,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     return(-1);
   }
 
-  table->sort.io_cache= new internal::IO_CACHE;
+  table->sort.io_cache= new internal::io_cache_st;
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -5056,12 +5051,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       error=cursor->rnd_next(record);
       continue;
     }
-    if (copy_blobs(first_field))
-    {
-      my_message(ER_OUTOFMEMORY, ER(ER_OUTOFMEMORY), MYF(0));
-      error=0;
-      goto err;
-    }
+    copy_blobs(first_field);
     memcpy(new_record,org_record,reclength);
 
     /* Read through rest of cursor and mark duplicated rows deleted */

@@ -91,7 +91,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
 
-#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -1847,9 +1846,8 @@ static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
     else if ((**field).type() == DRIZZLE_TYPE_BLOB)
     {
       Field_blob *blob= reinterpret_cast<Field_blob*>(*field);
-      unsigned char* blob_ptr;
       uint32_t blob_length= blob->get_length();
-      blob->get_ptr(&blob_ptr);
+      unsigned char* blob_ptr= blob->get_ptr();
       err= ib_col_set_value(tuple, colnr, blob_ptr, blob_length);
     }
     else

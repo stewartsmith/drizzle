@@ -26,8 +26,8 @@
 
 #include "net_serv.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+
 void compose_ip_addresses(std::vector<std::string> options);
 
 class ProtocolCounters
@@ -82,7 +82,7 @@ protected:
   bool _is_interactive;
 
   bool checkConnection(void);
-  bool netStoreData(const unsigned char *from, size_t length);
+  void netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
   void makeScramble(char *scramble);
@@ -111,7 +111,7 @@ public:
   virtual void close(void);
 
   virtual bool authenticate(void);
-  virtual bool readCommand(char **packet, uint32_t *packet_length);
+  virtual bool readCommand(char **packet, uint32_t& packet_length);
 
   virtual void sendOK(void);
   virtual void sendEOF(void);
@@ -120,14 +120,14 @@ public:
   virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 
   using Client::store;
-  virtual bool store(drizzled::Field *from);
-  virtual bool store(void);
-  virtual bool store(int32_t from);
-  virtual bool store(uint32_t from);
-  virtual bool store(int64_t from);
-  virtual bool store(uint64_t from);
-  virtual bool store(double from, uint32_t decimals, drizzled::String *buffer);
-  virtual bool store(const char *from, size_t length);
+  virtual void store(drizzled::Field *from);
+  virtual void store();
+  virtual void store(int32_t from);
+  virtual void store(uint32_t from);
+  virtual void store(int64_t from);
+  virtual void store(uint64_t from);
+  virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
+  virtual void store(const char *from, size_t length);
 
   virtual bool haveError(void);
   virtual bool haveMoreData(void);

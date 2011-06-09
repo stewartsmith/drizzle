@@ -46,8 +46,6 @@ namespace internal
 	  is renamed to org_name-'current_time'.BAK
 	*/
 
-#define REDEL_EXT ".BAK"
-
 int my_redel(const char *org_name, const char *tmp_name, myf MyFlags)
 {
   int error=1;

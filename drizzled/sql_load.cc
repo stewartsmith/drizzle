@@ -56,7 +56,7 @@ class READ_INFO {
   int	*stack,*stack_pos;
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
-  internal::IO_CACHE cache;
+  internal::io_cache_st cache;
 
 public:
   bool error,line_cuted,found_null,enclosed;

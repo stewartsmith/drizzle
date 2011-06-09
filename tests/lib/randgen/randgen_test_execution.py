@@ -23,7 +23,7 @@
     code related to the execution of dtr test cases 
     
     We are provided access to a testManager with 
-    dtr-specific testCases.  We contact teh executionManager
+    randgen-specific testCases.  We contact the executionManager
     to produce the system and server configurations we need
     to execute a test.
 
@@ -38,16 +38,12 @@ import commands
 import lib.test_mgmt.test_execution as test_execution
 
 class randgenTestExecutor(test_execution.testExecutor):
-    """ dtr-specific testExecutor 
-        We currently execute by sending test-case
-        data to client/randgen...for now
+    """ randgen-specific testExecutor 
 
     """
   
     def execute_testCase (self):
-        """ Execute a dtr testCase via calls to randgen (boo)
-            Eventually, we will replace randgen with pythonic
-            goodness, but we have these classes stored here for the moment
+        """ Execute a randgen testCase
 
         """
         test_execution.testExecutor.execute_testCase(self)

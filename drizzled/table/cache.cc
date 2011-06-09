@@ -201,7 +201,6 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
           force threads that are in lockTables() (but not yet
           in thr_multi_lock()) to abort it's locks, close all tables and retry
         */
-        in_use->some_tables_deleted= true;
         if (table->is_name_opened())
         {
           result= true;

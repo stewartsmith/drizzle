@@ -33,7 +33,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <drizzled/error.h>
 #include <drizzled/lock.h>
@@ -51,6 +51,7 @@ extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
 extern uint32_t server_id;
+extern std::string server_uuid;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
@@ -255,6 +256,32 @@ public:
   void setScoreboardIndex(int32_t in_scoreboard_index)
   {
     scoreboard_index= in_scoreboard_index;
+  }
+
+  bool isOriginatingServerUUIDSet()
+  {
+    return originating_server_uuid_set;
+  }
+
+  void setOriginatingServerUUID(std::string in_originating_server_uuid)
+  {
+    originating_server_uuid= in_originating_server_uuid;
+    originating_server_uuid_set= true;
+  }
+
+  std::string &getOriginatingServerUUID()
+  {
+    return originating_server_uuid;
+  }
+
+  void setOriginatingCommitID(uint64_t in_originating_commit_id)
+  {
+    originating_commit_id= in_originating_commit_id;
+  }
+
+  uint64_t getOriginatingCommitID()
+  {
+    return originating_commit_id;
   }
 
   /**
@@ -545,7 +572,6 @@ public:
   }
 
   bool is_admin_connection;
-  bool some_tables_deleted;
   bool no_errors;
   /**
     Set to true if execution of the current compound statement
@@ -668,6 +694,11 @@ public:
   {
     /* We return the global server ID. */
     return server_id;
+  }
+
+  inline std::string &getServerUUID() const
+  {
+    return server_uuid;
   }
 
   /**
@@ -866,7 +897,6 @@ public:
   void setAbort(bool arg);
   void lockOnSys();
   void set_status_var_init();
-
   /**
     Set the current database; use deep copy of C-string.
 
@@ -884,7 +914,7 @@ public:
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
   */
-  void set_db(const std::string &new_db);
+  void set_db(const std::string&);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -894,25 +924,6 @@ public:
   bool copy_db_to(char **p_db, size_t *p_db_length);
 
 public:
-  /**
-    Add an internal error handler to the thread execution context.
-    @param handler the exception handler to add
-  */
-  void push_internal_handler(Internal_error_handler *handler);
-
-  /**
-    Handle an error condition.
-    @param sql_errno the error number
-    @param level the error level
-    @return true if the error is handled
-  */
-  virtual bool handle_error(error_t sql_errno, const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level);
-
-  /**
-    Remove the error handler last pushed.
-  */
-  void pop_internal_handler();
 
   /**
     Resets Session part responsible for command processing state.
@@ -1035,20 +1046,6 @@ public:
   plugin::EventObserverList* getSchemaObservers(const std::string& schema);
   plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
- private:
-
-  /** The current internal error handler for this thread, or NULL. */
-  Internal_error_handler *m_internal_handler;
-  /**
-    This memory root is used for two purposes:
-    - for conventional queries, to allocate structures stored in main_lex
-    during parsing, and allocate runtime data (execution plan, etc.)
-    during execution.
-    - for prepared queries, only to allocate runtime data. The parsed
-    tree itself is reused between executions and thus is stored elsewhere.
-  */
-  memory::Root main_mem_root;
-
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
   void my_eof();
@@ -1069,7 +1066,6 @@ public:
   void close_thread_tables();
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
-  void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
 
   /**
@@ -1109,7 +1105,7 @@ public:
 
   /* Create a lock in the cache */
   table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
-  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
+  Table* lock_table_name_if_not_cached(const identifier::Table&);
 
   session::TableMessages &getMessageCache();
 
@@ -1170,7 +1166,6 @@ public:
 
   bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
   drizzled::util::Storable* getProperty0(const std::string&);
   void setProperty0(const std::string&, drizzled::util::Storable*);
 
@@ -1197,6 +1192,9 @@ private:
   rusage usage;
   identifier::user::mptr security_ctx;
   int32_t scoreboard_index;
+  bool originating_server_uuid_set;
+  std::string originating_server_uuid;
+  uint64_t originating_commit_id;
   plugin::Client *client;
 };
 

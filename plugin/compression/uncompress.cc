@@ -65,8 +65,7 @@ String *Item_func_uncompress::val_str(String *str)
     goto err;
   }
 
-  if (buffer.realloc((uint32_t)new_size))
-    goto err;
+  buffer.realloc(new_size);
 
   if ((err= uncompress((Byte*)buffer.ptr(), &new_size,
                        ((const Bytef*)res->ptr())+4,res->length())) == Z_OK)

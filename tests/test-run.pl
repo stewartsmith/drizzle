@@ -230,6 +230,7 @@ our $opt_master_myport;
 our $opt_slave_myport;
 our $opt_memc_myport;
 our $opt_pbms_myport;
+our $opt_json_server_myport;
 our $opt_rabbitmq_myport;
 our $opt_record;
 my $opt_report_features;
@@ -509,6 +510,7 @@ sub command_line_setup () {
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
 	     'pbms_port=i'              => \$opt_pbms_myport,
+	     'json_server_port=i'              => \$opt_json_server_myport,
 	     'rabbitmq_port=i'              => \$opt_rabbitmq_myport,
 	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
@@ -1171,6 +1173,7 @@ sub set_dtr_build_thread_ports($) {
   $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
   $opt_pbms_myport= gimme_a_good_port($opt_master_myport + 11);
   $opt_rabbitmq_myport= gimme_a_good_port($opt_master_myport + 12);
+  $opt_json_server_myport= gimme_a_good_port($opt_master_myport + 13);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1501,6 +1504,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
   $ENV{'PBMS_PORT'}=          $opt_pbms_myport;
+  $ENV{'JSON_SERVER_PORT'}=          $opt_json_server_myport;
   $ENV{'RABBITMQ_NODE_PORT'}= $opt_rabbitmq_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=   $drizzled_variables{'drizzle-protocol.port'};
   $ENV{'DRIZZLE_TRX_READER'} = $opt_top_builddir.'/plugin/transaction_log/utilities/drizzletrx';
@@ -1662,6 +1666,7 @@ sub environment_setup () {
     print "Using MC_PORT               = $ENV{MC_PORT}\n";
     print "Using PBMS_PORT             = $ENV{PBMS_PORT}\n";
     print "Using RABBITMQ_NODE_PORT    = $ENV{RABBITMQ_NODE_PORT}\n";
+    print "Using JSON_SERVER_PORT      = $ENV{JSON_SERVER_PORT}\n";
   }
 
   # Create an environment variable to make it possible

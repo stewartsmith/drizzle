@@ -21,18 +21,15 @@
 
 #include <drizzled/function/str/collation.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
-  size_t dummy_errors;
-  const charset_info_st * const cs= args[0]->collation.collation;
+  const charset_info_st* cs= args[0]->collation.collation;
 
   null_value= 0;
-  str->copy(cs->name, strlen(cs->name),
-            &my_charset_utf8_general_ci, collation.collation, &dummy_errors);
+  str->copy(cs->name, strlen(cs->name), collation.collation);
   return str;
 }
 

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <plugin/myisam/myisampack.h>
 
 /*

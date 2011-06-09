@@ -20,28 +20,25 @@
 #pragma once
 
 #include <drizzled/plugin/client.h>
+#include <drizzled/util/string.h>
 #include <boost/tokenizer.hpp>
 #include <vector>
 #include <queue>
 #include <string>
 
-namespace drizzled
-{
-namespace plugin
-{
-namespace client
-{
+namespace drizzled {
+namespace plugin {
+namespace client {
 
 /**
  * This class is an empty client implementation for internal used.
  */
 class Concurrent: public Client
 {
-  typedef std::vector<char> Bytes;
-  typedef std::queue <Bytes> Queue;
+  typedef std::queue < drizzled::util::String > Queue;
   Queue to_execute;
   bool is_dead;
-  Bytes packet_buffer;
+  drizzled::util::String packet_buffer;
 
 public:
 
@@ -58,17 +55,15 @@ public:
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
 
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
+  virtual bool readCommand(char **packet, uint32_t& packet_length)
   {
     while(not to_execute.empty())
     {
       Queue::value_type next= to_execute.front();
-      packet_buffer.resize(next.size());
-      memcpy(&packet_buffer[0], &next[0], next.size());
+      packet_buffer.assign(next.c_str(), next.size());
 
-      *packet= &packet_buffer[0];
-
-      *packet_length= next.size();
+      *packet= packet_buffer.c_str();
+      packet_length= next.size();
 
       to_execute.pop();
 
@@ -77,15 +72,15 @@ public:
 
     if (not is_dead)
     {
-      packet_buffer.resize(1);
-      *packet_length= 1;
-      *packet= &packet_buffer[0];
+      packet_buffer.clear();
+      packet_length= 1;
+      *packet= packet_buffer.c_str();
       is_dead= true;
 
       return true;
     }
 
-    *packet_length= 0;
+    packet_length= 0;
     return false;
   }
 
@@ -93,46 +88,45 @@ public:
   virtual void sendEOF(void) {}
   virtual void sendError(const drizzled::error_t, const char*) {}
   virtual bool sendFields(List<Item>*) { return false; }
-  virtual bool store(Field *) { return false; }
-  virtual bool store(void) { return false; }
-  virtual bool store(int32_t) { return false; }
-  virtual bool store(uint32_t) { return false; }
-  virtual bool store(int64_t) { return false; }
-  virtual bool store(uint64_t) { return false; }
-  virtual bool store(double, uint32_t, String*) { return false; }
-  virtual bool store(const type::Time*) { return false; }
-  virtual bool store(const char*) { return false; }
-  virtual bool store(const char*, size_t) { return false; }
-  virtual bool store(const std::string &) { return false; }
+  virtual void store(Field *) {}
+  virtual void store() {}
+  virtual void store(int32_t) {}
+  virtual void store(uint32_t) {}
+  virtual void store(int64_t) {}
+  virtual void store(uint64_t) {}
+  virtual void store(double, uint32_t, String*) {}
+  virtual void store(const type::Time*) {}
+  virtual void store(const char*) {}
+  virtual void store(const char*, size_t) {}
+  virtual void store(const std::string &) {}
   virtual bool haveMoreData(void) { return false;}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 
   void pushSQL(const std::string &arg)
   {
-    Bytes byte;
     typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
     Tokenizer tok(arg, boost::escaped_list_separator<char>("\\", ";", "\""));
 
     {
-      byte.resize(sizeof("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], "START TRANSACTION", sizeof("START TRANSACTION") -1);
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(drizzle_literal_parameter("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
 
     for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
     {
-      byte.resize(iter->size() +1); // +1 for the COM_QUERY
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], iter->c_str(), iter->size());
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(iter->c_str(), iter->size());
       to_execute.push(byte);
     }
 
     {
-      byte.resize(sizeof("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
-      byte[0]= COM_QUERY;
-      memcpy(&byte[1], "COMMIT", sizeof("COMMIT") -1);
+      drizzled::util::String byte;
+      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.append(drizzle_literal_parameter("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
   }

@@ -49,13 +49,13 @@ class loggingManager():
     def __init__(self, variables):
 
         self.log_file = sys.stdout
-        self.report_fmt = '{0:<55} {1} {2:>12}'
-        self.report_started = 0  
-        self.thick_line = '='*80
-        self.thin_line = '-'*80     
+        self.report_fmt = '{0:<42} {1} {2:>8}'
+        self.report_started = 0
+        self.thick_line = '='*(80 - len("20110420-105402  "))
+        self.thin_line = '-'*(80- len("20110420-105402  "))
 
     def _write_message(self,level, msg):
-      self.log_file.write("%s %s: %s\n" % (time.strftime("%d %b %Y %H:%M:%S"), level, str(msg)))
+      self.log_file.write("%s %s %s\n" % (time.strftime("%Y%m%d-%H%M%S"), level, str(msg)))
       self.log_file.flush()
 
     def setOutput(self,file_name):
@@ -89,7 +89,8 @@ class loggingManager():
 
 
     def test_report( self, test_name, test_status
-                   , execution_time, additional_output=None):
+                   , execution_time, additional_output = None
+                   , report_output = False):
         """ We use this method to deal with writing out the test report
 
         """
@@ -100,7 +101,7 @@ class loggingManager():
         msg = self.report_fmt.format( test_name, test_status
                                     , execution_time)
         self._write_message("", msg)
-        if additional_output and test_status != '[ pass ]':
+        if additional_output and report_output:
             additional_output=additional_output.split('\n')
             for line in additional_output:
                 line = line.strip()

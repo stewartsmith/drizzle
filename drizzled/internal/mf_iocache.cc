@@ -68,24 +68,24 @@ namespace drizzled
 namespace internal
 {
 
-static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count);
-static int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count);
+static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count);
+static int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count);
 
 /**
  * @brief
- *   Lock appends for the st_io_cache if required (need_append_buffer_lock)   
+ *   Lock appends for the io_cache_st if required (need_append_buffer_lock)   
  */
 inline
-static void lock_append_buffer(st_io_cache *, int )
+static void lock_append_buffer(io_cache_st *, int )
 {
 }
 
 /**
  * @brief
- *   Unlock appends for the st_io_cache if required (need_append_buffer_lock)   
+ *   Unlock appends for the io_cache_st if required (need_append_buffer_lock)   
  */
 inline
-static void unlock_append_buffer(st_io_cache *, int )
+static void unlock_append_buffer(io_cache_st *, int )
 {
 }
 
@@ -112,15 +112,15 @@ static size_t io_round_dn(size_t x)
 
 /**
  * @brief 
- *   Setup internal pointers inside st_io_cache
+ *   Setup internal pointers inside io_cache_st
  * 
  * @details
- *   This is called on automatically on init or reinit of st_io_cache
- *   It must be called externally if one moves or copies an st_io_cache object.
+ *   This is called on automatically on init or reinit of io_cache_st
+ *   It must be called externally if one moves or copies an io_cache_st object.
  * 
  * @param info Cache handler to setup
  */
-void st_io_cache::setup_io_cache()
+void io_cache_st::setup_io_cache()
 {
   /* Ensure that my_b_tell() and my_b_bytes_in_cache works */
   if (type == WRITE_CACHE)
@@ -136,7 +136,7 @@ void st_io_cache::setup_io_cache()
 }
 
 
-void st_io_cache::init_functions()
+void io_cache_st::init_functions()
 {
   switch (type) {
   case READ_NET:
@@ -158,7 +158,7 @@ void st_io_cache::init_functions()
 
 /**
  * @brief
- *   Initialize an st_io_cache object
+ *   Initialize an io_cache_st object
  *
  * @param file File that should be associated with the handler
  *                 If == -1 then real_open_cached_file() will be called when it's time to open file.
@@ -173,7 +173,7 @@ void st_io_cache::init_functions()
  * @retval 0 success
  * @retval # error
  */
-int st_io_cache::init_io_cache(int file_arg, size_t cachesize,
+int io_cache_st::init_io_cache(int file_arg, size_t cachesize,
                                enum cache_type type_arg, my_off_t seek_offset,
                                bool use_async_io, myf cache_myflags)
 {
@@ -297,7 +297,7 @@ int st_io_cache::init_io_cache(int file_arg, size_t cachesize,
  *   If we are doing a reinit of a cache where we have the start of the file
  *   in the cache, we are reusing this memory without flushing it to disk.
  */
-bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
+bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
                                   my_off_t seek_offset,
                                   bool,
                                   bool clear_cache)
@@ -385,13 +385,13 @@ bool st_io_cache::reinit_io_cache(enum cache_type type_arg,
  *   types than my_off_t unless you can be sure that their value fits.
  *   Same applies to differences of file offsets.
  *
- * @param info st_io_cache pointer @param Buffer Buffer to retrieve count bytes
+ * @param info io_cache_st pointer @param Buffer Buffer to retrieve count bytes
  * from file @param Count Number of bytes to read into Buffer
  * 
  * @retval 0 We succeeded in reading all data
  * @retval 1 Error: can't read requested characters
  */
-static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
+static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
 {
   size_t length_local,diff_length,left_length, max_length;
   my_off_t pos_in_file_local;
@@ -408,10 +408,10 @@ static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
   pos_in_file_local=info->pos_in_file+ (size_t) (info->read_end - info->buffer);
 
   /*
-    Whenever a function which operates on st_io_cache flushes/writes
-    some part of the st_io_cache to disk it will set the property
+    Whenever a function which operates on io_cache_st flushes/writes
+    some part of the io_cache_st to disk it will set the property
     "seek_not_done" to indicate this to other functions operating
-    on the st_io_cache.
+    on the io_cache_st.
   */
   if (info->seek_not_done)
   {
@@ -491,28 +491,32 @@ static int _my_b_read(st_io_cache *info, unsigned char *Buffer, size_t Count)
  * @brief
  *   Read one byte when buffer is empty
  */
-int _my_b_get(st_io_cache *info)
+int _my_b_get(io_cache_st *info)
 {
   unsigned char buff;
   IO_CACHE_CALLBACK pre_read,post_read;
+
   if ((pre_read = info->pre_read))
     (*pre_read)(info);
+
   if ((*(info)->read_function)(info,&buff,1))
     return my_b_EOF;
+
   if ((post_read = info->post_read))
     (*post_read)(info);
+
   return (int) (unsigned char) buff;
 }
 
 /**
  * @brief
- *   Write a byte buffer to st_io_cache and flush to disk if st_io_cache is full.
+ *   Write a byte buffer to io_cache_st and flush to disk if io_cache_st is full.
  *
  * @retval -1 On error; errno contains error code.
  * @retval 0 On success
  * @retval 1 On error on write
  */
-int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count)
+int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length_local;
 
@@ -536,10 +540,10 @@ int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count)
     if (info->seek_not_done)
     {
       /*
-        Whenever a function which operates on st_io_cache flushes/writes
-        some part of the st_io_cache to disk it will set the property
+        Whenever a function which operates on io_cache_st flushes/writes
+        some part of the io_cache_st to disk it will set the property
         "seek_not_done" to indicate this to other functions operating
-        on the st_io_cache.
+        on the io_cache_st.
       */
       if (lseek(info->file,info->pos_in_file,SEEK_SET))
       {
@@ -566,7 +570,7 @@ int _my_b_write(st_io_cache *info, const unsigned char *Buffer, size_t Count)
  *   As all write calls to the data goes through the cache,
  *   we will never get a seek over the end of the buffer.
  */
-int my_block_write(st_io_cache *info, const unsigned char *Buffer, size_t Count,
+int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
 		   my_off_t pos)
 {
   size_t length_local;
@@ -613,7 +617,7 @@ int my_block_write(st_io_cache *info, const unsigned char *Buffer, size_t Count,
  * @brief
  *   Flush write cache 
  */
-int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
+int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
 {
   size_t length_local;
   bool append_cache= false;
@@ -677,19 +681,19 @@ int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock)
 
 /**
  * @brief
- *   Free an st_io_cache object
+ *   Free an io_cache_st object
  * 
  * @detail
  *   It's currently safe to call this if one has called init_io_cache()
  *   on the 'info' object, even if init_io_cache() failed.
  *   This function is also safe to call twice with the same handle.
  * 
- * @param info st_io_cache Handle to free
+ * @param info io_cache_st Handle to free
  * 
  * @retval 0 ok
  * @retval # Error
  */
-int st_io_cache::end_io_cache()
+int io_cache_st::end_io_cache()
 {
   int _error=0;
 

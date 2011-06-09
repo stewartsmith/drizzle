@@ -29,7 +29,10 @@
 namespace drizzled {
 namespace session {
 
+bool volatile Cache::_ready_to_exit= false;
+Cache::list Cache::cache;
 boost::mutex Cache::_mutex;
+boost::condition_variable Cache::_end;
 
 Cache::session_shared_ptr Cache::find(const session_id_t &id)
 {

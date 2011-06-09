@@ -12,4 +12,5 @@ Several SQL functions are built into Drizzle--functions perform calculations on 
    aggregatefunctions
    control_flow
    string
+   ../dynamic
   

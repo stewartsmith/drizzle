@@ -40,7 +40,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/probes.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/query_rewrite.h>
 #include <drizzled/plugin/query_cache.h>
@@ -128,10 +128,11 @@ const std::string &getCommandName(const enum_server_command& command)
 
 void init_update_queries(void)
 {
-  uint32_t x;
-
-  for (x= 0; x <= SQLCOM_END; x++)
+  for (uint32_t x= uint32_t(SQLCOM_SELECT); 
+       x <= uint32_t(SQLCOM_END); x++)
+  {
     sql_command_flags[x].reset();
+  }
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -185,9 +186,9 @@ void init_update_queries(void)
         COM_QUIT/COM_SHUTDOWN
 */
 bool dispatch_command(enum_server_command command, Session *session,
-                      char* packet, uint32_t packet_length)
+                      const char* packet, uint32_t packet_length)
 {
-  bool error= 0;
+  bool error= false;
   Query_id &query_id= Query_id::get_query_id();
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
@@ -197,10 +198,12 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->times.set_time();
   session->setQueryId(query_id.value());
 
-  switch( command ) {
+  switch (command)
+  {
   /* Ignore these statements. */
   case COM_PING:
     break;
+
   /* Increase id and count all other statements. */
   default:
     session->status_var.questions++;
@@ -218,32 +221,36 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
-  switch (command) {
-  case COM_INIT_DB:
+  switch (command)
   {
-    if (packet_length == 0)
+  case COM_USE_SCHEMA:
     {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+      if (packet_length == 0)
+      {
+        my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+        break;
+      }
+      if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
+      {
+        session->my_ok();
+      }
       break;
     }
-    if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
-    {
-      session->my_ok();
-    }
-    break;
-  }
+
   case COM_QUERY:
-  {
-    session->readAndStoreQuery(packet, packet_length);
-    DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
-    parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
-    break;
-  }
+    {
+      session->readAndStoreQuery(packet, packet_length);
+      DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
+      parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
+      break;
+    }
+
   case COM_QUIT:
     /* We don't calculate statistics for this command */
     session->main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
+
   case COM_KILL:
     {
       if (packet_length != 4)
@@ -262,19 +269,22 @@ bool dispatch_command(enum_server_command command, Session *session,
       session->my_ok();
       break;
     }
+
   case COM_SHUTDOWN:
-  {
-    session->status_var.com_other++;
-    session->my_eof();
-    session->close_thread_tables();			// Free before kill
-    kill_drizzle();
-    error= true;
-    break;
-  }
+    {
+      session->status_var.com_other++;
+      session->my_eof();
+      session->close_thread_tables();			// Free before kill
+      kill_drizzle();
+      error= true;
+      break;
+    }
+
   case COM_PING:
     session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
+
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
   case COM_END:
@@ -295,7 +305,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   /* report error issued during command execution */
   if (session->killed_errno())
   {
-    if (! session->main_da().is_set())
+    if (not session->main_da().is_set())
       session->send_kill_message();
   }
   if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)

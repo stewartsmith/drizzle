@@ -64,6 +64,8 @@ void Execute::run(const std::string &execution_string, sql::ResultSet &result_se
     // session. Eventually we will allow someone to change the effective
     // user.
     new_session->user()= _session.user();
+    new_session->setOriginatingServerUUID(_session.getOriginatingServerUUID());
+    new_session->setOriginatingCommitID(_session.getOriginatingCommitID());
     
     if (Session::schedule(new_session))
     {

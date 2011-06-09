@@ -21,7 +21,7 @@
 #include <cassert>
 #include <drizzled/sql_locale.h>
 #include <drizzled/typelib.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/definitions.h>
 
 namespace drizzled {

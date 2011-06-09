@@ -23,7 +23,7 @@ Smart ALTER TABLE
 
 #include <config.h>
 #include <drizzled/error.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
 #include <drizzled/field/varstring.h>

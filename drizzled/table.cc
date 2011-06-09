@@ -730,10 +730,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
                               be used for name resolving; can be "".
 */
 
-#define STRING_TOTAL_LENGTH_TO_PACK_ROWS 128
-#define AVG_STRING_LENGTH_TO_PACK_ROWS   64
-#define RATIO_TO_PACK_ROWS	       2
-
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 Order *group, bool distinct, bool save_sum_fields,

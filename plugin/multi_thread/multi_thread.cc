@@ -54,7 +54,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
   char stack_dummy;
   boost::this_thread::disable_interruption disable_by_default;
 
-  Session::shared_ptr session(session::Cache::singleton().find(id));
+  Session::shared_ptr session(session::Cache::find(id));
 
   try
   {
@@ -65,17 +65,9 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
       return;
     }
     session->pushInterrupt(&disable_by_default);
-
-    if (drizzled::internal::my_thread_init())
-    {
-      session->disconnect(drizzled::ER_OUT_OF_RESOURCES);
-      session->status_var.aborted_connects++;
-    }
-    else
-    {
-      session->thread_stack= (char*) &stack_dummy;
-      session->run();
-    }
+    drizzled::internal::my_thread_init();
+    session->thread_stack= (char*) &stack_dummy;
+    session->run();
 
     killSessionNow(session);
   }

@@ -22,7 +22,6 @@
 #include <gcrypt.h>
 
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>

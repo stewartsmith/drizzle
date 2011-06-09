@@ -21,7 +21,6 @@
 
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/open_tables_state.h>
