@@ -93,18 +93,16 @@ public:
 
   ProtocolCounters& counters;
 
-  virtual int getFileDescriptor(void);
+  virtual int getFileDescriptor();
   virtual bool isConnected();
-  virtual bool isReading(void);
-  virtual bool isWriting(void);
-  virtual bool flush(void);
-  virtual void close(void);
+  virtual bool flush();
+  virtual void close();
 
-  virtual bool authenticate(void);
+  virtual bool authenticate();
   virtual bool readCommand(char **packet, uint32_t& packet_length);
 
-  virtual void sendOK(void);
-  virtual void sendEOF(void);
+  virtual void sendOK();
+  virtual void sendEOF();
   virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
   virtual void sendFields(drizzled::List<drizzled::Item>&);
@@ -119,8 +117,8 @@ public:
   virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
   virtual void store(const char *from, size_t length);
 
-  virtual bool haveError(void);
-  virtual bool wasAborted(void);
+  virtual bool haveError();
+  virtual bool wasAborted();
 };
 
 } /* namespace drizzle_plugin */

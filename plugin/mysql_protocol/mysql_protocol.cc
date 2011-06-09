@@ -118,16 +118,6 @@ bool ClientMySQLProtocol::isConnected()
   return net.vio != 0;
 }
 
-bool ClientMySQLProtocol::isReading()
-{
-  return net.reading_or_writing == 1;
-}
-
-bool ClientMySQLProtocol::isWriting()
-{
-  return net.reading_or_writing == 2;
-}
-
 bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)

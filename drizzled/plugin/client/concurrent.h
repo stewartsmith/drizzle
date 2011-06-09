@@ -54,8 +54,6 @@ public:
 
   virtual int getFileDescriptor(void) { return -1; }
   virtual bool isConnected(void) { return true; }
-  virtual bool isReading(void) { return false; }
-  virtual bool isWriting(void) { return false; }
   virtual bool flush(void) { return false; }
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }

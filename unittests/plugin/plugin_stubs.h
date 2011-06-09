@@ -86,18 +86,6 @@ public:
   virtual bool isConnected(void) { return false; };
 
   /**
-  * Check to see if the client is actively reading.
-  * @retval Boolean value representing reading state.
-  */
-  virtual bool isReading(void) { return false; };
-
-  /**
-  * Check to see if the client is actively writing.
-  * @retval Boolean value representing writing state.
-  */
-  virtual bool isWriting(void)  { return false; };
-
-  /**
   * Flush all data that has been buffered with store() methods.
   * @retval Boolean indicating success or failure.
   */

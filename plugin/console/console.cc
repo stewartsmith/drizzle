@@ -89,18 +89,6 @@ public:
     return true;
   }
 
-  virtual bool isReading(void)
-  {
-    printDebug("isReading");
-    return false;
-  }
-
-  virtual bool isWriting(void)
-  {
-    printDebug("isWriting");
-    return false;
-  }
-
   virtual bool flush(void)
   {
     printDebug("flush");
