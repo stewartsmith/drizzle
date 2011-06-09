@@ -161,7 +161,7 @@ bool NET::flush()
    If compression is used the original package is modified!
 */
 
-bool
+static bool
 drizzleclient_net_write(NET* net, const void* packet0, size_t len)
 {
   const unsigned char* packet= reinterpret_cast<const unsigned char*>(packet0);
@@ -216,7 +216,7 @@ drizzleclient_net_write(NET* net, const void* packet0, size_t len)
    1    error
 */
 
-bool
+static bool
 drizzleclient_net_write_command(NET *net,unsigned char command,
                   const unsigned char *header, size_t head_len,
                   const unsigned char *packet, size_t len)
@@ -568,7 +568,7 @@ end:
    net->read_pos points to the read data.
 */
 
-uint32_t
+static uint32_t
 drizzleclient_net_read(NET *net)
 {
   size_t len, complen;
@@ -744,6 +744,23 @@ void NET::set_write_timeout(uint32_t timeout)
     vio->timeout(1, timeout);
 #endif
   return;
+}
+
+bool NET::write(const void* data, size_t size)
+{
+  return drizzleclient_net_write(this, data, size);
+}
+
+bool NET::write_command(unsigned char command,
+  const unsigned char *header, size_t head_len,
+  const unsigned char *packet, size_t len)
+{
+  return drizzleclient_net_write_command(this, command, header, head_len, packet, len);
+}
+
+uint32_t NET::read()
+{
+  return drizzleclient_net_read(this);
 }
 
 } /* namespace drizzle_plugin */

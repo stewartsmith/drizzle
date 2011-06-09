@@ -52,13 +52,13 @@ public:
   int get_sd() const;
   void set_write_timeout(uint32_t timeout);
   void set_read_timeout(uint32_t timeout);
+  bool write(const void*, size_t);
+  bool write_command(unsigned char command,
+    const unsigned char *header, size_t head_len,
+    const unsigned char *packet, size_t len);
+  uint32_t read();
 };
 
-bool drizzleclient_net_write(NET*, const void*, size_t);
-bool drizzleclient_net_write_command(NET*, unsigned char command,
-                                     const unsigned char *header, size_t head_len,
-                                     const unsigned char *packet, size_t len);
-uint32_t drizzleclient_net_read(NET*);
 
 } /* namespace drizzle_plugin */
 

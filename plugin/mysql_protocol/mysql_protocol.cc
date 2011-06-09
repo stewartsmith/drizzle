@@ -122,7 +122,7 @@ bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)
     return false;
-  bool ret= drizzleclient_net_write(&net, packet.ptr(), packet.length());
+  bool ret= net.write(packet.ptr(), packet.length());
   packet.length(0);
   return ret;
 }
@@ -188,8 +188,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
 #endif
 
   net.pkt_nr=0;
-
-  packet_length= drizzleclient_net_read(&net);
+  packet_length= net.read();
   if (packet_length == packet_error)
   {
     /* Check if we can continue without closing the connection */
@@ -336,7 +335,7 @@ void ClientMySQLProtocol::sendOK()
     memcpy(pos,(unsigned char*) message,length);
     pos+=length;
   }
-  drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
+  net.write(buff, pos - buff);
   net.flush();
 
   session->main_da().can_overwrite_status= false;
@@ -417,7 +416,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   tmp[0]= '\0';
   length= (uint32_t)(tmp-(char*)buff);
   err= (char*) buff;
-  drizzleclient_net_write_command(&net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+  net.write_command((unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
   net.flush();
   session->main_da().can_overwrite_status= false;
 }
@@ -447,7 +446,7 @@ void ClientMySQLProtocol::sendFields(List<Item>& list)
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
   unsigned char *row_pos= storeLength(buff, list.size());
-  (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
+  (void) net.write(buff, row_pos - buff);
 
   while (Item* item=it++)
   {
@@ -699,13 +698,13 @@ bool ClientMySQLProtocol::checkConnection()
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
-    if (drizzleclient_net_write_command(&net
-          , (unsigned char) PROTOCOL_VERSION
+    if (net.write_command(
+            (unsigned char) PROTOCOL_VERSION
           , (unsigned char*) ""
           , 0
           , (unsigned char*) buff
           , (size_t) (end-buff)) 
-        ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
+        ||    (pkt_len= net.read()) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
@@ -850,7 +849,7 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
   if (session->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
-  drizzleclient_net_write(&net, buff, 5);
+  net.write(buff, 5);
 }
 
 /*
