@@ -31,7 +31,6 @@ testDataInit (prototest.mysql.bitfield.TestField) ... ok
 testDefaultInit (prototest.mysql.bitfield.TestField) ... ok
 testGetAttr (prototest.mysql.bitfield.TestField) ... ok
 testSetAttr (prototest.mysql.bitfield.TestField) ... ok
-testAdminHandshake (__main__.TestHandshake) ... ok
 testDBOverrun (__main__.TestHandshake) ... ok
 testEmptyRangeClientHandshake (__main__.TestHandshake) ... ok
 testNullClientHandshake (__main__.TestHandshake) ... ok
@@ -58,6 +57,6 @@ testPack (prototest.mysql.handshake.TestServerHandshake) ... ok
 testUnpackInit (prototest.mysql.handshake.TestServerHandshake) ... ok
 
 ----------------------------------------------------------------------
-Ran 58 tests
+Ran 57 tests
 
 OK
