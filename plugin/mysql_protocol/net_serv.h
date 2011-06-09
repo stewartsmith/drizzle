@@ -25,10 +25,10 @@
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
-typedef struct st_net {
+typedef struct st_net 
+{
   Vio *vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
   int fd;					/* For Perl DBI/dbd */
@@ -43,9 +43,7 @@ typedef struct st_net {
   unsigned int write_timeout;
   unsigned int read_timeout;
   unsigned int retry_count;
-  int fcntl;
   unsigned int *return_status;
-  unsigned char reading_or_writing;
   char save_char;
   bool compress;
   /*

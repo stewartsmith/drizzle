@@ -79,7 +79,7 @@ void drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
   net->pkt_nr=net->compress_pkt_nr=0;
   net->write_pos=net->read_pos = net->buff;
   net->last_error[0]=0;
-  net->compress=0; net->reading_or_writing=0;
+  net->compress=0; 
   net->where_b = net->remain_in_buf=0;
   net->last_errno=0;
   net->unused= 0;
@@ -362,7 +362,6 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
   if (net->error == 2)
     return(-1);                /* socket can't be used */
 
-  net->reading_or_writing=2;
   if (net->compress)
   {
     const uint32_t header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
@@ -457,7 +456,6 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 end:
   if (net->compress)
     free((char*)packet);
-  net->reading_or_writing=0;
 
   return (int) (pos != end);
 }
@@ -484,7 +482,6 @@ my_real_read(NET *net, size_t *complen)
 
   *complen = 0;
 
-  net->reading_or_writing= 1;
   /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
   pos = net->buff + net->where_b;        /* net->packet -4 */
@@ -567,9 +564,7 @@ my_real_read(NET *net, size_t *complen)
   }
 
 end:
-  net->reading_or_writing= 0;
-
-  return(len);
+  return len;
 }
 
 
