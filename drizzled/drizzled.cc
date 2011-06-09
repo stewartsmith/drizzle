@@ -220,13 +220,13 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 static bool opt_debugging= false;
 static uint32_t wake_thread;
-static const char *drizzled_chroot;
-static const char *default_character_set_name;
-static const char *character_set_filesystem_name;
-static const char *lc_time_names_name;
-static const char *default_collation_name;
-static const char *default_storage_engine_str;
-static const char *compiled_default_collation_name= "utf8_general_ci";
+static const char* drizzled_chroot;
+static const char* default_character_set_name;
+static const char* character_set_filesystem_name;
+static const char* lc_time_names_name;
+static const char* default_collation_name;
+static const char* default_storage_engine_str;
+static const char* const compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
