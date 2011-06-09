@@ -43,6 +43,7 @@ public:
   unsigned int last_errno;
   unsigned char error_;
 
+  void init(int sock, uint32_t buffer_length);
   bool flush();
   void end();
   void close();
@@ -58,7 +59,6 @@ bool drizzleclient_net_write_command(NET*, unsigned char command,
                                      const unsigned char *header, size_t head_len,
                                      const unsigned char *packet, size_t len);
 uint32_t drizzleclient_net_read(NET*);
-void drizzleclient_net_init_sock(NET*, int sock, uint32_t buffer_length);
 
 } /* namespace drizzle_plugin */
 

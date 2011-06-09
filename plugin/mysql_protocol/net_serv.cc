@@ -66,21 +66,21 @@ static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, s
 
 /** Init with packet info. */
 
-void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
+void NET::init(int sock, uint32_t buffer_length)
 {
-  net->vio = new Vio(sock);
-  net->max_packet= (uint32_t) buffer_length;
-  net->max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
+  vio= new Vio(sock);
+  max_packet= (uint32_t) buffer_length;
+  max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
 
-  net->buff=(unsigned char*) malloc((size_t) net->max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
-  net->buff_end=net->buff+net->max_packet;
-  net->error_=0;
-  net->pkt_nr=net->compress_pkt_nr=0;
-  net->write_pos=net->read_pos = net->buff;
-  net->compress=0; 
-  net->where_b = net->remain_in_buf=0;
-  net->last_errno=0;
-  net->vio->fastsend();
+  buff= (unsigned char*) malloc((size_t) max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
+  buff_end= buff + max_packet;
+  error_= 0;
+  pkt_nr= compress_pkt_nr= 0;
+  write_pos= read_pos= buff;
+  compress= 0; 
+  where_b= remain_in_buf= 0;
+  last_errno= 0;
+  vio->fastsend();
 }
 
 void NET::end()

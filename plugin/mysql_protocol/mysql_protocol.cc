@@ -96,7 +96,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, Pr
   if (fd == -1)
     return;
 
-  drizzleclient_net_init_sock(&net, fd, buffer_length.get());
+  net.init(fd, buffer_length.get());
   net.set_read_timeout(read_timeout.get());
   net.set_write_timeout(write_timeout.get());
   net.retry_count=retry_count.get();
