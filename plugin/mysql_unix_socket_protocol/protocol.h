@@ -34,11 +34,8 @@ namespace mysql_unix_socket_protocol {
 class Protocol : public ListenMySQLProtocol
 {
 public:
-  Protocol(std::string name,
-           bool using_mysql41_protocol,
-           const boost::filesystem::path &unix_socket_path) :
-    ListenMySQLProtocol(name, unix_socket_path.file_string(),
-                        using_mysql41_protocol),
+  Protocol(std::string name, bool using_mysql41_protocol, const boost::filesystem::path &unix_socket_path) :
+    ListenMySQLProtocol(name, unix_socket_path.file_string(), using_mysql41_protocol), 
     _unix_socket_path(unix_socket_path)
   { }
 
@@ -53,13 +50,10 @@ private:
   const boost::filesystem::path _unix_socket_path;
 };
 
-class ClientMySQLUnixSocketProtocol: public ClientMySQLProtocol
+class ClientMySQLUnixSocketProtocol : public ClientMySQLProtocol
 {
 public:
   ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
-
-  /* Unix socket protocol is for MySQL compatibility so do not allow admin connections */
-  bool isAdminAllowed() const { return false; }
 };
 
 

@@ -42,12 +42,10 @@ public:
   drizzled::plugin::Client *getClient(int fd);
 };
 
-class ClientDrizzleProtocol: public ClientMySQLProtocol
+class ClientDrizzleProtocol : public ClientMySQLProtocol
 {
 public:
-  ClientDrizzleProtocol(int fd, ProtocolCounters& set_counters): ClientMySQLProtocol(fd, true, set_counters) {}
-
-  bool isAdminAllowed() const;
+  ClientDrizzleProtocol(int fd, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, true, set_counters) {}
 };
 
 } /* namespace drizzle_protocol */

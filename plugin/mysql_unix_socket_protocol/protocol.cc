@@ -55,7 +55,7 @@ Protocol::~Protocol()
   fs::remove(_unix_socket_path);
 }
 
-in_port_t Protocol::getPort(void) const
+in_port_t Protocol::getPort() const
 {
   return 0;
 }

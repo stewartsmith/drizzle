@@ -208,8 +208,6 @@ class sysbenchTestExecutor(test_execution.testExecutor):
                                                           , self.master_server.master_port)
                    ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
                                                    , self.master_server.master_port)
-                   ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
-                                                         , self.master_server.master_port)
                    ,  'DRIZZLE_BASEDIR' : self.system_manager.code_tree.basedir
                    ,  'DRIZZLE_TRX_READER' : self.system_manager.code_tree.drizzle_trx_reader
                    }     

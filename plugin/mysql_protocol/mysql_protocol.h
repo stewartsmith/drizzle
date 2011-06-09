@@ -36,10 +36,8 @@ public:
   { }
 
   drizzled::atomic<uint64_t> connectionCount;
-  drizzled::atomic<uint64_t> adminConnectionCount;
   drizzled::atomic<uint64_t> failedConnections;
   drizzled::atomic<uint64_t> connected;
-  drizzled::atomic<uint64_t> adminConnected;
   uint32_t max_connections;
 };
 
@@ -75,12 +73,11 @@ protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool is_admin_connection;
   bool _using_mysql41_protocol;
   bool _is_interactive;
 
   bool checkConnection();
-  void netStoreData(const unsigned char *from, size_t length);
+  void netStoreData(const void*, size_t);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
   void makeScramble(char *scramble);
@@ -92,11 +89,6 @@ public:
   bool isInteractive() const
   {
     return _is_interactive;
-  }
-
-  bool isAdmin() const
-  {
-    return is_admin_connection;
   }
 
   ProtocolCounters& counters;
@@ -129,7 +121,6 @@ public:
 
   virtual bool haveError(void);
   virtual bool wasAborted(void);
-  virtual bool isAdminAllowed() const;
 };
 
 } /* namespace drizzle_plugin */
