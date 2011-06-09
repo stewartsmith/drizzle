@@ -99,14 +99,14 @@ bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buf
   return net->vio->peer_addr(buf, port, buflen);
 }
 
-void drizzleclient_net_keepalive(NET *net, bool flag)
+void NET::keepalive(bool flag)
 {
-  net->vio->keepalive(flag);
+  vio->keepalive(flag);
 }
 
-int drizzleclient_net_get_sd(NET *net)
+int NET::get_sd() const
 {
-  return net->vio->get_fd();
+  return vio->get_fd();
 }
 
 /** Realloc the packet buffer. */
@@ -728,7 +728,6 @@ drizzleclient_net_read(NET *net)
   return len;
 }
 
-
 void NET::set_read_timeout(uint32_t timeout)
 {
   read_timeout_= timeout;
@@ -738,7 +737,6 @@ void NET::set_read_timeout(uint32_t timeout)
 #endif
   return;
 }
-
 
 void NET::set_write_timeout(uint32_t timeout)
 {

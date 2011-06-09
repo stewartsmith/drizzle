@@ -43,6 +43,8 @@ public:
   unsigned int last_errno;
   unsigned char error;
 
+  void keepalive(bool flag);
+  int get_sd() const;
   void set_write_timeout(uint32_t timeout);
   void set_read_timeout(uint32_t timeout);
 };
@@ -57,8 +59,6 @@ uint32_t drizzleclient_net_read(NET*);
 void drizzleclient_net_close(NET*);
 void drizzleclient_net_init_sock(NET*, int sock, uint32_t buffer_length);
 bool drizzleclient_net_peer_addr(NET*, char *buf, uint16_t *port, size_t buflen);
-void drizzleclient_net_keepalive(NET*, bool flag);
-int drizzleclient_net_get_sd(NET*);
 
 } /* namespace drizzle_plugin */
 

@@ -110,7 +110,7 @@ ClientMySQLProtocol::~ClientMySQLProtocol()
 
 int ClientMySQLProtocol::getFileDescriptor()
 {
-  return drizzleclient_net_get_sd(&net);
+  return net.get_sd();
 }
 
 bool ClientMySQLProtocol::isConnected()
@@ -655,7 +655,7 @@ bool ClientMySQLProtocol::checkConnection()
 
     user_identifier->setAddress(ip);
   }
-  drizzleclient_net_keepalive(&net, true);
+  net.keepalive(true);
 
   char* end;
   uint32_t pkt_len= 0;
