@@ -376,12 +376,11 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
-  UserDetect *detected_user= new UserDetect();
-  const char* shell_user= detected_user->getUser();
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
   context("username",
           po::value<string>()->default_value(shell_user ? shell_user : ""),
           N_("User to use for auth."));
-  delete detected_user;
   context("password",
           po::value<string>()->default_value(""),
           N_("Password to use for auth."));
