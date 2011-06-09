@@ -74,7 +74,7 @@ void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
 
   net->buff=(unsigned char*) malloc((size_t) net->max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
   net->buff_end=net->buff+net->max_packet;
-  net->error=0;
+  net->error_=0;
   net->pkt_nr=net->compress_pkt_nr=0;
   net->write_pos=net->read_pos = net->buff;
   net->compress=0; 
@@ -83,10 +83,10 @@ void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
   net->vio->fastsend();
 }
 
-void drizzleclient_net_end(NET *net)
+void NET::end()
 {
-  free(net->buff);
-  net->buff= NULL;
+  free(buff);
+  buff= NULL;
 }
 
 void NET::close()
@@ -116,7 +116,7 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
   if (length >= net->max_packet_size)
   {
     /* @todo: 1 and 2 codes are identical. */
-    net->error= 3;
+    net->error_= 3;
     net->last_errno= ER_NET_PACKET_TOO_LARGE;
     my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
     return 1;
@@ -132,17 +132,17 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
   return 0;
 }
 
-bool drizzleclient_net_flush(NET *net)
+bool NET::flush()
 {
-  bool error= 0;
-  if (net->buff != net->write_pos)
+  bool error= false;
+  if (buff != write_pos)
   {
-    error= drizzleclient_net_real_write(net, net->buff, (size_t) (net->write_pos - net->buff)) ? 1 : 0;
-    net->write_pos= net->buff;
+    error= drizzleclient_net_real_write(this, buff, write_pos - buff) ? true : false;
+    write_pos= buff;
   }
   /* Sync packet number if using compression */
-  if (net->compress)
-    net->pkt_nr=net->compress_pkt_nr;
+  if (compress)
+    pkt_nr= compress_pkt_nr;
   return error;
 }
 
@@ -251,7 +251,7 @@ drizzleclient_net_write_command(NET *net,unsigned char command,
   buff[3]= (unsigned char) net->pkt_nr++;
   return (net_write_buff(net, buff, header_size) ||
           (head_len && net_write_buff(net, header, head_len)) ||
-          net_write_buff(net, packet, len) || drizzleclient_net_flush(net));
+          net_write_buff(net, packet, len) || net->flush());
 }
 
 /**
@@ -345,7 +345,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   /* Backup of the original SO_RCVTIMEO timeout */
 
-  if (net->error == 2)
+  if (net->error_ == 2)
     return(-1);                /* socket can't be used */
 
   if (net->compress)
@@ -411,7 +411,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
         {
           if (net->vio->should_retry() && retry_count++ < net->retry_count)
             continue;
-          net->error= 2;                     /* Close socket */
+          net->error_= 2;                     /* Close socket */
           net->last_errno= ER_NET_PACKET_TOO_LARGE;
           my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
           goto end;
@@ -429,7 +429,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       {
         continue;
       }
-      net->error= 2;                /* Close socket */
+      net->error_= 2;                /* Close socket */
       net->last_errno= interrupted ? CR_NET_WRITE_INTERRUPTED : CR_NET_ERROR_ON_WRITE;
       break;
     }
@@ -492,7 +492,7 @@ my_real_read(NET *net, size_t *complen)
           continue;
         }
         len= packet_error;
-        net->error= 2;                /* Close socket */
+        net->error_= 2;                /* Close socket */
         net->last_errno= net->vio->was_interrupted() ? CR_NET_READ_INTERRUPTED : CR_NET_READ_ERROR;
         goto end;
       }
@@ -697,7 +697,7 @@ drizzleclient_net_read(NET *net)
 
           if (error != Z_OK)
           {
-            net->error= 2;            /* caller will close socket */
+            net->error_= 2;            /* caller will close socket */
             net->last_errno= CR_NET_UNCOMPRESS_ERROR;
           }
           else

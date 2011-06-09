@@ -41,8 +41,10 @@ public:
   char save_char;
   bool compress;
   unsigned int last_errno;
-  unsigned char error;
+  unsigned char error_;
 
+  bool flush();
+  void end();
   void close();
   bool peer_addr(char *buf, size_t buflen, uint16_t&);
   void keepalive(bool flag);
@@ -51,8 +53,6 @@ public:
   void set_read_timeout(uint32_t timeout);
 };
 
-void drizzleclient_net_end(NET*);
-bool drizzleclient_net_flush(NET*);
 bool drizzleclient_net_write(NET*, const void*, size_t);
 bool drizzleclient_net_write_command(NET*, unsigned char command,
                                      const unsigned char *header, size_t head_len,

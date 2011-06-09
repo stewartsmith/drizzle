@@ -132,7 +132,7 @@ void ClientMySQLProtocol::close()
   if (net.vio)
   { 
     net.close();
-    drizzleclient_net_end(&net);
+    net.end();
     counters.connected.decrement();
   }
 }
@@ -201,10 +201,10 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
     else
       sendOK();
 
-    if (net.error != 3)
+    if (net.error_ != 3)
       return false;                       // We have to close it.
 
-    net.error= 0;
+    net.error_= 0;
   }
 
   *l_packet= (char*) net.read_pos;
@@ -337,7 +337,7 @@ void ClientMySQLProtocol::sendOK()
     pos+=length;
   }
   drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
-  drizzleclient_net_flush(&net);
+  net.flush();
 
   session->main_da().can_overwrite_status= false;
 }
@@ -360,12 +360,11 @@ void ClientMySQLProtocol::sendOK()
 void ClientMySQLProtocol::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
-  if (net.vio != 0)
+  if (net.vio)
   {
     session->main_da().can_overwrite_status= true;
-    writeEOFPacket(session->main_da().server_status(),
-                   session->main_da().total_warn_count());
-    drizzleclient_net_flush(&net);
+    writeEOFPacket(session->main_da().server_status(), session->main_da().total_warn_count());
+    net.flush();
     session->main_da().can_overwrite_status= false;
   }
   packet.shrink(buffer_length.get());
@@ -418,11 +417,8 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   tmp[0]= '\0';
   length= (uint32_t)(tmp-(char*)buff);
   err= (char*) buff;
-
   drizzleclient_net_write_command(&net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
-
-  drizzleclient_net_flush(&net);
-
+  net.flush();
   session->main_da().can_overwrite_status= false;
 }
 
@@ -627,12 +623,12 @@ void ClientMySQLProtocol::store(const char *from, size_t length)
 
 bool ClientMySQLProtocol::wasAborted()
 {
-  return net.error && net.vio != 0;
+  return net.error_ && net.vio != 0;
 }
 
 bool ClientMySQLProtocol::haveError()
 {
-  return net.error || net.vio == 0;
+  return net.error_ || net.vio == 0;
 }
 
 bool ClientMySQLProtocol::checkConnection()
