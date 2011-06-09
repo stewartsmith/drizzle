@@ -221,8 +221,8 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 static bool opt_debugging= false;
 static uint32_t wake_thread;
 static const char* drizzled_chroot;
-static const char* default_character_set_name;
-static const char* character_set_filesystem_name;
+static const char* default_character_set_name= "utf8";
+static const char* character_set_filesystem_name= "binary";
 static const char* lc_time_names_name;
 static const char* default_collation_name;
 static const char* default_storage_engine_str;
@@ -2018,12 +2018,10 @@ static void drizzle_init_variables(void)
   session::Cache::getCache().clear();
 
   /* Variables in libraries */
-  default_character_set_name= "utf8";
-  default_collation_name= (char *)compiled_default_collation_name;
-  character_set_filesystem_name= "binary";
-  lc_time_names_name= (char*) "en_US";
+  default_collation_name= compiled_default_collation_name;
+  lc_time_names_name= "en_US";
   /* Set default values for some option variables */
-  default_storage_engine_str= (char*) "innodb";
+  default_storage_engine_str= "innodb";
   global_system_variables.storage_engine= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
