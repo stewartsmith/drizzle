@@ -60,7 +60,6 @@ using namespace drizzled;
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
-const char  *not_error_sqlstate= "00000";
 
 static bool net_write_buff(NET*, const void*, uint32_t len);
 static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
@@ -78,17 +77,10 @@ void drizzleclient_net_init_sock(NET* net, int sock, uint32_t buffer_length)
   net->error=0;
   net->pkt_nr=net->compress_pkt_nr=0;
   net->write_pos=net->read_pos = net->buff;
-  net->last_error[0]=0;
   net->compress=0; 
   net->where_b = net->remain_in_buf=0;
   net->last_errno=0;
-  net->unused= 0;
-
-  if (net->vio)                    /* If real connection */
-  {
-    net->fd= net->vio->get_fd();            /* For perl DBI/DBD */
-    net->vio->fastsend();
-  }
+  net->vio->fastsend();
 }
 
 void drizzleclient_net_end(NET *net)
@@ -737,23 +729,23 @@ drizzleclient_net_read(NET *net)
 }
 
 
-void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)
+void NET::set_read_timeout(uint32_t timeout)
 {
-  net->read_timeout= timeout;
+  read_timeout_= timeout;
 #ifndef __sun
-  if (net->vio)
-    net->vio->timeout(0, timeout);
+  if (vio)
+    vio->timeout(0, timeout);
 #endif
   return;
 }
 
 
-void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
+void NET::set_write_timeout(uint32_t timeout)
 {
-  net->write_timeout= timeout;
+  write_timeout_= timeout;
 #ifndef __sun
-  if (net->vio)
-    net->vio->timeout(1, timeout);
+  if (vio)
+    vio->timeout(1, timeout);
 #endif
   return;
 }

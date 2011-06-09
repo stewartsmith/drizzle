@@ -27,40 +27,25 @@
 
 namespace drizzle_plugin {
 
-typedef struct st_net 
+class NET
 {
-  Vio *vio;
+public:
+  Vio* vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
-  int fd;					/* For Perl DBI/dbd */
-  /*
-    The following variable is set if we are doing several queries in one
-    command ( as in LOAD TABLE ... FROM MASTER ),
-    and do not want to confuse the client with OK at the wrong time
-  */
   unsigned long remain_in_buf,length, buf_length, where_b;
   unsigned long max_packet,max_packet_size;
   unsigned int pkt_nr,compress_pkt_nr;
-  unsigned int write_timeout;
-  unsigned int read_timeout;
+  unsigned int write_timeout_;
+  unsigned int read_timeout_;
   unsigned int retry_count;
   char save_char;
   bool compress;
-  /*
-    Pointer to query object in query cache, do not equal NULL (0) for
-    queries in cache that have not stored its results yet
-  */
-  /*
-    Unused, please remove with the next incompatible ABI change.
-  */
-  unsigned char *unused;
   unsigned int last_errno;
   unsigned char error;
-  /** Client library error message buffer. Actually belongs to struct MYSQL. */
-  char last_error[LIBDRIZZLE_ERRMSG_SIZE];
-  /** Client library sqlstate buffer. Set along with the error message. */
-  char sqlstate[LIBDRIZZLE_SQLSTATE_LENGTH+1];
-  void *extension;
-} NET;
+
+  void set_write_timeout(uint32_t timeout);
+  void set_read_timeout(uint32_t timeout);
+};
 
 void drizzleclient_net_end(NET*);
 bool drizzleclient_net_flush(NET*);
@@ -74,9 +59,6 @@ void drizzleclient_net_init_sock(NET*, int sock, uint32_t buffer_length);
 bool drizzleclient_net_peer_addr(NET*, char *buf, uint16_t *port, size_t buflen);
 void drizzleclient_net_keepalive(NET*, bool flag);
 int drizzleclient_net_get_sd(NET*);
-
-void drizzleclient_net_set_write_timeout(NET*, uint32_t timeout);
-void drizzleclient_net_set_read_timeout(NET*, uint32_t timeout);
 
 } /* namespace drizzle_plugin */
 

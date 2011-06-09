@@ -97,8 +97,8 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, Pr
     return;
 
   drizzleclient_net_init_sock(&net, fd, buffer_length.get());
-  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
+  net.set_read_timeout(read_timeout.get());
+  net.set_write_timeout(write_timeout.get());
   net.retry_count=retry_count.get();
 }
 
@@ -143,8 +143,8 @@ bool ClientMySQLProtocol::authenticate()
   counters.connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
-  drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, connect_timeout.get());
+  net.set_read_timeout(connect_timeout.get());
+  net.set_write_timeout(connect_timeout.get());
 
   if (checkConnection())
   {
@@ -167,8 +167,8 @@ bool ClientMySQLProtocol::authenticate()
   }
 
   /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
+  net.set_read_timeout(read_timeout.get());
+  net.set_write_timeout(write_timeout.get());
   return true;
 }
 
