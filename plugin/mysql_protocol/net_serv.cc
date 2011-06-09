@@ -89,14 +89,14 @@ void drizzleclient_net_end(NET *net)
   net->buff= NULL;
 }
 
-void drizzleclient_net_close(NET *net)
+void NET::close()
 {
-  drizzled::safe_delete(net->vio);
+  drizzled::safe_delete(vio);
 }
 
-bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+bool NET::peer_addr(char *buf, size_t buflen, uint16_t& port)
 {
-  return net->vio->peer_addr(buf, port, buflen);
+  return vio->peer_addr(buf, buflen, port);
 }
 
 void NET::keepalive(bool flag)
@@ -459,20 +459,18 @@ end:
 static uint32_t
 my_real_read(NET *net, size_t *complen)
 {
-  unsigned char *pos;
   size_t length= 0;
-  uint32_t i,retry_count=0;
+  uint32_t retry_count=0;
   size_t len=packet_error;
-  uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
-                    NET_HEADER_SIZE);
+  uint32_t remain= net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE : NET_HEADER_SIZE;
 
   *complen = 0;
 
   /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
-  pos = net->buff + net->where_b;        /* net->packet -4 */
+  unsigned char* pos = net->buff + net->where_b;        /* net->packet -4 */
 
-  for (i= 0; i < 2 ; i++)
+  for (uint32_t i= 0; i < 2 ; i++)
   {
     while (remain > 0)
     {

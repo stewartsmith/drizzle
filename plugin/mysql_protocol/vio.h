@@ -95,7 +95,7 @@ public:
    @param[in] buflen Size of buf.
    @returns True on success, false otherwise.
    */
-  bool peer_addr(char *buf, uint16_t *port, size_t buflen) const;
+  bool peer_addr(char *buf, size_t buflen, uint16_t& port) const;
 
   /**
    * Sets either the send, or recieve timeouts for the socket.

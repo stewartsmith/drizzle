@@ -131,7 +131,7 @@ void ClientMySQLProtocol::close()
 {
   if (net.vio)
   { 
-    drizzleclient_net_close(&net);
+    net.close();
     drizzleclient_net_end(&net);
     counters.connected.decrement();
   }
@@ -647,7 +647,7 @@ bool ClientMySQLProtocol::checkConnection()
     char ip[NI_MAXHOST];
     uint16_t peer_port;
 
-    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
+    if (net.peer_addr(ip, NI_MAXHOST, peer_port))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), ip);
       return false;

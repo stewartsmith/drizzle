@@ -43,6 +43,8 @@ public:
   unsigned int last_errno;
   unsigned char error;
 
+  void close();
+  bool peer_addr(char *buf, size_t buflen, uint16_t&);
   void keepalive(bool flag);
   int get_sd() const;
   void set_write_timeout(uint32_t timeout);
@@ -56,9 +58,7 @@ bool drizzleclient_net_write_command(NET*, unsigned char command,
                                      const unsigned char *header, size_t head_len,
                                      const unsigned char *packet, size_t len);
 uint32_t drizzleclient_net_read(NET*);
-void drizzleclient_net_close(NET*);
 void drizzleclient_net_init_sock(NET*, int sock, uint32_t buffer_length);
-bool drizzleclient_net_peer_addr(NET*, char *buf, uint16_t *port, size_t buflen);
 
 } /* namespace drizzle_plugin */
 
