@@ -535,8 +535,8 @@ try
   _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
-  UserDetect *detected_user= new UserDetect();
-  const char* shell_user= detected_user->getUser();
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
 
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
@@ -551,8 +551,6 @@ try
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql or drizzle)."))
   ;
-
-  delete detected_user;
 
   po::options_description hidden_options(_("Hidden Options"));
   hidden_options.add_options()

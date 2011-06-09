@@ -401,8 +401,8 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
-  UserDetect *detected_user= new UserDetect();
-  const char* shell_user= detected_user->getUser();
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
 
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
@@ -417,8 +417,6 @@ try
   ("user,u", po::value<string>(&current_user)->default_value((shell_user ? shell_user : "")),
   "User for login if not current user.")
   ;
-
-  delete detected_user;
 
   po::options_description long_options("Allowed Options");
   long_options.add(commandline_options).add(import_options).add(client_options);

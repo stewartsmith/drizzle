@@ -1473,8 +1473,8 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-  UserDetect *detected_user= new UserDetect();
-  const char* shell_user= detected_user->getUser();
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1488,9 +1488,6 @@ try
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
   ;
-#ifndef DRIZZLE_ADMIN_TOOL
-  delete detected_user;
-#endif
   po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
