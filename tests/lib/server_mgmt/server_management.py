@@ -267,7 +267,7 @@ class serverManager:
                 if not attempts_remain: # we kill the pid
                     if self.verbose:
                         self.logging.warning("Forcing kill of server pid: %s" %(server.pid))
-                        self.system_manager.kill_pid(server.pid)
+                    self.system_manager.kill_pid(server.pid)
             if shutdown_retcode:
                 self.logging.error("Problem shutting down server:")
                 self.logging.error("%s : %s" %(shutdown_retcode))

@@ -72,9 +72,6 @@ class drizzleTree(codeTree):
                            ]
 
 
-        self.drizzleadmin = self.system_manager.find_path([os.path.join(self.clientbindir,
-                                                     'drizzleadmin')])
-
         self.drizzle_client = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                      'drizzle')])
 
