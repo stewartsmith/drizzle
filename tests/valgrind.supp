@@ -48,7 +48,7 @@
 
 {
   glibc nss issue
-  Memcheck:Cond
+  Memcheck:Leak
   ...
   fun:__nss_database_lookup
   ...
