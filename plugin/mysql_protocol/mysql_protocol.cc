@@ -87,7 +87,6 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
 }
 
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, ProtocolCounters& set_counters) :
-  _using_mysql41_protocol(true),
   _is_interactive(false),
   counters(set_counters)
 {
@@ -223,10 +222,10 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
     packet_length= 1;
   }
-  else if (_using_mysql41_protocol)
+  else
   {
     /* Map from MySQL commands to Drizzle commands. */
-    switch ((int)(*l_packet)[0])
+    switch ((*l_packet)[0])
     {
     case 0: /* SLEEP */
     case 1: /* QUIT */
@@ -235,23 +234,21 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
       break;
 
     case 8: /* SHUTDOWN */
-      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      (*l_packet)[0]= COM_SHUTDOWN;
       break;
 
     case 12: /* KILL */
-      (*l_packet)[0]= (unsigned char) COM_KILL;
+      (*l_packet)[0]= COM_KILL;
       break;
 
     case 14: /* PING */
-      (*l_packet)[0]= (unsigned char) COM_PING;
+      (*l_packet)[0]= COM_PING;
       break;
-
 
     default:
       /* Respond with unknown command for MySQL commands we don't support. */
-      (*l_packet)[0]= (unsigned char) COM_END;
+      (*l_packet)[0]= COM_END;
       packet_length= 1;
-      break;
     }
   }
 
@@ -470,7 +467,7 @@ void ClientMySQLProtocol::sendFields(List<Item>& list)
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
 
-    if (_using_mysql41_protocol)
+    if (true) // _using_mysql41_protocol)
     {
       /* Switch to MySQL field numbering. */
       switch (field.type)
@@ -659,12 +656,7 @@ bool ClientMySQLProtocol::checkConnection()
     /* buff[] needs to big enough to hold the server_version variable */
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
 
-    server_capabilites= CLIENT_BASIC_FLAGS;
-
-    if (_using_mysql41_protocol)
-    {
-      server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
-    }
+    server_capabilites= CLIENT_BASIC_FLAGS | CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;

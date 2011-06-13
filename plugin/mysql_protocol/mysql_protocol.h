@@ -47,9 +47,6 @@ typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constr
 
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
-protected:
-  const std::string _hostname;
-
 public:
   ListenMySQLProtocol(std::string name, const std::string &hostname) :
    drizzled::plugin::ListenTcp(name),
@@ -61,6 +58,8 @@ public:
   static ProtocolCounters mysql_counters;
   virtual ProtocolCounters& getCounters() const { return mysql_counters; }
   void addCountersToTable();
+protected:
+  const std::string _hostname;
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -69,7 +68,6 @@ protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool _using_mysql41_protocol;
   bool _is_interactive;
 
   bool checkConnection();
