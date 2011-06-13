@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 """ test_execution:
-    code related to the execution of est cases 
+    code related to the execution of test cases 
     
     We are provided access to a testManager with 
     mode-specific testCases.  We contact the executionManager

@@ -133,6 +133,7 @@ Testing:
    testing/test-run.rst
    testing/dbqp.rst
    testing/randgen.rst
+   testing/sql-bench.rst
    testing/sysbench.rst
    testing/writing_tests.rst
 

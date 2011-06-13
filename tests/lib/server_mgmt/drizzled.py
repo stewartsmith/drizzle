@@ -54,7 +54,6 @@ class drizzleServer(Server):
         self.drizzledump = self.code_tree.drizzledump
         self.drizzle_client = self.code_tree.drizzle_client
         self.drizzleimport = self.code_tree.drizzleimport
-        self.drizzleadmin = self.code_tree.drizzleadmin
         self.drizzleslap = self.code_tree.drizzleslap
         self.server_path = self.code_tree.drizzle_server
         self.drizzle_client_path = self.code_tree.drizzle_client

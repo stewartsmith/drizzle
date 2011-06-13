@@ -170,7 +170,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %}
 
 %debug
-%require "2.2"
+%require "2.4"
 %pure-parser
 %name-prefix="base_sql_"
 %parse-param { drizzled::Session *session }
