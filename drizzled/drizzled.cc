@@ -250,7 +250,7 @@ uint32_t drizzled_bind_timeout;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
-back_log_constraints back_log(50);
+back_log_constraints back_log(SOMAXCONN);
 DRIZZLED_API uint32_t server_id;
 DRIZZLED_API string server_uuid;
 uint64_t table_cache_size;

@@ -30,7 +30,7 @@
 namespace drizzled {
 namespace plugin {
 
-class DRIZZLED_API Plugin
+class DRIZZLED_API Plugin : boost::noncopyable
 {
 private:
   const std::string _name;
@@ -38,9 +38,6 @@ private:
   module::Module *_module;
   const std::string _type_name;
 
-  Plugin();
-  Plugin(const Plugin&);
-  Plugin& operator=(const Plugin &);
 public:
   typedef std::pair<const std::string, const std::string> map_key;
   typedef std::map<const map_key, plugin::Plugin *> map;

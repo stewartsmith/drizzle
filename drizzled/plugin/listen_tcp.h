@@ -32,8 +32,6 @@ namespace plugin {
  */
 class DRIZZLED_API ListenTcp : public Listen
 {
-  ListenTcp();
-  ListenTcp& operator=(const ListenTcp&);
 protected:
   /** Count of errors encountered in acceptTcp. */
   uint32_t accept_error_count;
