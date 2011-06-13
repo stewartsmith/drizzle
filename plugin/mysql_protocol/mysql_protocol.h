@@ -49,15 +49,11 @@ class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
 protected:
   const std::string _hostname;
-  bool _using_mysql41_protocol;
 
 public:
-  ListenMySQLProtocol(std::string name,
-                      const std::string &hostname,
-                      bool using_mysql41_protocol):
+  ListenMySQLProtocol(std::string name, const std::string &hostname) :
    drizzled::plugin::ListenTcp(name),
-   _hostname(hostname),
-   _using_mysql41_protocol(using_mysql41_protocol)
+   _hostname(hostname)
   { }
   virtual const std::string getHost() const;
   virtual in_port_t getPort() const;

@@ -32,20 +32,14 @@ namespace drizzle_protocol {
 class ListenDrizzleProtocol : public ListenMySQLProtocol
 {
 public:
-  ListenDrizzleProtocol(std::string name,  const std::string &bind_address, bool using_mysql41_protocol) :
-    ListenMySQLProtocol(name, bind_address, using_mysql41_protocol)
+  ListenDrizzleProtocol(std::string name, const std::string &bind_address) :
+    ListenMySQLProtocol(name, bind_address)
   { }
 
   in_port_t getPort() const;
   static ProtocolCounters drizzle_counters;
   virtual ProtocolCounters& getCounters() const { return drizzle_counters; }
   drizzled::plugin::Client *getClient(int fd);
-};
-
-class ClientDrizzleProtocol : public ClientMySQLProtocol
-{
-public:
-  ClientDrizzleProtocol(int fd, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, set_counters) {}
 };
 
 } /* namespace drizzle_protocol */

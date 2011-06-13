@@ -922,7 +922,7 @@ static int init(drizzled::module::Context &context)
 
   context.add(new plugin::Create_function<MySQLPassword>(MySQLPasswordName));
 
-  ListenMySQLProtocol* listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
+  ListenMySQLProtocol* listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>());
   listen_obj->addCountersToTable();
   context.add(listen_obj); 
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));

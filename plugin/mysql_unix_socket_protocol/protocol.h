@@ -34,8 +34,8 @@ namespace mysql_unix_socket_protocol {
 class Protocol : public ListenMySQLProtocol
 {
 public:
-  Protocol(std::string name, bool using_mysql41_protocol, const boost::filesystem::path &unix_socket_path) :
-    ListenMySQLProtocol(name, unix_socket_path.file_string(), using_mysql41_protocol), 
+  Protocol(std::string name, const boost::filesystem::path &unix_socket_path) :
+    ListenMySQLProtocol(name, unix_socket_path.file_string()), 
     _unix_socket_path(unix_socket_path)
   { }
 
