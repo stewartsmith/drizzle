@@ -25,14 +25,9 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/catalog.h>
 
-namespace drizzled
-{
-
-namespace statement
-{
-
-namespace catalog
-{
+namespace drizzled {
+namespace statement {
+namespace catalog {
 
 Create::Create(Session *in_session, drizzled::lex_string_t &arg) :
   Catalog(in_session, arg)
