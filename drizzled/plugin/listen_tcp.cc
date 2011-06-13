@@ -32,40 +32,28 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-#define MAX_ACCEPT_RETRY	10	// Test accept this many times
+namespace drizzled {
 
-namespace drizzled
-{
 extern back_log_constraints back_log;
 extern uint32_t drizzled_bind_timeout;
 
-
 int plugin::ListenTcp::acceptTcp(int fd)
 {
-  int new_fd;
-  uint32_t retry;
-
-  for (retry= 0; retry < MAX_ACCEPT_RETRY; retry++)
+  for (int retry= 0; retry < 10; retry++)
   {
-    new_fd= accept(fd, NULL, 0);
-    if (new_fd != -1 || (errno != EINTR && errno != EAGAIN))
+    int new_fd= accept(fd, NULL, 0);
+    if (new_fd != -1)
+      return new_fd;
+    if (errno != EINTR && errno != EAGAIN)
       break;
   }
-
-  if (new_fd == -1)
+  if ((accept_error_count++ & 255) == 0)
   {
-    if ((accept_error_count++ & 255) == 0)
-    {
-      sql_perror(_("accept() failed with errno %d"));
-    }
-
-    if (errno == ENFILE || errno == EMFILE)
-      sleep(1);
-
-    return -1;
+    sql_perror(_("accept() failed with errno %d"));
   }
-
-  return new_fd;
+  if (errno == ENFILE || errno == EMFILE)
+    sleep(1);
+  return -1;
 }
 
 bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
