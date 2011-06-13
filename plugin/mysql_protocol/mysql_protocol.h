@@ -83,7 +83,7 @@ protected:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters&);
+  ClientMySQLProtocol(int fd, ProtocolCounters&);
   virtual ~ClientMySQLProtocol();
 
   bool isInteractive() const

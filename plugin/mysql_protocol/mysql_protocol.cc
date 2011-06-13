@@ -83,11 +83,11 @@ in_port_t ListenMySQLProtocol::getPort(void) const
 plugin::Client *ListenMySQLProtocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, getCounters());
 }
 
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters& set_counters) :
-  _using_mysql41_protocol(using_mysql41_protocol),
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, ProtocolCounters& set_counters) :
+  _using_mysql41_protocol(true),
   _is_interactive(false),
   counters(set_counters)
 {

@@ -45,7 +45,7 @@ public:
 class ClientDrizzleProtocol : public ClientMySQLProtocol
 {
 public:
-  ClientDrizzleProtocol(int fd, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, true, set_counters) {}
+  ClientDrizzleProtocol(int fd, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, set_counters) {}
 };
 
 } /* namespace drizzle_protocol */

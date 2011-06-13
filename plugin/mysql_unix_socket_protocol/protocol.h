@@ -50,13 +50,6 @@ private:
   const boost::filesystem::path _unix_socket_path;
 };
 
-class ClientMySQLUnixSocketProtocol : public ClientMySQLProtocol
-{
-public:
-  ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters& set_counters) : ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
-};
-
-
 } /* namespace mysql_unix_socket_protocol */
 } /* namespace drizzle_plugin */
 
