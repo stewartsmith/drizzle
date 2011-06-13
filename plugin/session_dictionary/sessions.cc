@@ -51,7 +51,6 @@ Sessions::Sessions() :
   add_field("QUERY", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
   add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INTERACTIVE", plugin::TableFunction::BOOLEAN, 0, false);
-  add_field("IS_ADMIN", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_CONSOLE", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
@@ -130,9 +129,6 @@ bool Sessions::Generator::populate()
 
     /* IS_INTERACTIVE */
     push(tmp->getClient()->isInteractive());
-
-    /* IS_ADMIN */
-    push(tmp->getClient()->isAdmin());
 
     /* IS_CONSOLE */
     push(tmp->getClient()->isConsole());

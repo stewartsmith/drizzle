@@ -111,11 +111,6 @@ public:
     return false;
   }
 
-  virtual bool isAdmin() const
-  {
-    return false;
-  }
-
   virtual catalog::Instance::shared_ptr catalog()
   {
     return catalog::local();
