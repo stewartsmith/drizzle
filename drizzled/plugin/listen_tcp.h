@@ -50,26 +50,24 @@ public:
       accept_error_count(0)
   {}
 
-  virtual ~ListenTcp() {}
-
   /**
    * This will bind the port to the host interfaces.
    * @fds[out] Vector of file descriptors that were bound.
    * @retval true on failure, false on success.
    */
-  virtual bool getFileDescriptors(std::vector<int> &fds);
+  virtual bool getFileDescriptors(std::vector<int>&);
 
   /**
    * Get the host address to bind to.
    * @retval The host address.
    */
-  virtual const std::string getHost(void) const;
+  virtual const std::string getHost() const;
 
   /**
    * Get the port to bind to.
    * @retval The port number.
    */
-  virtual in_port_t getPort(void) const= 0;
+  virtual in_port_t getPort() const= 0;
 };
 
 } /* end namespace plugin */
