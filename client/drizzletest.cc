@@ -1745,8 +1745,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
              v->name_len, v->name,
              v->str_val_len, v->str_val);
-    if (!(v->env_s= strdup(buf)))
-      die("Out of memory");
+    v->env_s= strdup(buf);
     putenv(v->env_s);
     free(old_env_s);
   }
@@ -2025,8 +2024,6 @@ static void var_copy(VAR *dest, VAR *src)
   if (dest->alloced_len < src->alloced_len)
   {
     char *tmpptr= (char *)realloc(dest->str_val, src->alloced_len);
-    if (tmpptr == NULL)
-      die("Out of memory");
     dest->str_val= tmpptr;
   }
   else
@@ -2080,8 +2077,6 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
       char *tmpptr= (char *)realloc(v->str_val, v->alloced_len+1);
-      if (tmpptr == NULL)
-        die("Out of memory");
       v->str_val= tmpptr;
     }
     v->str_val_len = new_val_len;
@@ -2094,7 +2089,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 }
 
 
-static int open_file(const char *name)
+static void open_file(const char *name)
 {
   char buff[FN_REFLEN];
 
@@ -2113,10 +2108,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  if (!(cur_file->file_name= strdup(buff)))
-    die("Out of memory");
+  cur_file->file_name= strdup(buff);
   cur_file->lineno=1;
-  return(0);
 }
 
 
@@ -3636,10 +3629,7 @@ static void do_close_connection(struct st_command *command)
     When the connection is closed set name to "-closed_connection-"
     to make it possible to reuse the connection name.
   */
-  if (!(con->name = strdup("-closed_connection-")))
-    die("Out of memory");
-
-  return;
+  con->name = strdup("-closed_connection-");
 }
 
 
@@ -3924,8 +3914,7 @@ static void do_connect(struct st_command *command)
                               ds_password.c_str(), ds_database.c_str(),
                               con_port, ds_sock.c_str()))
   {
-    if (!(con_slot->name= strdup(ds_connection_name.c_str())))
-      die("Out of memory");
+    con_slot->name= strdup(ds_connection_name.c_str());
     cur_con= con_slot;
 
     if (con_slot == next_con)
@@ -4532,8 +4521,7 @@ static int read_command(struct st_command** command_ptr)
   while (*p && my_isspace(charset_info, *p))
     p++;
 
-  if (!(command->query_buf= command->query= strdup(p)))
-    die("Out of memory");
+  command->query_buf= command->query= strdup(p);
 
   /* Calculate first word length(the command), terminated by space or ( */
   p= command->query;
@@ -5575,11 +5563,7 @@ try
       fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
       return EXIT_ARGUMENT_INVALID;
     }
-    if (!(cur_file->file_name= strdup(buff)))
-    {
-      fprintf(stderr, _("Out of memory"));
-      return EXIT_OUT_OF_MEMORY;
-    }
+    cur_file->file_name= strdup(buff);
     cur_file->lineno= 1;
   }
 
@@ -5678,8 +5662,6 @@ try
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
-    if (cur_file->file_name == NULL)
-      die("Out of memory");
     cur_file->lineno= 1;
   }
   cur_con= g_connections;
@@ -5689,8 +5671,7 @@ try
     die("Failed in drizzle_con_create()");
   drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
-  if (!(cur_con->name = strdup("default")))
-    die("Out of memory");
+  cur_con->name = strdup("default");
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
@@ -6163,8 +6144,6 @@ void do_get_replace_column(struct st_command *command)
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
     replace_column[column_number-1]= strdup(to);
-    if (replace_column[column_number-1] == NULL)
-      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);
