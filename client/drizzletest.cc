@@ -194,16 +194,17 @@ static uint64_t progress_start= 0;
 
 vector<struct st_command*> q_lines;
 
-typedef struct {
-  int read_lines,current_line;
-} parser_st;
-parser_st parser;
+struct parser_st
+{
+  int read_lines;
+  int current_line;
+} parser;
 
-typedef struct
+struct master_pos_st
 {
   char file[FN_REFLEN];
   uint32_t pos;
-} master_pos_st;
+};
 
 master_pos_st master_pos;
 
@@ -231,11 +232,11 @@ var_hash_t var_hash;
 
 struct st_connection
 {
-  drizzle_st *drizzle;
+  drizzle_st* drizzle;
   drizzle_con_st con;
   /* Used when creating views and sp, to avoid implicit commit */
-  drizzle_con_st *util_con;
-  char *name;
+  drizzle_con_st* util_con;
+  char* name;
 };
 st_connection g_connections[128];
 st_connection* cur_con= NULL, *next_con;
@@ -245,7 +246,8 @@ st_connection* cur_con= NULL, *next_con;
   Must match the "command_names" array
   Add new commands before Q_UNKNOWN!
 */
-enum enum_commands {
+enum enum_commands 
+{
   Q_CONNECTION=1,     Q_QUERY,
   Q_CONNECT,      Q_SLEEP, Q_REAL_SLEEP,
   Q_INC,        Q_DEC,
