@@ -574,13 +574,11 @@ bool update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex().current_select->cond_count+1)*2 +
 	session->lex().current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
-    return true;
+  key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz);
   and_level= 0;
   field= end= key_fields;
 
-  if (my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64))
-    return true;
+  my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64);
   if (cond)
   {
     add_key_fields(join_tab->join, &end, &and_level, cond, normal_tables,
@@ -685,7 +683,7 @@ bool update_ref_and_keys(Session *session,
       keyuse->set_size(i);
     }
   }
-  return false;
+  return false; // return void
 }
 
 /**

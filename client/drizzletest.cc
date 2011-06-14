@@ -6567,12 +6567,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     char *substring_to_replace= in_string + ovector[0];
     int substring_length= ovector[1] - ovector[0];
     *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
-    char * new_buf = (char *)malloc(*buf_len_p+1);
-    if (new_buf == NULL)
-    {
-      pcre_free(re);
-      return 1;
-    }
+    char* new_buf= (char*)malloc(*buf_len_p+1);
 
     memset(new_buf, 0, *buf_len_p+1);
     strncpy(new_buf, in_string, substring_to_replace-in_string);
@@ -6611,12 +6606,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
       current_position= current_position + length_of_replacement;
     }
 
-    char *new_buf = (char *) malloc(subject.length() + 1);
-    if (new_buf == NULL)
-    {
-      pcre_free(re);
-      return 1;
-    }
+    char* new_buf = (char*) malloc(subject.length() + 1);
     memset(new_buf, 0, subject.length() + 1);
     strncpy(new_buf, subject.c_str(), subject.length());
     *buf_len_p= subject.length() + 1;
@@ -6682,7 +6672,7 @@ struct FOLLOWS
   uint32_t len;
 };
 
-int init_sets(REP_SETS *sets, uint32_t states);
+void init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
 int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset);
 
@@ -6748,8 +6738,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
   REPLACE_STRING *rep_str;
-  if (init_sets(&sets, states))
-    return 0;
+  init_sets(&sets, states);
   found_sets=0;
   vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
@@ -6941,7 +6930,6 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
   REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE) * (sets.count)
     + sizeof(REPLACE_STRING) * (found_sets + 1) + sizeof(char*) * count + result_len);
-  if (replace)
   {
     memset(replace, 0, sizeof(REPLACE)*(sets.count)+
                        sizeof(REPLACE_STRING)*(found_sets+1)+
@@ -6978,19 +6966,12 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 }
 
 
-int init_sets(REP_SETS *sets,uint32_t states)
+void init_sets(REP_SETS *sets,uint32_t states)
 {
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
-  if (!(sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET)*SET_MALLOC_HUNC)))
-    return 1;
-  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint32_t)*sets->size_of_bits*
-                                        SET_MALLOC_HUNC)))
-  {
-    free(sets->set);
-    return 1;
-  }
-  return 0;
+  sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET) * SET_MALLOC_HUNC);
+  sets->bit_buffer=(uint*) malloc(sizeof(uint32_t) * sets->size_of_bits * SET_MALLOC_HUNC);
 }
 
 /* Make help sets invisible for nicer codeing */
@@ -7148,16 +7129,11 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
 
   if (! pa->typelib.count)
   {
-    if (!(pa->typelib.type_names=(const char **)
+    pa->typelib.type_names=(const char **)
           malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
                      (sizeof(char *)+sizeof(*pa->flag))*
-                     (sizeof(char *)+sizeof(*pa->flag))))))
-      return(-1);
-    if (!(pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD)))
-    {
-      free((char*) pa->typelib.type_names);
-      return (-1);
-    }
+                     (sizeof(char *)+sizeof(*pa->flag))));
+    pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD);
     pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(unsigned char*)+
                                                sizeof(*pa->flag));
     pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);

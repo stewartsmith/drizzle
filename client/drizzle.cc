@@ -1881,11 +1881,7 @@ try
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
-      {
-        fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
-        exit(1);
-      }
+      histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5);
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }

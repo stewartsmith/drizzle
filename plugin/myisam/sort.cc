@@ -156,18 +156,10 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       }
       while ((maxbuffer= (size_t)(records/(keys-1)+1)) != skr);
 
-    if ((sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)))))
-    {
-      if (my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer,
-			     maxbuffer/2))
-      {
-	free((unsigned char*) sort_keys);
-        sort_keys= 0;
-      }
-      else
-	break;
-    }
-    old_memavl=memavl;
+    sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)));
+    my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
+    break;
+    old_memavl=memavl; // todo: remove dead code
     if ((memavl=memavl/4*3) < MIN_SORT_MEMORY && old_memavl > MIN_SORT_MEMORY)
       memavl=MIN_SORT_MEMORY;
   }

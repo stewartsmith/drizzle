@@ -248,10 +248,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   if (param.addon_field)
   {
     param.res_length= param.addon_length;
-    if (!(table_sort.addon_buf= (unsigned char *) malloc(param.addon_length)))
-    {
-      goto err;
-    }
+    table_sort.addon_buf= (unsigned char *) malloc(param.addon_length);
   }
   else
   {
@@ -293,10 +290,8 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     selected_records_file= 0;
   }
 
-  if (multi_byte_charset && !(param.tmp_buffer= (char*) malloc(param.sort_length)))
-  {
-    goto err;
-  }
+  if (multi_byte_charset)
+    param.tmp_buffer= (char*) malloc(param.sort_length);
 
   memavl= getSession().variables.sortbuff_size;
   min_sort_memory= max((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
@@ -463,7 +458,7 @@ static char **make_char_array(char **old_pos, uint32_t fields,
   char *char_pos;
 
   if (old_pos ||
-      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*)))))
+      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*))))) // todo: remove malloc check
   {
     pos=old_pos; char_pos=((char*) (pos+fields)) -length;
     while (fields--) *(pos++) = (char_pos+= length);
@@ -484,7 +479,6 @@ static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffpek_poin
     return 0; /* sizeof(buffpek)*count will overflow */
   if (!tmp)
     tmp= (unsigned char *)malloc(length);
-  if (tmp)
   {
     if (buffpek_pointers->reinit_io_cache(internal::READ_CACHE,0L,0,0) ||
 	my_b_read(buffpek_pointers, (unsigned char*) tmp, length))
@@ -1072,8 +1066,7 @@ bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_i
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
 
-  if (!(to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count)))
-    return true;
+  to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count);
 
   for (unsigned char **end_ptr= sort_keys+count ; sort_keys != end_ptr ; sort_keys++)
   {
@@ -1081,7 +1074,7 @@ bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_i
     to+= res_length;
   }
 
-  return false;
+  return false; // return void
 }
 
 
@@ -1612,10 +1605,9 @@ sort_addon_field *FileSort::get_addon_fields(Field **ptabfield, uint32_t sortlen
     return 0;
   length+= (null_fields+7)/8;
 
-  if (length+sortlength_arg > getSession().variables.max_length_for_sort_data ||
-      !(addonf= (sort_addon_field *) malloc(sizeof(sort_addon_field)*
-                                            (fields+1))))
+  if (length+sortlength_arg > getSession().variables.max_length_for_sort_data)
     return 0;
+  addonf= (sort_addon_field *) malloc(sizeof(sort_addon_field) * (fields+1));
 
   *plength= length;
   length= (null_fields+7)/8;
