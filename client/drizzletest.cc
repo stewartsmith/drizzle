@@ -660,8 +660,6 @@ static void show_query(drizzle_con_st *con, const char* query)
     fprintf(stderr, "\n\n");
   }
   drizzle_result_free(&res);
-
-  return;
 }
 
 
@@ -905,7 +903,7 @@ static void free_used_memory()
       free(i.second);
   }
   var_hash.clear();
-  BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
+  BOOST_FOREACH(st_command* i, q_lines)
     delete i;
   for (size_t i= 0; i < var_reg.size(); i++)
   {
@@ -919,11 +917,16 @@ static void free_used_memory()
 
 static void cleanup_and_exit(int exit_code)
 {
-  free_used_memory();
-  internal::my_end();
+  if (0) // Olaf: Freeing resources is unnecessary when exiting
+  {
+    free_used_memory(); 
+    internal::my_end();
+  }
 
-  if (!silent) {
-    switch (exit_code) {
+  if (!silent) 
+  {
+    switch (exit_code) 
+    {
     case 1:
       printf("not ok\n");
       break;
@@ -935,7 +938,7 @@ static void cleanup_and_exit(int exit_code)
       break;
     default:
       printf("unknown exit code: %d\n", exit_code);
-      assert(0);
+      assert(false);
     }
   }
   exit(exit_code);
@@ -1482,7 +1485,8 @@ static void check_result(string* ds)
   if (access(result_file_name.c_str(), F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name.c_str());
 
-  switch (string_cmp(ds, result_file_name.c_str())) {
+  switch (string_cmp(ds, result_file_name.c_str())) 
+  {
   case RESULT_OK:
     break; /* ok */
   case RESULT_LENGTH_MISMATCH:
@@ -1521,8 +1525,6 @@ static void check_result(string* ds)
   default: /* impossible */
     die("Unknown error code from dyn_string_cmp()");
   }
-
-  return;
 }
 
 
@@ -1543,15 +1545,12 @@ static void check_result(string* ds)
 
 static void check_require(string* ds, const string &fname)
 {
-
-
   if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
     internal::fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
-  return;
 }
 
 
@@ -1989,11 +1988,10 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   {
     /* Get the value */
-    drizzle_row_t row;
     long rows= 0;
     const char* value= "No such row";
 
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t row= drizzle_row_next(&res))
     {
       if (++rows == row_no)
       {
@@ -2155,8 +2153,6 @@ static void do_source(st_command* command)
     }
     open_file(ds_filename.c_str());
   }
-
-  return;
 }
 
 
@@ -2401,7 +2397,6 @@ static void do_system(st_command* command)
 
 static void do_remove_file(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg rm_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to delete" }
@@ -2412,7 +2407,7 @@ static void do_remove_file(st_command* command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
+  int error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2431,7 +2426,6 @@ static void do_remove_file(st_command* command)
 
 static void do_copy_file(st_command* command)
 {
-  int error;
   string ds_from_file;
   string ds_to_file;
   const struct command_arg copy_file_args[] = {
@@ -2445,7 +2439,7 @@ static void do_copy_file(st_command* command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
+  int error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
 }
@@ -2500,7 +2494,6 @@ static void do_chmod_file(st_command* command)
 
 static void do_file_exist(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg file_exist_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to check if it exist" }
@@ -2512,7 +2505,7 @@ static void do_file_exist(st_command* command)
                      sizeof(file_exist_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (access(ds_filename.c_str(), F_OK) != 0);
+  int error= access(ds_filename.c_str(), F_OK) != 0;
   handle_command_error(command, error);
 }
 
@@ -2530,7 +2523,6 @@ static void do_file_exist(st_command* command)
 static void do_mkdir(st_command* command)
 {
   string ds_dirname;
-  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2540,7 +2532,7 @@ static void do_mkdir(st_command* command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
+  int error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2556,7 +2548,6 @@ static void do_mkdir(st_command* command)
 
 static void do_rmdir(st_command* command)
 {
-  int error;
   string ds_dirname;
   const struct command_arg rmdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to remove"}
@@ -2567,7 +2558,7 @@ static void do_rmdir(st_command* command)
                      rmdir_args, sizeof(rmdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= rmdir(ds_dirname.c_str()) != 0;
+  int error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
 }
 
@@ -2599,15 +2590,13 @@ static void my_ungetc(int c)
 static void read_until_delimiter(string *ds,
                                  string *ds_delimiter)
 {
-  char c;
-
   if (ds_delimiter->length() > MAX_DELIMITER_LENGTH)
     die("Max delimiter length(%d) exceeded", MAX_DELIMITER_LENGTH);
 
   /* Read from file until delimiter is found */
   while (1)
   {
-    c= my_getc(cur_file->file);
+    char c= my_getc(cur_file->file);
 
     if (c == '\n')
     {
@@ -2635,7 +2624,6 @@ static void read_until_delimiter(string *ds,
 
     ds->push_back(c);
   }
-  return;
 }
 
 
@@ -2667,9 +2655,7 @@ static void do_write_file_command(st_command* command, bool append)
   }
 
   read_until_delimiter(&ds_content, &ds_delimiter);
-  str_to_file2(ds_filename.c_str(), ds_content.c_str(),
-               ds_content.length(), append);
-  return;
+  str_to_file2(ds_filename.c_str(), ds_content.c_str(), ds_content.length(), append);
 }
 
 
@@ -2764,8 +2750,6 @@ static void do_cat_file(st_command* command)
                      ' ');
 
   cat_file(&ds_res, ds_filename.c_str());
-
-  return;
 }
 
 
@@ -2783,7 +2767,6 @@ static void do_cat_file(st_command* command)
 
 static void do_diff_files(st_command* command)
 {
-  int error= 0;
   string ds_filename;
   string ds_filename2;
   const struct command_arg diff_file_args[] = {
@@ -2798,7 +2781,8 @@ static void do_diff_files(st_command* command)
                      sizeof(diff_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  if ((error= compare_files(ds_filename.c_str(), ds_filename2.c_str())))
+  int error= compare_files(ds_filename.c_str(), ds_filename2.c_str());
+  if (error)
   {
     /* Compare of the two files failed, append them to output
        so the failure can be analyzed
@@ -2812,15 +2796,12 @@ static void do_diff_files(st_command* command)
 
 static st_connection * find_connection_by_name(const char *name)
 {
-  st_connection *con;
-  for (con= g_connections; con < next_con; con++)
+  for (st_connection* con= g_connections; con < next_con; con++)
   {
-    if (!strcmp(con->name, name))
-    {
+    if (not strcmp(con->name, name))
       return con;
-    }
   }
-  return 0; /* Connection not found */
+  return NULL;
 }
 
 
@@ -3036,7 +3017,6 @@ static void do_wait_for_slave_to_stop()
       break;
     usleep(SLAVE_POLL_INTERVAL);
   }
-  return;
 }
 
 static void do_sync_with_master2(long offset)
