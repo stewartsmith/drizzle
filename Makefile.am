@@ -17,7 +17,7 @@ ACLOCAL_AMFLAGS = -I m4 --force
 
 # includes append to these:
 SUFFIXES =
-TESTS = 
+TESTS =
 check_PROGRAMS =
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
@@ -27,7 +27,7 @@ nobase_nodist_pkginclude_HEADERS =
 nobase_dist_pkginclude_HEADERS =
 dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
-lib_LTLIBRARIES = 
+lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 extradir=${libdir}
 extra_LTLIBRARIES =
@@ -137,12 +137,11 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	fi
 
 clean-local:
-	find . -name '*.gcno' | xargs rm -f 
+	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 
 include config/lcov.am
 
-include docs/include.am
 include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
@@ -155,6 +154,7 @@ include unittests/include.am
 include libdrizzle-1.0/libdrizzle/include.am
 include libdrizzle-2.0/libdrizzle/include.am
 include win32/include.am
+include docs/include.am
 
 TESTS += ${check_PROGRAMS}
 

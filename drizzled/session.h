@@ -860,7 +860,7 @@ public:
                               const std::string &str,
                               bool allocate_lex_string);
 
-  int send_explain_fields(select_result *result);
+  void send_explain_fields(select_result*);
 
   void clear_error(bool full= false);
   void clearDiagnostics();

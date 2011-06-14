@@ -5292,18 +5292,16 @@ static int return_zero_rows(Join *join,
     if (having && having->val_int() == 0)
       send_row=0;
   }
-  if (! (result->send_fields(fields)))
+  result->send_fields(fields);
+  if (send_row)
   {
-    if (send_row)
-    {
-      List<Item>::iterator it(fields.begin());
-      Item *item;
-      while ((item= it++))
-        item->no_rows_in_result();
-      result->send_data(fields);
-    }
-    result->send_eof();				// Should be safe
+    List<Item>::iterator it(fields.begin());
+    Item *item;
+    while ((item= it++))
+      item->no_rows_in_result();
+    result->send_data(fields);
   }
+  result->send_eof();				// Should be safe
   /* Update results for FOUND_ROWS */
   join->session->limit_found_rows= join->session->examined_row_count= 0;
   return(0);

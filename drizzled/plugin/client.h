@@ -77,13 +77,13 @@ public:
    * Check to see if the client is actively reading.
    * @retval Boolean value representing reading state.
    */
-  virtual bool isReading(void)= 0;
+  virtual bool isReading(void)= 0; // todo: delete
 
   /**
    * Check to see if the client is actively writing.
    * @retval Boolean value representing writing state.
    */
-  virtual bool isWriting(void)= 0;
+  virtual bool isWriting(void)= 0; // todo: delete
 
   /**
    * Flush all data that has been buffered with store() methods.
@@ -129,7 +129,7 @@ public:
   /**
    * Send field list for result set.
    */
-  virtual bool sendFields(List<Item> *list)= 0;
+  virtual void sendFields(List<Item>&)= 0;
 
   /* Send result fields in various forms. */
   virtual void store(Field *from)= 0;
@@ -148,7 +148,6 @@ public:
   }
 
   /* Try to remove these. */
-  virtual bool haveMoreData(void)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
 

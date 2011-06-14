@@ -20,15 +20,11 @@
 #pragma once
 
 #include <drizzled/plugin/listen.h>
-
 #include <netinet/in.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class is used by client plugins to provide and manage TCP listening
@@ -37,7 +33,6 @@ namespace plugin
 class DRIZZLED_API ListenTcp : public Listen
 {
   ListenTcp();
-  ListenTcp(const ListenTcp&);
   ListenTcp& operator=(const ListenTcp&);
 protected:
   /** Count of errors encountered in acceptTcp. */

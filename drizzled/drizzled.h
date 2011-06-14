@@ -39,7 +39,6 @@ extern bool volatile ready_to_exit;
 extern bool opt_help;
 extern bool opt_help_extended;
 extern passwd *user_info;
-extern char *drizzled_user;
 
 extern global_buffer_constraint<uint64_t> global_sort_buffer;
 extern global_buffer_constraint<uint64_t> global_join_buffer;

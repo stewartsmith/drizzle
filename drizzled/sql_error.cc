@@ -212,8 +212,7 @@ bool show_warnings(Session *session,
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->getClient()->sendFields(&field_list))
-    return true;
+  session->getClient()->sendFields(field_list);
 
   Select_Lex *sel= &session->lex().select_lex;
   Select_Lex_Unit *unit= &session->lex().unit;

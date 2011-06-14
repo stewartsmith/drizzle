@@ -24,10 +24,8 @@
 
 #define DRIZZLE_ABORT BOOST_THROW_EXCEPTION(::drizzled::abort_exception())
 
-namespace drizzled
-{
-
-
+namespace drizzled {
+  
 class abort_exception :
   public boost::exception, public std::exception
 { };

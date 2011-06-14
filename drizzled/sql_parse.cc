@@ -576,8 +576,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         to prepend EXPLAIN to any query and receive output for it,
         even if the query itself redirects the output.
       */
-      if (!(result= new select_send()))
-        return true;
+      result= new select_send();
       session->send_explain_fields(result);
       optimizer::ExplainPlan planner;
       res= planner.explainUnion(session, &session->lex().unit, result);
@@ -600,8 +599,8 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     }
     else
     {
-      if (!result && !(result= new select_send()))
-        return true;
+      if (not result)
+        result= new select_send();
 
       /* Init the Query Cache plugin */
       plugin::QueryCache::prepareResultset(session);

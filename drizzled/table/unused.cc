@@ -47,7 +47,7 @@ UnusedTables &getUnused(void)
 void UnusedTables::cull()
 {
   /* Free cache if too big */
-  while (cached_open_tables() > table_cache_size && getTable())
+  while (table::getCache().size() > table_cache_size && getTable())
     remove_table(getTable());
 }
 

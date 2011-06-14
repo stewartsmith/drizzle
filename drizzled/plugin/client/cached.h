@@ -44,9 +44,9 @@ public:
   {
   }
 
-  virtual bool sendFields(List<Item> *list)
+  virtual void sendFields(List<Item>& list)
   {
-    List<Item>::iterator it(list->begin());
+    List<Item>::iterator it(list.begin());
 
     column= 0;
     max_column= 0;
@@ -59,8 +59,6 @@ public:
     }
     _result_set->setColumnCount(max_column);
     _result_set->createRow();
-
-    return false;
   }
 
   virtual void sendError(drizzled::error_t error_code, const char *error_message)

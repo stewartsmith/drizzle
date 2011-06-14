@@ -160,8 +160,7 @@ namespace dpo=drizzled::program_options;
 
 bool opt_daemon= false;
 
-namespace drizzled
-{
+namespace drizzled {
 
 inline void setup_fpu()
 {
@@ -201,12 +200,9 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 
 #define GET_HA_ROWS GET_ULL
 
-const char *tx_isolation_names[] =
-{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NULL};
+const char *tx_isolation_names[] = {"READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE", NULL};
 
-TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-                               tx_isolation_names, NULL};
+TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names) - 1, "", tx_isolation_names, NULL};
 
 /*
   Used with --help for detailed option
@@ -224,22 +220,21 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 static bool opt_debugging= false;
 static uint32_t wake_thread;
-static char *drizzled_chroot;
+static const char *drizzled_chroot;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
-static char *lc_time_names_name;
-static char *default_collation_name;
-static char *default_storage_engine_str;
+static const char *lc_time_names_name;
+static const char *default_collation_name;
+static const char *default_storage_engine_str;
 static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-char *drizzled_user;
+const char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 DRIZZLED_API bool volatile shutdown_in_progress;
-char *opt_scheduler_default;
-const char *opt_scheduler= NULL;
+const char* opt_scheduler= "multi_thread";
 
 DRIZZLED_API size_t my_thread_stack_size= 0;
 
@@ -382,8 +377,7 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
-namespace
-{
+namespace {
 
 std::string &getGlobHostname()
 {
@@ -476,7 +470,6 @@ void close_connections(void)
 
 void unireg_abort(int exit_code)
 {
-
   if (exit_code)
   {
     errmsg_printf(error::ERROR, _("Aborting"));
@@ -486,7 +479,7 @@ void unireg_abort(int exit_code)
     usage();
   }
 
-  clean_up(!opt_help && (exit_code));
+  clean_up(!opt_help && exit_code);
   internal::my_end();
   exit(exit_code);
 }
@@ -588,7 +581,7 @@ err:
 void set_user(const char *user, passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-  initgroups((char*) user, user_info_arg->pw_gid);
+  initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror(_("Set process group ID failed"));
@@ -1531,11 +1524,6 @@ int init_server_components(module::Registry &plugins)
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init())
-  {
-    errmsg_printf(error::ERROR, _("Could not initialize table cache\n"));
-    unireg_abort(1);
-  }
 
   // Resize the definition Cache at startup
   table::Cache::rehash(table_def_size);
@@ -1547,7 +1535,6 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-
   if (opt_help)
     unireg_abort(0);
 
@@ -1556,21 +1543,9 @@ int init_server_components(module::Registry &plugins)
     unireg_abort(1);
   }
 
-  string scheduler_name;
-  if (opt_scheduler)
+  if (plugin::Scheduler::setPlugin(opt_scheduler))
   {
-    scheduler_name= opt_scheduler;
-  }
-  else
-  {
-    scheduler_name= opt_scheduler_default;
-    opt_scheduler= opt_scheduler_default;
-  }
-
-  if (plugin::Scheduler::setPlugin(scheduler_name))
-  {
-      errmsg_printf(error::ERROR,
-                   _("No scheduler found, cannot continue!\n"));
+      errmsg_printf(error::ERROR, _("No scheduler found, cannot continue!\n"));
       unireg_abort(1);
   }
 
@@ -1578,24 +1553,18 @@ int init_server_components(module::Registry &plugins)
     This is entirely for legacy. We will create a new "disk based" engine and a
     "memory" engine which will be configurable longterm.
   */
-  const std::string myisam_engine_name("MyISAM");
-  const std::string heap_engine_name("MEMORY");
-  myisam_engine= plugin::StorageEngine::findByName(myisam_engine_name);
-  heap_engine= plugin::StorageEngine::findByName(heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName("MyISAM");
+  heap_engine= plugin::StorageEngine::findByName("MEMORY");
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    const std::string name(default_storage_engine_str);
-    plugin::StorageEngine *engine;
-
-    engine= plugin::StorageEngine::findByName(name);
+    plugin::StorageEngine *engine= plugin::StorageEngine::findByName(default_storage_engine_str);
     if (engine == NULL)
     {
-      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"),
-                    default_storage_engine_str);
+      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"), default_storage_engine_str);
       unireg_abort(1);
     }
     global_system_variables.storage_engine= engine;
@@ -1686,21 +1655,21 @@ struct option my_long_options[] =
 {
 
   {"help", '?', N_("Display this help and exit."),
-   (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
+   (char**) &opt_help, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"daemon", 'd', N_("Run as daemon."),
-   (char**) &opt_daemon, (char**) &opt_daemon, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
+   (char**) &opt_daemon, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
-   (char**) &max_system_variables.auto_increment_increment, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    OPT_ARG, 1, 1, INT64_MAX, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
    N_("Offset added to Auto-increment columns. Used when "
       "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
-   (char**) &max_system_variables.auto_increment_offset, 0, GET_ULL, OPT_ARG,
+   NULL, 0, GET_ULL, OPT_ARG,
    1, 1, INT64_MAX, 0, 1, 0 },
   {"basedir", 'b',
    N_("Path to installation directory. All paths are usually resolved "
@@ -1709,16 +1678,16 @@ struct option my_long_options[] =
    0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
-   (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
+   (char**) &drizzled_chroot, NULL, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"collation-server", OPT_DEFAULT_COLLATION,
    N_("Set the default collation."),
-   (char**) &default_collation_name, (char**) &default_collation_name,
+   (char**) &default_collation_name, NULL,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"completion-type", OPT_COMPLETION_TYPE,
    N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
-   (char**) &max_system_variables.completion_type, 0, GET_UINT,
+   NULL, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
   {"core-file", OPT_WANT_CORE,
    N_("Write core on errors."),
@@ -1735,12 +1704,12 @@ struct option my_long_options[] =
      easier to do */
   {"gdb", OPT_DEBUGGING,
    N_("Set up signals usable for debugging"),
-   (char**) &opt_debugging, (char**) &opt_debugging,
+   (char**) &opt_debugging, NULL,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
-   (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
+   NULL, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by drizzled."),
@@ -1750,7 +1719,7 @@ struct option my_long_options[] =
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
    (char**) &drizzled_bind_timeout,
-   (char**) &drizzled_bind_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   NULL, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
@@ -1759,7 +1728,7 @@ struct option my_long_options[] =
   {"server-id",	OPT_SERVER_ID,
    N_("Uniquely identifies the server instance in the community of "
       "replication partners."),
-   (char**) &server_id, (char**) &server_id, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 0,
+   (char**) &server_id, NULL, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
    N_("Don't print a stack trace on failure."),
@@ -1767,7 +1736,7 @@ struct option my_long_options[] =
    0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
-   (char**) &internal::my_use_symdir, (char**) &internal::my_use_symdir, 0, GET_BOOL, NO_ARG,
+   (char**) &internal::my_use_symdir, NULL, 0, GET_BOOL, NO_ARG,
    /*
      The system call realpath() produces warnings under valgrind and
      purify. These are not suppressed: instead we disable symlinks
@@ -1777,7 +1746,7 @@ struct option my_long_options[] =
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
-   (char**) &internal::timed_mutexes, (char**) &internal::timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
+   (char**) &internal::timed_mutexes, NULL, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
    N_("Default transaction isolation level."),
@@ -1791,69 +1760,69 @@ struct option my_long_options[] =
    N_("The number of outstanding connection requests Drizzle can have. This "
       "comes into play when the main Drizzle thread gets very many connection "
       "requests in a very short time."),
-    (char**) &back_log, (char**) &back_log, 0, GET_UINT,
+    (char**) &back_log, NULL, 0, GET_UINT,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
   { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
     N_("Size of tree cache used in bulk insert optimization. Note that this is "
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
-    (char**) &max_system_variables.bulk_insert_buff_size,
+    NULL,
     0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
    (char**) &global_system_variables.div_precincrement,
-   (char**) &max_system_variables.div_precincrement, 0, GET_UINT,
+   NULL, 0, GET_UINT,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
   { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
-   (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
+   NULL, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
-   (char**) &max_system_variables.max_allowed_packet, 0, GET_UINT32,
+   NULL, 0, GET_UINT32,
    REQUIRED_ARG, 64*1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_heap_table_size", OPT_MAX_HEP_TABLE_SIZE,
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
-   (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
       "return an error."),
    (char**) &global_system_variables.max_join_size,
-   (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
+   NULL, 0, GET_HA_ROWS, REQUIRED_ARG,
    INT32_MAX, 1, INT32_MAX, 0, 1, 0},
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,
-   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
-    (char**) &max_system_variables.max_seeks_for_key, 0, GET_UINT64,
+    NULL, 0, GET_UINT64,
     REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
    N_("The number of bytes to use when sorting BLOB or TEXT values "
       "(only the first max_sort_length bytes of each value are used; the "
       "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
-   (char**) &max_system_variables.max_sort_length, 0, GET_SIZE,
+   NULL, 0, GET_SIZE,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
-   (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
+   (char**) &max_write_lock_count, NULL, 0, GET_ULL,
    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
-   (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
@@ -1861,7 +1830,7 @@ struct option my_long_options[] =
        "false - do not apply any heuristic, thus perform exhaustive search; "
        "true - prune plans based on number of retrieved rows."),
     (char**) &global_system_variables.optimizer_prune_level,
-    (char**) &max_system_variables.optimizer_prune_level,
+    NULL,
     0, GET_BOOL, OPT_ARG, 1, 0, 1, 0, 1, 0},
   {"optimizer_search_depth", OPT_OPTIMIZER_SEARCH_DEPTH,
    N_("Maximum depth of search performed by the query optimizer. Values "
@@ -1873,7 +1842,7 @@ struct option my_long_options[] =
       "optimizer will switch to the original find_best (used for "
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
-   (char**) &max_system_variables.optimizer_search_depth,
+   NULL,
    0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
@@ -1900,23 +1869,23 @@ struct option my_long_options[] =
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
    N_("The size of the buffer that is allocated when preloading indexes"),
    (char**) &global_system_variables.preload_buff_size,
-   (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
-   (char**) &max_system_variables.query_alloc_block_size, 0, GET_UINT,
+   NULL, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
    N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
-   (char**) &max_system_variables.query_prealloc_size, 0, GET_UINT,
+   NULL, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
    ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
-   (char**) &max_system_variables.range_alloc_block_size, 0, GET_SIZE,
+   NULL, 0, GET_SIZE,
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, (int64_t)SIZE_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
@@ -1924,7 +1893,7 @@ struct option my_long_options[] =
        "size for each table it scans. If you do many sequential scans, you may "
        "want to increase this value."),
     (char**) &global_system_variables.read_buff_size,
-    (char**) &max_system_variables.read_buff_size,0, GET_UINT, REQUIRED_ARG,
+    NULL,0, GET_UINT, REQUIRED_ARG,
     128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
     0},
   {"read_rnd_buffer_size", OPT_RECORD_RND_BUFFER,
@@ -1932,40 +1901,40 @@ struct option my_long_options[] =
       "through this buffer to avoid a disk seeks. If not set, then it's set "
       "to the value of record_buffer."),
    (char**) &global_system_variables.read_rnd_buff_size,
-   (char**) &max_system_variables.read_rnd_buff_size, 0,
+   NULL, 0,
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   /* x8 compared to MySQL's x2. We have UTF8 to consider. */
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
-   (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
+   NULL, 0, GET_SIZE, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, (int64_t)SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
-   (char**) &table_def_size, (char**) &table_def_size,
+   (char**) &table_def_size, NULL,
    0, GET_SIZE, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
-   (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
+   (char**) &table_cache_size, NULL, 0, GET_UINT64,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, TABLE_OPEN_CACHE_MIN, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
-   (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
+   (char**) &table_lock_wait_timeout, NULL,
    0, GET_ULL, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_SIZE,
+   NULL, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
    UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
-   (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
+   NULL, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -2088,8 +2057,6 @@ static void drizzle_init_variables(void)
   max_system_variables.sortbuff_size= SIZE_MAX;
   max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
 
-  opt_scheduler_default= (char*) "multi_thread";
-
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
@@ -2211,11 +2178,8 @@ static void get_options()
   /* @TODO Make this all strings */
   if (vm.count("default-storage-engine"))
   {
-    default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
+    default_storage_engine_str= vm["default-storage-engine"].as<string>().c_str();
   }
-
-  /* Skip unknown options so that they may be processed later by plugins */
-  my_getopt_skip_unknown= true;
 
 
 #if defined(HAVE_BROKEN_REALPATH)
