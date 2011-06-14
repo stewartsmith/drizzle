@@ -136,8 +136,13 @@ public:
   }
 
   /* Try to remove these. */
+<<<<<<< TREE
   virtual bool haveError()= 0;
   virtual bool wasAborted()= 0;
+=======
+  virtual bool haveError(void)= 0;
+  virtual bool wasAborted(void)= 0;
+>>>>>>> MERGE-SOURCE
 
 };
 
