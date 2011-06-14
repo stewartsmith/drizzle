@@ -22,10 +22,9 @@
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/definitions.h>
 
-namespace drizzled
-{
-namespace memory
-{
+namespace drizzled {
+namespace memory {
+
 /*
   Malloc many pointers at the same time
   Only ptr1 can be free'd, and doing this will free all
