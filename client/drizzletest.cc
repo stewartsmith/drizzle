@@ -1261,16 +1261,15 @@ static void show_diff(string* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      ds_tmp.clear();
-
-      ds_tmp.append(
+      ds_tmp=
                     "\n"
                     "The two files differ but it was not possible to execute 'diff' in\n"
                     "order to show only the difference, tried both 'diff -u' or 'diff -c'.\n"
-                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
+                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n"
+                    "\n"
                     "To get a better report you should install 'diff' on your system, which you\n"
                     "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
-                    "\n");
+                    "\n";
 
       ds_tmp.append(" --- ");
       ds_tmp.append(filename1);
@@ -1287,7 +1286,7 @@ static void show_diff(string* ds,
   if (ds)
   {
     /* Add the diff to output */
-    ds->append(ds_tmp.c_str(), ds_tmp.length());
+    *ds += ds_tmp;
   }
   else
   {
@@ -1297,8 +1296,8 @@ static void show_diff(string* ds,
 
 }
 
-
-enum compare_files_result_enum {
+enum compare_files_result_enum 
+{
   RESULT_OK= 0,
   RESULT_CONTENT_MISMATCH= 1,
   RESULT_LENGTH_MISMATCH= 2
@@ -1321,13 +1320,13 @@ enum compare_files_result_enum {
 static int compare_files2(int fd, const char* filename2)
 {
   int error= RESULT_OK;
-  int fd2;
   uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
   string tmpfile;
 
-  if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
+  int fd2= internal::my_open(fname, O_RDONLY, MYF(0));
+  if (fd2 < 0)
   {
     internal::my_close(fd, MYF(0));
     if (! opt_testdir.empty())
@@ -1419,17 +1418,14 @@ static int compare_files(const char* filename1, const char* filename2)
 
 static int string_cmp(string* ds, const char *fname)
 {
-  int error;
-  int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
-                            "tmp", MYF(MY_WME))) < 0)
+  int fd= internal::create_temp_file(temp_file_path, TMPDIR, "tmp", MYF(MY_WME));
+  if (fd < 0)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
-               MYF(MY_FNABP | MY_WME)) ||
+  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(), MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     internal::my_close(fd, MYF(0));
@@ -1438,13 +1434,13 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to write file '%s'", temp_file_path);
   }
 
-  error= compare_files2(fd, fname);
+  int error= compare_files2(fd, fname);
 
   internal::my_close(fd, MYF(0));
   /* Remove the temporary file */
   internal::my_delete(temp_file_path, MYF(0));
 
-  return(error);
+  return error;
 }
 
 
@@ -1463,9 +1459,6 @@ static int string_cmp(string* ds, const char *fname)
 static void check_result(string* ds)
 {
   const char* mess= "Result content mismatch\n";
-
-
-  assert(result_file_name.c_str());
 
   if (access(result_file_name.c_str(), F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name.c_str());
@@ -1490,14 +1483,12 @@ static void check_result(string* ds)
     if (access(reject_file, W_OK) == 0)
     {
       /* Result file directory is writable, save reject file there */
-      internal::fn_format(reject_file, result_file_name.c_str(), NULL,
-                ".reject", MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), NULL, ".reject", MY_REPLACE_EXT);
     }
     else
     {
       /* Put reject file in opt_logdir */
-      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(),
-                ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(), ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
     str_to_file(reject_file, ds->c_str(), ds->length());
 
@@ -1841,11 +1832,8 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
       and assign that string to the $variable
     */
     string result;
-    uint32_t i;
-    size_t *lengths;
-
-    lengths= drizzle_row_field_sizes(&res);
-    for (i= 0; i < drizzle_result_column_count(&res); i++)
+    size_t* lengths= drizzle_row_field_sizes(&res);
+    for (uint32_t i= 0; i < drizzle_result_column_count(&res); i++)
     {
       if (row[i])
       {
@@ -1889,7 +1877,6 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
 static void var_set_query_get_value(st_command* command, VAR *var)
 {
-  long row_no;
   int col_no= -1;
   drizzle_result_st res;
   drizzle_return_t ret;
@@ -1912,7 +1899,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
                      ',');
 
   /* Convert row number to int */
-  row_no= atoi(ds_row.c_str());
+  long row_no= atoi(ds_row.c_str());
   
   istringstream buff(ds_row);
   if ((buff >> row_no).fail())
@@ -1920,27 +1907,23 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   /* Remove any surrounding "'s from the query - if there is any */
   // (Don't get me started on this)
-  char * unstripped_query= strdup(ds_query.c_str());
+  char* unstripped_query= strdup(ds_query.c_str());
   if (strip_surrounding(unstripped_query, '"', '"'))
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
-  ds_query.clear();
-  ds_query.append(unstripped_query);
+  ds_query= unstripped_query;
 
   /* Run the query */
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
-                    &ret) == NULL ||
+  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      die("Error running query '%s': %d %s", ds_query.c_str(), drizzle_result_error_code(&res), drizzle_result_error(&res));
       drizzle_result_free(&res);
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
   if (drizzle_result_column_count(&res) == 0 ||
@@ -1949,13 +1932,10 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   {
     /* Find column number from the given column name */
-    uint32_t i;
     uint32_t num_fields= drizzle_result_column_count(&res);
-    drizzle_column_st *column;
-
-    for (i= 0; i < num_fields; i++)
+    for (uint32_t i= 0; i < num_fields; i++)
     {
-      column= drizzle_column_next(&res);
+      drizzle_column_st* column= drizzle_column_next(&res);
       if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
           strlen(drizzle_column_name(column)) == ds_col.length())
       {
