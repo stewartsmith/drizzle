@@ -1473,8 +1473,7 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-  UserDetect detected_user;
-  const char* shell_user= detected_user.getUser();
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1483,7 +1482,7 @@ try
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
-  ("user,u", po::value<string>(&current_user)->default_value(shell_user ? shell_user : ""),
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))

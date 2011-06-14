@@ -234,8 +234,6 @@ struct st_connection
 {
   drizzle_st* drizzle;
   drizzle_con_st con;
-  /* Used when creating views and sp, to avoid implicit commit */
-  drizzle_con_st* util_con;
   char* name;
 };
 st_connection g_connections[128];
@@ -7006,7 +7004,6 @@ void REP_SETS::make_sets_invisible()
 
 REP_SET *make_new_set(REP_SETS *sets)
 {
-  uint32_t i,count,*bit_buffer;
   REP_SET *set;
   if (sets->extra)
   {
@@ -7020,17 +7017,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     set->size_of_bits=sets->size_of_bits;
     return set;
   }
-  count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) realloc((unsigned char*) sets->set_buffer,
-                                  sizeof(REP_SET)*count)))
-    return 0;
+  uint32_t count= sets->count + sets->invisible + SET_MALLOC_HUNC;
+  set= (REP_SET*) realloc((unsigned char*) sets->set_buffer, sizeof(REP_SET)*count);
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) realloc((unsigned char*) sets->bit_buffer,
-                                   (sizeof(uint32_t)*sets->size_of_bits)*count)))
-    return 0;
+  uint32_t* bit_buffer= (uint*) realloc((unsigned char*) sets->bit_buffer, (sizeof(uint32_t)*sets->size_of_bits)*count);
   sets->bit_buffer=bit_buffer;
-  for (i=0 ; i < count ; i++)
+  for (uint32_t i= 0; i < count; i++)
   {
     sets->set_buffer[i].bits=bit_buffer;
     bit_buffer+=sets->size_of_bits;
@@ -7175,9 +7168,7 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
   length=(uint32_t) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (unsigned char*)realloc((unsigned char*)pa->str,
-                                           (size_t)(pa->max_length+PS_MALLOC))))
-      return(1);
+    new_pos= (unsigned char*)realloc((unsigned char*)pa->str, (size_t)(pa->max_length+PS_MALLOC));
     if (new_pos != pa->str)
     {
       ptrdiff_t diff= PTR_BYTE_DIFF(new_pos,pa->str);
@@ -7193,12 +7184,10 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
     size_t len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=
-         (const char **)realloc((unsigned char*) pa->typelib.type_names,
+    new_array= (const char **)realloc((unsigned char*) pa->typelib.type_names,
                                  len/
                                   (sizeof(unsigned char*)+sizeof(*pa->flag))*
-                                  (sizeof(unsigned char*)+sizeof(*pa->flag)))))
-      return(1);
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag)));
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;
     pa->max_count=len/(sizeof(unsigned char*) + sizeof(*pa->flag));

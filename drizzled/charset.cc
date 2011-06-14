@@ -25,8 +25,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   We collect memory in this vector that we free on delete.
@@ -45,12 +44,10 @@ static vector<unsigned char*> memory_vector;
 
 bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2)
 {
-  return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
+  return cs1 == cs2 || not strcmp(cs1->csname, cs2->csname);
 }
 
-
-static uint
-get_collation_number_internal(const char *name)
+static uint get_collation_number_internal(const char *name)
 {
   for (charset_info_st **cs= all_charsets;
        cs < all_charsets+array_elements(all_charsets)-1;
@@ -64,19 +61,16 @@ get_collation_number_internal(const char *name)
   return 0;
 }
 
-static unsigned char *cs_alloc(size_t size)
+static unsigned char* cs_alloc(size_t size)
 {
   memory_vector.push_back(new unsigned char[size]);
   return memory_vector.back();
 }
 
-static bool init_state_maps(charset_info_st *cs)
+static void init_state_maps(charset_info_st *cs)
 {
-  if (!(cs->state_map= cs_alloc(256)))
-    return 1;
-    
-  if (!(cs->ident_map= cs_alloc(256)))
-    return 1;
+  cs->state_map= cs_alloc(256);
+  cs->ident_map= cs_alloc(256);
 
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -123,7 +117,6 @@ static bool init_state_maps(charset_info_st *cs)
   /* Special handling of hex and binary strings */
   state_map['x']= state_map['X']=  MY_LEX_IDENT_OR_HEX;
   state_map['b']= state_map['B']=  MY_LEX_IDENT_OR_BIN;
-  return 0;
 }
 
 static bool charset_initialized= false;
@@ -137,39 +130,28 @@ void add_compiled_collation(charset_info_st * cs)
   cs->state|= MY_CS_AVAILABLE;
 }
 
-static bool init_available_charsets(myf myflags)
+static void init_available_charsets(myf myflags)
 {
-  bool error= false;
   /*
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
   */
-  if (charset_initialized == false)
+  if (charset_initialized)
+    return;
+  memset(&all_charsets, 0, sizeof(all_charsets));
+  init_compiled_charsets(myflags);
+
+  /* Copy compiled charsets */
+  for (charset_info_st**cs= all_charsets;
+    cs < all_charsets+array_elements(all_charsets)-1;
+    cs++)
   {
-    charset_info_st **cs;
-    memset(&all_charsets, 0, sizeof(all_charsets));
-    init_compiled_charsets(myflags);
-
-    /* Copy compiled charsets */
-    for (cs=all_charsets;
-         cs < all_charsets+array_elements(all_charsets)-1 ;
-         cs++)
-    {
-      if (*cs)
-      {
-        if (cs[0]->ctype)
-          if (init_state_maps(*cs))
-            *cs= NULL;
-      }
-    }
-
-    charset_initialized= true;
+    if (*cs && cs[0]->ctype)
+      init_state_maps(*cs);
   }
-  assert(charset_initialized);
 
-  return error;
+  charset_initialized= true;
 }
-
 
 void free_charsets()
 {
@@ -182,13 +164,11 @@ void free_charsets()
   }
 }
 
-
 uint32_t get_collation_number(const char *name)
 {
   init_available_charsets(MYF(0));
   return get_collation_number_internal(name);
 }
-
 
 uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
@@ -205,7 +185,6 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
   return 0;
 }
 
-
 const char *get_charset_name(uint32_t charset_number)
 {
   init_available_charsets(MYF(0));
@@ -216,7 +195,6 @@ const char *get_charset_name(uint32_t charset_number)
 
   return "?";   /* this mimics find_type() */
 }
-
 
 static const charset_info_st *get_internal_charset(uint32_t cs_number)
 {
@@ -245,47 +223,31 @@ static const charset_info_st *get_internal_charset(uint32_t cs_number)
   return cs;
 }
 
-
 const charset_info_st *get_charset(uint32_t cs_number)
 {
-  const charset_info_st *cs;
   if (cs_number == default_charset_info->number)
     return default_charset_info;
 
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
+  init_available_charsets(MYF(0));	/* If it isn't initialized */
 
   if (!cs_number || cs_number >= array_elements(all_charsets)-1)
     return NULL;
 
-  cs= get_internal_charset(cs_number);
-
-  return cs;
+  return get_internal_charset(cs_number);
 }
 
 const charset_info_st *get_charset_by_name(const char *cs_name)
 {
-  uint32_t cs_number;
-  const charset_info_st *cs;
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
-
-  cs_number= get_collation_number(cs_name);
-  cs= cs_number ? get_internal_charset(cs_number) : NULL;
-
-  return cs;
+  init_available_charsets(MYF(0));	/* If it isn't initialized */
+  uint32_t cs_number= get_collation_number(cs_name);
+  return cs_number ? get_internal_charset(cs_number) : NULL;
 }
-
 
 const charset_info_st *get_charset_by_csname(const char *cs_name, uint32_t cs_flags)
 {
-  uint32_t cs_number;
-  const charset_info_st *cs;
-
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
-
-  cs_number= get_charset_number(cs_name, cs_flags);
-  cs= cs_number ? get_internal_charset(cs_number) : NULL;
-
-  return(cs);
+  init_available_charsets(MYF(0));	/* If it isn't initialized */
+  uint32_t cs_number= get_charset_number(cs_name, cs_flags);
+  return cs_number ? get_internal_charset(cs_number) : NULL;
 }
 
 
