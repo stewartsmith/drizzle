@@ -1103,17 +1103,13 @@ void log_msg(const char *fmt, ...)
 {
   va_list args;
   char buff[1024];
-  size_t len;
-
 
   va_start(args, fmt);
-  len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
+  size_t len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
   ds_res.append(buff, len);
   ds_res.append("\n");
-
-  return;
 }
 
 
@@ -1129,14 +1125,13 @@ void log_msg(const char *fmt, ...)
 
 static void cat_file(string* ds, const char* filename)
 {
-  int fd;
+  int fd= internal::my_open(filename, O_RDONLY, MYF(0));
+  if (fd < 0)
+    die("Failed to open file '%s'", filename);
   uint32_t len;
   char buff[512];
 
-  if ((fd= internal::my_open(filename, O_RDONLY, MYF(0))) < 0)
-    die("Failed to open file '%s'", filename);
-  while((len= internal::my_read(fd, (unsigned char*)&buff,
-                      sizeof(buff), MYF(0))) > 0)
+  while((len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
     while (p < buff+len)
@@ -1171,23 +1166,19 @@ static void cat_file(string* ds, const char* filename)
 
 */
 
-static int run_command(const char * cmd, string * result)
+static int run_command(const char* cmd, string& result)
 {
-  assert(result!=NULL);
-  char buf[512]= {0};
-  FILE *res_file;
-  int error;
-
-  if (!(res_file= popen(cmd, "r")))
+  FILE* res_file= popen(cmd, "r");
+  if (not res_file)
     die("popen(\"%s\", \"r\") failed", cmd);
 
+  char buf[512]= {0};
   while (fgets(buf, sizeof(buf), res_file))
   {
     /* Save the output of this command in the supplied string */
-    result->append(buf);
+    result.append(buf);
   }
-
-  error= pclose(res_file);
+  int error= pclose(res_file);
   return WEXITSTATUS(error);
 }
 
@@ -1204,20 +1195,15 @@ static int run_command(const char * cmd, string * result)
 
 */
 
-static int run_tool(const char *tool_path, string * result, ...)
+static int run_tool(const char *tool_path, string& result, ...)
 {
-  int ret;
-  const char* arg;
-  va_list args;
   string ds_cmdline;
-
-
   append_os_quoted(&ds_cmdline, tool_path, NULL);
   ds_cmdline.append(" ");
 
+  va_list args;
   va_start(args, result);
-
-  while ((arg= va_arg(args, char *)))
+  while (const char* arg= va_arg(args, char *))
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
@@ -1229,8 +1215,7 @@ static int run_tool(const char *tool_path, string * result, ...)
 
   va_end(args);
 
-  ret= run_command(ds_cmdline.c_str(), result);
-  return(ret);
+  return run_command(ds_cmdline.c_str(), result);
 }
 
 
@@ -1255,7 +1240,7 @@ static void show_diff(string* ds,
 
   /* First try with unified diff */
   if (run_tool("diff",
-               &ds_tmp, /* Get output from diff in ds_tmp */
+               ds_tmp, /* Get output from diff in ds_tmp */
                "-u",
                filename1,
                filename2,
@@ -1265,7 +1250,7 @@ static void show_diff(string* ds,
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
-                 &ds_tmp, /* Get output from diff in ds_tmp */
+                 ds_tmp, /* Get output from diff in ds_tmp */
                  "-c",
                  filename1,
                  filename2,
