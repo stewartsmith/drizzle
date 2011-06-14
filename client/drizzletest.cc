@@ -39,7 +39,9 @@
 
 #define MTEST_VERSION "3.3"
 
-#include "client_priv.h"
+#include <config.h>
+#include <client/get_password.h>
+#include <libdrizzle/libdrizzle.hpp>
 
 #include <queue>
 #include <map>
