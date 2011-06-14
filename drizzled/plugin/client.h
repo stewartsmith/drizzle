@@ -47,7 +47,7 @@ public:
    * Get attached session from the client object.
    * @retval Session object that is attached, NULL if none.
    */
-  virtual Session *getSession(void)
+  virtual Session *getSession()
   {
     return session;
   }
@@ -65,41 +65,29 @@ public:
    * Get file descriptor associated with client object.
    * @retval File descriptor that is attached, -1 if none.
    */
-  virtual int getFileDescriptor(void)= 0;
+  virtual int getFileDescriptor()= 0;
 
   /**
    * Check to see if the client is currently connected.
    * @retval Boolean value representing connected state.
    */
-  virtual bool isConnected(void)= 0;
-
-  /**
-   * Check to see if the client is actively reading.
-   * @retval Boolean value representing reading state.
-   */
-  virtual bool isReading(void)= 0; // todo: delete
-
-  /**
-   * Check to see if the client is actively writing.
-   * @retval Boolean value representing writing state.
-   */
-  virtual bool isWriting(void)= 0; // todo: delete
+  virtual bool isConnected()= 0;
 
   /**
    * Flush all data that has been buffered with store() methods.
    * @retval Boolean indicating success or failure.
    */
-  virtual bool flush(void)= 0;
+  virtual bool flush()= 0;
 
   /**
    * Close the client object.
    */
-  virtual void close(void)= 0;
+  virtual void close()= 0;
 
   /**
    * Perform handshake and authorize client if needed.
    */
-  virtual bool authenticate(void)= 0;
+  virtual bool authenticate()= 0;
 
   virtual bool isConsole() const
   {
@@ -122,8 +110,8 @@ public:
   virtual bool readCommand(char **packet, uint32_t& packet_length)= 0;
 
   /* Send responses. */
-  virtual void sendOK(void)= 0;
-  virtual void sendEOF(void)= 0;
+  virtual void sendOK()= 0;
+  virtual void sendEOF()= 0;
   virtual void sendError(const drizzled::error_t sql_errno, const char *err)= 0;
 
   /**
@@ -148,11 +136,10 @@ public:
   }
 
   /* Try to remove these. */
-  virtual bool haveError(void)= 0;
-  virtual bool wasAborted(void)= 0;
+  virtual bool haveError()= 0;
+  virtual bool wasAborted()= 0;
 
 };
 
 } /* namespace plugin */
 } /* namespace drizzled */
-

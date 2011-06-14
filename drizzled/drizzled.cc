@@ -220,13 +220,13 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 static bool opt_debugging= false;
 static uint32_t wake_thread;
-static const char *drizzled_chroot;
-static const char *default_character_set_name;
-static const char *character_set_filesystem_name;
-static const char *lc_time_names_name;
-static const char *default_collation_name;
-static const char *default_storage_engine_str;
-static const char *compiled_default_collation_name= "utf8_general_ci";
+static const char* drizzled_chroot;
+static const char* default_character_set_name= "utf8";
+static const char* character_set_filesystem_name= "binary";
+static const char* lc_time_names_name= "en_US";
+static const char* default_storage_engine_str= "innodb";
+static const char* const compiled_default_collation_name= "utf8_general_ci";
+static const char* default_collation_name= compiled_default_collation_name;
 
 /* Global variables */
 
@@ -353,12 +353,12 @@ global_buffer_constraint<uint64_t> global_read_buffer(0);
 
 DRIZZLED_API size_t transaction_message_threshold;
 
-static void drizzle_init_variables(void);
+static void drizzle_init_variables();
 static void get_options();
 static void fix_paths();
 
-static void usage(void);
-void close_connections(void);
+static void usage();
+void close_connections();
 
 fs::path base_plugin_dir(PKGPLUGINDIR);
 
@@ -400,7 +400,7 @@ const std::string &getServerHostname()
 ** Code to end drizzled
 ****************************************************************************/
 
-void close_connections(void)
+void close_connections()
 {
   /* Abort listening to new connections */
   plugin::Listen::shutdown();
@@ -1939,23 +1939,22 @@ struct option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static void print_version(void)
+static void print_version()
 {
   /*
     Note: the instance manager keys off the string 'Ver' so it can find the
     version from the output of 'drizzled --version', so don't change it!
   */
-  printf("%s  Ver %s for %s-%s on %s (%s)\n",internal::my_progname,
-	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU,
-         COMPILATION_COMMENT);
+  printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
+	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
-static void usage(void)
+static void usage()
 {
   if (!(default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
     exit(1);
   if (!default_collation_name)
-    default_collation_name= (char*) default_charset_info->name;
+    default_collation_name= default_charset_info->name;
   print_version();
   puts(_("Copyright (C) 2008 Sun Microsystems\n"
          "This software comes with ABSOLUTELY NO WARRANTY. "
@@ -1991,7 +1990,7 @@ static void usage(void)
     as these are initialized by my_getopt.
 */
 
-static void drizzle_init_variables(void)
+static void drizzle_init_variables()
 {
   /* Things reset to zero */
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
@@ -2013,17 +2012,10 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  g_refresh_version= 1L;	/* Increments on each reload */
-  global_thread_id= 1UL;
+  global_thread_id= 1;
   session::Cache::getCache().clear();
 
-  /* Variables in libraries */
-  default_character_set_name= "utf8";
-  default_collation_name= (char *)compiled_default_collation_name;
-  character_set_filesystem_name= "binary";
-  lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
-  default_storage_engine_str= (char*) "innodb";
   global_system_variables.storage_engine= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;

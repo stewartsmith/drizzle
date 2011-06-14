@@ -150,7 +150,7 @@ bool Vio::was_interrupted() const
   return en == EAGAIN || en == EINTR || en == EWOULDBLOCK || en == ETIMEDOUT;
 }
 
-bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
+bool Vio::peer_addr(char *buf, size_t buflen, uint16_t& port) const
 {
   char port_buf[NI_MAXSERV];
   sockaddr_storage remote;
@@ -164,7 +164,7 @@ bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
     return true;
   }
 
-  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
+  port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
 
   return false;
 }

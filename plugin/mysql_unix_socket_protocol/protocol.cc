@@ -67,7 +67,7 @@ static int init(drizzled::module::Context &context)
   fs::path uds_path(vm["path"].as<fs::path>());
   if (not fs::exists(uds_path))
   {
-    Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol", true, uds_path);
+    Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol", uds_path);
     listen_obj->addCountersToTable();
     context.add(listen_obj);
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
@@ -148,7 +148,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 plugin::Client *Protocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientMySQLUnixSocketProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, getCounters());
 }
 
 static void init_options(drizzled::module::option_context &context)

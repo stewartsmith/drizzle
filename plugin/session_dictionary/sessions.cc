@@ -60,10 +60,6 @@ Sessions::Generator::Generator(Field **arg) :
 {
 }
 
-Sessions::Generator::~Generator()
-{
-}
-
 bool Sessions::Generator::populate()
 {
   while (Session* tmp= session_generator)

@@ -47,17 +47,10 @@ typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constr
 
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
-protected:
-  const std::string _hostname;
-  bool _using_mysql41_protocol;
-
 public:
-  ListenMySQLProtocol(std::string name,
-                      const std::string &hostname,
-                      bool using_mysql41_protocol):
+  ListenMySQLProtocol(std::string name, const std::string &hostname) :
    drizzled::plugin::ListenTcp(name),
-   _hostname(hostname),
-   _using_mysql41_protocol(using_mysql41_protocol)
+   _hostname(hostname)
   { }
   virtual const std::string getHost() const;
   virtual in_port_t getPort() const;
@@ -65,6 +58,8 @@ public:
   static ProtocolCounters mysql_counters;
   virtual ProtocolCounters& getCounters() const { return mysql_counters; }
   void addCountersToTable();
+protected:
+  const std::string _hostname;
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -73,7 +68,6 @@ protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool _using_mysql41_protocol;
   bool _is_interactive;
 
   bool checkConnection();
@@ -83,7 +77,7 @@ protected:
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters&);
+  ClientMySQLProtocol(int fd, ProtocolCounters&);
   virtual ~ClientMySQLProtocol();
 
   bool isInteractive() const
@@ -93,34 +87,32 @@ public:
 
   ProtocolCounters& counters;
 
-  virtual int getFileDescriptor(void);
+  virtual int getFileDescriptor();
   virtual bool isConnected();
-  virtual bool isReading(void);
-  virtual bool isWriting(void);
-  virtual bool flush(void);
-  virtual void close(void);
+  virtual bool flush();
+  virtual void close();
 
-  virtual bool authenticate(void);
+  virtual bool authenticate();
   virtual bool readCommand(char **packet, uint32_t& packet_length);
 
-  virtual void sendOK(void);
-  virtual void sendEOF(void);
+  virtual void sendOK();
+  virtual void sendEOF();
   virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
   virtual void sendFields(drizzled::List<drizzled::Item>&);
 
   using Client::store;
-  virtual void store(drizzled::Field *from);
+  virtual void store(drizzled::Field*);
   virtual void store();
   virtual void store(int32_t from);
   virtual void store(uint32_t from);
   virtual void store(int64_t from);
   virtual void store(uint64_t from);
   virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
-  virtual void store(const char *from, size_t length);
+  virtual void store(const char*, size_t);
 
-  virtual bool haveError(void);
-  virtual bool wasAborted(void);
+  virtual bool haveError();
+  virtual bool wasAborted();
 };
 
 } /* namespace drizzle_plugin */

@@ -59,14 +59,14 @@ in_port_t ListenDrizzleProtocol::getPort() const
 plugin::Client *ListenDrizzleProtocol::getClient(int fd)
 {
   int new_fd= acceptTcp(fd);
-  return new_fd == -1 ? NULL : new ClientDrizzleProtocol(new_fd, getCounters());
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, getCounters());
 }
 
 static int init(drizzled::module::Context &context)
 {  
   const module::option_map &vm= context.getOptions();
 
-  ListenDrizzleProtocol *protocol=new ListenDrizzleProtocol("drizzle_protocol", vm["bind-address"].as<std::string>(), true);
+  ListenDrizzleProtocol *protocol=new ListenDrizzleProtocol("drizzle_protocol", vm["bind-address"].as<std::string>());
   protocol->addCountersToTable();
   context.add(protocol);
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
