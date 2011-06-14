@@ -237,8 +237,8 @@ struct st_connection
   drizzle_con_st *util_con;
   char *name;
 };
-struct st_connection connections[128];
-struct st_connection* cur_con= NULL, *next_con, *connections_end;
+st_connection g_connections[128];
+st_connection* cur_con= NULL, *next_con;
 
 /*
   List of commands in drizzletest
@@ -870,7 +870,7 @@ static void handle_command_error(struct st_command *command, uint32_t error)
 
 static void close_connections()
 {
-  for (--next_con; next_con >= connections; --next_con)
+  for (--next_con; next_con >= g_connections; --next_con)
   {
     if (next_con->drizzle != NULL)
     {
@@ -2817,10 +2817,10 @@ static void do_diff_files(struct st_command *command)
 }
 
 
-static struct st_connection * find_connection_by_name(const char *name)
+static st_connection * find_connection_by_name(const char *name)
 {
-  struct st_connection *con;
-  for (con= connections; con < next_con; con++)
+  st_connection *con;
+  for (con= g_connections; con < next_con; con++)
   {
     if (!strcmp(con->name, name))
     {
@@ -2844,7 +2844,7 @@ static struct st_connection * find_connection_by_name(const char *name)
 static void do_send_quit(struct st_command *command)
 {
   char *p= command->first_argument, *name;
-  struct st_connection *con;
+  st_connection *con;
   drizzle_result_st result;
   drizzle_return_t ret;
 
@@ -3608,7 +3608,7 @@ static int select_connection(struct st_command *command)
 static void do_close_connection(struct st_command *command)
 {
   char *p= command->first_argument, *name;
-  struct st_connection *con;
+  st_connection *con;
 
   if (!*p)
     die("Missing connection name in disconnect");
@@ -3820,7 +3820,7 @@ static void do_connect(struct st_command *command)
 {
   uint32_t con_port= opt_port;
   const char *con_options;
-  struct st_connection* con_slot;
+  st_connection* con_slot;
 
   string ds_connection_name;
   string ds_host;
@@ -3892,7 +3892,7 @@ static void do_connect(struct st_command *command)
   if (find_connection_by_name(ds_connection_name.c_str()))
     die("Connection %s already exists", ds_connection_name.c_str());
 
-  if (next_con != connections_end)
+  if (next_con != g_connections + sizeof(g_connections) / sizeof(st_connection) - 1)
   {
     con_slot= next_con;
   }
@@ -3900,7 +3900,7 @@ static void do_connect(struct st_command *command)
   {
     if (!(con_slot= find_connection_by_name("-closed_connection-")))
       die("Connection limit exhausted, you can have max %d connections",
-          (int) (sizeof(connections)/sizeof(struct st_connection)));
+          (int) (sizeof(g_connections)/sizeof(st_connection)));
   }
 
   if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
@@ -4870,7 +4870,7 @@ static int append_warnings(string *ds, drizzle_con_st *con,
   ds    output buffer where to store result form query
 */
 
-static void run_query_normal(struct st_connection *cn,
+static void run_query_normal(st_connection *cn,
                              struct st_command *command,
                              int flags, char *query, int query_len,
                              string *ds, string *ds_warnings)
@@ -5154,7 +5154,7 @@ void handle_no_error(struct st_command *command)
   is on the result will be read - for regular query, both bits must be on
 */
 
-static void run_query(struct st_connection *cn,
+static void run_query(st_connection *cn,
                       struct st_command *command,
                       int flags)
 {
@@ -5522,11 +5522,9 @@ try
   /* Init expected errors */
   memset(&saved_expected_errors, 0, sizeof(saved_expected_errors));
 
-  /* Init connections */
-  memset(connections, 0, sizeof(connections));
-  connections_end= connections +
-    (sizeof(connections)/sizeof(struct st_connection)) - 1;
-  next_con= connections + 1;
+  /* Init g_connections */
+  memset(g_connections, 0, sizeof(g_connections));
+  next_con= g_connections + 1;
 
   /* Init file stack */
   memset(file_stack.data(), 0, sizeof(file_stack));
@@ -5682,7 +5680,7 @@ try
       die("Out of memory");
     cur_file->lineno= 1;
   }
-  cur_con= connections;
+  cur_con= g_connections;
   if ((cur_con->drizzle= drizzle_create(NULL)) == NULL)
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
