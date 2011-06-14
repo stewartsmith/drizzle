@@ -64,8 +64,7 @@ void* multi_malloc(bool zerofill, ...)
   if (!(start= calloc(0, tot_length)))
     return(0);
 #else
-  if (!(start= malloc(tot_length)))
-    return(0);
+  start= malloc(tot_length);
   if (zerofill)
     memset(start, 0, tot_length);
 #endif
