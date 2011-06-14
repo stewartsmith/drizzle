@@ -21,15 +21,14 @@
 
 #include <config.h>
 #include <drizzled/message/table.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/catalog/local.h>
 
 namespace drizzled {
 namespace message {
 namespace table {
 
-shared_ptr make_shared(identifier::Table::const_reference identifier, const std::string &engine_arg)
+shared_ptr make_shared(const identifier::Table& identifier, const std::string &engine_arg)
 {
   shared_ptr shared(new message::Table);
 

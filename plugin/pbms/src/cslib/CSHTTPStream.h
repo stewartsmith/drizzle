@@ -24,6 +24,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSHTTPSTREAM_H__
 #define __CSHTTPSTREAM_H__
 

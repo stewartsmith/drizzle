@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -580,9 +580,26 @@ class systemManager:
                     self.logging.info("Killing pid %s from %s" %( pid
                                                                 , file_path
                                                                 ))
-                    self.execute_cmd("kill -9 %s" %pid, must_pass=0)
+                    self.kill_pid(pid)
         if exit:
             sys.exit(0)
+
+    def find_pid(self, pid):
+        """ Execute ps and see if we find the pid """
+
+        cmd = "ps"
+        retcode, output = self.execute_cmd(cmd)
+        output = output.split('\n')
+        for line in output:
+            found_pid = line.strip().split(' ')
+            if str(pid) == pid:
+                return True
+        return False
+
+    def kill_pid(self, pid):
+        """ We kill the specified pid """
+        
+        self.execute_cmd("kill -9 %s" %pid, must_pass=0)
 
    
     

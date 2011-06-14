@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_QUEUE_THREAD_H
-#define PLUGIN_SLAVE_QUEUE_THREAD_H
+#pragma once
 
 #include <drizzled/internal/my_pthread.h>
 
@@ -76,4 +75,3 @@ public:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_QUEUE_THREAD_H */

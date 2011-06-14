@@ -31,6 +31,7 @@ Created 6/2/1994 Heikki Tuuri
 
 #include "fsp0fsp.h"
 #include "page0page.h"
+#include "xtrabackup_api.h"
 
 #ifndef UNIV_HOTBACKUP
 #include "btr0cur.h"
@@ -120,7 +121,6 @@ btr_root_fseg_validate(
 /**************************************************************//**
 Gets the root node of a tree and x-latches it.
 @return	root page, x-latched */
-static
 buf_block_t*
 btr_root_block_get(
 /*===============*/
@@ -566,7 +566,6 @@ btr_node_ptr_set_child_page_no(
 /************************************************************//**
 Returns the child page of a node pointer and x-latches it.
 @return	child page, x-latched */
-static
 buf_block_t*
 btr_node_ptr_get_child(
 /*===================*/

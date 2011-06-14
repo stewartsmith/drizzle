@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -28,6 +28,7 @@ import thread
 import time
 import os
 import subprocess
+from ConfigParser import RawConfigParser
 
 class serverManager:
     """ code that handles the server objects
@@ -46,7 +47,8 @@ class serverManager:
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.initial_run = 1
-        self.server_base_name = 'server'
+        # we try this to shorten things - will see how this works
+        self.server_base_name = 's'
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.logging = system_manager.logging
@@ -65,7 +67,7 @@ class serverManager:
         if self.debug:
             self.logging.debug_class(self)
 
-    def request_servers( self, requester, workdir, server_requirements
+    def request_servers( self, requester, workdir, cnf_path, server_requirements
                        , working_environ, expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
@@ -87,7 +89,7 @@ class serverManager:
                                  , workdir, server_requirements)
 
         # Make sure we are running with the correct options 
-        self.evaluate_existing_servers(requester, server_requirements)
+        self.evaluate_existing_servers(requester, cnf_path, server_requirements)
 
         # Fire our servers up
         bad_start = self.start_servers( requester, working_environ
@@ -184,6 +186,7 @@ class serverManager:
         else:
             # manual-gdb issue
             server_retcode = 0
+        
         timer = float(0)
         timeout = float(server.server_start_timeout)
 
@@ -205,6 +208,11 @@ class serverManager:
      
         if server_retcode == 0:
             server.status = 1 # we are running
+            if os.path.exists(server.pid_file):
+                pid_file = open(server.pid_file,'r')
+                pid = pid_file.readline().strip()
+                pid_file.close()
+                server.pid = pid
 
         if server_retcode != 0 and not expect_fail and self.debug:
             self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
@@ -243,10 +251,26 @@ class serverManager:
             if self.verbose:
                 self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
             stop_cmd = server.get_stop_cmd()
-            retcode, output = self.system_manager.execute_cmd(stop_cmd)
-            if retcode:
+            #retcode, output = self.system_manager.execute_cmd(stop_cmd)
+            shutdown_subproc = subprocess.Popen( stop_cmd
+                                               , shell=True
+                                               )
+            shutdown_subproc.wait()
+            shutdown_retcode = shutdown_subproc.returncode
+            # We do some monitoring for the server PID and kill it
+            # if need be.  This is a bit of a band-aid for the 
+            # zombie-server bug on Natty : (  Need to find the cause.
+            attempts_remain = 3
+            while self.system_manager.find_pid(server.pid) and attempts_remain:
+                time.sleep(1)
+                attempts_remain = attempts_remain - 1
+                if not attempts_remain: # we kill the pid
+                    if self.verbose:
+                        self.logging.warning("Forcing kill of server pid: %s" %(server.pid))
+                    self.system_manager.kill_pid(server.pid)
+            if shutdown_retcode:
                 self.logging.error("Problem shutting down server:")
-                self.logging.error("%s : %s" %(retcode, output))
+                self.logging.error("%s : %s" %(shutdown_retcode))
             else:
                 server.status = 0 # indicate we are shutdown
         else:
@@ -258,10 +282,12 @@ class serverManager:
         for server in self.get_server_list(requester):
             self.stop_server(server)
 
-    def stop_server_list(self, server_list):
+    def stop_server_list(self, server_list, free_ports=False):
         """ Stop the servers in an arbitrary list of them """
         for server in server_list:
             self.stop_server(server)
+        if free_ports:
+            server.cleanup()
 
     def stop_all_servers(self):
         """ Stop all running servers """
@@ -307,7 +333,7 @@ class serverManager:
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
 
-    def evaluate_existing_servers( self, requester, server_requirements):
+    def evaluate_existing_servers( self, requester, cnf_path, server_requirements):
         """ See if the requester has any servers and if they
             are suitable for the current test
 
@@ -316,19 +342,51 @@ class serverManager:
         """
         current_servers = self.servers[requester]
 
+        # We have a config reader so we can do
+        # special per-server magic for setting up more
+        # complex scenario-based testing (eg we use a certain datadir)
+        if cnf_path: 
+            config_reader = RawConfigParser()
+            config_reader.read(cnf_path)
+        else:
+            config_reader = None
+        # A list that holds tuples of src,tgt pairs
+        # for using a pre-loaded-datadirs on a test server
+        datadir_requests = []
+
         for index,server in enumerate(current_servers):
-            server_options = server_requirements[index]
+            desired_server_options = server_requirements[index]
             # We add in any user-supplied options here
-            server_options = server_options + self.user_server_opts
+            desired_server_options = desired_server_options + self.user_server_opts
+
+            # We handle a reset in case we need it:
+            if server.need_reset:
+                self.reset_server(server)
+                server.need_reset = False
+
+            # Do our checking for config-specific madness we need to do
+            if config_reader and config_reader.has_section(server.name):
+                # mark server for restart in case it hasn't yet
+                # this method is a bit hackish - need better method later
+                if '--restart' not in desired_server_options:
+                    desired_server_options.append('--restart')
+                # We handle various scenarios
+                server_config_data = config_reader.items(server.name)
+                for cnf_option, data in server_config_data:
+                    if cnf_option == 'load-datadir':
+                        datadir_path = data
+                        datadir_requests.append((datadir_path,server))
+
             if self.compare_options( server.server_options
-                                   , server_options):
+                                   , desired_server_options):
                 return 1
             else:
                 # We need to reset what is running and change the server
                 # options
-                server_options = self.filter_server_options(server_options)
+                desired_server_options = self.filter_server_options(desired_server_options)
                 self.reset_server(server)
-                self.update_server_options(server, server_options)
+                self.update_server_options(server, desired_server_options)
+            self.load_datadirs(datadir_requests)
 
 
        
@@ -366,6 +424,16 @@ class serverManager:
         for server in self.servers[requester]:
             self.reset_server(server)
 
+    def load_datadirs(self, datadir_requests):
+        """ We load source_dir to the server's datadir """
+        for source_dir, server in datadir_requests:
+            source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
+            self.system_manager.remove_dir(server.datadir)
+            self.system_manager.copy_dir(source_dir_path, server.datadir)
+            # We need to signal that the server will need to be reset as we're
+            # using a non-standard datadir
+            server.need_reset = True
+
 
     def process_server_count(self, requester, desired_count, workdir, server_reqs):
         """ We see how many servers we have.  We shrink / grow
@@ -386,7 +454,7 @@ class serverManager:
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]
-            self.stop_server_list(retired_servers)
+            self.stop_server_list(retired_servers, free_ports=True)
             self.set_server_list(requester, good_servers)
             
          

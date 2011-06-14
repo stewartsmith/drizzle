@@ -69,7 +69,7 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-void Function::doGetSchemaIdentifiers(identifier::Schema::vector& schemas)
+void Function::doGetSchemaIdentifiers(identifier::schema::vector& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
@@ -123,7 +123,7 @@ bool Function::doDoesTableExist(Session&, const identifier::Table &identifier)
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     drizzled::identifier::Table::vector &set_of_identifiers)
+                                     drizzled::identifier::table::vector &set_of_identifiers)
 {
   set<std::string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);

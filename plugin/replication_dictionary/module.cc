@@ -39,18 +39,9 @@ static ReplicationStreamsTool *streams_tool;
 
 static int init(module::Context &context)
 {
-  streams_tool= new (nothrow) ReplicationStreamsTool;
-
-  if (streams_tool != NULL)
-  {
-    context.add(streams_tool);
-    return 0;
-  }
-  else
-  {
-    // error?
-    return 1;
-  }
+  streams_tool= new ReplicationStreamsTool;
+  context.add(streams_tool);
+  return 0;
 }
 
 DRIZZLE_PLUGIN(init, NULL, NULL);

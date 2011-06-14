@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_REPLICATION_H
-#define DRIZZLED_PLUGIN_REPLICATION_H
+#pragma once
 
 /**
  * @file Common structs and enums for the replication API
@@ -43,4 +42,3 @@ enum ReplicationReturnCode
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_REPLICATION_H */

@@ -26,15 +26,16 @@
 
 #include <config.h>
 #include <drizzled/cached_item.h>
+#include <drizzled/field.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>
 #include <drizzled/item/field.h>
+#include <drizzled/system_variables.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Create right type of Cached_item for an item.

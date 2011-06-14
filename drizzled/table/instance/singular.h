@@ -19,21 +19,13 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_INSTANCE_SINGULAR_H
-#define DRIZZLED_TABLE_INSTANCE_SINGULAR_H
+#pragma once
 
 #include <drizzled/table/instance/base.h>
 
-namespace drizzled
-{
-
-namespace identifier { class Table; }
-
-namespace table
-{
-
-namespace instance
-{
+namespace drizzled {
+namespace table {
+namespace instance {
 
 class Singular : public drizzled::TableShare
 {
@@ -50,4 +42,3 @@ public:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_SINGULAR_H */

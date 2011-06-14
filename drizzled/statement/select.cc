@@ -21,26 +21,22 @@
 #include <config.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
 
-namespace drizzled
-{
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 Select::Select(Session *in_session) :
   Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SELECT;
+    set_command(SQLCOM_SELECT);
   }
 
 bool Select::execute()
 {
-  TableList *all_tables= getSession()->getLex()->query_tables;
-  getSession()->status_var.last_query_cost= 0.0;
-  bool res= execute_sqlcom_select(getSession(), all_tables);
-
-  return res;
+  session().status_var.last_query_cost= 0.0;
+  return execute_sqlcom_select(&session(), lex().query_tables);
 }
 
 } /* namespace statement */

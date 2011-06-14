@@ -35,8 +35,7 @@
 
 #include "observer.h"
 
-#ifndef PLUGIN_USER_LOCKS_BARRIER_H
-#define PLUGIN_USER_LOCKS_BARRIER_H
+#pragma once
 
 /*
   Barrier was designed with the following concepts.
@@ -265,4 +264,3 @@ private:
 } // namespace barriers
 } // namespace user_locks
 
-#endif /* PLUGIN_USER_LOCKS_BARRIER_H */

@@ -40,6 +40,7 @@ Created 10/25/1995 Heikki Tuuri
 #include "dict0dict.h"
 #include "page0page.h"
 #include "page0zip.h"
+#include "xtrabackup_api.h"
 #ifndef UNIV_HOTBACKUP
 # include "buf0lru.h"
 # include "ibuf0ibuf.h"
@@ -297,7 +298,7 @@ struct fil_system_struct {
 
 /** The tablespace memory cache. This variable is NULL before the module is
 initialized. */
-static fil_system_t*	fil_system	= NULL;
+fil_system_t*	fil_system	= NULL;
 
 
 /********************************************************************//**
@@ -3448,7 +3449,6 @@ directory. We retry 100 times if os_file_readdir_next_file() returns -1. The
 idea is to read as much good data as we can and jump over bad data.
 @return 0 if ok, -1 if error even after the retries, 1 if at the end
 of the directory */
-static
 int
 fil_file_readdir_next_file(
 /*=======================*/
@@ -4471,6 +4471,70 @@ fil_io(
 	}
 
 	return(DB_SUCCESS);
+}
+
+/********************************************************************//**
+Confirm whether the parameters are valid or not */
+UNIV_INTERN
+bool
+fil_is_exist(
+/*=========*/
+	ulint	space_id,	/*!< in: space id */
+	ulint	block_offset)	/*!< in: offset in number of blocks */
+{
+	fil_space_t*	space;
+	fil_node_t*	node;
+
+	/* Reserve the fil_system mutex and make sure that we can open at
+	least one file while holding it, if the file is not already open */
+
+	fil_mutex_enter_and_prepare_for_io(space_id);
+
+	space = fil_space_get_by_id(space_id);
+
+	if (!space) {
+		mutex_exit(&fil_system->mutex);
+		return(false);
+	}
+
+	node = UT_LIST_GET_FIRST(space->chain);
+
+	for (;;) {
+		if (UNIV_UNLIKELY(node == NULL)) {
+			mutex_exit(&fil_system->mutex);
+			return(false);
+		}
+
+		if (space->id != 0 && node->size == 0) {
+			/* We do not know the size of a single-table tablespace
+			before we open the file */
+
+			break;
+		}
+
+		if (node->size > block_offset) {
+			/* Found! */
+			break;
+		} else {
+			block_offset -= node->size;
+			node = UT_LIST_GET_NEXT(chain, node);
+		}
+	}
+
+	/* Open file if closed */
+	fil_node_prepare_for_io(node, fil_system, space);
+	fil_node_complete_io(node, fil_system, OS_FILE_READ);
+
+	/* Check that at least the start offset is within the bounds of a
+	single-table tablespace */
+	if (UNIV_UNLIKELY(node->size <= block_offset)
+	    && space->id != 0 && space->purpose == FIL_TABLESPACE) {
+		mutex_exit(&fil_system->mutex);
+		return(false);
+	}
+
+	mutex_exit(&fil_system->mutex);
+	return(true);
 }
 
 #ifndef UNIV_HOTBACKUP

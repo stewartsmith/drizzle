@@ -17,18 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STORED_KEY_H
-#define DRIZZLED_STORED_KEY_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/copy_field.h>
+#include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class Field;
-class Session;
-class Item;
+namespace drizzled {
 
 /** class to store an field/item as a key struct */
 class StoredKey :public memory::SqlAlloc
@@ -155,4 +150,3 @@ protected:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STORED_KEY_H */

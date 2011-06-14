@@ -17,12 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_H
-#define DRIZZLED_SESSION_H
+#pragma once
 
 #include <algorithm>
 #include <bitset>
 #include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -33,83 +33,29 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <drizzled/catalog/instance.h>
-#include <drizzled/catalog/local.h>
-#include <drizzled/copy_info.h>
-#include <drizzled/cursor.h>
-#include <drizzled/diagnostics_area.h>
-#include <drizzled/file_exchange.h>
-#include <drizzled/ha_data.h>
-#include <drizzled/identifier.h>
-#include <drizzled/lex_column.h>
-#include <drizzled/my_hash.h>
-#include <drizzled/named_savepoint.h>
-#include <drizzled/open_tables_state.h>
-#include <drizzled/plugin.h>
-#include <drizzled/plugin/authorization.h>
+#include <drizzled/charset.h>
+#include <drizzled/base.h>
+#include <drizzled/error.h>
+#include <drizzled/lock.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/query_id.h>
-#include <drizzled/resource_context.h>
-#include <drizzled/session/property_map.h>
-#include <drizzled/session/state.h>
-#include <drizzled/session/table_messages.h>
-#include <drizzled/session/transactions.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/sql_locale.h>
-#include <drizzled/statistics_variables.h>
-#include <drizzled/system_variables.h>
-#include <drizzled/system_variables.h>
-#include <drizzled/table_ident.h>
-#include <drizzled/transaction_context.h>
-#include <drizzled/util/storable.h>
-#include <drizzled/var.h>
 #include <drizzled/visibility.h>
 #include <drizzled/util/find_ptr.h>
+#include <drizzled/util/string.h>
 #include <drizzled/type/time.h>
-#include <drizzled/sql_lex.h>
 
-#define MIN_HANDSHAKE_SIZE      6
-
-namespace drizzled
-{
-
-namespace plugin
-{
-class Client;
-class Scheduler;
-class EventObserverList;
-}
-
-namespace message
-{
-class Transaction;
-class Statement;
-class Resultset;
-}
-
-namespace internal { struct st_my_thread_var; }
-namespace table { class Placeholder; }
-
-class CopyField;
-class DrizzleXid;
-class Internal_error_handler;
-class Lex_input_stream;
-class TableShareInstance;
-class Table_ident;
-class Time_zone;
-class select_result;
-class user_var_entry;
+namespace drizzled {
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
+extern uint32_t server_id;
+extern std::string server_uuid;
 
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
-
-#define Session_SENTRY_MAGIC 0xfeedd1ff
-#define Session_SENTRY_GONE  0xdeadbeef
 
 extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
 
@@ -133,17 +79,18 @@ extern DRIZZLED_API struct drizzle_system_variables global_system_variables;
  * session object.
  */
 
-class DRIZZLED_API Session : public Open_tables_state
-{
-public:
-  // Plugin storage in Session.
-  typedef boost::shared_ptr<Session> shared_ptr;
-  typedef Session& reference;
-  typedef const Session& const_reference;
-  typedef const Session* const_pointer;
-  typedef Session* pointer;
+class Open_tables_state;
 
-  static shared_ptr make_shared(plugin::Client *client, catalog::Instance::shared_ptr instance_arg)
+class DRIZZLED_API Session
+{
+private:
+  class impl_c;
+
+  boost::scoped_ptr<impl_c> impl_;
+public:
+  typedef boost::shared_ptr<Session> shared_ptr;
+
+  static shared_ptr make_shared(plugin::Client *client, boost::shared_ptr<catalog::Instance> instance_arg)
   {
     assert(instance_arg);
     return boost::make_shared<Session>(client, instance_arg);
@@ -160,11 +107,11 @@ public:
 			that it needs to update this field in write_row
                         and update_row.
   */
-  enum enum_mark_columns mark_used_columns;
+  enum_mark_columns mark_used_columns;
   inline void* calloc(size_t size)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size)))
+    void *ptr= mem_root->alloc_root(size);
+    if (ptr)
       memset(ptr, 0, size);
     return ptr;
   }
@@ -175,9 +122,9 @@ public:
 
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
-    void *ptr;
-    if ((ptr= mem_root->alloc_root(size + gap)))
-      memcpy(ptr,str,size);
+    void *ptr= mem_root->alloc_root(size + gap);
+    if (ptr)
+      memcpy(ptr, str, size);
     return ptr;
   }
   /** Frees all items attached to this Statement */
@@ -190,13 +137,10 @@ public:
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
 
-
   memory::Root *getMemRoot()
   {
     return mem_root;
   }
-
-  uint64_t xa_id;
 
   uint64_t getXaId()
   {
@@ -205,29 +149,14 @@ public:
 
   void setXaId(uint64_t in_xa_id)
   {
-    xa_id= in_xa_id; 
+    xa_id= in_xa_id;
   }
-
-  /**
-   * Uniquely identifies each statement object in thread scope; change during
-   * statement lifetime.
-   *
-   * @todo should be const
-   */
-  uint32_t id;
-private:
-  LEX *lex; /**< parse tree descriptor */
 
 public:
-  LEX *getLex() 
-  {
-    return lex;
-  }
-
-  enum_sql_command getSqlCommand() const
-  {
-    return lex->sql_command;
-  }
+  Diagnostics_area& main_da();
+  const LEX& lex() const;
+  LEX& lex();
+  enum_sql_command getSqlCommand() const;
 
   /** query associated with this statement */
   typedef boost::shared_ptr<const std::string> QueryString;
@@ -239,71 +168,27 @@ private:
   // requires under some setup non const, you must copy the QueryString in
   // order to use it.
 public:
+  void resetQueryString();
+  const boost::shared_ptr<session::State>& state();
+
   QueryString getQueryString() const
   {
     return query;
   }
 
-  void resetQueryString()
-  {
-    query.reset();
-    _state.reset();
-  }
-
-  /*
-    We need to copy the lock on the string in order to make sure we have a stable string.
-    Once this is done we can use it to build a const char* which can be handed off for
-    a method to use (Innodb is currently the only engine using this).
-  */
-  const char *getQueryStringCopy(size_t &length)
+  const char* getQueryStringCopy(size_t &length)
   {
     QueryString tmp_string(getQueryString());
-
     if (not tmp_string)
     {
       length= 0;
       return NULL;
     }
-
     length= tmp_string->length();
-    char *to_return= strmake(tmp_string->c_str(), tmp_string->length());
-    return to_return;
+    return strmake(tmp_string->c_str(), tmp_string->length());
   }
 
-private:
-  session::State::shared_ptr  _state; 
-
-public:
-
-  session::State::const_shared_ptr state()
-  {
-    return _state;
-  }
-
-  /**
-    Name of the current (default) database.
-
-    If there is the current (default) database, "db" contains its name. If
-    there is no current (default) database, "db" is NULL and "db_length" is
-    0. In other words, "db", "db_length" must either be NULL, or contain a
-    valid database name.
-
-    @note this attribute is set and alloced by the slave SQL thread (for
-    the Session of that thread); that thread is (and must remain, for now) the
-    only responsible for freeing this member.
-  */
-private:
-  util::string::shared_ptr _schema;
-
-public:
-
-  util::string::const_shared_ptr schema() const
-  {
-    if (_schema)
-      return _schema;
-
-    return util::string::const_shared_ptr(new std::string(""));
-  }
+  util::string::ptr schema() const;
 
   /* current cache key */
   std::string query_cache_key;
@@ -316,17 +201,8 @@ public:
   static const char * const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
-private:
-  plugin::Client *client; /**< Pointer to client object */
-
 public:
-
   void setClient(plugin::Client *client_arg);
-
-  plugin::Client *getClient()
-  {
-    return client;
-  }
 
   plugin::Client *getClient() const
   {
@@ -348,14 +224,10 @@ public:
     return user_vars;
   }
 
-  drizzle_system_variables variables; /**< Mutable local variables local to the session */
+  drizzle_system_variables& variables; /**< Mutable local variables local to the session */
+  enum_tx_isolation getTxIsolation();
+  system_status_var& status_var;
 
-  enum_tx_isolation getTxIsolation()
-  {
-    return (enum_tx_isolation)variables.tx_isolation;
-  }
-
-  struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -366,26 +238,12 @@ public:
    */
   char *thread_stack;
 
-private:
-  identifier::User::shared_ptr security_ctx;
-
-  int32_t scoreboard_index;
-
-  inline void checkSentry() const
+  identifier::user::ptr user() const
   {
-    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
+    return security_ctx ? security_ctx : identifier::user::ptr();
   }
 
-public:
-  identifier::User::const_shared_ptr user() const
-  {
-    if (security_ctx)
-      return security_ctx;
-
-    return identifier::User::const_shared_ptr();
-  }
-
-  void setUser(identifier::User::shared_ptr arg)
+  void setUser(identifier::user::mptr arg)
   {
     security_ctx= arg;
   }
@@ -400,10 +258,36 @@ public:
     scoreboard_index= in_scoreboard_index;
   }
 
+  bool isOriginatingServerUUIDSet()
+  {
+    return originating_server_uuid_set;
+  }
+
+  void setOriginatingServerUUID(std::string in_originating_server_uuid)
+  {
+    originating_server_uuid= in_originating_server_uuid;
+    originating_server_uuid_set= true;
+  }
+
+  std::string &getOriginatingServerUUID()
+  {
+    return originating_server_uuid;
+  }
+
+  void setOriginatingCommitID(uint64_t in_originating_commit_id)
+  {
+    originating_commit_id= in_originating_commit_id;
+  }
+
+  uint64_t getOriginatingCommitID()
+  {
+    return originating_commit_id;
+  }
+
   /**
    * Is this session viewable by the current user?
    */
-  bool isViewable(identifier::User::const_reference) const;
+  bool isViewable(const identifier::User&) const;
 
 private:
   /**
@@ -429,17 +313,16 @@ public:
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
-  uint32_t dbug_sentry; /**< watch for memory corruption */
 
 private:
   boost::thread::id boost_thread_id;
-  boost_thread_shared_ptr _thread;
+  thread_ptr _thread;
   boost::this_thread::disable_interruption *interrupt;
 
   internal::st_my_thread_var *mysys_var;
 
 public:
-  boost_thread_shared_ptr &getThread()
+  thread_ptr &getThread()
   {
     return _thread;
   }
@@ -464,35 +347,7 @@ public:
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
    */
-  enum enum_server_command command;
-  uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Client */
-  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
-
-private:
-  boost::posix_time::ptime _epoch;
-  boost::posix_time::ptime _connect_time;
-  boost::posix_time::ptime _start_timer;
-  boost::posix_time::ptime _end_timer;
-
-  boost::posix_time::ptime _user_time;
-public:
-  uint64_t utime_after_lock; // This used by Innodb.
-
-  void resetUserTime()
-  {
-    _user_time= boost::posix_time::not_a_date_time;
-  }
-
-  const boost::posix_time::ptime &start_timer() const
-  {
-    return _start_timer;
-  }
-
-  void getTimeDifference(boost::posix_time::time_duration &result_arg, const boost::posix_time::ptime &arg) const
-  {
-    result_arg=  arg - _start_timer;
-  }
+  enum_server_command command;
 
   thr_lock_type update_lock_default;
 
@@ -516,20 +371,17 @@ private:
 
 public:
   void **getEngineData(const plugin::MonitoredInTransaction *monitored);
-  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
-                                      size_t index= 0);
+  ResourceContext& getResourceContext(const plugin::MonitoredInTransaction&, size_t index= 0);
 
-  session::Transactions transaction;
+  session::Transactions& transaction;
+  Open_tables_state& open_tables;
+	session::Times& times;
 
   Field *dup_field;
   sigset_t signals;
 
-  // As of right now we do not allow a concurrent execute to launch itself
-private:
-  bool concurrent_execute_allowed;
-
 public:
-
+  // As of right now we do not allow a concurrent execute to launch itself
   void setConcurrentExecute(bool arg)
   {
     concurrent_execute_allowed= arg;
@@ -539,9 +391,6 @@ public:
   {
     return concurrent_execute_allowed;
   }
-
-  /* Tells if LAST_INSERT_ID(#) was called for the current statement */
-  bool arg_of_last_insert_id_function;
 
   /*
     ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
@@ -589,9 +438,6 @@ public:
     (first_successful_insert_id_in_cur_stmt == 0), but storing "INSERT_ID=3"
     in the binlog is still needed; the list's minimum will contain 3.
   */
-  Discrete_intervals_list auto_inc_intervals_in_cur_stmt_for_binlog;
-  /** Used by replication and SET INSERT_ID */
-  Discrete_intervals_list auto_inc_intervals_forced;
 
   uint64_t limit_found_rows;
   uint64_t options; /**< Bitmap of options */
@@ -604,7 +450,7 @@ public:
 
   ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
 
-  /** 
+  /**
    * Number of rows we actually sent to the client, including "synthetic"
    * rows in ROLLUP etc.
    */
@@ -620,7 +466,7 @@ public:
    * of the query.
    *
    * @todo
-   * 
+   *
    * Possibly this it is incorrect to have used tables in Session because
    * with more than one subquery, it is not clear what does the field mean.
    */
@@ -628,33 +474,20 @@ public:
 
   /**
     @todo
-    
+
     This, and some other variables like 'count_cuted_fields'
     maybe should be statement/cursor local, that is, moved to Statement
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List<DRIZZLE_ERROR> warn_list;
   uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint32_t total_warn_count;
-  Diagnostics_area main_da;
 
-  ulong col_access;
-
-  /* Statement id is thread-wide. This counter is used to generate ids */
-  uint32_t statement_id_counter;
-  uint32_t rand_saved_seed1;
-  uint32_t rand_saved_seed2;
   /**
     Row counter, mainly for errors and warnings. Not increased in
     create_sort_index(); may differ from examined_row_count.
   */
   uint32_t row_count;
-
-  uint32_t getRowCount() const
-  {
-    return row_count;
-  }
 
   session_id_t thread_id;
   uint32_t tmp_table;
@@ -739,9 +572,7 @@ public:
   }
 
   bool is_admin_connection;
-  bool some_tables_deleted;
   bool no_errors;
-  bool password;
   /**
     Set to true if execution of the current compound statement
     can not continue. In particular, disables activation of
@@ -772,17 +603,13 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
-private:
-  bool abort_on_warning;
-  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
-
 public:
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
 
-  bool doing_tablespace_operation(void)
+  bool doing_tablespace_operation()
   {
     return tablespace_op;
   }
@@ -810,12 +637,9 @@ public:
     and may point to invalid memory after that.
   */
   Lex_input_stream *m_lip;
-  
+
   /** Place to store various things */
   void *session_marker;
-
-  /** Keeps a copy of the previous table around in case we are just slamming on particular table */
-  Table *cached_table;
 
   /**
     Points to info-string that we show in SHOW PROCESSLIST
@@ -826,7 +650,7 @@ public:
     macro/function.
   */
   inline void set_proc_info(const char *info)
-  { 
+  {
     proc_info= info;
   }
   inline const char* get_proc_info() const
@@ -872,11 +696,11 @@ public:
     return server_id;
   }
 
-  /** Returns the current transaction ID for the session's current statement */
-  inline my_xid getTransactionId()
+  inline std::string &getServerUUID() const
   {
-    return transaction.xid_state.xid.quick_get_my_xid();
+    return server_uuid;
   }
+
   /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
@@ -918,25 +742,15 @@ public:
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline uint64_t read_first_successful_insert_id_in_prev_stmt(void)
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt()
   {
     return first_successful_insert_id_in_prev_stmt;
   }
-  /**
-    Used by Intvar_log_event::do_apply_event() and by "SET INSERT_ID=#"
-    (mysqlbinlog). We'll soon add a variant which can take many intervals in
-    argument.
-  */
-  inline void force_one_auto_inc_interval(uint64_t next_id)
-  {
-    auto_inc_intervals_forced.empty(); // in case of multiple SET INSERT_ID
-    auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
-  }
 
-  Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog);
+  Session(plugin::Client *client_arg, boost::shared_ptr<catalog::Instance> catalog);
   virtual ~Session();
 
-  void cleanup(void);
+  void cleanup();
   /**
    * Cleans up after query.
    *
@@ -950,18 +764,8 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool storeGlobals();
+  void storeGlobals();
   void awake(Session::killed_state_t state_to_set);
-  /**
-   * Pulls thread-specific variables into Session state.
-   *
-   * Returns true most times, or false if there was a problem
-   * allocating resources for thread-specific storage.
-   *
-   * @TODO Kill this.  It's not necessary once my_thr_init() is bye bye.
-   *
-   */
-  bool initGlobals();
 
   /**
     Initialize memory roots necessary for query processing and (!)
@@ -972,10 +776,10 @@ public:
   void prepareForQueries();
 
   /**
-   * Executes a single statement received from the 
+   * Executes a single statement received from the
    * client connection.
    *
-   * Returns true if the statement was successful, or false 
+   * Returns true if the statement was successful, or false
    * otherwise.
    *
    * @note
@@ -990,7 +794,7 @@ public:
   /**
    * Reads a query from packet and stores it.
    *
-   * Returns true if query is read and allocated successfully, 
+   * Returns true if query is read and allocated successfully,
    * false otherwise.  On a return of false, Session::fatal_error
    * is set.
    *
@@ -1003,12 +807,12 @@ public:
    * @param The packet pointer to read from
    * @param The length of the query to read
    */
-  bool readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+  void readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
 
   /**
    * Ends the current transaction and (maybe) begins the next.
    *
-   * Returns true if the transaction completed successfully, 
+   * Returns true if the transaction completed successfully,
    * otherwise false.
    *
    * @param Completion type
@@ -1024,20 +828,9 @@ public:
    * Returns true on success, or false on failure.
    */
   bool authenticate();
-
-  /**
-   * Run a session.
-   *
-   * This will initialize the session and begin the command loop.
-   */
   void run();
-
-  /**
-   * Schedule a session to be run on the default scheduler.
-   */
   static bool schedule(Session::shared_ptr&);
-
-  static void unlink(session_id_t &session_id);
+  static void unlink(session_id_t&);
   static void unlink(Session::shared_ptr&);
 
   /*
@@ -1048,81 +841,7 @@ public:
   const char* enter_cond(boost::condition_variable_any &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
-  type::Time::epoch_t query_start()
-  {
-    return getCurrentTimestampEpoch();
-  }
-
-  void set_time()
-  {
-    _end_timer= _start_timer= boost::posix_time::microsec_clock::universal_time();
-    utime_after_lock= (_start_timer - _epoch).total_microseconds();
-  }
-
-  void set_time(time_t t) // This is done by a sys_var, as long as user_time is set, we will use that for all references to time
-  {
-    _user_time= boost::posix_time::from_time_t(t);
-  }
-
-  void set_time_after_lock()
-  { 
-    boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-    utime_after_lock= (mytime - _epoch).total_microseconds();
-  }
-
-  void set_end_timer()
-  {
-    _end_timer= boost::posix_time::microsec_clock::universal_time();
-    status_var.execution_time_nsec+=(_end_timer - _start_timer).total_microseconds();
-  }
-
-  uint64_t getElapsedTime() const
-  {
-    return (_end_timer - _start_timer).total_microseconds();
-  }
-
-  /**
-   * Returns the current micro-timestamp
-   */
-  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const
-  { 
-    type::Time::epoch_t t_mark;
-
-    if (actual)
-    {
-      boost::posix_time::ptime mytime(boost::posix_time::microsec_clock::universal_time());
-      t_mark= (mytime - _epoch).total_microseconds();
-    }
-    else
-    {
-      t_mark= (_end_timer - _epoch).total_microseconds();
-    }
-
-    return t_mark; 
-  }
-
-  // We may need to set user on this
-  type::Time::epoch_t getCurrentTimestampEpoch() const
-  { 
-    if (not _user_time.is_not_a_date_time())
-      return (_user_time - _epoch).total_seconds();
-
-    return (_start_timer - _epoch).total_seconds();
-  }
-
-  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
-  { 
-    if (not _user_time.is_not_a_date_time())
-    {
-      fraction_arg= 0;
-      return (_user_time - _epoch).total_seconds();
-    }
-
-    fraction_arg= _start_timer.time_of_day().fractional_seconds() % 1000000;
-    return (_start_timer - _epoch).total_seconds();
-  }
-
-  uint64_t found_rows(void) const
+  uint64_t found_rows() const
   {
     return limit_found_rows;
   }
@@ -1143,54 +862,11 @@ public:
 
   int send_explain_fields(select_result *result);
 
-  /**
-    Clear the current error, if any.
-    We do not clear is_fatal_error or is_fatal_sub_stmt_error since we
-    assume this is never called if the fatal error is set.
-    @todo: To silence an error, one should use Internal_error_handler
-    mechanism. In future this function will be removed.
-  */
-  inline void clear_error(bool full= false)
-  {
-    if (main_da.is_error())
-      main_da.reset_diagnostics_area();
+  void clear_error(bool full= false);
+  void clearDiagnostics();
+  bool is_error() const;
 
-    if (full)
-    {
-      drizzle_reset_errors(this, true);
-    }
-  }
-
-  void clearDiagnostics()
-  {
-    main_da.reset_diagnostics_area();
-  }
-
-  /**
-    Mark the current error as fatal. Warning: this does not
-    set any error, it sets a property of the error, so must be
-    followed or prefixed with my_error().
-  */
-  inline void fatal_error()
-  {
-    assert(main_da.is_error());
-    is_fatal_error= true;
-  }
-  /**
-    true if there is an error in the error stack.
-
-    Please use this method instead of direct access to
-    net.report_error.
-
-    If true, the current (sub)-statement should be aborted.
-    The main difference between this member and is_fatal_error
-    is that a fatal error can not be handled by a stored
-    procedure continue handler, whereas a normal error can.
-
-    To raise this flag, use my_error().
-  */
-  inline bool is_error() const { return main_da.is_error(); }
-  inline const CHARSET_INFO *charset() { return default_charset_info; }
+  static const charset_info_st *charset() { return default_charset_info; }
 
   /**
     Cleanup statement parse state (parse tree, lex) and execution
@@ -1221,7 +897,6 @@ public:
   void setAbort(bool arg);
   void lockOnSys();
   void set_status_var_init();
-
   /**
     Set the current database; use deep copy of C-string.
 
@@ -1239,7 +914,7 @@ public:
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
   */
-  void set_db(const std::string &new_db);
+  void set_db(const std::string&);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -1249,25 +924,6 @@ public:
   bool copy_db_to(char **p_db, size_t *p_db_length);
 
 public:
-  /**
-    Add an internal error handler to the thread execution context.
-    @param handler the exception handler to add
-  */
-  void push_internal_handler(Internal_error_handler *handler);
-
-  /**
-    Handle an error condition.
-    @param sql_errno the error number
-    @param level the error level
-    @return true if the error is handled
-  */
-  virtual bool handle_error(drizzled::error_t sql_errno, const char *message,
-                            DRIZZLE_ERROR::enum_warning_level level);
-
-  /**
-    Remove the error handler last pushed.
-  */
-  void pop_internal_handler();
 
   /**
     Resets Session part responsible for command processing state.
@@ -1301,26 +957,12 @@ public:
    *
    * @note Host, user and passwd may point to communication buffer.
    * Current implementation does not depend on that, but future changes
-   * should be done with this in mind; 
+   * should be done with this in mind;
    *
    * @param passwd Scrambled password received from client
    * @param db Database name to connect to, may be NULL
    */
   bool checkUser(const std::string &passwd, const std::string &db);
-  
-  /**
-   * Returns the timestamp (in microseconds) of when the Session 
-   * connected to the server.
-   */
-  uint64_t getConnectMicroseconds() const
-  {
-    return (_connect_time - _epoch).total_microseconds();
-  }
-
-  uint64_t getConnectSeconds() const
-  {
-    return (_connect_time - _epoch).total_seconds();
-  }
 
   /**
    * Returns a pointer to the active Transaction message for this
@@ -1340,7 +982,7 @@ public:
   {
     return statement_message;
   }
-  
+
   /**
    * Returns a pointer to the current Resulset message for this
    * Session, or NULL if no active message.
@@ -1387,135 +1029,36 @@ public:
    */
 
   void resetResultsetMessage()
-  { 
+  {
     resultset= NULL;
   }
 
-private:
-  /** Pointers to memory managed by the ReplicationServices component */
-  message::Transaction *transaction_message;
-  message::Statement *statement_message;
-  /* Pointer to the current resultset of Select query */
-  message::Resultset *resultset;
-  plugin::EventObserverList *session_event_observers;
-  
-  /* Schema observers are mapped to databases. */
-  typedef std::map<std::string, plugin::EventObserverList*> schema_event_observers_t;
-  schema_event_observers_t schema_event_observers;
-
- 
-public:
-  plugin::EventObserverList *getSessionObservers() 
-  { 
+  plugin::EventObserverList *getSessionObservers()
+  {
     return session_event_observers;
   }
-  
-  void setSessionObservers(plugin::EventObserverList *observers) 
-  { 
+
+  void setSessionObservers(plugin::EventObserverList *observers)
+  {
     session_event_observers= observers;
   }
-  
-  /* For schema event observers there is one set of observers per database. */
-  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
-  { 
-    if (schema_event_observers_t::mapped_type* i= find_ptr(schema_event_observers, db_name))
-      return *i;
-    return NULL;
-  }
-  
-  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
-  { 
-    schema_event_observers.erase(db_name);
-    if (observers)
-      schema_event_observers[db_name] = observers;
-  }
-  
-  
- private:
-  const char *proc_info;
 
-  /** The current internal error handler for this thread, or NULL. */
-  Internal_error_handler *m_internal_handler;
-  /**
-    The lex to hold the parsed tree of conventional (non-prepared) queries.
-    Whereas for prepared and stored procedure statements we use an own lex
-    instance for each new query, for conventional statements we reuse
-    the same lex. (@see mysql_parse for details).
-  */
-  LEX main_lex;
-  /**
-    This memory root is used for two purposes:
-    - for conventional queries, to allocate structures stored in main_lex
-    during parsing, and allocate runtime data (execution plan, etc.)
-    during execution.
-    - for prepared queries, only to allocate runtime data. The parsed
-    tree itself is reused between executions and thus is stored elsewhere.
-  */
-  memory::Root main_mem_root;
-
-  /**
-   * Marks all tables in the list which were used by current substatement
-   * as free for reuse.
-   *
-   * @param Head of the list of tables
-   *
-   * @note
-   *
-   * The reason we reset query_id is that it's not enough to just test
-   * if table->query_id != session->query_id to know if a table is in use.
-   *
-   * For example
-   * 
-   *  SELECT f1_that_uses_t1() FROM t1;
-   *  
-   * In f1_that_uses_t1() we will see one instance of t1 where query_id is
-   * set to query_id of original query.
-   */
-  void mark_used_tables_as_free_for_reuse(Table *table);
+  plugin::EventObserverList* getSchemaObservers(const std::string& schema);
+  plugin::EventObserverList* setSchemaObservers(const std::string& schema, plugin::EventObserverList*);
 
 public:
+  void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
+  void my_eof();
+  bool add_item_to_list(Item *item);
+  bool add_value_to_list(Item *value);
+  bool add_order_to_list(Item *item, bool asc);
+  bool add_group_to_list(Item *item, bool asc);
 
-  /** A short cut for session->main_da.set_ok_status(). */
-  inline void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0,
-                    uint64_t passed_id= 0, const char *message= NULL)
-  {
-    main_da.set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
-  }
-
-
-  /** A short cut for session->main_da.set_eof_status(). */
-
-  inline void my_eof()
-  {
-    main_da.set_eof_status(this);
-  }
-
-  /* Some inline functions for more speed */
-
-  inline bool add_item_to_list(Item *item)
-  {
-    return lex->current_select->add_item_to_list(this, item);
-  }
-
-  inline bool add_value_to_list(Item *value)
-  {
-    return lex->value_list.push_back(value);
-  }
-
-  inline bool add_order_to_list(Item *item, bool asc)
-  {
-    return lex->current_select->add_order_to_list(this, item, asc);
-  }
-
-  inline bool add_group_to_list(Item *item, bool asc)
-  {
-    return lex->current_select->add_group_to_list(this, item, asc);
-  }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
   void setVariable(const std::string &name, const std::string &value);
-  
+
   /**
    * Closes all tables used by the current substatement, or all tables
    * used by this thread if we are on the upper level.
@@ -1523,13 +1066,7 @@ public:
   void close_thread_tables();
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
-  void close_open_tables();
   void close_data_files_and_morph_locks(const identifier::Table &identifier);
-
-private:
-  bool free_cached_table(boost::mutex::scoped_lock &scopedLock);
-
-public:
 
   /**
    * Prepares statement for reopening of tables and recalculation of set of
@@ -1551,10 +1088,11 @@ public:
    *  true  - error
    *
    * @note
-   * 
+   *
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  bool openTablesLock(TableList *tables);
+  bool openTablesLock(TableList*);
+  Table *open_temporary_table(const identifier::Table &identifier, bool link_in_list= true);
 
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
 
@@ -1566,17 +1104,10 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  table::Placeholder *table_cache_insert_placeholder(const identifier::Table &identifier);
-  bool lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table);
+  table::Placeholder& table_cache_insert_placeholder(const identifier::Table&);
+  Table* lock_table_name_if_not_cached(const identifier::Table&);
 
-private:
-  session::TableMessages _table_message_cache;
-
-public:
-  session::TableMessages &getMessageCache()
-  {
-    return _table_message_cache;
-  }
+  session::TableMessages &getMessageCache();
 
   /* Reopen operations */
   bool reopen_tables();
@@ -1586,17 +1117,17 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
-  drizzled::util::Storable *getProperty(const std::string &arg)
+  template <class T>
+  T* getProperty(const std::string& name)
   {
-    return life_properties.getProperty(arg);
+    return static_cast<T*>(getProperty0(name));
   }
 
-  template<class T>
-  bool setProperty(const std::string &arg, T *value)
+  template <class T>
+  T setProperty(const std::string& name, T value)
   {
-    life_properties.setProperty(arg, value);
-
-    return true;
+    setProperty0(name, value);
+    return value;
   }
 
   /**
@@ -1607,66 +1138,71 @@ public:
     @return
     pointer to plugin::StorageEngine
   */
-  plugin::StorageEngine *getDefaultStorageEngine()
-  {
-    if (variables.storage_engine)
-      return variables.storage_engine;
-    return global_system_variables.storage_engine;
-  }
-
+  plugin::StorageEngine *getDefaultStorageEngine();
   void get_xid(DrizzleXid *xid); // Innodb only
 
-  table::Singular *getInstanceTable();
-  table::Singular *getInstanceTable(List<CreateField> &field_list);
-
-private:
-  bool resetUsage()
-  {
-    if (getrusage(RUSAGE_THREAD, &usage))
-    {
-      return false;
-    }
-
-    return true;
-  }
-
-public:
+  table::Singular& getInstanceTable();
+  table::Singular& getInstanceTable(std::list<CreateField>&);
 
   void setUsage(bool arg)
   {
     use_usage= arg;
   }
 
-  const struct rusage &getUsage()
+  const rusage &getUsage()
   {
     return usage;
   }
 
-  catalog::Instance::const_reference catalog() const
+  const catalog::Instance& catalog() const
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
-  catalog::Instance::reference catalog()
+  catalog::Instance& catalog()
   {
-    return *(_catalog.get());
+    return *_catalog;
   }
 
+  bool arg_of_last_insert_id_function; // Tells if LAST_INSERT_ID(#) was called for the current statement
 private:
-  catalog::Instance::shared_ptr _catalog;
+  drizzled::util::Storable* getProperty0(const std::string&);
+  void setProperty0(const std::string&, drizzled::util::Storable*);
 
-  // This lives throughout the life of Session
+  bool resetUsage()
+  {
+    return not getrusage(RUSAGE_THREAD, &usage);
+  }
+
+  boost::shared_ptr<catalog::Instance> _catalog;
+
+  /** Pointers to memory managed by the ReplicationServices component */
+  message::Transaction *transaction_message;
+  message::Statement *statement_message;
+  /* Pointer to the current resultset of Select query */
+  message::Resultset *resultset;
+  plugin::EventObserverList *session_event_observers;
+
+  uint64_t xa_id;
+  const char *proc_info;
+  bool abort_on_warning;
+  bool concurrent_execute_allowed;
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
   bool use_usage;
-  session::PropertyMap life_properties;
-  std::vector<table::Singular *> temporary_shares;
-  struct rusage usage;
+  rusage usage;
+  identifier::user::mptr security_ctx;
+  int32_t scoreboard_index;
+  bool originating_server_uuid_set;
+  std::string originating_server_uuid;
+  uint64_t originating_commit_id;
+  plugin::Client *client;
 };
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
 /* Bits in sql_command_flags */
 
-enum sql_command_flag_bits 
+enum sql_command_flag_bits
 {
   CF_BIT_CHANGES_DATA,
   CF_BIT_HAS_ROW_COUNT,
@@ -1682,12 +1218,11 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
-namespace display  {
-const std::string &type(drizzled::Session::global_read_lock_t type);
-size_t max_string_length(drizzled::Session::global_read_lock_t type);
-
+namespace display  
+{
+  const std::string &type(Session::global_read_lock_t);
+  size_t max_string_length(Session::global_read_lock_t);
 } /* namespace display */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_H */

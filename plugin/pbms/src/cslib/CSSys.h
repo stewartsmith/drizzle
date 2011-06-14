@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSSYSFILE_H__
 #define __CSSYSFILE_H__
 

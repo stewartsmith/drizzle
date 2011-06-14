@@ -23,6 +23,7 @@ Binary buddy allocator for compressed pages
 Created December 2006 by Marko Makela
 *******************************************************/
 
+#pragma once
 #ifndef buf0buddy_h
 #define buf0buddy_h
 

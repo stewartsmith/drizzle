@@ -40,7 +40,7 @@ namespace create
 namespace table
 {
 
-bool Select::executeInner(identifier::Table::const_reference)
+bool Select::executeInner(const identifier::Table&)
 {
   return false;
 }

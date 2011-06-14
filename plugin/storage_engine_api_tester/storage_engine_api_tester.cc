@@ -27,7 +27,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
 
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 
 #include <boost/unordered_map.hpp>
 
@@ -501,7 +501,7 @@ public:
   int doCreateTable(Session&,
                     Table&,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table& create_proto);
+                    const drizzled::message::Table& create_proto);
 
   int doDropTable(Session&, const identifier::Table &identifier);
 
@@ -518,7 +518,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::identifier::Schema &,
-                             drizzled::identifier::Table::vector &);
+                             drizzled::identifier::table::vector &);
 
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
@@ -591,7 +591,7 @@ bool SEAPITester::doDoesTableExist(Session &session, const identifier::Table &id
 
 void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
                                         const drizzled::identifier::Schema &si,
-                                        drizzled::identifier::Table::vector &ti)
+                                        drizzled::identifier::table::vector &ti)
 {
   return getRealEngine()->doGetTableIdentifiers(cd, si, ti);
 }
@@ -599,7 +599,7 @@ void SEAPITester::doGetTableIdentifiers(drizzled::CachedDirectory &cd,
 int SEAPITester::doCreateTable(Session& session,
                                Table& table,
                                const drizzled::identifier::Table &identifier,
-                               drizzled::message::Table& create_proto)
+                               const drizzled::message::Table& create_proto)
 {
   ENGINE_NEW_STATE("::doCreateTable()");
 

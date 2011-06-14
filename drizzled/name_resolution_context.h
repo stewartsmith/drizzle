@@ -17,18 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_H
-#define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
+#pragma once
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class TableList;
-class SecurityContext;
-class Session;
-class Select_Lex;
+namespace drizzled {
 
 /**
  * Instances of Name_resolution_context store the information necesary for
@@ -138,4 +131,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_NAME_RESOLUTION_CONTEXT_H */

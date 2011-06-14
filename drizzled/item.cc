@@ -53,6 +53,8 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/ref.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <math.h>
@@ -174,11 +176,9 @@ type::Decimal *Item::val_decimal_from_int(type::Decimal *decimal_value)
 type::Decimal *Item::val_decimal_from_string(type::Decimal *decimal_value)
 {
   String *res;
-  char *end_ptr;
   if (!(res= val_str(&str_value)))
     return NULL;
 
-  end_ptr= (char*) res->ptr()+ res->length();
   if (decimal_value->store(E_DEC_FATAL_ERROR & ~E_DEC_BAD_NUM,
                      res->ptr(), 
                      res->length(), 
@@ -306,14 +306,14 @@ Item::Item():
 
   /*
     Item constructor can be called during execution other then SQL_COM
-    command => we should check session->getLex()->current_select on zero (session->lex
+    command => we should check session->lex().current_select on zero (session->lex
     can be uninitialised)
   */
-  if (getSession().getLex()->current_select)
+  if (getSession().lex().current_select)
   {
-    enum_parsing_place place= getSession().getLex()->current_select->parsing_place;
+    enum_parsing_place place= getSession().lex().current_select->parsing_place;
     if (place == SELECT_LIST || place == IN_HAVING)
-      getSession().getLex()->current_select->select_n_having_items++;
+      getSession().lex().current_select->select_n_having_items++;
   }
 }
 
@@ -416,7 +416,7 @@ bool Item::check_cols(uint32_t c)
   return false;
 }
 
-void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs)
+void Item::set_name(const char *str, uint32_t length, const charset_info_st * const cs)
 {
   if (!length)
   {
@@ -466,7 +466,7 @@ bool Item::eq(const Item *item, bool) const
          ! my_strcasecmp(system_charset_info, name, item->name);
 }
 
-Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item::safe_charset_converter(const charset_info_st * const tocs)
 {
   Item_func_conv_charset *conv= new Item_func_conv_charset(this, tocs, 1);
   return conv->safe ? conv : NULL;
@@ -593,12 +593,12 @@ Item *Item::get_tmp_table_item(Session *session)
   return copy_or_same(session);
 }
 
-const CHARSET_INFO *Item::default_charset()
+const charset_info_st *Item::default_charset()
 {
   return current_session->variables.getCollation();
 }
 
-const CHARSET_INFO *Item::compare_collation()
+const charset_info_st *Item::compare_collation()
 {
   return NULL;
 }
@@ -786,7 +786,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
-    if (!(item_ref= new Item_aggregate_ref(&session->getLex()->current_select->context,
+    if (!(item_ref= new Item_aggregate_ref(&session->lex().current_select->context,
                                            ref_pointer_array + el, 0, name)))
       return; /* fatal_error is set */
     if (type() == SUM_FUNC_ITEM)
@@ -819,7 +819,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (mark_item)
     mark_item->depended_from= last;
   current->mark_as_dependent(last);
-  if (session->getLex()->describe & DESCRIBE_EXTENDED)
+  if (session->lex().describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
@@ -1094,7 +1094,7 @@ bool Item::is_datetime()
 String *Item::check_well_formed_result(String *str, bool send_error)
 {
   /* Check whether we got a well-formed string */
-  const CHARSET_INFO * const cs= str->charset();
+  const charset_info_st * const cs= str->charset();
   int well_formed_error;
   uint32_t wlen= cs->cset->well_formed_len(cs,
                                        str->ptr(), str->ptr() + str->length(),
@@ -1123,10 +1123,10 @@ String *Item::check_well_formed_result(String *str, bool send_error)
   return str;
 }
 
-bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs)
+bool Item::eq_by_collation(Item *item, bool binary_cmp, const charset_info_st * const cs)
 {
-  const CHARSET_INFO *save_cs= 0;
-  const CHARSET_INFO *save_item_cs= 0;
+  const charset_info_st *save_cs= 0;
+  const charset_info_st *save_item_cs= 0;
   if (collation.collation != cs)
   {
     save_cs= collation.collation;
@@ -1241,7 +1241,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   if (result_type() == STRING_RESULT)
   {
     String *result;
-    const CHARSET_INFO * const cs= collation.collation;
+    const charset_info_st * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];		// Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result=val_str(&str_value);
@@ -1353,12 +1353,10 @@ Item* Item::cache_const_expr_transformer(unsigned char *arg)
   return this;
 }
 
-bool Item::send(plugin::Client *client, String *buffer)
+void Item::send(plugin::Client *client, String *buffer)
 {
-  bool result= false;
-  enum_field_types f_type;
-
-  switch ((f_type=field_type())) {
+  switch (field_type())
+  {
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
@@ -1368,29 +1366,26 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_UUID:
   case DRIZZLE_TYPE_DECIMAL:
     {
-      String *res;
-      if ((res=val_str(buffer)))
-        result= client->store(res->ptr(),res->length());
+      if (String* res=val_str(buffer))
+        client->store(res->ptr(), res->length());
       break;
     }
   case DRIZZLE_TYPE_LONG:
     {
-      int64_t nr;
-      nr= val_int();
+      int64_t nr= val_int();
       if (!null_value)
-        result= client->store((int32_t)nr);
+        client->store((int32_t)nr);
       break;
     }
   case DRIZZLE_TYPE_LONGLONG:
     {
-      int64_t nr;
-      nr= val_int();
+      int64_t nr= val_int();
       if (!null_value)
       {
         if (unsigned_flag)
-          result= client->store((uint64_t)nr);
+          client->store((uint64_t)nr);
         else
-          result= client->store((int64_t)nr);
+          client->store((int64_t)nr);
       }
       break;
     }
@@ -1398,7 +1393,7 @@ bool Item::send(plugin::Client *client, String *buffer)
     {
       double nr= val_real();
       if (!null_value)
-        result= client->store(nr, decimals, buffer);
+        client->store(nr, decimals, buffer);
       break;
     }
   case DRIZZLE_TYPE_TIME:
@@ -1406,7 +1401,7 @@ bool Item::send(plugin::Client *client, String *buffer)
       type::Time tm;
       get_time(tm);
       if (not null_value)
-        result= client->store(&tm);
+        client->store(&tm);
       break;
     }
   case DRIZZLE_TYPE_DATETIME:
@@ -1416,14 +1411,12 @@ bool Item::send(plugin::Client *client, String *buffer)
       type::Time tm;
       get_date(tm, TIME_FUZZY_DATE);
       if (!null_value)
-        result= client->store(&tm);
+        client->store(&tm);
       break;
     }
   }
   if (null_value)
-    result= client->store();
-
-  return result;
+    client->store();
 }
 
 uint32_t Item::max_char_length() const
@@ -1431,7 +1424,7 @@ uint32_t Item::max_char_length() const
   return max_length / collation.collation->mbmaxlen;
 }
 
-void Item::fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs)
+void Item::fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs)
 { 
   max_length= char_to_byte_length_safe(max_char_length_arg, cs->mbmaxlen);
   collation.collation= cs;

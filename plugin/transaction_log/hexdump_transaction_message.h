@@ -35,8 +35,7 @@
  * the transaction message in the logfile at the supplied offset
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_HEXDUMP_TRANSACTION_MESSAGE_H
-#define PLUGIN_TRANSACTION_LOG_HEXDUMP_TRANSACTION_MESSAGE_H
+#pragma once
 
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -60,5 +59,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_HEXDUMP_TRANSACTION_MESSAGE_H */
 

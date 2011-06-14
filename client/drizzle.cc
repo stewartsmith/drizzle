@@ -35,7 +35,7 @@
  **/
 
 #include <config.h>
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle/libdrizzle.h>
 
 #include "server_detect.h"
 #include "get_password.h"
@@ -154,6 +154,8 @@ typedef Function drizzle_compentry_func_t;
 #include <boost/scoped_ptr.hpp>
 #include <drizzled/program_options/config_file.h>
 
+#include "user_detect.h"
+
 using namespace std;
 namespace po=boost::program_options;
 namespace dpo=drizzled::program_options;
@@ -163,6 +165,9 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 
 /* Buffer to hold 'version' and 'version_comment' */
 const int MAX_SERVER_VERSION_LENGTH= 128;
+
+/* Options used during connect */
+drizzle_con_options_t global_con_options= DRIZZLE_CON_NONE;
 
 #define PROMPT_CHAR '\\'
 
@@ -241,7 +246,7 @@ public:
 
   void setLineBuff(int max_size, FILE *file=NULL)
   {
-    line_buff= new(std::nothrow) LineBuffer(max_size, file);
+    line_buff= new LineBuffer(max_size, file);
   }
 
   void setLineBuff(LineBuffer *in_line_buff)
@@ -440,26 +445,24 @@ private:
   const char *name;        /* User printable name of the function. */
   char cmd_char;        /* msql command character */
 public:
-Commands(const char *in_name,
-         char in_cmd_char,
-         int (*in_func)(string *str,const char *name),
-         bool in_takes_params,
-         const char *in_doc)
-  :
-  name(in_name),
-  cmd_char(in_cmd_char),
-  func(in_func),
-  takes_params(in_takes_params),
-  doc(in_doc)
+  Commands(const char *in_name,
+           char in_cmd_char,
+           int (*in_func)(string *str,const char *name),
+           bool in_takes_params,
+           const char *in_doc) :
+    name(in_name),
+    cmd_char(in_cmd_char),
+    func(in_func),
+    takes_params(in_takes_params),
+    doc(in_doc)
   {}
 
-  Commands()
-  :
-  name(),
-  cmd_char(),
-  func(NULL),
-  takes_params(false),
-  doc()
+  Commands() :
+    name(),
+    cmd_char(),
+    func(NULL),
+    takes_params(false),
+    doc()
   {}
 
   int (*func)(string *str,const char *);/* Function to call to do the job. */
@@ -537,9 +540,9 @@ static Commands commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
     N_("Use another schema. Takes schema name as argument.") ),
-  Commands( "shutdown",    'u', com_shutdown,    1,
+  Commands( "shutdown",    'Q', com_shutdown,    false,
     N_("Shutdown the instance you are connected too.") ),
-  Commands( "warnings", 'W', com_warnings,  0,
+  Commands( "warnings", 'W', com_warnings,  false,
     N_("Show warnings after every statement.") ),
   Commands( "nowarning", 'w', com_nowarnings, 0,
     N_("Don't show warnings after every statement.") ),
@@ -1470,7 +1473,8 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1479,16 +1483,11 @@ try
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
-#ifdef DRIZZLE_ADMIN_TOOL
-  ("user,u", po::value<string>(&current_user)->default_value("root"),
-#else
-  ("user,u", po::value<string>(&current_user)->default_value(""),
-#endif
+  ("user,u", po::value<string>(&current_user)->default_value(shell_user ? shell_user : ""),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  _("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
   ;
-
   po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
@@ -1543,15 +1542,9 @@ try
 
   po::notify(vm);
 
-#ifdef DRIZZLE_ADMIN_TOOL
-  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
-                         getenv("DRIZZLE_PS1") :
-                         "drizzleadmin> ");
-#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1607,10 +1600,10 @@ try
 
   /* Inverted Booleans */
 
-  line_numbers= (vm.count("disable-line-numbers")) ? false : true;
-  column_names= (vm.count("disable-column-names")) ? false : true;
-  opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
-  opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
+  line_numbers= not vm.count("disable-line-numbers");
+  column_names= not vm.count("disable-column-names");
+  opt_rehash= not vm.count("disable-auto-rehash");
+  opt_reconnect= not vm.count("disable-reconnect");
 
   /* Don't rehash with --shutdown */
   if (vm.count("shutdown"))
@@ -1645,7 +1638,7 @@ try
     else
       init_tee(vm["tee"].as<string>().c_str());
   }
-  if (vm["disable-tee"].as<bool>() == true)
+  if (vm["disable-tee"].as<bool>())
   {
     if (opt_outfile)
       end_tee();
@@ -1702,9 +1695,21 @@ try
       opt_protocol.begin(), ::tolower);
 
     if (not opt_protocol.compare("mysql"))
-      use_drizzle_protocol=false;
+    {
+
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
+      use_drizzle_protocol= false;
+    }
+    else if (not opt_protocol.compare("mysql-plugin-auth"))
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE|DRIZZLE_CON_AUTH_PLUGIN);
+      use_drizzle_protocol= false;
+    }
     else if (not opt_protocol.compare("drizzle"))
-      use_drizzle_protocol=true;
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_EXPERIMENTAL);
+      use_drizzle_protocol= true;
+    }
     else
     {
       cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
@@ -1948,7 +1953,8 @@ void handle_sigint(int sig)
   drizzle_return_t ret;
 
   /* terminate if no query being executed, or we already tried interrupting */
-  if (!executing_query || interrupted_query) {
+  if (!executing_query || interrupted_query)
+  {
     goto err;
   }
 
@@ -2186,7 +2192,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.getAddToHistory() && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2280,37 +2285,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
       }
     }
-    else if (!*ml_comment && !*in_string &&
-             (end_of_line - pos) >= 10 &&
-             !strncmp(pos, "delimiter ", 10))
-    {
-      // Flush previously accepted characters
-      if (out != line)
-      {
-        buffer->append(line, (out - line));
-        out= line;
-      }
-
-      // Flush possible comments in the buffer
-      if (!buffer->empty())
-      {
-        if (com_go(buffer, 0) > 0) // < 0 is not fatal
-          return(1);
-        assert(buffer!=NULL);
-        buffer->clear();
-      }
-
-      /*
-        Delimiter wants the get rest of the given line as argument to
-        allow one to change ';' to ';;' and back
-      */
-      buffer->append(pos);
-      if (com_delimiter(buffer, pos) > 0)
-        return(1);
-
-      buffer->clear();
-      break;
-    }
     else if (!*ml_comment && !*in_string && !strncmp(pos, delimiter,
                                                      strlen(delimiter)))
     {
@@ -2370,7 +2344,22 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
       // comment to end of line
       if (preserve_comments)
+      {
+        bool started_with_nothing= !buffer->empty();
         buffer->append(pos);
+
+        /*
+          A single-line comment by itself gets sent immediately so that
+          client commands (delimiter, status, etc) will be interpreted on
+          the next line.
+        */
+        if (started_with_nothing)
+        {
+          if (com_go(buffer, 0) > 0)             // < 0 is not fatal
+           return 1;
+          buffer->clear();
+        }
+      }  
 
       break;
     }
@@ -3948,12 +3937,7 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,sql_file);
-  if (line_buff == NULL)
-  {
-    fclose(sql_file);
-    return put_info(_("Can't initialize LineBuffer"), INFO_ERROR, 0, 0);
-  }
+  line_buff= new LineBuffer(opt_max_input_line,sql_file);
 
   /* Save old status */
   old_status=status;
@@ -4221,16 +4205,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
   }
   drizzle_create(&drizzle);
 
-#ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
-#else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
-#endif
-
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
                           opt_drizzle_port, (char *)user.c_str(),
                           (char *)password.c_str(), (char *)database.c_str(),
-                          options) == NULL)
+                          global_con_options) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);

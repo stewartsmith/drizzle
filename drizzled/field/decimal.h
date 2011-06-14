@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_DECIMAL_H
-#define DRIZZLED_FIELD_DECIMAL_H
+#pragma once
 
 #include <drizzled/field/num.h>
 
@@ -65,7 +64,7 @@ public:
   int  reset(void);
   bool store_value(const type::Decimal *decimal_value);
   void set_value_on_overflow(type::Decimal *decimal_value, bool sign);
-  int  store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to, uint32_t length, const charset_info_st * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t t_type);
@@ -89,5 +88,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_DECIMAL_H */
 

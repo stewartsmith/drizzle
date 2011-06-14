@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_KEY_H
-#define DRIZZLED_KEY_H
+#pragma once
 
 #include <string>
 #include <boost/dynamic_bitset.hpp>
@@ -31,12 +30,7 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/handler_structs.h>
 
-namespace drizzled
-{
-
-namespace memory { class Root; }
-
-class Item;
+namespace drizzled {
 
 class Key :public memory::SqlAlloc {
 public:
@@ -109,4 +103,3 @@ int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_H */

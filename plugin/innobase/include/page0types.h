@@ -23,6 +23,7 @@ Index page routines
 Created 2/2/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef page0types_h
 #define page0types_h
 

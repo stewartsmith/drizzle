@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_TIME_DATE_ADD_INTERVAL_H
-#define DRIZZLED_FUNCTION_TIME_DATE_ADD_INTERVAL_H
+#pragma once
 
 #include <drizzled/function/time/date.h>
 
@@ -47,4 +46,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_TIME_DATE_ADD_INTERVAL_H */

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_FUNCTIONS_H
-#define DRIZZLED_GENERATOR_FUNCTIONS_H
+#pragma once
 
 #include <drizzled/plugin/function.h>
 
@@ -55,4 +54,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_FUNCTIONS_H */

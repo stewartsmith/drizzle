@@ -18,23 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_TABLE_H
-#define DRIZZLED_GENERATOR_TABLE_H
+#pragma once
 
 #include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace generator {
 
 class Table
 {
   Session &session;
 
-  identifier::Table::vector table_names;
-  identifier::Table::vector::const_iterator table_iterator;
+  identifier::table::vector table_names;
+  identifier::table::vector::const_iterator table_iterator;
 
 public:
 
@@ -72,4 +68,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_TABLE_H */

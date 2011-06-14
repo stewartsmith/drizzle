@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSCONFIG_H__
 #define __CSCONFIG_H__
 

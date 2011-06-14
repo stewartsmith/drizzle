@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_UNION_H
-#define DRIZZLED_SQL_UNION_H
+#pragma once
 
 namespace drizzled
 {
@@ -28,4 +27,3 @@ bool drizzle_union(Session *session, LEX *, select_result *result,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_UNION_H */

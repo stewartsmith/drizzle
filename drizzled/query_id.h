@@ -17,24 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_QUERY_ID_H
-#define DRIZZLED_QUERY_ID_H
+#pragma once
 
 #include <drizzled/atomics.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 typedef uint64_t query_id_t;
 
 class Query_id
 {
 public:
-  static Query_id& get_query_id() {
+  static Query_id& get_query_id() 
+  {
     static Query_id the_id;
     return the_id;
   }
-  ~Query_id();
 
   /* return current query_id value */
   query_id_t value() const;
@@ -52,4 +50,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_QUERY_ID_H */

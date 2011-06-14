@@ -28,8 +28,7 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
-#define PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
+#pragma once
 
 #include "user_commands.h"
 #include "scoreboard_slot.h"
@@ -55,4 +54,3 @@ private:
   UserCommands *user_commands;
 };
  
-#endif /* PLUGIN_LOGGING_STATS_GLOBAL_STATS_H */

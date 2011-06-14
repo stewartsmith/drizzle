@@ -23,6 +23,7 @@ The database buffer pool flush algorithm
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef buf0flu_h
 #define buf0flu_h
 

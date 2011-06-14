@@ -23,8 +23,7 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_TABLE_INSTANCE_BASE_H
-#define DRIZZLED_TABLE_INSTANCE_BASE_H
+#pragma once
 
 #include <string>
 
@@ -37,31 +36,13 @@
 #include <drizzled/memory/root.h>
 #include <drizzled/message.h>
 #include <drizzled/util/string.h>
-
 #include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
- 
-#include <drizzled/table/cache.h>
- 
 #include <drizzled/field.h>
 
-
-namespace drizzled
-{
+namespace drizzled {
 
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
-
-namespace plugin
-{
-class EventObserverList;
-class StorageEngine;
-}
-
-namespace table {
-class Singular;
-}
-
-class Field_blob;
 
 class TableShare
 {
@@ -433,7 +414,7 @@ public:
   void setTableMessage(const message::Table &arg)
   {
     assert(not getTableMessage());
-    _table_message.reset(new(std::nothrow) message::Table(arg));
+    _table_message.reset(new message::Table(arg));
   }
 
   const message::Table::Field &field(int32_t field_position) const
@@ -444,7 +425,7 @@ public:
 
   inline bool hasComment() const
   {
-    return (getTableMessage()) ?  getTableMessage()->options().has_comment() : false; 
+    return getTableMessage() ?  getTableMessage()->options().has_comment() : false; 
   }
 
   inline const char *getComment()
@@ -719,7 +700,7 @@ private:
                               Table &outparam,
                               bool &error_reported);
 public:
-  bool parse_table_proto(Session& session, message::Table &table);
+  bool parse_table_proto(Session& session, const message::Table &table);
 
   virtual bool is_replicated() const
   {
@@ -729,4 +710,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_BASE_H */

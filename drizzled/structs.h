@@ -20,24 +20,14 @@
 
 /* The old structures from unireg */
 
-#ifndef DRIZZLED_STRUCTS_H
-#define DRIZZLED_STRUCTS_H
+#pragma once
 
 #include <drizzled/base.h>
 #include <drizzled/definitions.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/thr_lock.h>
 
-namespace drizzled
-{
-
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
-
-class Table;
-class Field;
+namespace drizzled {
 
 class KeyPartInfo 
 {	/* Info about a key part */
@@ -93,8 +83,6 @@ public:
 };
 
 
-class JoinTable;
-
 class RegInfo 
 {
 public:		/* Extra info about reg */
@@ -114,10 +102,6 @@ public:		/* Extra info about reg */
   }
 };
 
-class Session;
-class Cursor;
-namespace optimizer { class SqlSelect; }
-
 typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 
 } /* namespace drizzled */
@@ -129,4 +113,3 @@ typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 #define STATUS_NO_PARENT	4	/* Parent record wasn't found */
 #define STATUS_NULL_ROW		32	/* table->null_row is set */
 
-#endif /* DRIZZLED_STRUCTS_H */

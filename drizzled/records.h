@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_RECORDS_H
-#define DRIZZLED_RECORDS_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
+namespace drizzled {
+
+ 
 struct ReadRecord {			/* Parameter to read_record */
   Table *table;			/* Head-form */
   Cursor *cursor;
@@ -50,7 +51,7 @@ public:
   unsigned char *cache_pos;
   unsigned char *cache_end;
   unsigned char *read_positions;
-  internal::IO_CACHE *io_cache;
+  internal::io_cache_st *io_cache;
   bool print_error;
   bool ignore_not_found_rows;
   JoinTable *do_insideout_scan;
@@ -217,4 +218,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_RECORDS_H */

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_ALL_FIELDS_H
-#define DRIZZLED_GENERATOR_ALL_FIELDS_H
+#pragma once
 
 namespace drizzled {
 namespace generator {
@@ -82,4 +81,3 @@ public:
 
 bool operator!(const drizzled::generator::FieldPair &arg);
 
-#endif /* DRIZZLED_GENERATOR_ALL_FIELDS_H */

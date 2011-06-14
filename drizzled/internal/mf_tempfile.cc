@@ -61,12 +61,7 @@ namespace internal
 int create_temp_file(char *to, const char *dir, const char *prefix,
                      myf MyFlags)
 {
-  int file= -1;
-
-  int org_file;
-  string prefix_str;
-
-  prefix_str= prefix ? prefix : "tmp.";
+  string prefix_str= prefix ? prefix : "tmp.";
   prefix_str.append("XXXXXX");
 
   if (!dir && ! (dir =getenv("TMPDIR")))
@@ -74,27 +69,27 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
   if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
   {
     errno= ENAMETOOLONG;
-    return(file);
+    return -1;
   }
   strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
-  org_file=mkstemp(to);
+  int org_file= mkstemp(to);
   /* TODO: This was old behavior, but really don't we want to
    * unlink files immediately under all circumstances?
    * if (mode & O_TEMPORARY)
     (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
   */
-  file=my_register_filename(org_file, to, EE_CANTCREATEFILE, MyFlags);
+  int file= my_register_filename(org_file, to, EE_CANTCREATEFILE, MyFlags);
 
   /* If we didn't manage to register the name, remove the temp file */
   if (org_file >= 0 && file < 0)
   {
-    int tmp=errno;
+    int tmp= errno;
     close(org_file);
     (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
-    errno=tmp;
+    errno= tmp;
   }
 
-  return(file);
+  return file;
 }
 
 } /* namespace internal */

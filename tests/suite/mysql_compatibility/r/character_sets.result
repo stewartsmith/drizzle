@@ -1,0 +1,16 @@
+CREATE TABLE `test1` (
+`c1` varchar(10) NOT NULL
+) DEFAULT CHARSET=latin1;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'latin1' at line 2
+CREATE TABLE `test2` (
+`c1` varchar(10) NOT NULL
+) DEFAULT CHARSET=utf8;
+DROP TABLE test2;
+CREATE TABLE `test2` (
+`c1` varchar(10) NOT NULL
+) DEFAULT CHARSET utf8;
+DROP TABLE test2;
+CREATE TABLE `test2` (
+`c1` varchar(10) NOT NULL
+) DEFAULT CHARSET DEFAULT;
+DROP TABLE test2;

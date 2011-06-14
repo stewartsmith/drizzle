@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __TABLE_MS_H__
 #define __TABLE_MS_H__
 

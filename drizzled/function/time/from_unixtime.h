@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_TIME_FROM_UNIXTIME_H
-#define DRIZZLED_FUNCTION_TIME_FROM_UNIXTIME_H
+#pragma once
 
 #include <drizzled/function/time/date.h>
 
@@ -39,4 +38,3 @@ class Item_func_from_unixtime :public Item_date_func
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_TIME_FROM_UNIXTIME_H */

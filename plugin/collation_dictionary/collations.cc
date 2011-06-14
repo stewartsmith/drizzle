@@ -52,8 +52,8 @@ bool CollationsTool::Generator::end()
 
 bool CollationsTool::Generator::check()
 {
-  const CHARSET_INFO *tmp_cs= character_set();
-  const CHARSET_INFO *tmp_cl= collation();
+  const charset_info_st *tmp_cs= character_set();
+  const charset_info_st *tmp_cl= collation();
 
   if (not tmp_cl || 
       not (tmp_cl->state & MY_CS_AVAILABLE) ||
@@ -117,8 +117,8 @@ bool CollationsTool::Generator::populate()
 
 void CollationsTool::Generator::fill()
 {
-  const CHARSET_INFO *tmp_cs= character_set();
-  const CHARSET_INFO *tmp_cl= collation_iter[0];
+  const charset_info_st *tmp_cs= character_set();
+  const charset_info_st *tmp_cl= collation_iter[0];
 
   assert(tmp_cs);
   assert(tmp_cl);

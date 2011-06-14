@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DYNAMIC_ARRAY_H
-#define DRIZZLED_DYNAMIC_ARRAY_H
+#pragma once
 
 #include <cstddef>
 
@@ -29,7 +28,6 @@ class DYNAMIC_ARRAY
 {
 public:
   unsigned char *buffer;
-  size_t elements;
   size_t max_element;
   uint32_t alloc_increment;
   uint32_t size_of_element;
@@ -40,6 +38,13 @@ public:
   {
     return elements;
   }
+
+  void set_size(size_t v)
+  {
+    elements = v;
+  }
+private:
+  size_t elements;
 };
 
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
@@ -48,15 +53,9 @@ public:
 bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc,
                                    uint32_t alloc_increment);
-/* init_dynamic_array() function is deprecated */
-bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                  uint32_t init_alloc,uint32_t alloc_increment);
 unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 void delete_dynamic(DYNAMIC_ARRAY *array);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DYNAMIC_ARRAY_H */

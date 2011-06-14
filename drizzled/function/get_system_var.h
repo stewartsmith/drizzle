@@ -17,16 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
-#define DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-class sys_var;
+namespace drizzled {
 
 Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component);
@@ -59,4 +55,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H */

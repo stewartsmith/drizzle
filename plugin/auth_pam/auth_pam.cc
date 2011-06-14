@@ -60,10 +60,9 @@ int auth_pam_talker(int num_msg,
 {
   auth_pam_userinfo *userinfo = (auth_pam_userinfo*)appdata_ptr;
   struct pam_response *response = 0;
-  int x;
 
   /* parameter sanity checking */
-  if(!resp || !msg || !userinfo)
+  if(not resp || not msg || not userinfo)
     return PAM_CONV_ERR;
 
   /* allocate memory to store response */
@@ -72,7 +71,7 @@ int auth_pam_talker(int num_msg,
     return PAM_CONV_ERR;
 
   /* copy values */
-  for(x= 0; x < num_msg; x++)
+  for(int x= 0; x < num_msg; x++)
   {
     /* initialize to safe values */
     response[x].resp_retcode= 0;

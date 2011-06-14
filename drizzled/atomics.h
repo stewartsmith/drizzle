@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ATOMICS_H
-#define DRIZZLED_ATOMICS_H
+#pragma once
 
 # if defined(__SUNPRO_CC)
 #  include <drizzled/atomic/sun_studio.h>
@@ -181,4 +180,3 @@ __DRIZZLE_DECL_ATOMIC64(unsigned long long)
 
 }
 
-#endif /* DRIZZLED_ATOMICS_H */

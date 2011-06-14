@@ -3,10 +3,13 @@
 Contributing Documentation
 ==========================
 
-Our documentation is written using `Sphinx Documentation Generator <http://sphinx.pocoo.org/>`_ which uses the `reStructuredText <http://docutils.sf.net/rst.html>`_ format.
+Our documentation is written using
+`Sphinx Documentation Generator <http://sphinx.pocoo.org/>`_
+which uses the `reStructuredText <http://docutils.sf.net/rst.html>`_ format.
 
-All our documentation is stored in the main source reporistory in the docs/
-directory, and every merge into trunk triggers a rebuild of our `documentation site <http://docs.drizzle.org/>`_.
+All our documentation is stored in the main source reposatory in the docs/
+directory, and every merge into trunk triggers a rebuild of our
+`documentation site <http://docs.drizzle.org/>`_.
 
 Requirements
 ------------
@@ -15,7 +18,7 @@ We require a minimum of python-sphinx 0.6 to compile the documentation but not
 all of it will build correctly in that version.  For correct documentation
 version 1.0 is required.
 
-When building the documentation warnings become errors, so the documentation
+When building the documentation warnings are treated as errors, so the documentation
 needs to be warning free in 1.0.
 
 Documentation Files
@@ -41,7 +44,7 @@ Documentation Format
 --------------------
 
 The documentation is in the reStructured text format which is a wiki-like markup
-laungauge ideal for documentation.
+language ideal for documentation.
 
 Headings
 ^^^^^^^^

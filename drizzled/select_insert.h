@@ -18,16 +18,16 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_INSERT_H
-#define DRIZZLED_SELECT_INSERT_H
+#pragma once
 
+#include <drizzled/copy_info.h>
 #include <drizzled/select_result_interceptor.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class select_insert :public select_result_interceptor {
- public:
+class select_insert :public select_result_interceptor 
+{
+public:
   TableList *table_list;
   Table *table;
   List<Item> *fields;
@@ -53,4 +53,3 @@ class select_insert :public select_result_interceptor {
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_INSERT_H */

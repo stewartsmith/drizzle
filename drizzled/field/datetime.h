@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_DATETIME_H
-#define DRIZZLED_FIELD_DATETIME_H
+#pragma once
 
 #include <drizzled/field/str.h>
 
@@ -60,7 +59,7 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   uint32_t decimals() const { return DATETIME_DEC; }
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const charset_info_st * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t type);
@@ -84,4 +83,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_DATETIME_H */

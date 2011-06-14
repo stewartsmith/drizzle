@@ -1100,6 +1100,9 @@ trx_purge(
 	/*	que_thr_t*	thr2; */
 	ulint		old_pages_handled;
 
+        if (srv_fake_write)
+          return(0);
+
 	mutex_enter(&(purge_sys->mutex));
 
 	if (purge_sys->trx->n_active_thrs > 0) {

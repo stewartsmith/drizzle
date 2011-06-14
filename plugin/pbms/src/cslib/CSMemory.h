@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSMEMORY_H__
 #define __CSMEMORY_H__
 

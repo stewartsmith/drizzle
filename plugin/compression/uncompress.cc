@@ -22,7 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/session.h>
-
+#include <drizzled/system_variables.h>
 #include <plugin/compression/uncompress.h>
 
 #include <zlib.h>
@@ -65,8 +65,7 @@ String *Item_func_uncompress::val_str(String *str)
     goto err;
   }
 
-  if (buffer.realloc((uint32_t)new_size))
-    goto err;
+  buffer.realloc(new_size);
 
   if ((err= uncompress((Byte*)buffer.ptr(), &new_size,
                        ((const Bytef*)res->ptr())+4,res->length())) == Z_OK)

@@ -19,11 +19,13 @@
 
 #include "drizzledump_data.h"
 #include "client_priv.h"
+#include <drizzled/definitions.h>
 #include <drizzled/gettext.h>
 #include <string>
 #include <iostream>
 #include <boost/regex.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/lexical_cast.hpp>
 
 #define EX_DRIZZLEERR 2
 
@@ -107,16 +109,15 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj)
 
   os << "(";
   
-  std::vector<std::string>::iterator i;
-  std::vector<std::string> fields = obj.columns;
+  std::vector<DrizzleDumpIndex::columnData>::iterator i;
+  std::vector<DrizzleDumpIndex::columnData> fields = obj.columns;
   for (i= fields.begin(); i != fields.end(); ++i)
   {
     if (i != fields.begin())
       os << ",";
-    std::string field= *i;
-    os << "`" << field << "`";
-    if (obj.length > 0)
-      os << "(" << obj.length << ")";
+    os << "`" << (*i).first << "`";
+    if ((*i).second > 0)
+      os << "(" << (*i).second << ")";
   }
 
   os << ")";
@@ -284,8 +285,6 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj)
   /* Another option that does the opposite of its name, makes me sad :( */
   if (opt_autocommit)
     os << "START TRANSACTION;" << std::endl;
-
-  std::streampos out_position= os.tellp();
 
   while((row= drizzle_row_next(obj.result)))
   {
@@ -526,6 +525,11 @@ std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj)
   if (not obj.comment.empty())
   {
     os << " COMMENT='" << obj.comment << "'";
+  }
+
+  if (not obj.replicate)
+  {
+    os << " REPLICATE=FALSE";
   }
 
   os << ";" << std::endl << std::endl;

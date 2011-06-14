@@ -22,6 +22,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_DUMP_H__
 #define __SYSTAB_DUMP_H__
 

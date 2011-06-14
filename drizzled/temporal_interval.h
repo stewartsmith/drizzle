@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TEMPORAL_INTERVAL_H
-#define DRIZZLED_TEMPORAL_INTERVAL_H
+#pragma once
 
 /* @TODO Replace this include with some forward decls */
 #include <drizzled/item.h>
@@ -180,7 +179,7 @@ private:
    */
   bool getIntervalFromString(const char *str,
                              uint32_t length, 
-                             const CHARSET_INFO * const cs,
+                             const charset_info_st * const cs,
                              uint32_t count, 
                              uint64_t *values,
                              bool transform_msec);
@@ -198,4 +197,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_INTERVAL_H */

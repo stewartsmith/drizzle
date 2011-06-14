@@ -18,12 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COLLATION_DICTIONARY_DICTIONARY_H
-#define PLUGIN_COLLATION_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 
 #include <plugin/collation_dictionary/character_sets.h>
 #include <plugin/collation_dictionary/collations.h>
 
-#endif /* PLUGIN_COLLATION_DICTIONARY_DICTIONARY_H */

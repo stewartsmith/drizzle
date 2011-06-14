@@ -31,6 +31,7 @@
  *
  */
  
+#pragma once
 #ifndef __TRANSLOG_MS_H__
 #define __TRANSLOG_MS_H__
 #include <stddef.h>

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_VERTEX_H
-#define DRIZZLED_MODULE_VERTEX_H
+#pragma once
 
 #include <string>
 
@@ -40,12 +39,8 @@ namespace boost
   };
 }
 
-namespace drizzled
-{
-
-namespace module
-{
-class Module;
+namespace drizzled {
+namespace module {
 
 class Vertex
 {
@@ -104,4 +99,3 @@ typedef boost::graph_traits<VertexGraph>::vertex_iterator vertex_iter;
 } /* namespace module */
 } /* namespace vertex */
 
-#endif /* DRIZZLED_MODULE_VERTEX_H */

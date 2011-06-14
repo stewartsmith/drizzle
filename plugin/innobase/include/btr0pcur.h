@@ -23,6 +23,7 @@ The index tree persistent cursor
 Created 2/23/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef btr0pcur_h
 #define btr0pcur_h
 

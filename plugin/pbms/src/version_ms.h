@@ -19,6 +19,7 @@
  * Author: Barry Leslie
  *
  */
+#pragma once
 #ifndef __PBMS_VERSION_H__
 #define __PBMS_VERSION_H__
 

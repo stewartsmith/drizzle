@@ -20,8 +20,7 @@
 
 
 
-#ifndef DRIZZLED_UTIL_CONVERT_H
-#define DRIZZLED_UTIL_CONVERT_H
+#pragma once
 
 #include <boost/lexical_cast.hpp>
 #include <string>
@@ -56,4 +55,3 @@ DRIZZLED_API void drizzled_hex_to_string(char *to, const char *from,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_CONVERT_H */

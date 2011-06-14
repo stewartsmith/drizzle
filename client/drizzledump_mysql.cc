@@ -291,11 +291,11 @@ bool DrizzleDumpTableMySQL::populateIndexes()
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
-      index->length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
       lastKey= row[2];
       firstIndex= false;
     }
-    index->columns.push_back(row[4]);
+    uint32_t length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
+    index->columns.push_back(std::make_pair(row[4], length));
   }
   if (!firstIndex)
     indexes.push_back(index);

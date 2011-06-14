@@ -20,17 +20,14 @@
 
 
 
-#ifndef DRIZZLED_MEMORY_ROOT_H
-#define DRIZZLED_MEMORY_ROOT_H
+#pragma once
 
 #include <cstddef>
-
+#include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * @namespace drizzled::memory
@@ -40,15 +37,13 @@ namespace drizzled
  * comment on the namespace Doxygen won't extract any documentation for
  * namespace members.
  */
-namespace memory
-{
+namespace memory {
 
 static const int KEEP_PREALLOC= 1;
 /* move used to free list and reuse them */
 static const int MARK_BLOCKS_FREE= 2;
 
-namespace internal
-{
+namespace internal {
 
 class UsedMemory
 {			   /* struct for once_alloc (block) */
@@ -61,8 +56,6 @@ public:
 }
 
 static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
-
-
 
 class DRIZZLED_API Root
 {
@@ -150,4 +143,3 @@ public:
 } /* namespace memory */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MEMORY_ROOT_H */

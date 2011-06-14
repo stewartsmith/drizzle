@@ -48,6 +48,8 @@
 #include "drizzledump_mysql.h"
 #include "drizzledump_drizzle.h"
 
+#include "user_detect.h"
+
 using namespace std;
 using namespace drizzled;
 namespace po= boost::program_options;
@@ -247,6 +249,7 @@ static void write_header(char *db_name)
       cout << " (Drizzle server)";
     cout << endl << endl;
   }
+
 } /* write_header */
 
 
@@ -430,16 +433,24 @@ static int do_flush_tables_read_lock()
   return 0;
 }
 
-static int do_unlock_tables()
-{
-  db_connection->queryNoResult("UNLOCK TABLES");
-  return 0;
-}
-
 static int start_transaction()
 {
   db_connection->queryNoResult("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ");
   db_connection->queryNoResult("START TRANSACTION WITH CONSISTENT SNAPSHOT");
+
+  if (db_connection->getServerType() == ServerDetect::SERVER_DRIZZLE_FOUND)
+  {
+    drizzle_result_st *result;
+    drizzle_row_t row;
+    std::string query("SELECT COMMIT_ID, ID FROM DATA_DICTIONARY.SYS_REPLICATION_LOG WHERE COMMIT_ID=(SELECT MAX(COMMIT_ID) FROM DATA_DICTIONARY.SYS_REPLICATION_LOG)");
+    result= db_connection->query(query);
+    if ((row= drizzle_row_next(result)))
+    {
+      cout << "-- SYS_REPLICATION_LOG: COMMIT_ID = " << row[0] << ", ID = " << row[1] << endl << endl;
+    }
+    db_connection->freeResult(result);
+  }
+
   return 0;
 }
 
@@ -524,6 +535,9 @@ try
   _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -532,7 +546,7 @@ try
   _("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
   _("Port number to use for connection."))
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((shell_user ? shell_user : "")),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql or drizzle)."))
@@ -628,12 +642,12 @@ try
 
   /* Inverted Booleans */
 
-  opt_drop= (vm.count("skip-drop-table")) ? false : true;
-  opt_comments= (vm.count("skip-comments")) ? false : true;
-  extended_insert= (vm.count("skip-extended-insert")) ? false : true;
-  opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
-  opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
-  opt_quoted= (vm.count("skip-quote-names")) ? false : true;
+  opt_drop= not vm.count("skip-drop-table");
+  opt_comments= not vm.count("skip-comments");
+  extended_insert= not vm.count("skip-extended-insert");
+  opt_dump_date= not vm.count("skip-dump-date");
+  opt_disable_keys= not vm.count("skip-disable-keys");
+  opt_quoted= not vm.count("skip-quote-names");
 
   if (vm.count("protocol"))
   {
@@ -664,7 +678,7 @@ try
     }
   }
 
-  if(vm.count("password"))
+  if (vm.count("password"))
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -769,22 +783,20 @@ try
     goto err;
   if (opt_lock_all_tables)
     db_connection->queryNoResult("FLUSH LOGS");
-  if (opt_single_transaction && do_unlock_tables()) /* unlock but no commit! */
-    goto err;
 
   if (opt_alldbs)
   {
     dump_all_databases();
     dump_all_tables();
   }
-  if (vm.count("database-used") && vm.count("Table-used") && ! opt_databases)
+  if (vm.count("database-used") && vm.count("Table-used") && not opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
     dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("Table-used") and opt_databases)
+  if (vm.count("Table-used") && opt_databases)
   {
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
@@ -800,7 +812,7 @@ try
     dump_all_tables();
   }
 
-  if (vm.count("database-used") && ! vm.count("Table-used"))
+  if (vm.count("database-used") && not vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SARGABLE_PARAM_H
-#define DRIZZLED_OPTIMIZER_SARGABLE_PARAM_H
+#pragma once
 
 namespace drizzled
 {
@@ -113,4 +112,3 @@ private:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SARGABLE_PARAM_H */

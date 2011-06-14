@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSSTRING_H__
 #define __CSSTRING_H__
 #include <string.h>

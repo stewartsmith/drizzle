@@ -27,6 +27,11 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/copy_info.h>
+#include <drizzled/file_exchange.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session/transactions.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -51,15 +56,15 @@ class READ_INFO {
   int	*stack,*stack_pos;
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
-  internal::IO_CACHE cache;
+  internal::io_cache_st cache;
 
 public:
   bool error,line_cuted,found_null,enclosed;
   unsigned char	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
-  const CHARSET_INFO *read_charset;
+  const charset_info_st *read_charset;
 
-  READ_INFO(int cursor, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(int cursor, size_t tot_length, const charset_info_st * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -139,12 +144,11 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   const char *tdb= (schema and not schema->empty()) ? schema->c_str() : table_list->getSchemaName(); // Result should never be null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
@@ -156,10 +160,10 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->openTablesLock(table_list))
     return(true);
 
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
+                                    &session->lex().select_lex.top_join_list,
                                     table_list,
-                                    &session->getLex()->select_lex.leaf_tables, true))
+                                    &session->lex().select_lex.leaf_tables, true))
      return(-1);
 
   /*
@@ -394,8 +398,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
-  if (error)
+  if (error) 
   {
     error= -1;				// Error on read
     goto err;
@@ -434,10 +437,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
   List<Item>::iterator it(fields_vars.begin());
   Item_field *sql_field;
   Table *table= table_list->table;
-  uint64_t id;
   bool err;
-
-  id= 0;
 
   while (!read_info.read_fixed_length())
   {
@@ -556,11 +556,9 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   Item *item;
   Table *table= table_list->table;
   uint32_t enclosed_length;
-  uint64_t id;
   bool err;
 
   enclosed_length=enclosed.length();
-  id= 0;
 
   for (;;it= fields_vars.begin())
   {
@@ -758,7 +756,7 @@ READ_INFO::unescape(char chr)
 
 
 READ_INFO::READ_INFO(int file_par, size_t tot_length,
-                     const CHARSET_INFO * const cs,
+                     const charset_info_st * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
   :cursor(file_par),escape_char(escape)

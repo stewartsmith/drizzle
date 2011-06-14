@@ -1,0 +1,10 @@
+create table t1 (a int primary key auto_increment, b varchar(100));
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post("http://localhost:$JSON_SERVER_PORT/0.1/sql", 'select * from t1;');
+insert into t1 (b) values ("from MySQL protocol");
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post('http://localhost:$JSON_SERVER_PORT/0.1/sql', 'select * from t1;');
+--replace_result $JSON_SERVER_PORT PORT
+--eval select http_post('http://localhost:$JSON_SERVER_PORT/0.1/sql', 'insert into t1 (b) values (\'from http\');');
+SELECT * from t1;
+drop table t1;

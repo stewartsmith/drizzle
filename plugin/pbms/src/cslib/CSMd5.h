@@ -69,6 +69,7 @@
  *	I have put a C++ wrapper around the data and functions to create an Md5 class.
  *
  */
+#pragma once
 #ifndef md5_INCLUDED
 #define md5_INCLUDED
 

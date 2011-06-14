@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __REPOSITORY_MS_H__
 #define __REPOSITORY_MS_H__
 #include <stddef.h>

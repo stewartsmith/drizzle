@@ -21,8 +21,9 @@
 #include <config.h>
 
 #include <plugin/table_cache_dictionary/dictionary.h>
+#include <drizzled/table.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/my_hash.h>
 
 using namespace drizzled;
 using namespace std;
@@ -44,7 +45,7 @@ table_cache_dictionary::TableCache::TableCache() :
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();

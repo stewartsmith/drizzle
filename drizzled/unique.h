@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_UNIQUE_H
-#define DRIZZLED_UNIQUE_H
+#pragma once
 
 #include <drizzled/tree.h>
 /*
@@ -35,7 +34,7 @@ namespace drizzled
 
 namespace internal
 {
-typedef struct st_io_cache IO_CACHE;
+struct st_io_cache;
 }
 
 class Unique : public memory::SqlAlloc
@@ -76,4 +75,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UNIQUE_H */

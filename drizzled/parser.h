@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_PARSER_H
-#define DRIZZLED_PARSER_H
+#pragma once
 
 #include <drizzled/charset.h>
 #include <drizzled/error.h>
@@ -48,7 +47,6 @@
 #include <drizzled/function/time/timestamp_diff.h>
 #include <drizzled/function/time/typecast.h>
 #include <drizzled/function/time/year.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/boolean.h>
 #include <drizzled/item/cmpfunc.h>
@@ -68,7 +66,6 @@
 #include <drizzled/select_dump.h>
 #include <drizzled/select_dumpvar.h>
 #include <drizzled/select_export.h>
-#include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/statement.h>
@@ -113,19 +110,6 @@
 #include <drizzled/statement/update.h>
 
 namespace drizzled {
-
-class Session;
-class Table_ident;
-class Item;
-class Item_num;
-
-namespace item
-{
-class Boolean;
-class True;
-class False;
-}
-
 namespace parser {
 
 Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal, Item *expr);
@@ -143,6 +127,8 @@ void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value);
 void buildEngineOption(LEX *lex, const char *key, uint64_t value);
 void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value);
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
+void buildSchemaDefiner(LEX *lex, const LEX_STRING &value);
+void buildSchemaDefiner(LEX *lex, const identifier::User &user);
 bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
 
 Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
@@ -152,7 +138,7 @@ void buildCreateFieldIdent(LEX *lex);
 
 void storeAlterColumnPosition(LEX *lex, const char *position);
 
-bool buildCollation(LEX *lex, const CHARSET_INFO *arg);
+bool buildCollation(LEX *lex, const charset_info_st *arg);
 void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg);
 void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table);
 
@@ -176,4 +162,3 @@ void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= fal
 } // namespace parser
 } // namespace drizzled
 
-#endif /* DRIZZLED_PARSER_H */

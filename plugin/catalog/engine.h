@@ -18,45 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_ENGINE_H
-#define PLUGIN_CATALOG_ENGINE_H
+#pragma once
 
-#include <boost/make_shared.hpp>
 #include <drizzled/catalog/engine.h>
+#include <drizzled/catalog/local.h>
 
 namespace plugin {
 namespace catalog {
 
 class Engine : public drizzled::catalog::Engine
 {
-
 public:
-  Engine() :
-    drizzled::catalog::Engine()
-  {}
-
   bool create(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &);
   bool drop(const drizzled::identifier::Catalog &identifier);
 
   bool exist(const drizzled::identifier::Catalog &identifier)
   {
-    if (drizzled::catalog::local_identifier() == identifier)
-      return true;
-
-    return false;
+    return drizzled::catalog::local_identifier() == identifier;
   }
 
-  void getIdentifiers(drizzled::identifier::Catalog::vector &identifiers)
+  void getIdentifiers(drizzled::identifier::catalog::vector &identifiers)
   {
     identifiers.push_back(drizzled::catalog::local_identifier());
   }
 
-  drizzled::message::catalog::shared_ptr getMessage(drizzled::identifier::Catalog::const_reference identifier);
+  drizzled::message::catalog::shared_ptr getMessage(const drizzled::identifier::Catalog& identifier);
 
   void getMessages(drizzled::message::catalog::vector &messages);
 
 private:
-  drizzled::message::catalog::shared_ptr readFile(drizzled::identifier::Catalog::const_reference identifier);
+  drizzled::message::catalog::shared_ptr readFile(const drizzled::identifier::Catalog& identifier);
   bool writeFile(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message);
   void prime(drizzled::message::catalog::vector &messages);
 
@@ -65,4 +56,3 @@ private:
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_ENGINE_H */

@@ -18,16 +18,16 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_SEND_H
-#define DRIZZLED_SELECT_SEND_H
+#pragma once
 
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_result.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class select_send :public select_result {
   /**
@@ -48,10 +48,10 @@ public:
     plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
-    if (session->lock)
+    if (session->open_tables.lock)
     {
-      session->unlockTables(session->lock);
-      session->lock= 0;
+      session->unlockTables(session->open_tables.lock);
+      session->open_tables.lock= 0;
     }
     session->my_eof();
     is_result_set_started= 0;
@@ -104,14 +104,9 @@ public:
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    Item *item;
-    while ((item=li++))
+    while (Item* item= li++)
     {
-      if (item->send(session->getClient(), &buffer))
-      {
-        my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-        break;
-      }
+      item->send(session->getClient(), &buffer);
     }
     /* Insert this record to the Resultset into the cache */
     if (session->query_cache_key != "" && session->getResultsetMessage() != NULL)
@@ -126,4 +121,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_SEND_H */

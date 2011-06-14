@@ -21,18 +21,12 @@
  * @file Simple named savepoint class.
  */
 
-#ifndef DRIZZLED_NAMED_SAVEPOINT_H
-#define DRIZZLED_NAMED_SAVEPOINT_H
+#pragma once
 
-#include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
+#include <drizzled/transaction_context.h>
+#include <string>
 
-namespace drizzled
-{
-
-namespace message
-{
-class Transaction;
-}
+namespace drizzled {
 
 /**
  * This is a class which stores information about
@@ -102,4 +96,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_NAMED_SAVEPOINT_H */

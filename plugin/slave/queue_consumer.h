@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_QUEUE_CONSUMER_H
-#define PLUGIN_SLAVE_QUEUE_CONSUMER_H
+#pragma once
 
 #include <plugin/slave/queue_thread.h>
 #include <plugin/slave/sql_executor.h>
@@ -78,6 +77,8 @@ private:
   bool getMessage(drizzled::message::Transaction &transaction,
                   std::string &commit_id,
                   uint64_t trx_id,
+                  std::string &originating_server_uuid,
+                  uint64_t &originating_commit_id,
                   uint32_t segment_id);
 
   /**
@@ -99,12 +100,18 @@ private:
    *
    * @param sql Batch of SQL statements to execute.
    * @param commit_id Commit ID value to store in state table.
+   * @param originating_server_uuid Server ID of the master where
+   *   this SQL was originally applied.
+   * @param originating_commit_id Commit ID of the master where
+   *   this SQL was originally applied.
    *
    * @retval true Success
    * @retval false Failure
    */
   bool executeSQLWithCommitId(std::vector<std::string> &sql,
-                              const std::string &commit_id);
+                              const std::string &commit_id,
+                              const std::string &originating_server_uuid,
+                              uint64_t originating_commit_id);
   
   /**
    * Remove messages for a given transaction from the queue.
@@ -127,4 +134,3 @@ private:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_QUEUE_CONSUMER_H */

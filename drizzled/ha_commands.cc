@@ -24,7 +24,6 @@
 */
 
 #include <config.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/probes.h>

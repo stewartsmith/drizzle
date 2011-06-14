@@ -68,6 +68,9 @@
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
+
+#include <drizzled/definitions.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/type/time.h>
 #include <drizzled/charset.h>
 #include <drizzled/typelib.h>
@@ -174,7 +177,7 @@ struct st_test_file
 static boost::array<st_test_file, 16> file_stack;
 static st_test_file* cur_file;
 
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
+static const charset_info_st *charset_info= &my_charset_utf8_general_ci; /* Default charset */
 
 /*
   Timer related variables
@@ -1403,16 +1406,11 @@ static int compare_files2(int fd, const char* filename2)
 
 static int compare_files(const char* filename1, const char* filename2)
 {
-  int fd;
-  int error;
-
-  if ((fd= internal::my_open(filename1, O_RDONLY, MYF(0))) < 0)
+  int fd= internal::my_open(filename1, O_RDONLY, MYF(0));
+  if (fd < 0)
     die("Failed to open first file: '%s'", filename1);
-
-  error= compare_files2(fd, filename2);
-
+  int error= compare_files2(fd, filename2);
   internal::my_close(fd, MYF(0));
-
   return error;
 }
 
@@ -3820,7 +3818,6 @@ static void do_connect(struct st_command *command)
 {
   uint32_t con_port= opt_port;
   const char *con_options;
-  bool con_ssl= 0;
   struct st_connection* con_slot;
 
   string ds_connection_name;
@@ -3884,11 +3881,8 @@ static void do_connect(struct st_command *command)
     end= con_options;
     while (*end && !my_isspace(charset_info, *end))
       end++;
-    if (!strncmp(con_options, "SSL", 3))
-      con_ssl= 1;
-    else
-      die("Illegal option to connect: %.*s",
-          (int) (end - con_options), con_options);
+    die("Illegal option to connect: %.*s",
+        (int) (end - con_options), con_options);
     /* Process next option */
     con_options= end;
   }
@@ -4132,7 +4126,7 @@ static bool end_of_query(int c)
 */
 
 
-static int my_strnncoll_simple(const CHARSET_INFO * const  cs, const unsigned char *s, size_t slen,
+static int my_strnncoll_simple(const charset_info_st * const  cs, const unsigned char *s, size_t slen,
                                const unsigned char *t, size_t tlen,
                                bool t_is_prefix)
 {
@@ -4410,7 +4404,7 @@ static void scan_command_for_warnings(struct st_command *command)
         end++;
       save= *end;
       *end= 0;
-      type= command_typelib.find_type(start, 1+2);
+      type= command_typelib.find_type(start, TYPELIB::e_default);
       if (type)
         warning_msg("Embedded drizzletest command '--%s' detected in "
                     "query '%s' was this intentional? ",
@@ -5268,7 +5262,7 @@ static void get_command_type(struct st_command* command)
 
   save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= command_typelib.find_type(command->query, 1+2);
+  type= command_typelib.find_type(command->query, TYPELIB::e_default);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5312,7 +5306,7 @@ static void get_command_type(struct st_command* command)
         */
         save= command->query[command->first_word_len-1];
         command->query[command->first_word_len-1]= 0;
-        if (command_typelib.find_type(command->query, 1+2) > 0)
+        if (command_typelib.find_type(command->query, TYPELIB::e_default) > 0)
           die("Extra delimiter \";\" found");
         command->query[command->first_word_len-1]= save;
 

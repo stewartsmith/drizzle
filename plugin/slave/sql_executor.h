@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_SQL_EXECUTOR_H
-#define PLUGIN_SLAVE_SQL_EXECUTOR_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -70,4 +69,3 @@ private:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_SQL_EXECUTOR_H */

@@ -42,10 +42,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
@@ -61,20 +59,11 @@ boost::mutex THR_LOCK_threads;
     1  error (Couldn't create THR_KEY_mysys)
 */
 
-bool my_thread_global_init(void)
+void my_thread_global_init()
 {
-  if (my_thread_init())
-  {
-    my_thread_global_end();			/* Clean up */
-    return 1;
-  }
-  return 0;
+  my_thread_init();
 }
 
-
-void my_thread_global_end(void)
-{
-}
 
 static uint64_t thread_id= 0;
 
@@ -89,43 +78,18 @@ static uint64_t thread_id= 0;
     1  Fatal error; mysys/dbug functions can't be used
 */
 
-bool my_thread_init(void)
+void my_thread_init()
 {
   // We should mever see my_thread_init()  called twice
   if (THR_KEY_mysys.get())
-    return 0;
-
-  st_my_thread_var *tmp= new st_my_thread_var;
-  if (tmp == NULL)
   {
-    return true;
+    abort();
   }
-  THR_KEY_mysys.reset(tmp);
-
   boost::mutex::scoped_lock scopedLock(THR_LOCK_threads);
-  tmp->id= ++thread_id;
-
-  return false;
+  THR_KEY_mysys.reset(new st_my_thread_var(++thread_id));
 }
 
-
-/*
-  Deallocate memory used by the thread for book-keeping
-
-  SYNOPSIS
-    my_thread_end()
-
-  NOTE
-    This may be called multiple times for a thread.
-    This happens for example when one calls 'server_init()'
-    server_end() and then ends with a end().
-*/
-
-void my_thread_end(void)
-{
-}
-
-struct st_my_thread_var *_my_thread_var(void)
+st_my_thread_var* _my_thread_var()
 {
   return THR_KEY_mysys.get();
 }

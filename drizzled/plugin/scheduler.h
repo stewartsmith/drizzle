@@ -19,24 +19,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_SCHEDULER_H
-#define DRIZZLED_PLUGIN_SCHEDULER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
-
-#include <string>
-#include <vector>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class should be used by scheduler plugins to implement custom session
@@ -79,4 +69,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

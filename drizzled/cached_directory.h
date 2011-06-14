@@ -25,10 +25,7 @@
  *   Defines the interface to the CachedDirectory class.
  */
 
-#ifndef DRIZZLED_CACHED_DIRECTORY_H
-#define DRIZZLED_CACHED_DIRECTORY_H
-
-#include <dirent.h>
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -37,8 +34,7 @@
 #include <cstdlib>
 #include <cerrno>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * A utility class to handle processing the entries/files within a directory.
@@ -49,7 +45,8 @@ namespace drizzled
 class CachedDirectory
 {
 public:
-  enum FILTER {
+  enum FILTER 
+  {
     NONE,
     DIRECTORY,
     FILE,
@@ -86,7 +83,7 @@ public:
    * @param[in] File extensions to allow
    */
   CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
-  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter, bool use_full_path= false);
+  CachedDirectory(const std::string& in_path, CachedDirectory::FILTER filter, bool use_full_path= false);
 
   /**
    * Destructor.  Cleans up any resources we've taken 
@@ -124,7 +121,7 @@ public:
    * @returns
    *   A vector of strings containing the directory entry names.
    */
-  inline const Entries &getEntries()
+  const Entries &getEntries() const
   {
     return entries;
   }
@@ -154,26 +151,10 @@ private:
    * @retval false Failure
    */
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
-  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, enum CachedDirectory::FILTER filter);
+  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, CachedDirectory::FILTER filter);
 
-  friend std::ostream& operator<<(std::ostream& output, CachedDirectory &directory)
-  {
-    output << "CachedDirectory:(Path: " << directory.getPath() << ")\n";
-
-    CachedDirectory::Entries files= directory.getEntries();
-
-    for (CachedDirectory::Entries::iterator fileIter= files.begin();
-         fileIter != files.end(); fileIter++)
-    {
-      CachedDirectory::Entry *entry= *fileIter;
-      output << "\t(" << entry->filename << ")\n";
-    }
-
-    return output;  // for multiple << operators.
-  }
-
+  friend std::ostream& operator<<(std::ostream&, const CachedDirectory&);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CACHED_DIRECTORY_H */

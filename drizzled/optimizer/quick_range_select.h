@@ -17,21 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_QUICK_RANGE_SELECT_H
-#define DRIZZLED_OPTIMIZER_QUICK_RANGE_SELECT_H
+#pragma once
 
+#include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/range.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <vector>
 
-namespace drizzled
-{
-
-class Cursor;
-
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * Quick select that does a range scan on a single key. 
@@ -309,4 +304,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_QUICK_RANGE_SELECT_H */

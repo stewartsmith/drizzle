@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INNOBASE_HANDLER_STATUS_FUNCTION_H
-#define PLUGIN_INNOBASE_HANDLER_STATUS_FUNCTION_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 
@@ -49,4 +48,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_INNOBASE_HANDLER_STATUS_FUNCTION_H */

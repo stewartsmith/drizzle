@@ -25,6 +25,7 @@
 
 #include <drizzled/session.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/sql_lex.h>
 
 #include "cslib/CSConfig.h"
 #include "cslib/CSGlobal.h"

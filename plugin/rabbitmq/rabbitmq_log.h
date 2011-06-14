@@ -23,8 +23,7 @@
  */
 
 
-#ifndef PLUGIN_RABBITMQ_RABBITMQ_LOG_H
-#define PLUGIN_RABBITMQ_RABBITMQ_LOG_H
+#pragma once
 
 #include <drizzled/replication_services.h>
 #include <drizzled/plugin/transaction_applier.h>
@@ -62,8 +61,6 @@ public:
    * @param[in] mqHandler name of the plugin, typically rabbitmq_log.
    */
   RabbitMQLog(const std::string &name,
-              const std::string &exchange,
-              const std::string &routingkey,
               RabbitMQHandler* mqHandler);
   ~RabbitMQLog();
 
@@ -83,4 +80,3 @@ public:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_RABBITMQ_RABBITMQ_LOG_H */

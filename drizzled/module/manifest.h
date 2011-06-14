@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_MANIFEST_H
-#define DRIZZLED_MODULE_MANIFEST_H
+#pragma once
 
 /**
  * @file Defines a Plugin Manifest
@@ -75,4 +74,3 @@ struct Manifest
 } /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MODULE_MANIFEST_H */

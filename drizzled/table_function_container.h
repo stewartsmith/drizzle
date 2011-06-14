@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_FUNCTION_CONTAINER_H
-#define DRIZZLED_TABLE_FUNCTION_CONTAINER_H
+#pragma once
 
 #include <set>
 #include <boost/unordered_map.hpp>
@@ -49,4 +48,3 @@ public:
 
 } /* namepsace drizzled */
 
-#endif /* DRIZZLED_TABLE_FUNCTION_CONTAINER_H */

@@ -47,7 +47,7 @@ void sql_perror(const char *message)
   errmsg_ptr= errmsg;
 #endif
 
-  errmsg_printf(error::ERROR, "%s: %s\n", message, errmsg);
+  errmsg_printf(error::ERROR, "%s: %s\n", message, errmsg_ptr);
 
 }
 
@@ -82,7 +82,7 @@ void sql_perror(std::string message, const std::string &extra)
     message+= "'";
   }
 
-  errmsg_printf(error::ERROR, "%s: %s\n", message.c_str(), errmsg);
+  errmsg_printf(error::ERROR, "%s: %s\n", message.c_str(), errmsg_ptr);
 }
 
 bool errmsg_printf (error::level_t priority, char const *format, ...)

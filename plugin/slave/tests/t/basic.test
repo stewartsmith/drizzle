@@ -1,0 +1,29 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+--echo Populating master server
+
+CREATE TABLE t1 (a int not null auto_increment, primary key(a));
+INSERT INTO t1 VALUES (),(),();
+SELECT * FROM t1;
+# We wait a bit for the slave
+# Might need a proper include file / test later
+--sleep 3 
+--echo Connecting to slave...
+connect (slave_con,127.0.0.1,root,,test, $BOT0_S1);
+echo Using connection slave_con...;
+connection slave_con;
+--sleep 3
+--echo Checking slave contents...
+--source include/wait_for_slave_plugin_to_sync.inc
+
+SHOW CREATE TABLE t1;
+SELECT * FROM t1;
+
+--echo Switching to default connection
+connection default;
+disconnect slave_con;
+
+# cleanup
+DROP TABLE t1;

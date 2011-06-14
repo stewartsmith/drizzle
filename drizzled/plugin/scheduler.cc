@@ -18,92 +18,55 @@
  */
 
 #include <config.h>
-
-#include <algorithm>
-
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
-#include <drizzled/plugin/scheduler.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-extern size_t my_thread_stack_size;
+typedef std::vector<plugin::Scheduler*> schedulers_t;
 
-std::vector<plugin::Scheduler *> all_schedulers;
-
-/* Globals (TBK) */
-static plugin::Scheduler *scheduler= NULL;
-
-
-class FindSchedulerByName : public std::unary_function<plugin::Scheduler *, bool>
-{
-  const std::string *name;
-public:
-  FindSchedulerByName(const std::string *name_arg)
-    : name(name_arg) {}
-  result_type operator() (argument_type sched)
-  {
-    return (bool)((name->compare(sched->getName()) == 0));
-  }
-};
-
+static schedulers_t g_schedulers;
+static plugin::Scheduler* g_scheduler= NULL;
 
 bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 {
-  std::vector<plugin::Scheduler *>::iterator iter=
-    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
-            FindSchedulerByName(&sched->getName()));
-
-  if (iter != all_schedulers.end())
+  BOOST_FOREACH(schedulers_t::reference it, g_schedulers)
   {
-    errmsg_printf(error::ERROR,
-                  _("Attempted to register a scheduler %s, but a scheduler "
-                    "has already been registered with that name.\n"),
-                    sched->getName().c_str());
+    if (it->getName() != sched->getName())
+      continue;
+    errmsg_printf(error::ERROR, _("Attempted to register a scheduler %s, but a scheduler has already been registered with that name.\n"), sched->getName().c_str());
     return true;
   }
-
   sched->deactivate();
-  all_schedulers.push_back(sched);
-
+  g_schedulers.push_back(sched);
   return false;
 }
 
-
 void plugin::Scheduler::removePlugin(plugin::Scheduler *sched)
 {
-  all_schedulers.erase(std::find(all_schedulers.begin(),
-                            all_schedulers.end(),
-                            sched));
+  g_schedulers.erase(std::find(g_schedulers.begin(), g_schedulers.end(), sched));
 }
-
 
 bool plugin::Scheduler::setPlugin(const std::string& name)
 {
-  std::vector<plugin::Scheduler *>::iterator iter=
-    std::find_if(all_schedulers.begin(), all_schedulers.end(), 
-            FindSchedulerByName(&name));
-
-  if (iter != all_schedulers.end())
+  BOOST_FOREACH(schedulers_t::reference it, g_schedulers)
   {
-    if (scheduler != NULL)
-      scheduler->deactivate();
-    scheduler= *iter;
-    scheduler->activate();
+    if (it->getName() != name)
+      continue;
+    if (g_scheduler)
+      g_scheduler->deactivate();
+    g_scheduler= it;
+    g_scheduler->activate();
     return false;
   }
-
-  errmsg_printf(error::WARN,
-                _("Attempted to configure %s as the scheduler, which did "
-                  "not exist.\n"), name.c_str());
+  errmsg_printf(error::WARN, _("Attempted to configure %s as the scheduler, which did not exist.\n"), name.c_str());
   return true;
 }
 
-
 plugin::Scheduler *plugin::Scheduler::getScheduler()
 {
-  return scheduler;
+  return g_scheduler;
 }
 
 } /* namespace drizzled */

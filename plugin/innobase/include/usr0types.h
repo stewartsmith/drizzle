@@ -23,6 +23,7 @@ Users and sessions global types
 Created 6/25/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef usr0types_h
 #define usr0types_h
 

@@ -16,6 +16,7 @@
 /* Scan through all rows */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
 
 /*
 	   Returns one of following values:

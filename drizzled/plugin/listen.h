@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LISTEN_H
-#define DRIZZLED_PLUGIN_LISTEN_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/atomics.h>
@@ -26,13 +25,9 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
-class Client;
-class Listen;
 typedef std::vector<Listen *> ListenVector;
 typedef std::pair<std::string*, drizzled::atomic<uint64_t>*> ListenCounter;
 /**
@@ -120,4 +115,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_LISTEN_H */

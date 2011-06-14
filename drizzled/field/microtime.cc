@@ -22,24 +22,18 @@
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/microtime.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/current_session.h>
-
-#include <math.h>
-
+#include <drizzled/temporal.h>
+#include <cmath>
 #include <sstream>
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <drizzled/temporal.h>
 
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 static boost::posix_time::ptime _epoch(boost::gregorian::date(1970, 1, 1));
 
@@ -67,7 +61,7 @@ Microtime::Microtime(bool maybe_null_arg,
 
 int Microtime::store(const char *from,
                      uint32_t len,
-                     const CHARSET_INFO * const )
+                     const charset_info_st * const )
 {
   MicroTimestamp temporal;
 
@@ -287,7 +281,7 @@ void Microtime::set_time()
   Session *session= getTable() ? getTable()->in_use : current_session;
 
   type::Time::usec_t fractional_seconds= 0;
-  uint64_t epoch_seconds= session->getCurrentTimestampEpoch(fractional_seconds);
+  uint64_t epoch_seconds= session->times.getCurrentTimestampEpoch(fractional_seconds);
 
   set_notnull();
   pack_num(epoch_seconds);

@@ -20,6 +20,10 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session/table_messages.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -27,7 +31,6 @@
 #include "ha_heap.h"
 
 #include <string>
-
 
 using namespace drizzled;
 using namespace std;
@@ -72,7 +75,7 @@ public:
   int doCreateTable(Session &session,
                     Table &table_arg,
                     const identifier::Table &identifier,
-                    message::Table &create_proto);
+                    const message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
      for MEMORY.
@@ -82,7 +85,7 @@ public:
   int heap_create_table(Session *session, const char *table_name,
                         Table *table_arg,
                         bool internal_table,
-                        message::Table &create_proto,
+                        const message::Table &create_proto,
                         HP_SHARE **internal_share);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
@@ -104,12 +107,12 @@ public:
   bool doDoesTableExist(Session& session, const identifier::Table &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
                                        const identifier::Schema&,
-                                       identifier::Table::vector&)
+                                       identifier::table::vector&)
 {
 }
 
@@ -654,7 +657,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
                               const identifier::Table &identifier,
-                              message::Table& create_proto)
+                              const message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
@@ -677,7 +680,7 @@ int HeapEngine::doCreateTable(Session &session,
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   Table *table_arg,
                                   bool internal_table, 
-                                  message::Table &create_proto,
+                                  const message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0;

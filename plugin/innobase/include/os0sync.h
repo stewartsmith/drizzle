@@ -31,6 +31,7 @@ synchronization primitives.
 Created 9/6/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef os0sync_h
 #define os0sync_h
 

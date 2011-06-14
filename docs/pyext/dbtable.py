@@ -14,6 +14,11 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 def setup(app):
-    app.add_description_unit('dbtable', 'dbtable',
-                             objname='database table',
-                             indextemplate='pair: %s; database table')
+    try:
+        app.add_description_unit('dbtable', 'dbtable',
+                                 objname='database table',
+                                 indextemplate='pair: %s; database table')
+    except TypeError:
+        # We have to trap for this because of Sphinx 0.6.2
+        pass
+

@@ -1,3 +1,4 @@
+#pragma once
  #ifndef __CSENCODE_H__
 #define __CSENCODE_H__
 /* Copyright (C) 2008 PrimeBase Technologies GmbH, Germany

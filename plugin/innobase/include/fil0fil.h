@@ -23,6 +23,7 @@ The low-level file system
 Created 10/25/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef fil0fil_h
 #define fil0fil_h
 
@@ -640,7 +641,15 @@ fil_io(
 				appropriately aligned */
 	void*	message);	/*!< in: message for aio handler if non-sync
 				aio used, else ignored */
-/**********************************************************************//**
+/********************************************************************//**
+Confirm whether the parameters are valid or not */
+UNIV_INTERN
+bool
+fil_is_exist(
+/*=========*/
+	ulint	space_id,	/*!< in: space id */
+	ulint	block_offset);	/*!< in: offset in number of blocks */
+				/**********************************************************************//**
 Waits for an aio operation to complete. This function is used to write the
 handler for completed requests. The aio array of pending requests is divided
 into segments (see os0file.c for more info). The thread specifies which

@@ -17,6 +17,8 @@
 
 #include <string.h>
 #include <cassert>
+#include <drizzled/error_t.h>
+
 
 using namespace drizzled;
 

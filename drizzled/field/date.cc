@@ -28,6 +28,7 @@
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
 #include <drizzled/current_session.h>
+#include <drizzled/system_variables.h>
 
 #include <math.h>
 
@@ -63,7 +64,7 @@ namespace drizzled
 */
 int Field_date::store(const char *from,
                          uint32_t len,
-                         const CHARSET_INFO * const )
+                         const charset_info_st * const )
 {
   /* 
    * Try to create a DateTime from the supplied string.  Throw an error

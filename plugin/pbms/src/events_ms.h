@@ -19,8 +19,7 @@
  * 2010-06-01
  */
 
-#ifndef PLUGIN_PBMS_PEVENTS_MS_H
-#define PLUGIN_PBMS_PEVENTS_MS_H
+#pragma once
 
 #include <drizzled/plugin/event_observer.h>
 #include "parameters_ms.h"
@@ -51,4 +50,3 @@ public:
 };
 } /* namespace plugin */
 } /* namespace drizzled */
-#endif /* PLUGIN_PBMS_PEVENTS_MS_H */

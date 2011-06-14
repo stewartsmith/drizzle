@@ -46,26 +46,26 @@ static Views *views;
 
 static int init(drizzled::module::Context &context)
 {
-  check_constraints = new(std::nothrow)CheckConstraints;
-  column_domain_usage = new(std::nothrow)ColumnDomainUsage;
-  column_privileges = new(std::nothrow)ColumnPrivileges;
-  columns = new(std::nothrow)Columns;
-  constraint_column_usage = new(std::nothrow)ConstraintColumnUsage;
-  constraint_table_usage = new(std::nothrow)ConstraintTableUsage;
-  domain_constraints = new(std::nothrow)DomainConstraints;
-  domains = new(std::nothrow)Domains;
-  key_column_usage = new(std::nothrow)KeyColumnUsage;
-  parameters = new(std::nothrow)Parameters;
-  referential_constraints = new(std::nothrow)ReferentialConstraints;
-  routines = new(std::nothrow)Routines;
-  routine_columns = new(std::nothrow)RoutineColumns;
-  schemata = new(std::nothrow)Schemata;
-  table_constraints = new(std::nothrow)TableConstraints;
-  table_privileges = new(std::nothrow)TablePriviledges;
-  tables = new(std::nothrow)Tables;
-  view_column_usage = new(std::nothrow)ViewColumnUsage;
-  view_table_usage = new(std::nothrow)ViewTableUsage;
-  views = new(std::nothrow)Views;
+  check_constraints = new CheckConstraints;
+  column_domain_usage = new ColumnDomainUsage;
+  column_privileges = new ColumnPrivileges;
+  columns = new Columns;
+  constraint_column_usage = new ConstraintColumnUsage;
+  constraint_table_usage = new ConstraintTableUsage;
+  domain_constraints = new DomainConstraints;
+  domains = new Domains;
+  key_column_usage = new KeyColumnUsage;
+  parameters = new Parameters;
+  referential_constraints = new ReferentialConstraints;
+  routines = new Routines;
+  routine_columns = new RoutineColumns;
+  schemata = new Schemata;
+  table_constraints = new TableConstraints;
+  table_privileges = new TablePriviledges;
+  tables = new Tables;
+  view_column_usage = new ViewColumnUsage;
+  view_table_usage = new ViewTableUsage;
+  views = new Views;
 
   context.add(check_constraints);
   context.add(column_domain_usage);

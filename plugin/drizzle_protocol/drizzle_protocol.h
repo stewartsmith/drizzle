@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H
-#define PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -55,12 +54,8 @@ class ClientDrizzleProtocol: public ClientMySQLProtocol
 public:
   ClientDrizzleProtocol(int fd, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, true, set_counters) {}
 
-  static std::vector<std::string> drizzle_admin_ip_addresses;
-  static void drizzle_compose_ip_addresses(std::vector<std::string> options);
-  bool isAdminAllowed(void);
 };
 
 } /* namespace drizzle_protocol */
 } /* namespace drizzle_plugin */
  
-#endif /* PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H */

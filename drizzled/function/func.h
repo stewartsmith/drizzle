@@ -19,12 +19,11 @@
 
 
 
-#ifndef DRIZZLED_FUNCTION_FUNC_H
-#define DRIZZLED_FUNCTION_FUNC_H
+#pragma once
 
 /// TODO: Rename this file - func.h is stupid.
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item.h>
 #include <drizzled/item/bin_string.h>
 #include <drizzled/lex_string.h>
@@ -36,11 +35,8 @@
 namespace drizzled
 {
 
-class DRIZZLED_API Item_func :
-  public Item_result_field
+class DRIZZLED_API Item_func : public Item_result_field
 {
-  Session &_session;
-
 protected:
   Item **args, *tmp_arg[2];
   /*
@@ -165,20 +161,8 @@ public:
   void traverse_cond(Cond_traverser traverser,
                      void * arg, traverse_order order);
   double fix_result(double value);
-
-  Session &getSession()
-  {
-    return _session;
-  }
-
-  Session *getSessionPtr()
-  {
-    return &_session;
-  }
-
 };
 
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_FUNC_H */

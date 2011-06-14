@@ -19,14 +19,16 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <string>
 
 #include <drizzled/session.h>
 #include <drizzled/item/string.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/function/set_user_var.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 
@@ -56,28 +58,21 @@ namespace drizzled
 int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-
-  SetVarVector::const_iterator it(var_list.begin());
-
-  while (it != var_list.end())
+  BOOST_FOREACH(SetVarVector::const_reference it, var_list)
   {
-    if ((error= (*it)->check(session)))
+    if ((error= it->check(session)))
       goto err;
-    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it= var_list.begin();
-    while (it != var_list.end())
+    BOOST_FOREACH(SetVarVector::const_reference it, var_list)
     {
-      error|= (*it)->update(session);         // Returns 0, -1 or 1
-      ++it;
+      error|= it->update(session);         // Returns 0, -1 or 1
     }
   }
-
 err:
-  free_underlaid_joins(session, &session->getLex()->select_lex);
-  return(error);
+  free_underlaid_joins(session, &session->lex().select_lex);
+  return error;
 }
 
 
@@ -241,13 +236,8 @@ int set_var_user::check(Session *session)
 
 int set_var_user::update(Session *)
 {
-  if (user_var_item->update())
-  {
-    /* Give an error if it's not given already */
-    my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY), MYF(0));
-    return -1;
-  }
-  return 0;
+  user_var_item->update();
+	return 0;
 }
 
 void set_var::setValue(const std::string &new_value)

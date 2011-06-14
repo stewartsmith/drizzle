@@ -41,6 +41,6 @@ AC_DEFUN([PANDORA_REQUIRE_BOOST_DATE_TIME],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_DATE_TIME($1)
   AS_IF([test "x${ac_cv_libboost_date_time}" = "xno" -a "x${ac_cv_libboost_date_time_mt}" = "xno"],
-      AC_MSG_ERROR([Boost.Date_Time is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([Boost.Date_Time is required for ${PACKAGE}]))
 ])
 

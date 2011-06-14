@@ -17,19 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CACHED_ITEM_H
-#define DRIZZLED_CACHED_ITEM_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/type/decimal.h>
 
-namespace drizzled
-{
-
-class Item;
-class Session;
-class Field;
+namespace drizzled {
 
 class Cached_item :public memory::SqlAlloc
 {
@@ -94,4 +88,3 @@ Cached_item *new_Cached_item(Session *session, Item *item);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CACHED_ITEM_H */

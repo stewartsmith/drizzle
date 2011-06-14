@@ -77,6 +77,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/error_message.h>
+#include <drizzled/named_savepoint.h>
 
 #include <fcntl.h>
 #include <stdarg.h>
@@ -90,7 +91,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
 
-#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -107,8 +107,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/module/option_map.h>
 #include <drizzled/charset.h>
 #include <drizzled/current_session.h>
-
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/session/table_messages.h>
 
 #include <iostream>
 
@@ -170,7 +171,7 @@ public:
   int doCreateTable(Session&,
                     Table& table_arg,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table& proto);
+                    const drizzled::message::Table& proto);
 
   int doDropTable(Session&, const identifier::Table &identifier);
 
@@ -187,12 +188,12 @@ public:
 private:
   void getTableNamesInSchemaFromHailDB(const drizzled::identifier::Schema &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
-                                       drizzled::identifier::Table::vector *identifiers);
+                                       drizzled::identifier::table::vector *identifiers);
 
 public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
                              const drizzled::identifier::Schema &schema,
-                             drizzled::identifier::Table::vector &identifiers);
+                             drizzled::identifier::table::vector &identifiers);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 1000; }
@@ -960,7 +961,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, const drizzled::message::Table& table_message)
 {
   ib_crsr_t cursor;
   ib_tpl_t message_tuple;
@@ -1041,7 +1042,7 @@ static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
 int HailDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
                                         const drizzled::identifier::Table &identifier,
-                                        drizzled::message::Table& table_message)
+                                        const drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t haildb_table_schema= NULL;
 //  ib_idx_sch_t haildb_pkey= NULL;
@@ -1114,16 +1115,16 @@ int HailDBEngine::doCreateTable(Session &session,
   bool has_primary= false;
   for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
   {
-    message::Table::Index *index = table_message.mutable_indexes(indexnr);
+    const message::Table::Index &index = table_message.indexes(indexnr);
 
     ib_idx_sch_t haildb_index;
 
-    haildb_err= ib_table_schema_add_index(haildb_table_schema, index->name().c_str(),
-                                   &haildb_index);
+    haildb_err= ib_table_schema_add_index(haildb_table_schema, index.name().c_str(),
+					  &haildb_index);
     if (haildb_err != DB_SUCCESS)
       goto schema_error;
 
-    if (index->is_primary())
+    if (index.is_primary())
     {
       has_primary= true;
       haildb_err= ib_index_schema_set_clustered(haildb_index);
@@ -1132,19 +1133,18 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (index->is_unique())
+    if (index.is_unique())
     {
       haildb_err= ib_index_schema_set_unique(haildb_index);
       if (haildb_err != DB_SUCCESS)
         goto schema_error;
     }
 
-    if (index->type() == message::Table::Index::UNKNOWN_INDEX)
-      index->set_type(message::Table::Index::BTREE);
+    assert(index.type() == message::Table::Index::UNKNOWN_INDEX);
 
-    for (int partnr= 0; partnr < index->index_part_size(); partnr++)
+    for (int partnr= 0; partnr < index.index_part_size(); partnr++)
     {
-      const message::Table::Index::IndexPart part= index->index_part(partnr);
+      const message::Table::Index::IndexPart part= index.index_part(partnr);
       const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
       uint64_t compare_length= 0;
 
@@ -1159,7 +1159,7 @@ int HailDBEngine::doCreateTable(Session &session,
         goto schema_error;
     }
 
-    if (! has_primary && index->is_unique())
+    if (! has_primary && index.is_unique())
     {
       haildb_err= ib_index_schema_set_clustered(haildb_index);
       has_explicit_pkey= true;
@@ -1526,7 +1526,7 @@ rollback:
 void HailDBEngine::getTableNamesInSchemaFromHailDB(
                                  const drizzled::identifier::Schema &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
-                                 drizzled::identifier::Table::vector *identifiers)
+                                 drizzled::identifier::table::vector *identifiers)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -1619,7 +1619,7 @@ void HailDBEngine::getTableNamesInSchemaFromHailDB(
 
 void HailDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
                                                  const drizzled::identifier::Schema &schema,
-                                                 drizzled::identifier::Table::vector &identifiers)
+                                                 drizzled::identifier::table::vector &identifiers)
 {
   getTableNamesInSchemaFromHailDB(schema, NULL, &identifiers);
 }
@@ -1846,9 +1846,8 @@ static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
     else if ((**field).type() == DRIZZLE_TYPE_BLOB)
     {
       Field_blob *blob= reinterpret_cast<Field_blob*>(*field);
-      unsigned char* blob_ptr;
       uint32_t blob_length= blob->get_length();
-      blob->get_ptr(&blob_ptr);
+      unsigned char* blob_ptr= blob->get_ptr();
       err= ib_col_set_value(tuple, colnr, blob_ptr, blob_length);
     }
     else
@@ -1925,7 +1924,7 @@ int HailDBCursor::doInsertRecord(unsigned char *record)
   }
 
   err= ib_cursor_first(cursor);
-  if (current_session->getLex()->sql_command == SQLCOM_CREATE_TABLE
+  if (current_session->lex().sql_command == SQLCOM_CREATE_TABLE
       && err == DB_MISSING_HISTORY)
   {
     /* See https://bugs.launchpad.net/drizzle/+bug/556978
@@ -3175,12 +3174,12 @@ static int haildb_init(drizzled::module::Context &context)
 
   /* Inverted Booleans */
 
-  innobase_adaptive_hash_index= (vm.count("disable-adaptive-hash-index")) ? false : true;
-  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
-  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
-  innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
-  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+  innobase_adaptive_hash_index= not vm.count("disable-adaptive-hash-index");
+  srv_adaptive_flushing= not vm.count("disable-adaptive-flushing");
+  innobase_use_checksums= not vm.count("disable-checksums");
+  innobase_use_doublewrite= not vm.count("disable-doublewrite");
+  innobase_print_verbose_log= not vm.count("disable-print-verbose-log");
+  srv_use_sys_malloc= not vm.count("use-internal-malloc");
 
 
   ib_err_t err;
@@ -3274,7 +3273,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (vm.count("flush-method") != 0)
+  if (vm.count("flush-method"))
   {
     err= ib_cfg_set_text("flush_method", 
                          vm["flush-method"].as<string>().c_str());
@@ -3383,11 +3382,9 @@ static int haildb_init(drizzled::module::Context &context)
                                                   innobase_file_format_name,
                                                   haildb_file_format_name_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
-  context.registerVariable(new sys_var_const_string_val("flush_method",
-                                                vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
+  context.registerVariable(new sys_var_const_string_val("flush_method", vm["flush-method"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("force_recovery", innobase_force_recovery));
-  context.registerVariable(new sys_var_const_string_val("log_group_home_dir",
-                                                vm.count("log-group-home-dir") ?  vm["log-group-home-dir"].as<string>() : ""));
+  context.registerVariable(new sys_var_const_string_val("log_group_home_dir", vm["log-group-home-dir"].as<string>()));
   context.registerVariable(new sys_var_constrained_value<int64_t>("log_file_size", haildb_log_file_size));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("log_files_in_group", haildb_log_files_in_group));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("lock_wait_timeout", innobase_lock_wait_timeout));

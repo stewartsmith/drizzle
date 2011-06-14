@@ -94,6 +94,9 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -128,7 +131,7 @@ LoggingStats::~LoggingStats()
 void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
                                            Session *session)
 {
-  enum_sql_command sql_command= session->getLex()->sql_command;
+  enum_sql_command sql_command= session->lex().sql_command;
 
   scoreboard_slot->getUserCommands()->logCommand(sql_command);
 
@@ -215,7 +218,9 @@ bool LoggingStats::postEnd(Session *session)
   }
 
   scoreboard_slot->getStatusVars()->logStatusVar(session);
-  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= session->getConnectSeconds(); 
+  boost::posix_time::ptime end(boost::posix_time::microsec_clock::universal_time());
+  uint64_t end_time= (end - session->times.epoch()).total_seconds();
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= end_time - session->times.getConnectSeconds();
 
   cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
   cumulative_stats->logGlobalStats(scoreboard_slot);
@@ -268,79 +273,20 @@ static void enable(Session *, sql_var_t)
   }
 }
 
-static bool initTable()
-{
-  current_commands_tool= new(nothrow)CurrentCommandsTool(logging_stats);
-
-  if (! current_commands_tool)
-  {
-    return true;
-  }
-
-  cumulative_commands_tool= new(nothrow)CumulativeCommandsTool(logging_stats);
-
-  if (! cumulative_commands_tool)
-  {
-    return true;
-  }
-
-  global_statements_tool= new(nothrow)GlobalStatementsTool(logging_stats);
-
-  if (! global_statements_tool)
-  {
-    return true;
-  }
-
-  session_statements_tool= new(nothrow)SessionStatementsTool(logging_stats);
-
-  if (! session_statements_tool)
-  {
-    return true;
-  }
-
-  session_status_tool= new(nothrow)StatusTool(logging_stats, true);
-
-  if (! session_status_tool)
-  {
-    return true;
-  }
-
-  global_status_tool= new(nothrow)StatusTool(logging_stats, false);
-
-  if (! global_status_tool)
-  {
-    return true;
-  }
-
-  cumulative_user_stats_tool= new(nothrow)CumulativeUserStatsTool(logging_stats);
-
-  if (! cumulative_user_stats_tool)
-  {
-    return true;
-  }
-
-  scoreboard_stats_tool= new(nothrow)ScoreboardStatsTool(logging_stats);
-  
-  if (! scoreboard_stats_tool)
-  {
-    return true;
-  }
-
-  return false;
-}
-
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-
-  sysvar_logging_stats_enabled= (vm.count("disable")) ? false : true;
+  sysvar_logging_stats_enabled= not vm.count("disable");
 
   logging_stats= new LoggingStats("logging_stats");
-
-  if (initTable())
-  {
-    return 1;
-  }
+  current_commands_tool= new CurrentCommandsTool(logging_stats);
+  cumulative_commands_tool= new CumulativeCommandsTool(logging_stats);
+  global_statements_tool= new GlobalStatementsTool(logging_stats);
+  session_statements_tool= new SessionStatementsTool(logging_stats);
+  session_status_tool= new StatusTool(logging_stats, true);
+  global_status_tool= new StatusTool(logging_stats, false);
+  cumulative_user_stats_tool= new CumulativeUserStatsTool(logging_stats);
+  scoreboard_stats_tool= new ScoreboardStatsTool(logging_stats);
 
   context.add(logging_stats);
   context.add(current_commands_tool);
@@ -353,9 +299,7 @@ static int init(drizzled::module::Context &context)
   context.add(scoreboard_stats_tool);
 
   if (sysvar_logging_stats_enabled)
-  {
     logging_stats->enable();
-  }
 
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("max_user_count", sysvar_logging_stats_max_user_count));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("bucket_count", sysvar_logging_stats_bucket_count));

@@ -18,17 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_INSERT_H
-#define DRIZZLED_STATEMENT_INSERT_H
+#pragma once
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Insert : public Statement
 {
@@ -36,7 +31,7 @@ public:
   Insert(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_INSERT;
+    set_command(SQLCOM_INSERT);
   }
 
   bool execute();
@@ -50,4 +45,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_INSERT_H */

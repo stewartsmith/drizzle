@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_DEC_H
-#define DRIZZLED_FUNCTION_MATH_DEC_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/real.h>
@@ -43,4 +42,3 @@ class Item_dec_func :public Item_real_func
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_MATH_DEC_H */

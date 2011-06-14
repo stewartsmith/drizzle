@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_FUNCTION_H
-#define DRIZZLED_PLUGIN_FUNCTION_H
+#pragma once
 
 
 #include <drizzled/item/func.h>
@@ -33,15 +32,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Item_func;
-
-namespace memory
-{
-  class Root;
-}
+namespace drizzled {
 
 namespace util
 {
@@ -49,8 +40,7 @@ struct insensitive_hash;
 struct insensitive_equal_to;
 }
 
-namespace plugin
-{
+namespace plugin {
 
 /**
  * Functions in the server: AKA UDF
@@ -107,4 +97,3 @@ public:
 } /* namespace drizzled */
 
 
-#endif /* DRIZZLED_PLUGIN_FUNCTION_H */

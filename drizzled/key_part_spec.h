@@ -18,18 +18,12 @@
  */
 
 
-#ifndef DRIZZLED_KEY_PART_SPEC_H
-#define DRIZZLED_KEY_PART_SPEC_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-namespace memory { class Root; }
-
-class Item;
+namespace drizzled {
 
 class Key_part_spec :public memory::SqlAlloc {
 public:
@@ -59,4 +53,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_PART_SPEC_H */

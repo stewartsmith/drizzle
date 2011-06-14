@@ -25,6 +25,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSEXEPTION_H__
 #define __CSEXEPTION_H__
 

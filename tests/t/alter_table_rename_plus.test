@@ -1,0 +1,14 @@
+CREATE TABLE t1 (a int primary key);
+ALTER TABLE t1 RENAME t2, ADD COLUMN b int;
+show tables;
+show create table t2;
+ALTER TABLE t2 ADD COLUMN c int, rename t3;
+show tables;
+show create table t3;
+ALTER TABLE t3 DISABLE KEYS, RENAME t4;
+show tables;
+show create table t4;
+ALTER TABLE t4 ENABLE KEYS, RENAME t5, DISABLE KEYS, RENAME t6, ENABLE KEYS;
+show tables;
+show create table t6;
+DROP TABLE t6;

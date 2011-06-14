@@ -20,14 +20,10 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_SINGULAR_H
-#define DRIZZLED_TABLE_SINGULAR_H
+#pragma once
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 class Singular : public Table
 {
@@ -41,9 +37,9 @@ public:
   {
   }
 
-  Singular(Session *session, List<CreateField> &field_list);
+  Singular(Session *session, std::list<CreateField>&);
 
-  TableShare *getMutableShare(void)
+  TableShare *getMutableShare()
   {
     return &_share;
   }
@@ -53,7 +49,7 @@ public:
     assert(0);
   }
 
-  const TableShare *getShare(void) const
+  const TableShare *getShare() const
   {
     return &_share;
   }
@@ -85,4 +81,3 @@ public:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_SINGULAR_H */

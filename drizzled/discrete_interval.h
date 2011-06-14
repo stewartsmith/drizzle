@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_DISCRETE_INTERVAL_H
-#define DRIZZLED_DISCRETE_INTERVAL_H
+#pragma once
 
 #include <cstdlib>
 
@@ -184,4 +183,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DISCRETE_INTERVAL_H */

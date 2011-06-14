@@ -22,9 +22,9 @@
 #include <drizzled/function/str/insert.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String *Item_func_insert::val_str(String *str)
 {
@@ -74,16 +74,12 @@ null:
   return 0;
 }
 
-
 void Item_func_insert::fix_length_and_dec()
 {
-  uint64_t max_result_length;
-
-  // Handle character set for args[0] and args[3].
+    // Handle character set for args[0] and args[3].
   if (agg_arg_charsets(collation, &args[0], 2, MY_COLL_ALLOW_CONV, 3))
     return;
-  max_result_length= ((uint64_t) args[0]->max_length+
-                      (uint64_t) args[3]->max_length);
+  uint64_t max_result_length= ((uint64_t) args[0]->max_length + (uint64_t) args[3]->max_length);
   if (max_result_length >= MAX_BLOB_WIDTH)
   {
     max_result_length= MAX_BLOB_WIDTH;

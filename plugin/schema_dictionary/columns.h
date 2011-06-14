@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H
-#define PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H
+#pragma once
 
 class ColumnsTool : public DataDictionary
 {
@@ -43,4 +42,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H */

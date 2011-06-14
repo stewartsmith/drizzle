@@ -22,6 +22,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_HTTPHEADER_H__
 #define __SYSTAB_HTTPHEADER_H__
 

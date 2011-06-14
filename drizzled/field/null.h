@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_NULL_H
-#define DRIZZLED_FIELD_NULL_H
+#pragma once
 
 #include <drizzled/field/str.h>
 
@@ -55,7 +54,7 @@ public:
   {
     return DRIZZLE_TYPE_NULL;
   }
-  int  store(const char *, uint32_t, const CHARSET_INFO * const)
+  int  store(const char *, uint32_t, const charset_info_st * const)
   {
     null[0]= 1;
     return 0;
@@ -119,4 +118,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_NULL_H */

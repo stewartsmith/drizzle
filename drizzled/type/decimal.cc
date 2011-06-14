@@ -107,7 +107,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>
@@ -214,8 +214,7 @@ int class_decimal2string(const type::Decimal *d,
                     ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
-  if (str->alloc(length))
-    return check_result(mask, E_DEC_OOM);
+  str->alloc(length);
 
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
                          &length, (int)0, fixed_dec,
@@ -283,7 +282,7 @@ int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) 
    @retval E_DEC_OOM
 */
 
-int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset)
+int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const charset_info_st * charset)
 {
   char *end, *from_end;
   int err;
@@ -291,8 +290,7 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    size_t dummy_errors;
-    tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
+    tmp.copy(from, length, &my_charset_utf8_general_ci);
     from= tmp.ptr();
     length=  tmp.length();
     charset= &my_charset_bin;
@@ -2082,8 +2080,7 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 int decimal_intg(const decimal_t *from)
 {
   int res;
-  dec1 *tmp_res;
-  tmp_res= remove_leading_zeroes(from, &res);
+  remove_leading_zeroes(from, &res);
   return res;
 }
 

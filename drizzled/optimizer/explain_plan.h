@@ -17,18 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
-#define DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
+#pragma once
 
 namespace drizzled {
-
-class Join;
-class Session;
-class Select_Lex_Unit;
-class select_result;
-
-namespace optimizer
-{
+namespace optimizer {
 
 /** select type for EXPLAIN */
 enum select_type
@@ -94,4 +86,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H */

@@ -23,6 +23,7 @@ SQL parser symbol table
 Created 12/15/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef pars0sym_h
 #define pars0sym_h
 

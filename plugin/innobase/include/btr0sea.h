@@ -23,6 +23,7 @@ The index tree adaptive search
 Created 2/17/1996 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef btr0sea_h
 #define btr0sea_h
 

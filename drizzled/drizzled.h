@@ -18,26 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DRIZZLED_H
-#define DRIZZLED_DRIZZLED_H
+#pragma once
 
 #include <bitset>
 #include <boost/program_options.hpp>
-
 #include <boost/detail/atomic_count.hpp>
-
+#include <drizzled/common_fwd.h>
 #include <drizzled/global_buffer.h>
 #include <drizzled/definitions.h>
 
 struct passwd;
 
-namespace drizzled
-{
-
-namespace module
-{
-class Registry;
-}
+namespace drizzled {
 
 extern boost::detail::atomic_count connection_count;
 extern const char *load_default_groups[];
@@ -71,4 +63,3 @@ void clean_up(bool print_message);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DRIZZLED_H */

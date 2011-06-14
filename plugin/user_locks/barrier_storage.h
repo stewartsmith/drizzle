@@ -18,11 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_BARRIER_STORAGE_H
-#define PLUGIN_USER_LOCKS_BARRIER_STORAGE_H
+#pragma once
 
 #include <drizzled/session.h>
-
+#include <drizzled/util/storable.h>
 #include <boost/unordered_set.hpp>
 
 namespace user_locks {
@@ -81,4 +80,3 @@ public:
 } /* namespace barriers */
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_BARRIER_STORAGE_H */

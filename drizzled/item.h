@@ -19,11 +19,10 @@
 
 
 
-#ifndef DRIZZLED_ITEM_H
-#define DRIZZLED_ITEM_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
@@ -31,23 +30,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Field;
-class Item_equal;
-class Item_field;
-class Item_ident;
-class Item_in_subselect;
-class Item_sum;
-class Select_Lex;
-class SendField;
-class Table;
-class user_var_entry;
-
-namespace plugin { class Client; }
-namespace type { class Time; }
-namespace type { class Decimal; }
+namespace drizzled {
 
 /**
   Dummy error processor used by default by Name_resolution_context.
@@ -207,7 +190,7 @@ public:
     set_name(arg.c_str(), arg.length(), system_charset_info);
   }
 
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs= system_charset_info);
+  void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
   /**
    * Renames item (used for views, cleanup() return original name).
    *
@@ -256,7 +239,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(plugin::Client *client, String *str);
+  virtual void send(plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's
     are functionally equal.
@@ -640,8 +623,8 @@ public:
   virtual const Item *real_item(void) const;
   virtual Item *get_tmp_table_item(Session *session);
 
-  static const CHARSET_INFO *default_charset();
-  virtual const CHARSET_INFO *compare_collation();
+  static const charset_info_st *default_charset();
+  virtual const charset_info_st *compare_collation();
 
   virtual bool walk(Item_processor processor,
                     bool walk_subquery,
@@ -730,7 +713,7 @@ public:
 
   virtual Item *neg_transformer(Session *session);
   virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  virtual Item *safe_charset_converter(const charset_info_st * const tocs);
   void delete_self();
 
   /**
@@ -783,7 +766,7 @@ public:
    * @retval
    *  false otherwise
    */
-  bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
+  bool eq_by_collation(Item *item, bool binary_cmp, const charset_info_st * const cs);
 
   inline uint32_t char_to_byte_length_safe(uint32_t char_length_arg, uint32_t mbmaxlen_arg)
   { 
@@ -793,7 +776,7 @@ public:
 
   uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs);
+  void fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs);
   void fix_char_length(uint32_t max_char_length_arg);
   void fix_char_length_uint64_t(uint64_t max_char_length_arg);
   void fix_length_and_charset_datetime(uint32_t max_char_length_arg);
@@ -958,4 +941,3 @@ Field *create_tmp_field(Session *session,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_H */

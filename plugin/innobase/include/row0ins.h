@@ -23,6 +23,7 @@ Insert into a table
 Created 4/20/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0ins_h
 #define row0ins_h
 

@@ -42,10 +42,10 @@
 #include <drizzled/option.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/tztime.h>
 #include <drizzled/data_home.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/item/uint.h>
@@ -62,6 +62,8 @@
 #include <drizzled/visibility.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/catalog/instance.h>
 
 #include <cstdio>
 #include <map>
@@ -70,19 +72,18 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace internal
 {
-extern bool timed_mutexes;
+	extern bool timed_mutexes;
 }
 
 extern plugin::StorageEngine *myisam_engine;
 extern bool timed_mutexes;
 
 extern struct option my_long_options[];
-extern const CHARSET_INFO *character_set_filesystem;
+extern const charset_info_st *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
 typedef map<string, sys_var *> SystemVariableMap;
@@ -215,6 +216,8 @@ static sys_var_const_str_ptr sys_scheduler("scheduler",
 
 static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
                                            fix_server_id);
+
+static sys_var_const_string sys_server_uuid("server_uuid", server_uuid);
 
 static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
                                                 &drizzle_system_variables::sortbuff_size);
@@ -1065,7 +1068,7 @@ unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
 
 bool sys_var_collation_sv::update(Session *session, set_var *var)
 {
-  const CHARSET_INFO *tmp;
+  const charset_info_st *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1119,7 +1122,7 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
                                                sql_var_t type,
                                                const LEX_STRING *)
 {
-  const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
+  const charset_info_st *cs= ((type == OPT_GLOBAL) ?
                            global_system_variables.*offset :
                            session->variables.*offset);
   return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";
@@ -1129,21 +1132,21 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
 
 bool sys_var_timestamp::update(Session *session,  set_var *var)
 {
-  session->set_time(time_t(var->getInteger()));
+  session->times.set_time(time_t(var->getInteger()));
   return 0;
 }
 
 
 void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
-  session->resetUserTime();
+  session->times.resetUserTime();
 }
 
 
 unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
                                             const LEX_STRING *)
 {
-  session->sys_var_tmp.int32_t_value= (int32_t) session->getCurrentTimestampEpoch();
+  session->sys_var_tmp.int32_t_value= (int32_t) session->times.getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
 }
 
@@ -1426,16 +1429,13 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
   if (result)
   {
     drizzle_show_var *show= result;
-
-    SystemVariableMap::const_iterator iter= system_variable_map.begin();
-    while (iter != system_variable_map.end())
+    BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
     {
-      sys_var *var= iter->second;
+      sys_var *var= iter.second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       ++show;
-      ++iter;
     }
 
     /* make last element empty */
@@ -1444,13 +1444,10 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
   return result;
 }
 
-
-
 void add_sys_var_to_list(sys_var *var)
 {
   string lower_name(var->getName());
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
+  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
 
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.count(lower_name))
@@ -1540,6 +1537,7 @@ int sys_var_init()
     add_sys_var_to_list(&sys_secure_file_priv, my_long_options);
     add_sys_var_to_list(&sys_select_limit, my_long_options);
     add_sys_var_to_list(&sys_server_id, my_long_options);
+    add_sys_var_to_list(&sys_server_uuid, my_long_options);
     add_sys_var_to_list(&sys_sort_buffer, my_long_options);
     add_sys_var_to_list(&sys_sql_notes, my_long_options);
     add_sys_var_to_list(&sys_sql_warnings, my_long_options);
@@ -1585,8 +1583,7 @@ int sys_var_init()
 sys_var *find_sys_var(const std::string &name)
 {
   string lower_name(name);
-  transform(lower_name.begin(), lower_name.end(),
-            lower_name.begin(), ::tolower);
+  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
 
   sys_var *result= NULL;
 
@@ -1625,7 +1622,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, sql_var_t type)
 {
-  plugin::StorageEngine *old_value, *new_value, **value;
+  plugin::StorageEngine *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -1637,7 +1634,6 @@ void sys_var_session_storage_engine::set_default(Session *session, sql_var_t typ
     new_value= global_system_variables.*offset;
   }
   assert(new_value);
-  old_value= *value;
   *value= new_value;
 }
 

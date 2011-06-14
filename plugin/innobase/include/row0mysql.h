@@ -24,6 +24,7 @@ Contains also create table and other data dictionary operations.
 Created 9/17/2000 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0mysql_h
 #define row0mysql_h
 

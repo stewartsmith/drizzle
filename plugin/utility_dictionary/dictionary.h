@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
-#define PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <plugin/utility_dictionary/counter.h>
@@ -27,4 +26,3 @@
 #include <plugin/utility_dictionary/random_number.h>
 #include <plugin/utility_dictionary/random_string.h>
 
-#endif /* PLUGIN_UTILITY_DICTIONARY_DICTIONARY_H */

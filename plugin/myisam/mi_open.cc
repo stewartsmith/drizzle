@@ -23,12 +23,11 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
-#include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/test.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/memory/multi_malloc.h>
+#include <drizzled/identifier.h>
 
 
 using namespace std;
@@ -83,7 +82,7 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
-    key_parts,unique_key_parts,fulltext_keys,uniques;
+    key_parts,unique_key_parts,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
        data_name[FN_REFLEN], rp_buff[PATH_MAX];
   unsigned char *disk_cache= NULL;
@@ -184,7 +183,6 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
     len=mi_uint2korr(share->state.header.state_info_length);
     keys=    (uint) share->state.header.keys;
     uniques= (uint) share->state.header.uniques;
-    fulltext_keys= (uint) share->state.header.fulltext_keys;
     key_parts= mi_uint2korr(share->state.header.key_parts);
     unique_key_parts= mi_uint2korr(share->state.header.unique_key_parts);
     share->state_diff_length=len-MI_STATE_INFO_SIZE;
@@ -771,7 +769,7 @@ static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *stat
   state->state.empty	= mi_sizekorr(ptr);	ptr +=8;
   state->state.key_empty= mi_sizekorr(ptr);	ptr +=8;
   state->auto_increment=mi_uint8korr(ptr);	ptr +=8;
-  state->state.checksum=(internal::ha_checksum) mi_uint8korr(ptr);	ptr +=8;
+  state->state.checksum=(ha_checksum) mi_uint8korr(ptr);	ptr +=8;
   state->process= mi_uint4korr(ptr);		ptr +=4;
   state->unique = mi_uint4korr(ptr);		ptr +=4;
   state->status = mi_uint4korr(ptr);		ptr +=4;

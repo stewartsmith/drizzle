@@ -17,19 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMP_CREATOR_H
-#define DRIZZLED_COMP_CREATOR_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
-class Item;
-class Item_bool_func2;
+namespace drizzled {
 
 class Comp_creator
 {
 public:
-  Comp_creator() {}                           /* Remove gcc warning */
   virtual ~Comp_creator() {}                  /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const = 0;
   virtual const char* symbol(bool invert) const = 0;
@@ -48,4 +44,3 @@ Comp_creator *comp_ne_creator(bool invert);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_COMP_CREATOR_H */

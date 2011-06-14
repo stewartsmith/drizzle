@@ -18,23 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
-#define DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H
+#pragma once
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
-
-namespace create
-{
-
-namespace table
-{
+namespace drizzled {
+namespace statement {
+namespace create {
+namespace table {
 
 class Like : public CreateTable
 {
@@ -44,7 +35,7 @@ public:
   {
   }
 
-  bool executeInner(identifier::Table::const_reference);
+  bool executeInner(const identifier::Table&);
 };
 
 } /* namespace table */
@@ -55,4 +46,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_TABLE_LIKE_H */

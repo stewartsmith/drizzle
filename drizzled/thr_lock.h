@@ -15,8 +15,7 @@
 
 /* For use with thr_locks */
 
-#ifndef DRIZZLED_THR_LOCK_H
-#define DRIZZLED_THR_LOCK_H
+#pragma once
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -184,8 +183,6 @@ public:
   }
 };
 
-class Session; 
-
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 DRIZZLED_API void thr_lock_init(THR_LOCK *lock);
 enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,
@@ -194,4 +191,3 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_THR_LOCK_H */

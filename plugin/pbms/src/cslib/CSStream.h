@@ -30,6 +30,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSSTREAM_H__
 #define __CSSTREAM_H__
 

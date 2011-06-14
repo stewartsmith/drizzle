@@ -19,20 +19,15 @@
 
 
 
-#ifndef DRIZZLED_MEMORY_SQL_ALLOC_H
-#define DRIZZLED_MEMORY_SQL_ALLOC_H
+#pragma once
 
 #include <unistd.h>
 #include <drizzled/memory/root.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace memory
-{
+namespace drizzled {
+namespace memory {
 
 void init_sql_alloc(Root *root, size_t block_size, size_t pre_alloc_size);
 void *sql_alloc(size_t);
@@ -67,4 +62,3 @@ public:
 }
 }
 
-#endif /* DRIZZLED_MEMORY_SQL_ALLOC_H */

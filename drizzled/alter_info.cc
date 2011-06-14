@@ -24,7 +24,6 @@
 
 #include <config.h>
 #include <drizzled/alter_info.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/alter_column.h>
 #include <drizzled/key.h>
 #include <drizzled/create_field.h>
@@ -34,10 +33,7 @@ namespace drizzled
 
 AlterInfo::AlterInfo() :
   flags(),
-  keys_onoff(LEAVE_AS_IS),
-  tablespace_op(NO_TABLESPACE_OP),
   no_parts(0),
-  build_method(HA_BUILD_DEFAULT),
   error_if_not_empty(false)
 {}
 

@@ -18,15 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_IDENTIFIER_CONSTANTS_SCHEMA_H
-#define DRIZZLED_IDENTIFIER_CONSTANTS_SCHEMA_H
+#pragma once
 
 namespace drizzled {
 namespace identifier {
 
-identifier::Schema::const_reference data_dictionary();
-identifier::Schema::const_reference information_schema();
-identifier::Schema::const_reference system_schema();
+const identifier::Schema& data_dictionary();
+const identifier::Schema& information_schema();
+const identifier::Schema& system_schema();
 
 } /* namespace identifier */
 } /* namespace drizzled */
@@ -34,4 +33,3 @@ identifier::Schema::const_reference system_schema();
 #define DATA_DICTIONARY_IDENTIFIER drizzled::identifier::data_dictionary()
 #define INFORMATION_SCHEMA_IDENTIFIER drizzled::identifier::information_schema()
 
-#endif /* DRIZZLED_IDENTIFIER_CONSTANTS_SCHEMA_H */

@@ -1,0 +1,3 @@
+CREATE TABLE t3 (a int) replicate=FALSE;
+SHOW CREATE TABLE t3;
+DROP TABLE t3;

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_BACKTRACE_H
-#define DRIZZLED_UTIL_BACKTRACE_H
+#pragma once
 
 #include <drizzled/visibility.h>
 
@@ -35,5 +34,4 @@ void custom_backtrace(void);
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_BACKTRACE_H */
 

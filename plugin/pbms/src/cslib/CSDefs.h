@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSDEFS_H__
 #define __CSDEFS_H__
 

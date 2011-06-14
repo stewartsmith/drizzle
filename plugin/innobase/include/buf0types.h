@@ -23,6 +23,7 @@ The database buffer pool global types for the directory
 Created 11/17/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef buf0types_h
 #define buf0types_h
 

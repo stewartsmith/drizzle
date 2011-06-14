@@ -20,12 +20,11 @@
 
 #include <config.h>
 
+#include <drizzled/error.h>
 #include <plugin/schema_engine/schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/cursor.h>
 #include <drizzled/data_home.h>
 
@@ -34,6 +33,7 @@
 #include <drizzled/execute.h>
 
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/cached_directory.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -102,7 +102,7 @@ void Schema::startup(drizzled::Session &)
 {
 }
 
-void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
+void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
   {
@@ -340,6 +340,6 @@ bool Schema::readSchemaFile(std::string db_opt_path, drizzled::message::Schema &
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
-                                   drizzled::identifier::Table::vector&)
+                                   drizzled::identifier::table::vector&)
 {
 }

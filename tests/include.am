@@ -59,7 +59,13 @@ TEST_RUN_DBQP= $(PYTHON) ../$(top_srcdir)/tests/dbqp.py \
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/crashme_tests \
 	${srcdir}/tests/dbqp.py \
+	${srcdir}/tests/dbqp_data \
+	${srcdir}/tests/randgen_tests \
+	${srcdir}/tests/sql-bench \
+	${srcdir}/tests/sqlbench_tests \
+	${srcdir}/tests/sysbench_tests \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -72,8 +78,12 @@ EXTRA_DIST += \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
         ${srcdir}/tests/lib/*.py \
+	${srcdir}/tests/lib/drizzle_test_run/*.py \
 	${srcdir}/tests/lib/My/*.pm \
+	${srcdir}/tests/lib/randgen/*.py \
         ${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sqlbench/*py \
+	${srcdir}/tests/lib/sysbench/*py \
 	${srcdir}/tests/lib/sys_mgmt/*py \
 	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind
@@ -130,6 +140,9 @@ test-mem:
 
 test-drizzle: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS))
+
+gdb-drizzled: 
+	./libtool --mode=execute gdb ./drizzled/drizzled
 
 test-valgrind: 
 	( $(MAKE) $(AM_MAKEFLAGS) && cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind)

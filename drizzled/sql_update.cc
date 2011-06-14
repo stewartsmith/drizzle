@@ -34,14 +34,18 @@
 #include <drizzled/filesort.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/key.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/util/test.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Re-read record if more columns are needed for error message.
@@ -147,7 +151,7 @@ int update_query(Session *session, TableList *table_list,
   Table		*table;
   optimizer::SqlSelect *select= NULL;
   ReadRecord	info;
-  Select_Lex    *select_lex= &session->getLex()->select_lex;
+  Select_Lex    *select_lex= &session->lex().select_lex;
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state_t killed_status= Session::NOT_KILLED;
@@ -247,7 +251,7 @@ int update_query(Session *session, TableList *table_list,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error || session->is_error())
     {
@@ -318,7 +322,7 @@ int update_query(Session *session, TableList *table_list,
       ha_rows examined_rows;
       FileSort filesort(*session);
 
-      table->sort.io_cache= new internal::IO_CACHE;
+      table->sort.io_cache= new internal::io_cache_st;
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
 	  (table->sort.found_records= filesort.run(table, sortorder, length,
@@ -341,7 +345,7 @@ int update_query(Session *session, TableList *table_list,
 	update these in a separate loop based on the pointer.
       */
 
-      internal::IO_CACHE tempfile;
+      internal::io_cache_st tempfile;
       if (tempfile.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
       {
 	goto err;
@@ -576,7 +580,7 @@ int update_query(Session *session, TableList *table_list,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ulong) session->rowCount(), found, id, buff);
     session->status_var.updated_row_count+= session->rowCount();
   }
@@ -621,9 +625,9 @@ bool prepare_update(Session *session, TableList *table_list,
 			 Item **conds, uint32_t order_num, Order *order)
 {
   List<Item> all_fields;
-  Select_Lex *select_lex= &session->getLex()->select_lex;
+  Select_Lex *select_lex= &session->lex().select_lex;
 
-  session->getLex()->allow_sum_func= 0;
+  session->lex().allow_sum_func= 0;
 
   if (setup_tables_and_check_access(session, &select_lex->context,
                                     &select_lex->top_join_list,

@@ -17,23 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HYBRID_TYPE_TRAITS_H
-#define DRIZZLED_HYBRID_TYPE_TRAITS_H
+#pragma once
 
 #include <drizzled/common.h>
 #include <drizzled/item_result.h>
 
-namespace drizzled
-{
-
-class Item;
-class Field;
-class Hybrid_type;
-class String;
-
-namespace type {
-class Decimal;
-}
+namespace drizzled {
 
 /* Hybryd_type_traits interface + default implementation for REAL_RESULT */
 
@@ -66,4 +55,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HYBRID_TYPE_TRAITS_H */

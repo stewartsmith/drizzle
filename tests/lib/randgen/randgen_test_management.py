@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -43,7 +43,8 @@ class testCase:
     """
     def __init__( self, system_manager, name=None
                 , fullname = None, server_requirements=[[]]
-                , comment=None, test_command=None, debug=False ):
+                , comment=None, test_command=None, cnf_path=None
+                , debug=False ):
         self.system_manager = system_manager
         self.logging = self.system_manager.logging
         self.skip_keys = ['system_manager','logging']
@@ -54,6 +55,7 @@ class testCase:
         self.comment = comment
         self.server_requirements = server_requirements
         self.test_command = test_command
+        self.cnf_path = cnf_path
         
         if debug:
             self.system_manager.logging.debug_class(self)
@@ -131,6 +133,7 @@ class testManager(test_management.testManager):
                        , fullname = "%s.%s" %(suite_name, test_name)
                        , server_requirements = server_requirements
                        , test_command = test_command
+                       , cnf_path = testfile
                        , debug = self.debug )
 
         #sys.exit(0)

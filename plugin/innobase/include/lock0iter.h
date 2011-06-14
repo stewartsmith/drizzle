@@ -23,6 +23,7 @@ Lock queue iterator type and function prototypes.
 Created July 16, 2007 Vasil Dimov
 *******************************************************/
 
+#pragma once
 #ifndef lock0iter_h
 #define lock0iter_h
 

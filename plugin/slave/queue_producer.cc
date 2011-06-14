@@ -71,7 +71,12 @@ bool QueueProducer::process()
     }
   }
 
-  if (not queryForReplicationEvents(_saved_max_commit_id))
+  /* Keep getting events until caught up */
+  enum drizzled::error_t err;
+  while ((err= (queryForReplicationEvents(_saved_max_commit_id))) == EE_OK)
+  {}
+
+  if (err == ER_YES)  /* We encountered an error */
   {
     if (_last_return == DRIZZLE_RETURN_LOST_CONNECTION)
     {
@@ -174,6 +179,7 @@ bool QueueProducer::closeConnection()
   if (drizzle_quit(&_connection, &result, &ret) == NULL)
   {
     _last_return= ret;
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -235,7 +241,6 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_result_create(&_connection, &result);
   drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
@@ -244,6 +249,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
     _last_error_message= "Replication slave: ";
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
+    drizzle_result_free(&result);
     return false;
   }
 
@@ -285,6 +291,8 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
 bool QueueProducer::queueInsert(const char *trx_id,
                                 const char *seg_id,
                                 const char *commit_id,
+                                const char *originating_server_uuid,
+                                const char *originating_commit_id,
                                 const char *msg,
                                 const char *msg_length)
 {
@@ -296,12 +304,17 @@ bool QueueProducer::queueInsert(const char *trx_id,
    * The SQL to insert our results into the local queue.
    */
   string sql= "INSERT INTO `sys_replication`.`queue`"
-              " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
+              " (`trx_id`, `seg_id`, `commit_order`,"
+              "  `originating_server_uuid`, `originating_commit_id`, `msg`) VALUES (";
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
   sql.append(", ", 2);
   sql.append(commit_id);
+  sql.append(", '", 3);
+  sql.append(originating_server_uuid);
+  sql.append("' , ", 4);
+  sql.append(originating_commit_id);
   sql.append(", '", 3);
 
   /*
@@ -340,6 +353,11 @@ bool QueueProducer::queueInsert(const char *trx_id,
       it= message_text.insert(it, '\\');
       ++it;
     }
+    else if (*it == ';')
+    {
+      it= message_text.insert(it, '\\');
+      ++it;  /* advance back to the semicolon */
+    }
   }
 
   sql.append(message_text);
@@ -362,22 +380,23 @@ bool QueueProducer::queueInsert(const char *trx_id,
 }
 
 
-bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
+enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
 {
   vector<uint64_t> trx_id_list;
 
   if (not queryForTrxIdList(max_commit_id, trx_id_list))
-    return false;
+    return ER_YES;
 
   if (trx_id_list.size() == 0)    /* nothing to get from the master */
   {
-    return true;
+    return ER_NO;
   }
 
   /*
    * The SQL to pull everything we need from the master.
    */
-  string sql= "SELECT `id`, `segid`, `commit_id`, `message`, `message_len` "
+  string sql= "SELECT `id`, `segid`, `commit_id`, `originating_server_uuid`,"
+              " `originating_commit_id`, `message`, `message_len` "
               " FROM `data_dictionary`.`sys_replication_log` WHERE `id` IN (";
 
   for (size_t x= 0; x < trx_id_list.size(); x++)
@@ -388,10 +407,10 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
   }
 
   sql.append(")", 1);
+  sql.append(" ORDER BY `commit_id` ASC");
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_result_create(&_connection, &result);
   drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
@@ -400,7 +419,8 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     _last_error_message= "Replication slave: ";
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
-    return false;
+    drizzle_result_free(&result);
+    return ER_YES;
   }
 
   /* TODO: Investigate 1-row-at-a-time buffering */
@@ -414,24 +434,25 @@ bool QueueProducer::queryForReplicationEvents(uint64_t max_commit_id)
     _last_error_message.append(drizzle_error(&_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
-    return false;
+    return ER_YES;
   }
 
   drizzle_row_t row;
 
   while ((row= drizzle_row_next(&result)) != NULL)
   {
-    if (not queueInsert(row[0], row[1], row[2], row[3], row[4]))
+    if (not queueInsert(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
     {
       errmsg_printf(error::ERROR,
                     _("Replication slave: Unable to insert into queue."));
-      return false;
+      drizzle_result_free(&result);
+      return ER_YES;
     }
   }
 
   drizzle_result_free(&result);
 
-  return true;
+  return EE_OK;
 }
 
 

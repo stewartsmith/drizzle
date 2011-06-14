@@ -19,26 +19,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
-#define DRIZZLED_PLUGIN_AUTHENTICATION_H
+#pragma once
 
 #include <string>
 
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/identifier.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace identifier {
-class User;
-} 
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Authentication : public Plugin
 {
@@ -56,11 +47,10 @@ public:
 
   static bool addPlugin(plugin::Authentication *auth);
   static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(drizzled::identifier::User::const_reference sctx,
+  static bool isAuthenticated(const drizzled::identifier::User& sctx,
                               const std::string &password);
 };
 
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

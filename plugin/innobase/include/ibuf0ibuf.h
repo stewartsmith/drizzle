@@ -23,6 +23,7 @@ Insert buffer
 Created 7/19/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef ibuf0ibuf_h
 #define ibuf0ibuf_h
 

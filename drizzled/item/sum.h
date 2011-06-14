@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_SUM_H
-#define DRIZZLED_ITEM_SUM_H
+#pragma once
 
 /* classes for sum functions */
 
@@ -27,19 +26,13 @@
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
-                                       const void* key2);
+int group_concat_key_cmp_with_distinct(void* arg, const void* key1, const void* key2);
 
-int group_concat_key_cmp_with_order(void* arg, const void* key1,
-                                    const void* key2);
-
-class Select_Lex;
-struct Order;
+int group_concat_key_cmp_with_order(void* arg, const void* key1, const void* key2);
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls
@@ -468,8 +461,6 @@ public:
 
 /* Common class for SUM(DISTINCT), AVG(DISTINCT) */
 
-class Unique;
-
 class Item_sum_distinct :public Item_sum_num
 {
 protected:
@@ -577,8 +568,6 @@ class Item_sum_count :public Item_sum_int
 };
 
 
-class Tmp_Table_Param;
-
 class Item_sum_count_distinct :public Item_sum_int
 {
   Table *table;
@@ -645,8 +634,6 @@ public:
 
 /* Item to get the value of a stored sum function */
 
-class Item_sum_avg;
-
 class Item_avg_field :public Item_result_field
 {
 public:
@@ -706,8 +693,6 @@ public:
     Item_sum_sum::cleanup();
   }
 };
-
-class Item_sum_variance;
 
 class Item_variance_field :public Item_result_field
 {
@@ -799,8 +784,6 @@ public:
     Item_sum_num::cleanup();
   }
 };
-
-class Item_sum_std;
 
 class Item_std_field :public Item_variance_field
 {
@@ -961,10 +944,6 @@ class Item_sum_xor :public Item_sum_bit
   Item *copy_or_same(Session* session);
 };
 
-
-
-class DRIZZLE_ERROR;
-
 class Item_func_group_concat : public Item_sum
 {
   Tmp_Table_Param *tmp_table_param;
@@ -1050,4 +1029,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_SUM_H */

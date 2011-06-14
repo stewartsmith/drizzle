@@ -45,10 +45,8 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/internal/my_sys.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/plugin.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
@@ -65,9 +63,15 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/named_savepoint.h>
-
+#include <drizzled/session/table_messages.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/cached_directory.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/times.h>
+#include <drizzled/session/transactions.h>
+#include <drizzled/typelib.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -175,7 +179,7 @@ typedef constrained_check<size_t, SIZE_MAX, 512*1024, 1024> additional_mem_pool_
 static additional_mem_pool_constraint innobase_additional_mem_pool_size;
 typedef constrained_check<unsigned int, 1000, 1> autoextend_constraint;
 static autoextend_constraint innodb_auto_extend_increment;
-typedef constrained_check<size_t, SIZE_MAX, 5242880, 1048576> buffer_pool_constraint;
+typedef constrained_check<size_t, SIZE_MAX, 33554432, 1048576> buffer_pool_constraint;
 static buffer_pool_constraint innobase_buffer_pool_size;
 typedef constrained_check<uint32_t, MAX_BUFFER_POOLS, 1> buffer_pool_instances_constraint;
 static buffer_pool_instances_constraint innobase_buffer_pool_instances;
@@ -205,6 +209,8 @@ static log_file_constraint innobase_log_file_size;
 
 static uint64_constraint innodb_replication_delay;
 
+static uint32_constraint buffer_pool_restore_at_startup;
+
 /** Percentage of the buffer pool to reserve for 'old' blocks.
 Connected to buf_LRU_old_ratio. */
 typedef constrained_check<uint32_t, 95, 5> old_blocks_constraint;
@@ -217,6 +223,16 @@ static uint32_constraint innodb_thread_sleep_delay;
 typedef constrained_check<uint32_t, 64, 0> read_ahead_threshold_constraint;
 static read_ahead_threshold_constraint innodb_read_ahead_threshold;
 
+static uint64_constraint ibuf_max_size;
+
+typedef constrained_check<uint32_t, 1, 0> binary_constraint;
+static binary_constraint ibuf_active_contract;
+
+typedef constrained_check<uint32_t, 999999999, 100> ibuf_accel_rate_constraint;
+static ibuf_accel_rate_constraint ibuf_accel_rate;
+static uint32_constraint checkpoint_age_target;
+static binary_constraint flush_neighbor_pages;
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -226,6 +242,9 @@ std::string innobase_log_group_home_dir;
 static string innobase_file_format_name;
 static string innobase_change_buffering;
 
+static string read_ahead;
+static string adaptive_flushing_method;
+
 /* The highest file format being used in the database. The value can be
 set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
@@ -234,7 +253,6 @@ static string innobase_file_format_max;
 /* Below we have boolean-valued start-up parameters, and their default
 values */
 
-typedef constrained_check<uint32_t, 2, 0> trinary_constraint;
 static trinary_constraint innobase_fast_shutdown;
 
 /* "innobase_file_format_check" decides whether we would continue
@@ -286,6 +304,43 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
   "all"		/* IBUF_USE_ALL */
 };
 
+/** Allowed values of read_ahead */
+static const char* read_ahead_names[] = {
+  "none",       /* 0 */
+  "random",
+  "linear",
+  "both",       /* 3 */
+  /* For compatibility with the older Percona patch */
+  "0",          /* 4 ("none" + 4) */
+  "1",
+  "2",
+  "3",          /* 7 ("both" + 4) */
+  NULL
+};
+
+static TYPELIB read_ahead_typelib = {
+  array_elements(read_ahead_names) - 1, "read_ahead_typelib",
+  read_ahead_names, NULL
+};
+
+/** Allowed values of adaptive_flushing_method */
+static const char* adaptive_flushing_method_names[] = {
+    "native",           /* 0 */
+    "estimate",         /* 1 */
+    "keep_average",     /* 2 */
+    /* For compatibility with the older Percona patch */
+    "0",                /* 3 ("native" + 3) */
+    "1",                /* 4 ("estimate" + 3) */
+    "2",                /* 5 ("keep_average" + 3) */
+    NULL
+};
+
+static TYPELIB adaptive_flushing_method_typelib = {
+  array_elements(adaptive_flushing_method_names) - 1,
+  "adaptive_flushing_method_typelib",
+  adaptive_flushing_method_names, NULL
+};
+
 /* "GEN_CLUST_INDEX" is the name reserved for Innodb default
 system primary index. */
 static const char innobase_index_reserve_name[]= "GEN_CLUST_INDEX";
@@ -321,14 +376,13 @@ public:
 
   virtual ~InnobaseEngine()
   {
-    int err= 0;
     if (innodb_inited) {
       srv_fast_shutdown = (ulint) innobase_fast_shutdown;
       innodb_inited = 0;
       hash_table_free(innobase_open_tables);
       innobase_open_tables = NULL;
       if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-        err = 1;
+        // Throw here?
       }
       srv_free_paths_and_sizes();
       if (internal_innobase_data_file_path)
@@ -462,7 +516,7 @@ public:
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
                                 const identifier::Table &identifier,
-                                message::Table&);
+                                const message::Table&);
   UNIV_INTERN int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
   UNIV_INTERN int doDropTable(Session &session, const identifier::Table &identifier);
 
@@ -490,7 +544,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
 
@@ -519,7 +573,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            const drizzled::identifier::Schema &schema_identifier,
-                                           drizzled::identifier::Table::vector &set_of_identifiers)
+                                           drizzled::identifier::table::vector &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -934,7 +988,7 @@ thd_set_lock_wait_time(
 	ulint	value)	/*!< in: time waited for the lock */
 {
   if (in_session)
-    in_session->utime_after_lock+= value;
+    in_session->times.utime_after_lock+= value;
 }
 
 /********************************************************************//**
@@ -964,8 +1018,17 @@ plugin::ReplicationReturnCode ReplicationLog::apply(Session &session,
   uint64_t end_timestamp= message.transaction_context().end_timestamp();
   bool is_end_segment= message.end_segment();
   trx->log_commit_id= TRUE;
+
+  string server_uuid= session.getServerUUID();
+  string originating_server_uuid= session.getOriginatingServerUUID();
+  uint64_t originating_commit_id= session.getOriginatingCommitID();
+  bool use_originating_server_uuid= session.isOriginatingServerUUIDSet();
+
   ulint error= insert_replication_message(data, message.ByteSize(), trx, trx_id,
-               end_timestamp, is_end_segment, seg_id);
+               end_timestamp, is_end_segment, seg_id, server_uuid.c_str(),
+               use_originating_server_uuid, originating_server_uuid.c_str(),
+               originating_commit_id);
+
   (void)error;
 
   delete[] data;
@@ -1175,7 +1238,7 @@ innobase_mysql_print_thd(
   uint  )   /*!< in: max query length to print, or 0 to
            use the default max length */
 {
-  drizzled::identifier::User::const_shared_ptr user_identifier(in_session->user());
+  drizzled::identifier::user::ptr user_identifier(in_session->user());
 
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
@@ -1199,7 +1262,7 @@ innobase_get_cset_width(
   ulint*  mbminlen, /*!< out: minimum length of a char (in bytes) */
   ulint*  mbmaxlen) /*!< out: maximum length of a char (in bytes) */
 {
-  CHARSET_INFO* cs;
+  charset_info_st* cs;
   ut_ad(cset < 256);
   ut_ad(mbminlen);
   ut_ad(mbmaxlen);
@@ -1274,7 +1337,7 @@ innobase_isspace(
   const void *cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+  return my_isspace(static_cast<const charset_info_st *>(cs), char_to_test);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -1866,6 +1929,30 @@ static void innodb_read_ahead_threshold_update(Session *, sql_var_t)
   srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
 }
 
+static void auto_lru_dump_update(Session *, sql_var_t)
+{
+  srv_auto_lru_dump= buffer_pool_restore_at_startup.get();
+}
+
+static void ibuf_active_contract_update(Session *, sql_var_t)
+{
+  srv_ibuf_active_contract= ibuf_active_contract.get();
+}
+
+static void ibuf_accel_rate_update(Session *, sql_var_t)
+{
+  srv_ibuf_accel_rate= ibuf_accel_rate.get();
+}
+
+static void checkpoint_age_target_update(Session *, sql_var_t)
+{
+  srv_checkpoint_age_target= checkpoint_age_target.get();
+}
+
+static void flush_neighbor_pages_update(Session *, sql_var_t)
+{
+  srv_flush_neighbor_pages= flush_neighbor_pages.get();
+}
 
 static int innodb_commit_concurrency_validate(Session *session, set_var *var)
 {
@@ -2003,6 +2090,49 @@ innodb_file_format_max_validate(
   return(1);
 }
 
+/*********************************************************************//**
+Check if argument is a valid value for srv_read_ahead and set it.  This
+function is registered as a callback with MySQL.
+@return 0 for valid read_ahead value */
+static
+int
+read_ahead_validate(
+/*================*/
+  Session*,             /*!< in: thread handle */
+  set_var*    var)
+{
+  const char *read_ahead_input = var->value->str_value.ptr();
+  int res = read_ahead_typelib.find_type(read_ahead_input, TYPELIB::e_none); // e_none is wrong
+
+  if (res > 0) {
+    srv_read_ahead = res - 1;
+    return 0;
+  }
+
+  return 1;
+}
+
+/*********************************************************************//**
+Check if argument is a valid value for srv_adaptive_flushing_method and
+set it.  This function is registered as a callback with MySQL.
+@return 0 for valid read_ahead value */
+static
+int
+adaptive_flushing_method_validate(
+/*==============================*/
+  Session*,             /*!< in: thread handle */
+  set_var*    var)
+{
+  const char *adaptive_flushing_method_input = var->value->str_value.ptr();
+  int res = adaptive_flushing_method_typelib.find_type(adaptive_flushing_method_input, TYPELIB::e_none); // e_none is wrong
+
+  if (res > 0) {
+    srv_adaptive_flushing_method = res - 1;
+    return 0;
+  }
+  return 1;
+}
+
 
 /*********************************************************************//**
 Opens an InnoDB database.
@@ -2034,28 +2164,31 @@ innobase_init(
   srv_spin_wait_delay= innodb_spin_wait_delay.get();
   srv_thread_sleep_delay= innodb_thread_sleep_delay.get();
   srv_read_ahead_threshold= innodb_read_ahead_threshold.get();
+  srv_auto_lru_dump= buffer_pool_restore_at_startup.get();
+  srv_ibuf_max_size= ibuf_max_size.get();
+  srv_ibuf_active_contract= ibuf_active_contract.get();
+  srv_ibuf_accel_rate= ibuf_accel_rate.get();
+  srv_checkpoint_age_target= checkpoint_age_target.get();
+  srv_flush_neighbor_pages= flush_neighbor_pages.get();
+
+  srv_read_ahead = read_ahead_typelib.find_type_or_exit(vm["read-ahead"].as<string>().c_str(),
+                                                        "read_ahead_typelib") + 1;
+
+  srv_adaptive_flushing_method = adaptive_flushing_method_typelib.find_type_or_exit(vm["adaptive-flushing-method"].as<string>().c_str(),
+                                                                                    "adaptive_flushing_method_typelib") + 1;
 
   /* Inverted Booleans */
 
-  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
-  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
-  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
-  srv_use_native_aio= (vm.count("disable-native-aio")) ? false : true;
-  support_xa= (vm.count("disable-xa")) ? false : true;
-  btr_search_enabled= (vm.count("disable-adaptive-hash-index")) ? false : true;
-
+  innobase_use_checksums= not vm.count("disable-checksums");
+  innobase_use_doublewrite= not vm.count("disable-doublewrite");
+  srv_adaptive_flushing= not vm.count("disable-adaptive-flushing");
+  srv_use_sys_malloc= not vm.count("use-internal-malloc");
+  srv_use_native_aio= not vm.count("disable-native-aio");
+  support_xa= not vm.count("disable-xa");
+  btr_search_enabled= not vm.count("disable-adaptive-hash-index");
 
   /* Hafta do this here because we need to late-bind the default value */
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= vm["data-home-dir"].as<string>();
-  }
-  else
-  {
-    innobase_data_home_dir= getDataHome().file_string();
-  }
-
+  innobase_data_home_dir= vm.count("data-home-dir") ? vm["data-home-dir"].as<string>() : getDataHome().file_string();
 
   if (vm.count("data-file-path"))
   {
@@ -2236,6 +2369,9 @@ innobase_change_buffering_inited_ok:
   srv_n_read_io_threads = (ulint) innobase_read_io_threads;
   srv_n_write_io_threads = (ulint) innobase_write_io_threads;
 
+  srv_read_ahead &= 3;
+  srv_adaptive_flushing_method %= 3;
+
   srv_force_recovery = (ulint) innobase_force_recovery;
 
   srv_use_doublewrite_buf = (ibool) innobase_use_doublewrite;
@@ -2289,43 +2425,27 @@ innobase_change_buffering_inited_ok:
   actuall_engine_ptr->dropTemporarySchema();
 
   context.add(new InnodbStatusTool);
-
   context.add(innodb_engine_ptr);
-
-  context.add(new(std::nothrow)CmpTool(false));
-
-  context.add(new(std::nothrow)CmpTool(true));
-
-  context.add(new(std::nothrow)CmpmemTool(false));
-
-  context.add(new(std::nothrow)CmpmemTool(true));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_TRX"));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCKS"));
-
-  context.add(new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS"));
-
-  context.add(new(std::nothrow)InnodbSysTablesTool());
-
-  context.add(new(std::nothrow)InnodbSysTableStatsTool());
-
-  context.add(new(std::nothrow)InnodbSysIndexesTool());
-
-  context.add(new(std::nothrow)InnodbSysColumnsTool());
-
-  context.add(new(std::nothrow)InnodbSysFieldsTool());
-
-  context.add(new(std::nothrow)InnodbSysForeignTool());
-
-  context.add(new(std::nothrow)InnodbSysForeignColsTool());
-
-  context.add(new(std::nothrow)InnodbInternalTables());
-  context.add(new(std::nothrow)InnodbReplicationTable());
+  context.add(new CmpTool(false));
+  context.add(new CmpTool(true));
+  context.add(new CmpmemTool(false));
+  context.add(new CmpmemTool(true));
+  context.add(new InnodbTrxTool("INNODB_TRX"));
+  context.add(new InnodbTrxTool("INNODB_LOCKS"));
+  context.add(new InnodbTrxTool("INNODB_LOCK_WAITS"));
+  context.add(new InnodbSysTablesTool());
+  context.add(new InnodbSysTableStatsTool());
+  context.add(new InnodbSysIndexesTool());
+  context.add(new InnodbSysColumnsTool());
+  context.add(new InnodbSysFieldsTool());
+  context.add(new InnodbSysForeignTool());
+  context.add(new InnodbSysForeignColsTool());
+  context.add(new InnodbInternalTables());
+  context.add(new InnodbReplicationTable());
 
   if (innobase_use_replication_log)
   {
-    ReplicationLog *replication_logger= new(std::nothrow)ReplicationLog();
+    ReplicationLog *replication_logger= new ReplicationLog();
     context.add(replication_logger);
     ReplicationLog::setup(replication_logger);
   }
@@ -2411,6 +2531,29 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value<uint32_t>("read_ahead_threshold",
                                                                    innodb_read_ahead_threshold,
                                                                    innodb_read_ahead_threshold_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("auto_lru_dump",
+                                                                   buffer_pool_restore_at_startup,
+                                                                   auto_lru_dump_update));
+  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("ibuf_max_size",
+                                                                            ibuf_max_size));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("ibuf_active_contract",
+                                                                   ibuf_active_contract,
+                                                                   ibuf_active_contract_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("ibuf_accel_rate",
+                                                                   ibuf_accel_rate,
+                                                                   ibuf_accel_rate_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("checkpoint_age_target",
+                                                                   checkpoint_age_target,
+                                                                   checkpoint_age_target_update));
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("flush_neighbor_pages",
+                                                                   flush_neighbor_pages,
+                                                                   flush_neighbor_pages_update));
+  context.registerVariable(new sys_var_std_string("read_ahead",
+                                                  read_ahead,
+                                                  read_ahead_validate));
+  context.registerVariable(new sys_var_std_string("adaptive_flushing_method",
+                                                  adaptive_flushing_method,
+                                                  adaptive_flushing_method_validate));
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
@@ -3639,7 +3782,7 @@ innobase_mysql_cmp(
   const unsigned char* b,   /* in: data field */
   unsigned int  b_length) /* in: data field length, not UNIV_SQL_NULL */
 {
-  const CHARSET_INFO* charset;
+  const charset_info_st* charset;
   enum_field_types  mysql_tp;
   int     ret;
 
@@ -3872,7 +4015,7 @@ ha_innobase::store_key_val_for_row(
       const byte* data;
       ulint   key_len;
       ulint   true_len;
-      const CHARSET_INFO* cs;
+      const charset_info_st* cs;
       int   error=0;
 
       key_len = key_part->length;
@@ -3931,7 +4074,7 @@ ha_innobase::store_key_val_for_row(
 
     } else if (mysql_type == DRIZZLE_TYPE_BLOB) {
 
-      const CHARSET_INFO* cs;
+      const charset_info_st* cs;
       ulint   key_len;
       ulint   true_len;
       int   error=0;
@@ -4003,8 +4146,7 @@ ha_innobase::store_key_val_for_row(
       ulint     true_len;
       ulint     key_len;
       const unsigned char*    src_start;
-      enum_field_types  real_type;
-      const CHARSET_INFO* cs= field->charset();
+      const charset_info_st* cs= field->charset();
 
       key_len = key_part->length;
 
@@ -4015,7 +4157,6 @@ ha_innobase::store_key_val_for_row(
       }
 
       src_start = record + key_part->offset;
-      real_type = field->real_type();
       true_len = key_len;
 
       /* Character set for the field is defined only
@@ -6020,11 +6161,11 @@ Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
 InnobaseEngine::doCreateTable(
-/*================*/
-  Session         &session, /*!< in: Session */
-  Table&    form,   /*!< in: information on table columns and indexes */
-        const identifier::Table &identifier,
-        message::Table& create_proto)
+			      /*================*/
+			      Session         &session, /*!< in: Session */
+			      Table&    form,   /*!< in: information on table columns and indexes */
+			      const identifier::Table &identifier,
+			      const message::Table& create_proto)
 {
   int   error;
   dict_table_t* innobase_table;
@@ -6565,6 +6706,10 @@ InnobaseEngine::doDropSchema(
 
   innobase_commit_low(trx);
   trx_free_for_mysql(trx);
+
+  if (error) {
+    // What do we do here?
+  }
 
   return false; // We are just a listener since we lack control over DDL, so we give no positive acknowledgement. 
 }
@@ -8800,7 +8945,7 @@ innobase_get_at_most_n_mbchars(
 {
   ulint char_length;    /*!< character length in bytes */
   ulint n_chars;      /*!< number of characters in prefix */
-  const CHARSET_INFO* charset;  /*!< charset used in the field */
+  const charset_info_st* charset;  /*!< charset used in the field */
 
   charset = get_charset((uint) charset_id);
 
@@ -9134,8 +9279,8 @@ static void init_options(drizzled::module::option_context &context)
           "Number of UNDO logs to purge in one batch from the history list. "
           "Default is 20.");
   context("purge-threads",
-          po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(0),
-          "Purge threads can be either 0 or 1. Defalut is 0.");
+          po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(1),
+          "Purge threads can be either 0 or 1. Default is 1.");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
            "Stores each InnoDB table to an .ibd file in the database dir.");
@@ -9249,6 +9394,31 @@ static void init_options(drizzled::module::option_context &context)
   context("read-ahead-threshold",
           po::value<read_ahead_threshold_constraint>(&innodb_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
+  context("auto-lru-dump",
+	  po::value<uint32_constraint>(&buffer_pool_restore_at_startup)->default_value(0),
+	  "Time in seconds between automatic buffer pool dumps. "
+	  "0 (the default) disables automatic dumps.");
+  context("ibuf-max-size",
+          po::value<uint64_constraint>(&ibuf_max_size)->default_value(UINT64_MAX),
+          "The maximum size of the insert buffer (in bytes).");
+  context("ibuf-active-contract",
+          po::value<binary_constraint>(&ibuf_active_contract)->default_value(1),
+          "Enable/Disable active_contract of insert buffer. 0:disable 1:enable");
+  context("ibuf-accel-rate",
+          po::value<ibuf_accel_rate_constraint>(&ibuf_accel_rate)->default_value(100),
+          "Tunes amount of insert buffer processing of background, in addition to innodb_io_capacity. (in percentage)");
+  context("checkpoint-age-target",
+          po::value<uint32_constraint>(&checkpoint_age_target)->default_value(0),
+          "Control soft limit of checkpoint age. (0 : not control)");
+  context("flush-neighbor-pages",
+          po::value<binary_constraint>(&flush_neighbor_pages)->default_value(1),
+          "Enable/Disable flushing also neighbor pages. 0:disable 1:enable");
+  context("read-ahead",
+          po::value<string>(&read_ahead)->default_value("linear"),
+          "Control read ahead activity (none, random, [linear], both). [from 1.0.5: random read ahead is ignored]");
+  context("adaptive-flushing-method",
+          po::value<string>(&adaptive_flushing_method)->default_value("estimate"),
+          "Choose method of innodb_adaptive_flushing. (native, [estimate], keep_average)");
   context("disable-xa",
           "Disable InnoDB support for the XA two-phase commit");
   context("disable-table-locks",

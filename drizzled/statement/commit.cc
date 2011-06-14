@@ -28,11 +28,11 @@ namespace drizzled
 
 bool statement::Commit::execute()
 {
-  if (! getSession()->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+  if (! session().endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
   {
     return true;
   }
-  getSession()->my_ok();
+  session().my_ok();
   return false;
 }
 

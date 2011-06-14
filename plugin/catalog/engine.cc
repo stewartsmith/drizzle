@@ -92,7 +92,7 @@ void Engine::getMessages(drizzled::message::catalog::vector &messages)
   prime(messages);
 }
 
-drizzled::message::catalog::shared_ptr Engine::getMessage(drizzled::identifier::Catalog::const_reference identifier)
+drizzled::message::catalog::shared_ptr Engine::getMessage(const drizzled::identifier::Catalog& identifier)
 {
   if (drizzled::catalog::local_identifier() == identifier)
   {
@@ -208,7 +208,7 @@ bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled
 }
 
 
-drizzled::message::catalog::shared_ptr Engine::readFile(drizzled::identifier::Catalog::const_reference identifier)
+drizzled::message::catalog::shared_ptr Engine::readFile(const drizzled::identifier::Catalog& identifier)
 {
   std::string path(identifier.getPath());
 

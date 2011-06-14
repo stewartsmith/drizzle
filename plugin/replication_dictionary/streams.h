@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_REPLICATION_DICTIONARY_STREAMS_H
-#define PLUGIN_REPLICATION_DICTIONARY_STREAMS_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/replication_services.h>
@@ -57,4 +56,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_REPLICATION_DICTIONARY_STREAMS_H */

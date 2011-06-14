@@ -62,8 +62,7 @@
  * %End-Header%
  */
 
-#ifndef DRIZZLED_TYPE_UUID_H
-#define DRIZZLED_TYPE_UUID_H
+#pragma once
 
 #include <cstdio>
 #include <iostream>
@@ -205,7 +204,7 @@ public:
             node[5]);
   }
 
-  void time(struct timeval ret_val)
+  void time(struct timeval& ret_val)
   {
     uint32_t high;
     uint64_t clock_reg;
@@ -217,7 +216,6 @@ public:
     ret_val.tv_sec = clock_reg / 10000000;
     ret_val.tv_usec = (clock_reg % 10000000) / 10;
   }
-
   bool isTimeType()
   {
     return ((time_hi_and_version >> 12) & 0xF) == 1 ? true : false; 
@@ -231,5 +229,4 @@ public:
 } /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_UUID_H */
 

@@ -23,9 +23,9 @@
 #include <drizzled/error.h>
 #include <drizzled/function/str/alloc_buffer.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_func_rpad::fix_length_and_dec()
 {
@@ -205,10 +205,9 @@ String *Item_func_lpad::val_str(String *str)
     goto err;
   }
 
-  if (args[2]->null_value || !pad_char_length ||
-      str->alloc((uint32_t) byte_count))
+  if (args[2]->null_value || !pad_char_length)
     goto err;
-
+  str->alloc((uint32_t) byte_count);
   str->length(0);
   str->set_charset(collation.collation);
   count-= res_char_length;

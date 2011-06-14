@@ -47,9 +47,10 @@
 #include <drizzled/field/real.h>
 #include <drizzled/field/str.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/util/test.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static void do_field_eq(CopyField *copy)
 {
@@ -386,7 +387,7 @@ static void do_field_decimal(CopyField *copy)
 
 static void do_cut_string(CopyField *copy)
 {
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr, copy->from_ptr, copy->to_length);
 
   /* Check if we loosed any important characters */
@@ -409,7 +410,7 @@ static void do_cut_string(CopyField *copy)
 static void do_cut_string_complex(CopyField *copy)
 {						// Shorter string field
   int well_formed_error;
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   const unsigned char *from_end= copy->from_ptr + copy->from_length;
   uint32_t copy_length= cs->cset->well_formed_len(cs,
                                               (char*) copy->from_ptr,
@@ -440,7 +441,7 @@ static void do_cut_string_complex(CopyField *copy)
 
 static void do_expand_binary(CopyField *copy)
 {
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr, copy->from_ptr, copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
                  copy->to_length-copy->from_length, '\0');
@@ -450,7 +451,7 @@ static void do_expand_binary(CopyField *copy)
 
 static void do_expand_string(CopyField *copy)
 {
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
                  copy->to_length-copy->from_length, ' ');
@@ -477,7 +478,7 @@ static void do_varstring1(CopyField *copy)
 static void do_varstring1_mb(CopyField *copy)
 {
   int well_formed_error;
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   uint32_t from_length= (uint32_t) *(unsigned char*) copy->from_ptr;
   const unsigned char *from_ptr= copy->from_ptr + 1;
   uint32_t to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
@@ -518,7 +519,7 @@ static void do_varstring2(CopyField *copy)
 static void do_varstring2_mb(CopyField *copy)
 {
   int well_formed_error;
-  const CHARSET_INFO * const cs= copy->from_field->charset();
+  const charset_info_st * const cs= copy->from_field->charset();
   uint32_t char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
   uint32_t from_length= uint2korr(copy->from_ptr);
   const unsigned char *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;

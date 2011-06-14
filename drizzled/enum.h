@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ENUM_H
-#define DRIZZLED_ENUM_H
+#pragma once
 
 namespace drizzled
 {
@@ -143,14 +142,6 @@ enum enum_table_category
   */
   TABLE_CATEGORY_INFORMATION
 };
-
-enum enum_enable_or_disable
-{
-  LEAVE_AS_IS,
-  ENABLE,
-  DISABLE
-};
-
 
 enum enum_mark_columns
 {
@@ -301,4 +292,3 @@ enum drizzle_exit_codes
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ENUM_H */

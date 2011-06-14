@@ -20,15 +20,13 @@
 
 #include <config.h>
 
+#include <drizzled/catalog/instance.h>
 #include <drizzled/session.h>
 #include <drizzled/function/str/strfunc.h>
 #include <plugin/utility_functions/functions.h>
 
-namespace drizzled
-{
-
-namespace utility_functions
-{
+namespace drizzled {
+namespace utility_functions {
 
 String *Catalog::val_str(String *str)
 {

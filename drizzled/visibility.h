@@ -25,8 +25,9 @@
  */
 
 
-#ifndef DRIZZLED_VISIBILITY_H
-#define DRIZZLED_VISIBILITY_H
+#pragma once
+
+#include <drizzled/common_fwd.h>
 
 /**
  *
@@ -69,4 +70,3 @@
 
 
 
-#endif /* DRIZZLED_VISIBILITY_H */

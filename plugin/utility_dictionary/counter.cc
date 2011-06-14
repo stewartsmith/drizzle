@@ -24,7 +24,7 @@
 
 #include <drizzled/atomics.h>
 #include <drizzled/session.h>
-
+#include <drizzled/sql_lex.h>
 
 using namespace drizzled;
 using namespace std;
@@ -39,13 +39,13 @@ utility_dictionary::Counter::Counter() :
 
 bool utility_dictionary::Counter::Generator::populate()
 {
-  if (getSession().getLex()->isSumExprUsed() && count > 0)
+  if (lex().isSumExprUsed() && count > 0)
     return false;
 
-  if (getSession().getLex()->current_select->group_list.elements && count > 0)
+  if (lex().current_select->group_list.elements && count > 0)
     return false;
 
-  if (getSession().getLex()->current_select->explicit_limit or count == 0)
+  if (lex().current_select->explicit_limit or count == 0)
   {
     push(counter.increment());
   }

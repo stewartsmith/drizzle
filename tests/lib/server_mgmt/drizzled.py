@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010,2011 Patrick Crews
@@ -49,16 +49,26 @@ class drizzleServer(Server):
                                            , workdir_root)
         self.code_tree = self.system_manager.code_tree
         self.preferred_base_port = 9306
+        
+        # client files
+        self.drizzledump = self.code_tree.drizzledump
+        self.drizzle_client = self.code_tree.drizzle_client
+        self.drizzleimport = self.code_tree.drizzleimport
+        self.drizzleslap = self.code_tree.drizzleslap
+        self.server_path = self.code_tree.drizzle_server
+        self.drizzle_client_path = self.code_tree.drizzle_client
+        self.schemawriter = self.code_tree.schemawriter
+
         # Get our ports
         self.port_block = self.system_manager.port_manager.get_port_block( self.name
                                                                          , self.preferred_base_port
-                                                                         , 5 )
+                                                                         , 6 )
         self.master_port = self.port_block[0]
         self.drizzle_tcp_port = self.port_block[1]
         self.mc_port = self.port_block[2]
         self.pbms_port = self.port_block[3]
         self.rabbitmq_node_port = self.port_block[4]
-        
+        self.json_server_port = self.port_block[5]
 
         # Generate our working directories
         self.dirset = { self.name : { 'var': {'std_data_ln':( os.path.join(self.code_tree.testdir,'std_data'))
@@ -98,16 +108,6 @@ class drizzleServer(Server):
         else:
             self.secure_file_string = "--secure-file-priv='%s'" %(self.vardir)
         self.user_string = '--user=root'
-
-        # client files
-        self.drizzledump = self.code_tree.drizzledump
-        self.drizzle_client = self.code_tree.drizzle_client
-        self.drizzleimport = self.code_tree.drizzleimport
-        self.drizzleadmin = self.code_tree.drizzleadmin
-        self.drizzleslap = self.code_tree.drizzleslap
-        self.server_path = self.code_tree.drizzle_server
-        self.drizzle_client_path = self.code_tree.drizzle_client
-        self.schemawriter = self.code_tree.schemawriter
 
         self.initialize_databases()
         self.take_db_snapshot()
@@ -166,7 +166,7 @@ class drizzleServer(Server):
     def get_stop_cmd(self):
         """ Return the command that will shut us down """
         
-        return "%s --user=root --port=%d --shutdown " %(self.drizzle_client_path, self.master_port)
+        return "%s --user=root --port=%d --connect-timeout=5 --silent --password= --shutdown " %(self.drizzle_client_path, self.master_port)
            
 
     def get_ping_cmd(self):
@@ -202,7 +202,7 @@ class drizzleServer(Server):
                      , "master-user=root"
                      , "master-pass=''"
                      , "max-reconnects=100"
-                     , "seconds-between-reconnects=20"
+                     #, "seconds-between-reconnects=20"
                      ]
        outfile = open(self.slave_config_file,'w')
        for line in config_data:

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TYPE_BOOLEAN_H
-#define DRIZZLED_TYPE_BOOLEAN_H
+#pragma once
 
 namespace drizzled
 {
@@ -34,4 +33,3 @@ bool convert(String &destination, const bool source, bool ansi_display);
 } /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_BOOLEAN_H */

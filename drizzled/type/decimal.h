@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_TYPE_DECIMAL_H
-#define DRIZZLED_TYPE_DECIMAL_H
+#pragma once
 #include <assert.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/definitions.h>
@@ -146,10 +145,6 @@ inline int decimal_string_size(const decimal_t *dec)
 */
 #define DECIMAL_MAX_STR_LENGTH (DECIMAL_MAX_POSSIBLE_PRECISION + 2)
 
-namespace type {
-class Decimal;
-}
-
 inline int class_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);
@@ -229,7 +224,7 @@ public:
 
   int val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) const;
 
-  int store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset);
+  int store(uint32_t mask, const char *from, uint32_t length, const charset_info_st * charset);
 
   int store(uint32_t mask, char *str, char **end)
   {
@@ -457,5 +452,4 @@ double my_double_round(double value, int64_t dec, bool dec_unsigned,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_DECIMAL_H */
 

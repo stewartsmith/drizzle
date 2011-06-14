@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSTHREAD_H__
 #define __CSTHREAD_H__
 

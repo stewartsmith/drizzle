@@ -37,6 +37,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/unique.h>
+#include <drizzled/table.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -44,8 +45,7 @@ using namespace CMATH_NAMESPACE;
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 int unique_write_to_ptrs(unsigned char* key,
                          uint32_t, Unique *unique)

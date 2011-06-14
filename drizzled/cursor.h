@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CURSOR_H
-#define DRIZZLED_CURSOR_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/definitions.h>
@@ -31,53 +30,26 @@
 #include <drizzled/message/table.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/thr_lock.h>
-#include <drizzled/xid.h>
 
 #include <bitset>
 #include <algorithm>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
-class AlterInfo;
-class CreateField;
-class ForeignKeyInfo;
-class Item;
-class Item_ident;
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
-class String;
-class Table;
-class TableList;
-class TableShare;
-class select_result;
-class sys_var_str;
-struct Order;
-
 typedef List<Item> List_item;
 extern KEY_CREATE_INFO default_key_create_info;
-
-/* Forward declaration for condition pushdown to storage engine */
-typedef class Item COND;
-
-typedef struct system_status_var system_status_var;
-
-namespace optimizer { class CostVector; }
-namespace plugin { class StorageEngine; }
 
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
 */
-template<class T>
-inline key_part_map make_keypart_map(T a)
+inline key_part_map make_keypart_map(int a)
 {
   return (((key_part_map)2 << a) - 1);
 }
@@ -86,8 +58,7 @@ inline key_part_map make_keypart_map(T a)
   bitmap with first N bits set
   (keypart_map for a key prefix of [0..N-1] keyparts)
 */
-template<class T>
-inline key_part_map make_prev_keypart_map(T a)
+inline key_part_map make_prev_keypart_map(int a)
 {
   return (((key_part_map)1 << a) - 1);
 }
@@ -640,7 +611,6 @@ extern const char *ha_row_type[];
 /* basic stuff */
 void ha_init_errors(void);
 
-class SortField;
 SortField *make_unireg_sortorder(Order *order, uint32_t *length,
                                  SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
@@ -681,8 +651,8 @@ bool create_table_no_lock(Session *session,
                           bool is_if_not_exists);
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set);
@@ -747,4 +717,3 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CURSOR_H */

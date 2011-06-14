@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -169,6 +169,7 @@ class testExecutor(test_execution.testExecutor):
                    ,  'MASTER_MYPORT': str(self.master_server.master_port)
                    ,  'MC_PORT': str(self.master_server.mc_port)
                    ,  'PBMS_PORT': str(self.master_server.pbms_port)
+                   ,  'JSON_SERVER_PORT': str(self.master_server.json_server_port)
                    ,  'RABBITMQ_NODE_PORT': str(self.master_server.rabbitmq_node_port)
                    ,  'DRIZZLE_TCP_PORT': str(self.master_server.drizzle_tcp_port)
                    ,  'EXE_DRIZZLE': self.master_server.drizzle_client
@@ -181,8 +182,7 @@ class testExecutor(test_execution.testExecutor):
                                                           , self.master_server.master_port)
                    ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
                                                    , self.master_server.master_port)
-                   ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
-                                                         , self.master_server.master_port)
+                   ,  'DRIZZLE_TRX_READER' : self.system_manager.code_tree.drizzle_trx_reader
                    }     
 
         self.working_environment = self.system_manager.create_working_environment(env_reqs)
@@ -190,13 +190,6 @@ class testExecutor(test_execution.testExecutor):
     def process_symlink_reqs(self):
         """ Create any symlinks we may need """
         needed_symlinks = []
-
-        # handle filesystem_engine 
-        if self.current_testcase.suitename == 'filesystem_engine':
-            needed_symlinks.append(( os.path.join(self.current_testcase.suitepath
-                                  , 't')
-                                  , os.path.join(self.master_server.vardir
-                                  , "filesystem_ln")))
 
         self.system_manager.create_symlinks(needed_symlinks)
 

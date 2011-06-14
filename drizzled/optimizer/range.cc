@@ -140,10 +140,12 @@
 #include <drizzled/key.h>
 #include <drizzled/unique.h>
 #include <drizzled/temporal.h> /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace std;
-namespace drizzled
-{
+
+namespace drizzled {
 
 #define HA_END_SPACE_KEY 0
 
@@ -364,7 +366,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 
   if (head->sort.io_cache)
   {
-    memcpy(select->file, head->sort.io_cache, sizeof(internal::IO_CACHE));
+    memcpy(select->file, head->sort.io_cache, sizeof(internal::io_cache_st));
     select->records=(ha_rows) (select->file->end_of_file/
 			       head->cursor->ref_length);
     delete head->sort.io_cache;
@@ -378,7 +380,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    file(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
+    file(static_cast<internal::io_cache_st *>(memory::sql_calloc(sizeof(internal::io_cache_st)))),
     free_cond(false)
 {
   quick_keys.reset();
@@ -811,7 +813,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
           objects are not allowed so don't use ROR-intersection for
           table deletes.
         */
-        if ((session->getLex()->sql_command != SQLCOM_DELETE))
+        if ((session->lex().sql_command != SQLCOM_DELETE))
         {
           /*
             Get best non-covering ROR-intersection plan and prepare data for
@@ -1044,7 +1046,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   /* Calculate cost(rowid_to_row_scan) */
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->getLex()->select_lex.join;
+    Join *join= param->session->lex().select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -1087,7 +1089,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   }
 
 build_ror_index_merge:
-  if (!all_scans_ror_able || param->session->getLex()->sql_command == SQLCOM_DELETE)
+  if (!all_scans_ror_able || param->session->lex().sql_command == SQLCOM_DELETE)
     return(imerge_trp);
 
   /* Ok, it is possible to build a ROR-union, try it. */
@@ -1162,7 +1164,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     optimizer::CostVector sweep_cost;
-    Join *join= param->session->getLex()->select_lex.join;
+    Join *join= param->session->lex().select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
@@ -1588,7 +1590,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (! info->is_covering)
   {
     optimizer::CostVector sweep_cost;
-    Join *join= info->param->session->getLex()->select_lex.join;
+    Join *join= info->param->session->lex().select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -3341,10 +3343,10 @@ and_all_keys(optimizer::RangeParameter *param,
   optimizer::SEL_ARG *next= NULL;
   ulong use_count=key1->use_count;
 
-  if (key1->elements != 1)
+  if (key1->size() != 1)
   {
-    key2->use_count+=key1->elements-1; //psergey: why we don't count that key1 has n-k-p?
-    key2->increment_use_count((int) key1->elements-1);
+    key2->use_count+=key1->size()-1; //psergey: why we don't count that key1 has n-k-p?
+    key2->increment_use_count((int) key1->size()-1);
   }
   if (key1->type == optimizer::SEL_ARG::MAYBE_KEY)
   {
@@ -3864,7 +3866,7 @@ ha_rows check_quick_select(Session *session,
       !(pk_is_clustered && keynr == param->table->getShare()->getPrimaryKey()))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
-  if (session->getLex()->sql_command != SQLCOM_SELECT)
+  if (session->lex().sql_command != SQLCOM_SELECT)
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   *bufsize= param->session->variables.read_rnd_buff_size;
@@ -4319,7 +4321,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
   /* Call multi_range_read_info() to get the MRR flags and buffer size */
   quick->mrr_flags= HA_MRR_NO_ASSOCIATION |
                     (table->key_read ? HA_MRR_INDEX_ONLY : 0);
-  if (session->getLex()->sql_command != SQLCOM_SELECT)
+  if (session->lex().sql_command != SQLCOM_SELECT)
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
@@ -4354,7 +4356,7 @@ range_seq_t optimizer::quick_range_seq_init(void *init_param, uint32_t, uint32_t
   quick->qr_traversal_ctx.first=  (optimizer::QuickRange**)quick->ranges.buffer;
   quick->qr_traversal_ctx.cur=    (optimizer::QuickRange**)quick->ranges.buffer;
   quick->qr_traversal_ctx.last=   quick->qr_traversal_ctx.cur +
-                                  quick->ranges.elements;
+                                  quick->ranges.size();
   return &quick->qr_traversal_ctx;
 }
 
@@ -4567,7 +4569,7 @@ static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
-  Join *join= session->getLex()->current_select->join;
+  Join *join= session->lex().current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
@@ -5471,7 +5473,7 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
   optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
   quick= new optimizer::QuickGroupMinMaxSelect(param->table,
-                                               param->session->getLex()->current_select->join,
+                                               param->session->lex().current_select->join,
                                                have_min,
                                                have_max,
                                                min_max_arg_part,

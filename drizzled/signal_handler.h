@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SIGNAL_HANDLER_H
-#define DRIZZLED_SIGNAL_HANDLER_H
+#pragma once
 
 #include <signal.h>
 
@@ -52,4 +51,3 @@ static inline void ignore_signal(int sig)
   assert(l_rc == 0);
 }
 
-#endif /* DRIZZLED_SIGNAL_HANDLER_H */

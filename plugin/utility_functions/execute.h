@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
-#define PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H
+#pragma once
 
 #include <drizzled/item/function/boolean.h>
 #include <drizzled/execute.h>
@@ -73,4 +72,3 @@ public:
 } /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_EXECUTE_H */

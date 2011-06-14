@@ -33,9 +33,11 @@
 #include <drizzled/table.h>
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/plugin/daemon.h>
-
+#include <drizzled/session/table_messages.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/key.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -120,7 +122,7 @@ public:
   int doCreateTable(Session&,
                     Table& table_arg,
                     const identifier::Table &identifier,
-                    message::Table&);
+                    const message::Table&);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
@@ -146,7 +148,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
     (void)state;
@@ -161,7 +163,7 @@ public:
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                          const drizzled::identifier::Schema&,
-                                         drizzled::identifier::Table::vector&)
+                                         drizzled::identifier::table::vector&)
 {
 }
 
@@ -1358,7 +1360,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
                                 const identifier::Table &identifier,
-                                message::Table& create_proto)
+                                const message::Table& create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;

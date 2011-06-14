@@ -82,6 +82,8 @@ drizzled/function_hash.h
 drizzled/gen_lex_hash
 drizzled/generated_probes.h
 drizzled/lex_hash.h
+drizzled/message/alter_table.pb.cc
+drizzled/message/alter_table.pb.h
 drizzled/message/binary_log.pb.cc
 drizzled/message/binary_log.pb.h
 drizzled/message/binlog_reader
@@ -111,7 +113,6 @@ drizzled/message/table_reader
 drizzled/message/table_writer
 drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
-drizzled/message/transaction_reader
 drizzled/message/transaction_writer
 drizzled/module/load_list.h
 drizzled/plugin/version.h
@@ -139,7 +140,6 @@ extra/Makefile.in
 extra/comp_err
 extra/innochecksum
 extra/my_print_defaults
-extra/mysql_password_hash
 extra/mysql_waitpid
 field.gcno
 field_conv.gcno
@@ -165,6 +165,7 @@ install-sh
 item.gcno
 key.gcno
 key_map.gcno
+libdrizzle-2.0/libdrizzle/mysql_password_hash
 libmysql/Makefile.in
 libserialutil_la-db.gcno
 libserialutil_la-unireg.gcno
@@ -219,7 +220,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 plugin/storage_engine_api_tester/cursor_states_to_dot
 plugin/storage_engine_api_tester/engine_states_to_dot
-plugin/transaction_log/utilities/transaction_reader
+plugin/transaction_log/utilities/drizzletrx
 po/POTFILES
 po/drizzle7.pot
 po/remove-potcdate.sed
@@ -303,7 +304,8 @@ support-files/drizzle-log-rotate
 support-files/drizzle7.pc
 support-files/drizzle.server
 support-files/drizzle.spec
-support-files/libdrizzle.pc
+support-files/libdrizzle-1.0.pc
+support-files/libdrizzle-2.0.pc
 support-files/libdrizzleclient.pc
 support-files/smf/Makefile.in
 support-files/smf/drizzle
@@ -316,6 +318,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
+tests/dbqp
 tests/dbqp_data/uuid
 tests/dbqp_work
 tests/install_test_db
@@ -346,3 +349,12 @@ drizzled/message/catalog.pb.cc
 drizzled/message/catalog.pb.h
 drizzled/message/catalog_reader
 drizzled/message/catalog_writer
+drizzled/message/replication_options.pb.cc
+drizzled/message/replication_options.pb.h
+drizzled/message/access.pb.cc
+drizzled/message/access.pb.h
+drizzled/execute/parser.cc
+drizzled/execute/parser.h
+drizzled/execute/parser.output
+drizzled/execute/scanner.cc
+drizzled/execute/scanner.h

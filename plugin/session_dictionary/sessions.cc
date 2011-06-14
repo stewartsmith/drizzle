@@ -30,7 +30,7 @@
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/pthread_globals.h>
-
+#include <drizzled/session/state.h>
 #include <set>
 
 using namespace std;
@@ -42,7 +42,7 @@ Sessions::Sessions() :
   plugin::TableFunction("DATA_DICTIONARY", "SESSIONS")
 {
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("SESION_USERNAME", 16);
+  add_field("SESSION_USERNAME", 16);
   add_field("SESSION_HOST", NI_MAXHOST);
   add_field("SESSION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SESSION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
@@ -51,7 +51,6 @@ Sessions::Sessions() :
   add_field("QUERY", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
   add_field("HAS_GLOBAL_LOCK", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_INTERACTIVE", plugin::TableFunction::BOOLEAN, 0, false);
-  add_field("IS_ADMIN", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_CONSOLE", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
@@ -67,12 +66,10 @@ Sessions::Generator::~Generator()
 
 bool Sessions::Generator::populate()
 {
-  drizzled::Session::pointer tmp;
-
-  while ((tmp= session_generator))
+  while (Session* tmp= session_generator)
   {
-    drizzled::session::State::const_shared_ptr state(tmp->state());
-    identifier::User::const_shared_ptr tmp_sctx= tmp->user();
+    boost::shared_ptr<session::State> state(tmp->state());
+    identifier::user::ptr tmp_sctx= tmp->user();
 
     /* ID */
     push((int64_t) tmp->thread_id);
@@ -90,7 +87,7 @@ bool Sessions::Generator::populate()
     push(tmp->catalog().name());
 
     /* SCHEMA */
-    drizzled::util::string::const_shared_ptr schema(tmp->schema());
+    util::string::ptr schema(tmp->schema());
     if (schema and not schema->empty())
     {
       push(*schema);
@@ -101,10 +98,9 @@ bool Sessions::Generator::populate()
     }
 
     /* COMMAND */
-    const char *val= tmp->getKilled() == Session::KILL_CONNECTION ? "Killed" : NULL;
-    if (val)
+    if (tmp->getKilled() == Session::KILL_CONNECTION)
     {
-      push(val);
+      push("Killed");
     }
     else
     {
@@ -133,9 +129,6 @@ bool Sessions::Generator::populate()
 
     /* IS_INTERACTIVE */
     push(tmp->getClient()->isInteractive());
-
-    /* IS_ADMIN */
-    push(tmp->getClient()->isAdmin());
 
     /* IS_CONSOLE */
     push(tmp->getClient()->isConsole());

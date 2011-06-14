@@ -18,8 +18,7 @@
  */
 
 #include <drizzled/sql_sort.h>
-#ifndef DRIZZLED_FILESORT_INFO_H
-#define DRIZZLED_FILESORT_INFO_H
+#pragma once
 
 
 namespace drizzled
@@ -29,7 +28,7 @@ namespace drizzled
 class filesort_info
 {
 public:
-  internal::st_io_cache *io_cache;           /* If sorted through filesort */
+  internal::io_cache_st *io_cache;           /* If sorted through filesort */
   unsigned char     **sort_keys;        /* Buffer for sorting keys */
   unsigned char     *buffpek;           /* Buffer for buffpek structures */
   uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
@@ -75,4 +74,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILESORT_INFO_H */

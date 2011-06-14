@@ -34,11 +34,7 @@ String *Item_date::val_str(String *str)
   if (! get_temporal(temporal))
     return (String *) NULL; /* get_temporal throws error. */
 
-  if (str->alloc(type::Time::MAX_STRING_LENGTH))
-  {
-    null_value= true;
-    return (String *) NULL;
-  }
+  str->alloc(type::Time::MAX_STRING_LENGTH);
 
   /* Convert the Date to a string and return it */
   size_t new_length;

@@ -21,8 +21,9 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/my_hash.h>
 
 using namespace drizzled;
 using namespace std;
@@ -45,16 +46,16 @@ ShowTableStatus::ShowTableStatus() :
 ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   show_dictionary::Show::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
   if (not isShowQuery())
    return;
 
-  statement::Show *select= static_cast<statement::Show *>(getSession().getLex()->statement);
+  statement::Show& select= static_cast<statement::Show&>(statement());
 
-  schema_predicate.append(select->getShowSchema());
+  schema_predicate.append(select.getShowSchema());
 
-  util::string::const_shared_ptr schema(getSession().schema());
+  util::string::ptr schema(getSession().schema());
   if (schema_predicate.empty() and schema)
   {
     schema_predicate.append(*schema);
@@ -71,7 +72,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
       table_list.push_back(iter->second);
     }
 
-    for (drizzled::Table *tmp_table= getSession().getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
+    for (drizzled::Table *tmp_table= getSession().open_tables.getTemporaryTables(); tmp_table; tmp_table= tmp_table->getNext())
     {
       if (tmp_table->getShare())
       {
@@ -139,7 +140,7 @@ bool ShowTableStatus::Generator::populate()
 {
   if (not next())
     return false;
-  
+
   fill();
 
   return true;

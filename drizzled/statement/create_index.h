@@ -18,22 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_INDEX_H
-#define DRIZZLED_STATEMENT_CREATE_INDEX_H
+#pragma once
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class CreateIndex : public CreateTable
 {
 public:
-  CreateIndex(Session *in_session, const drizzled::ha_build_method);
+  CreateIndex(Session *in_session);
 
   bool execute();
 };
@@ -42,4 +37,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_INDEX_H */

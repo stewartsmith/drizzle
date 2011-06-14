@@ -17,16 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SORT_FIELD_H
-#define DRIZZLED_SORT_FIELD_H
+#pragma once
 
 #include <drizzled/item_result.h>
 
-namespace drizzled
-{
-
-class Field;
-class Item;
+namespace drizzled {
 
 /**
  * A structure used to describe sort information
@@ -57,4 +52,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SORT_FIELD_H */

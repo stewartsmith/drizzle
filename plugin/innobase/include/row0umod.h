@@ -23,6 +23,7 @@ Undo modify of a row
 Created 2/27/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef row0umod_h
 #define row0umod_h
 

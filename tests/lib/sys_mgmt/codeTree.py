@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -61,6 +61,7 @@ class drizzleTree(codeTree):
         self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'])])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'drizzled'))
         self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
+        self.top_builddir = variables['topbuilddir']
         self.testdir = self.system_manager.find_path([os.path.abspath(variables['testdir'])])
         self.clientbindir = self.system_manager.find_path([os.path.join(self.builddir, 'client')
                                      , os.path.join(self.basedir, 'client')
@@ -70,9 +71,6 @@ class drizzleTree(codeTree):
                            , os.path.join(self.testdir,'suite')
                            ]
 
-
-        self.drizzleadmin = self.system_manager.find_path([os.path.join(self.clientbindir,
-                                                     'drizzleadmin')])
 
         self.drizzle_client = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                      'drizzle')])
@@ -101,6 +99,9 @@ class drizzleTree(codeTree):
 
         self.drizzletest = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                    'drizzletest')])
+
+        self.drizzle_trx_reader = self.system_manager.find_path([os.path.join(self.basedir,
+                                                                 'plugin/transaction_log/utilities/drizzletrx')])
 
         self.server_version_string = None
         self.server_executable = None
@@ -153,11 +154,15 @@ class drizzleTree(codeTree):
         ld_lib_paths = []
         if self.source_dist:
             ld_lib_paths = [ os.path.join(self.basedir,"libdrizzleclient/.libs/")
-                               , os.path.join(self.basedir,"mysys/.libs/")
-                               , os.path.join(self.basedir,"mystrings/.libs/")
-                               , os.path.join(self.basedir,"drizzled/.libs/")
-			                         , "/usr/local/lib"
-                               ]
+                           , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle.libs")
+                           , os.path.join(self.basedir,"libdrizzle/.libs")
+                           , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle/.libs")
+                           , os.path.join(self.basedir,"libdrizzle-1.0/libdrizzle/.libs")
+                           , os.path.join(self.basedir,"mysys/.libs/")
+                           , os.path.join(self.basedir,"mystrings/.libs/")
+                           , os.path.join(self.basedir,"drizzled/.libs/")
+			                     , "/usr/local/lib"
+                           ]
         else:
             ld_lib_paths = [ os.path.join(self.basedir,"lib")]
         return ld_lib_paths

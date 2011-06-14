@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_ERRMSG_H
-#define PLUGIN_SYSLOG_ERRMSG_H
+#pragma once
 
 #include <stdarg.h>
 #include <drizzled/plugin/error_message.h>
@@ -48,4 +47,3 @@ public:
 } /* namespace error_message */
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_SYSLOG_ERRMSG_H */

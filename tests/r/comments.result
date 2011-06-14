@@ -31,9 +31,9 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 select 1/*!000002*/;
 1
 1
-select 1/*!2038129999 2*/;
+select 1/*!203812999999 2*/;
 1
 1
-select 1 + /*!00000 2 */ + 3 /*!2038129999 noise*/ + 4;
+select 1 + /*!00000 2 */ + 3 /*!203812999999 noise*/ + 4;
 1 +  2  + 3  + 4
 10

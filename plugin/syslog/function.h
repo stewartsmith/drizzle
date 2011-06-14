@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_FUNCTION_H
-#define PLUGIN_SYSLOG_FUNCTION_H
+#pragma once
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
@@ -49,4 +48,3 @@ public:
 } /* namepsace drizzle_plugin */
 
 
-#endif /* PLUGIN_SYSLOG_FUNCTION_H */

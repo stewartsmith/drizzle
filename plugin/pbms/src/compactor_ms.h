@@ -34,6 +34,7 @@
  *
  */
 
+#pragma once
 #ifndef __COMPACTOR_MS_H__
 #define __COMPACTOR_MS_H__
 

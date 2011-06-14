@@ -18,28 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
-#define DRIZZLED_STATEMENT_ALTER_TABLE_H
+#pragma once
 
 #include <drizzled/statement/create_table.h>
 
-namespace drizzled
-{
-class Session;
-class TableList;
-
-namespace message
-{
-  class Table;
-}
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class AlterTable : public CreateTable
 {
 public:
-  AlterTable(Session *in_session, Table_ident *ident, drizzled::ha_build_method build_arg);
+  AlterTable(Session *in_session, Table_ident *ident);
 
   virtual bool is_alter() const
   {
@@ -63,4 +52,3 @@ bool alter_table(Session *session,
                  uint32_t order_num, Order *order, bool ignore);
 
 } /* namespace drizzled */
-#endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

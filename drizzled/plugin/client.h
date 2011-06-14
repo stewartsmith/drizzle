@@ -17,24 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_CLIENT_H
-#define DRIZZLED_PLUGIN_CLIENT_H
+#pragma once
 
 #include <drizzled/catalog/instance.h>
 #include <drizzled/catalog/local.h>
 #include <drizzled/error_t.h>
 #include <drizzled/item.h>
-#include <drizzled/sql_list.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-class String;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class allows new client sources to be written. This could be through
@@ -119,11 +111,6 @@ public:
     return false;
   }
 
-  virtual bool isAdmin() const
-  {
-    return false;
-  }
-
   virtual catalog::Instance::shared_ptr catalog()
   {
     return catalog::local();
@@ -132,7 +119,7 @@ public:
   /**
    * Read command from client.
    */
-  virtual bool readCommand(char **packet, uint32_t *packet_length)= 0;
+  virtual bool readCommand(char **packet, uint32_t& packet_length)= 0;
 
   /* Send responses. */
   virtual void sendOK(void)= 0;
@@ -145,19 +132,19 @@ public:
   virtual bool sendFields(List<Item> *list)= 0;
 
   /* Send result fields in various forms. */
-  virtual bool store(Field *from)= 0;
-  virtual bool store(void)= 0;
-  virtual bool store(int32_t from)= 0;
-  virtual bool store(uint32_t from)= 0;
-  virtual bool store(int64_t from)= 0;
-  virtual bool store(uint64_t from)= 0;
-  virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
-  virtual bool store(const type::Time *from);
-  virtual bool store(const char *from);
-  virtual bool store(const char *from, size_t length)= 0;
-  virtual bool store(const std::string &from)
+  virtual void store(Field *from)= 0;
+  virtual void store()= 0;
+  virtual void store(int32_t from)= 0;
+  virtual void store(uint32_t from)= 0;
+  virtual void store(int64_t from)= 0;
+  virtual void store(uint64_t from)= 0;
+  virtual void store(double from, uint32_t decimals, String *buffer)= 0;
+  virtual void store(const type::Time *from);
+  virtual void store(const char *from);
+  virtual void store(const char *from, size_t length)= 0;
+  virtual void store(const std::string &from)
   {
-    return store(from.c_str(), from.size());
+    store(from.c_str(), from.size());
   }
 
   /* Try to remove these. */
@@ -170,4 +157,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_CLIENT_H */

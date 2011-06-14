@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_REF_H
-#define DRIZZLED_ITEM_REF_H
+#pragma once
 
 #include <drizzled/item/ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_ref :public Item_ident
 {
@@ -77,7 +75,7 @@ public:
   String *str_result(String* tmp);
   type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
-  bool send(plugin::Client *client, String *tmp);
+  void send(plugin::Client *client, String *tmp);
   void make_field(SendField *field);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
@@ -157,4 +155,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_REF_H */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HANDLER_STRUCTS_H
-#define DRIZZLED_HANDLER_STRUCTS_H
+#pragma once
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -36,15 +35,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/structs.h>
 
-namespace drizzled
-{
-
-struct charset_info_st;
-
-namespace plugin
-{
-class StorageEngine;
-}
+namespace drizzled {
 
 typedef struct st_ha_create_information
 {
@@ -139,4 +130,3 @@ typedef struct st_range_seq_if
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HANDLER_STRUCTS_H */

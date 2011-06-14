@@ -95,7 +95,7 @@ bool CharacterSetsTool::Generator::populate()
 
 void CharacterSetsTool::Generator::fill()
 {
-  const CHARSET_INFO * const tmp_cs= character_set_iter[0];
+  const charset_info_st * const tmp_cs= character_set_iter[0];
 
   /* CHARACTER_SET_NAME */
   push(tmp_cs->csname);

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SELECT_DUMPVAR_H
-#define DRIZZLED_SELECT_DUMPVAR_H
+#pragma once
 
 #include <drizzled/error.h>
 #include <drizzled/function/set_user_var.h>
@@ -27,10 +26,7 @@
 
 #include <vector>
 
-namespace drizzled
-{
-
-class var;
+namespace drizzled {
 
 class select_dumpvar :public select_result_interceptor {
   ha_rows row_count;
@@ -56,4 +52,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_DUMPVAR_H */

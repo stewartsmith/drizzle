@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_MODULE_H
-#define DRIZZLED_MODULE_MODULE_H
+#pragma once
 
 /**
  * @file Defines a Plugin Module
@@ -28,23 +27,15 @@
  * or more plugin::Plugin objects. 
  */
 
+#include <drizzled/common_fwd.h>
 #include <string>
 #include <vector>
 
 namespace drizzled {
 
-class set_var;
-class sys_var;
-
-namespace module { class Registry; }
-
 void module_shutdown(module::Registry&);
 
 namespace module {
-
-class Library;
-class Manifest;
-class VertexHandle;
 
 /* A plugin module */
 class Module
@@ -111,4 +102,3 @@ private:
 } /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MODULE_MODULE_H */

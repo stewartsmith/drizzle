@@ -65,7 +65,7 @@ void Item_null::print(String *str)
 }
 
 
-Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_null::safe_charset_converter(const charset_info_st * const tocs)
 {
   collation.set(tocs);
   return this;
@@ -110,9 +110,9 @@ int Item_null::save_safe_in_field(Field *field)
   Pack data in buffer for sending.
 */
 
-bool Item_null::send(plugin::Client *client, String *)
+void Item_null::send(plugin::Client *client, String *)
 {
-  return client->store();
+  client->store();
 }
 
 } /* namespace drizzled */

@@ -18,16 +18,11 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_RESULT_H
-#define DRIZZLED_SELECT_RESULT_H
+#pragma once
 
 #include <drizzled/current_session.h>
 
-namespace drizzled
-{
-
-class Join;
-class Select_Lex_Unit;
+namespace drizzled {
 
 class select_result :public memory::SqlAlloc {
 protected:
@@ -81,4 +76,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_RESULT_H */

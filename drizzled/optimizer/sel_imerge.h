@@ -17,20 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SEL_IMERGE_H
-#define DRIZZLED_OPTIMIZER_SEL_IMERGE_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class RangeParameter;
-class SEL_TREE;
-class SEL_ARG;
+namespace drizzled {
+namespace optimizer {
 
 /*
   SEL_IMERGE is a list of possible ways to do index merge, i.e. it is
@@ -119,4 +111,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SEL_IMERGE_H */

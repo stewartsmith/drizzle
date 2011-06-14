@@ -224,7 +224,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
-    CHARSET_INFO *save_cs;
+    charset_info_st *save_cs;
 
     /*
       Initialize length from its original value (number of characters),
@@ -290,7 +290,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         sql_field->sql_type == MYSQL_TYPE_ENUM)
     {
       uint32 dummy;
-      CHARSET_INFO *cs= sql_field->charset;
+      charset_info_st *cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
       /*
@@ -753,7 +753,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
     List<Key_part_spec>::iterator cols(key->columns);
     List<Key_part_spec>::iterator cols2(key->columns);
-    CHARSET_INFO *ft_key_charset=0;  // for FULLTEXT
+    charset_info_st *ft_key_charset=0;  // for FULLTEXT
     for (uint column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint length;

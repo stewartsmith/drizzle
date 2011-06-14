@@ -23,6 +23,7 @@ Insert buffer global types
 Created 7/29/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef ibuf0types_h
 #define ibuf0types_h
 

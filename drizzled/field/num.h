@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_NUM_H
-#define DRIZZLED_FIELD_NUM_H
+#pragma once
 
 #include <drizzled/field.h>
 
@@ -56,14 +55,13 @@ public:
 
   uint32_t is_equal(CreateField *new_field);
 
-  int check_int(const CHARSET_INFO * const cs, const char *str, int length,
+  int check_int(const charset_info_st * const cs, const char *str, int length,
                 const char *int_end, int error);
 
-  bool get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
+  bool get_int(const charset_info_st * const cs, const char *from, uint32_t len,
                int64_t *rnd, uint64_t unsigned_max,
                int64_t signed_min, int64_t signed_max);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_NUM_H */

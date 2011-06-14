@@ -45,6 +45,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/util/tokenize.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/foreach.hpp>
 
@@ -178,9 +179,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
     return true;
   }
 
-  module::Module* tmp= new (std::nothrow) module::Module(manifest, library);
-  if (tmp == NULL)
-    return true;
+  module::Module* tmp= new module::Module(manifest, library);
 
   if (!test_plugin_options(tmp_root, tmp, long_options))
   {

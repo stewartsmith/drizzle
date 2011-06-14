@@ -67,6 +67,7 @@
 #include <drizzled/sort_field.h>
 #include <drizzled/select_result.h>
 #include <drizzled/key.h>
+#include <drizzled/my_hash.h>
 
 using namespace std;
 
@@ -86,7 +87,7 @@ static void change_cond_ref_to_const(Session *session,
                                      Item *cond,
                                      Item *field,
                                      Item *value);
-static bool copy_blobs(Field **ptr);
+static void copy_blobs(Field **ptr);
 
 static bool eval_const_cond(COND *cond)
 {
@@ -101,15 +102,13 @@ static bool eval_const_cond(COND *cond)
 const char *subq_sj_cond_name=
   "0123456789ABCDEF0123456789abcdef0123456789ABCDEF0123456789abcdef-sj-cond";
 
-static bool copy_blobs(Field **ptr)
+static void copy_blobs(Field **ptr)
 {
   for (; *ptr ; ptr++)
   {
     if ((*ptr)->flags & BLOB_FLAG)
-      if (((Field_blob *) (*ptr))->copy())
-	return 1;				// Error
+      ((Field_blob *) (*ptr))->copy();
   }
-  return 0;
 }
 
 /**
@@ -201,9 +200,9 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
     true  an error occured
     false ok
 */
-bool fix_inner_refs(Session *session, 
-                    List<Item> &all_fields, 
-                    Select_Lex *select, 
+bool fix_inner_refs(Session *session,
+                    List<Item> &all_fields,
+                    Select_Lex *select,
                     Item **ref_pointer_array)
 {
   Item_outer_ref *ref;
@@ -355,16 +354,16 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
 */
 bool select_query(Session *session,
                   Item ***rref_pointer_array,
-                  TableList *tables, 
-                  uint32_t wild_num, 
+                  TableList *tables,
+                  uint32_t wild_num,
                   List<Item> &fields,
-                  COND *conds, 
-                  uint32_t og_num,  
+                  COND *conds,
+                  uint32_t og_num,
                   Order *order,
                   Order *group,
-                  Item *having, 
+                  Item *having,
                   uint64_t select_options,
-                  select_result *result, 
+                  select_result *result,
                   Select_Lex_Unit *unit,
                   Select_Lex *select_lex)
 {
@@ -423,7 +422,7 @@ bool select_query(Session *session,
     goto err; // 1
   }
 
-  if (session->getLex()->describe & DESCRIBE_EXTENDED)
+  if (session->lex().describe & DESCRIBE_EXTENDED)
   {
     join->conds_history= join->conds;
     join->having_history= (join->having?join->having:join->tmp_having);
@@ -434,7 +433,7 @@ bool select_query(Session *session,
 
   join->exec();
 
-  if (session->getLex()->describe & DESCRIBE_EXTENDED)
+  if (session->lex().describe & DESCRIBE_EXTENDED)
   {
     select_lex->where= join->conds_history;
     select_lex->having= join->having_history;
@@ -544,7 +543,7 @@ bool update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,
-                         COND *cond, 
+                         COND *cond,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
@@ -561,7 +560,7 @@ bool update_ref_and_keys(Session *session,
     except BETWEEN predicates that have 3 arguments and
     IN predicates.
     This any predicate if it's not BETWEEN/IN can be used
-    directly to fill at most 2 array elements, either of KeyField 
+    directly to fill at most 2 array elements, either of KeyField
     or SargableParam type. For a BETWEEN predicate 3 elements
     can be filled as this predicate is considered as
     saragable with respect to each of its argument.
@@ -573,8 +572,8 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->getLex()->current_select->cond_count+1)*2 +
-	session->getLex()->current_select->between_count)*m+1);
+      (((session->lex().current_select->cond_count+1)*2 +
+	session->lex().current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
     return true;
   and_level= 0;
@@ -661,7 +660,7 @@ bool update_ref_and_keys(Session *session,
           use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
         if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
         {
-          if (prev->getKeypart() + 1 < use->getKeypart() || 
+          if (prev->getKeypart() + 1 < use->getKeypart() ||
               ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
             continue;				/* remove */
         }
@@ -682,8 +681,8 @@ bool update_ref_and_keys(Session *session,
         save_pos++;
       }
       i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-      set_dynamic(keyuse, (unsigned char*) &key_end, i);
-      keyuse->elements= i;
+      reinterpret_cast<optimizer::KeyUse*>(keyuse->buffer)[i] = key_end;
+      keyuse->set_size(i);
     }
   }
   return false;
@@ -956,8 +955,8 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(Join *join, 
-                        JoinTable *j, 
+bool create_ref_for_key(Join *join,
+                        JoinTable *j,
                         optimizer::KeyUse *org_keyuse,
                         table_map used_tables)
 {
@@ -1207,9 +1206,6 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
   }
   return tmp;
 }
-
-#define ICP_COND_USES_INDEX_ONLY 10
-
 
 /**
   cleanup JoinTable.
@@ -1565,7 +1561,7 @@ static bool check_simple_equality(Item *left_item,
 
       if (field_item->result_type() == STRING_RESULT)
       {
-        const CHARSET_INFO * const cs= ((Field_str*) field_item->field)->charset();
+        const charset_info_st * const cs= ((Field_str*) field_item->field)->charset();
         if (!item)
         {
           Item_func_eq *eq_item;
@@ -1633,7 +1629,7 @@ static bool check_simple_equality(Item *left_item,
     false   otherwise
 */
 static bool check_row_equality(Session *session,
-                               Item *left_row, 
+                               Item *left_row,
                                Item_row *right_row,
                                COND_EQUAL *cond_equal,
                                List<Item>* eq_list)
@@ -1652,12 +1648,12 @@ static bool check_row_equality(Session *session,
                                        (Item_row *) right_item,
 			               cond_equal, eq_list);
       if (!is_converted)
-        session->getLex()->current_select->cond_count++;
+        session->lex().current_select->cond_count++;
     }
     else
     {
       is_converted= check_simple_equality(left_item, right_item, 0, cond_equal);
-      session->getLex()->current_select->cond_count++;
+      session->lex().current_select->cond_count++;
     }
 
     if (!is_converted)
@@ -1713,7 +1709,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     if (left_item->type() == Item::ROW_ITEM &&
         right_item->type() == Item::ROW_ITEM)
     {
-      session->getLex()->current_select->cond_count--;
+      session->lex().current_select->cond_count--;
       return check_row_equality(session,
                                 (Item_row *) left_item,
                                 (Item_row *) right_item,
@@ -1744,7 +1740,7 @@ static bool check_equality(Session *session, Item *item, COND_EQUAL *cond_equal,
     just an argument of a comparison predicate.
     The function also determines the maximum number of members in
     equality lists of each Item_cond_and object assigning it to
-    session->getLex()->current_select->max_equal_elems.
+    session->lex().current_select->max_equal_elems.
 
   @note
     Multiple equality predicate =(f1,..fn) is equivalent to the conjuction of
@@ -1828,7 +1824,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
       {
         item_equal->fix_length_and_dec();
         item_equal->update_used_tables();
-        set_if_bigger(session->getLex()->current_select->max_equal_elems,
+        set_if_bigger(session->lex().current_select->max_equal_elems,
                       item_equal->members());
       }
 
@@ -1887,7 +1883,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         }
         else
           item_equal= (Item_equal *) eq_list.pop();
-        set_if_bigger(session->getLex()->current_select->max_equal_elems,
+        set_if_bigger(session->lex().current_select->max_equal_elems,
                       item_equal->members());
         return item_equal;
       }
@@ -1905,7 +1901,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
         {
           item_equal->fix_length_and_dec();
           item_equal->update_used_tables();
-          set_if_bigger(session->getLex()->current_select->max_equal_elems,
+          set_if_bigger(session->lex().current_select->max_equal_elems,
                         item_equal->members());
         }
         and_cond->cond_equal= cond_equal;
@@ -2401,7 +2397,7 @@ static void change_cond_ref_to_const(Session *session,
       args[1]= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
-	        and_father != cond && 
+	        and_father != cond &&
           ! left_item->const_item())
       {
         cond->marker=1;
@@ -2424,7 +2420,7 @@ static void change_cond_ref_to_const(Session *session,
       value= tmp;
       func->update_used_tables();
       if ((functype == Item_func::EQ_FUNC || functype == Item_func::EQUAL_FUNC) &&
-          and_father != cond && 
+          and_father != cond &&
           ! right_item->const_item())
       {
         args[0]= args[1];                       // For easy check
@@ -2468,9 +2464,9 @@ Item *remove_additional_cond(Item* conds)
   return conds;
 }
 
-static void propagate_cond_constants(Session *session, 
-                                     list<COND_CMP>& save_list, 
-                                     COND *and_father, 
+static void propagate_cond_constants(Session *session,
+                                     list<COND_CMP>& save_list,
+                                     COND *and_father,
                                      COND *cond)
 {
   if (cond->type() == Item::COND_ITEM)
@@ -2729,7 +2725,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
       if (*cond_value == Item::COND_UNDEF)
 	      *cond_value= tmp_cond_value;
 
-      switch (tmp_cond_value) 
+      switch (tmp_cond_value)
       {
         case Item::COND_OK:			/* Not true or false */
           if (and_level || (*cond_value == Item::COND_FALSE))
@@ -2761,7 +2757,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
       return (COND*) NULL;
 
     if (((Item_cond*) cond)->argument_list()->size() == 1)
-    {						
+    {
       /* Argument list contains only one element, so reduce it so a single item, then remove list */
       item= &((Item_cond*) cond)->argument_list()->front();
       ((Item_cond*) cond)->argument_list()->clear();
@@ -2785,11 +2781,11 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     if (args[0]->type() == Item::FIELD_ITEM)
     {
       Field *field= ((Item_field*) args[0])->field;
-      if (field->flags & AUTO_INCREMENT_FLAG 
-          && ! field->getTable()->maybe_null 
+      if (field->flags & AUTO_INCREMENT_FLAG
+          && ! field->getTable()->maybe_null
           && session->options & OPTION_AUTO_IS_NULL
           && (
-            session->first_successful_insert_id_in_prev_stmt > 0 
+            session->first_successful_insert_id_in_prev_stmt > 0
             && session->substitute_null_with_insert_id
             )
           )
@@ -2816,8 +2812,8 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
 #ifdef NOTDEFINED
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
       else if (
-          ((field->type() == DRIZZLE_TYPE_DATE) || (field->type() == DRIZZLE_TYPE_DATETIME)) 
-          && (field->flags & NOT_NULL_FLAG) 
+          ((field->type() == DRIZZLE_TYPE_DATE) || (field->type() == DRIZZLE_TYPE_DATETIME))
+          && (field->flags & NOT_NULL_FLAG)
           && ! field->table->maybe_null)
       {
         COND *new_cond;
@@ -2856,7 +2852,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     return (COND *) NULL;
   }
   else if ((*cond_value= cond->eq_cmp_result()) != Item::COND_OK)
-  {						
+  {
     /* boolan compare function */
     Item *left_item=	((Item_func*) cond)->arguments()[0];
     Item *right_item= ((Item_func*) cond)->arguments()[1];
@@ -4062,7 +4058,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
         if (fix)
           new_cond->argument_list()->push_back(fix);
       }
-      switch (new_cond->argument_list()->size()) 
+      switch (new_cond->argument_list()->size())
       {
         case 0:
           return (COND*) 0;			// Always true
@@ -4165,7 +4161,7 @@ static Item *part_of_refkey(Table *table,Field *field)
       if (field->eq(key_part->field) &&
 	  !(key_part->key_part_flag & HA_PART_KEY_SEG) &&
           //If field can be NULL, we should not remove this predicate, as
-          //it may lead to non-rejection of NULL values. 
+          //it may lead to non-rejection of NULL values.
           !(field->real_maybe_null()))
       {
 	return table->reginfo.join_tab->ref.items[part];
@@ -4859,7 +4855,7 @@ check_reverse_order:
 
         /* ORDER BY range_key DESC */
         tmp= new optimizer::QuickSelectDescending((optimizer::QuickRangeSelect*)(select->quick),
-                                                  used_key_parts, 
+                                                  used_key_parts,
                                                   &error);
         if (! tmp || error)
         {
@@ -4951,7 +4947,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     return(-1);
   }
 
-  table->sort.io_cache= new internal::IO_CACHE;
+  table->sort.io_cache= new internal::io_cache_st;
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -4979,8 +4975,8 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
         For impossible ranges (like when doing a lookup on NULL on a NOT NULL
         field, quick will contain an empty record set.
       */
-      if (! (select->quick= (optimizer::get_quick_select_for_ref(session, 
-                                                                 table, 
+      if (! (select->quick= (optimizer::get_quick_select_for_ref(session,
+                                                                 table,
                                                                  &tab->ref,
                                                                  tab->found_records))))
       {
@@ -5055,12 +5051,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       error=cursor->rnd_next(record);
       continue;
     }
-    if (copy_blobs(first_field))
-    {
-      my_message(ER_OUTOFMEMORY, ER(ER_OUTOFMEMORY), MYF(0));
-      error=0;
-      goto err;
-    }
+    copy_blobs(first_field);
     memcpy(new_record,org_record,reclength);
 
     /* Read through rest of cursor and mark duplicated rows deleted */
@@ -5107,7 +5098,7 @@ err:
   @note
     Note that this will not work on tables with blobs!
 */
-int remove_dup_with_hash_index(Session *session, 
+int remove_dup_with_hash_index(Session *session,
                                Table *table,
                                uint32_t field_count,
                                Field **first_field,
@@ -5116,15 +5107,12 @@ int remove_dup_with_hash_index(Session *session,
 {
   unsigned char *key_pos, *record=table->getInsertRecord();
   int error;
-  Cursor *cursor= table->cursor;
+  Cursor &cursor= *table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_length;
   HASH hash;
-  std::vector<unsigned char> key_buffer;
-  std::vector<uint32_t> field_lengths;
-
-  key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
-  field_lengths.resize(field_count);
+  std::vector<unsigned char> key_buffer((key_length + extra_length) * (long) cursor.stats.records);
+  std::vector<uint32_t> field_lengths(field_count);
 
   {
     Field **ptr;
@@ -5141,26 +5129,22 @@ int remove_dup_with_hash_index(Session *session,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
-		key_length, (hash_get_key) 0, 0, 0))
-  {
-    return(1);
-  }
+  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0))
+    return 1;
 
-  if ((error= cursor->startTableScan(1)))
+  if ((error= cursor.startTableScan(1)))
     goto err;
 
   key_pos= &key_buffer[0];
   for (;;)
   {
-    unsigned char *org_key_pos;
     if (session->getKilled())
     {
       session->send_kill_message();
       error=0;
       goto err;
     }
-    if ((error=cursor->rnd_next(record)))
+    if ((error=cursor.rnd_next(record)))
     {
       if (error == HA_ERR_RECORD_DELETED)
         continue;
@@ -5170,13 +5154,13 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->deleteRecord(record)))
+      if ((error=cursor.deleteRecord(record)))
         goto err;
       continue;
     }
 
     /* copy fields to key buffer */
-    org_key_pos= key_pos;
+    unsigned char* org_key_pos= key_pos;
     field_length= &field_lengths[0];
     for (Field **ptr= first_field ; *ptr ; ptr++)
     {
@@ -5187,7 +5171,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->deleteRecord(record)))
+      if ((error=cursor.deleteRecord(record)))
         goto err;
     }
     else
@@ -5195,17 +5179,17 @@ int remove_dup_with_hash_index(Session *session,
     key_pos+=extra_length;
   }
   hash_free(&hash);
-  cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->endTableScan();
-  return(0);
+  cursor.extra(HA_EXTRA_NO_CACHE);
+  (void) cursor.endTableScan();
+  return 0;
 
 err:
   hash_free(&hash);
-  cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->endTableScan();
+  cursor.extra(HA_EXTRA_NO_CACHE);
+  (void) cursor.endTableScan();
   if (error)
     table->print_error(error,MYF(0));
-  return(1);
+  return 1;
 }
 
 SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sortorder)
@@ -5336,8 +5320,8 @@ bool cp_buffer_from_ref(Session *session, table_reference_st *ref)
   @retval
     true  if error occurred
 */
-static bool find_order_in_list(Session *session, 
-                               Item **ref_pointer_array, 
+static bool find_order_in_list(Session *session,
+                               Item **ref_pointer_array,
                                TableList *tables,
                                Order *order,
                                List<Item> &fields,
@@ -5565,7 +5549,7 @@ int setup_group(Session *session,
     Item_field *field;
     int cur_pos_in_select_list= 0;
     List<Item>::iterator li(fields.begin());
-    List<Item_field>::iterator naf_it(session->getLex()->current_select->non_agg_fields.begin());
+    List<Item_field>::iterator naf_it(session->lex().current_select->non_agg_fields.begin());
 
     field= naf_it++;
     while (field && (item=li++))
@@ -5799,8 +5783,8 @@ bool setup_copy_fields(Session *session,
   uint32_t i, border= all_fields.size() - elements;
 
   if (param->field_count &&
-      !(copy=param->copy_field= new CopyField[param->field_count]))
-    goto err2;
+      !(copy= param->copy_field= new CopyField[param->field_count]))
+    return true;
 
   param->copy_funcs.clear();
   for (i= 0; (pos= li++); i++)
@@ -5835,8 +5819,7 @@ bool setup_copy_fields(Session *session,
               copy_funcs
               (to see full test case look at having.test, BUG #4358)
             */
-        if (param->copy_funcs.push_front(pos))
-          goto err;
+        param->copy_funcs.push_front(pos);
       }
       else
       {
@@ -5871,21 +5854,17 @@ bool setup_copy_fields(Session *session,
 	     !real_pos->with_sum_func)
     {						// Save for send fields
       pos= real_pos;
-      /* 
+      /*
         @todo In most cases this result will be sent to the user.
         This should be changed to use copy_int or copy_real depending
         on how the value is to be used: In some cases this may be an
         argument in a group function, like: IF(ISNULL(col),0,COUNT(*))
       */
-      if (!(pos=new Item_copy_string(pos)))
-        goto err;
+      pos=new Item_copy_string(pos);
       if (i < border)                           // HAVING, order_st and GROUP BY
-      {
-        if (extra_funcs.push_back(pos))
-          goto err;
-      }
-      else if (param->copy_funcs.push_back(pos))
-        goto err;
+        extra_funcs.push_back(pos);
+      else 
+				param->copy_funcs.push_back(pos);
     }
     res_all_fields.push_back(pos);
     ref_pointer_array[((i < border)? all_fields.size()-i-1 : i-border)]=
@@ -5908,8 +5887,7 @@ err:
   if (copy)
     delete [] param->copy_field;			// This is never 0
   param->copy_field=0;
-err2:
-  return(true);
+  return true;
 }
 
 /**
@@ -6209,7 +6187,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
 {
   if (expr->arg_count)
   {
-    Name_resolution_context *context= &session->getLex()->current_select->context;
+    Name_resolution_context *context= &session->lex().current_select->context;
     Item **arg,**arg_end;
     bool arg_changed= false;
     for (arg= expr->arguments(),

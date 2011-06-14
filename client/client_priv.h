@@ -18,8 +18,7 @@
 #define CLIENT_CLIENT_PRIV_H
 
 #include <config.h>
-#include <libdrizzle/drizzle_client.h>
-#include <drizzled/internal/my_sys.h>
+#include <libdrizzle/libdrizzle.h>
 
 #include <client/get_password.h>
 

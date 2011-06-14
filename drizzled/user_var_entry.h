@@ -18,18 +18,13 @@
  */
 
 
-#ifndef DRIZZLED_USER_VAR_ENTRY_H
-#define DRIZZLED_USER_VAR_ENTRY_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/query_id.h>
+#include <drizzled/item_result.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-namespace type { class Decimal; }
-
-// this is needed for user_vars hash
 class user_var_entry
 {
  public:
@@ -49,12 +44,10 @@ class user_var_entry
 
   ~user_var_entry()
   {
-    if (name.str) 
-      free(name.str);
-
-    if (value) 
-      free(value);
+    free(name.str);
+    free(value);
   }
+
   LEX_STRING name;
   char *value;
   ulong length;
@@ -70,11 +63,10 @@ class user_var_entry
   type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
-  bool update_hash(bool set_null, void *ptr, uint32_t length,
-                   Item_result type, const CHARSET_INFO * const cs, Derivation dv,
+  void update_hash(bool set_null, void *ptr, uint32_t length,
+                   Item_result type, const charset_info_st * const cs, Derivation dv,
                    bool unsigned_arg);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_USER_VAR_ENTRY_H */

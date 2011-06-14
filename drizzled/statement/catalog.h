@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_STATEMENT_CATALOG_H
-#define DRIZZLED_STATEMENT_CATALOG_H
+#pragma once
 
 #include <drizzled/statement.h>
 
@@ -42,7 +41,7 @@ public:
 
   bool execute();
 
-  identifier::Catalog::const_reference identifier() const
+  const identifier::Catalog& identifier() const
   {
     return _identifier;
   }
@@ -54,4 +53,3 @@ public:
 #include <drizzled/statement/catalog/create.h>
 #include <drizzled/statement/catalog/drop.h>
 
-#endif /* DRIZZLED_STATEMENT_CATALOG_H */

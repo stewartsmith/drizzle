@@ -46,6 +46,8 @@ length for the four byte UTF-8 that Drizzle supports) and the table definitions
 cannot directly share InnoDB tablespaces between MySQL and Drizzle. Use the
 drizzledump tool to migrate data from MySQL to Drizzle.
 
+.. _innodb_transaction_log:
+
 InnoDB Transaction Log
 ----------------------
 

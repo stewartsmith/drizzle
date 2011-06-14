@@ -47,7 +47,7 @@ AC_DEFUN([_PANDORA_REQUIRE_LIBAIO],[
   ac_enable_libaio="yes"
   _PANDORA_SEARCH_LIBAIO
   AS_IF([test "x$ac_cv_header_libaio_h" = "xno"],[
-    AC_MSG_ERROR([Couldn't find libaio.h. On Debian this can be found in libaio-dev. On Redhat this can be found in libaio-devel.])
+    PANDORA_MSG_ERROR([Couldn't find libaio.h. On Debian this can be found in libaio-dev. On Redhat this can be found in libaio-devel.])
   ])
 ])
 

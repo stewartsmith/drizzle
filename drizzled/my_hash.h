@@ -19,15 +19,11 @@
 
 /* Dynamic hashing of record with different key-length */
 
-#ifndef DRIZZLED_MY_HASH_H
-#define DRIZZLED_MY_HASH_H
+#pragma once
 
 #include <drizzled/dynamic_array.h>
 
-namespace drizzled
-{
-
-typedef struct charset_info_st CHARSET_INFO;
+namespace drizzled {
 
 /*
   Overhead to store an element in hash
@@ -41,41 +37,47 @@ typedef struct charset_info_st CHARSET_INFO;
 typedef unsigned char *(*hash_get_key)(const unsigned char *,size_t*,bool);
 typedef void (*hash_free_key)(void *);
 
-typedef struct st_hash {
+struct HASH_LINK 
+{
+  /* index to next key */
+  uint32_t next;
+  /* data for current entry */
+  unsigned char *data;
+} ;
+
+struct charset_info_st;
+
+struct HASH
+{
+  // typedef std::vector<HASH_LINK> array_t;
+  typedef DYNAMIC_ARRAY array_t;
   /* Length of key if const length */
   size_t key_offset,key_length;
   uint32_t blength;
   uint32_t records;
   uint32_t flags;
   /* Place for hash_keys */
-  DYNAMIC_ARRAY array;
+  array_t array;
   hash_get_key get_key;
   hash_free_key free;
-  const CHARSET_INFO *charset;
-} HASH;
+  const charset_info_st *charset;
+};
 
 /* A search iterator state */
 typedef uint32_t HASH_SEARCH_STATE;
 
 bool
-_hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
+_hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charset,
            uint32_t size, size_t key_offset, size_t key_length,
            hash_get_key get_key,
            hash_free_key free_element, uint32_t flags);
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H)
 void hash_free(HASH *tree);
-unsigned char *hash_element(HASH *hash,uint32_t idx);
 unsigned char *hash_search(const HASH *info, const unsigned char *key,
                            size_t length);
-unsigned char *hash_first(const HASH *info, const unsigned char *key,
-                          size_t length, HASH_SEARCH_STATE *state);
-unsigned char *hash_next(const HASH *info, const unsigned char *key,
-                         size_t length, HASH_SEARCH_STATE *state);
+unsigned char *hash_first(const HASH *info, const unsigned char *key, size_t length, HASH_SEARCH_STATE *state);
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
 
-#define hash_inited(H) ((H)->array.buffer != 0)
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MY_HASH_H */

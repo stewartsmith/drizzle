@@ -25,8 +25,7 @@
  * used in the nested loops join implementation.
  */
 
-#ifndef DRIZZLED_JOIN_TABLE_H
-#define DRIZZLED_JOIN_TABLE_H
+#pragma once
 
 #include <drizzled/enum_nested_loop_state.h>
 #include <drizzled/table_reference.h>
@@ -38,15 +37,8 @@
 
 #include <bitset>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Table;
-
-namespace optimizer
-{
-  class Position;
-}
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
@@ -252,4 +244,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_JOIN_TABLE_H */

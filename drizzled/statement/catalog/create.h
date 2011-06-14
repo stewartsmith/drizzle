@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_STATEMENT_CATALOG_CREATE_H
-#define DRIZZLED_STATEMENT_CATALOG_CREATE_H
+#pragma once
 
 namespace drizzled
 {
@@ -43,4 +42,3 @@ public:
 } /* namespace statement */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CATALOG_CREATE_H */

@@ -23,6 +23,7 @@ File space management
 Created 12/18/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef fsp0fsp_h
 #define fsp0fsp_h
 

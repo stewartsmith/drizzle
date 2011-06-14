@@ -27,10 +27,8 @@
 #include <algorithm>
 #include <vector>
 
-class Session;
+namespace drizzled {
 
-namespace drizzled
-{
 typedef std::vector<plugin::QueryCache *> QueryCaches;
 QueryCaches all_query_cache;
 

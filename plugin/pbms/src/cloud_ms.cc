@@ -26,7 +26,7 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/session.h>
 #include <drizzled/field.h>

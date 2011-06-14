@@ -31,8 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_DAEMON_H
-#define DRIZZLED_DAEMON_H
+#pragma once
 
 namespace drizzled
 {
@@ -42,4 +41,3 @@ void daemon_is_ready();
 
 }
 
-#endif /* DRIZZLED_DAEMON_H */

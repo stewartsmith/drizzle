@@ -35,9 +35,12 @@ set global hello_events1_watch_tables = "x,y";
 #include <string>
 #include <cstdio>
 #include <boost/program_options.hpp>
+#include <drizzled/item.h>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/table/instance/base.h>
 #include "hello_events.h"
+#include <drizzled/plugin.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -245,8 +248,6 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
 /* The event observer.*/
 bool HelloEvents::observeEventDo(EventData &data)
 {
-  bool result= false;
-  
   switch (data.event) {
   case AFTER_DROP_TABLE:
     observeAfterDropTable((AfterDropTableEventData &)data);
@@ -257,7 +258,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;
     
   case BEFORE_INSERT_RECORD:
-     result = observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
+    observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
     break;
     
   case AFTER_INSERT_RECORD:
@@ -265,7 +266,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
        
   case BEFORE_UPDATE_RECORD:
-    result = observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
+    observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
     break;
              
   case AFTER_UPDATE_RECORD:
@@ -273,7 +274,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
     
   case BEFORE_DELETE_RECORD:
-    result = observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
+    observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
     break;
 
   case AFTER_DELETE_RECORD:

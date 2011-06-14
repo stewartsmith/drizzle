@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H
-#define PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
@@ -98,4 +97,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H */

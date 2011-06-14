@@ -21,16 +21,14 @@
 #include <config.h>
 #include <drizzled/lock.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-void DrizzleLock::reset(void)
+void DrizzleLock::reset()
 {
   for (std::vector<THR_LOCK_DATA *>::iterator iter= locks.begin(); iter != locks.begin() + sizeLock() and iter != locks.end(); iter++)
   {
     (*iter)->type= TL_UNLOCK;
   }
 }
-
 
 } /* namespace drizzled */

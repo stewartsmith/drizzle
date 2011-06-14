@@ -18,11 +18,10 @@
  */
 
 /*
-** Common definition between mysql server & client
+** Common definition between Drizzle server & client
 */
 
-#ifndef DRIZZLED_COMMON_H
-#define DRIZZLED_COMMON_H
+#pragma once
 
 #include <unistd.h>
 #include <stdint.h>
@@ -77,12 +76,6 @@
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-
-/**
-  Maximum length of time zone name that we support
-  (Time zone name is char(64) in db). mysqlbinlog needs it.
-*/
-#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
 
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
@@ -167,7 +160,7 @@ enum enum_server_command
 {
   COM_SLEEP,
   COM_QUIT,
-  COM_INIT_DB,
+  COM_USE_SCHEMA,
   COM_QUERY,
   COM_SHUTDOWN,
   COM_CONNECT,
@@ -202,4 +195,3 @@ const int enum_field_types_size= DRIZZLE_TYPE_MICROTIME + 1;
 
 #endif /* defined(__cplusplus) */
 
-#endif /* DRIZZLED_COMMON_H */

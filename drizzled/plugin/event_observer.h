@@ -40,8 +40,7 @@
  *  SchemaEventObservers, or TableEventObservers class.
  *
  */
-#ifndef DRIZZLED_PLUGIN_EVENT_OBSERVER_H
-#define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 
@@ -49,18 +48,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Table;
-class TableShare;
-class Session;
-
-namespace plugin
-{
-class EventObserverList;
-class EventData;
-class EventObserver;
+namespace drizzled {
+namespace plugin {
 
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;
@@ -579,4 +568,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_EVENT_OBSERVER_H */

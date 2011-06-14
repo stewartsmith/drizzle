@@ -63,11 +63,14 @@
 #include <drizzled/session/cache.h>
 #include <drizzled/signal_handler.h>
 #include <drizzled/transaction_services.h>
-#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace drizzled;
 using namespace std;
@@ -84,12 +87,12 @@ extern bool opt_daemon;
 */
 static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
-  Session *session;
+  Session* session= current_session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((session= current_session))
+  if (session)
   {
     if (MyFlags & ME_FATALERROR)
       session->is_fatal_error= 1;
@@ -97,18 +100,19 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
-    */
+
     if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;
+    */
 
     /*
-      session->getLex()->current_select == 0 if lex structure is not inited
+      session->lex().current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->getLex()->current_select &&
-           session->getLex()->current_select->no_error && !session->is_fatal_error))
+    if (! (session->lex().current_select &&
+           session->lex().current_select->no_error && !session->is_fatal_error))
     {
-      if (! session->main_da.is_error())            // Return only first message
+      if (! session->main_da().is_error())            // Return only first message
       {
         if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
@@ -116,7 +120,7 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
         if (str == NULL)
           str= ER(error);
 
-        session->main_da.set_error_status(error, str);
+        session->main_da().set_error_status(error, str);
       }
     }
 
@@ -143,7 +147,7 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+  if (not (getDebug().test(debug::NO_STACKTRACE) ||
         getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
@@ -288,6 +292,25 @@ int main(int argc, char **argv)
                     getDataHome().file_string().c_str());
       unireg_abort(1);
     }
+
+    ifstream old_uuid_file ("server.uuid");
+    if (old_uuid_file.is_open())
+    {
+      getline (old_uuid_file, server_uuid);
+      old_uuid_file.close();
+    } 
+    else 
+    {
+      uuid_t uu;
+      char uuid_string[37];
+      uuid_generate_random(uu);
+      uuid_unparse(uu, uuid_string);
+      ofstream new_uuid_file ("server.uuid");
+      new_uuid_file << uuid_string;
+      new_uuid_file.close();
+      server_uuid= string(uuid_string);
+    }
+
     if (mkdir("local", 0700))
     {
       /* We don't actually care */
@@ -304,8 +327,6 @@ int main(int argc, char **argv)
     full_data_home= boost::filesystem::system_complete(getDataHome());
     errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
   }
-
-
 
   if (server_id == 0)
   {
@@ -347,58 +368,31 @@ int main(int argc, char **argv)
     unireg_abort(1);
 
   assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables())
-  {
-    abort_loop= true;
-    select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, SIGTERM);
-
-    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
-
-    unireg_abort(1);
-  }
-
-  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
-                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
+  drizzle_rm_tmp_tables();
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname, PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
   TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Send server startup event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-
-
-      transaction_services.sendStartupEvent(*session);
-
-      plugin_startup_window(modules, *(session.get()));
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    currentSession().reset(session.get());
+    transaction_services.sendStartupEvent(*session);
+    plugin_startup_window(modules, *session.get());
   }
 
   if (opt_daemon)
     daemon_is_ready();
 
-  /* 
+  /*
     Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown.
    */
-  plugin::Client *client;
-  while ((client= plugin::Listen::getClient()) != NULL)
+  while (plugin::Client* client= plugin::Listen::getClient())
   {
-    Session::shared_ptr session;
-    session= Session::make_shared(client, client->catalog());
-
-    if (not session)
-    {
-      delete client;
-      continue;
-    }
+    Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
@@ -407,24 +401,19 @@ int main(int argc, char **argv)
 
   /* Send server shutdown event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(*session.get());
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    currentSession().reset(session.get());
+    transaction_services.sendShutdownEvent(*session.get());
   }
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     select_thread_in_use= false;			// For close_connections
   }
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  session::Cache::singleton().shutdownSecond();
+  session::Cache::shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();

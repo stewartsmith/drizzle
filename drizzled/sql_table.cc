@@ -22,7 +22,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
@@ -36,16 +35,17 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-
 #include <drizzled/definition/cache.h>
-
+#include <drizzled/system_variables.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 #include <algorithm>
 #include <sstream>
@@ -54,8 +54,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool is_primary_key(KeyInfo *key_info)
 {
@@ -126,7 +125,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   do
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
     if (not drop_temporary && session->lock_table_names_exclusively(tables))
     {
@@ -140,7 +139,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
 
-      error= session->drop_temporary_table(tmp_identifier);
+      error= session->open_tables.drop_temporary_table(tmp_identifier);
 
       switch (error) {
       case  0:
@@ -156,16 +155,14 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (drop_temporary == false)
       {
-        Table *locked_table;
         abort_locked_tables(session, tmp_identifier);
-        table::Cache::singleton().removeTable(session, tmp_identifier,
-                                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                                              RTFC_CHECK_KILLED_FLAG);
+        table::Cache::removeTable(*session, tmp_identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
         /*
           If the table was used in lock tables, remember it so that
           unlock_table_names can free it
         */
-        if ((locked_table= drop_locked_tables(session, tmp_identifier)))
+        Table *locked_table= drop_locked_tables(session, tmp_identifier);
+        if (locked_table)
           table->table= locked_table;
 
         if (session->getKilled())
@@ -238,11 +235,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       std::string table_error;
 
-      for (util::string::vector::iterator iter= wrong_tables.begin();
-           iter != wrong_tables.end();
-           iter++)
+      BOOST_FOREACH(util::string::vector::reference iter, wrong_tables)
       {
-        table_error+= *iter;
+        table_error+= iter;
         table_error+= ',';
       }
       table_error.resize(table_error.size() -1);
@@ -331,10 +326,10 @@ class typelib_set_member
 {
 public:
   string s;
-  const CHARSET_INFO * const cs;
+  const charset_info_st * const cs;
 
   typelib_set_member(const char* value, unsigned int length,
-                     const CHARSET_INFO * const charset)
+                     const charset_info_st * const charset)
     : s(value, length),
       cs(charset)
   {}
@@ -363,7 +358,7 @@ public:
 
 static bool check_duplicates_in_interval(const char *set_or_name,
                                          const char *name, TYPELIB *typelib,
-                                         const CHARSET_INFO * const cs,
+                                         const charset_info_st * const cs,
                                          unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
@@ -409,7 +404,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-static void calculate_interval_lengths(const CHARSET_INFO * const cs,
+static void calculate_interval_lengths(const charset_info_st * const cs,
                                        TYPELIB *interval,
                                        uint32_t *max_length,
                                        uint32_t *tot_length)
@@ -547,7 +542,7 @@ static int prepare_create_table(Session *session,
 
   for (int32_t field_no=0; (sql_field=it++) ; field_no++)
   {
-    const CHARSET_INFO *save_cs;
+    const charset_info_st *save_cs;
 
     /*
       Initialize length from its original value (number of characters),
@@ -612,7 +607,7 @@ static int prepare_create_table(Session *session,
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
       size_t dummy;
-      const CHARSET_INFO * const cs= sql_field->charset;
+      const charset_info_st * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
       /*
@@ -644,8 +639,7 @@ static int prepare_create_table(Session *session,
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
-            size_t cnv_errs;
-            conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
+            conv.copy(tmp->ptr(), tmp->length(), cs);
             interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
           }
@@ -1342,7 +1336,7 @@ static bool locked_create_event(Session *session,
       /*
         @todo improve this error condition.
       */
-      if (definition::Cache::singleton().find(identifier.getKey()))
+      if (definition::Cache::find(identifier.getKey()))
       {
         my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
@@ -1369,7 +1363,7 @@ static bool locked_create_event(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(identifier);
+      (void) session->open_tables.rm_temporary_table(identifier);
       return error;
     }
   }
@@ -1452,7 +1446,7 @@ bool create_table_no_lock(Session *session,
                                &key_info_buffer, &key_count,
                                select_field_count))
   {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* CREATE TABLE (some confussion on naming, double check) */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1481,14 +1475,9 @@ static bool drizzle_create_table(Session *session,
                                  uint32_t select_field_count,
                                  bool is_if_not_exists)
 {
-  Table *name_lock= NULL;
+  Table *name_lock= session->lock_table_name_if_not_cached(identifier);
   bool result;
-
-  if (session->lock_table_name_if_not_cached(identifier, &name_lock))
-  {
-    result= true;
-  }
-  else if (name_lock == NULL)
+  if (name_lock == NULL)
   {
     if (is_if_not_exists)
     {
@@ -1518,7 +1507,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* Lock for removing name_lock during table create */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -1629,37 +1618,22 @@ rename_table(Session &session,
                    const identifier::Table &from,
                    const identifier::Table &to)
 {
-  int error= 0;
-
-  assert(base);
-
   if (not plugin::StorageEngine::doesSchemaExist(to))
   {
     my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
     return true;
   }
 
-  error= base->renameTable(session, from, to);
-
+  int error= base->renameTable(session, from, to);
   if (error == HA_ERR_WRONG_COMMAND)
-  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
-  }
   else if (error)
   {
-    std::string from_path;
-    std::string to_path;
-
-    from.getSQLPath(from_path);
-    to.getSQLPath(to_path);
-
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
-
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), 
+			from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str(), 
+			to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str(), error);
   }
-
-  return error ? true : false; 
+  return error; 
 }
 
 
@@ -1678,7 +1652,7 @@ rename_table(Session &session,
    the table is closed.
 
   PREREQUISITES
-    Lock on table::Cache::singleton().mutex()
+    Lock on table::Cache::mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1686,7 +1660,7 @@ void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function)
 {
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
@@ -1694,7 +1668,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   /* Wait until all there are no other threads that has this table open */
   identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
-  table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
+  table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1710,7 +1684,7 @@ void wait_while_table_is_used(Session *session, Table *table,
     reopen the table.
 
   PREREQUISITES
-    Lock on table::Cache::singleton().mutex()
+    Lock on table::Cache::mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1719,15 +1693,15 @@ void Session::close_cached_table(Table *table)
 
   wait_while_table_is_used(this, table, HA_EXTRA_FORCE_REOPEN);
   /* Close lock if this is not got with LOCK TABLES */
-  if (lock)
+  if (open_tables.lock)
   {
-    unlockTables(lock);
-    lock= NULL;			// Start locked threads
+    unlockTables(open_tables.lock);
+    open_tables.lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(table);
 
-  /* When lock on table::Cache::singleton().mutex() is freed other threads can continue */
+  /* When lock on table::Cache::mutex() is freed other threads can continue */
   locking::broadcast_refresh();
 }
 
@@ -1746,12 +1720,12 @@ static bool admin_table(Session* session, TableList* tables,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
-  Select_Lex *select= &session->getLex()->select_lex;
+  Select_Lex *select= &session->lex().select_lex;
   List<Item> field_list;
   Item *item;
   int result_code= 0;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;
@@ -1772,10 +1746,9 @@ static bool admin_table(Session* session, TableList* tables,
   for (table= tables; table; table= table->next_local)
   {
     identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
-    std::string table_name;
     bool fatal_error=0;
 
-    table_identifier.getSQLPath(table_name);
+    std::string table_name = table_identifier.getSQLPath();
 
     table->lock_type= lock_type;
     /* open only one table from local list of command */
@@ -1791,9 +1764,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      session->getLex()->query_tables= table;
-      session->getLex()->query_tables_last= &table->next_global;
-      session->getLex()->query_tables_own_last= 0;
+      session->lex().query_tables= table;
+      session->lex().query_tables_last= &table->next_global;
+      session->lex().query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1812,7 +1785,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.size())
+      if (!session->main_da().m_warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;
@@ -1832,7 +1805,7 @@ static bool admin_table(Session* session, TableList* tables,
       transaction_services.autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      session->getLex()->reset_query_tables_list(false);
+      session->lex().reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1842,12 +1815,12 @@ static bool admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
-      table::Cache::singleton().mutex().lock(); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(COND_refresh, table::Cache::singleton().mutex(),
+      table::Cache::mutex().lock(); /* Lock type is TL_WRITE and we lock to repair the table */
+      const char *old_message=session->enter_cond(COND_refresh, table::Cache::mutex(),
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
       identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-      table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
+      table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->getKilled())
 	goto err;
@@ -1858,10 +1831,10 @@ static bool admin_table(Session* session, TableList* tables,
 
 send_result:
 
-    session->getLex()->cleanup_after_one_table_open();
+    session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
+      List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
@@ -1947,9 +1920,9 @@ send_result:
         }
         else
         {
-          boost::unique_lock<boost::mutex> lock(table::Cache::singleton().mutex());
-	  identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-          table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
+          boost::unique_lock<boost::mutex> lock(table::Cache::mutex());
+          identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+          table::Cache::removeTable(*session, identifier, RTFC_NO_FLAG);
         }
       }
     }
@@ -1979,19 +1952,19 @@ err:
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
     to plugin::StorageEngine::createTable() in critical section protected by
-    table::Cache::singleton().mutex() in order to provide minimal atomicity against operations which
+    table::Cache::mutex() in order to provide minimal atomicity against operations which
     disregard name-locks, like I_S implementation, for example. This is a
     temporary and should not be copied. Instead we should fix our code to
     always honor name-locks.
 
-    Also some engines (e.g. NDB cluster) require that table::Cache::singleton().mutex() should be held
+    Also some engines (e.g. NDB cluster) require that table::Cache::mutex() should be held
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session,
                                  const message::Table& create_table_proto,
-                                 identifier::Table::const_reference destination_identifier,
-                                 identifier::Table::const_reference source_identifier,
+                                 const identifier::Table& destination_identifier,
+                                 const identifier::Table& source_identifier,
                                  bool is_engine_set)
 {
   // We require an additional table message because during parsing we used
@@ -2079,8 +2052,8 @@ static bool create_table_wrapper(Session &session,
 */
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set)
@@ -2096,7 +2069,7 @@ bool create_like_table(Session* session,
   */
   if (destination_identifier.isTmp())
   {
-    if (session->find_temporary_table(destination_identifier))
+    if (session->open_tables.find_temporary_table(destination_identifier))
     {
       table_exists= true;
     }
@@ -2109,12 +2082,12 @@ bool create_like_table(Session* session,
                                              is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else
       {
@@ -2124,19 +2097,7 @@ bool create_like_table(Session* session,
   }
   else // Standard table which will require locks.
   {
-    Table *name_lock= 0;
-
-    if (session->lock_table_name_if_not_cached(destination_identifier, &name_lock))
-    {
-      if (name_lock)
-      {
-        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
-        session->unlink_open_table(name_lock);
-      }
-
-      return res;
-    }
-
+    Table *name_lock= session->lock_table_name_if_not_cached(destination_identifier);
     if (not name_lock)
     {
       table_exists= true;
@@ -2149,7 +2110,7 @@ bool create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost::mutex::scoped_lock lock(table::Cache::mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                           source_identifier, is_engine_set);
       }
@@ -2168,7 +2129,7 @@ bool create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
+      boost::mutex::scoped_lock lock(table::Cache::mutex()); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }

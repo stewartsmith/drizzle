@@ -28,8 +28,7 @@
  * Defines a simple structure representing a transaction log entry.
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_ENTRY_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_ENTRY_H
+#pragma once
 
 #include <drizzled/replication_services.h>
 
@@ -108,4 +107,3 @@ private:
   uint32_t checksum; ///< Checksum of the transaction message bytes
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_ENTRY_H */

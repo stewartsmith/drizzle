@@ -56,7 +56,6 @@
 #include <drizzled/message/cache.h>
 #include <drizzled/module/load_list.h>
 #include <drizzled/module/registry.h>
-#include <drizzled/my_hash.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/plugin/event_observer.h>
@@ -72,16 +71,17 @@
 #include <drizzled/show.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_parse.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/temporal_format.h> /* For init_temporal_formats() */
-#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/typelib.h>
 #include <drizzled/visibility.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/open_tables_state.h>
 
 #include <google/protobuf/stubs/common.h>
-
-#include <drizzled/refresh_version.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -257,6 +257,7 @@ uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 back_log_constraints back_log(50);
 DRIZZLED_API uint32_t server_id;
+DRIZZLED_API string server_uuid;
 uint64_t table_cache_size;
 size_t table_def_size;
 uint32_t global_thread_id= 1UL;
@@ -329,10 +330,10 @@ drizzle_system_variables global_system_variables;
 drizzle_system_variables max_system_variables;
 global_counters current_global_counters;
 
-DRIZZLED_API const CHARSET_INFO *system_charset_info;
-const CHARSET_INFO *files_charset_info;
-const CHARSET_INFO *table_alias_charset;
-const CHARSET_INFO *character_set_filesystem;
+DRIZZLED_API const charset_info_st *system_charset_info;
+const charset_info_st *files_charset_info;
+const charset_info_st *table_alias_charset;
+const charset_info_st *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
@@ -412,13 +413,13 @@ void close_connections(void)
 
   /* kill connection thread */
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
     while (select_thread_in_use)
     {
-      boost::xtime xt; 
-      xtime_get(&xt, boost::TIME_UTC); 
-      xt.sec += 2; 
+      boost::xtime xt;
+      xtime_get(&xt, boost::TIME_UTC);
+      xt.sec += 2;
 
       for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
       {
@@ -437,13 +438,11 @@ void close_connections(void)
   */
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    session::Cache::list list= session::Cache::getCache();
 
-    for (session::Cache::list::iterator it= list.begin(); it != list.end(); ++it )
+    BOOST_FOREACH(session::Cache::list::reference tmp, list)
     {
-      Session::shared_ptr tmp(*it);
-
       tmp->setKilled(Session::KILL_CONNECTION);
       tmp->scheduler->killSession(tmp.get());
       DRIZZLE_CONNECTION_DONE(tmp->thread_id);
@@ -452,7 +451,7 @@ void close_connections(void)
     }
   }
 
-  if (session::Cache::singleton().count())
+  if (session::Cache::count())
     sleep(2);                                   // Give threads time to die
 
   /*
@@ -462,8 +461,8 @@ void close_connections(void)
   */
   for (;;)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    session::Cache::list list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    session::Cache::list list= session::Cache::getCache();
 
     if (list.empty())
     {
@@ -502,7 +501,6 @@ void clean_up(bool print_message)
   free_charsets();
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
-  xid_cache_free();
 
   deinit_temporal_formats();
 
@@ -515,7 +513,7 @@ void clean_up(bool print_message)
   if (print_message && server_start_time)
     errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
 
-  session::Cache::singleton().shutdownFirst();
+  session::Cache::shutdownFirst();
 
   /*
     The following lines may never be executed as the main thread may have
@@ -624,27 +622,27 @@ static void set_root(const char *path)
     session		 Thread handler
 */
 
-void drizzled::Session::unlink(session_id_t &session_id)
+void Session::unlink(session_id_t &session_id)
 {
-  Session::shared_ptr session= session::Cache::singleton().find(session_id);
+  Session::shared_ptr session= session::Cache::find(session_id);
 
   if (session)
     unlink(session);
 }
 
-void drizzled::Session::unlink(Session::shared_ptr &session)
+void Session::unlink(Session::shared_ptr &session)
 {
   --connection_count;
 
   session->cleanup();
 
-  boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+  boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
 
   if (unlikely(plugin::EventObserver::disconnectSession(*session)))
   {
     // We should do something about an error...
   }
-  session::Cache::singleton().erase(session);
+  session::Cache::erase(session);
 }
 
 
@@ -658,7 +656,7 @@ void drizzled::Session::unlink(Session::shared_ptr &session)
 
 
 
-const char *load_default_groups[]= 
+const char *load_default_groups[]=
 {
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
@@ -819,7 +817,7 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
   global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
 
-static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
+static void check_limits_max_join_size(ha_rows in_max_join_size)
 {
   global_system_variables.max_join_size= INT32_MAX;
   if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
@@ -1017,17 +1015,15 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
 
 static void process_defaults_files()
 {
-  for (vector<string>::iterator iter= defaults_file_list.begin();
-       iter != defaults_file_list.end();
-       ++iter)
+	BOOST_FOREACH(vector<string>::reference iter, defaults_file_list)
   {
-    fs::path file_location= *iter;
+    fs::path file_location= iter;
 
     ifstream input_defaults_file(file_location.file_string().c_str());
-    
+
     po::parsed_options file_parsed=
       dpo::parse_config_file(input_defaults_file, full_options, true);
-    vector<string> file_unknown= 
+    vector<string> file_unknown=
       po::collect_unrecognized(file_parsed.options, po::include_positional);
 
     for (vector<string>::iterator it= file_unknown.begin();
@@ -1037,17 +1033,12 @@ static void process_defaults_files()
       string new_unknown_opt("--");
       new_unknown_opt.append(*it);
       ++it;
-      if (it != file_unknown.end())
+      if (it == file_unknown.end())
+				break;
+      if ((*it) != "true")
       {
-        if ((*it) != "true")
-        {
-          new_unknown_opt.push_back('=');
-          new_unknown_opt.append(*it);
-        }
-      }
-      else
-      {
-        break;
+        new_unknown_opt.push_back('=');
+        new_unknown_opt.append(*it);
       }
       unknown_options.push_back(new_unknown_opt);
     }
@@ -1057,20 +1048,16 @@ static void process_defaults_files()
 
 static void compose_defaults_file_list(vector<string> in_options)
 {
-  for (vector<string>::iterator it= in_options.begin();
-       it != in_options.end();
-       ++it)
+	BOOST_FOREACH(vector<string>::reference it, in_options)
   {
-    fs::path p(*it);
+    fs::path p(it);
     if (fs::is_regular_file(p))
-      defaults_file_list.push_back(*it);
+      defaults_file_list.push_back(it);
     else
     {
-      errmsg_printf(error::ERROR,
-                  _("Defaults file '%s' not found\n"), (*it).c_str());
+      errmsg_printf(error::ERROR, _("Defaults file '%s' not found\n"), it.c_str());
       unireg_abort(1);
     }
-
   }
 }
 
@@ -1091,14 +1078,6 @@ int init_basic_variables(int argc, char **argv)
   drizzle_init_variables();
 
   find_plugin_dir(argv[0]);
-
-  /*
-    We set SYSTEM time zone as reasonable default and
-    also for failure of my_tz_init() and bootstrap mode.
-    If user explicitly set time zone with --default-time-zone
-    option we will change this value in my_tz_init().
-  */
-  global_system_variables.time_zone= my_tz_SYSTEM;
 
   char ret_hostname[FN_REFLEN];
   if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
@@ -1136,7 +1115,7 @@ int init_basic_variables(int argc, char **argv)
   ("plugin-add", po::value<vector<string> >()->composing()->notifier(&compose_plugin_add),
   _("Optional comma separated list of plugins to load at startup in addition "
      "to the default list of plugins. "
-     "[for example: --plugin_add=crc32,logger_gearman]"))    
+     "[for example: --plugin_add=crc32,logger_gearman]"))
   ("plugin-remove", po::value<vector<string> >()->composing()->notifier(&compose_plugin_remove),
   _("Optional comma separated list of plugins to not load at startup. Effectively "
      "removes a plugin from the list of plugins to be loaded. "
@@ -1158,7 +1137,7 @@ int init_basic_variables(int argc, char **argv)
   ("chroot,r", po::value<string>(),
   _("Chroot drizzled daemon during startup."))
   ("collation-server", po::value<string>(),
-  _("Set the default collation."))      
+  _("Set the default collation."))
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   _("Default completion type."))
   ("core-file",  _("Write core on errors."))
@@ -1175,7 +1154,7 @@ int init_basic_variables(int argc, char **argv)
   ("lc-time-name", po::value<string>(),
   _("Set the language used for the month names and the days of the week."))
   ("log-warnings,W", po::value<bool>(&global_system_variables.log_warnings)->default_value(false)->zero_tokens(),
-  _("Log some not critical warnings to the log file."))  
+  _("Log some not critical warnings to the log file."))
   ("pid-file", po::value<fs::path>(&pid_file),
   _("Pid file used by drizzled."))
   ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
@@ -1188,13 +1167,13 @@ int init_basic_variables(int argc, char **argv)
   ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
   _("Uniquely identifies the server instance in the community of "
      "replication partners."))
-  ("skip-stack-trace",  
+  ("skip-stack-trace",
   _("Don't print a stack trace on failure."))
   ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(false,true))->zero_tokens(),
   _("Enable symbolic link support."))
   ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false)->zero_tokens(),
   _("Specify whether to time mutexes (only InnoDB mutexes are currently "
-     "supported)")) 
+     "supported)"))
   ("tmpdir,t", po::value<string>(),
   _("Path for temporary files."))
   ("transaction-isolation", po::value<string>(),
@@ -1202,14 +1181,14 @@ int init_basic_variables(int argc, char **argv)
   ("transaction-message-threshold", po::value<size_t>(&transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
   _("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
   ("user,u", po::value<string>(),
-  _("Run drizzled daemon as user."))  
-  ("version,V", 
+  _("Run drizzled daemon as user."))
+  ("version,V",
   _("Output version information and exit."))
   ("back-log", po::value<back_log_constraints>(&back_log),
   _("The number of outstanding connection requests Drizzle can have. This "
      "comes into play when the main Drizzle thread gets very many connection "
      "requests in a very short time."))
-  ("bulk-insert-buffer-size", 
+  ("bulk-insert-buffer-size",
   po::value<uint64_t>(&global_system_variables.bulk_insert_buff_size)->default_value(8192*1024),
   _("Size of tree cache used in bulk insert optimization. Note that this is "
      "a limit per thread!"))
@@ -1229,14 +1208,14 @@ int init_basic_variables(int argc, char **argv)
   _("Max number of errors/warnings to store for a statement."))
   ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
   _("Don't allow creation of heap tables bigger than this."))
-  ("max-join-size", po::value<drizzled::ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
+  ("max-join-size", po::value<ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
   _("Joins that are probably going to read more than max_join_size records "
      "return an error."))
   ("max-length-for-sort-data", po::value<uint64_t>(&global_system_variables.max_length_for_sort_data)->default_value(1024)->notifier(&check_limits_mlfsd),
   _("Max number of bytes in sorted records."))
   ("max-seeks-for-key", po::value<uint64_t>(&global_system_variables.max_seeks_for_key)->default_value(ULONG_MAX)->notifier(&check_limits_msfk),
   _("Limit assumed max number of seeks when looking up rows based on a key"))
-  ("max-sort-length", po::value<size_t>(&global_system_variables.max_sort_length)->default_value(1024)->notifier(&check_limits_max_sort_length),  
+  ("max-sort-length", po::value<size_t>(&global_system_variables.max_sort_length)->default_value(1024)->notifier(&check_limits_max_sort_length),
   _("The number of bytes to use when sorting BLOB or TEXT values "
      "(only the first max_sort_length bytes of each value are used; the "
      "rest are ignored)."))
@@ -1259,7 +1238,7 @@ int init_basic_variables(int argc, char **argv)
      "testing/comparison)."))
   ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
   _("The size of the buffer that is allocated when preloading indexes"))
-  ("query-alloc-block-size", 
+  ("query-alloc-block-size",
   po::value<uint32_t>(&global_system_variables.query_alloc_block_size)->default_value(QUERY_ALLOC_BLOCK_SIZE)->notifier(&check_limits_qabs),
   _("Allocation block size for query parsing and execution"))
   ("query-prealloc-size",
@@ -1301,7 +1280,7 @@ int init_basic_variables(int argc, char **argv)
      "error. Used only if the connection has active cursors."))
   ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(DEFAULT_THREAD_STACK)->notifier(&check_limits_thread_stack),
   _("The stack size for each thread."))
-  ("tmp-table-size", 
+  ("tmp-table-size",
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
   _("If an internal in-memory temporary table exceeds this size, Drizzle will"
      " automatically convert it to an on-disk MyISAM table."))
@@ -1346,12 +1325,9 @@ int init_basic_variables(int argc, char **argv)
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
     {
-
-      for (CachedDirectory::Entries::const_iterator iter= config_conf_d.getEntries().begin();
-           iter != config_conf_d.getEntries().end();
-           ++iter)
+			BOOST_FOREACH(CachedDirectory::Entries::const_reference iter, config_conf_d.getEntries())
       {
-        string file_entry((*iter)->filename);
+        string file_entry(iter->filename);
 
         if (not file_entry.empty()
             && file_entry != "."
@@ -1374,7 +1350,7 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,  
+    errmsg_printf(error::ERROR,
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1463,7 +1439,7 @@ int init_remaining_variables(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,  
+    errmsg_printf(error::ERROR,
                   _("%s: %s.\n"
                     "Use --help to get a list of available options\n"),
                   internal::my_progname, err.what());
@@ -1474,10 +1450,9 @@ int init_remaining_variables(module::Registry &plugins)
 
   /* Inverted Booleans */
 
-  global_system_variables.optimizer_prune_level=
-    vm.count("disable-optimizer-prune") ? false : true;
+  global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
-  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
+  if (! vm["help"].as<bool>())
   {
     if ((user_info= check_user(drizzled_user)))
     {
@@ -1509,7 +1484,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   if (default_collation_name)
   {
-    const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
+    const charset_info_st * const default_collation= get_charset_by_name(default_collation_name);
     if (not default_collation)
     {
       errmsg_printf(error::ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
@@ -1563,19 +1538,11 @@ int init_server_components(module::Registry &plugins)
   }
 
   // Resize the definition Cache at startup
-  table::Cache::singleton().rehash(table_def_size);
-  definition::Cache::singleton().rehash(table_def_size);
+  table::Cache::rehash(table_def_size);
+  definition::Cache::rehash(table_def_size);
   message::Cache::singleton().rehash(table_def_size);
 
   setup_fpu();
-
-  /* Setup logs */
-
-  if (xid_cache_init())
-  {
-    errmsg_printf(error::ERROR, _("XA cache initialization failed: Out of memory\n"));
-    unireg_abort(1);
-  }
 
   /* Allow storage engine to give real error messages */
   ha_init_errors();
@@ -1597,7 +1564,7 @@ int init_server_components(module::Registry &plugins)
   else
   {
     scheduler_name= opt_scheduler_default;
-    opt_scheduler= opt_scheduler_default; 
+    opt_scheduler= opt_scheduler_default;
   }
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
@@ -1653,9 +1620,9 @@ int init_server_components(module::Registry &plugins)
 enum options_drizzled
 {
   OPT_SOCKET=256,
-  OPT_BIND_ADDRESS,            
+  OPT_BIND_ADDRESS,
   OPT_PID_FILE,
-  OPT_STORAGE_ENGINE,          
+  OPT_STORAGE_ENGINE,
   OPT_INIT_FILE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
@@ -2027,7 +1994,7 @@ static void usage(void)
          "and you are welcome to modify and redistribute it under the GPL "
          "license\n\n"));
 
- 
+
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
   po::options_description all_options("Drizzled Options");
@@ -2077,9 +2044,9 @@ static void drizzle_init_variables(void)
 
   /* Things with default values that are not zero */
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
-  refresh_version= 1L;	/* Increments on each reload */
+  g_refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session::Cache::singleton().getCache().clear();
+  session::Cache::getCache().clear();
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -2141,7 +2108,7 @@ static void get_options()
 
   fs::path &data_home_catalog= getDataHomeCatalog();
   data_home_catalog= getDataHome();
-  data_home_catalog /= "local"; 
+  data_home_catalog /= "local";
 
   if (vm.count("user"))
   {
@@ -2163,7 +2130,7 @@ static void get_options()
   if (vm.count("sort-heap-threshold"))
   {
     if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
-      (vm["sort-heap-threshold"].as<uint64_t>() < 
+      (vm["sort-heap-threshold"].as<uint64_t>() <
       global_system_variables.sortbuff_size))
     {
       cout << _("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
@@ -2293,7 +2260,7 @@ static void fix_paths()
 
   if (not opt_help)
   {
-    const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
+    const char *tmp_string= getenv("TMPDIR");
     struct stat buf;
     drizzle_tmpdir.clear();
 

@@ -1,0 +1,25 @@
+DROP TABLE IF EXISTS t1;
+Populating master server
+CREATE TABLE t1 (a int not null auto_increment, primary key(a));
+INSERT INTO t1 VALUES (),(),();
+SELECT * FROM t1;
+a
+1
+2
+3
+Connecting to slave...
+Using connection slave_con...
+Checking slave contents...
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM t1;
+a
+1
+2
+3
+Switching to default connection
+DROP TABLE t1;

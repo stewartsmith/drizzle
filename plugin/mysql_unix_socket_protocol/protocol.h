@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H
-#define PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -62,12 +61,9 @@ class ClientMySQLUnixSocketProtocol: public ClientMySQLProtocol
 public:
   ClientMySQLUnixSocketProtocol(int fd, bool __using_mysql41_protocol, ProtocolCounters *set_counters): ClientMySQLProtocol(fd, __using_mysql41_protocol, set_counters) {}
 
-  /* Unix socket protocol is for MySQL compatibility so do not allow admin connections */
-  bool isAdminAllowed(void) { return false; }
 };
 
 
 } /* namespace mysql_unix_socket_protocol */
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_UNIX_SOCKET_PROTOCOL_PROTOCOL_H */

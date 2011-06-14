@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -78,7 +78,7 @@ class portManager:
 
         """
         searching_for_port = 1
-        attempt_count = 100
+        attempt_count = 5000
         attempts_remain = attempt_count
         max_port_value = 32767
         min_port_value = 5001

@@ -23,24 +23,14 @@
   Routines to drop, repair, optimize, analyze, and check a schema table
 
 */
-#ifndef DRIZZLED_SQL_TABLE_H
-#define DRIZZLED_SQL_TABLE_H
+#pragma once
 
 #include <drizzled/base.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Session;
-class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
-class Table;
 typedef struct st_ha_create_information HA_CREATE_INFO;
-class AlterInfo;
-class Cursor;
-
-namespace message { class Table; }
-namespace identifier { class Table; }
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
@@ -62,4 +52,3 @@ bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_TABLE_H */

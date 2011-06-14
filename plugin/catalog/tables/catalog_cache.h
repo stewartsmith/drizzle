@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H
-#define PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H
+#pragma once
 
 #include <drizzled/generator/catalog/cache.h>
 
@@ -53,4 +52,3 @@ public:
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_TABLES_CATALOG_CACHE_H */

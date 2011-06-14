@@ -24,6 +24,7 @@ process and thread control primitives
 Created 9/8/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef os0thread_h
 #define os0thread_h
 

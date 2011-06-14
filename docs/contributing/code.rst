@@ -14,10 +14,18 @@ up for merging.  To do this:
  #. Paste your public key into the text box and click the *Import public key*
     button
 
+Logging into Launchpad
+----------------------
+
+You will need to set up your local bzr configuration with your Launchpad account
+so that you can push branches for merging.  To do this:
+
+ # bzr launchpad-login username
+
 Getting the Code
 ----------------
 
-You will need to prepare a directory for working with Drizzle, the following
+You will need to prepare a directory for working with Drizzle. The following
 example will assume you want to do this in ~/repos/drizzle:
 
 .. code-block:: bash
@@ -26,9 +34,9 @@ example will assume you want to do this in ~/repos/drizzle:
    cd ~/repos
    bzr init-repo drizzle
 
-At this stage you now have an initialized a directory for bzr to use.  Revision
-data will be stored here to save it having to be downloaded/stored for every
-branch.
+At this stage you now have an initialized a directory named ~/repos/drizzle
+for bzr to use.  Revision data will be stored in this directory so that it
+does not have to be separately downloaded and stored for every branch.
 
 .. code-block:: bash
 
@@ -49,7 +57,7 @@ Committing Work
 ---------------
 
 All commits need to have a proper description of the changes made.  This is so
-that future developers can dig through the bzr log to find out why a certain
+that future developers can read through the bzr log to find out why a certain
 change happened.
 
 When committing a bug fix please use:
@@ -64,13 +72,13 @@ pushed up.
 Coding Standards
 ----------------
 
-Our coding standards can be found inside the
+Our coding standards can be found at the
 `Drizzle wiki <http://wiki.drizzle.org/Coding_Standards>`_.
 
 Test Cases
 ----------
 
-Where possible SQL test cases should be created for your code.  Our test cases
+Where possible, SQL test cases should be created for your code.  Our test cases
 for bug fixes should be in the ``tests/suite/regression`` directory.  For more
 information about creating test cases please see the :ref:`test run <test-run-label>`
 section of our documentation.
@@ -93,11 +101,11 @@ Merge Proposals
 ---------------
 
 Once your work is done and ready for review you can go to the
-`code page <https://code.launchpad.net/drizzle>`_, click on your branch and you
-will see a link saying *Propose for merging*.
+`code page <https://code.launchpad.net/drizzle>`_, and then click on your branch.
+You will see a link labeled *Propose for merging*.
 
 In this screen simply fill in what this branch does and click the
 *Propose Merge* button.  Someone will review the branch, usually within a day or
-two and if approved it will go though our rigourous testing process which can
-take several hours.  If it needs more work feedback will always be given to
+two. If approved, it will go though our rigourous testing process, which can
+take several hours.  If it needs more work, feedback will always be given to
 explain why.

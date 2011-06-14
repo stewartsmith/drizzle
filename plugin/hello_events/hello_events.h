@@ -19,8 +19,7 @@
  * 2010-05-12
  */
 
-#ifndef PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H
-#define PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H
+#pragma once
 
 #include <drizzled/plugin/event_observer.h>
 
@@ -119,4 +118,3 @@ private:
 };
 } /* namespace plugin */
 } /* namespace drizzled */
-#endif /* PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H */

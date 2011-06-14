@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H
-#define DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
@@ -28,16 +27,8 @@
 #include <drizzled/join_table.h>
 #include <drizzled/optimizer/access_method.h>
 
-#include <boost/shared_ptr.hpp>
-
-/* Forward declarations */
-class Table;
-class JoinTable;
-
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class AccessMethodFactory
@@ -68,4 +59,3 @@ private:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H */

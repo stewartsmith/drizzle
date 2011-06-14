@@ -23,6 +23,7 @@ Lock module internal structures and methods.
 Created July 12, 2007 Vasil Dimov
 *******************************************************/
 
+#pragma once
 #ifndef lock0priv_h
 #define lock0priv_h
 

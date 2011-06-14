@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MIN_MAX_H
-#define DRIZZLED_FUNCTION_MIN_MAX_H
+#pragma once
 
 #include <drizzled/function/func.h>
 
@@ -34,7 +33,6 @@ class Item_func_min_max :public Item_func
   bool compare_as_dates;
   /* An item used for issuing warnings while string to DATETIME conversion. */
   Item *datetime_item;
-  Session *session;
 protected:
   enum_field_types cached_field_type;
 public:
@@ -68,4 +66,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MIN_MAX_H */

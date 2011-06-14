@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#pragma once
 
 // Needs to come first
 #include <drizzled/generator/schema.h>
@@ -33,4 +32,3 @@
 #include <drizzled/generator/table.h>
 #include <drizzled/generator/table_definition_cache.h>
 
-#endif /* DRIZZLED_GENERATOR_H */

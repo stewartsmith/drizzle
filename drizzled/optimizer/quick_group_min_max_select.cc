@@ -29,13 +29,14 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/functors.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
@@ -224,16 +225,9 @@ void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
   if (quick_prefix_select &&
       group_prefix_len < quick_prefix_select->max_used_key_length)
   {
-    DYNAMIC_ARRAY *arr= NULL;
-    uint32_t inx;
-
-    for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->elements; inx++)
-    {
-      optimizer::QuickRange *range= NULL;
-
-      get_dynamic(arr, (unsigned char*)&range, inx);
-      range->flag &= ~(NEAR_MIN | NEAR_MAX);
-    }
+    DYNAMIC_ARRAY& arr= quick_prefix_select->ranges;
+    for (size_t inx= 0; inx < arr.size(); inx++)
+      reinterpret_cast<optimizer::QuickRange**>(arr.buffer)[inx]->flag &= ~(NEAR_MIN | NEAR_MAX);
   }
 }
 

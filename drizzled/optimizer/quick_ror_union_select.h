@@ -17,20 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H
-#define DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H
+#pragma once
 
 #include <drizzled/optimizer/range.h>
 
 #include <vector>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class compare_functor;
+namespace drizzled {
+namespace optimizer {
 
 /**
   Rowid-Ordered Retrieval index union select.
@@ -128,4 +122,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H */

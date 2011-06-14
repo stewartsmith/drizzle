@@ -36,5 +36,5 @@ AC_DEFUN([PANDORA_HAVE_LIBVBUCKET],[
 AC_DEFUN([PANDORA_REQUIRE_LIBVBUCKET],[
   AC_REQUIRE([PANDORA_HAVE_LIBVBUCKET])
   AS_IF([test x$ac_cv_libvbucket = xno],
-      AC_MSG_ERROR([libvbucket is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([libvbucket is required for ${PACKAGE}]))
 ])

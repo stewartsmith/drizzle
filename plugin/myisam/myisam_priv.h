@@ -15,8 +15,7 @@
 
 /* This file is included by all internal myisam files */
 
-#ifndef PLUGIN_MYISAM_MYISAM_PRIV_H
-#define PLUGIN_MYISAM_MYISAM_PRIV_H
+#pragma once
 
 #include <config.h>
 
@@ -27,6 +26,8 @@
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
 #include <drizzled/enum.h>
+#include <drizzled/dynamic_array.h>
+#include <drizzled/error_t.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -53,7 +54,7 @@ typedef struct st_mi_status_info
   drizzled::internal::my_off_t key_empty;			/* lost space in indexfile */
   drizzled::internal::my_off_t key_file_length;
   drizzled::internal::my_off_t data_file_length;
-  drizzled::internal::ha_checksum checksum;
+  ha_checksum checksum;
 } MI_STATUS_INFO;
 
 typedef struct st_mi_state_info
@@ -91,7 +92,7 @@ typedef struct st_mi_state_info
   ulong sec_index_changed;		/* Updated when new sec_index */
   ulong sec_index_used;			/* which extra index are in use */
   uint64_t key_map;			/* Which keys are in use */
-  drizzled::internal::ha_checksum checksum;                 /* Table checksum */
+  ha_checksum checksum;                 /* Table checksum */
   ulong version;			/* timestamp of create */
   time_t create_time;			/* Time when created database */
   time_t recover_time;			/* Time for last recover */
@@ -170,8 +171,6 @@ typedef struct st_mi_isam_pack {
 
 #define MAX_NONMAPPED_INSERTS 1000
 
-namespace drizzled { class Session; }
-
 typedef struct st_mi_isam_share {	/* Shared between opens */
   MI_STATE_INFO state;
   MI_BASE_INFO base;
@@ -206,7 +205,7 @@ public:
   int (*read_rnd)(struct st_myisam_info*, unsigned char*, drizzled::internal::my_off_t, bool);
   int (*compare_record)(struct st_myisam_info*, const unsigned char *);
   /* Function to use for a row checksum. */
-  drizzled::internal::ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
+  ha_checksum (*calc_checksum)(struct st_myisam_info*, const unsigned char *);
   int (*compare_unique)(struct st_myisam_info*, MI_UNIQUEDEF *,
 			const unsigned char *record, drizzled::internal::my_off_t pos);
   size_t (*file_read)(MI_INFO *, unsigned char *, size_t, drizzled::internal::my_off_t, drizzled::myf);
@@ -283,7 +282,7 @@ struct st_myisam_info {
   drizzled::internal::my_off_t last_keypage;		/* Last key page read */
   drizzled::internal::my_off_t last_search_keypage;		/* Last keypage when searching */
   drizzled::internal::my_off_t dupp_key_pos;
-  drizzled::internal::ha_checksum checksum;                 /* Temp storage for row checksum */
+  ha_checksum checksum;                 /* Temp storage for row checksum */
   /* QQ: the folloing two xxx_length fields should be removed,
      as they are not compatible with parallel repair */
   ulong packed_length,blob_length;	/* Length of found, packed record */
@@ -303,7 +302,7 @@ struct st_myisam_info {
   uint	data_changed;			/* Somebody has changed data */
   uint	save_update;			/* When using KEY_READ */
   int	save_lastinx;
-  drizzled::internal::IO_CACHE rec_cache;			/* When cacheing records */
+  drizzled::internal::io_cache_st rec_cache;			/* When cacheing records */
   uint32_t  preload_buff_size;              /* When preloading indexes */
   drizzled::myf lock_wait;			/* is 0 or MY_DONT_WAIT */
   bool was_locked;			/* Was locked in panic */
@@ -331,7 +330,7 @@ typedef struct st_buffpek {
 typedef struct st_mi_sort_param
 {
   pthread_t  thr;
-  drizzled::internal::IO_CACHE read_cache, tempfile, tempfile_for_exceptions;
+  drizzled::internal::io_cache_st read_cache, tempfile, tempfile_for_exceptions;
   drizzled::DYNAMIC_ARRAY buffpek;
   MI_BIT_BUFF   bit_buff;               /* For parallel repair of packrec. */
 
@@ -360,9 +359,9 @@ typedef struct st_mi_sort_param
   int (*key_write)(struct st_mi_sort_param *, const void *);
   void (*lock_in_memory)(MI_CHECK *);
   int (*write_keys)(struct st_mi_sort_param *, register unsigned char **,
-                     uint32_t , struct st_buffpek *, drizzled::internal::IO_CACHE *);
-  unsigned int (*read_to_buffer)(drizzled::internal::IO_CACHE *,struct st_buffpek *, uint);
-  int (*write_key)(struct st_mi_sort_param *, drizzled::internal::IO_CACHE *,unsigned char *,
+                     uint32_t , struct st_buffpek *, drizzled::internal::io_cache_st *);
+  unsigned int (*read_to_buffer)(drizzled::internal::io_cache_st *,struct st_buffpek *, uint);
+  int (*write_key)(struct st_mi_sort_param *, drizzled::internal::io_cache_st *,unsigned char *,
                        uint, uint);
 } MI_SORT_PARAM;
 
@@ -609,7 +608,7 @@ extern uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned ch
                          unsigned char *old, drizzled::key_part_map keypart_map,
                          HA_KEYSEG **last_used_keyseg);
 extern int _mi_read_key_record(MI_INFO *info,drizzled::internal::my_off_t filepos,unsigned char *buf);
-extern int _mi_read_cache(drizzled::internal::IO_CACHE *info,unsigned char *buff,drizzled::internal::my_off_t pos,
+extern int _mi_read_cache(drizzled::internal::io_cache_st *info,unsigned char *buff,drizzled::internal::my_off_t pos,
 			  uint32_t length,int re_read_if_possibly);
 extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 
@@ -709,11 +708,11 @@ extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);
 ulong _my_calc_total_blob_length(MI_INFO *info, const unsigned char *record);
-drizzled::internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
-drizzled::internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
+ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf);
+ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *buf);
 bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
-		     drizzled::internal::ha_checksum unique_hash, drizzled::internal::my_off_t pos);
-drizzled::internal::ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
+		     ha_checksum unique_hash, drizzled::internal::my_off_t pos);
+ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const unsigned char *buf);
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 			   const unsigned char *record, drizzled::internal::my_off_t pos);
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
@@ -756,4 +755,5 @@ void mi_disable_non_unique_index(MI_INFO *info, drizzled::ha_rows rows);
 void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
                         uint32_t sline);
 
-#endif /* PLUGIN_MYISAM_MYISAM_PRIV_H */
+
+#define DFLT_INIT_HITS  3

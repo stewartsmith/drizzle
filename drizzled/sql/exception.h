@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_SQL_EXCEPTION_H
-#define DRIZZLED_SQL_EXCEPTION_H
+#pragma once
 
 #include <drizzled/error_t.h>
 
@@ -39,8 +38,6 @@
 
 namespace drizzled {
 namespace sql {
-
-class ResultSet;
 
 class Exception :  public std::runtime_error
 {
@@ -121,4 +118,3 @@ std::ostream& operator<<(std::ostream& output, const Exception &arg);
 } // namespace sql 
 } // namespace drizzled
 
-#endif /* DRIZZLED_SQL_EXCEPTION_H */

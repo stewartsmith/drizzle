@@ -33,35 +33,27 @@
   Some sections of this code came from the Boost examples.
 */
 
-#ifndef DRIZZLED_UTIL_STRING_H
-#define DRIZZLED_UTIL_STRING_H
+#pragma once
 
 #include <utility>
 #include <string>
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/shared_ptr.hpp>
 
-namespace drizzled
-{
+#define drizzle_literal_parameter(X) (X), size_t((sizeof(X) - 1))
 
-namespace util
-{
-
-
-namespace string {
-typedef boost::shared_ptr<std::string> shared_ptr;
-typedef boost::shared_ptr<const std::string> const_shared_ptr;
-typedef std::vector< std::string > vector;
-}
+namespace drizzled {
+namespace util {
 
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>
 {
   bool operator()(std::string const& x, std::string const& y) const
   {
-    return boost::algorithm::iequals(x, y, std::locale());
+    return boost::algorithm::iequals(x, y);
   }
 };
 
@@ -70,13 +62,8 @@ struct insensitive_hash : std::unary_function<std::string, std::size_t>
   std::size_t operator()(std::string const& x) const
   {
     std::size_t seed = 0;
-    std::locale locale;
-
-    for(std::string::const_iterator it = x.begin(); it != x.end(); ++it)
-    {
-      boost::hash_combine(seed, std::toupper(*it, locale));
-    }
-
+    BOOST_FOREACH(std::string::const_reference it, x)
+      boost::hash_combine(seed, std::toupper(it));
     return seed;
   }
 };
@@ -86,17 +73,88 @@ struct sensitive_hash : std::unary_function< std::vector<char>, std::size_t>
   std::size_t operator()(std::vector<char> const& x) const
   {
     std::size_t seed = 0;
-
-    for(std::vector<char>::const_iterator it = x.begin(); it != x.end(); ++it)
-    {
-      boost::hash_combine(seed, *it);
-    }
-
+    BOOST_FOREACH(std::vector<char>::const_reference it, x)
+      boost::hash_combine(seed, it);
     return seed;
   }
+};
+
+class String
+{
+public:
+
+  String()
+  {
+    _bytes.resize(1);
+  }
+
+  const char *c_str() const
+  {
+    return &_bytes[0];
+  }
+
+  char *c_str()
+  {
+    return &_bytes[0];
+  }
+
+  void assign(const size_t repeat, const char arg)
+  {
+    _bytes.resize(repeat +1); // inserts NULL at end
+    memset(&_bytes[0], int(arg), repeat);
+    _bytes[repeat]= 0;
+  }
+
+  void assign(const char *arg, const size_t arg_size)
+  {
+    _bytes.resize(arg_size +1); // +1 for NULL
+    memcpy(&_bytes[0], arg, arg_size);
+    _bytes[arg_size]= 0;
+  }
+
+  void append(const char *arg, const size_t arg_size)
+  {
+    if (not arg or not arg_size)
+      return;
+
+    size_t original_size= size();
+    if (original_size)
+    {
+      _bytes.resize(original_size +arg_size +1); // inserts NULL since string will already have a NULL
+      memcpy(&_bytes[original_size], arg, arg_size);
+      _bytes[original_size +arg_size]= 0;
+    }
+    else
+    {
+      assign(arg, arg_size);
+    }
+  }
+
+  const char& operator[] (size_t arg) const
+  {
+    return _bytes[arg];
+  }
+
+  char& operator[] (size_t arg)
+  {
+    return _bytes[arg];
+  }
+
+  void clear()
+  {
+    _bytes.resize(1);
+    _bytes[0]= 0;
+  }
+
+  size_t size() const
+  {
+    return _bytes.size() -1;
+  }
+
+private:
+  std::vector<char> _bytes;
 };
 
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_STRING_H */

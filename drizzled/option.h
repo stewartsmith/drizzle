@@ -13,11 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_OPTION_H
-#define DRIZZLED_OPTION_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
+
+namespace drizzled {
 
 #define GET_NO_ARG     1
 #define GET_BOOL       2
@@ -29,15 +29,10 @@ namespace drizzled
 #define GET_ULL        8
 #define GET_STR        9
 #define GET_STR_ALLOC 10
-#define GET_DISABLED  11
-#define GET_ENUM      12
-#define GET_SET       13
-#define GET_DOUBLE    14
 #define GET_SIZE      15
 #define GET_UINT64    16
 #define GET_ULONG_IS_FAIL 17
 
-#define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
 
 enum loglevel {
@@ -48,8 +43,6 @@ enum loglevel {
 
 enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 
-struct st_typelib;
-
 struct option
 {
   const char *name;                     /* Name of the option */
@@ -57,7 +50,7 @@ struct option
   const char *comment;                  /* option comment, for autom. --help */
   char      **value;                   /* The variable value */
   char      **u_max_value;             /* The user def. max variable value */
-  struct st_typelib *typelib;           /* Pointer to possible values */
+  TYPELIB *typelib;           /* Pointer to possible values */
   uint32_t     var_type;
   enum get_opt_arg_type arg_type;
   int64_t   def_value;                 /* Default value */
@@ -91,5 +84,4 @@ bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTION_H */
 

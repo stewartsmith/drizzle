@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -23,7 +23,7 @@
     code related to the execution of dtr test cases 
     
     We are provided access to a testManager with 
-    dtr-specific testCases.  We contact teh executionManager
+    randgen-specific testCases.  We contact the executionManager
     to produce the system and server configurations we need
     to execute a test.
 
@@ -38,16 +38,12 @@ import commands
 import lib.test_mgmt.test_execution as test_execution
 
 class randgenTestExecutor(test_execution.testExecutor):
-    """ dtr-specific testExecutor 
-        We currently execute by sending test-case
-        data to client/randgen...for now
+    """ randgen-specific testExecutor 
 
     """
   
     def execute_testCase (self):
-        """ Execute a dtr testCase via calls to randgen (boo)
-            Eventually, we will replace randgen with pythonic
-            goodness, but we have these classes stored here for the moment
+        """ Execute a randgen testCase
 
         """
         test_execution.testExecutor.execute_testCase(self)
@@ -59,6 +55,7 @@ class randgenTestExecutor(test_execution.testExecutor):
         # analyze results
         self.current_test_status = self.process_randgen_output()
         self.set_server_status(self.current_test_status)
+        self.server_manager.reset_servers(self.name)
  
 
     
@@ -89,7 +86,8 @@ class randgenTestExecutor(test_execution.testExecutor):
         randgen_output.close()
         randgen_file = open(randgen_outfile,'r')
         output = ''.join(randgen_file.readlines())
-        #print output
+        if self.debug:
+            self.logging.debug(output)
         randgen_file.close()
 
         if self.debug:
@@ -150,9 +148,8 @@ class randgenTestExecutor(test_execution.testExecutor):
                                                           , self.master_server.master_port)
                    ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
                                                    , self.master_server.master_port)
-                   ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
-                                                         , self.master_server.master_port)
-                   ,  'DRIZZLE_BASEDIR' : "%s" %(self.system_manager.code_tree.basedir)
+                   ,  'DRIZZLE_BASEDIR' : self.system_manager.code_tree.basedir
+                   ,  'DRIZZLE_TRX_READER' : self.system_manager.code_tree.drizzle_trx_reader
                    }     
 
 
@@ -162,13 +159,6 @@ class randgenTestExecutor(test_execution.testExecutor):
     def process_symlink_reqs(self):
         """ Create any symlinks we may need """
         needed_symlinks = []
-
-        # handle filesystem_engine 
-        if self.current_testcase.suitename == 'filesystem_engine':
-            needed_symlinks.append(( os.path.join(self.current_testcase.suitepath
-                                  , 't')
-                                  , os.path.join(self.master_server.vardir
-                                  , "filesystem_ln")))
 
         self.system_manager.create_symlinks(needed_symlinks)
 

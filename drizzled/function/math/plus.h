@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_MATH_PLUS_H
-#define DRIZZLED_FUNCTION_MATH_PLUS_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
@@ -38,4 +37,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_MATH_PLUS_H */

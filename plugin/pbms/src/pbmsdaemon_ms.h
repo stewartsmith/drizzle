@@ -19,8 +19,7 @@
  * 2010-06-09
  */
 
-#ifndef PLUGIN_PBMS_PBMSDAEMON_MS_H
-#define PLUGIN_PBMS_PBMSDAEMON_MS_H
+#pragma once
 
 class PBMSDaemon {
 public:
@@ -37,4 +36,3 @@ public:
 	
 };
 
-#endif // PLUGIN_PBMS_PBMSDAEMON_MS_H

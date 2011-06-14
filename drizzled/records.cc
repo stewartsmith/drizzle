@@ -30,9 +30,9 @@
 #include <drizzled/records.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int rr_sequential(ReadRecord *info);
 static int rr_quick(ReadRecord *info);
@@ -81,7 +81,7 @@ int ReadRecord::init_read_record(Session *session_arg,
                                  int use_record_cache,
                                  bool print_error_arg)
 {
-  internal::IO_CACHE *tempfile;
+  internal::io_cache_st *tempfile;
   int error= 0;
 
   session= session_arg;

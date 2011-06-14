@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __CLOUD_H__
 #define __CLOUD_H__
 /* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany

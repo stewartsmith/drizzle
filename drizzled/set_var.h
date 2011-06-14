@@ -17,29 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SET_VAR_H
-#define DRIZZLED_SET_VAR_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 
-#include <drizzled/memory/sql_alloc.h>
-#include <drizzled/sql_list.h>
+#include <drizzled/common_fwd.h>
+#include <drizzled/enum.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
-class StorageEngine;
-}
-
-class sys_var;
-class Item;
-class Item_func_set_user_var;
-class Time_zone;
-typedef struct my_locale_st MY_LOCALE;
-typedef struct charset_info_st CHARSET_INFO;
+namespace drizzled {
 
 /* Classes to support the SET command */
 
@@ -109,4 +95,3 @@ int sql_set_variables(Session *session, const SetVarVector &var_list);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SET_VAR_H */

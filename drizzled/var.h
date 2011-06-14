@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_VAR_H
-#define DRIZZLED_VAR_H
+#pragma once
 
 namespace drizzled
 {
@@ -38,4 +37,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_VAR_H */

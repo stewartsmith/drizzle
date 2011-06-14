@@ -30,7 +30,7 @@
 namespace drizzled
 {
 
-extern const CHARSET_INFO *system_charset_info;
+extern const charset_info_st *system_charset_info;
 
 void add_foreign_key_to_table_message(
     message::Table *table_message,

@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LOCALE_H
-#define DRIZZLED_SQL_LOCALE_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 typedef struct my_locale_st
 {
@@ -55,4 +53,3 @@ MY_LOCALE *my_locale_by_number(uint32_t number);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_LOCALE_H */

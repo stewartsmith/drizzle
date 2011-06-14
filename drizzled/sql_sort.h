@@ -17,24 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_SORT_H
-#define DRIZZLED_SQL_SORT_H
+#pragma once
 
 #include <unistd.h>
 #include <drizzled/base.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/qsort_cmp.h>
 
-namespace drizzled
-{
-
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
-
-class Field;
-class Table;
-class SortField;
+namespace drizzled {
 
 /*
    The structure sort_addon_field describes a fixed layout
@@ -92,4 +82,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_SORT_H */

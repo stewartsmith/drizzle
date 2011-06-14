@@ -23,12 +23,12 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/charset.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Some functions to calculate dates */
 
@@ -167,7 +167,7 @@ void make_truncated_value_warning(Session *session,
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];
   const char *type_str;
-  CHARSET_INFO *cs= &my_charset_utf8_general_ci;
+  charset_info_st *cs= &my_charset_utf8_general_ci;
   char buff[128];
   String str(buff,(uint32_t) sizeof(buff), system_charset_info);
   str.copy(str_val, str_length, system_charset_info);

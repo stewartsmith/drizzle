@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __CSS3PROTOCOL_H__
 #define __CSS3PROTOCOL_H__
 /* Copyright (C) 2009 PrimeBase Technologies GmbH, Germany

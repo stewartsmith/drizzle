@@ -31,6 +31,7 @@
 #include <config.h>
 #include <drizzled/common.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #endif
 
 #include "cslib/CSConfig.h"

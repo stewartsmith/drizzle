@@ -30,12 +30,14 @@
 
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/plugin.h>
 
 #include "logging.h"
 #include "wrap.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 logging::Syslog::Syslog(const std::string &facility,
                         const std::string &priority,
@@ -76,20 +78,20 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
   if (session->examined_row_count < _threshold_big_examined)
     return false;
-  
+
   /*
     TODO, the session object should have a "utime command completed"
     inside itself, so be more accurate, and so this doesnt have to
     keep calling current_utime, which can be slow.
   */
-  uint64_t t_mark= session->getCurrentTimestamp(false);
+  uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
   // return if query was not too slow
-  if (session->getElapsedTime() < _threshold_slow)
+  if (session->times.getElapsedTime() < _threshold_slow)
     return false;
-  
+
   drizzled::Session::QueryString query_string(session->getQueryString());
-  drizzled::util::string::const_shared_ptr schema(session->schema());
+  drizzled::util::string::ptr schema(session->schema());
 
   WrapSyslog::singleton()
     .log(_facility, _priority,
@@ -104,18 +106,18 @@ bool logging::Syslog::post(drizzled::Session *session)
          (unsigned long) session->getQueryId(),
          (int) schema->size(),
          schema->empty() ? "" : schema->c_str(),
-         (int) query_string->length(), 
+         (int) query_string->length(),
          query_string->empty() ? "" : query_string->c_str(),
          (int) drizzled::getCommandName(session->command).size(),
          drizzled::getCommandName(session->command).c_str(),
-         (unsigned long long) (t_mark - session->getConnectMicroseconds()),
-         (unsigned long long) (session->getElapsedTime()),
-         (unsigned long long) (t_mark - session->utime_after_lock),
+         (unsigned long long) (t_mark - session->times.getConnectMicroseconds()),
+         (unsigned long long) (session->times.getElapsedTime()),
+         (unsigned long long) (t_mark - session->times.utime_after_lock),
          (unsigned long) session->sent_row_count,
          (unsigned long) session->examined_row_count,
          (unsigned long) session->tmp_table,
          (unsigned long) session->total_warn_count);
-  
+
     return false;
 }
 

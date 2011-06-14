@@ -19,19 +19,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_DAEMON_H
-#define DRIZZLED_PLUGIN_DAEMON_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Daemon : public Plugin
 {
@@ -60,4 +55,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_DAEMON_H */

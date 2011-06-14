@@ -1,0 +1,31 @@
+# mysql_migrate.blob_type
+# test migration of the MySQL BLOB type 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_blob_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test tinyblob type
+eval SHOW CREATE TABLE $database.tinyblob_table;
+eval SELECT * FROM $database.tinyblob_table;
+
+--echo test our table:
+--echo test blob type
+eval SHOW CREATE TABLE $database.blob_table;
+eval SELECT * FROM $database.blob_table;
+
+--echo test our table:
+--echo test mediumblob type
+eval SHOW CREATE TABLE $database.mediumblob_table;
+eval SELECT * FROM $database.mediumblob_table;
+
+--echo test our table:
+--echo test longblob type
+eval SHOW CREATE TABLE $database.longblob_table;
+eval SELECT * FROM $database.longblob_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

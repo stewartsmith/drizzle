@@ -28,8 +28,7 @@
  * Defines a simple structure for maintaining a write buffer.
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_WRITE_BUFFER_H
-#define PLUGIN_TRANSACTION_LOG_WRITE_BUFFER_H
+#pragma once
 
 #include <stdint.h>
 #include <vector>
@@ -87,4 +86,3 @@ private:
   pthread_mutex_t latch; ///< Lock around the synchronized parts of the log (the write buffer)
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_WRITE_BUFFER_H */

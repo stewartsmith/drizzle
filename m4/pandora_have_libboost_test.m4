@@ -40,6 +40,6 @@ AC_DEFUN([PANDORA_REQUIRE_BOOST_TEST],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_TEST($1)
   AS_IF([test "x${ac_cv_libboost_unit_test_framework}" = "xno" -a "x${ac_cv_libboost_unit_test_framework_mt}" = "xno"],
-      AC_MSG_ERROR([boost::test is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([boost::test is required for ${PACKAGE}]))
 ])
 

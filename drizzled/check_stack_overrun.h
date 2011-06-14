@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CHECK_STACK_OVERRUN_H
-#define DRIZZLED_CHECK_STACK_OVERRUN_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
 
-class Session;
+namespace drizzled { 
 
 /**
   @note
@@ -36,4 +34,3 @@ bool check_stack_overrun(Session *session, long margin, void *buff);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CHECK_STACK_OVERRUN_H */

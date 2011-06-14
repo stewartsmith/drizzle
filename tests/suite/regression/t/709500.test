@@ -1,0 +1,57 @@
+--disable_warnings
+drop table if exists t1,t1s,t2s;
+--enable_warnings
+
+create table t1(i int);
+insert into t1 values (1), (2), (3);
+
+create table t1s(i int);
+insert into t1s values (10), (20), (30);
+create table t2s(i int);
+insert into t2s values (100), (200), (300);
+
+select straight_join t2s.i
+   from
+   t1s left outer join t2s on t2s.i = t1s.i;
+
+select straight_join t2s.i
+   from
+   t1s left outer join t2s on t2s.i = t1s.i
+   having t2s.i = 999;
+
+select * from t1
+where t1.i NOT IN
+(
+  select straight_join t2s.i 
+  from
+  t1s left outer join t2s on t2s.i = t1s.i
+  having t2s.i = 100
+);
+
+select * from t1
+where t1.i IN
+(
+  select straight_join t2s.i 
+  from
+  t1s left outer join t2s on t2s.i = t1s.i
+  having t2s.i = 100
+) IS UNKNOWN;
+
+select * from t1
+where not t1.i = ANY
+(
+  select straight_join t2s.i 
+  from
+  t1s left outer join t2s on t2s.i = t1s.i
+  having t2s.i = 999
+);
+
+select * from t1
+ where t1.i = ANY (
+  select straight_join t2s.i 
+  from
+  t1s left outer join t2s on t2s.i = t1s.i
+  having t2s.i = 999
+ ) is unknown;
+
+drop table t1,t1s,t2s;

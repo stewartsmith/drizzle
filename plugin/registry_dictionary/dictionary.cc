@@ -28,8 +28,8 @@ static PluginsTool *plugins;
 
 static int init(drizzled::module::Context &context)
 {
-  modules= new(std::nothrow)ModulesTool;
-  plugins= new(std::nothrow)PluginsTool;
+  modules= new ModulesTool;
+  plugins= new PluginsTool;
 
   context.add(modules);
   context.add(plugins);

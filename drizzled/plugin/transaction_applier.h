@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H
-#define DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H
+#pragma once
 
 /**
  * @file Defines the API for a TransactionApplier
@@ -38,15 +37,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace message { class Transaction; }
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * Base class for appliers of Transaction messages
@@ -87,4 +79,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H */

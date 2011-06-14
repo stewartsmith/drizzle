@@ -16,6 +16,7 @@
 /* Read a record from a random position */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
 
 /*
 	   Returns one of following values:

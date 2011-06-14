@@ -22,16 +22,11 @@
 #include <drizzled/query_id.h>
 #include <drizzled/internal/my_pthread.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Query_id::Query_id()
 {
   the_query_id= 1;
-}
-
-Query_id::~Query_id()
-{
 }
 
 uint64_t Query_id::value() const
@@ -41,9 +36,7 @@ uint64_t Query_id::value() const
 
 uint64_t Query_id::next()
 {
-  uint64_t ret= the_query_id.increment();
-
-  return ret;
+  return the_query_id.increment();
 }
 
 } /* namespace drizzled */

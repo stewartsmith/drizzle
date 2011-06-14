@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
-#define DRIZZLED_PLUGIN_QUERY_CACHE_H
+#pragma once
 
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/plugin.h>
@@ -27,13 +26,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-class select_result;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /* 
   This is the API that a qcache plugin must implement.
@@ -82,4 +76,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_QUERY_CACHE_H */

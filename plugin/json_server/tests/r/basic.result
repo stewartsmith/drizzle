@@ -1,0 +1,35 @@
+create table t1 (a int primary key auto_increment, b varchar(100));
+select http_post("http://localhost:PORT/0.1/sql", 'select * from t1;');;
+http_post("http://localhost:PORT/0.1/sql", 'select * from t1;')
+{
+   "query" : "select * from t1;",
+   "result_set" : [
+      [ "", "" ]
+   ],
+   "sqlstate" : "00000"
+}
+
+insert into t1 (b) values ("from MySQL protocol");
+select http_post('http://localhost:PORT/0.1/sql', 'select * from t1;');;
+http_post('http://localhost:PORT/0.1/sql', 'select * from t1;')
+{
+   "query" : "select * from t1;",
+   "result_set" : [
+      [ "1", "from MySQL protocol" ],
+      [ "", "" ]
+   ],
+   "sqlstate" : "00000"
+}
+
+select http_post('http://localhost:PORT/0.1/sql', 'insert into t1 (b) values (\'from http\');');;
+http_post('http://localhost:PORT/0.1/sql', 'insert into t1 (b) values (\'from http\');')
+{
+   "query" : "insert into t1 (b) values ('from http');",
+   "sqlstate" : "00000"
+}
+
+SELECT * from t1;
+a	b
+1	from MySQL protocol
+2	from http
+drop table t1;

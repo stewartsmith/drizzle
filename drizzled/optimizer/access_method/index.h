@@ -18,17 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_INDEX_H
-#define DRIZZLED_OPTIMIZER_ACCESS_METHOD_INDEX_H
+#pragma once
 
 #include <drizzled/optimizer/access_method.h>
 
-class Session;
-
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class Index
@@ -47,4 +42,3 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_ACCESS_METHOD_INDEX_H */

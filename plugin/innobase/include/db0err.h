@@ -23,6 +23,7 @@ Global error codes for the database
 Created 5/24/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef db0err_h
 #define db0err_h
 

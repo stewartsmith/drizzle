@@ -150,8 +150,7 @@ static LibInnoDBConfigTool *config_tool;
 
 int config_table_function_initialize(drizzled::module::Context &context)
 {
-  config_tool= new(std::nothrow)LibInnoDBConfigTool();
+  config_tool= new LibInnoDBConfigTool();
   context.add(config_tool);
-
   return 0;
 }

@@ -18,6 +18,11 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+# We will be using this to build the drizzled server
+drizzled_drizzled_SOURCES=
+
+include drizzled/execute/include.am
+
 drizzled/sql_yacc.cc: drizzled/sql_yacc.yy
 	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
 	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
@@ -43,7 +48,6 @@ DTRACEFILES= \
 nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/abort_exception.h \
 			      drizzled/alter_column.h \
-			      drizzled/alter_drop.h \
 			      drizzled/alter_info.h \
 			      drizzled/atomic/gcc_traits.h \
 			      drizzled/atomic/pthread_traits.h \
@@ -59,9 +63,9 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/catalog/instance.h \
 			      drizzled/catalog/local.h \
 			      drizzled/charset.h \
-			      drizzled/charset_info.h \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
+			      drizzled/common_fwd.h \
 			      drizzled/comp_creator.h \
 			      drizzled/constrained_value.h \
 			      drizzled/copy_field.h \
@@ -217,7 +221,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
 			      drizzled/global_buffer.h \
-			      drizzled/global_charset_info.h \
 			      drizzled/ha_data.h \
 			      drizzled/ha_statistics.h \
 			      drizzled/handler_structs.h \
@@ -227,14 +230,13 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/hybrid_type_traits_integer.h \
 			      drizzled/identifier.h \
 			      drizzled/identifier/catalog.h \
+			      drizzled/identifier/constants/user.h \
 			      drizzled/identifier/constants/schema.h \
 			      drizzled/identifier/constants/table.h \
 			      drizzled/identifier/schema.h \
-			      drizzled/identifier/session.h \
 			      drizzled/identifier/table.h \
 			      drizzled/identifier/user.h \
 			      drizzled/index_hint.h \
-			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
@@ -297,8 +299,10 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/message.h \
+			      drizzled/message/access.h \
 			      drizzled/message/cache.h \
 			      drizzled/message/catalog.h \
+			      drizzled/message/replication_options.h \
 			      drizzled/message/schema.h \
 			      drizzled/message/table.h \
 			      drizzled/module/context.h \
@@ -383,7 +387,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
-			      drizzled/refresh_version.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
 			      drizzled/schema.h \
@@ -403,9 +406,9 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/select_union.h \
 			      drizzled/session.h \
 			      drizzled/session/cache.h \
-			      drizzled/session/property_map.h \
 			      drizzled/session/state.h \
 			      drizzled/session/table_messages.h \
+			      drizzled/session/times.h \
 			      drizzled/session/transactions.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
@@ -507,7 +510,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
 			      drizzled/typelib.h \
-			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
 			      drizzled/user_var_entry.h \
@@ -546,7 +548,7 @@ drizzled_drizzled_DEPENDENCIES= \
                                       ${noinst_LTLIBRARIES} \
                                       $(pandora_plugin_libs)
 
-drizzled_drizzled_SOURCES= \
+drizzled_drizzled_SOURCES+= \
 			   drizzled/alter_info.cc \
 			   drizzled/cached_item.cc \
 			   drizzled/catalog.cc \
@@ -696,6 +698,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/identifier/catalog.cc \
 			   drizzled/identifier/constants/schema.cc \
 			   drizzled/identifier/constants/table.cc \
+			   drizzled/identifier/constants/user.cc \
 			   drizzled/identifier/schema.cc \
 			   drizzled/identifier/table.cc \
 			   drizzled/identifier/user.cc \
@@ -806,7 +809,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/xa_storage_engine.cc \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
-			   drizzled/refresh_version.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
 			   drizzled/select_dumpvar.cc \
@@ -814,6 +816,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/session/cache.cc \
 			   drizzled/session/state.cc \
 			   drizzled/session/table_messages.cc \
+			   drizzled/session/times.cc \
 			   drizzled/set_var.cc \
 			   drizzled/show.cc \
 			   drizzled/signal_handler.cc \
@@ -898,7 +901,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/type/boolean.cc \
 			   drizzled/type/decimal.cc \
 			   drizzled/type/time.cc \
-			   drizzled/tztime.cc \
 			   drizzled/unique.cc \
 			   drizzled/user_var_entry.cc \
 			   drizzled/version.cc \
@@ -939,7 +941,7 @@ drizzled_libtemporal_la_SOURCES= \
 				 drizzled/temporal_format.cc \
 				 drizzled/temporal_interval.cc
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
-drizzled_libserialutil_la_SOURCES = drizzled/schema.cc drizzled/table_proto_write.cc
+drizzled_libserialutil_la_SOURCES = drizzled/schema.cc drizzled/table_proto.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc

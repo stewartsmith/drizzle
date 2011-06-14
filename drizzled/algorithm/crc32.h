@@ -31,8 +31,7 @@
  * src/usr.bin/cksum/crc32.c.
  */
 
-#ifndef DRIZZLED_ALGORITHM_CRC32_H
-#define DRIZZLED_ALGORITHM_CRC32_H
+#pragma once
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -125,4 +124,3 @@ uint32_t crc32(T key, size_t key_length)
 } /* namespace algorithm */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ALGORITHM_CRC32_H */

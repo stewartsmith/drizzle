@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_REPLICATION_SLAVE_H
-#define PLUGIN_SLAVE_REPLICATION_SLAVE_H
+#pragma once
 
 #include <plugin/slave/queue_consumer.h>
 #include <plugin/slave/queue_producer.h>
@@ -41,7 +40,8 @@ public:
 
   ReplicationSlave(const std::string &config)
     : drizzled::plugin::Daemon("Replication Slave"),
-      _config_file(config)
+      _config_file(config),
+      _initial_max_commit_id(0)
   {}
   
   ~ReplicationSlave()
@@ -60,6 +60,25 @@ public:
     return _error;
   }
 
+  /**
+   * Set the initial value for the slave's maximum commit ID.
+   *
+   * This value basically determines where to start retrieving events from
+   * the master. Normally this is computed automatically based on the
+   * contents of the queue and/or the last applied commit ID. This allows
+   * us to override those values and start from another point. E.g., new
+   * slave provisioning or skipping a trouble statement.
+   *
+   * @param[in] value The commit ID value.
+   */
+  void setMaxCommitId(uint64_t value)
+  {
+    /* must tell producer to set its cached value */
+    _producer.setCachedMaxCommitId(value);
+    /* setting this indicates that we should store it permanently */
+    _initial_max_commit_id= value;
+  }
+
 private:
   std::string _config_file;
   std::string _error;
@@ -72,6 +91,8 @@ private:
 
   /** I/O thread that will populate the work queue */
   boost::thread _producer_thread;
+
+  uint64_t _initial_max_commit_id;
 
   /**
    * Initialize slave services with the given configuration file.
@@ -87,4 +108,3 @@ private:
   
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_REPLICATION_SLAVE_H */

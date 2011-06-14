@@ -23,6 +23,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -728,7 +730,7 @@ drizzleclient_net_read(NET *net)
 {
   size_t len, complen;
 
-  if (!net->compress)
+  if (not net->compress)
   {
     len = my_real_read(net,&complen);
     if (len == MAX_PACKET_LENGTH)
@@ -736,19 +738,25 @@ drizzleclient_net_read(NET *net)
       /* First packet of a multi-packet.  Concatenate the packets */
       uint32_t save_pos = net->where_b;
       size_t total_length= 0;
+
       do
       {
         net->where_b += len;
         total_length += len;
         len = my_real_read(net,&complen);
       } while (len == MAX_PACKET_LENGTH);
+
       if (len != packet_error)
+      {
         len+= total_length;
+      }
       net->where_b = save_pos;
     }
     net->read_pos = net->buff + net->where_b;
+
     if (len != packet_error)
       net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
+
     return len;
   }
   else
@@ -873,7 +881,7 @@ drizzleclient_net_read(NET *net)
     net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
   }
   return len;
-  }
+}
 
 
 void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)

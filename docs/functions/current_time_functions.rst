@@ -53,14 +53,14 @@ LOCALTIMESTAMP() is a synonym for NOW().
 now()	                            
 ------
 
-NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS:mmmmmm' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
 
 .. code-block:: mysql
 
 	SELECT NOW();
-        	-> '2011-02-15 13:40:06'
+        	-> '2011-02-15 13:40:06:002203'
 	SELECT NOW() + 0;
-        	-> 20110215134006.000000
+        	-> 20110215134006.002203
 
 NOW returns a constant time that indicates the time at which the statement began to execute. 
 
@@ -70,11 +70,11 @@ NOW returns a constant time that indicates the time at which the statement began
 
 Returns:
 
-+---------------------+----------+---------------------+
-| NOW()               | SLEEP(2) | NOW()               |
-+=====================+==========+=====================+
-| 2011-02-20 20:15:09 |        0 | 2011-02-20 20:15:09 |
-+---------------------+----------+---------------------+
++----------------------------+----------+----------------------------+
+| NOW()                      | SLEEP(2) | NOW()                      |
++============================+==========+============================+
+| 2011-02-20 20:15:09:002203 |        0 | 2011-02-20 20:15:09:002203 |
++----------------------------+----------+----------------------------+
 
 SYSDATE, however, returns the exact time at which the function was invoked.
 

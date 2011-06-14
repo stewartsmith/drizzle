@@ -43,6 +43,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
+#include <drizzled/named_savepoint.h>
 
 #define my_strdup(a,b) strdup(a)
 using namespace drizzled;
@@ -137,14 +138,14 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, const identifier::Table& ident, drizzled::message::Table& );	
+	int doCreateTable(Session&, Table&, const identifier::Table& ident, const drizzled::message::Table& );	
 	int doDropTable(Session &, const identifier::Table& );
 	
 	int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 	
         void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
                                    const drizzled::identifier::Schema &schema,
-                                   drizzled::identifier::Table::vector &set_of_identifiers) 
+                                   drizzled::identifier::table::vector &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
 		
@@ -1046,7 +1047,7 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const identifier::Table& , const drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );

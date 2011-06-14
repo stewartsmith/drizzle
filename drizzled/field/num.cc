@@ -25,9 +25,9 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Numeric fields base class constructor.
@@ -76,11 +76,11 @@ Field_num::Field_num(unsigned char *ptr_arg,
     2   error: garbage at the end of string.
 */
 
-int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int length,
+int Field_num::check_int(const charset_info_st * const cs, const char *str, int length,
                          const char *int_end, int error)
 {
   /* Test if we get an empty string or wrong integer */
-  if (str == int_end || error == MY_ERRNO_EDOM)
+  if (str == int_end || error == EDOM)
   {
     char buff[128];
     String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
@@ -124,7 +124,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
     1   error
 */
 
-bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,
+bool Field_num::get_int(const charset_info_st * const cs, const char *from, uint32_t len,
                         int64_t *rnd, uint64_t ,
                         int64_t signed_min, int64_t signed_max)
 {

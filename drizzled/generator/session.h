@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_SESSION_H
-#define DRIZZLED_GENERATOR_SESSION_H
+#pragma once
 
 #include <boost/thread/mutex.hpp>
 
@@ -33,42 +32,32 @@ class Session
 {
   session::Cache::list local_list;
   session::Cache::list::const_iterator iter;
-  identifier::User::const_reference user;
+  const identifier::User& user;
 
 public:
 
-  Session(identifier::User::const_reference arg) :
+  Session(const identifier::User& arg) :
     user(arg)
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
-    local_list= session::Cache::singleton().getCache();
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
+    local_list= session::Cache::getCache();
     iter= local_list.begin();
   }
 
-  ~Session()
-  {
-  }
-
-  operator drizzled::Session::pointer()
+  operator drizzled::Session*()
   {
     while (iter != local_list.end())
     {
-      drizzled::Session::pointer ret= iter->get();
+      drizzled::Session* ret= iter->get();
       iter++;
 
-      if (not ret->isViewable(user))
-      {
-        continue;
-      }
-
-      return ret;
+      if (ret->isViewable(user))
+	      return ret;
     }
-
-    return drizzled::Session::pointer();
+    return NULL;
   }
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_SESSION_H */

@@ -18,17 +18,15 @@
  */
 
 
-#ifndef DRIZZLED_FILE_EXCHANGE_H
-#define DRIZZLED_FILE_EXCHANGE_H
+#pragma once
 
 #include <drizzled/sql_string.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/enum.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-extern const CHARSET_INFO *default_charset_info;
+extern const charset_info_st *default_charset_info;
 
 static String default_line_term("\n",default_charset_info);
 static String default_escaped("\\",default_charset_info);
@@ -50,7 +48,7 @@ public:
   bool opt_enclosed;
   bool dumpfile;
   ulong skip_lines;
-  const CHARSET_INFO *cs;
+  const charset_info_st *cs;
   file_exchange(char *name, bool flag,
                 enum_filetype filetype_arg= FILETYPE_CSV);
 };
@@ -58,4 +56,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILE_EXCHANGE_H */

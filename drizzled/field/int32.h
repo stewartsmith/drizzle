@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_INT32_H
-#define DRIZZLED_FIELD_INT32_H
+#pragma once
 
 #include <drizzled/field/num.h>
 
@@ -58,7 +57,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_LONG;}
   enum ha_base_keytype key_type() const
   { return unsigned_flag ? HA_KEYTYPE_ULONG_INT : HA_KEYTYPE_LONG_INT; }
-  int store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to,uint32_t length, const charset_info_st * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
@@ -82,5 +81,4 @@ public:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_INT32_H */
 

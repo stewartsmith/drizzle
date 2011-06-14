@@ -18,8 +18,7 @@
  */
 
 
-#ifndef PLUGIN_SIMPLE_USER_POLICY_POLICY_H
-#define PLUGIN_SIMPLE_USER_POLICY_POLICY_H
+#pragma once
 
 #include <iostream>
 
@@ -37,14 +36,14 @@ public:
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              drizzled::identifier::Schema::const_reference schema);
+                              const drizzled::identifier::Schema& schema);
 
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);
 };
 
 inline bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
-                                   drizzled::identifier::Schema::const_reference schema)
+                                   const drizzled::identifier::Schema& schema)
 {
   if ((user_ctx.username() == "root")
       || schema.compare("data_dictionary")
@@ -67,4 +66,3 @@ inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
 
 } /* namespace simple_user_policy */
 
-#endif /* PLUGIN_SIMPLE_USER_POLICY_POLICY_H */

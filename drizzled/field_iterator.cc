@@ -21,10 +21,10 @@
 #include <drizzled/field_iterator.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 const char *Field_iterator_table::name()
 {
@@ -46,11 +46,7 @@ void Field_iterator_table::set_table(Table *table)
 
 Item *Field_iterator_table::create_item(Session *session)
 {
-  Select_Lex *select= session->getLex()->current_select;
-
-  Item_field *item= new Item_field(session, &select->context, *ptr);
-
-  return item;
+  return new Item_field(session, &session->lex().current_select->context, *ptr);
 }
 
 
@@ -229,8 +225,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     if (!add_table_ref->join_columns)
     {
       /* Create a list of natural join columns on demand. */
-      if (!(add_table_ref->join_columns= new List<Natural_join_column>))
-        return NULL;
+      add_table_ref->join_columns= new List<Natural_join_column>;
       add_table_ref->is_join_columns_complete= false;
     }
     add_table_ref->join_columns->push_back(nj_col);

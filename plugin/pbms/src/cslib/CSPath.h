@@ -26,6 +26,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSPATH_H__
 #define __CSPATH_H__
 

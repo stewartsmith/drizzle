@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FIELD_ITERATOR_H
-#define DRIZZLED_FIELD_ITERATOR_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
@@ -28,9 +27,6 @@
 
 namespace drizzled {
 
-class Table;
-class TableList;
-
 /*
   Iterator over the fields of a generic table reference.
 */
@@ -38,7 +34,6 @@ class TableList;
 class Field_iterator: public memory::SqlAlloc
 {
 public:
-  Field_iterator() {}                         /* Remove gcc warning */
   virtual ~Field_iterator() {}
   virtual void set(TableList *)= 0;
   virtual void next()= 0;
@@ -133,4 +128,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_ITERATOR_H */

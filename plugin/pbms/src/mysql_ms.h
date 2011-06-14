@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __MS_MYSQL_H__
 #define __MS_MYSQL_H__
 

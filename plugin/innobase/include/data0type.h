@@ -23,6 +23,7 @@ Data types
 Created 1/16/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef data0type_h
 #define data0type_h
 

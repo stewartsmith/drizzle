@@ -19,8 +19,7 @@
  */
 
 
-#ifndef DRIZZLED_MESSAGE_TABLE_H
-#define DRIZZLED_MESSAGE_TABLE_H
+#pragma once
 
 #include <uuid/uuid.h>
 
@@ -35,7 +34,7 @@ namespace table {
 typedef boost::shared_ptr <message::Table> shared_ptr;
 typedef const message::Table& const_reference;
 
-shared_ptr make_shared(identifier::Table::const_reference identifier, const std::string &engine_arg);
+shared_ptr make_shared(const identifier::Table& identifier, const std::string &engine_arg);
 shared_ptr make_shared(const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);
 void init(drizzled::message::Table &arg, const std::string &name_arg, const std::string &schema_arg, const std::string &engine_arg);
 void update(drizzled::message::Table &arg);
@@ -44,4 +43,3 @@ void update(drizzled::message::Table &arg);
 } // namespace message
 } // namespace drizzled
 
-#endif /* DRIZZLED_MESSAGE_TABLE_H */

@@ -24,20 +24,15 @@
  * Defines the Join class
  */
 
-#ifndef DRIZZLED_JOIN_H
-#define DRIZZLED_JOIN_H
+#pragma once
 
+#include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/position.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/tmp_table_param.h>
 #include <bitset>
 
-namespace drizzled
-{
-
-class DrizzleLock;
-class Session;
-class SortField;
+namespace drizzled {
 
 class Join :public memory::SqlAlloc
 {
@@ -380,4 +375,3 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *join_tab, bool e
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_JOIN_H */

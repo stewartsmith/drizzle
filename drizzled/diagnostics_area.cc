@@ -52,7 +52,7 @@ const char *Diagnostics_area::message() const
 }
 
 
-drizzled::error_t Diagnostics_area::sql_errno() const
+error_t Diagnostics_area::sql_errno() const
 {
   assert(m_status == DA_ERROR);
   return m_sql_errno;
@@ -139,7 +139,7 @@ void Diagnostics_area::set_eof_status(Session *session)
 /**
   Set ERROR status.
 */
-void Diagnostics_area::set_error_status(drizzled::error_t sql_errno_arg,
+void Diagnostics_area::set_error_status(error_t sql_errno_arg,
                                         const char *message_arg)
 {
   /*

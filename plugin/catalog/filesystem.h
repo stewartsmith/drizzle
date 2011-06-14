@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FILESYSTEM_H
-#define PLUGIN_CATALOG_FILESYSTEM_H
+#pragma once
 
 #include <drizzled/plugin/catalog.h>
 #include <plugin/catalog/engine.h>
@@ -47,4 +46,3 @@ public:
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_FILESYSTEM_H */

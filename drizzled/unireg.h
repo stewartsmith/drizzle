@@ -20,8 +20,7 @@
 
 /*  Extra functions used by unireg library */
 
-#ifndef DRIZZLED_UNIREG_H
-#define DRIZZLED_UNIREG_H
+#pragma once
 
 #include <drizzled/visibility.h>
 
@@ -32,4 +31,3 @@ DRIZZLED_API void unireg_abort(int exit_code) __attribute__((noreturn));
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UNIREG_H */

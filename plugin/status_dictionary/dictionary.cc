@@ -29,8 +29,8 @@ static VariablesTool *session_variables;
 
 static int init(drizzled::module::Context &context)
 {
-  global_variables= new(std::nothrow)VariablesTool(true);
-  session_variables= new(std::nothrow)VariablesTool(false);
+  global_variables= new VariablesTool(true);
+  session_variables= new VariablesTool(false);
 
   context.add(global_variables);
   context.add(session_variables);

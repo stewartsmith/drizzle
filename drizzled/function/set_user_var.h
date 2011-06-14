@@ -17,17 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_SET_USER_VAR_H
-#define DRIZZLED_FUNCTION_SET_USER_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Handling of user definable variables */
-
-class user_var_entry;
 
 class Item_func_set_user_var :public Item_func
 {
@@ -59,13 +55,13 @@ public:
   int64_t val_int_result();
   String *str_result(String *str);
   type::Decimal *val_decimal_result(type::Decimal *);
-  bool update_hash(void *ptr, uint32_t length, enum Item_result type,
-  		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
-  bool send(plugin::Client *client, String *str_arg);
+  void update_hash(void *ptr, uint32_t length, enum Item_result type,
+  		   const charset_info_st * const cs, Derivation dv, bool unsigned_arg);
+  void send(plugin::Client *client, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
-  bool update();
-  enum Item_result result_type () const { return cached_result_type; }
+  void update();
+  Item_result result_type () const { return cached_result_type; }
   bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec();
   virtual void print(String *str);
@@ -83,4 +79,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_SET_USER_VAR_H */

@@ -50,6 +50,7 @@
 
 */
 
+#pragma once
 #ifndef __CSSHA1_H__
 #define __CSSHA1_H__
 #include <string.h>

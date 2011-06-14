@@ -20,11 +20,11 @@
 #include <config.h>
 
 #include <drizzled/function/time/sysdate_local.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
+#include <drizzled/field.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
     Converts current time in time_t to type::Time represenatation for local
@@ -32,7 +32,7 @@ namespace drizzled
 */
 void Item_func_sysdate_local::store_now_in_TIME(type::Time &now_time)
 {
-  getSession().variables.time_zone->gmt_sec_to_TIME(now_time, time(NULL));
+  now_time.store(time(NULL));
 }
 
 

@@ -23,6 +23,7 @@ The B-tree
 Created 6/2/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef btr0btr_h
 #define btr0btr_h
 

@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATUS_HELPER_H
-#define DRIZZLED_STATUS_HELPER_H
+#pragma once
 
 #include <drizzled/plugin.h>
 #include <drizzled/statistics_variables.h>
@@ -41,4 +40,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATUS_HELPER_H */

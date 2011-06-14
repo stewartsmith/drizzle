@@ -42,6 +42,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
+#include <drizzled/errmsg_print.h>
 
 #include <string>
 #include <vector>

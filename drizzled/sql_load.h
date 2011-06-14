@@ -17,21 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LOAD_H
-#define DRIZZLED_SQL_LOAD_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class TableList;
-class file_exchange;
-class Session;
-class Table;
-class CopyInfo;
+namespace drizzled {
 
 int load(Session *session, file_exchange *ex, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
@@ -42,4 +34,3 @@ int write_record(Session *session, Table *table, CopyInfo *info);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_LOAD_H */

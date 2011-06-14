@@ -23,6 +23,7 @@ Debug utilities for Innobase
 Created 1/30/1994 Heikki Tuuri
 **********************************************************************/
 
+#pragma once
 #ifndef ut0dbg_h
 #define ut0dbg_h
 

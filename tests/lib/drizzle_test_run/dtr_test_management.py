@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -31,6 +31,7 @@
 import os
 import re
 import sys
+from ConfigParser import RawConfigParser
 
 import lib.test_mgmt.test_management as test_management
 
@@ -44,7 +45,7 @@ class testCase:
     """
     def __init__(self, system_manager, test_case=None, test_name=None, suite_name=None
                  , suite_path=None, test_server_options=[], test_path=None, result_path=None
-                 , comment=None, master_sh=None
+                 , comment=None, master_sh=None, cnf_path=None
                  , disable=0, innodb_test=1 
                  , need_debug=0, debug=0):
         self.system_manager = system_manager
@@ -65,9 +66,16 @@ class testCase:
         self.master_count = 1
         self.server_options = test_server_options
         # We will populate this in a better fashion later on
-        self.server_requirements=[self.server_options]
+        # as we allow .cnf files, we need to do a bit of
+        # messing about to make this work right
+        if self.server_options == [] or type(self.server_options[0]) is not list:
+            self.server_requirements=[self.server_options]
+        else:
+            self.server_requirements = self.server_options
+            self.server_options= self.server_options[0][0]
         self.comment = comment
         self.master_sh = master_sh
+        self.cnf_path = cnf_path
         self.disable = disable
         self.innodb_test  = innodb_test
         self.need_debug = need_debug
@@ -114,7 +122,7 @@ class testManager(test_management.testManager):
 
         # Get suite-level options
         suite_options = []
-        suite_options = self.process_suite_options(suite_dir) 
+        cnf_path, suite_options = self.process_suite_options(suite_dir) 
 
         # Get the 'name' of the suite.  This can require some processing
         # But the name is useful for reporting and whatnot
@@ -138,11 +146,11 @@ class testManager(test_management.testManager):
             disabled_tests = self.process_disabled_test_file(testdir)                        
             for test_case in testlist:
                 self.add_test(self.process_test_file(suite_dir,
-                                              suite_name, suite_options
+                                              suite_name, cnf_path, suite_options
                                               , disabled_tests, testdir 
                                               , resultdir, test_case))
 
-    def process_test_file(self, suite_dir, suite_name, suite_options 
+    def process_test_file(self, suite_dir, suite_name, suite_cnf_path, suite_options 
                           , disabled_tests, testdir 
                           , resultdir, test_case):
         """ We generate / find / store all the relevant information per-test.
@@ -165,15 +173,18 @@ class testManager(test_management.testManager):
          , result_path
          , comment
          , master_sh
+         , cnf_path
          , test_server_options
          , disable
          , innodb_test
          , need_debug) = self.gather_test_data(test_case, test_name,
                                  suite_name, test_server_options,testdir, 
-                                 resultdir, disabled_tests)  
+                                 resultdir, disabled_tests)
+        if suite_cnf_path and not cnf_path:
+            cnf_path=suite_cnf_path
         test_case = testCase(self.system_manager, test_case, test_name, suite_name, 
                              suite_dir, test_server_options,test_path, result_path,
-                             master_sh=master_sh, debug=self.debug)      
+                             master_sh=master_sh, cnf_path=cnf_path, debug=self.debug)      
         return test_case
 
 
@@ -200,14 +211,25 @@ class testManager(test_management.testManager):
             master_sh = master_sh_path 
         else:
             master_sh = None
-        master_opt_path = test_path.replace('.test','-master.opt')
+        master_opt_path = test_path.replace('.test', '-master.opt')
+        config_file_path = test_path.replace('.test', '.cnf')
+        # NOTE:  this currently makes suite level server options additive 
+        # to file-level .opt files...not sure if this is the best.
         test_server_options = test_server_options + self.process_opt_file(
                                                            master_opt_path)
+        # deal with .cnf files (which supercede master.opt stuff)
+        cnf_options = []
+        cnf_flag, returned_options = self.process_cnf_file(config_file_path)
+        cnf_options += returned_options
+        if cnf_flag: # we found a proper file and need to override
+            found_options = cnf_options
+        else:
+            config_file_path = None
         (disable, comment) = self.check_if_disabled(disabled_tests, test_name)
         innodb_test = 0
         need_debug = 0
-        return (test_path, result_file_name, result_path, comment, master_sh,
-                test_server_options, disable, innodb_test, need_debug)
+        return (test_path, result_file_name, result_path, comment, master_sh, 
+                config_file_path, test_server_options, disable, innodb_test, need_debug)
 
     def check_suite(self, suite_dir, testdir, resultdir):
         """Handle basic checks of the suite:
@@ -259,12 +281,29 @@ class testManager(test_management.testManager):
             that reside at the suite-level if they exist.
             Return a list of the options found
 
+            We also process .cnf files - this
+            is currently dbqp-only and is the proper
+            way to do things :P
+
         """
         found_options = []
         opt_files = ['t/master.opt','t/suite.opt']
         for opt_file in opt_files:
             found_options = found_options + self.process_opt_file(os.path.join(suite_dir,opt_file))
-        return found_options
+        # We also process the suite-level .cnf file(s).  We override
+        # a master.opt file if we have a .cnf file.  There is no reason they
+        # should ever be used in conjunction and I am biased towards .cnf ; )
+        cnf_files = ['t/master.cnf']
+        cnf_options = []
+        for cnf_file in cnf_files:
+            config_file_path = os.path.join(suite_dir,cnf_file)
+            cnf_flag, returned_options = self.process_cnf_file(config_file_path)
+            cnf_options += returned_options
+        if cnf_flag: # we found a proper file and need to override
+            found_options = cnf_options
+        else:
+            config_file_path = None
+        return config_file_path, found_options
 
     def process_disabled_test_file(self, testdir):
         """ Checks and processes the suite's disabled.def
@@ -341,6 +380,35 @@ class testManager(test_management.testManager):
                         found_options.append('--%s' %(option.strip()))
         opt_file.close()
         return found_options
+
+    def process_cnf_file(self, cnf_file_path):
+        """ We extract meaningful information from a .cnf file
+            if it exists.  Currently limited to server allocation
+            needs
+
+        """
+
+        server_requirements = []
+        cnf_flag = 0
+        if os.path.exists(cnf_file_path):
+            cnf_flag = 1
+            config_reader = RawConfigParser()
+            config_reader.read(cnf_file_path)
+            server_requirements = self.process_server_reqs(config_reader.get('test_servers','servers'))
+        return ( cnf_flag, server_requirements )
+
+    def process_server_reqs(self,data_string):
+        """ We read in the list of lists as a string, so we need to 
+            handle this / break it down into proper chunks
+
+        """
+        server_reqs = []
+        # We expect to see a list of lists and throw away the 
+        # enclosing brackets
+        option_sets = data_string[1:-1].strip().split(',')
+        for option_set in option_sets:
+            server_reqs.append([option_set[1:-1].strip()])
+        return server_reqs
 
     def testlist_filter(self, testlist):
         """ Filter our list of testdir contents based on several 

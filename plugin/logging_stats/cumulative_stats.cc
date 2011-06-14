@@ -28,6 +28,7 @@
  */
 
 #include <config.h>
+#include <drizzled/statistics_variables.h>
 #include "cumulative_stats.h"
 
 using namespace std;

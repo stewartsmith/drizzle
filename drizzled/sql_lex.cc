@@ -31,9 +31,14 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/plugin.h>
 
 #include <cstdio>
 #include <ctype.h>
+
+#include <drizzled/message/alter_table.pb.h>
 
 union ParserType;
 
@@ -101,36 +106,6 @@ Lex_input_stream::Lex_input_stream(Session *session,
 {
   m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
   m_cpp_ptr= m_cpp_buf;
-}
-
-Lex_input_stream::~Lex_input_stream()
-{}
-
-/**
-  The operation is called from the parser in order to
-  1) designate the intention to have utf8 body;
-  1) Indicate to the lexer that we will need a utf8 representation of this
-     statement;
-  2) Determine the beginning of the body.
-
-  @param session        Thread context.
-  @param begin_ptr  Pointer to the start of the body in the pre-processed
-                    buffer.
-*/
-void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
-{
-  assert(begin_ptr);
-  assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
-
-  uint32_t body_utf8_length=
-    (m_buf_length / default_charset_info->mbminlen) *
-    my_charset_utf8_bin.mbmaxlen;
-
-  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
-  m_body_utf8_ptr= m_body_utf8;
-  *m_body_utf8_ptr= 0;
-
-  m_cpp_utf8_processed_ptr= begin_ptr;
 }
 
 /**
@@ -224,7 +199,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   lex->session= lex->unit.session= session;
 
@@ -277,7 +252,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->statement= NULL;
-  
+
   lex->is_cross= false;
   lex->reset();
 }
@@ -294,7 +269,9 @@ void LEX::end()
 
   safe_delete(result);
   safe_delete(_create_table);
+  safe_delete(_alter_table);
   _create_table= NULL;
+  _alter_table= NULL;
   _create_field= NULL;
 
   result= 0;
@@ -324,12 +301,6 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   }
 
   return 0;
-}
-
-bool is_lex_native_function(const LEX_STRING *name)
-{
-  assert(name != NULL);
-  return (lookup_symbol(name->str, name->length, 1) != 0);
 }
 
 /* make a copy of token before ptr and set yytoklen */
@@ -390,7 +361,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   unsigned char c,sep;
   bool found_escape= false;
-  const CHARSET_INFO * const cs= lip->m_session->charset();
+  const charset_info_st * const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
   sep= lip->yyGetLast();                        // String should end with this
@@ -402,7 +373,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       if (use_mb(cs))
       {
         int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
-        if (l != 0) 
+        if (l != 0)
         {
           lip->skip_binary(l-1);
           continue;
@@ -671,8 +642,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->getLex();
-  const CHARSET_INFO * const cs= session->charset();
+  LEX *lex= &session->lex();
+  const charset_info_st * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
 
@@ -1296,29 +1267,6 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   }
 }
 
-void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
-{
-  /*
-    TODO:
-    This code assumes that there are no multi-bytes characters
-    that can be considered white-space.
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[0])))
-  {
-    str->length--;
-    str->str++;
-  }
-
-  /*
-    FIXME:
-    Also, parsing backward is not safe with multi bytes characters
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[str->length-1])))
-  {
-    str->length--;
-  }
-}
-
 /*
   Select_Lex structures initialisations
 */
@@ -1621,7 +1569,7 @@ bool Select_Lex_Node::set_braces(bool)
 bool Select_Lex_Node::inc_in_sum_expr()
 { return true; }
 
-uint32_t Select_Lex_Node::get_in_sum_expr() 
+uint32_t Select_Lex_Node::get_in_sum_expr()
 { return 0; }
 
 TableList* Select_Lex_Node::get_table_list()
@@ -1630,12 +1578,12 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list(Session *, 
-                                              Table_ident *, 
-                                              LEX_STRING *, 
+TableList *Select_Lex_Node::add_table_to_list(Session *,
+                                              Table_ident *,
+                                              LEX_STRING *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
-                                              thr_lock_type, 
-                                              List<Index_hint> *, 
+                                              thr_lock_type,
+                                              List<Index_hint> *,
                                               LEX_STRING *)
 {
   return 0;
@@ -1673,7 +1621,8 @@ bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 
 bool Select_Lex::add_item_to_list(Session *, Item *item)
 {
-  return(item_list.push_back(item));
+	item_list.push_back(item);
+  return false;
 }
 
 bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
@@ -1825,6 +1774,7 @@ void Select_Lex::print_limit(Session *, String *str)
 LEX::~LEX()
 {
   delete _create_table;
+  delete _alter_table;
 }
 
 /*
@@ -1875,19 +1825,20 @@ void Query_tables_list::reset_query_tables_list(bool init)
     for this.
 */
 LEX::LEX() :
-    result(0), 
-    yacc_yyss(0), 
+    result(0),
+    yacc_yyss(0),
     yacc_yyvs(0),
     session(NULL),
     charset(NULL),
     var_list(),
-    sql_command(SQLCOM_END), 
+    sql_command(SQLCOM_END),
     statement(NULL),
-    option_type(OPT_DEFAULT), 
+    option_type(OPT_DEFAULT),
     is_lex_started(0),
     cacheable(true),
     sum_expr_used(false),
     _create_table(NULL),
+    _alter_table(NULL),
     _create_field(NULL),
     _exists(false)
 {
@@ -2079,11 +2030,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->getLex()->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->getLex()->derived_tables flag
+    session->lex().derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->lex().derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->getLex()->select_lex, because we
+    NOTE: all units will be connected to session->lex().select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)
@@ -2159,29 +2110,17 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
 {
-  return index_hints->push_front (new (session->mem_root)
-                                 Index_hint(current_index_hint_type,
-                                            current_index_hint_clause,
-                                            str, length));
+  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
 }
 
-bool check_for_sql_keyword(drizzled::lex_string_t const& string)
+message::AlterTable *LEX::alter_table()
 {
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
+  if (not _alter_table)
+    _alter_table= new message::AlterTable;
 
-  return false;
+  return _alter_table;
 }
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
-{
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
-
-  return false;
-}
-
 
 } /* namespace drizzled */

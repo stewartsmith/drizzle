@@ -17,11 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_SUBSELECT_H
-#define DRIZZLED_ITEM_SUBSELECT_H
-
-/* subselect Item */
-
+#pragma once
 
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/ref.h>
@@ -29,23 +25,7 @@
 #include <drizzled/item/bin_string.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
-
-class Select_Lex;
-class Select_Lex_Unit;
-class Join;
-class select_result_interceptor;
-class subselect_engine;
-class subselect_hash_sj_engine;
-class Item_bool_func2;
-class Cached_item;
-class Item_in_optimizer;
-class Item_func_not_all;
-class Tmp_Table_Param;
-
-
-/* base class for subselects */
+namespace drizzled {
 
 class Item_subselect :public Item_result_field
 {
@@ -165,7 +145,6 @@ public:
 
 /* single value subselect */
 
-class Item_cache;
 class Item_singlerow_subselect :public Item_subselect
 {
 protected:
@@ -543,9 +522,6 @@ public:
 };
 
 
-class JoinTable;
-
-
 /*
   A subquery execution engine that evaluates the subquery by doing one index
   lookup in a unique index.
@@ -714,4 +690,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_SUBSELECT_H */

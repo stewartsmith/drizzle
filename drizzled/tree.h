@@ -13,8 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_TREE_H
-#define DRIZZLED_TREE_H
+#pragma once
 
 #include <unistd.h>
 
@@ -89,4 +88,3 @@ ha_rows tree_record_pos(TREE *tree, const void *key,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TREE_H */

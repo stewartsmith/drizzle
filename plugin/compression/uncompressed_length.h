@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
-#define PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
+#pragma once
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
@@ -36,4 +35,3 @@ public:
 };
 
 
-#endif /* PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H */

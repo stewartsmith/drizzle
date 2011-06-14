@@ -36,14 +36,15 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <math.h>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const double log_10[309];
 
@@ -788,7 +789,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
                                      int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
-  Item *str_arg= 0, *date_arg= 0;
+  Item *str_arg= 0;
 
   if (in_a->type() == Item::ROW_ITEM || in_b->type() == Item::ROW_ITEM)
     return CMP_DATE_DFLT;
@@ -802,14 +803,12 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
-      date_arg= in_a;
       str_arg= in_b;
     }
   }
   else if (in_b->is_datetime() && in_a->result_type() == STRING_RESULT)
   {
     cmp_type= CMP_STR_WITH_DATE;
-    date_arg= in_b;
     str_arg= in_a;
   }
 
@@ -858,15 +857,28 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
          */
         return CMP_DATE_DFLT;
       }
-      if (! temporal.from_string(str_val->c_ptr(), str_val->length()))
+      if (temporal.from_string(str_val->c_ptr(), str_val->length()))
       {
-        /* Chuck an error. Bad datetime input. */
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
-        return CMP_DATE_DFLT; /* :( What else can I return... */
+        /* String conversion was good.  Convert to an integer for comparison purposes. */
+        temporal.to_int64_t(&value);
       }
-
-      /* String conversion was good.  Convert to an integer for comparison purposes. */
-      temporal.to_int64_t(&value);
+      else
+      {
+        /* We aren't a DATETIME but still could be a TIME */
+        Time timevalue;
+        if (timevalue.from_string(str_val->c_ptr(), str_val->length()))
+        {
+          uint64_t timeint;
+          timevalue.to_uint64_t(timeint);
+          value= static_cast<int64_t>(timeint);
+        }
+        else
+        {
+          /* Chuck an error. Bad datetime input. */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
+          return CMP_DATE_DFLT; /* :( What else can I return... */
+        }
+      }
 
       if (const_value)
         *const_value= value;
@@ -1990,7 +2002,7 @@ bool Item_func_between::fix_fields(Session *session, Item **ref)
   if (Item_func_opt_neg::fix_fields(session, ref))
     return 1;
 
-  session->getLex()->current_select->between_count++;
+  session->lex().current_select->between_count++;
 
   /* not_null_tables_cache == union(T1(e),T1(e1),T1(e2)) */
   if (pred_level && !negated)
@@ -3113,7 +3125,7 @@ int in_vector::find(Item *item)
   return (int) ((*compare)(collation, base+start*size, result) == 0);
 }
 
-in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs)
+in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const charset_info_st * const cs)
   :in_vector(elements, sizeof(String), cmp_func, cs),
    tmp(buff, sizeof(buff), &my_charset_bin)
 {}
@@ -3143,7 +3155,7 @@ void in_string::set(uint32_t pos,Item *item)
   }
   if (!str->charset())
   {
-    const CHARSET_INFO *cs;
+    const charset_info_st *cs;
     if (!(cs= item->collation.collation))
       cs= &my_charset_bin;		// Should never happen for STR items
     str->set_charset(cs);
@@ -3284,7 +3296,7 @@ unsigned char *in_decimal::get_value(Item *item)
 
 
 cmp_item* cmp_item::get_comparator(Item_result type,
-                                   const CHARSET_INFO * const cs)
+                                   const charset_info_st * const cs)
 {
   switch (type) {
   case STRING_RESULT:
@@ -3555,7 +3567,7 @@ Item_func_in::fix_fields(Session *session, Item **ref)
 }
 
 
-static int srtcmp_in(const CHARSET_INFO * const cs, const String *x,const String *y)
+static int srtcmp_in(const charset_info_st * const cs, const String *x,const String *y)
 {
   return cs->coll->strnncollsp(cs,
                                (unsigned char *) x->ptr(),x->length(),
@@ -3955,7 +3967,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if (item->maybe_null)
       maybe_null=1;
   }
-  session->getLex()->current_select->cond_count+= list.size();
+  session->lex().current_select->cond_count+= list.size();
   session->session_marker= orig_session_marker;
   fix_length_and_dec();
   fixed= 1;
@@ -4284,8 +4296,7 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
     }
     return res;
   }
-  if (((Item_cond_and*) a)->add((Item*) b))
-    return 0;
+  ((Item_cond_and*) a)->add((Item*) b);
   ((Item_cond_and*) a)->used_tables_cache|= b->used_tables();
   ((Item_cond_and*) a)->not_null_tables_cache|= b->not_null_tables();
   return a;
@@ -4490,7 +4501,7 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
-static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+static unsigned char likeconv(const charset_info_st *cs, unsigned char a)
 {
 #ifdef LIKE_CMP_TOUPPER
   return cs->toupper(a);
@@ -4509,7 +4520,7 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
   int            f = 0;
   int            g = plm1;
   int *const splm1 = suff + plm1;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   *splm1 = pattern_len;
 
@@ -4607,7 +4618,7 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   int *end = bmBc + alphabet_size;
   int j;
   const int plm1 = pattern_len - 1;
-  const CHARSET_INFO *const cs= cmp.cmp_collation.collation;
+  const charset_info_st *const cs= cmp.cmp_collation.collation;
 
   for (i = bmBc; i < end; i++)
     *i = pattern_len;
@@ -4639,7 +4650,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   int shift = pattern_len;
   int j     = 0;
   int u     = 0;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   const int plm1=  pattern_len - 1;
   const int tlmpl= text_len - pattern_len;

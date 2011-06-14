@@ -41,6 +41,7 @@
  */
 
 
+#pragma once
 #ifndef __PBMS_ENABLED_H__
 #define __PBMS_ENABLED_H__
 

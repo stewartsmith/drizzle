@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_BOOLEAN_H
-#define DRIZZLED_FIELD_BOOLEAN_H
+#pragma once
 
 #include <drizzled/field.h>
 #include <string>
@@ -47,7 +46,7 @@ public:
   uint32_t pack_length() const { return sizeof(unsigned char); }
   uint32_t key_length() const { return sizeof(unsigned char); }
 
-  int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to, uint32_t length, const charset_info_st * const charset);
   int store(double );
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const drizzled::type::Decimal*);
@@ -94,5 +93,4 @@ private:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_BOOLEAN_H */
 

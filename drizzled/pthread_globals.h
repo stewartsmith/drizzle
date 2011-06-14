@@ -17,23 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PTHREAD_GLOBALS_H
-#define DRIZZLED_PTHREAD_GLOBALS_H
+#pragma once
 
 #include <pthread.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/shared_ptr.hpp>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-typedef boost::unique_lock<boost::mutex>  boost_unique_lock_t;
-
-typedef boost::shared_ptr<boost::thread> boost_thread_shared_ptr;
+typedef boost::shared_ptr<boost::thread> thread_ptr;
 
 extern boost::condition_variable_any COND_refresh;
 extern DRIZZLED_API boost::condition_variable COND_thread_count;
@@ -41,4 +36,3 @@ extern pthread_t signal_thread;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PTHREAD_GLOBALS_H */

@@ -23,6 +23,7 @@ Utilities for byte operations
 Created 1/20/1994 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0byte_h
 #define ut0byte_h
 

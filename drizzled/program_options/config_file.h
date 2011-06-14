@@ -7,8 +7,7 @@
  * http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifndef DRIZZLED_PROGRAM_OPTIONS_CONFIG_FILE_H
-#define DRIZZLED_PROGRAM_OPTIONS_CONFIG_FILE_H
+#pragma once
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/eof_iterator.hpp>
@@ -492,5 +491,4 @@ parse_config_file(const char* filename,
 } /* namespace program_options */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PROGRAM_OPTIONS_CONFIG_FILE_H */
 

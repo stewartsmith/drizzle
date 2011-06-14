@@ -18,9 +18,12 @@
  */
 
 #include <config.h>
+#include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
+#include <drizzled/sql_parse.h>
 #include PCRE_HEADER
 #include <limits.h>
 #include <sys/time.h>
@@ -71,7 +74,7 @@ static void quotify(const string &src, string &dst)
   static const char hexit[]= { '0', '1', '2', '3', '4', '5', '6', '7',
 			  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
   string::const_iterator src_iter;
-  
+
   for (src_iter= src.begin(); src_iter < src.end(); ++src_iter)
   {
     if (static_cast<unsigned char>(*src_iter) > 0x7f)
@@ -236,9 +239,9 @@ public:
       inside itself, so be more accurate, and so this doesnt have to
       keep calling current_utime, which can be slow.
     */
-    uint64_t t_mark= session->getCurrentTimestamp(false);
+    uint64_t t_mark= session->times.getCurrentTimestamp(false);
 
-    if (session->getElapsedTime() < (sysvar_logging_query_threshold_slow.get()))
+    if (session->times.getElapsedTime() < sysvar_logging_query_threshold_slow.get())
       return false;
 
     Session::QueryString query_string(session->getQueryString());
@@ -257,26 +260,24 @@ public:
 
     // buffer to quotify the query
     string qs;
-    
+
     // Since quotify() builds the quoted string incrementally, we can
     // avoid some reallocating if we reserve some space up front.
     qs.reserve(query_string->length());
-    
-    quotify(*query_string, qs);
-    
-    // to avoid trying to printf %s something that is potentially NULL
-    util::string::const_shared_ptr schema(session->schema());
-    const char *dbs= (schema and not schema->empty()) ? schema->c_str() : "";
 
+    quotify(*query_string, qs);
+
+    // to avoid trying to printf %s something that is potentially NULL
+    util::string::ptr schema(session->schema());
     formatter % t_mark
               % session->thread_id
               % session->getQueryId()
-              % dbs
+              % (schema ? schema->c_str() : "")
               % qs
               % getCommandName(session->command)
-              % (t_mark - session->getConnectMicroseconds())
-              % session->getElapsedTime()
-              % (t_mark - session->utime_after_lock)
+              % (t_mark - session->times.getConnectMicroseconds())
+              % session->times.getElapsedTime()
+              % (t_mark - session->times.utime_after_lock)
               % session->sent_row_count
               % session->examined_row_count
               % session->tmp_table
@@ -296,10 +297,9 @@ public:
 
 static int logging_query_plugin_init(drizzled::module::Context &context)
 {
-
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("filename") > 0)
+  if (vm.count("filename"))
   {
     context.add(new Logging_query(vm["filename"].as<string>(),
                                   vm["pcre"].as<string>()));

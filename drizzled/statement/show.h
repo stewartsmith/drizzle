@@ -18,17 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SHOW_H
-#define DRIZZLED_STATEMENT_SHOW_H
+#pragma once
 
 #include <drizzled/statement/select.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Show : public Select
 {
@@ -79,4 +74,3 @@ public:
 } /* namespace statement */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_SHOW_H */

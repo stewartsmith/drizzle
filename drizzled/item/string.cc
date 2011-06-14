@@ -23,31 +23,14 @@
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_string::safe_charset_converter(const charset_info_st * const tocs)
 {
-  Item_string *conv;
-  size_t conv_errors;
-  char *ptr;
   String tmp, cstr, *ostr= val_str(&tmp);
-  cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
-  if (conv_errors || !(conv= new Item_string(cstr.ptr(), cstr.length(),
-                                             cstr.charset(),
-                                             collation.derivation)))
-  {
-    /*
-      Safe conversion is not possible (or EOM).
-      We could not convert a string into the requested character set
-      without data loss. The target charset does not cover all the
-      characters from the string. Operation cannot be done correctly.
-    */
-    return NULL;
-  }
-
-  if (!(ptr= getSession().strmake(cstr.ptr(), cstr.length())))
-    return NULL;
+  cstr.copy(ostr->ptr(), ostr->length(), tocs);
+  Item_string* conv= new Item_string(cstr.ptr(), cstr.length(), cstr.charset(), collation.derivation);
+  char* ptr= getSession().strmake(cstr.ptr(), cstr.length());
 
   conv->str_value.set(ptr, cstr.length(), cstr.charset());
   /* Ensure that no one is going to change the result string */
@@ -56,26 +39,11 @@ Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 }
 
 
-Item *Item_static_string_func::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_static_string_func::safe_charset_converter(const charset_info_st * const tocs)
 {
-  Item_string *conv;
-  size_t conv_errors;
   String tmp, cstr, *ostr= val_str(&tmp);
-  cstr.copy(ostr->ptr(), ostr->length(), ostr->charset(), tocs, &conv_errors);
-  if (conv_errors ||
-      !(conv= new Item_static_string_func(func_name,
-                                          cstr.ptr(), cstr.length(),
-                                          cstr.charset(),
-                                          collation.derivation)))
-  {
-    /*
-      Safe conversion is not possible (or EOM).
-      We could not convert a string into the requested character set
-      without data loss. The target charset does not cover all the
-      characters from the string. Operation cannot be done correctly.
-    */
-    return NULL;
-  }
+  cstr.copy(ostr->ptr(), ostr->length(), tocs);
+  Item_string* conv= new Item_static_string_func(func_name, cstr.ptr(), cstr.length(), cstr.charset(), collation.derivation);
   conv->str_value.copy();
   /* Ensure that no one is going to change the result string */
   conv->str_value.mark_as_const();
@@ -116,7 +84,7 @@ double Item_string::val_real()
   int error;
   char *end, *org_end;
   double tmp;
-  const CHARSET_INFO * const cs= str_value.charset();
+  const charset_info_st * const cs= str_value.charset();
 
   org_end= (char*) str_value.ptr() + str_value.length();
   tmp= my_strntod(cs, (char*) str_value.ptr(), str_value.length(), &end,
@@ -146,7 +114,7 @@ int64_t Item_string::val_int()
   int64_t tmp;
   char *end= (char*) str_value.ptr()+ str_value.length();
   char *org_end= end;
-  const CHARSET_INFO * const cs= str_value.charset();
+  const charset_info_st * const cs= str_value.charset();
 
   tmp= (*(cs->cset->strtoll10))(cs, str_value.ptr(), &end, &err);
   /*

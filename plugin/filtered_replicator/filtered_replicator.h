@@ -27,8 +27,7 @@
  * @see drizzled/plugin/transaction_applier.h
  */
 
-#ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
-#define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/transaction_replicator.h>
@@ -235,4 +234,3 @@ private:
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */

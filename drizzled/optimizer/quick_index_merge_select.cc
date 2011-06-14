@@ -26,13 +26,14 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/unique.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int refpos_order_cmp(void *arg, const void *a, const void *b)
 {

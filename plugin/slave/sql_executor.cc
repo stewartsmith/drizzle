@@ -26,6 +26,7 @@
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/plugin.h>
 
 using namespace std;
 using namespace drizzled;
@@ -39,7 +40,7 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
   /* setup a Session object */
   _session= Session::make_shared(plugin::Listen::getNullClient(),
                                  catalog::local());
-  identifier::User::shared_ptr user_id= identifier::User::make_shared();
+  identifier::user::mptr user_id= identifier::User::make_shared();
   user_id->setUser(user);
   _session->setUser(user_id);
   _session->set_db(schema);

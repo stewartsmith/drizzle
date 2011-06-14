@@ -21,16 +21,16 @@
 
 #include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 #include <drizzled/table_function_container.h>
+#include <drizzled/sql_lex.h>
 
 #include <vector>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static TableFunctionContainer table_functions;
 
@@ -41,12 +41,13 @@ void plugin::TableFunction::init()
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
   message::set_is_replicated(proto, false);
+  message::set_definer(proto, SYSTEM_USER);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
 {
   assert(tool != NULL);
-  table_functions.addFunction(tool); 
+  table_functions.addFunction(tool);
   return false;
 }
 
@@ -59,6 +60,16 @@ void plugin::TableFunction::getNames(const std::string &arg,
                                      std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
+}
+
+LEX& plugin::TableFunction::Generator::lex()
+{
+	return getSession().lex();
+}
+
+statement::Statement& plugin::TableFunction::Generator::statement()
+{
+	return *lex().statement;
 }
 
 plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
@@ -96,7 +107,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options->set_default_null(is_default_null);
   field_constraints->set_is_notnull(not is_default_null);
 
-  switch (type) 
+  switch (type)
   {
   case TableFunction::STRING:
     {
@@ -150,18 +161,12 @@ plugin::TableFunction::Generator::Generator(Field **arg) :
 
 bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
-  bool ret;
-  uint64_t difference;
-
   columns_iterator= columns;
-  ret= populate();
-  difference= columns_iterator - columns;
+  bool ret= populate();
+  uint64_t difference= columns_iterator - columns;
 
-  if (ret == true)
-  {
+  if (ret)
     assert(difference == field_size);
-  }
-
   return ret;
 }
 
@@ -210,27 +215,15 @@ void plugin::TableFunction::Generator::push(const std::string& arg)
 void plugin::TableFunction::Generator::push(bool arg)
 {
   if (arg)
-  {
     (*columns_iterator)->store("YES", 3, scs);
-  }
   else
-  {
     (*columns_iterator)->store("NO", 2, scs);
-  }
-
   columns_iterator++;
 }
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().getLex()->wild)
-    return false;
-
-  bool match= wild_case_compare(system_charset_info,
-                                predicate.c_str(),
-                                getSession().getLex()->wild->ptr());
-
-  return match;
+  return lex().wild ? wild_case_compare(system_charset_info, predicate.c_str(), lex().wild->ptr()) : false;
 }
 
 } /* namespace drizzled */

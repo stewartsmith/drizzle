@@ -9,7 +9,7 @@ A VARCHAR or VARBINARY type is used to store variable length data. Indexes
 on these types are by default the full length of the data stored.
 The only difference between the two types is the COLLATION which is
 used. VARBINARY uses a binary collation for all index usage. VARCHAR can only
-contain valid UTF-8 characters.
+contain valid UTF-8 characters. If you need to store ASCII values the VARBINARY type.
 
 -------------
 TEXT and BLOB
@@ -26,7 +26,7 @@ NUMERICAL
 ---------
 
 BIGINT and INTEGER exist as Drizzle's two integer numerical types. BIGINT is
-a 64bit integer while INTEGER is a 32bit integer.
+a 64bit integer while INTEGER is a 32bit integer. Declaring a numerical types as UNSIGNED the value to be 64bit.
 
 DOUBLE is the systems native double type.
 
@@ -41,6 +41,10 @@ DATETIME
 TIMESTAMP
 
 DATE
+
+TIME
+
+TIMESTAMP can be supplied an optional parameter of (6) during creation. This causes microseconds to be recorded as well. The TIME type represents duration of an event in seconds.
 
 ----
 ENUM

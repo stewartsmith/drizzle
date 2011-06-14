@@ -32,8 +32,7 @@
  * @see drizzled/plugin/applier.h
  */
 
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H
+#pragma once
 
 #include <drizzled/replication_services.h>
 #include <drizzled/plugin/transaction_applier.h>
@@ -104,4 +103,3 @@ private:
   WriteBuffer *getWriteBuffer(const drizzled::Session &session);
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H */

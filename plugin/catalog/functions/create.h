@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_CATALOG_FUNCTIONS_CREATE_H
-#define PLUGIN_CATALOG_FUNCTIONS_CREATE_H
+#pragma once
 
 namespace plugin {
 namespace catalog {
@@ -43,4 +42,3 @@ public:
 } /* namespace catalog */
 } /* namespace plugin */
 
-#endif /* PLUGIN_CATALOG_FUNCTIONS_CREATE_H */

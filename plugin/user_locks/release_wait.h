@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_USER_LOCKS_RELEASE_WAIT_H
-#define PLUGIN_USER_LOCKS_RELEASE_WAIT_H
+#pragma once
 
 namespace user_locks {
 namespace locks {
@@ -41,4 +40,3 @@ public:
 } /* namespace locks */
 } /* namespace user_locks */
 
-#endif /* PLUGIN_USER_LOCKS_RELEASE_WAIT_H */

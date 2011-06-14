@@ -40,13 +40,14 @@
 #include <drizzled/type/decimal.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 
@@ -74,17 +75,17 @@ extern plugin::StorageEngine *heap_engine;
 
 bool Item_sum::init_sum_func_check(Session *session)
 {
-  if (!session->getLex()->allow_sum_func)
+  if (!session->lex().allow_sum_func)
   {
     my_message(ER_INVALID_GROUP_FUNC_USE, ER(ER_INVALID_GROUP_FUNC_USE),
                MYF(0));
     return true;
   }
   /* Set a reference to the nesting set function if there is  any */
-  in_sum_func= session->getLex()->in_sum_func;
+  in_sum_func= session->lex().in_sum_func;
   /* Save a pointer to object to be used in items for nested set functions */
-  session->getLex()->in_sum_func= this;
-  nest_level= session->getLex()->current_select->nest_level;
+  session->lex().in_sum_func= this;
+  nest_level= session->lex().current_select->nest_level;
   ref_by= 0;
   aggr_level= -1;
   aggr_sel= NULL;
@@ -146,7 +147,7 @@ bool Item_sum::init_sum_func_check(Session *session)
 bool Item_sum::check_sum_func(Session *session, Item **ref)
 {
   bool invalid= false;
-  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
+  nesting_map allow_sum_func= session->lex().allow_sum_func;
   /*
     The value of max_arg_level is updated if an argument of the set function
     contains a column reference resolved  against a subquery whose level is
@@ -179,7 +180,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   if (!invalid && aggr_level < 0)
   {
     aggr_level= nest_level;
-    aggr_sel= session->getLex()->current_select;
+    aggr_sel= session->lex().current_select;
   }
   /*
     By this moment we either found a subquery where the set function is
@@ -285,7 +286,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
   }
   aggr_sel->full_group_by_flag.set(SUM_FUNC_USED);
   update_used_tables();
-  session->getLex()->in_sum_func= in_sum_func;
+  session->lex().in_sum_func= in_sum_func;
   return false;
 }
 
@@ -317,8 +318,8 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
 bool Item_sum::register_sum_func(Session *session, Item **ref)
 {
   Select_Lex *sl;
-  nesting_map allow_sum_func= session->getLex()->allow_sum_func;
-  for (sl= session->getLex()->current_select->master_unit()->outer_select() ;
+  nesting_map allow_sum_func= session->lex().allow_sum_func;
+  for (sl= session->lex().current_select->master_unit()->outer_select() ;
        sl && sl->nest_level > max_arg_level;
        sl= sl->master_unit()->outer_select() )
   {
@@ -369,12 +370,12 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
       with_sum_func being set for an Select_Lex means that this Select_Lex
       has aggregate functions directly referenced (i.e. not through a sub-select).
     */
-    for (sl= session->getLex()->current_select;
+    for (sl= session->lex().current_select;
          sl && sl != aggr_sel && sl->master_unit()->item;
          sl= sl->master_unit()->outer_select() )
       sl->master_unit()->item->with_sum_func= 1;
   }
-  session->getLex()->current_select->mark_as_dependent(aggr_sel);
+  session->lex().current_select->mark_as_dependent(aggr_sel);
   return false;
 }
 
@@ -420,7 +421,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
 
 void Item_sum::mark_as_sum_func()
 {
-  Select_Lex *cur_select= getSession().getLex()->current_select;
+  Select_Lex *cur_select= getSession().lex().current_select;
   cur_select->n_sum_items++;
   cur_select->with_sum_func= 1;
   with_sum_func= 1;
@@ -1011,30 +1012,25 @@ enum Item_result Item_sum_distinct::result_type () const
 */
 bool Item_sum_distinct::setup(Session *session)
 {
-  List<CreateField> field_list;
-  CreateField field_def;                              /* field definition */
   /* It's legal to call setup() more than once when in a subquery */
   if (tree)
-    return(false);
+    return false;
 
   /*
     Virtual table and the tree are created anew on each re-execution of
     PS/SP. Hence all further allocations are performed in the runtime
     mem_root.
   */
-  if (field_list.push_back(&field_def))
-    return(true);
-
   null_value= maybe_null= 1;
   quick_group= 0;
 
   assert(args[0]->fixed);
 
-  field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
-                               args[0]->decimals, args[0]->maybe_null);
-
-  if (! (table= session->getInstanceTable(field_list)))
-    return(true);
+  std::list<CreateField> field_list;
+  field_list.push_back(CreateField());
+  CreateField& field_def = field_list.back();
+  field_def.init_for_tmp_table(table_field_type, args[0]->max_length, args[0]->decimals, args[0]->maybe_null);
+  table= &session->getInstanceTable(field_list);
 
   /* XXX: check that the case of CHAR(0) works OK */
   tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
@@ -1045,14 +1041,10 @@ bool Item_sum_distinct::setup(Session *session)
     simple_raw_key_cmp because the table contains numbers only; decimals
     are converted to binary representation as well.
   */
-  tree= new Unique(simple_raw_key_cmp, &tree_key_length,
-                   tree_key_length,
-                   (size_t)session->variables.max_heap_table_size);
-
+  tree= new Unique(simple_raw_key_cmp, &tree_key_length, tree_key_length, (size_t)session->variables.max_heap_table_size);
   is_evaluated= false;
-  return(tree == 0);
+  return false;
 }
-
 
 bool Item_sum_distinct::add()
 {
@@ -2582,7 +2574,7 @@ Item_sum_count_distinct::~Item_sum_count_distinct()
 bool Item_sum_count_distinct::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->getLex()->current_select;
+  Select_Lex *select_lex= session->lex().current_select;
 
   /*
     Setup can be called twice for ROLLUP items. This is a bug.
@@ -2599,8 +2591,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   for (uint32_t i=0; i < arg_count ; i++)
   {
     Item *item=args[i];
-    if (list.push_back(item))
-      return true;                              // End of memory
+    list.push_back(item);
     if (item->const_item() && item->is_null())
       always_null= 1;
   }
@@ -2932,7 +2923,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
   if (result->length() > item->max_length)
   {
     int well_formed_error;
-    const CHARSET_INFO * const cs= item->collation.collation;
+    const charset_info_st * const cs= item->collation.collation;
     const char *ptr= result->ptr();
     uint32_t add_length;
     /*
@@ -3206,7 +3197,7 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
 bool Item_func_group_concat::setup(Session *session)
 {
   List<Item> list;
-  Select_Lex *select_lex= session->getLex()->current_select;
+  Select_Lex *select_lex= session->lex().current_select;
 
   /*
     Currently setup() can be called twice. Please add
@@ -3226,8 +3217,7 @@ bool Item_func_group_concat::setup(Session *session)
   for (uint32_t i= 0; i < arg_count_field; i++)
   {
     Item *item= args[i];
-    if (list.push_back(item))
-      return(true);
+    list.push_back(item);
     if (item->const_item())
     {
       if (item->is_null())

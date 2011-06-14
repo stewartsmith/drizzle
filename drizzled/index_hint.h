@@ -24,8 +24,7 @@
  * Defines the API for index hints
  */
 
-#ifndef DRIZZLED_INDEX_HINT_H
-#define DRIZZLED_INDEX_HINT_H
+#pragma once
 
 namespace drizzled
 {
@@ -82,4 +81,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INDEX_HINT_H */

@@ -39,8 +39,7 @@
  * @see drizzled/calendar.cc
  */
 
-#ifndef DRIZZLED_TEMPORAL_H
-#define DRIZZLED_TEMPORAL_H
+#pragma once
 
 #define DRIZZLE_MAX_SECONDS 59
 #define DRIZZLE_MAX_SECONDS_WITH_LEAP 61
@@ -68,24 +67,11 @@
 #define DRIZZLE_YY_PART_YEAR  70
 
 #include <drizzled/calendar.h>
-
+#include <drizzled/common_fwd.h>
 #include <cassert>
 #include <ostream>
 
-/* Outside forward declarations */
-namespace type {
-class Decimal;
-}
-
-namespace drizzled
-{
-
-/* Forward declaration needed */
-class TemporalInterval;
-class TemporalIntervalYear;
-class TemporalIntervalDayOrLess;
-class TemporalIntervalDayOrWeek;
-class TemporalIntervalYearMonth;
+namespace drizzled {
 
 /**
  * Base class for all temporal data classes.
@@ -197,11 +183,6 @@ public:
    */
   friend class TemporalFormat;
 };
-
-/* Forward declaration needed */
-class DateTime;
-class Timestamp;
-class Time;
 
 /**
  * Class representing temporal components in a valid
@@ -830,4 +811,3 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_H */

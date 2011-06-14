@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_QSORT_CMP_H
-#define DRIZZLED_QSORT_CMP_H
+#pragma once
 
 namespace drizzled
 {
@@ -30,4 +29,3 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_QSORT_CMP_H */

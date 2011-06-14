@@ -27,9 +27,13 @@
 #include <boost/program_options.hpp>
 #include <pthread.h>
 
+#include <drizzled/definitions.h>
+#include <drizzled/internal/my_sys.h>
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 #include <drizzled/configmake.h>
+
+#include "user_detect.h"
 
 namespace po= boost::program_options;
 using namespace std;
@@ -397,6 +401,9 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
+
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -407,7 +414,7 @@ try
   "Port number to use for connection") 
   ("protocol", po::value<string>(&opt_protocol)->default_value("mysql"),
   "The protocol of connection (mysql or drizzle).")
-  ("user,u", po::value<string>(&current_user)->default_value(""),
+  ("user,u", po::value<string>(&current_user)->default_value((shell_user ? shell_user : "")),
   "User for login if not current user.")
   ;
 

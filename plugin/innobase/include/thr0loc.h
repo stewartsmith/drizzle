@@ -27,6 +27,7 @@ Created 10/5/1995 Heikki Tuuri
 a capability useful in some situations like storing the
 OS handle to the current thread, or its priority. */
 
+#pragma once
 #ifndef thr0loc_h
 #define thr0loc_h
 

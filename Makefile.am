@@ -29,6 +29,8 @@ dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
+extradir=${libdir}
+extra_LTLIBRARIES =
 noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
@@ -150,7 +152,8 @@ include client/include.am
 include support-files/include.am
 include tests/include.am
 include unittests/include.am
-include libdrizzle/include.am
+include libdrizzle-1.0/libdrizzle/include.am
+include libdrizzle-2.0/libdrizzle/include.am
 include win32/include.am
 
 TESTS += ${check_PROGRAMS}

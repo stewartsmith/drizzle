@@ -54,13 +54,13 @@ Catalog::~Catalog()
 {
 }
 
-bool Catalog::create(identifier::Catalog::const_reference identifier)
+bool Catalog::create(const identifier::Catalog& identifier)
 {
   message::catalog::shared_ptr message= message::catalog::make_shared(identifier);
   return create(identifier, message);
 }
 
-bool Catalog::create(identifier::Catalog::const_reference identifier, message::catalog::shared_ptr &message)
+bool Catalog::create(const identifier::Catalog& identifier, message::catalog::shared_ptr &message)
 {
   assert(message);
 
@@ -89,7 +89,7 @@ bool Catalog::create(identifier::Catalog::const_reference identifier, message::c
   return true;
 }
 
-bool Catalog::drop(identifier::Catalog::const_reference identifier)
+bool Catalog::drop(const identifier::Catalog& identifier)
 {
   if (identifier == drizzled::catalog::local_identifier())
   {
@@ -122,12 +122,12 @@ bool Catalog::drop(identifier::Catalog::const_reference identifier)
   return true;
 }
 
-bool Catalog::lock(identifier::Catalog::const_reference identifier)
+bool Catalog::lock(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
   
   // We insert a lock into the cache, if this fails we bail.
-  if (not catalog::Cache::singleton().lock(identifier, error))
+  if (not catalog::Cache::lock(identifier, error))
   {
     my_error(error, identifier);
 
@@ -138,10 +138,10 @@ bool Catalog::lock(identifier::Catalog::const_reference identifier)
 }
 
 
-bool Catalog::unlock(identifier::Catalog::const_reference identifier)
+bool Catalog::unlock(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  if (not catalog::Cache::singleton().unlock(identifier, error))
+  if (not catalog::Cache::unlock(identifier, error))
   {
     my_error(error, identifier);
   }
@@ -156,9 +156,9 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
   return false;
 }
 
-bool plugin::Catalog::exist(identifier::Catalog::const_reference identifier)
+bool plugin::Catalog::exist(const identifier::Catalog& identifier)
 {
-  if (catalog::Cache::singleton().exist(identifier))
+  if (catalog::Cache::exist(identifier))
     return true;
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
@@ -170,7 +170,7 @@ bool plugin::Catalog::exist(identifier::Catalog::const_reference identifier)
   return false;
 }
 
-void plugin::Catalog::getIdentifiers(identifier::Catalog::vector &identifiers)
+void plugin::Catalog::getIdentifiers(identifier::catalog::vector &identifiers)
 {
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
@@ -186,10 +186,10 @@ void plugin::Catalog::getMessages(message::catalog::vector &messages)
   }
 }
 
-message::catalog::shared_ptr plugin::Catalog::getMessage(identifier::Catalog::const_reference identifier)
+message::catalog::shared_ptr plugin::Catalog::getMessage(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+  catalog::Instance::shared_ptr instance= catalog::Cache::find(identifier, error);
   message::catalog::shared_ptr message;
 
   if (instance and instance->message())
@@ -206,10 +206,10 @@ message::catalog::shared_ptr plugin::Catalog::getMessage(identifier::Catalog::co
   return message;
 }
 
-catalog::Instance::shared_ptr plugin::Catalog::getInstance(identifier::Catalog::const_reference identifier)
+catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+  catalog::Instance::shared_ptr instance= catalog::Cache::find(identifier, error);
 
   if (instance)
     return instance;
@@ -222,7 +222,7 @@ catalog::Instance::shared_ptr plugin::Catalog::getInstance(identifier::Catalog::
       instance= catalog::Instance::make_shared(message);
       // If this should fail inserting into the cache, we are in a world of
       // pain.
-      catalog::Cache::singleton().insert(identifier, instance, error);
+      catalog::Cache::insert(identifier, instance, error);
 
       return instance;
     }

@@ -38,6 +38,7 @@ The server main program
 Created 10/10/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef srv0srv_h
 #define srv0srv_h
 
@@ -221,6 +222,19 @@ extern ulong	srv_max_buf_pool_modified_pct;
 extern ulong	srv_max_purge_lag;
 
 extern ulong	srv_replication_delay;
+
+extern uint64_t	srv_ibuf_max_size;
+extern uint32_t	srv_ibuf_active_contract;
+extern uint32_t srv_ibuf_accel_rate;
+extern uint32_t srv_checkpoint_age_target;
+extern uint32_t srv_flush_neighbor_pages;
+extern uint32_t	srv_read_ahead;
+extern uint32_t srv_adaptive_flushing_method;
+
+extern ibool    srv_read_only;
+extern ibool    srv_fake_write;
+extern ibool    srv_apply_log_only;
+
 /*-------------------------------------------*/
 
 extern ulint	srv_n_rows_inserted;
@@ -332,6 +346,9 @@ extern ulint srv_buf_pool_flushed;
 reading of a disk page */
 extern ulint srv_buf_pool_reads;
 
+/** Time in seconds between automatic buffer pool dumps */
+extern uint32_t srv_auto_lru_dump;
+
 /** Status variables to be passed to MySQL */
 typedef struct export_var_struct export_struc;
 
@@ -393,8 +410,9 @@ enum {
 				when writing data files, but do flush
 				after writing to log files */
 	SRV_UNIX_NOSYNC,	/*!< do not flush after writing */
-	SRV_UNIX_O_DIRECT	/*!< invoke os_file_set_nocache() on
+	SRV_UNIX_O_DIRECT,	/*!< invoke os_file_set_nocache() on
 				data files */
+	SRV_UNIX_ALL_O_DIRECT	/*!< Open log file also with O_DIRECT */
 };
 
 /** Alternatives for file i/o in Windows */
@@ -627,6 +645,16 @@ UNIV_INTERN
 os_thread_ret_t
 srv_error_monitor_thread(
 /*=====================*/
+	void*	arg);	/*!< in: a dummy parameter required by
+			os_thread_create */
+/*********************************************************************//**
+A thread which restores the buffer pool from a dump file on startup and does
+periodic buffer pool dumps.
+@return	a dummy parameter */
+UNIV_INTERN
+os_thread_ret_t
+srv_LRU_dump_restore_thread(
+/*====================*/
 	void*	arg);	/*!< in: a dummy parameter required by
 			os_thread_create */
 /******************************************************************//**

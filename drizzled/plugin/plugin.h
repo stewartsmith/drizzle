@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_PLUGIN_PLUGIN_H
-#define DRIZZLED_PLUGIN_PLUGIN_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -28,18 +27,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace module
-{
-class Module;
-}
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Plugin
 {
@@ -118,4 +107,3 @@ public:
 } /* end namespace plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_PLUGIN_H */

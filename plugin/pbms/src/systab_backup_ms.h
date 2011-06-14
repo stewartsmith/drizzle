@@ -24,6 +24,7 @@
  *
  */
 
+#pragma once
 #ifndef __SYSTAB_BACKUP_H__
 #define __SYSTAB_BACKUP_H__
 

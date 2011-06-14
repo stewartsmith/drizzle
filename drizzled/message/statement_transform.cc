@@ -34,11 +34,10 @@
 #include <boost/lexical_cast.hpp>
 
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/message.h>
 #include <drizzled/message/statement_transform.h>
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/access.h>
 
 #include <string>
 #include <vector>
@@ -403,10 +402,6 @@ transformInsertRecordToSql(const InsertHeader &header,
                                                            destination,
                                                            sql_variant);
 
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
   destination.append(") VALUES (");
 
   /* Add insert values */
@@ -475,10 +470,6 @@ transformInsertStatementToSql(const InsertHeader &header,
   enum TransformSqlError error= transformInsertHeaderToSql(header,
                                                            destination,
                                                            sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
 
   destination.append(") VALUES (", 10);
 
@@ -900,6 +891,14 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
     destination.append(" REPLICATE = FALSE");
   }
 
+  if (message::has_definer(schema))
+  {
+    destination.append(" DEFINER ");
+    destination.push_back('\'');
+    destination.append(message::definer(schema));
+    destination.push_back('\'');
+  }
+
   return NONE;
 }
 
@@ -1096,6 +1095,14 @@ transformTableDefinitionToSql(const Table &table,
   if (not message::is_replicated(table))
   {
     destination.append(" REPLICATE = FALSE");
+  }
+
+  if (message::has_definer(table))
+  {
+    destination.append(" DEFINER ");
+    destination.push_back('\'');
+    destination.append(message::definer(table));
+    destination.push_back('\'');
   }
 
   return NONE;

@@ -24,6 +24,7 @@ Created 12/13/1995 Heikki Tuuri
 ***********************************************************************/
 
 
+#pragma once
 #ifndef fut0fut_h
 #define fut0fut_h
 

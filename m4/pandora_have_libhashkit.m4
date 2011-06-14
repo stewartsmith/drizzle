@@ -38,5 +38,5 @@ AC_DEFUN([PANDORA_HAVE_LIBHASHKIT],[
 AC_DEFUN([PANDORA_REQUIRE_LIBHASHKIT],[
   AC_REQUIRE([PANDORA_HAVE_LIBHASHKIT])
   AS_IF([test x$ac_cv_libhashkit = xno],
-      AC_MSG_ERROR([libhashkit is required for ${PACKAGE}]))
+      PANDORA_MSG_ERROR([libhashkit is required for ${PACKAGE}]))
 ])

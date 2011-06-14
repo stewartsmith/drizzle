@@ -24,6 +24,7 @@ a query graph
 Created 12/29/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef eval0eval_h
 #define eval0eval_h
 

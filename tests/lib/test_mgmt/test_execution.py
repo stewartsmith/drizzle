@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 """ test_execution:
-    code related to the execution of est cases 
+    code related to the execution of test cases 
     
     We are provided access to a testManager with 
     mode-specific testCases.  We contact the executionManager
@@ -87,17 +87,18 @@ class testExecutor():
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
             for i in range(self.testcase_repeat_count):
-                self.handle_system_reqs()
-                self.handle_server_reqs()
-                self.handle_utility_reqs()
-                self.handle_start_and_exit(start_and_exit)
-                if self.current_test_status != 'fail':
-                    self.execute_testCase()
-                self.record_test_result()
-                if self.current_test_status == 'fail' and not self.execution_manager.force:
-                    self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
-                    keep_running = 0
-                self.current_test_status = None # reset ourselves
+                if keep_running:
+                    self.handle_system_reqs()
+                    self.handle_server_reqs()
+                    self.handle_utility_reqs()
+                    self.handle_start_and_exit(start_and_exit)
+                    if self.current_test_status != 'fail':
+                        self.execute_testCase()
+                    self.record_test_result()
+                    if self.current_test_status == 'fail' and not self.execution_manager.force:
+                        self.logging.error("Failed test.  Use --force to execute beyond the first test failure")
+                        keep_running = 0
+                    self.current_test_status = None # reset ourselves
         self.status = 0
 
     def get_testCase(self):
@@ -117,8 +118,10 @@ class testExecutor():
         """
 
         server_requirements = self.current_testcase.server_requirements
+        cnf_path = self.current_testcase.cnf_path
         (self.current_servers,bad_start) = self.server_manager.request_servers( self.name
                                                               , self.workdir
+                                                              , cnf_path
                                                               , server_requirements
                                                               , self.working_environment)
         if self.current_servers == 0 or bad_start:
@@ -140,7 +143,10 @@ class testExecutor():
                 variable_name = "%s_%s" %(self.name.upper(), server.name.upper())
                 variable_value = str(server.master_port)
                 extra_reqs[variable_name] = variable_value
-            self.working_environment = dict(self.working_environment, **extra_reqs)
+                variable_name = variable_name + "_PID"
+                variable_value = str(server.pid)
+                extra_reqs[variable_name] = variable_value
+            self.working_environment.update(extra_reqs)
         return 
 
     def handle_start_and_exit(self, start_and_exit):

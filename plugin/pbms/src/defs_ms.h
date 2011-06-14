@@ -25,6 +25,7 @@
  *
  */
 
+#pragma once
 #ifndef __DEFS_MS_H__
 #define __DEFS_MS_H__
 

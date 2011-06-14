@@ -27,6 +27,7 @@
  *
  */
 
+#pragma once
 #ifndef __CSGLOBAL_H__
 #define __CSGLOBAL_H__
 

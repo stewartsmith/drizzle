@@ -18,29 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_LIST_H
-#define DRIZZLED_TABLE_LIST_H
+#pragma once
 
 #include <drizzled/nested_join.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
-
-class Index_hint;
-class COND_EQUAL;
-class Natural_join_column;
-class select_union;
-class Select_Lex_Unit;
-class Select_Lex;
-class Tmp_Table_Param;
-class Item_subselect;
-class Table;
-
-namespace plugin
-{
-  class StorageEngine;
-}
+namespace drizzled {
 
 /**
  * A Table referenced in the FROM clause.
@@ -555,4 +538,3 @@ void close_thread_tables(Session *session);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_LIST_H */

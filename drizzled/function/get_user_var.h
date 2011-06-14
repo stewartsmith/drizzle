@@ -17,16 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_GET_USER_VAR_H
-#define DRIZZLED_FUNCTION_GET_USER_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-class user_var_entry;
+namespace drizzled {
 
 class Item_func_get_user_var :public Item_func
 {
@@ -64,4 +60,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_GET_USER_VAR_H */

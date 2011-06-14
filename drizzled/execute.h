@@ -18,18 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_EXECUTE_H
-#define DRIZZLED_EXECUTE_H
+#pragma once
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace sql
-{
-  class ResultSet;
-}
+namespace drizzled {
 
 class DRIZZLED_API Execute
 {
@@ -38,11 +31,10 @@ class DRIZZLED_API Execute
 
 public:
   Execute(Session&, bool wait_arg);
-  ~Execute();
 
-  void run(std::string &to_execute);
-  void run(const char *arg, size_t length);
-  void run(std::string &execution_string, sql::ResultSet &result_set);
+  void run(const std::string&);
+  void run(const char*, size_t);
+  void run(const std::string&, sql::ResultSet&);
 
   Session &session()
   {
@@ -59,4 +51,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_EXECUTE_H */

@@ -23,6 +23,7 @@ Executes SQL stored procedures and their control structures
 Created 1/20/1998 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef eval0proc_h
 #define eval0proc_h
 

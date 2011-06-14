@@ -42,7 +42,7 @@ namespace drizzled
   double precision floating point numbers
 ****************************************************************************/
 
-int Field_double::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
+int Field_double::store(const char *from,uint32_t len, const charset_info_st * const cs)
 {
   int error;
   char *end;
@@ -212,7 +212,7 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
 
 void Field_double::sql_type(String &res) const
 {
-  const CHARSET_INFO * const cs=res.charset();
+  const charset_info_st * const cs=res.charset();
   if (dec == NOT_FIXED_DEC)
   {
     res.set_ascii(STRING_WITH_LEN("double"));

@@ -88,6 +88,7 @@ Created 2/16/1996 Heikki Tuuri
 # include "thr0loc.h"
 # include "os0sync.h" /* for INNODB_RW_LOCKS_USE_ATOMICS */
 # include "zlib.h" /* for ZLIB_VERSION */
+#include "xtrabackup_api.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -127,9 +128,9 @@ UNIV_INTERN enum srv_shutdown_state	srv_shutdown_state = SRV_SHUTDOWN_NONE;
 static os_file_t	files[1000];
 
 /** io_handler_thread parameters for thread identification */
-static ulint		n[SRV_MAX_N_IO_THREADS + 6];
+static ulint		n[SRV_MAX_N_IO_THREADS + 7];
 /** io_handler_thread identifiers */
-static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6];
+static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 7];
 
 /** We use this mutex to test the return value of pthread_mutex_trylock
    on successful locking. HP-UX does NOT return 0, though Linux et al do. */
@@ -555,7 +556,6 @@ srv_calc_high32(
 /*********************************************************************//**
 Creates or opens the log files and closes them.
 @return	DB_SUCCESS or error code */
-static
 ulint
 open_or_create_log_file(
 /*====================*/
@@ -708,7 +708,6 @@ open_or_create_log_file(
 /*********************************************************************//**
 Creates or opens database data files and closes them.
 @return	DB_SUCCESS or error code */
-static
 ulint
 open_or_create_data_files(
 /*======================*/
@@ -1153,6 +1152,9 @@ innobase_start_or_create_for_mysql(void)
 	} else if (0 == ut_strcmp(srv_file_flush_method_str, "O_DIRECT")) {
 		srv_unix_file_flush_method = SRV_UNIX_O_DIRECT;
 
+	} else if (0 == ut_strcmp(srv_file_flush_method_str, "ALL_O_DIRECT")) {
+		srv_unix_file_flush_method = SRV_UNIX_ALL_O_DIRECT;
+
 	} else if (0 == ut_strcmp(srv_file_flush_method_str, "littlesync")) {
 		srv_unix_file_flush_method = SRV_UNIX_LITTLESYNC;
 
@@ -1558,6 +1560,10 @@ innobase_start_or_create_for_mysql(void)
 		are initialized in trx_sys_init_at_db_start(). */
 
 		recv_recovery_from_checkpoint_finish();
+
+                if (srv_apply_log_only)
+                  goto skip_processes;
+
 		if (srv_force_recovery < SRV_FORCE_NO_IBUF_MERGE) {
 			/* The following call is necessary for the insert
 			buffer to work with multiple tablespaces. We must
@@ -1661,6 +1667,10 @@ innobase_start_or_create_for_mysql(void)
 	/* Create the thread which prints InnoDB monitor info */
 	os_thread_create(&srv_monitor_thread, NULL,
 			 thread_ids + 4 + SRV_MAX_N_IO_THREADS);
+
+	/* Create the thread which automaticaly dumps/restore buffer pool */
+	os_thread_create(&srv_LRU_dump_restore_thread, NULL,
+			 thread_ids + 5 + SRV_MAX_N_IO_THREADS);
 
 	srv_is_being_started = FALSE;
 
@@ -1824,6 +1834,7 @@ innobase_start_or_create_for_mysql(void)
 		ibuf_update_max_tablespace_id();
 	}
 
+skip_processes:
 	srv_file_per_table = srv_file_per_table_original_value;
 
 	srv_was_started = TRUE;

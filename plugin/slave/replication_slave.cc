@@ -24,6 +24,7 @@
 #include <drizzled/errmsg_print.h>
 #include <boost/program_options.hpp>
 #include <fstream>
+#include <drizzled/plugin.h>
 
 using namespace std;
 using namespace drizzled;
@@ -108,6 +109,15 @@ bool ReplicationSlave::initWithConfig()
   {
     _error= rs.getErrorMessage();
     return false;
+  }
+
+  if (_initial_max_commit_id)
+  {
+    if (not rs.setInitialMaxCommitId(_initial_max_commit_id))
+    {
+      _error= rs.getErrorMessage();
+      return false;
+    }
   }
 
   return true;

@@ -29,6 +29,7 @@ wait for work items to be available and take them off the queue for
 processing.
 ************************************************************************/
 
+#pragma once
 #ifndef IB_WORK_QUEUE_H
 #define IB_WORK_QUEUE_H
 

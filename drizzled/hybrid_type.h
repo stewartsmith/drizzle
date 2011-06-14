@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HYBRID_TYPE_H
-#define DRIZZLED_HYBRID_TYPE_H
+#pragma once
 
 #include <drizzled/type/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*************************************************************************/
 /*
@@ -31,8 +29,6 @@ namespace drizzled
   (hybrid item is an item whose operand can be of any type, e.g. integer,
   real, decimal).
 */
-
-class Hybrid_type_traits;
 
 class Hybrid_type
 {
@@ -63,4 +59,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HYBRID_TYPE_H */

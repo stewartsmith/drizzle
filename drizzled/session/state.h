@@ -18,38 +18,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_STATE_H
-#define DRIZZLED_SESSION_STATE_H
+#pragma once
 
-#include <drizzled/util/string.h>
-#include <boost/unordered_map.hpp>
+#include <vector>
+#include <cstring>
 
-namespace drizzled
+namespace drizzled {
+namespace session {
+
+class State 
 {
-
-class Session;
-
-namespace session
-{
-
-class State {
-  std::vector <char> _query;
-
 public:
-  typedef boost::shared_ptr<State> shared_ptr;
-  typedef boost::shared_ptr<State> const_shared_ptr;
+  State(const char*, size_t);
 
-  State(const char *in_packet, size_t in_packet_length);
-
-  const char *query() const;
-
-  const char *query(size_t &size) const;
+  const char* query() const;
+  const char* query(size_t&) const;
 
 protected:
   friend class Session;
+private:
+  std::vector<char> _query;
 };
 
 } /* namespace session */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_SESSION_STATE_H */
