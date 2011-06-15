@@ -1735,11 +1735,7 @@ static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
-  const char *end = (char*)((query_end && *query_end) ?
-                            *query_end : query + strlen(query));
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
+  const char *end = ((query_end && *query_end) ? *query_end : query + strlen(query));
   drizzle_con_st *con= &cur_con->con;
   string ds_query;
 
@@ -1753,51 +1749,44 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   /* Eval the query, thus replacing all environment variables */
   do_eval(&ds_query, query, end, false);
 
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
-                    &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  if (res.column_count() == 0)
     die("Query '%s' didn't return a result set", ds_query.c_str());
 
-  if ((row= drizzle_row_next(&res)) && row[0])
+  drizzle_row_t row= res.row_next();
+  if (row && row[0])
   {
     /*
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
     string result;
-    size_t* lengths= drizzle_row_field_sizes(&res);
-    for (uint32_t i= 0; i < drizzle_result_column_count(&res); i++)
+    size_t* lengths= drizzle_row_field_sizes(&res.b_);
+    for (uint32_t i= 0; i < res.column_count(); i++)
     {
       if (row[i])
       {
         /* Add column to tab separated string */
         result.append(row[i], lengths[i]);
       }
-      result.append("\t", 1);
+      result += "\t";
     }
-    end= result.c_str() + result.length()-1;
+    end= result.c_str() + result.length() - 1;
     eval_expr(var, result.c_str(), (const char**) &end);
   }
   else
     eval_expr(var, "", 0);
-
-  drizzle_result_free(&res);
-  return;
 }
 
 

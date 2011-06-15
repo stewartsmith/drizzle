@@ -91,13 +91,23 @@ public:
   drizzle_con_st b_;
 };
 
-inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str)
+inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str, size_t str_size)
 {
   drizzle_return_t ret;
-  drizzle_query_str(con, &result.b_, str, &ret);
+  drizzle_query(con, &result.b_, str, str_size, &ret);
   if (ret == DRIZZLE_RETURN_OK)
     ret = drizzle_result_buffer(&result.b_);
   return ret;
+}
+
+inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const std::string& str)
+{
+  return query(con, result, str.data(), str.size());
+}
+
+inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str)
+{
+  return query(con, result, str, strlen(str));
 }
 
 }
