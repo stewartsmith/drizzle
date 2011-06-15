@@ -58,9 +58,29 @@ public:
     return drizzle_result_row_count(&b_);
   }
 
+  drizzle_column_st* column_next()
+  {
+    return drizzle_column_next(&b_);
+  }
+
   drizzle_row_t row_next()
   {
     return drizzle_row_next(&b_);
+  }
+
+  void column_seek(uint16_t i)
+  {
+    drizzle_column_seek(&b_, i);
+  }
+
+  void row_seek(uint64_t i)
+  {
+    drizzle_row_seek(&b_, i);
+  }
+
+  size_t* row_field_sizes()
+  {
+    return drizzle_row_field_sizes(&b_);
   }
 
   drizzle_result_st b_;

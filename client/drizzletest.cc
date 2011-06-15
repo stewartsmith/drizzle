@@ -626,14 +626,14 @@ static void show_query(drizzle_con_st *con, const char* query)
     fprintf(stderr, "=== %s ===\n", query);
     while (drizzle_row_t row= res.row_next())
     {
-      size_t *lengths= drizzle_row_field_sizes(&res.b_);
+      size_t *lengths= res.row_field_sizes();
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
-      drizzle_column_seek(&res.b_, 0);
+      res.column_seek(0);
       for (unsigned int i= 0; i < num_fields; i++)
       {
-        drizzle_column_st* column= drizzle_column_next(&res.b_);
+        drizzle_column_st* column= res.column_next();
         fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
       }
     }
@@ -687,7 +687,7 @@ static void show_warnings_before_error(drizzle_con_st *con)
     fprintf(stderr, "\nWarnings from just before the error:\n");
     while (drizzle_row_t row= res.row_next())
     {
-      size_t *lengths= drizzle_row_field_sizes(&res.b_);
+      size_t *lengths= res.row_field_sizes();
 
       if (++row_num >= res.row_count())
       {
@@ -1772,7 +1772,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
       and assign that string to the $variable
     */
     string result;
-    size_t* lengths= drizzle_row_field_sizes(&res.b_);
+    size_t* lengths= res.row_field_sizes();
     for (uint32_t i= 0; i < res.column_count(); i++)
     {
       if (row[i])
@@ -1867,7 +1867,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
     uint32_t num_fields= res.column_count();
     for (uint32_t i= 0; i < num_fields; i++)
     {
-      drizzle_column_st* column= drizzle_column_next(&res.b_);
+      drizzle_column_st* column= res.column_next();
       if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
           strlen(drizzle_column_name(column)) == ds_col.length())
       {
@@ -3175,7 +3175,7 @@ static void fill_global_error_names()
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
-    size_t *lengths= drizzle_row_field_sizes(&res.b_);
+    size_t *lengths= res.row_field_sizes();
     try
     {
       global_error_names[string(row[0], lengths[0])] = boost::lexical_cast<uint32_t>(string(row[1], lengths[1]));
@@ -4616,7 +4616,7 @@ static int append_warnings(string& ds, drizzle_con_st *con, drizzle_result_st *r
       die("Error running query \"SHOW WARNINGS\": %s", drizzle_con_error(con));
   }
 
-  if (warn_res.column_count())
+  if (warn_res.column_count() == 0)
     die("Warning count is %u but didn't get any warnings", count);
 
   append_result(&ds, &warn_res.b_);
@@ -4642,13 +4642,13 @@ static void run_query_normal(st_connection *cn,
                              int flags, char *query, int query_len,
                              string *ds, string *ds_warnings)
 {
-  drizzle_result_st res;
   drizzle_return_t ret;
   drizzle_con_st *con= &cn->con;
   int err= 0;
 
   drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
 
+  drizzle_result_st res;
   if (flags & QUERY_SEND_FLAG)
   {
     /*
@@ -4662,8 +4662,7 @@ static void run_query_normal(st_connection *cn,
           ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
       {
         err= drizzle_result_error_code(&res);
-        handle_error(command, err, drizzle_result_error(&res),
-                     drizzle_result_sqlstate(&res), ds);
+        handle_error(command, err, drizzle_result_error(&res), drizzle_result_sqlstate(&res), ds);
         if (ret == DRIZZLE_RETURN_ERROR_CODE)
           drizzle_result_free(&res);
       }
