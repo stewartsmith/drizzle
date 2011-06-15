@@ -570,7 +570,7 @@ static void append_os_quoted(string *str, const char *append, ...)
     const char *next_pos= cur_pos;
 
     /* Search for quote in each string and replace with escaped quote */
-    while((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
+    while ((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
     {
       str->append(cur_pos, next_pos - cur_pos);
       str->append("\\", 1);
@@ -814,7 +814,7 @@ static void check_command_args(st_command* command,
   }
   /* Check for too many arguments passed */
   ptr= command->last_argument;
-  while(ptr <= command->end)
+  while (ptr <= command->end)
   {
     if (*ptr && *ptr != ' ')
       die("Extra argument '%s' passed to '%.*s'",
@@ -968,7 +968,7 @@ void die(const char *fmt, ...)
   {
     int tail_lines= opt_tail_lines;
     const char* show_from= ds_res.c_str() + ds_res.length() - 1;
-    while(show_from > ds_res.c_str() && tail_lines > 0 )
+    while (show_from > ds_res.c_str() && tail_lines > 0 )
     {
       show_from--;
       if (*show_from == '\n')
@@ -1112,7 +1112,7 @@ static void cat_file(string* ds, const char* filename)
   if (fd < 0)
     die("Failed to open file '%s'", filename);
   char buff[512];
-  while(uint32_t len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0)))
+  while (uint32_t len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0)))
   {
     char *p= buff, *start= buff;
     while (p < buff+len)
@@ -1325,7 +1325,7 @@ static int compare_files2(int fd, const char* filename2)
       die("Failed to open second file: '%s'", fname);
     }
   }
-  while((len= internal::my_read(fd, (unsigned char*)&buff,
+  while ((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     if ((len2= internal::my_read(fd2, (unsigned char*)&buff2,
@@ -1521,7 +1521,7 @@ static int strip_surrounding(char* str, char c1, char c2)
   char* ptr= str;
 
   /* Check if the first non space character is c1 */
-  while(*ptr && my_isspace(charset_info, *ptr))
+  while (*ptr && my_isspace(charset_info, *ptr))
     ptr++;
   if (*ptr == c1)
   {
@@ -1530,7 +1530,7 @@ static int strip_surrounding(char* str, char c1, char c2)
 
     /* Last non space charecter should be c2 */
     ptr= strchr(str, '\0')-1;
-    while(*ptr && my_isspace(charset_info, *ptr))
+    while (*ptr && my_isspace(charset_info, *ptr))
       ptr--;
     if (*ptr == c2)
     {
@@ -3582,7 +3582,7 @@ static void safe_connect(drizzle_con_st *con, const char *name,
   drizzle_con_set_tcp(con, host.c_str(), port);
   drizzle_con_set_auth(con, user.c_str(), pass);
   drizzle_con_set_db(con, db.c_str());
-  while((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
+  while ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
     /*
       Connect failed
@@ -3643,8 +3643,6 @@ static int connect_n_handle_errors(st_command* command,
                                    const char* user, const char* pass,
                                    const char* db, int port, const char* sock)
 {
-  drizzle_return_t ret;
-
   /* Only log if an error is expected */
   if (!command->abort_on_error &&
       !disable_query_log)
@@ -3673,23 +3671,21 @@ static int connect_n_handle_errors(st_command* command,
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_auth(con, user, pass);
   drizzle_con_set_db(con, db);
-  if ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
+  drizzle_return_t ret= drizzle_con_connect(con);
+  if (ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
     {
       var_set_errno(drizzle_con_error_code(con));
-      handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con),
-                   drizzle_con_sqlstate(con), &ds_res);
+      handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con), drizzle_con_sqlstate(con), &ds_res);
     }
     else
     {
       var_set_errno(ret);
       handle_error(command, ret, drizzle_con_error(con), "", &ds_res);
     }
-
     return 0; /* Not connected */
   }
-
   var_set_errno(0);
   handle_no_error(command);
   return 1; /* Connected */
@@ -3724,8 +3720,6 @@ static int connect_n_handle_errors(st_command* command,
 static void do_connect(st_command* command)
 {
   uint32_t con_port= opt_port;
-  const char *con_options;
-  st_connection* con_slot;
 
   string ds_connection_name;
   string ds_host;
@@ -3777,7 +3771,7 @@ static void do_connect(st_command* command)
   }
 
   /* Options */
-  con_options= ds_options.c_str();
+  const char* con_options= ds_options.c_str();
   while (*con_options)
   {
     const char* end;
@@ -3797,6 +3791,7 @@ static void do_connect(st_command* command)
   if (find_connection_by_name(ds_connection_name.c_str()))
     die("Connection %s already exists", ds_connection_name.c_str());
 
+  st_connection* con_slot;
   if (next_con != g_connections + sizeof(g_connections) / sizeof(st_connection) - 1)
   {
     con_slot= next_con;
@@ -3815,17 +3810,15 @@ static void do_connect(st_command* command)
   drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
-  if (ds_database.length() == 0)
-    ds_database.append(opt_db);
+  if (ds_database.empty())
+    ds_database= opt_db;
 
   /* Special database to allow one to connect without a database name */
-  if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
+  if (ds_database == "*NO-ONE*")
     ds_database.clear();
 
-  if (connect_n_handle_errors(command, &con_slot->con,
-                              ds_host.c_str(),ds_user.c_str(),
-                              ds_password.c_str(), ds_database.c_str(),
-                              con_port, ds_sock.c_str()))
+  if (connect_n_handle_errors(command, &con_slot->con, ds_host.c_str(), ds_user.c_str(), 
+    ds_password.c_str(), ds_database.c_str(), con_port, ds_sock.c_str()))
   {
     con_slot->name= strdup(ds_connection_name.c_str());
     cur_con= con_slot;
@@ -3836,8 +3829,6 @@ static void do_connect(st_command* command)
 
   /* Update $drizzleclient_get_server_version to that of current connection */
   var_set_drizzleclient_get_server_version(&cur_con->con);
-
-  return;
 }
 
 
@@ -4287,7 +4278,7 @@ static void scan_command_for_warnings(st_command* command)
 {
   const char *ptr= command->query;
 
-  while(*ptr)
+  while (*ptr)
   {
     /*
       Look for query's that lines that start with a -- comment
@@ -4312,15 +4303,11 @@ static void scan_command_for_warnings(st_command* command)
       *end= 0;
       type= command_typelib.find_type(start, TYPELIB::e_default);
       if (type)
-        warning_msg("Embedded drizzletest command '--%s' detected in "
-                    "query '%s' was this intentional? ",
-                    start, command->query);
+        warning_msg("Embedded drizzletest command '--%s' detected in query '%s' was this intentional? ", start, command->query);
       *end= save;
     }
-
     ptr++;
   }
-  return;
 }
 
 /*
