@@ -4580,19 +4580,18 @@ static void append_info(string *ds, uint64_t affected_rows,
   Display the table headings with the names tab separated
 */
 
-static void append_table_headings(string *ds, drizzle_result_st *res)
+static void append_table_headings(string& ds, drizzle_result_st* res)
 {
   uint32_t col_idx= 0;
-  drizzle_column_st *column;
   drizzle_column_seek(res, 0);
-  while ((column= drizzle_column_next(res)))
+  while (drizzle_column_st* column= drizzle_column_next(res))
   {
     if (col_idx)
-      ds->append("\t", 1);
-    replace_append(ds, drizzle_column_name(column));
+      ds += "\t";
+    replace_append(&ds, drizzle_column_name(column));
     col_idx++;
   }
-  ds->append("\n", 1);
+  ds += "\n";
 }
 
 /*
@@ -4602,34 +4601,26 @@ static void append_table_headings(string *ds, drizzle_result_st *res)
   Number of warnings appended to ds
 */
 
-static int append_warnings(string *ds, drizzle_con_st *con,
-                           drizzle_result_st *res)
+static int append_warnings(string& ds, drizzle_con_st *con, drizzle_result_st *res)
 {
-  uint32_t count;
-  drizzle_result_st warn_res;
-  drizzle_return_t ret;
+  uint32_t count= drizzle_result_warning_count(res);
+  if (!count)
+    return 0;
 
-
-  if (!(count= drizzle_result_warning_count(res)))
-    return(0);
-
-  if (drizzle_query_str(con, &warn_res, "SHOW WARNINGS", &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c warn_res;
+  if (drizzle_return_t ret= drizzle::query(con, warn_res, "SHOW WARNINGS"))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
-      die("Error running query \"SHOW WARNINGS\": %s", drizzle_result_error(&warn_res));
+      die("Error running query \"SHOW WARNINGS\": %s", warn_res.error());
     else
       die("Error running query \"SHOW WARNINGS\": %s", drizzle_con_error(con));
   }
 
-  if (drizzle_result_column_count(&warn_res) == 0 ||
-      drizzle_result_buffer(&warn_res) != DRIZZLE_RETURN_OK)
+  if (warn_res.column_count())
     die("Warning count is %u but didn't get any warnings", count);
 
-  append_result(ds, &warn_res);
-  drizzle_result_free(&warn_res);
-
-  return(count);
+  append_result(&ds, &warn_res.b_);
+  return count;
 }
 
 
@@ -4736,7 +4727,7 @@ static void run_query_normal(st_connection *cn,
           append_metadata(ds, &res);
 
         if (!display_result_vertically)
-          append_table_headings(ds, &res);
+          append_table_headings(*ds, &res);
 
         append_result(ds, &res);
       }
@@ -4756,7 +4747,7 @@ static void run_query_normal(st_connection *cn,
       if (!disable_warnings)
       {
         drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
-        if (append_warnings(ds_warnings, con, &res) || ds_warnings->length())
+        if (append_warnings(*ds_warnings, con, &res) || ds_warnings->length())
         {
           ds->append("Warnings:\n", 10);
           ds->append(ds_warnings->c_str(), ds_warnings->length());
