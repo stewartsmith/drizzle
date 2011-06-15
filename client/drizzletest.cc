@@ -633,29 +633,24 @@ static void show_query(drizzle_con_st *con, const char* query)
   }
 
   {
-    drizzle_row_t row;
-    unsigned int i;
     unsigned int row_num= 0;
     unsigned int num_fields= drizzle_result_column_count(&res);
-    drizzle_column_st *column;
 
     fprintf(stderr, "=== %s ===\n", query);
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t  row= drizzle_row_next(&res))
     {
       size_t *lengths= drizzle_row_field_sizes(&res);
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
       drizzle_column_seek(&res, 0);
-      for(i= 0; i < num_fields; i++)
+      for (unsigned int i= 0; i < num_fields; i++)
       {
-        column= drizzle_column_next(&res);
-        fprintf(stderr, "%s\t%.*s\n",
-                drizzle_column_name(column),
-                (int)lengths[i], row[i] ? row[i] : "NULL");
+        drizzle_column_st* column= drizzle_column_next(&res);
+        fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
       }
     }
-    for (i= 0; i < strlen(query)+8; i++)
+    for (size_t i= 0; i < strlen(query)+8; i++)
       fprintf(stderr, "=");
     fprintf(stderr, "\n\n");
   }
@@ -717,14 +712,12 @@ static void show_warnings_before_error(drizzle_con_st *con)
   }
   else
   {
-    drizzle_row_t row;
     unsigned int row_num= 0;
     unsigned int num_fields= drizzle_result_column_count(&res);
 
     fprintf(stderr, "\nWarnings from just before the error:\n");
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t  row= drizzle_row_next(&res))
     {
-      uint32_t i;
       size_t *lengths= drizzle_row_field_sizes(&res);
 
       if (++row_num >= drizzle_result_row_count(&res))
@@ -733,7 +726,7 @@ static void show_warnings_before_error(drizzle_con_st *con)
         break;
       }
 
-      for(i= 0; i < num_fields; i++)
+      for (uint32_t i= 0; i < num_fields; i++)
       {
         fprintf(stderr, "%.*s ", (int)lengths[i],
                 row[i] ? row[i] : "NULL");
@@ -742,8 +735,6 @@ static void show_warnings_before_error(drizzle_con_st *con)
     }
   }
   drizzle_result_free(&res);
-
-  return;
 }
 
 
@@ -767,11 +758,10 @@ static void check_command_args(st_command* command,
                                const struct command_arg *args,
                                int num_args, const char delimiter_arg)
 {
-  int i;
   const char *ptr= arguments;
   const char *start;
 
-  for (i= 0; i < num_args; i++)
+  for (int i= 0; i < num_args; i++)
   {
     const struct command_arg *arg= &args[i];
     arg->ds->clear();
@@ -839,15 +829,12 @@ static void handle_command_error(st_command* command, uint32_t error)
 {
   if (error != 0)
   {
-    uint32_t i;
-
     if (command->abort_on_error)
-      die("command \"%.*s\" failed with error %d",
-          command->first_word_len, command->query, error);
-    for (i= 0; i < command->expected_errors.count; i++)
+      die("command \"%.*s\" failed with error %d", command->first_word_len, command->query, error);
+    for (uint32_t i= 0; i < command->expected_errors.count; i++)
     {
-      if ((command->expected_errors.err[i].type == ERR_ERRNO) &&
-          (command->expected_errors.err[i].code.errnum == error))
+      if (command->expected_errors.err[i].type == ERR_ERRNO &&
+          command->expected_errors.err[i].code.errnum == error)
       {
         return;
       }
@@ -1016,7 +1003,7 @@ void die(const char *fmt, ...)
 void abort_not_supported_test(const char *fmt, ...)
 {
   va_list args;
-  struct st_test_file* err_file= cur_file;
+  st_test_file* err_file= cur_file;
 
 
   /* Print include filestack */
@@ -1048,16 +1035,13 @@ void abort_not_supported_test(const char *fmt, ...)
 
 void verbose_msg(const char *fmt, ...)
 {
-  va_list args;
-
   if (!verbose)
     return;
-
+  va_list args;
   va_start(args, fmt);
   fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack.data())
-    fprintf(stderr, "In included file \"%s\": ",
-            cur_file->file_name);
+    fprintf(stderr, "In included file \"%s\": ", cur_file->file_name);
   if (start_lineno != 0)
     fprintf(stderr, "At line %u: ", start_lineno);
   vfprintf(stderr, fmt, args);
@@ -1071,7 +1055,6 @@ void warning_msg(const char *fmt, ...)
   va_list args;
   char buff[512];
   size_t len;
-
 
   va_start(args, fmt);
   ds_warning_messages.append("drizzletest: ");
@@ -1128,10 +1111,8 @@ static void cat_file(string* ds, const char* filename)
   int fd= internal::my_open(filename, O_RDONLY, MYF(0));
   if (fd < 0)
     die("Failed to open file '%s'", filename);
-  uint32_t len;
   char buff[512];
-
-  while((len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0))) > 0)
+  while(uint32_t len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0)))
   {
     char *p= buff, *start= buff;
     while (p < buff+len)
@@ -6640,7 +6621,7 @@ static uint32_t replace_len(const char *str)
 
 static bool start_at_word(const char *pos)
 {
-  return ((!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2));
+  return (!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2);
 }
 
 static bool end_of_word(const char *pos)
@@ -7189,9 +7170,7 @@ void append_sorted(string* ds, string *ds_input)
   if (ds_input->empty())
     return;  /* No input */
 
-  unsigned long eol_pos= 0;
-
-  eol_pos= ds_input->find_first_of('\n', 0);
+  unsigned long eol_pos= ds_input->find_first_of('\n', 0);
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
@@ -7210,12 +7189,11 @@ void append_sorted(string* ds, string *ds_input)
   } while ( eol_pos != string::npos);
 
   /* Create new result */
-  while (!lines.empty()) {
+  while (!lines.empty()) 
+  {
     ds->append(lines.top());
     lines.pop();
   }
-
-  return;
 }
 
 static void free_all_replace()
