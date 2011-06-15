@@ -599,53 +599,41 @@ static void append_os_quoted(string *str, const char *append, ...)
 
 static void show_query(drizzle_con_st *con, const char* query)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-
   if (!con)
     return;
+  drizzle::result_c res;
 
-  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  if (drizzle_return_t ret= drizzle::query(con, res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      log_msg("Error running query '%s': %d %s",
-              query, drizzle_result_error_code(&res),
-              drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      log_msg("Error running query '%s': %d %s", query, res.error_code(), res.error());
     }
     else
     {
-      log_msg("Error running query '%s': %d %s",
-              query, ret, drizzle_con_error(con));
+      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(con));
     }
     return;
   }
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    /* No result set returned */
-    drizzle_result_free(&res);
+  if (res.column_count() == 0)
     return;
-  }
 
   {
     unsigned int row_num= 0;
-    unsigned int num_fields= drizzle_result_column_count(&res);
+    unsigned int num_fields= res.column_count();
 
     fprintf(stderr, "=== %s ===\n", query);
-    while (drizzle_row_t  row= drizzle_row_next(&res))
+    while (drizzle_row_t row= res.row_next())
     {
-      size_t *lengths= drizzle_row_field_sizes(&res);
+      size_t *lengths= drizzle_row_field_sizes(&res.b_);
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
-      drizzle_column_seek(&res, 0);
+      drizzle_column_seek(&res.b_, 0);
       for (unsigned int i= 0; i < num_fields; i++)
       {
-        drizzle_column_st* column= drizzle_column_next(&res);
+        drizzle_column_st* column= drizzle_column_next(&res.b_);
         fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
       }
     }
@@ -653,7 +641,6 @@ static void show_query(drizzle_con_st *con, const char* query)
       fprintf(stderr, "=");
     fprintf(stderr, "\n\n");
   }
-  drizzle_result_free(&res);
 }
 
 

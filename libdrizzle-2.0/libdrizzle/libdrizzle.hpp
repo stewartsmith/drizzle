@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libdrizzle/libdrizzle.h>
+#include <stdexcept>
 
 namespace drizzle {
 
@@ -37,6 +38,16 @@ public:
     drizzle_result_free(&b_);
   }
 
+  const char* error()
+  {
+    return drizzle_result_error(&b_);
+  }
+
+  uint16_t error_code()
+  {
+    return drizzle_result_error_code(&b_);
+  }
+
   uint16_t column_count()
   {
     return drizzle_result_column_count(&b_);    
@@ -68,10 +79,10 @@ public:
     drizzle_con_free(&b_);
   }
 
-  drizzle_return_t query(result_c& result, const char* query)
+  drizzle_return_t query(result_c& result, const char* str)
   {
     drizzle_return_t ret;
-    drizzle_query_str(&b_, &result.b_, query, &ret);
+    drizzle_query_str(&b_, &result.b_, str, &ret);
     if (ret == DRIZZLE_RETURN_OK)
       ret = drizzle_result_buffer(&result.b_);
     return ret;
@@ -79,5 +90,14 @@ public:
 
   drizzle_con_st b_;
 };
+
+inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str)
+{
+  drizzle_return_t ret;
+  drizzle_query_str(con, &result.b_, str, &ret);
+  if (ret == DRIZZLE_RETURN_OK)
+    ret = drizzle_result_buffer(&result.b_);
+  return ret;
+}
 
 }

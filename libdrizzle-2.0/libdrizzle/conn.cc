@@ -788,6 +788,7 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
       snprintf(port, NI_MAXSERV, "%u", DRIZZLE_DEFAULT_TCP_PORT);
     port[NI_MAXSERV-1]= 0;
 
+    memset(&ai, 0, sizeof(ai));
     ai.ai_socktype= SOCK_STREAM;
     ai.ai_protocol= IPPROTO_TCP;
     ai.ai_flags = AI_PASSIVE;
