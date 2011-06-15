@@ -2971,34 +2971,27 @@ static void do_sync_with_master(st_command* command)
 */
 static void do_save_master_pos()
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
   drizzle_con_st *con= &cur_con->con;
-  const char *query;
+  const char *query= "show master status";
 
-
-  if (drizzle_query_str(con, &res, query= "show master status", &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  if (drizzle_return_t ret= drizzle::query(con, res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("failed in '%s': %d: %s", query, drizzle_result_error_code(&res),
-           drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      die("failed in '%s': %d: %s", query, res.error_code(), res.error());
     }
     else
       die("failed in '%s': %d: %s", query, ret, drizzle_con_error(con));
   }
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  if (res.column_count() == 0)
     die("drizzleclient_store_result() retuned NULL for '%s'", query);
-  if (!(row = drizzle_row_next(&res)))
+  drizzle_row_t row= res.row_next();
+  if (!row)
     die("empty result in show master status");
   strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
-  drizzle_result_free(&res);
 }
 
 
@@ -3152,33 +3145,29 @@ static void do_set_charset(st_command* command)
 
 static void fill_global_error_names()
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
   drizzle_con_st *con= &cur_con->con;
 
   global_error_names.clear();
 
+  drizzle::result_c res;
   const std::string ds_query("select error_name, error_code from data_dictionary.errors");
-  if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), drizzle_result_error_code(&res), drizzle_result_error(&res));
+      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
     }
     else
     {
       die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  if (res.column_count() == 0)
   {
-    drizzle_result_free(&res);
     die("Query '%s' didn't return a result set", ds_query.c_str());
   }
 
-  while (drizzle_row_t row= drizzle_row_next(&res))
+  while (drizzle_row_t row= res.row_next())
   {
     if (not row[0])
       break;
@@ -3186,20 +3175,16 @@ static void fill_global_error_names()
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
-    size_t *lengths= drizzle_row_field_sizes(&res);
+    size_t *lengths= drizzle_row_field_sizes(&res.b_);
     try
     {
       global_error_names[string(row[0], lengths[0])] = boost::lexical_cast<uint32_t>(string(row[1], lengths[1]));
     }
     catch (boost::bad_lexical_cast &ex)
     {
-      drizzle_result_free(&res);
       die("Invalid error_code from Drizzle: %s", ex.what());
     }
-
   }
-
-  drizzle_result_free(&res);
 }
 
 static uint32_t get_errcode_from_name(const char *error_name, const char *error_end)
