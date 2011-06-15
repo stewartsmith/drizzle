@@ -659,54 +659,37 @@ static void show_query(drizzle_con_st *con, const char* query)
 
 static void show_warnings_before_error(drizzle_con_st *con)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  const char* query= "SHOW WARNINGS";
-
   if (!con)
     return;
-
-  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  const char* query= "show warnings";
+  if (drizzle_return_t ret= drizzle::query(con, res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      log_msg("Error running query '%s': %d %s",
-              query, drizzle_result_error_code(&res),
-              drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      log_msg("Error running query '%s': %d %s", query, res.error_code(), res.error());
     }
     else
     {
-      log_msg("Error running query '%s': %d %s",
-              query, ret, drizzle_con_error(con));
+      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(con));
     }
     return;
   }
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    /* No result set returned */
-    drizzle_result_free(&res);
+  if (res.column_count() == 0)
     return;
-  }
 
-  if (drizzle_result_row_count(&res) <= 1)
-  {
-    /* Don't display the last row, it's "last error" */
-  }
-  else
+  if (res.row_count() >= 2) /* Don't display the last row, it's "last error" */
   {
     unsigned int row_num= 0;
-    unsigned int num_fields= drizzle_result_column_count(&res);
+    unsigned int num_fields= res.column_count();
 
     fprintf(stderr, "\nWarnings from just before the error:\n");
-    while (drizzle_row_t  row= drizzle_row_next(&res))
+    while (drizzle_row_t row= res.row_next())
     {
-      size_t *lengths= drizzle_row_field_sizes(&res);
+      size_t *lengths= drizzle_row_field_sizes(&res.b_);
 
-      if (++row_num >= drizzle_result_row_count(&res))
+      if (++row_num >= res.row_count())
       {
         /* Don't display the last row, it's "last error" */
         break;
@@ -714,15 +697,12 @@ static void show_warnings_before_error(drizzle_con_st *con)
 
       for (uint32_t i= 0; i < num_fields; i++)
       {
-        fprintf(stderr, "%.*s ", (int)lengths[i],
-                row[i] ? row[i] : "NULL");
+        fprintf(stderr, "%.*s ", (int)lengths[i], row[i] ? row[i] : "NULL");
       }
       fprintf(stderr, "\n");
     }
   }
-  drizzle_result_free(&res);
 }
-
 
 enum arg_type
 {
@@ -730,7 +710,8 @@ enum arg_type
   ARG_REST
 };
 
-struct command_arg {
+struct command_arg 
+{
   const char *argname;       /* Name of argument   */
   enum arg_type type;        /* Type of argument   */
   bool required;          /* Argument required  */
