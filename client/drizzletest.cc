@@ -39,7 +39,9 @@
 
 #define MTEST_VERSION "3.3"
 
-#include "client_priv.h"
+#include <config.h>
+#include <client/get_password.h>
+#include <libdrizzle/libdrizzle.hpp>
 
 #include <queue>
 #include <map>
@@ -192,16 +194,17 @@ static uint64_t progress_start= 0;
 
 vector<struct st_command*> q_lines;
 
-typedef struct {
-  int read_lines,current_line;
-} parser_st;
-parser_st parser;
+struct parser_st
+{
+  int read_lines;
+  int current_line;
+} parser;
 
-typedef struct
+struct master_pos_st
 {
   char file[FN_REFLEN];
   uint32_t pos;
-} master_pos_st;
+};
 
 master_pos_st master_pos;
 
@@ -229,21 +232,22 @@ var_hash_t var_hash;
 
 struct st_connection
 {
-  drizzle_st *drizzle;
+  drizzle_st* drizzle;
   drizzle_con_st con;
   /* Used when creating views and sp, to avoid implicit commit */
-  drizzle_con_st *util_con;
-  char *name;
+  drizzle_con_st* util_con;
+  char* name;
 };
-struct st_connection connections[128];
-struct st_connection* cur_con= NULL, *next_con, *connections_end;
+st_connection g_connections[128];
+st_connection* cur_con= NULL, *next_con;
 
 /*
   List of commands in drizzletest
   Must match the "command_names" array
   Add new commands before Q_UNKNOWN!
 */
-enum enum_commands {
+enum enum_commands 
+{
   Q_CONNECTION=1,     Q_QUERY,
   Q_CONNECT,      Q_SLEEP, Q_REAL_SLEEP,
   Q_INC,        Q_DEC,
@@ -467,11 +471,11 @@ void do_get_replace_column(struct st_command*);
 void free_replace_column();
 
 /* For replace */
-void do_get_replace(struct st_command *command);
+void do_get_replace(st_command* command);
 void free_replace();
 
 /* For replace_regex */
-void do_get_replace_regex(struct st_command *command);
+void do_get_replace_regex(st_command* command);
 
 void replace_append_mem(string *ds, const char *val,
                         int len);
@@ -762,7 +766,7 @@ struct command_arg {
 };
 
 
-static void check_command_args(struct st_command *command,
+static void check_command_args(st_command* command,
                                const char *arguments,
                                const struct command_arg *args,
                                int num_args, const char delimiter_arg)
@@ -835,7 +839,7 @@ static void check_command_args(struct st_command *command,
 }
 
 
-static void handle_command_error(struct st_command *command, uint32_t error)
+static void handle_command_error(st_command* command, uint32_t error)
 {
   if (error != 0)
   {
@@ -868,7 +872,7 @@ static void handle_command_error(struct st_command *command, uint32_t error)
 
 static void close_connections()
 {
-  for (--next_con; next_con >= connections; --next_con)
+  for (--next_con; next_con >= g_connections; --next_con)
   {
     if (next_con->drizzle != NULL)
     {
@@ -1589,7 +1593,7 @@ static int strip_surrounding(char* str, char c1, char c2)
 }
 
 
-static void strip_parentheses(struct st_command *command)
+static void strip_parentheses(st_command* command)
 {
   if (strip_surrounding(command->first_argument, '(', ')'))
     die("%.*s - argument list started with '%c' must be ended with '%c'",
@@ -1741,8 +1745,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
              v->name_len, v->name,
              v->str_val_len, v->str_val);
-    if (!(v->env_s= strdup(buf)))
-      die("Out of memory");
+    v->env_s= strdup(buf);
     putenv(v->env_s);
     free(old_env_s);
   }
@@ -1902,7 +1905,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
 */
 
-static void var_set_query_get_value(struct st_command *command, VAR *var)
+static void var_set_query_get_value(st_command* command, VAR *var)
 {
   long row_no;
   int col_no= -1;
@@ -2021,8 +2024,6 @@ static void var_copy(VAR *dest, VAR *src)
   if (dest->alloced_len < src->alloced_len)
   {
     char *tmpptr= (char *)realloc(dest->str_val, src->alloced_len);
-    if (tmpptr == NULL)
-      die("Out of memory");
     dest->str_val= tmpptr;
   }
   else
@@ -2076,8 +2077,6 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
       char *tmpptr= (char *)realloc(v->str_val, v->alloced_len+1);
-      if (tmpptr == NULL)
-        die("Out of memory");
       v->str_val= tmpptr;
     }
     v->str_val_len = new_val_len;
@@ -2090,7 +2089,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 }
 
 
-static int open_file(const char *name)
+static void open_file(const char *name)
 {
   char buff[FN_REFLEN];
 
@@ -2109,10 +2108,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  if (!(cur_file->file_name= strdup(buff)))
-    die("Out of memory");
+  cur_file->file_name= strdup(buff);
   cur_file->lineno=1;
-  return(0);
 }
 
 
@@ -2130,7 +2127,7 @@ static int open_file(const char *name)
 
 */
 
-static void do_source(struct st_command *command)
+static void do_source(st_command* command)
 {
   string ds_filename;
   const struct command_arg source_args[] = {
@@ -2224,7 +2221,7 @@ static int replace(string *ds_str,
   drizzletest commmand(s) like "remove_file" for that
 */
 
-static void do_exec(struct st_command *command)
+static void do_exec(st_command* command)
 {
   int error;
   char buf[512];
@@ -2326,7 +2323,7 @@ enum enum_operator
 
 */
 
-static int do_modify_var(struct st_command *command,
+static int do_modify_var(st_command* command,
                          enum enum_operator op)
 {
   const char *p= command->first_argument;
@@ -2367,7 +2364,7 @@ static int do_modify_var(struct st_command *command,
 
 */
 
-static void do_system(struct st_command *command)
+static void do_system(st_command* command)
 {
   string ds_cmd;
 
@@ -2404,7 +2401,7 @@ static void do_system(struct st_command *command)
   Remove the file <file_name>
 */
 
-static void do_remove_file(struct st_command *command)
+static void do_remove_file(st_command* command)
 {
   int error;
   string ds_filename;
@@ -2434,7 +2431,7 @@ static void do_remove_file(struct st_command *command)
   NOTE! Will fail if <to_file> exists
 */
 
-static void do_copy_file(struct st_command *command)
+static void do_copy_file(st_command* command)
 {
   int error;
   string ds_from_file;
@@ -2467,7 +2464,7 @@ static void do_copy_file(struct st_command *command)
 
 */
 
-static void do_chmod_file(struct st_command *command)
+static void do_chmod_file(st_command* command)
 {
   long mode= 0;
   string ds_mode;
@@ -2503,7 +2500,7 @@ static void do_chmod_file(struct st_command *command)
   Check if file <file_name> exists
 */
 
-static void do_file_exist(struct st_command *command)
+static void do_file_exist(st_command* command)
 {
   int error;
   string ds_filename;
@@ -2532,7 +2529,7 @@ static void do_file_exist(struct st_command *command)
   Create the directory <dir_name>
 */
 
-static void do_mkdir(struct st_command *command)
+static void do_mkdir(st_command* command)
 {
   string ds_dirname;
   int error;
@@ -2559,7 +2556,7 @@ static void do_mkdir(struct st_command *command)
   Remove the empty directory <dir_name>
 */
 
-static void do_rmdir(struct st_command *command)
+static void do_rmdir(st_command* command)
 {
   int error;
   string ds_dirname;
@@ -2644,7 +2641,7 @@ static void read_until_delimiter(string *ds,
 }
 
 
-static void do_write_file_command(struct st_command *command, bool append)
+static void do_write_file_command(st_command* command, bool append)
 {
   string ds_content;
   string ds_filename;
@@ -2705,7 +2702,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
 */
 
-static void do_write_file(struct st_command *command)
+static void do_write_file(st_command* command)
 {
   do_write_file_command(command, false);
 }
@@ -2736,7 +2733,7 @@ static void do_write_file(struct st_command *command)
 
 */
 
-static void do_append_file(struct st_command *command)
+static void do_append_file(st_command* command)
 {
   do_write_file_command(command, true);
 }
@@ -2754,7 +2751,7 @@ static void do_append_file(struct st_command *command)
 
 */
 
-static void do_cat_file(struct st_command *command)
+static void do_cat_file(st_command* command)
 {
   static string ds_filename;
   const struct command_arg cat_file_args[] = {
@@ -2786,7 +2783,7 @@ static void do_cat_file(struct st_command *command)
 
 */
 
-static void do_diff_files(struct st_command *command)
+static void do_diff_files(st_command* command)
 {
   int error= 0;
   string ds_filename;
@@ -2815,10 +2812,10 @@ static void do_diff_files(struct st_command *command)
 }
 
 
-static struct st_connection * find_connection_by_name(const char *name)
+static st_connection * find_connection_by_name(const char *name)
 {
-  struct st_connection *con;
-  for (con= connections; con < next_con; con++)
+  st_connection *con;
+  for (con= g_connections; con < next_con; con++)
   {
     if (!strcmp(con->name, name))
     {
@@ -2839,10 +2836,10 @@ static struct st_connection * find_connection_by_name(const char *name)
 
 */
 
-static void do_send_quit(struct st_command *command)
+static void do_send_quit(st_command* command)
 {
   char *p= command->first_argument, *name;
-  struct st_connection *con;
+  st_connection *con;
   drizzle_result_st result;
   drizzle_return_t ret;
 
@@ -2904,7 +2901,7 @@ static void do_change_user(struct st_command *)
   Default <delimiter> is EOF
 */
 
-static void do_perl(struct st_command *command)
+static void do_perl(st_command* command)
 {
   int error;
   int fd;
@@ -2984,7 +2981,7 @@ static void do_perl(struct st_command *command)
   Print "Some text" plus $<var_name> to result file
 */
 
-static int do_echo(struct st_command *command)
+static void do_echo(st_command* command)
 {
   string ds_echo;
 
@@ -2993,12 +2990,10 @@ static int do_echo(struct st_command *command)
   ds_res.append(ds_echo.c_str(), ds_echo.length());
   ds_res.append("\n");
   command->last_argument= command->end;
-  return(0);
 }
 
 
-static void
-do_wait_for_slave_to_stop(struct st_command *)
+static void do_wait_for_slave_to_stop()
 {
   static int SLAVE_POLL_INTERVAL= 300000;
   drizzle_con_st *con= &cur_con->con;
@@ -3045,7 +3040,6 @@ do_wait_for_slave_to_stop(struct st_command *)
   }
   return;
 }
-
 
 static void do_sync_with_master2(long offset)
 {
@@ -3106,8 +3100,7 @@ wait_for_position:
   return;
 }
 
-
-static void do_sync_with_master(struct st_command *command)
+static void do_sync_with_master(st_command* command)
 {
   long offset= 0;
   char *p= command->first_argument;
@@ -3130,7 +3123,7 @@ static void do_sync_with_master(struct st_command *command)
   when ndb binlog is on, this call will wait until last updated epoch
   (locally in the drizzled) has been received into the binlog
 */
-static int do_save_master_pos()
+static void do_save_master_pos()
 {
   drizzle_result_st res;
   drizzle_return_t ret;
@@ -3160,7 +3153,6 @@ static int do_save_master_pos()
   strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
   drizzle_result_free(&res);
-  return(0);
 }
 
 
@@ -3183,7 +3175,7 @@ static int do_save_master_pos()
   Program will die if error detected
 */
 
-static void do_let(struct st_command *command)
+static void do_let(st_command* command)
 {
   char *p= command->first_argument;
   char *var_name, *var_name_end;
@@ -3241,9 +3233,8 @@ static void do_let(struct st_command *command)
   used for cpu-independent delays.
 */
 
-static int do_sleep(struct st_command *command, bool real_sleep)
+static void do_sleep(st_command* command, bool real_sleep)
 {
-  bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
   double sleep_val= 0;
@@ -3259,10 +3250,9 @@ static int do_sleep(struct st_command *command, bool real_sleep)
         command->query,command->first_argument);
   string buff_str(sleep_start, sleep_end-sleep_start);
   istringstream buff(buff_str);
-  error= (buff >> sleep_val).fail();
-  if (error)
-    die("Invalid argument to %.*s \"%s\"", command->first_word_len,
-        command->query, command->first_argument);
+  buff >> sleep_val;
+  if (buff.fail())
+    die("Invalid argument to %.*s \"%s\"", command->first_word_len, command->query, command->first_argument);
 
   /* Fixed sleep time selected by --sleep option */
   if (opt_sleep >= 0 && !real_sleep)
@@ -3271,11 +3261,10 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   if (sleep_val)
     usleep(sleep_val * 1000000);
   command->last_argument= sleep_end;
-  return 0;
 }
 
 
-static void do_get_file_name(st_command *command, string &dest)
+static void do_get_file_name(st_command* command, string &dest)
 {
   char *p= command->first_argument;
   if (!*p)
@@ -3296,7 +3285,7 @@ static void do_get_file_name(st_command *command, string &dest)
 }
 
 
-static void do_set_charset(struct st_command *command)
+static void do_set_charset(st_command* command)
 {
   char *charset_name= command->first_argument;
   char *p;
@@ -3319,26 +3308,21 @@ static void fill_global_error_names()
 {
   drizzle_result_st res;
   drizzle_return_t ret;
-  drizzle_row_t row;
   drizzle_con_st *con= &cur_con->con;
 
   global_error_names.clear();
 
-  const std::string ds_query("select error_name, error_code "
-                             "from data_dictionary.errors");
+  const std::string ds_query("select error_name, error_code from data_dictionary.errors");
   if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      die("Error running query '%s': %d %s", ds_query.c_str(), drizzle_result_error_code(&res), drizzle_result_error(&res));
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
   if (drizzle_result_column_count(&res) == 0 ||
@@ -3348,8 +3332,10 @@ static void fill_global_error_names()
     die("Query '%s' didn't return a result set", ds_query.c_str());
   }
 
-  while ((row= drizzle_row_next(&res)) && row[0])
+  while (drizzle_row_t row= drizzle_row_next(&res))
   {
+    if (not row[0])
+      break;
     /*
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
@@ -3381,7 +3367,7 @@ static uint32_t get_errcode_from_name(const char *error_name, const char *error_
   return 0;
 }
 
-static void do_get_errcodes(struct st_command *command)
+static void do_get_errcodes(st_command* command)
 {
   struct st_match_err *to= saved_expected_errors.err;
   char *p= command->first_argument;
@@ -3492,7 +3478,7 @@ static void do_get_errcodes(struct st_command *command)
 */
 
 static char *get_string(char **to_ptr, char **from_ptr,
-                        struct st_command *command)
+                        st_command* command)
 {
   char c, sep;
   char *to= *to_ptr, *from= *from_ptr, *start=to;
@@ -3585,7 +3571,7 @@ static int select_connection_name(const char *name)
 }
 
 
-static int select_connection(struct st_command *command)
+static int select_connection(st_command* command)
 {
   char *name;
   char *p= command->first_argument;
@@ -3603,10 +3589,10 @@ static int select_connection(struct st_command *command)
 }
 
 
-static void do_close_connection(struct st_command *command)
+static void do_close_connection(st_command* command)
 {
   char *p= command->first_argument, *name;
-  struct st_connection *con;
+  st_connection *con;
 
   if (!*p)
     die("Missing connection name in disconnect");
@@ -3632,10 +3618,7 @@ static void do_close_connection(struct st_command *command)
     When the connection is closed set name to "-closed_connection-"
     to make it possible to reuse the connection name.
   */
-  if (!(con->name = strdup("-closed_connection-")))
-    die("Out of memory");
-
-  return;
+  con->name = strdup("-closed_connection-");
 }
 
 
@@ -3731,7 +3714,7 @@ static void safe_connect(drizzle_con_st *con, const char *name,
 
 */
 
-static int connect_n_handle_errors(struct st_command *command,
+static int connect_n_handle_errors(st_command* command,
                                    drizzle_con_st *con, const char* host,
                                    const char* user, const char* pass,
                                    const char* db, int port, const char* sock)
@@ -3814,11 +3797,11 @@ static int connect_n_handle_errors(struct st_command *command,
 
   */
 
-static void do_connect(struct st_command *command)
+static void do_connect(st_command* command)
 {
   uint32_t con_port= opt_port;
   const char *con_options;
-  struct st_connection* con_slot;
+  st_connection* con_slot;
 
   string ds_connection_name;
   string ds_host;
@@ -3890,7 +3873,7 @@ static void do_connect(struct st_command *command)
   if (find_connection_by_name(ds_connection_name.c_str()))
     die("Connection %s already exists", ds_connection_name.c_str());
 
-  if (next_con != connections_end)
+  if (next_con != g_connections + sizeof(g_connections) / sizeof(st_connection) - 1)
   {
     con_slot= next_con;
   }
@@ -3898,7 +3881,7 @@ static void do_connect(struct st_command *command)
   {
     if (!(con_slot= find_connection_by_name("-closed_connection-")))
       die("Connection limit exhausted, you can have max %d connections",
-          (int) (sizeof(connections)/sizeof(struct st_connection)));
+          (int) (sizeof(g_connections)/sizeof(st_connection)));
   }
 
   if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
@@ -3920,8 +3903,7 @@ static void do_connect(struct st_command *command)
                               ds_password.c_str(), ds_database.c_str(),
                               con_port, ds_sock.c_str()))
   {
-    if (!(con_slot->name= strdup(ds_connection_name.c_str())))
-      die("Out of memory");
+    con_slot->name= strdup(ds_connection_name.c_str());
     cur_con= con_slot;
 
     if (con_slot == next_con)
@@ -3935,7 +3917,7 @@ static void do_connect(struct st_command *command)
 }
 
 
-static int do_done(struct st_command *command)
+static int do_done(st_command* command)
 {
   /* Check if empty block stack */
   if (cur_block == block_stack)
@@ -4377,7 +4359,7 @@ static void convert_to_format_v1(char* query)
   suspicious things and generate warnings.
 */
 
-static void scan_command_for_warnings(struct st_command *command)
+static void scan_command_for_warnings(st_command* command)
 {
   const char *ptr= command->query;
 
@@ -4528,8 +4510,7 @@ static int read_command(struct st_command** command_ptr)
   while (*p && my_isspace(charset_info, *p))
     p++;
 
-  if (!(command->query_buf= command->query= strdup(p)))
-    die("Out of memory");
+  command->query_buf= command->query= strdup(p);
 
   /* Calculate first word length(the command), terminated by space or ( */
   p= command->query;
@@ -4868,8 +4849,8 @@ static int append_warnings(string *ds, drizzle_con_st *con,
   ds    output buffer where to store result form query
 */
 
-static void run_query_normal(struct st_connection *cn,
-                             struct st_command *command,
+static void run_query_normal(st_connection *cn,
+                             st_command* command,
                              int flags, char *query, int query_len,
                              string *ds, string *ds_warnings)
 {
@@ -5024,7 +5005,7 @@ end:
   immediately.
 */
 
-void handle_error(struct st_command *command,
+void handle_error(st_command* command,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds)
 {
@@ -5116,7 +5097,7 @@ void handle_error(struct st_command *command,
   error - function will not return
 */
 
-void handle_no_error(struct st_command *command)
+void handle_no_error(st_command* command)
 {
 
 
@@ -5152,8 +5133,8 @@ void handle_no_error(struct st_command *command)
   is on the result will be read - for regular query, both bits must be on
 */
 
-static void run_query(struct st_connection *cn,
-                      struct st_command *command,
+static void run_query(st_connection *cn,
+                      st_command* command,
                       int flags)
 {
   string *ds= NULL;
@@ -5392,7 +5373,7 @@ int main(int argc, char **argv)
 {
 try
 {
-  struct st_command *command;
+  st_command* command;
   bool q_send_flag= 0, abort_flag= 0;
   uint32_t command_executed= 0, last_command_executed= 0;
   string save_file("");
@@ -5520,11 +5501,9 @@ try
   /* Init expected errors */
   memset(&saved_expected_errors, 0, sizeof(saved_expected_errors));
 
-  /* Init connections */
-  memset(connections, 0, sizeof(connections));
-  connections_end= connections +
-    (sizeof(connections)/sizeof(struct st_connection)) - 1;
-  next_con= connections + 1;
+  /* Init g_connections */
+  memset(g_connections, 0, sizeof(g_connections));
+  next_con= g_connections + 1;
 
   /* Init file stack */
   memset(file_stack.data(), 0, sizeof(file_stack));
@@ -5573,11 +5552,7 @@ try
       fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
       return EXIT_ARGUMENT_INVALID;
     }
-    if (!(cur_file->file_name= strdup(buff)))
-    {
-      fprintf(stderr, _("Out of memory"));
-      return EXIT_OUT_OF_MEMORY;
-    }
+    cur_file->file_name= strdup(buff);
     cur_file->lineno= 1;
   }
 
@@ -5676,19 +5651,16 @@ try
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
-    if (cur_file->file_name == NULL)
-      die("Out of memory");
     cur_file->lineno= 1;
   }
-  cur_con= connections;
+  cur_con= g_connections;
   if ((cur_con->drizzle= drizzle_create(NULL)) == NULL)
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
   drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
-  if (!(cur_con->name = strdup("default")))
-    die("Out of memory");
+  cur_con->name = strdup("default");
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
@@ -5755,7 +5727,7 @@ try
       case Q_SOURCE: do_source(command); break;
       case Q_SLEEP: do_sleep(command, 0); break;
       case Q_REAL_SLEEP: do_sleep(command, 1); break;
-      case Q_WAIT_FOR_SLAVE_TO_STOP: do_wait_for_slave_to_stop(command); break;
+      case Q_WAIT_FOR_SLAVE_TO_STOP: do_wait_for_slave_to_stop(); break;
       case Q_INC: do_modify_var(command, DO_INC); break;
       case Q_DEC: do_modify_var(command, DO_DEC); break;
       case Q_ECHO: do_echo(command); command_executed++; break;
@@ -6137,7 +6109,7 @@ uint64_t timer_now()
   variable is replaced.
 */
 
-void do_get_replace_column(struct st_command *command)
+void do_get_replace_column(st_command* command)
 {
   char *from= command->first_argument;
   char *buff, *start;
@@ -6161,8 +6133,6 @@ void do_get_replace_column(struct st_command *command)
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
     replace_column[column_number-1]= strdup(to);
-    if (replace_column[column_number-1] == NULL)
-      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);
@@ -6236,7 +6206,7 @@ POINTER_ARRAY::~POINTER_ARRAY()
   free(str);
 }
 
-void do_get_replace(st_command *command)
+void do_get_replace(st_command* command)
 {
   char *from= command->first_argument;
   if (!*from)
@@ -6554,7 +6524,7 @@ int st_replace_regex::multi_reg_replace(char* val)
   case-sensitive
 
 */
-void do_get_replace_regex(struct st_command *command)
+void do_get_replace_regex(st_command* command)
 {
   char *expr= command->first_argument;
   glob_replace_regex.reset(new st_replace_regex(expr));
