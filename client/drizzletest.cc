@@ -4911,7 +4911,6 @@ static void run_query(st_connection *cn,
                       st_command* command,
                       int flags)
 {
-  string *ds= NULL;
   string *save_ds= NULL;
   string ds_result;
   string ds_sorted;
@@ -4945,14 +4944,7 @@ static void run_query(st_connection *cn,
     Create a temporary dynamic string to contain the output from
     this query.
   */
-  if (! command->require_file.empty())
-  {
-    ds= &ds_result;
-  }
-  else
-  {
-    ds= &ds_res;
-  }
+  string* ds= command->require_file.empty() ? &ds_res : &ds_result;
   /*
     Log the query into the output buffer
   */
@@ -4978,8 +4970,7 @@ static void run_query(st_connection *cn,
     Always run with normal C API if it's not a complete
     SEND + REAP
   */
-  run_query_normal(cn, command, flags, query, query_len,
-                   ds, &ds_warnings);
+  run_query_normal(cn, command, flags, query, query_len, ds, &ds_warnings);
 
   if (display_result_sorted)
   {
