@@ -492,11 +492,11 @@ void do_eval(string *query_eval, const char *query,
 {
   char c, next_c;
   int escaped = 0;
-  VAR *v;
 
   for (const char *p= query; (c= *p) && p < query_end; ++p)
   {
-    switch(c) {
+    switch(c) 
+    {
     case '$':
       if (escaped)
       {
@@ -505,7 +505,8 @@ void do_eval(string *query_eval, const char *query,
       }
       else
       {
-        if (!(v= var_get(p, &p, 0, 0)))
+        VAR* v= var_get(p, &p, 0, 0);
+        if (not v)
           die("Bad variable in eval");
         query_eval->append(v->str_val, v->str_val_len);
       }
@@ -534,10 +535,8 @@ void do_eval(string *query_eval, const char *query,
     default:
       escaped= 0;
       query_eval->append(p, 1);
-      break;
     }
   }
-  return;
 }
 
 
@@ -2763,24 +2762,24 @@ static st_connection * find_connection_by_name(const char *name)
 
 static void do_send_quit(st_command* command)
 {
-  char *p= command->first_argument, *name;
-  st_connection *con;
-  drizzle_result_st result;
-  drizzle_return_t ret;
+  char* p= command->first_argument;
 
-  if (!*p)
+  if (not *p)
     die("Missing connection name in send_quit");
-  name= p;
-  while (*p && !my_isspace(charset_info,*p))
+  char* name= p;
+  while (*p && !my_isspace(charset_info, *p))
     p++;
 
   if (*p)
     *p++= 0;
   command->last_argument= p;
 
-  if (!(con= find_connection_by_name(name)))
+  st_connection* con= find_connection_by_name(name);
+  if (not con)
     die("connection '%s' not found in connection pool", name);
 
+  drizzle_result_st result;
+  drizzle_return_t ret;
   if (drizzle_quit(&con->con,&result, &ret))
     drizzle_result_free(&result);
 }
@@ -3740,7 +3739,6 @@ static void do_connect(st_command* command)
     { "options", ARG_STRING, false, &ds_options, "Options to use while connecting" }
   };
 
-
   strip_parentheses(command);
   check_command_args(command, command->first_argument, connect_args,
                      sizeof(connect_args)/sizeof(struct command_arg),
@@ -3765,8 +3763,7 @@ static void do_connect(st_command* command)
     {
       char buff[FN_REFLEN];
       internal::fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
-      ds_sock.clear();
-      ds_sock.append(buff);
+      ds_sock= buff;
     }
   }
 
@@ -3774,16 +3771,14 @@ static void do_connect(st_command* command)
   const char* con_options= ds_options.c_str();
   while (*con_options)
   {
-    const char* end;
     /* Step past any spaces in beginning of option*/
     while (*con_options && my_isspace(charset_info, *con_options))
       con_options++;
     /* Find end of this option */
-    end= con_options;
+    const char* end= con_options;
     while (*end && !my_isspace(charset_info, *end))
       end++;
-    die("Illegal option to connect: %.*s",
-        (int) (end - con_options), con_options);
+    die("Illegal option to connect: %.*s", (int) (end - con_options), con_options);
     /* Process next option */
     con_options= end;
   }
@@ -3796,12 +3791,8 @@ static void do_connect(st_command* command)
   {
     con_slot= next_con;
   }
-  else
-  {
-    if (!(con_slot= find_connection_by_name("-closed_connection-")))
-      die("Connection limit exhausted, you can have max %d connections",
-          (int) (sizeof(g_connections)/sizeof(st_connection)));
-  }
+  else if (!(con_slot= find_connection_by_name("-closed_connection-")))
+    die("Connection limit exhausted, you can have max %d connections", (int) (sizeof(g_connections)/sizeof(st_connection)));
 
   if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
     die("Failed on drizzle_create()");
@@ -3832,7 +3823,7 @@ static void do_connect(st_command* command)
 }
 
 
-static int do_done(st_command* command)
+static void do_done(st_command* command)
 {
   /* Check if empty block stack */
   if (cur_block == block_stack)
@@ -3855,7 +3846,6 @@ static int do_done(st_command* command)
     cur_block--;
     parser.current_line++;
   }
-  return 0;
 }
 
 
@@ -3945,8 +3935,6 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
 
   free(v.str_val);
   free(v.env_s);
-
-  return;
 }
 
 
@@ -3964,7 +3952,6 @@ static void do_delimiter(struct st_command* command)
   delimiter_length= strlen(delimiter);
 
   command->last_argument= p + delimiter_length;
-  return;
 }
 
 
@@ -4453,9 +4440,7 @@ static int read_command(struct st_command** command_ptr)
 
 void str_to_file2(const char *fname, const char *str, int size, bool append)
 {
-  int fd;
   char buff[FN_REFLEN];
-  int flags= O_WRONLY | O_CREAT;
   if (!internal::test_if_hard_path(fname))
   {
     snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),fname);
@@ -4463,10 +4448,11 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   }
   internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
 
+  int flags= O_WRONLY | O_CREAT;
   if (!append)
     flags|= O_TRUNC;
-  if ((fd= internal::my_open(buff, flags,
-                   MYF(MY_WME | MY_FFNF))) < 0)
+  int fd= internal::my_open(buff, flags, MYF(MY_WME | MY_FFNF));
+  if (fd < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
@@ -4498,8 +4484,7 @@ void dump_result_to_log_file(const char *buf, int size)
                         ! opt_logdir.empty() ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               buf, size);
-  fprintf(stderr, "\nMore results from queries before failure can be found in %s\n",
-          log_file);
+  fprintf(stderr, "\nMore results from queries before failure can be found in %s\n", log_file);
 }
 
 void dump_progress()
@@ -4564,19 +4549,14 @@ static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column
 
 static void append_result(string *ds, drizzle_result_st *res)
 {
-  drizzle_row_t row;
   uint32_t num_fields= drizzle_result_column_count(res);
-  drizzle_column_st *column;
-  size_t *lengths;
-
-  while ((row = drizzle_row_next(res)))
+  while (drizzle_row_t row = drizzle_row_next(res))
   {
-    uint32_t i;
-    lengths = drizzle_row_field_sizes(res);
+    size_t* lengths = drizzle_row_field_sizes(res);
     drizzle_column_seek(res, 0);
-    for (i = 0; i < num_fields; i++)
+    for (uint32_t i = 0; i < num_fields; i++)
     {
-      column= drizzle_column_next(res);
+      drizzle_column_st* column= drizzle_column_next(res);
       if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
       {
         if (boost::lexical_cast<uint32_t>(row[i]))
@@ -4604,13 +4584,11 @@ static void append_result(string *ds, drizzle_result_st *res)
       }
       else
       {
-        append_field(ds, i, column,
-                     (const char*)row[i], lengths[i], !row[i]);
+        append_field(ds, i, column, (const char*)row[i], lengths[i], !row[i]);
       }
     }
     if (!display_result_vertically)
       ds->append("\n");
-
   }
 }
 
@@ -4896,7 +4874,6 @@ end:
   */
   drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
   var_set_errno(err);
-  return;
 }
 
 
@@ -4920,9 +4897,6 @@ void handle_error(st_command* command,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds)
 {
-  uint32_t i;
-
-
   if (! command->require_file.empty())
   {
     /*
@@ -4931,18 +4905,17 @@ void handle_error(st_command* command,
       abort_not_supported_test
     */
     if (err_errno == DRIZZLE_RETURN_SERVER_GONE)
-      die("require query '%s' failed: %d: %s", command->query,
-          err_errno, err_error);
+      die("require query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
     /* Abort the run of this test, pass the failed query as reason */
-    abort_not_supported_test("Query '%s' failed, required functionality " \
-                             "not supported", command->query);
+    abort_not_supported_test("Query '%s' failed, required functionality not supported", command->query);
   }
 
   if (command->abort_on_error)
     die("query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
-  for (i= 0 ; (uint32_t) i < command->expected_errors.count ; i++)
+  uint32_t i= 0;
+  for (; i < command->expected_errors.count; i++)
   {
     if (((command->expected_errors.err[i].type == ERR_ERRNO) &&
          (command->expected_errors.err[i].code.errnum == err_errno)) ||
@@ -4992,8 +4965,6 @@ void handle_error(st_command* command,
           command->query, err_sqlstate, err_error,
           command->expected_errors.err[0].code.sqlstate);
   }
-
-  return;
 }
 
 
@@ -5010,24 +4981,18 @@ void handle_error(st_command* command,
 
 void handle_no_error(st_command* command)
 {
-
-
   if (command->expected_errors.err[0].type == ERR_ERRNO &&
       command->expected_errors.err[0].code.errnum != 0)
   {
     /* Error code we wanted was != 0, i.e. not an expected success */
-    die("query '%s' succeeded - should have failed with errno %d...",
-        command->query, command->expected_errors.err[0].code.errnum);
+    die("query '%s' succeeded - should have failed with errno %d...", command->query, command->expected_errors.err[0].code.errnum);
   }
   else if (command->expected_errors.err[0].type == ERR_SQLSTATE &&
            strcmp(command->expected_errors.err[0].code.sqlstate,"00000") != 0)
   {
     /* SQLSTATE we wanted was != "00000", i.e. not an expected success */
-    die("query '%s' succeeded - should have failed with sqlstate %s...",
-        command->query, command->expected_errors.err[0].code.sqlstate);
+    die("query '%s' succeeded - should have failed with sqlstate %s...", command->query, command->expected_errors.err[0].code.sqlstate);
   }
-
-  return;
 }
 
 
@@ -5133,8 +5098,6 @@ static void run_query(st_connection *cn,
     */
     check_require(ds, command->require_file);
   }
-
-  return;
 }
 
 
@@ -5142,19 +5105,15 @@ static void run_query(st_connection *cn,
 
 static void get_command_type(struct st_command* command)
 {
-  char save;
-  uint32_t type;
-
-
   if (*command->query == '}')
   {
     command->type = Q_END_BLOCK;
     return;
   }
 
-  save= command->query[command->first_word_len];
+  char save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= command_typelib.find_type(command->query, TYPELIB::e_default);
+  uint32_t type= command_typelib.find_type(command->query, TYPELIB::e_default);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5207,12 +5166,8 @@ static void get_command_type(struct st_command* command)
   }
 
   /* Set expected error on command */
-  memcpy(&command->expected_errors, &saved_expected_errors,
-         sizeof(saved_expected_errors));
-  command->abort_on_error= (command->expected_errors.count == 0 &&
-                            abort_on_error);
-
-  return;
+  memcpy(&command->expected_errors, &saved_expected_errors, sizeof(saved_expected_errors));
+  command->abort_on_error= (command->expected_errors.count == 0 && abort_on_error);
 }
 
 
@@ -5284,11 +5239,9 @@ int main(int argc, char **argv)
 {
 try
 {
-  st_command* command;
   bool q_send_flag= 0, abort_flag= 0;
   uint32_t command_executed= 0, last_command_executed= 0;
-  string save_file("");
-  struct stat res_info;
+  string save_file;
 
   TMPDIR[0]= 0;
 
@@ -5595,6 +5548,7 @@ try
     open_file(opt_include.c_str());
   }
 
+  st_command* command;
   while (!read_command(&command) && !abort_flag)
   {
     int current_line_inc = 1, processed = 0;
@@ -5925,6 +5879,7 @@ try
     die("The test didn't produce any output");
   }
 
+  struct stat res_info;
   if (!command_executed &&
       ! result_file_name.empty() && !stat(result_file_name.c_str(), &res_info))
   {
@@ -6053,7 +6008,7 @@ void do_get_replace_column(st_command* command)
 
 void free_replace_column()
 {
-  for (uint32_t i= 0 ; i < max_replace_column; i++)
+  for (uint32_t i= 0; i < max_replace_column; i++)
   {
     free(replace_column[i]);
     replace_column[i]= 0;
@@ -6631,7 +6586,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   char *to_pos, **to_array;
 
   /* Count number of states */
-  for (i=result_len=max_length=0 , states=2 ; i < count ; i++)
+  for (i=result_len=max_length=0 , states=2; i < count; i++)
   {
     len=replace_len(from[i]);
     if (!len)
@@ -6645,7 +6600,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       max_length=len;
   }
   memset(is_word_end, 0, sizeof(is_word_end));
-  for (i=0 ; word_end_chars[i] ; i++)
+  for (i=0; word_end_chars[i]; i++)
     is_word_end[(unsigned char) word_end_chars[i]]=1;
 
   REP_SETS sets;
@@ -6692,7 +6647,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         start_states->internal_set_bit(states);
     }
     const char *pos;
-    for (pos= from[i], len=0; *pos ; pos++)
+    for (pos= from[i], len=0; *pos; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
@@ -6735,14 +6690,14 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   }
 
 
-  for (set_nr=0; set_nr < sets.count ; set_nr++)
+  for (set_nr=0; set_nr < sets.count; set_nr++)
   {
     set=sets.set+set_nr;
     default_state= 0;        /* Start from beginning */
 
     /* If end of found-string not found or start-set with current set */
 
-    for (i= UINT32_MAX; (i= set->get_next_bit(i)) ;)
+    for (i= UINT32_MAX; (i= set->get_next_bit(i));)
     {
       if (!follow[i].chr && !default_state)
         default_state= find_found(&found_set.front(), set->table_offset, set->found_offset+1);
@@ -6753,7 +6708,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
-    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i)) ;)
+    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i));)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
@@ -6763,11 +6718,11 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
-      for (const char *pos= word_end_chars ; *pos ; pos++)
+      for (const char *pos= word_end_chars; *pos; pos++)
         used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
-    for (chr= 0 ; chr < 256 ; chr++)
+    for (chr= 0; chr < 256; chr++)
     {
       if (! used_chars[chr])
         set->next[chr]= chr ? default_state : -1;
@@ -6780,7 +6735,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         new_set->found_offset=set->found_offset+1;
         found_end=0;
 
-        for (i= UINT32_MAX ; (i= sets.set[used_sets].get_next_bit(i)) ; )
+        for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i));)
         {
           if (!follow[i].chr || follow[i].chr == chr ||
               (follow[i].chr == SPACE_CHAR &&
@@ -6801,7 +6756,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         {
           new_set->found_len=0;      /* Set for testing if first */
           bits_set=0;
-          for (i= UINT32_MAX; (i= new_set->get_next_bit(i)) ;)
+          for (i= UINT32_MAX; (i= new_set->get_next_bit(i));)
           {
             if ((follow[i].chr == SPACE_CHAR ||
                  follow[i].chr == END_OF_LINE) && ! chr)
@@ -6850,14 +6805,14 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
     to_pos=(char *) (to_array+count);
-    for (i=0 ; i < count ; i++)
+    for (i=0; i < count; i++)
     {
       to_array[i]=to_pos;
       to_pos=strcpy(to_pos,to[i])+strlen(to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
-    for (i=1 ; i <= found_sets ; i++)
+    for (i=1; i <= found_sets; i++)
     {
       const char *pos= from[found_set[i-1].table_offset];
       rep_str[i].found= !memcmp(pos, "\\^", 3) ? 2 : 1;
@@ -6865,9 +6820,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       rep_str[i].to_offset= found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset= found_set[i-1].found_offset-replace_len(pos) + end_of_word(pos);
     }
-    for (i=0 ; i < sets.count ; i++)
+    for (i=0; i < sets.count; i++)
     {
-      for (j=0 ; j < 256 ; j++)
+      for (j=0; j < 256; j++)
         if (sets.set[i].next[j] >= 0)
           replace[i].next[j]=replace+sets.set[i].next[j];
         else
@@ -6951,7 +6906,7 @@ void REP_SET::internal_clear_bit(uint32_t bit)
 
 void REP_SET::or_bits(const REP_SET *from)
 {
-  for (uint32_t i= 0 ; i < size_of_bits; i++)
+  for (uint32_t i= 0; i < size_of_bits; i++)
     bits[i]|=from->bits[i];
 }
 
@@ -7061,7 +7016,7 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
     if (new_pos != pa->str)
     {
       ptrdiff_t diff= PTR_BYTE_DIFF(new_pos,pa->str);
-      for (i=0 ; i < pa->typelib.count ; i++)
+      for (i=0; i < pa->typelib.count; i++)
         pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
                                               char*);
       pa->str=new_pos;
