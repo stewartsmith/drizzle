@@ -148,6 +148,7 @@ dist_libdrizzleinstall_HEADERS= \
                                 libdrizzle-2.0/libdrizzle/handshake_client.h \
                                 libdrizzle-2.0/libdrizzle/handshake_server.h \
                                 libdrizzle-2.0/libdrizzle/libdrizzle.h \
+                                libdrizzle-2.0/libdrizzle/libdrizzle.hpp \
                                 libdrizzle-2.0/libdrizzle/query.h \
                                 libdrizzle-2.0/libdrizzle/result.h \
                                 libdrizzle-2.0/libdrizzle/result_client.h \
