@@ -1815,8 +1815,6 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 static void var_set_query_get_value(st_command* command, VAR *var)
 {
   int col_no= -1;
-  drizzle_result_st res;
-  drizzle_return_t ret;
   drizzle_con_st *con= &cur_con->con;
 
   string ds_query;
@@ -1849,30 +1847,27 @@ static void var_set_query_get_value(st_command* command, VAR *var)
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
   ds_query= unstripped_query;
 
-  /* Run the query */
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
     }
     else
     {
       die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  if (res.column_count() == 0)
     die("Query '%s' didn't return a result set", ds_query.c_str());
 
   {
     /* Find column number from the given column name */
-    uint32_t num_fields= drizzle_result_column_count(&res);
+    uint32_t num_fields= res.column_count();
     for (uint32_t i= 0; i < num_fields; i++)
     {
-      drizzle_column_st* column= drizzle_column_next(&res);
+      drizzle_column_st* column= drizzle_column_next(&res.b_);
       if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
           strlen(drizzle_column_name(column)) == ds_col.length())
       {
@@ -1882,9 +1877,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
     }
     if (col_no == -1)
     {
-      drizzle_result_free(&res);
-      die("Could not find column '%s' in the result of '%s'",
-          ds_col.c_str(), ds_query.c_str());
+      die("Could not find column '%s' in the result of '%s'", ds_col.c_str(), ds_query.c_str());
     }
   }
 
@@ -1893,23 +1886,17 @@ static void var_set_query_get_value(st_command* command, VAR *var)
     long rows= 0;
     const char* value= "No such row";
 
-    while (drizzle_row_t row= drizzle_row_next(&res))
+    while (drizzle_row_t row= res.row_next())
     {
       if (++rows == row_no)
       {
-
         /* Found the row to get */
-        if (row[col_no])
-          value= row[col_no];
-        else
-          value= "NULL";
-
+        value= row[col_no] ? row[col_no] : "NULL";
         break;
       }
     }
     eval_expr(var, value, 0);
   }
-  drizzle_result_free(&res);
 }
 
 
@@ -2737,7 +2724,7 @@ static void do_send_quit(st_command* command)
 
   drizzle_result_st result;
   drizzle_return_t ret;
-  if (drizzle_quit(&con->con,&result, &ret))
+  if (drizzle_quit(&con->con, &result, &ret))
     drizzle_result_free(&result);
 }
 
@@ -2880,42 +2867,30 @@ static void do_wait_for_slave_to_stop()
   drizzle_con_st *con= &cur_con->con;
   for (;;)
   {
-    drizzle_result_st res;
-    drizzle_return_t ret;
-    drizzle_row_t row;
-    int done;
-
-    if (drizzle_query_str(con,&res,"show status like 'Slave_running'",
-                          &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+    drizzle::result_c res;
+    if (drizzle_return_t ret= drizzle::query(con, res, "show status like 'Slave_running'"))
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        die("Query failed while probing slave for stop: %s",
-            drizzle_result_error(&res));
-        drizzle_result_free(&res);
+        die("Query failed while probing slave for stop: %s", res.error());
       }
       else
       {
-        die("Query failed while probing slave for stop: %s",
-            drizzle_con_error(con));
+        die("Query failed while probing slave for stop: %s", drizzle_con_error(con));
       }
     }
 
-    if (drizzle_result_column_count(&res) == 0 ||
-        drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+    if (res.column_count() == 0)
     {
-      die("Query failed while probing slave for stop: %s",
-          drizzle_con_error(con));
+      die("Query failed while probing slave for stop: %s", drizzle_con_error(con));
     }
 
-    if (!(row=drizzle_row_next(&res)) || !row[1])
+    drizzle_row_t row= res.row_next();
+    if (!row || !row[1])
     {
-      drizzle_result_free(&res);
       die("Strange result from query while probing slave for stop");
     }
-    done = !strcmp(row[1],"OFF");
-    drizzle_result_free(&res);
-    if (done)
+    if (!strcmp(row[1], "OFF"))
       break;
     usleep(SLAVE_POLL_INTERVAL);
   }
@@ -2923,9 +2898,6 @@ static void do_wait_for_slave_to_stop()
 
 static void do_sync_with_master2(long offset)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
   drizzle_con_st *con= &cur_con->con;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
@@ -2938,26 +2910,23 @@ static void do_sync_with_master2(long offset)
 
 wait_for_position:
 
-  if (drizzle_query_str(con, &res, query_buf, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  if (drizzle_return_t ret= drizzle::query(con, res, query_buf))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("failed in '%s': %d: %s", query_buf, drizzle_result_error_code(&res),
-           drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      die("failed in '%s': %d: %s", query_buf, res.error_code(), res.error());
     }
     else
       die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(con));
   }
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
+  if (res.column_count() == 0)
     die("drizzle_result_buffer() returned NULL for '%s'", query_buf);
 
-  if (!(row= drizzle_row_next(&res)))
+  drizzle_row_t row= res.row_next();
+  if (!row)
   {
-    drizzle_result_free(&res);
     die("empty result in %s", query_buf);
   }
   if (!row[0])
@@ -2966,7 +2935,6 @@ wait_for_position:
       It may be that the slave SQL thread has not started yet, though START
       SLAVE has been issued ?
     */
-    drizzle_result_free(&res);
     if (tries++ == 30)
     {
       show_query(con, "SHOW MASTER STATUS");
@@ -2976,8 +2944,6 @@ wait_for_position:
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
     goto wait_for_position;
   }
-  drizzle_result_free(&res);
-  return;
 }
 
 static void do_sync_with_master(st_command* command)
