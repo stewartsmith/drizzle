@@ -38,7 +38,6 @@ public:
 
   public:
     Generator(drizzled::Field **arg);
-    ~Generator();
 
     bool populate();
   };

@@ -73,11 +73,6 @@ int TYPELIB::find_type_or_exit(const char *x, const char *option) const
 int TYPELIB::find_type(const char *x, e_find_options full_name) const
 {
   assert(full_name & e_dont_complete);
-  return find_type(const_cast<char*>(x), full_name);
-}
-
-int TYPELIB::find_type(char *x, e_find_options full_name) const
-{
   if (!count)
     return 0;
   int find= 0;
@@ -85,31 +80,28 @@ int TYPELIB::find_type(char *x, e_find_options full_name) const
   const char *j;
   for (int pos= 0; (j= type_names[pos]); pos++)
   {
-    const char *i;
-    for (i= x;
-    	*i && *i != field_separator &&
-        my_toupper(&my_charset_utf8_general_ci,*i) ==
-    		my_toupper(&my_charset_utf8_general_ci,*j) ; i++, j++) ;
-    if (! *j)
+    const char *i= x;
+    for (; *i && *i != field_separator &&
+      my_toupper(&my_charset_utf8_general_ci, *i) == my_toupper(&my_charset_utf8_general_ci, *j); i++, j++)
+    {
+    }
+    if (not *j)
     {
       while (*i == ' ')
-	i++;					/* skip_end_space */
+        i++;					/* skip_end_space */
       if (not *i)
-	return(pos+1);
+        return pos + 1;
     }
-    if ((!*i && *i != field_separator) &&
-        (!*j || !(full_name & e_match_full)))
+    if (not *i && *i != field_separator && (not *j || not (full_name & e_match_full)))
     {
       find++;
-      findpos=pos;
+      findpos= pos;
     }
   }
   if (find == 0 || not x[0])
     return 0;
   if (find != 1 || (full_name & e_match_full))
     return -1;
-  if (!(full_name & e_dont_complete))
-    strcpy(x, type_names[findpos]);
   return findpos + 1;
 } /* find_type */
 

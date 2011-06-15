@@ -22,103 +22,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-
-size_t my_caseup_str_mb(const charset_info_st * const  cs, char *str)
-{
-  uint32_t l;
-  unsigned char *map= cs->to_upper;
-  char *str_orig= str;
-
-  while (*str)
-  {
-    /* Pointing after the '\0' is safe here. */
-    if ((l= my_ismbchar(cs, str, str + cs->mbmaxlen)))
-      str+= l;
-    else
-    {
-      *str= (char) map[(unsigned char)*str];
-      str++;
-    }
-  }
-  return (size_t) (str - str_orig);
-}
-
-
-size_t my_casedn_str_mb(const charset_info_st * const  cs, char *str)
-{
-  uint32_t l;
-  unsigned char *map= cs->to_lower;
-  char *str_orig= str;
-
-  while (*str)
-  {
-    /* Pointing after the '\0' is safe here. */
-    if ((l= my_ismbchar(cs, str, str + cs->mbmaxlen)))
-      str+= l;
-    else
-    {
-      *str= (char) map[(unsigned char)*str];
-      str++;
-    }
-  }
-  return (size_t) (str - str_orig);
-}
-
-
-size_t my_caseup_mb(const charset_info_st * const  cs, char *src, size_t srclen,
-                    char *dst, size_t dstlen)
-{
-#ifdef NDEBUG
-  (void)dst;
-  (void)dstlen;
-#endif
-  uint32_t l;
-  char *srcend= src + srclen;
-  unsigned char *map= cs->to_upper;
-
-  assert(src == dst && srclen == dstlen);
-  while (src < srcend)
-  {
-    if ((l=my_ismbchar(cs, src, srcend)))
-      src+= l;
-    else
-    {
-      *src=(char) map[(unsigned char) *src];
-      src++;
-    }
-  }
-  return srclen;
-}
-
-
-size_t my_casedn_mb(const charset_info_st * const  cs, char *src, size_t srclen,
-                    char *dst, size_t dstlen)
-{
-#ifdef NDEBUG
-  (void)dst;
-  (void)dstlen;
-#endif
-  uint32_t l;
-  char *srcend= src + srclen;
-  unsigned char *map=cs->to_lower;
-
-  assert(src == dst && srclen == dstlen);
-  while (src < srcend)
-  {
-    if ((l= my_ismbchar(cs, src, srcend)))
-      src+= l;
-    else
-    {
-      *src= (char) map[(unsigned char)*src];
-      src++;
-    }
-  }
-  return srclen;
-}
-
+namespace drizzled {
 
 /*
   my_strcasecmp_mb() returns 0 if strings are equal, non-zero otherwise.
@@ -1162,21 +1066,5 @@ int my_mb_ctype_mb(const charset_info_st * const cs, int *ctype,
             my_uni_ctype[wc>>8].pctype;
   return res;
 }
-
-
-MY_COLLATION_HANDLER my_collation_mb_bin_handler =
-{
-    NULL,              /* init */
-    my_strnncoll_mb_bin,
-    my_strnncollsp_mb_bin,
-    my_strnxfrm_mb,
-    my_strnxfrmlen_simple,
-    my_like_range_mb,
-    my_wildcmp_mb_bin,
-    my_strcasecmp_mb_bin,
-    my_instr_mb,
-    my_hash_sort_mb_bin,
-    my_propagate_simple
-};
 
 } /* namespace drizzled */

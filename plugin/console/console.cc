@@ -91,18 +91,6 @@ public:
     return true;
   }
 
-  virtual bool isReading(void)
-  {
-    printDebug("isReading");
-    return false;
-  }
-
-  virtual bool isWriting(void)
-  {
-    printDebug("isWriting");
-    return false;
-  }
-
   virtual bool flush(void)
   {
     printDebug("flush");
@@ -188,25 +176,21 @@ public:
     cout << "Error: " << static_cast<long>(sql_errno) << " " << err << endl;
   }
 
-  virtual bool sendFields(List<Item> *list)
+  virtual void sendFields(List<Item>& list)
   {
-    List<Item>::iterator it(list->begin());
-    Item *item;
+    List<Item>::iterator it(list.begin());
 
     column= 0;
     max_column= 0;
 
-    while ((item=it++))
+    while (Item* item=it++)
     {
       SendField field;
       item->make_field(&field);
       cout << field.col_name << "\t";
       max_column++;
     }
-
     cout << endl;
-
-    return false;
   }
 
   virtual void checkRowEnd(void)
@@ -269,12 +253,6 @@ public:
     cout.write(from, length);
     cout << "\t";
     checkRowEnd();
-  }
-
-  virtual bool haveMoreData()
-  {
-    printDebug("haveMoreData");
-    return false;
   }
 
   virtual bool haveError()

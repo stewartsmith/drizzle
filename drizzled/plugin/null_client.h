@@ -48,8 +48,6 @@ public:
 
   virtual int getFileDescriptor(void) { return -1; }
   virtual bool isConnected(void) { return true; }
-  virtual bool isReading(void) { return false; }
-  virtual bool isWriting(void) { return false; }
   virtual bool flush(void) { return false; }
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
@@ -88,7 +86,7 @@ public:
   virtual void sendOK(void) {}
   virtual void sendEOF(void) {}
   virtual void sendError(const drizzled::error_t, const char*) {}
-  virtual bool sendFields(List<Item>*) { return false; }
+  virtual void sendFields(List<Item>&) {}
   virtual void store(Field *) {}
   virtual void store(void) {}
   virtual void store(int32_t) {}
@@ -100,7 +98,6 @@ public:
   virtual void store(const char*) {}
   virtual void store(const char*, size_t) {}
   virtual void store(const std::string &) {}
-  virtual bool haveMoreData(void) { return false;}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 

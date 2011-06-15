@@ -54,8 +54,6 @@ public:
 
   virtual int getFileDescriptor(void) { return -1; }
   virtual bool isConnected(void) { return true; }
-  virtual bool isReading(void) { return false; }
-  virtual bool isWriting(void) { return false; }
   virtual bool flush(void) { return false; }
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
@@ -65,9 +63,9 @@ public:
     while(not to_execute.empty())
     {
       Queue::value_type next= to_execute.front();
-      packet_buffer.assign(next.c_str(), next.size());
+      packet_buffer= next;
 
-      *packet= packet_buffer.c_str();
+      *packet= packet_buffer.data();
       packet_length= next.size();
 
       to_execute.pop();
@@ -79,7 +77,7 @@ public:
     {
       packet_buffer.clear();
       packet_length= 1;
-      *packet= packet_buffer.c_str();
+      *packet= packet_buffer.data();
       is_dead= true;
 
       return true;
@@ -92,8 +90,8 @@ public:
   virtual void sendOK(void) {}
   virtual void sendEOF(void) {}
   virtual void sendError(const drizzled::error_t, const char*) {}
-  virtual bool sendFields(List<Item>*) { return false; }
-  virtual void store(Field *) {}
+  virtual void sendFields(List<Item>&) {}
+  virtual void store(Field*) {}
   virtual void store() {}
   virtual void store(int32_t) {}
   virtual void store(uint32_t) {}
@@ -104,34 +102,33 @@ public:
   virtual void store(const char*) {}
   virtual void store(const char*, size_t) {}
   virtual void store(const std::string &) {}
-  virtual bool haveMoreData(void) { return false;}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 
   void pushSQL(const std::string &arg)
   {
     ::drizzled::error_t err_msg;
-    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.c_str(), arg.length(), err_msg);
+    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.data(), arg.size(), err_msg);
     std::vector<std::string> parsed_tokens= context->start();
 
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
       byte.append(drizzle_literal_parameter("START TRANSACTION")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }
     
-    for (vector<string>::iterator iter= parsed_tokens.begin(); iter != parsed_tokens.end(); ++iter)
+    BOOST_FOREACH(const string& iter, parsed_tokens)
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
-      byte.append(iter->c_str(), iter->size());
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
+      byte.append(iter.data(), iter.size());
       to_execute.push(byte);
     }
 
     {
       drizzled::util::String byte;
-      byte.assign(1, char(COM_QUERY)); // Insert our COM_QUERY
+      byte.assign(1, COM_QUERY); // Insert our COM_QUERY
       byte.append(drizzle_literal_parameter("COMMIT")); // +1 for the COM_QUERY, provided by null count from sizeof()
       to_execute.push(byte);
     }

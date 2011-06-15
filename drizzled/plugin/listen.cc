@@ -32,18 +32,16 @@
 
 #include <poll.h>
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
-static std::vector<plugin::Listen *> listen_list;
-std::vector<plugin::Listen *> listen_fd_list;
+static std::vector<plugin::Listen*> listen_list;
+std::vector<plugin::Listen*> listen_fd_list;
 std::vector<pollfd> fd_list;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
-ListenVector &Listen::getListenProtocols()
+ListenVector& Listen::getListenProtocols()
 {
   return listen_list;
 }
@@ -56,42 +54,34 @@ bool Listen::addPlugin(plugin::Listen *listen_obj)
 
 void Listen::removePlugin(plugin::Listen *listen_obj)
 {
-  listen_list.erase(std::remove(listen_list.begin(),
-                                listen_list.end(),
-                                listen_obj),
-                    listen_list.end());
+  listen_list.erase(std::remove(listen_list.begin(), listen_list.end(), listen_obj), listen_list.end());
 }
 
-bool Listen::setup(void)
+bool Listen::setup()
 {
-  std::vector<plugin::Listen *>::iterator it;
-
-  for (it= listen_list.begin(); it < listen_list.end(); ++it)
+  BOOST_FOREACH(plugin::Listen* it, listen_list)
   {
     std::vector<int> fds;
-    std::vector<int>::iterator fd;
-
-    if ((*it)->getFileDescriptors(fds))
+    if (it->getFileDescriptors(fds))
     {
       errmsg_printf(error::ERROR, _("Error getting file descriptors"));
       return true;
     }
 
     fd_list.resize(fd_count + fds.size() + 1);
-
-    for (fd= fds.begin(); fd < fds.end(); ++fd)
+    
+    BOOST_FOREACH(int fd, fds)
     {
-      fd_list[fd_count].fd= *fd;
+      fd_list[fd_count].fd= fd;
       fd_list[fd_count].events= POLLIN | POLLERR;
-      listen_fd_list.push_back(*it);
+      listen_fd_list.push_back(it);
       fd_count++;
     }
   }
 
   if (fd_count == 0)
   {
-    errmsg_printf(error::ERROR,
-                  _("No sockets could be bound for listening"));
+    errmsg_printf(error::ERROR, _("No sockets could be bound for listening"));
     return true;
   }
 
@@ -114,21 +104,17 @@ bool Listen::setup(void)
   return false;
 }
 
-Client *plugin::Listen::getClient(void)
+Client *plugin::Listen::getClient()
 {
-  int ready;
-  plugin::Client *client;
-
   while (1)
   {
-    ready= poll(&fd_list[0], fd_count, -1);
+    int ready= poll(&fd_list[0], fd_count, -1);
     if (ready == -1)
     {
       if (errno != EINTR)
       {
         sql_perror("poll()");
       }
-
       continue;
     }
     else if (ready == 0)
@@ -156,25 +142,22 @@ Client *plugin::Listen::getClient(void)
         return NULL;
       }
 
-      if (!(client= listen_fd_list[x]->getClient(fd_list[x].fd)))
-        continue;
-
-      return client;
+      if (plugin::Client* client= listen_fd_list[x]->getClient(fd_list[x].fd))
+        return client;
     }
   }
 }
 
-Client *plugin::Listen::getNullClient(void)
+Client *plugin::Listen::getNullClient()
 {
   return new plugin::NullClient();
 }
 
-void Listen::shutdown(void)
+void Listen::shutdown()
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
 }
-
 
 } /* namespace plugin */
 } /* namespace drizzled */
