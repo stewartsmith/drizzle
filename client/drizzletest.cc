@@ -475,11 +475,10 @@ void free_replace();
 /* For replace_regex */
 void do_get_replace_regex(st_command* command);
 
-void replace_append_mem(string *ds, const char *val,
-                        int len);
+void replace_append_mem(string& ds, const char *val, int len);
 void replace_append(string *ds, const char *val);
 void replace_append_uint(string *ds, uint32_t val);
-void append_sorted(string* ds, string* ds_input);
+void append_sorted(string& ds, const string& ds_input);
 
 void handle_error(struct st_command*,
                   unsigned int err_errno, const char *err_error,
@@ -1073,7 +1072,7 @@ void log_msg(const char *fmt, ...)
 
 */
 
-static void cat_file(string* ds, const char* filename)
+static void cat_file(string& ds, const char* filename)
 {
   int fd= internal::my_open(filename, O_RDONLY, MYF(0));
   if (fd < 0)
@@ -1090,7 +1089,7 @@ static void cat_file(string* ds, const char* filename)
         /* Add fake newline instead of cr and output the line */
         *p= '\n';
         p++; /* Step past the "fake" newline */
-        ds->append(start, p-start);
+        ds.append(start, p - start);
         p++; /* Step past the "fake" newline */
         start= p;
       }
@@ -1098,7 +1097,7 @@ static void cat_file(string* ds, const char* filename)
         p++;
     }
     /* Output any chars that might be left */
-    ds->append(start, p-start);
+    ds.append(start, p - start);
   }
   internal::my_close(fd, MYF(0));
 }
@@ -1222,11 +1221,11 @@ static void show_diff(string* ds,
       ds_tmp.append(" --- ");
       ds_tmp.append(filename1);
       ds_tmp.append(" >>>\n");
-      cat_file(&ds_tmp, filename1);
+      cat_file(ds_tmp, filename1);
       ds_tmp.append("<<<\n --- ");
       ds_tmp.append(filename1);
       ds_tmp.append(" >>>\n");
-      cat_file(&ds_tmp, filename2);
+      cat_file(ds_tmp, filename2);
       ds_tmp.append("<<<<\n");
     }
   }
@@ -2638,7 +2637,7 @@ static void do_cat_file(st_command* command)
                      sizeof(cat_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  cat_file(&ds_res, ds_filename.c_str());
+  cat_file(ds_res, ds_filename.c_str());
 }
 
 
@@ -4432,13 +4431,13 @@ static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column
   {
     if (col_idx)
       ds->append("\t");
-    replace_append_mem(ds, val, (int)len);
+    replace_append_mem(*ds, val, (int)len);
   }
   else
   {
     ds->append(drizzle_column_name(column));
     ds->append("\t");
-    replace_append_mem(ds, val, (int)len);
+    replace_append_mem(*ds, val, (int)len);
     ds->append("\n");
   }
 }
@@ -4922,7 +4921,7 @@ static void run_query(st_connection *cn,
   */
   if (!disable_query_log && (flags & QUERY_SEND_FLAG))
   {
-    replace_append_mem(ds, query, query_len);
+    replace_append_mem(*ds, query, query_len);
     ds->append(delimiter, delimiter_length);
     ds->append("\n");
   }
@@ -4947,7 +4946,7 @@ static void run_query(st_connection *cn,
   if (display_result_sorted)
   {
     /* Sort the result set and append it to result */
-    append_sorted(save_ds, &ds_sorted);
+    append_sorted(*save_ds, ds_sorted);
     ds= save_ds;
   }
 
@@ -5907,8 +5906,7 @@ struct st_replace;
 struct st_replace *init_replace(const char **from, const char **to, uint32_t count,
                                 char *word_end_chars);
 
-void replace_strings_append(struct st_replace *rep, string* ds,
-                            const char *from, int len);
+void replace_strings_append(struct st_replace *rep, string& ds, const char *from, int len);
 
 st_replace *glob_replace= NULL;
 // boost::scoped_ptr<st_replace> glob_replace;
@@ -5988,16 +5986,13 @@ typedef struct st_replace_found {
 } REPLACE_STRING;
 
 
-void replace_strings_append(REPLACE *rep, string* ds,
-                            const char *str, int len)
+void replace_strings_append(REPLACE *rep, string& ds, const char *str, int len)
 {
-  REPLACE *rep_pos;
   REPLACE_STRING *rep_str;
-  const char *start, *from;
+  const char* start= str;
+  const char* from= str;
 
-
-  start= from= str;
-  rep_pos=rep+1;
+  REPLACE* rep_pos=rep+1;
   for (;;)
   {
     /* Loop through states */
@@ -6008,16 +6003,15 @@ void replace_strings_append(REPLACE *rep, string* ds,
     if (!(rep_str = ((REPLACE_STRING*) rep_pos))->replace_string)
     {
       /* No match found */
-      ds->append(start, from - start - 1);
+      ds.append(start, from - start - 1);
       return;
     }
 
     /* Append part of original string before replace string */
-    ds->append(start, (from - rep_str->to_offset) - start);
+    ds.append(start, (from - rep_str->to_offset) - start);
 
     /* Append replace string */
-    ds->append(rep_str->replace_string,
-               strlen(rep_str->replace_string));
+    ds.append(rep_str->replace_string, strlen(rep_str->replace_string));
 
     if (!*(from-=rep_str->from_offset) && rep_pos->found != 2)
       return;
@@ -6915,7 +6909,7 @@ int POINTER_ARRAY::insert(char* name)
 /* Functions that uses replace and replace_regex */
 
 /* Append the string to ds, with optional replace */
-void replace_append_mem(string *ds, const char *val, int len)
+void replace_append_mem(string& ds, const char *val, int len)
 {
   char *v= strdup(val);
 
@@ -6930,14 +6924,14 @@ void replace_append_mem(string *ds, const char *val, int len)
     replace_strings_append(glob_replace, ds, v, len);
   }
   else
-    ds->append(v, len);
+    ds.append(v, len);
 }
 
 
 /* Append zero-terminated string to ds, with optional replace */
 void replace_append(string *ds, const char *val)
 {
-  replace_append_mem(ds, val, strlen(val));
+  replace_append_mem(*ds, val, strlen(val));
 }
 
 /* Append uint32_t to ds, with optional replace */
@@ -6945,7 +6939,7 @@ void replace_append_uint(string *ds, uint32_t val)
 {
   ostringstream buff;
   buff << val;
-  replace_append_mem(ds, buff.str().c_str(), buff.str().size());
+  replace_append_mem(*ds, buff.str().c_str(), buff.str().size());
 
 }
 
@@ -6964,27 +6958,27 @@ void replace_append_uint(string *ds, uint32_t val)
 */
 
 
-void append_sorted(string* ds, string *ds_input)
+void append_sorted(string& ds, const string& ds_input)
 {
   priority_queue<string, vector<string>, greater<string> > lines;
 
-  if (ds_input->empty())
+  if (ds_input.empty())
     return;  /* No input */
 
-  unsigned long eol_pos= ds_input->find_first_of('\n', 0);
+  unsigned long eol_pos= ds_input.find_first_of('\n', 0);
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
-  ds->append(ds_input->substr(0, eol_pos+1));
+  ds.append(ds_input.substr(0, eol_pos+1));
 
   unsigned long start_pos= eol_pos+1;
 
   /* Insert line(s) in array */
   do {
 
-    eol_pos= ds_input->find_first_of('\n', start_pos);
+    eol_pos= ds_input.find_first_of('\n', start_pos);
     /* Find end of line */
-    lines.push(ds_input->substr(start_pos, eol_pos-start_pos+1));
+    lines.push(ds_input.substr(start_pos, eol_pos-start_pos+1));
     start_pos= eol_pos+1;
 
   } while ( eol_pos != string::npos);
@@ -6992,7 +6986,7 @@ void append_sorted(string* ds, string *ds_input)
   /* Create new result */
   while (!lines.empty()) 
   {
-    ds->append(lines.top());
+    ds.append(lines.top());
     lines.pop();
   }
 }
