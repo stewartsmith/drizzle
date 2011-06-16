@@ -1725,6 +1725,23 @@ static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 
 */
 
+static void dt_query(drizzle::connection_c& con, drizzle::result_c& res, const std::string& query)
+{
+  if (drizzle_return_t ret= con.query(res, query))
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", query.c_str(), res.error_code(), res.error());
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", query.c_str(), ret, con.error());
+    }
+  }
+  if (res.column_count() == 0)
+    die("Query '%s' didn't return a result set", query.c_str());
+}
+
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   const char *end = ((query_end && *query_end) ? *query_end : query + strlen(query));
@@ -1741,19 +1758,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   do_eval(&ds_query, query, end, false);
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= con.query(res, ds_query))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
-    }
-  }
-  if (res.column_count() == 0)
-    die("Query '%s' didn't return a result set", ds_query.c_str());
+  dt_query(con, res, ds_query);
 
   drizzle_row_t row= res.row_next();
   if (row && row[0])
@@ -1839,19 +1844,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
   ds_query= unstripped_query;
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= con.query(res, ds_query))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
-    }
-  }
-  if (res.column_count() == 0)
-    die("Query '%s' didn't return a result set", ds_query.c_str());
+  dt_query(con, res, ds_query);
 
   {
     /* Find column number from the given column name */
@@ -2884,18 +2877,7 @@ static void do_sync_with_master2(long offset)
 wait_for_position:
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= con.query(res, query_buf))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("failed in '%s': %d: %s", query_buf, res.error_code(), res.error());
-    }
-    else
-      die("failed in '%s': %d: %s", query_buf, ret, con.error());
-  }
-
-  if (res.column_count() == 0)
-    die("drizzle_result_buffer() returned NULL for '%s'", query_buf);
+  dt_query(con, res, query_buf);
 
   drizzle_row_t row= res.row_next();
   if (!row)
@@ -2948,18 +2930,7 @@ static void do_save_master_pos()
   const char *query= "show master status";
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= con.query(res, query))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("failed in '%s': %d: %s", query, res.error_code(), res.error());
-    }
-    else
-      die("failed in '%s': %d: %s", query, ret, con.error());
-  }
-
-  if (res.column_count() == 0)
-    die("drizzleclient_store_result() retuned NULL for '%s'", query);
+  dt_query(con, res, query);
   drizzle_row_t row= res.row_next();
   if (!row)
     die("empty result in show master status");
