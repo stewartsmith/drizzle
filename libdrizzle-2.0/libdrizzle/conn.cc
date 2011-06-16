@@ -70,11 +70,9 @@ int drizzle_con_fd(const drizzle_con_st *con)
 
 drizzle_return_t drizzle_con_set_fd(drizzle_con_st *con, int fd)
 {
-  drizzle_return_t ret;
-
   con->fd= fd;
 
-  ret= _con_setsockopt(con);
+  drizzle_return_t ret= _con_setsockopt(con);
   if (ret != DRIZZLE_RETURN_OK)
     con->drizzle->last_errno= errno;
 
@@ -101,8 +99,6 @@ void drizzle_con_close(drizzle_con_st *con)
 
 drizzle_return_t drizzle_con_set_events(drizzle_con_st *con, short events)
 {
-  drizzle_return_t ret;
-
   if ((con->events | events) == con->events)
     return DRIZZLE_RETURN_OK;
 
@@ -110,7 +106,7 @@ drizzle_return_t drizzle_con_set_events(drizzle_con_st *con, short events)
 
   if (con->drizzle->event_watch_fn != NULL)
   {
-    ret= con->drizzle->event_watch_fn(con, con->events,
+    drizzle_return_t ret= con->drizzle->event_watch_fn(con, con->events,
                                       con->drizzle->event_watch_context);
     if (ret != DRIZZLE_RETURN_OK)
     {
@@ -124,8 +120,6 @@ drizzle_return_t drizzle_con_set_events(drizzle_con_st *con, short events)
 
 drizzle_return_t drizzle_con_set_revents(drizzle_con_st *con, short revents)
 {
-  drizzle_return_t ret;
-
   if (revents != 0)
     con->options|= DRIZZLE_CON_IO_READY;
 
@@ -138,7 +132,7 @@ drizzle_return_t drizzle_con_set_revents(drizzle_con_st *con, short revents)
   if (revents & POLLOUT && !(con->events & POLLOUT) &&
       con->drizzle->event_watch_fn != NULL)
   {
-    ret= con->drizzle->event_watch_fn(con, con->events,
+    drizzle_return_t ret= con->drizzle->event_watch_fn(con, con->events,
                                       con->drizzle->event_watch_context);
     if (ret != DRIZZLE_RETURN_OK)
     {
@@ -328,10 +322,9 @@ uint32_t drizzle_con_server_version_number(const drizzle_con_st *con)
   uint32_t major;
   uint32_t minor;
   uint32_t version;
-  const char *current;
   char *end;
 
-  current= con->server_version;
+  const char *current= con->server_version;
 
   major= (uint32_t)strtoul(current, &end, 10);
   current= end + 1;
@@ -821,9 +814,6 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
   case DRIZZLE_CON_SOCKET_UDS:
     con->addrinfo_next= &(con->socket.uds.addrinfo);
     break;
-
-  default:
-    break;
   }
 
   drizzle_state_pop(con);
@@ -832,9 +822,6 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 {
-  int ret;
-  drizzle_return_t dret;
-
   drizzle_log_debug(con->drizzle, "drizzle_state_connect");
 
   if (con->fd != -1)
@@ -862,7 +849,7 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
     return DRIZZLE_RETURN_ERRNO;
   }
 
-  dret= _con_setsockopt(con);
+  drizzle_return_t dret= _con_setsockopt(con);
   if (dret != DRIZZLE_RETURN_OK)
   {
     con->drizzle->last_errno= errno;
@@ -871,8 +858,7 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 
   while (1)
   {
-    ret= connect(con->fd, con->addrinfo_next->ai_addr,
-                 con->addrinfo_next->ai_addrlen);
+    int ret= connect(con->fd, con->addrinfo_next->ai_addr, con->addrinfo_next->ai_addrlen);
 
 #ifdef _WIN32
     errno = WSAGetLastError();
@@ -944,8 +930,6 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
-
   drizzle_log_debug(con->drizzle, "drizzle_state_connecting");
 
   while (1)
@@ -964,7 +948,7 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
       return DRIZZLE_RETURN_OK;
     }
 
-    ret= drizzle_con_set_events(con, POLLOUT);
+    drizzle_return_t ret= drizzle_con_set_events(con, POLLOUT);
     if (ret != DRIZZLE_RETURN_OK)
       return ret;
 
@@ -980,7 +964,6 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 {
   drizzle_return_t ret;
-  ssize_t read_size;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_read");
 
@@ -1008,7 +991,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
   {
     size_t available_buffer= (size_t)DRIZZLE_MAX_BUFFER_SIZE -
         ((size_t)(con->buffer_ptr - con->buffer) + con->buffer_size);
-    read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
+    ssize_t read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
                      available_buffer, 0);
 #ifdef _WIN32
     errno = WSAGetLastError();
@@ -1110,14 +1093,12 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 drizzle_return_t drizzle_state_write(drizzle_con_st *con)
 {
   drizzle_return_t ret;
-  ssize_t write_size;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_write");
 
   while (con->buffer_size != 0)
   {
-  
-    write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
+    ssize_t write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
 
 #ifdef _WIN32
     errno = WSAGetLastError();
