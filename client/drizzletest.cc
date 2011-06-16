@@ -613,23 +613,27 @@ static void append_os_quoted(string *str, const char *append, ...)
 
 */
 
-static void show_query(drizzle::connection_c& con, const char* query)
+static int dt_query_log(drizzle::connection_c& con, drizzle::result_c& res, const std::string& query)
 {
-  drizzle::result_c res;
   if (drizzle_return_t ret= con.query(res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      log_msg("Error running query '%s': %d %s", query, res.error_code(), res.error());
+      log_msg("Error running query '%s': %d %s", query.c_str(), res.error_code(), res.error());
     }
     else
     {
-      log_msg("Error running query '%s': %d %s", query, ret, con.error());
+      log_msg("Error running query '%s': %d %s", query.c_str(), ret, con.error());
     }
-    return;
+    return 1;
   }
+  return res.column_count() == 0;
+}
 
-  if (res.column_count() == 0)
+static void show_query(drizzle::connection_c& con, const char* query)
+{
+  drizzle::result_c res;
+  if (dt_query_log(con, res, query))
     return;
 
   unsigned int row_num= 0;
@@ -671,21 +675,7 @@ static void show_query(drizzle::connection_c& con, const char* query)
 static void show_warnings_before_error(drizzle::connection_c& con)
 {
   drizzle::result_c res;
-  const char* query= "show warnings";
-  if (drizzle_return_t ret= con.query(res, query))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      log_msg("Error running query '%s': %d %s", query, res.error_code(), res.error());
-    }
-    else
-    {
-      log_msg("Error running query '%s': %d %s", query, ret, con.error());
-    }
-    return;
-  }
-
-  if (res.column_count() == 0)
+  if (dt_query_log(con, res, "show warnings"))
     return;
 
   if (res.row_count() >= 2) /* Don't display the last row, it's "last error" */
@@ -894,27 +884,25 @@ static void cleanup_and_exit(int exit_code)
 
 void die(const char *fmt, ...)
 {
-  static int dying= 0;
-  va_list args;
-
   /*
     Protect against dying twice
     first time 'die' is called, try to write log files
     second time, just exit
   */
+  static bool dying= false;
   if (dying)
     cleanup_and_exit(1);
-  dying= 1;
+  dying= true;
 
   /* Print the error message */
   fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack.data())
-    fprintf(stderr, "In included file \"%s\": ",
-            cur_file->file_name);
+    fprintf(stderr, "In included file \"%s\": ", cur_file->file_name);
   if (start_lineno > 0)
     fprintf(stderr, "At line %u: ", start_lineno);
   if (fmt)
   {
+    va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
@@ -2137,8 +2125,7 @@ static void do_exec(st_command* command)
 
     if (command->abort_on_error)
     {
-      log_msg("exec of '%s' failed, error: %d, status: %d, errno: %d",
-              ds_cmd.c_str(), error, status, errno);
+      log_msg("exec of '%s' failed, error: %d, status: %d, errno: %d", ds_cmd.c_str(), error, status, errno);
       die("command \"%s\" failed", command->first_argument);
     }
 
@@ -2160,8 +2147,7 @@ static void do_exec(st_command* command)
            command->expected_errors.err[0].code.errnum != 0)
   {
     /* Error code we wanted was != 0, i.e. not an expected success */
-    log_msg("exec of '%s failed, error: %d, errno: %d",
-            ds_cmd.c_str(), error, errno);
+    log_msg("exec of '%s failed, error: %d, errno: %d", ds_cmd.c_str(), error, errno);
     die("command \"%s\" succeeded - should have failed with errno %d...",
         command->first_argument, command->expected_errors.err[0].code.errnum);
   }
@@ -2834,23 +2820,7 @@ static void do_wait_for_slave_to_stop()
   for (;;)
   {
     drizzle::result_c res;
-    if (drizzle_return_t ret= con.query(res, "show status like 'Slave_running'"))
-    {
-      if (ret == DRIZZLE_RETURN_ERROR_CODE)
-      {
-        die("Query failed while probing slave for stop: %s", res.error());
-      }
-      else
-      {
-        die("Query failed while probing slave for stop: %s", con.error());
-      }
-    }
-
-    if (res.column_count() == 0)
-    {
-      die("Query failed while probing slave for stop: %s", con.error());
-    }
-
+    dt_query(con, res, "show status like 'Slave_running'");
     drizzle_row_t row= res.row_next();
     if (!row || !row[1])
     {
@@ -3094,23 +3064,7 @@ static void fill_global_error_names()
   global_error_names.clear();
 
   drizzle::result_c res;
-  const std::string ds_query("select error_name, error_code from data_dictionary.errors");
-  if (drizzle_return_t ret= con.query(res, ds_query))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), res.error_code(), res.error());
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
-    }
-  }
-  if (res.column_count() == 0)
-  {
-    die("Query '%s' didn't return a result set", ds_query.c_str());
-  }
-
+  dt_query(con, res, "select error_name, error_code from data_dictionary.errors");
   while (drizzle_row_t row= res.row_next())
   {
     if (not row[0])
@@ -4500,17 +4454,7 @@ static int append_warnings(string& ds, drizzle::connection_c& con, drizzle::resu
     return 0;
 
   drizzle::result_c warn_res;
-  if (drizzle_return_t ret= con.query(warn_res, "SHOW WARNINGS"))
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-      die("Error running query \"SHOW WARNINGS\": %s", warn_res.error());
-    else
-      die("Error running query \"SHOW WARNINGS\": %s", con.error());
-  }
-
-  if (warn_res.column_count() == 0)
-    die("Warning count is %u but didn't get any warnings", count);
-
+  dt_query(con, warn_res, "show warnings");
   append_result(&ds, warn_res);
   return count;
 }
