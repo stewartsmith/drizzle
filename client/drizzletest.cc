@@ -2722,10 +2722,9 @@ static void do_send_quit(st_command* command)
   if (not con)
     die("connection '%s' not found in connection pool", name);
 
-  drizzle_result_st result;
+  drizzle::result_c result;
   drizzle_return_t ret;
-  if (drizzle_quit(&con->con, &result, &ret))
-    drizzle_result_free(&result);
+  drizzle_quit(&con->con, &result.b_, &ret);
 }
 
 
@@ -2771,14 +2770,11 @@ static void do_change_user(struct st_command *)
 
 static void do_perl(st_command* command)
 {
-  int error;
-  int fd;
-  FILE *res_file;
   char buf[FN_REFLEN];
   char temp_file_path[FN_REFLEN];
   string ds_script;
   string ds_delimiter;
-  const struct command_arg perl_args[] = {
+  const command_arg perl_args[] = {
     { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
   };
 
@@ -2796,8 +2792,8 @@ static void do_perl(st_command* command)
   read_until_delimiter(&ds_script, &ds_delimiter);
 
   /* Create temporary file name */
-  if ((fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
-                            "tmp", MYF(MY_WME))) < 0)
+  int fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"), "tmp", MYF(MY_WME));
+  if (fd < 0)
     die("Failed to create temporary file for perl command");
   internal::my_close(fd, MYF(0));
 
@@ -2806,7 +2802,8 @@ static void do_perl(st_command* command)
   /* Format the "perl <filename>" command */
   snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
 
-  if (!(res_file= popen(buf, "r")) && command->abort_on_error)
+  FILE* res_file= popen(buf, "r");
+  if (not res_file && command->abort_on_error)
     die("popen(\"%s\", \"r\") failed", buf);
 
   while (fgets(buf, sizeof(buf), res_file))
@@ -2816,7 +2813,7 @@ static void do_perl(st_command* command)
     else
       replace_append(&ds_res, buf);
   }
-  error= pclose(res_file);
+  int error= pclose(res_file);
 
   /* Remove the temporary file */
   internal::my_delete(temp_file_path, MYF(0));
@@ -2852,14 +2849,11 @@ static void do_perl(st_command* command)
 static void do_echo(st_command* command)
 {
   string ds_echo;
-
-
   do_eval(&ds_echo, command->first_argument, command->end, false);
   ds_res.append(ds_echo.c_str(), ds_echo.length());
   ds_res.append("\n");
   command->last_argument= command->end;
 }
-
 
 static void do_wait_for_slave_to_stop()
 {
@@ -5620,11 +5614,9 @@ try
         break;
       case Q_PING:
         {
-          drizzle_result_st result;
+          drizzle::result_c result;
           drizzle_return_t ret;
-          (void) drizzle_ping(&cur_con->con, &result, &ret);
-          if (ret == DRIZZLE_RETURN_OK || ret == DRIZZLE_RETURN_ERROR_CODE)
-            drizzle_result_free(&result);
+          (void) drizzle_ping(&cur_con->con, &result.b_, &ret);
         }
         break;
       case Q_EXEC:
