@@ -233,15 +233,18 @@ var_hash_t var_hash;
 class st_connection
 {
 public:
-  st_connection()
+  st_connection() : con(drizzle)
   {
-    drizzle_create(&drizzle);
-    drizzle_con_create(&drizzle, &con);
-    drizzle_con_add_options(&con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+    drizzle_con_add_options(*this, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
   }
 
-  drizzle_st drizzle;
-  drizzle_con_st con;
+  operator drizzle_con_st*()
+  {
+    return &con.b_;
+  }
+
+  drizzle::drizzle_c drizzle;
+  drizzle::connection_c con;
 };
 
 typedef map<string, st_connection*> connections_t;
@@ -954,7 +957,7 @@ void die(const char *fmt, ...)
     been produced prior to the error
   */
   if (cur_con)
-    show_warnings_before_error(&cur_con->con);
+    show_warnings_before_error(*cur_con);
 
   cleanup_and_exit(1);
 }
@@ -1727,7 +1730,7 @@ static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   const char *end = ((query_end && *query_end) ? *query_end : query + strlen(query));
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
   string ds_query;
 
 
@@ -1806,7 +1809,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 static void var_set_query_get_value(st_command* command, VAR *var)
 {
   int col_no= -1;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
 
   string ds_query;
   string ds_col;
@@ -2703,7 +2706,7 @@ static void do_send_quit(st_command* command)
 
   drizzle::result_c result;
   drizzle_return_t ret;
-  drizzle_quit(&con->con, &result.b_, &ret);
+  drizzle_quit(*con, &result.b_, &ret);
 }
 
 
@@ -2837,7 +2840,7 @@ static void do_echo(st_command* command)
 static void do_wait_for_slave_to_stop()
 {
   static int SLAVE_POLL_INTERVAL= 300000;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
   for (;;)
   {
     drizzle::result_c res;
@@ -2871,7 +2874,7 @@ static void do_wait_for_slave_to_stop()
 
 static void do_sync_with_master2(long offset)
 {
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
 
@@ -2944,7 +2947,7 @@ static void do_sync_with_master(st_command* command)
 */
 static void do_save_master_pos()
 {
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
   const char *query= "show master status";
 
   drizzle::result_c res;
@@ -3118,7 +3121,7 @@ static void do_set_charset(st_command* command)
 
 static void fill_global_error_names()
 {
-  drizzle_con_st *con= &cur_con->con;
+  drizzle_con_st *con= *cur_con;
 
   global_error_names.clear();
 
@@ -3369,7 +3372,7 @@ static void select_connection_name(const char *name)
     die("connection '%s' not found in connection pool", name);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
+  var_set_drizzleclient_get_server_version(*cur_con);
 }
 
 
@@ -3405,7 +3408,6 @@ static void do_close_connection(st_command* command)
   if (!con)
     die("connection '%s' not found in connection pool", name);
   g_connections.erase(name);
-  drizzle_free(&con->drizzle);
   delete con;
 }
 
@@ -3439,7 +3441,7 @@ static st_connection* safe_connect(const char *name, const string host, const st
 {
   uint32_t failed_attempts= 0;
   st_connection* con0= new st_connection;
-  drizzle_con_st* con= &con0->con;
+  drizzle_con_st* con= *con0;
   drizzle_con_set_tcp(con, host.c_str(), port);
   drizzle_con_set_auth(con, user.c_str(), pass);
   drizzle_con_set_db(con, db.c_str());
@@ -3654,7 +3656,7 @@ static void do_connect(st_command* command)
   if (ds_database == "*NO-ONE*")
     ds_database.clear();
 
-  if (connect_n_handle_errors(command, &con_slot->con, ds_host.c_str(), ds_user.c_str(), 
+  if (connect_n_handle_errors(command, *con_slot, ds_host.c_str(), ds_user.c_str(), 
     ds_password.c_str(), ds_database.c_str(), con_port, ds_sock.c_str()))
   {
     g_connections[ds_connection_name]= con_slot;
@@ -3662,7 +3664,7 @@ static void do_connect(st_command* command)
   }
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
+  var_set_drizzleclient_get_server_version(*cur_con);
 }
 
 
@@ -4565,7 +4567,7 @@ static void run_query_normal(st_connection *cn,
                              string *ds, string& ds_warnings)
 {
   drizzle_return_t ret;
-  drizzle_con_st *con= &cn->con;
+  drizzle_con_st *con= *cn;
   int err= 0;
 
   drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
@@ -5331,7 +5333,7 @@ try
   var_set_errno(-1);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
+  var_set_drizzleclient_get_server_version(*cur_con);
 
   if (! opt_include.empty())
   {
@@ -5523,7 +5525,7 @@ try
         {
           drizzle::result_c result;
           drizzle_return_t ret;
-          (void) drizzle_ping(&cur_con->con, &result.b_, &ret);
+          (void) drizzle_ping(*cur_con, &result.b_, &ret);
         }
         break;
       case Q_EXEC:
@@ -5542,10 +5544,10 @@ try
         do_set_charset(command);
         break;
       case Q_DISABLE_RECONNECT:
-        set_reconnect(&cur_con->con, 0);
+        set_reconnect(*cur_con, 0);
         break;
       case Q_ENABLE_RECONNECT:
-        set_reconnect(&cur_con->con, 1);
+        set_reconnect(*cur_con, 1);
         break;
       case Q_DISABLE_PARSING:
         if (parsing_disabled == 0)
