@@ -1732,9 +1732,7 @@ static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   const char *end = ((query_end && *query_end) ? *query_end : query + strlen(query));
-  drizzle_con_st *con= *cur_con;
-  string ds_query;
-
+  drizzle::connection_c& con= *cur_con;
 
   while (end > query && *end != '`')
     --end;
@@ -1742,11 +1740,12 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     die("Syntax error in query, missing '`'");
   ++query;
 
+  string ds_query;
   /* Eval the query, thus replacing all environment variables */
   do_eval(&ds_query, query, end, false);
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
+  if (drizzle_return_t ret= con.query(res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -1754,7 +1753,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(&con.b_));
     }
   }
   if (res.column_count() == 0)
@@ -2949,18 +2948,18 @@ static void do_sync_with_master(st_command* command)
 */
 static void do_save_master_pos()
 {
-  drizzle_con_st *con= *cur_con;
+  drizzle::connection_c& con= *cur_con;
   const char *query= "show master status";
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= drizzle::query(con, res, query))
+  if (drizzle_return_t ret= con.query(res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       die("failed in '%s': %d: %s", query, res.error_code(), res.error());
     }
     else
-      die("failed in '%s': %d: %s", query, ret, drizzle_con_error(con));
+      die("failed in '%s': %d: %s", query, ret, drizzle_con_error(&con.b_));
   }
 
   if (res.column_count() == 0)
@@ -3123,13 +3122,13 @@ static void do_set_charset(st_command* command)
 
 static void fill_global_error_names()
 {
-  drizzle_con_st *con= *cur_con;
+  drizzle::connection_c& con= *cur_con;
 
   global_error_names.clear();
 
   drizzle::result_c res;
   const std::string ds_query("select error_name, error_code from data_dictionary.errors");
-  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
+  if (drizzle_return_t ret= con.query(res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -3137,7 +3136,7 @@ static void fill_global_error_names()
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(&con.b_));
     }
   }
   if (res.column_count() == 0)
