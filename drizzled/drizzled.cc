@@ -1134,7 +1134,7 @@ int init_basic_variables(int argc, char **argv)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   _("Default completion type."))
   ("core-file",  _("Write core on errors."))
-  ("datadir", po::value<fs::path>(&getDataHome()),
+  ("datadir", po::value<fs::path>(&getMutableDataHome()),
   _("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   _("Set the default storage engine for tables."))
@@ -1308,12 +1308,10 @@ int init_basic_variables(int argc, char **argv)
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
-    defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle.file_string());
+    defaults_file_list.insert(defaults_file_list.begin(), system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
-
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
@@ -1321,15 +1319,8 @@ int init_basic_variables(int argc, char **argv)
 			BOOST_FOREACH(CachedDirectory::Entries::const_reference iter, config_conf_d.getEntries())
       {
         string file_entry(iter->filename);
-
-        if (not file_entry.empty()
-            && file_entry != "."
-            && file_entry != "..")
-        {
-          fs::path the_entry(config_conf_d_location);
-          the_entry /= file_entry;
-          defaults_file_list.push_back(the_entry.file_string());
-        }
+        if (not file_entry.empty() && file_entry != "." && file_entry != "..")
+          defaults_file_list.push_back((config_conf_d_location / file_entry).file_string());
       }
     }
   }
@@ -1343,10 +1334,7 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
+    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
     unireg_abort(1);
   }
 
@@ -1361,10 +1349,7 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
+    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
     unireg_abort(1);
   }
 
@@ -2064,10 +2049,7 @@ static void drizzle_init_variables()
 */
 static void get_options()
 {
-
-  fs::path &data_home_catalog= getDataHomeCatalog();
-  data_home_catalog= getDataHome();
-  data_home_catalog /= "local";
+  setDataHomeCatalog(getDataHome() / "local");
 
   if (vm.count("user"))
   {

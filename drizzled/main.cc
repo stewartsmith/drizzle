@@ -323,9 +323,8 @@ int main(int argc, char **argv)
       unireg_abort(1);
     }
 
-    boost::filesystem::path &full_data_home= getFullDataHome();
-    full_data_home= boost::filesystem::system_complete(getDataHome());
-    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
+    setFullDataHome(boost::filesystem::system_complete(getDataHome()));
+    errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native_file_string().c_str());
   }
 
   if (server_id == 0)
