@@ -40,41 +40,40 @@ class testManager(object):
 
     """
 
-    def __init__( self, verbose, debug, default_engine, dotest, skiptest
-                , reorder, suitelist, suitepaths, system_manager
-                , test_cases, mode):
+    def __init__( self, variables, system_manager):
 
         self.system_manager = system_manager
         self.time_manager = system_manager.time_manager
         self.logging = system_manager.logging
-        if verbose:
+        if variables['verbose']:
             self.logging.verbose("Initializing test manager...")
 
-        if dotest:
-            dotest = dotest.strip()
-        if skiptest:
-            skiptest = skiptest.strip()
         self.skip_keys = [ 'system_manager'
+                         , 'verbose'
+                         , 'debug'
                          ]
         self.test_list = []
         self.first_test = 1
         self.total_test_count = 0
         self.executed_tests = {} # We have a hash of 'status':[test_name..]
         self.executing_tests = {}
-        self.verbose = verbose
-        self.debug = debug
-        self.default_engine = default_engine
-        self.dotest = dotest
-        self.skiptest = skiptest
-        self.reorder = reorder
-        self.suitelist = suitelist
-        self.mode = mode
+        self.verbose = variables['verbose']
+        self.debug = variables['debug']
+        self.default_engine = variables['defaultengine']
+        self.dotest = variables['dotest']
+        if self.dotest:
+            self.dotest = self.dotest.strip()
+        self.skiptest = variables['skiptest']
+        if self.skiptest:
+            self.skiptest = self.skiptest.strip()
+        self.reorder = variables['reorder']
+        self.suitelist = variables['suitelist']
+        self.mode = variables['mode']
         
         self.code_tree = self.system_manager.code_tree
-        self.suitepaths = suitepaths + self.code_tree.suite_paths
+        self.suitepaths = variables['suitepaths'] + self.code_tree.suite_paths
         self.testdir = self.code_tree.testdir
-        self.desired_tests = test_cases
-        self.mutex = thread.allocate_lock()
+        self.desired_tests = variables['test_cases']
         
         if self.debug:
             self.logging.debug(self)

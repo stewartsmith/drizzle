@@ -1,0 +1,76 @@
+#! /usr/bin/env python
+# -*- mode: python; indent-tabs-mode: nil; -*-
+# vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+#
+# Copyright (C) 2010, 2011 Patrick Crews
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA1
+
+""" We put the code for the individual options for test_subject_control_group here
+    keeps the option parser code cleaner
+
+    test_control_group - things like suite, do-test, skip-test
+    these options affect which tests are run
+
+"""
+
+# test subject control group
+# terrible name for options tht define the server / code
+# that is under test
+
+# find some default values
+# assume we are in-tree testing in general and operating from root/test(?)
+testdir_default = os.path.abspath(os.getcwd())
+
+basedir_default = os.path.split(testdir_default)[0]
+
+test_subject_control_group = optparse.OptionGroup(parser,
+                                 "Options for defining the code that will be under test")
+
+test_subject_control_group.add_option(
+    "--basedir"
+  , dest="basedir"
+  , type='string'
+  , default = basedir_default
+  , help = "Pass this argument to signal to the test-runner that this is an in-tree test.  We automatically set a number of variables relative to the argument (client-bindir, serverdir, testdir) [%default]"
+  )
+
+test_subject_control_group.add_option(
+    "--serverdir"
+  , dest="serverpath"
+  , type='string'
+  , default = "auto-search"
+  , help = "Path to the server executable.  [%default]"
+  )
+
+test_subject_control_group.add_option(
+    "--client-bindir"
+  , dest="clientbindir"
+  , type = 'string'
+  , default = "auto-search"
+  , help = "Path to the directory containing client program binaries for use in testing [%default]"
+  )
+
+
+test_subject_control_group.add_option(
+    "--default-storage-engine"
+   , dest="defaultengine"
+   , default = 'innodb'
+   , help="Start drizzled using the specified engine [%default]"
+   )    
+
+
+parser.add_option_group(test_subject_control_group)
+# end test subject control group

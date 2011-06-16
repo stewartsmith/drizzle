@@ -1,0 +1,39 @@
+#! /usr/bin/env python
+# -*- mode: python; indent-tabs-mode: nil; -*-
+# vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+#
+# Copyright (C) 2010, 2011 Patrick Crews
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA1
+
+""" We put the code for the individual options here to 
+    keep the option parser code cleaner
+
+    Options for controlling the use of various utilities with test execution
+
+"""
+
+utility_group = optparse.OptionGroup(parser,
+                  "Options to call additional utilities such as datagen")
+
+utility_group.add_option(
+    "--gendata"
+  , dest="gendatafile"
+  , action='store'
+  , type='string'
+  , default=None
+  , help="Call the randgen's gendata utility to use the specified configuration file.  This will populate the server prior to any test execution")
+
+parser.add_option_group(utility_group)

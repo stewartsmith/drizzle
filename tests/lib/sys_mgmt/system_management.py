@@ -38,7 +38,8 @@ import shutil
 import getpass
 import commands
 
-from lib.uuid import uuid4
+from uuid import uuid4
+
 from lib.sys_mgmt.port_management import portManager
 from lib.sys_mgmt.logging_management import loggingManager
 from lib.sys_mgmt.time_management import timeManager
