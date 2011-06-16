@@ -238,6 +238,11 @@ public:
     drizzle_con_add_options(*this, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
   }
 
+  operator drizzle::connection_c&()
+  {
+    return con;
+  }
+
   operator drizzle_con_st*()
   {
     return &con.b_;
@@ -608,13 +613,10 @@ static void append_os_quoted(string *str, const char *append, ...)
 
 */
 
-static void show_query(drizzle_con_st *con, const char* query)
+static void show_query(drizzle::connection_c& con, const char* query)
 {
-  if (!con)
-    return;
   drizzle::result_c res;
-
-  if (drizzle_return_t ret= drizzle::query(con, res, query))
+  if (drizzle_return_t ret= con.query(res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -622,7 +624,7 @@ static void show_query(drizzle_con_st *con, const char* query)
     }
     else
     {
-      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(con));
+      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(&con.b_));
     }
     return;
   }
@@ -2874,7 +2876,7 @@ static void do_wait_for_slave_to_stop()
 
 static void do_sync_with_master2(long offset)
 {
-  drizzle_con_st *con= *cur_con;
+  drizzle::connection_c& con= *cur_con;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
 
@@ -2887,14 +2889,14 @@ static void do_sync_with_master2(long offset)
 wait_for_position:
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= drizzle::query(con, res, query_buf))
+  if (drizzle_return_t ret= con.query(res, query_buf))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
       die("failed in '%s': %d: %s", query_buf, res.error_code(), res.error());
     }
     else
-      die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(con));
+      die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(&con.b_));
   }
 
   if (res.column_count() == 0)
