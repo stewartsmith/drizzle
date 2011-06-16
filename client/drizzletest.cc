@@ -4449,21 +4449,21 @@ static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column
   Values may be converted with 'replace_column'
 */
 
-static void append_result(string *ds, drizzle_result_st *res)
+static void append_result(string *ds, drizzle::result_c& res)
 {
-  uint32_t num_fields= drizzle_result_column_count(res);
-  while (drizzle_row_t row = drizzle_row_next(res))
+  uint32_t num_fields= res.column_count();
+  while (drizzle_row_t row = res.row_next())
   {
-    size_t* lengths = drizzle_row_field_sizes(res);
-    drizzle_column_seek(res, 0);
+    size_t* lengths = res.row_field_sizes();
+    res.column_seek(0);
     for (uint32_t i = 0; i < num_fields; i++)
     {
-      drizzle_column_st* column= drizzle_column_next(res);
-      if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
+      drizzle_column_st* column= res.column_next();
+      if (row[i] && drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
       {
         if (boost::lexical_cast<uint32_t>(row[i]))
         {
-          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          if (drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED)
           {
             append_field(ds, i, column, "YES", 3, false);
           }
@@ -4474,7 +4474,7 @@ static void append_result(string *ds, drizzle_result_st *res)
         }
         else
         {
-          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          if (drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED)
           {
             append_field(ds, i, column, "NO", 2, false);
           }
@@ -4499,54 +4499,41 @@ static void append_result(string *ds, drizzle_result_st *res)
   Append metadata for fields to output
 */
 
-static void append_metadata(string *ds, drizzle_result_st *res)
+static void append_metadata(string *ds, drizzle::result_c& res)
 {
-  drizzle_column_st *column;
   ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
              "Column_alias\tType\tLength\tMax length\tIs_null\t"
              "Flags\tDecimals\tCharsetnr\n");
 
-  drizzle_column_seek(res, 0);
-  while ((column= drizzle_column_next(res)))
+  res.column_seek(0);
+  while (drizzle_column_st* column= res.column_next())
   {
-    ds->append(drizzle_column_catalog(column),
-               strlen(drizzle_column_catalog(column)));
-    ds->append("\t", 1);
+    ds->append(drizzle_column_catalog(column), strlen(drizzle_column_catalog(column)));
+    *ds += "\t";
     ds->append(drizzle_column_db(column), strlen(drizzle_column_db(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_orig_table(column),
-               strlen(drizzle_column_orig_table(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_table(column),
-               strlen(drizzle_column_table(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_orig_name(column),
-               strlen(drizzle_column_orig_name(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_name(column),
-               strlen(drizzle_column_name(column)));
-    ds->append("\t", 1);
+    *ds += "\t";
+    ds->append(drizzle_column_orig_table(column), strlen(drizzle_column_orig_table(column)));
+    *ds += "\t";
+    ds->append(drizzle_column_table(column), strlen(drizzle_column_table(column)));
+    *ds += "\t";
+    ds->append(drizzle_column_orig_name(column), strlen(drizzle_column_orig_name(column)));
+    *ds += "\t";
+    ds->append(drizzle_column_name(column), strlen(drizzle_column_name(column)));
+    *ds += "\t";
     replace_append_uint(ds, drizzle_column_type_drizzle(column));
-    ds->append("\t", 1);
+    *ds += "\t";
     replace_append_uint(ds, drizzle_column_size(column));
-    ds->append("\t", 1);
-    if (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
-    {
-      replace_append_uint(ds, 1);
-    }
-    else
-    {
-      replace_append_uint(ds, drizzle_column_max_size(column));
-    }
-    ds->append("\t", 1);
-    ds->append((char*) ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y"), 1);
-    ds->append("\t", 1);
+    *ds += "\t";
+    replace_append_uint(ds, drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY ? 1 : drizzle_column_max_size(column));
+    *ds += "\t";
+    ds->append((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y", 1);
+    *ds += "\t";
     replace_append_uint(ds, drizzle_column_flags(column));
-    ds->append("\t", 1);
+    *ds += "\t";
     replace_append_uint(ds, drizzle_column_decimals(column));
-    ds->append("\t", 1);
+    *ds += "\t";
     replace_append_uint(ds, drizzle_column_charset(column));
-    ds->append("\n", 1);
+    *ds += "\n";
   }
 }
 
@@ -4574,11 +4561,11 @@ static void append_info(string *ds, uint64_t affected_rows,
   Display the table headings with the names tab separated
 */
 
-static void append_table_headings(string& ds, drizzle_result_st* res)
+static void append_table_headings(string& ds, drizzle::result_c& res)
 {
   uint32_t col_idx= 0;
-  drizzle_column_seek(res, 0);
-  while (drizzle_column_st* column= drizzle_column_next(res))
+  res.column_seek(0);
+  while (drizzle_column_st* column= res.column_next())
   {
     if (col_idx)
       ds += "\t";
@@ -4595,9 +4582,9 @@ static void append_table_headings(string& ds, drizzle_result_st* res)
   Number of warnings appended to ds
 */
 
-static int append_warnings(string& ds, drizzle_con_st *con, drizzle_result_st *res)
+static int append_warnings(string& ds, drizzle_con_st *con, drizzle::result_c& res)
 {
-  uint32_t count= drizzle_result_warning_count(res);
+  uint32_t count= drizzle_result_warning_count(&res.b_);
   if (!count)
     return 0;
 
@@ -4613,7 +4600,7 @@ static int append_warnings(string& ds, drizzle_con_st *con, drizzle_result_st *r
   if (warn_res.column_count() == 0)
     die("Warning count is %u but didn't get any warnings", count);
 
-  append_result(&ds, &warn_res.b_);
+  append_result(&ds, warn_res);
   return count;
 }
 
@@ -4634,7 +4621,7 @@ static int append_warnings(string& ds, drizzle_con_st *con, drizzle_result_st *r
 static void run_query_normal(st_connection *cn,
                              st_command* command,
                              int flags, char *query, int query_len,
-                             string *ds, string *ds_warnings)
+                             string *ds, string& ds_warnings)
 {
   drizzle_return_t ret;
   drizzle_con_st *con= &cn->con;
@@ -4709,12 +4696,12 @@ static void run_query_normal(st_connection *cn,
       if (res.column_count())
       {
         if (display_metadata)
-          append_metadata(ds, &res.b_);
+          append_metadata(ds, res);
 
         if (!display_result_vertically)
-          append_table_headings(*ds, &res.b_);
+          append_table_headings(*ds, res);
 
-        append_result(ds, &res.b_);
+        append_result(ds, res);
       }
 
       /*
@@ -4732,10 +4719,10 @@ static void run_query_normal(st_connection *cn,
       if (!disable_warnings)
       {
         drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
-        if (append_warnings(*ds_warnings, con, &res.b_) || ds_warnings->length())
+        if (append_warnings(ds_warnings, con, res) || not ds_warnings.empty())
         {
           ds->append("Warnings:\n", 10);
-          *ds += *ds_warnings;
+          *ds += ds_warnings;
         }
       }
 
@@ -4955,7 +4942,7 @@ static void run_query(st_connection *cn,
     Always run with normal C API if it's not a complete
     SEND + REAP
   */
-  run_query_normal(cn, command, flags, query, query_len, ds, &ds_warnings);
+  run_query_normal(cn, command, flags, query, query_len, ds, ds_warnings);
 
   if (display_result_sorted)
   {
