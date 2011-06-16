@@ -28,7 +28,7 @@
 class UserDetect
 {
   public:
-    const char* getUser() { return user.empty() ? NULL : &user[0]; }
+    const char* getUser() { return user.empty() ? "" : &user[0]; }
 
     UserDetect()
     {
@@ -38,10 +38,7 @@ class UserDetect
       char *pw_buffer= new char[pw_len];
 
       if (getpwuid_r(geteuid(), &pw_struct, pw_buffer, pw_len, &pw_tmp_struct) == 0)
-      {
-        user.resize(strlen(pw_struct.pw_name)+1);
-        strcpy(&user[0], pw_struct.pw_name);
-      }
+        user.assign(pw_struct.pw_name, pw_struct.pw_name + strlen(pw_struct.pw_name) + 1);
 
       delete[] pw_buffer;
     }

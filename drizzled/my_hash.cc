@@ -55,13 +55,7 @@ _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charse
            hash_free_key free_element, uint32_t flags)
 {
   hash->records=0;
-  if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
-                               growth_size))
-  {
-    /* Allow call to hash_free */
-    hash->free=0;
-    return true;
-  }
+  my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size, growth_size);
   hash->key_offset=key_offset;
   hash->key_length=key_length;
   hash->blength=1;
@@ -69,7 +63,7 @@ _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charse
   hash->free=free_element;
   hash->flags=flags;
   hash->charset=charset;
-  return false;
+  return false; // return void
 }
 
 

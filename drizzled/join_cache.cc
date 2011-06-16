@@ -172,8 +172,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     my_error(ER_OUT_OF_GLOBAL_JOINMEMORY, MYF(ME_ERROR+ME_WAITTANG));
     return 1;
   }
-  if (!(cache->buff= (unsigned char*) malloc(size)))
-    return 1;
+  cache->buff= (unsigned char*) malloc(size);
   cache->end= cache->buff+size;
   cache->reset_cache_write();
 

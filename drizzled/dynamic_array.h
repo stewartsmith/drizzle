@@ -50,9 +50,7 @@ private:
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 
-bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                   void *init_buffer, uint32_t init_alloc,
-                                   uint32_t alloc_increment);
+void init_dynamic_array2(DYNAMIC_ARRAY*, uint32_t element_size, void *init_buffer, uint32_t init_alloc, uint32_t alloc_increment);
 unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
 void delete_dynamic(DYNAMIC_ARRAY *array);

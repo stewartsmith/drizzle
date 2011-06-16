@@ -250,7 +250,7 @@ int io_cache_st::init_io_cache(int file_arg, size_t cachesize,
       }
 
       if ((buffer=
-	   (unsigned char*) malloc(buffer_block)) != 0)
+	   (unsigned char*) malloc(buffer_block)) != 0) // todo: remove malloc check
       {
 	write_buffer=buffer;
 	alloced_buffer= true;
