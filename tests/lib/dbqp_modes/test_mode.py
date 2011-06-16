@@ -44,38 +44,38 @@ def handle_mode(variables, system_manager):
         # other coolness easier in the future
 
         # get our mode-specific testManager and Executor
-        from dbqp_modes.drizzle_test_run.dtr_test_management import testManager
-        from dbqp_modes.drizzle_test_run.dtr_test_execution import testExecutor as testExecutor
+        from drizzle_test_run.dtr_test_management import testManager
+        from drizzle_test_run.dtr_test_execution import testExecutor as testExecutor
 
     elif test_mode == 'randgen':
         # randgen mode - we run the randgen grammar against
         # the specified server configs and report the randgen error code
 
         # get manager and executor
-        from dbqp_modes.randgen.randgen_test_management import testManager
-        from dbqp_modes.randgen.randgen_test_execution import randgenTestExecutor as testExecutor
+        from randgen.randgen_test_management import testManager
+        from randgen.randgen_test_execution import randgenTestExecutor as testExecutor
 
     elif test_mode == 'sysbench':
         # sysbench mode - we have a standard server setup 
         # and a variety of concurrencies we want to run
 
         # get manager and executor
-        from dbqp_modes.sysbench.sysbench_test_management import testManager
-        from dbqp_modes.sysbench.sysbench_test_execution import sysbenchTestExecutor as testExecutor
+        from sysbench.sysbench_test_management import testManager
+        from sysbench.sysbench_test_execution import sysbenchTestExecutor as testExecutor
 
     elif test_mode == 'sqlbench':
         # sqlbench mode - we execute all test sql-bench tests
         # - run-all-tests
 
         # get manager and executor
-        from dbqp_modes.sqlbench.sqlbench_test_management import testManager
-        from dbqp_modes.sqlbench.sqlbench_test_execution import sqlbenchTestExecutor as testExecutor
+        from sqlbench.sqlbench_test_management import testManager
+        from sqlbench.sqlbench_test_execution import sqlbenchTestExecutor as testExecutor
 
     elif test_mode == 'crashme':
         # crashme mode - see if the server lives : )
         # get manager and executor
-        from dbqp_modes.sqlbench.sqlbench_test_management import crashmeTestManager as testManager
-        from dbqp_modes.sqlbench.sqlbench_test_execution import crashmeTestExecutor as testExecutor
+        from sqlbench.sqlbench_test_management import crashmeTestManager as testManager
+        from sqlbench.sqlbench_test_execution import crashmeTestExecutor as testExecutor
 
     elif test_mode == 'cleanup':
         # cleanup mode - we try to kill any servers whose pid's we detect

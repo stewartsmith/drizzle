@@ -36,7 +36,7 @@ import os
 import sys
 
 import lib.dbqp_opts.test_run_options as test_run_options
-from lib.test_mode import handle_mode
+from lib.dbqp_modes.test_mode import handle_mode
 from lib.server_mgmt.server_management import serverManager
 from lib.sys_mgmt.system_management import systemManager
 from lib.test_mgmt.execution_management import executionManager

@@ -81,18 +81,18 @@ clientbindir_default = os.path.abspath(os.path.join(testdir_default,
                                        '../client'))
 basedir_default = os.path.split(testdir_default)[0]
 
-master_control_group = optparse.OptionGroup(parser, 
-                     "Master file - provides system-defining hooks to guide test execution.  Used for more advanced testing")
+config_control_group = optparse.OptionGroup(parser, 
+                     "Configuration controls - allows you to specify a file with a number of options already specified")
 
-master_control_group.add_option(
-   "--master_file"
-    , dest="defaultsfilepath"
+config_control_group.add_option(
+   "--config_file"
+    , dest="configfilepath"
     , action='store'
     , default=None # We want to have a file that will be our default defaults file...
-    , help="The file that specifies default system setup hooks for dbqp to figure out what to do"
+    , help="The file that specifies system configuration specs for dbqp to execute tests"
     )
 
-parser.add_option_group(master_control_group)
+parser.add_option_group(config_control_group)
 
 # We start adding our option groups to the parser
 # option groups kept in separate files just for cleanliness /
