@@ -299,12 +299,11 @@ time_t flush_status_time;
 
 fs::path basedir(PREFIX);
 fs::path pid_file;
-fs::path secure_file_priv("");
+fs::path secure_file_priv;
 fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
-
-char *opt_tc_log_file;
+const char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -377,23 +376,11 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
-namespace {
+static std::string g_hostname= "localhost";
 
-std::string &getGlobHostname()
+const std::string& getServerHostname()
 {
-  static std::string glob_hostname("localhost");
-  return glob_hostname;
-}
-
-void setServerHostname(const std::string &hostname)
-{
-  getGlobHostname()= hostname;
-}
-}
-
-const std::string &getServerHostname()
-{
-  return getGlobHostname();
+  return g_hostname;
 }
 
 /****************************************************************************
@@ -1014,34 +1001,26 @@ static void process_defaults_files()
 
     ifstream input_defaults_file(file_location.file_string().c_str());
 
-    po::parsed_options file_parsed=
-      dpo::parse_config_file(input_defaults_file, full_options, true);
-    vector<string> file_unknown=
-      po::collect_unrecognized(file_parsed.options, po::include_positional);
+    po::parsed_options file_parsed= dpo::parse_config_file(input_defaults_file, full_options, true);
+    vector<string> file_unknown= po::collect_unrecognized(file_parsed.options, po::include_positional);
 
-    for (vector<string>::iterator it= file_unknown.begin();
-         it != file_unknown.end();
-         ++it)
+    for (vector<string>::iterator it= file_unknown.begin(); it != file_unknown.end(); ++it)
     {
-      string new_unknown_opt("--");
-      new_unknown_opt.append(*it);
+      string new_unknown_opt("--" + *it);
       ++it;
       if (it == file_unknown.end())
 				break;
-      if ((*it) != "true")
-      {
-        new_unknown_opt.push_back('=');
-        new_unknown_opt.append(*it);
-      }
+      if (*it != "true")
+        new_unknown_opt += "=" + *it;
       unknown_options.push_back(new_unknown_opt);
     }
     store(file_parsed, vm);
   }
 }
 
-static void compose_defaults_file_list(vector<string> in_options)
+static void compose_defaults_file_list(const vector<string>& in_options)
 {
-	BOOST_FOREACH(vector<string>::reference it, in_options)
+	BOOST_FOREACH(const string& it, in_options)
   {
     fs::path p(it);
     if (fs::is_regular_file(p))
@@ -1056,12 +1035,11 @@ static void compose_defaults_file_list(vector<string> in_options)
 
 int init_basic_variables(int argc, char **argv)
 {
-  time_t curr_time;
   umask(((~internal::my_umask) & 0666));
   decimal_zero.set_zero(); // set decimal_zero constant;
   tzset();			// Set tzname
 
-  curr_time= time(NULL);
+  time_t curr_time= time(NULL);
   if (curr_time == (time_t)-1)
     return 1;
 
@@ -1075,14 +1053,12 @@ int init_basic_variables(int argc, char **argv)
   char ret_hostname[FN_REFLEN];
   if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
-    errmsg_printf(error::WARN,
-                  _("gethostname failed, using '%s' as hostname"),
-                  getServerHostname().c_str());
+    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"), getServerHostname().c_str());
     pid_file= "drizzle";
   }
   else
   {
-    setServerHostname(ret_hostname);
+    g_hostname= ret_hostname;
     pid_file= getServerHostname();
   }
   pid_file.replace_extension(".pid");
