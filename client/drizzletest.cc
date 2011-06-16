@@ -465,7 +465,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append);
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
 static uint32_t max_replace_column= 0;
-void do_get_replace_column(struct st_command*);
+void do_get_replace_column(st_command*);
 void free_replace_column();
 
 /* For replace */
@@ -480,10 +480,10 @@ void replace_append(string *ds, const char *val);
 void replace_append_uint(string *ds, uint32_t val);
 void append_sorted(string& ds, const string& ds_input);
 
-void handle_error(struct st_command*,
+void handle_error(st_command*,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds);
-void handle_no_error(struct st_command*);
+void handle_no_error(st_command*);
 
 
 void do_eval(string *query_eval, const char *query,
@@ -1179,10 +1179,8 @@ static int run_tool(const char *tool_path, string& result, ...)
 
 */
 
-static void show_diff(string* ds,
-                      const char* filename1, const char* filename2)
+static void show_diff(string* ds, const char* filename1, const char* filename2)
 {
-
   string ds_tmp;
 
   /* First try with unified diff */
@@ -1363,7 +1361,7 @@ static int compare_files(const char* filename1, const char* filename2)
   See 'compare_files2'
 */
 
-static int string_cmp(string* ds, const char *fname)
+static int string_cmp(const string& ds, const char *fname)
 {
   char temp_file_path[FN_REFLEN];
 
@@ -1372,7 +1370,7 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(), MYF(MY_FNABP | MY_WME)) ||
+  if (internal::my_write(fd, (unsigned char *) ds.data(), ds.length(), MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     internal::my_close(fd, MYF(0));
@@ -1403,7 +1401,7 @@ static int string_cmp(string* ds, const char *fname)
 
 */
 
-static void check_result(string* ds)
+static void check_result(string& ds)
 {
   const char* mess= "Result content mismatch\n";
 
@@ -1437,9 +1435,9 @@ static void check_result(string* ds)
       /* Put reject file in opt_logdir */
       internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(), ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
-    str_to_file(reject_file, ds->c_str(), ds->length());
+    str_to_file(reject_file, ds.data(), ds.length());
 
-    ds->erase(); /* Don't create a .log file */
+    ds.erase(); /* Don't create a .log file */
 
     show_diff(NULL, result_file_name.c_str(), reject_file);
     die("%s",mess);
@@ -1466,7 +1464,7 @@ static void check_result(string* ds)
 
 */
 
-static void check_require(string* ds, const string &fname)
+static void check_require(const string& ds, const string& fname)
 {
   if (string_cmp(ds, fname.c_str()))
   {
@@ -2743,7 +2741,7 @@ static void do_send_quit(st_command* command)
 
 */
 
-static void do_change_user(struct st_command *)
+static void do_change_user(st_command *)
 {
   assert(0);
 }
@@ -3776,7 +3774,7 @@ static void do_done(st_command* command)
 
 */
 
-static void do_block(enum block_cmd cmd, struct st_command* command)
+static void do_block(enum block_cmd cmd, st_command* command)
 {
   char *p= command->first_argument;
   const char *expr_start, *expr_end;
@@ -3839,7 +3837,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
 }
 
 
-static void do_delimiter(struct st_command* command)
+static void do_delimiter(st_command* command)
 {
   char* p= command->first_argument;
 
@@ -4270,10 +4268,10 @@ static void check_eol_junk(const char *eol)
 #define MAX_QUERY (768*1024*2) /* 256K -- a test in sp-big is >128K */
 static char read_command_buf[MAX_QUERY];
 
-static int read_command(struct st_command** command_ptr)
+static int read_command(st_command** command_ptr)
 {
   char *p= read_command_buf;
-  struct st_command* command;
+  st_command* command;
 
 
   if (parser.current_line < parser.read_lines)
@@ -4956,14 +4954,14 @@ static void run_query(st_connection *cn,
        and the output should be checked against an already
        existing file which has been specified using --require or --result
     */
-    check_require(ds, command->require_file);
+    check_require(*ds, command->require_file);
   }
 }
 
 
 /****************************************************************************/
 
-static void get_command_type(struct st_command* command)
+static void get_command_type(st_command* command)
 {
   if (*command->query == '}')
   {
@@ -5041,7 +5039,7 @@ static void get_command_type(struct st_command* command)
 
 */
 
-static void mark_progress(struct st_command*, int line)
+static void mark_progress(st_command*, int line)
 {
   uint64_t timer= timer_now();
   if (!progress_start)
@@ -5708,7 +5706,7 @@ try
   */
   if (ds_res.length())
   {
-    if (! result_file_name.empty())
+    if (not result_file_name.empty())
     {
       /* A result file has been specified */
 
@@ -5723,7 +5721,7 @@ try
            - detect missing result file
            - detect zero size result file
         */
-        check_result(&ds_res);
+        check_result(ds_res);
       }
     }
     else
@@ -5738,8 +5736,7 @@ try
   }
 
   struct stat res_info;
-  if (!command_executed &&
-      ! result_file_name.empty() && !stat(result_file_name.c_str(), &res_info))
+  if (!command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
