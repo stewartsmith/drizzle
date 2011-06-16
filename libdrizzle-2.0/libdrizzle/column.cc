@@ -357,13 +357,6 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
   if (column == NULL)
   {
     column= new drizzle_column_st;
-    if (column == NULL)
-    {
-      drizzle_set_error(result->con->drizzle, "drizzle_column_create",
-                        "malloc");
-      return NULL;
-    }
-
     column->result = result;
     /* SET BELOW: column->next */
     column->prev = NULL;
@@ -558,12 +551,6 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
     }
 
     result->column_buffer= new drizzle_column_st[result->column_count];
-    if (result->column_buffer == NULL)
-    {
-      drizzle_set_error(result->con->drizzle, "drizzle_column_buffer",
-                        "malloc");
-      return DRIZZLE_RETURN_MEMORY;
-    }
   }
 
   /* No while body, just keep calling to buffer columns. */

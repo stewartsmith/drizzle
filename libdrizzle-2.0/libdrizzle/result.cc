@@ -52,12 +52,6 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
   if (result == NULL)
   {
     result= new drizzle_result_st;
-    if (result == NULL)
-    {
-      drizzle_set_error(con->drizzle, "drizzle_result_create", "malloc");
-      return NULL;
-    }
-
     result->options|= DRIZZLE_RESULT_ALLOCATED;
   }
   else
@@ -281,27 +275,13 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
     if (result->row_list == NULL)
     {
-      result->row_list= new (std::nothrow) drizzle_row_list_t;
-      if (result->row_list == NULL)
-      {
-        drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
-        return DRIZZLE_RETURN_MEMORY;
-      }
+      result->row_list= new drizzle_row_list_t;
     }
 
 
     if (result->field_sizes_list == NULL)
     {
-      result->field_sizes_list= new (std::nothrow) drizzle_field_sizes_list_t;
-      if (result->field_sizes_list == NULL)
-      {
-        drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
-        return DRIZZLE_RETURN_MEMORY;
-      }
+      result->field_sizes_list= new drizzle_field_sizes_list_t;
     }
 
     result->row_list->push_back(row);

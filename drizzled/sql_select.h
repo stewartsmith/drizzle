@@ -240,7 +240,7 @@ int remove_dup_with_hash_index(Session *session,
                                Field **first_field,
                                uint32_t key_length,
                                Item *having);
-bool update_ref_and_keys(Session *session,
+void update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,

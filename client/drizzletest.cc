@@ -660,8 +660,6 @@ static void show_query(drizzle_con_st *con, const char* query)
     fprintf(stderr, "\n\n");
   }
   drizzle_result_free(&res);
-
-  return;
 }
 
 
@@ -905,7 +903,7 @@ static void free_used_memory()
       free(i.second);
   }
   var_hash.clear();
-  BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
+  BOOST_FOREACH(st_command* i, q_lines)
     delete i;
   for (size_t i= 0; i < var_reg.size(); i++)
   {
@@ -919,11 +917,16 @@ static void free_used_memory()
 
 static void cleanup_and_exit(int exit_code)
 {
-  free_used_memory();
-  internal::my_end();
+  if (0) // Olaf: Freeing resources is unnecessary when exiting
+  {
+    free_used_memory(); 
+    internal::my_end();
+  }
 
-  if (!silent) {
-    switch (exit_code) {
+  if (!silent) 
+  {
+    switch (exit_code) 
+    {
     case 1:
       printf("not ok\n");
       break;
@@ -935,7 +938,7 @@ static void cleanup_and_exit(int exit_code)
       break;
     default:
       printf("unknown exit code: %d\n", exit_code);
-      assert(0);
+      assert(false);
     }
   }
   exit(exit_code);
@@ -1100,17 +1103,13 @@ void log_msg(const char *fmt, ...)
 {
   va_list args;
   char buff[1024];
-  size_t len;
-
 
   va_start(args, fmt);
-  len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
+  size_t len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
   ds_res.append(buff, len);
   ds_res.append("\n");
-
-  return;
 }
 
 
@@ -1126,14 +1125,13 @@ void log_msg(const char *fmt, ...)
 
 static void cat_file(string* ds, const char* filename)
 {
-  int fd;
+  int fd= internal::my_open(filename, O_RDONLY, MYF(0));
+  if (fd < 0)
+    die("Failed to open file '%s'", filename);
   uint32_t len;
   char buff[512];
 
-  if ((fd= internal::my_open(filename, O_RDONLY, MYF(0))) < 0)
-    die("Failed to open file '%s'", filename);
-  while((len= internal::my_read(fd, (unsigned char*)&buff,
-                      sizeof(buff), MYF(0))) > 0)
+  while((len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
     while (p < buff+len)
@@ -1168,23 +1166,19 @@ static void cat_file(string* ds, const char* filename)
 
 */
 
-static int run_command(const char * cmd, string * result)
+static int run_command(const char* cmd, string& result)
 {
-  assert(result!=NULL);
-  char buf[512]= {0};
-  FILE *res_file;
-  int error;
-
-  if (!(res_file= popen(cmd, "r")))
+  FILE* res_file= popen(cmd, "r");
+  if (not res_file)
     die("popen(\"%s\", \"r\") failed", cmd);
 
+  char buf[512]= {0};
   while (fgets(buf, sizeof(buf), res_file))
   {
     /* Save the output of this command in the supplied string */
-    result->append(buf);
+    result.append(buf);
   }
-
-  error= pclose(res_file);
+  int error= pclose(res_file);
   return WEXITSTATUS(error);
 }
 
@@ -1201,20 +1195,15 @@ static int run_command(const char * cmd, string * result)
 
 */
 
-static int run_tool(const char *tool_path, string * result, ...)
+static int run_tool(const char *tool_path, string& result, ...)
 {
-  int ret;
-  const char* arg;
-  va_list args;
   string ds_cmdline;
-
-
   append_os_quoted(&ds_cmdline, tool_path, NULL);
   ds_cmdline.append(" ");
 
+  va_list args;
   va_start(args, result);
-
-  while ((arg= va_arg(args, char *)))
+  while (const char* arg= va_arg(args, char *))
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
@@ -1226,8 +1215,7 @@ static int run_tool(const char *tool_path, string * result, ...)
 
   va_end(args);
 
-  ret= run_command(ds_cmdline.c_str(), result);
-  return(ret);
+  return run_command(ds_cmdline.c_str(), result);
 }
 
 
@@ -1252,7 +1240,7 @@ static void show_diff(string* ds,
 
   /* First try with unified diff */
   if (run_tool("diff",
-               &ds_tmp, /* Get output from diff in ds_tmp */
+               ds_tmp, /* Get output from diff in ds_tmp */
                "-u",
                filename1,
                filename2,
@@ -1262,7 +1250,7 @@ static void show_diff(string* ds,
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
-                 &ds_tmp, /* Get output from diff in ds_tmp */
+                 ds_tmp, /* Get output from diff in ds_tmp */
                  "-c",
                  filename1,
                  filename2,
@@ -1273,16 +1261,15 @@ static void show_diff(string* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      ds_tmp.clear();
-
-      ds_tmp.append(
+      ds_tmp=
                     "\n"
                     "The two files differ but it was not possible to execute 'diff' in\n"
                     "order to show only the difference, tried both 'diff -u' or 'diff -c'.\n"
-                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
+                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n"
+                    "\n"
                     "To get a better report you should install 'diff' on your system, which you\n"
                     "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
-                    "\n");
+                    "\n";
 
       ds_tmp.append(" --- ");
       ds_tmp.append(filename1);
@@ -1299,7 +1286,7 @@ static void show_diff(string* ds,
   if (ds)
   {
     /* Add the diff to output */
-    ds->append(ds_tmp.c_str(), ds_tmp.length());
+    *ds += ds_tmp;
   }
   else
   {
@@ -1309,8 +1296,8 @@ static void show_diff(string* ds,
 
 }
 
-
-enum compare_files_result_enum {
+enum compare_files_result_enum 
+{
   RESULT_OK= 0,
   RESULT_CONTENT_MISMATCH= 1,
   RESULT_LENGTH_MISMATCH= 2
@@ -1333,13 +1320,13 @@ enum compare_files_result_enum {
 static int compare_files2(int fd, const char* filename2)
 {
   int error= RESULT_OK;
-  int fd2;
   uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
   string tmpfile;
 
-  if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
+  int fd2= internal::my_open(fname, O_RDONLY, MYF(0));
+  if (fd2 < 0)
   {
     internal::my_close(fd, MYF(0));
     if (! opt_testdir.empty())
@@ -1431,17 +1418,14 @@ static int compare_files(const char* filename1, const char* filename2)
 
 static int string_cmp(string* ds, const char *fname)
 {
-  int error;
-  int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
-                            "tmp", MYF(MY_WME))) < 0)
+  int fd= internal::create_temp_file(temp_file_path, TMPDIR, "tmp", MYF(MY_WME));
+  if (fd < 0)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
-               MYF(MY_FNABP | MY_WME)) ||
+  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(), MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     internal::my_close(fd, MYF(0));
@@ -1450,13 +1434,13 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to write file '%s'", temp_file_path);
   }
 
-  error= compare_files2(fd, fname);
+  int error= compare_files2(fd, fname);
 
   internal::my_close(fd, MYF(0));
   /* Remove the temporary file */
   internal::my_delete(temp_file_path, MYF(0));
 
-  return(error);
+  return error;
 }
 
 
@@ -1476,13 +1460,11 @@ static void check_result(string* ds)
 {
   const char* mess= "Result content mismatch\n";
 
-
-  assert(result_file_name.c_str());
-
   if (access(result_file_name.c_str(), F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name.c_str());
 
-  switch (string_cmp(ds, result_file_name.c_str())) {
+  switch (string_cmp(ds, result_file_name.c_str())) 
+  {
   case RESULT_OK:
     break; /* ok */
   case RESULT_LENGTH_MISMATCH:
@@ -1501,14 +1483,12 @@ static void check_result(string* ds)
     if (access(reject_file, W_OK) == 0)
     {
       /* Result file directory is writable, save reject file there */
-      internal::fn_format(reject_file, result_file_name.c_str(), NULL,
-                ".reject", MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), NULL, ".reject", MY_REPLACE_EXT);
     }
     else
     {
       /* Put reject file in opt_logdir */
-      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(),
-                ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(), ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
     str_to_file(reject_file, ds->c_str(), ds->length());
 
@@ -1521,8 +1501,6 @@ static void check_result(string* ds)
   default: /* impossible */
     die("Unknown error code from dyn_string_cmp()");
   }
-
-  return;
 }
 
 
@@ -1543,15 +1521,12 @@ static void check_result(string* ds)
 
 static void check_require(string* ds, const string &fname)
 {
-
-
   if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
     internal::fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
-  return;
 }
 
 
@@ -1857,11 +1832,8 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
       and assign that string to the $variable
     */
     string result;
-    uint32_t i;
-    size_t *lengths;
-
-    lengths= drizzle_row_field_sizes(&res);
-    for (i= 0; i < drizzle_result_column_count(&res); i++)
+    size_t* lengths= drizzle_row_field_sizes(&res);
+    for (uint32_t i= 0; i < drizzle_result_column_count(&res); i++)
     {
       if (row[i])
       {
@@ -1905,7 +1877,6 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
 static void var_set_query_get_value(st_command* command, VAR *var)
 {
-  long row_no;
   int col_no= -1;
   drizzle_result_st res;
   drizzle_return_t ret;
@@ -1928,7 +1899,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
                      ',');
 
   /* Convert row number to int */
-  row_no= atoi(ds_row.c_str());
+  long row_no= atoi(ds_row.c_str());
   
   istringstream buff(ds_row);
   if ((buff >> row_no).fail())
@@ -1936,27 +1907,23 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   /* Remove any surrounding "'s from the query - if there is any */
   // (Don't get me started on this)
-  char * unstripped_query= strdup(ds_query.c_str());
+  char* unstripped_query= strdup(ds_query.c_str());
   if (strip_surrounding(unstripped_query, '"', '"'))
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
-  ds_query.clear();
-  ds_query.append(unstripped_query);
+  ds_query= unstripped_query;
 
   /* Run the query */
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
-                    &ret) == NULL ||
+  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
+      die("Error running query '%s': %d %s", ds_query.c_str(), drizzle_result_error_code(&res), drizzle_result_error(&res));
       drizzle_result_free(&res);
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
     }
   }
   if (drizzle_result_column_count(&res) == 0 ||
@@ -1965,13 +1932,10 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   {
     /* Find column number from the given column name */
-    uint32_t i;
     uint32_t num_fields= drizzle_result_column_count(&res);
-    drizzle_column_st *column;
-
-    for (i= 0; i < num_fields; i++)
+    for (uint32_t i= 0; i < num_fields; i++)
     {
-      column= drizzle_column_next(&res);
+      drizzle_column_st* column= drizzle_column_next(&res);
       if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
           strlen(drizzle_column_name(column)) == ds_col.length())
       {
@@ -1989,11 +1953,10 @@ static void var_set_query_get_value(st_command* command, VAR *var)
 
   {
     /* Get the value */
-    drizzle_row_t row;
     long rows= 0;
     const char* value= "No such row";
 
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t row= drizzle_row_next(&res))
     {
       if (++rows == row_no)
       {
@@ -2155,8 +2118,6 @@ static void do_source(st_command* command)
     }
     open_file(ds_filename.c_str());
   }
-
-  return;
 }
 
 
@@ -2401,7 +2362,6 @@ static void do_system(st_command* command)
 
 static void do_remove_file(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg rm_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to delete" }
@@ -2412,7 +2372,7 @@ static void do_remove_file(st_command* command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
+  int error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2431,7 +2391,6 @@ static void do_remove_file(st_command* command)
 
 static void do_copy_file(st_command* command)
 {
-  int error;
   string ds_from_file;
   string ds_to_file;
   const struct command_arg copy_file_args[] = {
@@ -2445,7 +2404,7 @@ static void do_copy_file(st_command* command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
+  int error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
 }
@@ -2500,7 +2459,6 @@ static void do_chmod_file(st_command* command)
 
 static void do_file_exist(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg file_exist_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to check if it exist" }
@@ -2512,7 +2470,7 @@ static void do_file_exist(st_command* command)
                      sizeof(file_exist_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (access(ds_filename.c_str(), F_OK) != 0);
+  int error= access(ds_filename.c_str(), F_OK) != 0;
   handle_command_error(command, error);
 }
 
@@ -2530,7 +2488,6 @@ static void do_file_exist(st_command* command)
 static void do_mkdir(st_command* command)
 {
   string ds_dirname;
-  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2540,7 +2497,7 @@ static void do_mkdir(st_command* command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
+  int error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2556,7 +2513,6 @@ static void do_mkdir(st_command* command)
 
 static void do_rmdir(st_command* command)
 {
-  int error;
   string ds_dirname;
   const struct command_arg rmdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to remove"}
@@ -2567,7 +2523,7 @@ static void do_rmdir(st_command* command)
                      rmdir_args, sizeof(rmdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= rmdir(ds_dirname.c_str()) != 0;
+  int error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
 }
 
@@ -2599,15 +2555,13 @@ static void my_ungetc(int c)
 static void read_until_delimiter(string *ds,
                                  string *ds_delimiter)
 {
-  char c;
-
   if (ds_delimiter->length() > MAX_DELIMITER_LENGTH)
     die("Max delimiter length(%d) exceeded", MAX_DELIMITER_LENGTH);
 
   /* Read from file until delimiter is found */
   while (1)
   {
-    c= my_getc(cur_file->file);
+    char c= my_getc(cur_file->file);
 
     if (c == '\n')
     {
@@ -2635,7 +2589,6 @@ static void read_until_delimiter(string *ds,
 
     ds->push_back(c);
   }
-  return;
 }
 
 
@@ -2667,9 +2620,7 @@ static void do_write_file_command(st_command* command, bool append)
   }
 
   read_until_delimiter(&ds_content, &ds_delimiter);
-  str_to_file2(ds_filename.c_str(), ds_content.c_str(),
-               ds_content.length(), append);
-  return;
+  str_to_file2(ds_filename.c_str(), ds_content.c_str(), ds_content.length(), append);
 }
 
 
@@ -2764,8 +2715,6 @@ static void do_cat_file(st_command* command)
                      ' ');
 
   cat_file(&ds_res, ds_filename.c_str());
-
-  return;
 }
 
 
@@ -2783,7 +2732,6 @@ static void do_cat_file(st_command* command)
 
 static void do_diff_files(st_command* command)
 {
-  int error= 0;
   string ds_filename;
   string ds_filename2;
   const struct command_arg diff_file_args[] = {
@@ -2798,7 +2746,8 @@ static void do_diff_files(st_command* command)
                      sizeof(diff_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  if ((error= compare_files(ds_filename.c_str(), ds_filename2.c_str())))
+  int error= compare_files(ds_filename.c_str(), ds_filename2.c_str());
+  if (error)
   {
     /* Compare of the two files failed, append them to output
        so the failure can be analyzed
@@ -2812,15 +2761,12 @@ static void do_diff_files(st_command* command)
 
 static st_connection * find_connection_by_name(const char *name)
 {
-  st_connection *con;
-  for (con= g_connections; con < next_con; con++)
+  for (st_connection* con= g_connections; con < next_con; con++)
   {
-    if (!strcmp(con->name, name))
-    {
+    if (not strcmp(con->name, name))
       return con;
-    }
   }
-  return 0; /* Connection not found */
+  return NULL;
 }
 
 
@@ -3036,7 +2982,6 @@ static void do_wait_for_slave_to_stop()
       break;
     usleep(SLAVE_POLL_INTERVAL);
   }
-  return;
 }
 
 static void do_sync_with_master2(long offset)

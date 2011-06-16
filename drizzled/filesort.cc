@@ -114,8 +114,7 @@ public:
 
   ~SortParam()
   {
-    if (tmp_buffer)
-      free(tmp_buffer);
+    free(tmp_buffer);
   }
 
   int write_keys(unsigned char * *sort_keys,
@@ -126,7 +125,7 @@ public:
   void make_sortkey(unsigned char *to,
                     unsigned char *ref_pos);
   void register_used_fields();
-  bool save_index(unsigned char **sort_keys,
+  void save_index(unsigned char **sort_keys,
                   uint32_t count,
                   filesort_info *table_sort);
 
@@ -342,17 +341,13 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
   if (maxbuffer == 0)			// The whole set is in memory
   {
-    if (param.save_index(sort_keys,(uint32_t) records, &table_sort))
-    {
-      goto err;
-    }
+    param.save_index(sort_keys,(uint32_t) records, &table_sort);
   }
   else
   {
     if (table_sort.buffpek && table_sort.buffpek_len < maxbuffer)
     {
-      if (table_sort.buffpek)
-        free(table_sort.buffpek);
+      free(table_sort.buffpek);
       table_sort.buffpek = 0;
     }
     if (!(table_sort.buffpek=
@@ -1055,26 +1050,21 @@ void SortParam::register_used_fields()
 }
 
 
-bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
+void SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
 {
-  uint32_t offset;
-  unsigned char *to;
-
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
-  offset= rec_length - res_length;
+  uint32_t offset= rec_length - res_length;
 
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
 
-  to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count);
+  unsigned char* to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count);
 
   for (unsigned char **end_ptr= sort_keys+count ; sort_keys != end_ptr ; sort_keys++)
   {
     memcpy(to, *sort_keys+offset, res_length);
     to+= res_length;
   }
-
-  return false; // return void
 }
 
 

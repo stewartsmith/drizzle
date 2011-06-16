@@ -115,17 +115,11 @@ void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_s
           prev= &mem->next;
       }
       /* Allocate new prealloc block and add it to the end of free list */
-      if ((mem= static_cast<memory::internal::UsedMemory *>(malloc(size))))
-      {
-        mem->size= size;
-        mem->left= pre_alloc_size;
-        mem->next= *prev;
-        *prev= pre_alloc= mem;
-      }
-      else
-      {
-        pre_alloc= 0;
-      }
+      mem= static_cast<memory::internal::UsedMemory *>(malloc(size));
+      mem->size= size;
+      mem->left= pre_alloc_size;
+      mem->next= *prev;
+      *prev= pre_alloc= mem;
     }
   }
   else
@@ -179,12 +173,7 @@ void *memory::Root::alloc_root(size_t length)
     get_size= length+ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     get_size= max(get_size, tmp_block_size);
 
-    if (!(next = static_cast<memory::internal::UsedMemory *>(malloc(get_size))))
-    {
-      if (this->error_handler)
-	(*this->error_handler)();
-      return NULL;
-    }
+    next = static_cast<memory::internal::UsedMemory *>(malloc(get_size));
     this->block_num++;
     next->next= *prev;
     next->size= get_size;

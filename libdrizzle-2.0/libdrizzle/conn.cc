@@ -702,12 +702,6 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   if (con->command_buffer == NULL)
   {
     con->command_buffer= new uint8_t[(*total) + 1];
-    if (con->command_buffer == NULL)
-    {
-      drizzle_set_error(con->drizzle, "drizzle_command_buffer", "malloc");
-      *ret_ptr= DRIZZLE_RETURN_MEMORY;
-      return NULL;
-    }
   }
 
   memcpy(con->command_buffer + offset, command_data, size);

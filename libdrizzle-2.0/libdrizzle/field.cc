@@ -94,12 +94,6 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
   if (result->field_buffer == NULL)
   {
     result->field_buffer= new drizzle_field_t_type[(*total) + 1];
-    if (result->field_buffer == NULL)
-    {
-      drizzle_set_error(result->con->drizzle, "drizzle_field_buffer", "malloc");
-      *ret_ptr= DRIZZLE_RETURN_MEMORY;
-      return NULL;
-    }
   }
 
   memcpy(result->field_buffer + offset, field, size);
