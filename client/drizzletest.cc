@@ -632,28 +632,26 @@ static void show_query(drizzle::connection_c& con, const char* query)
   if (res.column_count() == 0)
     return;
 
+  unsigned int row_num= 0;
+  unsigned int num_fields= res.column_count();
+
+  fprintf(stderr, "=== %s ===\n", query);
+  while (drizzle_row_t row= res.row_next())
   {
-    unsigned int row_num= 0;
-    unsigned int num_fields= res.column_count();
+    size_t *lengths= res.row_field_sizes();
+    row_num++;
 
-    fprintf(stderr, "=== %s ===\n", query);
-    while (drizzle_row_t row= res.row_next())
+    fprintf(stderr, "---- %d. ----\n", row_num);
+    res.column_seek(0);
+    for (unsigned int i= 0; i < num_fields; i++)
     {
-      size_t *lengths= res.row_field_sizes();
-      row_num++;
-
-      fprintf(stderr, "---- %d. ----\n", row_num);
-      res.column_seek(0);
-      for (unsigned int i= 0; i < num_fields; i++)
-      {
-        drizzle_column_st* column= res.column_next();
-        fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
-      }
+      drizzle_column_st* column= res.column_next();
+      fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
     }
-    for (size_t i= 0; i < strlen(query)+8; i++)
-      fprintf(stderr, "=");
-    fprintf(stderr, "\n\n");
   }
+  for (size_t i= 0; i < strlen(query)+8; i++)
+    fprintf(stderr, "=");
+  fprintf(stderr, "\n\n");
 }
 
 
