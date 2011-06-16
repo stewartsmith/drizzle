@@ -449,17 +449,14 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 static char **make_char_array(char **old_pos, uint32_t fields,
                               uint32_t length)
 {
-  char **pos;
-  char *char_pos;
+  if (not old_pos)
+    old_pos= (char**) malloc((uint32_t) fields * (length + sizeof(char*)));
+  char** pos= old_pos; 
+  char* char_pos= ((char*) (pos+fields)) - length;
+  while (fields--) 
+    *(pos++) = (char_pos+= length);
 
-  if (old_pos ||
-      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*))))) // todo: remove malloc check
-  {
-    pos=old_pos; char_pos=((char*) (pos+fields)) -length;
-    while (fields--) *(pos++) = (char_pos+= length);
-  }
-
-  return(old_pos);
+  return old_pos;
 } /* make_char_array */
 
 
