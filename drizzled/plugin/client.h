@@ -143,4 +143,3 @@ public:
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
