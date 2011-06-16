@@ -232,12 +232,13 @@ var_hash_t var_hash;
 
 struct st_connection
 {
-  drizzle_st* drizzle;
+  drizzle_st drizzle;
   drizzle_con_st con;
-  char* name;
 };
-st_connection g_connections[128];
-st_connection* cur_con= NULL, *next_con;
+
+typedef map<string, st_connection*> connections_t;
+connections_t g_connections;
+st_connection* cur_con= NULL;
 
 /*
   List of commands in drizzletest
@@ -819,20 +820,6 @@ static void handle_command_error(st_command* command, uint32_t error)
 }
 
 
-static void close_connections()
-{
-  for (--next_con; next_con >= g_connections; --next_con)
-  {
-    if (next_con->drizzle != NULL)
-    {
-      drizzle_free(next_con->drizzle);
-      next_con->drizzle= NULL;
-    }
-    free(next_con->name);
-  }
-}
-
-
 static void close_files()
 {
   for (; cur_file >= file_stack.data(); cur_file--)
@@ -846,7 +833,6 @@ static void close_files()
 
 static void free_used_memory()
 {
-  close_connections();
   close_files();
   BOOST_FOREACH(var_hash_t::reference i, var_hash)
   {
@@ -2680,14 +2666,9 @@ static void do_diff_files(st_command* command)
 }
 
 
-static st_connection * find_connection_by_name(const char *name)
+static st_connection* find_connection_by_name(const char* name)
 {
-  for (st_connection* con= g_connections; con < next_con; con++)
-  {
-    if (not strcmp(con->name, name))
-      return con;
-  }
-  return NULL;
+  return find_ptr2(g_connections, name);
 }
 
 
@@ -3413,12 +3394,10 @@ static int select_connection(st_command* command)
 
 static void do_close_connection(st_command* command)
 {
-  char *p= command->first_argument, *name;
-  st_connection *con;
-
+  char* p= command->first_argument;
   if (!*p)
     die("Missing connection name in disconnect");
-  name= p;
+  char* name= p;
   while (*p && !my_isspace(charset_info,*p))
     p++;
 
@@ -3426,21 +3405,12 @@ static void do_close_connection(st_command* command)
     *p++= 0;
   command->last_argument= p;
 
-  if (!(con= find_connection_by_name(name)))
+  st_connection* con= find_connection_by_name(name);
+  if (!con)
     die("connection '%s' not found in connection pool", name);
-
-  if (con->drizzle != NULL)
-  {
-    drizzle_free(con->drizzle);
-    con->drizzle= NULL;
-  }
-  free(con->name);
-
-  /*
-    When the connection is closed set name to "-closed_connection-"
-    to make it possible to reuse the connection name.
-  */
-  con->name = strdup("-closed_connection-");
+  g_connections.erase(name);
+  drizzle_free(&con->drizzle);
+  delete con;
 }
 
 
@@ -3475,12 +3445,11 @@ static void safe_connect(drizzle_con_st *con, const char *name,
 {
   uint32_t failed_attempts= 0;
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
-  drizzle_return_t ret;
 
   drizzle_con_set_tcp(con, host.c_str(), port);
   drizzle_con_set_auth(con, user.c_str(), pass);
   drizzle_con_set_db(con, db.c_str());
-  while ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
+  while (drizzle_return_t ret= drizzle_con_connect(con))
   {
     /*
       Connect failed
@@ -3494,22 +3463,18 @@ static void safe_connect(drizzle_con_st *con, const char *name,
          ret == DRIZZLE_RETURN_COULD_NOT_CONNECT) &&
         failed_attempts < opt_max_connect_retries)
     {
-      verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
-                  opt_max_connect_retries, ret, drizzle_con_error(con));
+      verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts, opt_max_connect_retries, ret, drizzle_con_error(con));
       usleep(connection_retry_sleep);
     }
     else
     {
       if (failed_attempts > 0)
-        die("Could not open connection '%s' after %d attempts: %d %s", name,
-            failed_attempts, ret, drizzle_con_error(con));
+        die("Could not open connection '%s' after %d attempts: %d %s", name, failed_attempts, ret, drizzle_con_error(con));
       else
-        die("Could not open connection '%s': %d %s", name, ret,
-            drizzle_con_error(con));
+        die("Could not open connection '%s': %d %s", name, ret, drizzle_con_error(con));
     }
     failed_attempts++;
   }
-  return;
 }
 
 
@@ -3685,17 +3650,11 @@ static void do_connect(st_command* command)
   if (find_connection_by_name(ds_connection_name.c_str()))
     die("Connection %s already exists", ds_connection_name.c_str());
 
-  st_connection* con_slot;
-  if (next_con != g_connections + sizeof(g_connections) / sizeof(st_connection) - 1)
-  {
-    con_slot= next_con;
-  }
-  else if (!(con_slot= find_connection_by_name("-closed_connection-")))
-    die("Connection limit exhausted, you can have max %d connections", (int) (sizeof(g_connections)/sizeof(st_connection)));
+  st_connection* con_slot= new st_connection;
 
-  if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
+  if (not drizzle_create(&con_slot->drizzle))
     die("Failed on drizzle_create()");
-  if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
+  if (not drizzle_con_create(&con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
   drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
@@ -3710,11 +3669,8 @@ static void do_connect(st_command* command)
   if (connect_n_handle_errors(command, &con_slot->con, ds_host.c_str(), ds_user.c_str(), 
     ds_password.c_str(), ds_database.c_str(), con_port, ds_sock.c_str()))
   {
-    con_slot->name= strdup(ds_connection_name.c_str());
+    g_connections[ds_connection_name]= con_slot;
     cur_con= con_slot;
-
-    if (con_slot == next_con)
-      next_con++; /* if we used the next_con slot, advance the pointer */
   }
 
   /* Update $drizzleclient_get_server_version to that of current connection */
@@ -5223,10 +5179,6 @@ try
   /* Init expected errors */
   memset(&saved_expected_errors, 0, sizeof(saved_expected_errors));
 
-  /* Init g_connections */
-  memset(g_connections, 0, sizeof(g_connections));
-  next_con= g_connections + 1;
-
   /* Init file stack */
   memset(file_stack.data(), 0, sizeof(file_stack));
   cur_file= file_stack.data();
@@ -5375,16 +5327,15 @@ try
     cur_file->file_name= strdup("<stdin>");
     cur_file->lineno= 1;
   }
-  cur_con= g_connections;
-  if ((cur_con->drizzle= drizzle_create(NULL)) == NULL)
+  cur_con= new st_connection;
+  if (not drizzle_create(&cur_con->drizzle))
     die("Failed in drizzle_create()");
-  if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
+  if (not drizzle_con_create(&cur_con->drizzle, &cur_con->con))
     die("Failed in drizzle_con_create()");
   drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
-  cur_con->name = strdup("default");
-  safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
-               opt_db, opt_port);
+  safe_connect(&cur_con->con, "default", opt_host, opt_user, opt_pass, opt_db, opt_port);
+  g_connections["default"] = cur_con;
 
   fill_global_error_names();
 
