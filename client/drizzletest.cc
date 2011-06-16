@@ -624,7 +624,7 @@ static void show_query(drizzle::connection_c& con, const char* query)
     }
     else
     {
-      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(&con.b_));
+      log_msg("Error running query '%s': %d %s", query, ret, con.error());
     }
     return;
   }
@@ -670,13 +670,11 @@ static void show_query(drizzle::connection_c& con, const char* query)
 
 */
 
-static void show_warnings_before_error(drizzle_con_st *con)
+static void show_warnings_before_error(drizzle::connection_c& con)
 {
-  if (!con)
-    return;
   drizzle::result_c res;
   const char* query= "show warnings";
-  if (drizzle_return_t ret= drizzle::query(con, res, query))
+  if (drizzle_return_t ret= con.query(res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -684,7 +682,7 @@ static void show_warnings_before_error(drizzle_con_st *con)
     }
     else
     {
-      log_msg("Error running query '%s': %d %s", query, ret, drizzle_con_error(con));
+      log_msg("Error running query '%s': %d %s", query, ret, con.error());
     }
     return;
   }
@@ -1753,7 +1751,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(&con.b_));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
     }
   }
   if (res.column_count() == 0)
@@ -1810,7 +1808,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 static void var_set_query_get_value(st_command* command, VAR *var)
 {
   int col_no= -1;
-  drizzle_con_st *con= *cur_con;
+  drizzle::connection_c& con= *cur_con;
 
   string ds_query;
   string ds_col;
@@ -1843,7 +1841,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
   ds_query= unstripped_query;
 
   drizzle::result_c res;
-  if (drizzle_return_t ret= drizzle::query(con, res, ds_query))
+  if (drizzle_return_t ret= con.query(res, ds_query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -1851,7 +1849,7 @@ static void var_set_query_get_value(st_command* command, VAR *var)
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(con));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
     }
   }
   if (res.column_count() == 0)
@@ -2841,11 +2839,11 @@ static void do_echo(st_command* command)
 static void do_wait_for_slave_to_stop()
 {
   static int SLAVE_POLL_INTERVAL= 300000;
-  drizzle_con_st *con= *cur_con;
+  drizzle::connection_c& con= *cur_con;
   for (;;)
   {
     drizzle::result_c res;
-    if (drizzle_return_t ret= drizzle::query(con, res, "show status like 'Slave_running'"))
+    if (drizzle_return_t ret= con.query(res, "show status like 'Slave_running'"))
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
@@ -2853,13 +2851,13 @@ static void do_wait_for_slave_to_stop()
       }
       else
       {
-        die("Query failed while probing slave for stop: %s", drizzle_con_error(con));
+        die("Query failed while probing slave for stop: %s", con.error());
       }
     }
 
     if (res.column_count() == 0)
     {
-      die("Query failed while probing slave for stop: %s", drizzle_con_error(con));
+      die("Query failed while probing slave for stop: %s", con.error());
     }
 
     drizzle_row_t row= res.row_next();
@@ -2895,7 +2893,7 @@ wait_for_position:
       die("failed in '%s': %d: %s", query_buf, res.error_code(), res.error());
     }
     else
-      die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(&con.b_));
+      die("failed in '%s': %d: %s", query_buf, ret, con.error());
   }
 
   if (res.column_count() == 0)
@@ -2959,7 +2957,7 @@ static void do_save_master_pos()
       die("failed in '%s': %d: %s", query, res.error_code(), res.error());
     }
     else
-      die("failed in '%s': %d: %s", query, ret, drizzle_con_error(&con.b_));
+      die("failed in '%s': %d: %s", query, ret, con.error());
   }
 
   if (res.column_count() == 0)
@@ -3136,7 +3134,7 @@ static void fill_global_error_names()
     }
     else
     {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret, drizzle_con_error(&con.b_));
+      die("Error running query '%s': %d %s", ds_query.c_str(), ret, con.error());
     }
   }
   if (res.column_count() == 0)
@@ -4526,19 +4524,19 @@ static void append_table_headings(string& ds, drizzle::result_c& res)
   Number of warnings appended to ds
 */
 
-static int append_warnings(string& ds, drizzle_con_st *con, drizzle::result_c& res)
+static int append_warnings(string& ds, drizzle::connection_c& con, drizzle::result_c& res)
 {
   uint32_t count= drizzle_result_warning_count(&res.b_);
   if (!count)
     return 0;
 
   drizzle::result_c warn_res;
-  if (drizzle_return_t ret= drizzle::query(con, warn_res, "SHOW WARNINGS"))
+  if (drizzle_return_t ret= con.query(warn_res, "SHOW WARNINGS"))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
       die("Error running query \"SHOW WARNINGS\": %s", warn_res.error());
     else
-      die("Error running query \"SHOW WARNINGS\": %s", drizzle_con_error(con));
+      die("Error running query \"SHOW WARNINGS\": %s", con.error());
   }
 
   if (warn_res.column_count() == 0)
@@ -4562,13 +4560,13 @@ static int append_warnings(string& ds, drizzle_con_st *con, drizzle::result_c& r
   ds    output buffer where to store result form query
 */
 
-static void run_query_normal(st_connection *cn,
+static void run_query_normal(st_connection& cn,
                              st_command* command,
                              int flags, char *query, int query_len,
                              string *ds, string& ds_warnings)
 {
   drizzle_return_t ret;
-  drizzle_con_st *con= *cn;
+  drizzle_con_st *con= cn;
   int err= 0;
 
   drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
@@ -4663,7 +4661,7 @@ static void run_query_normal(st_connection *cn,
       if (!disable_warnings)
       {
         drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
-        if (append_warnings(ds_warnings, con, res) || not ds_warnings.empty())
+        if (append_warnings(ds_warnings, cn, res) || not ds_warnings.empty())
         {
           ds->append("Warnings:\n", 10);
           *ds += ds_warnings;
@@ -4823,14 +4821,10 @@ void handle_no_error(st_command* command)
   is on the result will be read - for regular query, both bits must be on
 */
 
-static void run_query(st_connection *cn,
+static void run_query(st_connection& cn,
                       st_command* command,
                       int flags)
 {
-  string *save_ds= NULL;
-  string ds_result;
-  string ds_sorted;
-  string ds_warnings;
   string eval_query;
   char *query;
   int query_len;
@@ -4860,6 +4854,7 @@ static void run_query(st_connection *cn,
     Create a temporary dynamic string to contain the output from
     this query.
   */
+  string ds_result;
   string* ds= command->require_file.empty() ? &ds_res : &ds_result;
   /*
     Log the query into the output buffer
@@ -4871,6 +4866,8 @@ static void run_query(st_connection *cn,
     ds->append("\n");
   }
 
+  string* save_ds= NULL;
+  string ds_sorted;
   if (display_result_sorted)
   {
     /*
@@ -4886,6 +4883,7 @@ static void run_query(st_connection *cn,
     Always run with normal C API if it's not a complete
     SEND + REAP
   */
+  string ds_warnings;
   run_query_normal(cn, command, flags, query, query_len, ds, ds_warnings);
 
   if (display_result_sorted)
@@ -5458,7 +5456,7 @@ try
           command->require_file= save_file;
           save_file.clear();
         }
-        run_query(cur_con, command, flags);
+        run_query(*cur_con, command, flags);
         command_executed++;
         command->last_argument= command->end;
 
@@ -5488,7 +5486,7 @@ try
           the query and read the result some time later when reap instruction
           is given on this connection.
         */
-        run_query(cur_con, command, QUERY_SEND_FLAG);
+        run_query(*cur_con, command, QUERY_SEND_FLAG);
         command_executed++;
         command->last_argument= command->end;
         break;

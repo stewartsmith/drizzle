@@ -132,6 +132,11 @@ public:
     drizzle_con_free(&b_);
   }
 
+  const char* error()
+  {
+    return drizzle_con_error(&b_);
+  }
+
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;
@@ -154,6 +159,7 @@ public:
   drizzle_con_st b_;
 };
 
+/*
 inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str, size_t str_size)
 {
   drizzle_return_t ret;
@@ -172,5 +178,6 @@ inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char*
 {
   return query(con, result, str, strlen(str));
 }
+*/
 
 }
