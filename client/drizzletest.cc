@@ -4642,23 +4642,21 @@ static void run_query_normal(st_connection *cn,
 
   drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
 
-  drizzle_result_st res;
+  drizzle::result_c res;
   if (flags & QUERY_SEND_FLAG)
   {
     /*
      * Send the query
      */
 
-    (void) drizzle_query(con, &res, query, query_len, &ret);
+    (void) drizzle_query(con, &res.b_, query, query_len, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE ||
           ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
       {
-        err= drizzle_result_error_code(&res);
-        handle_error(command, err, drizzle_result_error(&res), drizzle_result_sqlstate(&res), ds);
-        if (ret == DRIZZLE_RETURN_ERROR_CODE)
-          drizzle_result_free(&res);
+        err= res.error_code();
+        handle_error(command, err, res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
       {
@@ -4675,18 +4673,15 @@ static void run_query_normal(st_connection *cn,
     /*
      * Read the result packet
      */
-    if (drizzle_result_read(con, &res, &ret) == NULL ||
+    if (drizzle_result_read(con, &res.b_, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, drizzle_result_error_code(&res),
-                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
-                     ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
-      drizzle_result_free(&res);
       err= ret;
       goto end;
     }
@@ -4694,18 +4689,15 @@ static void run_query_normal(st_connection *cn,
     /*
       Store the result of the query if it will return any fields
     */
-    if (drizzle_result_column_count(&res) &&
-        (ret= drizzle_result_buffer(&res)) != DRIZZLE_RETURN_OK)
+    if (res.column_count() &&
+        (ret= drizzle_result_buffer(&res.b_)) != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, drizzle_result_error_code(&res),
-                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
-                     ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
-      drizzle_result_free(&res);
       err= ret;
       goto end;
     }
@@ -4714,15 +4706,15 @@ static void run_query_normal(st_connection *cn,
     {
       uint64_t affected_rows= 0;    /* Ok to be undef if 'disable_info' is set */
 
-      if (drizzle_result_column_count(&res))
+      if (res.column_count())
       {
         if (display_metadata)
-          append_metadata(ds, &res);
+          append_metadata(ds, &res.b_);
 
         if (!display_result_vertically)
-          append_table_headings(*ds, &res);
+          append_table_headings(*ds, &res.b_);
 
-        append_result(ds, &res);
+        append_result(ds, &res.b_);
       }
 
       /*
@@ -4730,7 +4722,7 @@ static void run_query_normal(st_connection *cn,
         query to find the warnings
       */
       if (!disable_info)
-        affected_rows= drizzle_result_affected_rows(&res);
+        affected_rows= drizzle_result_affected_rows(&res.b_);
 
       /*
         Add all warnings to the result. We can't do this if we are in
@@ -4740,18 +4732,17 @@ static void run_query_normal(st_connection *cn,
       if (!disable_warnings)
       {
         drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
-        if (append_warnings(*ds_warnings, con, &res) || ds_warnings->length())
+        if (append_warnings(*ds_warnings, con, &res.b_) || ds_warnings->length())
         {
           ds->append("Warnings:\n", 10);
-          ds->append(ds_warnings->c_str(), ds_warnings->length());
+          *ds += *ds_warnings;
         }
       }
 
       if (!disable_info)
-        append_info(ds, affected_rows, drizzle_result_info(&res));
+        append_info(ds, affected_rows, drizzle_result_info(&res.b_));
     }
 
-    drizzle_result_free(&res);
   }
 
   /* If we come here the query is both executed and read successfully */
