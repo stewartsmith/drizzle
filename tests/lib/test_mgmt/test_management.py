@@ -75,12 +75,11 @@ class testManager(object):
         self.testdir = self.code_tree.testdir
         self.desired_tests = variables['test_cases']
         
-        if self.debug:
-            self.logging.debug(self)
+        self.logging.debug_class(self)
 
     def add_test(self, new_test_case):
         """ Add a new testCase to our self.test_list """
-        if self.debug: pass
+
         self.test_list.append(new_test_case)
         
     def gather_tests(self):
@@ -119,9 +118,8 @@ class testManager(object):
         self.total_test_count = len(self.test_list)     
         self.logging.info("Found %d test(s) for execution" %(self.total_test_count))
         
-        if self.debug:
-            self.logging.debug("Found tests:")
-            self.logging.debug("%s" %(self.print_test_list()))
+        self.logging.debug("Found tests:")
+        self.logging.debug("%s" %(self.print_test_list()))
 
     def find_suite_path(self, suitename):
         """ We have a suitename, we need to locate the path to

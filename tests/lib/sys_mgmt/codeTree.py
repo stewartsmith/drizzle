@@ -58,7 +58,7 @@ class drizzleTree(codeTree):
         self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
-        self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'])])
+        self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'][0])])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'drizzled'))
         self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
         self.top_builddir = variables['topbuilddir']
@@ -116,8 +116,7 @@ class drizzleTree(codeTree):
          
         self.report()
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
     def report(self):
         self.logging.info("Using Drizzle source tree:")

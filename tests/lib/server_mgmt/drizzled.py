@@ -112,8 +112,7 @@ class drizzleServer(Server):
         self.initialize_databases()
         self.take_db_snapshot()
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
     def report(self):
         """ We print out some general useful info """

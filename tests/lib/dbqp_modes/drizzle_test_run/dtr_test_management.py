@@ -79,8 +79,8 @@ class testCase:
         self.disable = disable
         self.innodb_test  = innodb_test
         self.need_debug = need_debug
-        if debug:
-            self.system_manager.logging.debug_class(self)
+        
+        self.system_manager.logging.debug_class(self)
 
     def should_run(self):
         if self.skip_flag or self.disable:
@@ -272,8 +272,7 @@ class testManager(test_management.testManager):
             suite_name = os.path.basename(suite_dir_root)
         else:
             suite_name = suite_dir_basename
-        if self.debug:
-            self.system_manager.logging.debug("Suite_name:  %s" %(suite_name))
+        self.system_manager.logging.debug("Suite_name:  %s" %(suite_name))
         return suite_name
 
     def process_suite_options(self, suite_dir):
@@ -325,16 +324,14 @@ class testManager(test_management.testManager):
             self.system_manager.logging.error("Problem opening disabled.def file: %s" %(disabled_def_path))
             sys.exit(1)
 
-        if self.debug:
-            self.system_manager.logging.debug("Processing disabled.def file: %s" %(disabled_def_path))
+        self.system_manager.logging.debug("Processing disabled.def file: %s" %(disabled_def_path))
         disabled_bug_pattern = re.compile("[\S]+[\s]+:[\s]+[\S]")
         
         for line in disabled_test_file:
             line = line.strip()
             if not line.startswith('#'): # comment
                 if re.match(disabled_test_pattern,line):
-                    if self.debug:
-                        self.system_manager.logging.debug("found disabled test - %s" %(line))
+                    self.system_manager.logging.debug("found disabled test - %s" %(line))
                     test_name, test_comment = line.split(':')
                     disabled_tests[test_name.strip()]=test_comment.strip() 
             
@@ -368,8 +365,7 @@ class testManager(test_management.testManager):
             self.system_manager.logging.error("Problem opening option file: %s" %(opt_file_path))
             sys.exit(1)
 
-        if self.debug:
-            self.system_manager.logging.debug("Processing opt file: %s" %(opt_file_path))
+        self.system_manager.logging.debug("Processing opt file: %s" %(opt_file_path))
         for line in opt_file:
             options = line.split('--')
             if options:
@@ -470,8 +466,7 @@ class testManager(test_management.testManager):
    
         if disabled_tests:
             if test_name in disabled_tests:
-                if self.debug:
-                    self.system_manager.logging.debug("%s says - I'm disabled" %(test_name))
+                self.system_manager.logging.debug("%s says - I'm disabled" %(test_name))
                 return (1, disabled_tests[test_name])
         return (0,None)
 

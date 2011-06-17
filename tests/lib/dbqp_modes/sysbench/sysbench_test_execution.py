@@ -69,8 +69,7 @@ class sysbenchTestExecutor(test_execution.testExecutor):
         sysbench_output = open(sysbench_outfile,'w')
         sysbench_cmd = ' '.join([self.current_testcase.test_command,'prepare'])      
         self.logging.info("Preparing database for sysbench run...")
-        if self.debug:
-            self.logging.debug(sysbench_cmd)
+        self.logging.debug(sysbench_cmd)
         sysbench_subproc = subprocess.Popen( sysbench_cmd
                                          , shell=True
                                          #, cwd=os.getcwd()
@@ -85,9 +84,8 @@ class sysbenchTestExecutor(test_execution.testExecutor):
         sysbench_file = open(sysbench_outfile,'r')
         output = ''.join(sysbench_file.readlines())
         sysbench_file.close()
-        if self.debug:
-            self.logging.debug("sysbench_retcode: %d" %(retcode))
-            self.logging.debug(output)
+        self.logging.debug("sysbench_retcode: %d" %(retcode))
+        self.logging.debug(output)
         if retcode:
             self.logging.error("sysbench_prepare failed with retcode %d:" %(retcode))
             self.logging.error(output)   
@@ -123,12 +121,10 @@ class sysbenchTestExecutor(test_execution.testExecutor):
         sysbench_output.close()
         sysbench_file = open(sysbench_outfile,'r')
         output = ''.join(sysbench_file.readlines())
-        if self.debug:
-            self.logging.debug(output)
+        self.logging.debug(output)
         sysbench_file.close()
 
-        if self.debug:
-            self.logging.debug("sysbench_retcode: %d" %(retcode))
+        self.logging.debug("sysbench_retcode: %d" %(retcode))
         self.current_test_retcode = retcode
         self.current_test_output = output
         self.current_test_exec_time = execution_time
@@ -181,9 +177,8 @@ class sysbenchTestExecutor(test_execution.testExecutor):
         """ We do what we need to if we have a master.sh file """
         if self.current_testcase.master_sh:
             retcode, output = self.system_manager.execute_cmd("/bin/sh %s" %(self.current_testcase.master_sh))
-            if self.debug:
-                self.logging.info("retcode: %retcode")
-                self.logging.info("%output")
+            self.logging.debug("retcode: %retcode")
+            self.logging.debug("%output")
 
     def process_environment_reqs(self):
         """ We generate the ENV vars we need set

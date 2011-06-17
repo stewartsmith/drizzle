@@ -86,12 +86,10 @@ class randgenTestExecutor(test_execution.testExecutor):
         randgen_output.close()
         randgen_file = open(randgen_outfile,'r')
         output = ''.join(randgen_file.readlines())
-        if self.debug:
-            self.logging.debug(output)
+        self.logging.debug(output)
         randgen_file.close()
 
-        if self.debug:
-            self.logging.debug("randgen_retcode: %d" %(retcode))
+        self.logging.debug("randgen_retcode: %d" %(retcode))
         self.current_test_retcode = retcode
         self.current_test_output = output
         self.current_test_exec_time = execution_time
@@ -121,9 +119,8 @@ class randgenTestExecutor(test_execution.testExecutor):
         """ We do what we need to if we have a master.sh file """
         if self.current_testcase.master_sh:
             retcode, output = self.system_manager.execute_cmd("/bin/sh %s" %(self.current_testcase.master_sh))
-            if self.debug:
-                self.logging.info("retcode: %retcode")
-                self.logging.info("%output")
+            self.logging.debug("retcode: %retcode")
+            self.logging.debug("%output")
 
     def process_environment_reqs(self):
         """ We generate the ENV vars we need set

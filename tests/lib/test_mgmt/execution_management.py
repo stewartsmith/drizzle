@@ -79,8 +79,7 @@ class executionManager:
         self.executor_count = 1 
         self.executor_type = executor_type
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
 
     def execute_tests(self):

@@ -138,8 +138,7 @@ class systemManager:
         # options like valgrind and gdb
         self.handle_additional_reqs(variables)
      
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
         
     def get_code_tree(self, variables, tree_type):
         """Find out the important files, directories, and env. vars
@@ -163,8 +162,7 @@ class systemManager:
 
         """
 
-        if self.verbose:
-            self.logging.verbose("Processing source tree under test...")
+        self.logging.verbose("Processing source tree under test...")
         if tree_type == 'drizzle':
             # base_case
             from lib.sys_mgmt.codeTree import drizzleTree
@@ -271,8 +269,7 @@ class systemManager:
                 return full_path
             else:
                 shutil.rmtree(full_path)
-            if self.debug:
-                 self.logging.debug("Creating directory: %s" %(dirname))   
+            self.logging.debug("Creating directory: %s" %(dirname))   
         os.makedirs(full_path)
         return full_path
 
@@ -283,8 +280,7 @@ class systemManager:
             the dir must be empty to remove it
 
         """
-        if self.debug:
-            self.logging.debug("Removing directory: %s" %(dirname))
+        self.logging.debug("Removing directory: %s" %(dirname))
         if os.path.islink(dirname):
             os.remove(dirname)
         elif require_empty:
@@ -298,8 +294,8 @@ class systemManager:
             if overwrite == 1
 
         """
-        if self.debug:
-            self.logging.debug("Copying directory: %s to %s" %(srcdir, tgtdir))
+
+        self.logging.debug("Copying directory: %s to %s" %(srcdir, tgtdir))
         if os.path.exists(tgtdir):
             if overwrite:
                 self.remove_dir(tgtdir)
@@ -310,8 +306,8 @@ class systemManager:
 
     def create_symlink(self, source, link_name):
         """ We create a symlink to source named link_name """
-        if self.debug:
-            self.logging.debug("Creating symlink from %s to %s" %(source, link_name))
+
+        self.logging.debug("Creating symlink from %s to %s" %(source, link_name))
         if os.path.exists(link_name) or os.path.islink(link_name):
             os.remove(link_name)
         return os.symlink(source, link_name)
@@ -339,7 +335,7 @@ class systemManager:
            voodoo on os.environ
 
         """
-        if self.debug and not quiet:
+        if not quiet:
             self.logging.debug("Setting env var: %s" %(var_name))
         try:
             os.environ[var_name]=var_value
@@ -403,8 +399,7 @@ class systemManager:
         """
 
         for test_path in paths:
-            if self.debug:
-                self.logging.debug("Searching for path: %s" %(test_path))
+            self.logging.debug("Searching for path: %s" %(test_path))
             if os.path.exists(test_path):
                 return test_path
         if required:
@@ -419,8 +414,7 @@ class systemManager:
 
         """
 
-        if self.debug:
-            self.logging.debug("Executing command: %s" %(cmd))
+        self.logging.debug("Executing command: %s" %(cmd))
         (retcode, output)= commands.getstatusoutput(cmd)
         if not retcode == 0 and must_pass:
             self.logging.error("Command %s failed with retcode %d" %(cmd, retcode))

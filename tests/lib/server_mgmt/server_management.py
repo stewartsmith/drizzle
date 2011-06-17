@@ -66,8 +66,7 @@ class serverManager:
 
         self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
     def request_servers( self, requester, workdir, cnf_path, server_requirements
                        , working_environ, expect_fail = 0):
@@ -157,9 +156,8 @@ class serverManager:
         if self.verbose:
             self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
         start_cmd = server.get_start_cmd()
-        if self.debug:
-            self.logging.debug("Starting server with:")
-            self.logging.debug("%s" %(start_cmd))
+        self.logging.debug("Starting server with:")
+        self.logging.debug("%s" %(start_cmd))
         # we signal we tried to start as an attempt
         # to catch the case where a server is just 
         # starting up and the user ctrl-c's
@@ -224,8 +222,8 @@ class serverManager:
                 pid_file.close()
                 server.pid = pid
 
-        if server_retcode != 0 and not expect_fail and self.debug:
-            self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
+        if server_retcode != 0 and not expect_fail:
+            self.logging.error("Server startup command: %s failed with error code %d" %( start_cmd
                                                                                   , server_retcode))
         elif server_retcode == 0 and expect_fail:
         # catch a startup that should have failed and report
@@ -489,10 +487,9 @@ class serverManager:
 
     def update_server_options(self, server, server_options):
         """ Change the option_list a server has to use on startup """
-        if self.debug:
-            self.logging.debug("Updating server: %s options" %(server.name))
-            self.logging.debug("FROM: %s" %(server.server_options))
-            self.logging.debug("TO: %s" %(server_options))
+        self.logging.debug("Updating server: %s options" %(server.name))
+        self.logging.debug("FROM: %s" %(server.server_options))
+        self.logging.debug("TO: %s" %(server_options))
         server.set_server_options(server_options)
 
     def get_server_count(self):

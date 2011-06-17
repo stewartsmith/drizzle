@@ -53,6 +53,8 @@ class loggingManager():
         self.report_started = 0
         self.thick_line = '='*(80 - len("20110420-105402  "))
         self.thin_line = '-'*(80- len("20110420-105402  "))
+        self.verbose_flag = variables['verbose']
+        self.debug_flag = variables['debug']
 
     def _write_message(self,level, msg):
       self.log_file.write("%s %s %s\n" % (time.strftime("%Y%m%d-%H%M%S"), level, str(msg)))
@@ -74,12 +76,15 @@ class loggingManager():
       self._write_message("ERROR", msg)
 
     def verbose(self,msg):
-      self._write_message("VERBOSE", msg)
+      if self.verbose_flag:
+          self._write_message("VERBOSE", msg)
 
     def debug(self,msg):
-      self._write_message("DEBUG", msg)
+      if self.debug_flag:
+          self._write_message("DEBUG", msg)
  
     def debug_class(self,codeClass):
+      if self.debug_flag:
         self._write_message("DEBUG**",codeClass)
         skip_keys = ['skip_keys', 'debug', 'verbose']
         for key, item in sorted(vars(codeClass).items()):

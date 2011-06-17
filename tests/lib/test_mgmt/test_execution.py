@@ -75,8 +75,7 @@ class testExecutor():
         self.current_test_output = None
         self.current_test_exec_time = 0 
          
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
     def execute(self, start_and_exit):
         """ Execute a test case.  The details are *very* mode specific """
