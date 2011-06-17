@@ -76,18 +76,13 @@ class testManager(test_management.testManager):
 
     """
 
-    def __init__(self, verbose, debug, default_engine, dotest, skiptest
-                , reorder, suitelist, suitepaths, system_manager
-                , test_cases, mode):
-        super(testManager, self).__init__( verbose, debug, default_engine
-                                         , dotest, skiptest, reorder
-                                         , suitelist, suitepaths
-                                         , system_manager, test_cases, mode)
+    def __init__( self, variables, system_manager):
+        super(testManager, self).__init__( variables, system_manager)
         self.suitepaths = [os.path.join(self.testdir,'sysbench_tests')]
-        if suitelist is None:
+        if variables['suitelist'] is None:
             self.suitelist = ['readonly']
         else:
-            self.suitelist = suitelist
+            self.suitelist = variables['suitelist']
 
     def process_suite(self,suite_dir):
         """Process a test suite.
