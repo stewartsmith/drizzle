@@ -61,6 +61,8 @@ class serverManager:
         self.ld_lib_paths = system_manager.ld_lib_paths
         self.mutex = thread.allocate_lock()
         self.timer_increment = .5
+        self.libeatmydata = variables['libeatmydata']
+        self.libeatmydata_path = variables['libeatmydatapath']
 
         self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
 
@@ -123,6 +125,14 @@ class serverManager:
     def start_servers(self, requester, working_environ, expect_fail):
         """ Start all servers for the requester """
         bad_start = 0
+        if self.libeatmydata:
+            # We want to use libeatmydata to disable fsyncs
+            # this speeds up test execution, but we only want
+            # it to happen for the servers' environments
+            libeatmydata_data = {'LD_PRELOAD':self.libeatmydata_path}
+            self.system_manager.update_environment_vars( libeatmydata_data
+                                                       , working_environ)
+            #print working_environ
         for server in self.get_server_list(requester):
             if server.status == 0:
                 bad_start = bad_start + self.start_server( server

@@ -76,6 +76,22 @@ environment_control_group.add_option(
   )
 
 environment_control_group.add_option(
+    "--libeatmydata"
+  , dest="libeatmydata"
+  , action='store_true'
+  , default=False
+  , help = "We use libeatmydata (if available) to disable fsyncs and speed up test execution.  Implies --no-shm"
+  )
+
+environment_control_group.add_option(
+    "--libeatmydata-path"
+  , dest="libeatmydatapath"
+  , action='store'
+  , default='/usr/local/lib/libeatmydata.so'
+  , help = "Path to the libeatmydata install you want to use [%default]"
+  )
+
+environment_control_group.add_option(
     "--start-dirty"
   , dest="startdirty"
   , action='store_true'
@@ -90,6 +106,14 @@ environment_control_group.add_option(
   , default=False
   , help = "Turn off the use of --secure-file-priv=vardir for started servers"
   )
+
+environment_control_group.add_option(
+       "--randgen-path"
+     , dest="randgenpath"
+     , action='store'
+     , default=None
+     , help = "The path to a randgen installation that can be used to execute randgen-based tests"
+     )
 
 parser.add_option_group(environment_control_group)
 # end environment control group

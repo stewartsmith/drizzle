@@ -47,7 +47,7 @@ def organize_options(args, test_cases):
     """Put our arguments in a nice dictionary
        We use option.dest as dictionary key
        item = supplied input
- 
+ ['
     """
     variables = {}
     # we make a copy as the python manual on vars
@@ -68,6 +68,10 @@ def organize_options(args, test_cases):
     if variables['mode'] == 'cleanup':
         print "Setting --start-dirty=True for cleanup mode..."
         variables['startdirty']=True
+    if variables['libeatmydata'] and os.path.exists(variables['libeatmydatapath']):
+        # We are using libeatmydata vs. shared mem for server speedup
+        print "Using libeatmydata at %s.  Setting --no-shm / not using shared memory for testing..." %(variables['libeatmydatapath'])
+        variables['noshm']=True
     return variables
 
 # Create the CLI option parser
