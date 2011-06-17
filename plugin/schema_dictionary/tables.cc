@@ -46,8 +46,8 @@ static const string DATETIME("DATETIME");
 TablesTool::TablesTool() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("TABLE_TYPE");
   add_field("TABLE_ARCHETYPE");
   add_field("ENGINE");
