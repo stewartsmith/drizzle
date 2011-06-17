@@ -81,8 +81,7 @@ class testExecutor():
         """ Execute a test case.  The details are *very* mode specific """
         self.status = 1 # we are running
         keep_running = 1
-        if self.verbose:
-            self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
+        self.logging.verbose("Executor: %s beginning test execution..." %(self.name))
         while self.test_manager.has_tests() and keep_running == 1:
             self.get_testCase()
             for i in range(self.testcase_repeat_count):
@@ -199,8 +198,7 @@ class testExecutor():
 
     def execute_testCase(self):
         """ Do whatever evil voodoo we must do to execute a testCase """
-        if self.verbose:
-            self.logging.verbose("Executor: %s executing test: %s" %(self.name, self.current_testcase.fullname))
+        self.logging.verbose("Executor: %s executing test: %s" %(self.name, self.current_testcase.fullname))
 
     def record_test_result(self):
         """ We get the test_manager to record the result """

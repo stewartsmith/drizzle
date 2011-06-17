@@ -110,8 +110,7 @@ class testManager(test_management.testManager):
         
         """
 
-        if self.verbose:
-                self.system_manager.logging.verbose("Processing suite: %s" %(suite_dir))
+        self.system_manager.logging.verbose("Processing suite: %s" %(suite_dir))
 
         # Generate our test and result files:
         testdir = os.path.join(suite_dir, 't')
@@ -161,8 +160,7 @@ class testManager(test_management.testManager):
         
         test_server_options = suite_options
         test_name = test_case.replace('.test','')
-        if self.verbose:
-            self.system_manager.logging.verbose("Processing test: %s.%s" %(suite_name,test_name))
+        self.system_manager.logging.verbose("Processing test: %s.%s" %(suite_name,test_name))
 
         
         # Fix this , create a testCase with gather_test_data() passed

@@ -153,8 +153,7 @@ class serverManager:
 
         """
 
-        if self.verbose:
-            self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
+        self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
         start_cmd = server.get_start_cmd()
         self.logging.debug("Starting server with:")
         self.logging.debug("%s" %(start_cmd))
@@ -256,8 +255,7 @@ class serverManager:
                 attempts_remain = attempts_remain - 1
         # Now we try to shut the server down
         if self.ping_server(server, quiet=True):
-            if self.verbose:
-                self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
+            self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
             stop_cmd = server.get_stop_cmd()
             #retcode, output = self.system_manager.execute_cmd(stop_cmd)
             shutdown_subproc = subprocess.Popen( stop_cmd

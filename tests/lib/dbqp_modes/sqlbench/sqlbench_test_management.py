@@ -98,8 +98,7 @@ class testManager(test_management.testManager):
 
         # We know this based on how we organize sqlbench test conf files
         suite_name = os.path.basename(suite_dir) 
-        if self.verbose:
-                self.system_manager.logging.verbose("Processing suite: %s" %(suite_name))
+        self.system_manager.logging.verbose("Processing suite: %s" %(suite_name))
         testlist = [os.path.join(suite_dir,test_file) for test_file in sorted(os.listdir(suite_dir)) if test_file.endswith('.cnf')]
 
         # Search for specific test names

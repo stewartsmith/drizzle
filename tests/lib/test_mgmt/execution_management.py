@@ -97,9 +97,8 @@ class executionManager:
 
         # fire up the testExecutors and let them rip it up
         for executor_name, executor in self.executors.items():
-            if self.verbose:
-                self.logging.verbose("Starting executor: %s" %(executor_name))
-                # thread.start_new(executor.execute,()) # sigh...one day...damned drizzletest!
+            self.logging.verbose("Starting executor: %s" %(executor_name))
+            # thread.start_new(executor.execute,()) # sigh...one day...damned drizzletest!
             executor.execute(self.start_and_exit)
         while self.has_running_executors():
             pass
@@ -129,8 +128,7 @@ class executionManager:
     def create_test_executor(self, executor_name):
         """ Create a single testExecutor """
         
-        if self.verbose:
-                self.logging.verbose("Creating %s" %(executor_name))
+        self.logging.verbose("Creating %s" %(executor_name))
         new_executor = self.executor_type( self, executor_name
                                          , self.verbose, self.debug)
         self.log_executor(executor_name, new_executor)

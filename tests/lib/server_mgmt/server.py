@@ -111,8 +111,7 @@ class Server(object):
     def restore_snapshot(self):
         """ Restore from a stored snapshot """
         
-        if self.verbose:
-            self.logging.verbose("Restoring from db snapshot")
+        self.logging.verbose("Restoring from db snapshot")
         if not os.path.exists(self.snapshot_path):
             self.logging.error("Could not find snapshot: %s" %(self.snapshot_path))
         self.system_manager.remove_dir(self.datadir)

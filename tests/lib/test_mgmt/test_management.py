@@ -157,8 +157,7 @@ class testManager(object):
            to the rest of the test-runner
         
         """
-        if self.verbose:
-                self.logging.verbose("Processing suite: %s" %(suite))
+        self.logging.verbose("Processing suite: %s" %(suite))
 
     def has_tests(self):
         """Return 1 if we have tests in our testlist, 0 otherwise"""
