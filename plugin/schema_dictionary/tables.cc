@@ -21,6 +21,7 @@
 #include <config.h>
 #include <plugin/schema_dictionary/dictionary.h>
 #include <drizzled/identifier.h>
+#include <drizzled/table_proto.h>
 
 using namespace std;
 using namespace drizzled;
@@ -54,7 +55,8 @@ TablesTool::TablesTool() :
   add_field("TABLE_COLLATION");
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
-  add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
+  add_field("TABLE_COMMENT", plugin::TableFunction::STRING,
+            TABLE_COMMENT_MAXLEN, true);
   add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
