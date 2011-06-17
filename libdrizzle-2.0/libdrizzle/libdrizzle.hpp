@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <libdrizzle/libdrizzle.h>
 #include <stdexcept>
 
