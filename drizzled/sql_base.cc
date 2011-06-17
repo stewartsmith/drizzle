@@ -3799,15 +3799,6 @@ void drizzle_rm_tmp_tables()
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
 }
 
-
-
-/*****************************************************************************
-  unireg support functions
- *****************************************************************************/
-
-
-
-
 /**
   @} (end of group Data_Dictionary)
 */
