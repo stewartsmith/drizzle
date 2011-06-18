@@ -539,7 +539,7 @@ static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b)
    @retval
      1  Out of memory.
 */
-bool update_ref_and_keys(Session *session,
+void update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,
@@ -683,7 +683,6 @@ bool update_ref_and_keys(Session *session,
       keyuse->set_size(i);
     }
   }
-  return false; // return void
 }
 
 /**
@@ -5127,8 +5126,7 @@ int remove_dup_with_hash_index(Session *session,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0))
-    return 1;
+  hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0);
 
   if ((error= cursor.startTableScan(1)))
     goto err;

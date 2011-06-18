@@ -102,9 +102,6 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
   if (drizzle == NULL)
   {
     drizzle= new drizzle_st;
-    if (drizzle == NULL)
-      return NULL;
-
     drizzle->options= DRIZZLE_ALLOCATED;
   }
   else
@@ -282,13 +279,6 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   if (con == NULL)
   {
     con= new drizzle_con_st;
-    if (con == NULL)
-    {
-      if (drizzle != NULL)
-        drizzle_set_error(drizzle, "drizzle_con_create", "malloc");
-      return NULL;
-    }
-
     con->options= DRIZZLE_CON_ALLOCATED;
   }
   else

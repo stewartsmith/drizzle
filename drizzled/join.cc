@@ -5836,10 +5836,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   }
 
   if (conds || outer_join)
-    if (update_ref_and_keys(join->session, keyuse_array, stat, join->tables,
-                            conds, join->cond_equal,
-                            ~outer_join, join->select_lex, sargables))
-      return 1;
+    update_ref_and_keys(join->session, keyuse_array, stat, join->tables, conds, join->cond_equal, ~outer_join, join->select_lex, sargables);
 
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;

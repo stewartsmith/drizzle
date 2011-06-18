@@ -66,8 +66,8 @@ struct HASH
 /* A search iterator state */
 typedef uint32_t HASH_SEARCH_STATE;
 
-bool
-_hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charset,
+void
+_hash_init(HASH *hash,uint32_t growth_size, const charset_info_st* const,
            uint32_t size, size_t key_offset, size_t key_length,
            hash_get_key get_key,
            hash_free_key free_element, uint32_t flags);

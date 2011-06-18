@@ -18,7 +18,6 @@
 #include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/my_pthread.h>

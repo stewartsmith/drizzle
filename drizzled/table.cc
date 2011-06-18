@@ -40,7 +40,6 @@
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
-#include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/charset.h>

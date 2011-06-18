@@ -40,7 +40,6 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/xid.h>
