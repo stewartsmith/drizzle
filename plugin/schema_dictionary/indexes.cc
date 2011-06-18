@@ -27,9 +27,9 @@ using namespace drizzled;
 IndexesTool::IndexesTool() :
   TablesTool("INDEXES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("INDEX_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("INDEX_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);

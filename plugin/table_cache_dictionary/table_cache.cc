@@ -32,8 +32,8 @@ table_cache_dictionary::TableCache::TableCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_CACHE")
 {
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
   add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("ROWS", plugin::TableFunction::NUMBER, 0, false);

@@ -29,8 +29,8 @@ using namespace drizzled;
 ShowTemporaryTables::ShowTemporaryTables() :
   show_dictionary::Show("SHOW_TEMPORARY_TABLES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("RECORDS", plugin::TableFunction::NUMBER, 0, false);
   add_field("RECORD_LENGTH", plugin::TableFunction::NUMBER, 0, false);
   add_field("ENGINE");

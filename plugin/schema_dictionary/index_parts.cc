@@ -28,10 +28,10 @@ using namespace drizzled;
 IndexPartsTool::IndexPartsTool() :
   IndexesTool("INDEX_PARTS")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("INDEX_NAME");
-  add_field("COLUMN_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("INDEX_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER, 0, false);
   add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER, 0, false);
   add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER, 0, true);
