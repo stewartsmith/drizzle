@@ -16,7 +16,6 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
-#include <drizzled/unireg.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/message/statement_transform.h>
 

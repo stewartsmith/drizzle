@@ -27,9 +27,9 @@ using namespace drizzled;
 ViewTableUsage::ViewTableUsage() :
   InformationSchema("VIEW_TABLE_USAGE")
 {
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
   add_field("VIEW_DEFINITION");
   add_field("CHECK_OPTION");

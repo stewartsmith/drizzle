@@ -27,11 +27,11 @@ using namespace drizzled;
 RoutineColumns::RoutineColumns() :
   InformationSchema("ROUTINE_COLUMNS")
 {
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("COLUMN_NAME");
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("ORDINAL_POSITION");
   add_field("COLUMN_DEFAULT");
 
@@ -47,12 +47,12 @@ RoutineColumns::RoutineColumns() :
   add_field("CHARACTER_SET_CATALOG");
   add_field("CHARACTER_SET_SCHEMA");
   add_field("CHARACTER_SET_NAME");
-  add_field("COLLATION_CATALOG");
-  add_field("COLLATION_SCHEMA");
-  add_field("COLLATION_NAME");
-  add_field("DOMAIN_CATALOG");
-  add_field("DOMAIN_SCHEMA");
-  add_field("DOMAIN_NAME");
+  add_field("COLLATION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLLATION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLLATION_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("DOMAIN_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("DOMAIN_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("DOMAIN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 void RoutineColumns::Generator::fill()
