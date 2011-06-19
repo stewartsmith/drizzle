@@ -494,7 +494,7 @@ void do_get_replace_regex(st_command* command);
 
 void replace_append_mem(string& ds, const char *val, int len);
 void replace_append(string *ds, const char *val);
-void replace_append_uint(string *ds, uint32_t val);
+void replace_append_uint(string& ds, uint32_t val);
 void append_sorted(string& ds, const string& ds_input);
 
 void handle_error(st_command*,
@@ -818,49 +818,8 @@ static void handle_command_error(st_command* command, uint32_t error)
   }
 }
 
-
-static void close_files()
-{
-  for (; cur_file >= file_stack.data(); cur_file--)
-  {
-    if (cur_file->file && cur_file->file != stdin)
-      fclose(cur_file->file);
-    free(const_cast<char*>(cur_file->file_name));
-    cur_file->file_name= 0;
-  }
-}
-
-static void free_used_memory()
-{
-  close_files();
-  BOOST_FOREACH(var_hash_t::reference i, var_hash)
-  {
-    free(i.second->str_val);
-    free(i.second->env_s);
-    if (i.second->alloced)
-      free(i.second);
-  }
-  var_hash.clear();
-  BOOST_FOREACH(st_command* i, q_lines)
-    delete i;
-  for (size_t i= 0; i < var_reg.size(); i++)
-  {
-    if (var_reg[i].alloced_len)
-      free(var_reg[i].str_val);
-  }
-  free_all_replace();
-  free(opt_pass);
-}
-
-
 static void cleanup_and_exit(int exit_code)
 {
-  if (0) // Olaf: Freeing resources is unnecessary when exiting
-  {
-    free_used_memory(); 
-    internal::my_end();
-  }
-
   if (!silent) 
   {
     switch (exit_code) 
@@ -1012,12 +971,10 @@ void warning_msg(const char *fmt, ...)
     ds_warning_messages.append("Warning detected ");
     if (cur_file && cur_file != file_stack.data())
     {
-      len= snprintf(buff, sizeof(buff), "in included file %s ",
-                    cur_file->file_name);
+      len= snprintf(buff, sizeof(buff), "in included file %s ", cur_file->file_name);
       ds_warning_messages.append(buff, len);
     }
-    len= snprintf(buff, sizeof(buff), "at line %d: ",
-                  start_lineno);
+    len= snprintf(buff, sizeof(buff), "at line %d: ", start_lineno);
     ds_warning_messages.append(buff, len);
   }
 
@@ -2896,11 +2853,8 @@ static void do_sync_with_master(st_command* command)
 */
 static void do_save_master_pos()
 {
-  drizzle::connection_c& con= *cur_con;
-  const char *query= "show master status";
-
   drizzle::result_c res;
-  dt_query(con, res, query);
+  dt_query(*cur_con, res, "show master status");
   drizzle_row_t row= res.row_next();
   if (!row)
     die("empty result in show master status");
@@ -3442,7 +3396,7 @@ static int connect_n_handle_errors(st_command* command,
     if (db)
       replace_append(&ds_res, db);
     ds_res.append(",");
-    replace_append_uint(&ds_res, port);
+    replace_append_uint(ds_res, port);
     ds_res.append(",");
     if (sock)
       replace_append(&ds_res, sock);
@@ -4364,41 +4318,38 @@ static void append_result(string *ds, drizzle::result_c& res)
   Append metadata for fields to output
 */
 
-static void append_metadata(string *ds, drizzle::result_c& res)
+static void append_metadata(string& ds, drizzle::result_c& res)
 {
-  ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
-             "Column_alias\tType\tLength\tMax length\tIs_null\t"
-             "Flags\tDecimals\tCharsetnr\n");
-
+  ds += "Catalog\tDatabase\tTable\tTable_alias\tColumn\tColumn_alias\tType\tLength\tMax length\tIs_null\tFlags\tDecimals\tCharsetnr\n";
   res.column_seek(0);
   while (drizzle_column_st* column= res.column_next())
   {
-    ds->append(drizzle_column_catalog(column), strlen(drizzle_column_catalog(column)));
-    *ds += "\t";
-    ds->append(drizzle_column_db(column), strlen(drizzle_column_db(column)));
-    *ds += "\t";
-    ds->append(drizzle_column_orig_table(column), strlen(drizzle_column_orig_table(column)));
-    *ds += "\t";
-    ds->append(drizzle_column_table(column), strlen(drizzle_column_table(column)));
-    *ds += "\t";
-    ds->append(drizzle_column_orig_name(column), strlen(drizzle_column_orig_name(column)));
-    *ds += "\t";
-    ds->append(drizzle_column_name(column), strlen(drizzle_column_name(column)));
-    *ds += "\t";
+    ds += drizzle_column_catalog(column);
+    ds += "\t";
+    ds += drizzle_column_db(column);
+    ds += "\t";
+    ds += drizzle_column_orig_table(column);
+    ds += "\t";
+    ds += drizzle_column_table(column);
+    ds += "\t";
+    ds += drizzle_column_orig_name(column);
+    ds += "\t";
+    ds += drizzle_column_name(column);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_type_drizzle(column));
-    *ds += "\t";
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_size(column));
-    *ds += "\t";
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY ? 1 : drizzle_column_max_size(column));
-    *ds += "\t";
-    ds->append((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y", 1);
-    *ds += "\t";
+    ds += "\t";
+    ds.append((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y", 1);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_flags(column));
-    *ds += "\t";
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_decimals(column));
-    *ds += "\t";
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_charset(column));
-    *ds += "\n";
+    ds += "\n";
   }
 }
 
@@ -4551,7 +4502,7 @@ static void run_query_normal(st_connection& cn,
       if (res.column_count())
       {
         if (display_metadata)
-          append_metadata(ds, res);
+          append_metadata(*ds, res);
 
         if (!display_result_vertically)
           append_table_headings(*ds, res);
@@ -6778,11 +6729,11 @@ void replace_append(string *ds, const char *val)
 }
 
 /* Append uint32_t to ds, with optional replace */
-void replace_append_uint(string *ds, uint32_t val)
+void replace_append_uint(string& ds, uint32_t val)
 {
   ostringstream buff;
   buff << val;
-  replace_append_mem(*ds, buff.str().c_str(), buff.str().size());
+  replace_append_mem(ds, buff.str().c_str(), buff.str().size());
 
 }
 

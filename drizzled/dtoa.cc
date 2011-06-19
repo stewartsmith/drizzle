@@ -622,12 +622,8 @@ static Bigint *Bcopy(Bigint* dst, Bigint* src)
 
 static Bigint *Balloc(int k)
 {
-  Bigint *rv;
-
-  /* TODO: some malloc failure checking */
-
   int x= 1 << k;
-  rv= (Bigint*) malloc(sizeof(Bigint));
+  Bigint* rv= (Bigint*) malloc(sizeof(Bigint));
 
   rv->p.x= (ULong*)malloc(x * sizeof(ULong));
 
