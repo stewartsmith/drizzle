@@ -93,7 +93,6 @@ public:
   {
     return 0;
   }
-  void sql_type(String &str) const;
   uint32_t size_of() const
   {
     return sizeof(*this);

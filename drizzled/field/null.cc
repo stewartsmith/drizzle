@@ -18,21 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <config.h>
 #include <drizzled/field/null.h>
 
 namespace drizzled {
 
 unsigned char Field_null::null= 1;
-
-/****************************************************************************
-  Field_null, a field that always return NULL
-****************************************************************************/
-
-void Field_null::sql_type(String& res) const
-{
-  res.set_ascii(STRING_WITH_LEN("null"));
-}
 
 } /* namespace drizzled */

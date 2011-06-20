@@ -335,13 +335,6 @@ public:
   virtual int key_cmp(const unsigned char *str, uint32_t length);
   virtual uint32_t decimals() const;
 
-  /*
-    Caller beware: sql_type can change str.Ptr, so check
-    ptr() to see if it changed if you are using your own buffer
-    in str and restore it with set() if needed
-  */
-  virtual void sql_type(String &str) const =0;
-
   // For new field
   virtual uint32_t size_of() const =0;
 

@@ -89,11 +89,6 @@ int Boolean::store_decimal(const drizzled::type::Decimal *dec)
   return 0;
 }
 
-void Boolean::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("boolean"));
-}
-
 double Boolean::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;

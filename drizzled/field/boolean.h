@@ -55,8 +55,6 @@ public:
   int64_t val_int() const;
   type::Decimal *val_decimal(type::Decimal *) const;
 
-  void sql_type(drizzled::String&) const;
-
   Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);
   void sort_string(unsigned char*, uint32_t);

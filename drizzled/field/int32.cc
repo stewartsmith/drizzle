@@ -184,12 +184,6 @@ namespace field {
   }
 
 
-  void Int32::sql_type(String &res) const
-  {
-    const charset_info_st * const cs=res.charset();
-    res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
-  }
-
   unsigned char *Int32::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
   {
     int32_t val;

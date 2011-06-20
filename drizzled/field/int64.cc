@@ -32,11 +32,8 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /****************************************************************************
   Field type Int64 int (8 bytes)
@@ -46,11 +43,10 @@ int Int64::store(const char *from,uint32_t len, const charset_info_st * const cs
 {
   int error= 0;
   char *end;
-  uint64_t tmp;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  tmp= cs->cset->strntoull10rnd(cs, from, len, false, &end,&error);
+  uint64_t tmp= cs->cset->strntoull10rnd(cs, from, len, false, &end,&error);
   if (error == ERANGE)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
@@ -109,7 +105,7 @@ int Int64::store(int64_t nr, bool arg)
   int error= 0;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (arg and (nr < 0)) // Only a partial fix for overflow
+  if (arg && nr < 0) // Only a partial fix for overflow
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
@@ -121,7 +117,7 @@ int Int64::store(int64_t nr, bool arg)
 }
 
 
-double Int64::val_real(void) const
+double Int64::val_real() const
 {
   int64_t j;
 
@@ -134,7 +130,7 @@ double Int64::val_real(void) const
 }
 
 
-int64_t Int64::val_int(void) const
+int64_t Int64::val_int() const
 {
   int64_t j;
 
@@ -201,14 +197,6 @@ void Int64::sort_string(unsigned char *to,uint32_t )
   }
 #endif
 }
-
-
-void Int64::sql_type(String &res) const
-{
-  const charset_info_st * const cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
-}
-
 
 unsigned char *Int64::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
