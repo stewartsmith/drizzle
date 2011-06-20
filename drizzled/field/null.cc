@@ -22,16 +22,15 @@
 #include <config.h>
 #include <drizzled/field/null.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-unsigned char Field_null::null[1]={1};
+unsigned char Field_null::null[1]= {1};
 
 /****************************************************************************
   Field_null, a field that always return NULL
 ****************************************************************************/
 
-void Field_null::sql_type(String &res) const
+void Field_null::sql_type(String& res) const
 {
   res.set_ascii(STRING_WITH_LEN("null"));
 }

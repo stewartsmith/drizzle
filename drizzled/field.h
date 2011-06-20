@@ -66,12 +66,8 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class DRIZZLED_API Field
+class DRIZZLED_API Field : boost::noncopyable
 {
-  /* Prevent use of these */
-  Field(const Field&);
-  void operator=(Field &);
-
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
