@@ -24,7 +24,7 @@
 
 namespace drizzled {
 
-unsigned char Field_null::null[1]= {1};
+unsigned char Field_null::null= 1;
 
 /****************************************************************************
   Field_null, a field that always return NULL

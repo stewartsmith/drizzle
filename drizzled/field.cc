@@ -752,17 +752,17 @@ bool Field::is_null(ptrdiff_t row_offset) const
 
 bool Field::is_real_null(ptrdiff_t row_offset) const
 {
-  return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
+  return null_ptr && (null_ptr[row_offset] & null_bit);
 }
 
 bool Field::is_null_in_record(const unsigned char *record) const
 {
-  return null_ptr ? test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit) : false;
+  return null_ptr && test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit);
 }
 
 bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset) const
 {
-  return null_ptr ? test(null_ptr[with_offset] & null_bit) : false;
+  return null_ptr && test(null_ptr[with_offset] & null_bit);
 }
 
 void Field::set_null(ptrdiff_t row_offset)
@@ -931,7 +931,7 @@ const unsigned char *Field::unpack(unsigned char* to,
 
 const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
 {
-  return unpack(to, from, 0U, table->getShare()->db_low_byte_first);
+  return unpack(to, from, 0, table->getShare()->db_low_byte_first);
 }
 
 type::Decimal *Field::val_decimal(type::Decimal *) const
@@ -1011,11 +1011,7 @@ bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
   assert(getTable() and getTable()->getSession());
 
   String* res= val_str_internal(&tmp);
-  if (not res or str_to_datetime_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
-  {
-    return true;
-  }
-  return false;
+  return not res or str_to_datetime_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR;
 }
 
 bool Field::get_time(type::Time &ltime) const
@@ -1024,11 +1020,7 @@ bool Field::get_time(type::Time &ltime) const
   String tmp(buff,sizeof(buff),&my_charset_bin);
 
   String* res= val_str_internal(&tmp);
-  if (not res or str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime))
-  {
-    return true;
-  }
-  return false;
+  return not res or str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime);
 }
 
 int Field::store_time(type::Time &ltime, type::timestamp_t)
@@ -1085,9 +1077,7 @@ uint32_t Field::is_equal(CreateField *new_field_ptr)
 
 bool Field::eq_def(Field *field)
 {
-  if (real_type() != field->real_type() || charset() != field->charset() || pack_length() != field->pack_length())
-    return 0;
-  return 1;
+  return real_type() == field->real_type() && charset() == field->charset() && pack_length() == field->pack_length();
 }
 
 bool Field_enum::eq_def(Field *field)
@@ -1141,12 +1131,13 @@ uint32_t pack_length_to_packflag(uint32_t type)
 {
   switch (type) 
   {
-    case 1: return 1 << FIELDFLAG_PACK_SHIFT;
-    case 2: assert(1);
-    case 3: assert(1);
-    case 4: return f_settype(DRIZZLE_TYPE_LONG);
-    case 8: return f_settype(DRIZZLE_TYPE_LONGLONG);
+  case 1: return 1 << FIELDFLAG_PACK_SHIFT;
+  case 2: assert(0);
+  case 3: assert(0);
+  case 4: return f_settype(DRIZZLE_TYPE_LONG);
+  case 8: return f_settype(DRIZZLE_TYPE_LONGLONG);
   }
+  assert(false);
   return 0;					// This shouldn't happen
 }
 

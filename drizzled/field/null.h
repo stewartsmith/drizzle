@@ -30,7 +30,7 @@ namespace drizzled {
 
 class Field_null : public Field_str
 {
-  static unsigned char null[1];
+  static unsigned char null;
 public:
 
   using Field::store;
@@ -39,7 +39,7 @@ public:
   using Field::val_int;
 
   Field_null(unsigned char *ptr_arg, uint32_t len_arg, const char *field_name_arg) :
-    Field_str(ptr_arg, len_arg, null, 1, field_name_arg, &my_charset_bin)
+    Field_str(ptr_arg, len_arg, &null, 1, field_name_arg, &my_charset_bin)
   {}
 
   enum_field_types type() const
