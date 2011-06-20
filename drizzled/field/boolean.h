@@ -23,12 +23,11 @@
 #include <drizzled/field.h>
 #include <string>
 
-namespace drizzled
-{
-namespace field
-{
+namespace drizzled {
+namespace field {
 
-class Boolean :public Field {
+class Boolean : public Field 
+{
   bool ansi_display;
 
 public:
@@ -77,16 +76,14 @@ public:
   }
 
 private:
-  void setTrue();
-
-  void setFalse()
+  void set(bool v)
   {
-    ptr[0]= 0;
+    ptr[0]= v;
   }
 
   bool isTrue() const
   {
-    return ptr[0] ? true : false;
+    return ptr[0];
   }
 };
 
