@@ -965,10 +965,10 @@ void warning_msg(const char *fmt, ...)
   size_t len;
 
   va_start(args, fmt);
-  ds_warning_messages.append("drizzletest: ");
+  ds_warning_messages += "drizzletest: ";
   if (start_lineno != 0)
   {
-    ds_warning_messages.append("Warning detected ");
+    ds_warning_messages += "Warning detected ";
     if (cur_file && cur_file != file_stack.data())
     {
       len= snprintf(buff, sizeof(buff), "in included file %s ", cur_file->file_name);
@@ -981,7 +981,7 @@ void warning_msg(const char *fmt, ...)
   len= vsnprintf(buff, sizeof(buff), fmt, args);
   ds_warning_messages.append(buff, len);
 
-  ds_warning_messages.append("\n");
+  ds_warning_messages += "\n";
   va_end(args);
 
   return;
@@ -998,7 +998,7 @@ void log_msg(const char *fmt, ...)
   va_end(args);
 
   ds_res.append(buff, len);
-  ds_res.append("\n");
+  ds_res += "\n";
 }
 
 
@@ -1086,7 +1086,7 @@ static int run_tool(const char *tool_path, string& result, ...)
 {
   string ds_cmdline;
   append_os_quoted(&ds_cmdline, tool_path, NULL);
-  ds_cmdline.append(" ");
+  ds_cmdline += " ";
 
   va_list args;
   va_start(args, result);
@@ -1096,8 +1096,8 @@ static int run_tool(const char *tool_path, string& result, ...)
     if (strncmp(arg, "--", 2) == 0)
       append_os_quoted(&ds_cmdline, arg, NULL);
     else
-      ds_cmdline.append(arg);
-    ds_cmdline.append(" ");
+      ds_cmdline += arg;
+    ds_cmdline += " ";
   }
 
   va_end(args);
@@ -1156,15 +1156,15 @@ static void show_diff(string* ds, const char* filename1, const char* filename2)
                     "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
                     "\n";
 
-      ds_tmp.append(" --- ");
-      ds_tmp.append(filename1);
-      ds_tmp.append(" >>>\n");
+      ds_tmp += " --- ";
+      ds_tmp += filename1;
+      ds_tmp += " >>>\n";
       cat_file(ds_tmp, filename1);
-      ds_tmp.append("<<<\n --- ");
-      ds_tmp.append(filename1);
-      ds_tmp.append(" >>>\n");
+      ds_tmp += "<<<\n --- ";
+      ds_tmp += filename1;
+      ds_tmp += " >>>\n";
       cat_file(ds_tmp, filename2);
-      ds_tmp.append("<<<<\n");
+      ds_tmp += "<<<<\n";
     }
   }
 
@@ -1218,8 +1218,8 @@ static int compare_files2(int fd, const char* filename2)
     {
       tmpfile= opt_testdir;
       if (tmpfile[tmpfile.length()] != '/')
-        tmpfile.append("/");
-      tmpfile.append(filename2);
+        tmpfile += "/";
+      tmpfile += filename2;
       fname= tmpfile.c_str();
     }
     if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
@@ -1965,8 +1965,8 @@ static void do_source(st_command* command)
     {
       string testdir(opt_testdir);
       if (testdir[testdir.length()] != '/')
-        testdir.append("/");
-      testdir.append(ds_filename);
+        testdir += "/";
+      testdir += ds_filename;
       ds_filename.swap(testdir);
     }
     open_file(ds_filename.c_str());
@@ -2191,9 +2191,9 @@ static void do_system(st_command* command)
       die("system command '%s' failed", command->first_argument);
 
     /* If ! abort_on_error, log message and continue */
-    ds_res.append("system command '");
+    ds_res += "system command '";
     replace_append(&ds_res, command->first_argument);
-    ds_res.append("' failed\n");
+    ds_res += "' failed\n";
   }
 
   command->last_argument= command->end;
@@ -2462,7 +2462,7 @@ static void do_write_file_command(st_command* command, bool append)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter.append("EOF");
+    ds_delimiter += "EOF";
 
   if (!append && access(ds_filename.c_str(), F_OK) == 0)
   {
@@ -2702,7 +2702,7 @@ static void do_perl(st_command* command)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter.append("EOF");
+    ds_delimiter += "EOF";
 
   read_until_delimiter(&ds_script, &ds_delimiter);
 
@@ -2765,8 +2765,8 @@ static void do_echo(st_command* command)
 {
   string ds_echo;
   do_eval(&ds_echo, command->first_argument, command->end, false);
-  ds_res.append(ds_echo.c_str(), ds_echo.length());
-  ds_res.append("\n");
+  ds_res += ds_echo;
+  ds_res += "\n";
   command->last_argument= command->end;
 }
 
@@ -2986,7 +2986,7 @@ static void do_get_file_name(st_command* command, string &dest)
   {
     dest= opt_testdir;
     if (dest[dest.length()] != '/')
-      dest.append("/");
+      dest += "/";
   }
   dest.append(name);
 }
@@ -3386,23 +3386,23 @@ static int connect_n_handle_errors(st_command* command,
     /*
       Log the connect to result log
     */
-    ds_res.append("connect(");
+    ds_res += "connect(";
     replace_append(&ds_res, host);
-    ds_res.append(",");
+    ds_res += ",";
     replace_append(&ds_res, user);
-    ds_res.append(",");
+    ds_res += ",";
     replace_append(&ds_res, pass);
-    ds_res.append(",");
+    ds_res += ",";
     if (db)
       replace_append(&ds_res, db);
-    ds_res.append(",");
+    ds_res += ",";
     replace_append_uint(ds_res, port);
-    ds_res.append(",");
+    ds_res += ",";
     if (sock)
       replace_append(&ds_res, sock);
-    ds_res.append(")");
-    ds_res.append(delimiter);
-    ds_res.append("\n");
+    ds_res += ")";
+    ds_res += delimiter;
+    ds_res += "\n";
   }
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_auth(con, user, pass);
@@ -4342,7 +4342,7 @@ static void append_metadata(string& ds, drizzle::result_c& res)
     ds += "\t";
     replace_append_uint(ds, drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY ? 1 : drizzle_column_max_size(column));
     ds += "\t";
-    ds.append((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y", 1);
+    ds += drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL ? "N" : "Y";
     ds += "\t";
     replace_append_uint(ds, drizzle_column_flags(column));
     ds += "\t";
@@ -4868,7 +4868,7 @@ static void mark_progress(st_command*, int line)
   /* Line in file */
   buf << cur_file->lineno << endl;
 
-  ds_progress.append(buf.str());
+  ds_progress += buf.str();
 
 }
 
@@ -4983,10 +4983,10 @@ try
   long_options.add(commandline_options).add(test_options).add(client_options);
 
   std::string system_config_dir_test(SYSCONFDIR); 
-  system_config_dir_test.append("/drizzle/drizzletest.cnf");
+  system_config_dir_test += "/drizzle/drizzletest.cnf";
 
   std::string system_config_dir_client(SYSCONFDIR); 
-  system_config_dir_client.append("/drizzle/client.cnf");
+  system_config_dir_client += "/drizzle/client.cnf";
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
 
@@ -5009,10 +5009,10 @@ try
   if (! vm["no-defaults"].as<bool>())
   {
     std::string user_config_dir_test(user_config_dir);
-    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
+    user_config_dir_test += "/drizzle/drizzletest.cnf"; 
 
     std::string user_config_dir_client(user_config_dir);
-    user_config_dir_client.append("/drizzle/client.cnf");
+    user_config_dir_client += "/drizzle/client.cnf";
 
     ifstream user_test_ifs(user_config_dir_test.c_str());
     po::store(parse_config_file(user_test_ifs, test_options), vm);
