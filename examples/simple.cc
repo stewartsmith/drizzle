@@ -34,37 +34,26 @@
  *
  */
 
-
-#include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <netdb.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <getopt.h>
-
 #include <libdrizzle/drizzle_client.h>
+#include <netdb.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
-  int c;
-  const char *db= "INFORMATION_SCHEMA";
-  const char *host= NULL;
+  const char* db= "information_schema";
+  const char* host= NULL;
   bool mysql= false;
   in_port_t port= 0;
-  const char *query= "SELECT TABLE_SCHEMA,TABLE_NAME FROM TABLES";
+  const char* query= "select table_schema, table_name from tables";
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
-  drizzle_st drizzle;
-  drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
-  drizzle_result_st result;
-  drizzle_return_t ret;
-  int x;
-  char **row;
 
-  while ((c = getopt(argc, argv, "d:h:mp:q:v")) != -1)
+  for (int c; (c = getopt(argc, argv, "d:h:mp:q:v")) != -1; )
   {
-    switch(c)
+    switch (c)
     {
     case 'd':
       db= optarg;
@@ -87,7 +76,7 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      switch(verbose)
+      switch (verbose)
       {
       case DRIZZLE_VERBOSE_NEVER:
         verbose= DRIZZLE_VERBOSE_FATAL;
@@ -123,6 +112,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  drizzle_st drizzle;
   if (drizzle_create(&drizzle) == NULL)
   {
     printf("drizzle_create:NULL\n");
@@ -131,6 +121,7 @@ int main(int argc, char *argv[])
 
   drizzle_set_verbose(&drizzle, verbose);
 
+  drizzle_con_st* con= new drizzle_con_st;
   if (drizzle_con_create(&drizzle, con) == NULL)
   {
     printf("drizzle_con_create:NULL\n");
@@ -143,6 +134,8 @@ int main(int argc, char *argv[])
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_db(con, db);
 
+  drizzle_result_st result;
+  drizzle_return_t ret;
   (void)drizzle_query_str(con, &result, query, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
@@ -157,9 +150,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  while ((row= (char **)drizzle_row_next(&result)) != NULL)
+  while (drizzle_row_t row= drizzle_row_next(&result))
   {
-    for (x= 0; x < drizzle_result_column_count(&result); x++)
+    for (int x= 0; x < drizzle_result_column_count(&result); x++)
       printf("%s%s", x == 0 ? "" : ":", row[x] == NULL ? "NULL" : row[x]);
     printf("\n");
   }
@@ -167,7 +160,6 @@ int main(int argc, char *argv[])
   drizzle_result_free(&result);
   drizzle_con_free(con);
   drizzle_free(&drizzle);
-
-  free(con);
+  delete con;
   return 0;
 }
