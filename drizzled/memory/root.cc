@@ -52,7 +52,7 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
  *                      should be no less than memory::ROOT_MIN_BLOCK_SIZE)
  *
  */
-void memory::Root::init_alloc_root(size_t block_size_arg)
+void memory::Root::init(size_t block_size_arg)
 {
   free= used= pre_alloc= 0;
   min_malloc= 32;
@@ -127,7 +127,7 @@ void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_s
  * obtaining more memory from the heap if necessary
  *
  * @pre
- * mem_root must have been initialised via init_alloc_root()
+ * mem_root must have been initialised via init()
  *
  * @param  mem_root  The memory Root to allocate from
  * @param  length    The size of the block to allocate
@@ -277,7 +277,7 @@ void memory::Root::mark_blocks_free()
  *
  * @note
  * One can call this function either with root block initialised with
- * init_alloc_root() or with a zero:ed block.
+ * init() or with a zero:ed block.
  * It's also safe to call this multiple times with the same mem_root.
  *
  * @param   root     Memory root

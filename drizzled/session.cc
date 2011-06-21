@@ -247,11 +247,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   client->setSession(this);
 
   /*
-    Pass nominal parameters to init_alloc_root only to ensure that
+    Pass nominal parameters to init only to ensure that
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  memory::init_sql_alloc(mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
+  mem.init(memory::ROOT_MIN_BLOCK_SIZE);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
   lex().current_select= 0;
@@ -289,7 +289,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
-  memory::init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
+  warn_root.init(WARN_ALLOC_BLOCK_SIZE);
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */

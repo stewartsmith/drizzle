@@ -126,7 +126,7 @@ void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
   }
   if (! (tree->with_delete= with_delete))
   {
-    tree->mem_root.init_alloc_root(default_alloc_size);
+    tree->mem_root.init(default_alloc_size);
     tree->mem_root.min_malloc= (sizeof(TREE_ELEMENT)+tree->size_of_element);
   }
 }

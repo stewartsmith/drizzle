@@ -49,7 +49,7 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   record= head->record[0];
   if (! parent_alloc)
   {
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
   }
   else
   {

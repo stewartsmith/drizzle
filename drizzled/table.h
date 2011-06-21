@@ -315,7 +315,7 @@ private:
 
   void init_mem_root()
   {
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
   memory::Root *getMemRoot()

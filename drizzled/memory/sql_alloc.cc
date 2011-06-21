@@ -30,11 +30,6 @@
 
 namespace drizzled {
 
-void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
-{
-  mem_root->init_alloc_root(block_size);
-}
-
 void *memory::sql_alloc(size_t Size)
 {
   return current_mem_root()->alloc_root(Size);

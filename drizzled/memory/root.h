@@ -118,7 +118,7 @@ public:
   char *strdup_root(const char *str);
 
   char* strmake(const char*, size_t);
-  void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
+  void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
   inline void *duplicate(const void *str, size_t len)
   {
