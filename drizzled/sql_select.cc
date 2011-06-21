@@ -4935,11 +4935,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
     return(0);
   for (Order *ord= join->order; ord; ord= ord->next)
     length++;
-  if (!(join->sortorder= make_unireg_sortorder(order, &length, join->sortorder)))
-  {
-    return(-1);
-  }
-
+  join->sortorder= make_unireg_sortorder(order, &length, join->sortorder);
   table->sort.io_cache= new internal::io_cache_st;
   table->status=0;				// May be wrong if quick_select
 
@@ -5184,23 +5180,18 @@ err:
   return 1;
 }
 
-SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sortorder)
+SortField* make_unireg_sortorder(Order* order, uint32_t* length, SortField* sortorder)
 {
-  uint32_t count;
   SortField *sort,*pos;
 
-  count=0;
+  uint32_t count= 0;
   for (Order *tmp = order; tmp; tmp=tmp->next)
     count++;
-  if (!sortorder)
-    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) *
-                                       (max(count, *length) + 1));
+  if (not sortorder)
+    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) * (max(count, *length) + 1));
   pos= sort= sortorder;
 
-  if (!pos)
-    return 0;
-
-  for (;order;order=order->next,pos++)
+  for (; order; order= order->next,pos++)
   {
     Item *item= order->item[0]->real_item();
     pos->field= 0; pos->item= 0;
@@ -5217,7 +5208,7 @@ SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sort
     pos->reverse=! order->asc;
   }
   *length=count;
-  return(sort);
+  return sort;
 }
 
 /*
@@ -5336,8 +5327,7 @@ static bool find_order_in_list(Session *session,
     uint32_t count= (uint32_t) order_item->val_int();
     if (!count || count > fields.size())
     {
-      my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               order_item->full_name(), session->where());
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), order_item->full_name(), session->where());
       return true;
     }
     order->item= ref_pointer_array + count - 1;
@@ -5347,8 +5337,7 @@ static bool find_order_in_list(Session *session,
     return false;
   }
   /* Lookup the current GROUP/order_st field in the SELECT clause. */
-  select_item= find_item_in_list(session, order_item, fields, &counter,
-                                 REPORT_EXCEPT_NOT_FOUND, &resolution);
+  select_item= find_item_in_list(session, order_item, fields, &counter, REPORT_EXCEPT_NOT_FOUND, &resolution);
   if (!select_item)
     return true; /* The item is not unique, or some other error occured. */
 
@@ -5457,10 +5446,9 @@ int setup_order(Session *session,
                 Order *order)
 {
   session->setWhere("order clause");
-  for (; order; order=order->next)
+  for (; order; order= order->next)
   {
-    if (find_order_in_list(session, ref_pointer_array, tables, order, fields,
-			   all_fields, false))
+    if (find_order_in_list(session, ref_pointer_array, tables, order, fields, all_fields, false))
       return 1;
   }
   return 0;

@@ -211,12 +211,9 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     {
       FileSort filesort(*session);
       table->sort.io_cache= new internal::io_cache_st;
+      sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL);
 
-
-      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
-	  (table->sort.found_records = filesort.run(table, sortorder, length,
-						    select, HA_POS_ERROR, 1,
-						    examined_rows)) == HA_POS_ERROR)
+      if ((table->sort.found_records= filesort.run(table, sortorder, length, select, HA_POS_ERROR, 1, examined_rows)) == HA_POS_ERROR)
       {
         delete select;
         free_underlaid_joins(session, &session->lex().select_lex);

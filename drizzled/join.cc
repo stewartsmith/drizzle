@@ -5617,8 +5617,6 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
   stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
-  if (! stat || ! stat_ref || ! table_vector)
-    return 1;
 
   join->best_ref=stat_vector;
 
@@ -5648,8 +5646,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     table->quick_keys.reset();
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
-    memset(table->const_key_parts, 0,
-           sizeof(key_part_map)*table->getShare()->sizeKeys());
+    memset(table->const_key_parts, 0, sizeof(key_part_map)*table->getShare()->sizeKeys());
     all_table_map|= table->map;
     s->join=join;
     s->info=0;					// For describe
@@ -6022,7 +6019,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
-  return (join->session->getKilled() || get_best_combination(join));
+  return join->session->getKilled() || get_best_combination(join);
 }
 
 /**
