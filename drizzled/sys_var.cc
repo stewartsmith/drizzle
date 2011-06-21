@@ -1594,7 +1594,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   string engine_name= engine->getName();
-  return (unsigned char *) session->mem.strmake(engine_name.c_str(), engine_name.size());
+  return (unsigned char *) session->mem.strmake(engine_name);
 }
 
 

@@ -119,6 +119,8 @@ public:
   char* strdup(const char*);
 
   char* strmake(const char*, size_t);
+  char* strmake(const std::string&);
+  char* strmake(const String&);
   void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
   inline bool alloc_root_inited()

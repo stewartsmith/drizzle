@@ -168,7 +168,7 @@ public:
       return NULL;
     }
     length= tmp_string->length();
-    return mem.strmake(tmp_string->c_str(), tmp_string->length());
+    return mem.strmake(*tmp_string);
   }
 
   util::string::ptr schema() const;
