@@ -1794,10 +1794,8 @@ bool Item_in_subselect::setup_engine()
     subselect_single_select_engine *old_engine_ptr;
 
     old_engine_ptr= static_cast<subselect_single_select_engine *>(engine);
-
-    if (!(new_engine= new subselect_hash_sj_engine(session, this,
-                                                   old_engine_ptr)) ||
-        new_engine->init_permanent(unit->get_unit_column_types()))
+    new_engine= new subselect_hash_sj_engine(session, this, old_engine_ptr);
+    if (new_engine->init_permanent(unit->get_unit_column_types()))
     {
       Item_subselect::trans_res new_trans_res;
       /*
@@ -1809,9 +1807,7 @@ bool Item_in_subselect::setup_engine()
       new_engine= NULL;
       exec_method= NOT_TRANSFORMED;
       if (left_expr->cols() == 1)
-        new_trans_res= single_value_in_to_exists_transformer(
-                           old_engine_ptr->join,
-                           Eq_creator::instance());
+        new_trans_res= single_value_in_to_exists_transformer(old_engine_ptr->join, Eq_creator::instance());
       else
         new_trans_res= row_value_in_to_exists_transformer(old_engine_ptr->join);
       res= (new_trans_res != Item_subselect::RES_OK);
@@ -3069,16 +3065,14 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  if (!(tab= (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable))))
-    return(true);
+  tab= (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable));
   new (tab) JoinTable();
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
-  if (!(tab->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
-      !(tab->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) * (tmp_key_parts + 1)))) ||
-      !(tab->ref.items= (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts)))
-    return(true);
+  tab->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2);
+  tab->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) * (tmp_key_parts + 1)));
+  tab->ref.items= (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts);
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;
