@@ -2162,9 +2162,7 @@ int subselect_single_select_engine::exec()
       session->lex().current_select= save_select;
       return(join->error ? join->error : 1);
     }
-    if (save_join_if_explain())
-     return(1);
-
+    save_join_if_explain();
     if (item->engine_changed)
     {
       return(1);
@@ -2244,8 +2242,7 @@ int subselect_single_select_engine::exec()
   return(0);
 }
 
-bool 
-subselect_single_select_engine::save_join_if_explain()
+void subselect_single_select_engine::save_join_if_explain()
 {
   /*
     Save this JOIN to join->tmp_join since the original layout will be
@@ -2277,7 +2274,6 @@ subselect_single_select_engine::save_join_if_explain()
     select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
     join->init_save_join_tab();
   }
-  return false; // return void
 }
 
 
@@ -3175,8 +3171,7 @@ int subselect_hash_sj_engine::exec()
     if ((res= materialize_join->optimize()))
       goto err;
 
-    if (materialize_engine->save_join_if_explain())
-      goto err;
+    materialize_engine->save_join_if_explain();
 
     materialize_join->exec();
     if ((res= test(materialize_join->error || session->is_fatal_error)))

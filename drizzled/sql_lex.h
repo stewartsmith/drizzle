@@ -589,7 +589,7 @@ public:
                                List<Index_hint> *hints= 0,
                                LEX_STRING *option= 0);
   TableList* get_table_list();
-  bool init_nested_join(Session *session);
+  void init_nested_join(Session&);
   TableList *end_nested_join(Session *session);
   TableList *nest_last_join(Session *session);
   void add_joined_table(TableList *table);

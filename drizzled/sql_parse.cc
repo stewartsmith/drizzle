@@ -1072,9 +1072,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     1   otherwise
 */
 
-bool Select_Lex::init_nested_join(Session *session)
+void Select_Lex::init_nested_join(Session& session)
 {
-  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
+  TableList* ptr= (TableList*) session.mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   NestedJoin* nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
@@ -1084,7 +1084,6 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->clear();
-  return false; // return void
 }
 
 

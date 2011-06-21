@@ -1148,7 +1148,7 @@ row_format:
 row_format_or_text:
           row_format
           {
-            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -3569,8 +3569,7 @@ table_factor:
                 sel->master_unit()->global_parameters=
                    sel->master_unit()->fake_select_lex;
             }
-            if ($2->init_nested_join(Lex.session))
-              DRIZZLE_YYABORT;
+            $2->init_nested_join(*Lex.session);
             $$= 0;
             /* incomplete derived tables return NULL, we must be
                nested in select_derived rule to be here. */
@@ -3691,8 +3690,7 @@ select_part2_derived:
 select_derived:
           get_select_lex
           {
-            if ($1->init_nested_join(Lex.session))
-              DRIZZLE_YYABORT;
+            $1->init_nested_join(*Lex.session);
           }
           derived_table_list
           {
@@ -5201,7 +5199,7 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
-            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -5483,7 +5481,7 @@ user_variable_ident:
 internal_variable_ident:
           keyword_exception_for_variable
           {
-            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         | IDENT_sys    { $$=$1; }
