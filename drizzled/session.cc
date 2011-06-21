@@ -360,9 +360,8 @@ void Session::add_group_to_list(Item *item, bool asc)
 
 void Session::free_items()
 {
-  Item *next;
   /* This works because items are allocated with memory::sql_alloc() */
-  for (; free_list; free_list= next)
+  for (Item* next; free_list; free_list= next)
   {
     next= free_list->next;
     free_list->delete_self();
