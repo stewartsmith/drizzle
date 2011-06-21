@@ -31,10 +31,7 @@ DRIZZLED_API Session *_current_session();
 #define current_session ::drizzled::_current_session()
 memory::Root *current_mem_root();
 
-typedef boost::thread_specific_ptr<Session> MySessionVar;
-typedef boost::thread_specific_ptr<memory::Root *> MyMemoryRootVar;
-
-MySessionVar &currentSession();
-MyMemoryRootVar &currentMemRoot();
+void setCurrentSession(Session*);
+void setCurrentMemRoot(memory::Root*);
 
 } /* namespace drizzled */

@@ -28,26 +28,17 @@
 
 #include <drizzled/internal/my_sys.h>
 
-namespace drizzled
-{
-
-static void sql_alloc_error_handler(void)
-{
-  errmsg_printf(error::ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
-}
+namespace drizzled {
 
 void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 {
   mem_root->init_alloc_root(block_size);
-  mem_root->error_handler= sql_alloc_error_handler;
 }
-
 
 void *memory::sql_alloc(size_t Size)
 {
   return current_mem_root()->alloc_root(Size);
 }
-
 
 void *memory::sql_calloc(size_t size)
 {
@@ -56,16 +47,13 @@ void *memory::sql_calloc(size_t size)
   return ptr;
 }
 
-
 char *memory::sql_strdup(const char *str)
 {
   size_t len= strlen(str)+1;
-  char *pos;
-  if ((pos= (char*) memory::sql_alloc(len)))
-    memcpy(pos,str,len);
+  char *pos= (char*) memory::sql_alloc(len);
+  memcpy(pos,str,len);
   return pos;
 }
-
 
 char *memory::sql_strmake(const char *str, size_t len)
 {
@@ -75,12 +63,10 @@ char *memory::sql_strmake(const char *str, size_t len)
   return pos;
 }
 
-
 void* memory::sql_memdup(const void *ptr, size_t len)
 {
-  void *pos;
-  if ((pos= memory::sql_alloc(len)))
-    memcpy(pos,ptr,len);
+  void *pos= memory::sql_alloc(len);
+  memcpy(pos,ptr,len);
   return pos;
 }
 

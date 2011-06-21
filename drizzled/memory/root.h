@@ -18,8 +18,6 @@
  * @brief Memory root declarations
  */
 
-
-
 #pragma once
 
 #include <cstddef>
@@ -68,8 +66,7 @@ public:
     min_malloc(0),
     block_size(0),
     block_num(0),
-    first_block_usage(0),
-    error_handler(0)
+    first_block_usage(0)
   { }
 
   Root(size_t block_size_arg)
@@ -79,10 +76,7 @@ public:
     block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
     block_num= 4;			/* We shift this with >>2 */
     first_block_usage= 0;
-    error_handler= 0;
   }
-
-  ~Root();
 
   /**
    * blocks with free memory in it 
@@ -113,7 +107,6 @@ public:
    */
   unsigned int first_block_usage;
 
-  void (*error_handler)(void);
   void reset_root_defaults(size_t block_size, size_t prealloc_size);
   void *alloc_root(size_t Size);
   inline void *allocate(size_t Size)

@@ -459,8 +459,8 @@ Session::~Session()
   mysys_var=0;					// Safety (shouldn't be needed)
 
   impl_->mem_root.free_root(MYF(0));
-  currentMemRoot().release();
-  currentSession().release();
+  setCurrentMemRoot(NULL);
+  setCurrentSession(NULL);
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
@@ -531,8 +531,8 @@ void Session::storeGlobals()
     to track stack overrun.
   */
   assert(thread_stack);
-  currentSession().reset(this);
-  currentMemRoot().reset(&mem_root);
+  setCurrentSession(this);
+  setCurrentMemRoot(&mem);
 
   mysys_var= my_thread_var;
 

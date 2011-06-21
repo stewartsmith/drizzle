@@ -57,15 +57,9 @@ void memory::Root::init_alloc_root(size_t block_size_arg)
   free= used= pre_alloc= 0;
   min_malloc= 32;
   block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
-  error_handler= 0;
   block_num= 4;			/* We shift this with >>2 */
   first_block_usage= 0;
 }
-
-memory::Root::~Root()
-{
-}
-
 
 /**
  * @details
