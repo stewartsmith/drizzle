@@ -676,7 +676,7 @@ public:
   ~subselect_hash_sj_engine();
 
   bool init_permanent(List<Item> *tmp_columns);
-  bool init_runtime();
+  void init_runtime();
   void cleanup();
   int prepare() { return 0; }
   int exec();

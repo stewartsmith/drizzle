@@ -107,11 +107,11 @@ static uint32_t determine_search_depth(Join* join);
 static bool make_simple_join(Join *join,Table *tmp_table);
 static void make_outerjoin_info(Join *join);
 static bool make_join_select(Join *join, optimizer::SqlSelect *select,COND *item);
-static bool make_join_readinfo(Join *join);
+static void make_join_readinfo(Join&);
 static void update_depend_map(Join *join);
 static void update_depend_map(Join *join, Order *order);
 static Order *remove_constants(Join *join,Order *first_order,COND *cond, bool change_list, bool *simple_order);
-static int return_zero_rows(Join *join,
+static void return_zero_rows(Join *join,
                             select_result *res,
                             TableList *tables,
                             List<Item> &fields,
@@ -314,8 +314,7 @@ void Join::reset(Session *session_arg,
 
 bool Join::is_top_level_join() const
 {
-  return (unit == &session->lex().unit && (unit->fake_select_lex == 0 ||
-                                          select_lex == unit->fake_select_lex));
+  return unit == &session->lex().unit && (unit->fake_select_lex == 0 || select_lex == unit->fake_select_lex);
 }
 
 /**
@@ -366,17 +365,13 @@ int Join::prepare(Item ***rref_pointer_array,
   /* Check that all tables, fields, conds and order are ok */
 
   if (!(select_options & OPTION_SETUP_TABLES_DONE) &&
-      setup_tables_and_check_access(session, &select_lex->context, join_list,
-                                    tables_list, &select_lex->leaf_tables,
-                                    false))
+      setup_tables_and_check_access(session, &select_lex->context, join_list, tables_list, &select_lex->leaf_tables, false))
   {
       return(-1);
   }
 
   TableList *table_ptr;
-  for (table_ptr= select_lex->leaf_tables;
-       table_ptr;
-       table_ptr= table_ptr->next_leaf)
+  for (table_ptr= select_lex->leaf_tables; table_ptr; table_ptr= table_ptr->next_leaf)
   {
     tables++;
   }
@@ -1026,8 +1021,7 @@ int Join::optimize()
         test(select_options & OPTION_BUFFER_RESULT)));
 
   // No cache for MATCH == 'Don't use join buffering when we use MATCH'.
-  if (make_join_readinfo(this))
-    return 1;
+  make_join_readinfo(*this);
 
   /* Create all structures needed for materialized subquery execution. */
   if (setup_subquery_materialization())
@@ -1447,12 +1441,7 @@ void Join::exec()
 
   if (zero_result_cause)
   {
-    (void) return_zero_rows(this, result, select_lex->leaf_tables,
-                            *columns_list,
-          send_row_on_empty_set(),
-          select_options,
-          zero_result_cause,
-          having);
+    return_zero_rows(this, result, select_lex->leaf_tables, *columns_list, send_row_on_empty_set(), select_options, zero_result_cause, having);
     return;
   }
 
@@ -5094,13 +5083,13 @@ static bool make_join_select(Join *join,
     false - OK
     true  - Out of memory
 */
-static bool make_join_readinfo(Join *join)
+static void make_join_readinfo(Join& join)
 {
   bool sorted= true;
 
-  for (uint32_t i= join->const_tables ; i < join->tables ; i++)
+  for (uint32_t i= join.const_tables; i < join.tables; i++)
   {
-    JoinTable *tab=join->join_tab+i;
+    JoinTable *tab=join.join_tab+i;
     Table *table=tab->table;
     tab->read_record.table= table;
     tab->read_record.cursor= table->cursor;
@@ -5114,10 +5103,7 @@ static bool make_join_readinfo(Join *join)
 
     if (tab->insideout_match_tab)
     {
-      if (! (tab->insideout_buf= (unsigned char*) join->session->getMemRoot()->allocate(tab->table->key_info
-                                                                       [tab->index].
-                                                                       key_length)))
-        return true;
+      tab->insideout_buf= (unsigned char*) join.session->getMemRoot()->allocate(tab->table->key_info[tab->index].key_length);
     }
 
     optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
@@ -5136,9 +5122,7 @@ static bool make_join_readinfo(Join *join)
     access_method->getStats(table, tab);
   }
 
-  join->join_tab[join->tables-1].next_select= NULL; /* Set by do_select */
-
-  return false;
+  join.join_tab[join.tables-1].next_select= NULL; /* Set by do_select */
 }
 
 /** Update the dependency map for the tables. */
@@ -5263,24 +5247,13 @@ static Order *remove_constants(Join *join,Order *first_order, COND *cond, bool c
   return(first_order);
 }
 
-static int return_zero_rows(Join *join,
-                            select_result *result,
-                            TableList *tables,
-		                        List<Item> &fields,
-                            bool send_row,
-                            uint64_t select_options,
-                            const char *info,
-                            Item *having)
+static void return_zero_rows(Join *join, select_result *result, TableList *tables, List<Item> &fields, bool send_row, uint64_t select_options, const char *info, Item *having)
 {
   if (select_options & SELECT_DESCRIBE)
   {
-    optimizer::ExplainPlan planner(join,
-                                   false,
-                                   false,
-                                   false,
-                                   info);
+    optimizer::ExplainPlan planner(join, false, false, false, info);
     planner.printPlan();
-    return 0;
+    return;
   }
 
   join->join_free();
@@ -5296,15 +5269,13 @@ static int return_zero_rows(Join *join,
   if (send_row)
   {
     List<Item>::iterator it(fields.begin());
-    Item *item;
-    while ((item= it++))
+    while (Item* item= it++)
       item->no_rows_in_result();
     result->send_data(fields);
   }
   result->send_eof();				// Should be safe
   /* Update results for FOUND_ROWS */
   join->session->limit_found_rows= join->session->examined_row_count= 0;
-  return(0);
 }
 
 /**
@@ -5429,7 +5400,6 @@ static int return_zero_rows(Join *join,
 */
 static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds, bool top)
 {
-  TableList *table;
   NestedJoin *nested_join;
   TableList *prev_table= 0;
   List<TableList>::iterator li(join_list->begin());
@@ -5438,7 +5408,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     Try to simplify join operations from join_list.
     The most outer join operation is checked for conversion first.
   */
-  while ((table= li++))
+  while (TableList* table= li++)
   {
     table_map used_tables;
     table_map not_null_tables= (table_map) 0;
@@ -5569,14 +5539,13 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     no ON expression and not a semi-join => can be flattened.
   */
   li= join_list->begin();
-  while ((table= li++))
+  while (TableList* table= li++)
   {
     nested_join= table->getNestedJoin();
     if (nested_join && !table->on_expr)
     {
-      TableList *tbl;
       List<TableList>::iterator it(nested_join->join_list.begin());
-      while ((tbl= it++))
+      while (TableList* tbl= it++)
       {
         tbl->setEmbedding(table->getEmbedding());
         tbl->setJoinList(table->getJoinList());
@@ -5589,18 +5558,12 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
 
 static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *having)
 {
-  int error;
-  uint32_t reclength,offset;
-  uint32_t field_count;
-  Session *session= join->session;
-
   entry->reginfo.lock_type=TL_WRITE;
 
   /* Calculate how many saved fields there is in list */
-  field_count=0;
+  uint32_t field_count= 0;
   List<Item>::iterator it(fields.begin());
-  Item *item;
-  while ((item=it++))
+  while (Item* item=it++)
   {
     if (item->get_tmp_table_field() && ! item->const_item())
       field_count++;
@@ -5612,29 +5575,24 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     return(0);
   }
   Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
-  offset= (field_count ?
-           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0);
-  reclength= entry->getShare()->getRecordLength() - offset;
+  uint32_t offset= field_count ? entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0;
+  uint32_t reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
   entry->cursor->info(HA_STATUS_VARIABLE);
+  int error;
   if (entry->getShare()->db_type() == heap_engine ||
       (!entry->getShare()->blob_fields &&
-       ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records <
-        session->variables.sortbuff_size)))
+       ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records < join->session->variables.sortbuff_size)))
   {
-    error= remove_dup_with_hash_index(join->session, entry,
-                                      field_count, first_field,
-                                      reclength, having);
+    error= remove_dup_with_hash_index(join->session, entry, field_count, first_field, reclength, having);
   }
   else
   {
     error= remove_dup_with_compare(join->session, entry, first_field, offset, having);
   }
-
   free_blobs(first_field);
-
-  return(error);
+  return error;
 }
 
 /**
@@ -5652,19 +5610,17 @@ static int setup_without_group(Session *session,
                                bool *hidden_group_fields)
 {
   int res;
-  nesting_map save_allow_sum_func=session->lex().allow_sum_func ;
+  nesting_map save_allow_sum_func=session->lex().allow_sum_func;
 
   session->lex().allow_sum_func&= ~(1 << session->lex().current_select->nest_level);
   res= session->setup_conds(tables, conds);
 
   session->lex().allow_sum_func|= 1 << session->lex().current_select->nest_level;
-  res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
-                          order);
+  res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields, order);
   session->lex().allow_sum_func&= ~(1 << session->lex().current_select->nest_level);
-  res= res || setup_group(session, ref_pointer_array, tables, fields, all_fields,
-                          group, hidden_group_fields);
+  res= res || setup_group(session, ref_pointer_array, tables, fields, all_fields, group, hidden_group_fields);
   session->lex().allow_sum_func= save_allow_sum_func;
-  return(res);
+  return res;
 }
 
 /**
@@ -6135,11 +6091,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
   List<TableList>::iterator li(join_list->begin());
-  TableList *table;
-  while ((table= li++))
+  while (TableList* table= li++)
   {
-    NestedJoin *nested_join;
-    if ((nested_join= table->getNestedJoin()))
+    if (NestedJoin* nested_join= table->getNestedJoin())
     {
       /*
         It is guaranteed by simplify_joins() function that a nested join
@@ -6182,15 +6136,15 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
   for (; a && b; a=a->next,b=b->next)
   {
     if (!(*a->item)->eq(*b->item,1))
-      return (Table *) NULL;
+      return NULL;
     map|= a->item[0]->used_tables();
   }
   if (!map || (map & (RAND_TABLE_BIT | OUTER_REF_TABLE_BIT)))
-    return (Table *) NULL;
+    return NULL;
 
   for (; !(map & tables->table->map); tables= tables->next_leaf) {};
   if (map != tables->table->map)
-    return (Table *) NULL;				// More than one table
+    return NULL;				// More than one table
   return tables->table;
 }
 
@@ -6206,8 +6160,7 @@ static Table *get_sort_by_table(Order *a, Order *b,TableList *tables)
 static void reset_nj_counters(List<TableList> *join_list)
 {
   List<TableList>::iterator li(join_list->begin());
-  TableList *table;
-  while ((table= li++))
+  while (TableList* table= li++)
   {
     NestedJoin *nested_join;
     if ((nested_join= table->getNestedJoin()))
@@ -6216,7 +6169,6 @@ static void reset_nj_counters(List<TableList> *join_list)
       reset_nj_counters(&nested_join->join_list);
     }
   }
-  return;
 }
 
 /**
@@ -6320,8 +6272,6 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   Item_cond_and *cond=new Item_cond_and();
   Table *table=join_tab->table;
-  if (!cond)
-    return(true);
 
   for (uint32_t i=0 ; i < join_tab->ref.key_parts ; i++)
   {

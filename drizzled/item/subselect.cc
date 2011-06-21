@@ -1837,8 +1837,7 @@ bool Item_in_subselect::setup_engine()
       we should set the correct limit if given in the query.
     */
     unit->global_parameters->select_limit= NULL;
-    if ((res= new_engine->init_runtime()))
-      return(res);
+    new_engine->init_runtime();
   }
 
   return(res);
@@ -3023,13 +3022,10 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     result stream in a temporary table. The temporary table itself is
     managed (created/filled/etc) internally by the interceptor.
   */
-  if (!(tmp_result_sink= new select_union))
-    return(true);
+  tmp_result_sink= new select_union;
 
-  if (tmp_result_sink->create_result_table(
-                         session, tmp_columns, true,
-                         session->options | TMP_TABLE_ALL_COLUMNS,
-                         "materialized subselect"))
+  if (tmp_result_sink->create_result_table(session, tmp_columns, true, 
+    session->options | TMP_TABLE_ALL_COLUMNS, "materialized subselect"))
     return(true);
 
   tmp_table= tmp_result_sink->table;
@@ -3079,13 +3075,9 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
-  if (!(tab->ref.key_buff=
-        (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
-      !(tab->ref.key_copy=
-        (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
-                                  (tmp_key_parts + 1)))) ||
-      !(tab->ref.items=
-        (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts)))
+  if (!(tab->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
+      !(tab->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) * (tmp_key_parts + 1)))) ||
+      !(tab->ref.items= (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;
@@ -3124,7 +3116,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   @retval false if success
 */
 
-bool subselect_hash_sj_engine::init_runtime()
+void subselect_hash_sj_engine::init_runtime()
 {
   /*
     Create and optimize the JOIN that will be used to materialize
@@ -3134,7 +3126,6 @@ bool subselect_hash_sj_engine::init_runtime()
   /* Let our engine reuse this query plan for materialization. */
   materialize_join= materialize_engine->join;
   materialize_join->change_result(result);
-  return false;
 }
 
 
