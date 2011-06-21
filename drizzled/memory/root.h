@@ -124,7 +124,7 @@ public:
   void *memdup_root(const void *str, size_t len);
   char *strdup_root(const char *str);
 
-  char *strmake_root(const char *str,size_t len);
+  char* strmake(const char*, size_t);
   void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
   inline void *duplicate(const void *str, size_t len)

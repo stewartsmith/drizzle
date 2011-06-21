@@ -19,11 +19,11 @@
 
 #pragma once
 
-namespace drizzled
-{
-namespace memory
-{
+namespace drizzled {
+namespace memory {
+
 void* multi_malloc(bool zerofill, ...) __attribute__((malloc));
+
 } /* namespace memory */
 } /* namespace drizzled */
 

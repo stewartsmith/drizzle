@@ -639,7 +639,7 @@ static int prepare_create_table(Session *session,
                                        cs, &dummy))
           {
             conv.copy(tmp->ptr(), tmp->length(), cs);
-            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
+            interval->type_names[i]= session->mem_root->strmake(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
           }
 

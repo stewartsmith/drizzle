@@ -891,7 +891,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
 {
   if (allocate_lex_string)
     lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
-  lex_str->str= mem_root->strmake_root(str, length);
+  lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1558,7 +1558,7 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= mem.strmake_root(impl_->schema->c_str(), impl_->schema->size());
+  *p_db= mem.strmake(impl_->schema->c_str(), impl_->schema->size());
   *p_db_length= impl_->schema->size();
   return false;
 }

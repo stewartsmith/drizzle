@@ -29,8 +29,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static const unsigned int MAX_BLOCK_TO_DROP= 4096;
 static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
@@ -144,7 +143,6 @@ void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_s
  */
 void *memory::Root::alloc_root(size_t length)
 {
-  unsigned char* point;
   memory::internal::UsedMemory *next= NULL;
   memory::internal::UsedMemory **prev;
   assert(alloc_root_inited());
@@ -181,7 +179,7 @@ void *memory::Root::alloc_root(size_t length)
     *prev=next;
   }
 
-  point= (unsigned char*) ((char*) next+ (next->size-next->left));
+  unsigned char* point= (unsigned char*) ((char*) next+ (next->size-next->left));
   /** @todo next part may be unneeded due to this->first_block_usage counter*/
   if ((next->left-= length) < this->min_malloc)
   {						/* Full block */
@@ -336,7 +334,7 @@ void memory::Root::free_root(myf MyFlags)
  */
 char *memory::Root::strdup_root(const char *str)
 {
-  return strmake_root(str, strlen(str));
+  return strmake(str, strlen(str));
 }
 
 /**
@@ -350,14 +348,11 @@ char *memory::Root::strdup_root(const char *str)
  * even if the original string wasn't (one additional byte is allocated for
  * this purpose).
  */
-char *memory::Root::strmake_root(const char *str, size_t len)
+char *memory::Root::strmake(const char *str, size_t len)
 {
-  char *pos;
-  if ((pos= (char *)alloc_root(len+1)))
-  {
-    memcpy(pos,str,len);
-    pos[len]=0;
-  }
+  char* pos= (char*)alloc_root(len + 1);
+  memcpy(pos, str, len);
+  pos[len]= 0;
   return pos;
 }
 
@@ -372,11 +367,8 @@ char *memory::Root::strmake_root(const char *str, size_t len)
  */
 void *memory::Root::memdup_root(const void *str, size_t len)
 {
-  void *pos;
-
-  if ((pos= this->alloc_root(len)))
-    memcpy(pos,str,len);
-
+  void *pos= this->alloc_root(len);
+  memcpy(pos, str, len);
   return pos;
 }
 

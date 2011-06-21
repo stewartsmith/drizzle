@@ -127,7 +127,7 @@ TYPELIB *TYPELIB::copy_typelib(memory::Root& root) const
   to->name= name ? root.strdup_root(name) : NULL;
   for (uint32_t i= 0; i < count; i++)
   {
-    to->type_names[i]= root.strmake_root(type_names[i], type_lengths[i]);
+    to->type_names[i]= root.strmake(type_names[i], type_lengths[i]);
     to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;
