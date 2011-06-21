@@ -3070,7 +3070,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
-  tab->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2);
+  tab->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(tmp_key->key_length) * 2);
   tab->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) * (tmp_key_parts + 1)));
   tab->ref.items= (Item**) session->getMemRoot()->allocate(sizeof(Item*) * tmp_key_parts);
 

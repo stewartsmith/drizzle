@@ -979,7 +979,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
       return NULL;
   }
-  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
+  TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
   if (table->db.str)
   {
@@ -1075,14 +1075,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
 bool Select_Lex::init_nested_join(Session *session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(NestedJoin))))
-    return true;
+  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
@@ -1090,7 +1085,7 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->clear();
-  return false;
+  return false; // return void
 }
 
 
@@ -1151,19 +1146,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 
 TableList *Select_Lex::nest_last_join(Session *session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-  List<TableList> *embedded_list;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(NestedJoin))))
-    return NULL;
+  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
-  embedded_list= &nested_join->join_list;
+  List<TableList>* embedded_list= &nested_join->join_list;
   embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)

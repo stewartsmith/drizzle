@@ -138,6 +138,13 @@ public:
   }
   void free_root(myf MyFLAGS);
   void *multi_alloc_root(int unused, ...);
+
+  void* calloc(size_t size)
+  {
+    void* ptr= alloc_root(size);
+    memset(ptr, 0, size);
+    return ptr;
+  }
 };
 
 } /* namespace memory */

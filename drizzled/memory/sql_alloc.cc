@@ -45,18 +45,14 @@ void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 
 void *memory::sql_alloc(size_t Size)
 {
-  memory::Root *root= current_mem_root();
-  return root->alloc_root(Size);
+  return current_mem_root()->alloc_root(Size);
 }
 
 
 void *memory::sql_calloc(size_t size)
 {
-  void *ptr;
-
-  if ((ptr=memory::sql_alloc(size)))
-    memset(ptr, 0, size);
-
+  void *ptr= memory::sql_alloc(size);
+  memset(ptr, 0, size);
   return ptr;
 }
 
@@ -73,12 +69,9 @@ char *memory::sql_strdup(const char *str)
 
 char *memory::sql_strmake(const char *str, size_t len)
 {
-  char *pos;
-  if ((pos= (char*) memory::sql_alloc(len+1)))
-  {
-    memcpy(pos,str,len);
-    pos[len]=0;
-  }
+  char *pos= (char*) memory::sql_alloc(len+1);
+  memcpy(pos,str,len);
+  pos[len]=0;
   return pos;
 }
 

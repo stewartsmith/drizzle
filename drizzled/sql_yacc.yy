@@ -1148,7 +1148,7 @@ row_format:
 row_format_or_text:
           row_format
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -5201,7 +5201,7 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -5483,7 +5483,7 @@ user_variable_ident:
 internal_variable_ident:
           keyword_exception_for_variable
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake_root($1.str, $1.length);
             $$.length= $1.length;
           }
         | IDENT_sys    { $$=$1; }

@@ -108,25 +108,7 @@ public:
                         and update_row.
   */
   enum_mark_columns mark_used_columns;
-  inline void* calloc(size_t size)
-  {
-    void *ptr= mem_root->alloc_root(size);
-    if (ptr)
-      memset(ptr, 0, size);
-    return ptr;
-  }
-  inline char *strmake(const char *str, size_t size)
-  {
-    return mem_root->strmake_root(str,size);
-  }
 
-  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
-  {
-    void *ptr= mem_root->alloc_root(size + gap);
-    if (ptr)
-      memcpy(ptr, str, size);
-    return ptr;
-  }
   /** Frees all items attached to this Statement */
   void free_items();
 
@@ -135,7 +117,8 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  memory::Root *mem_root; /**< Pointer to current memroot */
+  memory::Root& mem;
+  memory::Root* mem_root; /**< Pointer to current memroot */
 
   memory::Root *getMemRoot()
   {
@@ -185,7 +168,7 @@ public:
       return NULL;
     }
     length= tmp_string->length();
-    return strmake(tmp_string->c_str(), tmp_string->length());
+    return mem.strmake_root(tmp_string->c_str(), tmp_string->length());
   }
 
   util::string::ptr schema() const;

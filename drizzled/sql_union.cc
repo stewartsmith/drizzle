@@ -307,11 +307,10 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         field object without table.
       */
       assert(!empty_table);
-      empty_table= (Table*) session->calloc(sizeof(Table));
+      empty_table= (Table*) session->mem.calloc(sizeof(Table));
       types.clear();
       List<Item>::iterator it(sl->item_list.begin());
-      Item *item_tmp;
-      while ((item_tmp= it++))
+      while (Item* item_tmp= it++)
       {
 	/* Error's in 'new' will be detected after loop */
 	types.push_back(new Item_type_holder(session_arg, item_tmp));

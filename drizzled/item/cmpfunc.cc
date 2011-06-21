@@ -3357,7 +3357,7 @@ cmp_item_row::~cmp_item_row()
 void cmp_item_row::alloc_comparators()
 {
   if (!comparators)
-    comparators= (cmp_item **) current_session->calloc(sizeof(cmp_item *)*n);
+    comparators= (cmp_item **) current_session->mem.calloc(sizeof(cmp_item *)*n);
 }
 
 

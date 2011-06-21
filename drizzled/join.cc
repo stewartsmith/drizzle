@@ -2181,7 +2181,7 @@ bool Join::alloc_func_list()
   }
 
   /* This must use calloc() as rollup_make_fields depends on this */
-  sum_funcs= (Item_sum**) session->calloc(sizeof(Item_sum**) * (func_count+1) +
+  sum_funcs= (Item_sum**) session->mem.calloc(sizeof(Item_sum**) * (func_count+1) +
               sizeof(Item_sum***) * (group_parts+1));
   sum_funcs_end= (Item_sum***) (sum_funcs+func_count+1);
   return(sum_funcs == 0);
@@ -5658,9 +5658,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   optimizer::Position *partial_pos;
 
   table_count= join->tables;
-  stat= (JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->getMemRoot()->allocate(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*)*(table_count*2));
+  stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
+  stat_ref= (JoinTable**) join->session->mem.allocate(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->mem.allocate(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;
 

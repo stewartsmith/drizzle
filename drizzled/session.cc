@@ -192,6 +192,7 @@ public:
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   impl_(new impl_c(*this)),
+  mem(impl_->mem_root),
   mem_root(&impl_->mem_root),
   query(new std::string),
   scheduler(NULL),
@@ -1557,7 +1558,7 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(impl_->schema->c_str(), impl_->schema->size());
+  *p_db= mem.strmake_root(impl_->schema->c_str(), impl_->schema->size());
   *p_db_length= impl_->schema->size();
   return false;
 }

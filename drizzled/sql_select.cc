@@ -999,14 +999,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_parts=keyparts;
   j->ref.key_length=length;
   j->ref.key=(int) key;
-  if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
-               (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
-  {
-    return(true);
-  }
+  j->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(length)*2);
+  j->ref.key_copy= (StoredKey**) session->mem.allocate((sizeof(StoredKey*) * (keyparts+1)));
+  j->ref.items=    (Item**) session->mem.allocate(sizeof(Item*)*keyparts);
+  j->ref.cond_guards= (bool**) session->mem.allocate(sizeof(uint*)*keyparts);
   j->ref.key_buff2=j->ref.key_buff+ALIGN_SIZE(length);
   j->ref.key_err=1;
   j->ref.null_rejecting= 0;
@@ -5638,9 +5634,7 @@ Order *create_distinct_group(Session *session,
         if ((*ord_iter->item)->eq(item, 1))
           goto next_item;
 
-      Order *ord=(Order*) session->calloc(sizeof(Order));
-      if (!ord)
-        return 0;
+      Order *ord=(Order*) session->mem.calloc(sizeof(Order));
 
       /*
         We have here only field_list (not all_field_list), so we can use
