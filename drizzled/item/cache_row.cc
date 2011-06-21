@@ -86,19 +86,18 @@ Item **Item_cache_row::addr(uint32_t i)
 }
 
 
-bool Item_cache_row::allocate(uint32_t num)
+void Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
   values= (Item_cache **) getSession().mem.calloc(sizeof(Item_cache *)*item_count);
-  return false; // return void
 }
 
 
 bool Item_cache_row::setup(Item * item)
 {
   example= item;
-  if (!values && allocate(item->cols()))
-    return 1;
+  if (!values)
+    allocate(item->cols());
   for (uint32_t i= 0; i < item_count; i++)
   {
     Item *el= item->element_index(i);

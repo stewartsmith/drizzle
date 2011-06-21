@@ -37,7 +37,7 @@ public:
     'allocate' used only in row transformer, to preallocate space for row
     cache.
   */
-  bool allocate(uint32_t num);
+  void allocate(uint32_t num);
   /*
     'setup' is needed only by row => it not called by simple row subselect
     (only by IN subselect (in subselect optimizer))
