@@ -1609,16 +1609,14 @@ void Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
   add_to_list(session, order_list, item, asc);
 }
 
-bool Select_Lex::add_item_to_list(Session *, Item *item)
+void Select_Lex::add_item_to_list(Session *, Item *item)
 {
 	item_list.push_back(item);
-  return false; // return void
 }
 
-bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
   add_to_list(session, group_list, item, asc);
-  return false; // return void
 }
 
 Select_Lex_Unit* Select_Lex::master_unit()
@@ -1658,13 +1656,10 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-
-bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
+void Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
-  if (ref_pointer_array)
-    return false;
-  ref_pointer_array= (Item **)session->mem.alloc(sizeof(Item*) * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)*5);
-  return false; // return void
+  if (not ref_pointer_array)
+    ref_pointer_array= (Item **)session->mem.alloc(sizeof(Item*) * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)*5);
 }
 
 void Select_Lex_Unit::print(String *str)

@@ -377,15 +377,13 @@ int Join::prepare(Item ***rref_pointer_array,
   }
 
 
-  if (setup_wild(session, fields_list, &all_fields, wild_num) ||
-      select_lex->setup_ref_array(session, og_num) ||
-      setup_fields(session, (*rref_pointer_array), fields_list, MARK_COLUMNS_READ,
-       &all_fields, 1) ||
-      setup_without_group(session, (*rref_pointer_array), tables_list,
-        select_lex->leaf_tables, fields_list,
-        all_fields, &conds, order, group_list,
-        &hidden_group_fields))
-    return(-1);
+  if (setup_wild(session, fields_list, &all_fields, wild_num))
+    return -1;
+  select_lex->setup_ref_array(session, og_num);
+  if (setup_fields(session, *rref_pointer_array, fields_list, MARK_COLUMNS_READ, &all_fields, 1) ||
+    setup_without_group(session, *rref_pointer_array, tables_list, select_lex->leaf_tables, fields_list,
+    all_fields, &conds, order, group_list, &hidden_group_fields))
+    return -1;
 
   ref_pointer_array= *rref_pointer_array;
 

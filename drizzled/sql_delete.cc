@@ -90,16 +90,15 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     tables.table = table;
     tables.alias = table_list->alias;
 
-      if (select_lex->setup_ref_array(session, order->elements) ||
-	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (Order*) order->first))
-      {
-        delete select;
-        free_underlaid_joins(session, &session->lex().select_lex);
-        DRIZZLE_DELETE_DONE(1, 0);
+    select_lex->setup_ref_array(session, order->elements);
+    if (setup_order(session, select_lex->ref_pointer_array, &tables, fields, all_fields, (Order*) order->first))
+    {
+      delete select;
+      free_underlaid_joins(session, &session->lex().select_lex);
+      DRIZZLE_DELETE_DONE(1, 0);
 
-        return true;
-      }
+      return true;
+    }
   }
 
   const_cond= (!conds || conds->const_item());

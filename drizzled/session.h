@@ -1032,10 +1032,10 @@ public:
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
   void my_eof();
-  bool add_item_to_list(Item *item);
-  bool add_value_to_list(Item *value);
-  bool add_order_to_list(Item *item, bool asc);
-  bool add_group_to_list(Item *item, bool asc);
+  void add_item_to_list(Item *item);
+  void add_value_to_list(Item *value);
+  void add_order_to_list(Item *item, bool asc);
+  void add_group_to_list(Item *item, bool asc);
 
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);

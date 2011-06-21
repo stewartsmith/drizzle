@@ -396,10 +396,8 @@ static bool plugin_load_list(module::Registry &registry,
   return false;
 }
 
-
 void module_shutdown(module::Registry &registry)
 {
-
   if (initialized)
   {
     reap_needed= true;

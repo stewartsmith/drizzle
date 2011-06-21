@@ -338,26 +338,24 @@ session::Transactions& statement::Statement::transaction()
 	return session().transaction;
 }
 
-bool Session::add_item_to_list(Item *item)
+void Session::add_item_to_list(Item *item)
 {
-  return lex().current_select->add_item_to_list(this, item);
+  lex().current_select->add_item_to_list(this, item);
 }
 
-bool Session::add_value_to_list(Item *value)
+void Session::add_value_to_list(Item *value)
 {
 	lex().value_list.push_back(value);
-  return false;
 }
 
-bool Session::add_order_to_list(Item *item, bool asc)
+void Session::add_order_to_list(Item *item, bool asc)
 {
   lex().current_select->add_order_to_list(this, item, asc);
-  return false; // return void
 }
 
-bool Session::add_group_to_list(Item *item, bool asc)
+void Session::add_group_to_list(Item *item, bool asc)
 {
-  return lex().current_select->add_group_to_list(this, item, asc);
+  lex().current_select->add_group_to_list(this, item, asc);
 }
 
 void Session::free_items()
