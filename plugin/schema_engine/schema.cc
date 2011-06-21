@@ -50,11 +50,15 @@
 using namespace std;
 using namespace drizzled;
 
+const char* MY_DB_OPT_FILE= "db.opt";
+const char* DEFAULT_FILE_EXTENSION= ".dfe"; // Deep Fried Elephant
 
-#define MY_DB_OPT_FILE "db.opt"
-#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
+static const char* g_schema_exts[] = 
+{
+  NULL
+};
 
-Schema::Schema():
+Schema::Schema() :
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
@@ -63,10 +67,6 @@ Schema::Schema():
   schema_cache_filled(false)
 {
   table_definition_ext= DEFAULT_FILE_EXTENSION;
-}
-
-Schema::~Schema()
-{
 }
 
 void Schema::prime()
@@ -87,13 +87,9 @@ void Schema::prime()
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-      assert(not ret.second); // If this has happened, something really bad is going down.
+      assert(ret.second); // If this has happened, something really bad is going down.
     }
   }
-}
-
-void Schema::startup(drizzled::Session &)
-{
 }
 
 void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
@@ -140,7 +136,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   pair<SchemaCache::iterator, bool> ret= 
     schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-  assert(not ret.second); // If this has happened, something really bad is going down.
+  assert(ret.second); // If this has happened, something really bad is going down.
   return true;
 }
 
@@ -196,10 +192,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
     pair<SchemaCache::iterator, bool> ret=
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-    if (ret.second == false)
-    {
-      abort(); // If this has happened, something really bad is going down.
-    }
+    assert(ret.second); // If this has happened, something really bad is going down.
   }
 
   return true;
@@ -319,4 +312,9 @@ void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
                                    drizzled::identifier::table::vector&)
 {
+}
+
+const char** Schema::bas_ext() const
+{
+  return g_schema_exts;
 }
