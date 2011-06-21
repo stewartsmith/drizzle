@@ -28,8 +28,8 @@ using namespace drizzled;
 ForeignKeysTool::ForeignKeysTool() :
   plugin::TableFunction("DATA_DICTIONARY", "FOREIGN_KEYS")
 {
-  add_field("CONSTRAINT_SCHEMA");
-  add_field("CONSTRAINT_TABLE");
+  add_field("CONSTRAINT_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CONSTRAINT_TABLE", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("CONSTRAINT_NAME");
   add_field("CONSTRAINT_COLUMNS");
 

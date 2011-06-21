@@ -237,36 +237,18 @@ int io_cache_st::init_io_cache(int file_arg, size_t cachesize,
   {
     /* Retry allocating memory in smaller blocks until we get one */
     cachesize= ((cachesize + min_cache-1) & ~(min_cache-1));
-    for (;;)
+    if (cachesize < min_cache)
+      cachesize = min_cache;
+    size_t buffer_block= cachesize;
+    if (type_arg == READ_CACHE && not global_read_buffer.add(buffer_block))
     {
-      size_t buffer_block;
-      if (cachesize < min_cache)
-	cachesize = min_cache;
-      buffer_block= cachesize;
-      if ((type_arg == READ_CACHE) and (not global_read_buffer.add(buffer_block)))
-      {
-        my_error(ER_OUT_OF_GLOBAL_READMEMORY, MYF(ME_ERROR+ME_WAITTANG));
-        return 2;
-      }
-
-      if ((buffer=
-	   (unsigned char*) malloc(buffer_block)) != 0) // todo: remove malloc check
-      {
-	write_buffer=buffer;
-	alloced_buffer= true;
-	break;					/* Enough memory found */
-      }
-      if (cachesize == min_cache)
-      {
-        if (type_arg == READ_CACHE)
-          global_read_buffer.sub(buffer_block);
-	return 2;				/* Can't alloc cache */
-      }
-      /* Try with less memory */
-      if (type_arg == READ_CACHE)
-        global_read_buffer.sub(buffer_block);
-      cachesize= (cachesize*3/4 & ~(min_cache-1));
+      my_error(ER_OUT_OF_GLOBAL_READMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+      return 2;
     }
+
+    buffer= (unsigned char*) malloc(buffer_block);
+    write_buffer=buffer;
+    alloced_buffer= true;
   }
 
   read_length=buffer_length=cachesize;

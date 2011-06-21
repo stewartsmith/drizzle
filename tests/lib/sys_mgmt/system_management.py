@@ -43,6 +43,7 @@ from uuid import uuid4
 from lib.sys_mgmt.port_management import portManager
 from lib.sys_mgmt.logging_management import loggingManager
 from lib.sys_mgmt.time_management import timeManager
+from lib.sys_mgmt.code_management import codeManager
 
 class systemManager:
     """Class to deal with the basics of system-level interaction
@@ -85,9 +86,13 @@ class systemManager:
         
         self.port_manager = portManager(self,variables['debug'])
         self.time_manager = timeManager(self)
+
+        # use our code_manager to handle the various basedirs 
+        # we have been passed
+        self.code_manager = codeManager(self, variables)
                    
         # Make sure the tree we are testing looks good
-        self.code_tree = self.get_code_tree(variables, tree_type)
+        self.code_tree = self.code_manager.code_trees['drizzle'][0]
 
         self.ld_lib_paths = self.join_env_var_values(self.code_tree.ld_lib_paths)
 
@@ -140,37 +145,6 @@ class systemManager:
      
         self.logging.debug_class(self)
         
-    def get_code_tree(self, variables, tree_type):
-        """Find out the important files, directories, and env. vars
-           for a particular type of tree.  We import a definition module
-           depending on the tree_type.  The module lets us know
-           what to look for, etc
-
-        """
-        
-        # Import the appropriate module that defines
-        # where we find what we need depending on 
-        # tree type
-        test_tree = self.process_tree_type(tree_type, variables)
-        return test_tree
-
-    def process_tree_type(self, tree_type, variables):
-        """Import the appropriate module depending on the type of tree
-           we are testing. 
-
-           Drizzle is the only supported type currently
-
-        """
-
-        self.logging.verbose("Processing source tree under test...")
-        if tree_type == 'drizzle':
-            # base_case
-            from lib.sys_mgmt.codeTree import drizzleTree
-            test_tree = drizzleTree(variables,self)
-            return test_tree
-        else:
-            self.logging.error("Tree_type: %s not supported yet" %(tree_type))
-            sys.exit(1)        
 
     
     def create_dirset(self, rootdir, dirset):

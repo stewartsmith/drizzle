@@ -249,27 +249,28 @@ class crashmeTestExecutor(sqlbenchTestExecutor):
         self.current_test_exec_time = execution_time
 
     def process_crashme_output(self):
-        infile_name = self.current_test_output.split('\n')[3].split(':')[1].strip()
-        inf= open(infile_name, "r")
-        inlines= inf.readlines()
-        error_flag= False
-        in_error_section = False
-        # crash-me is quite chatty and we don't normally want to sift
-        # through ALL of that stuff.  We do allow seeing it via --verbose
-        if not self.verbose:
-            self.current_test_output = ''
-        for inline in inlines:
-            if in_error_section and not inline.strip().startswith('#'):
-                in_error_section = False
-            if '=error' in inline:
-                error_flag= True
-                in_error_section= True
-            if in_error_section:
-                self.current_test_output += inline
-        inf.close()                
-        if self.current_test_retcode == 0 and not error_flag:
-            return 'pass'
-        else:
-            return 'fail'
+        if self.current_test_retcode == 0:
+            infile_name = self.current_test_output.split('\n')[3].split(':')[1].strip()
+            inf= open(infile_name, "r")
+            inlines= inf.readlines()
+            error_flag= False
+            in_error_section = False
+            # crash-me is quite chatty and we don't normally want to sift
+            # through ALL of that stuff.  We do allow seeing it via --verbose
+            if not self.verbose:
+                self.current_test_output = ''
+            for inline in inlines:
+                if in_error_section and not inline.strip().startswith('#'):
+                    in_error_section = False
+                if '=error' in inline:
+                    error_flag= True
+                    in_error_section= True
+                if in_error_section:
+                    self.current_test_output += inline
+            inf.close()                
+            if not error_flag:
+                return 'pass'
+        
+        return 'fail'
 
         

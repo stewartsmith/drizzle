@@ -27,12 +27,12 @@ using namespace drizzled;
 TableConstraints::TableConstraints() :
   InformationSchema("TABLE_CONSTRAINTS")
 {
-  add_field("CONSTRAINT_CATALOG");
-  add_field("CONSTRAINT_SCHEMA");
-  add_field("CONSTRAINT_NAME");
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("CONSTRAINT_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CONSTRAINT_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CONSTRAINT_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("CONSTRAINT_TYPE");
   add_field("IS_DEFERRABLE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("INITIALLY_DEFERRED", plugin::TableFunction::BOOLEAN, 0, false);
