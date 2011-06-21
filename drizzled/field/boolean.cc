@@ -71,7 +71,7 @@ int Boolean::store(const char *from, uint32_t length, const charset_info_st * co
 int Boolean::store(int64_t nr, bool)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  set(nr);
+  set(nr != 0);
   return 0;
 }
 
