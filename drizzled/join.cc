@@ -1349,24 +1349,21 @@ int Join::reinit()
 */
 bool Join::init_save_join_tab()
 {
-  if (!(tmp_join= (Join*)session->getMemRoot()->allocate(sizeof(Join))))
-    return 1;
+  tmp_join= (Join*)session->mem.allocate(sizeof(Join));
 
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
 
-  return 0;
+  return 0; // return void
 }
 
 bool Join::save_join_tab()
 {
   if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
-    if (!(join_tab_save= (JoinTable*)session->getMemRoot()->duplicate((unsigned char*) join_tab,
-            sizeof(JoinTable) * tables)))
-      return 1;
+    join_tab_save= (JoinTable*)session->mem.memdup(join_tab, sizeof(JoinTable) * tables);
   }
-  return 0;
+  return 0; // return void
 }
 
 /**
@@ -4828,11 +4825,7 @@ static bool make_join_select(Join *join,
       if (tmp || !cond || tab->type == AM_REF || tab->type == AM_REF_OR_NULL ||
           tab->type == AM_EQ_REF)
       {
-        optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)
-            session->getMemRoot()->duplicate((unsigned char*) select,
-              sizeof(*select)));
-        if (! sel)
-          return 1;			// End of memory
+        optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)session->mem.memdup(select, sizeof(*select)));
         /*
            If tab is an inner table of an outer join operation,
            add a match guard to the pushed down predicate.
@@ -4966,8 +4959,7 @@ static bool make_join_select(Join *join,
                                          current_map,
                                          current_map, 0)))
             {
-              tab->cache.select= (optimizer::SqlSelect*)
-                session->getMemRoot()->duplicate((unsigned char*) sel, sizeof(optimizer::SqlSelect));
+              tab->cache.select= (optimizer::SqlSelect*)session->mem.memdup(sel, sizeof(optimizer::SqlSelect));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }

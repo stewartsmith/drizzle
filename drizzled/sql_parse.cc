@@ -976,8 +976,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
-      return NULL;
+    alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 

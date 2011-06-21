@@ -1037,7 +1037,7 @@ bool Field::optimize_range(uint32_t idx, uint32_t)
 
 Field *Field::new_field(memory::Root *root, Table *new_table, bool)
 {
-  Field* tmp= (Field*) root->memdup_root((char*) this,size_of());
+  Field* tmp= (Field*) root->memdup(this,size_of());
   if (tmp->table->maybe_null)
     tmp->flags&= ~NOT_NULL_FLAG;
   tmp->table= new_table;
@@ -1064,7 +1064,7 @@ Field *Field::new_key_field(memory::Root *root, Table *new_table,
 
 Field *Field::clone(memory::Root *root, Table *new_table)
 {
-  Field *tmp= (Field*) root->memdup_root((char*) this,size_of());
+  Field *tmp= (Field*) root->memdup(this,size_of());
   tmp->init(new_table);
   tmp->move_field_offset((ptrdiff_t) (new_table->getInsertRecord() - new_table->getDefaultValues()));
   return tmp;

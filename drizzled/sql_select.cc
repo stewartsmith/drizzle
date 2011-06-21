@@ -5597,11 +5597,10 @@ Order *create_distinct_group(Session *session,
                                 bool *all_order_by_fields_used)
 {
   List<Item>::iterator li(fields.begin());
-  Item *item;
   Order *order,*group,**prev;
 
   *all_order_by_fields_used= 1;
-  while ((item=li++))
+  while (Item* item=li++)
     item->marker=0;			/* Marker that field is not used */
 
   prev= &group;  group=0;
@@ -5609,9 +5608,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
-      if (!ord)
-        return 0;
+      Order *ord=(Order*) session->mem.memdup(order,sizeof(Order));
       *prev=ord;
       prev= &ord->next;
       (*ord->item)->marker=1;
@@ -5621,7 +5618,7 @@ Order *create_distinct_group(Session *session,
   }
 
   li= fields.begin();
-  while ((item=li++))
+  while (Item* item=li++)
   {
     if (!item->const_item() && !item->with_sum_func && !item->marker)
     {

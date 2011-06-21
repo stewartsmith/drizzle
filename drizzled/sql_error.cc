@@ -67,7 +67,7 @@ namespace drizzled {
 */
 void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 {
-  msg= session->warn_root.strdup_root(msg_arg);
+  msg= session->warn_root.strdup(msg_arg);
 }
 
 /*

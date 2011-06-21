@@ -426,15 +426,13 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
-    session->mem_root->reset_root_defaults(session->variables.query_alloc_block_size,
-                                           session->variables.query_prealloc_size);
+    session->mem.reset_defaults(session->variables.query_alloc_block_size, session->variables.query_prealloc_size);
 }
 
 
 static void fix_server_id(Session *, sql_var_t)
 {
 }
-
 
 void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val)
 {

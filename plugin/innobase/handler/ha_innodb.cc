@@ -7903,8 +7903,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
                               tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
                               tmp_foreign_fields, tmp_referenced_fields);
 
-    ForeignKeyInfo *pf_key_info = (ForeignKeyInfo *)
-      session->getMemRoot()->duplicate(&f_key_info, sizeof(ForeignKeyInfo));
+    ForeignKeyInfo *pf_key_info = (ForeignKeyInfo*)session->mem.memdup(&f_key_info, sizeof(ForeignKeyInfo));
     f_key_list->push_back(pf_key_info);
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
   }

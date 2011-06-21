@@ -4015,13 +4015,11 @@ optimizer::get_quick_select(Parameter *param,
       quick->mrr_buf_size= mrr_buf_size;
       if (parent_alloc)
       {
-        quick->key_parts=(KEY_PART*)
-          parent_alloc->memdup_root( (char*) param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
+        quick->key_parts= (KEY_PART*)parent_alloc->memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
       }
       else
       {
-        quick->key_parts=(KEY_PART*)
-          quick->alloc.memdup_root((char*) param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
+        quick->key_parts= (KEY_PART*)quick->alloc.memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
       }
     }
   }

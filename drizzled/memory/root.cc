@@ -76,7 +76,7 @@ void memory::Root::init(size_t block_size_arg)
  *                        must be equal to or greater than block size,
  *                        otherwise means 'no prealloc'.
  */
-void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_size)
+void memory::Root::reset_defaults(size_t block_size_arg, size_t pre_alloc_size)
 {
   block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
   if (pre_alloc_size)
@@ -326,7 +326,7 @@ void memory::Root::free_root(myf MyFlags)
  * Duplicate a null-terminated string into memory allocated from within the
  * specified Root
  */
-char *memory::Root::strdup_root(const char *str)
+char *memory::Root::strdup(const char *str)
 {
   return strmake(str, strlen(str));
 }
@@ -359,7 +359,7 @@ char *memory::Root::strmake(const char *str, size_t len)
  * non-NULL pointer to a copy of the data if memory could be allocated, otherwise
  * NULL
  */
-void *memory::Root::memdup_root(const void *str, size_t len)
+void *memory::Root::memdup(const void *str, size_t len)
 {
   void *pos= this->alloc_root(len);
   memcpy(pos, str, len);
