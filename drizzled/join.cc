@@ -1225,8 +1225,7 @@ int Join::optimize()
       if (!group_list && ! exec_tmp_table1->distinct && order && simple_order)
       {
         session->set_proc_info("Sorting for order");
-        if (create_sort_index(session, this, order,
-                              HA_POS_ERROR, HA_POS_ERROR, true))
+        if (create_sort_index(session, this, order, HA_POS_ERROR, HA_POS_ERROR, true))
         {
           return 1;
         }
@@ -1266,12 +1265,8 @@ int Join::optimize()
       If this join belongs to an uncacheable subquery save
       the original join
     */
-    if (select_lex->uncacheable.any() && 
-        ! is_top_level_join() &&
-        init_save_join_tab())
-    {
-      return -1;
-    }
+    if (select_lex->uncacheable.any() && not is_top_level_join())
+      init_save_join_tab();
   }
 
   error= 0;
@@ -1347,23 +1342,20 @@ int Join::reinit()
    @retval 0      success.
    @retval 1      error occurred.
 */
-bool Join::init_save_join_tab()
+void Join::init_save_join_tab()
 {
   tmp_join= (Join*)session->mem.allocate(sizeof(Join));
 
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
-
-  return 0; // return void
 }
 
-bool Join::save_join_tab()
+void Join::save_join_tab()
 {
   if (! join_tab_save && select_lex->master_unit()->uncacheable.any())
   {
     join_tab_save= (JoinTable*)session->mem.memdup(join_tab, sizeof(JoinTable) * tables);
   }
-  return 0; // return void
 }
 
 /**
@@ -1617,12 +1609,9 @@ void Join::exec()
       if (curr_join->group_list)
       {
         session->set_proc_info("Creating sort index");
-        if (curr_join->join_tab == join_tab && save_join_tab())
-        {
-          return;
-        }
-        if (create_sort_index(session, curr_join, curr_join->group_list,
-                  HA_POS_ERROR, HA_POS_ERROR, false) ||
+        if (curr_join->join_tab == join_tab)
+          save_join_tab();
+        if (create_sort_index(session, curr_join, curr_join->group_list, HA_POS_ERROR, HA_POS_ERROR, false) ||
             make_group_fields(this, curr_join))
         {
           return;
@@ -1805,8 +1794,8 @@ void Join::exec()
           }
         }
       }
-      if (curr_join->join_tab == join_tab && save_join_tab())
-        return;
+      if (curr_join->join_tab == join_tab)
+        save_join_tab();
       /*
         Here we sort rows for order_st BY/GROUP BY clause, if the optimiser
         chose FILESORT to be faster than INDEX SCAN or there is no

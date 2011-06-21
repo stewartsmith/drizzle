@@ -2275,10 +2275,9 @@ subselect_single_select_engine::save_join_if_explain()
     */
     select_lex->uncacheable.set(UNCACHEABLE_EXPLAIN);
     select_lex->master_unit()->uncacheable.set(UNCACHEABLE_EXPLAIN);
-    if (join->init_save_join_tab())
-      return true;
+    join->init_save_join_tab();
   }
-  return false;
+  return false; // return void
 }
 
 
