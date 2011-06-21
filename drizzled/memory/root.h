@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstring>
 #include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
 #include <drizzled/visibility.h>
@@ -109,11 +107,7 @@ public:
   unsigned int first_block_usage;
 
   void reset_defaults(size_t block_size, size_t prealloc_size);
-  void *alloc_root(size_t Size);
-  inline void *allocate(size_t Size)
-  {
-    return alloc_root(Size);
-  }
+  void* alloc(size_t Size);
   void mark_blocks_free();
   void* memdup(const void*, size_t);
   char* strdup(const char*);
@@ -128,7 +122,12 @@ public:
     return min_malloc != 0;
   }
   void free_root(myf MyFLAGS);
-  void *multi_alloc_root(int unused, ...);
+  void* multi_alloc_root(int unused, ...);
+
+  void* alloc_root(size_t Size)
+  {
+    return alloc(Size);
+  }
 
   void* calloc(size_t size)
   {

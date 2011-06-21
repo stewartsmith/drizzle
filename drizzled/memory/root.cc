@@ -137,14 +137,14 @@ void Root::reset_defaults(size_t block_size_arg, size_t pre_alloc_size)
  * @todo Would this be more suitable as a member function on the
  * Root class?
  */
-void* Root::alloc_root(size_t length)
+void* Root::alloc(size_t length)
 {
   internal::UsedMemory *next= NULL;
-  internal::UsedMemory **prev;
   assert(alloc_root_inited());
 
   length= ALIGN_SIZE(length);
-  if ((*(prev= &this->free)) != NULL)
+  internal::UsedMemory **prev= &this->free;
+  if (*prev)
   {
     if ((*prev)->left < length &&
 	this->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
@@ -156,15 +156,13 @@ void* Root::alloc_root(size_t length)
       this->used= next;
       this->first_block_usage= 0;
     }
-    for (next= *prev ; next && next->left < length ; next= next->next)
+    for (next= *prev; next && next->left < length; next= next->next)
       prev= &next->next;
   }
   if (! next)
   {						/* Time to alloc new block */
-    size_t get_size, tmp_block_size;
-
-    tmp_block_size= this->block_size * (this->block_num >> 2);
-    get_size= length+ALIGN_SIZE(sizeof(internal::UsedMemory));
+    size_t tmp_block_size= this->block_size * (this->block_num >> 2);
+    size_t get_size= length+ALIGN_SIZE(sizeof(internal::UsedMemory));
     get_size= max(get_size, tmp_block_size);
 
     next = static_cast<internal::UsedMemory *>(malloc(get_size));
@@ -290,8 +288,6 @@ void Root::mark_blocks_free()
  */
 void Root::free_root(myf MyFlags)
 {
-  internal::UsedMemory *next,*old;
-
   if (MyFlags & MARK_BLOCKS_FREE)
   {
     this->mark_blocks_free();
@@ -300,15 +296,17 @@ void Root::free_root(myf MyFlags)
   if (!(MyFlags & KEEP_PREALLOC))
     this->pre_alloc=0;
 
-  for (next=this->used; next ;)
+  for (internal::UsedMemory* next= this->used; next;)
   {
-    old=next; next= next->next ;
+    internal::UsedMemory* old =next; 
+    next= next->next;
     if (old != this->pre_alloc)
       std::free(old);
   }
-  for (next=this->free ; next ;)
+  for (internal::UsedMemory* next=this->free; next;)
   {
-    old=next; next= next->next;
+    internal::UsedMemory* old= next; 
+    next= next->next;
     if (old != this->pre_alloc)
       std::free(old);
   }

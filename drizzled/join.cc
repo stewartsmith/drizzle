@@ -104,7 +104,7 @@ static bool best_extension_by_limited_search(Join *join,
                                              uint32_t depth,
                                              uint32_t prune_level);
 static uint32_t determine_search_depth(Join* join);
-static bool make_simple_join(Join *join,Table *tmp_table);
+static void make_simple_join(Join*, Table*);
 static void make_outerjoin_info(Join *join);
 static bool make_join_select(Join *join, optimizer::SqlSelect *select,COND *item);
 static void make_join_readinfo(Join&);
@@ -1344,7 +1344,7 @@ int Join::reinit()
 */
 void Join::init_save_join_tab()
 {
-  tmp_join= (Join*)session->mem.allocate(sizeof(Join));
+  tmp_join= (Join*)session->mem.alloc(sizeof(Join));
 
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
@@ -1565,8 +1565,7 @@ void Join::exec()
     {         /* Must copy to another table */
       /* Free first data from old join */
       curr_join->join_free();
-      if (make_simple_join(curr_join, curr_tmp_table))
-        return;
+      make_simple_join(curr_join, curr_tmp_table);
       calc_group_buffer(curr_join, group_list);
       count_field_types(select_lex, &curr_join->tmp_table_param,
       curr_join->tmp_all_fields1,
@@ -1687,8 +1686,7 @@ void Join::exec()
       curr_join->select_distinct=0;
     }
     curr_tmp_table->reginfo.lock_type= TL_UNLOCK;
-    if (make_simple_join(curr_join, curr_tmp_table))
-      return;
+    make_simple_join(curr_join, curr_tmp_table);
     calc_group_buffer(curr_join, curr_join->group_list);
     count_field_types(select_lex, &curr_join->tmp_table_param, *curr_all_fields, 0);
 
@@ -2226,7 +2224,6 @@ bool Join::make_sum_func_list(List<Item> &field_list,
 /** Allocate memory needed for other rollup functions. */
 bool Join::rollup_init()
 {
-  Item **ref_array;
 
   tmp_table_param.quick_group= 0; // Can't create groups in tmp table
   rollup.setState(Rollup::STATE_INITED);
@@ -2237,19 +2234,10 @@ bool Join::rollup_init()
   */
   tmp_table_param.group_parts= send_group_parts;
 
-  rollup.setNullItems((Item_null_result**) session->getMemRoot()->allocate((sizeof(Item*) +
-                                                                sizeof(Item**) +
-                                                                sizeof(List<Item>) +
-                                                                ref_pointer_array_size)
-                                                               * send_group_parts ));
-  if (! rollup.getNullItems())
-  {
-    return 1;
-  }
-
+  rollup.setNullItems((Item_null_result**) session->mem.alloc((sizeof(Item*) + sizeof(Item**) + sizeof(List<Item>) + ref_pointer_array_size) * send_group_parts));
   rollup.setFields((List<Item>*) (rollup.getNullItems() + send_group_parts));
   rollup.setRefPointerArrays((Item***) (rollup.getFields() + send_group_parts));
-  ref_array= (Item**) (rollup.getRefPointerArrays()+send_group_parts);
+  Item** ref_array= (Item**) (rollup.getRefPointerArrays()+send_group_parts);
 
   /*
     Prepare space for field list for the different levels
@@ -2273,8 +2261,7 @@ bool Join::rollup_init()
   }
 
   List<Item>::iterator it(all_fields.begin());
-  Item *item;
-  while ((item= it++))
+  while (Item* item= it++)
   {
     Order *group_tmp;
     bool found_in_group= 0;
@@ -3381,9 +3368,7 @@ static bool get_best_combination(Join *join)
   optimizer::Position cur_pos;
 
   table_count=join->tables;
-  if (!(join->join_tab=join_tab=
-  (JoinTable*) session->getMemRoot()->allocate(sizeof(JoinTable)*table_count)))
-    return(true);
+  join->join_tab=join_tab= (JoinTable*) session->mem.alloc(sizeof(JoinTable)*table_count);
 
   for (i= 0; i < table_count; i++)
     new (join_tab+i) JoinTable();
@@ -4529,33 +4514,27 @@ static uint32_t determine_search_depth(Join *join)
   return search_depth;
 }
 
-static bool make_simple_join(Join *join,Table *tmp_table)
+static void make_simple_join(Join *join,Table *tmp_table)
 {
-  Table **tableptr;
-  JoinTable *join_tab;
-
   /*
     Reuse Table * and JoinTable if already allocated by a previous call
     to this function through Join::exec (may happen for sub-queries).
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (Table**) join->session->getMemRoot()->allocate(sizeof(Table*))))
-      return(true);
+    join->table_reexec= (Table**) join->session->mem.alloc(sizeof(Table*));
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
   }
   if (!join->join_tab_reexec)
   {
-    if (!(join->join_tab_reexec=
-          (JoinTable*) join->session->getMemRoot()->allocate(sizeof(JoinTable))))
-      return(true);
+    join->join_tab_reexec= (JoinTable*) join->session->mem.alloc(sizeof(JoinTable));
     new (join->join_tab_reexec) JoinTable();
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }
-  tableptr= join->table_reexec;
-  join_tab= join->join_tab_reexec;
+  Table** tableptr= join->table_reexec;
+  JoinTable* join_tab= join->join_tab_reexec;
 
   join->join_tab=join_tab;
   join->table=tableptr; tableptr[0]=tmp_table;
@@ -4589,8 +4568,6 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   join_tab->read_record.init();
   tmp_table->status=0;
   tmp_table->null_row=0;
-
-  return false;
 }
 
 /**
@@ -5084,7 +5061,7 @@ static void make_join_readinfo(Join& join)
 
     if (tab->insideout_match_tab)
     {
-      tab->insideout_buf= (unsigned char*) join.session->getMemRoot()->allocate(tab->table->key_info[tab->index].key_length);
+      tab->insideout_buf= (unsigned char*) join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
     }
 
     optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
@@ -5640,8 +5617,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->mem.allocate(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->mem.allocate(sizeof(Table*)*(table_count*2));
+  stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;
 

@@ -1625,7 +1625,6 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
 int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 {
-  TableList *table;
   Session *session= this;
 
   /*
@@ -1638,23 +1637,19 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
     return 0;
 
   assert(session->open_tables.lock == 0);	// You must lock everything at once
-  Table **start,**ptr;
   uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
-  if (!(ptr=start=(Table**) session->getMemRoot()->allocate(sizeof(Table*)*count)))
-    return -1;
-
-  for (table= tables; table; table= table->next_global)
+  Table** start;
+  Table** ptr=start=(Table**) session->mem.alloc(sizeof(Table*)*count);
+  for (TableList* table= tables; table; table= table->next_global)
   {
     if (!table->placeholder())
       *(ptr++)= table->table;
   }
-
   if (not (session->open_tables.lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag)))
   {
     return -1;
   }
-
   return 0;
 }
 

@@ -580,7 +580,7 @@ public:
 
   bool add_item_to_list(Session *session, Item *item);
   bool add_group_to_list(Session *session, Item *item, bool asc);
-  bool add_order_to_list(Session *session, Item *item, bool asc);
+  void add_order_to_list(Session *session, Item *item, bool asc);
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
                                LEX_STRING *alias,

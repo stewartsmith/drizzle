@@ -574,7 +574,7 @@ void update_ref_and_keys(Session *session,
   sz= sizeof(optimizer::KeyField) *
       (((session->lex().current_select->cond_count+1)*2 +
 	session->lex().current_select->between_count)*m+1);
-  key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz);
+  key_fields= (optimizer::KeyField*) session->mem.alloc(sz);
   and_level= 0;
   field= end= key_fields;
 
@@ -1000,9 +1000,9 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   j->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(length)*2);
-  j->ref.key_copy= (StoredKey**) session->mem.allocate((sizeof(StoredKey*) * (keyparts+1)));
-  j->ref.items=    (Item**) session->mem.allocate(sizeof(Item*)*keyparts);
-  j->ref.cond_guards= (bool**) session->mem.allocate(sizeof(uint*)*keyparts);
+  j->ref.key_copy= (StoredKey**) session->mem.alloc((sizeof(StoredKey*) * (keyparts+1)));
+  j->ref.items=    (Item**) session->mem.alloc(sizeof(Item*)*keyparts);
+  j->ref.cond_guards= (bool**) session->mem.alloc(sizeof(uint*)*keyparts);
   j->ref.key_buff2=j->ref.key_buff+ALIGN_SIZE(length);
   j->ref.key_err=1;
   j->ref.null_rejecting= 0;
@@ -6252,10 +6252,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List<TableList>::iterator ti(tables->begin());
-  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
-                                                tables->size());
-  if (table == 0)
-    return;  // out of memory
+  TableList **table= (TableList **)session->mem.alloc(sizeof(TableList*) * tables->size());
 
   for (TableList **t= table + (tables->size() - 1); t >= table; t--)
     *t= ti++;

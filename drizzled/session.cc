@@ -351,7 +351,8 @@ bool Session::add_value_to_list(Item *value)
 
 bool Session::add_order_to_list(Item *item, bool asc)
 {
-  return lex().current_select->add_order_to_list(this, item, asc);
+  lex().current_select->add_order_to_list(this, item, asc);
+  return false; // return void
 }
 
 bool Session::add_group_to_list(Item *item, bool asc)
@@ -889,7 +890,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
+    lex_str= (LEX_STRING *)getMemRoot()->alloc(sizeof(LEX_STRING));
   lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
