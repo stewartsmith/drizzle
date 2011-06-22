@@ -93,15 +93,15 @@ static int imerge_list_or_list(optimizer::RangeParameter *param, List<optimizer:
      other Error
  */
 
-static int imerge_list_or_tree(optimizer::RangeParameter *param, List<optimizer::SEL_IMERGE> *im1, optimizer::SEL_TREE *tree)
+static int imerge_list_or_tree(optimizer::RangeParameter& param, List<optimizer::SEL_IMERGE>& im1, optimizer::SEL_TREE& tree)
 {
-  List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
+  List_iterator<optimizer::SEL_IMERGE> it(im1.begin());
   while (optimizer::SEL_IMERGE* imerge= it++)
   {
-    if (imerge->or_sel_tree_with_checks(*param, *tree))
+    if (imerge->or_sel_tree_with_checks(param, tree))
       it.remove();
   }
-  return im1->is_empty();
+  return im1.is_empty();
 }
 
 
@@ -197,7 +197,7 @@ optimizer::tree_or(optimizer::RangeParameter *param,
       if (param->remove_jump_scans && optimizer::remove_nonrange_trees(param, tree2))
          return(new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS));
       /* add tree2 to tree1->merges, checking if it collapses to ALWAYS */
-      if (imerge_list_or_tree(param, &tree1->merges, tree2))
+      if (imerge_list_or_tree(*param, tree1->merges, *tree2))
         result= new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS);
       else
         result= tree1;
