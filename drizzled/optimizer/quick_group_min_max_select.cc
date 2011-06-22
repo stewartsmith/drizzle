@@ -101,12 +101,12 @@ int optimizer::QuickGroupMinMaxSelect::init()
   if (group_prefix) /* Already initialized. */
     return 0;
 
-  last_prefix= (unsigned char*) alloc.alloc(group_prefix_len);
+  last_prefix= alloc.alloc(group_prefix_len);
   /*
     We may use group_prefix to store keys with all select fields, so allocate
     enough space for it.
   */
-  group_prefix= (unsigned char*) alloc.alloc(real_prefix_len + min_max_arg_len);
+  group_prefix= alloc.alloc(real_prefix_len + min_max_arg_len);
 
   if (key_infix_len > 0)
   {
@@ -114,7 +114,7 @@ int optimizer::QuickGroupMinMaxSelect::init()
       The memory location pointed to by key_infix will be deleted soon, so
       allocate a new buffer and copy the key_infix into it.
     */
-    unsigned char *tmp_key_infix= (unsigned char*) alloc.alloc(key_infix_len);
+    unsigned char *tmp_key_infix= alloc.alloc(key_infix_len);
     memcpy(tmp_key_infix, this->key_infix, key_infix_len);
     this->key_infix= tmp_key_infix;
   }

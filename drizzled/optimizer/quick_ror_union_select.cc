@@ -69,8 +69,8 @@ class optimizer::compare_functor
 
 int optimizer::QuickRorUnionSelect::init()
 {
-  queue= new priority_queue<QuickSelectInterface*, vector<QuickSelectInterface*>,  compare_functor>(compare_functor(this));
-  cur_rowid= (unsigned char*) alloc.alloc(2 * head->cursor->ref_length);
+  queue= new priority_queue<QuickSelectInterface*, vector<QuickSelectInterface*>, compare_functor>(compare_functor(this));
+  cur_rowid= alloc.alloc(2 * head->cursor->ref_length);
   prev_rowid= cur_rowid + head->cursor->ref_length;
   return 0; // return void
 }

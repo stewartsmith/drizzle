@@ -5059,7 +5059,7 @@ static void make_join_readinfo(Join& join)
 
     if (tab->insideout_match_tab)
     {
-      tab->insideout_buf= (unsigned char*) join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
+      tab->insideout_buf= join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
     }
 
     optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();

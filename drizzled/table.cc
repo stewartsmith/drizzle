@@ -1027,7 +1027,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     table->getMutableShare()->rec_buff_length= alloc_length;
-    table->record[0]= (unsigned char*) table->alloc(alloc_length*2);
+    table->record[0]= table->alloc(alloc_length*2);
     table->record[1]= table->getInsertRecord()+alloc_length;
     table->getMutableShare()->resizeDefaultValues(alloc_length);
   }

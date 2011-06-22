@@ -2286,19 +2286,17 @@ int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor,
     }
     else if ((**field).type() == DRIZZLE_TYPE_BLOB)
     {
-      if (blobroot == NULL)
-        (reinterpret_cast<Field_blob*>(*field))->set_ptr(length,
-                                      (unsigned char*)ib_col_get_value(tuple,
-                                                                       colnr));
+      if (not blobroot)
+        (reinterpret_cast<Field_blob*>(*field))->set_ptr(length, (unsigned char*)ib_col_get_value(tuple, colnr));
       else
       {
-        if (*blobroot == NULL)
+        if (not *blobroot)
         {
           *blobroot= new drizzled::memory::Root();
-          (**blobroot).init();
+          (*blobroot)->init();
         }
 
-        unsigned char *blob_ptr= (unsigned char*)(*blobroot)->alloc(length);
+        unsigned char *blob_ptr= (*blobroot)->alloc(length);
         memcpy(blob_ptr, ib_col_get_value(tuple, colnr), length);
         (reinterpret_cast<Field_blob*>(*field))->set_ptr(length, blob_ptr);
       }

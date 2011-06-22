@@ -2871,7 +2871,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
         field_length= length;
     }
     length+=offset;
-    min_str= (unsigned char*) alloc->alloc(length*2);
+    min_str= alloc->alloc(length*2);
     max_str=min_str+length;
     if (maybe_null)
       max_str[0]= min_str[0]=0;
@@ -3107,12 +3107,11 @@ get_mm_leaf(optimizer::RangeParameter *param,
     goto end;
   }
 
-  str= (unsigned char*) alloc->alloc(key_part->store_length+1);
+  str= alloc->alloc(key_part->store_length+1);
   if (maybe_null)
-    *str= (unsigned char) field->is_real_null();        // Set to 1 if null
+    *str= field->is_real_null();        // Set to 1 if null
   field->get_key_image(str+maybe_null, key_part->length);
-  if (! (tree= new (alloc) optimizer::SEL_ARG(field, str, str)))
-    goto end; // out of memory
+  tree= new (alloc) optimizer::SEL_ARG(field, str, str);
 
   /*
     Check if we are comparing an UNSIGNED integer with a negative constant.
@@ -3976,14 +3975,9 @@ optimizer::get_quick_select(Parameter *param,
     {
       quick->mrr_flags= mrr_flags;
       quick->mrr_buf_size= mrr_buf_size;
-      if (parent_alloc)
-      {
-        quick->key_parts= (KEY_PART*)parent_alloc->memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
-      }
-      else
-      {
-        quick->key_parts= (KEY_PART*)quick->alloc.memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
-      }
+      quick->key_parts= parent_alloc
+        ? (KEY_PART*)parent_alloc->memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts)
+        : (KEY_PART*)quick->alloc.memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
     }
   }
   return quick;

@@ -1637,7 +1637,7 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   records++;
 
-  record= (unsigned char*) outparam.alloc(rec_buff_length * records);
+  record= outparam.alloc(rec_buff_length * records);
 
   if (records == 0)
   {
