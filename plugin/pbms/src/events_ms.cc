@@ -100,7 +100,7 @@ static bool insertRecord(const char *db, const char *table_name, char *possible_
 		
 		if (length > org_length) {
 			// This can only happen if the BLOB URL is actually larger than the BLOB itself.
-			blob = (char *) session.getMemRoot()->allocate(length);
+			blob = (char *) session.mem.alloc(length);
 			memcpy(blob_rec+packlength, &blob, sizeof(char*));
 		}			
 		memcpy(blob, blob_url_buffer.bu_data, length);
