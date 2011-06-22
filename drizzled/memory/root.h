@@ -40,16 +40,15 @@ static const int KEEP_PREALLOC= 1;
 /* move used to free list and reuse them */
 static const int MARK_BLOCKS_FREE= 2;
 
-namespace internal {
-
-class UsedMemory
-{			   /* struct for once_alloc (block) */
-public:
-  UsedMemory *next;	   /* Next block in use */
-  size_t left;		   /* memory left in block  */            
-  size_t size;		   /* size of block */
-};
-
+namespace internal 
+{
+  class UsedMemory
+  {			   /* struct for once_alloc (block) */
+  public:
+    UsedMemory *next;	   /* Next block in use */
+    size_t left;		   /* memory left in block  */            
+    size_t size;		   /* size of block */
+  };
 }
 
 static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
@@ -57,7 +56,6 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 class DRIZZLED_API Root
 {
 public:
-
   Root() :
     free(0),
     used(0),
@@ -134,4 +132,9 @@ public:
 
 } /* namespace memory */
 } /* namespace drizzled */
+
+inline void* operator new(size_t size, drizzled::memory::Root& root)
+{
+  return root.alloc(size);
+}
 
