@@ -102,7 +102,7 @@ public:
      should be discarded.
      -1 - An error occurred
    */
-  int or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge);
+  int or_sel_imerge_with_checks(RangeParameter&, SEL_IMERGE&);
 
 };
 

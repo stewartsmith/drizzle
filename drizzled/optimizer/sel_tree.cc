@@ -75,15 +75,13 @@ bool optimizer::sel_trees_can_be_ored(const SEL_TREE& tree1, const SEL_TREE& tre
     other Error, both passed lists are unusable
 */
 
-static int imerge_list_or_list(optimizer::RangeParameter *param,
-                               List<optimizer::SEL_IMERGE> *im1,
-                               List<optimizer::SEL_IMERGE> *im2)
+static int imerge_list_or_list(optimizer::RangeParameter *param, List<optimizer::SEL_IMERGE> *im1, List<optimizer::SEL_IMERGE> *im2)
 {
   optimizer::SEL_IMERGE *imerge= &im1->front();
   im1->clear();
   im1->push_back(imerge);
 
-  return imerge->or_sel_imerge_with_checks(param, &im2->front());
+  return imerge->or_sel_imerge_with_checks(*param, im2->front());
 }
 
 
@@ -95,9 +93,7 @@ static int imerge_list_or_list(optimizer::RangeParameter *param,
      other Error
  */
 
-static int imerge_list_or_tree(optimizer::RangeParameter *param,
-                               List<optimizer::SEL_IMERGE> *im1,
-                               optimizer::SEL_TREE *tree)
+static int imerge_list_or_tree(optimizer::RangeParameter *param, List<optimizer::SEL_IMERGE> *im1, optimizer::SEL_TREE *tree)
 {
   List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
   while (optimizer::SEL_IMERGE* imerge= it++)

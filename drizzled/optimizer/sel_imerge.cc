@@ -80,11 +80,11 @@ int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter& pa
 }
 
 
-int optimizer::SEL_IMERGE::or_sel_imerge_with_checks(optimizer::RangeParameter *param, optimizer::SEL_IMERGE* imerge)
+int optimizer::SEL_IMERGE::or_sel_imerge_with_checks(RangeParameter& param, SEL_IMERGE& imerge)
 {
-  for (optimizer::SEL_TREE** tree= imerge->trees; tree != imerge->trees_next; tree++)
+  for (SEL_TREE** tree= imerge.trees; tree != imerge.trees_next; tree++)
   {
-    if (or_sel_tree_with_checks(*param, **tree))
+    if (or_sel_tree_with_checks(param, **tree))
       return 1;
   }
   return 0;
