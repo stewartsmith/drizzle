@@ -91,7 +91,7 @@ public:
      and (*this) should be discarded.
      -1  An error occurred.
    */
-  int or_sel_tree_with_checks(optimizer::RangeParameter *param, optimizer::SEL_TREE *new_tree);
+  int or_sel_tree_with_checks(RangeParameter&, SEL_TREE&);
 
   /*
      Perform OR operation on this index_merge and supplied index_merge list.

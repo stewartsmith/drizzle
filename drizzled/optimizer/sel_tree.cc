@@ -99,11 +99,10 @@ static int imerge_list_or_tree(optimizer::RangeParameter *param,
                                List<optimizer::SEL_IMERGE> *im1,
                                optimizer::SEL_TREE *tree)
 {
-  optimizer::SEL_IMERGE *imerge= NULL;
   List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
-  while ((imerge= it++))
+  while (optimizer::SEL_IMERGE* imerge= it++)
   {
-    if (imerge->or_sel_tree_with_checks(param, tree))
+    if (imerge->or_sel_tree_with_checks(*param, *tree))
       it.remove();
   }
   return im1->is_empty();
