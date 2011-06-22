@@ -34,11 +34,8 @@
 
 namespace drizzled {
 
-class Join :public memory::SqlAlloc
+class Join : public memory::SqlAlloc, boost::noncopyable
 {
-  Join(const Join &rhs);                        /**< not implemented */
-  Join& operator=(const Join &rhs);             /**< not implemented */
-
   /**
    * Contains a partial query execution plan which is extended during
    * cost-based optimization.

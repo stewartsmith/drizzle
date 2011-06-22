@@ -25,10 +25,8 @@
 #include <cstring>
 
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 /*
   Open a file

@@ -103,7 +103,7 @@ namespace drizzled {
 char internal_table_name[2]= "*";
 char empty_c_string[1]= {0};    /* used for not defined db */
 
-const char * const Session::DEFAULT_WHERE= "field list";
+const char* const Session::DEFAULT_WHERE= "field list";
 
 uint64_t g_refresh_version = 1;
 
@@ -196,7 +196,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   mem_root(&impl_->mem_root),
   query(new std::string),
   scheduler(NULL),
-  scheduler_arg(NULL),
   variables(impl_->variables),
   status_var(impl_->status_var),
   lock_id(&main_lock_id),
@@ -587,7 +586,7 @@ void Session::run()
   disconnect();
 }
 
-bool Session::schedule(Session::shared_ptr &arg)
+bool Session::schedule(const shared_ptr& arg)
 {
   arg->scheduler= plugin::Scheduler::getScheduler();
   assert(arg->scheduler);
@@ -622,13 +621,10 @@ bool Session::schedule(Session::shared_ptr &arg)
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
-    snprintf(error_message_buff, sizeof(error_message_buff),
-             ER(ER_CANT_CREATE_THREAD), 1);
+    snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1);
     arg->client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
-
     return true;
   }
-
   return false;
 }
 
@@ -1024,30 +1020,24 @@ select_export::~select_export()
 */
 
 
-static int create_file(Session *session,
+static int create_file(Session& session,
                        fs::path &target_path,
                        file_exchange *exchange,
                        internal::io_cache_st *cache)
 {
   fs::path to_file(exchange->file_name);
-  int file;
 
   if (not to_file.has_root_directory())
   {
     target_path= fs::system_complete(getDataHomeCatalog());
-    util::string::ptr schema(session->schema());
+    util::string::ptr schema(session.schema());
     if (not schema->empty())
     {
       int count_elements= 0;
-      for (fs::path::iterator iter= to_file.begin();
-           iter != to_file.end();
-           ++iter, ++count_elements)
-      { }
-
+      for (fs::path::iterator it= to_file.begin(); it != to_file.end(); it++)
+        count_elements++;
       if (count_elements == 1)
-      {
         target_path /= *schema;
-      }
     }
     target_path /= to_file;
   }
@@ -1072,10 +1062,11 @@ static int create_file(Session *session,
     return -1;
   }
   /* Create the file world readable */
-  if ((file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
+  int file= internal::my_create(target_path.file_string().c_str(), 0666, O_WRONLY|O_EXCL, MYF(MY_WME));
+  if (file < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (cache->init_io_cache(file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (cache->init_io_cache(file, 0, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     internal::my_close(file, MYF(0));
     internal::my_delete(target_path.file_string().c_str(), MYF(0));  // Delete file on error, it was just created
@@ -1142,7 +1133,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
     return 1;
   }
 
-  if ((file= create_file(session, path, exchange, cache)) < 0)
+  if ((file= create_file(*session, path, exchange, cache)) < 0)
     return 1;
 
   return 0;
@@ -1346,7 +1337,7 @@ int
 select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 {
   unit= u;
-  return (int) ((file= create_file(session, path, exchange, cache)) < 0);
+  return (file= create_file(*session, path, exchange, cache)) < 0;
 }
 
 

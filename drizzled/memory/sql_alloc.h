@@ -25,26 +25,52 @@
 namespace drizzled {
 namespace memory {
 
-void *sql_alloc(size_t);
-void *sql_calloc(size_t);
-char *sql_strdup(const char*);
-char *sql_strmake(const char*, size_t);
-void *sql_memdup(const void*, size_t);
+void* sql_alloc(size_t);
+void* sql_calloc(size_t);
+char* sql_strdup(const char*);
+char* sql_strmake(const char*, size_t);
+void* sql_memdup(const void*, size_t);
 
 class DRIZZLED_API SqlAlloc
 {
 public:
-  static void *operator new(size_t size);
-  static void *operator new[](size_t size);
-  static void *operator new[](size_t size, Root *mem_root);
-  static void *operator new(size_t size, Root *mem_root);
-  static void operator delete(void *, size_t)
+  static void *operator new(size_t size)
+  {
+    return memory::sql_alloc(size);
+  }
+
+  static void *operator new[](size_t size)
+  {
+    return memory::sql_alloc(size);
+  }
+
+  static void *operator new[](size_t size, Root& root)
+  {
+    return root.alloc(size);
+  }
+
+  static void *operator new(size_t size, Root& root)
+  {
+    return root.alloc(size);
+  }
+
+  static void *operator new[](size_t size, Root* root)
+  {
+    return root->alloc(size);
+  }
+
+  static void *operator new(size_t size, Root* root)
+  {
+    return root->alloc(size);
+  }
+
+  static void operator delete(void*, size_t)
   {  }
-  static void operator delete(void *, Root *)
+  static void operator delete(void*, Root*)
   {  }
-  static void operator delete[](void *, Root *)
+  static void operator delete[](void*, Root*)
   {  }
-  static void operator delete[](void *, size_t)
+  static void operator delete[](void*, size_t)
   {  }
 };
 

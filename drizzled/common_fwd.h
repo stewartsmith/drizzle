@@ -57,7 +57,6 @@ namespace generator
 namespace internal
 {
   struct io_cache_st;
-  
   struct st_my_thread_var;
 }
 
