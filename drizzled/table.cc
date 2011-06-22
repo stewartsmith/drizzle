@@ -209,6 +209,7 @@ void free_blobs(Table *table)
 TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) mem_root->alloc(sizeof(TYPELIB));
+  // TYPELIB *result= new (mem_root) TYPELIB;
   result->count= strings.size();
   result->name= "";
   result->type_names= (const char**) mem_root->alloc((sizeof(char*) + sizeof(uint32_t)) * (result->count + 1));

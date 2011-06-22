@@ -5617,6 +5617,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
   stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
+  // table_vector= new (join->session->mem) Table*[2 * table_count];
 
   join->best_ref=stat_vector;
 
