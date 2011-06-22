@@ -842,7 +842,7 @@ bool Item_sum_sum::add()
     if (!args[0]->null_value)
       null_value= 0;
   }
-  return(0);
+  return 0;
 }
 
 

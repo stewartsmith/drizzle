@@ -198,7 +198,7 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key,
     while ((idx=pos->next) != NO_RECORD);
   }
   *current_record= NO_RECORD;
-  return(0);
+  return 0;
 }
 
 /* Change link from pos to new_link */
@@ -385,7 +385,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   }
   if (++info->records == info->blength)
     info->blength+= info->blength;
-  return(0);
+  return 0;
 }
 
 } /* namespace drizzled */

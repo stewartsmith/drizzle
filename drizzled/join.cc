@@ -734,7 +734,7 @@ int Join::optimize()
   if (!tables_list)
   {
     error= 0;
-    return(0);
+    return 0;
   }
   error= -1;          // Error is sent to client
   sort_by_table= get_sort_by_table(order, group_list, select_lex->leaf_tables);
@@ -1134,7 +1134,7 @@ int Join::optimize()
   if (select_options & SELECT_DESCRIBE)
   {
     error= 0;
-    return(0);
+    return 0;
   }
   having= 0;
 
@@ -1327,7 +1327,7 @@ int Join::reinit()
       func->clear();
   }
 
-  return(0);
+  return 0;
 }
 
 /**
@@ -3366,11 +3366,7 @@ static bool get_best_combination(Join *join)
   optimizer::Position cur_pos;
 
   table_count=join->tables;
-  join->join_tab=join_tab= (JoinTable*) session->mem.alloc(sizeof(JoinTable)*table_count);
-
-  for (i= 0; i < table_count; i++)
-    new (join_tab+i) JoinTable();
-
+  join->join_tab=join_tab= new (session->mem) JoinTable[table_count];
   join->full_join=0;
 
   used_tables= OUTER_REF_TABLE_BIT;   // Outer row is already read
@@ -3405,7 +3401,7 @@ static bool get_best_combination(Join *join)
   for (i=0 ; i < table_count ; i++)
     join->map2table[join->join_tab[i].table->tablenr]=join->join_tab+i;
   update_depend_map(join);
-  return(0);
+  return 0;
 }
 
 /** Save const tables first as used tables. */
@@ -5014,7 +5010,7 @@ static bool make_join_select(Join *join,
       }
     }
   }
-  return(0);
+  return 0;
 }
 
 /*
@@ -5527,7 +5523,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
   if (!field_count && !(join->select_options & OPTION_FOUND_ROWS) && !having)
   {                    // only const items with no OPTION_FOUND_ROWS
     join->unit->select_limit_cnt= 1;		// Only send first row
-    return(0);
+    return 0;
   }
   Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   uint32_t offset= field_count ? entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0;

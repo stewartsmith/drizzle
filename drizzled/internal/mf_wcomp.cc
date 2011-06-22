@@ -75,7 +75,7 @@ int wild_compare(const char *str, const char *wildstr, bool str_is_pattern)
             return (1);
         }
       if (!*wildstr)
-        return(0);		/* '*' as last char: OK */
+        return 0;		/* '*' as last char: OK */
       if ((cmp= *wildstr) == wild_prefix && wildstr[1] && !str_is_pattern)
         cmp=wildstr[1];
       for (;;str++)

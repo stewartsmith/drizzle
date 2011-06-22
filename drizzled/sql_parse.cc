@@ -1308,7 +1308,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     session_arg->lex().current_select= fake_select_lex;
   }
   session_arg->lex().pop_context();
-  return(0);
+  return 0;
 }
 
 

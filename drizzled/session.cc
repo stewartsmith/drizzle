@@ -1352,7 +1352,7 @@ bool select_dump::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   if (row_count++ > 1)
   {
@@ -1373,7 +1373,7 @@ bool select_dump::send_data(List<Item> &items)
       return 1;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1394,14 +1394,14 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {				          // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 
@@ -1452,7 +1452,7 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
     it->store(0, cache);
   }
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 bool select_max_min_finder_subselect::cmp_real()
@@ -1520,11 +1520,11 @@ bool select_exists_subselect::send_data(List<Item> &)
   if (unit->offset_limit_cnt)
   { // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   it->value= 1;
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 /*

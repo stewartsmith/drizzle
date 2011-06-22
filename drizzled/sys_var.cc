@@ -1542,7 +1542,7 @@ int sys_var_init()
     errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
     return(1);
   }
-  return(0);
+  return 0;
 }
 
 

@@ -738,7 +738,7 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
     if (sl->test_limit())
       return(1);
   }
-  return(0);
+  return 0;
 }
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
@@ -1122,7 +1122,7 @@ Item_in_subselect::single_value_transformer(Join *join,
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
   {
-    pushed_cond_guards= (bool*)join->session->mem.alloc(sizeof(bool));
+    pushed_cond_guards= new (join->session->mem) bool;
     pushed_cond_guards[0]= true;
   }
 
@@ -2236,7 +2236,7 @@ int subselect_single_select_engine::exec()
   }
   session->setWhere(save_where);
   session->lex().current_select= save_select;
-  return(0);
+  return 0;
 }
 
 void subselect_single_select_engine::save_join_if_explain()
@@ -2435,7 +2435,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
       break;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -2486,7 +2486,7 @@ int subselect_uniquesubquery_engine::exec()
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
-    return(0);
+    return 0;
   }
 
   if (null_keypart)
@@ -2608,7 +2608,7 @@ int subselect_indexsubquery_engine::exec()
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
-    return(0);
+    return 0;
   }
 
   if (null_keypart)

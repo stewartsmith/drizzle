@@ -798,7 +798,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
   int temp;
 
   if (year == 0 && month == 0 && day == 0)
-    return(0);				/* Skip errors */
+    return 0;				/* Skip errors */
   delsum= (long) (365L * year+ 31*(month-1) +day);
   if (month <= 2)
       year--;

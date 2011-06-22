@@ -462,7 +462,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
 {
   int error;
   if (check_stack_overrun(session, STACK_MIN_SIZE, NULL))
-    return(0);                           // Fatal error flag is set
+    return 0;                           // Fatal error flag is set
   if (select)
   {
     select->head=table;
@@ -473,7 +473,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
     if (error == -1)
     {
       table->reginfo.impossible_range=1;
-      return(0);
+      return 0;
     }
   }
   return(HA_POS_ERROR);			/* This shouldn't happend */
@@ -4232,17 +4232,17 @@ static int test_if_order_by_key(Order *order, Table *table, uint32_t idx, uint32
           return(1);
       }
       else
-        return(0);
+        return 0;
     }
 
     if (key_part->field != field)
-      return(0);
+      return 0;
 
     /* set flag to 1 if we can use read-next on key, else to -1 */
     flag= ((order->asc == !(key_part->key_part_flag & HA_REVERSE_SORT)) ?
            1 : -1);
     if (reverse && flag != reverse)
-      return(0);
+      return 0;
     reverse=flag;				// Remember if reverse
     key_part++;
   }
@@ -4487,11 +4487,11 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     if (item->type() != Item::FIELD_ITEM)
     {
       usable_keys.reset();
-      return(0);
+      return 0;
     }
     usable_keys&= ((Item_field*) item)->field->part_of_sortkey;
     if (usable_keys.none())
-      return(0);					// No usable keys
+      return 0;					// No usable keys
   }
 
   ref_key= -1;
@@ -4501,7 +4501,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     ref_key=	   tab->ref.key;
     ref_key_parts= tab->ref.key_parts;
     if (tab->type == AM_REF_OR_NULL)
-      return(0);
+      return 0;
   }
   else if (select && select->quick)		// Range found by optimizer/range
   {
@@ -4516,7 +4516,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE ||
         quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
         quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT)
-      return(0);
+      return 0;
     ref_key=	   select->quick->index;
     ref_key_parts= select->quick->used_key_parts;
   }
@@ -4560,7 +4560,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
 
           if (create_ref_for_key(tab->join, tab, keyuse,
                                  tab->join->const_table_map))
-            return(0);
+            return 0;
         }
         else
         {
@@ -4583,7 +4583,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
                                         tab->join->unit->select_limit_cnt,0,
                                         true) <=
               0)
-            return(0);
+            return 0;
         }
         ref_key= new_ref_key;
       }
@@ -4628,7 +4628,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
         index order and not using join cache
         */
       if (tab->type == AM_ALL && tab->join->tables > tab->join->const_tables + 1)
-        return(0);
+        return 0;
       keys= *table->cursor->keys_to_use_for_scanning();
       keys|= table->covering_keys;
 
@@ -4819,7 +4819,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
       order_direction= best_key_direction;
     }
     else
-      return(0);
+      return 0;
   }
 
 check_reverse_order:
@@ -4915,7 +4915,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
   JoinTable *tab;
 
   if (join->tables == join->const_tables)
-    return(0);				// One row, no need to sort
+    return 0;				// One row, no need to sort
   tab=    join->join_tab + join->const_tables;
   table=  tab->table;
   select= tab->select;
@@ -4932,7 +4932,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
       test_if_skip_sort_order(tab,order,select_limit,0,
                               is_order_by ?  &table->keys_in_use_for_order_by :
                               &table->keys_in_use_for_group_by))
-    return(0);
+    return 0;
   for (Order *ord= join->order; ord; ord= ord->next)
     length++;
   join->sortorder= make_unireg_sortorder(order, &length, join->sortorder);
@@ -5073,7 +5073,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   }
 
   cursor->extra(HA_EXTRA_NO_CACHE);
-  return(0);
+  return 0;
 err:
   cursor->extra(HA_EXTRA_NO_CACHE);
   if (error)
@@ -5856,7 +5856,7 @@ bool setup_copy_fields(Session *session,
   */
   param->copy_funcs.concat(&extra_funcs);
 
-  return(0);
+  return 0;
 
 err:
   if (copy)

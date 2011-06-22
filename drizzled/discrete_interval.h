@@ -163,7 +163,7 @@ public:
       Discrete_interval *new_interval= new Discrete_interval(start, val, incr);
       return(append(new_interval));
     }
-    return(0);
+    return 0;
   }
 
   bool append(Discrete_interval *new_interval)
@@ -176,7 +176,7 @@ public:
       tail->next= new_interval;
     tail= new_interval;
     elements++;
-    return(0);
+    return 0;
   }
 
 };

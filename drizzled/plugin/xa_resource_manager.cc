@@ -205,7 +205,7 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
   if (commit_list.size())
     errmsg_printf(error::INFO, _("Crash recovery finished."));
 
-  return(0);
+  return 0;
 }
 
 bool XaResourceManager::addPlugin(XaResourceManager *resource_manager)

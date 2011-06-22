@@ -4326,7 +4326,7 @@ int64_t Item_is_not_null_test::val_int()
   if (args[0]->is_null())
   {
     owner->was_null|= 1;
-    return(0);
+    return 0;
   }
   else
     return(1);
