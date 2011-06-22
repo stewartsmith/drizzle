@@ -979,7 +979,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc_root(sizeof(optimizer::RangeReadPlan*)* n_child_scans);
+  range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc(sizeof(optimizer::RangeReadPlan*)* n_child_scans);
 
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -4241,7 +4241,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     make_prev_keypart_map(ref->key_parts);
   range->flag= (ref->key_length == key_info->key_length && (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0;
 
-  quick->key_parts=key_part=(KEY_PART *)quick->alloc.alloc_root(sizeof(KEY_PART)*ref->key_parts);
+  quick->key_parts=key_part=(KEY_PART *)quick->alloc.alloc(sizeof(KEY_PART)*ref->key_parts);
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)
   {

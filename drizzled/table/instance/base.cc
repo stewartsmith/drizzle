@@ -633,7 +633,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   for (int indx= 0; indx < table.indexes_size(); indx++)
     key_parts+= table.indexes(indx).index_part_size();
 
-  key_info= (KeyInfo*) alloc_root( table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
+  key_info= (KeyInfo*) alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
 
   KeyPartInfo *key_part;
 
@@ -641,7 +641,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     (key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc_root(sizeof(ulong*)*key_parts);
+  ulong *rec_per_key= (ulong*) alloc(sizeof(ulong*)*key_parts);
 
   KeyInfo* keyinfo= key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
@@ -922,9 +922,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     TYPELIB *t= (&intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_names= (const char**)alloc((field_options.field_value_size() + 1) * sizeof(char*));
 
-    t->type_lengths= (unsigned int*) alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_lengths= (unsigned int*)alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -1637,7 +1637,7 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   records++;
 
-  record= (unsigned char*) outparam.alloc_root(rec_buff_length * records);
+  record= (unsigned char*) outparam.alloc(rec_buff_length * records);
 
   if (records == 0)
   {
@@ -1671,7 +1671,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)));
+  field_ptr = (Field **) outparam.alloc((_field_size+1) * sizeof(Field*));
 
   outparam.setFields(field_ptr);
 
@@ -1700,7 +1700,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     KeyPartInfo *key_part;
     uint32_t n_length;
     n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    local_key_info= (KeyInfo*) outparam.alloc_root(n_length);
+    local_key_info= (KeyInfo*) outparam.alloc(n_length);
     outparam.key_info= local_key_info;
     key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 

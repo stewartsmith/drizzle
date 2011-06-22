@@ -249,7 +249,7 @@ int Cursor::ha_open(const identifier::Table &identifier,
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
     if (!ref)
-      ref= (unsigned char*) getTable()->alloc_root(ALIGN_SIZE(ref_length)*2);
+      ref= (unsigned char*) getTable()->alloc(ALIGN_SIZE(ref_length)*2);
     dup_ref=ref+ALIGN_SIZE(ref_length);
   }
   return error;

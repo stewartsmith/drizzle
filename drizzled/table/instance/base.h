@@ -170,12 +170,7 @@ public:
 private:
   memory::Root mem_root;
 
-  void *alloc(size_t arg)
-  {
-    return mem_root.alloc(arg);
-  }
-
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
     return mem_root.alloc(arg);
   }

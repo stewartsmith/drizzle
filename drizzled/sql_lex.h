@@ -234,7 +234,7 @@ public:
     return memory::sql_alloc(size);
   }
   static void *operator new(size_t size, memory::Root *mem_root)
-  { return (void*) mem_root->alloc(size); }
+  { return mem_root->alloc(size); }
   static void operator delete(void*, size_t)
   {  }
   static void operator delete(void*, memory::Root*)
