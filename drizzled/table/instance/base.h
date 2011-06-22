@@ -180,9 +180,9 @@ private:
     return mem_root.strmake(str_arg, len_arg);
   }
 
-  memory::Root *getMemRoot()
+  memory::Root& getMemRoot()
   {
-    return &mem_root;
+    return mem_root;
   }
 
   std::vector<std::string> _keynames;

@@ -315,14 +315,15 @@ private:
 
   void init_mem_root()
   {
+    assert(mem_root.alloc_root_inited());
     if (not mem_root.alloc_root_inited())
       mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
-  memory::Root *getMemRoot()
+  memory::Root& getMemRoot()
   {
     init_mem_root();
-    return &mem_root;
+    return mem_root;
   }
 
   unsigned char* alloc(size_t arg)

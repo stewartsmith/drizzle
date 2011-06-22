@@ -1605,7 +1605,7 @@ int TableShare::open_table_from_share(Session *session,
   boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.getMemRoot().free_root(MYF(0));       // Safe to call on zeroed root
   outparam.clearAlias();
 
   return ret;
@@ -1682,7 +1682,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= _fields[i]->clone(outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(&outparam.getMemRoot(), &outparam)))
       return local_error;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1730,7 +1730,7 @@ int TableShare::open_table_from_share_inner(Session *session,
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(outparam.getMemRoot(), &outparam, 0);
+          local_field= key_part->field= local_field->new_field(&outparam.getMemRoot(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }

@@ -120,9 +120,9 @@ public:
   memory::Root& mem;
   memory::Root* mem_root; /**< Pointer to current memroot */
 
-  memory::Root *getMemRoot()
+  memory::Root& getMemRoot0()
   {
-    return mem_root;
+    return *mem_root;
   }
 
   uint64_t getXaId()

@@ -887,7 +887,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= (LEX_STRING *)getMemRoot()->alloc(sizeof(LEX_STRING));
+    lex_str= (LEX_STRING *)mem.alloc(sizeof(LEX_STRING));
   lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
