@@ -84,7 +84,7 @@ int my_sync(int fd, myf my_flags)
     else if (my_flags & MY_WME)
       my_error(EE_SYNC, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
-  return(res);
+  return res;
 } /* my_sync */
 
 
@@ -121,7 +121,7 @@ int my_sync_dir(const char *dir_name, myf my_flags)
   }
   else
     res= 1;
-  return(res);
+  return res;
 }
 #else
 int my_sync_dir(const char *, myf)

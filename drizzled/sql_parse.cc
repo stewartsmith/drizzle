@@ -1492,7 +1492,7 @@ bool update_precheck(Session *session, TableList *)
   if (session->lex().select_lex.item_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (session->lex().select_lex.table_list.size() > 1)
@@ -1504,10 +1504,10 @@ bool update_precheck(Session *session, TableList *)
     if (msg)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-      return(true);
+      return true;
     }
   }
-  return(false);
+  return false;
 }
 
 
@@ -1532,9 +1532,9 @@ bool insert_precheck(Session *session, TableList *)
   if (session->lex().update_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 

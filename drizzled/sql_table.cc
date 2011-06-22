@@ -572,7 +572,7 @@ static int prepare_create_table(Session *session,
       tmp_pos+= strlen(tmp);
       strncpy(tmp_pos, STRING_WITH_LEN("_bin"));
       my_error(ER_UNKNOWN_COLLATION, MYF(0), tmp);
-      return(true);
+      return true;
     }
 
     /*
@@ -599,7 +599,7 @@ static int prepare_create_table(Session *session,
       {
         /* Could not convert */
         my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-        return(true);
+        return true;
       }
     }
 
@@ -621,15 +621,12 @@ static int prepare_create_table(Session *session,
           occupied memory at the same time when we free this
           sql_field -- at the end of execution.
         */
-        interval= sql_field->interval= typelib(session->mem_root,
-                                               sql_field->interval_list);
+        interval= sql_field->interval= typelib(*session->mem_root, sql_field->interval_list);
 
         List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
-        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
-                                          (unsigned char*) comma_buf +
-                                          sizeof(comma_buf));
+        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf, (unsigned char*) comma_buf + sizeof(comma_buf));
         assert(comma_length > 0);
 
         for (uint32_t i= 0; (tmp= int_it++); i++)
@@ -643,8 +640,7 @@ static int prepare_create_table(Session *session,
           }
 
           // Strip trailing spaces.
-          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                       interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i], interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
@@ -660,10 +656,10 @@ static int prepare_create_table(Session *session,
           String str, *def= sql_field->def->val_str(&str);
           if (def == NULL) /* SQL "NULL" maps to NULL */
           {
-            if ((sql_field->flags & NOT_NULL_FLAG) != 0)
+            if (sql_field->flags & NOT_NULL_FLAG)
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
 
             /* else, the defaults yield the correct length for NULLs. */
@@ -674,7 +670,7 @@ static int prepare_create_table(Session *session,
             if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
           }
         }
@@ -687,7 +683,7 @@ static int prepare_create_table(Session *session,
 
     sql_field->create_length_to_internal_length();
     if (prepare_blob_field(session, sql_field))
-      return(true);
+      return true;
 
     if (!(sql_field->flags & NOT_NULL_FLAG))
       null_fields++;
@@ -695,7 +691,7 @@ static int prepare_create_table(Session *session,
     if (check_column_name(sql_field->field_name))
     {
       my_error(ER_WRONG_COLUMN_NAME, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
 
     /* Check if we have used the same field name before */
@@ -712,7 +708,7 @@ static int prepare_create_table(Session *session,
 	if (field_no < select_field_pos || dup_no >= select_field_pos)
 	{
 	  my_error(ER_DUP_FIELDNAME, MYF(0), sql_field->field_name);
-	  return(true);
+	  return true;
 	}
 	else
 	{
@@ -766,7 +762,7 @@ static int prepare_create_table(Session *session,
 
     if (prepare_create_field(sql_field, &blob_columns,
 			     &timestamps, &timestamps_with_niladic))
-      return(true);
+      return true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -775,26 +771,26 @@ static int prepare_create_table(Session *session,
   {
     my_message(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS,
                ER(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment > 1)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment &&
       (engine->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (blob_columns && (engine->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
-    return(true);
+    return true;
   }
 
   /* Create keys */
@@ -837,7 +833,7 @@ static int prepare_create_table(Session *session,
                  (fk_key->name.str ? fk_key->name.str :
                                      "foreign key without name"),
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
-	return(true);
+	return true;
       }
       continue;
     }
@@ -846,10 +842,10 @@ static int prepare_create_table(Session *session,
     if (key->columns.size() > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
-      return(true);
+      return true;
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
-      return(true);
+      return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
     {
@@ -888,20 +884,20 @@ static int prepare_create_table(Session *session,
         is_primary_key_name(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
-      return(true);
+      return true;
     }
   }
   tmp= engine->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
-    return(true);
+    return true;
   }
 
   (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
   key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
-    return(true);				// Out of memory
+    return true;				// Out of memory
 
   key_iterator= alter_info->key_list.begin();
   key_number=0;
@@ -983,7 +979,7 @@ static int prepare_create_table(Session *session,
       if (!sql_field)
       {
 	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-	return(true);
+	return true;
       }
 
       while ((dup_column= cols2++) != column)
@@ -994,7 +990,7 @@ static int prepare_create_table(Session *session,
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
 			  column->field_name.str);
-	  return(true);
+	  return true;
 	}
       }
       cols2= key->columns.begin();
@@ -1080,7 +1076,7 @@ static int prepare_create_table(Session *session,
 	    else
 	    {
 	      my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	      return(true);
+	      return true;
 	    }
 	  }
 	}
@@ -1088,7 +1084,7 @@ static int prepare_create_table(Session *session,
             ! Field::type_can_have_key_part(sql_field->sql_type)))
 	{
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
-	  return(true);
+	  return true;
 	}
 	else if (! (engine->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
         {
@@ -1098,7 +1094,7 @@ static int prepare_create_table(Session *session,
       else if (length == 0)
       {
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
-	  return(true);
+	  return true;
       }
       if (length > engine->max_key_part_length())
       {
@@ -1117,7 +1113,7 @@ static int prepare_create_table(Session *session,
 	else
 	{
 	  my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	  return(true);
+	  return true;
 	}
       }
       key_part_info->length=(uint16_t) length;
@@ -1153,7 +1149,7 @@ static int prepare_create_table(Session *session,
 	  {
 	    my_message(ER_MULTIPLE_PRI_KEY, ER(ER_MULTIPLE_PRI_KEY),
                        MYF(0));
-	    return(true);
+	    return true;
 	  }
           static const char pkey_name[]= "PRIMARY";
 	  key_name=pkey_name;
@@ -1165,7 +1161,7 @@ static int prepare_create_table(Session *session,
 	if (check_if_keyname_exists(key_name, *key_info_buffer, key_info))
 	{
 	  my_error(ER_DUP_KEYNAME, MYF(0), key_name);
-	  return(true);
+	  return true;
 	}
 	key_info->name=(char*) key_name;
       }
@@ -1174,7 +1170,7 @@ static int prepare_create_table(Session *session,
     if (!key_info->name || check_column_name(key_info->name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key_info->name);
-      return(true);
+      return true;
     }
 
     if (!(key_info->flags & HA_NULL_PART_KEY))
@@ -1187,7 +1183,7 @@ static int prepare_create_table(Session *session,
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);
-      return(true);
+      return true;
     }
 
     key_info++;
@@ -1197,13 +1193,13 @@ static int prepare_create_table(Session *session,
       (engine->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
-    return(true);
+    return true;
   }
 
   if (auto_increment > 0)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   /* Sort keys in optimized order */
   internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
@@ -1236,11 +1232,11 @@ static int prepare_create_table(Session *session,
       */
 
       my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
   }
 
-  return(false);
+  return false;
 }
 
 /*
@@ -1930,7 +1926,7 @@ send_result:
   }
 
   session->my_eof();
-  return(false);
+  return false;
 
 err:
   transaction_services.autocommitOrRollback(*session, true);
@@ -1938,7 +1934,7 @@ err:
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
     table->table=0;
-  return(true);
+  return true;
 }
 
   /*

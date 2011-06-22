@@ -1205,7 +1205,7 @@ int double2decimal(const double from, decimal_t *to)
                                 internal::MY_GCVT_ARG_DOUBLE,
                                 sizeof(buff) - 1, buff, NULL);
   res= string2decimal(buff, to, &end);
-  return(res);
+  return res;
 }
 
 

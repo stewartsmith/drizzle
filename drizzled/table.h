@@ -791,8 +791,8 @@ void change_double_for_sort(double nr,unsigned char *to);
 int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
-TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
+TYPELIB* convert_strings_to_array_type(char** typelibs, char** end);
+TYPELIB* typelib(memory::Root&, List<String>&);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 

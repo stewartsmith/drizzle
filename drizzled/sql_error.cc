@@ -235,10 +235,10 @@ bool show_warnings(Session *session,
     session->getClient()->store((uint32_t) err->code);
     session->getClient()->store(err->msg, strlen(err->msg));
     if (session->getClient()->flush())
-      return(true);
+      return true;
   }
   session->my_eof();
-  return(false);
+  return false;
 }
 
 } /* namespace drizzled */

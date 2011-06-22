@@ -446,7 +446,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
     */
     table_list= res->next_global;
   }
-  return(res);
+  return res;
 }
 
 
