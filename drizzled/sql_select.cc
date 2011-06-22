@@ -549,9 +549,6 @@ void update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          vector<optimizer::SargableParam> &sargables)
 {
-  uint	and_level,found_eq_constant;
-  optimizer::KeyField *key_fields, *end, *field;
-  uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
@@ -571,11 +568,9 @@ void update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= sizeof(optimizer::KeyField) *
-      (((session->lex().current_select->cond_count+1)*2 +
-	session->lex().current_select->between_count)*m+1);
-  key_fields= (optimizer::KeyField*) session->mem.alloc(sz);
-  and_level= 0;
+  optimizer::KeyField* key_fields= new (session->mem) optimizer::KeyField[((session->lex().current_select->cond_count+1)*2 + session->lex().current_select->between_count)*m+1];
+  uint and_level= 0;
+  optimizer::KeyField* end, *field;
   field= end= key_fields;
 
   my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64);
@@ -648,7 +643,7 @@ void update_ref_and_keys(Session *session,
 
     use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;
-    found_eq_constant= 0;
+    uint found_eq_constant= 0;
     {
       uint32_t i;
 
@@ -1000,9 +995,9 @@ bool create_ref_for_key(Join *join,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   j->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(length)*2);
-  j->ref.key_copy= (StoredKey**) session->mem.alloc((sizeof(StoredKey*) * (keyparts+1)));
-  j->ref.items=    (Item**) session->mem.alloc(sizeof(Item*)*keyparts);
-  j->ref.cond_guards= (bool**) session->mem.alloc(sizeof(uint*)*keyparts);
+  j->ref.key_copy= new (session->mem) StoredKey*[keyparts + 1];
+  j->ref.items= new (session->mem) Item*[keyparts];
+  j->ref.cond_guards= new (session->mem) bool*[keyparts];
   j->ref.key_buff2=j->ref.key_buff+ALIGN_SIZE(length);
   j->ref.key_err=1;
   j->ref.null_rejecting= 0;

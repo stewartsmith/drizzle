@@ -4516,7 +4516,7 @@ static void make_simple_join(Join *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    join->table_reexec= (Table**) join->session->mem.alloc(sizeof(Table*));
+    join->table_reexec= new (join->session->mem) Table*;
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
   }
@@ -5610,9 +5610,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
-  // table_vector= new (join->session->mem) Table*[2 * table_count];
+  stat_ref= new (join->session->mem) JoinTable*[MAX_TABLES];
+  table_vector= new (join->session->mem) Table*[2 * table_count];
 
   join->best_ref=stat_vector;
 
