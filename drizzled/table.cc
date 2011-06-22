@@ -1032,7 +1032,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->setup_tmp_table_column_bitmaps();
 
   recinfo=param->start_recinfo;
-  null_flags=(unsigned char*) table->getInsertRecord();
+  null_flags= table->getInsertRecord();
   pos=table->getInsertRecord()+ null_pack_length;
   if (null_pack_length)
   {
@@ -1042,7 +1042,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     recinfo++;
     memset(null_flags, 255, null_pack_length);	// Set null fields
 
-    table->null_flags= (unsigned char*) table->getInsertRecord();
+    table->null_flags= table->getInsertRecord();
     table->getMutableShare()->null_fields= null_count+ hidden_null_count;
     table->getMutableShare()->null_bytes= null_pack_length;
   }

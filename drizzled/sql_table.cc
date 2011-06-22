@@ -896,8 +896,6 @@ static int prepare_create_table(Session *session,
 
   (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
   key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
-  if (!*key_info_buffer || ! key_part_info)
-    return true;				// Out of memory
 
   key_iterator= alter_info->key_list.begin();
   key_number=0;

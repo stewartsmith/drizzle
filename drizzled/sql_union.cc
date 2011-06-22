@@ -35,10 +35,10 @@ bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
   bool res= unit->prepare(session, result, SELECT_NO_UNLOCK | setup_tables_done_option);
-  if (!res)
+  if (not res)
     res= unit->exec();
   if (res)
-    res|= unit->cleanup();
+    unit->cleanup();
   return res;
 }
 

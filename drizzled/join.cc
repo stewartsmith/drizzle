@@ -4526,8 +4526,7 @@ static void make_simple_join(Join *join,Table *tmp_table)
   }
   if (!join->join_tab_reexec)
   {
-    join->join_tab_reexec= (JoinTable*) join->session->mem.alloc(sizeof(JoinTable));
-    new (join->join_tab_reexec) JoinTable();
+    join->join_tab_reexec= new (join->session->mem) JoinTable;
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }

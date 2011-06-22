@@ -257,8 +257,7 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
         optimizer::SEL_ARG *key2_next=key2->next;
         if (key2_shared)
         {
-          if (! (key2=new optimizer::SEL_ARG(*key2)))
-            return 0;		// out of memory
+          key2=new optimizer::SEL_ARG(*key2);
           key2->increment_use_count(key1->use_count+1);
           key2->next= key2_next; // New copy of key2
         }

@@ -346,19 +346,13 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
                                              bool allow_null_cond,
                                              int *error)
 {
-  optimizer::SqlSelect *select= NULL;
-
   *error= 0;
 
   if (! conds && ! allow_null_cond)
   {
     return 0;
   }
-  if (! (select= new optimizer::SqlSelect()))
-  {
-    *error= 1;			// out of memory
-    return 0;
-  }
+  optimizer::SqlSelect* select= new optimizer::SqlSelect;
   select->read_tables=read_tables;
   select->const_tables=const_tables;
   select->head=head;
@@ -2543,8 +2537,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
       tree= get_mm_tree(param,li++);
       if (tree)
       {
-	Item *item;
-	while ((item=li++))
+	while (Item* item= li++)
 	{
 	  optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	  if (!new_tree)
@@ -2770,8 +2763,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
         tree= &optimizer::null_element;
       goto end;
     }
-    if (!(tree= new (alloc) optimizer::SEL_ARG(field,is_null_string,is_null_string)))
-      goto end;                                 // out of memory
+    tree= new (*alloc) optimizer::SEL_ARG(field,is_null_string,is_null_string);
     if (type == Item_func::ISNOTNULL_FUNC)
     {
       tree->min_flag=NEAR_MIN;		    /* IS NOT NULL ->  X > NULL */
@@ -4098,16 +4090,13 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
   }
 
   /* Get range for retrieving rows in QUICK_SELECT::get_next */
-  if (! (range= new optimizer::QuickRange(param->min_key,
+  range= new optimizer::QuickRange(param->min_key,
 			                                     (uint32_t) (tmp_min_key - param->min_key),
                                            min_part >=0 ? make_keypart_map(min_part) : 0,
 			                                     param->max_key,
 			                                     (uint32_t) (tmp_max_key - param->max_key),
                                            max_part >=0 ? make_keypart_map(max_part) : 0,
-			                                     flag)))
-  {
-    return 1;			// out of memory
-  }
+			                                     flag);
 
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->min_length);
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->max_length);
@@ -4211,9 +4200,9 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     goto err;
   quick->records= records;
 
-  if ((cp_buffer_from_ref(session, ref) && session->is_fatal_error) ||
-      !(range= new(alloc) optimizer::QuickRange()))
+  if (cp_buffer_from_ref(session, ref) && session->is_fatal_error)
     goto err;                                   // out of memory
+  range= new (*alloc) optimizer::QuickRange;
 
   range->min_key= range->max_key= ref->key_buff;
   range->min_length= range->max_length= ref->key_length;
@@ -5547,7 +5536,7 @@ boost::dynamic_bitset<> optimizer::RorScanInfo::bitsToBitset() const
   }
   string final(covered_fields_size - res.length(), '0');
   final.append(res);
-  return (boost::dynamic_bitset<>(final));
+  return boost::dynamic_bitset<>(final);
 }
 
 

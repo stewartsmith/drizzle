@@ -137,11 +137,8 @@ void module::Registry::buildDeps()
       }
       if (not found_dep)
       {
-        errmsg_printf(error::ERROR,
-                      _("Couldn't process plugin module dependencies. "
-                        "%s depends on %s but %s is not to be loaded.\n"),
-                      handle->getName().c_str(),
-                      dep_str.c_str(), dep_str.c_str());
+        errmsg_printf(error::ERROR, _("Couldn't process plugin module dependencies. %s depends on %s but %s is not to be loaded.\n"),
+          handle->getName().c_str(), dep_str.c_str(), dep_str.c_str());
         DRIZZLE_ABORT;
       }
     }
@@ -164,10 +161,8 @@ module::Registry::ModuleList module::Registry::getList()
   return plugins;
 }
 
-module::Library *module::Registry::addLibrary(const std::string &plugin_name,
-                                              bool builtin)
+module::Library *module::Registry::addLibrary(const std::string &plugin_name, bool builtin)
 {
-
   /* If this dll is already loaded just return it */
   module::Library *library= findLibrary(plugin_name);
   if (library)
@@ -187,8 +182,8 @@ void module::Registry::removeLibrary(const std::string &plugin_name)
   LibraryMap::iterator iter= library_registry_.find(plugin_name);
   if (iter != library_registry_.end())
   {
-    library_registry_.erase(iter);
     delete iter->second;
+    library_registry_.erase(iter);
   }
 }
 

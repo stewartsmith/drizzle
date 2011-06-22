@@ -342,22 +342,14 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param,
 
   if (type != KEY_RANGE)
   {
-    if (! (tmp= new (param->mem_root) optimizer::SEL_ARG(type)))
-      return 0;	// out of memory
+    tmp= new (param->mem_root) optimizer::SEL_ARG(type);
     tmp->prev= *next_arg; // Link into next/prev chain
     (*next_arg)->next= tmp;
     (*next_arg)= tmp;
   }
   else
   {
-    if (! (tmp= new (param->mem_root) optimizer::SEL_ARG(field,
-                                                         part,
-                                                         min_value,
-                                                         max_value,
-                                                         min_flag,
-                                                         max_flag,
-                                                         maybe_flag)))
-      return 0; // OOM
+    tmp= new (param->mem_root) optimizer::SEL_ARG(field, part, min_value, max_value, min_flag, max_flag, maybe_flag);
     tmp->parent= new_parent;
     tmp->next_key_part= next_key_part;
     if (left != &optimizer::null_element)

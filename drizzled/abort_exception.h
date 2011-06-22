@@ -26,8 +26,7 @@
 
 namespace drizzled {
   
-class abort_exception :
-  public boost::exception, public std::exception
+class abort_exception : public boost::exception, public std::exception
 { };
 
 }

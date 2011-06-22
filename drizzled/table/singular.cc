@@ -88,14 +88,10 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
   record[0]= session->mem.alloc(getMutableShare()->rec_buff_length);
-  if (not getInsertRecord())
-  {
-    throw "Memory allocation failure";
-  }
 
   if (null_pack_length)
   {
-    null_flags= (unsigned char*) getInsertRecord();
+    null_flags= getInsertRecord();
     getMutableShare()->null_fields= null_count;
     getMutableShare()->null_bytes= null_pack_length;
   }
@@ -239,7 +235,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
       if (!(key_field->flags & NOT_NULL_FLAG))
       {
         seg->null_bit= key_field->null_bit;
-        seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) getInsertRecord());
+        seg->null_pos= (uint32_t) (key_field->null_ptr - getInsertRecord());
         /*
           We are using a GROUP BY on something that contains NULL
           In this case we have to tell MyISAM that two NULL should

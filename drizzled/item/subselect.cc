@@ -3057,8 +3057,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  tab= (JoinTable*) session->mem.alloc(sizeof(JoinTable));
-  new (tab) JoinTable();
+  tab= new (session->mem) JoinTable;
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;

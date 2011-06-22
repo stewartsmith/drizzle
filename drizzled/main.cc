@@ -334,8 +334,7 @@ int main(int argc, char **argv)
 
   try
   {
-    if (init_server_components(modules))
-      DRIZZLE_ABORT;
+    init_server_components(modules);
   }
   catch (abort_exception& ex)
   {
