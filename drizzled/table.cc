@@ -211,7 +211,7 @@ TYPELIB *typelib(memory::Root& mem_root, List<String> &strings)
   TYPELIB *result= new (mem_root) TYPELIB;
   result->count= strings.size();
   result->name= "";
-  result->type_names= (const char**) mem_root->alloc((sizeof(char*) + sizeof(uint32_t)) * (result->count + 1));
+  result->type_names= (const char**) mem_root.alloc((sizeof(char*) + sizeof(uint32_t)) * (result->count + 1));
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
   List<String>::iterator it(strings.begin());
@@ -663,19 +663,14 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     Make sure that the blob fits into a Field_varstring which has
     2-byte lenght.
   */
-  if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE &&
-      (org_field->flags & BLOB_FLAG))
+  if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE && (org_field->flags & BLOB_FLAG))
   {
     table->setVariableWidth();
-    new_field= new Field_varstring(convert_blob_length,
-                                   org_field->maybe_null(),
-                                   org_field->field_name,
-                                   org_field->charset());
+    new_field= new Field_varstring(convert_blob_length, org_field->maybe_null(), org_field->field_name, org_field->charset());
   }
   else
   {
-    new_field= org_field->new_field(session->mem_root, table,
-                                    table == org_field->getTable());
+    new_field= org_field->new_field(session->mem_root, table, table == org_field->getTable());
   }
   if (new_field)
   {
