@@ -449,14 +449,6 @@ uint32_t Field_blob::pack_length() const
   return (uint32_t) (sizeof(uint32_t) + portable_sizeof_char_ptr);
 }
 
-void Field_blob::sql_type(String &res) const
-{
-  if (charset() == &my_charset_bin)
-    res.set_ascii(STRING_WITH_LEN("blob"));
-  else
-    res.set_ascii(STRING_WITH_LEN("text"));
-}
-
 unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
                                 uint32_t max_length, bool low_byte_first)
 {

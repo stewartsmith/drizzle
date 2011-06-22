@@ -314,20 +314,10 @@ int Field_decimal::cmp(const unsigned char *a,const unsigned char*b)
 }
 
 
-void Field_decimal::sort_string(unsigned char *buff,
-                                uint32_t )
+void Field_decimal::sort_string(unsigned char *buff, uint32_t)
 {
   memcpy(buff, ptr, bin_size);
 }
-
-
-void Field_decimal::sql_type(String &str) const
-{
-  const charset_info_st * const cs= str.charset();
-  str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
-                                "decimal(%d,%d)", precision, (int)dec));
-}
-
 
 /**
   Returns the number of bytes field uses in row-based replication

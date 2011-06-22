@@ -66,12 +66,8 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class DRIZZLED_API Field
+class DRIZZLED_API Field : boost::noncopyable
 {
-  /* Prevent use of these */
-  Field(const Field&);
-  void operator=(Field &);
-
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -338,13 +334,6 @@ public:
   virtual int key_cmp(const unsigned char *a,const unsigned char *b);
   virtual int key_cmp(const unsigned char *str, uint32_t length);
   virtual uint32_t decimals() const;
-
-  /*
-    Caller beware: sql_type can change str.Ptr, so check
-    ptr() to see if it changed if you are using your own buffer
-    in str and restore it with set() if needed
-  */
-  virtual void sql_type(String &str) const =0;
 
   // For new field
   virtual uint32_t size_of() const =0;

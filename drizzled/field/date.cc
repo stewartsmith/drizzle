@@ -252,9 +252,4 @@ void Field_date::sort_string(unsigned char *to,uint32_t )
   to[3] = ptr[0];
 }
 
-void Field_date::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("date"));
-}
-
 } /* namespace drizzled */

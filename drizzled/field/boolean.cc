@@ -20,32 +20,17 @@
 
 
 #include <config.h>
-
 #include <algorithm>
-
 #include <drizzled/field/boolean.h>
 #include <drizzled/type/boolean.h>
-
 #include <drizzled/error.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/temporal.h>
 
-union set_true_t {
-  unsigned char byte;
-  bool is_true:1;
-
-  set_true_t()
-  {
-    is_true= true;
-  }
-} set_true;
-
-namespace drizzled
-{
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 Boolean::Boolean(unsigned char *ptr_arg,
                  uint32_t len_arg,
@@ -79,50 +64,29 @@ int Boolean::store(const char *from, uint32_t length, const charset_info_st * co
     my_error(ER_INVALID_BOOLEAN_VALUE, MYF(0), from);
     return 1;
   }
-
-  if (result)
-  {
-    setTrue();
-  }
-  else
-  {
-    setFalse();
-  }
-
+  set(result);
   return 0;
 }
 
-int Boolean::store(int64_t nr, bool )
+int Boolean::store(int64_t nr, bool)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  nr == 0 ? setFalse() : setTrue();
+  set(nr != 0);
   return 0;
 }
 
 int  Boolean::store(double nr)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  nr == 0 ? setFalse() : setTrue();
+  set(nr);
   return 0;
 }
 
 int Boolean::store_decimal(const drizzled::type::Decimal *dec)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (dec->isZero())
-  {
-    setFalse();
-    return 0;
-  }
-
-  setTrue();
-
+  set(not dec->isZero());
   return 0;
-}
-
-void Boolean::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("boolean"));
 }
 
 double Boolean::val_real() const
@@ -140,9 +104,7 @@ int64_t Boolean::val_int() const
 String *Boolean::val_str(String *val_buffer, String *) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
-
   (void)type::convert(*val_buffer, isTrue(), ansi_display);
-
   return val_buffer;
 }
 
@@ -153,20 +115,13 @@ type::Decimal *Boolean::val_decimal(type::Decimal *dec) const
     int2_class_decimal(E_DEC_OK, 1, false, dec);
     return dec;
   }
-
   dec->set_zero();
-
   return dec;
 }
 
 void Boolean::sort_string(unsigned char *to, uint32_t length_arg)
 {
   memcpy(to, ptr, length_arg);
-}
-
-void Boolean::setTrue()
-{
-  ptr[0]= set_true.byte;
 }
 
 } /* namespace field */

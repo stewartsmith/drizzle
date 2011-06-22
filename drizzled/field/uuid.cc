@@ -98,11 +98,6 @@ int Uuid::store_decimal(const drizzled::type::Decimal*)
   return 1;
 }
 
-void Uuid::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("uuid"));
-}
-
 double Uuid::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;

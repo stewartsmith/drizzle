@@ -24,19 +24,13 @@
 #include <drizzled/type/boolean.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace type {
 
-namespace type
+void convert(String &destination, const bool source, bool ansi_display)
 {
-
-bool convert(String &destination, const bool source, bool ansi_display)
-{
-  uint32_t mlength= (5) * system_charset_info->mbmaxlen;
-
-  destination.alloc(mlength);
+  destination.alloc(5 * system_charset_info->mbmaxlen);
   char *buffer=(char*) destination.c_ptr();
-
   if (source)
   {
     if (ansi_display)
@@ -63,8 +57,6 @@ bool convert(String &destination, const bool source, bool ansi_display)
       destination.length(5);
     }
   }
-
-  return true;
 }
 
 bool convert(bool &destination, const char *source, const size_t source_length)

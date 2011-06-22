@@ -64,7 +64,6 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return sizeof(double); }
-  void sql_type(String &str) const;
 };
 
 } /* namespace drizzled */
