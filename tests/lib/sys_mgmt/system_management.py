@@ -33,17 +33,17 @@
 # imports
 import os
 import sys
-import copy
 import shutil
 import getpass
 import commands
 
 from uuid import uuid4
 
-from lib.sys_mgmt.port_management import portManager
-from lib.sys_mgmt.logging_management import loggingManager
-from lib.sys_mgmt.time_management import timeManager
 from lib.sys_mgmt.code_management import codeManager
+from lib.sys_mgmt.environment_management import environmentManager
+from lib.sys_mgmt.logging_management import loggingManager
+from lib.sys_mgmt.port_management import portManager
+from lib.sys_mgmt.time_management import timeManager
 
 class systemManager:
     """Class to deal with the basics of system-level interaction
@@ -62,10 +62,9 @@ class systemManager:
                          , 'port_manager'
                          , 'logging_manager'
                          , 'environment_reqs'
-                         , 'env_var_delimiter']
+                         ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
-        self.env_var_delimiter = ':'
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
@@ -94,7 +93,10 @@ class systemManager:
         # Make sure the tree we are testing looks good
         self.code_tree = self.code_manager.code_trees['drizzle'][0]
 
-        self.ld_lib_paths = self.join_env_var_values(self.code_tree.ld_lib_paths)
+        # environment manager handles updates / whatever to testing environments
+        self.env_manager = environmentManager(self, variables)
+
+        self.ld_lib_paths = self.env_manager.join_env_var_values(self.code_tree.ld_lib_paths)
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
@@ -109,12 +111,13 @@ class systemManager:
                                 , 'TOP_BUILDDIR' : self.top_builddir
                                 , 'DRIZZLE_TEST_DIR' : self.code_tree.testdir
                                 , 'DTR_BUILD_THREAD' : "-69.5"
-                                , 'LD_LIBRARY_PATH' : self.append_env_var( 'LD_LIBRARY_PATH'
+                                # Need to move these to server-level
+                                , 'LD_LIBRARY_PATH' : self.env_manager.append_env_var( 'LD_LIBRARY_PATH'
                                                                          , self.ld_lib_paths
                                                                          , suffix = 0
                                                                          , quiet = 1
                                                                          )
-                                , 'DYLD_LIBRARY_PATH' : self.append_env_var( 'DYLD_LIBRARY_PATH'
+                                , 'DYLD_LIBRARY_PATH' : self.env_manager.append_env_var( 'DYLD_LIBRARY_PATH'
                                                                          , self.ld_lib_paths
                                                                          , suffix = 0
                                                                          , quiet = 1
@@ -122,7 +125,7 @@ class systemManager:
                                 }
         # set the env vars we need
         # self.process_environment_reqs(self.environment_reqs)
-        self.update_environment_vars(self.environment_reqs)
+        self.env_manager.update_environment_vars(self.environment_reqs)
 
         # We find or generate our id file
         # We use a uuid to identify the symlinked
@@ -144,9 +147,8 @@ class systemManager:
         self.handle_additional_reqs(variables)
      
         self.logging.debug_class(self)
-        
 
-    
+
     def create_dirset(self, rootdir, dirset):
         """ We produce the set of directories defined in dirset
             dirset is a set of dictionaries like
@@ -296,67 +298,7 @@ class systemManager:
             source, link_name = needed_symlink
             self.create_symlink(source, link_name)
 
-    def join_env_var_values(self, value_list):
-        """ Utility to join multiple values into a nice string
-            for setting an env var to
- 
-        """
 
-        return self.env_var_delimiter.join(value_list)
-
-    def set_env_var(self, var_name, var_value, quiet=0):
-        """Set an environment variable.  We really just abstract
-           voodoo on os.environ
-
-        """
-        if not quiet:
-            self.logging.debug("Setting env var: %s" %(var_name))
-        try:
-            os.environ[var_name]=var_value
-        except Exception, e:
-            self.logging.error("Issue setting environment variable %s to value %s" %(var_name, var_value))
-            self.logging.error("%s" %(e))
-            sys.exit(1)
-
-    def update_environment_vars(self, desired_vars, working_environment=None):
-        """ We update the environment vars with desired_vars
-            The expectation is that you know what you are asking for ; )
-            If working_environment is provided, we will update that with
-            desired_vars.  We operate directly on os.environ by default
-            We return our updated environ dictionary
-
-        """
-
-        if not working_environment:
-            working_environment = os.environ
-        working_environment.update(desired_vars)
-        return working_environment
-
-    def create_working_environment(self, desired_vars):
-        """ We return a copy of os.environ updated with desired_vars """
-
-        working_copy = copy.deepcopy(os.environ)
-        return self.update_environment_vars( desired_vars
-                                    , working_environment = working_copy )
-
-    def append_env_var(self, var_name, append_string, suffix=1, quiet=0):
-        """ We add the values in var_values to the environment variable 
-            var_name.  Depending on suffix value, we either append or prepend
-            we return a string suitable for os.putenv
-
-        """
-        new_var_value = ""
-        if var_name in os.environ:
-            cur_var_value = os.environ[var_name]
-            if suffix: # We add new values to end of existing value
-                new_var_values = [ cur_var_value, append_string ]
-            else:
-                new_var_values = [ append_string, cur_var_value ]
-            new_var_value = self.env_var_delimiter.join(new_var_values)
-        else:
-            # No existing variable value
-            new_var_value = append_string
-        return new_var_value
 
     def find_path(self, paths, required=1):
         """We search for the files we need / want to be aware of
@@ -520,8 +462,8 @@ class systemManager:
         # add debug libraries to ld_library_path
         debug_path = '/usr/lib/debug'
         if os.path.exists(debug_path):
-            self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
-            self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+            self.env_manager.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
+            self.env_manager.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
 
 
     def cleanup(self, exit=False):

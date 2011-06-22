@@ -129,7 +129,7 @@ class serverManager:
             # this speeds up test execution, but we only want
             # it to happen for the servers' environments
             libeatmydata_data = {'LD_PRELOAD':self.libeatmydata_path}
-            self.system_manager.update_environment_vars( libeatmydata_data
+            self.system_manager.env_manager.update_environment_vars( libeatmydata_data
                                                        , working_environ)
             #print working_environ
         for server in self.get_server_list(requester):
