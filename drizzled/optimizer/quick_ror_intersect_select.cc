@@ -58,11 +58,11 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
 
   if (parent_alloc)
   {
-    last_rowid= (unsigned char*) parent_alloc->alloc_root(head->cursor->ref_length);
+    last_rowid= (unsigned char*) parent_alloc->alloc(head->cursor->ref_length);
   }
   else
   {
-    last_rowid= (unsigned char*) alloc.alloc_root(head->cursor->ref_length);
+    last_rowid= (unsigned char*) alloc.alloc(head->cursor->ref_length);
   }
 }
 

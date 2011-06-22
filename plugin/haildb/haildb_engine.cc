@@ -2298,7 +2298,7 @@ int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor,
           (**blobroot).init();
         }
 
-        unsigned char *blob_ptr= (unsigned char*)(**blobroot).alloc_root(length);
+        unsigned char *blob_ptr= (unsigned char*)(*blobroot)->alloc(length);
         memcpy(blob_ptr, ib_col_get_value(tuple, colnr), length);
         (reinterpret_cast<Field_blob*>(*field))->set_ptr(length, blob_ptr);
       }

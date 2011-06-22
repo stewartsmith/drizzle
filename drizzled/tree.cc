@@ -228,9 +228,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size,
     if (tree->with_delete)
       element= (TREE_ELEMENT *) malloc(alloc_size);
     else
-      element= (TREE_ELEMENT *) tree->mem_root.alloc_root(alloc_size);
-    if (!element)
-      return(NULL);
+      element= (TREE_ELEMENT *) tree->mem_root.alloc(alloc_size);
     **parent= element;
     element->left= element->right= &tree->null_element;
     if (!tree->offset_to_key)

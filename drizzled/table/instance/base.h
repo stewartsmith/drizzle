@@ -170,9 +170,14 @@ public:
 private:
   memory::Root mem_root;
 
+  void *alloc(size_t arg)
+  {
+    return mem_root.alloc(arg);
+  }
+
   void *alloc_root(size_t arg)
   {
-    return mem_root.alloc_root(arg);
+    return mem_root.alloc(arg);
   }
 
   char *strmake(const char *str_arg, size_t len_arg)

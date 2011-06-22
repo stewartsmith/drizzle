@@ -530,19 +530,12 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
-  {
-    setPath(path_buff, _path.length());
-    strcpy(path_buff, _path.c_str());
-    setNormalizedPath(path_buff, _path.length());
+  path_buff= (char *)mem_root.alloc(_path.length() + 1);
+  setPath(path_buff, _path.length());
+  strcpy(path_buff, _path.c_str());
+  setNormalizedPath(path_buff, _path.length());
 
-    version= g_refresh_version;
-  }
-  else
-  {
-    assert(0); // We should throw here.
-    abort();
-  }
+  version= g_refresh_version;
 }
 
 void TableShare::init(const char *new_table_name,
@@ -1644,8 +1637,7 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
-    return local_error;
+  record= (unsigned char*) outparam.alloc_root(rec_buff_length * records);
 
   if (records == 0)
   {
@@ -1679,10 +1671,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)))))
-  {
-    return local_error;
-  }
+  field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)));
 
   outparam.setFields(field_ptr);
 
@@ -1711,8 +1700,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     KeyPartInfo *key_part;
     uint32_t n_length;
     n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
-      return local_error;
+    local_key_info= (KeyInfo*) outparam.alloc_root(n_length);
     outparam.key_info= local_key_info;
     key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 

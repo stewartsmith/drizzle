@@ -186,7 +186,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
   if (getShare()->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
-    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot()->alloc_root(sizeof(*seg) * keyinfo->key_parts);
+    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot()->alloc(sizeof(*seg) * keyinfo->key_parts);
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||

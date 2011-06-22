@@ -131,7 +131,7 @@ public:
 
   void* calloc(size_t size)
   {
-    void* ptr= alloc_root(size);
+    void* ptr= alloc(size);
     memset(ptr, 0, size);
     return ptr;
   }

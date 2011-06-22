@@ -321,30 +321,21 @@ public:
   memory::Root *getMemRoot()
   {
     if (not mem_root.alloc_root_inited())
-    {
       init_mem_root();
-    }
-
     return &mem_root;
   }
 
   void *alloc_root(size_t arg)
   {
     if (not mem_root.alloc_root_inited())
-    {
       init_mem_root();
-    }
-
-    return mem_root.alloc_root(arg);
+    return mem_root.alloc(arg);
   }
 
   char *strmake(const char *str_arg, size_t len_arg)
   {
     if (not mem_root.alloc_root_inited())
-    {
       init_mem_root();
-    }
-
     return mem_root.strmake(str_arg, len_arg);
   }
 

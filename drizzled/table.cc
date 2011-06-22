@@ -208,16 +208,12 @@ void free_blobs(Table *table)
 
 TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
-  TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
-  if (!result)
-    return 0;
+  TYPELIB *result= (TYPELIB*) mem_root->alloc(sizeof(TYPELIB));
   result->count= strings.size();
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
-  if (!(result->type_names= (const char**) mem_root->alloc_root(nbytes)))
-    return 0;
-    
+  result->type_names= (const char**) mem_root->alloc_root(nbytes);
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
   List<String>::iterator it(strings.begin());
@@ -798,19 +794,15 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
-  if (not table->getMemRoot()->multi_alloc_root(0,
-                                                &default_field, sizeof(Field*) * (field_count),
-                                                &from_field, sizeof(Field*)*field_count,
-                                                &copy_func, sizeof(*copy_func)*(copy_func_count+1),
-                                                &param->keyinfo, sizeof(*param->keyinfo),
-                                                &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
-                                                &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
-                                                &group_buff, (group && ! using_unique_constraint ?
-                                                              param->group_length : 0),
-                                                NULL))
-  {
-    return NULL;
-  }
+  table->getMemRoot()->multi_alloc_root(0,
+    &default_field, sizeof(Field*) * (field_count),
+    &from_field, sizeof(Field*)*field_count,
+    &copy_func, sizeof(*copy_func)*(copy_func_count+1),
+    &param->keyinfo, sizeof(*param->keyinfo),
+    &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
+    &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
+    &group_buff, (group && ! using_unique_constraint ? param->group_length : 0),
+    NULL);
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
   param->copy_field= copy= new (session->mem_root) CopyField[field_count];
   param->items_to_copy= copy_func;
@@ -1037,10 +1029,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     table->getMutableShare()->rec_buff_length= alloc_length;
-    if (!(table->record[0]= (unsigned char*) table->alloc_root(alloc_length*2)))
-    {
-      goto err;
-    }
+    table->record[0]= (unsigned char*) table->alloc_root(alloc_length*2);
     table->record[1]= table->getInsertRecord()+alloc_length;
     table->getMutableShare()->resizeDefaultValues(alloc_length);
   }
@@ -1256,9 +1245,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			 (table->getMutableShare()->uniques ? test(null_pack_length) : 0));
     table->distinct= 1;
     table->getMutableShare()->keys= 1;
-    if (!(key_part_info= (KeyPartInfo*)
-         table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
-      goto err;
+    key_part_info= (KeyPartInfo*)table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo));
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;

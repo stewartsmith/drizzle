@@ -225,8 +225,7 @@ void* Root::multi_alloc_root(int unused, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) this->alloc_root(tot_length)))
-    return(0);
+  start= (char*) this->alloc_root(tot_length);
 
   va_start(args, unused);
   res= start;
@@ -344,7 +343,7 @@ char* Root::strdup(const char* str)
  */
 char* Root::strmake(const char* str, size_t len)
 {
-  char* pos= (char*)alloc_root(len + 1);
+  char* pos= (char*)alloc(len + 1);
   memcpy(pos, str, len);
   pos[len]= 0;
   return pos;
@@ -371,7 +370,7 @@ char* Root::strmake(const String& v)
  */
 void* Root::memdup(const void* str, size_t len)
 {
-  void* pos= this->alloc_root(len);
+  void* pos= alloc(len);
   memcpy(pos, str, len);
   return pos;
 }

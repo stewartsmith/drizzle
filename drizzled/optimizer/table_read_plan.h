@@ -68,7 +68,7 @@ public:
   /* Table read plans are allocated on memory::Root and are never deleted */
   static void *operator new(size_t size, memory::Root *mem_root)
   { 
-    return (void*) mem_root->alloc_root((uint32_t) size); 
+    return mem_root->alloc(size); 
   }
 
   static void operator delete(void *, size_t)

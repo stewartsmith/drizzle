@@ -234,10 +234,10 @@ public:
     return memory::sql_alloc(size);
   }
   static void *operator new(size_t size, memory::Root *mem_root)
-  { return (void*) mem_root->alloc_root((uint32_t) size); }
-  static void operator delete(void *, size_t)
+  { return (void*) mem_root->alloc(size); }
+  static void operator delete(void*, size_t)
   {  }
-  static void operator delete(void *, memory::Root *)
+  static void operator delete(void*, memory::Root*)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}

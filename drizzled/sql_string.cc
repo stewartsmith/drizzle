@@ -92,7 +92,7 @@ String::String(const String &str)
 
 void *String::operator new(size_t size, memory::Root *mem_root)
 {
-  return mem_root->alloc_root(static_cast<size_t>(size));
+  return mem_root->alloc(size);
 }
 
 String::~String() { free(); }

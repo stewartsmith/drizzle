@@ -32,7 +32,7 @@ namespace drizzled {
 
 void *memory::sql_alloc(size_t Size)
 {
-  return current_mem_root()->alloc_root(Size);
+  return current_mem_root()->alloc(Size);
 }
 
 void *memory::sql_calloc(size_t size)
@@ -77,12 +77,12 @@ void *memory::SqlAlloc::operator new[](size_t size)
 
 void *memory::SqlAlloc::operator new[](size_t size, memory::Root *mem_root)
 {
-  return mem_root->alloc_root(size);
+  return mem_root->alloc(size);
 }
 
 void *memory::SqlAlloc::operator new(size_t size, memory::Root *mem_root)
 {
-  return mem_root->alloc_root(size);
+  return mem_root->alloc(size);
 }
 
 } /* namespace drizzled */

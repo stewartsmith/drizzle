@@ -69,22 +69,15 @@ class optimizer::compare_functor
 
 int optimizer::QuickRorUnionSelect::init()
 {
-  queue=
-    new priority_queue<optimizer::QuickSelectInterface *,
-                       vector<optimizer::QuickSelectInterface *>,
-                       optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc.alloc_root(2 * head->cursor->ref_length)))
-  {
-    return 0;
-  }
+  queue= new priority_queue<QuickSelectInterface*, vector<QuickSelectInterface*>,  compare_functor>(compare_functor(this));
+  cur_rowid= (unsigned char*) alloc.alloc(2 * head->cursor->ref_length);
   prev_rowid= cur_rowid + head->cursor->ref_length;
-  return 0;
+  return 0; // return void
 }
 
 
 int optimizer::QuickRorUnionSelect::reset()
 {
-  int error;
   have_prev_rowid= false;
   if (! scans_inited)
   {
@@ -116,7 +109,7 @@ int optimizer::QuickRorUnionSelect::reset()
       return 0;
     }
     
-    error= (*it)->get_next();
+    int error= (*it)->get_next();
     if (error)
     {
       if (error == HA_ERR_END_OF_FILE)

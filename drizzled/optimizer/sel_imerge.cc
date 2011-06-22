@@ -48,15 +48,14 @@ int optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimiz
     uint32_t old_size= sizeof(optimizer::SEL_TREE**) * old_elements;
     uint32_t new_size= old_size * realloc_ratio;
     optimizer::SEL_TREE **new_trees= NULL;
-    if (! (new_trees= (optimizer::SEL_TREE**) param->mem_root->alloc_root(new_size)))
-      return -1;
+    new_trees= (optimizer::SEL_TREE**) param->mem_root->alloc(new_size);
     memcpy(new_trees, trees, old_size);
     trees= new_trees;
     trees_next= trees + old_elements;
     trees_end= trees + old_elements * realloc_ratio;
   }
   *(trees_next++)= tree;
-  return 0;
+  return 0; // return void
 }
 
 

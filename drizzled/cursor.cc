@@ -89,8 +89,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
     on this->table->mem_root and we will not be able to reclaim that memory
     when the clone Cursor object is destroyed.
   */
-  if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
-    return NULL;
+  new_handler->ref= (unsigned char*) mem_root->alloc(ALIGN_SIZE(ref_length)*2);
 
   identifier::Table identifier(getTable()->getShare()->getSchemaName(),
                              getTable()->getShare()->getTableName(),
@@ -249,13 +248,9 @@ int Cursor::ha_open(const identifier::Table &identifier,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) getTable()->alloc_root(ALIGN_SIZE(ref_length)*2)))
-    {
-      close();
-      error=HA_ERR_OUT_OF_MEM;
-    }
-    else
-      dup_ref=ref+ALIGN_SIZE(ref_length);
+    if (!ref)
+      ref= (unsigned char*) getTable()->alloc_root(ALIGN_SIZE(ref_length)*2);
+    dup_ref=ref+ALIGN_SIZE(ref_length);
   }
   return error;
 }

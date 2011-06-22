@@ -101,14 +101,12 @@ int optimizer::QuickGroupMinMaxSelect::init()
   if (group_prefix) /* Already initialized. */
     return 0;
 
-  if (! (last_prefix= (unsigned char*) alloc.alloc_root(group_prefix_len)))
-      return 1;
+  last_prefix= (unsigned char*) alloc.alloc_root(group_prefix_len);
   /*
     We may use group_prefix to store keys with all select fields, so allocate
     enough space for it.
   */
-  if (! (group_prefix= (unsigned char*) alloc.alloc_root(real_prefix_len + min_max_arg_len)))
-    return 1;
+  group_prefix= (unsigned char*) alloc.alloc_root(real_prefix_len + min_max_arg_len);
 
   if (key_infix_len > 0)
   {
@@ -117,32 +115,16 @@ int optimizer::QuickGroupMinMaxSelect::init()
       allocate a new buffer and copy the key_infix into it.
     */
     unsigned char *tmp_key_infix= (unsigned char*) alloc.alloc_root(key_infix_len);
-    if (! tmp_key_infix)
-      return 1;
     memcpy(tmp_key_infix, this->key_infix, key_infix_len);
     this->key_infix= tmp_key_infix;
   }
 
   if (min_max_arg_part)
   {
-    if (have_min)
-    {
-      if (! (min_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      min_functions= NULL;
-    if (have_max)
-    {
-      if (! (max_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      max_functions= NULL;
-
-    Item_sum *min_max_item= NULL;
+    min_functions= have_min ? new List<Item_sum> : NULL;
+    max_functions= have_max ? new List<Item_sum> : NULL;
     Item_sum **func_ptr= join->sum_funcs;
-    while ((min_max_item= *(func_ptr++)))
+    while (Item_sum* min_max_item= *(func_ptr++))
     {
       if (have_min && (min_max_item->sum_func() == Item_sum::MIN_FUNC))
         min_functions->push_back(min_max_item);
@@ -151,21 +133,12 @@ int optimizer::QuickGroupMinMaxSelect::init()
     }
 
     if (have_min)
-    {
-      if (! (min_functions_it= new List<Item_sum>::iterator(min_functions->begin())))
-        return 1;
-    }
-
+      min_functions_it= new List<Item_sum>::iterator(min_functions->begin());
     if (have_max)
-    {
-      if (! (max_functions_it= new List<Item_sum>::iterator(max_functions->begin())))
-        return 1;
-    }
+      max_functions_it= new List<Item_sum>::iterator(max_functions->begin());
   }
-
-  return 0;
+  return 0; // return void
 }
-
 
 optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 {

@@ -696,7 +696,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
     session->no_errors=1;				// Don't warn about NULL
     alloc.init(session->variables.range_alloc_block_size);
-    param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->getShare()->key_parts);
+    param.key_parts= (KEY_PART*) alloc.alloc( sizeof(KEY_PART) * head->getShare()->key_parts);
     if (fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
@@ -979,19 +979,14 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (! (range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc_root(sizeof(optimizer::RangeReadPlan*)* n_child_scans)))
-  {
-    return NULL;
-  }
+  range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc_root(sizeof(optimizer::RangeReadPlan*)* n_child_scans);
 
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
     analyze possibility of ROR scans. Also calculate some values needed by
     other parts of the code.
   */
-  for (ptree= imerge->trees, cur_child= range_scans;
-       ptree != imerge->trees_next;
-       ptree++, cur_child++)
+  for (ptree= imerge->trees, cur_child= range_scans; ptree != imerge->trees_next; ptree++, cur_child++)
   {
     if (!(*cur_child= get_key_scans_params(session, param, *ptree, true, false, read_time)))
     {
@@ -1062,11 +1057,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
                                     param->session->variables.sortbuff_size);
   if (param->imerge_cost_buff_size < unique_calc_buff_size)
   {
-    if (!(param->imerge_cost_buff= (uint*)param->mem_root->alloc_root(unique_calc_buff_size)))
-    {
-      return NULL;
-    }
-
+    param->imerge_cost_buff= (uint*)param->mem_root->alloc(unique_calc_buff_size);
     param->imerge_cost_buff_size= unique_calc_buff_size;
   }
 
@@ -1094,11 +1085,7 @@ build_ror_index_merge:
 
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
-  if (! (roru_read_plans=
-          (optimizer::TableReadPlan **) param->mem_root->alloc_root(sizeof(optimizer::TableReadPlan*) * n_child_scans)))
-  {
-    return imerge_trp;
-  }
+  roru_read_plans= (optimizer::TableReadPlan **) param->mem_root->alloc(sizeof(optimizer::TableReadPlan*) * n_child_scans);
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1209,12 +1196,8 @@ skip_to_ror_scan:
 static
 optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
-  optimizer::RorScanInfo *ror_scan= NULL;
-
   uint32_t keynr;
-
-  if (!(ror_scan= (optimizer::RorScanInfo*)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo))))
-    return NULL;
+  optimizer::RorScanInfo* ror_scan= (optimizer::RorScanInfo*)param->mem_root->alloc(sizeof(optimizer::RorScanInfo));
 
   ror_scan->idx= idx;
   ror_scan->keynr= keynr= param->real_keynr[idx];
@@ -1711,15 +1694,10 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   if (total_cost > read_time)
     return NULL;
 
-  optimizer::RorIntersectReadPlan *trp= NULL;
-  if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
-  {
-    return trp;
-  }
+  optimizer::RorIntersectReadPlan* trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  if (!(trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)* best_num)))
-    return NULL;
+  trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* best_num);
   memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(optimizer::RorScanInfo*));
   trp->last_scan=  trp->first_scan + best_num;
   trp->is_covering= true;
@@ -1817,12 +1795,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  if (! (tree->ror_scans= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)* param->keys)))
-  {
-    return NULL;
-  }
-  cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
-           param->table->getShare()->getPrimaryKey() : MAX_KEY);
+  tree->ror_scans= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* param->keys);
+  cpk_no= ((param->table->cursor->primary_key_is_clustered()) ? param->table->getShare()->getPrimaryKey() : MAX_KEY);
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
   {
@@ -1850,9 +1824,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
                      (qsort_cmp)cmp_ror_scan_info);
 
   optimizer::RorScanInfo **intersect_scans= NULL; /* ROR scans used in index intersection */
-  optimizer::RorScanInfo **intersect_scans_end= NULL;
-  if (! (intersect_scans= (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*) * tree->n_ror_scans)))
-    return NULL;
+  optimizer::RorScanInfo **intersect_scans_end= intersect_scans= 
+    (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*) * tree->n_ror_scans);
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
@@ -1911,12 +1884,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   optimizer::RorIntersectReadPlan *trp= NULL;
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
-    if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
-      return trp;
-
-    if (! (trp->first_scan=
-           (optimizer::RorScanInfo**)param->mem_root->alloc_root(sizeof(optimizer::RorScanInfo*)*best_num)))
-      return NULL;
+    trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
+    trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)*best_num);
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(optimizer::RorScanInfo*));
     trp->last_scan=  trp->first_scan + best_num;
     trp->is_covering= intersect_best.is_covering;
@@ -2902,11 +2871,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
         field_length= length;
     }
     length+=offset;
-    if (!(min_str= (unsigned char*) alloc->alloc_root(length*2)))
-    {
-      goto end;
-    }
-
+    min_str= (unsigned char*) alloc->alloc(length*2);
     max_str=min_str+length;
     if (maybe_null)
       max_str[0]= min_str[0]=0;
@@ -3142,9 +3107,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     goto end;
   }
 
-  str= (unsigned char*) alloc->alloc_root(key_part->store_length+1);
-  if (!str)
-    goto end;
+  str= (unsigned char*) alloc->alloc(key_part->store_length+1);
   if (maybe_null)
     *str= (unsigned char) field->is_real_null();        // Set to 1 if null
   field->get_key_image(str+maybe_null, key_part->length);
@@ -4276,13 +4239,9 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
   range->min_length= range->max_length= ref->key_length;
   range->min_keypart_map= range->max_keypart_map=
     make_prev_keypart_map(ref->key_parts);
-  range->flag= ((ref->key_length == key_info->key_length &&
-                 (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0);
+  range->flag= (ref->key_length == key_info->key_length && (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0;
 
-
-  if (!(quick->key_parts=key_part=(KEY_PART *)
-        quick->alloc.alloc_root(sizeof(KEY_PART)*ref->key_parts)))
-    goto err;
+  quick->key_parts=key_part=(KEY_PART *)quick->alloc.alloc_root(sizeof(KEY_PART)*ref->key_parts);
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)
   {

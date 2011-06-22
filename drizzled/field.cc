@@ -612,7 +612,7 @@ void *Field::operator new(size_t size)
 
 void *Field::operator new(size_t size, memory::Root *mem_root)
 {
-  return mem_root->alloc_root(static_cast<uint32_t>(size));
+  return mem_root->alloc(size);
 }
 
 enum_field_types Field::field_type_merge(enum_field_types a,
