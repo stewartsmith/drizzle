@@ -415,17 +415,10 @@ int optimizer::QuickGroupMinMaxSelect::next_min()
 
 int optimizer::QuickGroupMinMaxSelect::next_max()
 {
-  int result= 0;
-
   /* Get the last key in the (possibly extended) group. */
-  if (! min_max_ranges.empty())
-    result= next_max_in_range();
-  else
-    result= cursor->index_read_map(record,
-                                   group_prefix,
-                                   make_prev_keypart_map(real_key_parts),
-                                   HA_READ_PREFIX_LAST);
-  return result;
+  return min_max_ranges.empty()
+    ? cursor->index_read_map(record, group_prefix, make_prev_keypart_map(real_key_parts), HA_READ_PREFIX_LAST)
+    : next_max_in_range();
 }
 
 
@@ -488,9 +481,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
 
   assert(! min_max_ranges.empty());
 
-  for (vector<optimizer::QuickRange *>::iterator it= min_max_ranges.begin();
-       it != min_max_ranges.end();
-       ++it)
+  for (vector<optimizer::QuickRange *>::iterator it= min_max_ranges.begin(); it != min_max_ranges.end(); ++it)
   { /* Search from the left-most range to the right. */
     cur_range= *it;
 

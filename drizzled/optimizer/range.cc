@@ -5407,9 +5407,7 @@ void cost_group_min_max(Table* table,
 optimizer::QuickSelectInterface *
 optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
-  optimizer::QuickGroupMinMaxSelect *quick= NULL;
-
-  quick= new optimizer::QuickGroupMinMaxSelect(param->table,
+  optimizer::QuickGroupMinMaxSelect *quick= new optimizer::QuickGroupMinMaxSelect(param->table,
                                                param->session->lex().current_select->join,
                                                have_min,
                                                have_max,
@@ -5424,11 +5422,6 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
                                                key_infix_len,
                                                key_infix,
                                                parent_alloc);
-  if (! quick)
-  {
-    return NULL;
-  }
-
   if (quick->init())
   {
     delete quick;
