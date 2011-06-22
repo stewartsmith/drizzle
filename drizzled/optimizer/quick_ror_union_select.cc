@@ -130,11 +130,9 @@ int optimizer::QuickRorUnionSelect::reset()
 }
 
 
-bool
-optimizer::QuickRorUnionSelect::push_quick_back(QuickSelectInterface *quick_sel_range)
+void optimizer::QuickRorUnionSelect::push_quick_back(QuickSelectInterface *quick_sel_range)
 {
   quick_selects.push_back(quick_sel_range);
-  return false;
 }
 
 

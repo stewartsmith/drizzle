@@ -2007,28 +2007,20 @@ static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
 
 optimizer::QuickSelectInterface *optimizer::IndexMergeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
-  optimizer::QuickIndexMergeSelect *quick_imerge;
-  optimizer::QuickRangeSelect *quick= NULL;
   /* index_merge always retrieves full rows, ignore retrieve_full_rows */
-  if (! (quick_imerge= new optimizer::QuickIndexMergeSelect(param->session, param->table)))
-  {
-    return NULL;
-  }
-
+  optimizer::QuickIndexMergeSelect* quick_imerge= new optimizer::QuickIndexMergeSelect(param->session, param->table);
   quick_imerge->records= records;
   quick_imerge->read_time= read_cost;
-  for (optimizer::RangeReadPlan **range_scan= range_scans; 
-       range_scan != range_scans_end;
-       range_scan++)
+  for (optimizer::RangeReadPlan **range_scan= range_scans; range_scan != range_scans_end; range_scan++)
   {
-    if (! (quick= (optimizer::QuickRangeSelect*)
-          ((*range_scan)->make_quick(param, false, &quick_imerge->alloc))) ||
-        quick_imerge->push_quick_back(quick))
+    optimizer::QuickRangeSelect* quick= (optimizer::QuickRangeSelect*)((*range_scan)->make_quick(param, false, &quick_imerge->alloc));
+    if (not quick)
     {
       delete quick;
       delete quick_imerge;
       return NULL;
     }
+    quick_imerge->push_quick_back(quick);
   }
   return quick_imerge;
 }
@@ -2055,12 +2047,12 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
                                                 (*first_scan)->sel_arg,
                                                 HA_MRR_USE_DEFAULT_IMPL | HA_MRR_SORTED,
                                                 0,
-                                                alloc)) ||
-          quick_intersect->push_quick_back(quick))
+                                                alloc)))
       {
         delete quick_intersect;
         return NULL;
       }
+      quick_intersect->push_quick_back(quick);
     }
     if (cpk_scan)
     {
@@ -2086,26 +2078,20 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
 
 optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
-  optimizer::QuickRorUnionSelect *quick_roru= NULL;
-  optimizer::TableReadPlan **scan= NULL;
-  optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
     rows, ignore retrieve_full_rows parameter.
   */
-  if ((quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table)))
+  optimizer::QuickRorUnionSelect* quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table);
+  for (optimizer::TableReadPlan** scan= first_ror; scan != last_ror; scan++)
   {
-    for (scan= first_ror; scan != last_ror; scan++)
-    {
-      if (! (quick= (*scan)->make_quick(param, false, &quick_roru->alloc)) ||
-          quick_roru->push_quick_back(quick))
-      {
-        return NULL;
-      }
-    }
-    quick_roru->records= records;
-    quick_roru->read_time= read_cost;
+    optimizer::QuickSelectInterface* quick= (*scan)->make_quick(param, false, &quick_roru->alloc);
+    if (not quick)
+      return NULL;
+    quick_roru->push_quick_back(quick);
   }
+  quick_roru->records= records;
+  quick_roru->read_time= read_cost;
   return quick_roru;
 }
 
