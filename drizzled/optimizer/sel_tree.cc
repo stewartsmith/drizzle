@@ -34,31 +34,19 @@ using namespace drizzled;
 static optimizer::SEL_ARG *key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
 static bool eq_tree(optimizer::SEL_ARG* a, optimizer::SEL_ARG *b);
 
-bool optimizer::sel_trees_can_be_ored(optimizer::SEL_TREE *tree1, 
-                                      optimizer::SEL_TREE *tree2,
-                                      optimizer::RangeParameter* param)
+bool optimizer::sel_trees_can_be_ored(const SEL_TREE& tree1, const SEL_TREE& tree2, const RangeParameter& param)
 {
-  key_map common_keys= tree1->keys_map;
-  common_keys&= tree2->keys_map;
+  key_map common_keys= tree1.keys_map;
+  common_keys&= tree2.keys_map;
 
   if (common_keys.none())
-  {
     return false;
-  }
 
   /* trees have a common key, check if they refer to same key part */
-  optimizer::SEL_ARG **key1,**key2;
-  for (uint32_t key_no=0; key_no < param->keys; key_no++)
+  for (uint32_t key_no= 0; key_no < param.keys; key_no++)
   {
-    if (common_keys.test(key_no))
-    {
-      key1= tree1->keys + key_no;
-      key2= tree2->keys + key_no;
-      if ((*key1)->part == (*key2)->part)
-      {
-        return true;
-      }
-    }
+    if (common_keys.test(key_no) && tree1.keys[key_no]->part == tree2.keys[key_no]->part)
+      return true;
   }
   return false;
 }
@@ -155,7 +143,7 @@ optimizer::tree_or(optimizer::RangeParameter *param,
   optimizer::SEL_TREE *result= NULL;
   key_map  result_keys;
   result_keys.reset();
-  if (sel_trees_can_be_ored(tree1, tree2, param))
+  if (sel_trees_can_be_ored(*tree1, *tree2, *param))
   {
     /* Join the trees key per key */
     optimizer::SEL_ARG **key1= NULL;

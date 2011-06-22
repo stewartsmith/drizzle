@@ -61,7 +61,7 @@ int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *pa
 {
   for (optimizer::SEL_TREE** tree = trees; tree != trees_next; tree++)
   {
-    if (sel_trees_can_be_ored(*tree, new_tree, param))
+    if (sel_trees_can_be_ored(**tree, *new_tree, *param))
     {
       *tree = tree_or(param, *tree, new_tree);
       if (!*tree)
