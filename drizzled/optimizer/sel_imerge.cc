@@ -39,7 +39,7 @@ optimizer::SEL_IMERGE::SEL_IMERGE()
 {}
 
 
-int optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree)
+void optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree)
 {
   if (trees_next == trees_end)
   {
@@ -54,15 +54,12 @@ int optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimiz
     trees_end= trees + old_elements * realloc_ratio;
   }
   *(trees_next++)= tree;
-  return 0; // return void
 }
 
 
 int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *param, optimizer::SEL_TREE *new_tree)
 {
-  for (optimizer::SEL_TREE** tree = trees;
-       tree != trees_next;
-       tree++)
+  for (optimizer::SEL_TREE** tree = trees; tree != trees_next; tree++)
   {
     if (sel_trees_can_be_ored(*tree, new_tree, param))
     {
@@ -78,7 +75,8 @@ int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *pa
   }
 
   /* New tree cannot be combined with any of existing trees. */
-  return or_sel_tree(param, new_tree);
+  or_sel_tree(param, new_tree);
+  return 0;
 }
 
 

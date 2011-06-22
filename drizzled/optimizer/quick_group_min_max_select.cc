@@ -137,7 +137,7 @@ int optimizer::QuickGroupMinMaxSelect::init()
     if (have_max)
       max_functions_it= new List<Item_sum>::iterator(max_functions->begin());
   }
-  return 0; // return void
+  return 0;
 }
 
 optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()

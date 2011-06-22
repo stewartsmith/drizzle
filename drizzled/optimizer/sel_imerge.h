@@ -60,7 +60,7 @@ public:
      0 - OK
      -1 - Out of memory.
    */
-  int or_sel_tree(RangeParameter *param, SEL_TREE *tree);
+  void or_sel_tree(RangeParameter *param, SEL_TREE *tree);
 
   /*
      Perform OR operation on this SEL_IMERGE and supplied optimizer::SEL_TREE new_tree,

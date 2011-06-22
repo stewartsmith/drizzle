@@ -194,14 +194,9 @@ optimizer::tree_or(optimizer::RangeParameter *param,
 			result= new optimizer::SEL_TREE();
 			merge= new optimizer::SEL_IMERGE();
 			result->merges.push_back(merge);
-      if (merge->or_sel_tree(param, tree1) || merge->or_sel_tree(param, tree2))
-      {
-        result= NULL;
-      }
-      else
-      {
-        result->type= tree1->type;
-      }
+      merge->or_sel_tree(param, tree1);
+      merge->or_sel_tree(param, tree2);
+      result->type= tree1->type;
     }
     else if (!tree1->merges.is_empty() && !tree2->merges.is_empty())
     {
