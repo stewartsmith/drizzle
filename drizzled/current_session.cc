@@ -20,30 +20,35 @@
 #include <config.h>
 #include <drizzled/current_session.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-static MySessionVar THR_Session;
-static MyMemoryRootVar THR_Mem_root;
+static boost::thread_specific_ptr<Session> THR_Session;
+static boost::thread_specific_ptr<memory::Root> THR_Mem_root;
 
-MySessionVar &currentSession(void)
-{
-  return THR_Session;
-}
-
-MyMemoryRootVar &currentMemRoot(void)
-{
-  return THR_Mem_root;
-}
-
-Session *_current_session(void)
+Session* _current_session()
 {
   return THR_Session.get();
 }
 
-memory::Root *current_mem_root(void)
+memory::Root* current_mem_root()
 {
-  return *(currentMemRoot().get());
+  return THR_Mem_root.get();
+}
+
+void setCurrentSession(Session* v)
+{
+  if (v)
+    THR_Session.reset(v);
+  else
+    THR_Session.release();
+}
+
+void setCurrentMemRoot(memory::Root* v)
+{
+  if (v)
+    THR_Mem_root.reset(v);
+  else
+    THR_Mem_root.release();
 }
 
 } /* namespace drizzled */

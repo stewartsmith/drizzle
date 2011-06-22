@@ -293,8 +293,8 @@ public:
   /** Cleanup this Join, possibly for reuse */
   void cleanup(bool full);
   void clear();
-  bool save_join_tab();
-  bool init_save_join_tab();
+  void save_join_tab();
+  void init_save_join_tab();
   bool send_row_on_empty_set()
   {
     return (do_send_rows && tmp_table_param.sum_func_count != 0 &&

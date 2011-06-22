@@ -46,7 +46,7 @@ bool buildCreateTable(Session *session, Table_ident *ident);
 bool buildDescribe(Session *session, Table_ident *ident);
 bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident);
 bool buildProcesslist(Session *session);
-bool buildScemas(Session *session);
+bool buildSchemas(Session*);
 bool buildStatus(Session *session, const drizzled::sql_var_t is_global);
 bool buildEngineStatus(Session *session, LEX_STRING);
 bool buildTableStatus(Session *session, const char *ident);

@@ -50,8 +50,7 @@ optimizer::QuickIndexMergeSelect::QuickIndexMergeSelect(Session *session_param,
   index= MAX_KEY;
   head= table;
   memset(&read_record, 0, sizeof(read_record));
-  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  return;
+  alloc.init(session->variables.range_alloc_block_size);
 }
 
 int optimizer::QuickIndexMergeSelect::init()

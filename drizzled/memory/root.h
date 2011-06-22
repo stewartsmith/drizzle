@@ -18,11 +18,8 @@
  * @brief Memory root declarations
  */
 
-
-
 #pragma once
 
-#include <cstddef>
 #include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
 #include <drizzled/visibility.h>
@@ -68,8 +65,7 @@ public:
     min_malloc(0),
     block_size(0),
     block_num(0),
-    first_block_usage(0),
-    error_handler(0)
+    first_block_usage(0)
   { }
 
   Root(size_t block_size_arg)
@@ -79,10 +75,7 @@ public:
     block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
     block_num= 4;			/* We shift this with >>2 */
     first_block_usage= 0;
-    error_handler= 0;
   }
-
-  ~Root();
 
   /**
    * blocks with free memory in it 
@@ -113,31 +106,35 @@ public:
    */
   unsigned int first_block_usage;
 
-  void (*error_handler)(void);
-  void reset_root_defaults(size_t block_size, size_t prealloc_size);
-  void *alloc_root(size_t Size);
-  inline void *allocate(size_t Size)
-  {
-    return alloc_root(Size);
-  }
+  void reset_defaults(size_t block_size, size_t prealloc_size);
+  void* alloc(size_t Size);
   void mark_blocks_free();
-  void *memdup_root(const void *str, size_t len);
-  char *strdup_root(const char *str);
+  void* memdup(const void*, size_t);
+  char* strdup(const char*);
 
-  char *strmake_root(const char *str,size_t len);
-  void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
-
-  inline void *duplicate(const void *str, size_t len)
-  {
-    return memdup_root(str, len);
-  }
+  char* strmake(const char*, size_t);
+  char* strmake(const std::string&);
+  char* strmake(const String&);
+  void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
   inline bool alloc_root_inited()
   {
     return min_malloc != 0;
   }
   void free_root(myf MyFLAGS);
-  void *multi_alloc_root(int unused, ...);
+  void* multi_alloc_root(int unused, ...);
+
+  void* alloc_root(size_t Size)
+  {
+    return alloc(Size);
+  }
+
+  void* calloc(size_t size)
+  {
+    void* ptr= alloc_root(size);
+    memset(ptr, 0, size);
+    return ptr;
+  }
 };
 
 } /* namespace memory */

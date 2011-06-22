@@ -695,9 +695,9 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     param.force_default_mrr= ordered_output;
 
     session->no_errors=1;				// Don't warn about NULL
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-    if (!(param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->getShare()->key_parts)) ||
-        fill_used_fields_bitmap(&param))
+    alloc.init(session->variables.range_alloc_block_size);
+    param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->getShare()->key_parts);
+    if (fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
       alloc.free_root(MYF(0));			// Return memory & allocator
@@ -4015,13 +4015,11 @@ optimizer::get_quick_select(Parameter *param,
       quick->mrr_buf_size= mrr_buf_size;
       if (parent_alloc)
       {
-        quick->key_parts=(KEY_PART*)
-          parent_alloc->memdup_root( (char*) param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
+        quick->key_parts= (KEY_PART*)parent_alloc->memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
       }
       else
       {
-        quick->key_parts=(KEY_PART*)
-          quick->alloc.memdup_root((char*) param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
+        quick->key_parts= (KEY_PART*)quick->alloc.memdup(param->key[idx], sizeof(KEY_PART)* param->table->key_info[param->real_keynr[idx]].key_parts);
       }
     }
   }

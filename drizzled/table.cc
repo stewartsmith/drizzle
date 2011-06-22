@@ -187,7 +187,7 @@ void Table::resetTable(Session *session,
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
 }
 
 
@@ -735,7 +735,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  memory::Root *mem_root_save;
   uint	i,field_count,null_count,null_pack_length;
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
@@ -813,17 +812,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     return NULL;
   }
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
-  if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
-  {
-    return NULL;
-  }
+  param->copy_field= copy= new (session->mem_root) CopyField[field_count];
   param->items_to_copy= copy_func;
   /* make table according to fields */
 
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
-  mem_root_save= session->mem_root;
+  memory::Root* mem_root_save= session->mem_root;
   session->mem_root= table->getMemRoot();
 
   table->getMutableShare()->setFields(field_count+1);
@@ -854,9 +850,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   param->using_indirect_summary_function= 0;
 
   List<Item>::iterator li(fields.begin());
-  Item *item;
   Field **tmp_from_field=from_field;
-  while ((item=li++))
+  while (Item* item=li++)
   {
     Item::Type type=item->type();
     if (not_all_columns)

@@ -107,36 +107,14 @@ struct st_item_value_holder : public drizzle_value
   Item *item;
 };
 
-class Bookmark
-{
-public:
-  Bookmark() :
-    type_code(0),
-    offset(0),
-    version(0),
-    key("")
-  {}
-  uint8_t type_code;
-  int offset;
-  uint32_t version;
-  string key;
-};
-
-typedef boost::unordered_map<string, Bookmark> bookmark_unordered_map;
-static bookmark_unordered_map bookmark_hash;
-
-
-
 /* prototypes */
-static void plugin_prune_list(vector<string> &plugin_list,
-                              const vector<string> &plugins_to_remove);
+static void plugin_prune_list(vector<string> &plugin_list, const vector<string> &plugins_to_remove);
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root,
                              const set<string> &plugin_list,
                              po::options_description &long_options,
                              bool builtin= false);
-static int test_plugin_options(memory::Root *, module::Module *,
-                               po::options_description &long_options);
+static int test_plugin_options(memory::Root*, module::Module*, po::options_description&long_options);
 static void unlock_variables(Session *session, drizzle_system_variables *vars);
 static void cleanup_variables(drizzle_system_variables *vars);
 
@@ -418,10 +396,8 @@ static bool plugin_load_list(module::Registry &registry,
   return false;
 }
 
-
 void module_shutdown(module::Registry &registry)
 {
-
   if (initialized)
   {
     reap_needed= true;

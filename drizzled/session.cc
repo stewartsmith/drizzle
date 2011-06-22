@@ -192,6 +192,7 @@ public:
 
 Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catalog_arg) :
   impl_(new impl_c(*this)),
+  mem(impl_->mem_root),
   mem_root(&impl_->mem_root),
   query(new std::string),
   scheduler(NULL),
@@ -246,11 +247,11 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   client->setSession(this);
 
   /*
-    Pass nominal parameters to init_alloc_root only to ensure that
+    Pass nominal parameters to init only to ensure that
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  memory::init_sql_alloc(mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
+  mem.init(memory::ROOT_MIN_BLOCK_SIZE);
   cuted_fields= sent_row_count= row_count= 0L;
   // Must be reset to handle error with Session's created for init of mysqld
   lex().current_select= 0;
@@ -288,7 +289,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
-  memory::init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
+  warn_root.init(WARN_ALLOC_BLOCK_SIZE);
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
@@ -337,32 +338,30 @@ session::Transactions& statement::Statement::transaction()
 	return session().transaction;
 }
 
-bool Session::add_item_to_list(Item *item)
+void Session::add_item_to_list(Item *item)
 {
-  return lex().current_select->add_item_to_list(this, item);
+  lex().current_select->add_item_to_list(this, item);
 }
 
-bool Session::add_value_to_list(Item *value)
+void Session::add_value_to_list(Item *value)
 {
 	lex().value_list.push_back(value);
-  return false;
 }
 
-bool Session::add_order_to_list(Item *item, bool asc)
+void Session::add_order_to_list(Item *item, bool asc)
 {
-  return lex().current_select->add_order_to_list(this, item, asc);
+  lex().current_select->add_order_to_list(this, item, asc);
 }
 
-bool Session::add_group_to_list(Item *item, bool asc)
+void Session::add_group_to_list(Item *item, bool asc)
 {
-  return lex().current_select->add_group_to_list(this, item, asc);
+  lex().current_select->add_group_to_list(this, item, asc);
 }
 
 void Session::free_items()
 {
-  Item *next;
   /* This works because items are allocated with memory::sql_alloc() */
-  for (; free_list; free_list= next)
+  for (Item* next; free_list; free_list= next)
   {
     next= free_list->next;
     free_list->delete_self();
@@ -458,8 +457,8 @@ Session::~Session()
   mysys_var=0;					// Safety (shouldn't be needed)
 
   impl_->mem_root.free_root(MYF(0));
-  currentMemRoot().release();
-  currentSession().release();
+  setCurrentMemRoot(NULL);
+  setCurrentSession(NULL);
 
   plugin::Logging::postEndDo(this);
   plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
@@ -530,8 +529,8 @@ void Session::storeGlobals()
     to track stack overrun.
   */
   assert(thread_stack);
-  currentSession().reset(this);
-  currentMemRoot().reset(&mem_root);
+  setCurrentSession(this);
+  setCurrentMemRoot(&mem);
 
   mysys_var= my_thread_var;
 
@@ -564,8 +563,7 @@ void Session::prepareForQueries()
   command= COM_SLEEP;
   times.set_time();
 
-  mem_root->reset_root_defaults(variables.query_alloc_block_size,
-                                variables.query_prealloc_size);
+  mem.reset_defaults(variables.query_alloc_block_size, variables.query_prealloc_size);
   transaction.xid_state.xid.set_null();
   transaction.xid_state.in_session=1;
   if (use_usage)
@@ -889,8 +887,8 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= (LEX_STRING *)getMemRoot()->allocate(sizeof(LEX_STRING));
-  lex_str->str= mem_root->strmake_root(str, length);
+    lex_str= (LEX_STRING *)getMemRoot()->alloc(sizeof(LEX_STRING));
+  lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1557,7 +1555,7 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(impl_->schema->c_str(), impl_->schema->size());
+  *p_db= mem.strmake(*impl_->schema);
   *p_db_length= impl_->schema->size();
   return false;
 }

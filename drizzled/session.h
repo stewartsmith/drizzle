@@ -108,25 +108,7 @@ public:
                         and update_row.
   */
   enum_mark_columns mark_used_columns;
-  inline void* calloc(size_t size)
-  {
-    void *ptr= mem_root->alloc_root(size);
-    if (ptr)
-      memset(ptr, 0, size);
-    return ptr;
-  }
-  inline char *strmake(const char *str, size_t size)
-  {
-    return mem_root->strmake_root(str,size);
-  }
 
-  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
-  {
-    void *ptr= mem_root->alloc_root(size + gap);
-    if (ptr)
-      memcpy(ptr, str, size);
-    return ptr;
-  }
   /** Frees all items attached to this Statement */
   void free_items();
 
@@ -135,7 +117,8 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  memory::Root *mem_root; /**< Pointer to current memroot */
+  memory::Root& mem;
+  memory::Root* mem_root; /**< Pointer to current memroot */
 
   memory::Root *getMemRoot()
   {
@@ -185,7 +168,7 @@ public:
       return NULL;
     }
     length= tmp_string->length();
-    return strmake(tmp_string->c_str(), tmp_string->length());
+    return mem.strmake(*tmp_string);
   }
 
   util::string::ptr schema() const;
@@ -1049,10 +1032,10 @@ public:
 public:
   void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0, uint64_t passed_id= 0, const char *message= NULL);
   void my_eof();
-  bool add_item_to_list(Item *item);
-  bool add_value_to_list(Item *value);
-  bool add_order_to_list(Item *item, bool asc);
-  bool add_group_to_list(Item *item, bool asc);
+  void add_item_to_list(Item *item);
+  void add_value_to_list(Item *value);
+  void add_order_to_list(Item *item, bool asc);
+  void add_group_to_list(Item *item, bool asc);
 
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);

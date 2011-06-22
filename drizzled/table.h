@@ -315,7 +315,7 @@ private:
 
   void init_mem_root()
   {
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
   memory::Root *getMemRoot()
@@ -338,14 +338,14 @@ public:
     return mem_root.alloc_root(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char *strmake(const char *str_arg, size_t len_arg)
   {
     if (not mem_root.alloc_root_inited())
     {
       init_mem_root();
     }
 
-    return mem_root.strmake_root(str_arg, len_arg);
+    return mem_root.strmake(str_arg, len_arg);
   }
 
   filesort_info sort;

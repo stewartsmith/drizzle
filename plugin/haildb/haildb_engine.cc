@@ -2295,7 +2295,7 @@ int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor,
         if (*blobroot == NULL)
         {
           *blobroot= new drizzled::memory::Root();
-          (**blobroot).init_alloc_root();
+          (**blobroot).init();
         }
 
         unsigned char *blob_ptr= (unsigned char*)(**blobroot).alloc_root(length);

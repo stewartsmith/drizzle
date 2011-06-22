@@ -175,9 +175,9 @@ private:
     return mem_root.alloc_root(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char *strmake(const char *str_arg, size_t len_arg)
   {
-    return mem_root.strmake_root(str_arg, len_arg);
+    return mem_root.strmake(str_arg, len_arg);
   }
 
   memory::Root *getMemRoot()

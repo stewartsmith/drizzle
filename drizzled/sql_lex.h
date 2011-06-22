@@ -578,9 +578,9 @@ public:
   bool inc_in_sum_expr();
   uint32_t get_in_sum_expr();
 
-  bool add_item_to_list(Session *session, Item *item);
-  bool add_group_to_list(Session *session, Item *item, bool asc);
-  bool add_order_to_list(Session *session, Item *item, bool asc);
+  void add_item_to_list(Session *session, Item *item);
+  void add_group_to_list(Session *session, Item *item, bool asc);
+  void add_order_to_list(Session *session, Item *item, bool asc);
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
                                LEX_STRING *alias,
@@ -589,7 +589,7 @@ public:
                                List<Index_hint> *hints= 0,
                                LEX_STRING *option= 0);
   TableList* get_table_list();
-  bool init_nested_join(Session *session);
+  void init_nested_join(Session&);
   TableList *end_nested_join(Session *session);
   TableList *nest_last_join(Session *session);
   void add_joined_table(TableList *table);
@@ -620,7 +620,7 @@ public:
     init_query();
     init_select();
   }
-  bool setup_ref_array(Session *session, uint32_t order_group_num);
+  void setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str);
   static void print_order(String *str, Order *order);
 

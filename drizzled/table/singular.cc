@@ -87,7 +87,7 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   null_pack_length= (null_count + 7)/8;
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
-  record[0]= (unsigned char*)session->getMemRoot()->allocate(getMutableShare()->rec_buff_length);
+  record[0]= (unsigned char*)session->mem.alloc(getMutableShare()->rec_buff_length);
   if (not getInsertRecord())
   {
     throw "Memory allocation failure";
@@ -187,8 +187,6 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot()->alloc_root(sizeof(*seg) * keyinfo->key_parts);
-    if (not seg)
-      return true;
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||

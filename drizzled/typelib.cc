@@ -124,10 +124,10 @@ TYPELIB *TYPELIB::copy_typelib(memory::Root& root) const
   to->type_names= (const char**)root.alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
   to->type_lengths= (unsigned int*)(to->type_names + count + 1);
   to->count= count;
-  to->name= name ? root.strdup_root(name) : NULL;
+  to->name= name ? root.strdup(name) : NULL;
   for (uint32_t i= 0; i < count; i++)
   {
-    to->type_names[i]= root.strmake_root(type_names[i], type_lengths[i]);
+    to->type_names[i]= root.strmake(type_names[i], type_lengths[i]);
     to->type_lengths[i]= type_lengths[i];
   }
   to->type_names[to->count]= NULL;

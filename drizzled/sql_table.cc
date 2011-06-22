@@ -635,11 +635,10 @@ static int prepare_create_table(Session *session,
         for (uint32_t i= 0; (tmp= int_it++); i++)
         {
           uint32_t lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(),
-                                       cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs, &dummy))
           {
             conv.copy(tmp->ptr(), tmp->length(), cs);
-            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
+            interval->type_names[i]= session->mem.strmake(conv);
             interval->type_lengths[i]= conv.length();
           }
 

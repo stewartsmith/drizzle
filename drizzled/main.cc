@@ -376,7 +376,7 @@ int main(int argc, char **argv)
   /* Send server startup event */
   {
     Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-    currentSession().reset(session.get());
+    setCurrentSession(session.get());
     transaction_services.sendStartupEvent(*session);
     plugin_startup_window(modules, *session.get());
   }
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
   /* Send server shutdown event */
   {
     Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-    currentSession().reset(session.get());
+    setCurrentSession(session.get());
     transaction_services.sendShutdownEvent(*session.get());
   }
 

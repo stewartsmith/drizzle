@@ -1608,16 +1608,12 @@ copy_data_between_tables(Session *session,
         tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
         error= 1;
 
-        if (session->lex().select_lex.setup_ref_array(session, order_num) ||
-            setup_order(session, session->lex().select_lex.ref_pointer_array,
-                        &tables, fields, all_fields, order) ||
-            !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
-            (from->sort.found_records= filesort.run(from, sortorder, length,
-                                                    (optimizer::SqlSelect *) 0, HA_POS_ERROR,
-                                                    1, examined_rows)) == HA_POS_ERROR)
-        {
+        session->lex().select_lex.setup_ref_array(session, order_num);
+        if (setup_order(session, session->lex().select_lex.ref_pointer_array, &tables, fields, all_fields, order))
           break;
-        }
+        sortorder= make_unireg_sortorder(order, &length, NULL);
+        if ((from->sort.found_records= filesort.run(from, sortorder, length, (optimizer::SqlSelect *) 0, HA_POS_ERROR, 1, examined_rows)) == HA_POS_ERROR)
+          break;
       }
     }
 

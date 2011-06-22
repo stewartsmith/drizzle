@@ -3357,7 +3357,7 @@ cmp_item_row::~cmp_item_row()
 void cmp_item_row::alloc_comparators()
 {
   if (!comparators)
-    comparators= (cmp_item **) current_session->calloc(sizeof(cmp_item *)*n);
+    comparators= (cmp_item **) current_session->mem.calloc(sizeof(cmp_item *)*n);
 }
 
 
@@ -4482,9 +4482,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
-                                                                  ((pattern_len + 1)*2+
-                                                                   alphabet_size)));
+        int *suff = (int*) session->mem.alloc(sizeof(int) * ((pattern_len + 1)*2+ alphabet_size));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);

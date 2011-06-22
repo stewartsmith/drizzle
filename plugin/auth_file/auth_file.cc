@@ -40,23 +40,19 @@ namespace fs= boost::filesystem;
 using namespace std;
 using namespace drizzled;
 
-namespace auth_file
-{
+namespace auth_file {
 
 static const fs::path DEFAULT_USERS_FILE= SYSCONFDIR "/drizzle.users";
 
-class AuthFile: public plugin::Authentication
+class AuthFile : public plugin::Authentication
 {
-  const fs::path users_file;
-
 public:
-
-  AuthFile(string name_arg, fs::path users_file_arg);
+  AuthFile(fs::path users_file_arg);
 
   /**
    * Retrieve the last error encountered in the class.
    */
-  string& getError(void);
+  const string& getError() const;
 
   /**
    * Load the users file into a map cache.
@@ -64,7 +60,7 @@ public:
    * @return True on success, false on error. If false is returned an error
    *  is set and can be retrieved with getError().
    */
-  bool loadFile(void);
+  bool loadFile();
 
 private:
 
@@ -89,44 +85,41 @@ private:
                        const string &scrambled_password);
 
   string error;
+  const fs::path users_file;
 
   /**
    * Cache or username:password entries from the file.
    */
-  std::map<string, string> users;
+  typedef std::map<string, string> users_t;
+  users_t users;
 };
 
-AuthFile::AuthFile(string name_arg, fs::path users_file_arg):
-  plugin::Authentication(name_arg),
-  users_file(users_file_arg),
-  error(),
-  users()
+AuthFile::AuthFile(fs::path users_file_arg) :
+  plugin::Authentication("auth_file"),
+  users_file(users_file_arg)
 {
 }
 
-string& AuthFile::getError(void)
+const string& AuthFile::getError() const
 {
   return error;
 }
 
-bool AuthFile::loadFile(void)
+bool AuthFile::loadFile()
 {
   ifstream file(users_file.string().c_str());
 
   if (!file.is_open())
   {
-    error = "Could not open users file: ";
-    error += users_file.string();
+    error = "Could not open users file: " + users_file.string();
     return false;
   }
 
-  while (!file.eof())
+  string line;
+  while (getline(file, line))
   {
-    string line;
-    getline(file, line);
-
     /* Ignore blank lines and lines starting with '#'. */
-    if (line == "" || line[line.find_first_not_of(" \t")] == '#')
+    if (line.empty() || line[line.find_first_not_of(" \t")] == '#')
       continue;
 
     string username;
@@ -140,19 +133,12 @@ bool AuthFile::loadFile(void)
       password = string(line, password_offset + 1);
     }
 
-    std::pair<std::map<std::string, std::string>::iterator, bool> result=
-      users.insert(std::pair<std::string, std::string>(username, password));
-
-    if (result.second == false)
+    if (not users.insert(pair<string, string>(username, password)).second)
     {
-      error = "Duplicate entry found in users file: ";
-      error += username;
-      file.close();
+      error = "Duplicate entry found in users file: " + username;
       return false;
     }
   }
-
-  file.close();
   return true;
 }
 
@@ -160,8 +146,7 @@ bool AuthFile::verifyMySQLHash(const string &password,
                                const string &scramble_bytes,
                                const string &scrambled_password)
 {
-  if (scramble_bytes.size() != SHA1_DIGEST_LENGTH ||
-      scrambled_password.size() != SHA1_DIGEST_LENGTH)
+  if (scramble_bytes.size() != SHA1_DIGEST_LENGTH || scrambled_password.size() != SHA1_DIGEST_LENGTH)
   {
     return false;
   }
@@ -173,8 +158,7 @@ bool AuthFile::verifyMySQLHash(const string &password,
 
   /* Generate the double SHA1 hash for the password stored locally first. */
   SHA1Init(&ctx);
-  SHA1Update(&ctx, reinterpret_cast<const uint8_t *>(password.c_str()),
-             password.size());
+  SHA1Update(&ctx, reinterpret_cast<const uint8_t *>(password.c_str()), password.size());
   SHA1Final(temp_hash, &ctx);
 
   SHA1Init(&ctx);
@@ -183,8 +167,7 @@ bool AuthFile::verifyMySQLHash(const string &password,
 
   /* Hash the scramble that was sent to client with the local password. */
   SHA1Init(&ctx);
-  SHA1Update(&ctx, reinterpret_cast<const uint8_t*>(scramble_bytes.c_str()),
-             SHA1_DIGEST_LENGTH);
+  SHA1Update(&ctx, reinterpret_cast<const uint8_t*>(scramble_bytes.c_str()), SHA1_DIGEST_LENGTH);
   SHA1Update(&ctx, local_scrambled_password, SHA1_DIGEST_LENGTH);
   SHA1Final(temp_hash, &ctx);
 
@@ -204,28 +187,22 @@ bool AuthFile::verifyMySQLHash(const string &password,
 
 bool AuthFile::authenticate(const identifier::User &sctx, const string &password)
 {
-  std::map<std::string, std::string>::const_iterator user= users.find(sctx.username());
-  if (user == users.end())
+  string* user= find_ptr(users, sctx.username());
+  if (not user)
     return false;
-
-  if (sctx.getPasswordType() == identifier::User::MYSQL_HASH)
-    return verifyMySQLHash(user->second, sctx.getPasswordContext(), password);
-
-  if (password == user->second)
-    return true;
-
-  return false;
+  return sctx.getPasswordType() == identifier::User::MYSQL_HASH
+    ? verifyMySQLHash(*user, sctx.getPasswordContext(), password)
+    : password == *user;
 }
 
 static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  AuthFile *auth_file = new AuthFile("auth_file", fs::path(vm["users"].as<string>()));
+  AuthFile *auth_file = new AuthFile(fs::path(vm["users"].as<string>()));
   if (not auth_file->loadFile())
   {
-    errmsg_printf(error::ERROR, _("Could not load auth file: %s\n"),
-                  auth_file->getError().c_str());
+    errmsg_printf(error::ERROR, _("Could not load auth file: %s\n"), auth_file->getError().c_str());
     delete auth_file;
     return 1;
   }
