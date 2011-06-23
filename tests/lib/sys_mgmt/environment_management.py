@@ -34,6 +34,7 @@ class environmentManager():
     def __init__(self, system_manager, variables):
         self.system_manager = system_manager
         self.logging = self.system_manager.logging
+        self.env_var_delimiter = ':'
         
     def join_env_var_values(self, value_list):
         """ Utility to join multiple values into a nice string
@@ -41,7 +42,7 @@ class environmentManager():
  
         """
 
-        return ':'.join(value_list)
+        return self.env_var_delimiter.join(value_list)
 
     def set_env_var(self, var_name, var_value, quiet=0):
         """Set an environment variable.  We really just abstract

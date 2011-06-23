@@ -107,7 +107,7 @@ class drizzleTree(codeTree):
         self.server_compile_os = None
         self.server_platform = None
         self.server_compile_comment = None
-        self.type = 'Drizzle'
+        self.type = 'drizzle'
 
         self.process_server_version()
         self.ld_lib_paths = self.get_ld_lib_paths()

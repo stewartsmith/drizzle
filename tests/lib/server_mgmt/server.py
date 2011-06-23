@@ -122,17 +122,17 @@ class Server(object):
     def is_started(self):
         """ Is the server running?  Particulars are server-dependent """
 
-        return
+        return "You need to implement is_started"
 
     def get_start_cmd(self):
         """ Return the command the server_manager can use to start me """
 
-        return "Allakazam!"
+        return "You need to implement get_start_cmd"
 
     def get_stop_cmd(self):
         """ Return the command the server_manager can use to stop me """
 
-        return "Whoa, Nelly!"
+        return "You need to implement get_stop_cmd"
 
     def get_ping_cmd(self):
         """ Return the command that can be used to 'ping' me 
@@ -144,7 +144,7 @@ class Server(object):
 
         """
    
-        return "Hello?"
+        return "You need to implement get_ping_cmd"
 
     def cleanup(self):
         """ Cleanup - just free ports for now..."""

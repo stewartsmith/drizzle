@@ -38,8 +38,9 @@ class serverManager:
     """
 
     def __init__(self, system_manager, variables):
-        self.skip_keys = [ 'ld_lib_paths'
-                         , 'system_manager'
+        self.skip_keys = [ 'system_manager'
+                         , 'env_manager'
+                         , 'code_manager'
                          , 'logging'
                          , 'gdb'
                          ]
@@ -51,14 +52,14 @@ class serverManager:
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
         self.code_manager = system_manager.code_manager
+        self.env_manager = system_manager.env_manager
         self.logging = system_manager.logging
         self.gdb  = self.system_manager.gdb
         self.default_storage_engine = variables['defaultengine']
         self.default_server_type = variables['defaultservertype']
         self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
-        # We track this
-        self.ld_lib_paths = system_manager.ld_lib_paths
+
         self.mutex = thread.allocate_lock()
         self.timer_increment = .5
         self.libeatmydata = variables['libeatmydata']
@@ -131,13 +132,6 @@ class serverManager:
     def start_servers(self, requester, working_environ, expect_fail):
         """ Start all servers for the requester """
         bad_start = 0
-        if self.libeatmydata:
-            # We want to use libeatmydata to disable fsyncs
-            # this speeds up test execution, but we only want
-            # it to happen for the servers' environments
-            libeatmydata_data = {'LD_PRELOAD':self.libeatmydata_path}
-            self.system_manager.env_manager.update_environment_vars( libeatmydata_data
-                                                       , working_environ)
 
         for server in self.get_server_list(requester):
             if server.status == 0:
@@ -161,6 +155,8 @@ class serverManager:
             start up
 
         """
+        # take care of any environment updates we need to do
+        self.handle_environment_reqs(server, working_environ)
 
         self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
         start_cmd = server.get_start_cmd()
@@ -538,7 +534,37 @@ class serverManager:
             if server.failed_test:
                 self.reset_server(server)
 
+    def handle_environment_reqs(self, server, working_environ):
+        """ We update the working_environ as we need to
+            before starting the server.
 
+            This includes things like libeatmydata, ld_preloads, etc
+
+        """
+        environment_reqs = {}
+
+        if self.libeatmydata:
+            # We want to use libeatmydata to disable fsyncs
+            # this speeds up test execution, but we only want
+            # it to happen for the servers' environments
+
+            environment_reqs.update({'LD_PRELOAD':self.libeatmydata_path})
+
+        # handle ld_preloads
+        ld_lib_paths = self.env_manager.join_env_var_values(server.code_tree.ld_lib_paths)
+        environment_reqs.update({'LD_LIBRARY_PATH' : self.env_manager.append_env_var( 'LD_LIBRARY_PATH'
+                                                                                    , ld_lib_paths
+                                                                                    , suffix = 0
+                                                                                    , quiet = 1
+                                                                                    )
+                                , 'DYLD_LIBRARY_PATH' : self.env_manager.append_env_var( 'DYLD_LIBRARY_PATH'
+                                                                                       , ld_lib_paths
+                                                                                       , suffix = 0
+                                                                                       , quiet = 1
+                                                                                       )
+
+                                 })
+        self.env_manager.update_environment_vars(environment_reqs)
 
 
 

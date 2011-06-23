@@ -57,10 +57,10 @@ class systemManager:
         if variables['verbose']:
             self.logging.verbose("Initializing system manager...")
 
-        self.skip_keys = [ 'code_tree'
-                         , 'ld_lib_paths'
-                         , 'port_manager'
+        self.skip_keys = [ 'port_manager'
                          , 'logging_manager'
+                         , 'code_manager'
+                         , 'env_manager'
                          , 'environment_reqs'
                          ]
         self.debug = variables['debug']
@@ -90,14 +90,9 @@ class systemManager:
         # use our code_manager to handle the various basedirs 
         # we have been passed
         self.code_manager = codeManager(self, variables)
-                   
-        # Make sure the tree we are testing looks good
-        self.code_tree = self.code_manager.code_trees['drizzle'][0]
 
         # environment manager handles updates / whatever to testing environments
         self.env_manager = environmentManager(self, variables)
-
-        self.ld_lib_paths = self.env_manager.join_env_var_values(self.code_tree.ld_lib_paths)
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
@@ -112,17 +107,6 @@ class systemManager:
                                 , 'TOP_BUILDDIR' : self.top_builddir
                                 , 'DRIZZLE_TEST_DIR' : self.testdir
                                 , 'DTR_BUILD_THREAD' : "-69.5"
-                                # Need to move these to server-level
-                                , 'LD_LIBRARY_PATH' : self.env_manager.append_env_var( 'LD_LIBRARY_PATH'
-                                                                         , self.ld_lib_paths
-                                                                         , suffix = 0
-                                                                         , quiet = 1
-                                                                         )
-                                , 'DYLD_LIBRARY_PATH' : self.env_manager.append_env_var( 'DYLD_LIBRARY_PATH'
-                                                                         , self.ld_lib_paths
-                                                                         , suffix = 0
-                                                                         , quiet = 1
-                                                                         )
                                 }
         # set the env vars we need
         # self.process_environment_reqs(self.environment_reqs)
