@@ -50,20 +50,35 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-ReplicationServices::ReplicationServices() :
-  is_active(false)
-{
-}
+typedef std::vector<plugin::TransactionReplicator*> Replicators;
+typedef std::vector<std::pair<std::string, plugin::TransactionApplier*> > Appliers;
 
-void ReplicationServices::normalizeReplicatorName(string &name)
+/** 
+  * Atomic boolean set to true if any *active* replicators
+  * or appliers are actually registered.
+  */
+static bool is_active= false;
+/**
+  * The timestamp of the last time a Transaction message was successfully
+  * applied (sent to an Applier)
+  */
+static atomic<uint64_t> last_applied_timestamp;
+/** Our collection of registered replicator plugins */
+static Replicators replicators;
+/** Our collection of registered applier plugins and their requested replicator plugin names */
+static Appliers appliers;
+/** Our replication streams */
+static ReplicationServices::ReplicationStreams replication_streams;
+
+  /**
+   * Strips underscores and lowercases supplied replicator name
+   * or requested name, and appends the suffix "replicator" if missing...
+   */
+static void normalizeReplicatorName(string &name)
 {
-  transform(name.begin(),
-            name.end(),
-            name.begin(),
-            ::tolower);
+  transform(name.begin(), name.end(), name.begin(), ::tolower);
   if (name.find("replicator") == string::npos)
     name.append("replicator", 10);
   {

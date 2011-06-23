@@ -80,11 +80,6 @@ public:
   plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session,
                                                        message::Transaction &to_push);
   /**
-   * Constructor
-   */
-  ReplicationServices();
-
-  /**
    * Singleton method
    * Returns the singleton instance of ReplicationServices
    */
@@ -144,30 +139,6 @@ public:
    * applier.
    */
   uint64_t getLastAppliedTimestamp() const;
-private:
-  typedef std::vector<plugin::TransactionReplicator *> Replicators;
-  typedef std::vector<std::pair<std::string, plugin::TransactionApplier *> > Appliers;
-  /** 
-   * Atomic boolean set to true if any *active* replicators
-   * or appliers are actually registered.
-   */
-  bool is_active;
-  /**
-   * The timestamp of the last time a Transaction message was successfully
-   * applied (sent to an Applier)
-   */
-  atomic<uint64_t> last_applied_timestamp;
-  /** Our collection of registered replicator plugins */
-  Replicators replicators;
-  /** Our collection of registered applier plugins and their requested replicator plugin names */
-  Appliers appliers;
-  /** Our replication streams */
-  ReplicationStreams replication_streams;
-  /**
-   * Strips underscores and lowercases supplied replicator name
-   * or requested name, and appends the suffix "replicator" if missing...
-   */
-  void normalizeReplicatorName(std::string &name);
 };
 
 } /* namespace drizzled */
