@@ -988,7 +988,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
   for (Field **field=entry->getFields() ; *field ; field++)
   {
-    if (((*field)->isWriteSet()) == false)
+    if (not (*field)->isWriteSet())
     {
       /*
        * If the field doesn't have any default value

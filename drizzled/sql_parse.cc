@@ -497,13 +497,13 @@ static int execute_command(Session *session)
     drizzle_reset_errors(session, 0);
   }
 
-  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
+  assert(not session->transaction.stmt.hasModifiedNonTransData());
 
   if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
       && ! session->inTransaction()
       && session->lex().statement->isTransactional())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -544,7 +544,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       && ! session->inTransaction()
       && ! lex->statement->isShow())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -940,7 +940,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
 

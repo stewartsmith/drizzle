@@ -2203,7 +2203,7 @@ static void fix_paths()
       }
     }
 
-    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
     {
       errmsg_printf(error::ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);

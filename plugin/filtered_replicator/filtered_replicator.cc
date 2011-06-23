@@ -321,9 +321,7 @@ void FilteredReplicator::populateFilter(std::string input,
 bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 {
   pthread_mutex_lock(&sch_vector_lock);
-  std::vector<string>::iterator it= find(schemas_to_filter.begin(),
-                                         schemas_to_filter.end(),
-                                         schema_name);
+  std::vector<string>::iterator it= find(schemas_to_filter.begin(), schemas_to_filter.end(), schema_name);
   if (it != schemas_to_filter.end())
   {
     pthread_mutex_unlock(&sch_vector_lock);
@@ -338,18 +336,9 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
    */
   if (not _sch_regex.empty())
   {
-    int32_t result= pcre_exec(sch_re,
-                              NULL,
-                              schema_name.c_str(),
-                              schema_name.length(),
-                              0,
-                              0,
-                              NULL,
-                              0);
+    int32_t result= pcre_exec(sch_re, NULL, schema_name.c_str(), schema_name.length(), 0, 0, NULL, 0);
     if (result >= 0)
-    {
       return true;
-    }
   }
 
   return false;
@@ -358,9 +347,7 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 bool FilteredReplicator::isTableFiltered(const string &table_name)
 {
   pthread_mutex_lock(&tab_vector_lock);
-  std::vector<string>::iterator it= find(tables_to_filter.begin(),
-                                         tables_to_filter.end(),
-                                         table_name);
+  std::vector<string>::iterator it= find(tables_to_filter.begin(), tables_to_filter.end(), table_name);
   if (it != tables_to_filter.end())
   {
     pthread_mutex_unlock(&tab_vector_lock);
@@ -375,18 +362,9 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
    */
   if (not _tab_regex.empty())
   {
-    int32_t result= pcre_exec(tab_re,
-                              NULL,
-                              table_name.c_str(),
-                              table_name.length(),
-                              0,
-                              0,
-                              NULL,
-                              0);
+    int32_t result= pcre_exec(tab_re, NULL, table_name.c_str(), table_name.length(), 0, 0, NULL, 0);
     if (result >= 0)
-    {
       return true;
-    }
   }
 
   return false;
