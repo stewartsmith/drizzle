@@ -1704,12 +1704,10 @@ void Session::close_cached_table(Table *table)
           (admin operation or network communication failed)
 */
 static bool admin_table(Session* session, TableList* tables,
-                              HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
-                              int (Cursor::*operator_func)(Session *,
-                                                            HA_CHECK_OPT *))
+                              int (Cursor::*operator_func)(Session*))
 {
   TableList *table;
   Select_Lex *select= &session->lex().select_lex;
@@ -1816,7 +1814,7 @@ static bool admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    result_code = (table->table->cursor->*operator_func)(session, check_opt);
+    result_code = (table->table->cursor->*operator_func)(session);
 
 send_result:
 
@@ -2144,24 +2142,18 @@ bool create_like_table(Session* session,
 }
 
 
-bool analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
+bool analyze_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
-  return(admin_table(session, tables, check_opt,
-				"analyze", lock_type, true,
-				&Cursor::ha_analyze));
+  return(admin_table(session, tables, "analyze", lock_type, true, &Cursor::ha_analyze));
 }
 
 
-bool check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
+bool check_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, check_opt,
-				"check", lock_type,
-				false,
-				&Cursor::ha_check));
+  return admin_table(session, tables, "check", lock_type, false, &Cursor::ha_check);
 }
 
 } /* namespace drizzled */

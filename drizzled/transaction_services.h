@@ -106,9 +106,7 @@ public:
    * @param table Table object containing delete information
    * @param use_update_record If true, uses the values from the update row instead
    */
-  void deleteRecord(Session& session,
-                    Table &table,
-                    bool use_update_record= false);
+  void deleteRecord(Session& session, Table &table, bool use_update_record= false);
 
   /**
    * Creates a CreateSchema Statement GPB message and adds it
@@ -551,8 +549,6 @@ private:
   int commitPhaseOne(Session& session, bool all);
 
   uint64_t getCurrentTransactionId(Session& session);
-
-  plugin::XaStorageEngine *xa_storage_engine;
 };
 
 } /* namespace drizzled */

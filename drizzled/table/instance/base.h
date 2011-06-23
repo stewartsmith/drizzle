@@ -180,7 +180,7 @@ private:
     return mem_root.strmake(str_arg, len_arg);
   }
 
-  memory::Root& getMemRoot()
+  memory::Root& mem()
   {
     return mem_root;
   }

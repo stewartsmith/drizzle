@@ -303,6 +303,9 @@ namespace drizzled {
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
+
+static plugin::XaStorageEngine *xa_storage_engine;
+
 TransactionServices::TransactionServices()
 {
   xa_storage_engine= static_cast<plugin::XaStorageEngine*>(plugin::StorageEngine::findByName("InnoDB"));

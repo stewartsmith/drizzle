@@ -787,7 +787,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
-  table->getMemRoot().multi_alloc(0,
+  table->mem().multi_alloc(0,
     &default_field, sizeof(Field*) * (field_count),
     &from_field, sizeof(Field*)*field_count,
     &copy_func, sizeof(*copy_func)*(copy_func_count+1),
@@ -805,7 +805,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   memset(from_field, 0, sizeof(Field*)*field_count);
 
   memory::Root* mem_root_save= session->mem_root;
-  session->mem_root= &table->getMemRoot();
+  session->mem_root= &table->mem();
 
   table->getMutableShare()->setFields(field_count+1);
   table->setFields(table->getMutableShare()->getFields(true));
@@ -892,7 +892,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
           }
           session->mem_root= mem_root_save;
           *argp= new Item_field(new_field);
-          session->mem_root= &table->getMemRoot();
+          session->mem_root= &table->mem();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
 	    null_count++;

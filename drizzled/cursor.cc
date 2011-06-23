@@ -608,7 +608,6 @@ void Cursor::drop_table(const char *)
   Performs checks upon the table.
 
   @param session                thread doing CHECK Table operation
-  @param check_opt          options from the parser
 
   @retval
     HA_ADMIN_OK               Successful upgrade
@@ -619,7 +618,7 @@ void Cursor::drop_table(const char *)
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
-int Cursor::ha_check(Session *, HA_CHECK_OPT *)
+int Cursor::ha_check(Session *)
 {
   return HA_ADMIN_OK;
 }
@@ -680,9 +679,8 @@ Cursor::ha_delete_all_rows()
      * @todo Make TransactionServices generic to AfterTriggerServices
      * or similar...
      */
-    Session *const session= getTable()->in_use;
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.truncateTable(*session, *getTable());
+    Session& session= *getTable()->in_use;
+    TransactionServices::singleton().truncateTable(session, *getTable());
   }
 
   return result;
@@ -711,7 +709,7 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 */
 
 int
-Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
+Cursor::ha_analyze(Session* session)
 {
   setTransactionReadWrite();
 
