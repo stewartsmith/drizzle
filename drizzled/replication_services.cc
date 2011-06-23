@@ -97,19 +97,15 @@ bool ReplicationServices::evaluateRegisteredPlugins()
     return false;
   }
 
-  for (Appliers::iterator appl_iter= appliers.begin();
-       appl_iter != appliers.end();
-       ++appl_iter)
+  BOOST_FOREACH(Appliers::reference appl_iter, appliers)
   {
-    plugin::TransactionApplier *applier= (*appl_iter).second;
-    string requested_replicator_name= (*appl_iter).first;
+    plugin::TransactionApplier *applier= appl_iter.second;
+    string requested_replicator_name= appl_iter.first;
     normalizeReplicatorName(requested_replicator_name);
 
     bool found= false;
     Replicators::iterator repl_iter;
-    for (repl_iter= replicators.begin();
-         repl_iter != replicators.end();
-         ++repl_iter)
+    for (repl_iter= replicators.begin(); repl_iter != replicators.end(); ++repl_iter)
     {
       string replicator_name= (*repl_iter)->getName();
       normalizeReplicatorName(replicator_name);
@@ -170,12 +166,10 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Sessio
 {
   plugin::ReplicationReturnCode result= plugin::SUCCESS;
 
-  for (ReplicationStreams::iterator iter= replication_streams.begin();
-       iter != replication_streams.end();
-       ++iter)
+  BOOST_FOREACH(ReplicationStreams::reference iter, replication_streams)
   {
-    plugin::TransactionReplicator *cur_repl= iter->first;
-    plugin::TransactionApplier *cur_appl= iter->second;
+    plugin::TransactionReplicator *cur_repl= iter.first;
+    plugin::TransactionApplier *cur_appl= iter.second;
 
     result= cur_repl->replicate(cur_appl, in_session, to_push);
 

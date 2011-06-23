@@ -36,6 +36,7 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 #include <drizzled/calendar.h>
@@ -54,8 +55,7 @@
 #include <vector>
 #include <string.h>
 
-namespace drizzled 
-{
+namespace drizzled {
 
 extern std::vector<TemporalFormat *> known_datetime_formats;
 extern std::vector<TemporalFormat *> known_date_formats;
@@ -146,59 +146,28 @@ void Temporal::set_epoch_seconds()
 
 bool Date::from_string(const char *from, size_t from_len)
 {
-  /* 
-   * Loop through the known date formats and see if 
-   * there is a match.
-   */
-  bool matched= false;
-  TemporalFormat *current_format;
-  std::vector<TemporalFormat *>::iterator current= known_date_formats.begin();
-
   _useconds= 0; // We may not match on it, so we need to make sure we zero it out.
-  while (current != known_date_formats.end())
+  BOOST_FOREACH(TemporalFormat* it, known_date_formats)
   {
-    current_format= *current;
-    if (current_format->matches(from, from_len, this))
-    {
-      matched= true;
-      break;
-    }
-    current++;
+    if (not it->matches(from, from_len, this))
+      continue;
+    set_epoch_seconds();
+    return is_valid();
   }
-
-  if (! matched)
-    return false;
-
-  set_epoch_seconds();
-  return is_valid();
+  return false;
 }
 
 bool DateTime::from_string(const char *from, size_t from_len)
 {
-  /* 
-   * Loop through the known datetime formats and see if 
-   * there is a match.
-   */
-  bool matched= false;
-  TemporalFormat *current_format;
-  std::vector<TemporalFormat *>::iterator current= known_datetime_formats.begin();
-
-  while (current != known_datetime_formats.end())
+  BOOST_FOREACH(TemporalFormat* it, known_datetime_formats)
   {
-    current_format= *current;
-    if (current_format->matches(from, from_len, this))
-    {
-      matched= true;
-      break;
-    }
-    current++;
+    if (not it->matches(from, from_len, this))
+      continue;
+    set_epoch_seconds();
+    return is_valid();
   }
+  return false;
 
-  if (! matched)
-    return false;
-
-  set_epoch_seconds();
-  return is_valid();
 }
 
 /*
@@ -1008,43 +977,23 @@ std::ostream& operator<<(std::ostream& os, const Timestamp& subject)
 
 bool Time::from_string(const char *from, size_t from_len)
 {
-  /*
-   * Loop through the known time formats and see if
-   * there is a match.
-   */
-  bool matched= false;
-  TemporalFormat *current_format;
-  std::vector<TemporalFormat *>::iterator current= known_time_formats.begin();
-
-  while (current != known_time_formats.end())
+  BOOST_FOREACH(TemporalFormat* it, known_time_formats)
   {
-    current_format= *current;
-    if (current_format->matches(from, from_len, this))
-    {
-      matched= true;
-      break;
-    }
-    current++;
+    if (not it->matches(from, from_len, this))
+      continue;
+    return is_fuzzy_valid();
   }
-
-  if (not matched)
-    return false;
-
-  return is_fuzzy_valid();
+  return false;
 }
 
 int Time::to_string(char *to, size_t to_len) const
 {
-  return snprintf(to, to_len,
-		  "%02" PRIu32 ":%02" PRIu32 ":%02" PRIu32,
-		  _hours, _minutes, _seconds);
+  return snprintf(to, to_len, "%02" PRIu32 ":%02" PRIu32 ":%02" PRIu32, _hours, _minutes, _seconds);
 }
 
 int Date::to_string(char *to, size_t to_len) const
 {
-  return snprintf(to, to_len,
-		  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32,
-		  _years, _months, _days);
+  return snprintf(to, to_len, "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32, _years, _months, _days);
 }
 
 int DateTime::to_string(char *to, size_t to_len) const
@@ -1053,28 +1002,22 @@ int DateTime::to_string(char *to, size_t to_len) const
   if (_useconds == 0)
   {
     return snprintf(to, to_len,
-		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-		          " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32,
-		    _years, _months, _days,
-		    _hours, _minutes, _seconds);
+		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32,
+		    _years, _months, _days, _hours, _minutes, _seconds);
   }
   else
   {
     return snprintf(to, to_len,
-		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-		       " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-		    _years, _months, _days,
-		    _hours, _minutes, _seconds, _useconds);
+		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+		    _years, _months, _days, _hours, _minutes, _seconds, _useconds);
   }
 }
 
 int MicroTimestamp::to_string(char *to, size_t to_len) const
 {
   return snprintf(to, to_len,
-                  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-                  " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
-                  _years, _months, _days,
-                  _hours, _minutes, _seconds, _useconds);
+                  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+                  _years, _months, _days, _hours, _minutes, _seconds, _useconds);
 }
 
 void Time::to_decimal(type::Decimal *to) const
@@ -1108,31 +1051,23 @@ void DateTime::to_decimal(type::Decimal *to) const
 
 void Date::to_int64_t(int64_t *to) const
 {
-  *to= (_years * INT32_C(10000)) 
-     + (_months * INT32_C(100)) 
-     + _days;
+  *to= (_years * INT32_C(10000)) + (_months * INT32_C(100)) + _days;
 }
 
 void Date::to_int32_t(int32_t *to) const
 {
-  *to= (_years * INT32_C(10000)) 
-     + (_months * INT32_C(100)) 
-     + _days;
+  *to= (_years * INT32_C(10000)) + (_months * INT32_C(100)) + _days;
 }
 
 void Time::to_int32_t(int32_t *to) const
 {
-  *to= (_hours * INT32_C(10000)) 
-     + (_minutes * INT32_C(100)) 
-     + _seconds;
+  *to= (_hours * INT32_C(10000)) + (_minutes * INT32_C(100)) + _seconds;
 }
 
 // We fill the structure based on just int
 void Time::to_uint64_t(uint64_t &to) const
 {
-  to= (_hours * 60 * 60)
-     + (_minutes * 60)
-     + _seconds;
+  to= (_hours * 60 * 60) + (_minutes * 60) + _seconds;
 }
 
 void DateTime::to_int64_t(int64_t *to) const
