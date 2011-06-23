@@ -126,16 +126,10 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 int optimizer::QuickRorIntersectSelect::reset()
 {
   if (! scans_inited && init_ror_merged_scan(true))
-  {
     return 0;
-  }
   scans_inited= true;
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
-  {
-    (*it)->reset();
-  }
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
+    it->reset();
   return 0;
 }
 
@@ -240,11 +234,9 @@ void optimizer::QuickRorIntersectSelect::add_info_string(string *str)
 {
   bool first= true;
   str->append("intersect(");
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     if (! first)
       str->append(",");
     else
@@ -267,11 +259,9 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
   char buf[64];
   uint32_t length;
   bool first= true;
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     if (first)
     {
       first= false;
@@ -282,7 +272,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
       used_lengths->append(",");
     }
     key_names->append(key_info->name);
-    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(it->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 

@@ -51,8 +51,6 @@ module::Registry::Registry() :
 
 module::Registry::~Registry()
 {
-  plugin::Plugin::map::iterator plugin_iter;
-
   /* Give all plugins a chance to cleanup, before
    * all plugins are deleted.
    * This can be used if shutdown code references
