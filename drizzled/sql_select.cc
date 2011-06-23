@@ -6235,7 +6235,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List<TableList>::iterator ti(tables->begin());
-  TableList **table= (TableList **)session->mem.alloc(sizeof(TableList*) * tables->size());
+  TableList **table= new (session->mem) TableList*[tables->size()];
 
   for (TableList **t= table + (tables->size() - 1); t >= table; t--)
     *t= ti++;

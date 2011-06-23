@@ -690,7 +690,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
     session->no_errors=1;				// Don't warn about NULL
     alloc.init(session->variables.range_alloc_block_size);
-    param.key_parts= (KEY_PART*) alloc.alloc( sizeof(KEY_PART) * head->getShare()->key_parts);
+    param.key_parts= new (alloc) KEY_PART[head->getShare()->key_parts];
     if (fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
@@ -4207,7 +4207,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     make_prev_keypart_map(ref->key_parts);
   range->flag= (ref->key_length == key_info->key_length && (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0;
 
-  quick->key_parts=key_part=(KEY_PART *)quick->alloc.alloc(sizeof(KEY_PART)*ref->key_parts);
+  quick->key_parts=key_part= new (alloc) KEY_PART[ref->key_parts];
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)
   {

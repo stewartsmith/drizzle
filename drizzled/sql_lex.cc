@@ -1658,7 +1658,7 @@ List<Item>* Select_Lex::get_item_list()
 void Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
   if (not ref_pointer_array)
-    ref_pointer_array= (Item **)session->mem.alloc(sizeof(Item*) * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)*5);
+    ref_pointer_array= new (session->mem) Item*[5 * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)];
 }
 
 void Select_Lex_Unit::print(String *str)

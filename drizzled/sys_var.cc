@@ -1405,7 +1405,7 @@ static option* find_option(struct option *opt, const char *name)
 
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
-  drizzle_show_var *result= (drizzle_show_var*) session->mem.alloc(sizeof(drizzle_show_var) * (system_variable_map.size() + 1));
+  drizzle_show_var *result= new (session->mem) drizzle_show_var[system_variable_map.size() + 1];
   drizzle_show_var *show= result;
   BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
   {
