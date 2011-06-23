@@ -35,9 +35,6 @@ private:
   TableList *save_next_local;
 
 public:
-
-  Name_resolution_context_state() {}          /* Remove gcc warning */
-
   /* Save the state of a name resolution context. */
   void save_state(Name_resolution_context *context, TableList *table_list);
 

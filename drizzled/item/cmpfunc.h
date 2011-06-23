@@ -254,8 +254,6 @@ public:
 class Eq_creator :public Comp_creator
 {
 public:
-  Eq_creator() {}                             /* Remove gcc warning */
-  virtual ~Eq_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<>" : "="; }
   virtual bool eqne_op() const { return 1; }
@@ -266,8 +264,6 @@ public:
 class Ne_creator :public Comp_creator
 {
 public:
-  Ne_creator() {}                             /* Remove gcc warning */
-  virtual ~Ne_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "=" : "<>"; }
   virtual bool eqne_op() const { return 1; }
@@ -278,8 +274,6 @@ public:
 class Gt_creator :public Comp_creator
 {
 public:
-  Gt_creator() {}                             /* Remove gcc warning */
-  virtual ~Gt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<=" : ">"; }
   virtual bool eqne_op() const { return 0; }
@@ -290,8 +284,6 @@ public:
 class Lt_creator :public Comp_creator
 {
 public:
-  Lt_creator() {}                             /* Remove gcc warning */
-  virtual ~Lt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">=" : "<"; }
   virtual bool eqne_op() const { return 0; }
@@ -302,8 +294,6 @@ public:
 class Ge_creator :public Comp_creator
 {
 public:
-  Ge_creator() {}                             /* Remove gcc warning */
-  virtual ~Ge_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<" : ">="; }
   virtual bool eqne_op() const { return 0; }
@@ -314,8 +304,6 @@ public:
 class Le_creator :public Comp_creator
 {
 public:
-  Le_creator() {}                             /* Remove gcc warning */
-  virtual ~Le_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">" : "<="; }
   virtual bool eqne_op() const { return 0; }
@@ -997,7 +985,6 @@ class cmp_item_int :public cmp_item
 {
   int64_t value;
 public:
-  cmp_item_int() {}                           /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_int();
@@ -1043,7 +1030,6 @@ class cmp_item_real :public cmp_item
 {
   double value;
 public:
-  cmp_item_real() {}                          /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_real();
@@ -1065,7 +1051,6 @@ class cmp_item_decimal :public cmp_item
 {
   type::Decimal value;
 public:
-  cmp_item_decimal() {}                       /* Remove gcc warning */
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *c);

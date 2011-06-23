@@ -2075,8 +2075,7 @@ void TransactionServices::dropTable(Session& session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::truncateTable(Session& session,
-                                        Table &table)
+void TransactionServices::truncateTable(Session& session, Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
