@@ -973,7 +973,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc(sizeof(optimizer::RangeReadPlan*)* n_child_scans);
+  range_scans= new (*param->mem_root) optimizer::RangeReadPlan*[n_child_scans];
 
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1061,16 +1061,13 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
-    if ((imerge_trp= new (param->mem_root) optimizer::IndexMergeReadPlan))
-    {
-      imerge_trp->read_cost= imerge_cost;
-      imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
-      imerge_trp->records= min(imerge_trp->records,
-                               param->table->cursor->stats.records);
-      imerge_trp->range_scans= range_scans;
-      imerge_trp->range_scans_end= range_scans + n_child_scans;
-      read_time= imerge_cost;
-    }
+    imerge_trp= new (*param->mem_root) optimizer::IndexMergeReadPlan;
+    imerge_trp->read_cost= imerge_cost;
+    imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
+    imerge_trp->records= min(imerge_trp->records, param->table->cursor->stats.records);
+    imerge_trp->range_scans= range_scans;
+    imerge_trp->range_scans_end= range_scans + n_child_scans;
+    read_time= imerge_cost;
   }
 
 build_ror_index_merge:
@@ -1079,7 +1076,7 @@ build_ror_index_merge:
 
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
-  roru_read_plans= (optimizer::TableReadPlan **) param->mem_root->alloc(sizeof(optimizer::TableReadPlan*) * n_child_scans);
+  roru_read_plans= new (*param->mem_root) optimizer::TableReadPlan*[n_child_scans];
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1158,7 +1155,7 @@ skip_to_ror_scan:
   optimizer::RorUnionReadPlan *roru= NULL;
   if (roru_total_cost < read_time)
   {
-    if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
+    if ((roru= new (*param->mem_root) optimizer::RorUnionReadPlan))
     {
       roru->first_ror= roru_read_plans;
       roru->last_ror= roru_read_plans + n_child_scans;
@@ -1191,7 +1188,7 @@ static
 optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
   uint32_t keynr;
-  optimizer::RorScanInfo* ror_scan= (optimizer::RorScanInfo*)param->mem_root->alloc(sizeof(optimizer::RorScanInfo));
+  optimizer::RorScanInfo* ror_scan= new (*param->mem_root) optimizer::RorScanInfo;
 
   ror_scan->idx= idx;
   ror_scan->keynr= keynr= param->real_keynr[idx];
@@ -1688,10 +1685,10 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   if (total_cost > read_time)
     return NULL;
 
-  optimizer::RorIntersectReadPlan* trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
+  optimizer::RorIntersectReadPlan* trp= new (*param->mem_root) optimizer::RorIntersectReadPlan;
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* best_num);
+  trp->first_scan= new (*param->mem_root) optimizer::RorScanInfo*[best_num];
   memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(optimizer::RorScanInfo*));
   trp->last_scan=  trp->first_scan + best_num;
   trp->is_covering= true;
@@ -1878,7 +1875,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   optimizer::RorIntersectReadPlan *trp= NULL;
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
-    trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
+    trp= new (*param->mem_root) optimizer::RorIntersectReadPlan;
     trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)*best_num);
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(optimizer::RorScanInfo*));
     trp->last_scan=  trp->first_scan + best_num;
@@ -1985,7 +1982,7 @@ static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
+    if ((read_plan= new (*param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
                                                                    best_mrr_flags)))
     {
       read_plan->records= best_records;
@@ -4907,8 +4904,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* The query passes all tests, so construct a new TRP object. */
-  read_plan=
-    new(param->mem_root) optimizer::GroupMinMaxReadPlan(have_min,
+  read_plan= new (*param->mem_root) optimizer::GroupMinMaxReadPlan(have_min,
                                                         have_max,
                                                         min_max_arg_part,
                                                         group_prefix_len,
@@ -4922,15 +4918,10 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
                                                         best_index_tree,
                                                         best_param_idx,
                                                         best_quick_prefix_records);
-  if (read_plan)
-  {
-    if (tree && read_plan->quick_prefix_records == 0)
-      return NULL;
-
-    read_plan->read_cost= best_read_cost;
-    read_plan->records= best_records;
-  }
-
+  if (tree && read_plan->quick_prefix_records == 0)
+    return NULL;
+  read_plan->read_cost= best_read_cost;
+  read_plan->records= best_records;
   return read_plan;
 }
 

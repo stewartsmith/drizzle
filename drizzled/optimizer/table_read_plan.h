@@ -66,9 +66,9 @@ public:
                                            memory::Root *parent_alloc= NULL) = 0;
 
   /* Table read plans are allocated on memory::Root and are never deleted */
-  static void *operator new(size_t size, memory::Root *mem_root)
+  static void *operator new(size_t size, memory::Root& root)
   {
-    return mem_root->alloc(size);
+    return root.alloc(size);
   }
 
   static void operator delete(void *, size_t)
