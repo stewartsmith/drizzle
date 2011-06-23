@@ -403,7 +403,7 @@ bool truncate(Session& session, TableList *table_list)
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= TransactionServices::singleton().autocommitOrRollback(session, error);
+  error= TransactionServices::autocommitOrRollback(session, error);
   session.options= save_options;
   return error;
 }

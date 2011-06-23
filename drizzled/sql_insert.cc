@@ -1768,8 +1768,7 @@ bool select_create::send_eof()
     */
     if (!table->getShare()->getType())
     {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(*session, 0);
+      TransactionServices::autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

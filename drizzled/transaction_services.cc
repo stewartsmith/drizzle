@@ -304,11 +304,10 @@ namespace drizzled {
  * is always committed at the end of all statements.
  */
 
-static plugin::XaStorageEngine *xa_storage_engine;
-
-TransactionServices::TransactionServices()
+static plugin::XaStorageEngine& xa_storage_engine()
 {
-  xa_storage_engine= static_cast<plugin::XaStorageEngine*>(plugin::StorageEngine::findByName("InnoDB"));
+  static plugin::XaStorageEngine& engine= static_cast<plugin::XaStorageEngine&>(*plugin::StorageEngine::findByName("InnoDB"));
+  return engine;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -327,7 +326,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
     registerResourceForTransaction(session, monitored, engine);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
+  TransactionContext& trans= session.transaction.stmt;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
   if (resource_context.isStarted())
@@ -338,9 +337,8 @@ void TransactionServices::registerResourceForStatement(Session& session,
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->registerResource(&resource_context);
-
-  trans->no_2pc= true;
+  trans.registerResource(&resource_context);
+  trans.no_2pc= true;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -360,7 +358,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
     registerResourceForTransaction(session, monitored, engine, resource_manager);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
+  TransactionContext& trans= session.transaction.stmt;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
   if (resource_context.isStarted())
@@ -372,14 +370,14 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
   resource_context.setXaResourceManager(resource_manager);
-  trans->registerResource(&resource_context);
+  trans.registerResource(&resource_context);
 }
 
 void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans= &session.transaction.all;
+  TransactionContext& trans= session.transaction.all;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 1);
 
   if (resource_context.isStarted())
@@ -387,14 +385,14 @@ void TransactionServices::registerResourceForTransaction(Session& session,
 
   session.server_status|= SERVER_STATUS_IN_TRANS;
 
-  trans->registerResource(&resource_context);
+  trans.registerResource(&resource_context);
 
   assert(monitored->participatesInSqlTransaction());
   assert(not monitored->participatesInXaTransaction());
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc= true;
+  trans.no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -445,7 +443,7 @@ void TransactionServices::allocateNewTransactionId()
   }
 
   Session *my_session= current_session;
-  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  uint64_t xa_id= xa_storage_engine().getNewTransactionId(my_session);
   my_session->setXaId(xa_id);
 }
 
@@ -453,7 +451,7 @@ uint64_t TransactionServices::getCurrentTransactionId(Session& session)
 {
   if (session.getXaId() == 0)
   {
-    session.setXaId(xa_storage_engine->getNewTransactionId(&session)); 
+    session.setXaId(xa_storage_engine().getNewTransactionId(&session)); 
   }
 
   return session.getXaId();

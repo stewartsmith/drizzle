@@ -44,18 +44,6 @@ class DRIZZLED_API TransactionServices
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
   
-  TransactionServices();
-
-  /**
-   * Singleton method
-   * Returns the singleton instance of TransactionServices
-   */
-  static inline TransactionServices &singleton()
-  {
-    static TransactionServices transaction_services;
-    return transaction_services;
-  }
-
   /**
    * Returns true if the transaction manager should construct
    * Transaction and Statement messages, false otherwise.
@@ -189,15 +177,15 @@ public:
    * @param query Query string
    * @param schema Schema for the table affected by the raw SQL.
    */
-  void rawStatement(Session&, const std::string &query, const std::string &schema);
+  static void rawStatement(Session&, const std::string &query, const std::string &schema);
 
-  void rawStatement(Session& session, const std::string& query)
+  static void rawStatement(Session& session, const std::string& query)
   {
     rawStatement(session, query, "");
   }
 
   /* transactions: interface to plugin::StorageEngine functions */
-  int rollbackTransaction(Session&, bool all);
+  static int rollbackTransaction(Session&, bool all);
 
   /**
    * Commit the current transaction.
@@ -212,7 +200,7 @@ public:
    * stored functions or triggers. So we simply do nothing now.
    * This should be fixed in later ( >= 5.1) releases.
    */
-  int commitTransaction(Session&, bool all);
+  static int commitTransaction(Session&, bool all);
 
   /**
    * This is used to commit or rollback a single statement depending on
@@ -225,12 +213,12 @@ public:
    * the user has used LOCK TABLES then that mechanism does not know to do the
    * commit.
    */
-  int autocommitOrRollback(Session&, int error);
+  static int autocommitOrRollback(Session&, int error);
 
   /* savepoints */
-  int rollbackToSavepoint(Session&, NamedSavepoint &sv);
-  int setSavepoint(Session&, NamedSavepoint &sv);
-  int releaseSavepoint(Session&, NamedSavepoint &sv);
+  static int rollbackToSavepoint(Session&, NamedSavepoint &sv);
+  static int setSavepoint(Session&, NamedSavepoint &sv);
+  static int releaseSavepoint(Session&, NamedSavepoint &sv);
 
   /**
    * Marks a storage engine as participating in a statement
@@ -250,9 +238,7 @@ public:
    * @param[in] monitored Descriptor for the resource which will be participating
    * @param[in] engine Pointer to the TransactionalStorageEngine resource
    */
-  void registerResourceForStatement(Session&,
-                                    plugin::MonitoredInTransaction *monitored,
-                                    plugin::TransactionalStorageEngine *engine);
+  static void registerResourceForStatement(Session&, plugin::MonitoredInTransaction*, plugin::TransactionalStorageEngine*);
 
   /**
    * Marks an XA storage engine as participating in a statement
@@ -273,7 +259,7 @@ public:
    * @param[in] engine Pointer to the TransactionalStorageEngine resource
    * @param[in] resource_manager Pointer to the XaResourceManager resource manager
    */
-  void registerResourceForStatement(Session&,
+  static void registerResourceForStatement(Session&,
                                     plugin::MonitoredInTransaction *monitored,
                                     plugin::TransactionalStorageEngine *engine,
                                     plugin::XaResourceManager *resource_manager);
@@ -302,16 +288,11 @@ public:
    * time when this method is called except from the
    * TransactionServices::registerResourceForStatement method.
    */
-  void registerResourceForTransaction(Session&,
-                                      plugin::MonitoredInTransaction *monitored,
-                                      plugin::TransactionalStorageEngine *engine);
+  static void registerResourceForTransaction(Session&, plugin::MonitoredInTransaction*, plugin::TransactionalStorageEngine*);
 
-  void registerResourceForTransaction(Session&,
-                                      plugin::MonitoredInTransaction *monitored,
-                                      plugin::TransactionalStorageEngine *engine,
-                                      plugin::XaResourceManager *resource_manager);
+  static void registerResourceForTransaction(Session&, plugin::MonitoredInTransaction*, plugin::TransactionalStorageEngine*, plugin::XaResourceManager*);
 
-  void allocateNewTransactionId();
+  static void allocateNewTransactionId();
  
   /**************
    * Events API
@@ -325,7 +306,7 @@ public:
    * @retval true Success
    * @retval false Failure
    */
-  bool sendStartupEvent(Session&);
+  static bool sendStartupEvent(Session&);
 
   /**
    * Send server shutdown event.
@@ -335,7 +316,7 @@ public:
    * @retval true Success
    * @retval false Failure
    */
-  bool sendShutdownEvent(Session&);
+  static bool sendShutdownEvent(Session&);
 
 private:
 

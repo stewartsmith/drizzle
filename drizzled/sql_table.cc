@@ -197,8 +197,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         {
           if (message) // If we have no definition, we don't know if the table should have been replicated
           {
-            TransactionServices &transaction_services= TransactionServices::singleton();
-            transaction_services.dropTable(*session, identifier, *message, if_exists);
+            TransactionServices::dropTable(*session, identifier, *message, if_exists);
           }
         }
         else
@@ -1368,8 +1367,7 @@ static bool locked_create_event(Session *session,
 
   if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(*session, table_proto);
+    TransactionServices::createTable(*session, table_proto);
   }
 
   return false;
@@ -1714,7 +1712,6 @@ static bool admin_table(Session* session, TableList* tables,
   List<Item> field_list;
   Item *item;
   int result_code= 0;
-  TransactionServices &transaction_services= TransactionServices::singleton();
   const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
@@ -1789,7 +1786,7 @@ static bool admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name.c_str());
       session->getClient()->store(buff, length);
-      transaction_services.autocommitOrRollback(*session, false);
+      TransactionServices::autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       session->lex().reset_query_tables_list(false);
@@ -1913,7 +1910,7 @@ send_result:
         }
       }
     }
-    transaction_services.autocommitOrRollback(*session, false);
+    TransactionServices::autocommitOrRollback(*session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1925,7 +1922,7 @@ send_result:
   return false;
 
 err:
-  transaction_services.autocommitOrRollback(*session, true);
+  TransactionServices::autocommitOrRollback(*session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
@@ -2016,8 +2013,7 @@ static bool create_table_wrapper(Session &session,
 
   if (success && not destination_identifier.isTmp())
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, new_table_message);
+    TransactionServices::createTable(session, new_table_message);
   }
 
   return success;
