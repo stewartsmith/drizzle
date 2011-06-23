@@ -237,14 +237,6 @@ void Size::sort_string(unsigned char *to,uint32_t )
 #endif
 }
 
-
-void Size::sql_type(String &res) const
-{
-  const charset_info_st * const cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "unsigned integer"));
-}
-
-
 unsigned char *Size::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
 {
   int64_t val;

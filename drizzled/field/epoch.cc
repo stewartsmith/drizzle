@@ -334,11 +334,6 @@ void Epoch::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Epoch::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
-}
-
 void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;

@@ -53,7 +53,6 @@ public:
   double val_real() const;
   int64_t val_int() const;
   String *val_str(String*,String *) const;
-  void sql_type(drizzled::String&) const;
   int store_decimal(const drizzled::type::Decimal*);
 
   Item_result result_type () const { return STRING_RESULT; }

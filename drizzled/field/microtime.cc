@@ -271,11 +271,6 @@ void Microtime::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Microtime::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("microsecond timestamp"));
-}
-
 void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;

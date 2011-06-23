@@ -23,12 +23,11 @@
 #include <drizzled/field.h>
 #include <string>
 
-namespace drizzled
-{
-namespace field
-{
+namespace drizzled {
+namespace field {
 
-class Boolean :public Field {
+class Boolean : public Field 
+{
   bool ansi_display;
 
 public:
@@ -56,8 +55,6 @@ public:
   int64_t val_int() const;
   type::Decimal *val_decimal(type::Decimal *) const;
 
-  void sql_type(drizzled::String&) const;
-
   Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);
   void sort_string(unsigned char*, uint32_t);
@@ -77,16 +74,14 @@ public:
   }
 
 private:
-  void setTrue();
-
-  void setFalse()
+  void set(bool v)
   {
-    ptr[0]= 0;
+    ptr[0]= v;
   }
 
   bool isTrue() const
   {
-    return ptr[0] ? true : false;
+    return ptr[0];
   }
 };
 

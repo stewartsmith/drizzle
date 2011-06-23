@@ -265,11 +265,6 @@ void Time::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Time::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
-}
-
 long Time::get_timestamp(bool *null_value) const
 {
   if ((*null_value= is_null()))

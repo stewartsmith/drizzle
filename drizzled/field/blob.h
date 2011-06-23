@@ -155,7 +155,6 @@ public:
   uint32_t get_key_image(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(std::basic_string<unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
-  void sql_type(String&) const;
   inline void copy()
   {
     unsigned char* tmp= get_ptr();

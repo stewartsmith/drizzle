@@ -76,7 +76,6 @@ public:
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);
   bool zero_pack() const { return 0; }
-  void sql_type(String &str) const;
   uint32_t max_display_length() { return field_length; }
   uint32_t size_of() const { return sizeof(*this); }
   uint32_t pack_length() const { return (uint32_t) bin_size; }

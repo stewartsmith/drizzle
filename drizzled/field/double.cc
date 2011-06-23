@@ -209,19 +209,4 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
   change_double_for_sort(nr, to);
 }
 
-
-void Field_double::sql_type(String &res) const
-{
-  const charset_info_st * const cs=res.charset();
-  if (dec == NOT_FIXED_DEC)
-  {
-    res.set_ascii(STRING_WITH_LEN("double"));
-  }
-  else
-  {
-    res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			    "double(%d,%d)",(int) field_length,dec));
-  }
-}
-
 } /* namespace drizzled */
