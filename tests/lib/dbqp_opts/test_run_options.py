@@ -79,18 +79,16 @@ parser= optparse.OptionParser(version='%prog (database quality platform aka proj
 
 # find some default values
 # assume we are in-tree testing in general and operating from root/test(?)
-testdir_default = os.path.abspath(os.getcwd())
-workdir_default = os.path.join(testdir_default,'workdir')
-clientbindir_default = os.path.abspath(os.path.join(testdir_default,
-                                       '../client'))
-basedir_default = os.path.split(testdir_default)[0]
+option_module = 'lib/dbqp_opts/option_master_defaults.opt'
+execfile(option_module)
+
 
 config_control_group = optparse.OptionGroup(parser, 
                      "Configuration controls - allows you to specify a file with a number of options already specified")
 
 config_control_group.add_option(
-   "--config_file"
-    , dest="configfilepath"
+   "--sys_config_file"
+    , dest="sysconfigfilepath"
     , action='store'
     , default=None # We want to have a file that will be our default defaults file...
     , help="The file that specifies system configuration specs for dbqp to execute tests"

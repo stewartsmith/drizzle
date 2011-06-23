@@ -88,6 +88,11 @@ class codeManager:
         # We'll do something later, but we're cheating for now
         # as we KNOW we're using drizzle code by default (only)
         return 'drizzle'
-  
+
+    def get_tree(self, server_type, server_version):
+        """ We return an appropriate server tree for use in testing """
+   
+        # We can make this more robust later on
+        return self.code_trees[server_type][0]
         
             

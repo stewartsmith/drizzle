@@ -35,7 +35,7 @@ import sys
 import subprocess
 import commands
 
-import lib.test_mgmt.drizzle_test_execution as test_execution
+import lib.test_mgmt.test_execution as test_execution
 
 class testExecutor(test_execution.testExecutor):
     """ dtr-specific testExecutor 
@@ -89,7 +89,7 @@ class testExecutor(test_execution.testExecutor):
             # We want to record a new result
             drizzletest_arguments.append('--record')
         drizzletest_cmd = "%s %s %s" %( self.cmd_prefix
-                                      , self.system_manager.code_tree.drizzletest
+                                      , self.master_server.code_tree.drizzletest
                                       , " ".join(drizzletest_arguments))
         return drizzletest_cmd
 

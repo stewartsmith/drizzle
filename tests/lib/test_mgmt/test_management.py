@@ -70,9 +70,8 @@ class testManager(object):
         self.suitelist = variables['suitelist']
         self.mode = variables['mode']
         
-        self.code_tree = self.system_manager.code_tree
-        self.suitepaths = variables['suitepaths'] + self.code_tree.suite_paths
-        self.testdir = self.code_tree.testdir
+        self.suitepaths = variables['suitepaths']
+        self.testdir = variables['testdir']
         self.desired_tests = variables['test_cases']
         
         self.logging.debug_class(self)

@@ -49,6 +49,15 @@ test_subject_control_group.add_option(
   )
 
 test_subject_control_group.add_option(
+    "--default_server_type"
+  , dest="defaultservertype"
+  , type='string'
+  , default = server_type_default
+  , action='store'
+  , help = "Defines what we consider to be the default server type.  We assume a server is default type unless specified otherwise. [%default]"
+  )
+
+test_subject_control_group.add_option(
     "--serverdir"
   , dest="serverpath"
   , type='string'

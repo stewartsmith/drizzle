@@ -45,4 +45,13 @@ analysis_control_group.add_option(
   , help = "Pass an option to valgrind (overrides/removes default valgrind options)"
   )
 
+analysis_control_group.add_option(
+    "--valgrind-suppressions"
+  , dest="valgrindsuppressions"
+  , type='string'
+  , action='store'
+  , default = valgrind_suppression_default
+  , help = "Point at a valgrind suppression file [%default]"
+  )
+
 parser.add_option_group(analysis_control_group)

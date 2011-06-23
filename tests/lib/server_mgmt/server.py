@@ -40,6 +40,7 @@ class Server(object):
     def __init__(self
                 , name
                 , server_manager
+                , code_tree
                 , default_storage_engine
                 , server_options
                 , requester
@@ -63,6 +64,7 @@ class Server(object):
         self.server_manager.log_server(self, requester)
 
         self.system_manager = self.server_manager.system_manager
+        self.code_tree = code_tree
         self.valgrind = self.system_manager.valgrind
         self.gdb = self.system_manager.gdb
         if self.valgrind:

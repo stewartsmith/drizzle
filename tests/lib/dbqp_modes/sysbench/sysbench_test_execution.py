@@ -34,7 +34,7 @@ import sys
 import subprocess
 import commands
 
-import lib.test_mgmt.drizzle_test_execution as test_execution
+import lib.test_mgmt.test_execution as test_execution
 
 class sysbenchTestExecutor(test_execution.testExecutor):
     """ sysbench-specific testExecutor 

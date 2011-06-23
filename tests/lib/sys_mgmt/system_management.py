@@ -76,6 +76,7 @@ class systemManager:
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
+        self.valgrind_suppress_file = variables['valgrindsuppressions']
         self.gdb = variables['gdb']
         self.manual_gdb = variables['manualgdb']
         self.randgen_path = variables['randgenpath']
@@ -109,7 +110,7 @@ class systemManager:
                                 , 'USE_RUNNING_SERVER' : "0"
                                 , 'TOP_SRCDIR' : self.top_srcdir
                                 , 'TOP_BUILDDIR' : self.top_builddir
-                                , 'DRIZZLE_TEST_DIR' : self.code_tree.testdir
+                                , 'DRIZZLE_TEST_DIR' : self.testdir
                                 , 'DTR_BUILD_THREAD' : "-69.5"
                                 # Need to move these to server-level
                                 , 'LD_LIBRARY_PATH' : self.env_manager.append_env_var( 'LD_LIBRARY_PATH'
@@ -411,8 +412,8 @@ class systemManager:
 
         if self.manual_gdb:
             self.logging.info("To start gdb, open another terminal and enter:")
-            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( self.code_tree.testdir
-                                                                                  , self.code_tree.testdir
+            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( server.code_tree.testdir
+                                                                                  , server.code_tree.testdir
                                                                                   , gdb_file_path
                                                                                   , server.server_path
                                                                                   ) )
@@ -438,7 +439,7 @@ class systemManager:
         self.logging.info("Running valgrind with options: %s" %(" ".join(valgrind_args)))
 
         # set our environment variable
-        self.set_env_var('VALGRIND_RUN', '1', quiet=0)
+        self.env_manager.set_env_var('VALGRIND_RUN', '1', quiet=0)
 
         # generate command prefix to call valgrind
         cmd_prefix = ''
@@ -452,8 +453,7 @@ class systemManager:
                    , "--num-callers=16" 
                    ]
             # look for our suppressions file and add it to the mix if found
-            suppress_file = os.path.join(self.code_tree.testdir,'valgrind.supp')
-            if os.path.exists(suppress_file):
+            if os.path.exists(self.valgrind_suppress_file):
                 args = args + [ "--suppressions=%s" %(suppress_file) ]
 
             cmd_prefix = cmd_prefix + " ".join(args + valgrind_args)

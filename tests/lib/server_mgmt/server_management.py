@@ -42,7 +42,6 @@ class serverManager:
                          , 'system_manager'
                          , 'logging'
                          , 'gdb'
-                         , 'code_tree'
                          ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
@@ -51,10 +50,11 @@ class serverManager:
         self.server_base_name = 's'
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
+        self.code_manager = system_manager.code_manager
         self.logging = system_manager.logging
         self.gdb  = self.system_manager.gdb
-        self.code_tree = system_manager.code_tree
         self.default_storage_engine = variables['defaultengine']
+        self.default_server_type = variables['defaultservertype']
         self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
         # We track this
@@ -101,20 +101,27 @@ class serverManager:
 
 
     
-    def allocate_server(self, requester, server_options, workdir):
+    def allocate_server( self, requester, server_options
+                       , workdir, server_type=None, server_version=None):
         """ Intialize an appropriate server object.
             Start up occurs elsewhere
 
         """
+        # use default server type unless specifically requested to do otherwise
+        if not server_type:
+            server_type = self.default_server_type
 
         # Get a name for our server
         server_name = self.get_server_name(requester)
 
         # initialize our new server_object
-        if self.code_tree.type == 'Drizzle':
+        if server_type == 'drizzle':
+          # get the right codeTree type from the code manager
+          code_tree = self.code_manager.get_tree(server_type, server_version)
           from lib.server_mgmt.drizzled import drizzleServer as server_type
         new_server = server_type( server_name
                                 , self
+                                , code_tree
                                 , self.default_storage_engine
                                 , server_options
                                 , requester
@@ -131,7 +138,7 @@ class serverManager:
             libeatmydata_data = {'LD_PRELOAD':self.libeatmydata_path}
             self.system_manager.env_manager.update_environment_vars( libeatmydata_data
                                                        , working_environ)
-            #print working_environ
+
         for server in self.get_server_list(requester):
             if server.status == 0:
                 bad_start = bad_start + self.start_server( server
@@ -139,6 +146,8 @@ class serverManager:
                                                          , working_environ
                                                          , expect_fail
                                                          )
+            else:
+                self.logging.debug("Server %s already running" %(server.name))
         return bad_start
 
     def start_server(self, server, requester, working_environ, expect_fail):
@@ -346,56 +355,78 @@ class serverManager:
             We should have the proper number of servers at this point
 
         """
+
+        # A dictionary that holds various tricks
+        # we can do with our test servers
+        special_processing_reqs = {}
+
         current_servers = self.servers[requester]
 
-        # We have a config reader so we can do
-        # special per-server magic for setting up more
-        # complex scenario-based testing (eg we use a certain datadir)
-        if cnf_path: 
-            config_reader = RawConfigParser()
-            config_reader.read(cnf_path)
-        else:
-            config_reader = None
-        # A list that holds tuples of src,tgt pairs
-        # for using a pre-loaded-datadirs on a test server
-        datadir_requests = []
-
         for index,server in enumerate(current_servers):
-            desired_server_options = server_requirements[index]
-            # We add in any user-supplied options here
-            desired_server_options = desired_server_options + self.user_server_opts
-
             # We handle a reset in case we need it:
             if server.need_reset:
                 self.reset_server(server)
                 server.need_reset = False
 
-            # Do our checking for config-specific madness we need to do
-            if config_reader and config_reader.has_section(server.name):
-                # mark server for restart in case it hasn't yet
-                # this method is a bit hackish - need better method later
-                if '--restart' not in desired_server_options:
-                    desired_server_options.append('--restart')
-                # We handle various scenarios
-                server_config_data = config_reader.items(server.name)
-                for cnf_option, data in server_config_data:
-                    if cnf_option == 'load-datadir':
-                        datadir_path = data
-                        datadir_requests.append((datadir_path,server))
+            desired_server_options = server_requirements[index]
+            
+            # do any special config processing - this can alter
+            # how we view our servers
+            if cnf_path:
+                self.handle_server_config_file( cnf_path
+                                              , server
+                                              , special_processing_reqs
+                                              , desired_server_options
+                                              )
 
             if self.compare_options( server.server_options
                                    , desired_server_options):
-                return 1
+                return
             else:
                 # We need to reset what is running and change the server
                 # options
                 desired_server_options = self.filter_server_options(desired_server_options)
                 self.reset_server(server)
                 self.update_server_options(server, desired_server_options)
-            self.load_datadirs(datadir_requests)
+            
+            self.handle_special_server_requests(special_processing_reqs)
 
+    def handle_server_config_file( self
+                                 , cnf_path
+                                 , server
+                                 , special_processing_reqs
+                                 , desired_server_options
+                                 ):
+        # We have a config reader so we can do
+        # special per-server magic for setting up more
+        # complex scenario-based testing (eg we use a certain datadir)
+        config_reader = RawConfigParser()
+        config_reader.read(cnf_path)
 
-       
+        # Do our checking for config-specific madness we need to do
+        if config_reader and config_reader.has_section(server.name):
+            # mark server for restart in case it hasn't yet
+            # this method is a bit hackish - need better method later
+            if '--restart' not in desired_server_options:
+                desired_server_options.append('--restart')
+            # We handle various scenarios
+            server_config_data = config_reader.items(server.name)
+            for cnf_option, data in server_config_data:
+                if cnf_option == 'load-datadir':
+                    datadir_path = data
+                    request_key = 'datadir_requests'
+                if request_key not in special_processing_reqs:
+                    special_processing_reqs[request_key] = []
+                special_processing_reqs[request_key].append((datadir_path,server))
+
+    def handle_special_server_requests(self, request_dictionary):
+        """ We run through our set of special requests and do 
+            the appropriate voodoo
+
+        """
+        for key, item in request_dictionary.items():
+            if key == 'datadir_requests':
+                self.load_datadirs(item)
 
     def filter_server_options(self, server_options):
         """ Remove a list of options we don't want passed to the server

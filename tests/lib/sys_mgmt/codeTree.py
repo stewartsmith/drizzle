@@ -67,9 +67,7 @@ class drizzleTree(codeTree):
                                      , os.path.join(self.basedir, 'client')
                                      , os.path.join(self.basedir, 'bin')])
         self.srcdir = self.system_manager.find_path([self.basedir])
-        self.suite_paths = [ os.path.join(self.basedir,'plugin')
-                           , os.path.join(self.testdir,'suite')
-                           ]
+        self.suite_paths = variables['suitepaths']
 
 
         self.drizzle_client = self.system_manager.find_path([os.path.join(self.clientbindir,
@@ -100,7 +98,7 @@ class drizzleTree(codeTree):
         self.drizzletest = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                    'drizzletest')])
 
-        self.drizzle_trx_reader = self.system_manager.find_path([os.path.join(self.basedir,
+        self.trx_reader = self.system_manager.find_path([os.path.join(self.basedir,
                                                                  'plugin/transaction_log/utilities/drizzletrx')])
 
         self.server_version_string = None
@@ -153,7 +151,7 @@ class drizzleTree(codeTree):
         ld_lib_paths = []
         if self.source_dist:
             ld_lib_paths = [ os.path.join(self.basedir,"libdrizzleclient/.libs/")
-                           , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle.libs")
+                           #, os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle.libs")
                            , os.path.join(self.basedir,"libdrizzle/.libs")
                            , os.path.join(self.basedir,"libdrizzle-2.0/libdrizzle/.libs")
                            , os.path.join(self.basedir,"libdrizzle-1.0/libdrizzle/.libs")

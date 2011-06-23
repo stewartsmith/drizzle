@@ -43,8 +43,8 @@ test_control_group.add_option(
   , dest="suitepaths"
   , type='string'
   , action="append"
-  , default = []
-  , help="The path containing the suite(s) you wish to execute.  Use on --suitepath for each suite you want to use."
+  , default = suitepaths_default
+  , help="The path containing the suite(s) you wish to execute.  Use one --suitepath for each suite you want to use. [%default]"
   )
 
 test_control_group.add_option(
