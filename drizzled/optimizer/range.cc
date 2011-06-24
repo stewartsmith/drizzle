@@ -1786,7 +1786,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  tree->ror_scans= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* param->keys);
+  tree->ror_scans= new (*param->mem_root) optimizer::RorScanInfo*[param->keys];
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ? param->table->getShare()->getPrimaryKey() : MAX_KEY);
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
@@ -1815,8 +1815,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
                      (qsort_cmp)cmp_ror_scan_info);
 
   optimizer::RorScanInfo **intersect_scans= NULL; /* ROR scans used in index intersection */
-  optimizer::RorScanInfo **intersect_scans_end= intersect_scans= 
-    (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*) * tree->n_ror_scans);
+  optimizer::RorScanInfo **intersect_scans_end= intersect_scans=  new (*param->mem_root) optimizer::RorScanInfo*[tree->n_ror_scans];
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
@@ -1876,7 +1875,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
     trp= new (*param->mem_root) optimizer::RorIntersectReadPlan;
-    trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)*best_num);
+    trp->first_scan= new (*param->mem_root) optimizer::RorScanInfo*[best_num];
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(optimizer::RorScanInfo*));
     trp->last_scan=  trp->first_scan + best_num;
     trp->is_covering= intersect_best.is_covering;

@@ -1238,7 +1238,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			 (table->getMutableShare()->uniques ? test(null_pack_length) : 0));
     table->distinct= 1;
     table->getMutableShare()->keys= 1;
-    key_part_info= (KeyPartInfo*)table->alloc(keyinfo->key_parts * sizeof(KeyPartInfo));
+    key_part_info= new (table->mem()) KeyPartInfo[keyinfo->key_parts];
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;

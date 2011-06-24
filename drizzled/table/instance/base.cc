@@ -1671,11 +1671,11 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  field_ptr = (Field **) outparam.alloc((_field_size+1) * sizeof(Field*));
+  field_ptr = new (outparam.mem()) Field*[_field_size + 1];
 
   outparam.setFields(field_ptr);
 
-  record= (unsigned char*) outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
+  record= outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
 
   outparam.null_flags= (unsigned char*) record+1;
 
@@ -1685,7 +1685,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     if (!((*field_ptr)= _fields[i]->clone(&outparam.mem(), &outparam)))
       return local_error;
   }
-  (*field_ptr)= 0;                              // End marker
+  *field_ptr= 0;                              // End marker
 
   if (found_next_number_field)
     outparam.found_next_number_field=
