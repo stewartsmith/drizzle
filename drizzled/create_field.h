@@ -70,7 +70,7 @@ public:
   CreateField() :after(0) {}
   CreateField(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  CreateField *clone(memory::Root *mem_root) const
+  CreateField *clone(memory::Root& mem_root) const
     { return new (mem_root) CreateField(*this); }
   void create_length_to_internal_length(void);
 

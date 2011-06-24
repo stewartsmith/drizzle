@@ -33,13 +33,6 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-namespace util
-{
-struct insensitive_hash;
-struct insensitive_equal_to;
-}
-
 namespace plugin {
 
 /**
@@ -49,16 +42,12 @@ class DRIZZLED_API Function
   : public Plugin,
     public std::unary_function<memory::Root*, Item_func *>
 {
-  Function();
-  Function(const Function &);
-  Function& operator=(const Function &);
 public:
   Function(std::string in_name)
    : Plugin(in_name, "Function"),
      std::unary_function<memory::Root*, Item_func *>()
   { }
   virtual result_type operator()(argument_type root) const= 0;
-  virtual ~Function() {}
 
   /**
    * Add a new Function factory to the list of factories we manage.
@@ -84,12 +73,12 @@ class Create_function
 {
 public:
   typedef T FunctionClass;
-  Create_function(std::string in_name)
+  Create_function(const std::string& in_name)
     : Function(in_name)
   { }
   virtual result_type operator()(argument_type root) const
   {
-    return new (root) FunctionClass();
+    return new (*root) FunctionClass();
   }
 };
 

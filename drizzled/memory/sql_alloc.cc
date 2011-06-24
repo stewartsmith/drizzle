@@ -37,32 +37,22 @@ void* sql_alloc(size_t Size)
 
 void* sql_calloc(size_t size)
 {
-  void* ptr= sql_alloc(size);
-  memset(ptr, 0, size);
-  return ptr;
+  return current_mem_root()->calloc(size);
 }
 
 char* sql_strdup(const char* str)
 {
-  size_t len= strlen(str) + 1;
-  char* pos= (char*) sql_alloc(len);
-  memcpy(pos, str, len);
-  return pos;
+  return current_mem_root()->strdup(str);
 }
 
 char* sql_strmake(const char* str, size_t len)
 {
-  char* pos= (char*) sql_alloc(len + 1);
-  memcpy(pos, str, len);
-  pos[len]= 0;
-  return pos;
+  return current_mem_root()->strmake(str, len);
 }
 
 void* sql_memdup(const void* ptr, size_t len)
 {
-  void* pos= sql_alloc(len);
-  memcpy(pos,ptr,len);
-  return pos;
+  return current_mem_root()->memdup(ptr, len);
 }
 
 }
