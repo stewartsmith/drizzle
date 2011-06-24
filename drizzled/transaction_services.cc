@@ -436,8 +436,7 @@ void TransactionServices::registerResourceForTransaction(Session& session,
 
 void TransactionServices::allocateNewTransactionId()
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
   {
     return;
   }
@@ -938,8 +937,7 @@ int TransactionServices::releaseSavepoint(Session& session,
 
 bool TransactionServices::shouldConstructMessages()
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  return replication_services.isActive();
+  return ReplicationServices::isActive();
 }
 
 message::Transaction *TransactionServices::getActiveTransactionMessage(Session& session,
@@ -1004,8 +1002,7 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *transa
 
 int TransactionServices::commitTransactionMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return 0;
 
   /*
@@ -1039,7 +1036,7 @@ int TransactionServices::commitTransactionMessage(Session& session)
   
   finalizeTransactionMessage(*transaction, session);
   
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
+  plugin::ReplicationReturnCode result= ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
@@ -1066,8 +1063,7 @@ void TransactionServices::finalizeStatementMessage(message::Statement &statement
 
 void TransactionServices::rollbackTransactionMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
   
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -1114,7 +1110,7 @@ void TransactionServices::rollbackTransactionMessage(Session& session)
 
     finalizeTransactionMessage(*transaction, session);
     
-    (void) replication_services.pushTransactionMessage(session, *transaction);
+    (void) ReplicationServices::pushTransactionMessage(session, *transaction);
   }
 
   cleanupTransactionMessage(transaction, session);
@@ -1122,8 +1118,7 @@ void TransactionServices::rollbackTransactionMessage(Session& session)
 
 void TransactionServices::rollbackStatementMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   message::Statement *current_statement= session.getStatementMessage();
@@ -1335,8 +1330,7 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
 bool TransactionServices::insertRecord(Session& session,
                                        Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return false;
 
   if (not table.getShare()->is_replicated())
@@ -1543,8 +1537,7 @@ void TransactionServices::updateRecord(Session& session,
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -1805,8 +1798,7 @@ void TransactionServices::deleteRecord(Session& session,
                                        Table &table,
                                        bool use_update_record)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -1864,8 +1856,7 @@ void TransactionServices::deleteRecord(Session& session,
 void TransactionServices::createTable(Session& session,
                                       const message::Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (not replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(table))
@@ -1888,7 +1879,7 @@ void TransactionServices::createTable(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
@@ -1897,8 +1888,7 @@ void TransactionServices::createTable(Session& session,
 void TransactionServices::createSchema(Session& session,
                                        const message::Schema &schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(schema))
@@ -1921,7 +1911,7 @@ void TransactionServices::createSchema(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
@@ -1931,8 +1921,7 @@ void TransactionServices::dropSchema(Session& session,
                                      const identifier::Schema& identifier,
                                      message::schema::const_reference schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (not replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(schema))
@@ -1955,7 +1944,7 @@ void TransactionServices::dropSchema(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
@@ -1964,8 +1953,7 @@ void TransactionServices::alterSchema(Session& session,
                                       const message::Schema &old_schema,
                                       const message::Schema &new_schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(old_schema))
@@ -1992,7 +1980,7 @@ void TransactionServices::alterSchema(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
@@ -2002,8 +1990,7 @@ void TransactionServices::dropTable(Session& session,
                                     message::table::const_reference table,
                                     bool if_exists)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(table))
@@ -2031,15 +2018,14 @@ void TransactionServices::dropTable(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
 void TransactionServices::truncateTable(Session& session, Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -2070,7 +2056,7 @@ void TransactionServices::truncateTable(Session& session, Table &table)
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
@@ -2079,8 +2065,7 @@ void TransactionServices::rawStatement(Session& session,
                                        const string &query,
                                        const string &schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
  
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2094,15 +2079,14 @@ void TransactionServices::rawStatement(Session& session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
 int TransactionServices::sendEvent(Session& session, const message::Event &event)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (not replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return 0;
   message::Transaction transaction;
 
@@ -2114,7 +2098,7 @@ int TransactionServices::sendEvent(Session& session, const message::Event &event
 
   message::Event *trx_event= transaction.mutable_event();
   trx_event->CopyFrom(event);
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, transaction);
+  plugin::ReplicationReturnCode result= ReplicationServices::pushTransactionMessage(session, transaction);
   return result;
 }
 

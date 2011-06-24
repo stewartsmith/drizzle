@@ -78,15 +78,6 @@ public:
    * @param Message to push out
    */
   static plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session, message::Transaction &to_push);
-  /**
-   * Singleton method
-   * Returns the singleton instance of ReplicationServices
-   */
-  static inline ReplicationServices &singleton()
-  {
-    static ReplicationServices replication_services;
-    return replication_services;
-  }
 
   /**
    * Returns whether the ReplicationServices object

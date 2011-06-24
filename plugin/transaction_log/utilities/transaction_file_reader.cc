@@ -54,9 +54,7 @@ TransactionFileReader::~TransactionFileReader()
 {
   delete raw_input;
   close(file);
-
-  if (buffer != NULL)
-    free(buffer);
+  free(buffer);
 }
 
 bool TransactionFileReader::openFile(const string &filename, int start_pos)

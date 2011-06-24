@@ -359,8 +359,7 @@ int main(int argc, char **argv)
    *
    * not checking return since unireg_abort() hangs
    */
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-    (void) replication_services.evaluateRegisteredPlugins();
+  (void) ReplicationServices::evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
     unireg_abort(1);

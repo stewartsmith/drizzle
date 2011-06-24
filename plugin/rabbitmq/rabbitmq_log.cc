@@ -144,8 +144,7 @@ static int init(drizzled::module::Context &context)
   }
 
   context.add(rabbitmqLogger);
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.attachApplier(rabbitmqLogger, vm["use-replicator"].as<string>());
+  ReplicationServices::attachApplier(rabbitmqLogger, vm["use-replicator"].as<string>());
 
   context.registerVariable(new sys_var_const_string_val("host", vm["host"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", sysvar_rabbitmq_port));
