@@ -43,17 +43,17 @@ int wild_compare(const char *str, const char *wildstr, bool str_is_pattern)
       {
 	wildstr++;
         if (str_is_pattern && *str++ != wild_prefix)
-          return(1);
+          return 1;
       }
       if (*wildstr++ != *str++)
-        return(1);
+        return 1;
     }
     if (! *wildstr )
       return(*str != 0);
     if (*wildstr++ == wild_one)
     {
       if (! *str || (str_is_pattern && *str == wild_many))
-        return(1);                     /* One char; skip */
+        return 1;                     /* One char; skip */
       if (*str++ == wild_prefix && str_is_pattern && *str)
         str++;
     }

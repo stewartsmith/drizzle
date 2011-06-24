@@ -730,13 +730,13 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 {
   if (unit_arg->fake_select_lex &&
       unit_arg->fake_select_lex->test_limit())
-    return(1);
+    return 1;
 
   Select_Lex *sl= unit_arg->first_select();
   for (; sl; sl= sl->next_select())
   {
     if (sl->test_limit())
-      return(1);
+      return 1;
   }
   return 0;
 }
@@ -2162,7 +2162,7 @@ int subselect_single_select_engine::exec()
     save_join_if_explain();
     if (item->engine_changed)
     {
-      return(1);
+      return 1;
     }
   }
   if (select_lex->uncacheable.any() &&
@@ -2408,7 +2408,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
       if (top_level)
       {
         /* Partial match on top level */
-        return(1);
+        return 1;
       }
       else
       {
@@ -2478,7 +2478,7 @@ int subselect_uniquesubquery_engine::exec()
 
   /* TODO: change to use of 'full_scan' here? */
   if (copy_ref_key())
-    return(1);
+    return 1;
   if (table->status)
   {
     /*
@@ -2599,7 +2599,7 @@ int subselect_indexsubquery_engine::exec()
 
   /* Copy the ref key and check for nulls... */
   if (copy_ref_key())
-    return(1);
+    return 1;
 
   if (table->status)
   {

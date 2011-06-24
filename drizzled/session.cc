@@ -1386,7 +1386,7 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   if (it->assigned())
   {
     my_message(ER_SUBQUERY_NO_1_ROW, ER(ER_SUBQUERY_NO_1_ROW), MYF(0));
-    return(1);
+    return 1;
   }
   if (unit->offset_limit_cnt)
   {				          // Using limit offset,count

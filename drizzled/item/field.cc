@@ -826,7 +826,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
               /* The column to which we link isn't valid. */
               my_error(ER_BAD_FIELD_ERROR, MYF(0), (*res)->name,
                        session->where());
-              return(1);
+              return 1;
             }
 
             set_field(new_field);

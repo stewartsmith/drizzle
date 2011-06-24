@@ -1537,7 +1537,7 @@ int sys_var_init()
   catch (std::exception&)
   {
     errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
-    return(1);
+    return 1;
   }
   return 0;
 }

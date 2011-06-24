@@ -4224,7 +4224,7 @@ static int test_if_order_by_key(Order *order, Table *table, uint32_t idx, uint32
          one row).  The sorting doesn't matter.
         */
         if (key_part == key_part_end && reverse == 0)
-          return(1);
+          return 1;
       }
       else
         return 0;
@@ -5073,7 +5073,7 @@ err:
   cursor->extra(HA_EXTRA_NO_CACHE);
   if (error)
     table->print_error(error,MYF(0));
-  return(1);
+  return 1;
 }
 
 /**

@@ -713,7 +713,7 @@ int my_wildcmp_8bit(const charset_info_st * const cs,
 	wildstr++;
 
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return(str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char     */

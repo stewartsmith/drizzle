@@ -19,10 +19,7 @@
  */
 
 #include <config.h>
-#include <drizzled/plugin/table_function.h>
 #include <drizzled/function_container.h>
-
-#include <iostream>
 
 using namespace std;
 
@@ -30,7 +27,12 @@ static drizzled::FunctionContainer::Map _functions_map;
 
 namespace drizzled {
 
-FunctionContainer::Map &FunctionContainer::getMap()
+const FunctionContainer::Map& FunctionContainer::getMap()
+{
+  return _functions_map;
+}
+
+FunctionContainer::Map& FunctionContainer::getMutableMap()
 {
   return _functions_map;
 }

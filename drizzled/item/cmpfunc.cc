@@ -4329,7 +4329,7 @@ int64_t Item_is_not_null_test::val_int()
     return 0;
   }
   else
-    return(1);
+    return 1;
 }
 
 /**
