@@ -34,7 +34,7 @@ Cache::list Cache::cache;
 boost::mutex Cache::_mutex;
 boost::condition_variable Cache::_end;
 
-Cache::session_shared_ptr Cache::find(const session_id_t &id)
+Cache::session_ptr Cache::find(const session_id_t &id)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   BOOST_FOREACH(list::const_reference it, cache)
@@ -42,7 +42,7 @@ Cache::session_shared_ptr Cache::find(const session_id_t &id)
     if (it->thread_id == id)
       return it;
   }
-  return session_shared_ptr();
+  return session_ptr();
 }
 
 void Cache::shutdownFirst()
@@ -72,13 +72,13 @@ size_t Cache::count()
   return cache.size();
 }
 
-void Cache::insert(session_shared_ptr &arg)
+void Cache::insert(const session_ptr& arg)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
   cache.push_back(arg);
 }
 
-void Cache::erase(session_shared_ptr &arg)
+void Cache::erase(const session_ptr& arg)
 {
   list::iterator iter= std::find(cache.begin(), cache.end(), arg);
   assert(iter != cache.end());

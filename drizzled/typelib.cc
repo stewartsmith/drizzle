@@ -120,8 +120,8 @@ int TYPELIB::find_type(const char *x, e_find_options full_name) const
 
 TYPELIB *TYPELIB::copy_typelib(memory::Root& root) const
 {
-  TYPELIB* to= (TYPELIB*) root.alloc_root(sizeof(TYPELIB));
-  to->type_names= (const char**)root.alloc_root((sizeof(char *) + sizeof(int)) * (count + 1));
+  TYPELIB* to= (TYPELIB*) root.alloc(sizeof(TYPELIB));
+  to->type_names= (const char**)root.alloc((sizeof(char *) + sizeof(int)) * (count + 1));
   to->type_lengths= (unsigned int*)(to->type_names + count + 1);
   to->count= count;
   to->name= name ? root.strdup(name) : NULL;

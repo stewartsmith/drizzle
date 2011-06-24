@@ -29,9 +29,9 @@ namespace session {
 
 class DRIZZLED_API Cache 
 {
-  typedef boost::shared_ptr<drizzled::Session> session_shared_ptr;
+  typedef boost::shared_ptr<drizzled::Session> session_ptr;
 public:
-  typedef std::list<session_shared_ptr> list;
+  typedef std::list<session_ptr> list;
 
   static list &getCache()
   {
@@ -51,11 +51,11 @@ public:
   static void shutdownFirst();
   static void shutdownSecond();
 
-  static void erase(session_shared_ptr&);
+  static void erase(const session_ptr&);
   static size_t count();
-  static void insert(session_shared_ptr &arg);
+  static void insert(const session_ptr&);
 
-  static session_shared_ptr find(const session_id_t &id);
+  static session_ptr find(const session_id_t&);
 
 private:
   static bool volatile _ready_to_exit;

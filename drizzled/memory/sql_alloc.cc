@@ -25,64 +25,45 @@
 #include <drizzled/current_session.h>
 #include <drizzled/error.h>
 #include <drizzled/definitions.h>
-
 #include <drizzled/internal/my_sys.h>
 
 namespace drizzled {
+namespace memory {
 
-void *memory::sql_alloc(size_t Size)
+void* sql_alloc(size_t Size)
 {
-  return current_mem_root()->alloc_root(Size);
+  return current_mem_root()->alloc(Size);
 }
 
-void *memory::sql_calloc(size_t size)
+void* sql_calloc(size_t size)
 {
-  void *ptr= memory::sql_alloc(size);
+  void* ptr= sql_alloc(size);
   memset(ptr, 0, size);
   return ptr;
 }
 
-char *memory::sql_strdup(const char *str)
+char* sql_strdup(const char* str)
 {
-  size_t len= strlen(str)+1;
-  char *pos= (char*) memory::sql_alloc(len);
-  memcpy(pos,str,len);
+  size_t len= strlen(str) + 1;
+  char* pos= (char*) sql_alloc(len);
+  memcpy(pos, str, len);
   return pos;
 }
 
-char *memory::sql_strmake(const char *str, size_t len)
+char* sql_strmake(const char* str, size_t len)
 {
-  char *pos= (char*) memory::sql_alloc(len+1);
-  memcpy(pos,str,len);
-  pos[len]=0;
+  char* pos= (char*) sql_alloc(len + 1);
+  memcpy(pos, str, len);
+  pos[len]= 0;
   return pos;
 }
 
-void* memory::sql_memdup(const void *ptr, size_t len)
+void* sql_memdup(const void* ptr, size_t len)
 {
-  void *pos= memory::sql_alloc(len);
+  void* pos= sql_alloc(len);
   memcpy(pos,ptr,len);
   return pos;
 }
 
-void *memory::SqlAlloc::operator new(size_t size)
-{
-  return memory::sql_alloc(size);
 }
-
-void *memory::SqlAlloc::operator new[](size_t size)
-{
-  return memory::sql_alloc(size);
-}
-
-void *memory::SqlAlloc::operator new[](size_t size, memory::Root *mem_root)
-{
-  return mem_root->alloc_root(size);
-}
-
-void *memory::SqlAlloc::operator new(size_t size, memory::Root *mem_root)
-{
-  return mem_root->alloc_root(size);
-}
-
 } /* namespace drizzled */

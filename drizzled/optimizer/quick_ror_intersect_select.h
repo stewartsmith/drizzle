@@ -145,13 +145,13 @@ public:
    * @retval false OK
    * @retval true  Out of memory.
    */
-  bool push_quick_back(QuickRangeSelect *quick_sel_range);
+  void push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /**
    * Range quick selects this intersection consists of, not including
    * cpk_quick.
    */
-  std::vector<QuickRangeSelect *> quick_selects;
+  std::vector<QuickRangeSelect*> quick_selects;
 
   /**
    * Merged quick select that uses Clustered PK, if there is one. This quick

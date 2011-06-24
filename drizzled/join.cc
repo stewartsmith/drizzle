@@ -2192,7 +2192,7 @@ bool Join::make_sum_func_list(List<Item> &field_list,
   Item *item;
 
   if (*sum_funcs && !recompute)
-    return(false); /* We have already initialized sum_funcs. */
+    return false; /* We have already initialized sum_funcs. */
 
   func= sum_funcs;
   while ((item=it++))
@@ -2214,9 +2214,9 @@ bool Join::make_sum_func_list(List<Item> &field_list,
       sum_funcs_end[i]= func;
   }
   else if (rollup.getState() == Rollup::STATE_READY)
-    return(false);                         // Don't put end marker
+    return false;                         // Don't put end marker
   *func=0;          // End marker
-  return(false);
+  return false;
 }
 
 /** Allocate memory needed for other rollup functions. */
@@ -2564,9 +2564,9 @@ bool Join::change_result(select_result *res)
   result= res;
   if (result->prepare(fields_list, select_lex->master_unit()))
   {
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 /**
@@ -3399,7 +3399,7 @@ static bool get_best_combination(Join *join)
         join->full_join=1;
     }
     else if (create_ref_for_key(join, j, keyuse, used_tables))
-      return(true);                        // Something went wrong
+      return true;                        // Something went wrong
   }
 
   for (i=0 ; i < table_count ; i++)
@@ -3491,7 +3491,7 @@ static bool choose_plan(Join *join, table_map join_tables)
   */
   if (join->session->lex().is_single_level_stmt())
     join->session->status_var.last_query_cost= join->best_read;
-  return(false);
+  return false;
 }
 
 /**
@@ -4179,7 +4179,7 @@ static bool greedy_search(Join      *join,
     join->best_read= DBL_MAX;
     if (best_extension_by_limited_search(join, remaining_tables, idx, record_count,
                                          read_time, search_depth, prune_level))
-      return(true);
+      return true;
 
     if (size_remain <= search_depth)
     {
@@ -4187,7 +4187,7 @@ static bool greedy_search(Join      *join,
         'join->best_positions' contains a complete optimal extension of the
         current partial QEP.
       */
-      return(false);
+      return false;
     }
 
     /* select the first table in the optimal extension as most promising */
@@ -4356,7 +4356,7 @@ static bool best_extension_by_limited_search(Join *join,
 {
   Session *session= join->session;
   if (session->getKilled())  // Abort
-    return(true);
+    return true;
 
   /*
      'join' is a partial plan with lower cost than the best plan so far,
@@ -4436,7 +4436,7 @@ static bool best_extension_by_limited_search(Join *join,
                                              current_read_time,
                                              search_depth - 1,
                                              prune_level))
-          return(true);
+          return true;
         std::swap(join->best_ref[idx], *pos);
       }
       else
@@ -4459,7 +4459,7 @@ static bool best_extension_by_limited_search(Join *join,
       restore_prev_nj_state(s);
     }
   }
-  return(false);
+  return false;
 }
 
 /**
@@ -5059,7 +5059,7 @@ static void make_join_readinfo(Join& join)
 
     if (tab->insideout_match_tab)
     {
-      tab->insideout_buf= (unsigned char*) join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
+      tab->insideout_buf= join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
     }
 
     optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
@@ -5617,6 +5617,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
   stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
+  // table_vector= new (join->session->mem) Table*[2 * table_count];
 
   join->best_ref=stat_vector;
 
@@ -6221,7 +6222,7 @@ static void restore_prev_nj_state(JoinTable *last)
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 {
   if (!join_tab->ref.key_parts)
-    return(false);
+    return false;
 
   Item_cond_and *cond=new Item_cond_and();
   Table *table=join_tab->table;
@@ -6233,7 +6234,7 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
     cond->add(new Item_func_equal(new Item_field(field), value));
   }
   if (session->is_fatal_error)
-    return(true);
+    return true;
 
   if (!cond->fixed)
     cond->fix_fields(session, (Item**)&cond);

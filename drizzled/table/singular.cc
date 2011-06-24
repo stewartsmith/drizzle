@@ -87,7 +87,7 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   null_pack_length= (null_count + 7)/8;
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
-  record[0]= (unsigned char*)session->mem.alloc(getMutableShare()->rec_buff_length);
+  record[0]= session->mem.alloc(getMutableShare()->rec_buff_length);
   if (not getInsertRecord())
   {
     throw "Memory allocation failure";
@@ -186,7 +186,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
   if (getShare()->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
-    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot()->alloc_root(sizeof(*seg) * keyinfo->key_parts);
+    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot().alloc(sizeof(*seg) * keyinfo->key_parts);
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
@@ -321,13 +321,13 @@ Singular::~Singular()
   }
 
   /* free blobs */
-  for (Field **ptr= getFields() ; *ptr ; ptr++)
+  for (Field **ptr= getFields(); *ptr; ptr++)
   {
     (*ptr)->free();
   }
   free_io_cache();
 
-  getMemRoot()->free_root(MYF(0));
+  getMemRoot().free_root(MYF(0));
   in_use->set_proc_info(save_proc_info);
 }
 

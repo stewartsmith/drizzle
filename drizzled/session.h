@@ -120,11 +120,6 @@ public:
   memory::Root& mem;
   memory::Root* mem_root; /**< Pointer to current memroot */
 
-  memory::Root *getMemRoot()
-  {
-    return mem_root;
-  }
-
   uint64_t getXaId()
   {
     return xa_id;
@@ -181,7 +176,7 @@ public:
     It's needed because we do not save/restore Session::where normally during
     primary (non subselect) query execution.
   */
-  static const char * const DEFAULT_WHERE;
+  static const char* const DEFAULT_WHERE;
 
   memory::Root warn_root; /**< Allocation area for warnings and errors */
 public:
@@ -192,10 +187,9 @@ public:
     return client;
   }
 
-  plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
-  void *scheduler_arg; /**< Pointer to the optional scheduler argument */
+  plugin::Scheduler* scheduler; /**< Pointer to scheduler object */
 
-  typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+  typedef boost::unordered_map<std::string, user_var_entry*, util::insensitive_hash, util::insensitive_equal_to> UserVars;
 
 private:
   typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
@@ -730,8 +724,8 @@ public:
     return first_successful_insert_id_in_prev_stmt;
   }
 
-  Session(plugin::Client *client_arg, boost::shared_ptr<catalog::Instance> catalog);
-  virtual ~Session();
+  Session(plugin::Client*, boost::shared_ptr<catalog::Instance>);
+  ~Session();
 
   void cleanup();
   /**
@@ -812,9 +806,9 @@ public:
    */
   bool authenticate();
   void run();
-  static bool schedule(Session::shared_ptr&);
+  static bool schedule(const Session::shared_ptr&);
   static void unlink(session_id_t&);
-  static void unlink(Session::shared_ptr&);
+  static void unlink(const Session::shared_ptr&);
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

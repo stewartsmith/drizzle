@@ -101,7 +101,7 @@ public:
   void add_info_string(std::string *str);
   bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
-  bool push_quick_back(QuickSelectInterface *quick_sel_range);
+  void push_quick_back(QuickSelectInterface *quick_sel_range);
 
   std::vector<QuickSelectInterface *> quick_selects; /**< Merged quick selects */
 

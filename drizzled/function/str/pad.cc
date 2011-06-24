@@ -66,19 +66,16 @@ void Item_func_rpad::fix_length_and_dec()
 String *Item_func_rpad::val_str(String *str)
 {
   assert(fixed == 1);
+  null_value=1;
   uint32_t res_byte_length,res_char_length,pad_char_length,pad_byte_length;
-  char *to;
   const char *ptr_pad;
   /* must be int64_t to avoid truncation */
   int64_t count= args[1]->val_int();
-  int64_t byte_count;
   String *res= args[0]->val_str(str);
   String *rpad= args[2]->val_str(&rpad_str);
 
-  if (!res || args[1]->null_value || !rpad ||
-      ((count < 0) && !args[1]->unsigned_flag))
-    goto err;
-  null_value=0;
+  if (!res || args[1]->null_value || !rpad || ((count < 0) && !args[1]->unsigned_flag))
+    return 0;
   /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Set here so that rest of code sees out-of-bound value as such. */
   if ((uint64_t) count > INT32_MAX)
@@ -86,26 +83,25 @@ String *Item_func_rpad::val_str(String *str)
   if (count <= (res_char_length= res->numchars()))
   {						// String to pad is big enough
     res->length(res->charpos((int) count));	// Shorten result if longer
-    return (res);
+    null_value=0;
+    return res;
   }
   pad_char_length= rpad->numchars();
 
-  byte_count= count * collation.collation->mbmaxlen;
+  int64_t byte_count= count * collation.collation->mbmaxlen;
   if ((uint64_t) byte_count > session.variables.max_allowed_packet)
   {
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
 			func_name(), session.variables.max_allowed_packet);
-    goto err;
+    return 0;
   }
   if (args[2]->null_value || !pad_char_length)
-    goto err;
+    return 0;
   res_byte_length= res->length();	/* Must be done before alloc_buffer */
-  if (!(res= alloc_buffer(res,str,&tmp_value, (ulong) byte_count)))
-    goto err;
-
-  to= (char*) res->ptr()+res_byte_length;
+  res= alloc_buffer(res,str,&tmp_value, (ulong) byte_count);
+  char* to= (char*) res->ptr()+res_byte_length;
   ptr_pad=rpad->ptr();
   pad_byte_length= rpad->length();
   count-= res_char_length;
@@ -121,11 +117,8 @@ String *Item_func_rpad::val_str(String *str)
     to+= pad_byte_length;
   }
   res->length(to- (char*) res->ptr());
-  return (res);
-
- err:
-  null_value=1;
-  return 0;
+  null_value=0;
+  return res;
 }
 
 
@@ -207,7 +200,7 @@ String *Item_func_lpad::val_str(String *str)
 
   if (args[2]->null_value || !pad_char_length)
     goto err;
-  str->alloc((uint32_t) byte_count);
+  str->alloc((size_t) byte_count);
   str->length(0);
   str->set_charset(collation.collation);
   count-= res_char_length;

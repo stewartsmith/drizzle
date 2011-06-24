@@ -45,7 +45,7 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
  * chunk for memory allocation and pre-allocates first block if specified.
  * Altough error can happen during execution of this function if
  * pre_alloc_size is non-0 it won't be reported. Instead it will be
- * reported as error in first alloc_root() on this memory root.
+ * reported as error in first alloc() on this memory root.
  *
  * @param  mem_root       memory root to initialize
  * @param  block_size     size of chunks (blocks) used for memory allocation
@@ -137,7 +137,7 @@ void Root::reset_defaults(size_t block_size_arg, size_t pre_alloc_size)
  * @todo Would this be more suitable as a member function on the
  * Root class?
  */
-void* Root::alloc(size_t length)
+unsigned char* Root::alloc(size_t length)
 {
   internal::UsedMemory *next= NULL;
   assert(alloc_root_inited());
@@ -209,7 +209,7 @@ void* Root::alloc(size_t length)
  * A pointer to the beginning of the allocated memory block in case of 
  * success or NULL if out of memory
  */
-void* Root::multi_alloc_root(int unused, ...)
+void* Root::multi_alloc(int unused, ...)
 {
   va_list args;
   char* *ptr, *start, *res;
@@ -225,8 +225,7 @@ void* Root::multi_alloc_root(int unused, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) this->alloc_root(tot_length)))
-    return(0);
+  start= (char*) this->alloc(tot_length);
 
   va_start(args, unused);
   res= start;
@@ -344,7 +343,7 @@ char* Root::strdup(const char* str)
  */
 char* Root::strmake(const char* str, size_t len)
 {
-  char* pos= (char*)alloc_root(len + 1);
+  char* pos= (char*)alloc(len + 1);
   memcpy(pos, str, len);
   pos[len]= 0;
   return pos;
@@ -371,7 +370,7 @@ char* Root::strmake(const String& v)
  */
 void* Root::memdup(const void* str, size_t len)
 {
-  void* pos= this->alloc_root(len);
+  void* pos= alloc(len);
   memcpy(pos, str, len);
   return pos;
 }

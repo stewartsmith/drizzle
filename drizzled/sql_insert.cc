@@ -554,9 +554,9 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
                                     table_list,
                                     &session->lex().select_lex.leaf_tables,
                                     select_insert))
-    return(true);
+    return true;
 
-  return(false);
+  return false;
 }
 
 
@@ -633,11 +633,11 @@ bool prepare_insert(Session *session, TableList *table_list,
   {
     /* it should be allocated before Item::fix_fields() */
     if (table_list->set_insert_values(session->mem_root))
-      return(true);
+      return true;
   }
 
   if (prepare_insert_check_table(session, table_list, fields, select_insert))
-    return(true);
+    return true;
 
 
   /* Prepare the fields in the statement. */
@@ -685,7 +685,7 @@ bool prepare_insert(Session *session, TableList *table_list,
   }
 
   if (res)
-    return(res);
+    return res;
 
   if (not table)
     table= table_list->table;
@@ -1055,7 +1055,7 @@ bool insert_select_prepare(Session *session)
                            lex->update_list, lex->value_list,
                            lex->duplicates,
                            &select_lex->where, true, false, false))
-    return(true);
+    return true;
 
   /*
     exclude first table from leaf tables list, because it belong to
@@ -1065,7 +1065,7 @@ bool insert_select_prepare(Session *session)
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
   select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
-  return(false);
+  return false;
 }
 
 
@@ -1219,7 +1219,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->mark_columns_needed_for_insert();
 
 
-  return(res);
+  return res;
 }
 
 

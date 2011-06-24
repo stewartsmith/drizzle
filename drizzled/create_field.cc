@@ -206,7 +206,7 @@ bool CreateField::init(Session *,
   {
     my_error(ER_TOO_BIG_SCALE, MYF(0), decimals, fld_name,
              NOT_FIXED_DEC-1);
-    return(true);
+    return true;
   }
 
   sql_type= fld_type;
@@ -243,12 +243,12 @@ bool CreateField::init(Session *,
       {
         my_error(ER_TOO_BIG_PRECISION, MYF(0), length, fld_name,
                 DECIMAL_MAX_PRECISION);
-        return(true);
+        return true;
       }
       if (length < decimals)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-        return(true);
+        return true;
       }
       length= class_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
       pack_length= class_decimal_get_binary_size(length, decimals);
@@ -274,7 +274,7 @@ bool CreateField::init(Session *,
           decimals != NOT_FIXED_DEC)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-        return(true);
+        return true;
       }
       break;
     case DRIZZLE_TYPE_MICROTIME:
@@ -369,7 +369,7 @@ bool CreateField::setDefaultValue(Item *default_value_item,
     if (res->length())
     {
       my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), field_name);
-      return(true);
+      return true;
     }
   }
 

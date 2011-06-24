@@ -387,7 +387,7 @@ bool select_query(Session *session,
         //here is EXPLAIN of subselect or derived table
         if (join->change_result(result))
         {
-          return(true);
+          return true;
         }
       }
       else
@@ -405,7 +405,7 @@ bool select_query(Session *session,
   else
   {
     if (!(join= new Join(session, fields, select_options, result)))
-      return(true);
+      return true;
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
     if ((err= join->prepare(rref_pointer_array, tables, wild_num,
@@ -1032,7 +1032,7 @@ bool create_ref_for_key(Join *join,
                            maybe_null ?  key_buff : 0,
                            keyinfo->key_part[i].length, keyuse->getVal());
         if (session->is_fatal_error)
-          return(true);
+          return true;
         tmp.copy();
       }
       else
@@ -5936,7 +5936,7 @@ bool change_to_use_tmp_fields(Session *session,
         else
           item_field= (Item*) new Item_field(field);
         if (!item_field)
-          return(true);                    // Fatal error
+          return true;                    // Fatal error
 
         if (item->real_item()->type() != Item::FIELD_ITEM)
           field->orig_table= 0;
@@ -5961,7 +5961,7 @@ bool change_to_use_tmp_fields(Session *session,
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
-  return(false);
+  return false;
 }
 
 /**
@@ -6029,9 +6029,9 @@ bool setup_sum_funcs(Session *session, Item_sum **func_ptr)
   while ((func= *(func_ptr++)))
   {
     if (func->setup(session))
-      return(true);
+      return true;
   }
-  return(false);
+  return false;
 }
 
 void init_tmptable_sum_functions(Item_sum **func_ptr)

@@ -40,16 +40,15 @@ static const int KEEP_PREALLOC= 1;
 /* move used to free list and reuse them */
 static const int MARK_BLOCKS_FREE= 2;
 
-namespace internal {
-
-class UsedMemory
-{			   /* struct for once_alloc (block) */
-public:
-  UsedMemory *next;	   /* Next block in use */
-  size_t left;		   /* memory left in block  */            
-  size_t size;		   /* size of block */
-};
-
+namespace internal 
+{
+  class UsedMemory
+  {			   /* struct for once_alloc (block) */
+  public:
+    UsedMemory *next;	   /* Next block in use */
+    size_t left;		   /* memory left in block  */            
+    size_t size;		   /* size of block */
+  };
 }
 
 static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
@@ -57,7 +56,6 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 class DRIZZLED_API Root
 {
 public:
-
   Root() :
     free(0),
     used(0),
@@ -107,7 +105,7 @@ public:
   unsigned int first_block_usage;
 
   void reset_defaults(size_t block_size, size_t prealloc_size);
-  void* alloc(size_t Size);
+  unsigned char* alloc(size_t Size);
   void mark_blocks_free();
   void* memdup(const void*, size_t);
   char* strdup(const char*);
@@ -122,16 +120,11 @@ public:
     return min_malloc != 0;
   }
   void free_root(myf MyFLAGS);
-  void* multi_alloc_root(int unused, ...);
-
-  void* alloc_root(size_t Size)
-  {
-    return alloc(Size);
-  }
+  void* multi_alloc(int unused, ...);
 
   void* calloc(size_t size)
   {
-    void* ptr= alloc_root(size);
+    void* ptr= alloc(size);
     memset(ptr, 0, size);
     return ptr;
   }
@@ -139,4 +132,9 @@ public:
 
 } /* namespace memory */
 } /* namespace drizzled */
+
+inline void* operator new(size_t size, drizzled::memory::Root& root)
+{
+  return root.alloc(size);
+}
 

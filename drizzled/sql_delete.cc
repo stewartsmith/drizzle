@@ -107,7 +107,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
   if (session->is_error())
   {
     /* Error evaluating val_int(). */
-    return(true);
+    return true;
   }
 
   /*
@@ -369,17 +369,17 @@ int prepare_delete(Session *session, TableList *table_list, Item **conds)
   if (setup_tables_and_check_access(session, &session->lex().select_lex.context, &select_lex->top_join_list, 
     table_list, &select_lex->leaf_tables, false) ||
       session->setup_conds(table_list, conds))
-    return(true);
+    return true;
 
   if (unique_table(table_list, table_list->next_global))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
-    return(true);
+    return true;
   }
   List<Item> all_fields;
   if (select_lex->inner_refs_list.size() && fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
-    return(true);
-  return(false);
+    return true;
+  return false;
 }
 
 

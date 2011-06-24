@@ -39,7 +39,7 @@ optimizer::SEL_IMERGE::SEL_IMERGE()
 {}
 
 
-int optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree)
+void optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree)
 {
   if (trees_next == trees_end)
   {
@@ -47,32 +47,27 @@ int optimizer::SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, optimiz
     uint32_t old_elements= (trees_end - trees);
     uint32_t old_size= sizeof(optimizer::SEL_TREE**) * old_elements;
     uint32_t new_size= old_size * realloc_ratio;
-    optimizer::SEL_TREE **new_trees= NULL;
-    if (! (new_trees= (optimizer::SEL_TREE**) param->mem_root->alloc_root(new_size)))
-      return -1;
+    optimizer::SEL_TREE** new_trees= (optimizer::SEL_TREE**) param->mem_root->alloc(new_size);
     memcpy(new_trees, trees, old_size);
     trees= new_trees;
     trees_next= trees + old_elements;
     trees_end= trees + old_elements * realloc_ratio;
   }
   *(trees_next++)= tree;
-  return 0;
 }
 
 
-int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *param, optimizer::SEL_TREE *new_tree)
+int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter& param, optimizer::SEL_TREE& new_tree)
 {
-  for (optimizer::SEL_TREE** tree = trees;
-       tree != trees_next;
-       tree++)
+  for (optimizer::SEL_TREE** tree = trees; tree != trees_next; tree++)
   {
-    if (sel_trees_can_be_ored(*tree, new_tree, param))
+    if (sel_trees_can_be_ored(**tree, new_tree, param))
     {
-      *tree = tree_or(param, *tree, new_tree);
+      *tree = tree_or(&param, *tree, &new_tree);
       if (!*tree)
         return 1;
-      if (((*tree)->type == optimizer::SEL_TREE::MAYBE) ||
-          ((*tree)->type == optimizer::SEL_TREE::ALWAYS))
+      if (((*tree)->type == SEL_TREE::MAYBE) ||
+          ((*tree)->type == SEL_TREE::ALWAYS))
         return 1;
       /* optimizer::SEL_TREE::IMPOSSIBLE is impossible here */
       return 0;
@@ -80,17 +75,16 @@ int optimizer::SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *pa
   }
 
   /* New tree cannot be combined with any of existing trees. */
-  return or_sel_tree(param, new_tree);
+  or_sel_tree(&param, &new_tree);
+  return 0;
 }
 
 
-int optimizer::SEL_IMERGE::or_sel_imerge_with_checks(optimizer::RangeParameter *param, optimizer::SEL_IMERGE* imerge)
+int optimizer::SEL_IMERGE::or_sel_imerge_with_checks(RangeParameter& param, SEL_IMERGE& imerge)
 {
-  for (optimizer::SEL_TREE** tree= imerge->trees;
-       tree != imerge->trees_next;
-       tree++)
+  for (SEL_TREE** tree= imerge.trees; tree != imerge.trees_next; tree++)
   {
-    if (or_sel_tree_with_checks(param, *tree))
+    if (or_sel_tree_with_checks(param, **tree))
       return 1;
   }
   return 0;

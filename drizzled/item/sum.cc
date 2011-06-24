@@ -3203,10 +3203,10 @@ bool Item_func_group_concat::setup(Session *session)
     assertion here when this is fixed.
   */
   if (table || tree)
-    return(false);
+    return false;
 
   if (!(tmp_table_param= new Tmp_Table_Param))
-    return(true);
+    return true;
 
   /* We'll convert all blobs to varchar fields in the temporary table */
   tmp_table_param->convert_blob_length= max_length *
@@ -3222,7 +3222,7 @@ bool Item_func_group_concat::setup(Session *session)
       if (item->is_null())
       {
         always_null= 1;
-        return(false);
+        return false;
       }
     }
   }
@@ -3236,7 +3236,7 @@ bool Item_func_group_concat::setup(Session *session)
   */
   if (arg_count_order &&
       setup_order(session, args, context->table_list, list, all_fields, *order))
-    return(true);
+    return true;
 
   count_field_types(select_lex, tmp_table_param, all_fields, 0);
   tmp_table_param->force_copy_fields= force_copy_fields;
@@ -3265,7 +3265,7 @@ bool Item_func_group_concat::setup(Session *session)
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
   {
-    return(true);
+    return true;
   }
 
   table->cursor->extra(HA_EXTRA_NO_ROWS);
@@ -3299,7 +3299,7 @@ bool Item_func_group_concat::setup(Session *session)
                               tree_key_length,
                               (size_t)session->variables.max_heap_table_size);
 
-  return(false);
+  return false;
 }
 
 

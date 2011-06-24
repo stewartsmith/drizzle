@@ -353,7 +353,7 @@ bool Item_in_subselect::exec()
   {
     /* Always compute IN for the first row as the cache is not valid for it. */
     if (!first_execution)
-      return(false);
+      return false;
     first_execution= false;
   }
 
@@ -1728,7 +1728,7 @@ Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *fu
   }
 err:
   session->setWhere(save_where);
-  return(res);
+  return res;
 }
 
 
@@ -1833,7 +1833,7 @@ bool Item_in_subselect::setup_engine()
     new_engine->init_runtime();
   }
 
-  return(res);
+  return res;
 }
 
 
@@ -3014,7 +3014,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
 
   if (tmp_result_sink->create_result_table(session, tmp_columns, true, 
     session->options | TMP_TABLE_ALL_COLUMNS, "materialized subselect"))
-    return(true);
+    return true;
 
   tmp_table= tmp_result_sink->table;
   tmp_key= tmp_table->key_info;
@@ -3037,7 +3037,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     tmp_table= NULL;
     delete result;
     result= NULL;
-    return(true);
+    return true;
   }
   result= tmp_result_sink;
 
@@ -3090,7 +3090,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->ref.key_err= 1;
   tab->ref.key_parts= tmp_key_parts;
 
-  return(false);
+  return false;
 }
 
 
@@ -3196,7 +3196,7 @@ int subselect_hash_sj_engine::exec()
       empty_result_set= true;
       item_in->value= false;
       /* TODO: check we need this: item_in->null_value= false; */
-      return(false);
+      return false;
     }
     /* Set tmp_param only if its usable, i.e. tmp_param->copy_field != NULL. */
     tmp_param= &(item_in->unit->outer_select()->join->tmp_table_param);
@@ -3206,7 +3206,7 @@ int subselect_hash_sj_engine::exec()
 err:
     session->lex().current_select= save_select;
     if (res)
-      return(res);
+      return res;
   }
 
   /*

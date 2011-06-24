@@ -37,9 +37,9 @@
 using namespace std;
 
 namespace drizzled {
+namespace optimizer {
 
-optimizer::QuickGroupMinMaxSelect::
-QuickGroupMinMaxSelect(Table *table,
+QuickGroupMinMaxSelect::QuickGroupMinMaxSelect(Table *table,
                        Join *join_arg,
                        bool have_min_arg,
                        bool have_max_arg,
@@ -96,19 +96,17 @@ QuickGroupMinMaxSelect(Table *table,
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::init()
+int QuickGroupMinMaxSelect::init()
 {
   if (group_prefix) /* Already initialized. */
     return 0;
 
-  if (! (last_prefix= (unsigned char*) alloc.alloc_root(group_prefix_len)))
-      return 1;
+  last_prefix= alloc.alloc(group_prefix_len);
   /*
     We may use group_prefix to store keys with all select fields, so allocate
     enough space for it.
   */
-  if (! (group_prefix= (unsigned char*) alloc.alloc_root(real_prefix_len + min_max_arg_len)))
-    return 1;
+  group_prefix= alloc.alloc(real_prefix_len + min_max_arg_len);
 
   if (key_infix_len > 0)
   {
@@ -116,33 +114,17 @@ int optimizer::QuickGroupMinMaxSelect::init()
       The memory location pointed to by key_infix will be deleted soon, so
       allocate a new buffer and copy the key_infix into it.
     */
-    unsigned char *tmp_key_infix= (unsigned char*) alloc.alloc_root(key_infix_len);
-    if (! tmp_key_infix)
-      return 1;
+    unsigned char *tmp_key_infix= alloc.alloc(key_infix_len);
     memcpy(tmp_key_infix, this->key_infix, key_infix_len);
     this->key_infix= tmp_key_infix;
   }
 
   if (min_max_arg_part)
   {
-    if (have_min)
-    {
-      if (! (min_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      min_functions= NULL;
-    if (have_max)
-    {
-      if (! (max_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      max_functions= NULL;
-
-    Item_sum *min_max_item= NULL;
+    min_functions= have_min ? new List<Item_sum> : NULL;
+    max_functions= have_max ? new List<Item_sum> : NULL;
     Item_sum **func_ptr= join->sum_funcs;
-    while ((min_max_item= *(func_ptr++)))
+    while (Item_sum* min_max_item= *(func_ptr++))
     {
       if (have_min && (min_max_item->sum_func() == Item_sum::MIN_FUNC))
         min_functions->push_back(min_max_item);
@@ -151,23 +133,14 @@ int optimizer::QuickGroupMinMaxSelect::init()
     }
 
     if (have_min)
-    {
-      if (! (min_functions_it= new List<Item_sum>::iterator(min_functions->begin())))
-        return 1;
-    }
-
+      min_functions_it= new List<Item_sum>::iterator(min_functions->begin());
     if (have_max)
-    {
-      if (! (max_functions_it= new List<Item_sum>::iterator(max_functions->begin())))
-        return 1;
-    }
+      max_functions_it= new List<Item_sum>::iterator(max_functions->begin());
   }
-
   return 0;
 }
 
-
-optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
+QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 {
   if (cursor->inited != Cursor::NONE)
   {
@@ -187,9 +160,9 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 }
 
 
-bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
+bool QuickGroupMinMaxSelect::add_range(SEL_ARG *sel_range)
 {
-  optimizer::QuickRange *range= NULL;
+  QuickRange *range= NULL;
   uint32_t range_flag= sel_range->min_flag | sel_range->max_flag;
 
   /* Skip (-inf,+inf) ranges, e.g. (x < 5 or x > 4). */
@@ -206,7 +179,7 @@ bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
                     min_max_arg_len) == 0)
       range_flag|= EQ_RANGE;  /* equality condition */
   }
-  range= new optimizer::QuickRange(sel_range->min_value,
+  range= new QuickRange(sel_range->min_value,
                                    min_max_arg_len,
                                    make_keypart_map(sel_range->part),
                                    sel_range->max_value,
@@ -220,24 +193,24 @@ bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
+void QuickGroupMinMaxSelect::adjust_prefix_ranges()
 {
   if (quick_prefix_select &&
       group_prefix_len < quick_prefix_select->max_used_key_length)
   {
     DYNAMIC_ARRAY& arr= quick_prefix_select->ranges;
     for (size_t inx= 0; inx < arr.size(); inx++)
-      reinterpret_cast<optimizer::QuickRange**>(arr.buffer)[inx]->flag &= ~(NEAR_MIN | NEAR_MAX);
+      reinterpret_cast<QuickRange**>(arr.buffer)[inx]->flag &= ~(NEAR_MIN | NEAR_MAX);
   }
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::update_key_stat()
+void QuickGroupMinMaxSelect::update_key_stat()
 {
   max_used_key_length= real_prefix_len;
   if (! min_max_ranges.empty())
   {
-    optimizer::QuickRange *cur_range= NULL;
+    QuickRange *cur_range= NULL;
     if (have_min)
     { /* Check if the right-most range has a lower boundary. */
       cur_range= min_max_ranges.back();
@@ -276,7 +249,7 @@ void optimizer::QuickGroupMinMaxSelect::update_key_stat()
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::reset(void)
+int QuickGroupMinMaxSelect::reset(void)
 {
   int result;
 
@@ -295,7 +268,7 @@ int optimizer::QuickGroupMinMaxSelect::reset(void)
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::get_next()
+int QuickGroupMinMaxSelect::get_next()
 {
   int min_res= 0;
   int max_res= 0;
@@ -375,7 +348,7 @@ int optimizer::QuickGroupMinMaxSelect::get_next()
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::next_min()
+int QuickGroupMinMaxSelect::next_min()
 {
   int result= 0;
 
@@ -440,23 +413,16 @@ int optimizer::QuickGroupMinMaxSelect::next_min()
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::next_max()
+int QuickGroupMinMaxSelect::next_max()
 {
-  int result= 0;
-
   /* Get the last key in the (possibly extended) group. */
-  if (! min_max_ranges.empty())
-    result= next_max_in_range();
-  else
-    result= cursor->index_read_map(record,
-                                   group_prefix,
-                                   make_prev_keypart_map(real_key_parts),
-                                   HA_READ_PREFIX_LAST);
-  return result;
+  return min_max_ranges.empty()
+    ? cursor->index_read_map(record, group_prefix, make_prev_keypart_map(real_key_parts), HA_READ_PREFIX_LAST)
+    : next_max_in_range();
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::next_prefix()
+int QuickGroupMinMaxSelect::next_prefix()
 {
   int result= 0;
 
@@ -502,11 +468,11 @@ int optimizer::QuickGroupMinMaxSelect::next_prefix()
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
+int QuickGroupMinMaxSelect::next_min_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
-  optimizer::QuickRange *cur_range= NULL;
+  QuickRange *cur_range= NULL;
   bool found_null= false;
   int result= HA_ERR_KEY_NOT_FOUND;
   basic_string<unsigned char> max_key;
@@ -515,9 +481,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
 
   assert(! min_max_ranges.empty());
 
-  for (vector<optimizer::QuickRange *>::iterator it= min_max_ranges.begin();
-       it != min_max_ranges.end();
-       ++it)
+  for (vector<QuickRange *>::iterator it= min_max_ranges.begin(); it != min_max_ranges.end(); ++it)
   { /* Search from the left-most range to the right. */
     cur_range= *it;
 
@@ -622,18 +586,18 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
 }
 
 
-int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
+int QuickGroupMinMaxSelect::next_max_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
-  optimizer::QuickRange *cur_range= NULL;
+  QuickRange *cur_range= NULL;
   int result= 0;
   basic_string<unsigned char> min_key;
   min_key.reserve(real_prefix_len + min_max_arg_len);
 
   assert(! min_max_ranges.empty());
 
-  for (vector<optimizer::QuickRange *>::reverse_iterator rit= min_max_ranges.rbegin();
+  for (vector<QuickRange *>::reverse_iterator rit= min_max_ranges.rbegin();
        rit != min_max_ranges.rend();
        ++rit)
   { /* Search from the right-most range to the left. */
@@ -712,7 +676,7 @@ int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::update_min_result()
+void QuickGroupMinMaxSelect::update_min_result()
 {
   *min_functions_it= min_functions->begin();
   for (Item_sum *min_func; (min_func= (*min_functions_it)++); )
@@ -720,7 +684,7 @@ void optimizer::QuickGroupMinMaxSelect::update_min_result()
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::update_max_result()
+void QuickGroupMinMaxSelect::update_max_result()
 {
   *max_functions_it= max_functions->begin();
   for (Item_sum *max_func; (max_func= (*max_functions_it)++); )
@@ -728,7 +692,7 @@ void optimizer::QuickGroupMinMaxSelect::update_max_result()
 }
 
 
-void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(string *key_names,
+void QuickGroupMinMaxSelect::add_keys_and_lengths(string *key_names,
                                                              string *used_lengths)
 {
   char buf[64];
@@ -737,4 +701,5 @@ void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(string *key_names,
   used_lengths->append(buf, length);
 }
 
+}
 } /* namespace drizzled */

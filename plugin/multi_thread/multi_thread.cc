@@ -123,7 +123,7 @@ void MultiThreadScheduler::setStackSize()
 #endif
 }
 
-bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
+bool MultiThreadScheduler::addSession(const Session::shared_ptr& session)
 {
   if (thread_count >= max_threads)
     return true;
@@ -165,7 +165,7 @@ void MultiThreadScheduler::killSession(Session *session)
   }
 }
 
-void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
+void MultiThreadScheduler::killSessionNow(const Session::shared_ptr& session)
 {
   killSession(session.get());
 

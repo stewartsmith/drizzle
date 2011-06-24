@@ -29,19 +29,17 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
-  bool res;
-  if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
-                           setup_tables_done_option)))
+  bool res= unit->prepare(session, result, SELECT_NO_UNLOCK | setup_tables_done_option);
+  if (!res)
     res= unit->exec();
   if (res)
     res|= unit->cleanup();
-  return(res);
+  return res;
 }
 
 
@@ -225,13 +223,13 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 	offset_limit_cnt= 0;
 	if (result->prepare(sl->join->fields_list, this))
 	{
-	  return(true);
+	  return true;
 	}
 	sl->join->select_options|= SELECT_DESCRIBE;
 	sl->join->reinit();
       }
     }
-    return(false);
+    return false;
   }
   prepared= 1;
   saved_error= false;
@@ -333,7 +331,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       while ((type= tp++, item_tmp= it++))
       {
         if (((Item_type_holder*)type)->join_types(session_arg, item_tmp))
-	  return(true);
+	  return true;
       }
     }
   }
@@ -389,7 +387,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 
 err:
   session_arg->lex().current_select= lex_select_save;
-  return(true);
+  return true;
 }
 
 
@@ -461,7 +459,7 @@ bool Select_Lex_Unit::exec()
         if (sl == union_distinct)
 	{
 	  if (table->cursor->ha_disable_indexes(HA_KEY_SWITCH_ALL))
-	    return(true);
+	    return true;
 	  table->no_keyread=1;
 	}
 	saved_error= sl->join->error;
@@ -528,7 +526,7 @@ bool Select_Lex_Unit::exec()
 					      fake_select_lex->options, result)))
 	{
 	  fake_select_lex->table_list.clear();
-	  return(true);
+	  return true;
 	}
         fake_select_lex->join->no_const_tables= true;
 
@@ -600,7 +598,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (cleaned)
   {
-    return(false);
+    return false;
   }
   cleaned= 1;
 
