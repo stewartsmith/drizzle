@@ -171,7 +171,7 @@ void ReplicationServices::detachApplier(plugin::TransactionApplier *)
 {
 }
 
-bool ReplicationServices::isActive() const
+bool ReplicationServices::isActive()
 {
   return is_active;
 }

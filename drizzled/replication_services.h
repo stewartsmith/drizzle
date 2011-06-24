@@ -69,7 +69,7 @@ public:
    * This is only necessary because we don't yet have plugin dependency
    * tracking...
    */
-  bool evaluateRegisteredPlugins();
+  static bool evaluateRegisteredPlugins();
   /** 
    * Helper method which pushes a constructed message out to the registered
    * replicator and applier plugins.
@@ -77,8 +77,7 @@ public:
    * @param Session descriptor
    * @param Message to push out
    */
-  plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session,
-                                                       message::Transaction &to_push);
+  static plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session, message::Transaction &to_push);
   /**
    * Singleton method
    * Returns the singleton instance of ReplicationServices
@@ -94,12 +93,12 @@ public:
    * is active.  In other words, does it have both
    * a replicator and an applier that are *active*?
    */
-  bool isActive() const;
+  static bool isActive();
 
   /**
    * Returns the list of replication streams
    */
-  ReplicationStreams &getReplicationStreams();
+  static ReplicationStreams &getReplicationStreams();
 
   /**
    * Attaches a replicator to our internal collection of
@@ -107,7 +106,7 @@ public:
    *
    * @param Pointer to a replicator to attach/register
    */
-  void attachReplicator(plugin::TransactionReplicator *in_replicator);
+  static void attachReplicator(plugin::TransactionReplicator *in_replicator);
   
   /**
    * Detaches/unregisters a replicator with our internal
@@ -115,7 +114,7 @@ public:
    *
    * @param Pointer to the replicator to detach
    */
-  void detachReplicator(plugin::TransactionReplicator *in_replicator);
+  static void detachReplicator(plugin::TransactionReplicator *in_replicator);
   
   /**
    * Attaches a applier to our internal collection of
@@ -124,7 +123,7 @@ public:
    * @param Pointer to a applier to attach/register
    * @param The name of the replicator to pair with
    */
-  void attachApplier(plugin::TransactionApplier *in_applier, const std::string &requested_replicator);
+  static void attachApplier(plugin::TransactionApplier *in_applier, const std::string &requested_replicator);
   
   /**
    * Detaches/unregisters a applier with our internal
@@ -132,13 +131,13 @@ public:
    *
    * @param Pointer to the applier to detach
    */
-  void detachApplier(plugin::TransactionApplier *in_applier);
+  static void detachApplier(plugin::TransactionApplier *in_applier);
 
   /** 
    * Returns the timestamp of the last Transaction which was sent to an
    * applier.
    */
-  uint64_t getLastAppliedTimestamp() const;
+  static uint64_t getLastAppliedTimestamp();
 };
 
 } /* namespace drizzled */
