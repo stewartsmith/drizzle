@@ -21,6 +21,8 @@
 #pragma once
 
 #include <drizzled/statement.h>
+#include <iostream>
+using namespace std;
 
 namespace drizzled {
 namespace statement {
@@ -29,7 +31,10 @@ class CreateProcedure : public Statement
 {
 public:
   CreateProcedure(Session *in_session) : Statement(in_session)
-  {}
+  {
+    set_command(SQLCOM_END);
+    cerr << "Hello,world" << endl;
+  }
 
   bool execute();
 };

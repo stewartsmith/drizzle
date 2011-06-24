@@ -77,6 +77,7 @@
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/create_index.h>
+#include <drizzled/statement/create_procedure.h>
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/create_table.h>
 #include <drizzled/statement/create_table/like.h>
