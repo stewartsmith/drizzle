@@ -38,16 +38,12 @@ namespace plugin {
 /**
  * Functions in the server: AKA UDF
  */
-class DRIZZLED_API Function
-  : public Plugin,
-    public std::unary_function<memory::Root*, Item_func *>
+class DRIZZLED_API Function : public Plugin
 {
 public:
-  Function(std::string in_name)
-   : Plugin(in_name, "Function"),
-     std::unary_function<memory::Root*, Item_func *>()
+  Function(std::string in_name) : Plugin(in_name, "Function")
   { }
-  virtual result_type operator()(argument_type root) const= 0;
+  virtual Item_func* operator()(memory::Root*) const= 0;
 
   /**
    * Add a new Function factory to the list of factories we manage.
@@ -76,7 +72,7 @@ public:
   Create_function(const std::string& in_name)
     : Function(in_name)
   { }
-  virtual result_type operator()(argument_type root) const
+  virtual Item_func* operator()(memory::Root* root) const
   {
     return new (*root) FunctionClass();
   }
