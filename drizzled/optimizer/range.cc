@@ -4207,7 +4207,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     make_prev_keypart_map(ref->key_parts);
   range->flag= (ref->key_length == key_info->key_length && (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0;
 
-  quick->key_parts=key_part= new (alloc) KEY_PART[ref->key_parts];
+  quick->key_parts=key_part= new (quick->alloc) KEY_PART[ref->key_parts];
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)
   {
