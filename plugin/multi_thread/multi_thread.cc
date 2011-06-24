@@ -78,7 +78,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 
-    TransactionServices::singleton().sendShutdownEvent(*session.get());
+    TransactionServices::sendShutdownEvent(*session.get());
   }
   // @todo remove hard spin by disconnection the session first from the
   // thread.

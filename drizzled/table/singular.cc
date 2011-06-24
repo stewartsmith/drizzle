@@ -88,14 +88,10 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
   record[0]= session->mem.alloc(getMutableShare()->rec_buff_length);
-  if (not getInsertRecord())
-  {
-    throw "Memory allocation failure";
-  }
 
   if (null_pack_length)
   {
-    null_flags= (unsigned char*) getInsertRecord();
+    null_flags= getInsertRecord();
     getMutableShare()->null_fields= null_count;
     getMutableShare()->null_bytes= null_pack_length;
   }
@@ -186,7 +182,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
   if (getShare()->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
-    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot().alloc(sizeof(*seg) * keyinfo->key_parts);
+    HA_KEYSEG *seg= (HA_KEYSEG*) mem().alloc(sizeof(*seg) * keyinfo->key_parts);
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
@@ -239,7 +235,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
       if (!(key_field->flags & NOT_NULL_FLAG))
       {
         seg->null_bit= key_field->null_bit;
-        seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) getInsertRecord());
+        seg->null_pos= (uint32_t) (key_field->null_ptr - getInsertRecord());
         /*
           We are using a GROUP BY on something that contains NULL
           In this case we have to tell MyISAM that two NULL should
@@ -327,7 +323,7 @@ Singular::~Singular()
   }
   free_io_cache();
 
-  getMemRoot().free_root(MYF(0));
+  mem().free_root(MYF(0));
   in_use->set_proc_info(save_proc_info);
 }
 

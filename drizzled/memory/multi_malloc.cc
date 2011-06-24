@@ -62,7 +62,7 @@ void* multi_malloc(bool zerofill, ...)
 
 #ifdef HAVE_VALGRIND
   if (!(start= calloc(0, tot_length)))
-    return(0);
+    return 0;
 #else
   start= malloc(tot_length);
   if (zerofill)

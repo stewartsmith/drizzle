@@ -38,10 +38,6 @@ public:
     iter= local_vector.begin();
   }
 
-  ~TableDefinitionCache()
-  {
-  }
-
   operator drizzled::TableShare::shared_ptr()
   {
     while (iter != local_vector.end())

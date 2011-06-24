@@ -47,8 +47,7 @@ using namespace std;
 /* Stay outside of the namespace because otherwise bison goes nuts */
 int base_sql_lex(ParserType *arg, drizzled::Session *yysession);
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 
@@ -57,7 +56,7 @@ static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 */
 static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
-  Order* order = (Order *) session->mem.alloc(sizeof(Order));
+  Order* order = new (session->mem) Order;
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;

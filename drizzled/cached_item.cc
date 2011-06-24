@@ -99,7 +99,7 @@ bool Cached_item_str::cmp(void)
   }
   else if (null_value)
     // new and old value was null
-    return(0);
+    return 0;
   else
     tmp= sortcmp(&value,res,item->collation.collation) != 0;
   if (tmp)

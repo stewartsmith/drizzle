@@ -961,7 +961,7 @@ after_n_copied_inc:
 gok_or_after_err:
   if (!table->cursor->has_transactions())
     session->transaction.stmt.markModifiedNonTransData();
-  return(0);
+  return 0;
 
 err:
   info->last_errno= error;
@@ -1244,7 +1244,7 @@ int select_insert::prepare2(void)
   if (session->lex().current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
 
-  return(0);
+  return 0;
 }
 
 
@@ -1728,7 +1728,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
-  return(0);
+  return 0;
 }
 
 void select_create::store_values(List<Item> &values)
@@ -1768,8 +1768,7 @@ bool select_create::send_eof()
     */
     if (!table->getShare()->getType())
     {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(*session, 0);
+      TransactionServices::autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

@@ -117,10 +117,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /* Lets hope this doesn't fail as the result will be messy */
   if (not error)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rawStatement(session(),
-                                      *session().getQueryString(),
-                                      *session().schema());        
+    TransactionServices::rawStatement(session(), *session().getQueryString(), *session().schema());        
     session().my_ok();
   }
 

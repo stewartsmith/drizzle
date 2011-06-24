@@ -295,8 +295,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da().can_overwrite_status= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(*session, session->is_error());
+  TransactionServices::autocommitOrRollback(*session, session->is_error());
   session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -1308,7 +1307,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     session_arg->lex().current_select= fake_select_lex;
   }
   session_arg->lex().pop_context();
-  return(0);
+  return 0;
 }
 
 

@@ -1479,7 +1479,7 @@ int init_remaining_variables(module::Registry &plugins)
 }
 
 
-int init_server_components(module::Registry &plugins)
+void init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1538,8 +1538,6 @@ int init_server_components(module::Registry &plugins)
   }
 
   init_update_queries();
-
-  return(0);
 }
 
 

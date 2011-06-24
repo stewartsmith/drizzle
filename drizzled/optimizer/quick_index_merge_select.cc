@@ -206,14 +206,10 @@ int optimizer::QuickIndexMergeSelect::get_next()
 
 bool optimizer::QuickIndexMergeSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    if (is_key_used(head, (*it)->index, fields))
-    {
+    if (is_key_used(head, it->index, fields))
       return 1;
-    }
   }
   return 0;
 }
@@ -223,15 +219,13 @@ void optimizer::QuickIndexMergeSelect::add_info_string(string *str)
 {
   bool first= true;
   str->append("sort_union(");
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
     if (! first)
       str->append(",");
     else
       first= false;
-    (*it)->add_info_string(str);
+    it->add_info_string(str);
   }
   if (pk_quick_select)
   {
@@ -249,9 +243,7 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
   uint32_t length= 0;
   bool first= true;
 
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
     if (first)
       first= false;
@@ -261,9 +253,9 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
       used_lengths->append(",");
     }
 
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     key_names->append(key_info->name);
-    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(it->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)

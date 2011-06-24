@@ -54,7 +54,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
   *ref= item;
 
-  return(0);
+  return 0;
 }
 
 Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,

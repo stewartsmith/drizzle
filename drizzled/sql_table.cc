@@ -197,8 +197,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         {
           if (message) // If we have no definition, we don't know if the table should have been replicated
           {
-            TransactionServices &transaction_services= TransactionServices::singleton();
-            transaction_services.dropTable(*session, identifier, *message, if_exists);
+            TransactionServices::dropTable(*session, identifier, *message, if_exists);
           }
         }
         else
@@ -896,8 +895,6 @@ static int prepare_create_table(Session *session,
 
   (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
   key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
-  if (!*key_info_buffer || ! key_part_info)
-    return true;				// Out of memory
 
   key_iterator= alter_info->key_list.begin();
   key_number=0;
@@ -1370,8 +1367,7 @@ static bool locked_create_event(Session *session,
 
   if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(*session, table_proto);
+    TransactionServices::createTable(*session, table_proto);
   }
 
   return false;
@@ -1706,19 +1702,16 @@ void Session::close_cached_table(Table *table)
           (admin operation or network communication failed)
 */
 static bool admin_table(Session* session, TableList* tables,
-                              HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
-                              int (Cursor::*operator_func)(Session *,
-                                                            HA_CHECK_OPT *))
+                              int (Cursor::*operator_func)(Session*))
 {
   TableList *table;
   Select_Lex *select= &session->lex().select_lex;
   List<Item> field_list;
   Item *item;
   int result_code= 0;
-  TransactionServices &transaction_services= TransactionServices::singleton();
   const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
@@ -1793,7 +1786,7 @@ static bool admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name.c_str());
       session->getClient()->store(buff, length);
-      transaction_services.autocommitOrRollback(*session, false);
+      TransactionServices::autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       session->lex().reset_query_tables_list(false);
@@ -1818,7 +1811,7 @@ static bool admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    result_code = (table->table->cursor->*operator_func)(session, check_opt);
+    result_code = (table->table->cursor->*operator_func)(session);
 
 send_result:
 
@@ -1917,7 +1910,7 @@ send_result:
         }
       }
     }
-    transaction_services.autocommitOrRollback(*session, false);
+    TransactionServices::autocommitOrRollback(*session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1929,7 +1922,7 @@ send_result:
   return false;
 
 err:
-  transaction_services.autocommitOrRollback(*session, true);
+  TransactionServices::autocommitOrRollback(*session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
@@ -2020,8 +2013,7 @@ static bool create_table_wrapper(Session &session,
 
   if (success && not destination_identifier.isTmp())
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, new_table_message);
+    TransactionServices::createTable(session, new_table_message);
   }
 
   return success;
@@ -2146,24 +2138,18 @@ bool create_like_table(Session* session,
 }
 
 
-bool analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
+bool analyze_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
-  return(admin_table(session, tables, check_opt,
-				"analyze", lock_type, true,
-				&Cursor::ha_analyze));
+  return(admin_table(session, tables, "analyze", lock_type, true, &Cursor::ha_analyze));
 }
 
 
-bool check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
+bool check_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, check_opt,
-				"check", lock_type,
-				false,
-				&Cursor::ha_check));
+  return admin_table(session, tables, "check", lock_type, false, &Cursor::ha_check);
 }
 
 } /* namespace drizzled */

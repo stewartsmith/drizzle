@@ -129,7 +129,7 @@ int my_wildcmp_mb(const charset_info_st * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 
@@ -765,7 +765,7 @@ int my_wildcmp_mb_bin(const charset_info_st * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 

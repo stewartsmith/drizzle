@@ -39,13 +39,10 @@ bool statement::ReleaseSavepoint::execute()
    * find one with the same name, we release it and
    * unbind it from our deque.
    */
-  TransactionServices &transaction_services= TransactionServices::singleton();
   deque<NamedSavepoint> &savepoints= transaction().savepoints;
   deque<NamedSavepoint>::iterator iter;
 
-  for (iter= savepoints.begin();
-       iter != savepoints.end();
-       ++iter)
+  for (iter= savepoints.begin(); iter != savepoints.end(); ++iter)
   {
     NamedSavepoint &sv= *iter;
     const string &sv_name= sv.getName();
@@ -59,7 +56,7 @@ bool statement::ReleaseSavepoint::execute()
   if (iter != savepoints.end())
   {
     NamedSavepoint &sv= *iter;
-    (void) transaction_services.releaseSavepoint(session(), sv);
+    (void) TransactionServices::releaseSavepoint(session(), sv);
     savepoints.erase(iter);
     session().my_ok();
   }

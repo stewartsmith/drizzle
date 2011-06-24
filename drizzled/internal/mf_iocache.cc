@@ -466,7 +466,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
   info->read_end=info->buffer+ length_local;
   info->pos_in_file=pos_in_file_local;
   memcpy(Buffer, info->buffer, Count);
-  return(0);
+  return 0;
 }
 
 /**
@@ -658,7 +658,7 @@ int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
     }
   }
   unlock_append_buffer(info, need_append_buffer_lock);
-  return(0);
+  return 0;
 }
 
 /**

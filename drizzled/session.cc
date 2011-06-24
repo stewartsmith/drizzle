@@ -406,8 +406,7 @@ void Session::cleanup()
   }
 #endif
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rollbackTransaction(*this, true);
+    TransactionServices::rollbackTransaction(*this, true);
   }
 
   BOOST_FOREACH(UserVars::reference iter, user_vars)
@@ -745,7 +744,6 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   bool result= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -761,7 +759,7 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.commitTransaction(*this, true))
+      if (TransactionServices::commitTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       break;
@@ -778,7 +776,7 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.rollbackTransaction(*this, true))
+      if (TransactionServices::rollbackTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
@@ -805,7 +803,6 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
 bool Session::endActiveTransaction()
 {
   bool result= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -815,7 +812,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (transaction_services.commitTransaction(*this, true))
+    if (TransactionServices::commitTransaction(*this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -883,7 +880,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= (LEX_STRING *)mem.alloc(sizeof(LEX_STRING));
+    lex_str= new (mem) LEX_STRING;
   lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
@@ -1352,7 +1349,7 @@ bool select_dump::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   if (row_count++ > 1)
   {
@@ -1373,7 +1370,7 @@ bool select_dump::send_data(List<Item> &items)
       return 1;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1394,14 +1391,14 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {				          // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 
@@ -1452,7 +1449,7 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
     it->store(0, cache);
   }
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 bool select_max_min_finder_subselect::cmp_real()
@@ -1520,11 +1517,11 @@ bool select_exists_subselect::send_data(List<Item> &)
   if (unit->offset_limit_cnt)
   { // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   it->value= 1;
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 /*
@@ -1814,9 +1811,8 @@ void Session::close_thread_tables()
     TODO: This should be fixed in later releases.
    */
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
     main_da().can_overwrite_status= true;
-    transaction_services.autocommitOrRollback(*this, is_error());
+    TransactionServices::autocommitOrRollback(*this, is_error());
     main_da().can_overwrite_status= false;
     transaction.stmt.reset();
   }

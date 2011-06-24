@@ -37,7 +37,7 @@ bool select_dumpvar::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   if (row_count++)
   {

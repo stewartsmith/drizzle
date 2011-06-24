@@ -65,7 +65,6 @@ bool statement::RollbackToSavepoint::execute()
    * all savepoints "above" the one we find.
    */
   deque<NamedSavepoint> &savepoints= transaction().savepoints;
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   /* Short-circuit for no savepoints */
   if (savepoints.empty())
@@ -88,7 +87,7 @@ bool statement::RollbackToSavepoint::execute()
                      first_savepoint_name.size()) == 0)
     {
       /* Found the named savepoint we want to rollback to */
-      (void) transaction_services.rollbackToSavepoint(session(), first_savepoint);
+      (void) TransactionServices::rollbackToSavepoint(session(), first_savepoint);
 
       if (transaction().all.hasModifiedNonTransData())
       {
@@ -126,7 +125,7 @@ bool statement::RollbackToSavepoint::execute()
       /* Found the named savepoint we want to rollback to */
       found= true;
 
-      (void) transaction_services.rollbackToSavepoint(session(), sv);
+      (void) TransactionServices::rollbackToSavepoint(session(), sv);
     }
     if (found)
     {

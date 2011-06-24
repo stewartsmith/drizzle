@@ -34,7 +34,7 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
 
   /* The behavior of write(fd, buf, 0) is not portable */
   if (unlikely(!Count))
-    return(0);
+    return 0;
 
   for (;;)
   {
@@ -60,7 +60,7 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
       break;					/* Return bytes written */
   }
   if (MyFlags & (MY_NABP | MY_FNABP))
-    return(0);			/* Want only errors */
+    return 0;			/* Want only errors */
   return(writenbytes+written);
 } /* my_write */
 

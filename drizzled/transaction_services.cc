@@ -303,9 +303,11 @@ namespace drizzled {
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
-TransactionServices::TransactionServices()
+
+static plugin::XaStorageEngine& xa_storage_engine()
 {
-  xa_storage_engine= static_cast<plugin::XaStorageEngine*>(plugin::StorageEngine::findByName("InnoDB"));
+  static plugin::XaStorageEngine& engine= static_cast<plugin::XaStorageEngine&>(*plugin::StorageEngine::findByName("InnoDB"));
+  return engine;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -324,7 +326,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
     registerResourceForTransaction(session, monitored, engine);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
+  TransactionContext& trans= session.transaction.stmt;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
   if (resource_context.isStarted())
@@ -335,9 +337,8 @@ void TransactionServices::registerResourceForStatement(Session& session,
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->registerResource(&resource_context);
-
-  trans->no_2pc= true;
+  trans.registerResource(&resource_context);
+  trans.no_2pc= true;
 }
 
 void TransactionServices::registerResourceForStatement(Session& session,
@@ -357,7 +358,7 @@ void TransactionServices::registerResourceForStatement(Session& session,
     registerResourceForTransaction(session, monitored, engine, resource_manager);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
+  TransactionContext& trans= session.transaction.stmt;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
   if (resource_context.isStarted())
@@ -369,14 +370,14 @@ void TransactionServices::registerResourceForStatement(Session& session,
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
   resource_context.setXaResourceManager(resource_manager);
-  trans->registerResource(&resource_context);
+  trans.registerResource(&resource_context);
 }
 
 void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans= &session.transaction.all;
+  TransactionContext& trans= session.transaction.all;
   ResourceContext& resource_context= session.getResourceContext(*monitored, 1);
 
   if (resource_context.isStarted())
@@ -384,14 +385,14 @@ void TransactionServices::registerResourceForTransaction(Session& session,
 
   session.server_status|= SERVER_STATUS_IN_TRANS;
 
-  trans->registerResource(&resource_context);
+  trans.registerResource(&resource_context);
 
   assert(monitored->participatesInSqlTransaction());
   assert(not monitored->participatesInXaTransaction());
 
   resource_context.setMonitored(monitored);
   resource_context.setTransactionalStorageEngine(engine);
-  trans->no_2pc= true;
+  trans.no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -442,7 +443,7 @@ void TransactionServices::allocateNewTransactionId()
   }
 
   Session *my_session= current_session;
-  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  uint64_t xa_id= xa_storage_engine().getNewTransactionId(my_session);
   my_session->setXaId(xa_id);
 }
 
@@ -450,7 +451,7 @@ uint64_t TransactionServices::getCurrentTransactionId(Session& session)
 {
   if (session.getXaId() == 0)
   {
-    session.setXaId(xa_storage_engine->getNewTransactionId(&session)); 
+    session.setXaId(xa_storage_engine().getNewTransactionId(&session)); 
   }
 
   return session.getXaId();
@@ -493,12 +494,10 @@ int TransactionServices::commitTransaction(Session& session,
      */
     if (shouldConstructMessages())
     {
-      for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-           it != resource_contexts.end() && ! error;
-           ++it)
+      BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
       {
-        ResourceContext *resource_context= *it;
-        int err;
+        if (error)
+          break;
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -511,7 +510,7 @@ int TransactionServices::commitTransaction(Session& session,
 
         if (resource->participatesInXaTransaction())
         {
-          if ((err= resource_context->getXaResourceManager()->xaPrepare(&session, normal_transaction)))
+          if (int err= resource_context->getXaResourceManager()->xaPrepare(&session, normal_transaction))
           {
             my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
             error= 1;
@@ -567,18 +566,13 @@ int TransactionServices::commitPhaseOne(Session& session,
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      int err;
-      ResourceContext *resource_context= *it;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaCommit(&session, all)))
+        if (int err= resource_context->getXaResourceManager()->xaCommit(&session, all))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -590,7 +584,7 @@ int TransactionServices::commitPhaseOne(Session& session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->commit(&session, all)))
+        if (int err= resource_context->getTransactionalStorageEngine()->commit(&session, all))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -630,23 +624,17 @@ int TransactionServices::rollbackTransaction(Session& session,
     We must not rollback the normal transaction if a statement
     transaction is pending.
   */
-  assert(session.transaction.stmt.getResourceContexts().empty() ||
-              trans == &session.transaction.stmt);
+  assert(session.transaction.stmt.getResourceContexts().empty() || trans == &session.transaction.stmt);
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      int err;
-      ResourceContext *resource_context= *it;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaRollback(&session, all)))
+        if (int err= resource_context->getXaResourceManager()->xaRollback(&session, all))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -658,7 +646,7 @@ int TransactionServices::rollbackTransaction(Session& session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, all)))
+        if (int err= resource_context->getTransactionalStorageEngine()->rollback(&session, all))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -721,12 +709,8 @@ int TransactionServices::autocommitOrRollback(Session& session,
   {
     TransactionContext *trans = &session.transaction.stmt;
     TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      ResourceContext *resource_context= *it;
-
       resource_context->getTransactionalStorageEngine()->endStatement(&session);
     }
 
@@ -774,18 +758,13 @@ int TransactionServices::rollbackToSavepoint(Session& session,
     rolling back to savepoint in all storage engines that were part of the
     transaction when the savepoint was set
   */
-  for (TransactionContext::ResourceContexts::iterator it= sv_resource_contexts.begin();
-       it != sv_resource_contexts.end();
-       ++it)
+  BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, sv_resource_contexts)
   {
-    int err;
-    ResourceContext *resource_context= *it;
-
     plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(&session, sv)))
+      if (int err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(&session, sv))
       {
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error= 1;
@@ -831,18 +810,13 @@ int TransactionServices::rollbackToSavepoint(Session& session,
      * savepoint's resource contexts.
      */
         
-    for (TransactionContext::ResourceContexts::iterator it= set_difference_contexts.begin();
-         it != set_difference_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, set_difference_contexts)
     {
-      ResourceContext *resource_context= *it;
-      int err;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, !(0))))
+        if (int err= resource_context->getTransactionalStorageEngine()->rollback(&session, true))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -900,18 +874,13 @@ int TransactionServices::setSavepoint(Session& session,
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      ResourceContext *resource_context= *it;
-      int err;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->setSavepoint(&session, sv)))
+        if (int err= resource_context->getTransactionalStorageEngine()->setSavepoint(&session, sv))
         {
           my_error(ER_GET_ERRNO, MYF(0), err);
           error= 1;
@@ -950,18 +919,13 @@ int TransactionServices::releaseSavepoint(Session& session,
 
   TransactionContext::ResourceContexts &resource_contexts= sv.getResourceContexts();
 
-  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-       it != resource_contexts.end();
-       ++it)
+  BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
   {
-    int err;
-    ResourceContext *resource_context= *it;
-
     plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(&session, sv)))
+      if (int err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(&session, sv))
       {
         my_error(ER_GET_ERRNO, MYF(0), err);
         error= 1;
@@ -2072,8 +2036,7 @@ void TransactionServices::dropTable(Session& session,
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::truncateTable(Session& session,
-                                        Table &table)
+void TransactionServices::truncateTable(Session& session, Table &table)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())

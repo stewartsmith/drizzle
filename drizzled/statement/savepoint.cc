@@ -61,7 +61,6 @@ bool statement::Savepoint::execute()
      * Look through the savepoints.  If we find one with
      * the same name, delete it.
      */
-    TransactionServices &transaction_services= TransactionServices::singleton();
     deque<NamedSavepoint> &savepoints= transaction().savepoints;
     deque<NamedSavepoint>::iterator iter;
 
@@ -81,13 +80,13 @@ bool statement::Savepoint::execute()
     if (iter != savepoints.end())
     {
       NamedSavepoint &sv= *iter;
-      (void) transaction_services.releaseSavepoint(session(), sv);
+      (void) TransactionServices::releaseSavepoint(session(), sv);
       savepoints.erase(iter);
     }
     
     NamedSavepoint newsv(lex().ident.str, lex().ident.length);
 
-    if (transaction_services.setSavepoint(session(), newsv))
+    if (TransactionServices::setSavepoint(session(), newsv))
     {
       return true;
     }
