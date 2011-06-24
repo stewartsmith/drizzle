@@ -64,17 +64,16 @@ public:
 };
 
 template<class T>
-class Create_function
- : public Function
+class Create_function : public Function
 {
 public:
-  typedef T FunctionClass;
-  Create_function(const std::string& in_name)
-    : Function(in_name)
-  { }
+  Create_function(const std::string& in_name) : Function(in_name)
+  { 
+  }
+
   virtual Item_func* operator()(memory::Root* root) const
   {
-    return new (*root) FunctionClass();
+    return new (*root) T();
   }
 };
 

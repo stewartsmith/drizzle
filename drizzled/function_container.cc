@@ -28,8 +28,7 @@ using namespace std;
 
 static drizzled::FunctionContainer::Map _functions_map;
 
-namespace drizzled
-{
+namespace drizzled {
 
 FunctionContainer::Map &FunctionContainer::getMap()
 {

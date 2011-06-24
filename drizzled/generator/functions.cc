@@ -27,27 +27,20 @@
 
 using namespace std;
 
-namespace drizzled
+namespace drizzled {
+namespace generator {
+
+Functions::Functions(Session&)
 {
-namespace generator
-{
+  functions.reserve(plugin::Function::getMap().size() + FunctionContainer::getMap().size());
 
-Functions::Functions(Session &arg) :
-  session(arg)
-{
-  function_list.reserve(plugin::Function::getMap().size() + FunctionContainer::getMap().size());
+  BOOST_FOREACH(FunctionContainer::Map::const_reference it, FunctionContainer::getMap()) 
+    functions.push_back(it.first);
 
-  std::transform(FunctionContainer::getMap().begin(),
-                 FunctionContainer::getMap().end(),
-                 std::back_inserter(function_list),
-                 boost::bind(&FunctionContainer::Map::value_type::first, _1) );
+  BOOST_FOREACH(plugin::Function::Map::const_reference it, plugin::Function::getMap())
+    functions.push_back(it.first);
 
-  std::transform(plugin::Function::getMap().begin(),
-                 plugin::Function::getMap().end(),
-                 std::back_inserter(function_list),
-                 boost::bind(&plugin::Function::Map::value_type::first, _1) );
-
-  iter= function_list.begin();
+  iter= functions.begin();
 }
 
 } /* namespace generator */
