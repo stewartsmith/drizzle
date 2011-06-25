@@ -1981,17 +1981,13 @@ static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (*param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
-                                                                   best_mrr_flags)))
-    {
-      read_plan->records= best_records;
-      read_plan->is_ror= tree->ror_scans_map.test(idx);
-      read_plan->read_cost= read_time;
-      read_plan->mrr_buf_size= best_buf_size;
-    }
+    read_plan= new (*param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx, best_mrr_flags);
+    read_plan->records= best_records;
+    read_plan->is_ror= tree->ror_scans_map.test(idx);
+    read_plan->read_cost= read_time;
+    read_plan->mrr_buf_size= best_buf_size;
   }
-
-  return(read_plan);
+  return read_plan;
 }
 
 
@@ -5467,13 +5463,8 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
 
 optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
-  optimizer::QuickRangeSelect *quick= NULL;
-  if ((quick= optimizer::get_quick_select(param,
-                                          key_idx,
-                                          key,
-                                          mrr_flags,
-                                          mrr_buf_size,
-                                          parent_alloc)))
+  optimizer::QuickRangeSelect *quick= optimizer::get_quick_select(param, key_idx, key, mrr_flags, mrr_buf_size, parent_alloc);
+  if (quick)
   {
     quick->records= records;
     quick->read_time= read_cost;
@@ -5487,10 +5478,8 @@ uint32_t optimizer::RorScanInfo::findFirstNotSet() const
   boost::dynamic_bitset<> map= bitsToBitset();
   for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
   {
-    if (! map.test(i))
-    {
+    if (not map.test(i))
       return i;
-    }
   }
   return map.size();
 }

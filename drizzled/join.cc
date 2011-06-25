@@ -5057,20 +5057,7 @@ static void make_join_readinfo(Join& join)
       tab->insideout_buf= join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
     }
 
-    optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
-    boost::shared_ptr<optimizer::AccessMethod> access_method(factory.createAccessMethod(tab->type));
-
-    if (! access_method)
-    {
-      /**
-       * @todo
-       * Is abort() the correct thing to call here? I call this here because it was what was called in
-       * the default case for the switch statement that used to be here.
-       */
-      abort();
-    }
-
-    access_method->getStats(table, tab);
+    optimizer::AccessMethodFactory::create(tab->type)->getStats(*table, *tab);
   }
 
   join.join_tab[join.tables-1].next_select= NULL; /* Set by do_select */

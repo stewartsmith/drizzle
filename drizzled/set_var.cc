@@ -94,10 +94,7 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
   if (value_arg && value_arg->type() == Item::FIELD_ITEM)
   {
     Item_field *item= (Item_field*) value_arg;
-    if (!(value=new Item_string(item->field_name,
-                                (uint32_t) strlen(item->field_name),
-                                item->collation.collation)))
-      value=value_arg;			/* Give error message later */
+    value=new Item_string(item->field_name, (uint32_t) strlen(item->field_name), item->collation.collation);
   }
   else
   {
@@ -119,7 +116,7 @@ int set_var::check(Session *session)
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
-  if (!value)
+  if (not value)
   {
     if (var->check_default(type))
     {
@@ -156,7 +153,7 @@ int set_var::update(Session *session)
 {
   try
   {
-    if (! value)
+    if (not value)
       var->set_default(session, type);
     else if (var->update(session, this))
       return -1;				// should never happen
