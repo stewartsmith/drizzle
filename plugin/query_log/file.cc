@@ -19,6 +19,7 @@
 
 #include <config.h>
 #include <string>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include "file.h"
 
