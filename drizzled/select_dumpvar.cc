@@ -42,7 +42,7 @@ bool select_dumpvar::send_data(List<Item> &items)
   if (row_count++)
   {
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
-    return(1);
+    return 1;
   }
   while ((iter != var_list.end()) && (item= it++))
   {

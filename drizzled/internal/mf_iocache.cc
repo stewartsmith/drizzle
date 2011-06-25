@@ -411,7 +411,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
       */
       assert(errno != ESPIPE);
       info->error= -1;
-      return(1);
+      return 1;
     }
   }
 
@@ -422,14 +422,14 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     if (info->end_of_file <= pos_in_file_local)
     {					/* End of file */
       info->error= (int) left_length;
-      return(1);
+      return 1;
     }
     length_local=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
     if ((read_length= my_read(info->file,Buffer, length_local, info->myflags)) != length_local)
     {
       info->error= (read_length == (size_t) -1 ? -1 :
 		    (int) (read_length+left_length));
-      return(1);
+      return 1;
     }
     Count-= length_local;
     Buffer+= length_local;
@@ -447,7 +447,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     if (Count)
     {
       info->error= static_cast<int>(left_length);	/* We only got this many char */
-      return(1);
+      return 1;
     }
      length_local=0;				/* Didn't read any chars */
   }
@@ -460,7 +460,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     info->pos_in_file= pos_in_file_local;
     info->error=  length_local == (size_t) -1 ? -1 : (int) ( length_local+left_length);
     info->read_pos=info->read_end=info->buffer;
-    return(1);
+    return 1;
   }
   info->read_pos=info->buffer+Count;
   info->read_end=info->buffer+ length_local;

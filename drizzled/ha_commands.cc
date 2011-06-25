@@ -40,8 +40,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 

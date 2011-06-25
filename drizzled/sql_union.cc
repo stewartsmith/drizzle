@@ -472,7 +472,7 @@ bool Select_Lex_Unit::exec()
 	  if (union_result->flush())
 	  {
 	    session->lex().current_select= lex_select_save;
-	    return(1);
+	    return 1;
 	  }
 	}
       }
@@ -486,7 +486,7 @@ bool Select_Lex_Unit::exec()
       if (error)
       {
         table->print_error(error, MYF(0));
-        return(1);
+        return 1;
       }
       if (found_rows_for_union && !sl->braces &&
           select_limit_cnt != HA_POS_ERROR)

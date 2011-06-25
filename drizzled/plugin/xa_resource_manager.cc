@@ -172,7 +172,7 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
   if (!trans_list)
   {
     errmsg_printf(error::ERROR, ER(ER_OUTOFMEMORY), trans_len*sizeof(XID));
-    return(1);
+    return 1;
   }
 
   if (commit_list.size())
@@ -199,7 +199,7 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
                     "drizzled with the --tc-heuristic-recover switch to "
                     "commit or rollback pending transactions."),
                     recover_func.getMyXIDs(), opt_tc_log_file);
-    return(1);
+    return 1;
   }
 
   if (commit_list.size())

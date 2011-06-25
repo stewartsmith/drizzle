@@ -730,13 +730,13 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 {
   if (unit_arg->fake_select_lex &&
       unit_arg->fake_select_lex->test_limit())
-    return(1);
+    return 1;
 
   Select_Lex *sl= unit_arg->first_select();
   for (; sl; sl= sl->next_select())
   {
     if (sl->test_limit())
-      return(1);
+      return 1;
   }
   return 0;
 }
@@ -1390,7 +1390,7 @@ Item_in_subselect::row_value_transformer(Join *join)
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
-      pushed_cond_guards= (bool*)join->session->mem.alloc(sizeof(bool) * left_expr->cols());
+      pushed_cond_guards= new (join->session->mem) bool[left_expr->cols()];
       for (uint32_t i= 0; i < cols_num; i++)
         pushed_cond_guards[i]= true;
     }
@@ -2162,7 +2162,7 @@ int subselect_single_select_engine::exec()
     save_join_if_explain();
     if (item->engine_changed)
     {
-      return(1);
+      return 1;
     }
   }
   if (select_lex->uncacheable.any() &&
@@ -2408,7 +2408,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
       if (top_level)
       {
         /* Partial match on top level */
-        return(1);
+        return 1;
       }
       else
       {
@@ -2478,7 +2478,7 @@ int subselect_uniquesubquery_engine::exec()
 
   /* TODO: change to use of 'full_scan' here? */
   if (copy_ref_key())
-    return(1);
+    return 1;
   if (table->status)
   {
     /*
@@ -2599,7 +2599,7 @@ int subselect_indexsubquery_engine::exec()
 
   /* Copy the ref key and check for nulls... */
   if (copy_ref_key())
-    return(1);
+    return 1;
 
   if (table->status)
   {
@@ -3062,8 +3062,8 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
   tab->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(tmp_key->key_length) * 2);
-  tab->ref.key_copy= (StoredKey**) session->mem.alloc((sizeof(StoredKey*) * (tmp_key_parts + 1)));
-  tab->ref.items= (Item**) session->mem.alloc(sizeof(Item*) * tmp_key_parts);
+  tab->ref.key_copy= new (session->mem) StoredKey*[tmp_key_parts + 1];
+  tab->ref.items= new (session->mem) Item*[tmp_key_parts];
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;

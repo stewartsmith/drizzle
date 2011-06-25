@@ -157,12 +157,12 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     errno= EEXIST;
     if (MyFlags & MY_WME)
       my_error(EE_CANTCREATEFILE, MYF(0), tmp_name, EEXIST);
-    return(1);
+    return 1;
   }
 
   /* Create new symlink */
   if (symlink(tmp_name, to))
-    return(1);
+    return 1;
   else if (MyFlags & MY_SYNC_DIR)
     my_sync_dir_by_file(to, MyFlags);
 
@@ -177,7 +177,7 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     int save_errno=errno;
     my_delete(to, MyFlags);			/* Remove created symlink */
     errno=save_errno;
-    return(1);
+    return 1;
   }
 
   /* Remove original symlink */

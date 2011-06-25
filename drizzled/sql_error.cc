@@ -146,8 +146,8 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   if (session->main_da().m_warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
-    err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
-    session->main_da().m_warn_list.push_back(err, &session->warn_root);
+    err= new (session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
+    session->main_da().m_warn_list.push_back(err, session->warn_root);
   }
   session->warn_count[(uint32_t) level]++;
   session->total_warn_count++;

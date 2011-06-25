@@ -20,10 +20,6 @@
 
 #pragma once
 
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
 #include <drizzled/join_table.h>
 #include <drizzled/optimizer/access_method.h>
 
@@ -37,25 +33,9 @@ namespace optimizer {
 class AccessMethodFactory
 {
 public:
-
-  static AccessMethodFactory &singleton()
-  {
-    static AccessMethodFactory fact;
-    return fact;
-  }
-
-  boost::shared_ptr<AccessMethod> createAccessMethod(enum access_method type);
-
-private:
-  
-  AccessMethodFactory() {}
-
-  ~AccessMethodFactory() {}
-
-  AccessMethodFactory(const AccessMethodFactory&);
+  static AccessMethod::ptr create(access_method);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
 

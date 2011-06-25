@@ -2034,51 +2034,23 @@ static Native_func_registry func_array[] =
   startup only (before going multi-threaded)
 */
 
-int item_create_init()
+void item_create_init()
 {
-  string func_name;
-
-  Native_func_registry *func;
-  for (func= func_array; func->builder != NULL; func++)
-  {
-    func_name.assign(func->name.str, func->name.length);
-
-    FunctionContainer::getMap()[func_name]= func->builder;
-  }
-
-  return 0;
+  for (Native_func_registry* func= func_array; func->builder; func++)
+    FunctionContainer::getMutableMap()[string(func->name.str, func->name.length)]= func->builder;
 }
 
-
-Create_func *
-find_native_function_builder(LEX_STRING name)
+Create_func* find_native_function_builder(LEX_STRING name)
 {
-  Create_func *builder= NULL;
-
-  string func_name(name.str, name.length);
-
-  FunctionContainer::Map::iterator func_iter=
-    FunctionContainer::getMap().find(func_name);
-
-  if (func_iter != FunctionContainer::getMap().end())
-  {
-    builder= (*func_iter).second;
-  }
-
-  return builder;
+  return find_ptr2(FunctionContainer::getMap(), string(name.str, name.length));
 }
 
-
-Item*
-create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs)
+Item* create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs)
 {
-  const charset_info_st * const real_cs= (cs ? cs : session->variables.getCollation());
-  return new (session->mem_root) Item_char_typecast(a, len, real_cs);
+  return new (session->mem_root) Item_char_typecast(a, len, cs ? cs : session->variables.getCollation());
 }
 
-
-Item *
-create_func_cast(Session *session, Item *a, Cast_target cast_type,
+Item* create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
                  const charset_info_st * const cs)
 {

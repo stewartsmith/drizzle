@@ -48,9 +48,7 @@ ReplicationStreamsTool::ReplicationStreamsTool() :
 ReplicationStreamsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  ReplicationServices::ReplicationStreams &replication_streams=
-    replication_services.getReplicationStreams();
+  ReplicationServices::ReplicationStreams &replication_streams= ReplicationServices::getReplicationStreams();
 
   it= replication_streams.begin();
   end= replication_streams.end();

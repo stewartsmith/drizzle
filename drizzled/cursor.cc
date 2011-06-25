@@ -68,9 +68,9 @@ Cursor::Cursor(plugin::StorageEngine &engine_arg,
     next_insert_id(0), insert_id_for_cur_row(0)
 { }
 
-Cursor::~Cursor(void)
+Cursor::~Cursor()
 {
-  assert(locked == false);
+  assert(not locked);
   /* TODO: assert(inited == NONE); */
 }
 

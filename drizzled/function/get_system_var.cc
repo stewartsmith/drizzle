@@ -49,7 +49,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
     the error is reported in sys_var::item().
   */
   if (!(item= var->item(session, var_type, &component)))
-    return(1);                             // Impossible
+    return 1;                             // Impossible
 
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
   *ref= item;

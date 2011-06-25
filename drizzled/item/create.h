@@ -173,7 +173,7 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
                  const char *len, const char *dec,
                  const charset_info_st * const cs);
 
-int item_create_init();
+void item_create_init();
 void item_create_cleanup();
 
 } /* namespace drizzled */

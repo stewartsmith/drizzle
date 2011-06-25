@@ -444,7 +444,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
     if (skip_lines)
     {
@@ -518,12 +518,12 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
 
     /*
       We don't need to reset auto-increment field since we are restoring
@@ -565,7 +565,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
 
     table->restoreRecordAsDefault();
@@ -599,7 +599,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0), field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           field->set_null();
           if (not field->maybe_null())
@@ -622,7 +622,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
 
 	continue;
@@ -645,7 +645,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       else
       {
         my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-        return(1);
+        return 1;
       }
     }
     if (read_info.error)
@@ -670,7 +670,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0),field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           if (not field->maybe_null() and field->is_timestamp())
               ((field::Epoch::pointer) field)->set_time();
@@ -693,7 +693,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
       }
     }
@@ -701,12 +701,12 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
     /*
       We don't need to reset auto-increment field since we are restoring
       its default value at the beginning of each loop iteration.
@@ -720,7 +720,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
       if (session->getKilled())
-        return(1);
+        return 1;
     }
     session->row_count++;
   }

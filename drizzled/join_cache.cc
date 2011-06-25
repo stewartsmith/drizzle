@@ -94,7 +94,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     global_join_buffer.sub(size);
     free((unsigned char*) cache->buff);
     cache->buff=0;
-    return(1);
+    return 1;
   }
   copy=cache->field;
   blob_ptr=cache->blob_ptr=(CacheField**)

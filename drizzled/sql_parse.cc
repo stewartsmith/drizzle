@@ -497,13 +497,13 @@ static int execute_command(Session *session)
     drizzle_reset_errors(session, 0);
   }
 
-  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
+  assert(not session->transaction.stmt.hasModifiedNonTransData());
 
   if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
       && ! session->inTransaction()
       && session->lex().statement->isTransactional())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -544,7 +544,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       && ! session->inTransaction()
       && ! lex->statement->isShow())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -666,7 +666,7 @@ new_select(LEX *lex, bool move_down)
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
-    return(1);
+    return 1;
   }
 
   select_lex->nest_level= lex->nest_level;
@@ -675,7 +675,7 @@ new_select(LEX *lex, bool move_down)
     Select_Lex_Unit *unit;
     /* first select_lex of subselect or derived table */
     if (!(unit= new (session->mem_root) Select_Lex_Unit()))
-      return(1);
+      return 1;
 
     unit->init_query();
     unit->init_select();
@@ -940,7 +940,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
 
@@ -1280,7 +1280,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   assert(!fake_select_lex);
 
   if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
-      return(1);
+      return 1;
   fake_select_lex->include_standalone(this,
                                       (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;

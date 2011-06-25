@@ -20,11 +20,7 @@
 
 #pragma once
 
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 namespace optimizer {
@@ -36,8 +32,7 @@ namespace optimizer {
 class AccessMethod
 {
 public:
-
-  AccessMethod() {}
+  typedef boost::shared_ptr<AccessMethod> ptr;
 
   virtual ~AccessMethod() {}
 
@@ -48,12 +43,9 @@ public:
    * @param[in] join_tab
    * @return true on failure; false on success
    */
-  virtual bool getStats(Table *table,
-                        JoinTable *join_tab)= 0;
-
+  virtual void getStats(Table&, JoinTable&)= 0;
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
 
