@@ -47,7 +47,7 @@ public:
   */
   Key_part_spec *clone(memory::Root *mem_root) const
   {
-    return new (mem_root) Key_part_spec(*this);
+    return new (*mem_root) Key_part_spec(*this);
   }
 };
 
