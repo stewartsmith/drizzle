@@ -894,7 +894,7 @@ create:
           {
             Lex.name= $4;
           }
-        | CREATE PROCEDURE
+        | CREATE PROCEDURE proc_name
           {
             Lex.statement= new statement::CreateProcedure(YYSession);
           }
