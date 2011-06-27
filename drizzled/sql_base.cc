@@ -2551,17 +2551,12 @@ test_if_string_in_list(const char *find, List<String> *str_list)
   true   otherwise
 */
 
-static bool
-set_new_item_local_context(Session *session, Item_ident *item, TableList *table_ref)
+static void set_new_item_local_context(Session *session, Item_ident *item, TableList *table_ref)
 {
-  Name_resolution_context *context;
-  if (!(context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context* context= new (session->mem_root) Name_resolution_context;
   context->init();
-  context->first_name_resolution_table=
-    context->last_name_resolution_table= table_ref;
+  context->first_name_resolution_table= context->last_name_resolution_table= table_ref;
   item->context= context;
-  return false;
 }
 
 
@@ -2691,9 +2686,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Item *item_2=   nj_col_2->create_item(session);
       Field *field_1= nj_col_1->field();
       Field *field_2= nj_col_2->field();
-      Item_ident *item_ident_1, *item_ident_2;
-      Item_func_eq *eq_cond;
-
+ 
       if (!item_1 || !item_2)
         return(result); // out of memory
 
@@ -2710,20 +2703,18 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         We need to cast item_1,2 to Item_ident, because we need to hook name
         resolution contexts specific to each item.
       */
-      item_ident_1= (Item_ident*) item_1;
-      item_ident_2= (Item_ident*) item_2;
+      Item_ident* item_ident_1= (Item_ident*) item_1;
+      Item_ident* item_ident_2= (Item_ident*) item_2;
       /*
         Create and hook special name resolution contexts to each item in the
         new join condition . We need this to both speed-up subsequent name
         resolution of these items, and to enable proper name resolution of
         the items during the execute phase of PS.
       */
-      if (set_new_item_local_context(session, item_ident_1, nj_col_1->table_ref) ||
-          set_new_item_local_context(session, item_ident_2, nj_col_2->table_ref))
-        return(result);
+      set_new_item_local_context(session, item_ident_1, nj_col_1->table_ref);
+      set_new_item_local_context(session, item_ident_2, nj_col_2->table_ref);
 
-      if (!(eq_cond= new Item_func_eq(item_ident_1, item_ident_2)))
-        return(result);                               /* Out of memory. */
+      Item_func_eq* eq_cond= new Item_func_eq(item_ident_1, item_ident_2);
 
       /*
         Add the new equi-join condition to the ON clause. Notice that
@@ -2767,9 +2758,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     we check for this error in store_natural_using_join_columns() when
     (found_using_fields < length(join_using_fields)).
   */
-  result= false;
-
-  return(result);
+  return false;
 }
 
 
@@ -2820,15 +2809,11 @@ store_natural_using_join_columns(Session *session,
   Field_iterator_table_ref it_1, it_2;
   Natural_join_column *nj_col_1, *nj_col_2;
   bool result= true;
-  List<Natural_join_column> *non_join_columns;
 
   assert(!natural_using_join->join_columns);
 
-  if (!(non_join_columns= new List<Natural_join_column>) ||
-      !(natural_using_join->join_columns= new List<Natural_join_column>))
-  {
-    return(result);
-  }
+  List<Natural_join_column>* non_join_columns= new List<Natural_join_column>;
+  natural_using_join->join_columns= new List<Natural_join_column>;
 
   /* Append the columns of the first join operand. */
   for (it_1.set(table_ref_1); !it_1.end_of_fields(); it_1.next())
@@ -2851,26 +2836,21 @@ store_natural_using_join_columns(Session *session,
   */
   if (using_fields && found_using_fields < using_fields->size())
   {
-    String *using_field_name;
     List<String>::iterator using_fields_it(using_fields->begin());
-    while ((using_field_name= using_fields_it++))
+    while (String* using_field_name= using_fields_it++)
     {
       const char *using_field_name_ptr= using_field_name->c_ptr();
-      List<Natural_join_column>::iterator
-        it(natural_using_join->join_columns->begin());
-      Natural_join_column *common_field;
-
+      List<Natural_join_column>::iterator  it(natural_using_join->join_columns->begin());
       for (;;)
       {
         /* If reached the end of fields, and none was found, report error. */
-        if (!(common_field= it++))
+        Natural_join_column* common_field= it++;
+        if (not common_field)
         {
-          my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
-                   session->where());
-          return(result);
+          my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr, session->where());
+          return result;
         }
-        if (!my_strcasecmp(system_charset_info,
-                           common_field->name(), using_field_name_ptr))
+        if (!my_strcasecmp(system_charset_info, common_field->name(), using_field_name_ptr))
           break;                                // Found match
       }
     }
@@ -2893,9 +2873,7 @@ store_natural_using_join_columns(Session *session,
     natural_using_join->join_columns->concat(non_join_columns);
   natural_using_join->is_join_columns_complete= true;
 
-  result= false;
-
-  return(result);
+  return false;
 }
 
 
@@ -3055,9 +3033,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
     else
       table_ref->next_name_resolution_table= NULL;
   }
-  result= false; /* All is OK. */
-
-  return(result);
+  return false;
 }
 
 
@@ -3105,8 +3081,7 @@ static bool setup_natural_join_row_types(Session *session,
   {
     table_ref= left_neighbor;
     left_neighbor= table_ref_it++;
-    if (store_top_level_join_columns(session, table_ref,
-                                     left_neighbor, right_neighbor))
+    if (store_top_level_join_columns(session, table_ref, left_neighbor, right_neighbor))
       return true;
     if (left_neighbor)
     {
@@ -3201,7 +3176,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
                   List<Item> &fields, enum_mark_columns mark_used_columns,
                   List<Item> *sum_func_list, bool allow_sum_func)
 {
-  register Item *item;
+  Item *item;
   enum_mark_columns save_mark_used_columns= session->mark_used_columns;
   nesting_map save_allow_sum_func= session->lex().allow_sum_func;
   List<Item>::iterator it(fields.begin());

@@ -1238,11 +1238,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       {
 	having= new Item_is_not_null_test(this, having);
         if (left_expr->maybe_null)
-        {
-          if (!(having= new Item_func_trig_cond(having,
-                                                get_cond_guard(0))))
-            return(RES_ERROR);
-        }
+          having= new Item_func_trig_cond(having, get_cond_guard(0));
 	/*
 	  Item_is_not_null_test can't be changed during fix_fields()
 	  we can assign select_lex->having here, and pass 0 as last
@@ -1268,10 +1264,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
         result is NULL or false, wrap condition in a trig_cond.
       */
       if (!abort_on_null && left_expr->maybe_null)
-      {
-        if (!(item= new Item_func_trig_cond(item, get_cond_guard(0))))
-          return(RES_ERROR);
-      }
+        item= new Item_func_trig_cond(item, get_cond_guard(0));
       /*
         TODO: figure out why the following is done here in
         single_value_transformer but there is no corresponding action in
@@ -1310,11 +1303,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
                                             (char *)"<no matter>",
                                             (char *)"<result>"));
         if (!abort_on_null && left_expr->maybe_null)
-        {
-          if (!(new_having= new Item_func_trig_cond(new_having,
-                                                    get_cond_guard(0))))
-            return(RES_ERROR);
-        }
+          new_having= new Item_func_trig_cond(new_having, get_cond_guard(0));
         new_having->name= (char*)in_having_cond;
 	select_lex->having= join->having= new_having;
 	select_lex->having_fix_field= 1;
@@ -1484,10 +1473,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                             );
       Item *col_item= new Item_cond_or(item_eq, item_isnull);
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
-      {
-        if (!(col_item= new Item_func_trig_cond(col_item, get_cond_guard(i))))
-          return(RES_ERROR);
-      }
+        col_item= new Item_func_trig_cond(col_item, get_cond_guard(i));
       having_item= and_items(having_item, col_item);
 
       Item *item_nnull_test=
@@ -1579,11 +1565,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
         */
         if (left_expr->element_index(i)->maybe_null)
         {
-          if (!(item= new Item_func_trig_cond(item, get_cond_guard(i))))
-            return(RES_ERROR);
-          if (!(having_col_item=
-                  new Item_func_trig_cond(having_col_item, get_cond_guard(i))))
-            return(RES_ERROR);
+          item= new Item_func_trig_cond(item, get_cond_guard(i));
+          having_col_item= new Item_func_trig_cond(having_col_item, get_cond_guard(i));
         }
         having_item= and_items(having_item, having_col_item);
       }
@@ -1857,8 +1840,7 @@ bool Item_in_subselect::init_left_expr_cache()
   if (! outer_join || ! outer_join->tables || ! outer_join->join_tab)
     return true;
 
-  if (!(left_expr_cache= new List<Cached_item>))
-    return true;
+  left_expr_cache= new List<Cached_item>;
 
   for (uint32_t i= 0; i < left_expr->cols(); i++)
   {

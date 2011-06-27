@@ -786,9 +786,7 @@ void Item::split_sum_func(Session *session, Item **ref_pointer_array,
     Item *real_itm= real_item();
 
     ref_pointer_array[el]= real_itm;
-    if (!(item_ref= new Item_aggregate_ref(&session->lex().current_select->context,
-                                           ref_pointer_array + el, 0, name)))
-      return; /* fatal_error is set */
+    item_ref= new Item_aggregate_ref(&session->lex().current_select->context, ref_pointer_array + el, 0, name);
     if (type() == SUM_FUNC_ITEM)
       item_ref->depended_from= ((Item_sum *) this)->depended_from();
     fields.push_front(real_itm);

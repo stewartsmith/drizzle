@@ -1006,8 +1006,7 @@ int READ_INFO::read_field()
     /*
      ** We come here if buffer is too small. Enlarge it and continue
      */
-    if (!(new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE)))
-      return (error=1);
+    new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE);
     to=new_buffer + (to-buffer);
     buffer=new_buffer;
     buff_length+=IO_SIZE;

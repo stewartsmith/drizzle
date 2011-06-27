@@ -1592,8 +1592,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_and *item;
-    if ((item= new Item_cond_and(session, this)))
-       item->copy_andor_arguments(session, this);
+    item= new Item_cond_and(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);
@@ -1622,8 +1622,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_or *item;
-    if ((item= new Item_cond_or(session, this)))
-      item->copy_andor_arguments(session, this);
+    item= new Item_cond_or(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);

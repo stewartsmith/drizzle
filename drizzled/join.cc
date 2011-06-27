@@ -634,8 +634,10 @@ int Join::optimize()
       conds= having;
       having= 0;
     }
-    else if ((conds=new Item_cond_and(conds,having)))
+    else
     {
+      conds= new Item_cond_and(conds,having);
+
       /*
         Item_cond_and can't be fixed after creation, so we do not check
         conds->fixed
@@ -1741,16 +1743,12 @@ void Join::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new optimizer::SqlSelect()))
-            return;
+          curr_table->select= new optimizer::SqlSelect;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
         else          // This should never happen
         {
-          if (!(curr_table->select->cond=
-          new Item_cond_and(curr_table->select->cond,
-                sort_table_cond)))
-            return;
+          curr_table->select->cond= new Item_cond_and(curr_table->select->cond, sort_table_cond);
           /*
             Item_cond_and do not need fix_fields for execution, its parameters
             are fixed or do not need fix_fields, too
@@ -1759,9 +1757,7 @@ void Join::exec()
         }
         curr_table->select_cond= curr_table->select->cond;
         curr_table->select_cond->top_level_item();
-        curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having,
-                    ~ (table_map) 0,
-                    ~used_tables, 0);
+        curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having, ~ (table_map) 0, ~used_tables, 0);
       }
     }
     {
@@ -2286,8 +2282,6 @@ bool Join::rollup_init()
             result we do not include fields for constant expressions.
           */
           Item* new_item= new Item_func_rollup_const(item);
-          if (!new_item)
-            return 1;
           new_item->fix_fields(session, NULL);
           *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)

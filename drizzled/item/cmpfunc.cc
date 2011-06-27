@@ -603,8 +603,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
         comparators= 0;
         return 1;
       }
-      if (!(comparators= new Arg_comparator[n]))
-        return 1;
+      comparators= new Arg_comparator[n];
       for (uint32_t i=0; i < n; i++)
       {
         if ((*a)->element_index(i)->cols() != (*b)->element_index(i)->cols())
@@ -3630,8 +3629,7 @@ void Item_func_in::fix_length_and_dec()
       }
       else
       {
-        if (!(cmp= new cmp_item_row))
-          return;
+        cmp= new cmp_item_row;
         cmp_items[ROW_RESULT]= cmp;
       }
       cmp->n= args[0]->cols();
@@ -4196,10 +4194,7 @@ void Item_cond::neg_arguments(Session *session)
   {
     Item *new_item= item->neg_transformer(session);
     if (!new_item)
-    {
-      if (!(new_item= new Item_func_not(item)))
-	return;					// Fatal OEM error
-    }
+      new_item= new Item_func_not(item);
     li.replace(new_item);
   }
 }
@@ -4289,11 +4284,9 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
   if (a == *org_item)
   {
     Item_cond *res;
-    if ((res= new Item_cond_and(a, (Item*) b)))
-    {
-      res->used_tables_cache= a->used_tables() | b->used_tables();
-      res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
-    }
+    res= new Item_cond_and(a, (Item*) b);
+    res->used_tables_cache= a->used_tables() | b->used_tables();
+    res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
     return res;
   }
   ((Item_cond_and*) a)->add((Item*) b);

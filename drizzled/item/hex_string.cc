@@ -144,8 +144,7 @@ Item *Item_hex_string::safe_charset_converter(const charset_info_st * const tocs
   Item_string *conv;
   String tmp, *str= val_str(&tmp);
 
-  if (!(conv= new Item_string(str->ptr(), str->length(), tocs)))
-    return NULL;
+  conv= new Item_string(str->ptr(), str->length(), tocs);
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

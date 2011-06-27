@@ -265,8 +265,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (from_field != not_found_field)
       {
         Item_field* fld;
-        if (!(fld= new Item_field(from_field)))
-          goto error;
+        fld= new Item_field(from_field);
         *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
                           session->lex().current_select, this, fld);

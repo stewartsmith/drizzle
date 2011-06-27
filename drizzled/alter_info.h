@@ -65,7 +65,7 @@ enum enum_alter_info_flags
  * This structure contains a list of columns or indexes to be created,
  * altered or dropped.
  */
-class AlterInfo
+class AlterInfo : boost::noncopyable
 {
 public:
   typedef std::list<AlterColumn> alter_list_t;
@@ -79,10 +79,7 @@ public:
   bool error_if_not_empty;
 
   AlterInfo();
-  AlterInfo(const AlterInfo &rhs, memory::Root *mem_root);
-private:
-  AlterInfo &operator=(const AlterInfo &rhs); // not implemented
-  AlterInfo(const AlterInfo &rhs);            // not implemented
+  AlterInfo(const AlterInfo&, memory::Root*);
 };
 
 } /* namespace drizzled */

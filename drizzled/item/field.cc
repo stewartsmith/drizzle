@@ -428,8 +428,7 @@ bool Item_field::is_null()
 Item *Item_field::get_tmp_table_item(Session *session)
 {
   Item_field *new_item= new Item_field(session, this);
-  if (new_item)
-    new_item->field= new_item->result_field;
+  new_item->field= new_item->result_field;
   return new_item;
 }
 
@@ -559,8 +558,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
               fix_inner_refs() function.
             */
             ;
-            if (!(rf= new Item_outer_ref(context, this)))
-              return -1;
+            rf= new Item_outer_ref(context, this);
             *reference= rf;
             select->inner_refs_list.push_back(rf);
             rf->in_sum_func= session->lex().in_sum_func;

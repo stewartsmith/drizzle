@@ -242,8 +242,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 
   if (is_union_select)
   {
-    if (!(tmp_result= union_result= new select_union))
-      goto err;
+    tmp_result= union_result= new select_union;
     if (describe)
       tmp_result= sel_result;
   }
@@ -522,13 +521,8 @@ bool Select_Lex_Unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new Join(session, item_list,
-					      fake_select_lex->options, result)))
-	{
-	  fake_select_lex->table_list.clear();
-	  return true;
-	}
-        fake_select_lex->join->no_const_tables= true;
+	fake_select_lex->join= new Join(session, item_list, fake_select_lex->options, result);
+  fake_select_lex->join->no_const_tables= true;
 
 	/*
 	  Fake Select_Lex should have item list for correctref_array
