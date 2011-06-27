@@ -631,41 +631,51 @@ class Create_func_lpad : public Create_func_arg3
 public:
   using Create_func_arg3::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3)
+  {
+    return new (session->mem) Item_func_lpad(*session, arg1, arg2, arg3);
+  }
 
   static Create_func_lpad s_singleton;
-
 protected:
   Create_func_lpad() {}
 };
 
+Create_func_lpad Create_func_lpad::s_singleton;
 
 class Create_func_ltrim : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_ltrim(arg1);
+  }
 
   static Create_func_ltrim s_singleton;
-
 protected:
   Create_func_ltrim() {}
 };
 
+Create_func_ltrim Create_func_ltrim::s_singleton;
 
 class Create_func_makedate : public Create_func_arg2
 {
 public:
   using Create_func_arg2::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2)
+  {
+    return new (session->mem) Item_func_makedate(arg1, arg2);
+  }
 
   static Create_func_makedate s_singleton;
-
 protected:
   Create_func_makedate() {}
 };
+
+Create_func_makedate Create_func_makedate::s_singleton;
 
 class Create_func_make_set : public Create_native_func
 {
@@ -969,13 +979,17 @@ class Create_func_weekday : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_weekday(arg1, 0);
+  }
 
   static Create_func_weekday s_singleton;
-
 protected:
   Create_func_weekday() {}
 };
+
+Create_func_weekday Create_func_weekday::s_singleton;
 
 /*
 =============================================================================
@@ -1011,28 +1025,23 @@ Create_udf_func Create_udf_func::s_singleton;
 Item*
 Create_udf_func::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  const plugin::Function *udf= plugin::Function::get(std::string(name.str, name.length));
-  assert(udf);
-  return create(session, udf, item_list);
+  return create(session, plugin::Function::get(std::string(name.str, name.length)), item_list);
 }
 
 
 Item*
-Create_udf_func::create(Session *session, const plugin::Function *udf,
-                        List<Item> *item_list)
+Create_udf_func::create(Session *session, const plugin::Function *udf, List<Item> *item_list)
 {
+  assert(udf);
   int arg_count= item_list ? item_list->size() : 0;
   Item_func* func= (*udf)(&session->mem);
-
-  if(!func->check_argument_count(arg_count))
+  if (!func->check_argument_count(arg_count))
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), func->func_name());
     return NULL;
   }
-
   if (item_list)
     func->set_arguments(*item_list);
-
   return func;
 }
 
@@ -1045,7 +1054,6 @@ Create_native_func::create(Session *session, LEX_STRING name, List<Item> *item_l
     my_error(ER_WRONG_PARAMETERS_TO_NATIVE_FCT, MYF(0), name.str);
     return NULL;
   }
-
   return create_native(session, name, item_list);
 }
 
@@ -1059,7 +1067,6 @@ Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_lis
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
-
   return create(session);
 }
 
@@ -1195,7 +1202,6 @@ Create_func_datediff::create(Session *session, Item *arg1, Item *arg2)
 {
   Item *i1= new (session->mem) Item_func_to_days(arg1);
   Item *i2= new (session->mem) Item_func_to_days(arg2);
-
   return new (session->mem) Item_func_minus(i1, i2);
 }
 
@@ -1238,11 +1244,9 @@ Create_func_degrees::create(Session *session, Item *arg1)
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
-Create_func_export_set::create_native(Session *session, LEX_STRING name,
-                                      List<Item> *item_list)
+Create_func_export_set::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) 
+  switch (item_list ? item_list->size() : 0) 
   {
   case 3:
     {
@@ -1324,8 +1328,7 @@ Item*
 Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
                                          List<Item> *item_list)
 {
-  int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) 
+  switch (item_list ? item_list->size() : 0) 
   {
   case 1:
     {
@@ -1342,7 +1345,6 @@ Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
   default:
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
   }
-
   return NULL;
 }
 
@@ -1486,33 +1488,6 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
   }
   return NULL;
 }
-
-Create_func_lpad Create_func_lpad::s_singleton;
-
-Item*
-Create_func_lpad::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem) Item_func_lpad(*session, arg1, arg2, arg3);
-}
-
-
-Create_func_ltrim Create_func_ltrim::s_singleton;
-
-Item*
-Create_func_ltrim::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_ltrim(arg1);
-}
-
-
-Create_func_makedate Create_func_makedate::s_singleton;
-
-Item*
-Create_func_makedate::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem) Item_func_makedate(arg1, arg2);
-}
-
 
 Create_func_make_set Create_func_make_set::s_singleton;
 
@@ -1739,38 +1714,18 @@ Item*
 Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
                                           List<Item> *item_list)
 {
-  Item *func= NULL;
-  int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (item_list ? item_list->size() : 0) 
+  {
   case 0:
-  {
-    func= new (session->mem) Item_func_unix_timestamp();
-    break;
-  }
+    return new (session->mem) Item_func_unix_timestamp();
   case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem) Item_func_unix_timestamp(param_1);
-    break;
-  }
+    return new (session->mem) Item_func_unix_timestamp(item_list->pop());
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
   }
-  }
-
-  return func;
+  return NULL;
 }
 
-
-Create_func_weekday Create_func_weekday::s_singleton;
-
-Item*
-Create_func_weekday::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_weekday(arg1, 0);
-}
 
 struct Native_func_registry
 {
@@ -1869,47 +1824,28 @@ Item* create_func_char_cast(Session *session, Item *a, int len, const charset_in
   return new (session->mem) Item_char_typecast(a, len, cs ? cs : session->variables.getCollation());
 }
 
-Item* create_func_cast(Session *session, Item *a, Cast_target cast_type,
-                 const char *c_len, const char *c_dec,
-                 const charset_info_st * const cs)
+Item* create_func_cast(Session *session, Item *a, Cast_target cast_type, const char *c_len, const char *c_dec, const charset_info_st * const cs)
 {
-  Item *res= NULL;
-  uint32_t len;
-  uint32_t dec;
-
-  switch (cast_type) {
+  switch (cast_type) 
+  {
   case ITEM_CAST_SIGNED:
-    res= new (session->mem) function::cast::Signed(a);
-    break;
-
+    return new (session->mem) function::cast::Signed(a);
   case ITEM_CAST_UNSIGNED:
-    res= new (session->mem) function::cast::Unsigned(a);
-    break;
-
+    return new (session->mem) function::cast::Unsigned(a);
   case ITEM_CAST_BINARY:
-    res= new (session->mem) Item_func_binary(a);
-    break;
-
+    return new (session->mem) Item_func_binary(a);
   case ITEM_CAST_BOOLEAN:
-    res= new (session->mem) function::cast::Boolean(a);
-    break;
-
+    return new (session->mem) function::cast::Boolean(a);
   case ITEM_CAST_TIME:
-    res= new (session->mem) function::cast::Time(a);
-    break;
-
+    return new (session->mem) function::cast::Time(a);
   case ITEM_CAST_DATE:
-    res= new (session->mem) Item_date_typecast(a);
-    break;
-
+    return new (session->mem) Item_date_typecast(a);
   case ITEM_CAST_DATETIME:
-    res= new (session->mem) Item_datetime_typecast(a);
-    break;
-
+    return new (session->mem) Item_datetime_typecast(a);
   case ITEM_CAST_DECIMAL:
     {
-      len= c_len ? atoi(c_len) : 0;
-      dec= c_dec ? atoi(c_dec) : 0;
+      uint32_t len= c_len ? atoi(c_len) : 0;
+      uint32_t dec= c_dec ? atoi(c_dec) : 0;
       class_decimal_trim(&len, &dec);
       if (len < dec)
       {
@@ -1918,28 +1854,20 @@ Item* create_func_cast(Session *session, Item *a, Cast_target cast_type,
       }
       if (len > DECIMAL_MAX_PRECISION)
       {
-        my_error(ER_TOO_BIG_PRECISION, MYF(0), len, a->name,
-                 DECIMAL_MAX_PRECISION);
+        my_error(ER_TOO_BIG_PRECISION, MYF(0), len, a->name, DECIMAL_MAX_PRECISION);
         return 0;
       }
       if (dec > DECIMAL_MAX_SCALE)
       {
-        my_error(ER_TOO_BIG_SCALE, MYF(0), dec, a->name,
-                 DECIMAL_MAX_SCALE);
+        my_error(ER_TOO_BIG_SCALE, MYF(0), dec, a->name, DECIMAL_MAX_SCALE);
         return 0;
       }
-      res= new (session->mem) Item_decimal_typecast(a, len, dec);
-      break;
+      return new (session->mem) Item_decimal_typecast(a, len, dec);
     }
   case ITEM_CAST_CHAR:
-    {
-      len= c_len ? atoi(c_len) : -1;
-      res= create_func_char_cast(session, a, len, cs);
-      break;
-    }
+    return create_func_char_cast(session, a, c_len ? atoi(c_len) : -1, cs);
   }
-
-  return res;
+  return NULL;
 }
 
 } /* namespace drizzled */
