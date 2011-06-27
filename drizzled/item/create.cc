@@ -733,14 +733,17 @@ class Create_func_monthname : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_monthname(arg1);
+  }
 
   static Create_func_monthname s_singleton;
-
 protected:
   Create_func_monthname() {}
 };
 
+Create_func_monthname Create_func_monthname::s_singleton;
 
 class Create_func_name_const : public Create_func_arg2
 {
@@ -761,14 +764,17 @@ class Create_func_nullif : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2)
+  {
+    return new (session->mem) Item_func_nullif(arg1, arg2);
+  }
 
   static Create_func_nullif s_singleton;
-
 protected:
   Create_func_nullif() {}
 };
 
+Create_func_nullif Create_func_nullif::s_singleton;
 
 class Create_func_oct : public Create_func_arg1
 {
@@ -898,6 +904,8 @@ protected:
   Create_func_rtrim() {}
 };
 
+Create_func_rtrim Create_func_rtrim::s_singleton;
+
 class Create_func_sign : public Create_func_arg1
 {
 public:
@@ -932,83 +940,85 @@ class Create_func_strcmp : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2);
-
+  virtual Item* create(Session *session, Item *arg1, Item *arg2)
+  {
+    return new (session->mem) Item_func_strcmp(arg1, arg2);
+  }
+  
   static Create_func_strcmp s_singleton;
 protected:
   Create_func_strcmp() {}
 };
 
+Create_func_strcmp Create_func_strcmp::s_singleton;
 
 class Create_func_tan : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_tan(arg1);
+  }
 
   static Create_func_tan s_singleton;
-
 protected:
   Create_func_tan() {}
 };
 
+Create_func_tan Create_func_tan::s_singleton;
 
 class Create_func_time_format : public Create_func_arg2
 {
 public:
   using Create_func_arg2::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2)
+  {
+    return new (session->mem) Item_func_date_format(arg1, arg2, 1);
+  }
 
   static Create_func_time_format s_singleton;
-
 protected:
   Create_func_time_format() {}
 };
 
-
-class Create_func_time_to_sec : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item* create(Session *session, Item *arg1);
-
-  static Create_func_time_to_sec s_singleton;
-
-protected:
-  Create_func_time_to_sec() {}
-};
-
+Create_func_time_format Create_func_time_format::s_singleton;
 
 class Create_func_to_days : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_to_days(arg1);
+  }
 
   static Create_func_to_days s_singleton;
-
 protected:
   Create_func_to_days() {}
 };
 
+Create_func_to_days Create_func_to_days::s_singleton;
 
 class Create_func_ucase : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_ucase(arg1);
+  }
 
   static Create_func_ucase s_singleton;
-
 protected:
   Create_func_ucase() {}
 };
 
+Create_func_ucase Create_func_ucase::s_singleton;
 
 class Create_func_unix_timestamp : public Create_native_func
 {
@@ -1016,7 +1026,6 @@ public:
   virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_unix_timestamp s_singleton;
-
 protected:
   Create_func_unix_timestamp() {}
 };
@@ -1475,25 +1484,6 @@ Create_func_make_set::create_native(Session *session_arg, LEX_STRING name,
   return new (session_arg->mem) Item_func_make_set(*session_arg, param_1, *item_list);
 }
 
-
-Create_func_monthname Create_func_monthname::s_singleton;
-
-Item*
-Create_func_monthname::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_monthname(arg1);
-}
-
-
-Create_func_nullif Create_func_nullif::s_singleton;
-
-Item*
-Create_func_nullif::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem) Item_func_nullif(arg1, arg2);
-}
-
-
 Create_func_oct Create_func_oct::s_singleton;
 
 Item*
@@ -1587,49 +1577,6 @@ Create_func_space::create(Session *session, Item *arg1)
   }
 
   return new (session->mem) Item_func_repeat(*session, sp, arg1);
-}
-
-Create_func_strcmp Create_func_strcmp::s_singleton;
-
-Item*
-Create_func_strcmp::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem) Item_func_strcmp(arg1, arg2);
-}
-
-
-Create_func_tan Create_func_tan::s_singleton;
-
-Item*
-Create_func_tan::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_tan(arg1);
-}
-
-
-Create_func_time_format Create_func_time_format::s_singleton;
-
-Item*
-Create_func_time_format::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem) Item_func_date_format(arg1, arg2, 1);
-}
-
-Create_func_to_days Create_func_to_days::s_singleton;
-
-Item*
-Create_func_to_days::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_to_days(arg1);
-}
-
-
-Create_func_ucase Create_func_ucase::s_singleton;
-
-Item*
-Create_func_ucase::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_ucase(arg1);
 }
 
 Create_func_unix_timestamp Create_func_unix_timestamp::s_singleton;
