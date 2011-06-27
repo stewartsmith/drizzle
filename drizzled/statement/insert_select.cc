@@ -62,21 +62,13 @@ bool statement::InsertSelect::execute()
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
-    select_lex->context.table_list=
-      select_lex->context.first_name_resolution_table= second_table;
+    select_lex->context.table_list= select_lex->context.first_name_resolution_table= second_table;
     res= insert_select_prepare(&session());
-    if (! res && (sel_result= new select_insert(first_table,
-                                                first_table->table,
-                                                &lex().field_list,
-                                                &lex().update_list,
-                                                &lex().value_list,
-                                                lex().duplicates,
-                                                lex().ignore)))
+    if (not res)
     {
-      res= handle_select(&session(), 
-                         &lex(), 
-                         sel_result, 
-                         OPTION_SETUP_TABLES_DONE);
+      sel_result= new select_insert(first_table, first_table->table, &lex().field_list, &lex().update_list, &lex().value_list, 
+        lex().duplicates, lex().ignore);
+      res= handle_select(&session(), &lex(), sel_result, OPTION_SETUP_TABLES_DONE);
 
       /*
          Invalidate the table in the query cache if something changed
