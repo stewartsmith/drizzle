@@ -110,7 +110,7 @@ namespace drizzled {
 class Create_native_func : public Create_func
 {
 public:
-  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item *create(Session*, LEX_STRING name, List<Item>*);
 
   /**
     Builder method, with no arguments.
@@ -119,14 +119,11 @@ public:
     @param item_list The function parameters, none of which are named
     @return An item representing the function call
   */
-  virtual Item *create_native(Session *session, LEX_STRING name,
-                              List<Item> *item_list) = 0;
+  virtual Item *create_native(Session*, LEX_STRING name, List<Item>*) = 0;
 
 protected:
   /** Constructor. */
   Create_native_func() {}
-  /** Destructor. */
-  virtual ~Create_native_func() {}
 };
 
 
@@ -149,8 +146,6 @@ public:
 protected:
   /** Constructor. */
   Create_func_arg0() {}
-  /** Destructor. */
-  virtual ~Create_func_arg0() {}
 };
 
 
@@ -174,8 +169,6 @@ public:
 protected:
   /** Constructor. */
   Create_func_arg1() {}
-  /** Destructor. */
-  virtual ~Create_func_arg1() {}
 };
 
 
@@ -200,8 +193,6 @@ public:
 protected:
   /** Constructor. */
   Create_func_arg2() {}
-  /** Destructor. */
-  virtual ~Create_func_arg2() {}
 };
 
 
@@ -227,8 +218,6 @@ public:
 protected:
   /** Constructor. */
   Create_func_arg3() {}
-  /** Destructor. */
-  virtual ~Create_func_arg3() {}
 };
 
 
@@ -254,7 +243,6 @@ public:
 
 protected:
   Create_func_bin() {}
-  virtual ~Create_func_bin() {}
 };
 
 class Create_func_concat : public Create_native_func
@@ -266,7 +254,6 @@ public:
 
 protected:
   Create_func_concat() {}
-  virtual ~Create_func_concat() {}
 };
 
 
@@ -279,7 +266,6 @@ public:
 
 protected:
   Create_func_concat_ws() {}
-  virtual ~Create_func_concat_ws() {}
 };
 
 
@@ -294,7 +280,6 @@ public:
 
 protected:
   Create_func_conv() {}
-  virtual ~Create_func_conv() {}
 };
 
 class Create_func_cot : public Create_func_arg1
@@ -308,7 +293,6 @@ public:
 
 protected:
   Create_func_cot() {}
-  virtual ~Create_func_cot() {}
 };
 
 class Create_func_date_format : public Create_func_arg2
@@ -322,7 +306,6 @@ public:
 
 protected:
   Create_func_date_format() {}
-  virtual ~Create_func_date_format() {}
 };
 
 
@@ -337,7 +320,6 @@ public:
 
 protected:
   Create_func_datediff() {}
-  virtual ~Create_func_datediff() {}
 };
 
 
@@ -352,7 +334,6 @@ public:
 
 protected:
   Create_func_dayname() {}
-  virtual ~Create_func_dayname() {}
 };
 
 
@@ -367,7 +348,6 @@ public:
 
 protected:
   Create_func_dayofmonth() {}
-  virtual ~Create_func_dayofmonth() {}
 };
 
 
@@ -382,7 +362,6 @@ public:
 
 protected:
   Create_func_dayofweek() {}
-  virtual ~Create_func_dayofweek() {}
 };
 
 
@@ -397,7 +376,6 @@ public:
 
 protected:
   Create_func_dayofyear() {}
-  virtual ~Create_func_dayofyear() {}
 };
 
 
@@ -412,7 +390,6 @@ public:
 
 protected:
   Create_func_decode() {}
-  virtual ~Create_func_decode() {}
 };
 
 
@@ -427,7 +404,6 @@ public:
 
 protected:
   Create_func_degrees() {}
-  virtual ~Create_func_degrees() {}
 };
 
 class Create_func_export_set : public Create_native_func
@@ -440,7 +416,6 @@ public:
 
 protected:
   Create_func_export_set() {}
-  virtual ~Create_func_export_set() {}
 };
 
 
@@ -453,7 +428,6 @@ public:
 
 protected:
   Create_func_field() {}
-  virtual ~Create_func_field() {}
 };
 
 
@@ -468,7 +442,6 @@ public:
 
 protected:
   Create_func_find_in_set() {}
-  virtual ~Create_func_find_in_set() {}
 };
 
 class Create_func_found_rows : public Create_func_arg0
@@ -482,7 +455,6 @@ public:
 
 protected:
   Create_func_found_rows() {}
-  virtual ~Create_func_found_rows() {}
 };
 
 
@@ -497,7 +469,6 @@ public:
 
 protected:
   Create_func_from_days() {}
-  virtual ~Create_func_from_days() {}
 };
 
 
@@ -510,7 +481,6 @@ public:
 
 protected:
   Create_func_from_unixtime() {}
-  virtual ~Create_func_from_unixtime() {}
 };
 
 
@@ -523,7 +493,6 @@ public:
 
 protected:
   Create_func_greatest() {}
-  virtual ~Create_func_greatest() {}
 };
 
 
@@ -538,7 +507,6 @@ public:
 
 protected:
   Create_func_ifnull() {}
-  virtual ~Create_func_ifnull() {}
 };
 
 
@@ -553,7 +521,6 @@ public:
 
 protected:
   Create_func_instr() {}
-  virtual ~Create_func_instr() {}
 };
 
 
@@ -568,7 +535,6 @@ public:
 
 protected:
   Create_func_isnull() {}
-  virtual ~Create_func_isnull() {}
 };
 
 
@@ -583,7 +549,6 @@ public:
 
 protected:
   Create_func_last_day() {}
-  virtual ~Create_func_last_day() {}
 };
 
 
@@ -596,7 +561,6 @@ public:
 
 protected:
   Create_func_last_insert_id() {}
-  virtual ~Create_func_last_insert_id() {}
 };
 
 
@@ -611,7 +575,6 @@ public:
 
 protected:
   Create_func_lcase() {}
-  virtual ~Create_func_lcase() {}
 };
 
 
@@ -624,7 +587,6 @@ public:
 
 protected:
   Create_func_least() {}
-  virtual ~Create_func_least() {}
 };
 
 class Create_func_load_file : public Create_func_arg1
@@ -638,7 +600,6 @@ public:
 
 protected:
   Create_func_load_file() {}
-  virtual ~Create_func_load_file() {}
 };
 
 
@@ -651,7 +612,6 @@ public:
 
 protected:
   Create_func_locate() {}
-  virtual ~Create_func_locate() {}
 };
 
 
@@ -666,7 +626,6 @@ public:
 
 protected:
   Create_func_lpad() {}
-  virtual ~Create_func_lpad() {}
 };
 
 
@@ -681,7 +640,6 @@ public:
 
 protected:
   Create_func_ltrim() {}
-  virtual ~Create_func_ltrim() {}
 };
 
 
@@ -696,7 +654,6 @@ public:
 
 protected:
   Create_func_makedate() {}
-  virtual ~Create_func_makedate() {}
 };
 
 class Create_func_make_set : public Create_native_func
@@ -708,7 +665,6 @@ public:
 
 protected:
   Create_func_make_set() {}
-  virtual ~Create_func_make_set() {}
 };
 
 
@@ -723,7 +679,6 @@ public:
 
 protected:
   Create_func_monthname() {}
-  virtual ~Create_func_monthname() {}
 };
 
 
@@ -738,7 +693,6 @@ public:
 
 protected:
   Create_func_name_const() {}
-  virtual ~Create_func_name_const() {}
 };
 
 
@@ -753,7 +707,6 @@ public:
 
 protected:
   Create_func_nullif() {}
-  virtual ~Create_func_nullif() {}
 };
 
 
@@ -768,7 +721,6 @@ public:
 
 protected:
   Create_func_oct() {}
-  virtual ~Create_func_oct() {}
 };
 
 class Create_func_period_add : public Create_func_arg2
@@ -782,7 +734,6 @@ public:
 
 protected:
   Create_func_period_add() {}
-  virtual ~Create_func_period_add() {}
 };
 
 
@@ -797,7 +748,6 @@ public:
 
 protected:
   Create_func_period_diff() {}
-  virtual ~Create_func_period_diff() {}
 };
 
 
@@ -812,7 +762,6 @@ public:
 
 protected:
   Create_func_pi() {}
-  virtual ~Create_func_pi() {}
 };
 
 class Create_func_radians : public Create_func_arg1
@@ -826,7 +775,6 @@ public:
 
 protected:
   Create_func_radians() {}
-  virtual ~Create_func_radians() {}
 };
 
 
@@ -839,7 +787,6 @@ public:
 
 protected:
   Create_func_round() {}
-  virtual ~Create_func_round() {}
 };
 
 
@@ -854,7 +801,6 @@ public:
 
 protected:
   Create_func_row_count() {}
-  virtual ~Create_func_row_count() {}
 };
 
 
@@ -869,7 +815,6 @@ public:
 
 protected:
   Create_func_rpad() {}
-  virtual ~Create_func_rpad() {}
 };
 
 
@@ -884,7 +829,6 @@ public:
 
 protected:
   Create_func_rtrim() {}
-  virtual ~Create_func_rtrim() {}
 };
 
 class Create_func_sign : public Create_func_arg1
@@ -898,7 +842,6 @@ public:
 
 protected:
   Create_func_sign() {}
-  virtual ~Create_func_sign() {}
 };
 
 class Create_func_space : public Create_func_arg1
@@ -912,7 +855,6 @@ public:
 
 protected:
   Create_func_space() {}
-  virtual ~Create_func_space() {}
 };
 
 class Create_func_strcmp : public Create_func_arg2
@@ -926,7 +868,6 @@ public:
 
 protected:
   Create_func_strcmp() {}
-  virtual ~Create_func_strcmp() {}
 };
 
 
@@ -941,7 +882,6 @@ public:
 
 protected:
   Create_func_tan() {}
-  virtual ~Create_func_tan() {}
 };
 
 
@@ -956,7 +896,6 @@ public:
 
 protected:
   Create_func_time_format() {}
-  virtual ~Create_func_time_format() {}
 };
 
 
@@ -971,7 +910,6 @@ public:
 
 protected:
   Create_func_time_to_sec() {}
-  virtual ~Create_func_time_to_sec() {}
 };
 
 
@@ -986,7 +924,6 @@ public:
 
 protected:
   Create_func_to_days() {}
-  virtual ~Create_func_to_days() {}
 };
 
 
@@ -1001,7 +938,6 @@ public:
 
 protected:
   Create_func_ucase() {}
-  virtual ~Create_func_ucase() {}
 };
 
 
@@ -1014,7 +950,6 @@ public:
 
 protected:
   Create_func_unix_timestamp() {}
-  virtual ~Create_func_unix_timestamp() {}
 };
 
 
@@ -1029,7 +964,6 @@ public:
 
 protected:
   Create_func_weekday() {}
-  virtual ~Create_func_weekday() {}
 };
 
 /*
@@ -1216,16 +1150,15 @@ Create_func_bin Create_func_bin::s_singleton;
 Item*
 Create_func_bin::create(Session *session, Item *arg1)
 {
-  Item *i10= new (session->mem) Item_int((int32_t) 10,2);
-  Item *i2= new (session->mem) Item_int((int32_t) 2,1);
+  Item *i10= new (session->mem) Item_int(10, 2);
+  Item *i2= new (session->mem) Item_int(2, 1);
   return new (session->mem) Item_func_conv(arg1, i10, i2);
 }
 
 Create_func_concat Create_func_concat::s_singleton;
 
 Item*
-Create_func_concat::create_native(Session *session, LEX_STRING name,
-                                  List<Item> *item_list)
+Create_func_concat::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
 {
   int arg_count= 0;
 
@@ -1277,7 +1210,7 @@ Create_func_cot Create_func_cot::s_singleton;
 Item*
 Create_func_cot::create(Session *session, Item *arg1)
 {
-  Item *i1= new (session->mem) Item_int((char*) "1", 1, 1);
+  Item *i1= new (session->mem) Item_int("1", 1, 1);
   Item *i2= new (session->mem) Item_func_tan(arg1);
   return new (session->mem) Item_func_div(session, i1, i2);
 }
@@ -1344,7 +1277,7 @@ Create_func_degrees Create_func_degrees::s_singleton;
 Item*
 Create_func_degrees::create(Session *session, Item *arg1)
 {
-  return new (session->mem) Item_func_units((char*) "degrees", arg1,
+  return new (session->mem) Item_func_units("degrees", arg1,
                                              180/M_PI, 0.0);
 }
 
@@ -1763,7 +1696,7 @@ Create_func_radians Create_func_radians::s_singleton;
 Item*
 Create_func_radians::create(Session *session, Item *arg1)
 {
-  return new (session->mem) Item_func_units((char*) "radians", arg1,
+  return new (session->mem) Item_func_units("radians", arg1,
                                              M_PI/180, 0.0);
 }
 
@@ -1783,7 +1716,7 @@ Create_func_round::create_native(Session *session, LEX_STRING name,
   case 1:
   {
     Item *param_1= item_list->pop();
-    Item *i0 = new (session->mem) Item_int((char*)"0", 0, 1);
+    Item *i0 = new (session->mem) Item_int("0", 0, 1);
     func= new (session->mem) Item_func_round(param_1, i0, 0);
     break;
   }
