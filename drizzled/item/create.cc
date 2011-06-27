@@ -110,7 +110,7 @@ namespace drizzled {
 class Create_native_func : public Create_func
 {
 public:
-  virtual Item *create(Session*, LEX_STRING name, List<Item>*);
+  virtual Item* create(Session*, LEX_STRING name, List<Item>*);
 
   /**
     Builder method, with no arguments.
@@ -119,7 +119,7 @@ public:
     @param item_list The function parameters, none of which are named
     @return An item representing the function call
   */
-  virtual Item *create_native(Session*, LEX_STRING name, List<Item>*) = 0;
+  virtual Item* create_native(Session*, LEX_STRING name, List<Item>*) = 0;
 
 protected:
   /** Constructor. */
@@ -134,14 +134,14 @@ protected:
 class Create_func_arg0 : public Create_func
 {
 public:
-  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with no arguments.
     @param session The current thread
     @return An item representing the function call
   */
-  virtual Item *create(Session *session) = 0;
+  virtual Item* create(Session *session) = 0;
 
 protected:
   /** Constructor. */
@@ -156,7 +156,7 @@ protected:
 class Create_func_arg1 : public Create_func
 {
 public:
-  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with one argument.
@@ -164,7 +164,7 @@ public:
     @param arg1 The first argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(Session *session, Item *arg1) = 0;
+  virtual Item* create(Session *session, Item *arg1) = 0;
 
 protected:
   /** Constructor. */
@@ -179,7 +179,7 @@ protected:
 class Create_func_arg2 : public Create_func
 {
 public:
-  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with two arguments.
@@ -188,7 +188,7 @@ public:
     @param arg2 The second argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(Session *session, Item *arg1, Item *arg2) = 0;
+  virtual Item* create(Session *session, Item *arg1, Item *arg2) = 0;
 
 protected:
   /** Constructor. */
@@ -203,7 +203,7 @@ protected:
 class Create_func_arg3 : public Create_func
 {
 public:
-  virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
 
   /**
     Builder method, with three arguments.
@@ -213,7 +213,7 @@ public:
     @param arg3 The third argument of the function
     @return An item representing the function call
   */
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3) = 0;
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3) = 0;
 
 protected:
   /** Constructor. */
@@ -237,7 +237,7 @@ class Create_func_bin : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_bin s_singleton;
 
@@ -248,7 +248,7 @@ protected:
 class Create_func_concat : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_concat s_singleton;
 
@@ -260,7 +260,7 @@ protected:
 class Create_func_concat_ws : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_concat_ws s_singleton;
 
@@ -274,7 +274,7 @@ class Create_func_conv : public Create_func_arg3
 public:
   using Create_func_arg3::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_conv s_singleton;
 
@@ -287,7 +287,7 @@ class Create_func_cot : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_cot s_singleton;
 
@@ -300,21 +300,24 @@ class Create_func_date_format : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2)
+  {
+    return new (session->mem) Item_func_date_format(arg1, arg2, 0);
+  }
 
   static Create_func_date_format s_singleton;
-
 protected:
   Create_func_date_format() {}
 };
 
+Create_func_date_format Create_func_date_format::s_singleton;
 
 class Create_func_datediff : public Create_func_arg2
 {
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_datediff s_singleton;
 
@@ -328,7 +331,10 @@ class Create_func_dayname : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_dayname(arg1);
+  }
 
   static Create_func_dayname s_singleton;
 
@@ -336,13 +342,14 @@ protected:
   Create_func_dayname() {}
 };
 
+Create_func_dayname Create_func_dayname::s_singleton;
 
 class Create_func_dayofmonth : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_dayofmonth s_singleton;
 
@@ -356,7 +363,7 @@ class Create_func_dayofweek : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_dayofweek s_singleton;
 
@@ -370,7 +377,7 @@ class Create_func_dayofyear : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_dayofyear s_singleton;
 
@@ -384,7 +391,7 @@ class Create_func_decode : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_decode s_singleton;
 
@@ -398,7 +405,7 @@ class Create_func_degrees : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_degrees s_singleton;
 
@@ -410,7 +417,7 @@ class Create_func_export_set : public Create_native_func
 {
 
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_export_set s_singleton;
 
@@ -422,7 +429,7 @@ protected:
 class Create_func_field : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_field s_singleton;
 
@@ -436,7 +443,7 @@ class Create_func_find_in_set : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_find_in_set s_singleton;
 
@@ -449,7 +456,7 @@ class Create_func_found_rows : public Create_func_arg0
 public:
   using Create_func_arg0::create;
 
-  virtual Item *create(Session *session);
+  virtual Item* create(Session *session);
 
   static Create_func_found_rows s_singleton;
 
@@ -463,7 +470,7 @@ class Create_func_from_days : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_from_days s_singleton;
 
@@ -475,7 +482,7 @@ protected:
 class Create_func_from_unixtime : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_from_unixtime s_singleton;
 
@@ -487,7 +494,7 @@ protected:
 class Create_func_greatest : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_greatest s_singleton;
 
@@ -501,7 +508,7 @@ class Create_func_ifnull : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_ifnull s_singleton;
 
@@ -515,7 +522,7 @@ class Create_func_instr : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_instr s_singleton;
 
@@ -529,7 +536,7 @@ class Create_func_isnull : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_isnull s_singleton;
 
@@ -543,7 +550,7 @@ class Create_func_last_day : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_last_day s_singleton;
 
@@ -555,7 +562,7 @@ protected:
 class Create_func_last_insert_id : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_last_insert_id s_singleton;
 
@@ -569,7 +576,7 @@ class Create_func_lcase : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_lcase s_singleton;
 
@@ -581,7 +588,7 @@ protected:
 class Create_func_least : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_least s_singleton;
 
@@ -594,7 +601,7 @@ class Create_func_load_file : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_load_file s_singleton;
 
@@ -606,7 +613,7 @@ protected:
 class Create_func_locate : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_locate s_singleton;
 
@@ -620,7 +627,7 @@ class Create_func_lpad : public Create_func_arg3
 public:
   using Create_func_arg3::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_lpad s_singleton;
 
@@ -634,7 +641,7 @@ class Create_func_ltrim : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_ltrim s_singleton;
 
@@ -648,7 +655,7 @@ class Create_func_makedate : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_makedate s_singleton;
 
@@ -659,7 +666,7 @@ protected:
 class Create_func_make_set : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_make_set s_singleton;
 
@@ -673,7 +680,7 @@ class Create_func_monthname : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_monthname s_singleton;
 
@@ -687,7 +694,7 @@ class Create_func_name_const : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_name_const s_singleton;
 
@@ -701,7 +708,7 @@ class Create_func_nullif : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_nullif s_singleton;
 
@@ -715,7 +722,7 @@ class Create_func_oct : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_oct s_singleton;
 
@@ -728,7 +735,7 @@ class Create_func_period_add : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_period_add s_singleton;
 
@@ -742,7 +749,7 @@ class Create_func_period_diff : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_period_diff s_singleton;
 
@@ -756,7 +763,7 @@ class Create_func_pi : public Create_func_arg0
 public:
   using Create_func_arg0::create;
 
-  virtual Item *create(Session *session);
+  virtual Item* create(Session *session);
 
   static Create_func_pi s_singleton;
 
@@ -769,7 +776,7 @@ class Create_func_radians : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_radians s_singleton;
 
@@ -781,7 +788,7 @@ protected:
 class Create_func_round : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_round s_singleton;
 
@@ -795,7 +802,7 @@ class Create_func_row_count : public Create_func_arg0
 public:
   using Create_func_arg0::create;
 
-  virtual Item *create(Session *session);
+  virtual Item* create(Session *session);
 
   static Create_func_row_count s_singleton;
 
@@ -809,7 +816,7 @@ class Create_func_rpad : public Create_func_arg3
 public:
   using Create_func_arg3::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
 
   static Create_func_rpad s_singleton;
 
@@ -823,7 +830,7 @@ class Create_func_rtrim : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_rtrim s_singleton;
 
@@ -836,7 +843,7 @@ class Create_func_sign : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_sign s_singleton;
 
@@ -849,7 +856,7 @@ class Create_func_space : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_space s_singleton;
 
@@ -862,7 +869,7 @@ class Create_func_strcmp : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_strcmp s_singleton;
 
@@ -876,7 +883,7 @@ class Create_func_tan : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_tan s_singleton;
 
@@ -890,7 +897,7 @@ class Create_func_time_format : public Create_func_arg2
 public:
   using Create_func_arg2::create;
 
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_time_format s_singleton;
 
@@ -904,7 +911,7 @@ class Create_func_time_to_sec : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_time_to_sec s_singleton;
 
@@ -918,7 +925,7 @@ class Create_func_to_days : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_to_days s_singleton;
 
@@ -932,7 +939,7 @@ class Create_func_ucase : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_ucase s_singleton;
 
@@ -944,7 +951,7 @@ protected:
 class Create_func_unix_timestamp : public Create_native_func
 {
 public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_unix_timestamp s_singleton;
 
@@ -958,7 +965,7 @@ class Create_func_weekday : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item *create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_weekday s_singleton;
 
@@ -1011,11 +1018,7 @@ Create_udf_func::create(Session *session, const plugin::Function *udf,
                         List<Item> *item_list)
 {
   Item_func *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   func= (*udf)(&session->mem);
 
   if(!func->check_argument_count(arg_count))
@@ -1047,11 +1050,7 @@ Create_native_func::create(Session *session, LEX_STRING name, List<Item> *item_l
 Item*
 Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 0)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1065,11 +1064,7 @@ Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_lis
 Item*
 Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 1)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1091,11 +1086,7 @@ Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *item_lis
 Item*
 Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1119,11 +1110,7 @@ Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_lis
 Item*
 Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 3)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1160,11 +1147,7 @@ Create_func_concat Create_func_concat::s_singleton;
 Item*
 Create_func_concat::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 1)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1181,11 +1164,7 @@ Item*
 Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
                                      List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   /* "WS" stands for "With Separator": this function takes 2+ arguments */
   if (arg_count < 2)
   {
@@ -1215,15 +1194,6 @@ Create_func_cot::create(Session *session, Item *arg1)
   return new (session->mem) Item_func_div(session, i1, i2);
 }
 
-Create_func_date_format Create_func_date_format::s_singleton;
-
-Item*
-Create_func_date_format::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem) Item_func_date_format(arg1, arg2, 0);
-}
-
-
 Create_func_datediff Create_func_datediff::s_singleton;
 
 Item*
@@ -1234,16 +1204,6 @@ Create_func_datediff::create(Session *session, Item *arg1, Item *arg2)
 
   return new (session->mem) Item_func_minus(i1, i2);
 }
-
-
-Create_func_dayname Create_func_dayname::s_singleton;
-
-Item*
-Create_func_dayname::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_dayname(arg1);
-}
-
 
 Create_func_dayofmonth Create_func_dayofmonth::s_singleton;
 
@@ -1288,11 +1248,7 @@ Create_func_export_set::create_native(Session *session, LEX_STRING name,
                                       List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 3:
   {
@@ -1340,11 +1296,7 @@ Item*
 Create_func_field::create_native(Session *session, LEX_STRING name,
                                  List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1388,11 +1340,7 @@ Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
                                          List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 1:
   {
@@ -1425,11 +1373,7 @@ Item*
 Create_func_greatest::create_native(Session *session, LEX_STRING name,
                                     List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1482,11 +1426,7 @@ Create_func_last_insert_id::create_native(Session *session, LEX_STRING name,
                                           List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 0:
   {
@@ -1525,11 +1465,7 @@ Item*
 Create_func_least::create_native(Session *session, LEX_STRING name,
                                  List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1555,11 +1491,7 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
                                   List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 2:
   {
@@ -1621,11 +1553,7 @@ Item*
 Create_func_make_set::create_native(Session *session_arg, LEX_STRING name,
                                     List<Item> *item_list)
 {
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
@@ -1707,11 +1635,7 @@ Create_func_round::create_native(Session *session, LEX_STRING name,
                                  List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 1:
   {
@@ -1849,11 +1773,7 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
                                           List<Item> *item_list)
 {
   Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->size();
-
+  int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 0:
   {
