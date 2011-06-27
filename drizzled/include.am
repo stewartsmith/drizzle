@@ -443,8 +443,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/statement/create_index.h \
 			      drizzled/statement/create_schema.h \
 			      drizzled/statement/create_table.h \
-			      drizzled/statement/create_table/like.h \
-			      drizzled/statement/create_table/select.h \
 			      drizzled/statement/delete.h \
 			      drizzled/statement/drop_index.h \
 			      drizzled/statement/drop_schema.h \
@@ -850,8 +848,6 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/statement/create_index.cc \
 			   drizzled/statement/create_schema.cc \
 			   drizzled/statement/create_table.cc \
-			   drizzled/statement/create_table/like.cc \
-			   drizzled/statement/create_table/select.cc \
 			   drizzled/statement/delete.cc \
 			   drizzled/statement/drop_index.cc \
 			   drizzled/statement/drop_schema.cc \
