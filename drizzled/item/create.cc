@@ -1021,9 +1021,8 @@ Item*
 Create_udf_func::create(Session *session, const plugin::Function *udf,
                         List<Item> *item_list)
 {
-  Item_func *func= NULL;
   int arg_count= item_list ? item_list->size() : 0;
-  func= (*udf)(&session->mem);
+  Item_func* func= (*udf)(&session->mem);
 
   if(!func->check_argument_count(arg_count))
   {
@@ -1031,7 +1030,7 @@ Create_udf_func::create(Session *session, const plugin::Function *udf,
     return NULL;
   }
 
-  if(item_list)
+  if (item_list)
     func->set_arguments(*item_list);
 
   return func;
@@ -1242,46 +1241,37 @@ Item*
 Create_func_export_set::create_native(Session *session, LEX_STRING name,
                                       List<Item> *item_list)
 {
-  Item *func= NULL;
   int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (arg_count) 
+  {
   case 3:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *param_3= item_list->pop();
-    func= new (session->mem) Item_func_export_set(param_1, param_2, param_3);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      Item *param_3= item_list->pop();
+      return new (session->mem) Item_func_export_set(param_1, param_2, param_3);
+    }
   case 4:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *param_3= item_list->pop();
-    Item *param_4= item_list->pop();
-    func= new (session->mem) Item_func_export_set(param_1, param_2, param_3,
-                                                   param_4);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      Item *param_3= item_list->pop();
+      Item *param_4= item_list->pop();
+      return new (session->mem) Item_func_export_set(param_1, param_2, param_3, param_4);
+    }
   case 5:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *param_3= item_list->pop();
-    Item *param_4= item_list->pop();
-    Item *param_5= item_list->pop();
-    func= new (session->mem) Item_func_export_set(param_1, param_2, param_3,
-                                                   param_4, param_5);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      Item *param_3= item_list->pop();
+      Item *param_4= item_list->pop();
+      Item *param_5= item_list->pop();
+      return new (session->mem) Item_func_export_set(param_1, param_2, param_3, param_4, param_5);
+    }
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
   }
-  }
-
-  return func;
+  return NULL;
 }
 
 
@@ -1334,31 +1324,26 @@ Item*
 Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
                                          List<Item> *item_list)
 {
-  Item *func= NULL;
   int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (arg_count) 
+  {
   case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem) Item_func_from_unixtime(param_1);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      return new (session->mem) Item_func_from_unixtime(param_1);
+    }
   case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *ut= new (session->mem) Item_func_from_unixtime(param_1);
-    func= new (session->mem) Item_func_date_format(ut, param_2, 0);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      Item *ut= new (session->mem) Item_func_from_unixtime(param_1);
+      return new (session->mem) Item_func_date_format(ut, param_2, 0);
+    }
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
   }
 
-  return func;
+  return NULL;
 }
 
 
@@ -1420,28 +1405,21 @@ Item*
 Create_func_last_insert_id::create_native(Session *session, LEX_STRING name,
                                           List<Item> *item_list)
 {
-  Item *func= NULL;
   int arg_count= item_list ? item_list->size() : 0;
   switch (arg_count) {
   case 0:
-  {
-    func= new (session->mem) Item_func_last_insert_id();
-    break;
-  }
+    {
+      return new (session->mem) Item_func_last_insert_id();
+    }
   case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem) Item_func_last_insert_id(param_1);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      return new (session->mem) Item_func_last_insert_id(param_1);
+    }
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
   }
-  }
-
-  return func;
+  return NULL;
 }
 
 
@@ -1485,34 +1463,28 @@ Item*
 Create_func_locate::create_native(Session *session, LEX_STRING name,
                                   List<Item> *item_list)
 {
-  Item *func= NULL;
   int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (arg_count) 
+  {
   case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    /* Yes, parameters in that order : 2, 1 */
-    func= new (session->mem) Item_func_locate(param_2, param_1);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      /* Yes, parameters in that order : 2, 1 */
+      return new (session->mem) Item_func_locate(param_2, param_1);
+    }
   case 3:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    Item *param_3= item_list->pop();
-    /* Yes, parameters in that order : 2, 1, 3 */
-    func= new (session->mem) Item_func_locate(param_2, param_1, param_3);
-    break;
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      Item *param_3= item_list->pop();
+      /* Yes, parameters in that order : 2, 1, 3 */
+      return new (session->mem) Item_func_locate(param_2, param_1, param_3);
+    }
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
   }
-  }
-
-  return func;
+  return NULL;
 }
 
 Create_func_lpad Create_func_lpad::s_singleton;
