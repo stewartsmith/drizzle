@@ -832,7 +832,6 @@ public:
   virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_radians s_singleton;
-
 protected:
   Create_func_radians() {}
 };
@@ -844,7 +843,6 @@ public:
   virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
 
   static Create_func_round s_singleton;
-
 protected:
   Create_func_round() {}
 };
@@ -855,35 +853,44 @@ class Create_func_row_count : public Create_func_arg0
 public:
   using Create_func_arg0::create;
 
-  virtual Item* create(Session *session);
+  virtual Item* create(Session *session)
+  {
+    return new (session->mem) Item_func_row_count();
+  }
 
   static Create_func_row_count s_singleton;
-
 protected:
   Create_func_row_count() {}
 };
 
+Create_func_row_count Create_func_row_count::s_singleton;
 
 class Create_func_rpad : public Create_func_arg3
 {
 public:
   using Create_func_arg3::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3)
+  {
+    return new (session->mem) Item_func_rpad(*session, arg1, arg2, arg3);
+  }
 
   static Create_func_rpad s_singleton;
-
 protected:
   Create_func_rpad() {}
 };
 
+Create_func_rpad Create_func_rpad::s_singleton;
 
 class Create_func_rtrim : public Create_func_arg1
 {
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_rtrim(arg1);
+  }
 
   static Create_func_rtrim s_singleton;
 
@@ -896,13 +903,17 @@ class Create_func_sign : public Create_func_arg1
 public:
   using Create_func_arg1::create;
 
-  virtual Item* create(Session *session, Item *arg1);
+  virtual Item* create(Session *session, Item *arg1)
+  {
+    return new (session->mem) Item_func_sign(arg1);
+  }
 
   static Create_func_sign s_singleton;
-
 protected:
   Create_func_sign() {}
 };
+
+Create_func_sign Create_func_sign::s_singleton;
 
 class Create_func_space : public Create_func_arg1
 {
@@ -912,7 +923,6 @@ public:
   virtual Item* create(Session *session, Item *arg1);
 
   static Create_func_space s_singleton;
-
 protected:
   Create_func_space() {}
 };
@@ -925,7 +935,6 @@ public:
   virtual Item* create(Session *session, Item *arg1, Item *arg2);
 
   static Create_func_strcmp s_singleton;
-
 protected:
   Create_func_strcmp() {}
 };
@@ -1532,71 +1541,26 @@ Create_func_radians::create(Session *session, Item *arg1)
 
 Create_func_round Create_func_round::s_singleton;
 
-Item*
-Create_func_round::create_native(Session *session, LEX_STRING name,
-                                 List<Item> *item_list)
+Item* Create_func_round::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  Item *func= NULL;
-  int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (item_list ? item_list->size() : 0) 
+  {
   case 1:
   {
     Item *param_1= item_list->pop();
     Item *i0 = new (session->mem) Item_int("0", 0, 1);
-    func= new (session->mem) Item_func_round(param_1, i0, 0);
-    break;
+    return new (session->mem) Item_func_round(param_1, i0, 0);
   }
   case 2:
   {
     Item *param_1= item_list->pop();
     Item *param_2= item_list->pop();
-    func= new (session->mem) Item_func_round(param_1, param_2, 0);
-    break;
+    return new (session->mem) Item_func_round(param_1, param_2, 0);
   }
   default:
-  {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
   }
-  }
-
-  return func;
-}
-
-
-Create_func_row_count Create_func_row_count::s_singleton;
-
-Item*
-Create_func_row_count::create(Session *session)
-{
-  return new (session->mem) Item_func_row_count();
-}
-
-
-Create_func_rpad Create_func_rpad::s_singleton;
-
-Item*
-Create_func_rpad::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem) Item_func_rpad(*session, arg1, arg2, arg3);
-}
-
-
-Create_func_rtrim Create_func_rtrim::s_singleton;
-
-Item*
-Create_func_rtrim::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_rtrim(arg1);
-}
-
-
-Create_func_sign Create_func_sign::s_singleton;
-
-Item*
-Create_func_sign::create(Session *session, Item *arg1)
-{
-  return new (session->mem) Item_func_sign(arg1);
+  return NULL;
 }
 
 Create_func_space Create_func_space::s_singleton;
