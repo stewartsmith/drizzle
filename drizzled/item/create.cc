@@ -274,13 +274,17 @@ class Create_func_conv : public Create_func_arg3
 public:
   using Create_func_arg3::create;
 
-  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3);
+  virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3)
+  {
+    return new (session->mem) Item_func_conv(arg1, arg2, arg3);
+  }
 
   static Create_func_conv s_singleton;
-
 protected:
   Create_func_conv() {}
 };
+
+Create_func_conv Create_func_conv::s_singleton;
 
 class Create_func_cot : public Create_func_arg1
 {
@@ -1173,15 +1177,6 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
   }
 
   return new (session->mem) Item_func_concat_ws(*session, *item_list);
-}
-
-
-Create_func_conv Create_func_conv::s_singleton;
-
-Item*
-Create_func_conv::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem) Item_func_conv(arg1, arg2, arg3);
 }
 
 Create_func_cot Create_func_cot::s_singleton;
