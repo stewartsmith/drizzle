@@ -777,7 +777,7 @@ Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item)
 
 Item *Item_sum_sum::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_sum(session, this);
+  return new (session->mem) Item_sum_sum(session, this);
 }
 
 
@@ -1018,7 +1018,7 @@ bool Item_sum_distinct::setup(Session *session)
   /*
     Virtual table and the tree are created anew on each re-execution of
     PS/SP. Hence all further allocations are performed in the runtime
-    mem_root.
+    mem.
   */
   null_value= maybe_null= 1;
   quick_group= 0;
@@ -1180,7 +1180,7 @@ Item_sum_avg_distinct::calculate_val_and_count()
 
 Item *Item_sum_count::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_count(session, this);
+  return new (session->mem) Item_sum_count(session, this);
 }
 
 
@@ -1240,7 +1240,7 @@ void Item_sum_avg::fix_length_and_dec()
 
 Item *Item_sum_avg::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_avg(session, this);
+  return new (session->mem) Item_sum_avg(session, this);
 }
 
 
@@ -1352,7 +1352,7 @@ double Item_sum_std::val_real()
 
 Item *Item_sum_std::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_std(session, this);
+  return new (session->mem) Item_sum_std(session, this);
 }
 
 
@@ -1450,7 +1450,7 @@ void Item_sum_variance::fix_length_and_dec()
 
 Item *Item_sum_variance::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_variance(session, this);
+  return new (session->mem) Item_sum_variance(session, this);
 }
 
 
@@ -1742,7 +1742,7 @@ void Item_sum_hybrid::no_rows_in_result()
 
 Item *Item_sum_min::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_min(session, this);
+  return new (session->mem) Item_sum_min(session, this);
 }
 
 
@@ -1805,7 +1805,7 @@ bool Item_sum_min::add()
 
 Item *Item_sum_max::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_max(session, this);
+  return new (session->mem) Item_sum_max(session, this);
 }
 
 
@@ -1883,7 +1883,7 @@ void Item_sum_bit::clear()
 
 Item *Item_sum_or::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_or(session, this);
+  return new (session->mem) Item_sum_or(session, this);
 }
 
 
@@ -1897,7 +1897,7 @@ bool Item_sum_or::add()
 
 Item *Item_sum_xor::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_xor(session, this);
+  return new (session->mem) Item_sum_xor(session, this);
 }
 
 
@@ -1911,7 +1911,7 @@ bool Item_sum_xor::add()
 
 Item *Item_sum_and::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_and(session, this);
+  return new (session->mem) Item_sum_and(session, this);
 }
 
 
@@ -2685,7 +2685,7 @@ bool Item_sum_count_distinct::setup(Session *session)
 
 Item *Item_sum_count_distinct::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_count_distinct(session, this);
+  return new (session->mem) Item_sum_count_distinct(session, this);
 }
 
 
@@ -3083,7 +3083,7 @@ void Item_func_group_concat::cleanup()
 
 Item *Item_func_group_concat::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_func_group_concat(session, this);
+  return new (session->mem) Item_func_group_concat(session, this);
 }
 
 
