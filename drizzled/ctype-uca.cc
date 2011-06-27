@@ -7732,13 +7732,10 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
     return 1;
   }
 
-  if (!(newweights= (uint16_t**) (*alloc)(256*sizeof(uint16_t*))))
-    return 1;
+  newweights= (uint16_t**) (*alloc)(256*sizeof(uint16_t*));
   memset(newweights, 0, 256*sizeof(uint16_t*));
 
-  if (!(newlengths= (unsigned char*) (*alloc)(256)))
-    return 1;
-
+  newlengths= (unsigned char*) (*alloc)(256);
   memcpy(newlengths, deflengths, 256);
 
   /*
@@ -7773,8 +7770,7 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
       /* Alloc new page and copy the default UCA weights */
       uint32_t size= 256*newlengths[pagec]*sizeof(uint16_t);
 
-      if (!(newweights[pagec]= (uint16_t*) (*alloc)(size)))
-        return 1;
+      newweights[pagec]= (uint16_t*) (*alloc)(size);
       memset(newweights[pagec], 0, size);
 
       for (chc=0 ; chc < 256; chc++)

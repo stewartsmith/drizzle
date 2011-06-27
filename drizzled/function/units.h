@@ -22,20 +22,21 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/real.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_func_units :public Item_real_func
+class Item_func_units : public Item_real_func
 {
-  char *name;
-  double mul,add;
 public:
-  Item_func_units(char *name_arg,Item *a,double mul_arg,double add_arg)
-    :Item_real_func(a),name(name_arg),mul(mul_arg),add(add_arg) {}
+  Item_func_units(const char *name_arg, Item *a, double mul_arg, double add_arg)
+    : Item_real_func(a),name(name_arg),mul(mul_arg),add(add_arg) {}
   double val_real();
   const char *func_name() const { return name; }
   void fix_length_and_dec()
   { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
+private:
+  const char *name;
+  double mul;
+  double add;
 };
 
 } /* namespace drizzled */

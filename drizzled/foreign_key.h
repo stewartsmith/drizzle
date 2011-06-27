@@ -73,18 +73,6 @@ public:
    */
   Foreign_key(const Foreign_key &rhs, memory::Root *mem_root);
 
-
-  /**
-   * Used to make a clone of this object for ALTER/CREATE TABLE
-   * 
-   * @see comment for Key_part_spec::clone
-   */
-  virtual Key *clone(memory::Root *mem_root) const
-  {
-    return new (mem_root) Foreign_key(*this, mem_root);
-  }
-
-
   /* Used to validate foreign key options */
   bool validate(List<CreateField> &table_fields);
 };

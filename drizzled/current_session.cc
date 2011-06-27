@@ -37,18 +37,14 @@ memory::Root* current_mem_root()
 
 void setCurrentSession(Session* v)
 {
-  if (v)
-    THR_Session.reset(v);
-  else
-    THR_Session.release();
+  THR_Session.release();
+  THR_Session.reset(v);
 }
 
 void setCurrentMemRoot(memory::Root* v)
 {
-  if (v)
-    THR_Mem_root.reset(v);
-  else
-    THR_Mem_root.release();
+  THR_Mem_root.release();
+  THR_Mem_root.reset(v);
 }
 
 } /* namespace drizzled */

@@ -3815,8 +3815,7 @@ key_usage_list:
 using_list:
           ident
           {
-            if (!($$= new List<String>))
-              DRIZZLE_YYABORT;
+            $$= new List<String>;
             $$->push_back(new (YYSession->mem_root)
                               String((const char *) $1.str, $1.length,
                                       system_charset_info));
@@ -4113,8 +4112,8 @@ ulonglong_num:
 
 select_var_list_init:
           {
-            if (not Lex.describe && (not (Lex.result= new select_dumpvar())))
-              DRIZZLE_YYABORT;
+            if (not Lex.describe)
+			  Lex.result= new select_dumpvar;
           }
           select_var_list
           {}
@@ -4384,8 +4383,7 @@ opt_equal:
 no_braces:
           '('
           {
-              if (!(Lex.insert_list = new List_item))
-                DRIZZLE_YYABORT;
+              Lex.insert_list = new List_item;
           }
           opt_values ')'
           {

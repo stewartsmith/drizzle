@@ -258,8 +258,6 @@ bool fix_inner_refs(Session *session,
                           ref->field_name, ref->alias_name_used) :
               new Item_ref(ref->context, item_ref, ref->table_name,
                           ref->field_name, ref->alias_name_used);
-    if (!new_ref)
-      return true;
     ref->outer_ref= new_ref;
     ref->ref= &ref->outer_ref;
 
@@ -404,16 +402,11 @@ bool select_query(Session *session,
   }
   else
   {
-    if (!(join= new Join(session, fields, select_options, result)))
-      return true;
+    join= new Join(session, fields, select_options, result);
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
-    if ((err= join->prepare(rref_pointer_array, tables, wild_num,
-                           conds, og_num, order, group, having,
-                           select_lex, unit)) == true)
-    {
+    if ((err= join->prepare(rref_pointer_array, tables, wild_num, conds, og_num, order, group, having, select_lex, unit)))
       goto err;
-    }
   }
 
   err= join->optimize();
@@ -936,12 +929,9 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
 {
   if (*e1)
   {
-    Item *res;
-    if ((res= new Item_cond_and(*e1, e2)))
-    {
-      *e1= res;
-      res->quick_fix_field();
-    }
+    Item* res= new Item_cond_and(*e1, e2);
+    *e1= res;
+    res->quick_fix_field();
   }
   else
     *e1= e2;
@@ -1146,8 +1136,7 @@ void add_not_null_conds(Join *join)
           */
           if (!referred_tab || referred_tab->join != join)
             continue;
-          if (!(notnull= new Item_func_isnotnull(not_null_item)))
-            return;
+          notnull= new Item_func_isnotnull(not_null_item);
           /*
             We need to do full fix_fields() call here in order to have correct
             notnull->const_item(). This is needed e.g. by test_quick_select
@@ -1553,8 +1542,7 @@ static bool check_simple_equality(Item *left_item,
         if (!item)
         {
           Item_func_eq *eq_item;
-          if ((eq_item= new Item_func_eq(left_item, right_item)))
-            return false;
+          eq_item= new Item_func_eq(left_item, right_item);
           eq_item->set_cmp_func();
           eq_item->quick_fix_field();
           item= eq_item;
@@ -1647,8 +1635,7 @@ static bool check_row_equality(Session *session,
     if (!is_converted)
     {
       Item_func_eq *eq_item;
-      if (!(eq_item= new Item_func_eq(left_item, right_item)))
-        return false;
+      eq_item= new Item_func_eq(left_item, right_item);
       eq_item->set_cmp_func();
       eq_item->quick_fix_field();
       eq_list->push_back(eq_item);
@@ -2778,19 +2765,15 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
             )
           )
       {
-        COND *new_cond;
-        if ((new_cond= new Item_func_eq(args[0], new Item_int("last_insert_id()",
-                                                          session->read_first_successful_insert_id_in_prev_stmt(),
-                                                          MY_INT64_NUM_DECIMAL_DIGITS))))
-        {
-          cond= new_cond;
-          /*
-            Item_func_eq can't be fixed after creation so we do not check
-            cond->fixed, also it do not need tables so we use 0 as second
-            argument.
-          */
-          cond->fix_fields(session, &cond);
-        }
+        COND *new_cond= new Item_func_eq(args[0], new Item_int("last_insert_id()", 
+          session->read_first_successful_insert_id_in_prev_stmt(), MY_INT64_NUM_DECIMAL_DIGITS));
+        cond= new_cond;
+        /*
+        Item_func_eq can't be fixed after creation so we do not check
+        cond->fixed, also it do not need tables so we use 0 as second
+        argument.
+        */
+        cond->fix_fields(session, &cond);
         /*
           IS NULL should be mapped to LAST_INSERT_ID only for first row, so
           clear for next row
@@ -2804,17 +2787,14 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
           && (field->flags & NOT_NULL_FLAG)
           && ! field->table->maybe_null)
       {
-        COND *new_cond;
-        if ((new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2))))
-        {
-          cond= new_cond;
-          /*
-            Item_func_eq can't be fixed after creation so we do not check
-            cond->fixed, also it do not need tables so we use 0 as second
-            argument.
-          */
-          cond->fix_fields(session, &cond);
-        }
+        COND* new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2));
+        cond= new_cond;
+        /*
+        Item_func_eq can't be fixed after creation so we do not check
+        cond->fixed, also it do not need tables so we use 0 as second
+        argument.
+        */
+        cond->fix_fields(session, &cond);
       }
 #endif /* NOTDEFINED */
     }
@@ -5764,9 +5744,7 @@ bool setup_copy_fields(Session *session,
     Item *real_pos= pos->real_item();
     if (real_pos->type() == Item::FIELD_ITEM)
     {
-      Item_field *item;
-      if (!(item= new Item_field(session, ((Item_field*) real_pos))))
-        goto err;
+      Item_field* item= new Item_field(session, ((Item_field*) real_pos));
       if (pos->type() == Item::REF_ITEM)
       {
         /* preserve the names of the ref when dereferncing */
@@ -5778,8 +5756,7 @@ bool setup_copy_fields(Session *session,
       pos= item;
       if (item->field->flags & BLOB_FLAG)
       {
-        if (!(pos= new Item_copy_string(pos)))
-          goto err;
+        pos= new Item_copy_string(pos);
             /*
               Item_copy_string::copy for function can call
               Item_copy_string::val_int for blob via Item_ref.
@@ -6172,10 +6149,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
         {
           if (item->eq(*group_tmp->item,0))
           {
-            Item *new_item;
-            if (!(new_item= new Item_ref(context, group_tmp->item, 0,
-                                        item->name)))
-              return 1;                                 // fatal_error is set
+            Item* new_item= new Item_ref(context, group_tmp->item, 0, item->name);
             *arg= new_item;
             arg_changed= true;
           }

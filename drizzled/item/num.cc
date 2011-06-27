@@ -44,11 +44,9 @@ Item *Item_num::safe_charset_converter(const charset_info_st * const)
   char buf[64];
   String *s, tmp(buf, sizeof(buf), &my_charset_bin);
   s= val_str(&tmp);
-  if ((conv= new Item_string(s->ptr(), s->length(), s->charset())))
-  {
-    conv->str_value.copy();
-    conv->str_value.mark_as_const();
-  }
+  conv= new Item_string(s->ptr(), s->length(), s->charset());
+  conv->str_value.copy();
+  conv->str_value.mark_as_const();
   return conv;
 }
 
