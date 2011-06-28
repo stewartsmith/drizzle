@@ -91,17 +91,14 @@ const char *Item_ident::full_name() const
     tmp= (char*) memory::sql_alloc(tmp_len);
     snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
   }
-  else
+  else if (table_name[0])
   {
-    if (table_name[0])
-    {
-      tmp_len=strlen(table_name)+strlen(field_name)+2;
-      tmp= (char*) memory::sql_alloc(tmp_len);
-      snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
-    }
-    else
-      return field_name;
+    tmp_len=strlen(table_name)+strlen(field_name)+2;
+    tmp= (char*) memory::sql_alloc(tmp_len);
+    snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
   }
+  else
+    return field_name;
   return tmp;
 }
 
