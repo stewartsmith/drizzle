@@ -284,7 +284,6 @@ Item::Item():
   is_expensive_cache(-1),
   name(0), 
   name_length(0),
-  orig_name(0), 
   max_length(0), 
   marker(0),
   decimals(0),
@@ -322,7 +321,6 @@ Item::Item(Session *session, Item *item):
   str_value(item->str_value),
   name(item->name),
   name_length(item->name_length),
-  orig_name(item->orig_name),
   max_length(item->max_length),
   marker(item->marker),
   decimals(item->decimals),
@@ -385,20 +383,6 @@ void Item::cleanup()
 {
   fixed= false;
   marker= 0;
-  if (orig_name)
-    name= orig_name;
-  return;
-}
-
-void Item::rename(char *new_name)
-{
-  /*
-    we can compare pointers to names here, because if name was not changed,
-    pointer will be same
-  */
-  if (! orig_name && new_name != name)
-    orig_name= name;
-  name= new_name;
 }
 
 Item* Item::transform(Item_transformer transformer, unsigned char *arg)
@@ -1478,11 +1462,11 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
   Item *new_item= NULL;
   if (item->basic_const_item())
     return; /* Can't be better */
-  Item_result res_type=item_cmp_type(comp_item->result_type(),
-				     item->result_type());
-  char *name=item->name; /* Alloced by memory::sql_alloc */
+  Item_result res_type=item_cmp_type(comp_item->result_type(), item->result_type());
+  const char *name=item->name; /* Alloced by memory::sql_alloc */
 
-  switch (res_type) {
+  switch (res_type) 
+  {
   case STRING_RESULT:
     {
       char buff[MAX_FIELD_WIDTH];

@@ -119,13 +119,11 @@ public:
   String str_value;
 
   /** Name from select */
-  char *name;
+  const char *name;
 
   /** Length of name */
   uint32_t name_length;
 
-  /** Original item name (if it was renamed) */
-  char *orig_name;
   Item *next;
   uint32_t max_length;
 
@@ -191,12 +189,6 @@ public:
   }
 
   void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
-  /**
-   * Renames item (used for views, cleanup() return original name).
-   *
-   * @param new_name	new name of item;
-   */
-  void rename(char *new_name);
   void init_make_field(SendField *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);

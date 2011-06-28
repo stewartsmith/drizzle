@@ -21,13 +21,10 @@
 
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace item {
 
-namespace item
-{
-
-class Boolean: public Item_basic_constant
+class Boolean : public Item_basic_constant
 {
   bool value;
 
@@ -38,7 +35,7 @@ public:
   {
     max_length= value ? 4 : 5;
     fixed= true;
-    name= (const_cast<char *>(str_arg));
+    name= str_arg;
   }
 
   Boolean(bool arg) :

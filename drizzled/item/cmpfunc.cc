@@ -713,8 +713,7 @@ WHERE col= 'j'
 */
 
 static int64_t
-get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
-                  char *warn_name, bool *error_arg)
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type, const char *warn_name, bool *error_arg)
 {
   int64_t value= 0;
   type::cut_t error= type::VALID;
