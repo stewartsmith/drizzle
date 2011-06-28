@@ -612,12 +612,6 @@ bool Item::remove_dependence_processor(unsigned char *)
   return false;
 }
 
-bool Item::remove_fixed(unsigned char *)
-{
-  fixed= false;
-  return false;
-}
-
 bool Item::collect_item_field_processor(unsigned char *)
 {
   return false;
@@ -1406,37 +1400,9 @@ uint32_t Item::max_char_length() const
   return max_length / collation.collation->mbmaxlen;
 }
 
-void Item::fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs)
-{ 
-  max_length= char_to_byte_length_safe(max_char_length_arg, cs->mbmaxlen);
-  collation.collation= cs;
-}
-
 void Item::fix_char_length(uint32_t max_char_length_arg)
 { 
   max_length= char_to_byte_length_safe(max_char_length_arg, collation.collation->mbmaxlen);
-}
-
-void Item::fix_char_length_uint64_t(uint64_t max_char_length_arg)
-{ 
-  uint64_t max_result_length= max_char_length_arg *
-    collation.collation->mbmaxlen;
-
-  if (max_result_length >= MAX_BLOB_WIDTH)
-  { 
-    max_length= MAX_BLOB_WIDTH;
-    maybe_null= false;
-  }
-  else
-  {
-    max_length= max_result_length;
-  }
-}
-
-void Item::fix_length_and_charset_datetime(uint32_t max_char_length_arg)
-{ 
-  collation.set(&my_charset_bin);
-  fix_char_length(max_char_length_arg);
 }
 
 Item_result item_cmp_type(Item_result a,Item_result b)

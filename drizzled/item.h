@@ -666,7 +666,6 @@ public:
                              traverse_order order);
 
   virtual bool remove_dependence_processor(unsigned char * arg);
-  virtual bool remove_fixed(unsigned char * arg);
   virtual bool collect_item_field_processor(unsigned char * arg);
   virtual bool find_item_in_field_list_processor(unsigned char *arg);
   virtual bool change_context_processor(unsigned char *context);
@@ -768,10 +767,7 @@ public:
 
   uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs);
   void fix_char_length(uint32_t max_char_length_arg);
-  void fix_char_length_uint64_t(uint64_t max_char_length_arg);
-  void fix_length_and_charset_datetime(uint32_t max_char_length_arg);
 
 protected:
   Session &getSession()
