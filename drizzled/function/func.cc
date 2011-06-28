@@ -156,8 +156,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) getSession().getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-        return;
+      args=(Item**) getSession().mem.alloc(sizeof(Item*)*arg_count);
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
   }

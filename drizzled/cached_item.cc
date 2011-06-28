@@ -94,7 +94,7 @@ bool Cached_item_str::cmp(void)
   {
     if ((null_value= item->null_value))
       // New value was null
-      return(true);
+      return true;
     tmp=true;
   }
   else if (null_value)
@@ -121,9 +121,9 @@ bool Cached_item_real::cmp(void)
   {
     null_value= item->null_value;
     value=nr;
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 bool Cached_item_int::cmp(void)
@@ -133,9 +133,9 @@ bool Cached_item_int::cmp(void)
   {
     null_value= item->null_value;
     value=nr;
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 

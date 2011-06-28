@@ -34,8 +34,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -63,10 +62,10 @@ bool Item_field::collect_item_field_processor(unsigned char *arg)
   while ((curr_item= item_list_it++))
   {
     if (curr_item->eq(this, 1))
-      return(false); /* Already in the set. */
+      return false; /* Already in the set. */
   }
   item_list->push_back(this);
-  return(false);
+  return false;
 }
 
 
@@ -1197,7 +1196,7 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
     res= field_conv(to,result_field);
     null_value=0;
   }
-  return(res);
+  return res;
 }
 
 

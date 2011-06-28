@@ -400,8 +400,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
-static bool _schema_select(Session *session, Select_Lex *sel,
-                           const string& schema_table_name)
+static bool _schema_select(Session& session, Select_Lex& sel, const string& schema_table_name)
 {
   LEX_STRING db, table;
   bitset<NUM_OF_TABLE_OPTIONS> table_options;
@@ -409,31 +408,18 @@ static bool _schema_select(Session *session, Select_Lex *sel,
      We have to make non const db_name & table_name
      because of lower_case_table_names
   */
-  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
-  session->make_lex_string(&table, schema_table_name, false);
-
-  if (not sel->add_table_to_list(session, new Table_ident(db, table), NULL, table_options, TL_READ))
-  {
-    return true;
-  }
-  return false;
+  session.make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session.make_lex_string(&table, schema_table_name, false);
+  return not sel.add_table_to_list(&session, new Table_ident(db, table), NULL, table_options, TL_READ);
 }
 
-int prepare_new_schema_table(Session *session, LEX& lex,
-                             const string& schema_table_name)
+int prepare_new_schema_table(Session *session, LEX& lex0, const string& schema_table_name)
 {
-  Select_Lex *schema_select_lex= NULL;
-
-  Select_Lex *select_lex= lex.current_select;
-  assert(select_lex);
-  if (_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
+  Select_Lex& lex= *lex0.current_select;
+  if (_schema_select(*session, lex, schema_table_name))
+    return 1;
+  TableList *table_list= (TableList*)lex.table_list.first;
+  table_list->schema_select_lex= NULL;
   return 0;
 }
 
@@ -976,10 +962,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
-      return NULL;
+    alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
   }
-  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
+  TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
   if (table->db.str)
   {
@@ -1073,16 +1058,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     1   otherwise
 */
 
-bool Select_Lex::init_nested_join(Session *session)
+void Select_Lex::init_nested_join(Session& session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(NestedJoin))))
-    return true;
+  TableList* ptr= (TableList*) session.mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
@@ -1090,7 +1070,6 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->clear();
-  return false;
 }
 
 
@@ -1151,19 +1130,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 
 TableList *Select_Lex::nest_last_join(Session *session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-  List<TableList> *embedded_list;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(NestedJoin))))
-    return NULL;
+  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
-  embedded_list= &nested_join->join_list;
+  List<TableList>* embedded_list= &nested_join->join_list;
   embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
@@ -1519,7 +1492,7 @@ bool update_precheck(Session *session, TableList *)
   if (session->lex().select_lex.item_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (session->lex().select_lex.table_list.size() > 1)
@@ -1531,10 +1504,10 @@ bool update_precheck(Session *session, TableList *)
     if (msg)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-      return(true);
+      return true;
     }
   }
-  return(false);
+  return false;
 }
 
 
@@ -1559,9 +1532,9 @@ bool insert_precheck(Session *session, TableList *)
   if (session->lex().update_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 

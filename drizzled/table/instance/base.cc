@@ -530,19 +530,12 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
-  {
-    setPath(path_buff, _path.length());
-    strcpy(path_buff, _path.c_str());
-    setNormalizedPath(path_buff, _path.length());
+  path_buff= (char *)mem_root.alloc(_path.length() + 1);
+  setPath(path_buff, _path.length());
+  strcpy(path_buff, _path.c_str());
+  setNormalizedPath(path_buff, _path.length());
 
-    version= g_refresh_version;
-  }
-  else
-  {
-    assert(0); // We should throw here.
-    abort();
-  }
+  version= g_refresh_version;
 }
 
 void TableShare::init(const char *new_table_name,
@@ -640,7 +633,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   for (int indx= 0; indx < table.indexes_size(); indx++)
     key_parts+= table.indexes(indx).index_part_size();
 
-  key_info= (KeyInfo*) alloc_root( table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
+  key_info= (KeyInfo*) alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
 
   KeyPartInfo *key_part;
 
@@ -648,7 +641,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     (key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc_root(sizeof(ulong*)*key_parts);
+  ulong *rec_per_key= (ulong*) alloc(sizeof(ulong*)*key_parts);
 
   KeyInfo* keyinfo= key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
@@ -772,10 +765,10 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strmake_root(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.str= strmake(indx.comment().c_str(), keyinfo->comment.length);
     }
 
-    keyinfo->name= strmake_root(indx.name().c_str(), indx.name().length());
+    keyinfo->name= strmake(indx.name().c_str(), indx.name().length());
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -929,9 +922,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     TYPELIB *t= (&intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_names= (const char**)alloc((field_options.field_value_size() + 1) * sizeof(char*));
 
-    t->type_lengths= (unsigned int*) alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_lengths= (unsigned int*)alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -941,7 +934,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strmake_root(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= strmake(field_options.field_value(n).c_str(), field_options.field_value(n).length());
 
       /* 
        * Go ask the charset what the length is as for "" length=1
@@ -1014,7 +1007,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       size_t len= pfield.comment().length();
       const char* str= pfield.comment().c_str();
 
-      comment.str= strmake_root(str, len);
+      comment.str= strmake(str, len);
       comment.length= len;
     }
 
@@ -1612,7 +1605,7 @@ int TableShare::open_table_from_share(Session *session,
   boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.getMemRoot().free_root(MYF(0));       // Safe to call on zeroed root
   outparam.clearAlias();
 
   return ret;
@@ -1644,8 +1637,7 @@ int TableShare::open_table_from_share_inner(Session *session,
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
-    return local_error;
+  record= outparam.alloc(rec_buff_length * records);
 
   if (records == 0)
   {
@@ -1679,10 +1671,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)))))
-  {
-    return local_error;
-  }
+  field_ptr = (Field **) outparam.alloc((_field_size+1) * sizeof(Field*));
 
   outparam.setFields(field_ptr);
 
@@ -1693,7 +1682,7 @@ int TableShare::open_table_from_share_inner(Session *session,
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= _fields[i]->clone(outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(&outparam.getMemRoot(), &outparam)))
       return local_error;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1711,8 +1700,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     KeyPartInfo *key_part;
     uint32_t n_length;
     n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
-      return local_error;
+    local_key_info= (KeyInfo*) outparam.alloc(n_length);
     outparam.key_info= local_key_info;
     key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 
@@ -1742,7 +1730,7 @@ int TableShare::open_table_from_share_inner(Session *session,
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(outparam.getMemRoot(), &outparam, 0);
+          local_field= key_part->field= local_field->new_field(&outparam.getMemRoot(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }

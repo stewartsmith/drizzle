@@ -610,7 +610,7 @@ void Session::unlink(session_id_t &session_id)
     unlink(session);
 }
 
-void Session::unlink(Session::shared_ptr &session)
+void Session::unlink(const Session::shared_ptr& session)
 {
   --connection_count;
 

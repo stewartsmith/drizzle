@@ -362,15 +362,13 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(memory::Root *root,
-                           Table *new_table,
-                           bool keep_type);
+  virtual Field *new_field(memory::Root*, Table*, bool keep_type);
   virtual Field *new_key_field(memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(memory::Root *mem_root, Table *new_table);
+  Field* clone(memory::Root*, Table*);
   void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;

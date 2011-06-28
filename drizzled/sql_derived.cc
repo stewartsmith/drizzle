@@ -109,7 +109,7 @@ bool derived_prepare(Session *session, LEX *, TableList *orig_table_list)
       sl->context.outer_context= 0;
 
     if (!(derived_result= new select_union))
-      return(true); // out of memory
+      return true; // out of memory
 
     // Select_Lex_Unit::prepare correctly work for single select
     if ((res= unit->prepare(session, derived_result, 0)))
@@ -164,7 +164,7 @@ exit:
     }
   }
 
-  return(res);
+  return res;
 }
 
 /*

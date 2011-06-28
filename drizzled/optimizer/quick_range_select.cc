@@ -70,7 +70,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   if (! no_alloc && ! parent_alloc)
   {
     // Allocates everything through the internal memroot
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
     session->mem_root= &alloc;
   }
   else

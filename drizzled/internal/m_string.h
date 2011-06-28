@@ -41,10 +41,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
@@ -64,7 +62,8 @@ extern	char *strxncat(char *dst,size_t len, const char *src, ...);
 extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
 
 /* Conversion routines */
-typedef enum {
+typedef enum 
+{
   MY_GCVT_ARG_FLOAT,
   MY_GCVT_ARG_DOUBLE
 } my_gcvt_arg_type;

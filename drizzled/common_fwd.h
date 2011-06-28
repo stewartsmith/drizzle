@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -56,7 +57,6 @@ namespace generator
 namespace internal
 {
   struct io_cache_st;
-  
   struct st_my_thread_var;
 }
 

@@ -170,19 +170,19 @@ public:
 private:
   memory::Root mem_root;
 
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
-    return mem_root.alloc_root(arg);
+    return mem_root.alloc(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char *strmake(const char *str_arg, size_t len_arg)
   {
-    return mem_root.strmake_root(str_arg, len_arg);
+    return mem_root.strmake(str_arg, len_arg);
   }
 
-  memory::Root *getMemRoot()
+  memory::Root& getMemRoot()
   {
-    return &mem_root;
+    return mem_root;
   }
 
   std::vector<std::string> _keynames;

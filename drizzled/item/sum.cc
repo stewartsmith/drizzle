@@ -413,8 +413,7 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   if (arg_count <= 2)
     args=tmp_args;
   else
-    if (!(args= (Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-      return;
+    args= (Item**) session->mem.alloc(sizeof(Item*)*arg_count);
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
 
@@ -2658,7 +2657,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->getMemRoot()->allocate(table->getShare()->sizeFields() * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->mem.alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
@@ -3204,10 +3203,10 @@ bool Item_func_group_concat::setup(Session *session)
     assertion here when this is fixed.
   */
   if (table || tree)
-    return(false);
+    return false;
 
   if (!(tmp_table_param= new Tmp_Table_Param))
-    return(true);
+    return true;
 
   /* We'll convert all blobs to varchar fields in the temporary table */
   tmp_table_param->convert_blob_length= max_length *
@@ -3223,7 +3222,7 @@ bool Item_func_group_concat::setup(Session *session)
       if (item->is_null())
       {
         always_null= 1;
-        return(false);
+        return false;
       }
     }
   }
@@ -3237,7 +3236,7 @@ bool Item_func_group_concat::setup(Session *session)
   */
   if (arg_count_order &&
       setup_order(session, args, context->table_list, list, all_fields, *order))
-    return(true);
+    return true;
 
   count_field_types(select_lex, tmp_table_param, all_fields, 0);
   tmp_table_param->force_copy_fields= force_copy_fields;
@@ -3266,7 +3265,7 @@ bool Item_func_group_concat::setup(Session *session)
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
   {
-    return(true);
+    return true;
   }
 
   table->cursor->extra(HA_EXTRA_NO_ROWS);
@@ -3300,7 +3299,7 @@ bool Item_func_group_concat::setup(Session *session)
                               tree_key_length,
                               (size_t)session->variables.max_heap_table_size);
 
-  return(false);
+  return false;
 }
 
 

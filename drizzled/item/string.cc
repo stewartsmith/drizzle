@@ -30,7 +30,7 @@ Item *Item_string::safe_charset_converter(const charset_info_st * const tocs)
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), tocs);
   Item_string* conv= new Item_string(cstr.ptr(), cstr.length(), cstr.charset(), collation.derivation);
-  char* ptr= getSession().strmake(cstr.ptr(), cstr.length());
+  char* ptr= getSession().mem.strmake(cstr);
 
   conv->str_value.set(ptr, cstr.length(), cstr.charset());
   /* Ensure that no one is going to change the result string */

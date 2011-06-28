@@ -50,8 +50,7 @@ optimizer::QuickIndexMergeSelect::QuickIndexMergeSelect(Session *session_param,
   index= MAX_KEY;
   head= table;
   memset(&read_record, 0, sizeof(read_record));
-  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  return;
+  alloc.init(session->variables.range_alloc_block_size);
 }
 
 int optimizer::QuickIndexMergeSelect::init()
@@ -64,8 +63,7 @@ int optimizer::QuickIndexMergeSelect::reset()
   return (read_keys_and_merge());
 }
 
-bool
-optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
+void optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
 {
   /*
     Save quick_select that does scan on clustered primary key as it will be
@@ -80,24 +78,16 @@ optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *q
   {
     quick_selects.push_back(quick_sel_range);
   }
-  return false;
 }
 
 optimizer::QuickIndexMergeSelect::~QuickIndexMergeSelect()
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
-  {
-    (*it)->cursor= NULL;
-  }
-  for_each(quick_selects.begin(),
-           quick_selects.end(),
-           DeletePtr());
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
+    it->cursor= NULL;
+  for_each(quick_selects.begin(), quick_selects.end(), DeletePtr());
   quick_selects.clear();
   delete pk_quick_select;
   alloc.free_root(MYF(0));
-  return;
 }
 
 

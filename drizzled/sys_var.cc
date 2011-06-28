@@ -426,15 +426,13 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
-    session->mem_root->reset_root_defaults(session->variables.query_alloc_block_size,
-                                           session->variables.query_prealloc_size);
+    session->mem.reset_defaults(session->variables.query_alloc_block_size, session->variables.query_prealloc_size);
 }
 
 
 static void fix_server_id(Session *, sql_var_t)
 {
 }
-
 
 void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val)
 {
@@ -963,8 +961,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
     if (str)
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->strmake(str, length), length,
-                           system_charset_info, DERIVATION_SYSCONST);
+      tmp= new Item_string(session->mem.strmake(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
     else
     {
@@ -1408,24 +1405,19 @@ static option* find_option(struct option *opt, const char *name)
 
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
-  int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
-
-  if (result)
+  drizzle_show_var *result= (drizzle_show_var*) session->mem.alloc(sizeof(drizzle_show_var) * (system_variable_map.size() + 1));
+  drizzle_show_var *show= result;
+  BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
   {
-    drizzle_show_var *show= result;
-    BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
-    {
-      sys_var *var= iter.second;
-      show->name= var->getName().c_str();
-      show->value= (char*) var;
-      show->type= SHOW_SYS;
-      ++show;
-    }
-
-    /* make last element empty */
-    memset(show, 0, sizeof(drizzle_show_var));
+    sys_var *var= iter.second;
+    show->name= var->getName().c_str();
+    show->value= (char*) var;
+    show->type= SHOW_SYS;
+    ++show;
   }
+
+  /* make last element empty */
+  memset(show, 0, sizeof(drizzle_show_var));
   return result;
 }
 
@@ -1593,15 +1585,11 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          sql_var_t type,
                                                          const LEX_STRING *)
 {
-  unsigned char* result;
-  string engine_name;
   plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
-  engine_name= engine->getName();
-  result= (unsigned char *) session->strmake(engine_name.c_str(),
-                                             engine_name.size());
-  return result;
+  string engine_name= engine->getName();
+  return (unsigned char *) session->mem.strmake(engine_name);
 }
 
 

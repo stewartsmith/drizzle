@@ -26,8 +26,7 @@
 
 using namespace drizzled;
 
-bool optimizer::System::getStats(Table *table,
-                                 JoinTable *join_tab)
+bool optimizer::System::getStats(Table *table, JoinTable *join_tab)
 {
   table->status= STATUS_NO_RECORD;
   join_tab->read_first_record= reinterpret_cast<Read_record_func>(join_tab->joinReadSystem());

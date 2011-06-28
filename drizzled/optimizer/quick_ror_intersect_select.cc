@@ -49,21 +49,16 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   record= head->record[0];
   if (! parent_alloc)
   {
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
   }
   else
   {
     memset(&alloc, 0, sizeof(memory::Root));
   }
 
-  if (parent_alloc)
-  {
-    last_rowid= (unsigned char*) parent_alloc->alloc_root(head->cursor->ref_length);
-  }
-  else
-  {
-    last_rowid= (unsigned char*) alloc.alloc_root(head->cursor->ref_length);
-  }
+  last_rowid= parent_alloc
+    ? parent_alloc->alloc(head->cursor->ref_length)
+    : alloc.alloc(head->cursor->ref_length);
 }
 
 
@@ -145,24 +140,18 @@ int optimizer::QuickRorIntersectSelect::reset()
 }
 
 
-bool
-optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
+void optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
 {
   quick_selects.push_back(quick);
-  return false;
 }
 
 
 bool optimizer::QuickRorIntersectSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    if (is_key_used(head, (*it)->index, fields))
-    {
+    if (is_key_used(head, it->index, fields))
       return 1;
-    }
   }
   return 0;
 }

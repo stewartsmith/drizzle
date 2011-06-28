@@ -1148,7 +1148,7 @@ row_format:
 row_format_or_text:
           row_format
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -2319,25 +2319,21 @@ select_item_list:
         | select_item
         | '*'
           {
-            if (YYSession->add_item_to_list( new Item_field(&YYSession->lex().current_select->context, NULL, NULL, "*")))
-              DRIZZLE_YYABORT;
-
-            (YYSession->lex().current_select->with_wild)++;
+            YYSession->add_item_to_list( new Item_field(&YYSession->lex().current_select->context, NULL, NULL, "*"));
+            YYSession->lex().current_select->with_wild++;
           }
         ;
 
 select_item:
           remember_name table_wild remember_end
           {
-            if (YYSession->add_item_to_list($2))
-              DRIZZLE_YYABORT;
+            YYSession->add_item_to_list($2);
           }
         | remember_name expr remember_end select_alias
           {
             assert($1 < $3);
 
-            if (YYSession->add_item_to_list($2))
-              DRIZZLE_YYABORT;
+            YYSession->add_item_to_list($2);
 
             if ($4.str)
             {
@@ -3569,8 +3565,7 @@ table_factor:
                 sel->master_unit()->global_parameters=
                    sel->master_unit()->fake_select_lex;
             }
-            if ($2->init_nested_join(Lex.session))
-              DRIZZLE_YYABORT;
+            $2->init_nested_join(*Lex.session);
             $$= 0;
             /* incomplete derived tables return NULL, we must be
                nested in select_derived rule to be here. */
@@ -3691,8 +3686,7 @@ select_part2_derived:
 select_derived:
           get_select_lex
           {
-            if ($1->init_nested_join(Lex.session))
-              DRIZZLE_YYABORT;
+            $1->init_nested_join(*Lex.session);
           }
           derived_table_list
           {
@@ -3956,9 +3950,9 @@ group_clause:
 
 group_list:
           group_list ',' order_ident order_dir
-          { if (YYSession->add_group_to_list($3,(bool) $4)) DRIZZLE_YYABORT; }
+          { YYSession->add_group_to_list($3,(bool) $4); }
         | order_ident order_dir
-          { if (YYSession->add_group_to_list($1,(bool) $2)) DRIZZLE_YYABORT; }
+          { YYSession->add_group_to_list($1,(bool) $2); }
         ;
 
 olap_opt:
@@ -3998,9 +3992,8 @@ alter_order_list:
 alter_order_item:
           simple_ident order_dir
           {
-            bool ascending= ($2 == 1) ? true : false;
-            if (YYSession->add_order_to_list($1, ascending))
-              DRIZZLE_YYABORT;
+            bool ascending= $2 == 1;
+            YYSession->add_order_to_list($1, ascending);
           }
         ;
 
@@ -4025,13 +4018,11 @@ order_clause:
 order_list:
           order_list ',' order_ident order_dir
           {
-            if (YYSession->add_order_to_list($3,(bool) $4))
-              DRIZZLE_YYABORT;
+            YYSession->add_order_to_list($3,(bool) $4);
           }
         | order_ident order_dir
           {
-            if (YYSession->add_order_to_list($1,(bool) $2))
-              DRIZZLE_YYABORT;
+            YYSession->add_order_to_list($1,(bool) $2);
           }
         ;
 
@@ -4466,8 +4457,8 @@ update_list:
 update_elem:
           simple_ident equal expr_or_default
           {
-            if (YYSession->add_item_to_list($1) || YYSession->add_value_to_list($3))
-              DRIZZLE_YYABORT;
+            YYSession->add_item_to_list($1);
+			YYSession->add_value_to_list($3);
           }
         ;
 
@@ -4535,8 +4526,8 @@ show:
 show_param:
            DATABASES show_wild
            {
-             if (not show::buildScemas(YYSession))
-               DRIZZLE_YYABORT;
+             if (not show::buildSchemas(YYSession))
+				DRIZZLE_YYABORT;
            }
            /* SHOW TABLES */
          | TABLES opt_db show_wild
@@ -5201,7 +5192,7 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         ;
@@ -5483,7 +5474,7 @@ user_variable_ident:
 internal_variable_ident:
           keyword_exception_for_variable
           {
-            $$.str= YYSession->strmake($1.str, $1.length);
+            $$.str= YYSession->mem.strmake($1.str, $1.length);
             $$.length= $1.length;
           }
         | IDENT_sys    { $$=$1; }

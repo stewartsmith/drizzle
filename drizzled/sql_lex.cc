@@ -55,13 +55,9 @@ static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 /**
   save order by and tables in own lists.
 */
-static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
+static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
-  Order *order;
-
-  if (!(order = (Order *) session->getMemRoot()->allocate(sizeof(Order))))
-    return true;
-
+  Order* order = (Order *) session->mem.alloc(sizeof(Order));
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
@@ -69,8 +65,6 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   order->used=0;
   order->counter_used= 0;
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
-
-  return false;
 }
 
 /**
@@ -104,7 +98,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
+  m_cpp_buf= (char*) session->mem.alloc(length + 1);
   m_cpp_ptr= m_cpp_buf;
 }
 
@@ -309,7 +303,7 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
   LEX_STRING tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->strmake(lip->get_tok_start() + skip, tmp.length);
+  tmp.str= lip->m_session->mem.strmake(lip->get_tok_start() + skip, tmp.length);
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
@@ -332,7 +326,7 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->getMemRoot()->allocate(tmp.length+1);
+  tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
   from= lip->get_tok_start() + skip;
   to= tmp.str;
   end= to+length;
@@ -398,18 +392,14 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
         lip->yyUnget();
 
       /* Found end. Unescape and return string */
-      const char *str, *end;
-      char *start;
-
-      str= lip->get_tok_start();
-      end= lip->get_ptr();
+      const char* str= lip->get_tok_start();
+      const char* end= lip->get_ptr();
       /* Extract the text from the token */
       str+= pre_skip;
       end-= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->getMemRoot()->allocate((uint32_t) (end-str)+1)))
-        return (char*) "";		// memory::SqlAlloc has set error flag
+      char* start= (char*) lip->m_session->mem.alloc((uint32_t) (end-str)+1);
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
@@ -1614,20 +1604,19 @@ Select_Lex* Select_Lex_Unit::outer_select()
   return (Select_Lex*) master;
 }
 
-bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, order_list, item, asc);
+  add_to_list(session, order_list, item, asc);
 }
 
-bool Select_Lex::add_item_to_list(Session *, Item *item)
+void Select_Lex::add_item_to_list(Session *, Item *item)
 {
 	item_list.push_back(item);
-  return false;
 }
 
-bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, group_list, item, asc);
+  add_to_list(session, group_list, item, asc);
 }
 
 Select_Lex_Unit* Select_Lex::master_unit()
@@ -1667,18 +1656,10 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-
-bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
+void Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
-  if (ref_pointer_array)
-    return false;
-
-  return (ref_pointer_array=
-          (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.size() +
-                                                 select_n_having_items +
-                                                 select_n_where_fields +
-                                                 order_group_num)*5)) == 0;
+  if (not ref_pointer_array)
+    ref_pointer_array= (Item **)session->mem.alloc(sizeof(Item*) * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)*5);
 }
 
 void Select_Lex_Unit::print(String *str)

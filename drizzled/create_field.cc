@@ -109,17 +109,15 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
        old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
-    ptrdiff_t diff;
-
     /* Get the value from default_values */
-    diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
+    ptrdiff_t diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
     orig_field->move_field_offset(diff);	// Points now at default_values
     if (! orig_field->is_real_null())
     {
-      char buff[MAX_FIELD_WIDTH], *pos;
-      String tmp(buff, sizeof(buff), charset), *res;
-      res= orig_field->val_str_internal(&tmp);
-      pos= (char*) memory::sql_strmake(res->ptr(), res->length());
+      char buff[MAX_FIELD_WIDTH];
+      String tmp(buff, sizeof(buff), charset);
+      String* res= orig_field->val_str_internal(&tmp);
+      char* pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
     orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
@@ -208,7 +206,7 @@ bool CreateField::init(Session *,
   {
     my_error(ER_TOO_BIG_SCALE, MYF(0), decimals, fld_name,
              NOT_FIXED_DEC-1);
-    return(true);
+    return true;
   }
 
   sql_type= fld_type;
@@ -245,12 +243,12 @@ bool CreateField::init(Session *,
       {
         my_error(ER_TOO_BIG_PRECISION, MYF(0), length, fld_name,
                 DECIMAL_MAX_PRECISION);
-        return(true);
+        return true;
       }
       if (length < decimals)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-        return(true);
+        return true;
       }
       length= class_decimal_precision_to_length(length, decimals, fld_type_modifier & UNSIGNED_FLAG);
       pack_length= class_decimal_get_binary_size(length, decimals);
@@ -276,7 +274,7 @@ bool CreateField::init(Session *,
           decimals != NOT_FIXED_DEC)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-        return(true);
+        return true;
       }
       break;
     case DRIZZLE_TYPE_MICROTIME:
@@ -371,7 +369,7 @@ bool CreateField::setDefaultValue(Item *default_value_item,
     if (res->length())
     {
       my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), field_name);
-      return(true);
+      return true;
     }
   }
 

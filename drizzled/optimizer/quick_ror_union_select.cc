@@ -43,7 +43,7 @@ optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
   head= table;
   rowid_length= table->cursor->ref_length;
   record= head->record[0];
-  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+  alloc.init(session->variables.range_alloc_block_size);
   session_param->mem_root= &alloc;
 }
 
@@ -69,14 +69,8 @@ class optimizer::compare_functor
 
 int optimizer::QuickRorUnionSelect::init()
 {
-  queue=
-    new priority_queue<optimizer::QuickSelectInterface *,
-                       vector<optimizer::QuickSelectInterface *>,
-                       optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc.alloc_root(2 * head->cursor->ref_length)))
-  {
-    return 0;
-  }
+  queue= new priority_queue<QuickSelectInterface*, vector<QuickSelectInterface*>, compare_functor>(compare_functor(this));
+  cur_rowid= alloc.alloc(2 * head->cursor->ref_length);
   prev_rowid= cur_rowid + head->cursor->ref_length;
   return 0;
 }
@@ -84,7 +78,6 @@ int optimizer::QuickRorUnionSelect::init()
 
 int optimizer::QuickRorUnionSelect::reset()
 {
-  int error;
   have_prev_rowid= false;
   if (! scans_inited)
   {
@@ -116,7 +109,7 @@ int optimizer::QuickRorUnionSelect::reset()
       return 0;
     }
     
-    error= (*it)->get_next();
+    int error= (*it)->get_next();
     if (error)
     {
       if (error == HA_ERR_END_OF_FILE)
@@ -137,11 +130,9 @@ int optimizer::QuickRorUnionSelect::reset()
 }
 
 
-bool
-optimizer::QuickRorUnionSelect::push_quick_back(QuickSelectInterface *quick_sel_range)
+void optimizer::QuickRorUnionSelect::push_quick_back(QuickSelectInterface *quick_sel_range)
 {
   quick_selects.push_back(quick_sel_range);
-  return false;
 }
 
 

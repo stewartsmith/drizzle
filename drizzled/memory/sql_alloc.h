@@ -17,46 +17,61 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-
 #pragma once
 
-#include <unistd.h>
 #include <drizzled/memory/root.h>
-
 #include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace memory {
 
-void init_sql_alloc(Root *root, size_t block_size, size_t pre_alloc_size);
-void *sql_alloc(size_t);
-void *sql_calloc(size_t);
-char *sql_strdup(const char *str);
-char *sql_strmake(const char *str, size_t len);
-void *sql_memdup(const void * ptr, size_t size);
+void* sql_alloc(size_t);
+void* sql_calloc(size_t);
+char* sql_strdup(const char*);
+char* sql_strmake(const char*, size_t);
+void* sql_memdup(const void*, size_t);
 
 class DRIZZLED_API SqlAlloc
 {
 public:
-  static void *operator new(size_t size);
-  static void *operator new[](size_t size);
-  static void *operator new[](size_t size, Root *mem_root);
-  static void *operator new(size_t size, Root *mem_root);
-  static void operator delete(void *, size_t)
-  {  }
-  static void operator delete(void *, Root *)
-  {  }
-  static void operator delete[](void *, Root *)
-  {  }
-  static void operator delete[](void *, size_t)
-  {  }
-  SqlAlloc() {}
-  /**
-   * @TODO: Make this virtual... but List<> must be fixed first
-   */
-  ~SqlAlloc() {}
+  static void *operator new(size_t size)
+  {
+    return memory::sql_alloc(size);
+  }
 
+  static void *operator new[](size_t size)
+  {
+    return memory::sql_alloc(size);
+  }
+
+  static void *operator new[](size_t size, Root& root)
+  {
+    return root.alloc(size);
+  }
+
+  static void *operator new(size_t size, Root& root)
+  {
+    return root.alloc(size);
+  }
+
+  static void *operator new[](size_t size, Root* root)
+  {
+    return root->alloc(size);
+  }
+
+  static void *operator new(size_t size, Root* root)
+  {
+    return root->alloc(size);
+  }
+
+  static void operator delete(void*, size_t)
+  {  }
+  static void operator delete(void*, Root*)
+  {  }
+  static void operator delete[](void*, Root*)
+  {  }
+  static void operator delete[](void*, size_t)
+  {  }
 };
 
 }

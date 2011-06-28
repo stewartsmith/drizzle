@@ -490,7 +490,7 @@ public:
   bool is_executed() const { return executed; }
   bool no_rows();
   virtual enum_engine_type engine_type() { return SINGLE_SELECT_ENGINE; }
-  bool save_join_if_explain();
+  void save_join_if_explain();
 
   friend class subselect_hash_sj_engine;
   friend class Item_in_subselect;
@@ -676,7 +676,7 @@ public:
   ~subselect_hash_sj_engine();
 
   bool init_permanent(List<Item> *tmp_columns);
-  bool init_runtime();
+  void init_runtime();
   void cleanup();
   int prepare() { return 0; }
   int exec();

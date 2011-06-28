@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_type_holder::Item_type_holder(Session *session, Item *item)
   :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))
@@ -149,7 +148,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
                  item->collation.collation->name,
                  item->collation.derivation_name(),
                  "UNION");
-        return(true);
+        return true;
       }
       /*
         To figure out max_length, we have to take into account possible
@@ -196,7 +195,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
   /* Remember decimal integer part to be used in DECIMAL_RESULT handleng */
   prev_decimal_int_part= decimal_int_part();
 
-  return(false);
+  return false;
 }
 
 
