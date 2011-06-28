@@ -348,8 +348,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
     if (cmp >= 0 && tmp->cmp_min_to_min(key2) < 0)
     {						// tmp.min <= x < key2.min
       optimizer::SEL_ARG *new_arg= tmp->clone_first(key2);
-      if (! new_arg)
-        return 0;				// OOM
       if ((new_arg->next_key_part= key1->next_key_part))
         new_arg->increment_use_count(key1->use_count+1);
       tmp->copy_min_to_min(key2);
@@ -363,8 +361,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
       if (tmp->cmp_min_to_min(&key) > 0)
       {						// key.min <= x < tmp.min
         optimizer::SEL_ARG *new_arg= key.clone_first(tmp);
-        if (! new_arg)
-          return 0;				// OOM
         if ((new_arg->next_key_part=key.next_key_part))
           new_arg->increment_use_count(key1->use_count+1);
         key1= key1->insert(new_arg);
@@ -398,8 +394,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
       else
       {
         optimizer::SEL_ARG *new_arg= tmp->clone_last(&key); // tmp.min <= x <= key.max
-        if (! new_arg)
-          return 0;				// OOM
         tmp->copy_max_to_min(&key);
         tmp->increment_use_count(key1->use_count+1);
         /* Increment key count as it may be used for next loop */

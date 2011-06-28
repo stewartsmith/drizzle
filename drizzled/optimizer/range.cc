@@ -291,8 +291,8 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
 static
 optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree);
 
-static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param, 
-                                     optimizer::SEL_TREE *tree1, 
+static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param,
+                                     optimizer::SEL_TREE *tree1,
                                      optimizer::SEL_TREE *tree2);
 
 static optimizer::SEL_ARG *sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
@@ -310,8 +310,8 @@ static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
                              uint32_t length);
 
-bool sel_trees_can_be_ored(optimizer::SEL_TREE *tree1, 
-                           optimizer::SEL_TREE *tree2, 
+bool sel_trees_can_be_ored(optimizer::SEL_TREE *tree1,
+                           optimizer::SEL_TREE *tree2,
                            optimizer::RangeParameter *param);
 
 
@@ -370,7 +370,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 }
 
 
-optimizer::SqlSelect::SqlSelect() 
+optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
@@ -407,17 +407,17 @@ optimizer::SqlSelect::~SqlSelect()
 }
 
 
-bool optimizer::SqlSelect::check_quick(Session *session, 
+bool optimizer::SqlSelect::check_quick(Session *session,
                                        bool force_quick_range,
                                        ha_rows limit)
 {
   key_map tmp;
   tmp.set();
-  return (test_quick_select(session, 
-                           tmp, 
-                           0, 
+  return (test_quick_select(session,
+                           tmp,
+                           0,
                            limit,
-                           force_quick_range, 
+                           force_quick_range,
                            false) < 0);
 }
 
@@ -2138,14 +2138,14 @@ static optimizer::SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
 */
 static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
                                   Item_func *cond_func,
-                                  Field *field, 
+                                  Field *field,
                                   Item *value,
-                                  Item_result cmp_type, 
+                                  Item_result cmp_type,
                                   bool inv)
 {
   optimizer::SEL_TREE *tree= NULL;
 
-  switch (cond_func->functype()) 
+  switch (cond_func->functype())
   {
 
   case Item_func::NE_FUNC:
@@ -2158,25 +2158,25 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
     {
       if (inv)
       {
-        tree= get_ne_mm_tree(param, 
-                             cond_func, 
-                             field, 
+        tree= get_ne_mm_tree(param,
+                             cond_func,
+                             field,
                              cond_func->arguments()[1],
-                             cond_func->arguments()[2], 
+                             cond_func->arguments()[2],
                              cmp_type);
       }
       else
       {
-        tree= get_mm_parts(param, 
-                           cond_func, 
-                           field, 
+        tree= get_mm_parts(param,
+                           cond_func,
+                           field,
                            Item_func::GE_FUNC,
 		                       cond_func->arguments()[1],
                            cmp_type);
         if (tree)
         {
-          tree= tree_and(param, 
-                         tree, 
+          tree= tree_and(param,
+                         tree,
                          get_mm_parts(param, cond_func, field,
 					               Item_func::LE_FUNC,
 					               cond_func->arguments()[2],
@@ -2185,15 +2185,15 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
       }
     }
     else
-      tree= get_mm_parts(param, 
-                         cond_func, 
+      tree= get_mm_parts(param,
+                         cond_func,
                          field,
                          (inv ?
                           (value == (Item*)1 ? Item_func::GT_FUNC :
                                                Item_func::LT_FUNC):
                           (value == (Item*)1 ? Item_func::LE_FUNC :
                                                Item_func::GE_FUNC)),
-                         cond_func->arguments()[0], 
+                         cond_func->arguments()[0],
                          cmp_type);
     break;
   }
@@ -2262,10 +2262,10 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         do
         {
           func->array->value_to_item(i, value_item);
-          tree= get_mm_parts(param, 
-                             cond_func, 
+          tree= get_mm_parts(param,
+                             cond_func,
                              field, Item_func::LT_FUNC,
-                             value_item, 
+                             value_item,
                              cmp_type);
           if (! tree)
             break;
@@ -2512,8 +2512,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
       tree=0;
-      Item *item;
-      while ((item=li++))
+      while (Item* item=li++)
       {
 	optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	if (param->session->is_fatal_error ||
@@ -2691,12 +2690,11 @@ get_mm_parts(optimizer::RangeParameter *param,
     if (field->eq(key_part->field))
     {
       optimizer::SEL_ARG *sel_arg=0;
-      if (!tree && !(tree=new optimizer::SEL_TREE()))
-        return 0;				// OOM
+      if (!tree)
+        tree= new optimizer::SEL_TREE;
       if (!value || !(value->used_tables() & ~param->read_tables))
       {
-        sel_arg= get_mm_leaf(param,cond_func,
-            key_part->field,key_part,type,value);
+        sel_arg= get_mm_leaf(param,cond_func, key_part->field,key_part,type,value);
         if (! sel_arg)
           continue;
         if (sel_arg->type == optimizer::SEL_ARG::IMPOSSIBLE)
@@ -2708,8 +2706,7 @@ get_mm_parts(optimizer::RangeParameter *param,
       else
       {
         // This key may be used later
-        if (! (sel_arg= new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY)))
-          return 0;			// OOM
+        sel_arg= new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY);
       }
       sel_arg->part=(unsigned char) key_part->part;
       tree->keys[key_part->key]=sel_add(tree->keys[key_part->key],sel_arg);
@@ -2783,8 +2780,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     goto end;
 
   if (param->using_real_indexes)
-    optimize_range= field->optimize_range(param->real_keynr[key_part->key],
-                                          key_part->part);
+    optimize_range= field->optimize_range(param->real_keynr[key_part->key], key_part->part);
   else
     optimize_range= true;
 
@@ -3070,7 +3066,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     Any predicate except "<=>"(null-safe equality operator) involving NULL as a
     constant is always FALSE
     Put IMPOSSIBLE Tree(null_element) here.
-  */  
+  */
   if (type != Item_func::EQUAL_FUNC && field->is_real_null())
   {
     tree= &optimizer::null_element;
@@ -3418,8 +3414,6 @@ key_and(optimizer::RangeParameter *param,
     if (! next || next->type != optimizer::SEL_ARG::IMPOSSIBLE)
     {
       optimizer::SEL_ARG *new_arg= e1->clone_and(e2);
-      if (! new_arg)
-        return &optimizer::null_element;			// End of memory
       new_arg->next_key_part=next;
       if (! new_tree)
       {
@@ -4226,12 +4220,11 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     optimizer::QuickRange *null_range= NULL;
 
     *ref->null_ref_key= 1;		// Set null byte then create a range
-    if (!(null_range= new (alloc)
+    null_range= new (alloc)
           optimizer::QuickRange(ref->key_buff, ref->key_length,
                                  make_prev_keypart_map(ref->key_parts),
                                  ref->key_buff, ref->key_length,
-                                 make_prev_keypart_map(ref->key_parts), EQ_RANGE)))
-      goto err;
+                                 make_prev_keypart_map(ref->key_parts), EQ_RANGE);
     *ref->null_ref_key= 0;		// Clear null byte
     quick->ranges.push_back(&null_range);
   }
@@ -4243,9 +4236,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
-  if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records,
-                                           &quick->mrr_buf_size,
-                                           &quick->mrr_flags, &cost))
+  if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records, &quick->mrr_buf_size, &quick->mrr_flags, &cost))
     goto err;
 
   return quick;

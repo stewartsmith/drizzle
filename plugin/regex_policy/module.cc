@@ -250,35 +250,23 @@ CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, Chec
 void CheckItem::setCachedResult(bool result)
 {
   // TODO: make the mutex per-cache
-  CheckMap *old_cache;
-  CheckMap *new_cache;
   boost::mutex::scoped_lock lock(check_cache_mutex, boost::defer_lock);
   lock.lock();
 
   // Copy the current one
-  if (*check_cache)
-  {
-    new_cache= new CheckMap(**check_cache);
-  }
-  else
-  {
-    new_cache= new CheckMap();
-  }
+  CheckMap* new_cache= *check_cache ? new CheckMap(**check_cache) : new CheckMap;
 
   // Update it
   (*new_cache)[key]= result;
   // Replace old
-  old_cache= *check_cache;
+  CheckMap* old_cache= *check_cache;
   *check_cache= new_cache;
 
   lock.unlock();
   has_cached_result= true;
   cached_result= result;
 
-  if (old_cache)
-  {
-    delete old_cache;
-  }
+  delete old_cache;
 }
 
 } /* namespace regex_policy */

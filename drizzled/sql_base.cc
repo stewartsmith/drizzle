@@ -2597,7 +2597,6 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
 {
   Field_iterator_table_ref it_1, it_2;
   Natural_join_column *nj_col_1, *nj_col_2;
-  bool result= true;
   bool first_outer_loop= true;
   /*
     Leaf table references to which new natural join columns are added
@@ -2619,7 +2618,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     /* true if field_name_1 is a member of using_fields */
     bool is_using_column_1;
     if (!(nj_col_1= it_1.get_or_create_column_ref(leaf_1)))
-      return(result);
+      return true;
     field_name_1= nj_col_1->name();
     is_using_column_1= using_fields &&
       test_if_string_in_list(field_name_1, using_fields);
@@ -2637,7 +2636,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Natural_join_column *cur_nj_col_2;
       const char *cur_field_name_2;
       if (!(cur_nj_col_2= it_2.get_or_create_column_ref(leaf_2)))
-        return(result);
+        return true;
       cur_field_name_2= cur_nj_col_2->name();
 
       /*
@@ -2657,7 +2656,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
             (found && (!using_fields || is_using_column_1)))
         {
           my_error(ER_NON_UNIQ_ERROR, MYF(0), field_name_1, session->where());
-          return(result);
+          return true;
         }
         nj_col_2= cur_nj_col_2;
         found= true;
@@ -2688,7 +2687,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Field *field_2= nj_col_2->field();
  
       if (!item_1 || !item_2)
-        return(result); // out of memory
+        return true; // out of memory
 
       /*
         In the case of no_wrap_view_item == 0, the created items must be
@@ -2808,7 +2807,6 @@ store_natural_using_join_columns(Session *session,
 {
   Field_iterator_table_ref it_1, it_2;
   Natural_join_column *nj_col_1, *nj_col_2;
-  bool result= true;
 
   assert(!natural_using_join->join_columns);
 
@@ -2848,7 +2846,7 @@ store_natural_using_join_columns(Session *session,
         if (not common_field)
         {
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr, session->where());
-          return result;
+          return true;
         }
         if (!my_strcasecmp(system_charset_info, common_field->name(), using_field_name_ptr))
           break;                                // Found match
@@ -2912,8 +2910,6 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
                              TableList *left_neighbor,
                              TableList *right_neighbor)
 {
-  bool result= true;
-
   /* Call the procedure recursively for each nested table reference. */
   if (table_ref->getNestedJoin())
   {
@@ -2956,9 +2952,8 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
         same_level_right_neighbor : right_neighbor;
 
       if (cur_table_ref->getNestedJoin() &&
-          store_top_level_join_columns(session, cur_table_ref,
-                                       real_left_neighbor, real_right_neighbor))
-        return(result);
+          store_top_level_join_columns(session, cur_table_ref, real_left_neighbor, real_right_neighbor))
+        return true;
       same_level_right_neighbor= cur_table_ref;
     }
   }
@@ -2990,7 +2985,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
       std::swap(table_ref_1, table_ref_2);
     if (mark_common_columns(session, table_ref_1, table_ref_2,
                             using_fields, &found_using_fields))
-      return(result);
+      return true;
 
     /*
       Swap the join operands back, so that we pick the columns of the second
@@ -3002,7 +2997,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
     if (store_natural_using_join_columns(session, table_ref, table_ref_1,
                                          table_ref_2, using_fields,
                                          found_using_fields))
-      return(result);
+      return true;
 
     /*
       Change NATURAL JOIN to JOIN ... ON. We do this for both operands
