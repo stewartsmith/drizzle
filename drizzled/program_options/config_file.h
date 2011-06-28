@@ -11,7 +11,6 @@
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/eof_iterator.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
@@ -23,10 +22,8 @@
 #include <utility>
 #include <set>
 
-namespace drizzled
-{
-namespace program_options
-{
+namespace drizzled {
+namespace program_options {
 
 typedef std::pair<std::string, std::string> option_result_pair;
 std::string parse_suffix(const std::string& arg_val);
@@ -490,5 +487,3 @@ parse_config_file(const char* filename,
 
 } /* namespace program_options */
 } /* namespace drizzled */
-
-
