@@ -75,6 +75,7 @@ doxerr.log
 drizzle-2010.01.1315.tar.gz
 drizzle.pot
 drizzled.gcno
+drizzled/config.h.gch
 drizzled/configmake.h
 drizzled/drizzled
 drizzled/drizzled_safe
