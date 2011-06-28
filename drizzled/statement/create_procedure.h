@@ -33,7 +33,6 @@ public:
   CreateProcedure(Session *in_session) : Statement(in_session)
   {
     set_command(SQLCOM_END);
-    cerr << "Hello,world" << endl;
   }
 
   bool execute();
