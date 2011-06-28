@@ -2,7 +2,7 @@
 # -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2010 Patrick Crews
+# Copyright (C) 2010, 2011 Patrick Crews
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

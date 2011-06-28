@@ -91,7 +91,7 @@ config_control_group.add_option(
     , dest="sysconfigfilepath"
     , action='store'
     , default=None # We want to have a file that will be our default defaults file...
-    , help="The file that specifies system configuration specs for dbqp to execute tests"
+    , help="The file that specifies system configuration specs for dbqp to execute tests (not yet implemented)"
     )
 
 parser.add_option_group(config_control_group)

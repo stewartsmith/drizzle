@@ -37,7 +37,7 @@ import commands
 
 import lib.test_mgmt.test_execution as test_execution
 
-class randgenTestExecutor(test_execution.testExecutor):
+class testExecutor(test_execution.testExecutor):
     """ randgen-specific testExecutor 
 
     """

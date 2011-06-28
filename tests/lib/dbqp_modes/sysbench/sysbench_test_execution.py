@@ -36,7 +36,7 @@ import commands
 
 import lib.test_mgmt.test_execution as test_execution
 
-class sysbenchTestExecutor(test_execution.testExecutor):
+class testExecutor(test_execution.testExecutor):
     """ sysbench-specific testExecutor 
         
     """

@@ -78,7 +78,8 @@ EXTRA_DIST += \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
         ${srcdir}/tests/lib/*.py \
-	${srcdir}/tests/lib/dbqp_modes/drizzle_test_run/*.py \
+	${srcdir}/tests/lib/dbqp_modes/crashme/*.py \
+	${srcdir}/tests/lib/dbqp_modes/dtr/*.py \
 	${srcdir}/tests/lib/dbqp_modes/randgen/*.py \
 	${srcdir}/tests/lib/dbqp_modes/sqlbench/*py \
 	${srcdir}/tests/lib/dbqp_modes/sysbench/*py \

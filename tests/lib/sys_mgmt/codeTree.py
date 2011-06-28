@@ -2,7 +2,7 @@
 # -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2010 Patrick Crews
+# Copyright (C) 2010, 2011 Patrick Crews
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,7 +144,7 @@ class drizzleTree(codeTree):
     def get_ld_lib_paths(self):
         """ Return a list of paths we want added to LD_LIB variables
 
-            These are processed later by the system manager, but we want to 
+            These are processed later at the server_manager level, but we want to 
             specify them here (for a drizzle source tree) and now
   
         """
@@ -163,5 +163,131 @@ class drizzleTree(codeTree):
         else:
             ld_lib_paths = [ os.path.join(self.basedir,"lib")]
         return ld_lib_paths
+
+class mysqlTree(codeTree):
+    """ What a MySQL code tree should look like to the test-runner
+    
+    """
+
+    def __init__(self, variables,system_manager):
+        self.system_manager = system_manager
+        self.logging = self.system_manager.logging
+        self.skip_keys = ['ld_lib_paths']
+        self.debug = variables['debug']
+        self.verbose = variables['verbose']
+        self.basedir = self.system_manager.find_path([os.path.abspath(variables['basedir'][0])])
+        self.source_dist = os.path.isdir(os.path.join(self.basedir, 'mysqld'))
+        self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
+        self.top_builddir = variables['topbuilddir']
+        self.testdir = self.system_manager.find_path([os.path.abspath(variables['testdir'])])
+        self.clientbindir = self.system_manager.find_path([os.path.join(self.basedir, 'client_release')
+                                                         , os.path.join(self.basedir, 'client_debug')
+                                                         , os.path.join(self.basedir, 'client')
+                                                         , os.path.join(self.basedir, 'bin')])
+        self.charsetdir = self.system_manager.find_path([os.path.join(self.basedir, 'mysql/charsets')
+                                                       , os.path.join(self.basedir, 'sql/share/charsets')
+                                                       , os.path.join(self.basedir, 'share/charsets')])
+
+        self.srcdir = self.system_manager.find_path([self.basedir])
+        self.suite_paths = variables['suitepaths']
+
+        self.mysql_client = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                           'mysql')])
+
+        self.mysqldump = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                        'mysqldump')])
+
+        self.mysqlimport = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                          'mysqlimport')])
+
+        self.mysqladmin = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                         'mysqladmin')])
+
+        self.mysql_server = self.system_manager.find_path([ os.path.join(self.basedir, '/sql/mysqld-debug')
+                                                          , os.path.join(self.basedir, '/libexec/mysqld-debug')
+                                                          , os.path.join(self.basedir, '/sbin/mysqld-debug')
+                                                          , os.path.join(self.basedir, '/bin/mysqld-debug')
+                                                          , os.path.join(self.basedir, '/sql/mysqld')
+                                                          , os.path.join(self.basedir, '/libexec/mysqld')
+                                                          , os.path.join(self.basedir, '/sbin/mysqld')
+                                                          , os.path.join(self.basedir, '/bin/mysqld')
+                                                          , os.path.join(self.basedir, '/sql/mysqld-max-nt')
+                                                          , os.path.join(self.basedir, '/libexec/mysqld-max-nt')
+                                                          , os.path.join(self.basedir, '/sbin/mysqld-max-nt')
+                                                          , os.path.join(self.basedir, '/bin/mysqld-max-nt')
+                                                          , os.path.join(self.basedir, '/sql/mysqld-max')
+                                                          , os.path.join(self.basedir, '/libexec/mysqld-max')
+                                                          , os.path.join(self.basedir, '/sbin/mysqld-max')
+                                                          , os.path.join(self.basedir, '/bin/mysqld-max')
+                                                          , os.path.join(self.basedir, '/sql/mysqld-nt')
+                                                          , os.path.join(self.basedir, '/libexec/mysqld-nt')
+                                                          , os.path.join(self.basedir, '/sbin/mysqld-nt')
+                                                          , os.path.join(self.basedir, '/bin/mysqld-nt')
+                                                          ])
+
+
+
+        self.mysqlslap = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                     'mysqlslap')])
+
+        self.mysqltest = self.system_manager.find_path([os.path.join(self.clientbindir,
+                                                   'mysqltest')])
+
+        self.server_version_string = None
+        self.server_executable = None
+        self.server_version = None
+        self.server_compile_os = None
+        self.server_platform = None
+        self.server_compile_comment = None
+        self.type = 'mysql'
+
+        self.process_server_version()
+        self.ld_lib_paths = self.get_ld_lib_paths()
+         
+        self.report()
+
+        self.logging.debug_class(self)
+
+    def report(self):
+        self.logging.info("Using mysql source tree:")
+        report_keys = ['basedir'
+                      ,'clientbindir'
+                      ,'testdir'
+                      ,'server_version'
+                      ,'server_compile_os'
+                      ,'server_platform'
+                      ,'server_comment']
+        for key in report_keys:
+            self.logging.info("%s: %s" %(key, vars(self)[key]))
+        
+    def process_server_version(self):
+        """ Get the server version number from the found server executable """
+        (retcode, self.server_version_string) = self.system_manager.execute_cmd(("%s --no-defaults --version" %(self.mysql_server)))
+        # This is a bit bobo, but we're doing it, so nyah
+        # TODO fix this : )
+        self.server_executable, data_string = [data_item.strip() for data_item in self.server_version_string.split('Ver ')]
+        self.server_version, data_string = [data_item.strip() for data_item in data_string.split('for ')]
+        self.server_compile_os, data_string = [data_item.strip() for data_item in data_string.split(' on')]
+        self.server_platform = data_string.split(' ')[0].strip()
+        self.server_comment = data_string.replace(self.server_platform,'').strip()
+
+    def get_ld_lib_paths(self):
+        """ Return a list of paths we want added to LD_LIB variables
+
+            These are processed later at the server_manager level, but we want to 
+            specify them here (for a mysql source tree) and now
+  
+        """
+        ld_lib_paths = []
+        if self.source_dist:
+            ld_lib_paths = [ os.path.join(self.basedir,"libmysql/.libs/")
+                           , os.path.join(self.basedir,"libmysql_r/.libs")
+                           , os.path.join(self.basedir,"zlib/.libs")
+                           ]
+        else:
+            ld_lib_paths = [ os.path.join(self.basedir,"lib")
+                           , os.path.join(self.basedir,"lib/mysql")]
+        return ld_lib_paths
+
 
         

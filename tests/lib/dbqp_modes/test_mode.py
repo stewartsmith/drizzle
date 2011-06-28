@@ -34,60 +34,35 @@ def handle_mode(variables, system_manager):
 
     """
 
-    test_mode = variables['mode']
+    test_mode = variables['mode'].strip()
     system_manager.logging.info("Using testing mode: %s" %test_mode)
 
-    # drizzle-test-run mode - the default
-    if test_mode == 'dtr':
-        # DTR mode - this is what we are coding to initially
-        # We are just setting the code up this way to hopefully make
-        # other coolness easier in the future
-
-        # get our mode-specific testManager and Executor
-        from drizzle_test_run.dtr_test_management import testManager
-        from drizzle_test_run.dtr_test_execution import testExecutor as testExecutor
-
-    elif test_mode == 'randgen':
-        # randgen mode - we run the randgen grammar against
-        # the specified server configs and report the randgen error code
-
-        # get manager and executor
-        from randgen.randgen_test_management import testManager
-        from randgen.randgen_test_execution import randgenTestExecutor as testExecutor
-
-    elif test_mode == 'sysbench':
-        # sysbench mode - we have a standard server setup 
-        # and a variety of concurrencies we want to run
-
-        # get manager and executor
-        from sysbench.sysbench_test_management import testManager
-        from sysbench.sysbench_test_execution import sysbenchTestExecutor as testExecutor
-
-    elif test_mode == 'sqlbench':
-        # sqlbench mode - we execute all test sql-bench tests
-        # - run-all-tests
-
-        # get manager and executor
-        from sqlbench.sqlbench_test_management import testManager
-        from sqlbench.sqlbench_test_execution import sqlbenchTestExecutor as testExecutor
-
-    elif test_mode == 'crashme':
-        # crashme mode - see if the server lives : )
-        # get manager and executor
-        from sqlbench.sqlbench_test_management import crashmeTestManager as testManager
-        from sqlbench.sqlbench_test_execution import crashmeTestExecutor as testExecutor
-
-    elif test_mode == 'cleanup':
+    if test_mode == 'cleanup':
         # cleanup mode - we try to kill any servers whose pid's we detect
         # in our workdir.  Might extend to other things (file cleanup, etc)
         # at some later point
         system_manager.cleanup(exit=True)
- 
-    else:
-        system_manager.logging.error("unknown mode argument: %s" %variables['mode'])
-        sys.exit(1)
+
+    else: # we expect something from dbqp_modes
+        supported_modes = [ 'dtr'
+                          , 'randgen'
+                          , 'sysbench'
+                          , 'sqlbench'
+                          , 'crashme'
+                          , 'native'
+                          ]
+        if test_mode not in supported_modes:
+            system_manager.logging.error("invalid mode argument: %s" %test_mode)
+            sys.exit(1)
+        
+        mgmt_module = "lib.dbqp_modes.%s.%s_test_management" %(test_mode, test_mode)
+        tmp = __import__(mgmt_module, globals(), locals(), ['testManager'], -1)
+        testManager = tmp.testManager
+
+        exec_module = "%s.%s_test_execution" %(test_mode, test_mode)
+        tmp = __import__(exec_module, globals(), locals(), ['testExecutor'], -1)
+        testExecutor = tmp.testExecutor        
 
     test_manager = testManager( variables, system_manager )
-
     return (test_manager, testExecutor)
 

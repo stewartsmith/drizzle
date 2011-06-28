@@ -2,7 +2,7 @@
 # -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2010 Patrick Crews
+# Copyright (C) 2010, 2011 Patrick Crews
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,10 +116,15 @@ class serverManager:
         server_name = self.get_server_name(requester)
 
         # initialize our new server_object
+        # get the right codeTree type from the code manager
+        code_tree = self.code_manager.get_tree(server_type, server_version)
+
+        # import the correct server type object
         if server_type == 'drizzle':
-          # get the right codeTree type from the code manager
-          code_tree = self.code_manager.get_tree(server_type, server_version)
-          from lib.server_mgmt.drizzled import drizzleServer as server_type
+            from lib.server_mgmt.drizzled import drizzleServer as server_type
+        elif server_type == 'mysql':
+            from lib.server_mgmt.mysqld import mysqlServer as server_type
+
         new_server = server_type( server_name
                                 , self
                                 , code_tree
