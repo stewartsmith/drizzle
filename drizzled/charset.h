@@ -28,8 +28,7 @@
 #include <drizzled/visibility.h>
 #include <drizzled/definitions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define MY_CS_NAME_SIZE			32
 #define MY_CS_CTYPE_TABLE_SIZE		257
@@ -167,7 +166,7 @@ struct charset_info_st;
 /* See strings/charset_info_st.txt for information about this structure  */
 typedef struct my_collation_handler_st
 {
-  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
+  bool (*init)(charset_info_st*, unsigned char *(*alloc)(size_t));
   /* Collation routines */
   int     (*strnncoll)(const struct charset_info_st * const,
 		       const unsigned char *, size_t, const unsigned char *, size_t, bool);
@@ -205,7 +204,7 @@ typedef struct my_collation_handler_st
 /* See strings/charset_info_st.txt about information on this structure  */
 typedef struct my_charset_handler_st
 {
-  void* init_unused;
+  void (*init_unused)();
   /* Multibyte routines */
   uint32_t    (*ismbchar)(const struct charset_info_st * const, const char *, const char *);
   uint32_t    (*mbcharlen)(const struct charset_info_st * const, uint32_t c);

@@ -250,7 +250,15 @@ static const charset_info_st *get_internal_charset(uint32_t cs_number)
   if (not cs)
     return NULL;
   assert(not (not (cs->state & MY_CS_COMPILED) && not (cs->state & MY_CS_LOADED)));
-  return cs->state & MY_CS_AVAILABLE ? cs : NULL;
+  if (not (cs->state & MY_CS_AVAILABLE))
+    return NULL;
+  if (not (cs->state & MY_CS_READY))
+  {
+    if (cs->coll->init && cs->coll->init(cs, cs_alloc))
+      return NULL;
+    cs->state|= MY_CS_READY;
+  }
+  return cs;
 }
 
 const charset_info_st *get_charset(uint32_t cs_number)
