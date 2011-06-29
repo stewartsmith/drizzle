@@ -84,17 +84,17 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
     in which case push_warnings() has already called this function.
 */
 
-void drizzle_reset_errors(Session *session, bool force)
+void drizzle_reset_errors(Session& session, bool force)
 {
-  if (session->getQueryId() != session->getWarningQueryId() || force)
+  if (session.getQueryId() != session.getWarningQueryId() || force)
   {
-    session->setWarningQueryId(session->getQueryId());
-    session->warn_root.free_root(MYF(0));
-    memset(session->warn_count, 0, sizeof(session->warn_count));
+    session.setWarningQueryId(session.getQueryId());
+    session.warn_root.free_root(MYF(0));
+    memset(session.warn_count, 0, sizeof(session.warn_count));
     if (force)
-      session->total_warn_count= 0;
-    session->main_da().m_warn_list.clear();
-    session->row_count= 1; // by default point to row 1
+      session.total_warn_count= 0;
+    session.main_da().m_warn_list.clear();
+    session.row_count= 1; // by default point to row 1
   }
 }
 
@@ -122,7 +122,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   }
 
   if (session->getQueryId() != session->getWarningQueryId())
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, false);
   session->got_warning= 1;
 
   /* Abort if we are using strict mode and we are not using IGNORE */

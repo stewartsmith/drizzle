@@ -1939,9 +1939,7 @@ void Session::clear_error(bool full)
     main_da().reset_diagnostics_area();
 
   if (full)
-  {
-    drizzle_reset_errors(this, true);
-  }
+    drizzle_reset_errors(*this, true);
 }
 
 void Session::clearDiagnostics()

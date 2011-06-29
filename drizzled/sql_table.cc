@@ -1830,7 +1830,7 @@ send_result:
         if (session->getClient()->flush())
           goto err;
       }
-      drizzle_reset_errors(session, true);
+      drizzle_reset_errors(*session, true);
     }
     session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
