@@ -977,9 +977,13 @@ try_and_report("Automatic row id", "automatic_rowid",
    ["NOW","now","now()",0,2],           # Any value is acceptable
    ["CURDATE","curdate","curdate()",0,2],
    ["CURTIME","curtime","curtime()",0,2],
+   # Drizzle is different than MySQL in displaying timestamps
+   # ["TIMESTAMPADD","timestampadd",
+   #  "timestampadd(SQL_TSI_SECOND,1,'1997-01-01 00:00:00')",
+   #  "1997-01-01 00:00:01",1],
    ["TIMESTAMPADD","timestampadd",
     "timestampadd(SQL_TSI_SECOND,1,'1997-01-01 00:00:00')",
-    "1997-01-01 00:00:01",1],
+     "1997-01-01 00:00:01.000000",1],
    ["TIMESTAMPDIFF","timestampdiff",
     "timestampdiff(SQL_TSI_SECOND,'1997-01-01 00:00:01',".
      " '1997-01-01 00:00:02')","1",0],
@@ -1568,8 +1572,12 @@ if ($limits{'type_sql_date'} eq 'yes')
 	   "CHAR(a,EUR)",'16.08.1963',0],
 	  ["MAKEDATE",'makedate',"MAKEDATE(1963,228)"
 	   ,'make_date_r(1963,08,16)',0],
+	  # Drizzle is different than MySQL in handling TO_DAYS
+	  # Drizzle calculates the Julian Day Number
+	  # ["TO_DAYS","to_days",
+	  #   "to_days(make_date(1996,01,01))",729024,0],
 	  ["TO_DAYS","to_days",
-	   "to_days(make_date(1996,01,01))",729024,0],
+	    "to_days(make_date(1996,01,01))",2450084,0],
 	  ["ADD_MONTHS","add_months",
 	   "add_months(make_date(1997,01,01),1)","make_date_r(1997,02,01)",0], 
 	      # oracle the date plus n months
