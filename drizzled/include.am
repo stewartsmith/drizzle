@@ -916,7 +916,6 @@ noinst_LTLIBRARIES+= \
 		     drizzled/libtypelib.la
 
 drizzled_libcharset_la_SOURCES= \
-				drizzled/charset-def.cc \
 				drizzled/charset.cc \
 				drizzled/ctype-bin.cc \
 				drizzled/ctype-mb.cc \

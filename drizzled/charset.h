@@ -205,7 +205,7 @@ typedef struct my_collation_handler_st
 /* See strings/charset_info_st.txt about information on this structure  */
 typedef struct my_charset_handler_st
 {
-  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
+  void* init_unused;
   /* Multibyte routines */
   uint32_t    (*ismbchar)(const struct charset_info_st * const, const char *, const char *);
   uint32_t    (*mbcharlen)(const struct charset_info_st * const, uint32_t c);
@@ -320,11 +320,9 @@ extern bool resolve_charset(const char *cs_name,
 extern bool resolve_collation(const char *cl_name,
 			     const charset_info_st *default_cl,
 			     const charset_info_st **cl);
-extern void free_charsets(void);
+extern void free_charsets();
 extern char *get_charsets_dir(char *buf);
 extern bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2);
-extern bool init_compiled_charsets(myf flags);
-extern void add_compiled_collation(charset_info_st *cs);
 extern size_t escape_string_for_drizzle(const charset_info_st *charset_info,
 					char *to, size_t to_length,
 					const char *from, size_t length);
