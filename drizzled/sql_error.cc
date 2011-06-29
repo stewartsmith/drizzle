@@ -147,9 +147,9 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   {
     /* We have to use warn_root, as mem_root is freed after each query */
     err= new (session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
-    session->main_da().m_warn_list.push_back(err, session->warn_root);
+    session->main_da().m_warn_list.push_back(err);
   }
-  session->warn_count[(uint32_t) level]++;
+  session->warn_count[level]++;
   session->total_warn_count++;
 
   return err;
@@ -220,8 +220,7 @@ bool show_warnings(Session *session,
 
   unit->set_limit(sel);
 
-  List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
-  while (DRIZZLE_ERROR* err= it++)
+  BOOST_FOREACH(DRIZZLE_ERROR* err, session->main_da().m_warn_list)
   {
     /* Skip levels that the user is not interested in */
     if (! levels_to_show.test(err->level))

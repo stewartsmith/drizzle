@@ -1818,14 +1818,11 @@ send_result:
     session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
-      DRIZZLE_ERROR *err;
-      while ((err= it++))
+      BOOST_FOREACH(DRIZZLE_ERROR* err, session->main_da().m_warn_list)
       {
         session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
-        session->getClient()->store(warning_level_names[err->level].str,
-                               warning_level_names[err->level].length);
+        session->getClient()->store(warning_level_names[err->level].str, warning_level_names[err->level].length);
         session->getClient()->store(err->msg);
         if (session->getClient()->flush())
           goto err;
