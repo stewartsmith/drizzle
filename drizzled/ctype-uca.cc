@@ -41,8 +41,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
@@ -7814,8 +7813,7 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
     */
     uint32_t size= 0x40*0x40*sizeof(uint16_t) + 256;
     char *contraction_flags;
-    if (!(cs->contractions= (uint16_t*) (*alloc)(size)))
-        return 1;
+    cs->contractions= (uint16_t*) (*alloc)(size);
     memset(cs->contractions, 0, size);
     contraction_flags= ((char*) cs->contractions) + 0x40*0x40;
     for (i=0; i < rc; i++)
@@ -7859,10 +7857,10 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
   Should work for any character set.
 */
 
-bool my_coll_init_uca(charset_info_st *cs, cs_alloc_func alloc)
+static bool my_coll_init_uca(charset_info_st& cs, cs_alloc_func alloc)
 {
-  cs->pad_char= ' ';
-  return create_tailoring(cs, alloc);
+  cs.pad_char= ' ';
+  return create_tailoring(&cs, alloc);
 }
 
 int my_strnncoll_any_uca(const charset_info_st * const cs,

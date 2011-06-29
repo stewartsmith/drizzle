@@ -254,7 +254,7 @@ static const charset_info_st *get_internal_charset(uint32_t cs_number)
     return NULL;
   if (not (cs->state & MY_CS_READY))
   {
-    if (cs->coll->init && cs->coll->init(cs, cs_alloc))
+    if (cs->coll->init && cs->coll->init(*cs, cs_alloc))
       return NULL;
     cs->state|= MY_CS_READY;
   }

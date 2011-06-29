@@ -166,7 +166,7 @@ struct charset_info_st;
 /* See strings/charset_info_st.txt for information about this structure  */
 typedef struct my_collation_handler_st
 {
-  bool (*init)(charset_info_st*, unsigned char *(*alloc)(size_t));
+  bool (*init)(charset_info_st&, unsigned char *(*alloc)(size_t));
   /* Collation routines */
   int     (*strnncoll)(const struct charset_info_st * const,
 		       const unsigned char *, size_t, const unsigned char *, size_t, bool);
@@ -573,8 +573,6 @@ size_t my_casedn_utf8mb4(const charset_info_st * const cs,
                   char *src, size_t srclen,
                   char *dst, size_t dstlen);
 
-
-bool my_coll_init_uca(charset_info_st *cs, cs_alloc_func alloc);
 
 int my_strnncoll_any_uca(const charset_info_st * const cs,
                          const unsigned char *s, size_t slen,
