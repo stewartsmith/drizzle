@@ -25,13 +25,12 @@ namespace session {
 class DRIZZLED_API Times
 {
 public:
-	Times() :
+  Times() :
     _epoch(boost::gregorian::date(1970, 1 ,1))
-	{
-    
+  {
     _connect_time = boost::posix_time::microsec_clock::universal_time();
-		utime_after_lock = 0;
-	}
+    utime_after_lock = 0;
+  }
 
   uint64_t getConnectMicroseconds() const;
   uint64_t getConnectSeconds() const;
@@ -41,10 +40,10 @@ public:
   void set_time_after_lock();
   void set_end_timer(Session&);
   uint64_t getElapsedTime() const;
-  type::Time::epoch_t getCurrentTimestamp(bool actual= true) const;
-  type::Time::epoch_t getCurrentTimestampEpoch() const;
-  type::Time::epoch_t getCurrentTimestampEpoch(type::Time::usec_t& fraction_arg) const;
-  type::Time::epoch_t query_start();
+  type::epoch_t getCurrentTimestamp(bool actual= true) const;
+  type::epoch_t getCurrentTimestampEpoch() const;
+  type::epoch_t getCurrentTimestampEpoch(type::usec_t& fraction_arg) const;
+  type::epoch_t query_start();
   boost::posix_time::ptime start_timer() const;
   boost::posix_time::ptime epoch() const;
 

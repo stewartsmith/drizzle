@@ -738,7 +738,7 @@ void init_time(void)
   time_t seconds;
   struct tm *l_time,tm_tmp;
   type::Time my_time;
-  type::Time::epoch_t epoch;
+  type::epoch_t epoch;
   bool not_used;
 
   seconds= (time_t) time((time_t*) 0);
@@ -932,7 +932,7 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
   }
 #endif
 
-  epoch= (type::Time::epoch_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
+  epoch= (type::epoch_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
                    (long) days_at_timestart)*86400L + (long) t->hour*3600L +
                   (long) (t->minute*60 + t->second)) + (time_t) my_time_zone -
                  3600);
@@ -1046,12 +1046,12 @@ void Time::store(const struct timeval &from)
 }
 
 
-void Time::store(const type::Time::epoch_t &from, bool use_localtime)
+void Time::store(const type::epoch_t &from, bool use_localtime)
 {
   store(from, 0, use_localtime);
 }
 
-void Time::store(const type::Time::epoch_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
+void Time::store(const type::epoch_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
 {
   epoch_t from= from_arg;
 

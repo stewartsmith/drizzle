@@ -278,7 +278,7 @@ String *Epoch::val_str(String *val_buffer, String *) const
 bool Epoch::get_date(type::Time &ltime, uint32_t) const
 {
   uint64_t temp;
-  type::Time::epoch_t time_temp;
+  type::epoch_t time_temp;
 
   unpack_num(temp);
   time_temp= temp;

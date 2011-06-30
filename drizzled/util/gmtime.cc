@@ -52,7 +52,7 @@ namespace util
 
 int _daylight = 0;                  // Non-zero if daylight savings time is used
 long _dstbias = 0;                  // Offset for Daylight Saving Time
-type::Time::epoch_t _timezone = 0;                 // Difference in seconds between GMT and local time
+type::epoch_t _timezone = 0;                 // Difference in seconds between GMT and local time
 const char *_tzname[2] = {"GMT", "GMT"};  // Standard/daylight savings time zone names
 
 const char *_days[] = 
@@ -89,7 +89,7 @@ const int _ytab[2][12] =
   {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 };
 
-struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
+struct tm *gmtime(const type::epoch_t &timer, struct tm *tmbuf)
 {
   uint64_t dayclock, dayno;
   int year = EPOCH_YR;
@@ -123,7 +123,7 @@ struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
   return tmbuf;
 }
 
-void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
+void gmtime(const type::epoch_t &timer, type::Time &tmbuf)
 {
   uint64_t dayclock, dayno;
   int32_t year= EPOCH_YR;
@@ -155,17 +155,17 @@ void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
   tmbuf.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 }
 
-void localtime(const type::Time::epoch_t &timer, type::Time &tmbuf)
+void localtime(const type::epoch_t &timer, type::Time &tmbuf)
 {
-  type::Time::epoch_t t;
+  type::epoch_t t;
 
   t = timer - _timezone;
   return util::gmtime(t, tmbuf);
 }
 
-struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf)
+struct tm *localtime(const type::epoch_t &timer, struct tm *tmbuf)
 {
-  type::Time::epoch_t t;
+  type::epoch_t t;
 
   t = timer - _timezone;
   return util::gmtime(t, tmbuf);

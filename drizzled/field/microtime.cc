@@ -90,7 +90,7 @@ int Microtime::store_time(type::Time &ltime, type::timestamp_t )
   long my_timezone;
   bool in_dst_time_gap;
 
-  type::Time::epoch_t time_tmp;
+  type::epoch_t time_tmp;
   ltime.convert(time_tmp, &my_timezone, &in_dst_time_gap, true);
   uint64_t tmp_seconds= time_tmp;
   uint32_t tmp_micro= ltime.second_part;
@@ -106,7 +106,7 @@ int Microtime::store(double from)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   uint64_t from_tmp= (uint64_t)from;
-  type::Time::usec_t fractional_seconds= (type::Time::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS;
+  type::usec_t fractional_seconds= (type::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS;
 
   MicroTimestamp temporal;
   if (not temporal.from_int64_t(from_tmp))
@@ -155,7 +155,7 @@ int Microtime::store(int64_t from, bool)
 double Microtime::val_real(void) const
 {
   uint64_t temp;
-  type::Time::usec_t micro_temp;
+  type::usec_t micro_temp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -204,7 +204,7 @@ int64_t Microtime::val_int(void) const
 String *Microtime::val_str(String *val_buffer, String *) const
 {
   uint64_t temp= 0;
-  type::Time::usec_t micro_temp= 0;
+  type::usec_t micro_temp= 0;
 
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
@@ -275,7 +275,7 @@ void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
 
-  type::Time::usec_t fractional_seconds= 0;
+  type::usec_t fractional_seconds= 0;
   uint64_t epoch_seconds= session->times.getCurrentTimestampEpoch(fractional_seconds);
 
   set_notnull();
