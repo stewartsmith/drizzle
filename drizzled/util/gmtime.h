@@ -29,10 +29,8 @@
 namespace drizzled {
 namespace util {
 
-tm *gmtime(const type::epoch_t &timer, tm *tmbuf);
-void gmtime(const type::epoch_t &timer, type::Time &tmbuf);
-tm *localtime(const type::epoch_t &timer, tm *tmbuf);
-void localtime(const type::epoch_t &timer,  type::Time &tmbuf);
+tm* gmtime(const type::epoch_t&, tm*);
+void gmtime(const type::epoch_t&, type::Time&);
 
 } /* namespace util */
 } /* namespace drizzled */

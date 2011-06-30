@@ -30,8 +30,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int check_time_range(type::Time *my_time, int *warning);
 
@@ -832,7 +831,7 @@ namespace type {
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, bool skip_timezone) const
+void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) const
 {
   uint32_t loop;
   int shift= 0;
@@ -938,15 +937,7 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
                  3600);
 
   current_timezone= my_time_zone;
-  if (skip_timezone)
-  {
-    util::gmtime(epoch, &tm_tmp);
-  }
-  else
-  {
-    util::localtime(epoch, &tm_tmp);
-  }
-
+  util::gmtime(epoch, &tm_tmp);
   l_time= &tm_tmp;
   for (loop=0;
        loop < 2 &&
@@ -966,14 +957,7 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
           (long) ((int) t->second - (int) l_time->tm_sec));
     current_timezone+= diff+3600;		/* Compensate for -3600 above */
     epoch+= (time_t) diff;
-    if (skip_timezone)
-    {
-      util::gmtime(epoch, &tm_tmp);
-    }
-    else
-    {
-      util::localtime(epoch, &tm_tmp);
-    }
+    util::gmtime(epoch, &tm_tmp);
     l_time=&tm_tmp;
   }
   /*
@@ -1046,24 +1030,15 @@ void Time::store(const struct timeval &from)
 }
 
 
-void Time::store(const type::epoch_t &from, bool use_localtime)
+void Time::store(type::epoch_t from)
 {
-  store(from, 0, use_localtime);
+  store(from, 0);
 }
 
-void Time::store(const type::epoch_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
+void Time::store(type::epoch_t from_arg, usec_t from_fractional_seconds)
 {
   epoch_t from= from_arg;
-
-  if (use_localtime)
-  {
-    util::localtime(from, *this);
-    _is_local_time= true;
-  }
-  else
-  {
-    util::gmtime(from, *this);
-  }
+  util::gmtime(from, *this);
 
   // Since time_t/epoch_t doesn't have fractional seconds, we have to
   // collect them outside of the gmtime function.
