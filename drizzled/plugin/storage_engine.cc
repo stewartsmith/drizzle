@@ -75,7 +75,7 @@ EngineVector &StorageEngine::getSchemaEngines()
   return g_schema_engines;
 }
 
-StorageEngine::StorageEngine(const std::string name_arg,
+StorageEngine::StorageEngine(const std::string &name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg) :
   Plugin(name_arg, "StorageEngine"),
   MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
