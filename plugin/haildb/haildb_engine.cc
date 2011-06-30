@@ -224,7 +224,7 @@ public:
 
   typedef std::map<std::string, HailDBTableShare*> HailDBMap;
   HailDBMap haildb_open_tables;
-  HailDBTableShare *findOpenTable(const std::string table_name);
+  HailDBTableShare *findOpenTable(const std::string &table_name);
   void addOpenTable(const std::string &table_name, HailDBTableShare *);
   void deleteOpenTable(const std::string &table_name);
 
@@ -462,7 +462,7 @@ int HailDBEngine::doRollback(Session* session, bool all)
   return 0;
 }
 
-HailDBTableShare *HailDBEngine::findOpenTable(const string table_name)
+HailDBTableShare *HailDBEngine::findOpenTable(const string &table_name)
 {
   HailDBMap::iterator find_iter=
     haildb_open_tables.find(table_name);
