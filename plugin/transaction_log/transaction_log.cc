@@ -95,7 +95,7 @@ using namespace google;
 
 TransactionLog *transaction_log= NULL; /* The singleton transaction log */
 
-TransactionLog::TransactionLog(const string in_log_file_path,
+TransactionLog::TransactionLog(const string &in_log_file_path,
                                uint32_t in_flush_frequency,
                                bool in_do_checksum) : 
     state(OFFLINE),
