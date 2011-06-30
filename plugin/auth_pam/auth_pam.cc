@@ -86,8 +86,7 @@ int auth_pam_talker(int num_msg,
       response[x].resp = strdup(userinfo->password);
       break;
     default:
-      if(response)
-        free(response);
+      free(response);
       return PAM_CONV_ERR;
     }
   }

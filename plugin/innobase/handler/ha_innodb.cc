@@ -385,8 +385,7 @@ public:
         // Throw here?
       }
       srv_free_paths_and_sizes();
-      if (internal_innobase_data_file_path)
-        free(internal_innobase_data_file_path);
+      free(internal_innobase_data_file_path);
     }
     
     /* These get strdup'd from vm variables */
@@ -2252,8 +2251,7 @@ innobase_init(
 
 mem_free_and_error:
     srv_free_paths_and_sizes();
-    if (internal_innobase_data_file_path)
-      free(internal_innobase_data_file_path);
+    free(internal_innobase_data_file_path);
     goto error;
   }
 
@@ -7968,9 +7966,7 @@ ha_innobase::free_foreign_key_create_info(
 /*======================================*/
   char* str)  /*!< in, own: create info string to free */
 {
-  if (str) {
-    free(str);
-  }
+  free(str);
 }
 
 /*******************************************************************//**

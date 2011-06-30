@@ -256,8 +256,7 @@ int main(int argc, char *argv[])
 
   drizzle_free(&(client.drizzle));
 
-  if (client.client_con_list != NULL)
-    free(client.client_con_list);
+  free(client.client_con_list);
 
   return 0;
 }

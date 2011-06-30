@@ -58,8 +58,7 @@ int mi_close(MI_INFO *info)
   myisam_open_list.remove(info);
 
   void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   if (flag)
   {
     if (share->kfile >= 0 &&

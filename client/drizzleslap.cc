@@ -731,8 +731,7 @@ burnin:
     option_cleanup(query_options);
 
 #ifdef HAVE_SMEM
-    if (shared_memory_base_name)
-      free(shared_memory_base_name);
+    free(shared_memory_base_name);
 #endif
 
   }
