@@ -121,12 +121,17 @@ std::vector<std::string> Context::start()
   {
     parsed_queries.push_back(query.substr(0, pos));
     if (query[pos+1] == ' ')
+    {
       query= query.substr(pos + 2, query.length());
+    }
     else
+    {
       query= query.substr(pos + 1, query.length());
+    }
   }
   parsed_queries.push_back(query); 
   query.clear();
+
   return parsed_queries;
 }
 
