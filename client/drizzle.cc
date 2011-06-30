@@ -549,6 +549,7 @@ static Commands commands[] = {
   /* Get bash-like expansion for some commands */
   Commands( "create table",     0, 0, 0, ""),
   Commands( "create database",  0, 0, 0, ""),
+  Commands( "create procedure",  0, 0, 0, ""),
   Commands( "show databases",   0, 0, 0, ""),
   Commands( "show fields from", 0, 0, 0, ""),
   Commands( "show keys from",   0, 0, 0, ""),
