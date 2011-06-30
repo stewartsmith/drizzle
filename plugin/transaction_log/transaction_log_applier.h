@@ -54,7 +54,7 @@ class WriteBuffer;
 class TransactionLogApplier: public drizzled::plugin::TransactionApplier 
 {
 public:
-  TransactionLogApplier(const std::string name_arg,
+  TransactionLogApplier(const std::string &name_arg,
                         TransactionLog *in_transaction_log,
                         TransactionLogIndex *in_transaction_log_index,
                         uint32_t in_num_write_buffers);
