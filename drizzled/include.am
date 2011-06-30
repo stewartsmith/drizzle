@@ -441,6 +441,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/statement/check.h \
 			      drizzled/statement/commit.h \
 			      drizzled/statement/create_index.h \
+			      drizzled/statement/create_procedure.h \
 			      drizzled/statement/create_schema.h \
 			      drizzled/statement/create_table.h \
 			      drizzled/statement/delete.h \
@@ -846,6 +847,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/statement/check.cc \
 			   drizzled/statement/commit.cc \
 			   drizzled/statement/create_index.cc \
+			   drizzled/statement/create_procedure.cc \
 			   drizzled/statement/create_schema.cc \
 			   drizzled/statement/create_table.cc \
 			   drizzled/statement/delete.cc \
