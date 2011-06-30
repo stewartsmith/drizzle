@@ -50,7 +50,7 @@ public:
     password_type(NONE)
   { }
 
-  User(const std::string username_arg):
+  User(const std::string &username_arg):
     password_type(NONE),
     _user(username_arg),
     _address("")
