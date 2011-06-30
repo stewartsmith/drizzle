@@ -58,7 +58,7 @@ class DRIZZLED_API TransactionalStorageEngine : public StorageEngine
 {
   friend class SEAPITester;
 public:
-  TransactionalStorageEngine(const std::string name_arg,
+  TransactionalStorageEngine(const std::string &name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual int startTransaction(Session *session, start_transaction_option_t options)
