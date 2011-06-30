@@ -17,7 +17,6 @@
 
 #include <boost/date_time.hpp>
 #include <drizzled/common_fwd.h>
-#include <drizzled/type/time.h>
 
 namespace drizzled {
 namespace session {
