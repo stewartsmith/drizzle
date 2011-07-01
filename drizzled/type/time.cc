@@ -734,15 +734,13 @@ static int check_time_range(type::Time *my_time, int *warning)
 */
 void init_time(void)
 {
-  time_t seconds;
-  struct tm *l_time,tm_tmp;
   type::Time my_time;
   type::epoch_t epoch;
-  bool not_used;
 
-  seconds= (time_t) time((time_t*) 0);
+  time_t seconds= time(NULL);
+  tm tm_tmp;
   localtime_r(&seconds, &tm_tmp);
-  l_time= &tm_tmp;
+  tm* l_time= &tm_tmp;
   my_time_zone=		3600;		/* Comp. for -3600 in my_gmt_sec */
   my_time.year=		(uint32_t) l_time->tm_year+1900;
   my_time.month=	(uint32_t) l_time->tm_mon+1;
@@ -753,7 +751,7 @@ void init_time(void)
   my_time.time_type=	type::DRIZZLE_TIMESTAMP_NONE;
   my_time.second_part=  0;
   my_time.neg=          false;
-  my_time.convert(epoch, &my_time_zone, &not_used); /* Init my_time_zone */
+  my_time.convert(epoch, &my_time_zone); /* Init my_time_zone */
 }
 
 
@@ -831,20 +829,18 @@ namespace type {
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) const
+void Time::convert(epoch_t &epoch, long *my_timezone) const
 {
-  uint32_t loop;
   int shift= 0;
-  type::Time tmp_time;
-  type::Time *t= &tmp_time;
   struct tm *l_time,tm_tmp;
-  long diff, current_timezone;
+  long diff;
 
   /*
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  tmp_time= *this;
+  type::Time tmp_time= *this;
+  type::Time* t= &tmp_time;
 
   if (not t->isValidEpoch())
   {
@@ -936,11 +932,11 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) con
                   (long) (t->minute*60 + t->second)) + (time_t) my_time_zone -
                  3600);
 
-  current_timezone= my_time_zone;
+  long current_timezone= my_time_zone;
   util::gmtime(epoch, &tm_tmp);
   l_time= &tm_tmp;
-  for (loop=0;
-       loop < 2 &&
+  int loop= 0;
+  for (; loop < 2 &&
 	 (t->hour != (uint32_t) l_time->tm_hour ||
 	  t->minute != (uint32_t) l_time->tm_min ||
           t->second != (uint32_t) l_time->tm_sec);
@@ -984,8 +980,6 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) con
       epoch+=3600 - t->minute*60 - t->second;	/* Move to next hour */
     else if (diff == -3600)
       epoch-=t->minute*60 + t->second;		/* Move to previous hour */
-
-    *in_dst_time_gap= true;
   }
   *my_timezone= current_timezone;
 

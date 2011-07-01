@@ -170,7 +170,7 @@ public:
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut);
-  void convert(type::epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) const;
+  void convert(type::epoch_t &epoch, long *my_timezone) const;
 
   void truncate(const timestamp_t arg);
 
