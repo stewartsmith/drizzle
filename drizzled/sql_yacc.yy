@@ -434,7 +434,6 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  PRECISION                     /* SQL-2003-R */
 %token  PREV_SYM
 %token  PRIMARY_SYM                   /* SQL-2003-R */
-%token  PROCEDURE
 %token  PROCESS
 %token  PROCESSLIST_SYM
 %token  QUARTER_SYM
@@ -893,10 +892,6 @@ create:
           opt_create_database_options
           {
             Lex.name= $4;
-          }
-        | CREATE PROCEDURE proc_name
-          {
-            Lex.statement= new statement::CreateProcedure(YYSession);
           }
         ;
 
@@ -4213,10 +4208,6 @@ drop:
             statement->drop_if_exists=$3;
             Lex.name= $4;
           }
-        | DROP PROCEDURE proc_name
-          {
-            /*code goes here*/
-          }
         ;
 
 table_list:
@@ -5149,10 +5140,6 @@ schema_name:
         ;
 
 catalog_name:
-          ident
-        ;
-        
-proc_name:
           ident
         ;
 
