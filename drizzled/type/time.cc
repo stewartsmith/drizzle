@@ -1010,7 +1010,6 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap) con
 
 void Time::store(const struct tm &from)
 {
-  _is_local_time= false;
   neg= 0;
   second_part= 0;
   year=	(int32_t) ((from.tm_year+1900) % 10000);

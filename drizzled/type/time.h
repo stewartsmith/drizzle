@@ -127,8 +127,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(false),
-    time_type(type_arg),
-    _is_local_time(false)
+    time_type(type_arg)
   {
   }
 
@@ -145,8 +144,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(neg_arg),
-    time_type(DRIZZLE_TIMESTAMP_TIME),
-    _is_local_time(false)
+    time_type(DRIZZLE_TIMESTAMP_TIME)
   {
   }
 
@@ -154,14 +152,12 @@ public:
   usec_t second_part;
   bool neg;
   timestamp_t time_type;
-  bool _is_local_time;
 
   void reset()
   {
     year= month= day= hour= minute= second= second_part= 0;
     neg= false;
     time_type= DRIZZLE_TIMESTAMP_DATE;
-    _is_local_time= false;
   }
 
   timestamp_t type() const
