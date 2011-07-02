@@ -30,6 +30,7 @@ void load_cursor_state_transitions(state_multimap &states);
 
 void load_cursor_state_transitions(state_multimap &states)
 {
+  states.insert(state_pair("Cursor()", "Cursor()")); // dummy for constructor
   states.insert(state_pair("Cursor()", "::doOpen()"));
   states.insert(state_pair("::doOpen()", "::store_lock()"));
 

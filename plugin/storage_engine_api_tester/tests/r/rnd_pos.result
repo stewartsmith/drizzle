@@ -18,20 +18,63 @@ select * from data_dictionary.seapitester_engine_state_history;
 STATE
 ::max_supported_key_length()
 ::max_supported_keys()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::position()
+Cursor 2 ::rnd_next()
+Cursor 2 ::position()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_pos()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::doEndTableScan()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::close()
+Cursor 2 Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
@@ -53,20 +96,63 @@ STATE
 ::max_supported_key_parts()
 ::max_supported_keys()
 ::max_supported_key_part_length()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::position()
+Cursor 2 ::rnd_next()
+Cursor 2 ::position()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_pos()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::doEndTableScan()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::close()
+Cursor 2 Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
@@ -77,20 +163,45 @@ select * from data_dictionary.seapitester_engine_state_history;
 STATE
 ::max_supported_key_length()
 ::max_supported_keys()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
 ::max_supported_key_length()
 ::max_supported_key_parts()
 ::max_supported_keys()
 ::max_supported_key_part_length()
 ::max_supported_key_part_length()
+Cursor 3 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 4 Cursor()
+Cursor 4 ::doOpen()
 START STATEMENT
+Cursor 4 ::external_lock()
+Cursor 4 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 4 ::external_lock()
+Cursor 4 locked
+Cursor 4 ::close()
+Cursor 4 Cursor()
+Cursor 2 ::store_lock()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::close()
+Cursor 2 Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

@@ -36,43 +36,123 @@ STATE
 ::max_supported_key_parts()
 ::max_supported_keys()
 ::max_supported_key_part_length()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 ROLLBACK
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
 BEGIN
 In Transaction
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 ROLLBACK STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
 COMMIT
 ::SEAPITester()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 ROLLBACK
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT
 ::SEAPITester()
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::close()
+Cursor 2 Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

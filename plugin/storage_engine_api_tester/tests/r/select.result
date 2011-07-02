@@ -7,6 +7,7 @@ select * from data_dictionary.seapitester_engine_state_history;
 STATE
 ::max_supported_key_length()
 ::max_supported_keys()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
 BEGIN
@@ -23,12 +24,32 @@ commit;
 drop table t2;
 select * from data_dictionary.seapitester_engine_state_history;
 STATE
+Cursor 1 Cursor()
+Cursor 1 ::doOpen()
+Cursor 1 ::store_lock()
 START STATEMENT
+Cursor 1 ::external_lock()
+Cursor 1 locked
+Cursor 1 ::info()
+Cursor 1 locked
+Cursor 1 ::scan_time()
+Cursor 1 locked
+Cursor 1 ::scan_time()
+Cursor 1 locked
+Cursor 1 ::doStartTableScan()
+Cursor 1 ::rnd_next()
+Cursor 1 ::doEndTableScan()
+Cursor 1 ::external_lock()
+Cursor 1 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 1 ::reset()
+Cursor 1 ::doOpen()
 COMMIT
 ::SEAPITester()
+Cursor 1 ::close()
+Cursor 1 Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
