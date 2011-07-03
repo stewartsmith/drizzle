@@ -126,7 +126,7 @@ bool ShowColumns::Generator::populate()
   return true;
 }
 
-void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, const string collation)
+void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, const string &collation)
 {
   switch (type)
   {

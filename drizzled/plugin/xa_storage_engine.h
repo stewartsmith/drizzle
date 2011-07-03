@@ -45,7 +45,7 @@ class DRIZZLED_API XaStorageEngine :
   public XaResourceManager
 {
 public:
-  XaStorageEngine(const std::string name_arg,
+  XaStorageEngine(const std::string &name_arg,
                   const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~XaStorageEngine();
