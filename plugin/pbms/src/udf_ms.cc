@@ -354,8 +354,7 @@ my_bool pbms_update_blob_trig_init(UDF_INIT *initid, UDF_ARGS *args, char *messa
 
 void pbms_update_blob_trig_deinit(UDF_INIT *initid)
 {
-	if (initid->ptr)
-		free(initid->ptr);
+	free(initid->ptr);
 }
 
 char *pbms_update_blob_trig(UDF_INIT *initid, UDF_ARGS *args,

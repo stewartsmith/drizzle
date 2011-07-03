@@ -232,15 +232,13 @@ static void server(drizzle_st *drizzle, drizzle_con_st *con,
   while (1)
   {
     drizzle_result_free(result);
-    if (data != NULL)
-      free(data);
+    free(data);
 
     data= (uint8_t *)drizzle_con_command_buffer(con, &command, &total, &ret);
     if (ret == DRIZZLE_RETURN_LOST_CONNECTION ||
         (ret == DRIZZLE_RETURN_OK && command == DRIZZLE_COMMAND_QUIT))
     {
-      if (data != NULL)
-        free(data);
+      free(data);
       return;
     }
     DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_buffer", drizzle)

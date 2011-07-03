@@ -1615,11 +1615,9 @@ err:
 
   void * rec_buff_ptr= NULL;
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.rec_buff);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= NULL;
 
   free(sort_info.buff);
@@ -2302,11 +2300,9 @@ err:
 
   void * rec_buff_ptr= NULL;
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.rec_buff);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= NULL;
 
   free((unsigned char*) sort_info.key_block);

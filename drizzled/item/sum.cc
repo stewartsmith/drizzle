@@ -3061,11 +3061,10 @@ void Item_func_group_concat::cleanup()
         delete_tree(tree);
         tree= 0;
       }
-      if (unique_filter)
-      {
-        delete unique_filter;
-        unique_filter= NULL;
-      }
+
+      delete unique_filter;
+      unique_filter= NULL;
+
       if (warning)
       {
         char warn_buff[DRIZZLE_ERRMSG_SIZE];

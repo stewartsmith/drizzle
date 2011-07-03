@@ -2806,11 +2806,8 @@ enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, boo
 
   if (join_tab->use_quick == 2)
   {
-    if (join_tab->select->quick)
-    {					/* Used quick select last. reset it */
-      delete join_tab->select->quick;
-      join_tab->select->quick=0;
-    }
+    delete join_tab->select->quick;
+    join_tab->select->quick= 0;
   }
   /* read through all records */
   if ((error=join_init_read_record(join_tab)))

@@ -116,8 +116,7 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
 
 void drizzle_field_free(drizzle_field_t field)
 {
-  if (field != NULL)
-    delete[] field;
+  delete[] field;
 }
 
 /*
