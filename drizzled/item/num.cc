@@ -24,8 +24,7 @@
 #include <drizzled/item/string.h>
 #include <drizzled/item/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   @details
@@ -40,11 +39,10 @@ namespace drizzled
 */
 Item *Item_num::safe_charset_converter(const charset_info_st * const)
 {
-  Item_string *conv;
   char buf[64];
-  String *s, tmp(buf, sizeof(buf), &my_charset_bin);
-  s= val_str(&tmp);
-  conv= new Item_string(s->ptr(), s->length(), s->charset());
+  String tmp(buf, sizeof(buf), &my_charset_bin);
+  String* s= val_str(&tmp);
+  Item_string* conv= new Item_string(s->ptr(), s->length(), s->charset());
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

@@ -141,10 +141,8 @@ bool Item_hex_string::eq(const Item *arg, bool binary_cmp) const
 
 Item *Item_hex_string::safe_charset_converter(const charset_info_st * const tocs)
 {
-  Item_string *conv;
   String tmp, *str= val_str(&tmp);
-
-  conv= new Item_string(str->ptr(), str->length(), tocs);
+  Item_string* conv= new Item_string(str->ptr(), str->length(), tocs);
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;
