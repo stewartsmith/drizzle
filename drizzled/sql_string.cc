@@ -234,22 +234,12 @@ void String::copy(const char *str,size_t arg_length, const charset_info_st* cs)
 bool String::needs_conversion(size_t arg_length, const charset_info_st* from_cs, const charset_info_st* to_cs)
 {
   if (!to_cs ||
-      (to_cs == &my_charset_bin) ||
-      (to_cs == from_cs) ||
+      to_cs == &my_charset_bin ||
+      to_cs == from_cs ||
       my_charset_same(from_cs, to_cs) ||
-      ((from_cs == &my_charset_bin) && (!(arg_length % to_cs->mbminlen))))
+      (from_cs == &my_charset_bin && not (arg_length % to_cs->mbminlen)))
     return false;
   return true;
-}
-
-void String::set_or_copy_aligned(const char *str,size_t arg_length, const charset_info_st* cs)
-{
-  /* How many bytes are in incomplete character */
-  size_t offset= (arg_length % cs->mbminlen);
-
-  assert(!offset); /* All characters are complete, just copy */
-
-  set(str, arg_length, cs);
 }
 
 /*

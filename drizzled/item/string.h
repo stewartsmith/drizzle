@@ -32,7 +32,8 @@ public:
               const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
-    str_value.set_or_copy_aligned(str, length, cs);
+    assert(not (length % cs->mbminlen));
+    str_value.set(str, length, cs);
     collation.set(cs, dv);
     /*
       We have to have a different max_length than 'length' here to
@@ -61,7 +62,8 @@ public:
               const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
-    str_value.set_or_copy_aligned(str, length, cs);
+    assert(not (length % cs->mbminlen));
+    str_value.set(str, length, cs);
     collation.set(cs, dv);
     max_length= str_value.numchars()*cs->mbmaxlen;
     set_name(name_par, 0, cs);
