@@ -2105,13 +2105,13 @@ void MSMetaDataTable::insertRow(char *buf)
 		alias = data + data_len + meta_name->length() + 1; // Set the alias to the value location.
 	} else 
 #endif
-		memcpy(data + data_len, meta_name.c_ptr_quick(), meta_name.length());
+		memcpy(data + data_len, meta_name.data(), meta_name.length());
 		
 	data_len += meta_name.length();
 	data[data_len] = 0;
 	data_len++;
 
-	memcpy(data + data_len, meta_value.c_ptr_quick(), meta_value.length());
+	memcpy(data + data_len, meta_value.data(), meta_value.length());
 	data_len += meta_value.length();
 	data[data_len] = 0;
 	data_len++;
@@ -2349,13 +2349,13 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 		alias = data + iMetDataSize + n_meta_name.length() + 1; // Set the alias to the value location.
 	} else 
 #endif
-		memcpy(data + iMetDataSize, n_meta_name.c_ptr_quick(), n_meta_name.length());
+		memcpy(data + iMetDataSize, n_meta_name.data(), n_meta_name.length());
 		
 	iMetDataSize += n_meta_name.length();
 	data[iMetDataSize] = 0;
 	iMetDataSize++;
 
-	memcpy(data + iMetDataSize, n_meta_value.c_ptr_quick(), n_meta_value.length());
+	memcpy(data + iMetDataSize, n_meta_value.data(), n_meta_value.length());
 	iMetDataSize += n_meta_value.length();
 	data[iMetDataSize] = 0;
 	iMetDataSize++;

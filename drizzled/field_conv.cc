@@ -345,8 +345,7 @@ static void do_field_string(CopyField *copy)
   char buff[MAX_FIELD_WIDTH];
   copy->tmp.set_quick(buff,sizeof(buff),copy->tmp.charset());
   copy->from_field->val_str_internal(&copy->tmp);
-  copy->to_field->store(copy->tmp.c_ptr_quick(),copy->tmp.length(),
-                        copy->tmp.charset());
+  copy->to_field->store(copy->tmp.data(),copy->tmp.length(), copy->tmp.charset());
 }
 
 
@@ -857,7 +856,7 @@ int field_conv(Field *to,Field *from)
       end with \0. Can be replaced with .ptr() when we have our own
       string->double conversion.
     */
-    return to->store(result.c_ptr_quick(),result.length(),from->charset());
+    return to->store(result.c_str(),result.length(),from->charset());
   }
   else if (from->result_type() == REAL_RESULT)
   {

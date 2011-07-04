@@ -94,13 +94,23 @@ public:
 
     return Ptr;
   }
-  inline char *c_ptr_quick()
+  inline const char* begin() const
   {
-    if (Ptr && str_length < Alloced_length)
-      Ptr[str_length]=0;
     return Ptr;
   }
-  inline char* c_str()
+  inline const char* end() const
+  {
+    return begin() + size();
+  }
+  inline const char* data() const
+  {
+    return Ptr;
+  }
+  inline size_t size() const
+  {
+    return length();
+  }
+  inline const char* c_str()
   {
     if (Ptr && str_length < Alloced_length)
       Ptr[str_length]=0;

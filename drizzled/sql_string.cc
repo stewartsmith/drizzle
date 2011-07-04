@@ -337,25 +337,25 @@ int String::charpos(int i,size_t offset)
 
 int String::strstr(const String &s,size_t offset)
 {
-  if (s.length()+offset <= str_length)
+  if (s.length() + offset <= str_length)
   {
     if (!s.length())
       return ((int) offset);	// Empty string is always found
 
     const char *str = Ptr+offset;
     const char *search=s.ptr();
-    const char *end=Ptr+str_length-s.length()+1;
+    const char *last=Ptr+str_length-s.length()+1;
     const char *search_end=s.ptr()+s.length();
 skip:
-    while (str != end)
+    while (str != last)
     {
       if (*str++ == *search)
       {
-	char *i,*j;
-	i=(char*) str; j=(char*) search+1;
-	while (j != search_end)
-	  if (*i++ != *j++) goto skip;
-	return (int) (str-Ptr) -1;
+        const char* i= str; 
+        const char* j= search + 1;
+        while (j != search_end)
+          if (*i++ != *j++) goto skip;
+        return (int) (str - Ptr) - 1;
       }
     }
   }
@@ -375,18 +375,18 @@ int String::strrstr(const String &s,size_t offset)
     const char *str = Ptr+offset-1;
     const char *search=s.ptr()+s.length()-1;
 
-    const char *end=Ptr+s.length()-2;
+    const char *last=Ptr+s.length()-2;
     const char *search_end=s.ptr()-1;
 skip:
-    while (str != end)
+    while (str != last)
     {
       if (*str-- == *search)
       {
-	char *i,*j;
-	i=(char*) str; j=(char*) search-1;
-	while (j != search_end)
-	  if (*i-- != *j--) goto skip;
-	return (int) (i-Ptr) +1;
+        const char* i= str; 
+        const char* j= search-1;
+        while (j != search_end)
+          if (*i-- != *j--) goto skip;
+        return (int) (i-Ptr) + 1;
       }
     }
   }
@@ -607,8 +607,8 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
 
 void String::print(String& str) const
 {
-  const char* end= Ptr + str_length;
-  for (const char* st= Ptr; st < end; st++)
+  const char* last= Ptr + str_length;
+  for (const char* st= Ptr; st < last; st++)
   {
     unsigned char c= *st;
     switch (c)
@@ -648,7 +648,7 @@ void String::print(String& str) const
 */
 
 /* Factor the extern out */
-extern const charset_info_st *system_charset_info, *files_charset_info;
+extern const charset_info_st *system_charset_info;
 
 void String::append_identifier(const char *name, size_t in_length)
 {
