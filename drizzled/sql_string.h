@@ -80,15 +80,15 @@ public:
   inline size_t length() const { return str_length;}
   inline size_t alloced_length() const { return Alloced_length;}
   inline char& operator [] (size_t i) const { return Ptr[i]; }
-  inline void length(size_t len) { str_length=len ; }
-  inline bool is_empty() { return (str_length == 0); }
-  inline void mark_as_const() { Alloced_length= 0;}
+  inline void length(size_t len) { str_length=len; }
+  inline bool empty() const { return str_length == 0; }
+  inline void mark_as_const() { Alloced_length= 0; }
   inline char *ptr() { return Ptr; }
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {
     if (str_length == Alloced_length)
-      (void) realloc(str_length);
+      realloc(str_length);
     else
       Ptr[str_length]= 0;
 
@@ -100,20 +100,12 @@ public:
       Ptr[str_length]=0;
     return Ptr;
   }
-  inline char *c_ptr_safe()
+  inline char* c_str()
   {
     if (Ptr && str_length < Alloced_length)
       Ptr[str_length]=0;
     else
-      (void) realloc(str_length);
-    return Ptr;
-  }
-  inline char *c_str()
-  {
-    if (Ptr && str_length < Alloced_length)
-      Ptr[str_length]=0;
-    else
-      (void) realloc(str_length);
+      realloc(str_length);
     return Ptr;
   }
   void append_identifier(const char *name, size_t length);

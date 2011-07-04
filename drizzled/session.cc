@@ -1107,24 +1107,19 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
                    (int) (unsigned char) (*exchange->field_term)[0] : INT_MAX;
   if (!exchange->line_term->length())
     exchange->line_term=exchange->field_term;	// Use this if it exists
-  field_sep_char= (exchange->enclosed->length() ?
-                  (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char);
-  escape_char=	(exchange->escaped->length() ?
-                (int) (unsigned char) (*exchange->escaped)[0] : -1);
+  field_sep_char= exchange->enclosed->length() ? (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char;
+  escape_char= exchange->escaped->length() ? (int) (unsigned char) (*exchange->escaped)[0] : -1;
   is_ambiguous_field_sep= test(strchr(ESCAPE_CHARS, field_sep_char));
   is_unsafe_field_sep= test(strchr(NUMERIC_CHARS, field_sep_char));
-  line_sep_char= (exchange->line_term->length() ?
-                 (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX);
+  line_sep_char= exchange->line_term->length() ? (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX;
   if (!field_term_length)
     exchange->opt_enclosed=0;
   if (!exchange->enclosed->length())
     exchange->opt_enclosed=1;			// A little quicker loop
   fixed_row_size= (!field_term_length && !exchange->enclosed->length() &&
 		   !blob_flag);
-  if ((is_ambiguous_field_sep && exchange->enclosed->is_empty() &&
-       (string_results || is_unsafe_field_sep)) ||
-      (exchange->opt_enclosed && non_string_results &&
-       field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
+  if ((is_ambiguous_field_sep && exchange->enclosed->empty() && (string_results || is_unsafe_field_sep)) ||
+      (exchange->opt_enclosed && non_string_results && field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
     my_error(ER_AMBIGUOUS_FIELD_TERM, MYF(0));
     return 1;

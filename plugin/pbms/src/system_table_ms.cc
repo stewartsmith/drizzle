@@ -2067,7 +2067,7 @@ void MSMetaDataTable::insertRow(char *buf)
 	if (!resetScan(true, &have_data, repo_index -1))
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
-	const char *alias = NULL, *tag = meta_name.c_ptr_safe();
+	const char *alias = NULL, *tag = meta_name.c_str();
 	
 	if (iMetDataSize) {
 		MetaData md(iMetData->getBuffer(0), iMetDataSize);
@@ -2169,7 +2169,7 @@ void MSMetaDataTable::deleteRow(char *buf)
 	if (!resetScan(true, &have_data, repo_index -1))
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
-	const char *alias = NULL, *value = NULL, *tag = meta_name.c_ptr_safe();
+	const char *alias = NULL, *value = NULL, *tag = meta_name.c_str();
 	char *location;
 	
 	// Check to see name exists.
@@ -2296,7 +2296,7 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
 	char *location;
-	const char *value, *alias = NULL, *n_tag = n_meta_name.c_ptr_safe(), *o_tag = o_meta_name.c_ptr_safe();
+	const char *value, *alias = NULL, *n_tag = n_meta_name.c_str(), *o_tag = o_meta_name.c_str();
 	
 	if (!my_strcasecmp(&UTF8_CHARSET, o_tag, n_tag))
 		n_tag = NULL;
