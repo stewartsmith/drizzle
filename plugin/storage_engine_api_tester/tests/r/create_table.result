@@ -10,6 +10,7 @@ STATE
 Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
