@@ -56,7 +56,7 @@ public:
       return table_name;
     }
 
-    void pushType(drizzled::message::Table::Field::FieldType type, const std::string collation);
+    void pushType(drizzled::message::Table::Field::FieldType type, const std::string &collation);
 
     void fill();
 

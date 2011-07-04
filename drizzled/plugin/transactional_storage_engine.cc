@@ -33,7 +33,7 @@ namespace plugin {
 
 static std::vector<TransactionalStorageEngine*> g_engines;
 
-TransactionalStorageEngine::TransactionalStorageEngine(const std::string name_arg,
+TransactionalStorageEngine::TransactionalStorageEngine(const std::string &name_arg,
                                                        const std::bitset<HTON_BIT_SIZE> &flags_arg)
     : StorageEngine(name_arg, flags_arg)
 {

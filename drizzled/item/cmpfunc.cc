@@ -3181,8 +3181,7 @@ in_row::in_row(uint32_t elements, Item *)
 
 in_row::~in_row()
 {
-  if (base)
-    delete [] (cmp_item_row*) base;
+  delete [] (cmp_item_row*) base;
 }
 
 unsigned char *in_row::get_value(Item *item)

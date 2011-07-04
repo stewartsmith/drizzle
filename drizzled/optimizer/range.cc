@@ -385,11 +385,9 @@ optimizer::SqlSelect::SqlSelect()
 
 void optimizer::SqlSelect::cleanup()
 {
-  if (quick)
-  {
-    delete quick;
-    quick= NULL;
-  }
+
+  delete quick;
+  quick= NULL;
 
   if (free_cond)
   {
@@ -640,11 +638,10 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 {
   uint32_t idx;
   double scan_time;
-  if (quick)
-  {
-    delete quick;
-    quick= NULL;
-  }
+
+  delete quick;
+  quick= NULL;
+
   needed_reg.reset();
   quick_keys.reset();
   if (keys_to_use.none())
@@ -859,12 +856,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       records= best_trp->records;
       if (! (quick= best_trp->make_quick(&param, true)) || quick->init())
       {
-        /* quick can already be free here */
-        if (quick)
-        {
-          delete quick;
-          quick= NULL;
-        }
+        delete quick;
+        quick= NULL;
       }
     }
 

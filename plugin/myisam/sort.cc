@@ -227,8 +227,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   error =0;
 
 err:
-  if (sort_keys)
-    free((unsigned char*) sort_keys);
+  free(sort_keys);
   delete_dynamic(&buffpek);
   tempfile.close_cached_file();
   tempfile_for_exceptions.close_cached_file();
@@ -309,8 +308,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     {
       got_error=1;
       void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sinfo->rec_buff);
-      if (rec_buff_ptr != NULL)
-        free(rec_buff_ptr);
+      free(rec_buff_ptr);
       continue;
     }
     if (!got_error)
@@ -334,8 +332,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     }
     free((unsigned char*) sinfo->sort_keys);
     void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sinfo->rec_buff);
-    if (rec_buff_ptr != NULL)
-      free(rec_buff_ptr);
+    free(rec_buff_ptr);
     sinfo->sort_keys=0;
   }
 

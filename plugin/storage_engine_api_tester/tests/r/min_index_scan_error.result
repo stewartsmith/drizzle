@@ -1,3 +1,4 @@
+flush tables;
 create table t1 (a int primary key auto_increment, b int, index(b)) engine=storage_engine_api_tester;
 show create table t1;
 Table	Create Table
@@ -22,10 +23,20 @@ select min(b) from t1;
 Got one of the listed errors
 select * from data_dictionary.seapitester_engine_state_history;
 STATE
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doStartIndexScan()
+Cursor 2 ::doStartIndexScan() ERROR
+Cursor 2 locked
 END STATEMENT
 ROLLBACK
 ::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

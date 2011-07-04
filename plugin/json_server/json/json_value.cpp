@@ -131,8 +131,7 @@ public:
 
    virtual void releaseStringValue( char *value )
    {
-      if ( value )
-         free( value );
+     free( value );
    }
 };
 
@@ -541,8 +540,7 @@ Value::~Value()
       JSON_ASSERT_UNREACHABLE;
    }
 
-   if ( comments_ )
-      delete[] comments_;
+   delete[] comments_;
 }
 
 Value &
