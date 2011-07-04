@@ -279,30 +279,6 @@ public:
   }
   void reserve(size_t space_needed, size_t grow_by);
 
-  /*
-    The following append operations do NOT check alloced memory
-    q_*** methods writes values of parameters itself
-    qs_*** methods writes string representation of value
-  */
-  void q_append(const char c);
-  void q_append(const size_t n);
-  void q_append(double d);
-  void q_append(double *d);
-  void q_append(const char *data, size_t data_len);
-  void write_at_position(int position, size_t value);
-
-  /* Inline (general) functions used by the protocol functions */
-
-  inline char *prep_append(size_t arg_length, size_t step_alloc)
-  {
-    size_t new_length= arg_length + str_length;
-    if (new_length > Alloced_length)
-      realloc(new_length + step_alloc);
-    size_t old_length= str_length;
-    str_length+= arg_length;
-    return Ptr+ old_length;			/* Area to use */
-  }
-
   inline void append(const char *s, size_t arg_length, size_t step_alloc)
   {
     size_t new_length= arg_length + str_length;
@@ -323,14 +299,11 @@ public:
   }
 };
 
-bool check_if_only_end_space(const charset_info_st * const cs, char *str,
-                             char *end);
+bool check_if_only_end_space(const charset_info_st* const, char *str, char *end);
 
-std::ostream& operator<<(std::ostream& output, const String &str);
+std::ostream& operator<<(std::ostream&, const String&);
 
 } /* namespace drizzled */
 
 bool operator==(const drizzled::String &s1, const drizzled::String &s2);
 bool operator!=(const drizzled::String &s1, const drizzled::String &s2);
-
-

@@ -623,13 +623,10 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
   return res;
 }
 
-
-
-
-void String::print(String *str)
+void String::print(String *str) // const
 {
-  char *st= (char*)Ptr, *end= st+str_length;
-  for (; st < end; st++)
+  const char* end= Ptr + str_length;
+  for (const char* st= Ptr; st < end; st++)
   {
     unsigned char c= *st;
     switch (c)
