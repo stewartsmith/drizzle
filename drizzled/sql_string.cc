@@ -327,22 +327,7 @@ void String::append(const char *s)
   append(s, strlen(s));
 }
 
-
-/*
-  Append a string in the given charset to the string
-  with character set recoding
-*/
-
-void String::append(const char *s,size_t arg_length, const charset_info_st * const)
-{
-  realloc(str_length + arg_length);
-  memcpy(Ptr + str_length, s, arg_length);
-  str_length+= arg_length;
-}
-
-
-void String::append_with_prefill(const char *s,size_t arg_length,
-		 size_t full_length, char fill_char)
+void String::append_with_prefill(const char *s,size_t arg_length, size_t full_length, char fill_char)
 {
   int t_length= arg_length > full_length ? arg_length : full_length;
 
@@ -688,20 +673,13 @@ extern const charset_info_st *system_charset_info, *files_charset_info;
 
 void String::append_identifier(const char *name, size_t in_length)
 {
-  const char *name_end;
-  char quote_char;
-  int q= '`';
+  // The identifier must be quoted as it includes a quote character or it's a keyword
 
-  /*
-    The identifier must be quoted as it includes a quote character or
-   it's a keyword
-  */
+  reserve(in_length * 2 + 2);
+  const char quote_char= '`';
+  append(&quote_char, 1);
 
-  reserve(in_length*2 + 2);
-  quote_char= (char) q;
-  append(&quote_char, 1, system_charset_info);
-
-  for (name_end= name+in_length ; name < name_end ; name+= in_length)
+  for (const char* name_end= name+in_length ; name < name_end ; name+= in_length)
   {
     unsigned char chr= (unsigned char) *name;
     in_length= my_mbcharlen(system_charset_info, chr);
@@ -715,10 +693,10 @@ void String::append_identifier(const char *name, size_t in_length)
     if (!in_length)
       in_length= 1;
     if (in_length == 1 && chr == (unsigned char) quote_char)
-      append(&quote_char, 1, system_charset_info);
-    append(name, in_length, system_charset_info);
+      append(&quote_char, 1);
+    append(name, in_length);
   }
-  append(&quote_char, 1, system_charset_info);
+  append(&quote_char, 1);
 }
 
 bool check_if_only_end_space(const charset_info_st * const cs, char *str,
