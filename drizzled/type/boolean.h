@@ -25,7 +25,8 @@ namespace type {
 
 bool convert(bool &destination, String &source);
 bool convert(bool &destination, const char *source, const size_t source_length);
-void convert(String &destination, const bool source, bool ansi_display);
+const char* convert(bool source, bool ansi_display);
+void convert(String& destination, bool source, bool ansi_display);
 
 } /* namespace type */
 } /* namespace drizzled */
