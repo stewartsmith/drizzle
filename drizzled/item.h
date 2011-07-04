@@ -32,14 +32,6 @@
 
 namespace drizzled {
 
-/**
-  Dummy error processor used by default by Name_resolution_context.
-
-  @note
-    do nothing
-*/
-void dummy_error_processor(Session *session, void *data);
-
 /*
   Analyzer function
     SYNOPSIS

@@ -37,9 +37,6 @@ bool statement::InsertSelect::execute()
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
   Select_Lex_Unit *unit= &lex().unit;
-  select_result *sel_result= NULL;
-  bool res= false;
-  bool need_start_waiting= false;
 
   if (insert_precheck(&session(), all_tables))
   {
@@ -51,11 +48,12 @@ bool statement::InsertSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= not session().wait_if_global_read_lock(false, true)))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
+  bool res;
   if (! (res= session().openTablesLock(all_tables)))
   {
     DRIZZLE_INSERT_SELECT_START(session().getQueryString()->c_str());
@@ -66,8 +64,7 @@ bool statement::InsertSelect::execute()
     res= insert_select_prepare(&session());
     if (not res)
     {
-      sel_result= new select_insert(first_table, first_table->table, &lex().field_list, &lex().update_list, &lex().value_list, 
-        lex().duplicates, lex().ignore);
+      select_result* sel_result= new select_insert(first_table, first_table->table, &lex().field_list, &lex().update_list, &lex().value_list, lex().duplicates, lex().ignore);
       res= handle_select(&session(), &lex(), sel_result, OPTION_SETUP_TABLES_DONE);
 
       /*

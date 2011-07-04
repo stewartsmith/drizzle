@@ -851,13 +851,13 @@ bool Item_field::fix_fields(Session *session, Item **reference)
         }
       }
       if ((ret= fix_outer_field(session, &from_field, reference)) < 0)
-        goto error;
+        return true;
       outer_fixed= true;
       if (!ret)
         goto mark_non_agg_field;
     }
     else if (!from_field)
-      goto error;
+      return true;
 
     if (!outer_fixed && cached_table && cached_table->select_lex &&
         context->select_lex &&
@@ -865,7 +865,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
     {
       int ret;
       if ((ret= fix_outer_field(session, &from_field, reference)) < 0)
-        goto error;
+        return true;
       outer_fixed= 1;
       if (!ret)
         goto mark_non_agg_field;
@@ -923,10 +923,6 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   fixed= 1;
 mark_non_agg_field:
   return false;
-
-error:
-  context->process_error(session);
-  return true;
 }
 
 Item *Item_field::safe_charset_converter(const charset_info_st * const tocs)

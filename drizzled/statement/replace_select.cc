@@ -36,8 +36,6 @@ bool statement::ReplaceSelect::execute()
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
   Select_Lex_Unit *unit= &lex().unit;
-  select_result *sel_result= NULL;
-  bool res;
 
   if (insert_precheck(&session(), all_tables))
   {
@@ -54,6 +52,7 @@ bool statement::ReplaceSelect::execute()
     return true;
   }
 
+  bool res;
   if (! (res= session().openTablesLock(all_tables)))
   {
     /* Skip first table, which is the table we are inserting in */
@@ -64,8 +63,7 @@ bool statement::ReplaceSelect::execute()
     res= insert_select_prepare(&session());
     if (not res)
     {
-      sel_result= new select_insert(first_table, first_table->table, &lex().field_list, &lex().update_list,&lex().value_list, 
-        lex().duplicates, lex().ignore);
+      select_result* sel_result= new select_insert(first_table, first_table->table, &lex().field_list, &lex().update_list,&lex().value_list, lex().duplicates, lex().ignore);
       res= handle_select(&session(), &lex(), sel_result, OPTION_SETUP_TABLES_DONE);
       /*
          Invalidate the table in the query cache if something changed

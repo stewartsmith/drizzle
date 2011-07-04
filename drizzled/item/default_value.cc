@@ -37,9 +37,6 @@ bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 
 bool Item_default_value::fix_fields(Session *session, Item **)
 {
-  Item *real_arg;
-  Item_field *field_arg;
-  Field *def_field;
   assert(fixed == 0);
 
   if (!arg)
@@ -48,33 +45,27 @@ bool Item_default_value::fix_fields(Session *session, Item **)
     return false;
   }
   if (!arg->fixed && arg->fix_fields(session, &arg))
-    goto error;
+    return true;
 
 
-  real_arg= arg->real_item();
+  Item* real_arg= arg->real_item();
   if (real_arg->type() != FIELD_ITEM)
   {
     my_error(ER_NO_DEFAULT_FOR_FIELD, MYF(0), arg->name);
-    goto error;
+    return true;
   }
 
-  field_arg= (Item_field *)real_arg;
+  Item_field* field_arg= (Item_field *)real_arg;
   if (field_arg->field->flags & NO_DEFAULT_VALUE_FLAG)
   {
     my_error(ER_NO_DEFAULT_FOR_FIELD, MYF(0), field_arg->field->field_name);
-    goto error;
+    return true;
   }
-  if (!(def_field= (Field*) memory::sql_alloc(field_arg->field->size_of())))
-    goto error;
+  Field* def_field= (Field*) memory::sql_alloc(field_arg->field->size_of());
   memcpy(def_field, field_arg->field, field_arg->field->size_of());
-  def_field->move_field_offset((ptrdiff_t)
-                               (def_field->getTable()->getDefaultValues() - def_field->getTable()->record[0]));
+  def_field->move_field_offset((ptrdiff_t)(def_field->getTable()->getDefaultValues() - def_field->getTable()->record[0]));
   set_field(def_field);
   return false;
-
-error:
-  context->process_error(session);
-  return true;
 }
 
 
@@ -99,18 +90,10 @@ int Item_default_value::save_in_field(Field *field_arg, bool no_conversions)
     {
       if (field_arg->reset())
       {
-        my_message(ER_CANT_CREATE_GEOMETRY_OBJECT,
-                   ER(ER_CANT_CREATE_GEOMETRY_OBJECT), MYF(0));
+        my_message(ER_CANT_CREATE_GEOMETRY_OBJECT, ER(ER_CANT_CREATE_GEOMETRY_OBJECT), MYF(0));
         return -1;
       }
-
-      {
-        push_warning_printf(field_arg->getTable()->in_use,
-                            DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_NO_DEFAULT_FOR_FIELD,
-                            ER(ER_NO_DEFAULT_FOR_FIELD),
-                            field_arg->field_name);
-      }
+      push_warning_printf(field_arg->getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NO_DEFAULT_FOR_FIELD, ER(ER_NO_DEFAULT_FOR_FIELD), field_arg->field_name);
       return 1;
     }
     field_arg->set_default();

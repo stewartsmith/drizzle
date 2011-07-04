@@ -1535,9 +1535,6 @@ bool field_is_equal_to_item(Field *field,Item *item)
   return result == field->val_real();
 }
 
-void dummy_error_processor(Session *, void *)
-{}
-
 /**
   Create field for temporary table using type of given item.
 
