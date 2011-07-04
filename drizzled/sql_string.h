@@ -241,9 +241,7 @@ public:
   void copy(const String&);			// Allocate new string
   void copy(const std::string&, const charset_info_st*);	// Allocate new string
   void copy(const char*, size_t, const charset_info_st*); // Allocate new string
-  static bool needs_conversion(size_t arg_length,
-  			       const charset_info_st* cs_from, const charset_info_st* cs_to,
-			       size_t *offset);
+  static bool needs_conversion(size_t arg_length, const charset_info_st* cs_from, const charset_info_st* cs_to);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
   void append(const String &s);
@@ -288,7 +286,7 @@ public:
     str_length+= arg_length;
   }
 
-  void print(String *print);
+  void print(String&) const;
 
   /* Swap two string objects. Efficient way to exchange data without memcpy. */
   void swap(String &s);

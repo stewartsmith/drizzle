@@ -231,24 +231,16 @@ void String::copy(const char *str,size_t arg_length, const charset_info_st* cs)
   character_set_results is NULL.
 */
 
-bool String::needs_conversion(size_t arg_length,
-			      const charset_info_st * const from_cs,
-			      const charset_info_st * const to_cs,
-			      size_t *offset)
+bool String::needs_conversion(size_t arg_length, const charset_info_st* from_cs, const charset_info_st* to_cs)
 {
-  *offset= 0;
   if (!to_cs ||
       (to_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs) ||
-      ((from_cs == &my_charset_bin) &&
-       (!(*offset=(arg_length % to_cs->mbminlen)))))
+      ((from_cs == &my_charset_bin) && (!(arg_length % to_cs->mbminlen))))
     return false;
   return true;
 }
-
-
-
 
 void String::set_or_copy_aligned(const char *str,size_t arg_length, const charset_info_st* cs)
 {
@@ -623,7 +615,7 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
   return res;
 }
 
-void String::print(String *str) // const
+void String::print(String& str) const
 {
   const char* end= Ptr + str_length;
   for (const char* st= Ptr; st < end; st++)
@@ -632,25 +624,25 @@ void String::print(String *str) // const
     switch (c)
     {
     case '\\':
-      str->append("\\\\", sizeof("\\\\")-1);
+      str.append("\\\\", sizeof("\\\\")-1);
       break;
     case '\0':
-      str->append("\\0", sizeof("\\0")-1);
+      str.append("\\0", sizeof("\\0")-1);
       break;
     case '\'':
-      str->append("\\'", sizeof("\\'")-1);
+      str.append("\\'", sizeof("\\'")-1);
       break;
     case '\n':
-      str->append("\\n", sizeof("\\n")-1);
+      str.append("\\n", sizeof("\\n")-1);
       break;
     case '\r':
-      str->append("\\r", sizeof("\\r")-1);
+      str.append("\\r", sizeof("\\r")-1);
       break;
     case '\032': // Ctrl-Z
-      str->append("\\Z", sizeof("\\Z")-1);
+      str.append("\\Z", sizeof("\\Z")-1);
       break;
     default:
-      str->append(c);
+      str.append(c);
     }
   }
 }

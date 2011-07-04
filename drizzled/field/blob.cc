@@ -160,8 +160,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
 
   if (from == value.ptr())
   {
-    size_t dummy_offset;
-    if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
+    if (!String::needs_conversion(length, cs, field_charset))
     {
       Field_blob::store_length(length);
       memmove(ptr+sizeof(uint32_t), &from, sizeof(char*));

@@ -70,11 +70,8 @@ void Item_string::print(String *str)
     str->append('_');
     str->append(collation.collation->csname);
   }
-
   str->append('\'');
-
-  str_value.print(str);
-
+  str_value.print(*str);
   str->append('\'');
 }
 

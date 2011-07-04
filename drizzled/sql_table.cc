@@ -604,7 +604,6 @@ static int prepare_create_table(Session *session,
 
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
-      size_t dummy;
       const charset_info_st * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
@@ -631,7 +630,7 @@ static int prepare_create_table(Session *session,
         for (uint32_t i= 0; (tmp= int_it++); i++)
         {
           uint32_t lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(), cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
             conv.copy(tmp->ptr(), tmp->length(), cs);
             interval->type_names[i]= session->mem.strmake(conv);
