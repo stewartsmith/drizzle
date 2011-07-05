@@ -60,14 +60,14 @@ public:
 
   void assign(const void* b, const void* e)
   {
-		begin_ = reinterpret_cast<T>(b);
-		end_ = reinterpret_cast<T>(e);
+    begin_ = reinterpret_cast<T>(b);
+    end_ = reinterpret_cast<T>(e);
   }
 
   void assign(const void* b, size_t sz)
   {
-		begin_ = reinterpret_cast<T>(b);
-		end_ = begin_ + sz;
+    begin_ = reinterpret_cast<T>(b);
+    end_ = begin_ + sz;
   }
 
   T begin() const

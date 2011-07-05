@@ -786,11 +786,9 @@ static const char* table_path_to_haildb_name(const char* name)
 
   if (strncmp(name, sys_prefix.c_str(), sys_prefix.length()) == 0)
   {
-    string find_name(name+datadict_path.length());
-    std::transform(find_name.begin(), find_name.end(), find_name.begin(), ::toupper);
-    boost::unordered_set<string>::iterator iter= haildb_system_table_names.find(find_name);
+    boost::unordered_set<string>::iterator iter= haildb_system_table_names.find(boost::to_upper_copy(string(name + datadict_path.length())));
     if (iter != haildb_system_table_names.end())
-      return iter->c_str()+sys_table_prefix.length();
+      return iter->c_str() + sys_table_prefix.length();
   }
 
   int slashes= 2;

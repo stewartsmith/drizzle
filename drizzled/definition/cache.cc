@@ -65,10 +65,7 @@ void Cache::CopyFrom(drizzled::table::instance::Shared::vector &vector)
 
   vector.reserve(definition::Cache::size());
 
-  std::transform(cache.begin(),
-                 cache.end(),
-                 std::back_inserter(vector),
-                 boost::bind(&Map::value_type::second, _1) );
+  std::transform(cache.begin(), cache.end(), std::back_inserter(vector), boost::bind(&Map::value_type::second, _1));
   assert(vector.size() == cache.size());
 }
 
