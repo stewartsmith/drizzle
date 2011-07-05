@@ -769,10 +769,7 @@ enum enum_comment_state
 
 } /* namespace drizzled */
 
-#include <drizzled/lex_input_stream.h>
-
-namespace drizzled
-{
+namespace drizzled {
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list

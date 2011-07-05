@@ -115,7 +115,7 @@ private:
   const char *db;
 
 public:
-  const char *getSchemaName()
+  const char *getSchemaName() const
   {
     return db;
   }
@@ -137,7 +137,7 @@ private:
   const char *table_name;
 
 public:
-  const char *getTableName()
+  const char *getTableName() const
   {
     return table_name;
   }

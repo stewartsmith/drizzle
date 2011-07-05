@@ -60,6 +60,7 @@
 #include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
 #include <drizzled/create_field.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <limits.h>
 

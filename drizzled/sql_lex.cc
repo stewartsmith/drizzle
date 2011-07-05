@@ -34,6 +34,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/plugin.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <cstdio>
 #include <ctype.h>

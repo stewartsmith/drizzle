@@ -19,13 +19,11 @@
 
 #pragma once
 
-namespace drizzled
-{
-namespace optimizer
-{
-class CostVector
-{
+namespace drizzled {
+namespace optimizer {
 
+class CostVector 
+{
 public:
   CostVector() :
     io_count(0.0),
@@ -35,7 +33,7 @@ public:
     import_cost(0.0)
   {}
 
-  double total_cost()
+  double total_cost() const
   {
     return IO_COEFF*io_count*avg_io_cost + CPU_COEFF * cpu_cost +
       MEM_COEFF*mem_cost + IMPORT_COEFF*import_cost;

@@ -48,6 +48,7 @@
 #include <drizzled/table_ident.h>
 #include <drizzled/var.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/lex_input_stream.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
