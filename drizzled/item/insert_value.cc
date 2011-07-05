@@ -27,8 +27,7 @@
 #include <drizzled/item/default_value.h>
 #include <drizzled/field/null.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -72,8 +71,6 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
   if (field_arg->field->getTable()->insert_values.size())
   {
     Field *def_field= (Field*) memory::sql_alloc(field_arg->field->size_of());
-    if (!def_field)
-      return true;
     memcpy(def_field, field_arg->field, field_arg->field->size_of());
     def_field->move_field_offset((ptrdiff_t)
                                  (&def_field->getTable()->insert_values[0] - def_field->getTable()->record[0]));
@@ -81,14 +78,10 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
   }
   else
   {
-    Field *tmp_field= field_arg->field;
     /* charset doesn't matter here, it's to avoid sigsegv only */
-    tmp_field= new Field_null(0, 0, field_arg->field->field_name);
-    if (tmp_field)
-    {
-      tmp_field->init(field_arg->field->getTable());
-      set_field(tmp_field);
-    }
+    Field* tmp_field= new Field_null(0, 0, field_arg->field->field_name);
+    tmp_field->init(field_arg->field->getTable());
+    set_field(tmp_field);
   }
   return false;
 }

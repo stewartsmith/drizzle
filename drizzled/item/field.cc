@@ -58,8 +58,7 @@ bool Item_field::collect_item_field_processor(unsigned char *arg)
 {
   List<Item_field> *item_list= (List<Item_field>*) arg;
   List<Item_field>::iterator item_list_it(item_list->begin());
-  Item_field *curr_item;
-  while ((curr_item= item_list_it++))
+  while (Item_field* curr_item= item_list_it++)
   {
     if (curr_item->eq(this, 1))
       return false; /* Already in the set. */
@@ -89,9 +88,8 @@ bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
   KeyPartInfo *first_non_group_part= *((KeyPartInfo **) arg);
   KeyPartInfo *last_part= *(((KeyPartInfo **) arg) + 1);
-  KeyPartInfo *cur_part;
 
-  for (cur_part= first_non_group_part; cur_part != last_part; cur_part++)
+  for (KeyPartInfo* cur_part= first_non_group_part; cur_part != last_part; cur_part++)
   {
     if (field->eq(cur_part->field))
       return true;
@@ -215,7 +213,7 @@ void Item_field::reset_field(Field *f)
 {
   set_field(f);
   /* 'name' is pointing at field->field_name of old field */
-  name= (char*) f->field_name;
+  name= f->field_name;
 }
 
 /* ARGSUSED */
@@ -324,7 +322,8 @@ bool Item_field::val_bool_result()
     return false;
   }
 
-  switch (result_field->result_type()) {
+  switch (result_field->result_type()) 
+  {
   case INT_RESULT:
     return result_field->val_int() != 0;
 
@@ -342,12 +341,12 @@ bool Item_field::val_bool_result()
     return result_field->val_real() != 0.0;
 
   case ROW_RESULT:
-    assert(0);
-    return 0;                                   // Shut up compiler
+    assert(false);
+    return 0;
   }
 
-  assert(0);
-  return 0;                                   // Shut up compiler
+  assert(false);
+  return 0;
 }
 
 
@@ -385,7 +384,7 @@ table_map Item_field::used_tables() const
     return 0;					// const item
   }
 
-  return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
+  return depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map;
 }
 
 enum Item_result Item_field::result_type () const
@@ -547,7 +546,6 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
               select->group_list.elements &&
               (place == SELECT_LIST || place == IN_HAVING))
           {
-            Item_outer_ref *rf;
             /*
               If an outer field is resolved in a grouping select then it
               is replaced for an Item_outer_ref object. Otherwise an
@@ -557,8 +555,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
               after the original field has been fixed and this is done in the
               fix_inner_refs() function.
             */
-            ;
-            rf= new Item_outer_ref(context, this);
+            Item_outer_ref* rf= new Item_outer_ref(context, this);
             *reference= rf;
             select->inner_refs_list.push_back(rf);
             rf->in_sum_func= session->lex().in_sum_func;
@@ -587,15 +584,10 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
         else
         {
           Item::Type ref_type= (*reference)->type();
-          prev_subselect_item->used_tables_cache|=
-            (*reference)->used_tables();
-          prev_subselect_item->const_item_cache&=
-            (*reference)->const_item();
+          prev_subselect_item->used_tables_cache|= (*reference)->used_tables();
+          prev_subselect_item->const_item_cache&= (*reference)->const_item();
           mark_as_dependent(session, last_checked_context->select_lex,
-                            context->select_lex, this,
-                            ((ref_type == REF_ITEM || ref_type == FIELD_ITEM) ?
-                             (Item_ident*) (*reference) :
-                             0));
+            context->select_lex, this, ((ref_type == REF_ITEM || ref_type == FIELD_ITEM) ? (Item_ident*) (*reference) : 0));
           /*
             A reference to a view field had been found and we
             substituted it instead of this Item (find_field_in_tables
@@ -653,9 +645,6 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   }
   else if (ref != not_found_item)
   {
-    Item *save;
-    Item_ref *rf;
-
     /* Should have been checked in resolve_ref_in_select_and_group(). */
     assert(*ref && (*ref)->fixed);
     /*
@@ -664,16 +653,13 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       constructor, so no initialization is performed, and call
       fix_fields() below.
     */
-    save= *ref;
+    Item* save= *ref;
     *ref= NULL;                             // Don't call set_properties()
-    rf= (place == IN_HAVING ?
-         new Item_ref(context, ref, (char*) table_name,
-                      (char*) field_name, alias_name_used) :
+    Item_ref* rf= (place == IN_HAVING ?
+         new Item_ref(context, ref, (char*) table_name, (char*) field_name, alias_name_used) :
          (!select->group_list.elements ?
-         new Item_direct_ref(context, ref, (char*) table_name,
-                             (char*) field_name, alias_name_used) :
-         new Item_outer_ref(context, ref, (char*) table_name,
-                            (char*) field_name, alias_name_used)));
+         new Item_direct_ref(context, ref, (char*) table_name, (char*) field_name, alias_name_used) :
+         new Item_outer_ref(context, ref, table_name, field_name, alias_name_used)));
     *ref= save;
     if (!rf)
       return -1;
@@ -692,9 +678,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     if (rf->fix_fields(session, reference) || rf->check_cols(1))
       return -1;
 
-    mark_as_dependent(session, last_checked_context->select_lex,
-                      context->select_lex, this,
-                      rf);
+    mark_as_dependent(session, last_checked_context->select_lex, context->select_lex, this, rf);
     return 0;
   }
   else
@@ -704,12 +688,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
                       this, (Item_ident*)*reference);
     if (last_checked_context->select_lex->having_fix_field)
     {
-      Item_ref *rf;
-      rf= new Item_ref(context,
-                       (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0),
-                       (char*) cached_table->alias, (char*) field_name);
-      if (!rf)
-        return -1;
+      Item_ref* rf= new Item_ref(context, (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0), (char*) cached_table->alias, (char*) field_name);
       *reference= rf;
       /*
         rf is Item_ref => never substitute other items (in this case)

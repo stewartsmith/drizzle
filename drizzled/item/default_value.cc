@@ -25,8 +25,7 @@
 #include <drizzled/session.h>
 #include <drizzled/item/default_value.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 {

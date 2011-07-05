@@ -948,11 +948,7 @@ AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
 if BUILD_GCC_PCH
-PCHHEADERS= \
-	    drizzled/definitions.h.gch \
-	    drizzled/plugin/storage_engine.h.gch  \
-	    drizzled/sql_base.h.gch \
-	    drizzled/sql_parse.h.gch
+PCHHEADERS= config.h.gch
 else
 PCHHEADERS =
 endif
