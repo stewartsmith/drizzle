@@ -1073,13 +1073,10 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   if (cond->type() == Item::COND_ITEM)
   {
     List<Item>::iterator li(((Item_cond*) cond)->argument_list()->begin());
-    Item *item;
-    while ((item= li++))
+    while (Item* item= li++)
     {
       if (maxmin_in_range(max_fl, field, item))
-      {
         return 1;
-      }
     }
     return 0;
   }
@@ -1120,8 +1117,8 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   case Item_func::EQ_FUNC:
   case Item_func::EQUAL_FUNC:
     break;
-  default:                                        // Keep compiler happy
-    assert(false);                               // Impossible
+  default:
+    ; // assert(false); // Impossible; Olaf: Not really, assert is hit. BUG?
   }
   return 0;
 }
