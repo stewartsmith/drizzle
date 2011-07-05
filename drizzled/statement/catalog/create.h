@@ -21,19 +21,14 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
+namespace catalog {
 
-namespace statement
-{
-
-namespace catalog
-{
-
-class Create :public Catalog
+class Create : public Catalog
 {
 public:
-  Create(Session *in_session, drizzled::lex_string_t &arg);
+  Create(Session*, LEX_STRING&);
   bool authorized() const;
   bool perform() const;
 };

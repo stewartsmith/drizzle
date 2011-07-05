@@ -45,7 +45,7 @@ namespace execute {
 union YYSTYPE
 {
   long long number;  
-  lex_string_t string;
+  LEX_STRING string;
 };
 
 } // namespace execute

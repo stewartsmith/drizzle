@@ -437,7 +437,7 @@ bool buildCollation(LEX *lex, const charset_info_st *arg)
   return true;
 }
 
-void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
+void buildKey(LEX *lex, Key::Keytype type_par, const LEX_STRING &name_arg)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
   Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
@@ -446,7 +446,7 @@ void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
 
-void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
+void buildForeignKey(LEX *lex, const LEX_STRING &name_arg, drizzled::Table_ident *table)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
   Key *key= new Foreign_key(name_arg, lex->col_list,

@@ -41,7 +41,7 @@ class Catalog : public Identifier
 {
 public:
   Catalog(const std::string &name_arg);
-  Catalog(const drizzled::lex_string_t &name_arg);
+  Catalog(const drizzled::LEX_STRING &name_arg);
   bool isValid() const;
   bool compare(const std::string &arg) const;
 

@@ -29,7 +29,7 @@ namespace drizzled
 namespace statement
 {
 
-Catalog::Catalog(Session *in_session, drizzled::lex_string_t &arg) :
+Catalog::Catalog(Session *in_session, drizzled::LEX_STRING &arg) :
   Statement(in_session),
   _identifier(arg)
 {

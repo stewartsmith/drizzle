@@ -34,7 +34,7 @@ class Catalog : public Statement
   identifier::Catalog _identifier;
 
 public:
-  Catalog(Session *in_session, drizzled::lex_string_t &arg);
+  Catalog(Session *in_session, drizzled::LEX_STRING &arg);
 
   virtual bool authorized() const= 0;
   virtual bool perform() const= 0;

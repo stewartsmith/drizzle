@@ -137,8 +137,8 @@ void buildCreateFieldIdent(LEX *lex);
 void storeAlterColumnPosition(LEX *lex, const char *position);
 
 bool buildCollation(LEX *lex, const charset_info_st *arg);
-void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg);
-void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table);
+void buildKey(LEX *lex, Key::Keytype type_par, const LEX_STRING &name_arg);
+void buildForeignKey(LEX *lex, const LEX_STRING &name_arg, drizzled::Table_ident *table);
 
 drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned);
 drizzled::enum_field_types buildSerialColumn(LEX *lex);
