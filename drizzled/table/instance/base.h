@@ -314,9 +314,7 @@ public:
 
   const std::string &getTableName(std::string &name_arg) const
   {
-    name_arg.clear();
-    name_arg.append(table_name.str, table_name.length);
-
+    name_arg.assign(table_name.str, table_name.length);
     return name_arg;
   }
 
@@ -325,11 +323,14 @@ public:
     return db.str;
   }
 
+  size_t getSchemaNameSize() const
+  {
+    return db.length;
+  }
+
   const std::string &getSchemaName(std::string &schema_name_arg) const
   {
-    schema_name_arg.clear();
-    schema_name_arg.append(db.str, db.length);
-
+    schema_name_arg.assign(db.str, db.length);
     return schema_name_arg;
   }
 

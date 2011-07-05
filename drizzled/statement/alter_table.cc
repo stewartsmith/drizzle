@@ -1599,9 +1599,9 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
-        tables.setTableName(from->getMutableShare()->getTableName());
+        tables.setTableName(from->getMutableShare()->getTableName(), from->getMutableShare()->getTableNameSize());
         tables.alias= tables.getTableName();
-        tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
+        tables.setSchemaName(from->getMutableShare()->getSchemaName(), from->getMutableShare()->getSchemaNameSize());
         error= 1;
 
         session->lex().select_lex.setup_ref_array(session, order_num);
@@ -1736,12 +1736,12 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
   if (table->getShare()->getType())
   {
     TableList tbl;
-    tbl.setSchemaName(const_cast<char *>(identifier.getSchemaName().c_str()));
-    tbl.alias= const_cast<char *>(identifier.getTableName().c_str());
-    tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
+    tbl.setSchemaName(identifier.getSchemaName().c_str(), identifier.getSchemaName().size());
+    tbl.alias= identifier.getTableName().c_str();
+    tbl.setTableName(identifier.getTableName().c_str(), identifier.getTableName().size());
 
     /* Table is in session->temporary_tables */
-    return session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {

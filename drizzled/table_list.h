@@ -125,9 +125,10 @@ public:
     return &db;
   }
 
-  void setSchemaName(char *arg)
+  void setSchemaName(const char *arg, size_t arg_size)
   {
     db= arg;
+    db_length= arg_size;
   }
 
   const char *alias;
@@ -141,12 +142,13 @@ public:
     return table_name;
   }
 
-  void setTableName(const char *arg)
+  void setTableName(const char *arg, size_t arg_size)
   {
     table_name= arg;
+    table_name_length= arg_size;
   }
 
-  char *option; ///< Used by cache index
+  const char *option; ///< Used by cache index
   Item *on_expr; ///< Used with outer join
   Table *table; ///< opened table
   /**

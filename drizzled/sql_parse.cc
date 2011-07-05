@@ -962,8 +962,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str);
-    ptr->db_length= table->db.length;
+    ptr->setSchemaName(table->db.str, table->db.length);
   }
   else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
     return NULL;
@@ -972,8 +971,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str);
-  ptr->table_name_length=table->table.length;
+  ptr->setTableName(table->table.str, table->table.length);
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);

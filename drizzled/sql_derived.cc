@@ -146,11 +146,9 @@ exit:
     {
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->setTableName(const_cast<char *>(table->getShare()->getTableName()));
-      orig_table_list->table_name_length= table->getShare()->getTableNameSize();
+      orig_table_list->setTableName(table->getShare()->getTableName(), table->getShare()->getTableNameSize());
       table->derived_select_number= first_select->select_number;
-      orig_table_list->setSchemaName((char *)"");
-      orig_table_list->db_length= 0;
+      orig_table_list->setSchemaName("", 0);
       /* Force read of table stats in the optimizer */
       table->cursor->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
