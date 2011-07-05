@@ -50,6 +50,7 @@
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 using namespace std;
 

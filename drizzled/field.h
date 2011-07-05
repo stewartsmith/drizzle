@@ -774,14 +774,6 @@ inline bool isDateTime(const enum_field_types &arg)
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
 
-} /* namespace drizzled */
-
-/** @TODO Why is this in the middle of the file???*/
-#include <drizzled/create_field.h>
-
-namespace drizzled
-{
-
 /**
  * A class for sending field information to a client.
  *
@@ -803,7 +795,6 @@ public:
   uint32_t flags;
   uint32_t decimals;
   enum_field_types type;
-  SendField() {}
 };
 
 uint32_t pack_length_to_packflag(uint32_t type);

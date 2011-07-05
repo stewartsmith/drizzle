@@ -41,6 +41,7 @@
 #include <drizzled/session/transactions.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 

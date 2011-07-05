@@ -29,6 +29,7 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 namespace table {

@@ -172,24 +172,21 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   charset= &my_charset_bin;
   decimals= decimals_arg & FIELDFLAG_MAX_DEC;
 
-  if (! maybe_null)
-    flags= NOT_NULL_FLAG;
-  else
-    flags= 0;
+  flags= maybe_null ? 0 : NOT_NULL_FLAG;
 }
 
 bool CreateField::init(Session *,
-                        char *fld_name,
+                        const char *fld_name,
                         enum_field_types fld_type,
-                        char *fld_length,
-                        char *fld_decimals,
+                        const char *fld_length,
+                        const char *fld_decimals,
                         uint32_t fld_type_modifier,
                         LEX_STRING *fld_comment,
-                        char *fld_change,
+                        const char *fld_change,
                         List<String> *fld_interval_list,
-                        const charset_info_st * const fld_charset,
+                        const charset_info_st* fld_charset,
                         uint32_t,
-                        enum column_format_type column_format_in)
+                        column_format_type column_format_in)
 {
   uint32_t sign_len= 0;
   uint32_t allowed_type_modifier= 0;

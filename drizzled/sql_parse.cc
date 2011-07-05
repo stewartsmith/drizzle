@@ -59,6 +59,7 @@
 #include <drizzled/system_variables.h>
 #include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/create_field.h>
 
 #include <limits.h>
 

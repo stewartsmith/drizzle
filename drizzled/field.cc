@@ -56,6 +56,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/display.h>
 #include <drizzled/typelib.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 

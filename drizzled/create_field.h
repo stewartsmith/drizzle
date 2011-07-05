@@ -37,7 +37,7 @@ public:
   const char *after; /**< Put this new Field after this Field */
   LEX_STRING comment; /**< A comment for this field */
   Item *def; /**< Default value for the new field */
-  enum enum_field_types sql_type; /**< The data type of the new field */
+  enum_field_types sql_type; /**< The data type of the new field */
 
   enum_field_types type() const
   {
@@ -108,23 +108,23 @@ public:
     @retval
       true  on error
   */
-  bool init(Session *session,
-            char *field_name,
+  bool init(Session*,
+            const char *field_name,
             enum_field_types type,
-            char *length,
-            char *decimals,
+            const char *length,
+            const char *decimals,
             uint32_t type_modifier,
             LEX_STRING *comment,
-            char *change,
+            const char *change,
             List<String> *interval_list,
-            const charset_info_st * const cs,
+            const charset_info_st*,
             uint32_t uint_geom_type,
-            enum column_format_type column_format);
+            column_format_type column_format);
 
   bool setDefaultValue(Item *default_value, Item *on_update_item);
 };
 
-std::ostream& operator<<(std::ostream& output, const CreateField &field);
+std::ostream& operator<<(std::ostream&, const CreateField&);
 
 } /* namespace drizzled */
 

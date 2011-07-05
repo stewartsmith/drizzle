@@ -37,7 +37,7 @@
 
 #include <drizzled/table_proto.h>
 #include <drizzled/charset.h>
-
+#include <drizzled/create_field.h>
 #include <drizzled/function/time/typecast.h>
 
 using namespace std;
