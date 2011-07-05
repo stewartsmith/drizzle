@@ -1121,8 +1121,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   case Item_func::EQUAL_FUNC:
     break;
   default:                                        // Keep compiler happy
-    assert(1);                               // Impossible
-    break;
+    assert(false);                               // Impossible
   }
   return 0;
 }

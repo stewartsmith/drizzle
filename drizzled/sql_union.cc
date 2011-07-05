@@ -376,7 +376,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      assert(1); // Olaf: should this be assert(false)?
+      assert(false);
     }
   }
 
