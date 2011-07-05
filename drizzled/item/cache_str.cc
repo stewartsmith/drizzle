@@ -22,8 +22,7 @@
 #include <drizzled/item/cache_str.h>
 #include <drizzled/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_cache_str::Item_cache_str(const Item *item) :
   Item_cache(), value(0),
@@ -74,7 +73,7 @@ int64_t Item_cache_str::val_int()
     return my_strntoll(value->charset(), value->ptr(),
                        value->length(), 10, (char**) 0, &err);
   else
-    return (int64_t)0;
+    return 0;
 }
 
 type::Decimal *Item_cache_str::val_decimal(type::Decimal *decimal_val)
@@ -89,9 +88,7 @@ type::Decimal *Item_cache_str::val_decimal(type::Decimal *decimal_val)
 
 int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 {
-  int res= Item_cache::save_in_field(field, no_conversions);
-
-  return res;
+  return Item_cache::save_in_field(field, no_conversions);
 }
 
 } /* namespace drizzled */

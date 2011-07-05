@@ -23,7 +23,7 @@
 
 namespace drizzled {
 
-class Item_cache_row: public Item_cache
+class Item_cache_row : public Item_cache
 {
   Item_cache  **values;
   uint32_t item_count;
@@ -42,8 +42,8 @@ public:
     'setup' is needed only by row => it not called by simple row subselect
     (only by IN subselect (in subselect optimizer))
   */
-  bool setup(Item *item);
-  void store(Item *item);
+  bool setup(Item*);
+  void store(Item*);
   void illegal_method_call(const char * method_name);
   void make_field(SendField *field);
   double val_real();

@@ -25,10 +25,9 @@
 #include <drizzled/type/decimal.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache: public Item_basic_constant
+class Item_cache : public Item_basic_constant
 {
 protected:
   Item *example;

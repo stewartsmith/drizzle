@@ -240,7 +240,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
-			      drizzled/item/blob.h \
 			      drizzled/item/boolean.h \
 			      drizzled/item/cache.h \
 			      drizzled/item/cache_decimal.h \

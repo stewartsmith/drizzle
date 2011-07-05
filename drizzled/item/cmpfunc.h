@@ -138,8 +138,6 @@ protected:
   : item::function::Boolean(a), value(a_value), affirmative(a_affirmative)
   {}
 
-  ~Item_func_truth()
-  {}
 private:
   /**
     True for <code>X IS [NOT] TRUE</code>,
@@ -161,7 +159,6 @@ class Item_func_istrue : public Item_func_truth
 {
 public:
   Item_func_istrue(Item *a) : Item_func_truth(a, true, true) {}
-  ~Item_func_istrue() {}
   virtual const char* func_name() const { return "istrue"; }
 };
 
@@ -174,7 +171,6 @@ class Item_func_isnottrue : public Item_func_truth
 {
 public:
   Item_func_isnottrue(Item *a) : Item_func_truth(a, true, false) {}
-  ~Item_func_isnottrue() {}
   virtual const char* func_name() const { return "isnottrue"; }
 };
 
@@ -187,7 +183,6 @@ class Item_func_isfalse : public Item_func_truth
 {
 public:
   Item_func_isfalse(Item *a) : Item_func_truth(a, false, true) {}
-  ~Item_func_isfalse() {}
   virtual const char* func_name() const { return "isfalse"; }
 };
 
@@ -200,7 +195,6 @@ class Item_func_isnotfalse : public Item_func_truth
 {
 public:
   Item_func_isnotfalse(Item *a) : Item_func_truth(a, false, false) {}
-  ~Item_func_isnotfalse() {}
   virtual const char* func_name() const { return "isnotfalse"; }
 };
 
