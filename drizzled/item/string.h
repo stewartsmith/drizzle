@@ -22,10 +22,9 @@
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_string :public Item_basic_constant
+class Item_string : public Item_basic_constant
 {
 public:
   Item_string(const char *str,uint32_t length,
@@ -87,8 +86,7 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   Item *clone_item()
   {
-    return new Item_string(name, str_value.ptr(),
-    			   str_value.length(), collation.collation);
+    return new Item_string(name, str_value.ptr(), str_value.length(), collation.collation);
   }
   Item *safe_charset_converter(const charset_info_st * const tocs);
   inline void append(char *str, uint32_t length)
@@ -142,16 +140,16 @@ private:
 };
 
 
-class Item_static_string_func :public Item_string
+class Item_static_string_func : public Item_string
 {
   const char *func_name;
 public:
   Item_static_string_func(const char *name_par, const char *str, uint32_t length,
-                          const charset_info_st * const cs,
+                          const charset_info_st* cs,
                           Derivation dv= DERIVATION_COERCIBLE)
     :Item_string(NULL, str, length, cs, dv), func_name(name_par)
   {}
-  Item *safe_charset_converter(const charset_info_st * const tocs);
+  Item *safe_charset_converter(const charset_info_st*);
 
   virtual inline void print(String *str)
   {

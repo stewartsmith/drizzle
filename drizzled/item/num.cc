@@ -37,7 +37,7 @@ namespace drizzled {
   the latter returns a non-fixed Item, so val_str() crashes afterwards.
   Override Item_num method, to return a fixed item.
 */
-Item *Item_num::safe_charset_converter(const charset_info_st * const)
+Item *Item_num::safe_charset_converter(const charset_info_st*)
 {
   char buf[64];
   String tmp(buf, sizeof(buf), &my_charset_bin);

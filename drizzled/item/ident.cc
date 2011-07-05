@@ -40,7 +40,7 @@ Item_ident::Item_ident(Name_resolution_context *context_arg,
    alias_name_used(false), cached_field_index(NO_CACHED_FIELD_INDEX),
    cached_table(0), depended_from(0)
 {
-  name = (char*) field_name_arg;
+  name = field_name_arg;
 }
 
 /**
@@ -69,7 +69,6 @@ void Item_ident::cleanup()
   table_name= orig_table_name;
   field_name= orig_field_name;
   depended_from= 0;
-  return;
 }
 
 bool Item_ident::remove_dependence_processor(unsigned char * arg)
@@ -182,8 +181,7 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->charsetnr= field->charset()->number;
   tmp_field->length=field->field_length;
   tmp_field->type=field->type();
-  tmp_field->flags= field->getTable()->maybe_null ?
-    (field->flags & ~NOT_NULL_FLAG) : field->flags;
+  tmp_field->flags= field->getTable()->maybe_null ? (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }
 

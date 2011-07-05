@@ -27,8 +27,7 @@
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const charset_info_st *system_charset_info;
 
@@ -154,7 +153,7 @@ bool Item_float::eq(const Item *arg, bool) const
   return false;
 }
 
-Item *Item_static_float_func::safe_charset_converter(const charset_info_st * const)
+Item *Item_static_float_func::safe_charset_converter(const charset_info_st*)
 {
   char buf[64];
   String tmp(buf, sizeof(buf), &my_charset_bin);

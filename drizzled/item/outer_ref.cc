@@ -22,8 +22,7 @@
 #include <drizzled/item/uint.h>
 #include <drizzled/item/outer_ref.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Prepare referenced outer field then call usual Item_direct_ref::fix_fields
@@ -40,11 +39,10 @@ namespace drizzled
 
 bool Item_outer_ref::fix_fields(Session *session, Item **reference)
 {
-  bool err;
   /* outer_ref->check_cols() will be made in Item_direct_ref::fix_fields */
   if ((*ref) && !(*ref)->fixed && ((*ref)->fix_fields(session, reference)))
     return true;
-  err= Item_direct_ref::fix_fields(session, reference);
+  bool err= Item_direct_ref::fix_fields(session, reference);
   if (!outer_ref)
     outer_ref= *ref;
   if ((*ref)->type() == Item::FIELD_ITEM)

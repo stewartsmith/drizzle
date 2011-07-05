@@ -41,10 +41,9 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
   /* We should only check that arg is in first table */
   if (!arg->fixed)
   {
-    bool res;
     TableList *orig_next_table= context->last_name_resolution_table;
     context->last_name_resolution_table= context->first_name_resolution_table;
-    res= arg->fix_fields(session, &arg);
+    bool res= arg->fix_fields(session, &arg);
     context->last_name_resolution_table= orig_next_table;
     if (res)
       return true;

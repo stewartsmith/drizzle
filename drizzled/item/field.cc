@@ -656,9 +656,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
     Item* save= *ref;
     *ref= NULL;                             // Don't call set_properties()
     Item_ref* rf= (place == IN_HAVING ?
-         new Item_ref(context, ref, (char*) table_name, (char*) field_name, alias_name_used) :
+         new Item_ref(context, ref, table_name, field_name, alias_name_used) :
          (!select->group_list.elements ?
-         new Item_direct_ref(context, ref, (char*) table_name, (char*) field_name, alias_name_used) :
+         new Item_direct_ref(context, ref, table_name, field_name, alias_name_used) :
          new Item_outer_ref(context, ref, table_name, field_name, alias_name_used)));
     *ref= save;
     if (!rf)
@@ -683,12 +683,10 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   }
   else
   {
-    mark_as_dependent(session, last_checked_context->select_lex,
-                      context->select_lex,
-                      this, (Item_ident*)*reference);
+    mark_as_dependent(session, last_checked_context->select_lex, context->select_lex, this, (Item_ident*)*reference);
     if (last_checked_context->select_lex->having_fix_field)
     {
-      Item_ref* rf= new Item_ref(context, (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0), (char*) cached_table->alias, (char*) field_name);
+      Item_ref* rf= new Item_ref(context, (cached_table->getSchemaName()[0] ? cached_table->getSchemaName() : 0), cached_table->alias, field_name);
       *reference= rf;
       /*
         rf is Item_ref => never substitute other items (in this case)
@@ -817,8 +815,6 @@ bool Item_field::fix_fields(Session *session, Item **reference)
               Item_field created by the parser with the new Item_ref.
             */
             Item_ref *rf= new Item_ref(context, db_name,table_name,field_name);
-            if (!rf)
-              return 1;
             *reference= rf;
             /*
               Because Item_ref never substitutes itself with other items
@@ -921,7 +917,6 @@ void Item_field::cleanup()
    */
   field= result_field= 0;
   null_value= false;
-  return;
 }
 
 
@@ -951,11 +946,10 @@ bool Item_field::result_as_int64_t()
 
 Item_equal *Item_field::find_item_equal(COND_EQUAL *cond_equal)
 {
-  Item_equal *item= 0;
   while (cond_equal)
   {
     List<Item_equal>::iterator li(cond_equal->current_level.begin());
-    while ((item= li++))
+    while (Item_equal* item= li++)
     {
       if (item->contains(field))
         return item;
@@ -1186,9 +1180,7 @@ void Item_field::update_null_value()
     popping up.
   */
   Session *session= field->getTable()->in_use;
-  int no_errors;
-
-  no_errors= session->no_errors;
+  int no_errors= session->no_errors;
   session->no_errors= 1;
   Item::update_null_value();
   session->no_errors= no_errors;
@@ -1227,12 +1219,9 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
     int el= all_fields->size();
-    Item_ref *ref;
-
     ref_pointer_array[el]= (Item*)this;
     all_fields->push_front((Item*)this);
-    ref= new Item_ref(&select->context, ref_pointer_array + el,
-                      table_name, field_name);
+    Item_ref* ref= new Item_ref(&select->context, ref_pointer_array + el, table_name, field_name);
     return ref;
   }
   return this;
