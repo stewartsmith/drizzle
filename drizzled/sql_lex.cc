@@ -1825,29 +1825,6 @@ LEX::LEX() :
   reset_query_tables_list(true);
 }
 
-/**
-  This method should be called only during parsing.
-  It is aware of compound statements (stored routine bodies)
-  and will initialize the destination with the default
-  database of the stored routine, rather than the default
-  database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database
-  set to 'bar' and then issues:
-
-  CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
-
-  t1 is meant to refer to foo.t1, not to bar.t1.
-
-  This method is needed to support this rule.
-
-  @return true in case of error (parsing should be aborted, false in
-  case of success
-*/
-bool LEX::copy_db_to(char **p_db, size_t *p_db_length) const
-{
-  return session->copy_db_to(p_db, p_db_length);
-}
-
 /*
   initialize limit counters
 

@@ -965,7 +965,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->setSchemaName(table->db.str);
     ptr->db_length= table->db.length;
   }
-  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
+  else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
     return NULL;
   else
     ptr->setIsFqtn(false);
@@ -985,15 +985,13 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (lock_type != TL_IGNORE)
   {
     TableList *first_table= (TableList*) table_list.first;
-    for (TableList *tables= first_table ;
-	 tables ;
-	 tables=tables->next_local)
+    for (TableList *tables= first_table; tables; tables= tables->next_local)
     {
       if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
+        not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
-	return NULL;
+        my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+        return NULL;
       }
     }
   }

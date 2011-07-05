@@ -898,7 +898,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length);
+  bool copy_db_to(const char*& p_db, size_t& p_db_length);
 
 public:
 

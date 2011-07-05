@@ -112,7 +112,7 @@ public:
   TableList **prev_global;
 
 private:
-  char *db;
+  const char *db;
 
 public:
   const char *getSchemaName()
@@ -120,7 +120,7 @@ public:
     return db;
   }
 
-  char **getSchemaNamePtr()
+  const char** getSchemaNamePtr()
   {
     return &db;
   }

@@ -1531,15 +1531,15 @@ void Session::end_statement()
   resetResultsetMessage();
 }
 
-bool Session::copy_db_to(char **p_db, size_t *p_db_length)
+bool Session::copy_db_to(const char*& db, size_t& db_length)
 {
   if (impl_->schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= mem.strmake(*impl_->schema);
-  *p_db_length= impl_->schema->size();
+  db= mem.strmake(*impl_->schema);
+  db_length= impl_->schema->size();
   return false;
 }
 
