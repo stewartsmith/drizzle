@@ -106,7 +106,6 @@ bool statement::AlterTable::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
-  bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
 
@@ -158,7 +157,7 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  if (not (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
+  if (session().wait_if_global_read_lock(0, 1))
     return true;
 
   bool res;
@@ -1616,7 +1615,7 @@ copy_data_between_tables(Session *session,
     /* Tell handler that we have values for all columns in the to table */
     to->use_all_columns();
 
-    error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+    error= info.init_read_record(session, from, NULL, 1, true);
     if (error)
     {
       to->print_error(errno, MYF(0));

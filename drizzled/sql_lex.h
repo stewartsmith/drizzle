@@ -786,9 +786,9 @@ public:
   Select_Lex *all_selects_list;
 
   /* This is the "scale" for DECIMAL (S,P) notation */
-  char *length;
+  const char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
-  char *dec;
+  const char *dec;
 
   /**
    * This is used kind of like the "ident" member variable below, as

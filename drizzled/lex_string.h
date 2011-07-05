@@ -30,7 +30,17 @@ namespace drizzled {
 /* This definition must match the one given in mysql/plugin.h */
 struct LEX_STRING
 {
-  char *str;
+  const char* begin() const
+  {
+    return str;
+  }
+
+  const char* end() const
+  {
+    return str + length;
+  }
+
+  char* str;
   size_t length;
 };
 

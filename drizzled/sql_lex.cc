@@ -321,14 +321,12 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
                                    uint32_t length, char quote)
 {
   LEX_STRING tmp;
-  const char *from, *end;
-  char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
   tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
-  from= lip->get_tok_start() + skip;
-  to= tmp.str;
-  end= to+length;
+  const char* from= lip->get_tok_start() + skip;
+  char* to= (char*)tmp.str;
+  const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + length;

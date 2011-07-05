@@ -806,12 +806,12 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 */
 
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_types type,
-		       char *length, char *decimals,
+		       const char *length, const char *decimals,
 		       uint32_t type_modifier,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
-		       char *change,
+		       const char *change,
                        List<String> *interval_list, const charset_info_st * const cs)
 {
   register CreateField *new_field;
@@ -921,12 +921,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                                          LEX_STRING *option)
 {
   TableList *previous_table_ref; /* The table preceding the current one. */
-  char *alias_str;
   LEX *lex= &session->lex();
 
   if (!table)
     return NULL;				// End of memory
-  alias_str= alias ? alias->str : table->table.str;
+  const char* alias_str= alias ? alias->str : table->table.str;
   if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {

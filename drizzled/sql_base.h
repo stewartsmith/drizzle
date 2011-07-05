@@ -38,18 +38,18 @@ DRIZZLED_API void kill_drizzle();
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
-                       char *length, char *decimal,
+                       const char *length, const char *decimal,
                        uint32_t type_modifier,
                        enum column_format_type column_format,
                        Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
-                       char *change, List<String> *interval_list,
+                       const char *change, List<String> *interval_list,
                        const charset_info_st * const cs);
-CreateField * new_create_field(Session *session, char *field_name, enum_field_types type,
-                               char *length, char *decimals,
+CreateField * new_create_field(Session *session, const char *field_name, enum_field_types type,
+                               const char *length, const char *decimals,
                                uint32_t type_modifier,
                                Item *default_value, Item *on_update_value,
-                               LEX_STRING *comment, char *change,
+                               LEX_STRING *comment, const char *change,
                                List<String> *interval_list, charset_info_st *cs);
 void push_new_name_resolution_context(Session&, TableList& left_op, TableList& right_op);
 void add_join_on(TableList *b,Item *expr);

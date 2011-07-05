@@ -691,15 +691,10 @@ bool prepare_insert(Session *session, TableList *table_list,
   if (not table)
     table= table_list->table;
 
-  if (not select_insert)
+  if (not select_insert && unique_table(table_list, table_list->next_global, true))
   {
-    TableList *duplicate;
-    if ((duplicate= unique_table(table_list, table_list->next_global, true)))
-    {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
-
-      return true;
-    }
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
+    return true;
   }
 
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)

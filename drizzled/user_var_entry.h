@@ -44,7 +44,7 @@ class user_var_entry
 
   ~user_var_entry()
   {
-    free(name.str);
+    free(const_cast<char*>(name.str));
     free(value);
   }
 

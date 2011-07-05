@@ -2502,16 +2502,14 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
            ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
-      int write_error;
-      Item *item;
       List<Item>::iterator it(rollup.getFields()[i].begin());
-      while ((item= it++))
+      while (Item* item= it++)
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->cursor->insertRecord(table_arg->getInsertRecord())))
+      if (table_arg->cursor->insertRecord(table_arg->getInsertRecord()))
       {
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return 1;
