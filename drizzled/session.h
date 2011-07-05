@@ -217,7 +217,7 @@ public:
 
   identifier::user::ptr user() const
   {
-    return security_ctx ? security_ctx : identifier::user::ptr();
+    return security_ctx;
   }
 
   void setUser(identifier::user::mptr arg)
@@ -225,7 +225,7 @@ public:
     security_ctx= arg;
   }
 
-  int32_t getScoreboardIndex()
+  int32_t getScoreboardIndex() const
   {
     return scoreboard_index;
   }

@@ -235,10 +235,8 @@ namespace util
   }
 }
 
-typedef class Item COND;
 typedef struct my_locale_st MY_LOCALE;
 typedef struct st_columndef MI_COLUMNDEF;
-typedef struct system_status_var system_status_var;
 
 class AlterColumn;
 class AlterDrop;
