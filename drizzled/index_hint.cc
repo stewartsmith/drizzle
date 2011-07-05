@@ -33,8 +33,7 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/sql_table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
  * Names of the index hints (for error messages). Keep in sync with

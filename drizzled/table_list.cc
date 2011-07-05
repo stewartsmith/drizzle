@@ -292,10 +292,9 @@ void TableList::print(Session *session, String *str)
       if (alias && alias[0])
       {
         str->append(' ');
-
         string t_alias(alias);
         boost::to_lower(t_alias);
-        str->append_identifier(t_alias.c_str(), t_alias.length());
+        str->append_identifier(t_alias);
       }
     }
 
@@ -304,8 +303,8 @@ void TableList::print(Session *session, String *str)
       List<Index_hint>::iterator it(index_hints->begin());
       while (Index_hint* hint= it++)
       {
-        str->append (STRING_WITH_LEN(" "));
-        hint->print (session, str);
+        str->append(STRING_WITH_LEN(" "));
+        hint->print(session, str);
       }
     }
   }

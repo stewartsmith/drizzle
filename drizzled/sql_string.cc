@@ -676,8 +676,12 @@ void String::append_identifier(const char *name, size_t in_length)
   append(&quote_char, 1);
 }
 
-bool check_if_only_end_space(const charset_info_st * const cs, char *str,
-                             char *end)
+void String::append_identifier(str_ref v)
+{
+  append_identifier(v.data(), v.size());
+}
+
+bool check_if_only_end_space(const charset_info_st * const cs, char *str, char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
