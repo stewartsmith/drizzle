@@ -154,59 +154,59 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
     case message::Statement::INSERT:
     {
       const message::TableMetadata &metadata= in_statement.insert_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::UPDATE:
     {
       const message::TableMetadata &metadata= in_statement.update_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::DELETE:
     {
       const message::TableMetadata &metadata= in_statement.delete_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::CREATE_SCHEMA:
     {
-      in_schema_name.assign(in_statement.create_schema_statement().schema().name());
+      in_schema_name= in_statement.create_schema_statement().schema().name();
       in_table_name.clear();
       break;
     }
     case message::Statement::ALTER_SCHEMA:
     {
-      in_schema_name.assign(in_statement.alter_schema_statement().after().name());
+      in_schema_name= in_statement.alter_schema_statement().after().name();
       in_table_name.clear();
       break;
     }
     case message::Statement::DROP_SCHEMA:
     {
-      in_schema_name.assign(in_statement.drop_schema_statement().schema_name());
+      in_schema_name= in_statement.drop_schema_statement().schema_name();
       in_table_name.clear();
       break;
     }
     case message::Statement::CREATE_TABLE:
     {
-      in_schema_name.assign(in_statement.create_table_statement().table().schema());
-      in_table_name.assign(in_statement.create_table_statement().table().name());
+      in_schema_name= in_statement.create_table_statement().table().schema();
+      in_table_name= in_statement.create_table_statement().table().name();
       break;
     }
     case message::Statement::ALTER_TABLE:
     {
-      in_schema_name.assign(in_statement.alter_table_statement().after().schema());
-      in_table_name.assign(in_statement.alter_table_statement().after().name());
+      in_schema_name= in_statement.alter_table_statement().after().schema();
+      in_table_name= in_statement.alter_table_statement().after().name();
       break;
     }
     case message::Statement::DROP_TABLE:
     {
       const message::TableMetadata &metadata= in_statement.drop_table_statement().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     default:
@@ -400,11 +400,11 @@ void FilteredReplicator::parseQuery(const string &sql,
     {
       /* the name must be the fifth word */
       pos= sql.find_first_of(' ', 21);
-      target_name.assign(sql.substr(21, pos - 21));
+      target_name= sql.substr(21, pos - 21);
     }
     else
     {
-      target_name.assign(cmp_str);
+      target_name= cmp_str;
     }
     /*
      * Determine whether the name is a concatenation of the schema
@@ -417,15 +417,15 @@ void FilteredReplicator::parseQuery(const string &sql,
       /*
        * There is a schema name here...
        */
-      schema_name.assign(target_name.substr(0, pos));
+      schema_name= target_name.substr(0, pos);
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(target_name.substr(pos + 1));
+      table_name= target_name.substr(pos + 1);
     }
     else
     {
-      table_name.assign(target_name);
+      table_name= target_name;
     }
   }
   else if (type.compare("CREATE") == 0)
@@ -448,15 +448,15 @@ void FilteredReplicator::parseQuery(const string &sql,
       /*
        * There is a schema name here...
        */
-      schema_name.assign(target_name.substr(0, pos));
+      schema_name= target_name.substr(0, pos);
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(target_name.substr(pos + 1));
+      table_name= target_name.substr(pos + 1);
     }
     else
     {
-      table_name.assign(target_name);
+      table_name= target_name;
     }
   }
   else
@@ -470,7 +470,7 @@ void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
   pthread_mutex_lock(&sysvar_sch_lock);
-  _sch_filter.assign(input);
+  _sch_filter= input;
   schemas_to_filter.clear();
   populateFilter(_sch_filter, schemas_to_filter);
   pthread_mutex_unlock(&sysvar_sch_lock);
@@ -481,7 +481,7 @@ void FilteredReplicator::setTableFilter(const string &input)
 {
   pthread_mutex_lock(&tab_vector_lock);
   pthread_mutex_lock(&sysvar_tab_lock);
-  _tab_filter.assign(input);
+  _tab_filter= input;
   tables_to_filter.clear();
   populateFilter(_tab_filter, tables_to_filter);
   pthread_mutex_unlock(&sysvar_tab_lock);
@@ -493,9 +493,6 @@ static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicato
 static int filtered_schemas_validate(Session*, set_var *var)
 {
   const char *input= var->value->str_value.ptr();
-  if (input == NULL)
-    return 1;
-
   if (input && filtered_replicator)
   {
     filtered_replicator->setSchemaFilter(input);
@@ -508,9 +505,6 @@ static int filtered_schemas_validate(Session*, set_var *var)
 static int filtered_tables_validate(Session*, set_var *var)
 {
   const char *input= var->value->str_value.ptr();
-  if (input == NULL)
-    return 1;
-
   if (input && filtered_replicator)
   {
     filtered_replicator->setTableFilter(input);

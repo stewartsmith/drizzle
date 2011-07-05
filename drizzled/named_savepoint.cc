@@ -27,17 +27,9 @@ namespace drizzled
 {
   NamedSavepoint::NamedSavepoint(const NamedSavepoint &other)
   {
-    name.assign(other.getName());
-    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
-    resource_contexts.assign(other_resource_contexts.begin(), other_resource_contexts.end());
-    if (other.getTransactionMessage() != NULL)
-    {
-      transaction_message= new message::Transaction(*other.getTransactionMessage());
-    }
-    else 
-    {
-      transaction_message= NULL;
-    }
+    name= other.getName();
+    resource_contexts= other.getResourceContexts();
+    transaction_message= other.getTransactionMessage() ? new message::Transaction(*other.getTransactionMessage()) : NULL;
   }
 
   NamedSavepoint::~NamedSavepoint()
