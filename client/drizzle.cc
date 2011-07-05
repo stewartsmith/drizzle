@@ -1690,12 +1690,9 @@ try
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(), 
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
     {
-
       global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
       use_drizzle_protocol= false;
     }
@@ -2548,17 +2545,14 @@ char **mysql_completion (const char *text, int, int)
     return (char**) 0;
 }
 
-inline string lower_string(const string &from_string)
+inline string lower_string(const string& from)
 {
-  string to_string= from_string;
-  transform(to_string.begin(), to_string.end(),
-            to_string.begin(), ::tolower);
-  return to_string;
+  return boost::to_lower_copy(from);
 }
-inline string lower_string(const char * from_string)
+
+inline string lower_string(const char* from)
 {
-  string to_string= from_string;
-  return lower_string(to_string);
+  return boost::to_lower_copy(string(from));
 }
 
 template <class T>
@@ -2571,8 +2565,7 @@ public:
   CompletionMatch(string text) : match_text(text) {}
   inline bool operator() (const pair<string,string> &match_against) const
   {
-    string sub_match=
-      lower_string(match_against.first.substr(0,match_text.size()));
+    string sub_match= lower_string(match_against.first.substr(0,match_text.size()));
     return match_func(sub_match,match_text);
   }
 };

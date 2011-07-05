@@ -80,25 +80,23 @@ bool Item_ident::remove_dependence_processor(unsigned char * arg)
 
 const char *Item_ident::full_name() const
 {
-  char *tmp;
-	size_t tmp_len;
   if (!table_name || !field_name)
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
-    tmp= (char*) memory::sql_alloc(tmp_len);
+    size_t tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
+    char* tmp= (char*) memory::sql_alloc(tmp_len);
     snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
+    return tmp;
   }
-  else if (table_name[0])
+  if (table_name[0])
   {
-    tmp_len=strlen(table_name)+strlen(field_name)+2;
-    tmp= (char*) memory::sql_alloc(tmp_len);
+    size_t tmp_len= strlen(table_name)+strlen(field_name)+2;
+    char* tmp= (char*) memory::sql_alloc(tmp_len);
     snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
+    return tmp;
   }
-  else
-    return field_name;
-  return tmp;
+  return field_name;
 }
 
 
@@ -108,23 +106,20 @@ void Item_ident::print(String *str)
 
   if (table_name && table_name[0])
   {
-    t_name.assign(table_name);
-    std::transform(t_name.begin(), t_name.end(), t_name.begin(), ::tolower);
+    t_name= table_name;
+    boost::to_lower(t_name);
   }
  
   if (db_name && db_name[0])
   {
-    d_name.assign(db_name);
-    // Keeping the std:: prefix here, since Item_ident has a transform
-    // method
-    std::transform(d_name.begin(), d_name.end(), d_name.begin(), ::tolower);
+    d_name= db_name;
+    boost::to_lower(d_name);
   }
 
   if (!table_name || !field_name || !field_name[0])
   {
     const char *nm= (field_name && field_name[0]) ? field_name : name ? name : "tmp_field";
     str->append_identifier(nm, (uint32_t) strlen(nm));
-
     return;
   }
   if (db_name && db_name[0] && !alias_name_used)

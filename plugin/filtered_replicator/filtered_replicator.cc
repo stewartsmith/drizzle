@@ -271,13 +271,10 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
      * also keep all entries in the vectors of schemas and tables to filter in
      * lowercase.
      */
-    std::transform(schema_name.begin(), schema_name.end(),
-                  schema_name.begin(), ::tolower);
-    std::transform(table_name.begin(), table_name.end(),
-                  table_name.begin(), ::tolower);
+    boost::to_lower(schema_name);
+    boost::to_lower(table_name);
 
-    if (! isSchemaFiltered(schema_name) &&
-        ! isTableFiltered(table_name))
+    if (! isSchemaFiltered(schema_name) && ! isTableFiltered(table_name))
     {
       message::Statement *s= filtered_transaction.add_statement();
       *s= statement; /* copy contruct */

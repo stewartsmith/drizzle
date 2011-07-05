@@ -18,79 +18,44 @@
  */
 
 #include <config.h>
-
+#include <boost/algorithm/string.hpp>
 #include "option_context.h"
 
-namespace drizzled
-{
-namespace module
-{
-
-
+namespace drizzled {
+namespace module {
+  
 option_context::option_context(const std::string &module_name_in,
                                po::options_description_easy_init po_options_in) :
   module_name(module_name_in),
   po_options(po_options_in)
 { }
 
-option_context& option_context::operator()(const char* name,
-                                           const char* description)
+option_context& option_context::operator()(const char* name, const char* description)
 {
-  const std::string new_name(prepend_name(module_name, name));
-  po_options(new_name.c_str(), description);
+  po_options(prepend_name(module_name, name).c_str(), description);
   return *this;
 }
 
-
-option_context& option_context::operator()(const char* name,
-                                           const po::value_semantic* s)
+option_context& option_context::operator()(const char* name, const po::value_semantic* s)
 {
-  const std::string new_name(prepend_name(module_name, name));
-  po_options(new_name.c_str(), s);
+  po_options(prepend_name(module_name, name).c_str(), s);
   return *this;
 }
 
-
-option_context& option_context::operator()(const char* name,
-                             const po::value_semantic* s,
-                             const char* description)
+option_context& option_context::operator()(const char* name, const po::value_semantic* s, const char* description)
 {
-  const std::string new_name(prepend_name(module_name, name));
-  po_options(new_name.c_str(), s, description);
+  po_options(prepend_name(module_name, name).c_str(), s, description);
   return *this;
 }
 
-namespace
-{
-
-class SwapUnderscores
-{
-public:
-  char operator()(char a) const
-  {
-    if (a == '_')
-      return '-';
-    return a;
-  }
-};
-
-} /* namespace */
-
-/*
- * Private methods.
- */
-std::string option_context::prepend_name(std::string in_module_name,
-                                         const char *name_in)
+std::string option_context::prepend_name(std::string in_module_name, const char *name_in)
 {
   in_module_name.push_back('.');
-  std::transform(in_module_name.begin(), in_module_name.end(),
-                 in_module_name.begin(), SwapUnderscores());
-  std::transform(in_module_name.begin(), in_module_name.end(),
-                 in_module_name.begin(), ::tolower);
+  std::replace(in_module_name.begin(), in_module_name.end(), '_', '-');
+  boost::to_lower(in_module_name);
   in_module_name.append(name_in);
   return in_module_name;
 }
-
 
 } /* namespace module */
 } /* namespace drizzled */

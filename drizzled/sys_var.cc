@@ -1424,7 +1424,7 @@ drizzle_show_var* enumerate_sys_vars(Session *session)
 void add_sys_var_to_list(sys_var *var)
 {
   string lower_name(var->getName());
-  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+  boost::to_lower(lower_name);
 
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.count(lower_name))
@@ -1556,21 +1556,10 @@ int sys_var_init()
 
 sys_var *find_sys_var(const std::string &name)
 {
-  string lower_name(name);
-  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-
-  sys_var *result= NULL;
-
-  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
-    result= *ptr;
-
-  if (result == NULL)
-  {
-    my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
-    return NULL;
-  }
-
-  return result;
+  if (sys_var* ptr= find_ptr2(system_variable_map, boost::to_lower_copy(name)))
+    return ptr;
+  my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
+  return NULL;
 }
 
 
