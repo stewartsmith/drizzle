@@ -44,19 +44,28 @@ bool ReplicationSchema::create()
     return false;
 
   /*
-   * Create our IO thread state information table if we need to.
+    Create our IO thread state information table if we need to.
    */
+
+  /*
+    Table: io_state
+    Version 1.0: Initial definition
+    Version 1.1: Added master_id and PK on master_id
+  */
+
 
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`io_state` ("
+                " `master_id` BIGINT NOT NULL,"
                 " `status` VARCHAR(20) NOT NULL,"
                 " `error_msg` VARCHAR(250))"
-                " COMMENT = 'VERSION 1.0'");
+                " COMMENT = 'VERSION 1.1'");
 
   if (not executeSQL(sql))
     return false;
 
+#if 0
   sql.clear();
   sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`io_state`");
 
@@ -77,6 +86,7 @@ bool ReplicationSchema::create()
         return false;
     }
   }
+#endif
 
   /*
    * Create our applier thread state information table if we need to.
@@ -86,21 +96,24 @@ bool ReplicationSchema::create()
    * Table: applier_state
    * Version 1.0: Initial definition
    * Version 1.1: Added originating_server_uuid and originating_commit_id
+   * Version 1.2: Added master_id and changed PK to master_id
    */
 
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`applier_state`"
                 " (`last_applied_commit_id` BIGINT NOT NULL PRIMARY KEY,"
+                " `master_id` BIGINT NOT NULL,"
                 " `originating_server_uuid` VARCHAR(36) NOT NULL,"
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `status` VARCHAR(20) NOT NULL,"
                 " `error_msg` VARCHAR(250))"
-                " COMMENT = 'VERSION 1.1'");
+                " COMMENT = 'VERSION 1.2'");
 
   if (not executeSQL(sql))
     return false;
 
+#if 0
   sql.clear();
   sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`applier_state`");
 
@@ -123,11 +136,13 @@ bool ReplicationSchema::create()
         return false;
     }
   }
+#endif
 
   /*
    * Create our message queue table if we need to.
    * Version 1.0: Initial definition
    * Version 1.1: Added originating_server_uuid and originating_commit_id
+   * Version 1.2: Added master_id and changed PK to (master_id, trx_id, seg_id)
    */
 
   sql.clear();
@@ -138,21 +153,76 @@ bool ReplicationSchema::create()
                 " `originating_server_uuid` VARCHAR(36) NOT NULL,"
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `msg` BLOB,"
+                " `master_id` BIGINT NOT NULL,"
                 " PRIMARY KEY(`trx_id`, `seg_id`))"
-                " COMMENT = 'VERSION 1.1'");
+                " COMMENT = 'VERSION 1.2'");
   if (not executeSQL(sql))
     return false;
 
   return true;
 }
 
-bool ReplicationSchema::setInitialMaxCommitId(uint64_t value)
+bool ReplicationSchema::createInitialIORow(uint32_t master_id)
+{
+  vector<string> sql;
+
+  sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`io_state` WHERE `master_id` = " + boost::lexical_cast<string>(master_id));
+
+  sql::ResultSet result_set(1);
+  Execute execute(*(_session.get()), true);
+  execute.run(sql[0], result_set);
+  result_set.next();
+  string count= result_set.getString(0);
+
+  if (count == "0")
+  {
+    sql.clear();
+    sql.push_back("INSERT INTO `sys_replication`.`io_state` (`master_id`, `status`) VALUES ("
+                  + boost::lexical_cast<string>(master_id)
+                  + ", 'STOPPED')");
+    if (not executeSQL(sql))
+      return false;
+  }
+
+  return true;
+}
+
+bool ReplicationSchema::createInitialApplierRow(uint32_t master_id)
+{
+  vector<string> sql;
+
+  sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`applier_state` WHERE `master_id` = " + boost::lexical_cast<string>(master_id));
+
+  sql::ResultSet result_set(1);
+  Execute execute(*(_session.get()), true);
+  execute.run(sql[0], result_set);
+  result_set.next();
+  string count= result_set.getString(0);
+
+  if (count == "0")
+  {
+    sql.clear();
+    sql.push_back("INSERT INTO `sys_replication`.`applier_state`"
+                  " (`master_id`, `last_applied_commit_id`, `status`) VALUES ("
+                  + boost::lexical_cast<string>(master_id)
+                  + ",0 , 'STOPPED')");
+    if (not executeSQL(sql))
+      return false;
+  }
+
+  return true;
+}
+
+
+bool ReplicationSchema::setInitialMaxCommitId(uint32_t master_id, uint64_t value)
 {
   vector<string> sql;
 
   sql.push_back("UPDATE `sys_replication`.`applier_state`"
                 " SET `last_applied_commit_id` = "
-                + lexical_cast<string>(value));
+                + lexical_cast<string>(value)
+                + " WHERE `master_id` = "
+                + lexical_cast<string>(master_id));
 
   return executeSQL(sql);
 }
