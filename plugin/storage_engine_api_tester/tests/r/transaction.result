@@ -30,6 +30,7 @@ STATE
 Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 BEGIN
 In Transaction
 END STATEMENT
@@ -210,6 +211,7 @@ COMMIT
 ::SEAPITester()
 Cursor 2 ::close()
 Cursor 2 Cursor()
+Cursor 2 ~Cursor()
 BEGIN
 In Transaction
 select seapitester_clear_engine_state_history();
