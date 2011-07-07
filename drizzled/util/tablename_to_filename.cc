@@ -43,9 +43,7 @@ static const char hexchars[]= "0123456789abcdef";
 */
 bool tablename_to_filename(const std::string &from, std::string &to)
 {
-  
-  std::string::const_iterator iter= from.begin();
-  for (; iter != from.end(); ++iter)
+  for (std::string::const_iterator iter= from.begin(); iter != from.end(); ++iter)
   {
     if (isascii(*iter))
     {

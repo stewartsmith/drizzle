@@ -107,10 +107,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     the table defintion cache as soon as the last instance is removed
   */
   identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
-  const identifier::Table::Key &key(identifier.getKey());
-  TableShare *share= new TableShare(identifier.getType(),
-                                    identifier,
-                                    const_cast<char *>(key.vector()),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
+  TableShare *share= new TableShare(identifier.getType(), identifier, identifier.getKey().vector(),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -1674,30 +1671,19 @@ RETURN
 Table* Session::open_temporary_table(const identifier::Table &identifier, bool link_in_list)
 {
   assert(identifier.isTmp());
-
-
-  table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(),
-                                                        identifier,
-                                                        const_cast<identifier::Table&>(identifier).getPath().c_str(),
-                                                        static_cast<uint32_t>(identifier.getPath().length()));
-  if (not new_tmp_table)
-    return NULL;
-
+  table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(), identifier, 
+    identifier.getPath().c_str(), static_cast<uint32_t>(identifier.getPath().length()));
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (new_tmp_table->getMutableShare()->open_table_def(*static_cast<Session *>(this), identifier) ||
-      new_tmp_table->getMutableShare()->open_table_from_share(static_cast<Session *>(this), identifier, identifier.getTableName().c_str(),
-                                                              (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                                                          HA_GET_INDEX),
-                                                              ha_open_options,
-                                                              *new_tmp_table))
+  if (new_tmp_table->getMutableShare()->open_table_def(*this, identifier) ||
+      new_tmp_table->getMutableShare()->open_table_from_share(this, identifier, identifier.getTableName().c_str(),
+        (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE | HA_GET_INDEX), ha_open_options, *new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     delete new_tmp_table->getMutableShare();
     delete new_tmp_table;
-
-    return 0;
+    return NULL;
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
