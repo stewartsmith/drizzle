@@ -179,21 +179,9 @@ std::string Table::build_tmptable_filename()
 
 void Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  if (util::tablename_to_filename(in_db, in_path))
-  {
-    errmsg_printf(error::ERROR, _("Schema name cannot be encoded and fit within filesystem name length restrictions."));
-  }
-
-  in_path.append(FN_ROOTDIR);
-
-  if (is_tmp) // It a conversion tmp
-  {
-    in_path.append(in_table_name);
-  }
-  else if (util::tablename_to_filename(in_table_name, in_path))
-  {
-    errmsg_printf(error::ERROR, _("Table name cannot be encoded and fit within filesystem name length restrictions."));
-  }
+  in_path += util::tablename_to_filename(in_db);
+  in_path += FN_LIBCHAR;
+  in_path += is_tmp ? in_table_name : util::tablename_to_filename(in_table_name);
 }
 
 Table::Table(const drizzled::Table &table) :
@@ -209,10 +197,11 @@ Table::Table(const drizzled::Table &table) :
 
 void Table::init()
 {
-  switch (type) {
+  switch (type) 
+  {
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
-    assert(path.size() == 0);
+    assert(path.empty());
     build_table_filename(path, getSchemaName(), table_name, false);
     break;
   case message::Table::INTERNAL:
@@ -225,18 +214,11 @@ void Table::init()
     break;
   }
 
-  switch (type) {
-  case message::Table::FUNCTION:
-  case message::Table::STANDARD:
-  case message::Table::INTERNAL:
-    break;
-  case message::Table::TEMPORARY:
-    {
-      size_t pos= path.find("tmp/#sql");
-      if (pos != std::string::npos) 
-        key_path= path.substr(pos);
-    }
-    break;
+  if (type == message::Table::TEMPORARY)
+  {
+    size_t pos= path.find("tmp/#sql");
+    if (pos != std::string::npos) 
+      key_path= path.substr(pos);
   }
 
   hash_value= util::insensitive_hash()(path);

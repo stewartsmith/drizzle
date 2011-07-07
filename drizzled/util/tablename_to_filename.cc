@@ -28,7 +28,7 @@
 namespace drizzled {
 namespace util {
 
-static const char hexchars[]= "0123456789abcdef";
+static const char* hexchars= "0123456789abcdef";
 
 
 /*
@@ -42,8 +42,9 @@ static const char hexchars[]= "0123456789abcdef";
   RETURN
     true if errors happen. false on success.
 */
-bool tablename_to_filename(const std::string &from, std::string &to)
+std::string tablename_to_filename(const std::string &from)
 {
+  std::string to;
   BOOST_FOREACH(char it, from)
   {
     if (isascii(it))
@@ -71,7 +72,7 @@ bool tablename_to_filename(const std::string &from, std::string &to)
   {
     to += "@@@";
   }
-  return false;
+  return to;
 }
 
 } /* namespace util */

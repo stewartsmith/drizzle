@@ -56,9 +56,8 @@ Catalog::Catalog(const drizzled::LEX_STRING &name_arg) :
 void Catalog::init()
 { 
   assert(not _name.empty());
-  path.append("../");
-  if (util::tablename_to_filename(_name, path))
-    errmsg_printf(error::ERROR, _("Catalog name cannot be encoded and fit within filesystem name length restrictions."));
+  path += "../";
+  path += util::tablename_to_filename(_name);
   assert(path.length()); // TODO throw exception, this is a possibility
   hash_value= util::insensitive_hash()(path);
 }
