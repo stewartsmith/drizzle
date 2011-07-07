@@ -60,7 +60,7 @@ public:
 
   TableShare(const identifier::Table::Type type_arg,
              const identifier::Table &identifier,
-             char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
+             const char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   virtual ~TableShare();
 

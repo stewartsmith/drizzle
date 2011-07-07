@@ -1678,7 +1678,7 @@ Table* Session::open_temporary_table(const identifier::Table &identifier, bool l
 
   table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(),
                                                         identifier,
-                                                        const_cast<char *>(const_cast<identifier::Table&>(identifier).getPath().c_str()),
+                                                        const_cast<identifier::Table&>(identifier).getPath().c_str(),
                                                         static_cast<uint32_t>(identifier.getPath().length()));
   if (not new_tmp_table)
     return NULL;

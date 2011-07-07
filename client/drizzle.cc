@@ -388,15 +388,12 @@ static string pager("");
 static string outfile("");
 static FILE *PAGER, *OUTFILE;
 static uint32_t prompt_counter;
-static char *delimiter= NULL;
+static const char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
-                                      drizzle_result_st *result,
-                                      uint32_t *error_code);
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length, drizzle_result_st *result, uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
-
 
 void tee_fprintf(FILE *file, const char *fmt, ...);
 void tee_fputs(const char *s, FILE *file);
@@ -1617,7 +1614,7 @@ try
     /* Check that delimiter does not contain a backslash */
     if (! strstr(delimiter_str.c_str(), "\\"))
     {
-      delimiter= (char *)delimiter_str.c_str();  
+      delimiter= delimiter_str.c_str();  
     }
     else
     {
@@ -3948,27 +3945,25 @@ static int com_source(string *, const char *line)
 static int
 com_delimiter(string *, const char *line)
 {
-  char buff[256], *tmp;
+  char buff[256];
 
   strncpy(buff, line, sizeof(buff) - 1);
-  tmp= get_arg(buff, 0);
+  char* tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
   {
-    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"),
-             INFO_ERROR, 0, 0);
+    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"), INFO_ERROR, 0, 0);
     return 0;
   }
   else
   {
     if (strstr(tmp, "\\"))
     {
-      put_info(_("DELIMITER cannot contain a backslash character"),
-               INFO_ERROR, 0, 0);
+      put_info(_("DELIMITER cannot contain a backslash character"), INFO_ERROR, 0, 0);
       return 0;
     }
   }
-  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
+  delimiter= strdup(tmp);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;

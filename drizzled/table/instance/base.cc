@@ -455,7 +455,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
 */
 TableShare::TableShare(const identifier::Table::Type type_arg,
                        const identifier::Table &identifier,
-                       char *path_arg,
+                       const char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
