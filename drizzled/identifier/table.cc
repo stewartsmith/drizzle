@@ -133,45 +133,17 @@ static uint32_t counter= 1;
 static uint32_t get_counter()
 {
   boost::mutex::scoped_lock lock(counter_mutex);
-  uint32_t x;
-  x= ++counter;
-
-  return x;
+  return ++counter;
 }
 
 #endif
 
-size_t Table::build_tmptable_filename(std::string &buffer)
+std::string Table::build_tmptable_filename()
 {
-  ostringstream post_tmpdir_str;
-
-  buffer.append(drizzle_tmpdir);
-  size_t tmpdir_length= buffer.length();
-
-  post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << pthread_self() << "-" << get_counter();
-
-  buffer.append(post_tmpdir_str.str());
-
-  transform(buffer.begin() + tmpdir_length, buffer.end(), buffer.begin() + tmpdir_length, ::tolower);
-
-  return buffer.length();
+  ostringstream os;
+  os << "/" << TMP_FILE_PREFIX << current_pid << pthread_self() << "-" << get_counter();
+  return drizzle_tmpdir + boost::to_lower_copy(os.str());
 }
-
-size_t Table::build_tmptable_filename(std::vector<char> &buffer)
-{
-  ostringstream post_tmpdir_str;
-
-  post_tmpdir_str << drizzle_tmpdir << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << pthread_self() << "-" << get_counter();
-
-  buffer.resize(post_tmpdir_str.str().length() + 1);
-  memcpy(&buffer[0], post_tmpdir_str.str().c_str(), post_tmpdir_str.str().size());
-  buffer[post_tmpdir_str.str().size()]= 0;
-
-  return buffer.size();
-}
-
 
 /*
   Creates path to a cursor: drizzle_data_dir/db/table.ext
@@ -205,12 +177,11 @@ size_t Table::build_tmptable_filename(std::vector<char> &buffer)
     path length on success, 0 on failure
 */
 
-size_t Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
+void Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
   if (util::tablename_to_filename(in_db, in_path))
   {
     errmsg_printf(error::ERROR, _("Schema name cannot be encoded and fit within filesystem name length restrictions."));
-    return 0;
   }
 
   in_path.append(FN_ROOTDIR);
@@ -222,10 +193,7 @@ size_t Table::build_table_filename(std::string &in_path, const std::string &in_d
   else if (util::tablename_to_filename(in_table_name, in_path))
   {
     errmsg_printf(error::ERROR, _("Table name cannot be encoded and fit within filesystem name length restrictions."));
-    return 0;
   }
-   
-  return in_path.length();
 }
 
 Table::Table(const drizzled::Table &table) :
@@ -248,14 +216,12 @@ void Table::init()
     build_table_filename(path, getSchemaName(), table_name, false);
     break;
   case message::Table::INTERNAL:
-    assert(path.size() == 0);
+    assert(path.empty());
     build_table_filename(path, getSchemaName(), table_name, true);
     break;
   case message::Table::TEMPORARY:
     if (path.empty())
-    {
-      build_tmptable_filename(path);
-    }
+      path= build_tmptable_filename();
     break;
   }
 
@@ -266,22 +232,15 @@ void Table::init()
     break;
   case message::Table::TEMPORARY:
     {
-      size_t pos;
-
-      pos= path.find("tmp/#sql");
+      size_t pos= path.find("tmp/#sql");
       if (pos != std::string::npos) 
-      {
         key_path= path.substr(pos);
-      }
     }
     break;
   }
 
   hash_value= util::insensitive_hash()(path);
-
-  std::string tb_name(getTableName());
-  boost::to_lower(tb_name);
-  key.set(getKeySize(), getSchemaName(), tb_name);
+  key.set(getKeySize(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 

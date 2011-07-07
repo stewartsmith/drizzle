@@ -297,7 +297,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
 {
   if (type_arg == message::Table::INTERNAL)
   {
-    identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    string s= identifier::Table::build_tmptable_filename();
+    private_key_for_cache.vectorPtr().assign(s.c_str(), s.c_str() + s.size() + 1);
     init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
@@ -609,8 +610,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   db_create_options= (local_db_create_options & 0x0000FFFF);
   db_options_in_use= db_create_options;
 
-  block_size= table_options.has_block_size() ?
-    table_options.block_size() : 0;
+  block_size= table_options.has_block_size() ? table_options.block_size() : 0;
 
   table_charset= get_charset(table_options.collation_id());
 
