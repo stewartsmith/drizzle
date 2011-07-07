@@ -28,7 +28,7 @@ namespace memory {
 void* sql_alloc(size_t);
 void* sql_calloc(size_t);
 char* sql_strdup(const char*);
-char* sql_strdup(const char*, size_t);
+char* sql_strdup(str_ref);
 void* sql_memdup(const void*, size_t);
 
 class DRIZZLED_API SqlAlloc
