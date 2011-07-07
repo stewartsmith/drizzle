@@ -634,7 +634,7 @@ static int prepare_create_table(Session *session,
           if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
             conv.copy(tmp->ptr(), tmp->length(), cs);
-            interval->type_names[i]= session->mem.strmake(conv);
+            interval->type_names[i]= session->mem.strdup(conv);
             interval->type_lengths[i]= conv.length();
           }
 

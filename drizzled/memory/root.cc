@@ -327,7 +327,7 @@ void Root::free_root(myf MyFlags)
  */
 char* Root::strdup(const char* str)
 {
-  return strmake(str, strlen(str));
+  return strdup(str, strlen(str));
 }
 
 /**
@@ -341,7 +341,7 @@ char* Root::strdup(const char* str)
  * even if the original string wasn't (one additional byte is allocated for
  * this purpose).
  */
-char* Root::strmake(const char* str, size_t len)
+char* Root::strdup(const char* str, size_t len)
 {
   char* pos= (char*)alloc(len + 1);
   memcpy(pos, str, len);
@@ -349,14 +349,9 @@ char* Root::strmake(const char* str, size_t len)
   return pos;
 }
 
-char* Root::strmake(const std::string& v)
+char* Root::strdup(str_ref v)
 {
-  return strmake(v.data(), v.size());
-}
-
-char* Root::strmake(const String& v)
-{
-  return strmake(v.ptr(), v.length());
+  return strdup(v.data(), v.size());
 }
 
 /**

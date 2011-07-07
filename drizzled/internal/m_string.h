@@ -16,8 +16,6 @@
 /* There may be prolems include all of theese. Try to test in
    configure with ones are needed? */
 
-
-
 #pragma once
 
 #include <strings.h>
@@ -34,8 +32,6 @@ namespace drizzled {
 namespace internal {
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
-
-// extern char *strmake(char *dst,const char *src,size_t length);
 
 /* Conversion routines */
 enum my_gcvt_arg_type

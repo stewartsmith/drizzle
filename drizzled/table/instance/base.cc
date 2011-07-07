@@ -529,7 +529,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     _path= identifier::Table::build_table_filename(db.str, table_name.str, false);
   }
 
-  char* path_buff= mem_root.strmake(_path);
+  char* path_buff= mem_root.strdup(_path);
   setPath(path_buff, _path.length());
   setNormalizedPath(path_buff, _path.length());
 
@@ -762,10 +762,10 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strmake(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.str= strdup(indx.comment().c_str(), keyinfo->comment.length);
     }
 
-    keyinfo->name= strmake(indx.name().c_str(), indx.name().length());
+    keyinfo->name= strdup(indx.name().c_str(), indx.name().length());
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -931,7 +931,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strmake(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= strdup(field_options.field_value(n).c_str(), field_options.field_value(n).length());
 
       /* 
        * Go ask the charset what the length is as for "" length=1
@@ -1004,7 +1004,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       size_t len= pfield.comment().length();
       const char* str= pfield.comment().c_str();
 
-      comment.str= strmake(str, len);
+      comment.str= strdup(str, len);
       comment.length= len;
     }
 

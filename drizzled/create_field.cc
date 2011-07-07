@@ -117,7 +117,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       char buff[MAX_FIELD_WIDTH];
       String tmp(buff, sizeof(buff), charset);
       String* res= orig_field->val_str_internal(&tmp);
-      char* pos= memory::sql_strmake(res->ptr(), res->length());
+      char* pos= memory::sql_strdup(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
     orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
