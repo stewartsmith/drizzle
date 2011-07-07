@@ -121,15 +121,5 @@ void gmtime(const type::epoch_t &timer, type::Time &tmbuf)
   tmbuf.time_type= type::DRIZZLE_TIMESTAMP_DATETIME;
 }
 
-void localtime(const type::epoch_t &timer, type::Time &tmbuf)
-{
-  return util::gmtime(timer, tmbuf);
-}
-
-struct tm *localtime(const type::epoch_t &timer, struct tm *tmbuf)
-{
-  return util::gmtime(timer, tmbuf);
-}
-
 } /* namespace util */
 } /* namespace drizzled */

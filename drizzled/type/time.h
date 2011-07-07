@@ -127,8 +127,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(false),
-    time_type(type_arg),
-    _is_local_time(false)
+    time_type(type_arg)
   {
   }
 
@@ -145,8 +144,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(neg_arg),
-    time_type(DRIZZLE_TIMESTAMP_TIME),
-    _is_local_time(false)
+    time_type(DRIZZLE_TIMESTAMP_TIME)
   {
   }
 
@@ -154,14 +152,12 @@ public:
   usec_t second_part;
   bool neg;
   timestamp_t time_type;
-  bool _is_local_time;
 
   void reset()
   {
     year= month= day= hour= minute= second= second_part= 0;
     neg= false;
     time_type= DRIZZLE_TIMESTAMP_DATE;
-    _is_local_time= false;
   }
 
   timestamp_t type() const
@@ -174,18 +170,17 @@ public:
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut);
-  void convert(type::epoch_t &epoch, long *my_timezone,
-               bool *in_dst_time_gap, bool skip_timezone= false) const;
+  void convert(type::epoch_t &epoch, long *my_timezone) const;
 
   void truncate(const timestamp_t arg);
 
   bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags);
-  void store(const type::epoch_t &from, bool use_localtime= false);
-  void store(const type::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
-  void store(const struct tm &from);
-  void store(const struct timeval &from);
+  void store(type::epoch_t from);
+  void store(type::epoch_t from, usec_t from_fractional_seconds);
+  void store(const tm&);
+  void store(const timeval&);
 
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;

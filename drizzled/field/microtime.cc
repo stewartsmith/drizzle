@@ -85,13 +85,12 @@ int Microtime::store(const char *from,
   return 0;
 }
 
-int Microtime::store_time(type::Time &ltime, type::timestamp_t )
+int Microtime::store_time(type::Time &ltime, type::timestamp_t)
 {
   long my_timezone;
-  bool in_dst_time_gap;
 
   type::epoch_t time_tmp;
-  ltime.convert(time_tmp, &my_timezone, &in_dst_time_gap, true);
+  ltime.convert(time_tmp, &my_timezone);
   uint64_t tmp_seconds= time_tmp;
   uint32_t tmp_micro= ltime.second_part;
 
