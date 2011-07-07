@@ -177,11 +177,10 @@ std::string Table::build_tmptable_filename()
     path length on success, 0 on failure
 */
 
-void Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
+std::string Table::build_table_filename(const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  in_path += util::tablename_to_filename(in_db);
-  in_path += FN_LIBCHAR;
-  in_path += is_tmp ? in_table_name : util::tablename_to_filename(in_table_name);
+  string in_path= util::tablename_to_filename(in_db) + FN_LIBCHAR;
+  return in_path + (is_tmp ? in_table_name : util::tablename_to_filename(in_table_name));
 }
 
 Table::Table(const drizzled::Table &table) :
@@ -202,11 +201,11 @@ void Table::init()
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
     assert(path.empty());
-    build_table_filename(path, getSchemaName(), table_name, false);
+    path= build_table_filename(getSchemaName(), table_name, false);
     break;
   case message::Table::INTERNAL:
     assert(path.empty());
-    build_table_filename(path, getSchemaName(), table_name, true);
+    path= build_table_filename(getSchemaName(), table_name, true);
     break;
   case message::Table::TEMPORARY:
     if (path.empty())

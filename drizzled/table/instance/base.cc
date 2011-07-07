@@ -526,12 +526,11 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
+    _path= identifier::Table::build_table_filename(db.str, table_name.str, false);
   }
 
-  char* path_buff= (char *)mem_root.alloc(_path.length() + 1);
+  char* path_buff= mem_root.strmake(_path);
   setPath(path_buff, _path.length());
-  strcpy(path_buff, _path.c_str());
   setNormalizedPath(path_buff, _path.length());
 
   version= g_refresh_version;
