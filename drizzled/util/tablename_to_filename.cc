@@ -21,6 +21,7 @@
 #include <config.h>
 #include <string>
 
+#include <boost/foreach.hpp>
 #include <drizzled/util/tablename_to_filename.h>
 #include <drizzled/internal/my_sys.h>
 
@@ -43,36 +44,32 @@ static const char hexchars[]= "0123456789abcdef";
 */
 bool tablename_to_filename(const std::string &from, std::string &to)
 {
-  for (std::string::const_iterator iter= from.begin(); iter != from.end(); ++iter)
+  BOOST_FOREACH(char it, from)
   {
-    if (isascii(*iter))
+    if (isascii(it))
     {
-      if ((isdigit(*iter)) ||
-          (islower(*iter)) ||
-          (*iter == '_') ||
-          (*iter == ' ') ||
-          (*iter == '-'))
+      if (isdigit(it) || islower(it) || it == '_' || it == ' ' || it == '-')
       {
-        to.push_back(*iter);
+        to.push_back(it);
         continue;
       }
 
-      if (isupper(*iter))
+      if (isupper(it))
       {
-        to.push_back(tolower(*iter));
+        to.push_back(tolower(it));
         continue;
       }
     }
    
     /* We need to escape this char in a way that can be reversed */
     to.push_back('@');
-    to.push_back(hexchars[(*iter >> 4) & 15]);
-    to.push_back(hexchars[(*iter) & 15]);
+    to.push_back(hexchars[(it >> 4) & 15]);
+    to.push_back(hexchars[it & 15]);
   }
 
   if (drizzled::internal::check_if_legal_tablename(to.c_str()))
   {
-    to.append("@@@");
+    to += "@@@";
   }
   return false;
 }

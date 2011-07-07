@@ -507,8 +507,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_in_use(0),
   keys_for_keyread(0)
 {
-  char *path_buff;
-  std::string _path;
 
   private_key_for_cache= identifier.getKey();
   /*
@@ -520,16 +518,17 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
+  std::string _path;
   if (path_arg)
   {
-    _path.append(path_arg, path_length_arg);
+    _path.assign(path_arg, path_length_arg);
   }
   else
   {
     identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  path_buff= (char *)mem_root.alloc(_path.length() + 1);
+  char* path_buff= (char *)mem_root.alloc(_path.length() + 1);
   setPath(path_buff, _path.length());
   strcpy(path_buff, _path.c_str());
   setNormalizedPath(path_buff, _path.length());
