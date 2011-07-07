@@ -494,7 +494,7 @@ static int execute_command(Session *session)
   */
   if (all_tables || ! session->lex().is_single_level_stmt())
   {
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, 0);
   }
 
   assert(not session->transaction.stmt.hasModifiedNonTransData());

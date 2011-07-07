@@ -27,6 +27,7 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/charset.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/sql_string.h>
 
 namespace drizzled {
 

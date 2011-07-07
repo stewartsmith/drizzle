@@ -24,18 +24,15 @@
 
 #pragma once
 
-#include <time.h>
+#include <ctime>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace util {
 
-namespace util
-{
-
-struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
-void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf);
-struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
-void localtime(const type::Time::epoch_t &timer,  type::Time &tmbuf);
+tm *gmtime(const type::epoch_t &timer, tm *tmbuf);
+void gmtime(const type::epoch_t &timer, type::Time &tmbuf);
+tm *localtime(const type::epoch_t &timer, tm *tmbuf);
+void localtime(const type::epoch_t &timer,  type::Time &tmbuf);
 
 } /* namespace util */
 } /* namespace drizzled */

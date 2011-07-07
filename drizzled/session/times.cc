@@ -23,17 +23,17 @@
 namespace drizzled {
 namespace session {
 
-type::Time::epoch_t Times::getCurrentTimestamp(bool actual) const
+type::epoch_t Times::getCurrentTimestamp(bool actual) const
 {
   return ((actual ? boost::posix_time::microsec_clock::universal_time() : _end_timer) - _epoch).total_microseconds();
 }
 
-type::Time::epoch_t Times::getCurrentTimestampEpoch() const
+type::epoch_t Times::getCurrentTimestampEpoch() const
 {
 	return ((_user_time.is_not_a_date_time() ? _start_timer : _user_time) - _epoch).total_seconds();
 }
 
-type::Time::epoch_t Times::getCurrentTimestampEpoch(type::Time::usec_t &fraction_arg) const
+type::epoch_t Times::getCurrentTimestampEpoch(type::usec_t &fraction_arg) const
 {
   if (not _user_time.is_not_a_date_time())
   {
@@ -76,7 +76,7 @@ void Times::set_time_after_lock()
   utime_after_lock= (boost::posix_time::microsec_clock::universal_time() - _epoch).total_microseconds();
 }
 
-type::Time::epoch_t Times::query_start()
+type::epoch_t Times::query_start()
 {
   return getCurrentTimestampEpoch();
 }

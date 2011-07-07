@@ -25,6 +25,7 @@
 
 #include <boost/checked_delete.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/ptr_container/ptr_container.hpp>
 #include <drizzled/copy_field.h>
 #include <drizzled/data_home.h>
 #include <drizzled/diagnostics_area.h>
@@ -184,7 +185,7 @@ public:
   session::TableMessages table_message_cache;
   util::string::mptr schema;
   boost::shared_ptr<session::State> state;
-  std::vector<table::Singular*> temporary_shares;
+  boost::ptr_vector<table::Singular> temporary_shares;
 	session::Times times;
 	session::Transactions transaction;
   drizzle_system_variables variables;
@@ -854,7 +855,6 @@ void Session::cleanup_after_query()
   _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for_each(impl_->temporary_shares.begin(), impl_->temporary_shares.end(), DeletePtr());
   impl_->temporary_shares.clear();
 }
 
@@ -1905,7 +1905,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const id
 table::Singular& Session::getInstanceTable()
 {
   impl_->temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
-  return *impl_->temporary_shares.back();
+  return impl_->temporary_shares.back();
 }
 
 
@@ -1930,7 +1930,7 @@ table::Singular& Session::getInstanceTable()
 table::Singular& Session::getInstanceTable(std::list<CreateField>& field_list)
 {
   impl_->temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
-  return *impl_->temporary_shares.back();
+  return impl_->temporary_shares.back();
 }
 
 void Session::clear_error(bool full)
@@ -1939,9 +1939,7 @@ void Session::clear_error(bool full)
     main_da().reset_diagnostics_area();
 
   if (full)
-  {
-    drizzle_reset_errors(this, true);
-  }
+    drizzle_reset_errors(*this, true);
 }
 
 void Session::clearDiagnostics()

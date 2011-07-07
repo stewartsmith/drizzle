@@ -21,27 +21,14 @@
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_basic_constant :public Item
+class Item_basic_constant : public Item
 {
 public:
-  Item_basic_constant() :
-    Item()
-  {
-  }
-
   /* to prevent drop fixed flag (no need parent cleanup call) */
   void cleanup()
   {
-    /*
-      Restore the original field name as it might not have been allocated
-      in the statement memory. If the name is auto generated, it must be
-      done again between subsequent executions of a prepared statement.
-    */
-    if (orig_name)
-      name= orig_name;
   }
 };
 

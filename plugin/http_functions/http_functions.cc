@@ -148,7 +148,6 @@ String *HttpPostFunction::val_str(String *str)
   assert(fixed == 1);
   String *url = args[0]->val_str(str);
   CURL *curl;
-  CURLcode retref;
   String post_storage;
   HttpPostData post_data(args[1]->val_str(&post_storage));
 
@@ -164,7 +163,7 @@ String *HttpPostFunction::val_str(String *str)
   curl_easy_setopt(curl, CURLOPT_READFUNCTION, http_post_readfunc);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&result);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "drizzle-http-functions/1.0");
-  retref= curl_easy_perform(curl);
+  /*CURLcode retref=*/ curl_easy_perform(curl);
   curl_easy_cleanup(curl);
 
   return &result;
