@@ -23,6 +23,7 @@
 #include <plugin/slave/queue_thread.h>
 #include <plugin/slave/sql_executor.h>
 #include <drizzled/session.h>
+#include <string>
 
 namespace drizzled
 {
@@ -41,7 +42,8 @@ public:
   QueueConsumer() :
     QueueThread(),
     SQLExecutor("slave", "replication"),
-    _check_interval(5)
+    _check_interval(5),
+    _ignore_errors(false)
   { }
 
   bool init();
@@ -59,6 +61,14 @@ public:
   }
   
   /**
+   * Determines if we should ignore errors from statements pulled from masters.
+   */
+  void setIgnoreErrors(bool value)
+  {
+    _ignore_errors= value;
+  }
+
+  /**
    * Update applier status in state table.
    *
    * @param err_msg Error message string
@@ -66,16 +76,41 @@ public:
    */
   void setApplierState(const std::string &err_msg, bool status);
 
+  void addMasterId(uint32_t id)
+  {
+    _master_ids.push_back(id);
+  }
+
+  bool processSingleMaster(const std::string &master_id);
+
 private:
   typedef std::vector<uint64_t> TrxIdList;
 
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
 
-  bool getListOfCompletedTransactions(TrxIdList &list);
+  std::vector<uint32_t> _master_ids;
+
+  bool _ignore_errors;
+
+  /**
+   * Get a list of transaction IDs from the queue that are complete.
+   *
+   * A "complete" transaction is one in which we have received the end
+   * segment of the transaction.
+   *
+   * @param[in] master_id Identifier of the master we are interested in.
+   * @param[out] list The list to populate with transaction IDs.
+   *
+   * @retval true Success
+   * @retval false Error
+   */
+  bool getListOfCompletedTransactions(const std::string &master_id,
+                                      TrxIdList &list);
 
   bool getMessage(drizzled::message::Transaction &transaction,
                   std::string &commit_id,
+                  const std::string &master_id,
                   uint64_t trx_id,
                   std::string &originating_server_uuid,
                   uint64_t &originating_commit_id,
@@ -111,7 +146,8 @@ private:
   bool executeSQLWithCommitId(std::vector<std::string> &sql,
                               const std::string &commit_id,
                               const std::string &originating_server_uuid,
-                              uint64_t originating_commit_id);
+                              uint64_t originating_commit_id,
+                              const std::string &master_id);
   
   /**
    * Remove messages for a given transaction from the queue.
@@ -121,7 +157,7 @@ private:
    * @retval true Success
    * @retval false Failure
    */
-  bool deleteFromQueue(uint64_t trx_id);
+  bool deleteFromQueue(const std::string &master_id, uint64_t trx_id);
 
   /**
    * Determine if a Statement message is an end message.
