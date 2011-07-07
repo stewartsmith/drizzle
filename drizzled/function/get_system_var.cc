@@ -34,24 +34,24 @@ Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
   :var(var_arg), var_type(var_type_arg), component(*component_arg)
 {
   /* set_name() will allocate the name */
-  set_name(name_arg, name_len_arg, system_charset_info);
+  set_name(name_arg, name_len_arg);
 }
 
 
 bool
 Item_func_get_system_var::fix_fields(Session *session, Item **ref)
 {
-  Item *item;
 
   /*
     Evaluate the system variable and substitute the result (a basic constant)
     instead of this item. If the variable can not be evaluated,
     the error is reported in sys_var::item().
   */
-  if (!(item= var->item(session, var_type, &component)))
+  Item *item= var->item(session, var_type, &component);
+  if (not item)
     return 1;                             // Impossible
 
-  item->set_name(name, 0, system_charset_info); // don't allocate a new name
+  item->set_name(name, 0); // don't allocate a new name
   *ref= item;
 
   return 0;

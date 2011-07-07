@@ -746,7 +746,7 @@ void create_select_for_variable(Session *session, const char *var_name)
     char buff[MAX_SYS_VAR_LENGTH*2+4+8];
     char *end= buff;
     end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
-    var->set_name(buff, end-buff, system_charset_info);
+    var->set_name(buff, end-buff);
     session->add_item_to_list(var);
   }
 }
