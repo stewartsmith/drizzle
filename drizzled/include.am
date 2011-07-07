@@ -947,11 +947,7 @@ drizzled_libmemory_la_SOURCES= \
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
-if BUILD_GCC_PCH
 PCHHEADERS= config.h.gch
-else
-PCHHEADERS =
-endif
 
 BUILT_MAINT_SRC+= \
 		 drizzled/sql_yacc.cc \

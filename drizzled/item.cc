@@ -1431,11 +1431,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
       if (item->null_value)
         new_item= new Item_null(name);
       else
-      {
-        uint32_t length= result->length();
-        char *tmp_str= memory::sql_strmake(result->ptr(), length);
-        new_item= new Item_string(name, tmp_str, length, result->charset());
-      }
+        new_item= new Item_string(name, memory::sql_strmake(result->ptr(), result->length()), result->length(), result->charset());
       break;
     }
   case INT_RESULT:
