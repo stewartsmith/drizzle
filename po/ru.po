@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-07-05 19:56+0000\n"
+"PO-Revision-Date: 2011-07-06 17:50+0000\n"
 "Last-Translator: Valerii Kolem <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-07-06 04:34+0000\n"
+"X-Launchpad-Export-Date: 2011-07-07 04:37+0000\n"
 "X-Generator: Launchpad (build 13168)\n"
 
 msgid "Synonym for `help'."
@@ -610,31 +610,36 @@ msgid ""
 "-- Dumping data for table %s\n"
 "--\n"
 msgstr ""
+"\n"
+"--\n"
+"--Сброс данных таблицы %s\n"
+"--\n"
 
 msgid "-- Retrieving rows...\n"
-msgstr ""
+msgstr "--Извлечение строк...\n"
 
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr ""
+msgstr "%s: Ошибка в поле счетчика таблицы: %s ! Прерывание выполнения.\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
 msgstr ""
+"%s: Ошибка при чтении строк таблицы: %s (%d:%s) ! Прерывание выполнения.\n"
 
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
-msgstr ""
+msgstr "-- %<PRIu32> из ~%<PRIu64> строк сброшены для таблицы %s\n"
 
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
-msgstr ""
+msgstr "Не достаточно полей для таблицы %s! Прерывание выполнения.\n"
 
 msgid "when doing refresh"
-msgstr ""
+msgstr "при выполнении обновления"
 
 msgid "alloc_root failure."
-msgstr ""
+msgstr "alloc_root сбой"
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
@@ -644,30 +649,34 @@ msgstr "Не найдена таблица: \"%s\""
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
+"Предупреждение: Не возможно прочитать ключи из таблицы %s; записи не "
+"сортированы (%s)\n"
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
+"Ошибка: Не достаточно памяти для хранения для сортировки по пунктам\n"
 
 msgid ""
 "Number of rows before each output progress report (requires --verbose)."
 msgstr ""
+"Число строк перед каждым выводом отчета о ходе работы (requires --verbose)."
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
+msgstr "Используйте: %s [ОПЦИИ] база данных [таблицы]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "ИЛИ %s [ОПЦИИ] --databases [ОПЦИИ] DB1 [DB2 DB3...]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
+msgstr "ИЛИ %s [ОПЦИИ] --all-databases [ОПЦИИ]\n"
 
 #, c-format
 msgid "Value supplied for port is not valid.\n"
-msgstr ""
+msgstr "Значение, указанное для этого порта является недоступным.\n"
 
 #, c-format
 msgid "Input filename too long: %s"
@@ -675,23 +684,27 @@ msgstr "Имя входного файла слишком длинное: %s"
 
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s Drizzle %s libdrizzle %s, для  %s-%s (%s)\n"
 
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Эта программное обеспечение предоставляется без АБСОЛЮТНОЙ ГАРАНТИЙ. Это "
+"программное обеспечение бесплатно\n"
+" и вы можете его улучшать и распространять под лицензией GPL.\n"
 
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Дампы определений и данных с сервера баз данных Drizzle"
 
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr ""
+"Недопустимое использование опции --ignore-table=<база данных>.<таблица>\n"
 
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
-msgstr ""
+msgstr "Не допустимый  способ для --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr ""
