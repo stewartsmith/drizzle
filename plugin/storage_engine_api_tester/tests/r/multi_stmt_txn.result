@@ -15,6 +15,7 @@ STATE
 Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 BEGIN
 In Transaction
 END STATEMENT
@@ -93,11 +94,13 @@ select * from data_dictionary.seapitester_engine_state_history;
 STATE
 Cursor 2 ::close()
 Cursor 2 Cursor()
+Cursor 2 ~Cursor()
 ::max_supported_key_length()
 ::max_supported_keys()
 Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 BEGIN
 In Transaction
 END STATEMENT
@@ -224,6 +227,7 @@ COMMIT
 ::SEAPITester()
 Cursor 2 ::close()
 Cursor 2 Cursor()
+Cursor 2 ~Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

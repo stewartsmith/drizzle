@@ -164,7 +164,7 @@ public:
     }
 
   ~SEAPITesterCursor()
-    { delete realCursor;}
+    { CURSOR_NEW_STATE("~Cursor()"); delete realCursor;}
 
   int close();
   int rnd_next(unsigned char *buf) {
