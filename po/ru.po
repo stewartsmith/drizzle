@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-07-06 17:50+0000\n"
+"PO-Revision-Date: 2011-07-09 15:15+0000\n"
 "Last-Translator: Valerii Kolem <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-07-07 04:37+0000\n"
+"X-Launchpad-Export-Date: 2011-07-10 04:34+0000\n"
 "X-Generator: Launchpad (build 13168)\n"
 
 msgid "Synonym for `help'."
@@ -707,13 +707,13 @@ msgid "Invalid mode to --compatible: %s\n"
 msgstr "Не допустимый  способ для --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Ошибка: неверное значение для opt_max_connect_retries"
 
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Ошибка: неверное значение для opt_tail_lines"
 
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Ошибка: неверное значение opt_sleep"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
@@ -728,28 +728,34 @@ msgstr ""
 
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
+"Можно использовать только переключатель --user, если запущено с правами "
+"администратора.\n"
 
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
 msgstr ""
+"Неизбежная ошибка: Пожалуйста, прочитайте раздел \"Безопасность\" из "
+"справочника, найдите как запустить drizzled с правами администратора.\n"
 
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
 msgstr ""
+"Неизбежная ошибка: Не возможно изменить, чтобы войти как пользователь '%s' ; "
+"Пожалуйста проверьте, что такой  пользователь существует.\n"
 
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
-msgstr ""
+msgstr "gethostname не удалось, используя '%s' как  имя хоста."
 
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr ""
+msgstr "Неизвестный язык: '%s'"
 
 msgid "Can't create thread-keys"
-msgstr ""
+msgstr "Не возможно создать поток ключей"
 
 msgid "Failed to initialize plugins."
 msgstr "Не удалось проинициализировать плагины."
@@ -785,6 +791,8 @@ msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
 msgstr ""
+"Путь к каталогу установки. Все пути, как правило, определяются относительно "
+"этого."
 
 msgid "Chroot drizzled daemon during startup."
 msgstr ""
