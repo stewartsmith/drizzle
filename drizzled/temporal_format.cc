@@ -66,6 +66,11 @@ TemporalFormat::TemporalFormat(const char *pattern) :
                     );
 }
 
+TemporalFormat::~TemporalFormat()
+{
+  pcre_free(_re);
+}
+
 bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
 {
   if (! is_valid()) 
