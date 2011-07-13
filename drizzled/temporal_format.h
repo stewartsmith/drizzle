@@ -63,6 +63,9 @@ public:
    * @param Pattern to use in matching
    */
   TemporalFormat(const char *pattern);
+
+  ~TemporalFormat();
+
   /**
    * Returns whether the instance is compiled
    * and contains a valid regular expression.

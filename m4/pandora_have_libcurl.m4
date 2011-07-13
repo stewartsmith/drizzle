@@ -32,10 +32,14 @@ AC_DEFUN([_PANDORA_SEARCH_LIBCURL],[
      AC_COMPILE_IFELSE([
        AC_LANG_PROGRAM(
          [[
-           CURL *handle;
-           handle=curl_easy_init();
-           rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME, "foo");
-         ]])],
+           #include <curl/curl.h>
+         ]],
+         [[
+           CURL *curl_handle=curl_easy_init();
+           CURLcode rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME, "foo");
+           (void)rv;
+         ]])
+       ],
        [pandora_cv_curl_have_username=yes],
        [pandora_cv_curl_have_username=no])
      ])
