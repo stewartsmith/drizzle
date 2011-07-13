@@ -343,15 +343,10 @@ bool fill_table_proto(const identifier::Table& identifier,
           }
         }
 
-	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
-	    && field_arg->charset==&my_charset_bin)
-	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
-	    && field_arg->charset==&my_charset_bin))
+	if ((field_arg->sql_type == DRIZZLE_TYPE_VARCHAR && field_arg->charset == &my_charset_bin)
+	   || (field_arg->sql_type == DRIZZLE_TYPE_BLOB && field_arg->charset == &my_charset_bin))
 	{
-	  string bin_default;
-	  bin_default.assign(default_value->c_ptr(),
-			     default_value->length());
-	  field_options->set_default_bin_value(bin_default);
+	  field_options->set_default_bin_value(string(default_value->c_ptr(), default_value->length()));
 	}
 	else
 	{

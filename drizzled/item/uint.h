@@ -21,10 +21,9 @@
 
 #include <drizzled/item/int.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_uint :public Item_int
+class Item_uint : public Item_int
 {
 public:
   Item_uint(const char *str_arg, uint32_t length);

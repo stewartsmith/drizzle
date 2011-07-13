@@ -52,9 +52,9 @@ namespace drizzled {
 
 extern plugin::StorageEngine *myisam_engine;
 
-inline Item * and_items(Item* cond, Item *item)
+inline Item* and_items(Item* cond, Item *item)
 {
-  return (cond? (new Item_cond_and(cond, item)) : item);
+  return cond ? new Item_cond_and(cond, item) : item;
 }
 
 Item_subselect::Item_subselect() :
@@ -149,14 +149,12 @@ void Item_subselect::cleanup()
     engine->cleanup();
   reset();
   value_assigned= 0;
-  return;
 }
 
 void Item_singlerow_subselect::cleanup()
 {
   value= 0; row= 0;
   Item_subselect::cleanup();
-  return;
 }
 
 
@@ -170,7 +168,6 @@ void Item_in_subselect::cleanup()
   }
   first_execution= true;
   Item_subselect::cleanup();
-  return;
 }
 
 Item_subselect::~Item_subselect()
@@ -181,7 +178,7 @@ Item_subselect::~Item_subselect()
 Item_subselect::trans_res
 Item_subselect::select_transformer(Join *)
 {
-  return(RES_OK);
+  return RES_OK;
 }
 
 
@@ -421,7 +418,6 @@ Item_singlerow_subselect::Item_singlerow_subselect(Select_Lex *select_lex)
   init(select_lex, new select_singlerow_subselect(this));
   maybe_null= 1;
   max_columns= UINT_MAX;
-  return;
 }
 
 Select_Lex *
@@ -467,8 +463,6 @@ Item_maxmin_subselect::Item_maxmin_subselect(Session *session_param,
     session here
   */
   session= session_param;
-
-  return;
 }
 
 void Item_maxmin_subselect::cleanup()
@@ -484,7 +478,6 @@ void Item_maxmin_subselect::cleanup()
     value will be found.
   */
   was_values= true;
-  return;
 }
 
 
@@ -1112,10 +1105,7 @@ Item_in_subselect::single_value_transformer(Join *join,
       As far as  Item_ref_in_optimizer do not substitute itself on fix_fields
       we can use same item for all selects.
     */
-    expr= new Item_direct_ref(&select_lex->context,
-                              (Item**)optimizer->get_cache(),
-			      (char *)"<no matter>",
-			      (char *)in_left_expr_name);
+    expr= new Item_direct_ref(&select_lex->context, (Item**)optimizer->get_cache(), "<no matter>", in_left_expr_name);
 
     master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
   }
@@ -1184,13 +1174,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       select_lex->group_list.elements)
   {
     bool tmp;
-    Item *item= func->create(expr,
-                             new Item_ref_null_helper(&select_lex->context,
-                                                      this,
-                                                      select_lex->
-                                                      ref_pointer_array,
-                                                      (char *)"<ref>",
-                                                      this->full_name()));
+    Item *item= func->create(expr, new Item_ref_null_helper(&select_lex->context, this, select_lex->ref_pointer_array, "<ref>", this->full_name()));
     if (!abort_on_null && left_expr->maybe_null)
     {
       /*
@@ -1228,9 +1212,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       bool tmp;
       Item *having= item, *orig_item= item;
       select_lex->item_list.clear();
-      select_lex->item_list.push_back(new Item_int("Not_used",
-                                                   (int64_t) 1,
-                                                   MY_INT64_NUM_DECIMAL_DIGITS));
+      select_lex->item_list.push_back(new Item_int("Not_used", 1, MY_INT64_NUM_DECIMAL_DIGITS));
       select_lex->ref_pointer_array[0]= &select_lex->item_list.front();
 
       item= func->create(expr, item);
@@ -1256,8 +1238,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
         select_lex->having_fix_field= 0;
         if (tmp)
 	  return(RES_ERROR);
-	item= new Item_cond_or(item,
-			       new Item_func_isnull(orig_item));
+	item= new Item_cond_or(item, new Item_func_isnull(orig_item));
       }
       /*
         If we may encounter NULL IN (SELECT ...) and care whether subquery
@@ -1296,15 +1277,10 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
 	  we can assign select_lex->having here, and pass 0 as last
 	  argument (reference) to fix_fields()
 	*/
-        Item *new_having=
-          func->create(expr,
-                       new Item_ref_null_helper(&select_lex->context, this,
-                                            select_lex->ref_pointer_array,
-                                            (char *)"<no matter>",
-                                            (char *)"<result>"));
+        Item *new_having= func->create(expr, new Item_ref_null_helper(&select_lex->context, this, select_lex->ref_pointer_array, "<no matter>", "<result>"));
         if (!abort_on_null && left_expr->maybe_null)
           new_having= new Item_func_trig_cond(new_having, get_cond_guard(0));
-        new_having->name= (char*)in_having_cond;
+        new_having->name= in_having_cond;
 	select_lex->having= join->having= new_having;
 	select_lex->having_fix_field= 1;
 
@@ -1456,20 +1432,20 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                          Item_ref(&select_lex->context,
                                   (*optimizer->get_cache())->
                                   addr(i),
-                                  (char *)"<no matter>",
-                                  (char *)in_left_expr_name),
+                                  "<no matter>",
+                                  in_left_expr_name),
                          new
                          Item_ref(&select_lex->context,
                                   select_lex->ref_pointer_array + i,
-                                  (char *)"<no matter>",
-                                  (char *)"<list ref>")
+                                  "<no matter>",
+                                  "<list ref>")
                         );
       Item *item_isnull=
         new Item_func_isnull(new
                              Item_ref(&select_lex->context,
                                       select_lex->ref_pointer_array+i,
-                                      (char *)"<no matter>",
-                                      (char *)"<list ref>")
+                                      "<no matter>",
+                                      "<list ref>")
                             );
       Item *col_item= new Item_cond_or(item_eq, item_isnull);
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
@@ -1481,13 +1457,11 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                                    new Item_ref(&select_lex->context,
                                                 select_lex->
                                                 ref_pointer_array + i,
-                                                (char *)"<no matter>",
-                                                (char *)"<list ref>"));
+                                                "<no matter>",
+                                                "<list ref>"));
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
       {
-        if (!(item_nnull_test=
-              new Item_func_trig_cond(item_nnull_test, get_cond_guard(i))))
-          return(RES_ERROR);
+        item_nnull_test= new Item_func_trig_cond(item_nnull_test, get_cond_guard(i));
       }
       item_having_part2= and_items(item_having_part2, item_nnull_test);
       item_having_part2->top_level_item();
@@ -1530,14 +1504,14 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                          Item_direct_ref(&select_lex->context,
                                          (*optimizer->get_cache())->
                                          addr(i),
-                                         (char *)"<no matter>",
-                                         (char *)in_left_expr_name),
+                                         "<no matter>",
+                                         in_left_expr_name),
                          new
                          Item_direct_ref(&select_lex->context,
                                          select_lex->
                                          ref_pointer_array+i,
-                                         (char *)"<no matter>",
-                                         (char *)"<list ref>")
+                                         "<no matter>",
+                                         "<list ref>")
                         );
       if (!abort_on_null)
       {
@@ -1546,8 +1520,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                                     new
                                     Item_ref(&select_lex->context,
                                              select_lex->ref_pointer_array + i,
-                                             (char *)"<no matter>",
-                                             (char *)"<list ref>"));
+                                             "<no matter>",
+                                             "<list ref>"));
 
 
         item_isnull= new
@@ -1555,8 +1529,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                            Item_direct_ref(&select_lex->context,
                                            select_lex->
                                            ref_pointer_array+i,
-                                           (char *)"<no matter>",
-                                           (char *)"<list ref>")
+                                           "<no matter>",
+                                           "<list ref>")
                           );
         item= new Item_cond_or(item, item_isnull);
         /*
@@ -2010,9 +1984,8 @@ int subselect_single_select_engine::prepare()
 {
   if (prepared)
     return 0;
-  join= new Join(session, select_lex->item_list,
-		 select_lex->options | SELECT_NO_UNLOCK, result);
-  if (!join || !result)
+  join= new Join(session, select_lex->item_list, select_lex->options | SELECT_NO_UNLOCK, result);
+  if (not result)
     return 1; /* Fatal error is set already. */
   prepared= 1;
   Select_Lex *save_select= session->lex().current_select;

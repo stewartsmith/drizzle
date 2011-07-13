@@ -27,7 +27,7 @@
 
 namespace drizzled {
 
-class Item_subselect :public Item_result_field
+class Item_subselect : public Item_result_field
 {
   bool value_assigned; /* value already assigned to subselect */
 public:

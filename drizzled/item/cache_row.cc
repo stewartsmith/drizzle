@@ -25,73 +25,62 @@
 
 #include <drizzled/item/cache_row.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_cache_row::make_field(SendField *)
 {
-  illegal_method_call((const char*)"make_field");
+  illegal_method_call("make_field");
 }
-
 
 double Item_cache_row::val_real()
 {
-  illegal_method_call((const char*)"val");
+  illegal_method_call("val");
   return 0;
 }
-
 
 int64_t Item_cache_row::val_int()
 {
-  illegal_method_call((const char*)"val_int");
+  illegal_method_call("val_int");
   return 0;
 }
-
 
 String *Item_cache_row::val_str(String *)
 {
-  illegal_method_call((const char*)"val_str");
+  illegal_method_call("val_str");
   return 0;
 }
-
 
 type::Decimal *Item_cache_row::val_decimal(type::Decimal *)
 {
-  illegal_method_call((const char*)"val_decimal");
+  illegal_method_call("val_decimal");
   return 0;
 }
-
 
 enum Item_result Item_cache_row::result_type() const
 {
   return ROW_RESULT;
 }
 
-
 uint32_t Item_cache_row::cols()
 {
   return item_count;
 }
-
 
 Item *Item_cache_row::element_index(uint32_t i)
 {
   return values[i];
 }
 
-
 Item **Item_cache_row::addr(uint32_t i)
 {
   return (Item **) (values + i);
 }
-
 
 void Item_cache_row::allocate(uint32_t num)
 {
   item_count= num;
   values= (Item_cache **) getSession().mem.calloc(sizeof(Item_cache *)*item_count);
 }
-
 
 bool Item_cache_row::setup(Item * item)
 {
@@ -109,7 +98,6 @@ bool Item_cache_row::setup(Item * item)
   return 0;
 }
 
-
 void Item_cache_row::store(Item * item)
 {
   null_value= 0;
@@ -121,14 +109,11 @@ void Item_cache_row::store(Item * item)
   }
 }
 
-
-void Item_cache_row::illegal_method_call(const char *)
+void Item_cache_row::illegal_method_call(const char*)
 {
-  assert(0);
+  assert(false);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
-  return;
 }
-
 
 bool Item_cache_row::check_cols(uint32_t c)
 {
@@ -139,7 +124,6 @@ bool Item_cache_row::check_cols(uint32_t c)
   }
   return 0;
 }
-
 
 bool Item_cache_row::null_inside()
 {
@@ -160,7 +144,6 @@ bool Item_cache_row::null_inside()
   return 0;
 }
 
-
 void Item_cache_row::bring_value()
 {
   for (uint32_t i= 0; i < item_count; i++)
@@ -168,12 +151,10 @@ void Item_cache_row::bring_value()
   return;
 }
 
-
 void Item_cache_row::keep_array()
 {
   save_array= 1;
 }
-
 
 void Item_cache_row::cleanup()
 {
@@ -184,6 +165,5 @@ void Item_cache_row::cleanup()
     values= 0;
   return;
 }
-
 
 } /* namespace drizzled */

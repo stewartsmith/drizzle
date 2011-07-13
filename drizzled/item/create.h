@@ -24,8 +24,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Public function builder interface.
@@ -65,9 +64,6 @@ public:
   virtual Item *create(Session *session, LEX_STRING name, List<Item> *item_list) = 0;
 
 protected:
-  /** Constructor */
-  Create_func() {}
-  /** Destructor */
   virtual ~Create_func() {}
 };
 
@@ -99,14 +95,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  virtual Item* create(Session *session, LEX_STRING db, LEX_STRING name,
-                       bool use_explicit_name, List<Item> *item_list) = 0;
-
-protected:
-  /** Constructor. */
-  Create_qfunc() {}
-  /** Destructor. */
-  virtual ~Create_qfunc() {}
+  virtual Item* create(Session*, LEX_STRING db, LEX_STRING name, bool use_explicit_name, List<Item>*) = 0;
 };
 
 
@@ -115,7 +104,7 @@ protected:
   @param name The native function name
   @return The native function builder associated with the name, or NULL
 */
-extern Create_func * find_native_function_builder(LEX_STRING name);
+extern Create_func* find_native_function_builder(LEX_STRING name);
 
 
 /**
@@ -123,7 +112,7 @@ extern Create_func * find_native_function_builder(LEX_STRING name);
   @param session The current thread
   @return A function builder for qualified functions
 */
-extern Create_qfunc * find_qualified_function_builder(Session *session);
+extern Create_qfunc* find_qualified_function_builder(Session*);
 
 
 /**
@@ -142,9 +131,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  Item *create(Session *session,
-               const plugin::Function *fct,
-               List<Item> *item_list);
+  Item *create(Session *session, const plugin::Function *fct, List<Item> *item_list);
 
   /** Singleton. */
   static Create_udf_func s_singleton;
@@ -152,8 +139,6 @@ public:
 protected:
   /** Constructor. */
   Create_udf_func() {}
-  /** Destructor. */
-  virtual ~Create_udf_func() {}
 };
 
 Item*
@@ -169,9 +154,7 @@ create_func_char_cast(Session *session, Item *a, int len, const charset_info_st 
   @param cs The character set
 */
 Item *
-create_func_cast(Session *session, Item *a, Cast_target cast_type,
-                 const char *len, const char *dec,
-                 const charset_info_st * const cs);
+create_func_cast(Session*, Item *a, Cast_target cast_type, const char *len, const char *dec, const charset_info_st*);
 
 void item_create_init();
 void item_create_cleanup();

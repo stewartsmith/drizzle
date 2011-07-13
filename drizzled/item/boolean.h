@@ -43,15 +43,7 @@ public:
   {
     max_length= value ? 4 : 5;
     fixed= true;
-
-    if (value)
-    {
-      name= const_cast<char *>("TRUE");
-    }
-    else
-    {
-      name= const_cast<char *>("FALSE");
-    }
+    name= value ? "TRUE" : "FALSE";
   }
 
   enum Type type() const { return BOOLEAN_ITEM; }
@@ -74,16 +66,7 @@ public:
   drizzled::String* val_str(drizzled::String *value_buffer)
   {
     value_buffer->realloc(5);
-
-    if (value)
-    {
-      value_buffer->append("TRUE");
-    }
-    else
-    {
-      value_buffer->append("FALSE");
-    }
-
+    value_buffer->append(value ? "TRUE" : "FALSE");
     return value_buffer;
   }
 

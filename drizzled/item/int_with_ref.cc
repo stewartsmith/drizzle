@@ -22,8 +22,7 @@
 #include <drizzled/item/uint.h>
 #include <drizzled/item/int_with_ref.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item *Item_int_with_ref::clone_item()
 {
@@ -32,9 +31,9 @@ Item *Item_int_with_ref::clone_item()
     We need to evaluate the constant to make sure it works with
     parameter markers.
   */
-  return (ref->unsigned_flag ?
+  return ref->unsigned_flag ?
           new Item_uint(ref->name, ref->val_int(), ref->max_length) :
-          new Item_int(ref->name, ref->val_int(), ref->max_length));
+          new Item_int(ref->name, ref->val_int(), ref->max_length);
 }
 
 } /* namespace drizzled */

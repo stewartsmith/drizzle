@@ -130,7 +130,7 @@ String *Item_char_typecast::val_str(String *str)
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE,
                           ER(ER_TRUNCATED_WRONG_VALUE), char_type,
-                          res->c_ptr_safe());
+                          res->c_str());
       res->length((uint) length);
     }
     else if (cast_cs == &my_charset_bin && res->length() < (uint) cast_length)

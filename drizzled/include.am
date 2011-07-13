@@ -240,7 +240,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
-			      drizzled/item/blob.h \
 			      drizzled/item/boolean.h \
 			      drizzled/item/cache.h \
 			      drizzled/item/cache_decimal.h \
@@ -949,11 +948,7 @@ AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
 if BUILD_GCC_PCH
-PCHHEADERS= \
-	    drizzled/definitions.h.gch \
-	    drizzled/plugin/storage_engine.h.gch  \
-	    drizzled/sql_base.h.gch \
-	    drizzled/sql_parse.h.gch
+PCHHEADERS= config.h.gch
 else
 PCHHEADERS =
 endif

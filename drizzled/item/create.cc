@@ -146,10 +146,6 @@ public:
     @return An item representing the function call
   */
   virtual Item* create_native(Session*, LEX_STRING name, List<Item>*) = 0;
-
-protected:
-  /** Constructor. */
-  Create_native_func() {}
 };
 
 
@@ -168,10 +164,6 @@ public:
     @return An item representing the function call
   */
   virtual Item* create(Session *session) = 0;
-
-protected:
-  /** Constructor. */
-  Create_func_arg0() {}
 };
 
 
@@ -191,10 +183,6 @@ public:
     @return An item representing the function call
   */
   virtual Item* create(Session *session, Item *arg1) = 0;
-
-protected:
-  /** Constructor. */
-  Create_func_arg1() {}
 };
 
 
@@ -215,10 +203,6 @@ public:
     @return An item representing the function call
   */
   virtual Item* create(Session *session, Item *arg1, Item *arg2) = 0;
-
-protected:
-  /** Constructor. */
-  Create_func_arg2() {}
 };
 
 
@@ -240,10 +224,6 @@ public:
     @return An item representing the function call
   */
   virtual Item* create(Session *session, Item *arg1, Item *arg2, Item *arg3) = 0;
-
-protected:
-  /** Constructor. */
-  Create_func_arg3() {}
 };
 
 

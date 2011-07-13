@@ -24,8 +24,7 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 double Item_ref_null_helper::val_real()
 {

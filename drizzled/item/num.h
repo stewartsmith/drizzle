@@ -24,11 +24,11 @@
 
 namespace drizzled {
 
-class Item_num: public Item_basic_constant
+class Item_num : public Item_basic_constant
 {
 public:
   virtual Item_num *neg()= 0;
-  Item *safe_charset_converter(const charset_info_st * const tocs);
+  Item *safe_charset_converter(const charset_info_st*);
 };
 
 } /* namespace drizzled */

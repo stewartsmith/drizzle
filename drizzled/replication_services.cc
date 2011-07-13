@@ -78,9 +78,9 @@ static ReplicationServices::ReplicationStreams replication_streams;
    */
 static void normalizeReplicatorName(string &name)
 {
-  transform(name.begin(), name.end(), name.begin(), ::tolower);
+  boost::to_lower(name);
   if (name.find("replicator") == string::npos)
-    name.append("replicator", 10);
+    name.append("replicator");
   {
     size_t found_underscore= name.find('_');
     while (found_underscore != string::npos)

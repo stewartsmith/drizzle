@@ -550,7 +550,7 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
 HailDBTableShare::HailDBTableShare(const char* name, bool hidden_primary_key)
   : use_count(0), has_hidden_primary_key(hidden_primary_key)
 {
-  table_name.assign(name);
+  table_name= name;
 }
 
 uint64_t HailDBEngine::getInitialAutoIncrementValue(HailDBCursor *cursor)

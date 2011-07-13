@@ -177,10 +177,10 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
           struct stat entrystat;
 
           buffered_fullpath.append(in_path);
-          if (buffered_fullpath[buffered_fullpath.length()] != '/')
+          if (buffered_fullpath[buffered_fullpath.length() - 1] != '/')
             buffered_fullpath.append(1, FN_LIBCHAR);
 
-          buffered_fullpath.assign(result->d_name);
+          buffered_fullpath= result->d_name;
 
           stat(buffered_fullpath.c_str(), &entrystat);
 

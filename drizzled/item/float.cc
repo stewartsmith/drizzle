@@ -27,8 +27,7 @@
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const charset_info_st *system_charset_info;
 
@@ -154,13 +153,12 @@ bool Item_float::eq(const Item *arg, bool) const
   return false;
 }
 
-Item *Item_static_float_func::safe_charset_converter(const charset_info_st * const)
+Item *Item_static_float_func::safe_charset_converter(const charset_info_st*)
 {
-  Item_string *conv;
   char buf[64];
-  String *s, tmp(buf, sizeof(buf), &my_charset_bin);
-  s= val_str(&tmp);
-  conv= new Item_static_string_func(func_name, s->ptr(), s->length(), s->charset());
+  String tmp(buf, sizeof(buf), &my_charset_bin);
+  String* s= val_str(&tmp);
+  Item_string* conv= new Item_static_string_func(func_name, s->ptr(), s->length(), s->charset());
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

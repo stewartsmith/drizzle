@@ -374,9 +374,8 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   path.length= normalized_path.length= 0;
 
   std::string tb_name(identifier.getTableName());
-  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+  boost::to_lower(tb_name);
   assert(strcmp(tb_name.c_str(), table_name.str) == 0);
-
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 

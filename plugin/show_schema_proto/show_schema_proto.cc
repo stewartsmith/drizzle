@@ -77,7 +77,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   null_value= false;
 
-  const char* db= db_sptr->c_ptr_safe();
+  const char* db= db_sptr->c_str();
 
   string proto_as_text("");
   message::schema::shared_ptr proto;

@@ -33,7 +33,7 @@ public:
   Schema(const std::string &name) :
     identifier::Schema(name)
   {
-    std::transform(name.begin(), name.end(), _path.begin(), ::tolower);
+    _path= boost::to_lower_copy(name);
   }
 
   const std::string &getPath() const
