@@ -26,20 +26,6 @@
 using namespace std;
 using namespace drizzled;
 
-static const string VARCHAR("VARCHAR");
-/* VARBINARY already defined elsewhere */
-static const string VARBIN("VARBINARY");
-static const string DOUBLE("DOUBLE");
-static const string BLOB("BLOB");
-static const string TEXT("TEXT");
-static const string ENUM("ENUM");
-static const string INTEGER("INTEGER");
-static const string BIGINT("BIGINT");
-static const string DECIMAL("DECIMAL");
-static const string DATE("DATE");
-static const string TIMESTAMP("TIMESTAMP");
-static const string DATETIME("DATETIME");
-
 ShowColumns::ShowColumns() :
   show_dictionary::Show("SHOW_COLUMNS")
 {
@@ -126,44 +112,6 @@ bool ShowColumns::Generator::populate()
   return true;
 }
 
-void ShowColumns::Generator::pushType(message::Table::Field::FieldType type, const string &collation)
-{
-  switch (type)
-  {
-  default:
-  case message::Table::Field::VARCHAR:
-    push(collation.compare("binary") ? VARCHAR : VARBIN);
-    break;
-  case message::Table::Field::DOUBLE:
-    push(DOUBLE);
-    break;
-  case message::Table::Field::BLOB:
-    push(collation.compare("binary") ? TEXT : BLOB);
-    break;
-  case message::Table::Field::ENUM:
-    push(ENUM);
-    break;
-  case message::Table::Field::INTEGER:
-    push(INTEGER);
-    break;
-  case message::Table::Field::BIGINT:
-    push(BIGINT);
-    break;
-  case message::Table::Field::DECIMAL:
-    push(DECIMAL);
-    break;
-  case message::Table::Field::DATE:
-    push(DATE);
-    break;
-  case message::Table::Field::EPOCH:
-    push(TIMESTAMP);
-    break;
-  case message::Table::Field::DATETIME:
-    push(DATETIME);
-    break;
-  }
-}
-
 
 void ShowColumns::Generator::fill()
 {
@@ -171,7 +119,7 @@ void ShowColumns::Generator::fill()
   push(column.name());
 
   /* Type */
-  pushType(column.type(), column.string_options().collation());
+  push(drizzled::message::type(column));
 
   /* Null */
   push(not column.constraints().is_notnull());
