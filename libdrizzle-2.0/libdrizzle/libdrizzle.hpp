@@ -138,6 +138,21 @@ public:
     return drizzle_con_error(&b_);
   }
 
+  void set_tcp(const char* host, in_port_t port)
+  {
+    drizzle_con_set_tcp(&b_, host, port);
+  }
+
+  void set_auth(const char* user, const char* password)
+  {
+    drizzle_con_set_auth(&b_, user, password);
+  }
+
+  void set_db(const char* db)
+  {
+    drizzle_con_set_db(&b_, db);
+  }
+
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;

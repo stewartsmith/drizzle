@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
   drizzle::connection_c* con= new drizzle::connection_c(drizzle);
   if (mysql)
     drizzle_con_add_options(&con->b_, DRIZZLE_CON_MYSQL);
-  drizzle_con_set_tcp(&con->b_, host, port);
-  drizzle_con_set_db(&con->b_, db);
+  con->set_tcp(host, port);
+  con->set_db(db);
   drizzle::result_c result;
   if (con->query(result, query))
   {
