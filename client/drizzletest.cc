@@ -81,9 +81,6 @@
 
 #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 
-#ifndef DRIZZLE_RETURN_SERVER_GONE
-#define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
-#endif
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
@@ -4579,7 +4576,7 @@ void handle_error(st_command* command,
       returned a valid reponse. Don't allow 2013 or 2006 to trigger an
       abort_not_supported_test
     */
-    if (err_errno == DRIZZLE_RETURN_SERVER_GONE)
+    if (err_errno == DRIZZLE_RETURN_LOST_CONNECTION)
       die("require query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
     /* Abort the run of this test, pass the failed query as reason */
