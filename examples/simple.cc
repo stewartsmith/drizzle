@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
       break;
 
     case 'p':
-      port= (in_port_t)atoi(optarg);
+      port= static_cast<in_port_t>(atoi(optarg));
       break;
 
     case 'u':
@@ -88,27 +88,8 @@ int main(int argc, char *argv[])
       break;
 
     case 'v':
-      switch (verbose)
-      {
-      case DRIZZLE_VERBOSE_NEVER:
-        verbose= DRIZZLE_VERBOSE_FATAL;
-        break;
-      case DRIZZLE_VERBOSE_FATAL:
-        verbose= DRIZZLE_VERBOSE_ERROR;
-        break;
-      case DRIZZLE_VERBOSE_ERROR:
-        verbose= DRIZZLE_VERBOSE_INFO;
-        break;
-      case DRIZZLE_VERBOSE_INFO:
-        verbose= DRIZZLE_VERBOSE_DEBUG;
-        break;
-      case DRIZZLE_VERBOSE_DEBUG:
-        verbose= DRIZZLE_VERBOSE_CRAZY;
-        break;
-      case DRIZZLE_VERBOSE_CRAZY:
-      case DRIZZLE_VERBOSE_MAX:
-        break;
-      }
+      if (verbose < DRIZZLE_VERBOSE_MAX)
+        verbose= static_cast<drizzle_verbose_t>(verbose + 1);
       break;
 
     default:
