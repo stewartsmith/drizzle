@@ -20,6 +20,7 @@
 #pragma once
 
 #include <drizzled/item/basic_constant.h>
+#include <drizzled/util/backtrace.h>
 
 namespace drizzled {
 namespace item {
@@ -56,6 +57,11 @@ public:
 
   enum Type type() const { return BOOLEAN_ITEM; }
 
+  Item_result result_type() const
+  {
+    return INT_RESULT;
+  }
+
   virtual bool val_bool()
   {
     return value;
@@ -63,6 +69,7 @@ public:
 
   double val_real()
   {
+    call_backtrace();
     return value ? 1 : 0;
   }
 
@@ -77,11 +84,11 @@ public:
 
     if (value)
     {
-      value_buffer->append("TRUE");
+      value_buffer->copy("TRUE", 4, default_charset());
     }
     else
     {
-      value_buffer->append("FALSE");
+      value_buffer->copy("FALSE", 5, default_charset());
     }
 
     return value_buffer;

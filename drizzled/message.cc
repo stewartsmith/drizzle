@@ -207,12 +207,6 @@ const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignK
   return NO_ACTION;
 }
 
-// This matches SQL standard of using YES/NO not the normal TRUE/FALSE
-const std::string &type(bool type)
-{
-  return type ? YES : NO;
-}
-
 const std::string &type(drizzled::message::Table::Index::IndexType type)
 {
   switch (type)

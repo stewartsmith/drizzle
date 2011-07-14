@@ -26,6 +26,7 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/current_session.h>
+#include <drizzled/display.h>
 #include <drizzled/error.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/item/cache_int.h>
@@ -33,11 +34,11 @@
 #include <drizzled/item/int_with_ref.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/system_variables.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/system_variables.h>
 
 #include <math.h>
 #include <algorithm>
@@ -94,7 +95,9 @@ static void agg_result_type(Item_result *type, Item **items, uint32_t nitems)
   for (; item < item_end; item++)
   {
     if ((*item)->type() != Item::NULL_ITEM)
+    {
       *type= item_store_type(*type, *item, unsigned_flag);
+    }
   }
 }
 
@@ -2371,8 +2374,7 @@ Item_func_if::fix_fields(Session *session, Item **ref)
 }
 
 
-void
-Item_func_if::fix_length_and_dec()
+void Item_func_if::fix_length_and_dec()
 {
   maybe_null= args[1]->maybe_null || args[2]->maybe_null;
   decimals= max(args[1]->decimals, args[2]->decimals);
@@ -2397,32 +2399,38 @@ Item_func_if::fix_length_and_dec()
   }
   else
   {
-    agg_result_type(&cached_result_type, args+1, 2);
+    agg_result_type(&cached_result_type, args +1, 2);
     if (cached_result_type == STRING_RESULT)
     {
-      if (agg_arg_charsets(collation, args+1, 2, MY_COLL_ALLOW_CONV, 1))
+      if (agg_arg_charsets(collation, args +1, 2, MY_COLL_ALLOW_CONV, 1))
         return;
     }
     else
     {
       collation.set(&my_charset_bin);	// Number
     }
-    cached_field_type= agg_field_type(args + 1, 2);
+    cached_field_type= agg_field_type(args +1, 2);
   }
 
-  if ((cached_result_type == DECIMAL_RESULT )
-      || (cached_result_type == INT_RESULT))
+  switch (cached_result_type)
   {
-    int len1= args[1]->max_length - args[1]->decimals
-      - (args[1]->unsigned_flag ? 0 : 1);
-
-    int len2= args[2]->max_length - args[2]->decimals
-      - (args[2]->unsigned_flag ? 0 : 1);
-
-    max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
-  }
-  else
+  case DECIMAL_RESULT: 
+  case INT_RESULT:
+    {
+      int len1= args[1]->max_length -args[1]->decimals -(args[1]->unsigned_flag ? 0 : 1);
+      int len2= args[2]->max_length -args[2]->decimals -(args[2]->unsigned_flag ? 0 : 1);
+      max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
+    }
+    break;
+  case REAL_RESULT:
+  case STRING_RESULT:
     max_length= max(args[1]->max_length, args[2]->max_length);
+    break;
+
+  case ROW_RESULT:
+    assert(0);
+    break;
+  }
 }
 
 
@@ -2449,8 +2457,8 @@ Item_func_if::val_int()
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  int64_t value=arg->val_int();
-  null_value=arg->null_value;
+  int64_t value= arg->val_int();
+  null_value= arg->null_value;
   return value;
 }
 
@@ -2459,10 +2467,12 @@ Item_func_if::val_str(String *str)
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  String *res=arg->val_str(str);
+  String *res= arg->val_str(str);
   if (res)
+  {
     res->set_charset(collation.collation);
-  null_value=arg->null_value;
+  }
+  null_value= arg->null_value;
   return res;
 }
 

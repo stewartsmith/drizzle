@@ -135,6 +135,7 @@ public:
     Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
+
   inline void set(const char *str,size_t arg_length, const charset_info_st * const cs)
   {
     free();
@@ -143,6 +144,7 @@ public:
     str_charset=cs;
   }
   void set_ascii(const char *str, size_t arg_length);
+
   inline void set_quick(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     if (!alloced)
@@ -151,6 +153,7 @@ public:
     }
     str_charset= cs;
   }
+
   void set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
   void set(int64_t num, const charset_info_st * const cs)
   { set_int(num, false, cs); }
@@ -242,8 +245,8 @@ public:
   void copy(const std::string&, const charset_info_st*);	// Allocate new string
   void copy(const char*, size_t, const charset_info_st*); // Allocate new string
   static bool needs_conversion(size_t arg_length,
-  			       const charset_info_st* cs_from, const charset_info_st* cs_to,
-			       size_t *offset);
+                               const charset_info_st* cs_from, const charset_info_st* cs_to,
+                               size_t *offset);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
   void append(const String &s);

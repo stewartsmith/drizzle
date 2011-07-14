@@ -306,14 +306,14 @@ void String::append(const String &s)
 
 void String::append(const char *s,size_t arg_length)
 {
-  if (!arg_length)
+  if (arg_length == 0)
     return;
 
   /*
     For an ASCII compatinble string we can just append.
   */
   realloc(str_length+arg_length);
-  memcpy(Ptr+str_length,s,arg_length);
+  memcpy(Ptr +str_length, s, arg_length);
   str_length+=arg_length;
 }
 

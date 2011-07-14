@@ -2999,7 +2999,9 @@ function_call_conflict:
             }
           }
         | IF '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_if($3,$5,$7);
+          }
         | KILL_SYM kill_option '(' expr ')'
           {
             List<Item> *args= new (YYSession->mem_root) List<Item>;
