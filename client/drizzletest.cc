@@ -24,8 +24,8 @@
 
   Tool used for executing a .test file
 
-  See the "DRIZZLE Test framework manual" for more information
-  http://dev.mysql.com/doc/drizzletest/en/index.html
+  See the "MySQL Test framework manual" for more information
+  http://dev.mysql.com/doc/mysqltest/en/index.html
 
   Please keep the test framework tools identical in all versions!
 
@@ -4988,8 +4988,7 @@ try
 
   if (user_config_dir.compare(0, 2, "~/") == 0)
   {
-    const char *homedir= getenv("HOME");
-    if (homedir != NULL)
+    if (const char *homedir= getenv("HOME"))
       user_config_dir.replace(0, 1, homedir);
   }
 
@@ -5495,39 +5494,29 @@ try
     Time to compare result or save it to record file.
     The entire output from test is now kept in ds_res.
   */
-  if (ds_res.length())
+  if (ds_res.empty())
+    die("The test didn't produce any output");
+  if (result_file_name.empty())
   {
-    if (not result_file_name.empty())
-    {
-      /* A result file has been specified */
-
-      if (record)
-      {
-        /* Recording - dump the output from test to result file */
-        str_to_file(result_file_name.c_str(), ds_res.c_str(), ds_res.length());
-      }
-      else
-      {
-        /* Check that the output from test is equal to result file
-           - detect missing result file
-           - detect zero size result file
-        */
-        check_result(ds_res);
-      }
-    }
-    else
-    {
-      /* No result_file_name specified to compare with, print to stdout */
-      printf("%s", ds_res.c_str());
-    }
+    /* No result_file_name specified to compare with, print to stdout */
+    printf("%s", ds_res.c_str());
+  }
+  else if (record)
+  {
+    /* Recording - dump the output from test to result file */
+    str_to_file(result_file_name.c_str(), ds_res.c_str(), ds_res.length());
   }
   else
   {
-    die("The test didn't produce any output");
+    /* Check that the output from test is equal to result file
+    - detect missing result file
+    - detect zero size result file
+    */
+    check_result(ds_res);
   }
 
   struct stat res_info;
-  if (!command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
+  if (not command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
@@ -5543,7 +5532,7 @@ try
     dump_progress();
 
   /* Dump warning messages */
-  if (! result_file_name.empty() && ds_warning_messages.length())
+  if (not result_file_name.empty() && ds_warning_messages.length())
     dump_warning_messages();
 
   timer_output();
@@ -5556,7 +5545,7 @@ try
     cerr<<err.what()<<endl;
   }
 
-  return 0; /* Keep compiler happy too */
+  return 0;
 }
 
 
