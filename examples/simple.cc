@@ -38,7 +38,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle/libdrizzle.hpp>
 #include <netdb.h>
 #include <unistd.h>
 
@@ -103,50 +103,37 @@ int main(int argc, char *argv[])
       printf("usage: %s [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] "
              "[-v]\n", argv[0]);
       printf("\t-d <db>    - Database to use for query\n");
-      printf("\t-h <host>  - Host to listen on\n");
+      printf("\t-h <host>  - Host to connect to\n");
       printf("\t-m         - Use the MySQL protocol\n");
-      printf("\t-p <port>  - Port to listen on\n");
+      printf("\t-p <port>  - Port to connect to\n");
       printf("\t-q <query> - Query to run\n");
       printf("\t-v         - Increase verbosity level\n");
       return 1;
     }
   }
 
-  drizzle_st drizzle;
-  if (drizzle_create(&drizzle) == NULL)
-  {
-    printf("drizzle_create:NULL\n");
-    return 1;
-  }
-
-  drizzle_set_verbose(&drizzle, verbose);
-
-  drizzle_con_st* con= new drizzle_con_st;
-  if (drizzle_con_create(&drizzle, con) == NULL)
-  {
-    printf("drizzle_con_create:NULL\n");
-    return 1;
-  }
-
+  drizzle::drizzle_c drizzle;
+  drizzle_set_verbose(&drizzle.b_, verbose);
+  drizzle::connection_c* con= new drizzle::connection_c(drizzle);
   if (mysql)
-    drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
+    drizzle_con_add_options(&con->b_, DRIZZLE_CON_MYSQL);
 
-  drizzle_con_set_tcp(con, host, port);
-  drizzle_con_set_db(con, db);
+  drizzle_con_set_tcp(&con->b_, host, port);
+  drizzle_con_set_db(&con->b_, db);
 
   drizzle_result_st result;
   drizzle_return_t ret;
-  (void)drizzle_query_str(con, &result, query, &ret);
+  (void)drizzle_query_str(&con->b_, &result, query, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_query:%s\n", drizzle_con_error(con));
+    printf("drizzle_query:%s\n", con->error());
     return 1;
   }
 
   ret= drizzle_result_buffer(&result);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_result_buffer:%s\n", drizzle_con_error(con));
+    printf("drizzle_result_buffer:%s\n", con->error());
     return 1;
   }
 
@@ -158,8 +145,6 @@ int main(int argc, char *argv[])
   }
 
   drizzle_result_free(&result);
-  drizzle_con_free(con);
-  drizzle_free(&drizzle);
   delete con;
   return 0;
 }
