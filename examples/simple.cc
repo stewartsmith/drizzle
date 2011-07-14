@@ -34,13 +34,15 @@
  *
  */
 
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
+#include <iostream>
 #include <libdrizzle/libdrizzle.hpp>
 #include <netdb.h>
 #include <unistd.h>
+
+using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -100,14 +102,14 @@ int main(int argc, char *argv[])
       break;
 
     default:
-      printf("usage: %s [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] "
-             "[-v]\n", argv[0]);
-      printf("\t-d <db>    - Database to use for query\n");
-      printf("\t-h <host>  - Host to connect to\n");
-      printf("\t-m         - Use the MySQL protocol\n");
-      printf("\t-p <port>  - Port to connect to\n");
-      printf("\t-q <query> - Query to run\n");
-      printf("\t-v         - Increase verbosity level\n");
+      cout << 
+        "usage: " << argv[0] << " [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] [-v]\n"
+        "\t-d <db>    - Database to use for query\n"
+        "\t-h <host>  - Host to connect to\n"
+        "\t-m         - Use the MySQL protocol\n"
+        "\t-p <port>  - Port to connect to\n"
+        "\t-q <query> - Query to run\n"
+        "\t-v         - Increase verbosity level\n";
       return 1;
     }
   }
@@ -117,34 +119,23 @@ int main(int argc, char *argv[])
   drizzle::connection_c* con= new drizzle::connection_c(drizzle);
   if (mysql)
     drizzle_con_add_options(&con->b_, DRIZZLE_CON_MYSQL);
-
   drizzle_con_set_tcp(&con->b_, host, port);
   drizzle_con_set_db(&con->b_, db);
-
-  drizzle_result_st result;
-  drizzle_return_t ret;
-  (void)drizzle_query_str(&con->b_, &result, query, &ret);
-  if (ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c result;
+  if (con->query(result, query))
   {
-    printf("drizzle_query:%s\n", con->error());
+    cerr << "drizzle_query: " << con->error() << endl;
     return 1;
   }
-
-  ret= drizzle_result_buffer(&result);
-  if (ret != DRIZZLE_RETURN_OK)
+  while (drizzle_row_t row= result.row_next())
   {
-    printf("drizzle_result_buffer:%s\n", con->error());
-    return 1;
+    for (int x= 0; x < result.column_count(); x++)
+    {
+      if (x)
+        cout << ", ";
+      cout << (row[x] ? row[x] : "NULL");
+    }
+    cout << endl;
   }
-
-  while (drizzle_row_t row= drizzle_row_next(&result))
-  {
-    for (int x= 0; x < drizzle_result_column_count(&result); x++)
-      printf("%s%s", x == 0 ? "" : ":", row[x] == NULL ? "NULL" : row[x]);
-    printf("\n");
-  }
-
-  drizzle_result_free(&result);
-  delete con;
   return 0;
 }
