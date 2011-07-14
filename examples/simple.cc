@@ -48,12 +48,14 @@ int main(int argc, char *argv[])
 {
   const char* db= "information_schema";
   const char* host= NULL;
+  const char* user= NULL;
+  const char* password= NULL;
   bool mysql= false;
   in_port_t port= 0;
   const char* query= "select table_schema, table_name from tables";
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
 
-  for (int c; (c = getopt(argc, argv, "d:h:mp:q:v")) != -1; )
+  for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
   {
     switch (c)
     {
@@ -71,6 +73,14 @@ int main(int argc, char *argv[])
 
     case 'p':
       port= (in_port_t)atoi(optarg);
+      break;
+
+    case 'u':
+      user= optarg;
+      break;
+
+    case 'P':
+      password = optarg;
       break;
 
     case 'q':
@@ -108,6 +118,8 @@ int main(int argc, char *argv[])
         "\t-h <host>  - Host to connect to\n"
         "\t-m         - Use the MySQL protocol\n"
         "\t-p <port>  - Port to connect to\n"
+        "\t-u <user>  - User\n"
+        "\t-P <pass>  - Password\n"
         "\t-q <query> - Query to run\n"
         "\t-v         - Increase verbosity level\n";
       return 1;
@@ -120,11 +132,12 @@ int main(int argc, char *argv[])
   if (mysql)
     drizzle_con_add_options(&con->b_, DRIZZLE_CON_MYSQL);
   con->set_tcp(host, port);
+  con->set_auth(user, password);
   con->set_db(db);
   drizzle::result_c result;
   if (con->query(result, query))
   {
-    cerr << "drizzle_query: " << con->error() << endl;
+    cerr << "query: " << con->error() << endl;
     return 1;
   }
   while (drizzle_row_t row= result.row_next())
