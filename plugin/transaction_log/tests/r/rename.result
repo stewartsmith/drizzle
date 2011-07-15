@@ -7,7 +7,7 @@ id INT NOT NULL
 RENAME TABLE t1 TO t2;
 DROP TABLE t2;
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 SET AUTOCOMMIT=0;
 USE test;
@@ -19,7 +19,7 @@ COMMIT;
 
 Generating statements for innodb replication log
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 SET AUTOCOMMIT=0;
 USE test;

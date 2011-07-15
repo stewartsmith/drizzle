@@ -210,8 +210,8 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `c` VARCHAR(30) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  UNIQUE KEY `c` (`c`(2)),
-  UNIQUE KEY `t` (`t`(3))
+  UNIQUE KEY `c` (`c`(2)) USING BTREE,
+  UNIQUE KEY `t` (`t`(3)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 insert t1 values ('cccc', 'tttt'),
 (0xD0B1212223D0B1D0B1D0B1D0B1D0B1, 0xD0B1D0B1212223D0B1D0B1D0B1D0B1),
@@ -309,8 +309,8 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `i1` INT NOT NULL,
   `i2` INT NOT NULL,
-  UNIQUE KEY `i1idx` (`i1`),
-  UNIQUE KEY `i2idx` (`i2`)
+  UNIQUE KEY `i1idx` (`i1`) USING BTREE,
+  UNIQUE KEY `i2idx` (`i2`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (
@@ -336,7 +336,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `a` (`a`,`b`)
+  KEY `a` (`a`,`b`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify b varchar(20);
 show create table t1;
@@ -344,7 +344,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `b` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `a` (`a`,`b`)
+  KEY `a` (`a`,`b`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify a varchar(20);
 show create table t1;
@@ -352,7 +352,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
   `b` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `a` (`a`,`b`)
+  KEY `a` (`a`,`b`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null unique);
@@ -400,14 +400,14 @@ t1	CREATE TABLE `t1` (
   `c2` VARCHAR(12) COLLATE utf8_general_ci NOT NULL,
   `c3` VARCHAR(123) COLLATE utf8_general_ci NOT NULL,
   `c4` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`c2`,`c3`),
-  UNIQUE KEY `i4` (`c4`),
-  KEY `c1` (`c1`),
-  KEY `i1` (`c1`),
-  KEY `i2` (`c2`),
-  KEY `i3` (`c3`),
-  KEY `i5` (`c1`,`c2`,`c3`,`c4`),
-  KEY `c2` (`c2`,`c4`)
+  PRIMARY KEY (`c2`,`c3`) USING BTREE,
+  UNIQUE KEY `i4` (`c4`) USING BTREE,
+  KEY `c1` (`c1`) USING BTREE,
+  KEY `i1` (`c1`) USING BTREE,
+  KEY `i2` (`c2`) USING BTREE,
+  KEY `i3` (`c3`) USING BTREE,
+  KEY `i5` (`c1`,`c2`,`c3`,`c4`) USING BTREE,
+  KEY `c2` (`c2`,`c4`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 drop index c1;
 alter table t1 add index (c1);
@@ -433,14 +433,14 @@ t1	CREATE TABLE `t1` (
   `c2` VARCHAR(12) COLLATE utf8_general_ci NOT NULL,
   `c3` VARCHAR(123) COLLATE utf8_general_ci NOT NULL,
   `c4` TIMESTAMP NULL DEFAULT NULL,
-  KEY `i1` (`c1`),
-  KEY `i5` (`c1`,`c2`,`c3`,`c4`),
-  KEY `c1` (`c1`),
-  KEY `c1_2` (`c1`),
-  KEY `i3` (`c3`),
-  KEY `i2` (`c2`),
-  KEY `i4` (`c4`),
-  KEY `c2` (`c2`(4),`c3`(7))
+  KEY `i1` (`c1`) USING BTREE,
+  KEY `i5` (`c1`,`c2`,`c3`,`c4`) USING BTREE,
+  KEY `c1` (`c1`) USING BTREE,
+  KEY `c1_2` (`c1`) USING BTREE,
+  KEY `i3` (`c3`) USING BTREE,
+  KEY `i2` (`c2`) USING BTREE,
+  KEY `i4` (`c4`) USING BTREE,
+  KEY `c2` (`c2`(4),`c3`(7)) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 insert into t1 values(1, 'a', 'a', NULL);
 insert into t1 values(1, 'b', 'b', NULL);
@@ -503,9 +503,9 @@ t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
   `c` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
-  UNIQUE KEY `cc` (`c`),
-  UNIQUE KEY `bb` (`b`(1)),
-  KEY `aa` (`a`)
+  UNIQUE KEY `cc` (`c`) USING BTREE,
+  UNIQUE KEY `bb` (`b`(1)) USING BTREE,
+  KEY `aa` (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int not null, key aa(a), 
@@ -528,9 +528,9 @@ t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
   `c` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
-  UNIQUE KEY `cc` (`c`),
-  UNIQUE KEY `bb` (`b`(1)),
-  KEY `aa` (`a`)
+  UNIQUE KEY `cc` (`c`) USING BTREE,
+  UNIQUE KEY `bb` (`b`(1)) USING BTREE,
+  KEY `aa` (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 End of 5.0 tests

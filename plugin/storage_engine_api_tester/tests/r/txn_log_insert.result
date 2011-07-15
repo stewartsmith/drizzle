@@ -159,7 +159,7 @@ select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `pk` INT NOT NULL AUTO_INCREMENT,   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`pk`) ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `pk` INT NOT NULL AUTO_INCREMENT,   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`pk`) USING BTREE ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`pk`,`id`,`padding`) VALUES (2,1,'I love testing.');

@@ -629,7 +629,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -642,7 +642,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1

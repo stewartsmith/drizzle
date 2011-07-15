@@ -22,9 +22,9 @@ product_order	CREATE TABLE `product_order` (
   `product_category` INT NOT NULL,
   `product_id` INT NOT NULL,
   `customer_id` INT NOT NULL,
-  PRIMARY KEY (`no`),
-  KEY `product_category` (`product_category`,`product_id`),
-  KEY `customer_id` (`customer_id`),
+  PRIMARY KEY (`no`) USING BTREE,
+  KEY `product_category` (`product_category`,`product_id`) USING BTREE,
+  KEY `customer_id` (`customer_id`) USING BTREE,
   CONSTRAINT `product_order_ibfk_1` FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`, `id`) ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT `product_order_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci

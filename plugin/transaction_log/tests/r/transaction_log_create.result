@@ -40,7 +40,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -167,7 +167,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -257,7 +257,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -361,7 +361,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 112
         index_part {
           fieldnr: 0
@@ -475,7 +475,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 20
         index_part {
           fieldnr: 1
@@ -582,7 +582,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 20
         index_part {
           fieldnr: 1
@@ -598,7 +598,7 @@ statement {
         name: "composite_key"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 48
         index_part {
           fieldnr: 0
@@ -714,7 +714,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -727,7 +727,7 @@ statement {
         name: "unique_key"
         is_primary: false
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 88
         index_part {
           fieldnr: 0
@@ -815,7 +815,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -888,7 +888,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -970,7 +970,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -983,7 +983,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -1061,7 +1061,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1074,7 +1074,7 @@ statement {
         name: "b_key"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -1167,7 +1167,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1180,7 +1180,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -1257,7 +1257,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1270,7 +1270,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -1372,7 +1372,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1385,7 +1385,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 1020
         index_part {
           fieldnr: 1
@@ -1487,7 +1487,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1585,7 +1585,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1888,7 +1888,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -2004,7 +2004,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -2017,7 +2017,7 @@ statement {
         name: "key1"
         is_primary: false
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 40
         index_part {
           fieldnr: 1
@@ -2032,7 +2032,7 @@ statement {
         name: "named_key"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 8
         index_part {
           fieldnr: 2
@@ -2045,7 +2045,7 @@ statement {
         name: "partial_key"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 30
         index_part {
           fieldnr: 3

@@ -372,21 +372,21 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` VARCHAR(6500) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `index1` (`f1`(10))
+  KEY `index1` (`f1`(10)) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 modify f1 varchar(255);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `index1` (`f1`(10))
+  KEY `index1` (`f1`(10)) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 modify f1 tinytext;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` TEXT COLLATE utf8_general_ci,
-  KEY `index1` (`f1`(10))
+  KEY `index1` (`f1`(10)) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 DROP TABLE IF EXISTS t1;
