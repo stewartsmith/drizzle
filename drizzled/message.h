@@ -42,7 +42,6 @@ bool is_numeric(const drizzled::message::Table::Field &type);
 const std::string &type(const drizzled::message::Table::Field &type);
 const std::string &type(drizzled::message::Table::Field::FieldType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption type);
-const std::string &type(bool type);
 const std::string &type(drizzled::message::Table::Index::IndexType type);
 const std::string &type(drizzled::message::Table::ForeignKeyConstraint::ForeignKeyMatchOption type);
 const std::string &type(drizzled::message::Table::TableType type);
