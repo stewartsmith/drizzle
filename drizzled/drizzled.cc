@@ -469,7 +469,7 @@ void unireg_exit()
 void unireg_actual_abort(const char *file, int line, const char *func, const std::string& message)
 {
   std::stringstream temp;
-  temp << _("Aborting:") << "\"" << message << "\"" << " at " << file << ":" << line << " in " << func << "()";
+  temp << _("Aborting:") << "\"" << message << "\"" << ". Abort was called from " << file << ":" << line << " in " << func << "()";
   errmsg_printf(error::ERROR, temp.str().c_str());
 
   clean_up(opt_help == false);

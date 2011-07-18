@@ -393,7 +393,9 @@ int main(int argc, char **argv)
   }
 
   if (opt_daemon)
+  {
     daemon_is_ready();
+  }
 
   /*
     Listen for new connections and start new session for each connection
