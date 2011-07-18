@@ -252,10 +252,11 @@ int main(int argc, char **argv)
   /* Function generates error messages before abort */
   error_handler_hook= my_message_sql;
 
-  /* init_common_variables must get basic settings such as data_home_dir
-     and plugin_load_list. */
-  if (init_basic_variables(argc, argv))
-    unireg_abort(1);				// Will do exit
+  /* init_common_variables must get basic settings such as data_home_dir and plugin_load_list. */
+  if (not init_variables_before_daemonizing(argc, argv))
+  {
+    unireg_abort << "init_variables_before_daemonizing() failed";				// Will do exit
+  }
 
   if (opt_daemon)
   {
@@ -265,13 +266,15 @@ int main(int argc, char **argv)
     }
     if (daemonize())
     {
-      fprintf(stderr, "failed to daemon() in order to daemonize\n");
-      exit(EXIT_FAILURE);
+      unireg_abort << "--daemon failed";
     }
   }
 
-  if (init_remaining_variables(modules))
-    unireg_abort(1);				// Will do exit
+  if (not init_variables_after_daemonizing(modules))
+  {
+    unireg_abort << "init_variables_after_daemonizing() failed";				// Will do exit
+  }
+
 
   /*
     init signals & alarm
@@ -287,16 +290,13 @@ int main(int argc, char **argv)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(error::ERROR,
-                    _("Data directory %s does not exist\n"),
-                    getDataHome().file_string().c_str());
-      unireg_abort(1);
+      unireg_abort << "Data directory " << getDataHome().file_string() << " does not exist";
     }
 
     ifstream old_uuid_file ("server.uuid");
     if (old_uuid_file.is_open())
     {
-      getline (old_uuid_file, server_uuid);
+      getline(old_uuid_file, server_uuid);
       old_uuid_file.close();
     } 
     else 
@@ -311,16 +311,30 @@ int main(int argc, char **argv)
       server_uuid= string(uuid_string);
     }
 
-    if (mkdir("local", 0700))
+    if (mkdir("local", 0700) == -1)
     {
-      /* We don't actually care */
+      switch (errno)
+      {
+      case EEXIST:
+        break;
+
+      case EACCES:
+        {
+          char cwd[1024];
+          unireg_abort << "Could not create local catalog, permission denied in directory:" << getcwd(cwd, sizeof(cwd));
+        }
+
+      default:
+        {
+          char cwd[1024];
+          unireg_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
+        }
+      }
     }
-    if (chdir("local"))
+
+    if (chdir("local") == -1)
     {
-      errmsg_printf(error::ERROR,
-                    _("Local catalog %s/local does not exist\n"),
-                    getDataHome().file_string().c_str());
-      unireg_abort(1);
+      unireg_abort << "Local catalog does not exist, was unable to chdir() to " << getDataHome().file_string();
     }
 
     setFullDataHome(boost::filesystem::system_complete(getDataHome()));
@@ -344,7 +358,7 @@ int main(int argc, char **argv)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 #endif
-    unireg_abort(1);
+    unireg_abort << "init_server_components() failed";
   }
 
 
@@ -362,7 +376,9 @@ int main(int argc, char **argv)
   (void) ReplicationServices::evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
-    unireg_abort(1);
+  {
+    unireg_abort << "Failed plugin::Listen::setup()";
+  }
 
   assert(plugin::num_trx_monitored_objects > 0);
   drizzle_rm_tmp_tables();
