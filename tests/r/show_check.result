@@ -154,7 +154,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
-  UNIQUE KEY `aa` (`a`)
+  UNIQUE KEY `aa` (`a`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a int not null, primary key (a));
@@ -162,7 +162,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
@@ -171,7 +171,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` INT NOT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `b` (`b`)
+  KEY `b` (`b`) USING BTREE
 ) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test' COLLATE = utf8_general_ci
 alter table t1 ROW_FORMAT=dynamic;
 show create table t1;
@@ -179,7 +179,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` INT NOT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `b` (`b`)
+  KEY `b` (`b`) USING BTREE
 ) ENGINE=MyISAM ROW_FORMAT='dynamic' COMMENT='test' COLLATE = utf8_general_ci
 ALTER TABLE t1 COMMENT="", ROW_FORMAT=default;
 show create table t1;
@@ -187,7 +187,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` INT NOT NULL,
   `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `b` (`b`)
+  KEY `b` (`b`) USING BTREE
 ) ENGINE=MyISAM ROW_FORMAT='default' COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
@@ -240,7 +240,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `type_enum` ENUM('red','green','blue') DEFAULT NULL,
   `type_set` ENUM('red','green','blue') DEFAULT NULL,
   `type_blob` BLOB,
-  KEY `type_int` (`type_int`)
+  KEY `type_int` (`type_int`) USING BTREE
 ) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test' COLLATE = utf8_general_ci
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
@@ -375,7 +375,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` INT DEFAULT NULL,
-  KEY `i` (`i`)
+  KEY `i` (`i`) USING HASH
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING HASH (i)) ENGINE=MEMORY;
@@ -399,7 +399,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` INT DEFAULT NULL,
-  KEY `i` (`i`)
+  KEY `i` (`i`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
@@ -415,14 +415,14 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` INT DEFAULT NULL,
-  KEY `i` (`i`)
+  KEY `i` (`i`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE t1 ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` INT DEFAULT NULL,
-  KEY `i` (`i`)
+  KEY `i` (`i`) USING BTREE
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
