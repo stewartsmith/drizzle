@@ -283,10 +283,9 @@ int main(int argc, char **argv)
   init_signals();
 
 
-  select_thread=pthread_self();
+  select_thread= pthread_self();
   select_thread_in_use=1;
 
-  if (not opt_help)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {

@@ -30,6 +30,7 @@ namespace drizzled
 
 void unireg_exit() __attribute__((noreturn));
 DRIZZLED_API void unireg_actual_abort(const char *file, int line, const char *func, const std::string& message) __attribute__((noreturn));
+void unireg_startup_finished();
 
 namespace stream {
 

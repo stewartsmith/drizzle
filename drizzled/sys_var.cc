@@ -1375,7 +1375,7 @@ static option* find_option(struct option *opt, const char *name)
   uint32_t length= strlen(name);
   for (; opt->name; opt++)
   {
-    if (!getopt_compare_strings(opt->name, name, length) && !opt->name[length])
+    if (not getopt_compare_strings(opt->name, name, length) and not opt->name[length])
     {
       /*
       Only accept the option if one can set values through it.

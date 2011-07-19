@@ -204,11 +204,6 @@ const char *tx_isolation_names[] = {"READ-UNCOMMITTED", "READ-COMMITTED", "REPEA
 
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names) - 1, "", tx_isolation_names, NULL};
 
-/*
-  Used with --help for detailed option
-*/
-bool opt_help= false;
-
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
  {&Arg_comparator::compare_real,       &Arg_comparator::compare_e_real},
@@ -361,6 +356,7 @@ void close_connections();
 
 fs::path base_plugin_dir(PKGPLUGINDIR);
 
+po::options_description general_options(_("General Options"));
 po::options_description config_options(_("Config File Options"));
 po::options_description long_options(_("Kernel Options"));
 po::options_description plugin_load_options(_("Plugin Loading Options"));
@@ -381,6 +377,16 @@ static std::string g_hostname= "localhost";
 const std::string& getServerHostname()
 {
   return g_hostname;
+}
+
+static void print_version()
+{
+  /*
+    Note: the instance manager keys off the string 'Ver' so it can find the
+    version from the output of 'drizzled --version', so don't change it!
+  */
+  printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
+	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
 /****************************************************************************
@@ -454,15 +460,16 @@ void close_connections()
   }
 }
 
+static bool unireg_startup_completed= false;
+void unireg_startup_finished()
+{
+  unireg_startup_completed= true;
+}
 
 void unireg_exit()
 {
-  if (opt_help)
-  {
-    usage();
-  }
-
   internal::my_end();
+  assert(unireg_startup_completed == false);
   exit(EXIT_SUCCESS);
 }
 
@@ -472,8 +479,10 @@ void unireg_actual_abort(const char *file, int line, const char *func, const std
   temp << _("Aborting:") << "\"" << message << "\"" << ". Abort was called from " << file << ":" << line << " in " << func << "()";
   errmsg_printf(error::ERROR, temp.str().c_str());
 
-  clean_up(opt_help == false);
+  clean_up(vm.count("help") == 0);
   internal::my_end();
+
+  assert(unireg_startup_completed == false);
   exit(EXIT_FAILURE);
 }
 
@@ -524,14 +533,15 @@ passwd *check_user(const char *user)
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
-            errmsg_printf(error::WARN, _("One can only use the --user switch "
-                            "if running as root\n"));
+      {
+        errmsg_printf(error::WARN, _("One can only use the --user switch if running as root"));
+      }
     }
     return NULL;
   }
   if (not user)
   {
-    unireg_abort << _("Fatal error: Please read \"Security\" section of the manual to find out how to run drizzled as root");
+    unireg_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
   }
 
   if (not strcmp(user, "root"))
@@ -1039,11 +1049,18 @@ bool init_variables_before_daemonizing(int argc, char **argv)
 
   system_config_dir /= "drizzle";
 
-  config_options.add_options()
-  ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
-  _("Display this help and exit."))
+  general_options.add_options()
+  ("help,?",
+  _("Display help and exit."))
   ("daemon,d", po::value<bool>(&opt_daemon)->default_value(false)->zero_tokens(),
   _("Run as a daemon."))
+  ("user,u", po::value<string>(),
+  _("Run drizzled daemon as user."))
+  ("version,V",
+  _("Print version information and exit."))
+    ;
+
+  config_options.add_options()
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   _("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
@@ -1123,10 +1140,6 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   _("Default transaction isolation level."))
   ("transaction-message-threshold", po::value<size_t>(&transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
   _("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
-  ("user,u", po::value<string>(),
-  _("Run drizzled daemon as user."))
-  ("version,V",
-  _("Output version information and exit."))
   ("back-log", po::value<back_log_constraints>(&back_log),
   _("The number of outstanding connection requests Drizzle can have. This "
      "comes into play when the main Drizzle thread gets very many connection "
@@ -1234,15 +1247,17 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   full_options.add(long_options);
   full_options.add(plugin_load_options);
 
+  initial_options.add(general_options);
   initial_options.add(config_options);
   initial_options.add(plugin_load_options);
 
   int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
   /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
     options(initial_options).allow_unregistered().run();
-  unknown_options=
-    po::collect_unrecognized(parsed.options, po::include_positional);
+
+  unknown_options= po::collect_unrecognized(parsed.options, po::include_positional);
 
   try
   {
@@ -1253,7 +1268,25 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     unireg_abort << _("Duplicate entry for command line option");
   }
 
-  if (not vm["no-defaults"].as<bool>())
+  /* TODO: here is where we should add a process_env_vars */
+
+  /* We need a notify here so that plugin_init will work properly */
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    unireg_abort << "Use --help to get a list of available options. " << err.what(); 
+  }
+
+  if (vm.count("version"))
+  {
+    print_version();
+    unireg_exit();
+  }
+
+  if (vm.count("no-defaults"))
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
@@ -1272,18 +1305,6 @@ bool init_variables_before_daemonizing(int argc, char **argv)
           defaults_file_list.push_back((config_conf_d_location / file_entry).file_string());
       }
     }
-  }
-
-  /* TODO: here is where we should add a process_env_vars */
-
-  /* We need a notify here so that plugin_init will work properly */
-  try
-  {
-    po::notify(vm);
-  }
-  catch (po::validation_error &err)
-  {
-    unireg_abort << "Use --help to get a list of available options. " << err.what(); 
   }
 
   process_defaults_files();
@@ -1363,12 +1384,9 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
   global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
-  if (! vm["help"].as<bool>())
+  if ((user_info= check_user(drizzled_user)))
   {
-    if ((user_info= check_user(drizzled_user)))
-    {
-      set_user(drizzled_user, user_info);
-    }
+    set_user(drizzled_user, user_info);
   }
 
   fix_paths();
@@ -1383,7 +1401,9 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
   /* Creates static regex matching for temporal values */
   if (not init_temporal_formats())
+  {
     return false;
+  }
 
   if (!(default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
@@ -1392,7 +1412,9 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
 
   if (vm.count("scheduler"))
+  {
     opt_scheduler= vm["scheduler"].as<string>().c_str();
+  }
 
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
@@ -1421,6 +1443,12 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
 void init_server_components(module::Registry &plugins)
 {
+  if (vm.count("help"))
+  {
+    usage();
+    unireg_exit();
+  }
+
   /*
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
@@ -1435,11 +1463,6 @@ void init_server_components(module::Registry &plugins)
 
   /* Allow storage engine to give real error messages */
   ha_init_errors();
-
-  if (opt_help)
-  {
-    unireg_exit();
-  }
 
   if (plugin_finalize(plugins))
   {
@@ -1552,13 +1575,6 @@ enum options_drizzled
 
 struct option my_long_options[] =
 {
-
-  {"help", '?', N_("Display this help and exit."),
-   (char**) &opt_help, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"daemon", 'd', N_("Run as daemon."),
-   (char**) &opt_daemon, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1834,16 +1850,6 @@ struct option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static void print_version()
-{
-  /*
-    Note: the instance manager keys off the string 'Ver' so it can find the
-    version from the output of 'drizzled --version', so don't change it!
-  */
-  printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
-	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
-}
-
 static void usage()
 {
   if ((default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)) == NULL)
@@ -1867,6 +1873,7 @@ static void usage()
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
   po::options_description all_options("Drizzled Options");
+  all_options.add(general_options);
   all_options.add(config_options);
   all_options.add(plugin_load_options);
   all_options.add(long_options);
@@ -1969,19 +1976,15 @@ static void get_options()
 
   if (vm.count("user"))
   {
-    if (! drizzled_user || ! strcmp(drizzled_user, vm["user"].as<string>().c_str()))
+    if (drizzled_user == NULL or strcmp(drizzled_user, vm["user"].as<string>().c_str()) == 0)
+    {
       drizzled_user= (char *)vm["user"].as<string>().c_str();
-
+    }
     else
-      errmsg_printf(error::WARN, _("Ignoring user change to '%s' because the user was "
-                                       "set to '%s' earlier on the command line\n"),
+    {
+      errmsg_printf(error::WARN, _("Ignoring user change to '%s' because the user was set to '%s' earlier on the command line"),
                     vm["user"].as<string>().c_str(), drizzled_user);
-  }
-
-  if (vm.count("version"))
-  {
-    print_version();
-    unireg_exit();
+    }
   }
 
   if (vm.count("sort-heap-threshold"))
@@ -2113,6 +2116,9 @@ static void get_options()
 
 static void fix_paths()
 {
+  if (vm.count("help"))
+    return;
+
   fs::path pid_file_path(pid_file);
   if (pid_file_path.root_path().string() == "")
   {
@@ -2121,46 +2127,49 @@ static void fix_paths()
   }
   pid_file= fs::system_complete(pid_file_path);
 
-  if (not opt_help)
+  const char *tmp_string= getenv("TMPDIR");
+  struct stat buf;
+  drizzle_tmpdir.clear();
+
+  if (vm.count("tmpdir"))
   {
-    const char *tmp_string= getenv("TMPDIR");
-    struct stat buf;
-    drizzle_tmpdir.clear();
+    drizzle_tmpdir.append(vm["tmpdir"].as<string>());
+  }
+  else if (tmp_string == NULL)
+  {
+    drizzle_tmpdir.append(getDataHome().file_string());
+    drizzle_tmpdir.push_back(FN_LIBCHAR);
+    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+  }
+  else
+  {
+    drizzle_tmpdir.append(tmp_string);
+  }
 
-    if (vm.count("tmpdir"))
-    {
-      drizzle_tmpdir.append(vm["tmpdir"].as<string>());
-    }
-    else if (tmp_string == NULL)
-    {
-      drizzle_tmpdir.append(getDataHome().file_string());
-      drizzle_tmpdir.push_back(FN_LIBCHAR);
-      drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
-    }
-    else
-    {
-      drizzle_tmpdir.append(tmp_string);
-    }
+  drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
+  assert(drizzle_tmpdir.size());
 
-    drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
-    assert(drizzle_tmpdir.size());
+  assert(getuid() != 0 and geteuid() != 0);
+  if (getuid() == 0 or geteuid() == 0)
+  {
+    unireg_abort << "Drizzle cannot be run as root, please see the Security piece of the manual for more information.";
+  }
 
-    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+  if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+  {
+    if (errno != EEXIST)
     {
-      if (errno != EEXIST)
-      {
-        unireg_abort << "There was an error creating the '" 
-          << fs::path(drizzle_tmpdir).leaf() 
-          << "' part of the path '" 
-          << drizzle_tmpdir 
-          << "'.  Please check the path exists and is writable.";
-      }
+      unireg_abort << "There was an error creating the '" 
+        << fs::path(drizzle_tmpdir).leaf() 
+        << "' part of the path '" 
+        << drizzle_tmpdir 
+        << "'.  Please check the path exists and is writable.";
     }
+  }
 
-    if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
-    {
-      unireg_abort << "There was an error opening the path '" << drizzle_tmpdir << "', please check the path exists and is writable.";
-    }
+  if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
+  {
+    unireg_abort << "There was an error opening the path '" << drizzle_tmpdir << "', please check the path exists and is writable.";
   }
 }
 
