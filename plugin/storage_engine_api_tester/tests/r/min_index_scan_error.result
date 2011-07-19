@@ -5,8 +5,8 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL AUTO_INCREMENT,
   `b` INT DEFAULT NULL,
-  PRIMARY KEY (`a`),
-  KEY `b` (`b`)
+  PRIMARY KEY (`a`) USING BTREE,
+  KEY `b` (`b`) USING BTREE
 ) ENGINE=STORAGE_ENGINE_API_TESTER COLLATE = utf8_general_ci
 insert into t1 (b) values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 insert into t1 (b) values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);

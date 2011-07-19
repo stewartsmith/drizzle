@@ -19,10 +19,10 @@ DELETE FROM t2 WHERE id=2;
 COMMIT;
 DROP TABLE t1, t2;
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t2` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t2` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`) VALUES (1);
@@ -45,10 +45,10 @@ COMMIT;
 
 Generating statements for innodb replication log
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t2` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t2` (   `id` INT NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`) VALUES (1);

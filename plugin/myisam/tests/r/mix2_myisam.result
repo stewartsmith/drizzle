@@ -632,7 +632,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
-  KEY `a` (`a`(5))
+  KEY `a` (`a`(5)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (a int not null auto_increment, primary key(a)) engine=MyISAM;
@@ -1095,9 +1095,9 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  KEY `v` (`v`),
-  KEY `c` (`c`),
-  KEY `t` (`t`(10))
+  KEY `v` (`v`) USING BTREE,
+  KEY `c` (`c`) USING BTREE,
+  KEY `t` (`t`(10)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
@@ -1314,9 +1314,9 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
   `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  KEY `c` (`c`),
-  KEY `t` (`t`(10)),
-  KEY `v` (`v`)
+  KEY `c` (`c`) USING BTREE,
+  KEY `t` (`t`(10)) USING BTREE,
+  KEY `v` (`v`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1 where v='a';
 count(*)
@@ -1394,9 +1394,9 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
   `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  KEY `c` (`c`),
-  KEY `t` (`t`(10)),
-  KEY `v` (`v`(30))
+  KEY `c` (`c`) USING BTREE,
+  KEY `t` (`t`(10)) USING BTREE,
+  KEY `v` (`v`(30)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1 where v='a';
 count(*)
@@ -1476,9 +1476,9 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` VARCHAR(600) COLLATE utf8_general_ci DEFAULT NULL,
   `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  KEY `c` (`c`),
-  KEY `t` (`t`(10)),
-  KEY `v` (`v`(333))
+  KEY `c` (`c`) USING BTREE,
+  KEY `t` (`t`(10)) USING BTREE,
+  KEY `v` (`v`(333)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 select v,count(*) from t1 group by v limit 10;
 v	count(*)
@@ -1554,9 +1554,9 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   `t` TEXT COLLATE utf8_general_ci,
-  KEY `v` (`v`(5)),
-  KEY `c` (`c`(5)),
-  KEY `t` (`t`(5))
+  KEY `v` (`v`(5)) USING BTREE,
+  KEY `c` (`c`(5)) USING BTREE,
+  KEY `t` (`t`(5)) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create TEMPORARY table t1 (v char(10));

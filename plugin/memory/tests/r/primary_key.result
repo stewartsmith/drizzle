@@ -3,7 +3,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` UUID NOT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING HASH
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 INSERT INTO t1 VALUES (uuid());
 INSERT INTO t1 VALUES (uuid());

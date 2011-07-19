@@ -434,7 +434,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp default 20050102030405);
@@ -444,7 +444,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` TIMESTAMP NULL DEFAULT '2005-01-02 03:04:05',
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (date date not null);

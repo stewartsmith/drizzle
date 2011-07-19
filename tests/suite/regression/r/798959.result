@@ -1,0 +1,18 @@
+SELECT IF(true, result_type(1), 'yes');
+IF(true, result_type(1), 'yes')
+INTEGER
+SELECT IF(true, typeof(1), 'yes');
+IF(true, typeof(1), 'yes')
+DRIZZLE_TYPE_LONGLONG
+SELECT IF(true, result_type(true), 'yes');
+IF(true, result_type(true), 'yes')
+INTEGER
+SELECT IF(true, typeof(true), 'yes');
+IF(true, typeof(true), 'yes')
+DRIZZLE_TYPE_LONGLONG
+SELECT IF(true, true, 'yes');
+IF(true, true, 'yes')
+TRUE
+SELECT IF(true, true, '');
+IF(true, true, '')
+TRUE

@@ -8,7 +8,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE t2 ADD COLUMN c int, rename t3;
 show tables;
@@ -20,7 +20,7 @@ t3	CREATE TABLE `t3` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
   `c` INT DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE t3 DISABLE KEYS, RENAME t4;
 Warnings:
@@ -34,7 +34,7 @@ t4	CREATE TABLE `t4` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
   `c` INT DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE t4 ENABLE KEYS, RENAME t5, DISABLE KEYS, RENAME t6, ENABLE KEYS;
 Warnings:
@@ -48,6 +48,6 @@ t6	CREATE TABLE `t6` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
   `c` INT DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t6;

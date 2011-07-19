@@ -166,6 +166,11 @@ public:
     return table_definition_ext;
   }
 
+  virtual message::Table::Index::IndexType default_index_type() const
+  {
+    return message::Table::Index::BTREE;
+  }
+
 private:
   std::vector<std::string> aliases;
 

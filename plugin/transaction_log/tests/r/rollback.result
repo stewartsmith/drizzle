@@ -28,7 +28,7 @@ ROLLBACK TO SAVEPOINT savept3;
 COMMIT;
 DROP TABLE t1;
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
@@ -42,7 +42,7 @@ COMMIT;
 
 Generating statements for innodb replication log
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`id`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');

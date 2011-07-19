@@ -677,17 +677,20 @@ public:
 
 class Item_func_if :public Item_func
 {
-  enum Item_result cached_result_type;
+  Item_result cached_result_type;
   enum_field_types cached_field_type;
+
 public:
-  Item_func_if(Item *a,Item *b,Item *c)
-    :Item_func(a,b,c), cached_result_type(INT_RESULT)
+  Item_func_if(Item *a, Item *b, Item *c) :
+    Item_func(a,b,c),
+    cached_result_type(INT_RESULT)
   {}
+
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
   type::Decimal *val_decimal(type::Decimal *);
-  enum Item_result result_type () const { return cached_result_type; }
+  Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
   bool fix_fields(Session *, Item **);
   void fix_length_and_dec();

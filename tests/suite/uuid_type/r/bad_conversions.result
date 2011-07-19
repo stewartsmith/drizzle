@@ -3,7 +3,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` UUID NOT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 INSERT INTO t1 VALUES ("1b4e28ba-2fa1-11d2-883f-b9a761bde3fb");
 SELECT a FROM t1;
