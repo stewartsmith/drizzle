@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-07-06 13:11+0000\n"
+"POT-Creation-Date: 2011-07-19 21:27+0000\n"
 "PO-Revision-Date: 2010-09-11 06:12+0000\n"
 "Last-Translator: Tor Syversen <sol-moe@online.no>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
+"Language: nb\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: nb\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-09-12 04:53+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -191,24 +191,24 @@ msgstr "Vis advarsler etter hvert uttrykk."
 msgid "Don't show warnings after every statement."
 msgstr "Ikke vis advarsler etter hvert uttrykk."
 
-#: ../client/drizzle.cc:1198 ../client/drizzle.cc:4082
+#: ../client/drizzle.cc:1198 ../client/drizzle.cc:4069
 #, c-format
 msgid "shutting down drizzled"
 msgstr ""
 
-#: ../client/drizzle.cc:1200 ../client/drizzle.cc:4084
+#: ../client/drizzle.cc:1200 ../client/drizzle.cc:4071
 #, c-format
 msgid " on port %d"
 msgstr ""
 
 #: ../client/drizzle.cc:1209 ../client/drizzle.cc:1215
-#: ../client/drizzle.cc:4093 ../client/drizzle.cc:4099
+#: ../client/drizzle.cc:4080 ../client/drizzle.cc:4086
 #, c-format
 msgid "shutdown failed; error: '%s'"
 msgstr ""
 
 #: ../client/drizzle.cc:1224 ../client/drizzle.cc:1260
-#: ../client/drizzle.cc:4108
+#: ../client/drizzle.cc:4095
 #, c-format
 msgid "done\n"
 msgstr ""
@@ -552,27 +552,27 @@ msgstr ""
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
-#: ../client/drizzle.cc:1623 ../client/drizzle.cc:3978
+#: ../client/drizzle.cc:1624 ../client/drizzle.cc:3966
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "Skilletegn kan ikke inneholde en backlash (\\)."
 
-#: ../client/drizzle.cc:1714 ../client/drizzledump.cc:660
-#: ../client/drizzleimport.cc:475 ../client/drizzleslap.cc:623
-#: ../client/drizzletest.cc:5110
+#: ../client/drizzle.cc:1712 ../client/drizzledump.cc:658
+#: ../client/drizzleimport.cc:473 ../client/drizzleslap.cc:622
+#: ../client/drizzletest.cc:5108
 msgid "Error: Unknown protocol"
 msgstr ""
 
-#: ../client/drizzle.cc:1728
+#: ../client/drizzle.cc:1726
 #, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
 msgstr ""
 
-#: ../client/drizzle.cc:1774 ../client/drizzle.cc:4245
+#: ../client/drizzle.cc:1772 ../client/drizzle.cc:4232
 #, fuzzy, c-format
 msgid "Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"
 msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
 
-#: ../client/drizzle.cc:1780
+#: ../client/drizzle.cc:1778
 #, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -580,17 +580,17 @@ msgid ""
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
 
-#: ../client/drizzle.cc:1785
+#: ../client/drizzle.cc:1783
 #, fuzzy, c-format
 msgid "Usage: drizzle [OPTIONS] [schema]\n"
 msgstr "Bruk: %s [egenskaper] [databasenavn]\n"
 
-#: ../client/drizzle.cc:1839
+#: ../client/drizzle.cc:1837
 #, fuzzy, c-format
 msgid "Welcome to the Drizzle client..  Commands end with %s or \\g."
 msgstr "Velkommen til Drizzle-klienten. Kommandoer slutter med ; eller \\g."
 
-#: ../client/drizzle.cc:1848
+#: ../client/drizzle.cc:1846
 #, fuzzy, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
@@ -600,71 +600,71 @@ msgstr ""
 "Din Drizzle-tilkoblingsid er %u\n"
 "Serverversjon: %s\n"
 
-#: ../client/drizzle.cc:1882
+#: ../client/drizzle.cc:1880
 #, c-format
 msgid "Reading history-file %s\n"
 msgstr "Leser historiefilen %s\n"
 
-#: ../client/drizzle.cc:1889
+#: ../client/drizzle.cc:1887
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "Skriv 'help;' eller '\\h' for hjelp. Skriv '\\c' for å tømme "
 "skjermbufferet.\n"
 
-#: ../client/drizzle.cc:1899
+#: ../client/drizzle.cc:1897
 msgid "Error:"
 msgstr ""
 
-#: ../client/drizzle.cc:1912
+#: ../client/drizzle.cc:1910
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "Skriver historiefilen %s\n"
 
-#: ../client/drizzle.cc:1920
+#: ../client/drizzle.cc:1918
 msgid "Aborted"
 msgstr "Avbrutt"
 
-#: ../client/drizzle.cc:1920
+#: ../client/drizzle.cc:1918
 msgid "Bye"
 msgstr "Adjø"
 
-#: ../client/drizzle.cc:1971
+#: ../client/drizzle.cc:1969
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Spørringen ble avbrutt med Ctrl+C\n"
 
-#: ../client/drizzle.cc:2054
+#: ../client/drizzle.cc:2047
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
 msgstr ""
 
-#: ../client/drizzle.cc:2271
+#: ../client/drizzle.cc:2264
 msgid "Unknown command: "
 msgstr ""
 
-#: ../client/drizzle.cc:2426
+#: ../client/drizzle.cc:2419
 msgid "Not found a delimiter within max_input_line of input"
 msgstr ""
 
-#: ../client/drizzle.cc:2672
+#: ../client/drizzle.cc:2661
 msgid ""
 "Reading table information for completion of table and column names\n"
 "You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:2711
+#: ../client/drizzle.cc:2700
 msgid "No connection. Trying to reconnect..."
 msgstr "Ingen tilkobling. Prøver å koble til på nytt..."
 
-#: ../client/drizzle.cc:2717
+#: ../client/drizzle.cc:2706
 msgid "Can't connect to the server\n"
 msgstr "Klarte ikke å koble til serveren\n"
 
-#: ../client/drizzle.cc:2801
+#: ../client/drizzle.cc:2790
 msgid "List of all Drizzle commands:"
 msgstr "Oversikt over alle Drizzle-kommandoer:"
 
-#: ../client/drizzle.cc:2805
+#: ../client/drizzle.cc:2794
 #, fuzzy, c-format
 msgid ""
 "Note that all text commands must be first on line and end with '%s' or \\g"
@@ -672,51 +672,51 @@ msgstr ""
 "Husk at alle tekstkommandoer må være i starten av en linje og må slutte med "
 "';'"
 
-#: ../client/drizzle.cc:2863
+#: ../client/drizzle.cc:2852
 msgid "No query specified\n"
 msgstr "Ingen spørring oppgitt\n"
 
-#: ../client/drizzle.cc:2878
+#: ../client/drizzle.cc:2867
 msgid "Ignoring query to other database"
 msgstr "Overser spørring til annen database"
 
-#: ../client/drizzle.cc:2927
+#: ../client/drizzle.cc:2916
 msgid "Empty set"
 msgstr "Tomt sett"
 
-#: ../client/drizzle.cc:2940
+#: ../client/drizzle.cc:2929
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld rad i settet"
 msgstr[1] "%ld rader i settet"
 
-#: ../client/drizzle.cc:2949
+#: ../client/drizzle.cc:2938
 msgid "Query OK"
 msgstr "Spørring OK"
 
-#: ../client/drizzle.cc:2951
+#: ../client/drizzle.cc:2940
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Spørring OK, %ld rad påvirket"
 msgstr[1] "Spørring OK, %ld rader påvirket"
 
-#: ../client/drizzle.cc:3023
+#: ../client/drizzle.cc:3012
 msgid "popen() failed! defaulting PAGER to stdout!\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3045
+#: ../client/drizzle.cc:3034
 #, c-format
 msgid "Error logging to file '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3050
+#: ../client/drizzle.cc:3039
 #, fuzzy, c-format
 msgid "Logging to file '%s'\n"
 msgstr "Leser historiefilen %s\n"
 
-#: ../client/drizzle.cc:3134
+#: ../client/drizzle.cc:3123
 #, c-format
 msgid ""
 "Field %3u:  `%s`\n"
@@ -733,171 +733,171 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3714
+#: ../client/drizzle.cc:3703
 #, c-format
 msgid "No previous outfile available, you must give a filename!\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3719
+#: ../client/drizzle.cc:3708
 #, c-format
 msgid "Currently logging to file '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3739
+#: ../client/drizzle.cc:3728
 #, fuzzy, c-format
 msgid "No outfile specified!\n"
 msgstr "Ingen spørring oppgitt\n"
 
-#: ../client/drizzle.cc:3752
+#: ../client/drizzle.cc:3741
 msgid "Outfile disabled.\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3779
+#: ../client/drizzle.cc:3768
 #, fuzzy
 msgid "Default pager wasn't set, using stdout.\n"
 msgstr "Skru av sidevisning, skriv til stdout."
 
-#: ../client/drizzle.cc:3799
+#: ../client/drizzle.cc:3788
 #, c-format
 msgid "PAGER set to '%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3810
+#: ../client/drizzle.cc:3799
 msgid "PAGER set to stdout\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3893
+#: ../client/drizzle.cc:3881
 #, c-format
 msgid "Connection id:    %u"
 msgstr ""
 
-#: ../client/drizzle.cc:3895
+#: ../client/drizzle.cc:3883
 #, c-format
 msgid "Current schema: %.128s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:3896
+#: ../client/drizzle.cc:3884
 msgid "*** NONE ***"
 msgstr ""
 
 #. Skip command name
-#: ../client/drizzle.cc:3916
+#: ../client/drizzle.cc:3904
 msgid "Usage: \\. <filename> | source <filename>"
 msgstr ""
 
-#: ../client/drizzle.cc:3931
+#: ../client/drizzle.cc:3919
 #, fuzzy, c-format
 msgid "Failed to open file '%s', error: %d"
 msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
 
-#: ../client/drizzle.cc:3970
+#: ../client/drizzle.cc:3958
 msgid "DELIMITER must be followed by a 'delimiter' character or string"
 msgstr ""
 
-#: ../client/drizzle.cc:4003
+#: ../client/drizzle.cc:3991
 msgid "USE must be followed by a schema name"
 msgstr ""
 
-#: ../client/drizzle.cc:4071
+#: ../client/drizzle.cc:4058
 #, fuzzy
 msgid "Schema changed"
 msgstr "Databasen som skal brukes."
 
-#: ../client/drizzle.cc:4117
+#: ../client/drizzle.cc:4104
 #, fuzzy
 msgid "Show warnings enabled."
 msgstr "Vis advarsler etter hvert uttrykk."
 
-#: ../client/drizzle.cc:4125
+#: ../client/drizzle.cc:4112
 #, fuzzy
 msgid "Show warnings disabled."
 msgstr "Vis advarsler etter hvert uttrykk."
 
-#: ../client/drizzle.cc:4252
+#: ../client/drizzle.cc:4239
 #, c-format
 msgid ""
 "\n"
 "Connection id:\t\t%lu\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4264
+#: ../client/drizzle.cc:4251
 #, c-format
 msgid "Current schema:\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4265
+#: ../client/drizzle.cc:4252
 #, c-format
 msgid "Current user:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4271
+#: ../client/drizzle.cc:4258
 msgid "SSL:\t\t\tNot in use"
 msgstr ""
 
-#: ../client/drizzle.cc:4276
+#: ../client/drizzle.cc:4263
 msgid ""
 "\n"
 "No connection\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4283
+#: ../client/drizzle.cc:4270
 msgid ""
 "\n"
 "All updates ignored to this schema\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4286
+#: ../client/drizzle.cc:4273
 #, c-format
 msgid "Current pager:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4287
+#: ../client/drizzle.cc:4274
 #, c-format
 msgid "Using outfile:\t\t'%s'\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4288
+#: ../client/drizzle.cc:4275
 #, c-format
 msgid "Using delimiter:\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4289
+#: ../client/drizzle.cc:4276
 #, c-format
 msgid "Server version:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4290
+#: ../client/drizzle.cc:4277
 #, c-format
 msgid "Protocol:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4291
+#: ../client/drizzle.cc:4278
 #, c-format
 msgid "Protocol version:\t%d\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4292
+#: ../client/drizzle.cc:4279
 #, c-format
 msgid "Connection:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4299
+#: ../client/drizzle.cc:4286
 #, c-format
 msgid "UNIX socket:\t\t%s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4301
+#: ../client/drizzle.cc:4288
 #, c-format
 msgid "TCP port:\t\t%d\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4306
+#: ../client/drizzle.cc:4293
 msgid ""
 "\n"
 "Note that you are running in safe_update_mode:\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4308
+#: ../client/drizzle.cc:4295
 #, c-format
 msgid ""
 "UPDATEs and DELETEs that don't use a key in the WHERE clause are not "
@@ -905,61 +905,61 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: %"
-"lu\n"
+"             Max number of examined row combination in a join is set to: "
+"%lu\n"
 "\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4370
+#: ../client/drizzle.cc:4357
 #, c-format
 msgid "ERROR"
 msgstr "FEIL"
 
-#: ../client/drizzle.cc:4413
+#: ../client/drizzle.cc:4400
 #, c-format
 msgid "ERROR %d (%s): "
 msgstr ""
 
-#: ../client/drizzle.cc:4415
+#: ../client/drizzle.cc:4402
 #, fuzzy, c-format
 msgid "ERROR %d: "
 msgstr "FEIL"
 
-#: ../client/drizzle.cc:4418
+#: ../client/drizzle.cc:4405
 #, fuzzy
 msgid "ERROR: "
 msgstr "FEIL"
 
-#: ../client/drizzle.cc:4523
+#: ../client/drizzle.cc:4510
 msgid " hours "
 msgstr ""
 
-#: ../client/drizzle.cc:4525
+#: ../client/drizzle.cc:4512
 msgid " hour "
 msgstr ""
 
-#: ../client/drizzle.cc:4529
+#: ../client/drizzle.cc:4516
 msgid " min "
 msgstr ""
 
-#: ../client/drizzle.cc:4539
+#: ../client/drizzle.cc:4526
 msgid " sec"
 msgstr ""
 
-#: ../client/drizzle.cc:4641
+#: ../client/drizzle.cc:4628
 msgid "(unknown)"
 msgstr ""
 
-#: ../client/drizzle.cc:4761
+#: ../client/drizzle.cc:4748
 #, c-format
 msgid "Returning to default PROMPT of %s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4766
+#: ../client/drizzle.cc:4753
 msgid "Memory allocation error. Not changing prompt\n"
 msgstr ""
 
-#: ../client/drizzle.cc:4771
+#: ../client/drizzle.cc:4758
 #, c-format
 msgid "PROMPT set to '%s'\n"
 msgstr ""
@@ -1241,13 +1241,13 @@ msgstr ""
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:673 ../client/drizzleimport.cc:488
-#: ../client/drizzleslap.cc:633 ../client/drizzletest.cc:5122
+#: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:486
+#: ../client/drizzleslap.cc:632 ../client/drizzletest.cc:5120
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:728
+#: ../client/drizzledump.cc:726
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr ""
@@ -1308,7 +1308,7 @@ msgstr ""
 msgid "-- Retrieving foreign keys for "
 msgstr ""
 
-#: ../client/drizzleslap.cc:2291
+#: ../client/drizzleslap.cc:2290
 #, c-format
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
@@ -3236,8 +3236,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -3627,13 +3627,13 @@ msgid ""
 "restrictions."
 msgstr ""
 
-#: ../drizzled/identifier/schema.cc:55 ../drizzled/identifier/table.cc:213
+#: ../drizzled/identifier/schema.cc:55 ../drizzled/identifier/table.cc:212
 msgid ""
 "Schema name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
 
-#: ../drizzled/identifier/table.cc:225
+#: ../drizzled/identifier/table.cc:224
 msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
 "restrictions."
@@ -3912,7 +3912,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1892 ../drizzled/session.cc:1901
+#: ../drizzled/session.cc:1887 ../drizzled/session.cc:1896
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
@@ -3964,7 +3964,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../drizzled/sql_table.cc:1885
+#: ../drizzled/sql_table.cc:1881
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
@@ -3995,12 +3995,12 @@ msgstr ""
 msgid "Got error %d when reading table '%s'"
 msgstr ""
 
-#: ../drizzled/table/instance/base.cc:1839
+#: ../drizzled/table/instance/base.cc:1838
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
 
-#: ../drizzled/table/instance/base.cc:1846
+#: ../drizzled/table/instance/base.cc:1845
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
@@ -4150,19 +4150,19 @@ msgstr ""
 msgid "Error Messages to stderr"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:556
+#: ../plugin/filtered_replicator/filtered_replicator.cc:547
 msgid "Comma-separated list of schemas to exclude"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:559
+#: ../plugin/filtered_replicator/filtered_replicator.cc:550
 msgid "Comma-separated list of tables to exclude"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:562
+#: ../plugin/filtered_replicator/filtered_replicator.cc:553
 msgid "Regular expression to apply to schemas to exclude"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:565
+#: ../plugin/filtered_replicator/filtered_replicator.cc:556
 msgid "Regular expression to apply to tables to exclude"
 msgstr ""
 
@@ -4699,9 +4699,9 @@ msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
 
-#: ../plugin/json_server/json_server.cc:266
+#: ../plugin/json_server/json_server.cc:363
 #, fuzzy
-msgid "Port number to use for connection or 0 for default (port 80) "
+msgid "Port number to use for connection or 0 for default (port 8086) "
 msgstr "Socket-fil som skal brukes for tilkobling"
 
 #: ../plugin/logging_gearman/logging_gearman.cc:186
@@ -5514,33 +5514,29 @@ msgstr ""
 msgid " got "
 msgstr ""
 
-#: ../plugin/slave/module.cc:58
+#: ../plugin/slave/module.cc:56
 #, fuzzy
 msgid "Path to the slave configuration file"
 msgstr "Sti til filen du vil bruke som transaksjonslogg"
 
-#: ../plugin/slave/module.cc:61
-msgid "Value to use as the maximum commit ID stored on the slave"
-msgstr ""
-
-#: ../plugin/slave/queue_producer.cc:113
+#: ../plugin/slave/queue_producer.cc:114
 #, fuzzy
 msgid "Lost connection to master. Reconnecting."
 msgstr "Ingen tilkobling. Prøver å koble til på nytt..."
 
-#: ../plugin/slave/queue_producer.cc:140 ../plugin/slave/queue_producer.cc:149
-#: ../plugin/slave/queue_producer.cc:163 ../plugin/slave/queue_producer.cc:251
-#: ../plugin/slave/queue_producer.cc:263 ../plugin/slave/queue_producer.cc:280
-#: ../plugin/slave/queue_producer.cc:421 ../plugin/slave/queue_producer.cc:435
+#: ../plugin/slave/queue_producer.cc:141 ../plugin/slave/queue_producer.cc:150
+#: ../plugin/slave/queue_producer.cc:164 ../plugin/slave/queue_producer.cc:256
+#: ../plugin/slave/queue_producer.cc:268 ../plugin/slave/queue_producer.cc:285
+#: ../plugin/slave/queue_producer.cc:428 ../plugin/slave/queue_producer.cc:442
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: ../plugin/slave/queue_producer.cc:447
+#: ../plugin/slave/queue_producer.cc:454
 msgid "Replication slave: Unable to insert into queue."
 msgstr ""
 
-#: ../plugin/slave/replication_slave.cc:44
+#: ../plugin/slave/replication_slave.cc:43
 #, c-format
 msgid "Could not start slave services: %s\n"
 msgstr ""
@@ -5787,8 +5783,8 @@ msgstr ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
 #~ "to have type %s  but the column is not found."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, men kolonna ble ikke funnet."
+#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon "
+#~ "%d hadde typen %s, men kolonna ble ikke funnet."
 
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
@@ -5801,16 +5797,16 @@ msgstr ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but the type has no character set."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe "
+#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen "
+#~ "'%s' i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe "
 #~ "tegnsett."
 
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
 #~ "to have type %s, found type %s."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, fant typen %s."
+#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon "
+#~ "%d hadde typen %s, fant typen %s."
 
 #~ msgid ""
 #~ "'%s' had no or invalid character set, and default character set is multi-"
@@ -5823,8 +5819,8 @@ msgstr ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but found character set '%s'."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
+#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen "
+#~ "'%s' i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
 
 #~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 #~ msgstr ""
