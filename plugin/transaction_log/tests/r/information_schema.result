@@ -84,7 +84,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0

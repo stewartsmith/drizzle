@@ -359,3 +359,4 @@ drizzled/execute/parser.h
 drizzled/execute/parser.output
 drizzled/execute/scanner.cc
 drizzled/execute/scanner.h
+plugin/innobase/xtrabackup/drizzlebackup.innobase

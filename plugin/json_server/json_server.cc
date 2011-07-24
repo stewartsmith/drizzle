@@ -20,10 +20,15 @@
 
 
 #include <config.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+
 #include <drizzled/module/module.h>
 #include <drizzled/module/context.h>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/plugin.h>
+#include <drizzled/plugin/daemon.h>
 #include <drizzled/sys_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
@@ -38,13 +43,16 @@
 #include <drizzled/constrained_value.h>
 #include <evhttp.h>
 #include <event.h>
-#include <pthread.h>
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
 
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/catalog/local.h>
+
+#include <drizzled/pthread_globals.h>
+#include <boost/bind.hpp>
+
 
 #include <drizzled/version.h>
 #include <plugin/json_server/json/json.h>
@@ -59,8 +67,6 @@ namespace json_server
 {
 
 static port_constraint port;
-struct event_base *base= NULL;
-struct evhttp *httpd;
 
 static in_port_t getPort(void)
 {
@@ -222,48 +228,139 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-extern "C" void *libevent_thread(void*);
+static void shutdown_event(int fd, short, void *arg)
+{
+  struct event_base *base= (struct event_base *)arg;
+  event_base_loopbreak(base);
+  close(fd);
+}
 
-extern "C" void *libevent_thread(void*)
+
+static void run(struct event_base *base)
 {
   internal::my_thread_init();
 
   event_base_dispatch(base);
-  evhttp_free(httpd);
-  return NULL;
 }
+
+
+class JsonServer : public drizzled::plugin::Daemon
+{
+private:
+  JsonServer(const JsonServer &);
+  JsonServer& operator=(const JsonServer &);
+
+  drizzled::thread_ptr json_thread;
+  in_port_t _port;
+  struct evhttp *httpd;
+  struct event_base *base;
+  int wakeup_fd[2];
+  struct event wakeup_event;
+
+public:
+  JsonServer(in_port_t port_arg) :
+    drizzled::plugin::Daemon("JSON Server"),
+    _port(port_arg),
+    httpd(NULL),
+    base(NULL)
+  { }
+
+  bool init()
+  {
+    if (pipe(wakeup_fd) < 0)
+    {
+      sql_perror("pipe");
+      return false;
+    }
+
+    int returned_flags;
+    if ((returned_flags= fcntl(wakeup_fd[0], F_GETFL, 0)) < 0)
+    {
+      sql_perror("fcntl:F_GETFL");
+      return false;
+    }
+
+    if (fcntl(wakeup_fd[0], F_SETFL, returned_flags | O_NONBLOCK) < 0)
+
+    {
+      sql_perror("F_SETFL");
+      return false;
+    }
+
+    if ((base= event_init()) == NULL)
+    {
+      sql_perror("event_init()");
+      return false;
+    }
+
+    if ((httpd= evhttp_new(base)) == NULL)
+    {
+      sql_perror("evhttp_new()");
+      return false;
+    }
+
+
+    if ((evhttp_bind_socket(httpd, "0.0.0.0", getPort())) == -1)
+    {
+      sql_perror("evhttp_bind_socket()");
+      return false;
+    }
+
+    evhttp_set_cb(httpd, "/", process_root_request, NULL);
+    evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
+    evhttp_set_cb(httpd, "/0.1/sql", process_api01_sql_req, NULL);
+    evhttp_set_gencb(httpd, process_request, NULL);
+
+    event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
+    event_base_set(base, &wakeup_event);
+    if (event_add(&wakeup_event, NULL) < 0)
+    {
+      sql_perror("event_add");
+      return false;
+    }
+
+    json_thread.reset(new boost::thread((boost::bind(&run, base))));
+
+    if (not json_thread)
+      return false;
+
+    return true;
+  }
+
+  ~JsonServer()
+  {
+    // If we can't write(), we will just muddle our way through the shutdown
+    char buffer[1];
+    buffer[0]= 4;
+    if ((write(wakeup_fd[1], &buffer, 1)) == 1)
+    {
+      json_thread->join();
+      evhttp_free(httpd);
+      event_base_free(base);
+    }
+  }
+};
 
 static int json_server_init(drizzled::module::Context &context)
 {
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
 
-  base= event_init();
-  httpd= evhttp_new(base);
-  if (httpd == NULL)
-    return -1;
+  JsonServer *server;
+  context.add(server= new JsonServer(port));
 
-  int r= evhttp_bind_socket(httpd, "0.0.0.0", getPort());
-
-  if (r != 0)
+  if (server and not server->init())
+  {
     return -2;
+  }
 
-  evhttp_set_cb(httpd, "/", process_root_request, NULL);
-  evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
-  evhttp_set_cb(httpd, "/0.1/sql", process_api01_sql_req, NULL);
-  evhttp_set_gencb(httpd, process_request, NULL);
-
-  pthread_t libevent_loop_thread;
-
-  pthread_create(&libevent_loop_thread, NULL, libevent_thread, NULL);
-
-  return 0;
+  return bool(server) ? 0 : 1;
 }
 
 static void init_options(drizzled::module::option_context &context)
 {
   context("port",
-          po::value<port_constraint>(&port)->default_value(80),
-          _("Port number to use for connection or 0 for default (port 80) "));
+          po::value<port_constraint>(&port)->default_value(8086),
+          _("Port number to use for connection or 0 for default (port 8086) "));
 }
 
 } /* namespace json_server */

@@ -14,7 +14,7 @@ DROP TABLE junktesttable;
 We should only see events for t1 table in the log
 
 SET AUTOCOMMIT=0;
-CREATE TABLE `test`.`t1` (   `a` INT NOT NULL,   PRIMARY KEY (`a`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `a` INT NOT NULL,   PRIMARY KEY (`a`) USING BTREE ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`a`) VALUES (1);

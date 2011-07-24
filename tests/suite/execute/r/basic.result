@@ -30,7 +30,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  UNIQUE KEY `a` (`a`)
+  UNIQUE KEY `a` (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 EXECUTE "INSERT INTO t1 VALUES ()";
 EXECUTE "DROP TABLE t1";
@@ -160,7 +160,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT DEFAULT NULL,
-  KEY `a_index` (`a`)
+  KEY `a_index` (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 SET @var = "DROP INDEX a_index ON t1";
 EXECUTE @var;

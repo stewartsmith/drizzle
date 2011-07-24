@@ -68,8 +68,14 @@ public:
     return new ha_heap(*this, table);
   }
 
-  const char **bas_ext() const {
+  const char **bas_ext() const 
+  {
     return ha_heap_exts;
+  }
+
+  drizzled::message::Table::Index::IndexType default_index_type() const
+  {
+    return drizzled::message::Table::Index::HASH;
   }
 
   int doCreateTable(Session &session,
