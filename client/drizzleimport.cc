@@ -401,9 +401,6 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
-  UserDetect detected_user;
-  const char* shell_user= detected_user.getUser();
-
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -414,7 +411,7 @@ try
   "Port number to use for connection") 
   ("protocol", po::value<string>(&opt_protocol)->default_value("mysql"),
   "The protocol of connection (mysql or drizzle).")
-  ("user,u", po::value<string>(&current_user)->default_value((shell_user ? shell_user : "")),
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   "User for login if not current user.")
   ;
 
@@ -466,9 +463,7 @@ try
   po::notify(vm);
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
       use_drizzle_protocol=false;
     else if (not opt_protocol.compare("drizzle"))

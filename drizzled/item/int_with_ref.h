@@ -28,8 +28,7 @@
 
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_int_with_ref :public Item_int
 {

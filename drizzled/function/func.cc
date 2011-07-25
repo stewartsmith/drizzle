@@ -122,10 +122,9 @@ void Item_func::set_arguments(List<Item> &list)
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     List<Item>::iterator li(list.begin());
-    Item *item;
     Item **save_args= args;
 
-    while ((item=li++))
+    while (Item* item=li++)
     {
       *(save_args++)= item;
       with_sum_func|=item->with_sum_func;
@@ -156,8 +155,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) getSession().getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-        return;
+      args= new (getSession().mem) Item*[arg_count];
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
   }

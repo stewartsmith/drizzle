@@ -138,8 +138,6 @@ protected:
   : item::function::Boolean(a), value(a_value), affirmative(a_affirmative)
   {}
 
-  ~Item_func_truth()
-  {}
 private:
   /**
     True for <code>X IS [NOT] TRUE</code>,
@@ -161,7 +159,6 @@ class Item_func_istrue : public Item_func_truth
 {
 public:
   Item_func_istrue(Item *a) : Item_func_truth(a, true, true) {}
-  ~Item_func_istrue() {}
   virtual const char* func_name() const { return "istrue"; }
 };
 
@@ -174,7 +171,6 @@ class Item_func_isnottrue : public Item_func_truth
 {
 public:
   Item_func_isnottrue(Item *a) : Item_func_truth(a, true, false) {}
-  ~Item_func_isnottrue() {}
   virtual const char* func_name() const { return "isnottrue"; }
 };
 
@@ -187,7 +183,6 @@ class Item_func_isfalse : public Item_func_truth
 {
 public:
   Item_func_isfalse(Item *a) : Item_func_truth(a, false, true) {}
-  ~Item_func_isfalse() {}
   virtual const char* func_name() const { return "isfalse"; }
 };
 
@@ -200,7 +195,6 @@ class Item_func_isnotfalse : public Item_func_truth
 {
 public:
   Item_func_isnotfalse(Item *a) : Item_func_truth(a, false, false) {}
-  ~Item_func_isnotfalse() {}
   virtual const char* func_name() const { return "isnotfalse"; }
 };
 
@@ -254,8 +248,6 @@ public:
 class Eq_creator :public Comp_creator
 {
 public:
-  Eq_creator() {}                             /* Remove gcc warning */
-  virtual ~Eq_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<>" : "="; }
   virtual bool eqne_op() const { return 1; }
@@ -266,8 +258,6 @@ public:
 class Ne_creator :public Comp_creator
 {
 public:
-  Ne_creator() {}                             /* Remove gcc warning */
-  virtual ~Ne_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "=" : "<>"; }
   virtual bool eqne_op() const { return 1; }
@@ -278,8 +268,6 @@ public:
 class Gt_creator :public Comp_creator
 {
 public:
-  Gt_creator() {}                             /* Remove gcc warning */
-  virtual ~Gt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<=" : ">"; }
   virtual bool eqne_op() const { return 0; }
@@ -290,8 +278,6 @@ public:
 class Lt_creator :public Comp_creator
 {
 public:
-  Lt_creator() {}                             /* Remove gcc warning */
-  virtual ~Lt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">=" : "<"; }
   virtual bool eqne_op() const { return 0; }
@@ -302,8 +288,6 @@ public:
 class Ge_creator :public Comp_creator
 {
 public:
-  Ge_creator() {}                             /* Remove gcc warning */
-  virtual ~Ge_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<" : ">="; }
   virtual bool eqne_op() const { return 0; }
@@ -314,8 +298,6 @@ public:
 class Le_creator :public Comp_creator
 {
 public:
-  Le_creator() {}                             /* Remove gcc warning */
-  virtual ~Le_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">" : "<="; }
   virtual bool eqne_op() const { return 0; }
@@ -695,17 +677,20 @@ public:
 
 class Item_func_if :public Item_func
 {
-  enum Item_result cached_result_type;
+  Item_result cached_result_type;
   enum_field_types cached_field_type;
+
 public:
-  Item_func_if(Item *a,Item *b,Item *c)
-    :Item_func(a,b,c), cached_result_type(INT_RESULT)
+  Item_func_if(Item *a, Item *b, Item *c) :
+    Item_func(a,b,c),
+    cached_result_type(INT_RESULT)
   {}
+
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
   type::Decimal *val_decimal(type::Decimal *);
-  enum Item_result result_type () const { return cached_result_type; }
+  Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
   bool fix_fields(Session *, Item **);
   void fix_length_and_dec();
@@ -997,7 +982,6 @@ class cmp_item_int :public cmp_item
 {
   int64_t value;
 public:
-  cmp_item_int() {}                           /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_int();
@@ -1043,7 +1027,6 @@ class cmp_item_real :public cmp_item
 {
   double value;
 public:
-  cmp_item_real() {}                          /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_real();
@@ -1065,7 +1048,6 @@ class cmp_item_decimal :public cmp_item
 {
   type::Decimal value;
 public:
-  cmp_item_decimal() {}                       /* Remove gcc warning */
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *c);
@@ -1607,8 +1589,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_and *item;
-    if ((item= new Item_cond_and(session, this)))
-       item->copy_andor_arguments(session, this);
+    item= new Item_cond_and(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);
@@ -1637,8 +1619,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_or *item;
-    if ((item= new Item_cond_or(session, this)))
-      item->copy_andor_arguments(session, this);
+    item= new Item_cond_or(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);

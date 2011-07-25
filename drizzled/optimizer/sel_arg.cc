@@ -23,8 +23,7 @@
 #include <drizzled/optimizer/sel_arg.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Functions to fix up the tree after insert and delete */
 static void left_rotate(optimizer::SEL_ARG **root, optimizer::SEL_ARG *leaf)
@@ -72,7 +71,8 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone_and(optimizer::SEL_ARG *arg)
   }
   else
   {
-    new_min=arg->min_value; flag_min=arg->min_flag;
+    new_min=arg->min_value;
+    flag_min=arg->min_flag;
   }
   if (cmp_max_to_max(arg) <= 0)
   {
@@ -84,38 +84,21 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone_and(optimizer::SEL_ARG *arg)
     new_max= arg->max_value;
     flag_max= arg->max_flag;
   }
-  return (new SEL_ARG(field,
-                      part,
-                      new_min,
-                      new_max,
-                      flag_min,
-                      flag_max,
-                      test(maybe_flag && arg->maybe_flag)));
+  return new SEL_ARG(field, part, new_min, new_max, flag_min, flag_max, test(maybe_flag && arg->maybe_flag));
 }
 
 
 /* min <= X , arg->min */
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_first(optimizer::SEL_ARG *arg)
 {
-  return (new SEL_ARG(field,part,
-                      min_value,
-                      arg->min_value,
-                      min_flag,
-                      arg->min_flag & NEAR_MIN ? 0 : NEAR_MAX,
-		                                     maybe_flag | arg->maybe_flag));
+  return new SEL_ARG(field,part, min_value, arg->min_value, min_flag, arg->min_flag & NEAR_MIN ? 0 : NEAR_MAX, maybe_flag | arg->maybe_flag);
 }
 
 
 /* min <= X <= key_max */
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_last(optimizer::SEL_ARG *arg)
 {
-  return (new SEL_ARG(field,
-                      part,
-                      min_value,
-                      arg->max_value,
-                      min_flag,
-                      arg->max_flag,
-                      maybe_flag | arg->maybe_flag));
+  return new SEL_ARG(field, part, min_value, arg->max_value, min_flag, arg->max_flag, maybe_flag | arg->maybe_flag);
 }
 
 
@@ -330,9 +313,7 @@ optimizer::SEL_ARG::SEL_ARG(Field *field_,
   left= right= &optimizer::null_element;
 }
 
-optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param,
-                                              optimizer::SEL_ARG *new_parent,
-                                              optimizer::SEL_ARG **next_arg)
+optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param, optimizer::SEL_ARG *new_parent, optimizer::SEL_ARG **next_arg)
 {
   optimizer::SEL_ARG *tmp= NULL;
 
@@ -342,22 +323,14 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param,
 
   if (type != KEY_RANGE)
   {
-    if (! (tmp= new (param->mem_root) optimizer::SEL_ARG(type)))
-      return 0;	// out of memory
+    tmp= new (*param->mem_root) optimizer::SEL_ARG(type);
     tmp->prev= *next_arg; // Link into next/prev chain
     (*next_arg)->next= tmp;
     (*next_arg)= tmp;
   }
   else
   {
-    if (! (tmp= new (param->mem_root) optimizer::SEL_ARG(field,
-                                                         part,
-                                                         min_value,
-                                                         max_value,
-                                                         min_flag,
-                                                         max_flag,
-                                                         maybe_flag)))
-      return 0; // OOM
+    tmp= new (*param->mem_root) optimizer::SEL_ARG(field, part, min_value, max_value, min_flag, max_flag, maybe_flag);
     tmp->parent= new_parent;
     tmp->next_key_part= next_key_part;
     if (left != &optimizer::null_element)
@@ -402,10 +375,10 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::last()
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_tree(RangeParameter *param)
 {
   optimizer::SEL_ARG tmp_link;
-  optimizer::SEL_ARG*next_arg= NULL;
-  optimizer::SEL_ARG *root= NULL;
+  optimizer::SEL_ARG* next_arg= NULL;
   next_arg= &tmp_link;
-  if (! (root= clone(param, (SEL_ARG *) 0, &next_arg)))
+  optimizer::SEL_ARG* root= clone(param, (SEL_ARG *) 0, &next_arg);
+  if (not root)
     return 0;
   next_arg->next= 0; // Fix last link
   tmp_link.next->prev= 0; // Fix first link

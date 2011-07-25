@@ -32,40 +32,28 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-#define MAX_ACCEPT_RETRY	10	// Test accept this many times
+namespace drizzled {
 
-namespace drizzled
-{
 extern back_log_constraints back_log;
 extern uint32_t drizzled_bind_timeout;
 
-
 int plugin::ListenTcp::acceptTcp(int fd)
 {
-  int new_fd;
-  uint32_t retry;
-
-  for (retry= 0; retry < MAX_ACCEPT_RETRY; retry++)
+  for (int retry= 0; retry < 10; retry++)
   {
-    new_fd= accept(fd, NULL, 0);
-    if (new_fd != -1 || (errno != EINTR && errno != EAGAIN))
+    int new_fd= accept(fd, NULL, 0);
+    if (new_fd != -1)
+      return new_fd;
+    if (errno != EINTR && errno != EAGAIN)
       break;
   }
-
-  if (new_fd == -1)
+  if ((accept_error_count++ & 255) == 0)
   {
-    if ((accept_error_count++ & 255) == 0)
-    {
-      sql_perror(_("accept() failed with errno %d"));
-    }
-
-    if (errno == ENFILE || errno == EMFILE)
-      sleep(1);
-
-    return -1;
+    sql_perror(_("accept() failed with errno %d"));
   }
-
-  return new_fd;
+  if (errno == ENFILE || errno == EMFILE)
+    sleep(1);
+  return -1;
 }
 
 bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
@@ -73,14 +61,9 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   int ret;
   char host_buf[NI_MAXHOST];
   char port_buf[NI_MAXSERV];
-  struct addrinfo hints;
-  struct addrinfo *ai;
-  struct addrinfo *ai_list;
-  int fd= -1;
-  uint32_t waited;
+  addrinfo hints;
+  addrinfo *ai_list;
   uint32_t this_wait;
-  uint32_t retry;
-  struct linger ling= {0, 0};
   int flags= 1;
 
   memset(&hints, 0, sizeof(struct addrinfo));
@@ -96,7 +79,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     return true;
   }
 
-  for (ai= ai_list; ai != NULL; ai= ai->ai_next)
+  for (addrinfo* ai= ai_list; ai != NULL; ai= ai->ai_next)
   {
     ret= getnameinfo(ai->ai_addr, ai->ai_addrlen, host_buf, NI_MAXHOST,
                      port_buf, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
@@ -106,7 +89,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
       strcpy(port_buf, "-");
     }
 
-    fd= socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    int fd= socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (fd == -1)
     {
       /*
@@ -149,6 +132,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
       return true;
     }
 
+    linger ling= {0, 0};
     ret= setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
     if (ret != 0)
     {
@@ -171,7 +155,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
       Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
       Limit the sequence by drizzled_bind_timeout.
     */
-    for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
+    for (uint32_t waited= 0, retry= 1; ; retry++, waited+= this_wait)
     {
       if (((ret= ::bind(fd, ai->ai_addr, ai->ai_addrlen)) == 0) ||
           (errno != EADDRINUSE) || (waited >= drizzled_bind_timeout))
@@ -213,7 +197,7 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   return false;
 }
 
-const std::string plugin::ListenTcp::getHost(void) const
+const std::string plugin::ListenTcp::getHost() const
 {
   return "";
 }

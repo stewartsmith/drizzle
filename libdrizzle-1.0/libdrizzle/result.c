@@ -106,8 +106,7 @@ void drizzle_result_free(drizzle_result_st *result)
   for (column= result->column_list; column != NULL; column= result->column_list)
     drizzle_column_free(column);
 
-  if (result->column_buffer != NULL)
-    free(result->column_buffer);
+  free(result->column_buffer);
 
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {

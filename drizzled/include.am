@@ -240,7 +240,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/item.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
-			      drizzled/item/blob.h \
 			      drizzled/item/boolean.h \
 			      drizzled/item/cache.h \
 			      drizzled/item/cache_decimal.h \
@@ -443,8 +442,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/statement/create_index.h \
 			      drizzled/statement/create_schema.h \
 			      drizzled/statement/create_table.h \
-			      drizzled/statement/create_table/like.h \
-			      drizzled/statement/create_table/select.h \
 			      drizzled/statement/delete.h \
 			      drizzled/statement/drop_index.h \
 			      drizzled/statement/drop_schema.h \
@@ -850,8 +847,6 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/statement/create_index.cc \
 			   drizzled/statement/create_schema.cc \
 			   drizzled/statement/create_table.cc \
-			   drizzled/statement/create_table/like.cc \
-			   drizzled/statement/create_table/select.cc \
 			   drizzled/statement/delete.cc \
 			   drizzled/statement/drop_index.cc \
 			   drizzled/statement/drop_schema.cc \
@@ -920,7 +915,6 @@ noinst_LTLIBRARIES+= \
 		     drizzled/libtypelib.la
 
 drizzled_libcharset_la_SOURCES= \
-				drizzled/charset-def.cc \
 				drizzled/charset.cc \
 				drizzled/ctype-bin.cc \
 				drizzled/ctype-mb.cc \
@@ -954,11 +948,7 @@ AM_YFLAGS = -p DRIZZLE -d --verbose
 
 
 if BUILD_GCC_PCH
-PCHHEADERS= \
-	    drizzled/definitions.h.gch \
-	    drizzled/plugin/storage_engine.h.gch  \
-	    drizzled/sql_base.h.gch \
-	    drizzled/sql_parse.h.gch
+PCHHEADERS= config.h.gch
 else
 PCHHEADERS =
 endif

@@ -43,17 +43,17 @@ int wild_compare(const char *str, const char *wildstr, bool str_is_pattern)
       {
 	wildstr++;
         if (str_is_pattern && *str++ != wild_prefix)
-          return(1);
+          return 1;
       }
       if (*wildstr++ != *str++)
-        return(1);
+        return 1;
     }
     if (! *wildstr )
       return(*str != 0);
     if (*wildstr++ == wild_one)
     {
       if (! *str || (str_is_pattern && *str == wild_many))
-        return(1);                     /* One char; skip */
+        return 1;                     /* One char; skip */
       if (*str++ == wild_prefix && str_is_pattern && *str)
         str++;
     }
@@ -75,7 +75,7 @@ int wild_compare(const char *str, const char *wildstr, bool str_is_pattern)
             return (1);
         }
       if (!*wildstr)
-        return(0);		/* '*' as last char: OK */
+        return 0;		/* '*' as last char: OK */
       if ((cmp= *wildstr) == wild_prefix && wildstr[1] && !str_is_pattern)
         cmp=wildstr[1];
       for (;;str++)

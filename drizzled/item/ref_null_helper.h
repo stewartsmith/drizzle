@@ -28,10 +28,9 @@
      with NULL value.
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_ref_null_helper: public Item_ref
+class Item_ref_null_helper : public Item_ref
 {
 protected:
   Item_in_subselect* owner;

@@ -32,14 +32,6 @@
 
 namespace drizzled {
 
-/**
-  Dummy error processor used by default by Name_resolution_context.
-
-  @note
-    do nothing
-*/
-void dummy_error_processor(Session *session, void *data);
-
 /*
   Analyzer function
     SYNOPSIS
@@ -119,13 +111,11 @@ public:
   String str_value;
 
   /** Name from select */
-  char *name;
+  const char *name;
 
   /** Length of name */
   uint32_t name_length;
 
-  /** Original item name (if it was renamed) */
-  char *orig_name;
   Item *next;
   uint32_t max_length;
 
@@ -191,12 +181,6 @@ public:
   }
 
   void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
-  /**
-   * Renames item (used for views, cleanup() return original name).
-   *
-   * @param new_name	new name of item;
-   */
-  void rename(char *new_name);
   void init_make_field(SendField *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);
@@ -674,7 +658,6 @@ public:
                              traverse_order order);
 
   virtual bool remove_dependence_processor(unsigned char * arg);
-  virtual bool remove_fixed(unsigned char * arg);
   virtual bool collect_item_field_processor(unsigned char * arg);
   virtual bool find_item_in_field_list_processor(unsigned char *arg);
   virtual bool change_context_processor(unsigned char *context);
@@ -776,10 +759,7 @@ public:
 
   uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, charset_info_st *cs);
   void fix_char_length(uint32_t max_char_length_arg);
-  void fix_char_length_uint64_t(uint64_t max_char_length_arg);
-  void fix_length_and_charset_datetime(uint32_t max_char_length_arg);
 
 protected:
   Session &getSession()

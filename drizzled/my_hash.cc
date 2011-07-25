@@ -48,20 +48,14 @@ static uint32_t calc_hash(const HASH *hash, const unsigned char *key, size_t len
 
 #define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
 
-bool
+void
 _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charset,
            uint32_t size, size_t key_offset, size_t key_length,
            hash_get_key get_key,
            hash_free_key free_element, uint32_t flags)
 {
   hash->records=0;
-  if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
-                               growth_size))
-  {
-    /* Allow call to hash_free */
-    hash->free=0;
-    return true;
-  }
+  my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size, growth_size);
   hash->key_offset=key_offset;
   hash->key_length=key_length;
   hash->blength=1;
@@ -69,7 +63,6 @@ _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charse
   hash->free=free_element;
   hash->flags=flags;
   hash->charset=charset;
-  return false;
 }
 
 
@@ -205,7 +198,7 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key,
     while ((idx=pos->next) != NO_RECORD);
   }
   *current_record= NO_RECORD;
-  return(0);
+  return 0;
 }
 
 /* Change link from pos to new_link */
@@ -269,13 +262,13 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
     unsigned char *key= (unsigned char*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
       /* Duplicate entry */
-      return(true);
+      return true;
   }
 
   flag=0;
   if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
     /* No more memory */
-    return(true);
+    return true;
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;
@@ -392,7 +385,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   }
   if (++info->records == info->blength)
     info->blength+= info->blength;
-  return(0);
+  return 0;
 }
 
 } /* namespace drizzled */

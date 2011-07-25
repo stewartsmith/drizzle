@@ -22,10 +22,9 @@
 #include <drizzled/item/num.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_int :public Item_num
+class Item_int : public Item_num
 {
 public:
   int64_t value;

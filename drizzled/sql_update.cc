@@ -323,14 +323,10 @@ int update_query(Session *session, TableList *table_list,
       FileSort filesort(*session);
 
       table->sort.io_cache= new internal::io_cache_st;
+      sortorder=make_unireg_sortorder(order, &length, NULL);
 
-      if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
-	  (table->sort.found_records= filesort.run(table, sortorder, length,
-						   select, limit, 1,
-						   examined_rows)) == HA_POS_ERROR)
-      {
-	goto err;
-      }
+      if ((table->sort.found_records= filesort.run(table, sortorder, length, select, limit, 1, examined_rows)) == HA_POS_ERROR)
+        goto err;
       /*
 	Filesort has already found and selected the rows we want to update,
 	so we don't need the where clause
@@ -629,15 +625,11 @@ bool prepare_update(Session *session, TableList *table_list,
 
   session->lex().allow_sum_func= 0;
 
-  if (setup_tables_and_check_access(session, &select_lex->context,
-                                    &select_lex->top_join_list,
-                                    table_list,
-                                    &select_lex->leaf_tables,
-                                    false) ||
-      session->setup_conds(table_list, conds) ||
-      select_lex->setup_ref_array(session, order_num) ||
-      setup_order(session, select_lex->ref_pointer_array,
-		  table_list, all_fields, all_fields, order))
+  if (setup_tables_and_check_access(session, &select_lex->context, &select_lex->top_join_list, table_list, &select_lex->leaf_tables, false) ||
+      session->setup_conds(table_list, conds))
+      return true;
+  select_lex->setup_ref_array(session, order_num);
+  if (setup_order(session, select_lex->ref_pointer_array, table_list, all_fields, all_fields, order))
     return true;
 
   /* Check that we are not using table that we are updating in a sub select */

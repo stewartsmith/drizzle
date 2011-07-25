@@ -47,10 +47,8 @@ class TemporalFormatTest
 
   ~TemporalFormatTest()
   {
-    if (tf != NULL)
-      delete tf;
-    if (temporal != NULL)
-      delete temporal;
+    delete tf;
+    delete temporal;
   }
 };
 

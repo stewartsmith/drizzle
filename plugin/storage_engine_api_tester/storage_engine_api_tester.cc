@@ -47,6 +47,8 @@ state_multimap cursor_state_transitions;
 void load_engine_state_transitions(state_multimap &states);
 void load_cursor_state_transitions(state_multimap &states);
 
+uint64_t next_cursor_id;
+
 plugin::TransactionalStorageEngine *realEngine;
 
 /* ERROR INJECTION For SEAPITESTER
@@ -154,10 +156,15 @@ public:
   SEAPITesterCursor(drizzled::plugin::StorageEngine &engine_arg,
                     drizzled::Table &table_arg)
     : Cursor(engine_arg, table_arg)
-    { cursor_state= "Cursor()"; realCursor= NULL;}
+    {
+      cursor_state= "Cursor()";
+      realCursor= NULL;
+      id= ++next_cursor_id;
+      CURSOR_NEW_STATE("Cursor()");
+    }
 
   ~SEAPITesterCursor()
-    { delete realCursor;}
+    { CURSOR_NEW_STATE("~Cursor()"); delete realCursor;}
 
   int close();
   int rnd_next(unsigned char *buf) {
@@ -255,6 +262,7 @@ private:
   string cursor_state;
   void CURSOR_NEW_STATE(const string &new_state);
   Session* user_session;
+  uint64_t id;
 };
 
 int SEAPITesterCursor::doOpen(const identifier::Table &identifier, int mode, uint32_t test_if_locked)
@@ -449,6 +457,15 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
   }
 
   cursor_state= new_state;
+
+  std::string cursor_state_str("Cursor ");
+  char nr[50];
+  snprintf(nr, sizeof(nr), "%"PRIu64, this->id);
+  cursor_state_str.append(nr);
+  cursor_state_str.append(" ");
+  cursor_state_str.append(cursor_state);
+
+  engine_state_history.push_back(cursor_state_str);
 
   cerr << "\t\tCursor " << this << " STATE : " << cursor_state << endl;
 }

@@ -24,47 +24,22 @@
 #include <drizzled/type/boolean.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
+namespace drizzled {
+namespace type {
+
+const char* convert(bool source, bool ansi_display)
 {
-
-namespace type
-{
-
-bool convert(String &destination, const bool source, bool ansi_display)
-{
-  uint32_t mlength= (5) * system_charset_info->mbmaxlen;
-
-  destination.alloc(mlength);
-  char *buffer=(char*) destination.c_ptr();
-
   if (source)
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "YES", 3);
-      destination.length(3);
-    }
-    else
-    {
-      memcpy(buffer, "TRUE", 4);
-      destination.length(4);
-    }
-  }
-  else
-  {
-    if (ansi_display)
-    {
-      memcpy(buffer, "NO", 2);
-      destination.length(2);
-    }
-    else
-    {
-      memcpy(buffer, "FALSE", 5);
-      destination.length(5);
-    }
-  }
+    return ansi_display ? "YES" : "TRUE";
+  return ansi_display ? "NO" : "FALSE";
+}
 
-  return true;
+void convert(String& destination, bool source, bool ansi_display)
+{
+  const char* v= convert(source, ansi_display);
+  destination.alloc(strlen(v));
+  strcpy(destination.c_ptr(), v);
+  destination.length(strlen(v));
 }
 
 bool convert(bool &destination, const char *source, const size_t source_length)

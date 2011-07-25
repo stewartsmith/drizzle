@@ -1473,8 +1473,7 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-  UserDetect detected_user;
-  const char* shell_user= detected_user.getUser();
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -1483,7 +1482,7 @@ try
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
-  ("user,u", po::value<string>(&current_user)->default_value(shell_user ? shell_user : ""),
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
@@ -1567,18 +1566,19 @@ try
   prompt_counter=0;
 
   outfile.clear();      // no (default) outfile
-  pager.assign("stdout");  // the default, if --pager wasn't given
+  pager= "stdout";  // the default, if --pager wasn't given
+  if (const char* tmp= getenv("PAGER"))
   {
-    const char *tmp= getenv("PAGER");
-    if (tmp && strlen(tmp))
+    if (strlen(tmp))
     {
       default_pager_set= 1;
-      default_pager.assign(tmp);
+      default_pager= tmp;
     }
   }
   if (! isatty(0) || ! isatty(1))
   {
-    status.setBatch(1); opt_silent=1;
+    status.setBatch(1); 
+    opt_silent=1;
   }
   else
     status.setAddToHistory(1);
@@ -1653,11 +1653,11 @@ try
       if (vm[pager].as<string>().length())
       {
         default_pager_set= 1;
-        pager.assign(vm["pager"].as<string>());
-        default_pager.assign(pager);
+        pager= vm["pager"].as<string>();
+        default_pager= pager;
       }
       else if (default_pager_set)
-        pager.assign(default_pager);
+        pager= default_pager;
       else
         opt_nopager= 1;
     }
@@ -1691,12 +1691,9 @@ try
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(), 
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
     {
-
       global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
       use_drizzle_protocol= false;
     }
@@ -1882,11 +1879,7 @@ try
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
-      {
-        fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
-        exit(1);
-      }
+      histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5);
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
@@ -1996,33 +1989,28 @@ void window_resize(int)
 
 
 
-static int process_options(void)
+static int process_options()
 {
-  char *tmp, *pagpoint;
-  
+  if (const char* tmp= getenv("DRIZZLE_HOST"))
+    current_host= tmp;
 
-  tmp= (char *) getenv("DRIZZLE_HOST");
-  if (tmp)
-    current_host.assign(tmp);
-
-  pagpoint= getenv("PAGER");
-  if (!((char*) (pagpoint)))
+  if (const char* pagpoint= getenv("PAGER"))
   {
-    pager.assign("stdout");
-    opt_nopager= 1;
+    pager= pagpoint;
   }
   else
   {
-    pager.assign(pagpoint);
+    pager= "stdout";
+    opt_nopager= 1;
   }
-  default_pager.assign(pager);
+  default_pager= pager;
 
   //
 
   if (status.getBatch()) /* disable pager and outfile in this case */
   {
-    default_pager.assign("stdout");
-    pager.assign("stdout");
+    default_pager= "stdout";
+    pager= "stdout";
     opt_nopager= 1;
     default_pager_set= 0;
     opt_outfile= 0;
@@ -2553,17 +2541,14 @@ char **mysql_completion (const char *text, int, int)
     return (char**) 0;
 }
 
-inline string lower_string(const string &from_string)
+inline string lower_string(const string& from)
 {
-  string to_string= from_string;
-  transform(to_string.begin(), to_string.end(),
-            to_string.begin(), ::tolower);
-  return to_string;
+  return boost::to_lower_copy(from);
 }
-inline string lower_string(const char * from_string)
+
+inline string lower_string(const char* from)
 {
-  string to_string= from_string;
-  return lower_string(to_string);
+  return boost::to_lower_copy(string(from));
 }
 
 template <class T>
@@ -2576,8 +2561,7 @@ public:
   CompletionMatch(string text) : match_text(text) {}
   inline bool operator() (const pair<string,string> &match_against) const
   {
-    string sub_match=
-      lower_string(match_against.first.substr(0,match_text.size()));
+    string sub_match= lower_string(match_against.first.substr(0,match_text.size()));
     return match_func(sub_match,match_text);
   }
 };
@@ -2738,7 +2722,7 @@ static void get_current_db(void)
     {
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
-        current_db.assign(row[0]);
+        current_db= row[0];
       drizzle_result_free(&res);
     }
   }
@@ -3051,7 +3035,7 @@ static void init_tee(const char *file_name)
     return;
   }
   OUTFILE = new_outfile;
-  outfile.assign(file_name);
+  outfile= file_name;
   tee_fprintf(stdout, _("Logging to file '%s'\n"), file_name);
   opt_outfile= 1;
 
@@ -3783,11 +3767,11 @@ com_pager(string *, const char *line)
     {
       tee_fprintf(stdout, _("Default pager wasn't set, using stdout.\n"));
       opt_nopager=1;
-      pager.assign("stdout");
+      pager= "stdout";
       PAGER= stdout;
       return 0;
     }
-    pager.assign(default_pager);
+    pager= default_pager;
   }
   else
   {
@@ -3797,8 +3781,8 @@ com_pager(string *, const char *line)
            (isspace(*(end-1)) || iscntrl(*(end-1))))
       --end;
     pager_name.erase(end, pager_name.end());
-    pager.assign(pager_name);
-    default_pager.assign(pager_name);
+    pager= pager_name;
+    default_pager= pager_name;
   }
   opt_nopager=0;
   tee_fprintf(stdout, _("PAGER set to '%s'\n"), pager.c_str());
@@ -3809,7 +3793,7 @@ com_pager(string *, const char *line)
 static int
 com_nopager(string *, const char *)
 {
-  pager.assign("stdout");
+  pager= "stdout";
   opt_nopager=1;
   PAGER= stdout;
   tee_fprintf(stdout, _("PAGER set to stdout\n"));
@@ -3870,8 +3854,7 @@ com_connect(string *buffer, const char *line)
     tmp= get_arg(buff, 0);
     if (tmp && *tmp)
     {
-      current_db.erase();
-      current_db.assign(tmp);
+      current_db= tmp;
       tmp= get_arg(buff, 1);
       if (tmp)
       {
@@ -4067,8 +4050,7 @@ com_use(string *, const char *line)
       else
         drizzle_result_free(&result);
     }
-    current_db.erase();
-    current_db.assign(tmp);
+    current_db= tmp;
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
   }

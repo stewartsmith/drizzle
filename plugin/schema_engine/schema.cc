@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <boost/foreach.hpp>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
@@ -49,11 +50,15 @@
 using namespace std;
 using namespace drizzled;
 
+const char* MY_DB_OPT_FILE= "db.opt";
+const char* DEFAULT_FILE_EXTENSION= ".dfe"; // Deep Fried Elephant
 
-#define MY_DB_OPT_FILE "db.opt"
-#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
+static const char* g_schema_exts[] = 
+{
+  NULL
+};
 
-Schema::Schema():
+Schema::Schema() :
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
@@ -64,25 +69,17 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
 }
 
-Schema::~Schema()
-{
-}
-
 void Schema::prime()
 {
   CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
   boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+  BOOST_FOREACH(CachedDirectory::Entries::reference entry, files)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    message::Schema schema_message;
-
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
-
+    message::Schema schema_message;
     if (readSchemaFile(entry->filename, schema_message))
     {
       identifier::Schema schema_identifier(schema_message.name());
@@ -90,29 +87,16 @@ void Schema::prime()
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-      if (ret.second == false)
-      {
-        abort(); // If this has happened, something really bad is going down.
-      }
+      assert(ret.second); // If this has happened, something really bad is going down.
     }
   }
-}
-
-void Schema::startup(drizzled::Session &)
-{
 }
 
 void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
-  {
-    for (SchemaCache::iterator iter= schema_cache.begin();
-         iter != schema_cache.end();
-         iter++)
-    {
-      set_of_names.push_back(identifier::Schema(iter->second->name()));
-    }
-  }
+  BOOST_FOREACH(SchemaCache::reference iter, schema_cache)
+    set_of_names.push_back(iter.second->name());
   mutex.unlock_shared();
 }
 
@@ -120,17 +104,13 @@ drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identi
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
-
   if (iter != schema_cache.end())
   {
-    drizzled::message::schema::shared_ptr schema_message;
-    schema_message= iter->second;
+    drizzled::message::schema::shared_ptr schema_message= iter->second;
     mutex.unlock_shared();
-
     return schema_message;
   }
   mutex.unlock_shared();
-
   return drizzled::message::schema::shared_ptr();
 }
 
@@ -152,18 +132,11 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     return false;
   }
 
-  {
-    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
-    pair<SchemaCache::iterator, bool> ret=
-      schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
+  pair<SchemaCache::iterator, bool> ret= 
+    schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-
-    if (ret.second == false)
-    {
-      abort(); // If this has happened, something really bad is going down.
-    }
-  }
-
+  assert(ret.second); // If this has happened, something really bad is going down.
   return true;
 }
 
@@ -219,10 +192,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
     pair<SchemaCache::iterator, bool> ret=
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-    if (ret.second == false)
-    {
-      abort(); // If this has happened, something really bad is going down.
-    }
+    assert(ret.second); // If this has happened, something really bad is going down.
   }
 
   return true;
@@ -342,4 +312,9 @@ void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
                                    drizzled::identifier::table::vector&)
 {
+}
+
+const char** Schema::bas_ext() const
+{
+  return g_schema_exts;
 }

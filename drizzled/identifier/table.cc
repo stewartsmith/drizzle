@@ -143,11 +143,10 @@ static uint32_t get_counter()
 
 size_t Table::build_tmptable_filename(std::string &buffer)
 {
-  size_t tmpdir_length;
   ostringstream post_tmpdir_str;
 
   buffer.append(drizzle_tmpdir);
-  tmpdir_length= buffer.length();
+  size_t tmpdir_length= buffer.length();
 
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
   post_tmpdir_str << pthread_self() << "-" << get_counter();
@@ -281,8 +280,7 @@ void Table::init()
   hash_value= util::insensitive_hash()(path);
 
   std::string tb_name(getTableName());
-  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
-
+  boost::to_lower(tb_name);
   key.set(getKeySize(), getSchemaName(), tb_name);
 }
 

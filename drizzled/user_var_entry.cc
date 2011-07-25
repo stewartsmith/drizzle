@@ -52,7 +52,7 @@ double user_var_entry::val_real(bool *null_value)
     return internal::my_atof(value);                      // This is null terminated
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
   return 0.0;					// Impossible
@@ -87,7 +87,7 @@ int64_t user_var_entry::val_int(bool *null_value) const
     }
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 
@@ -100,10 +100,11 @@ int64_t user_var_entry::val_int(bool *null_value) const
 String *user_var_entry::val_str(bool *null_value, String *str,
                                 uint32_t decimals)
 {
-  if ((*null_value= (value == 0)))
-    return (String*) 0;
+  if ((*null_value= not value))
+    return NULL;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     str->set_real(*(double*) value, decimals, &my_charset_bin);
     break;
@@ -121,10 +122,10 @@ String *user_var_entry::val_str(bool *null_value, String *str,
 
   case STRING_RESULT:
     str->copy(value, length, collation.collation);
-    // break missing?
+    break;
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 
@@ -156,7 +157,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     break;
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 

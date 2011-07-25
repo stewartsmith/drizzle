@@ -62,8 +62,7 @@ public:
 
   ~Statement()
   {
-    if (string)
-      free(string);
+    free(string);
   }
    
   char *getString() const

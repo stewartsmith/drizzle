@@ -70,7 +70,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   if (! no_alloc && ! parent_alloc)
   {
     // Allocates everything through the internal memroot
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
     session->mem_root= &alloc;
   }
   else
@@ -463,15 +463,11 @@ optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSel
   rev_it= rev_ranges.begin();
 
   /* Remove EQ_RANGE flag for keys that are not using the full key */
-  for (vector<optimizer::QuickRange *>::iterator it= rev_ranges.begin();
-       it != rev_ranges.end();
-       ++it)
+  BOOST_FOREACH(QuickRange* it, rev_ranges)
   {
-    optimizer::QuickRange *r= *it;
-    if ((r->flag & EQ_RANGE) &&
-        head->key_info[index].key_length != r->max_length)
+    if ((it->flag & EQ_RANGE) && head->key_info[index].key_length != it->max_length)
     {
-      r->flag&= ~EQ_RANGE;
+      it->flag&= ~EQ_RANGE;
     }
   }
   q->dont_free= 1; // Don't free shared mem

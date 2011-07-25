@@ -29,19 +29,17 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
-  bool res;
-  if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
-                           setup_tables_done_option)))
+  bool res= unit->prepare(session, result, SELECT_NO_UNLOCK | setup_tables_done_option);
+  if (not res)
     res= unit->exec();
   if (res)
-    res|= unit->cleanup();
-  return(res);
+    unit->cleanup();
+  return res;
 }
 
 
@@ -225,13 +223,13 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 	offset_limit_cnt= 0;
 	if (result->prepare(sl->join->fields_list, this))
 	{
-	  return(true);
+	  return true;
 	}
 	sl->join->select_options|= SELECT_DESCRIBE;
 	sl->join->reinit();
       }
     }
-    return(false);
+    return false;
   }
   prepared= 1;
   saved_error= false;
@@ -244,8 +242,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 
   if (is_union_select)
   {
-    if (!(tmp_result= union_result= new select_union))
-      goto err;
+    tmp_result= union_result= new select_union;
     if (describe)
       tmp_result= sel_result;
   }
@@ -307,11 +304,10 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         field object without table.
       */
       assert(!empty_table);
-      empty_table= (Table*) session->calloc(sizeof(Table));
+      empty_table= (Table*) session->mem.calloc(sizeof(Table));
       types.clear();
       List<Item>::iterator it(sl->item_list.begin());
-      Item *item_tmp;
-      while ((item_tmp= it++))
+      while (Item* item_tmp= it++)
       {
 	/* Error's in 'new' will be detected after loop */
 	types.push_back(new Item_type_holder(session_arg, item_tmp));
@@ -334,7 +330,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       while ((type= tp++, item_tmp= it++))
       {
         if (((Item_type_holder*)type)->join_types(session_arg, item_tmp))
-	  return(true);
+	  return true;
       }
     }
   }
@@ -380,7 +376,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      assert(1); // Olaf: should this be assert(false)?
+      assert(false);
     }
   }
 
@@ -390,7 +386,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 
 err:
   session_arg->lex().current_select= lex_select_save;
-  return(true);
+  return true;
 }
 
 
@@ -462,7 +458,7 @@ bool Select_Lex_Unit::exec()
         if (sl == union_distinct)
 	{
 	  if (table->cursor->ha_disable_indexes(HA_KEY_SWITCH_ALL))
-	    return(true);
+	    return true;
 	  table->no_keyread=1;
 	}
 	saved_error= sl->join->error;
@@ -475,7 +471,7 @@ bool Select_Lex_Unit::exec()
 	  if (union_result->flush())
 	  {
 	    session->lex().current_select= lex_select_save;
-	    return(1);
+	    return 1;
 	  }
 	}
       }
@@ -489,7 +485,7 @@ bool Select_Lex_Unit::exec()
       if (error)
       {
         table->print_error(error, MYF(0));
-        return(1);
+        return 1;
       }
       if (found_rows_for_union && !sl->braces &&
           select_limit_cnt != HA_POS_ERROR)
@@ -525,13 +521,8 @@ bool Select_Lex_Unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new Join(session, item_list,
-					      fake_select_lex->options, result)))
-	{
-	  fake_select_lex->table_list.clear();
-	  return(true);
-	}
-        fake_select_lex->join->no_const_tables= true;
+	fake_select_lex->join= new Join(session, item_list, fake_select_lex->options, result);
+  fake_select_lex->join->no_const_tables= true;
 
 	/*
 	  Fake Select_Lex should have item list for correctref_array
@@ -601,7 +592,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (cleaned)
   {
-    return(false);
+    return false;
   }
   cleaned= 1;
 

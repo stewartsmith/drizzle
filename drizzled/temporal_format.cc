@@ -30,6 +30,7 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <drizzled/temporal_format.h>
 #include <drizzled/temporal.h>
 
@@ -41,8 +42,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 TemporalFormat::TemporalFormat(const char *pattern) :
   _pattern(pattern)
@@ -64,6 +64,11 @@ TemporalFormat::TemporalFormat(const char *pattern) :
                     , &_error_offset
                     , NULL /* Use default character table */
                     );
+}
+
+TemporalFormat::~TemporalFormat()
+{
+  pcre_free(_re);
 }
 
 bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
@@ -302,12 +307,8 @@ bool init_temporal_formats()
 /** Free all allocated temporal formats */
 void deinit_temporal_formats()
 {
-  vector<TemporalFormat *>::iterator p= all_temporal_formats.begin();
-  while (p != all_temporal_formats.end())
-  {
-    delete *p;
-    ++p;
-  }
+  BOOST_FOREACH(TemporalFormat* it, all_temporal_formats)
+    delete it;
   known_date_formats.clear();
   known_datetime_formats.clear();
   known_time_formats.clear();

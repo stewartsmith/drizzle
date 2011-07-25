@@ -25,13 +25,32 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   We collect memory in this vector that we free on delete.
 */
 static vector<unsigned char*> memory_vector;
+
+extern charset_info_st my_charset_utf8mb4_icelandic_uca_ci;
+extern charset_info_st my_charset_utf8mb4_latvian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_romanian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_slovenian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_polish_uca_ci;
+extern charset_info_st my_charset_utf8mb4_estonian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_spanish_uca_ci;
+extern charset_info_st my_charset_utf8mb4_swedish_uca_ci;
+extern charset_info_st my_charset_utf8mb4_turkish_uca_ci;
+extern charset_info_st my_charset_utf8mb4_czech_uca_ci;
+extern charset_info_st my_charset_utf8mb4_danish_uca_ci;
+extern charset_info_st my_charset_utf8mb4_lithuanian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_slovak_uca_ci;
+extern charset_info_st my_charset_utf8mb4_spanish2_uca_ci;
+extern charset_info_st my_charset_utf8mb4_roman_uca_ci;
+extern charset_info_st my_charset_utf8mb4_persian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_esperanto_uca_ci;
+extern charset_info_st my_charset_utf8mb4_hungarian_uca_ci;
+extern charset_info_st my_charset_utf8mb4_sinhala_uca_ci;
 
 /*
   The code below implements this functionality:
@@ -45,12 +64,10 @@ static vector<unsigned char*> memory_vector;
 
 bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2)
 {
-  return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
+  return cs1 == cs2 || not strcmp(cs1->csname, cs2->csname);
 }
 
-
-static uint
-get_collation_number_internal(const char *name)
+static uint get_collation_number_internal(const char *name)
 {
   for (charset_info_st **cs= all_charsets;
        cs < all_charsets+array_elements(all_charsets)-1;
@@ -64,19 +81,16 @@ get_collation_number_internal(const char *name)
   return 0;
 }
 
-static unsigned char *cs_alloc(size_t size)
+static unsigned char* cs_alloc(size_t size)
 {
   memory_vector.push_back(new unsigned char[size]);
   return memory_vector.back();
 }
 
-static bool init_state_maps(charset_info_st *cs)
+static void init_state_maps(charset_info_st *cs)
 {
-  if (!(cs->state_map= cs_alloc(256)))
-    return 1;
-    
-  if (!(cs->ident_map= cs_alloc(256)))
-    return 1;
+  cs->state_map= cs_alloc(256);
+  cs->ident_map= cs_alloc(256);
 
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
@@ -123,7 +137,6 @@ static bool init_state_maps(charset_info_st *cs)
   /* Special handling of hex and binary strings */
   state_map['x']= state_map['X']=  MY_LEX_IDENT_OR_HEX;
   state_map['b']= state_map['B']=  MY_LEX_IDENT_OR_BIN;
-  return 0;
 }
 
 static bool charset_initialized= false;
@@ -131,45 +144,62 @@ static bool charset_initialized= false;
 DRIZZLED_API charset_info_st *all_charsets[256];
 const DRIZZLED_API charset_info_st *default_charset_info = &my_charset_utf8_general_ci;
 
-void add_compiled_collation(charset_info_st * cs)
+static void add_compiled_collation(charset_info_st * cs)
 {
   all_charsets[cs->number]= cs;
   cs->state|= MY_CS_AVAILABLE;
 }
 
-static bool init_available_charsets(myf myflags)
+static void init_compiled_charsets()
 {
-  bool error= false;
+  add_compiled_collation(&my_charset_bin);
+
+  add_compiled_collation(&my_charset_utf8mb4_general_ci);
+  add_compiled_collation(&my_charset_utf8mb4_bin);
+  add_compiled_collation(&my_charset_utf8mb4_unicode_ci);
+  add_compiled_collation(&my_charset_utf8mb4_icelandic_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_latvian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_romanian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_slovenian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_polish_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_estonian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_spanish_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_swedish_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_turkish_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_czech_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_danish_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_lithuanian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_slovak_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_spanish2_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_roman_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_persian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_esperanto_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_hungarian_uca_ci);
+  add_compiled_collation(&my_charset_utf8mb4_sinhala_uca_ci);
+}
+
+static void init_available_charsets()
+{
   /*
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
   */
-  if (charset_initialized == false)
+  if (charset_initialized)
+    return;
+  memset(&all_charsets, 0, sizeof(all_charsets));
+  init_compiled_charsets();
+
+  /* Copy compiled charsets */
+  for (charset_info_st**cs= all_charsets;
+    cs < all_charsets+array_elements(all_charsets)-1;
+    cs++)
   {
-    charset_info_st **cs;
-    memset(&all_charsets, 0, sizeof(all_charsets));
-    init_compiled_charsets(myflags);
-
-    /* Copy compiled charsets */
-    for (cs=all_charsets;
-         cs < all_charsets+array_elements(all_charsets)-1 ;
-         cs++)
-    {
-      if (*cs)
-      {
-        if (cs[0]->ctype)
-          if (init_state_maps(*cs))
-            *cs= NULL;
-      }
-    }
-
-    charset_initialized= true;
+    if (*cs && cs[0]->ctype)
+      init_state_maps(*cs);
   }
-  assert(charset_initialized);
 
-  return error;
+  charset_initialized= true;
 }
-
 
 void free_charsets()
 {
@@ -182,18 +212,16 @@ void free_charsets()
   }
 }
 
-
 uint32_t get_collation_number(const char *name)
 {
-  init_available_charsets(MYF(0));
+  init_available_charsets();
   return get_collation_number_internal(name);
 }
-
 
 uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
   charset_info_st **cs;
-  init_available_charsets(MYF(0));
+  init_available_charsets();
 
   for (cs= all_charsets;
        cs < all_charsets+array_elements(all_charsets)-1 ;
@@ -205,87 +233,59 @@ uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
   return 0;
 }
 
-
 const char *get_charset_name(uint32_t charset_number)
 {
-  init_available_charsets(MYF(0));
-
-  const charset_info_st *cs= all_charsets[charset_number];
-  if (cs && (cs->number == charset_number) && cs->name )
-    return cs->name;
-
-  return "?";   /* this mimics find_type() */
+  init_available_charsets();
+  const charset_info_st* cs= all_charsets[charset_number];
+  return cs && cs->number == charset_number && cs->name ? cs->name : "?";
 }
-
 
 static const charset_info_st *get_internal_charset(uint32_t cs_number)
 {
-  charset_info_st *cs;
+  charset_info_st* cs= all_charsets[cs_number];
   /*
     To make things thread safe we are not allowing other threads to interfere
     while we may changing the cs_info_table
   */
-  if ((cs= all_charsets[cs_number]))
+  if (not cs)
+    return NULL;
+  assert(not (not (cs->state & MY_CS_COMPILED) && not (cs->state & MY_CS_LOADED)));
+  if (not (cs->state & MY_CS_AVAILABLE))
+    return NULL;
+  if (not (cs->state & MY_CS_READY))
   {
-    if (!(cs->state & MY_CS_COMPILED) && !(cs->state & MY_CS_LOADED))
-    {
-      assert(0);
-    }
-    cs= (cs->state & MY_CS_AVAILABLE) ? cs : NULL;
+    if (cs->coll->init && cs->coll->init(*cs, cs_alloc))
+      return NULL;
+    cs->state|= MY_CS_READY;
   }
-  if (cs && !(cs->state & MY_CS_READY))
-  {
-    if ((cs->cset->init && cs->cset->init(cs, cs_alloc)) ||
-        (cs->coll->init && cs->coll->init(cs, cs_alloc)))
-      cs= NULL;
-    else
-      cs->state|= MY_CS_READY;
-  }
-
   return cs;
 }
 
-
 const charset_info_st *get_charset(uint32_t cs_number)
 {
-  const charset_info_st *cs;
   if (cs_number == default_charset_info->number)
     return default_charset_info;
 
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
+  init_available_charsets();	/* If it isn't initialized */
 
   if (!cs_number || cs_number >= array_elements(all_charsets)-1)
     return NULL;
 
-  cs= get_internal_charset(cs_number);
-
-  return cs;
+  return get_internal_charset(cs_number);
 }
 
 const charset_info_st *get_charset_by_name(const char *cs_name)
 {
-  uint32_t cs_number;
-  const charset_info_st *cs;
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
-
-  cs_number= get_collation_number(cs_name);
-  cs= cs_number ? get_internal_charset(cs_number) : NULL;
-
-  return cs;
+  init_available_charsets();	/* If it isn't initialized */
+  uint32_t cs_number= get_collation_number(cs_name);
+  return cs_number ? get_internal_charset(cs_number) : NULL;
 }
-
 
 const charset_info_st *get_charset_by_csname(const char *cs_name, uint32_t cs_flags)
 {
-  uint32_t cs_number;
-  const charset_info_st *cs;
-
-  (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
-
-  cs_number= get_charset_number(cs_name, cs_flags);
-  cs= cs_number ? get_internal_charset(cs_number) : NULL;
-
-  return(cs);
+  init_available_charsets();	/* If it isn't initialized */
+  uint32_t cs_number= get_charset_number(cs_name, cs_flags);
+  return cs_number ? get_internal_charset(cs_number) : NULL;
 }
 
 

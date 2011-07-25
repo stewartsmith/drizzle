@@ -42,7 +42,7 @@ String *Item_func_uncompress::val_str(String *str)
   if (!res)
     goto err;
   null_value= 0;
-  if (res->is_empty())
+  if (res->empty())
     return res;
 
   /* If length is less than 4 bytes, data is corrupt */

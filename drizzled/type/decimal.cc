@@ -1178,16 +1178,13 @@ fatal_error:
 
 int decimal2double(const decimal_t *from, double *to)
 {
-  char strbuf[FLOATING_POINT_BUFFER], *end;
+  char strbuf[FLOATING_POINT_BUFFER];
   int len= sizeof(strbuf);
-  int rc, error;
-
-  rc = decimal2string(from, strbuf, &len, 0, 0, 0);
-  end= strbuf + len;
-
+  int rc = decimal2string(from, strbuf, &len, 0, 0, 0);
+  char* end= strbuf + len;
+  int error;
   *to= internal::my_strtod(strbuf, &end, &error);
-
-  return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
+  return rc != E_DEC_OK ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
 
 /**
@@ -1208,7 +1205,7 @@ int double2decimal(const double from, decimal_t *to)
                                 internal::MY_GCVT_ARG_DOUBLE,
                                 sizeof(buff) - 1, buff, NULL);
   res= string2decimal(buff, to, &end);
-  return(res);
+  return res;
 }
 
 

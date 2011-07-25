@@ -153,7 +153,7 @@ void drizzled_handle_segfault(int sig)
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"));
 
-  drizzled::util::custom_backtrace();
+  call_backtrace();
 
   write_core(sig);
 

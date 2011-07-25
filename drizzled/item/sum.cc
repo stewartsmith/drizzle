@@ -411,10 +411,9 @@ Item_sum::Item_sum(Session *session, Item_sum *item):
   forced_const(item->forced_const)
 {
   if (arg_count <= 2)
-    args=tmp_args;
+    args= tmp_args;
   else
-    if (!(args= (Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-      return;
+    args= new (session->mem) Item*[arg_count];
   memcpy(args, item->args, sizeof(Item*)*arg_count);
 }
 
@@ -778,7 +777,7 @@ Item_sum_sum::Item_sum_sum(Session *session, Item_sum_sum *item)
 
 Item *Item_sum_sum::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_sum(session, this);
+  return new (session->mem) Item_sum_sum(session, this);
 }
 
 
@@ -843,7 +842,7 @@ bool Item_sum_sum::add()
     if (!args[0]->null_value)
       null_value= 0;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1019,7 +1018,7 @@ bool Item_sum_distinct::setup(Session *session)
   /*
     Virtual table and the tree are created anew on each re-execution of
     PS/SP. Hence all further allocations are performed in the runtime
-    mem_root.
+    mem.
   */
   null_value= maybe_null= 1;
   quick_group= 0;
@@ -1181,7 +1180,7 @@ Item_sum_avg_distinct::calculate_val_and_count()
 
 Item *Item_sum_count::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_count(session, this);
+  return new (session->mem) Item_sum_count(session, this);
 }
 
 
@@ -1241,7 +1240,7 @@ void Item_sum_avg::fix_length_and_dec()
 
 Item *Item_sum_avg::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_avg(session, this);
+  return new (session->mem) Item_sum_avg(session, this);
 }
 
 
@@ -1353,7 +1352,7 @@ double Item_sum_std::val_real()
 
 Item *Item_sum_std::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_std(session, this);
+  return new (session->mem) Item_sum_std(session, this);
 }
 
 
@@ -1451,7 +1450,7 @@ void Item_sum_variance::fix_length_and_dec()
 
 Item *Item_sum_variance::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_variance(session, this);
+  return new (session->mem) Item_sum_variance(session, this);
 }
 
 
@@ -1743,7 +1742,7 @@ void Item_sum_hybrid::no_rows_in_result()
 
 Item *Item_sum_min::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_min(session, this);
+  return new (session->mem) Item_sum_min(session, this);
 }
 
 
@@ -1806,7 +1805,7 @@ bool Item_sum_min::add()
 
 Item *Item_sum_max::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_max(session, this);
+  return new (session->mem) Item_sum_max(session, this);
 }
 
 
@@ -1884,7 +1883,7 @@ void Item_sum_bit::clear()
 
 Item *Item_sum_or::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_or(session, this);
+  return new (session->mem) Item_sum_or(session, this);
 }
 
 
@@ -1898,7 +1897,7 @@ bool Item_sum_or::add()
 
 Item *Item_sum_xor::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_xor(session, this);
+  return new (session->mem) Item_sum_xor(session, this);
 }
 
 
@@ -1912,7 +1911,7 @@ bool Item_sum_xor::add()
 
 Item *Item_sum_and::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_and(session, this);
+  return new (session->mem) Item_sum_and(session, this);
 }
 
 
@@ -2584,8 +2583,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   if (tree || table || tmp_table_param)
     return false;
 
-  if (!(tmp_table_param= new Tmp_Table_Param))
-    return true;
+  tmp_table_param= new Tmp_Table_Param;
 
   /* Create a table with an unique key over all parameters */
   for (uint32_t i=0; i < arg_count ; i++)
@@ -2657,8 +2655,8 @@ bool Item_sum_count_distinct::setup(Session *session)
       {
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
-        cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->getMemRoot()->allocate(table->getShare()->sizeFields() * sizeof(uint32_t));
+        cmp_arg= this;
+        field_lengths= new (session->mem) uint32_t[table->getShare()->sizeFields()];
         for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
@@ -2686,7 +2684,7 @@ bool Item_sum_count_distinct::setup(Session *session)
 
 Item *Item_sum_count_distinct::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_sum_count_distinct(session, this);
+  return new (session->mem) Item_sum_count_distinct(session, this);
 }
 
 
@@ -3063,11 +3061,10 @@ void Item_func_group_concat::cleanup()
         delete_tree(tree);
         tree= 0;
       }
-      if (unique_filter)
-      {
-        delete unique_filter;
-        unique_filter= NULL;
-      }
+
+      delete unique_filter;
+      unique_filter= NULL;
+
       if (warning)
       {
         char warn_buff[DRIZZLE_ERRMSG_SIZE];
@@ -3084,7 +3081,7 @@ void Item_func_group_concat::cleanup()
 
 Item *Item_func_group_concat::copy_or_same(Session* session)
 {
-  return new (session->mem_root) Item_func_group_concat(session, this);
+  return new (session->mem) Item_func_group_concat(session, this);
 }
 
 
@@ -3204,10 +3201,9 @@ bool Item_func_group_concat::setup(Session *session)
     assertion here when this is fixed.
   */
   if (table || tree)
-    return(false);
+    return false;
 
-  if (!(tmp_table_param= new Tmp_Table_Param))
-    return(true);
+  tmp_table_param= new Tmp_Table_Param;
 
   /* We'll convert all blobs to varchar fields in the temporary table */
   tmp_table_param->convert_blob_length= max_length *
@@ -3223,7 +3219,7 @@ bool Item_func_group_concat::setup(Session *session)
       if (item->is_null())
       {
         always_null= 1;
-        return(false);
+        return false;
       }
     }
   }
@@ -3237,7 +3233,7 @@ bool Item_func_group_concat::setup(Session *session)
   */
   if (arg_count_order &&
       setup_order(session, args, context->table_list, list, all_fields, *order))
-    return(true);
+    return true;
 
   count_field_types(select_lex, tmp_table_param, all_fields, 0);
   tmp_table_param->force_copy_fields= force_copy_fields;
@@ -3266,7 +3262,7 @@ bool Item_func_group_concat::setup(Session *session)
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
   {
-    return(true);
+    return true;
   }
 
   table->cursor->extra(HA_EXTRA_NO_ROWS);
@@ -3300,7 +3296,7 @@ bool Item_func_group_concat::setup(Session *session)
                               tree_key_length,
                               (size_t)session->variables.max_heap_table_size);
 
-  return(false);
+  return false;
 }
 
 

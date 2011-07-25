@@ -2,7 +2,7 @@ SHOW CREATE TABLE bug56143_2;
 Table	Create Table
 bug56143_2	CREATE TABLE `bug56143_2` (
   `a` INT DEFAULT NULL,
-  KEY `a` (`a`),
+  KEY `a` (`a`) USING BTREE,
   CONSTRAINT `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1` FOREIGN KEY (`a`) REFERENCES `bug56143_1` (`a`) ON UPDATE SET NULL,
   CONSTRAINT `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa10` FOREIGN KEY (`a`) REFERENCES `bug56143_1` (`a`) ON UPDATE SET NULL,
   CONSTRAINT `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa100` FOREIGN KEY (`a`) REFERENCES `bug56143_1` (`a`) ON UPDATE SET NULL,

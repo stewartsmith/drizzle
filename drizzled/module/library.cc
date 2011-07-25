@@ -83,11 +83,11 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   }
 
   void *dl_handle= NULL;
-  string dlpath("");
+  string dlpath;
 
   if (builtin)
   {
-    dlpath.assign("<builtin>");
+    dlpath= "<builtin>";
     dl_handle= dlopen(NULL, RTLD_NOW|RTLD_LOCAL);
     if (dl_handle == NULL)
     {
@@ -102,7 +102,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   else
   {
   /* Open new dll handle */
-    dlpath.assign(Library::getLibraryPath(plugin_name).file_string());
+    dlpath= Library::getLibraryPath(plugin_name).file_string();
     dl_handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
     if (dl_handle == NULL)
     {

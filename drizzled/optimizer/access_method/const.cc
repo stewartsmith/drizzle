@@ -19,24 +19,23 @@
  */
 
 #include <config.h>
-#include <drizzled/session.h>
 #include <drizzled/join_table.h>
-#include <drizzled/sql_select.h>
 #include <drizzled/optimizer/access_method/const.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/table.h>
 
-using namespace drizzled;
+namespace drizzled {
 
-bool optimizer::Const::getStats(Table *table,
-                                JoinTable *join_tab)
+void optimizer::Const::getStats(Table& table, JoinTable& join_tab)
 {
-  table->status= STATUS_NO_RECORD;
-  join_tab->read_first_record= join_read_const;
-  join_tab->read_record.read_record= join_no_more_records;
-  if (table->covering_keys.test(join_tab->ref.key) &&
-      ! table->no_keyread)
+  table.status= STATUS_NO_RECORD;
+  join_tab.read_first_record= join_read_const;
+  join_tab.read_record.read_record= join_no_more_records;
+  if (table.covering_keys.test(join_tab.ref.key) && not table.no_keyread)
   {
-    table->key_read= 1;
-    table->cursor->extra(HA_EXTRA_KEYREAD);
+    table.key_read= 1;
+    table.cursor->extra(HA_EXTRA_KEYREAD);
   }
-  return false;
+}
+
 }

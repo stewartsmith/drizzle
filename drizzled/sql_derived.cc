@@ -25,8 +25,7 @@
 #include <drizzled/session.h>
 #include <drizzled/open_tables_state.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Call given derived table processor (preparing or filling tables)
@@ -108,8 +107,7 @@ bool derived_prepare(Session *session, LEX *, TableList *orig_table_list)
     for (Select_Lex *sl= first_select; sl; sl= sl->next_select())
       sl->context.outer_context= 0;
 
-    if (!(derived_result= new select_union))
-      return(true); // out of memory
+    derived_result= new select_union;
 
     // Select_Lex_Unit::prepare correctly work for single select
     if ((res= unit->prepare(session, derived_result, 0)))
@@ -141,10 +139,7 @@ exit:
     */
     if (res)
     {
-      if (table)
-      {
-        table= 0;
-      }
+      table= 0;
       delete derived_result;
     }
     else
@@ -164,7 +159,7 @@ exit:
     }
   }
 
-  return(res);
+  return res;
 }
 
 /*

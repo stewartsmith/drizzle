@@ -28,10 +28,10 @@ using namespace drizzled;
 ColumnsTool::ColumnsTool() :
   DataDictionary("COLUMNS")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("COLUMN_NAME");
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER, 0, false);
   add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);

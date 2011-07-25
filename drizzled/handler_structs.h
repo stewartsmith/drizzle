@@ -84,16 +84,10 @@ typedef struct st_ha_alter_information
 
 typedef struct key_create_information_st
 {
-  enum ha_key_alg algorithm;
+  ha_key_alg algorithm;
   uint32_t block_size;
   LEX_STRING comment;
 } KEY_CREATE_INFO;
-
-
-typedef struct st_ha_check_opt
-{
-  st_ha_check_opt() {}                        /* Remove gcc warning */
-} HA_CHECK_OPT;
 
 
 typedef struct st_range_seq_if

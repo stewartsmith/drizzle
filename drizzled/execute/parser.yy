@@ -70,9 +70,7 @@
 #define YYLTYPE_IS_TRIVIAL 0
 
 int execute_lex(YYSTYPE* lvalp, void* scanner);
-std::vector<std::string> parsed_queries;
 std::string query;
-size_t pos= std::string::npos;
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0) 
 
 inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scanner, const char *error)
@@ -82,7 +80,6 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
     /* TODO: FIX ME!!! */
     /*
     context->abort(context, error);*/
-    (void)scanner; (void)error;
   }
 }
 
@@ -119,17 +116,22 @@ namespace execute {
 std::vector<std::string> Context::start() 
 {
   execute_parse(this, (void **)scanner);
-  parsed_queries.clear();
+  std::vector<std::string> parsed_queries;
   while ((pos= query.find(';')) != std::string::npos)
   {
     parsed_queries.push_back(query.substr(0, pos));
     if (query[pos+1] == ' ')
+    {
       query= query.substr(pos + 2, query.length());
+    }
     else
+    {
       query= query.substr(pos + 1, query.length());
+    }
   }
   parsed_queries.push_back(query); 
   query.clear();
+
   return parsed_queries;
 }
 

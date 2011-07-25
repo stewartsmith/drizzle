@@ -179,7 +179,7 @@ retry:
 
       if (not session->getKilled())
       {
-        drizzle_reset_errors(session, 1);         // Clear warnings
+        drizzle_reset_errors(*session, true);         // Clear warnings
         session->clear_error();                 // Clear error message
         goto retry;
       }

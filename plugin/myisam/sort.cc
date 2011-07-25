@@ -103,12 +103,9 @@ my_var_write(MI_SORT_PARAM *info, internal::io_cache_st *to_file, unsigned char 
 int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 			  size_t sortbuff_size)
 {
-  int error;
-  size_t maxbuffer, skr;
-  uint32_t memavl,old_memavl,keys,sort_length;
+  size_t skr;
+  uint32_t memavl,keys;
   DYNAMIC_ARRAY buffpek;
-  ha_rows records;
-  unsigned char **sort_keys;
   internal::io_cache_st tempfile, tempfile_for_exceptions;
 
   if (info->keyinfo->flag & HA_VAR_LENGTH_KEY)
@@ -127,12 +124,13 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   my_b_clear(&tempfile);
   my_b_clear(&tempfile_for_exceptions);
   memset(&buffpek, 0, sizeof(buffpek));
-  sort_keys= (unsigned char **) NULL; error= 1;
-  maxbuffer=1;
+  unsigned char** sort_keys= (unsigned char **) NULL; 
+  int error= 1;
+  size_t maxbuffer=1;
 
   memavl=max(sortbuff_size,(size_t)MIN_SORT_MEMORY);
-  records=	info->sort_info->max_records;
-  sort_length=	info->key_length;
+  ha_rows records= info->sort_info->max_records;
+  uint32_t sort_length= info->key_length;
 
   while (memavl >= MIN_SORT_MEMORY)
   {
@@ -143,33 +141,21 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     else
       do
       {
-	skr=maxbuffer;
-	if (memavl < sizeof(BUFFPEK)* maxbuffer ||
-	    (keys=(memavl-sizeof(BUFFPEK)* maxbuffer)/
-             (sort_length+sizeof(char*))) <= 1 ||
-            keys < maxbuffer)
-	{
-	  mi_check_print_error(info->sort_info->param,
-			       "myisam_sort_buffer_size is too small");
-	  goto err;
-	}
+        skr=maxbuffer;
+        if (memavl < sizeof(BUFFPEK)* maxbuffer ||
+          (keys=(memavl-sizeof(BUFFPEK)* maxbuffer) / (sort_length+sizeof(char*))) <= 1 ||
+          keys < maxbuffer)
+        {
+          mi_check_print_error(info->sort_info->param,
+            "myisam_sort_buffer_size is too small");
+          goto err;
+        }
       }
       while ((maxbuffer= (size_t)(records/(keys-1)+1)) != skr);
 
-    if ((sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)))))
-    {
-      if (my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer,
-			     maxbuffer/2))
-      {
-	free((unsigned char*) sort_keys);
-        sort_keys= 0;
-      }
-      else
-	break;
-    }
-    old_memavl=memavl;
-    if ((memavl=memavl/4*3) < MIN_SORT_MEMORY && old_memavl > MIN_SORT_MEMORY)
-      memavl=MIN_SORT_MEMORY;
+    sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)));
+    my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
+    break;
   }
   if (memavl < MIN_SORT_MEMORY)
   {
@@ -241,8 +227,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   error =0;
 
 err:
-  if (sort_keys)
-    free((unsigned char*) sort_keys);
+  free(sort_keys);
   delete_dynamic(&buffpek);
   tempfile.close_cached_file();
   tempfile_for_exceptions.close_cached_file();
@@ -323,8 +308,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     {
       got_error=1;
       void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sinfo->rec_buff);
-      if (rec_buff_ptr != NULL)
-        free(rec_buff_ptr);
+      free(rec_buff_ptr);
       continue;
     }
     if (!got_error)
@@ -348,8 +332,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     }
     free((unsigned char*) sinfo->sort_keys);
     void * rec_buff_ptr= mi_get_rec_buff_ptr(info, sinfo->rec_buff);
-    if (rec_buff_ptr != NULL)
-      free(rec_buff_ptr);
+    free(rec_buff_ptr);
     sinfo->sort_keys=0;
   }
 

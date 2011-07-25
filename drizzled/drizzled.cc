@@ -250,7 +250,7 @@ uint32_t drizzled_bind_timeout;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
-back_log_constraints back_log(50);
+back_log_constraints back_log(SOMAXCONN);
 DRIZZLED_API uint32_t server_id;
 DRIZZLED_API string server_uuid;
 uint64_t table_cache_size;
@@ -299,12 +299,11 @@ time_t flush_status_time;
 
 fs::path basedir(PREFIX);
 fs::path pid_file;
-fs::path secure_file_priv("");
+fs::path secure_file_priv;
 fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
-
-char *opt_tc_log_file;
+const char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -377,23 +376,11 @@ po::variables_map &getVariablesMap()
   return vm;
 }
 
-namespace {
+static std::string g_hostname= "localhost";
 
-std::string &getGlobHostname()
+const std::string& getServerHostname()
 {
-  static std::string glob_hostname("localhost");
-  return glob_hostname;
-}
-
-void setServerHostname(const std::string &hostname)
-{
-  getGlobHostname()= hostname;
-}
-}
-
-const std::string &getServerHostname()
-{
-  return getGlobHostname();
+  return g_hostname;
 }
 
 /****************************************************************************
@@ -623,7 +610,7 @@ void Session::unlink(session_id_t &session_id)
     unlink(session);
 }
 
-void Session::unlink(Session::shared_ptr &session)
+void Session::unlink(const Session::shared_ptr& session)
 {
   --connection_count;
 
@@ -1014,34 +1001,26 @@ static void process_defaults_files()
 
     ifstream input_defaults_file(file_location.file_string().c_str());
 
-    po::parsed_options file_parsed=
-      dpo::parse_config_file(input_defaults_file, full_options, true);
-    vector<string> file_unknown=
-      po::collect_unrecognized(file_parsed.options, po::include_positional);
+    po::parsed_options file_parsed= dpo::parse_config_file(input_defaults_file, full_options, true);
+    vector<string> file_unknown= po::collect_unrecognized(file_parsed.options, po::include_positional);
 
-    for (vector<string>::iterator it= file_unknown.begin();
-         it != file_unknown.end();
-         ++it)
+    for (vector<string>::iterator it= file_unknown.begin(); it != file_unknown.end(); ++it)
     {
-      string new_unknown_opt("--");
-      new_unknown_opt.append(*it);
+      string new_unknown_opt("--" + *it);
       ++it;
       if (it == file_unknown.end())
 				break;
-      if ((*it) != "true")
-      {
-        new_unknown_opt.push_back('=');
-        new_unknown_opt.append(*it);
-      }
+      if (*it != "true")
+        new_unknown_opt += "=" + *it;
       unknown_options.push_back(new_unknown_opt);
     }
     store(file_parsed, vm);
   }
 }
 
-static void compose_defaults_file_list(vector<string> in_options)
+static void compose_defaults_file_list(const vector<string>& in_options)
 {
-	BOOST_FOREACH(vector<string>::reference it, in_options)
+	BOOST_FOREACH(const string& it, in_options)
   {
     fs::path p(it);
     if (fs::is_regular_file(p))
@@ -1056,12 +1035,11 @@ static void compose_defaults_file_list(vector<string> in_options)
 
 int init_basic_variables(int argc, char **argv)
 {
-  time_t curr_time;
   umask(((~internal::my_umask) & 0666));
   decimal_zero.set_zero(); // set decimal_zero constant;
   tzset();			// Set tzname
 
-  curr_time= time(NULL);
+  time_t curr_time= time(NULL);
   if (curr_time == (time_t)-1)
     return 1;
 
@@ -1075,14 +1053,12 @@ int init_basic_variables(int argc, char **argv)
   char ret_hostname[FN_REFLEN];
   if (gethostname(ret_hostname,sizeof(ret_hostname)) < 0)
   {
-    errmsg_printf(error::WARN,
-                  _("gethostname failed, using '%s' as hostname"),
-                  getServerHostname().c_str());
+    errmsg_printf(error::WARN, _("gethostname failed, using '%s' as hostname"), getServerHostname().c_str());
     pid_file= "drizzle";
   }
   else
   {
-    setServerHostname(ret_hostname);
+    g_hostname= ret_hostname;
     pid_file= getServerHostname();
   }
   pid_file.replace_extension(".pid");
@@ -1134,7 +1110,7 @@ int init_basic_variables(int argc, char **argv)
   ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
   _("Default completion type."))
   ("core-file",  _("Write core on errors."))
-  ("datadir", po::value<fs::path>(&getDataHome()),
+  ("datadir", po::value<fs::path>(&getMutableDataHome()),
   _("Path to the database root."))
   ("default-storage-engine", po::value<string>(),
   _("Set the default storage engine for tables."))
@@ -1308,12 +1284,10 @@ int init_basic_variables(int argc, char **argv)
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
-    defaults_file_list.insert(defaults_file_list.begin(),
-                              system_config_file_drizzle.file_string());
+    defaults_file_list.insert(defaults_file_list.begin(), system_config_file_drizzle.file_string());
 
     fs::path config_conf_d_location(system_config_dir);
     config_conf_d_location /= "conf.d";
-
 
     CachedDirectory config_conf_d(config_conf_d_location.file_string());
     if (not config_conf_d.fail())
@@ -1321,15 +1295,8 @@ int init_basic_variables(int argc, char **argv)
 			BOOST_FOREACH(CachedDirectory::Entries::const_reference iter, config_conf_d.getEntries())
       {
         string file_entry(iter->filename);
-
-        if (not file_entry.empty()
-            && file_entry != "."
-            && file_entry != "..")
-        {
-          fs::path the_entry(config_conf_d_location);
-          the_entry /= file_entry;
-          defaults_file_list.push_back(the_entry.file_string());
-        }
+        if (not file_entry.empty() && file_entry != "." && file_entry != "..")
+          defaults_file_list.push_back((config_conf_d_location / file_entry).file_string());
       }
     }
   }
@@ -1343,10 +1310,7 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
+    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
     unireg_abort(1);
   }
 
@@ -1361,10 +1325,7 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
+    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
     unireg_abort(1);
   }
 
@@ -1457,12 +1418,11 @@ int init_remaining_variables(module::Registry &plugins)
 
   init_time();				/* Init time-functions (read zone) */
 
-  if (item_create_init())
-    return 1;
+  item_create_init();
   if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
-  if (! init_temporal_formats())
+  if (not init_temporal_formats())
     return 1;
 
   if (!(default_charset_info=
@@ -1518,7 +1478,7 @@ int init_remaining_variables(module::Registry &plugins)
 }
 
 
-int init_server_components(module::Registry &plugins)
+void init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1577,8 +1537,6 @@ int init_server_components(module::Registry &plugins)
   }
 
   init_update_queries();
-
-  return(0);
 }
 
 
@@ -2064,10 +2022,7 @@ static void drizzle_init_variables()
 */
 static void get_options()
 {
-
-  fs::path &data_home_catalog= getDataHomeCatalog();
-  data_home_catalog= getDataHome();
-  data_home_catalog /= "local";
+  setDataHomeCatalog(getDataHome() / "local");
 
   if (vm.count("user"))
   {
@@ -2247,7 +2202,7 @@ static void fix_paths()
       }
     }
 
-    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
     {
       errmsg_printf(error::ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);

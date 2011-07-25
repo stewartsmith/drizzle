@@ -175,8 +175,7 @@ void drizzle_free(drizzle_st *drizzle)
     assert(drizzle->con_list == NULL);
   }
 
-  if (drizzle->pfds != NULL)
-    free(drizzle->pfds);
+  free(drizzle->pfds);
 
   if (drizzle->options & DRIZZLE_ALLOCATED)
     free(drizzle);

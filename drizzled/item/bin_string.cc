@@ -20,8 +20,7 @@
 #include <config.h>
 #include <drizzled/item/bin_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   bin item.

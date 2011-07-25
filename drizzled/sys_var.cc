@@ -426,15 +426,13 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
-    session->mem_root->reset_root_defaults(session->variables.query_alloc_block_size,
-                                           session->variables.query_prealloc_size);
+    session->mem.reset_defaults(session->variables.query_alloc_block_size, session->variables.query_prealloc_size);
 }
 
 
 static void fix_server_id(Session *, sql_var_t)
 {
 }
-
 
 void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val)
 {
@@ -963,8 +961,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
     if (str)
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->strmake(str, length), length,
-                           system_charset_info, DERIVATION_SYSCONST);
+      tmp= new Item_string(session->mem.strmake(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
     else
     {
@@ -1408,46 +1405,38 @@ static option* find_option(struct option *opt, const char *name)
 
 drizzle_show_var* enumerate_sys_vars(Session *session)
 {
-  int size= sizeof(drizzle_show_var) * (system_variable_map.size() + 1);
-  drizzle_show_var *result= (drizzle_show_var*) session->getMemRoot()->allocate(size);
-
-  if (result)
+  drizzle_show_var *result= new (session->mem) drizzle_show_var[system_variable_map.size() + 1];
+  drizzle_show_var *show= result;
+  BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
   {
-    drizzle_show_var *show= result;
-    BOOST_FOREACH(SystemVariableMap::const_reference iter, system_variable_map)
-    {
-      sys_var *var= iter.second;
-      show->name= var->getName().c_str();
-      show->value= (char*) var;
-      show->type= SHOW_SYS;
-      ++show;
-    }
-
-    /* make last element empty */
-    memset(show, 0, sizeof(drizzle_show_var));
+    sys_var *var= iter.second;
+    show->name= var->getName().c_str();
+    show->value= (char*) var;
+    show->type= SHOW_SYS;
+    ++show;
   }
+
+  /* make last element empty */
+  memset(show, 0, sizeof(drizzle_show_var));
   return result;
 }
 
 void add_sys_var_to_list(sys_var *var)
 {
   string lower_name(var->getName());
-  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+  boost::to_lower(lower_name);
 
   /* this fails if there is a conflicting variable name. */
   if (system_variable_map.count(lower_name))
   {
-    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"),
-                  var->getName().c_str());
+    errmsg_printf(error::ERROR, _("Variable named %s already exists!\n"), var->getName().c_str());
     throw exception();
   } 
 
-  pair<SystemVariableMap::iterator, bool> ret= 
-    system_variable_map.insert(make_pair(lower_name, var));
+  pair<SystemVariableMap::iterator, bool> ret= system_variable_map.insert(make_pair(lower_name, var));
   if (ret.second == false)
   {
-    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"),
-                  var->getName().c_str());
+    errmsg_printf(error::ERROR, _("Could not add Variable: %s\n"), var->getName().c_str());
     throw exception();
   }
 }
@@ -1548,9 +1537,9 @@ int sys_var_init()
   catch (std::exception&)
   {
     errmsg_printf(error::ERROR, _("Failed to initialize system variables"));
-    return(1);
+    return 1;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1567,21 +1556,10 @@ int sys_var_init()
 
 sys_var *find_sys_var(const std::string &name)
 {
-  string lower_name(name);
-  transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-
-  sys_var *result= NULL;
-
-  if (SystemVariableMap::mapped_type* ptr= find_ptr(system_variable_map, lower_name))
-    result= *ptr;
-
-  if (result == NULL)
-  {
-    my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
-    return NULL;
-  }
-
-  return result;
+  if (sys_var* ptr= find_ptr2(system_variable_map, boost::to_lower_copy(name)))
+    return ptr;
+  my_error(ER_UNKNOWN_SYSTEM_VARIABLE, MYF(0), name.c_str());
+  return NULL;
 }
 
 
@@ -1593,15 +1571,11 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          sql_var_t type,
                                                          const LEX_STRING *)
 {
-  unsigned char* result;
-  string engine_name;
   plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
-  engine_name= engine->getName();
-  result= (unsigned char *) session->strmake(engine_name.c_str(),
-                                             engine_name.size());
-  return result;
+  string engine_name= engine->getName();
+  return (unsigned char *) session->mem.strmake(engine_name);
 }
 
 

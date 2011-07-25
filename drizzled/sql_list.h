@@ -138,9 +138,9 @@ public:
     last= &(*last)->next;
     elements++;
   }
-  void push_back(void *info, memory::Root *mem_root)
+  void push_back(void *info, memory::Root& mem)
   {
-    *last = new (mem_root) list_node(info, &end_of_list);
+    *last = new (mem) list_node(info, &end_of_list);
     last= &(*last)->next;
     elements++;
   }
@@ -332,9 +332,6 @@ public:
   List() {}
   List(const List<T> &tmp) : base_list(tmp) {}
   List(const List<T> &tmp, memory::Root *mem_root) : base_list(tmp, mem_root) {}
-  void push_back(T *a) { base_list::push_back(a); }
-  void push_back(T *a, memory::Root *mem_root) { base_list::push_back(a, mem_root); }
-  void push_front(T *a) { base_list::push_front(a); }
   T& front() {return *static_cast<T*>(first->info); }
   T* pop()  {return static_cast<T*>(base_list::pop()); }
   void concat(List<T> *list) { base_list::concat(list); }

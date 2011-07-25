@@ -21,8 +21,7 @@
 #include <drizzled/session.h>
 #include <drizzled/diagnostics_area.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Clear this diagnostics area.

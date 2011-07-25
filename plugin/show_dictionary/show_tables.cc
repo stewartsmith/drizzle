@@ -29,7 +29,7 @@ using namespace drizzled;
 ShowTables::ShowTables() :
   show_dictionary::Show("SHOW_TABLES")
 {
-  add_field("TABLE_NAME");
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 ShowTables::Generator::Generator(drizzled::Field **arg) :

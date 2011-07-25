@@ -26,7 +26,6 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
-#include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
@@ -198,8 +197,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         {
           if (message) // If we have no definition, we don't know if the table should have been replicated
           {
-            TransactionServices &transaction_services= TransactionServices::singleton();
-            transaction_services.dropTable(*session, identifier, *message, if_exists);
+            TransactionServices::dropTable(*session, identifier, *message, if_exists);
           }
         }
         else
@@ -573,7 +571,7 @@ static int prepare_create_table(Session *session,
       tmp_pos+= strlen(tmp);
       strncpy(tmp_pos, STRING_WITH_LEN("_bin"));
       my_error(ER_UNKNOWN_COLLATION, MYF(0), tmp);
-      return(true);
+      return true;
     }
 
     /*
@@ -600,13 +598,12 @@ static int prepare_create_table(Session *session,
       {
         /* Could not convert */
         my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-        return(true);
+        return true;
       }
     }
 
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
-      size_t dummy;
       const charset_info_st * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
@@ -622,31 +619,26 @@ static int prepare_create_table(Session *session,
           occupied memory at the same time when we free this
           sql_field -- at the end of execution.
         */
-        interval= sql_field->interval= typelib(session->mem_root,
-                                               sql_field->interval_list);
+        interval= sql_field->interval= typelib(*session->mem_root, sql_field->interval_list);
 
         List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
-        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
-                                          (unsigned char*) comma_buf +
-                                          sizeof(comma_buf));
+        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf, (unsigned char*) comma_buf + sizeof(comma_buf));
         assert(comma_length > 0);
 
         for (uint32_t i= 0; (tmp= int_it++); i++)
         {
           uint32_t lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(),
-                                       cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
             conv.copy(tmp->ptr(), tmp->length(), cs);
-            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
+            interval->type_names[i]= session->mem.strmake(conv);
             interval->type_lengths[i]= conv.length();
           }
 
           // Strip trailing spaces.
-          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                       interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i], interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
@@ -662,10 +654,10 @@ static int prepare_create_table(Session *session,
           String str, *def= sql_field->def->val_str(&str);
           if (def == NULL) /* SQL "NULL" maps to NULL */
           {
-            if ((sql_field->flags & NOT_NULL_FLAG) != 0)
+            if (sql_field->flags & NOT_NULL_FLAG)
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
 
             /* else, the defaults yield the correct length for NULLs. */
@@ -676,7 +668,7 @@ static int prepare_create_table(Session *session,
             if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
           }
         }
@@ -689,7 +681,7 @@ static int prepare_create_table(Session *session,
 
     sql_field->create_length_to_internal_length();
     if (prepare_blob_field(session, sql_field))
-      return(true);
+      return true;
 
     if (!(sql_field->flags & NOT_NULL_FLAG))
       null_fields++;
@@ -697,7 +689,7 @@ static int prepare_create_table(Session *session,
     if (check_column_name(sql_field->field_name))
     {
       my_error(ER_WRONG_COLUMN_NAME, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
 
     /* Check if we have used the same field name before */
@@ -714,7 +706,7 @@ static int prepare_create_table(Session *session,
 	if (field_no < select_field_pos || dup_no >= select_field_pos)
 	{
 	  my_error(ER_DUP_FIELDNAME, MYF(0), sql_field->field_name);
-	  return(true);
+	  return true;
 	}
 	else
 	{
@@ -768,7 +760,7 @@ static int prepare_create_table(Session *session,
 
     if (prepare_create_field(sql_field, &blob_columns,
 			     &timestamps, &timestamps_with_niladic))
-      return(true);
+      return true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -777,26 +769,26 @@ static int prepare_create_table(Session *session,
   {
     my_message(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS,
                ER(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment > 1)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment &&
       (engine->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (blob_columns && (engine->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
-    return(true);
+    return true;
   }
 
   /* Create keys */
@@ -839,7 +831,7 @@ static int prepare_create_table(Session *session,
                  (fk_key->name.str ? fk_key->name.str :
                                      "foreign key without name"),
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
-	return(true);
+	return true;
       }
       continue;
     }
@@ -848,10 +840,10 @@ static int prepare_create_table(Session *session,
     if (key->columns.size() > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
-      return(true);
+      return true;
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
-      return(true);
+      return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
     {
@@ -890,20 +882,18 @@ static int prepare_create_table(Session *session,
         is_primary_key_name(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
-      return(true);
+      return true;
     }
   }
   tmp= engine->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
-    return(true);
+    return true;
   }
 
   (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
   key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
-  if (!*key_info_buffer || ! key_part_info)
-    return(true);				// Out of memory
 
   key_iterator= alter_info->key_list.begin();
   key_number=0;
@@ -985,7 +975,7 @@ static int prepare_create_table(Session *session,
       if (!sql_field)
       {
 	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-	return(true);
+	return true;
       }
 
       while ((dup_column= cols2++) != column)
@@ -996,7 +986,7 @@ static int prepare_create_table(Session *session,
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
 			  column->field_name.str);
-	  return(true);
+	  return true;
 	}
       }
       cols2= key->columns.begin();
@@ -1082,7 +1072,7 @@ static int prepare_create_table(Session *session,
 	    else
 	    {
 	      my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	      return(true);
+	      return true;
 	    }
 	  }
 	}
@@ -1090,7 +1080,7 @@ static int prepare_create_table(Session *session,
             ! Field::type_can_have_key_part(sql_field->sql_type)))
 	{
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
-	  return(true);
+	  return true;
 	}
 	else if (! (engine->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
         {
@@ -1100,7 +1090,7 @@ static int prepare_create_table(Session *session,
       else if (length == 0)
       {
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
-	  return(true);
+	  return true;
       }
       if (length > engine->max_key_part_length())
       {
@@ -1119,7 +1109,7 @@ static int prepare_create_table(Session *session,
 	else
 	{
 	  my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	  return(true);
+	  return true;
 	}
       }
       key_part_info->length=(uint16_t) length;
@@ -1155,7 +1145,7 @@ static int prepare_create_table(Session *session,
 	  {
 	    my_message(ER_MULTIPLE_PRI_KEY, ER(ER_MULTIPLE_PRI_KEY),
                        MYF(0));
-	    return(true);
+	    return true;
 	  }
           static const char pkey_name[]= "PRIMARY";
 	  key_name=pkey_name;
@@ -1167,7 +1157,7 @@ static int prepare_create_table(Session *session,
 	if (check_if_keyname_exists(key_name, *key_info_buffer, key_info))
 	{
 	  my_error(ER_DUP_KEYNAME, MYF(0), key_name);
-	  return(true);
+	  return true;
 	}
 	key_info->name=(char*) key_name;
       }
@@ -1176,7 +1166,7 @@ static int prepare_create_table(Session *session,
     if (!key_info->name || check_column_name(key_info->name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key_info->name);
-      return(true);
+      return true;
     }
 
     if (!(key_info->flags & HA_NULL_PART_KEY))
@@ -1189,7 +1179,7 @@ static int prepare_create_table(Session *session,
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);
-      return(true);
+      return true;
     }
 
     key_info++;
@@ -1199,13 +1189,13 @@ static int prepare_create_table(Session *session,
       (engine->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
-    return(true);
+    return true;
   }
 
   if (auto_increment > 0)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   /* Sort keys in optimized order */
   internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
@@ -1238,11 +1228,11 @@ static int prepare_create_table(Session *session,
       */
 
       my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
   }
 
-  return(false);
+  return false;
 }
 
 /*
@@ -1376,8 +1366,7 @@ static bool locked_create_event(Session *session,
 
   if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(*session, table_proto);
+    TransactionServices::createTable(*session, table_proto);
   }
 
   return false;
@@ -1712,19 +1701,16 @@ void Session::close_cached_table(Table *table)
           (admin operation or network communication failed)
 */
 static bool admin_table(Session* session, TableList* tables,
-                              HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
-                              int (Cursor::*operator_func)(Session *,
-                                                            HA_CHECK_OPT *))
+                              int (Cursor::*operator_func)(Session*))
 {
   TableList *table;
   Select_Lex *select= &session->lex().select_lex;
   List<Item> field_list;
   Item *item;
   int result_code= 0;
-  TransactionServices &transaction_services= TransactionServices::singleton();
   const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
@@ -1799,7 +1785,7 @@ static bool admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name.c_str());
       session->getClient()->store(buff, length);
-      transaction_services.autocommitOrRollback(*session, false);
+      TransactionServices::autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       session->lex().reset_query_tables_list(false);
@@ -1824,26 +1810,23 @@ static bool admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    result_code = (table->table->cursor->*operator_func)(session, check_opt);
+    result_code = (table->table->cursor->*operator_func)(session);
 
 send_result:
 
     session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
-      DRIZZLE_ERROR *err;
-      while ((err= it++))
+      BOOST_FOREACH(DRIZZLE_ERROR* err, session->main_da().m_warn_list)
       {
         session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
-        session->getClient()->store(warning_level_names[err->level].str,
-                               warning_level_names[err->level].length);
+        session->getClient()->store(warning_level_names[err->level].str, warning_level_names[err->level].length);
         session->getClient()->store(err->msg);
         if (session->getClient()->flush())
           goto err;
       }
-      drizzle_reset_errors(session, true);
+      drizzle_reset_errors(*session, true);
     }
     session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
@@ -1923,7 +1906,7 @@ send_result:
         }
       }
     }
-    transaction_services.autocommitOrRollback(*session, false);
+    TransactionServices::autocommitOrRollback(*session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1932,15 +1915,15 @@ send_result:
   }
 
   session->my_eof();
-  return(false);
+  return false;
 
 err:
-  transaction_services.autocommitOrRollback(*session, true);
+  TransactionServices::autocommitOrRollback(*session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
     table->table=0;
-  return(true);
+  return true;
 }
 
   /*
@@ -2026,8 +2009,7 @@ static bool create_table_wrapper(Session &session,
 
   if (success && not destination_identifier.isTmp())
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, new_table_message);
+    TransactionServices::createTable(session, new_table_message);
   }
 
   return success;
@@ -2152,24 +2134,18 @@ bool create_like_table(Session* session,
 }
 
 
-bool analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
+bool analyze_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
-  return(admin_table(session, tables, check_opt,
-				"analyze", lock_type, true,
-				&Cursor::ha_analyze));
+  return(admin_table(session, tables, "analyze", lock_type, true, &Cursor::ha_analyze));
 }
 
 
-bool check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
+bool check_table(Session* session, TableList* tables)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, check_opt,
-				"check", lock_type,
-				false,
-				&Cursor::ha_check));
+  return admin_table(session, tables, "check", lock_type, false, &Cursor::ha_check);
 }
 
 } /* namespace drizzled */

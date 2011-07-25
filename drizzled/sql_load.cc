@@ -154,11 +154,11 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (escaped->length() > 4 || enclosed->length() > 4)
   {
     my_error(ER_WRONG_FIELD_TERMINATORS,MYF(0),enclosed->c_ptr(), enclosed->length());
-    return(true);
+    return true;
   }
 
   if (session->openTablesLock(table_list))
-    return(true);
+    return true;
 
   if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
                                     &session->lex().select_lex.top_join_list,
@@ -177,7 +177,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (unique_table(table_list, table_list->next_global))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
-    return(true);
+    return true;
   }
 
   table= table_list->table;
@@ -196,7 +196,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(true);
+      return true;
   }
   else
   {						// Part field list
@@ -204,7 +204,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     if (setup_fields(session, 0, fields_vars, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         check_that_all_fields_are_given_values(session, table, table_list))
-      return(true);
+      return true;
     /*
       Check whenever TIMESTAMP field with auto-set feature specified
       explicitly.
@@ -222,7 +222,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     }
     /* Fix the expressions in SET clause */
     if (setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(true);
+      return true;
   }
 
   table->mark_columns_needed_for_insert();
@@ -254,12 +254,12 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   {
     my_message(ER_BLOBS_AND_NO_TERMINATED,ER(ER_BLOBS_AND_NO_TERMINATED),
 	       MYF(0));
-    return(true);
+    return true;
   }
   if (use_vars && !field_term->length() && !enclosed->length())
   {
     my_error(ER_LOAD_FROM_FIXED_SIZE_ROWS_TO_VAR, MYF(0));
-    return(true);
+    return true;
   }
 
   fs::path to_file(ex->file_name);
@@ -289,7 +289,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-      return(true);
+      return true;
     }
   }
 
@@ -297,7 +297,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (stat(target_path.file_string().c_str(), &stat_info))
   {
     my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
-    return(true);
+    return true;
   }
 
   // if we are not in slave thread, the cursor must be:
@@ -307,7 +307,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
          (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
   {
     my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
-    return(true);
+    return true;
   }
   if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
     is_fifo = 1;
@@ -316,7 +316,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
   {
     my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
-    return(true);
+    return true;
   }
   CopyInfo info;
   memset(&info, 0, sizeof(info));
@@ -333,7 +333,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   {
     if	(file >= 0)
       internal::my_close(file,MYF(0));			// no files in net reading
-    return(true);				// Can't allocate buffers
+    return true;				// Can't allocate buffers
   }
 
   /*
@@ -444,7 +444,7 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
     if (skip_lines)
     {
@@ -518,12 +518,12 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
 
     /*
       We don't need to reset auto-increment field since we are restoring
@@ -565,7 +565,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
 
     table->restoreRecordAsDefault();
@@ -599,7 +599,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0), field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           field->set_null();
           if (not field->maybe_null())
@@ -622,7 +622,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
 
 	continue;
@@ -645,7 +645,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       else
       {
         my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-        return(1);
+        return 1;
       }
     }
     if (read_info.error)
@@ -670,7 +670,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0),field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           if (not field->maybe_null() and field->is_timestamp())
               ((field::Epoch::pointer) field)->set_time();
@@ -693,7 +693,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
       }
     }
@@ -701,12 +701,12 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
     /*
       We don't need to reset auto-increment field since we are restoring
       its default value at the beginning of each loop iteration.
@@ -720,7 +720,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
       if (session->getKilled())
-        return(1);
+        return 1;
     }
     session->row_count++;
   }
@@ -1006,8 +1006,7 @@ int READ_INFO::read_field()
     /*
      ** We come here if buffer is too small. Enlarge it and continue
      */
-    if (!(new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE)))
-      return (error=1);
+    new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE);
     to=new_buffer + (to-buffer);
     buffer=new_buffer;
     buff_length+=IO_SIZE;

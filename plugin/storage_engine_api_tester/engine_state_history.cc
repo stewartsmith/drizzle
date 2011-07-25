@@ -118,10 +118,13 @@ public:
   }
 };
 
+extern uint64_t next_cursor_id;
+
 int64_t ClearEngineStateHistoryFunction::val_int()
 {
   engine_state_history.clear();
   null_value= false;
+  next_cursor_id= 0;
   return 0;
 }
 

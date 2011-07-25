@@ -39,7 +39,9 @@
 
 #define MTEST_VERSION "3.3"
 
-#include "client_priv.h"
+#include <config.h>
+#include <client/get_password.h>
+#include <libdrizzle/libdrizzle.hpp>
 
 #include <queue>
 #include <map>
@@ -192,16 +194,17 @@ static uint64_t progress_start= 0;
 
 vector<struct st_command*> q_lines;
 
-typedef struct {
-  int read_lines,current_line;
-} parser_st;
-parser_st parser;
+struct parser_st
+{
+  int read_lines;
+  int current_line;
+} parser;
 
-typedef struct
+struct master_pos_st
 {
   char file[FN_REFLEN];
   uint32_t pos;
-} master_pos_st;
+};
 
 master_pos_st master_pos;
 
@@ -227,23 +230,39 @@ boost::array<VAR, 10> var_reg;
 typedef boost::unordered_map<string, VAR *> var_hash_t;
 var_hash_t var_hash;
 
-struct st_connection
+class st_connection
 {
-  drizzle_st *drizzle;
-  drizzle_con_st con;
-  /* Used when creating views and sp, to avoid implicit commit */
-  drizzle_con_st *util_con;
-  char *name;
+public:
+  st_connection() : con(drizzle)
+  {
+    drizzle_con_add_options(*this, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  }
+
+  operator drizzle::connection_c&()
+  {
+    return con;
+  }
+
+  operator drizzle_con_st*()
+  {
+    return &con.b_;
+  }
+
+  drizzle::drizzle_c drizzle;
+  drizzle::connection_c con;
 };
-struct st_connection connections[128];
-struct st_connection* cur_con= NULL, *next_con, *connections_end;
+
+typedef map<string, st_connection*> connections_t;
+connections_t g_connections;
+st_connection* cur_con= NULL;
 
 /*
   List of commands in drizzletest
   Must match the "command_names" array
   Add new commands before Q_UNKNOWN!
 */
-enum enum_commands {
+enum enum_commands 
+{
   Q_CONNECTION=1,     Q_QUERY,
   Q_CONNECT,      Q_SLEEP, Q_REAL_SLEEP,
   Q_INC,        Q_DEC,
@@ -463,26 +482,25 @@ void str_to_file2(const char *fname, const char *str, int size, bool append);
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
 static uint32_t max_replace_column= 0;
-void do_get_replace_column(struct st_command*);
+void do_get_replace_column(st_command*);
 void free_replace_column();
 
 /* For replace */
-void do_get_replace(struct st_command *command);
+void do_get_replace(st_command* command);
 void free_replace();
 
 /* For replace_regex */
-void do_get_replace_regex(struct st_command *command);
+void do_get_replace_regex(st_command* command);
 
-void replace_append_mem(string *ds, const char *val,
-                        int len);
+void replace_append_mem(string& ds, const char *val, int len);
 void replace_append(string *ds, const char *val);
-void replace_append_uint(string *ds, uint32_t val);
-void append_sorted(string* ds, string* ds_input);
+void replace_append_uint(string& ds, uint32_t val);
+void append_sorted(string& ds, const string& ds_input);
 
-void handle_error(struct st_command*,
+void handle_error(st_command*,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds);
-void handle_no_error(struct st_command*);
+void handle_no_error(st_command*);
 
 
 void do_eval(string *query_eval, const char *query,
@@ -490,11 +508,11 @@ void do_eval(string *query_eval, const char *query,
 {
   char c, next_c;
   int escaped = 0;
-  VAR *v;
 
   for (const char *p= query; (c= *p) && p < query_end; ++p)
   {
-    switch(c) {
+    switch(c) 
+    {
     case '$':
       if (escaped)
       {
@@ -503,7 +521,8 @@ void do_eval(string *query_eval, const char *query,
       }
       else
       {
-        if (!(v= var_get(p, &p, 0, 0)))
+        VAR* v= var_get(p, &p, 0, 0);
+        if (not v)
           die("Bad variable in eval");
         query_eval->append(v->str_val, v->str_val_len);
       }
@@ -532,10 +551,8 @@ void do_eval(string *query_eval, const char *query,
     default:
       escaped= 0;
       query_eval->append(p, 1);
-      break;
     }
   }
-  return;
 }
 
 
@@ -568,7 +585,7 @@ static void append_os_quoted(string *str, const char *append, ...)
     const char *next_pos= cur_pos;
 
     /* Search for quote in each string and replace with escaped quote */
-    while((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
+    while ((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
     {
       str->append(cur_pos, next_pos - cur_pos);
       str->append("\\", 1);
@@ -596,70 +613,49 @@ static void append_os_quoted(string *str, const char *append, ...)
 
 */
 
-static void show_query(drizzle_con_st *con, const char* query)
+static int dt_query_log(drizzle::connection_c& con, drizzle::result_c& res, const std::string& query)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-
-  if (!con)
-    return;
-
-  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  if (drizzle_return_t ret= con.query(res, query))
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      log_msg("Error running query '%s': %d %s",
-              query, drizzle_result_error_code(&res),
-              drizzle_result_error(&res));
-      drizzle_result_free(&res);
+      log_msg("Error running query '%s': %d %s", query.c_str(), res.error_code(), res.error());
     }
     else
     {
-      log_msg("Error running query '%s': %d %s",
-              query, ret, drizzle_con_error(con));
+      log_msg("Error running query '%s': %d %s", query.c_str(), ret, con.error());
     }
-    return;
+    return 1;
   }
+  return res.column_count() == 0;
+}
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    /* No result set returned */
-    drizzle_result_free(&res);
+static void show_query(drizzle::connection_c& con, const char* query)
+{
+  drizzle::result_c res;
+  if (dt_query_log(con, res, query))
     return;
-  }
 
+  unsigned int row_num= 0;
+  unsigned int num_fields= res.column_count();
+
+  fprintf(stderr, "=== %s ===\n", query);
+  while (drizzle_row_t row= res.row_next())
   {
-    drizzle_row_t row;
-    unsigned int i;
-    unsigned int row_num= 0;
-    unsigned int num_fields= drizzle_result_column_count(&res);
-    drizzle_column_st *column;
+    size_t *lengths= res.row_field_sizes();
+    row_num++;
 
-    fprintf(stderr, "=== %s ===\n", query);
-    while ((row= drizzle_row_next(&res)))
+    fprintf(stderr, "---- %d. ----\n", row_num);
+    res.column_seek(0);
+    for (unsigned int i= 0; i < num_fields; i++)
     {
-      size_t *lengths= drizzle_row_field_sizes(&res);
-      row_num++;
-
-      fprintf(stderr, "---- %d. ----\n", row_num);
-      drizzle_column_seek(&res, 0);
-      for(i= 0; i < num_fields; i++)
-      {
-        column= drizzle_column_next(&res);
-        fprintf(stderr, "%s\t%.*s\n",
-                drizzle_column_name(column),
-                (int)lengths[i], row[i] ? row[i] : "NULL");
-      }
+      drizzle_column_st* column= res.column_next();
+      fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
     }
-    for (i= 0; i < strlen(query)+8; i++)
-      fprintf(stderr, "=");
-    fprintf(stderr, "\n\n");
   }
-  drizzle_result_free(&res);
-
-  return;
+  for (size_t i= 0; i < strlen(query)+8; i++)
+    fprintf(stderr, "=");
+  fprintf(stderr, "\n\n");
 }
 
 
@@ -676,76 +672,36 @@ static void show_query(drizzle_con_st *con, const char* query)
 
 */
 
-static void show_warnings_before_error(drizzle_con_st *con)
+static void show_warnings_before_error(drizzle::connection_c& con)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  const char* query= "SHOW WARNINGS";
-
-  if (!con)
+  drizzle::result_c res;
+  if (dt_query_log(con, res, "show warnings"))
     return;
 
-  if (drizzle_query_str(con, &res, query, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  if (res.row_count() >= 2) /* Don't display the last row, it's "last error" */
   {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      log_msg("Error running query '%s': %d %s",
-              query, drizzle_result_error_code(&res),
-              drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      log_msg("Error running query '%s': %d %s",
-              query, ret, drizzle_con_error(con));
-    }
-    return;
-  }
-
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    /* No result set returned */
-    drizzle_result_free(&res);
-    return;
-  }
-
-  if (drizzle_result_row_count(&res) <= 1)
-  {
-    /* Don't display the last row, it's "last error" */
-  }
-  else
-  {
-    drizzle_row_t row;
     unsigned int row_num= 0;
-    unsigned int num_fields= drizzle_result_column_count(&res);
+    unsigned int num_fields= res.column_count();
 
     fprintf(stderr, "\nWarnings from just before the error:\n");
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t row= res.row_next())
     {
-      uint32_t i;
-      size_t *lengths= drizzle_row_field_sizes(&res);
+      size_t *lengths= res.row_field_sizes();
 
-      if (++row_num >= drizzle_result_row_count(&res))
+      if (++row_num >= res.row_count())
       {
         /* Don't display the last row, it's "last error" */
         break;
       }
 
-      for(i= 0; i < num_fields; i++)
+      for (uint32_t i= 0; i < num_fields; i++)
       {
-        fprintf(stderr, "%.*s ", (int)lengths[i],
-                row[i] ? row[i] : "NULL");
+        fprintf(stderr, "%.*s ", (int)lengths[i], row[i] ? row[i] : "NULL");
       }
       fprintf(stderr, "\n");
     }
   }
-  drizzle_result_free(&res);
-
-  return;
 }
-
 
 enum arg_type
 {
@@ -753,7 +709,8 @@ enum arg_type
   ARG_REST
 };
 
-struct command_arg {
+struct command_arg 
+{
   const char *argname;       /* Name of argument   */
   enum arg_type type;        /* Type of argument   */
   bool required;          /* Argument required  */
@@ -762,16 +719,15 @@ struct command_arg {
 };
 
 
-static void check_command_args(struct st_command *command,
+static void check_command_args(st_command* command,
                                const char *arguments,
                                const struct command_arg *args,
                                int num_args, const char delimiter_arg)
 {
-  int i;
   const char *ptr= arguments;
   const char *start;
 
-  for (i= 0; i < num_args; i++)
+  for (int i= 0; i < num_args; i++)
   {
     const struct command_arg *arg= &args[i];
     arg->ds->clear();
@@ -824,7 +780,7 @@ static void check_command_args(struct st_command *command,
   }
   /* Check for too many arguments passed */
   ptr= command->last_argument;
-  while(ptr <= command->end)
+  while (ptr <= command->end)
   {
     if (*ptr && *ptr != ' ')
       die("Extra argument '%s' passed to '%.*s'",
@@ -835,19 +791,16 @@ static void check_command_args(struct st_command *command,
 }
 
 
-static void handle_command_error(struct st_command *command, uint32_t error)
+static void handle_command_error(st_command* command, uint32_t error)
 {
   if (error != 0)
   {
-    uint32_t i;
-
     if (command->abort_on_error)
-      die("command \"%.*s\" failed with error %d",
-          command->first_word_len, command->query, error);
-    for (i= 0; i < command->expected_errors.count; i++)
+      die("command \"%.*s\" failed with error %d", command->first_word_len, command->query, error);
+    for (uint32_t i= 0; i < command->expected_errors.count; i++)
     {
-      if ((command->expected_errors.err[i].type == ERR_ERRNO) &&
-          (command->expected_errors.err[i].code.errnum == error))
+      if (command->expected_errors.err[i].type == ERR_ERRNO &&
+          command->expected_errors.err[i].code.errnum == error)
       {
         return;
       }
@@ -865,63 +818,12 @@ static void handle_command_error(struct st_command *command, uint32_t error)
   }
 }
 
-
-static void close_connections()
-{
-  for (--next_con; next_con >= connections; --next_con)
-  {
-    if (next_con->drizzle != NULL)
-    {
-      drizzle_free(next_con->drizzle);
-      next_con->drizzle= NULL;
-    }
-    free(next_con->name);
-  }
-}
-
-
-static void close_files()
-{
-  for (; cur_file >= file_stack.data(); cur_file--)
-  {
-    if (cur_file->file && cur_file->file != stdin)
-      fclose(cur_file->file);
-    free(const_cast<char*>(cur_file->file_name));
-    cur_file->file_name= 0;
-  }
-}
-
-static void free_used_memory()
-{
-  close_connections();
-  close_files();
-  BOOST_FOREACH(var_hash_t::reference i, var_hash)
-  {
-    free(i.second->str_val);
-    free(i.second->env_s);
-    if (i.second->alloced)
-      free(i.second);
-  }
-  var_hash.clear();
-  BOOST_FOREACH(vector<st_command*>::reference i, q_lines)
-    delete i;
-  for (size_t i= 0; i < var_reg.size(); i++)
-  {
-    if (var_reg[i].alloced_len)
-      free(var_reg[i].str_val);
-  }
-  free_all_replace();
-  free(opt_pass);
-}
-
-
 static void cleanup_and_exit(int exit_code)
 {
-  free_used_memory();
-  internal::my_end();
-
-  if (!silent) {
-    switch (exit_code) {
+  if (!silent) 
+  {
+    switch (exit_code) 
+    {
     case 1:
       printf("not ok\n");
       break;
@@ -933,7 +835,7 @@ static void cleanup_and_exit(int exit_code)
       break;
     default:
       printf("unknown exit code: %d\n", exit_code);
-      assert(0);
+      assert(false);
     }
   }
   exit(exit_code);
@@ -941,27 +843,25 @@ static void cleanup_and_exit(int exit_code)
 
 void die(const char *fmt, ...)
 {
-  static int dying= 0;
-  va_list args;
-
   /*
     Protect against dying twice
     first time 'die' is called, try to write log files
     second time, just exit
   */
+  static bool dying= false;
   if (dying)
     cleanup_and_exit(1);
-  dying= 1;
+  dying= true;
 
   /* Print the error message */
   fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack.data())
-    fprintf(stderr, "In included file \"%s\": ",
-            cur_file->file_name);
+    fprintf(stderr, "In included file \"%s\": ", cur_file->file_name);
   if (start_lineno > 0)
     fprintf(stderr, "At line %u: ", start_lineno);
   if (fmt)
   {
+    va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
@@ -976,7 +876,7 @@ void die(const char *fmt, ...)
   {
     int tail_lines= opt_tail_lines;
     const char* show_from= ds_res.c_str() + ds_res.length() - 1;
-    while(show_from > ds_res.c_str() && tail_lines > 0 )
+    while (show_from > ds_res.c_str() && tail_lines > 0 )
     {
       show_from--;
       if (*show_from == '\n')
@@ -1002,7 +902,7 @@ void die(const char *fmt, ...)
     been produced prior to the error
   */
   if (cur_con)
-    show_warnings_before_error(&cur_con->con);
+    show_warnings_before_error(*cur_con);
 
   cleanup_and_exit(1);
 }
@@ -1011,7 +911,7 @@ void die(const char *fmt, ...)
 void abort_not_supported_test(const char *fmt, ...)
 {
   va_list args;
-  struct st_test_file* err_file= cur_file;
+  st_test_file* err_file= cur_file;
 
 
   /* Print include filestack */
@@ -1043,16 +943,13 @@ void abort_not_supported_test(const char *fmt, ...)
 
 void verbose_msg(const char *fmt, ...)
 {
-  va_list args;
-
   if (!verbose)
     return;
-
+  va_list args;
   va_start(args, fmt);
   fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack.data())
-    fprintf(stderr, "In included file \"%s\": ",
-            cur_file->file_name);
+    fprintf(stderr, "In included file \"%s\": ", cur_file->file_name);
   if (start_lineno != 0)
     fprintf(stderr, "At line %u: ", start_lineno);
   vfprintf(stderr, fmt, args);
@@ -1067,27 +964,24 @@ void warning_msg(const char *fmt, ...)
   char buff[512];
   size_t len;
 
-
   va_start(args, fmt);
-  ds_warning_messages.append("drizzletest: ");
+  ds_warning_messages += "drizzletest: ";
   if (start_lineno != 0)
   {
-    ds_warning_messages.append("Warning detected ");
+    ds_warning_messages += "Warning detected ";
     if (cur_file && cur_file != file_stack.data())
     {
-      len= snprintf(buff, sizeof(buff), "in included file %s ",
-                    cur_file->file_name);
+      len= snprintf(buff, sizeof(buff), "in included file %s ", cur_file->file_name);
       ds_warning_messages.append(buff, len);
     }
-    len= snprintf(buff, sizeof(buff), "at line %d: ",
-                  start_lineno);
+    len= snprintf(buff, sizeof(buff), "at line %d: ", start_lineno);
     ds_warning_messages.append(buff, len);
   }
 
   len= vsnprintf(buff, sizeof(buff), fmt, args);
   ds_warning_messages.append(buff, len);
 
-  ds_warning_messages.append("\n");
+  ds_warning_messages += "\n";
   va_end(args);
 
   return;
@@ -1098,17 +992,13 @@ void log_msg(const char *fmt, ...)
 {
   va_list args;
   char buff[1024];
-  size_t len;
-
 
   va_start(args, fmt);
-  len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
+  size_t len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
   ds_res.append(buff, len);
-  ds_res.append("\n");
-
-  return;
+  ds_res += "\n";
 }
 
 
@@ -1122,16 +1012,13 @@ void log_msg(const char *fmt, ...)
 
 */
 
-static void cat_file(string* ds, const char* filename)
+static void cat_file(string& ds, const char* filename)
 {
-  int fd;
-  uint32_t len;
-  char buff[512];
-
-  if ((fd= internal::my_open(filename, O_RDONLY, MYF(0))) < 0)
+  int fd= internal::my_open(filename, O_RDONLY, MYF(0));
+  if (fd < 0)
     die("Failed to open file '%s'", filename);
-  while((len= internal::my_read(fd, (unsigned char*)&buff,
-                      sizeof(buff), MYF(0))) > 0)
+  char buff[512];
+  while (uint32_t len= internal::my_read(fd, (unsigned char*)&buff, sizeof(buff), MYF(0)))
   {
     char *p= buff, *start= buff;
     while (p < buff+len)
@@ -1142,7 +1029,7 @@ static void cat_file(string* ds, const char* filename)
         /* Add fake newline instead of cr and output the line */
         *p= '\n';
         p++; /* Step past the "fake" newline */
-        ds->append(start, p-start);
+        ds.append(start, p - start);
         p++; /* Step past the "fake" newline */
         start= p;
       }
@@ -1150,7 +1037,7 @@ static void cat_file(string* ds, const char* filename)
         p++;
     }
     /* Output any chars that might be left */
-    ds->append(start, p-start);
+    ds.append(start, p - start);
   }
   internal::my_close(fd, MYF(0));
 }
@@ -1166,23 +1053,19 @@ static void cat_file(string* ds, const char* filename)
 
 */
 
-static int run_command(const char * cmd, string * result)
+static int run_command(const char* cmd, string& result)
 {
-  assert(result!=NULL);
-  char buf[512]= {0};
-  FILE *res_file;
-  int error;
-
-  if (!(res_file= popen(cmd, "r")))
+  FILE* res_file= popen(cmd, "r");
+  if (not res_file)
     die("popen(\"%s\", \"r\") failed", cmd);
 
+  char buf[512]= {0};
   while (fgets(buf, sizeof(buf), res_file))
   {
     /* Save the output of this command in the supplied string */
-    result->append(buf);
+    result.append(buf);
   }
-
-  error= pclose(res_file);
+  int error= pclose(res_file);
   return WEXITSTATUS(error);
 }
 
@@ -1199,33 +1082,27 @@ static int run_command(const char * cmd, string * result)
 
 */
 
-static int run_tool(const char *tool_path, string * result, ...)
+static int run_tool(const char *tool_path, string& result, ...)
 {
-  int ret;
-  const char* arg;
-  va_list args;
   string ds_cmdline;
-
-
   append_os_quoted(&ds_cmdline, tool_path, NULL);
-  ds_cmdline.append(" ");
+  ds_cmdline += " ";
 
+  va_list args;
   va_start(args, result);
-
-  while ((arg= va_arg(args, char *)))
+  while (const char* arg= va_arg(args, char *))
   {
     /* Options should be os quoted */
     if (strncmp(arg, "--", 2) == 0)
       append_os_quoted(&ds_cmdline, arg, NULL);
     else
-      ds_cmdline.append(arg);
-    ds_cmdline.append(" ");
+      ds_cmdline += arg;
+    ds_cmdline += " ";
   }
 
   va_end(args);
 
-  ret= run_command(ds_cmdline.c_str(), result);
-  return(ret);
+  return run_command(ds_cmdline.c_str(), result);
 }
 
 
@@ -1242,15 +1119,13 @@ static int run_tool(const char *tool_path, string * result, ...)
 
 */
 
-static void show_diff(string* ds,
-                      const char* filename1, const char* filename2)
+static void show_diff(string* ds, const char* filename1, const char* filename2)
 {
-
   string ds_tmp;
 
   /* First try with unified diff */
   if (run_tool("diff",
-               &ds_tmp, /* Get output from diff in ds_tmp */
+               ds_tmp, /* Get output from diff in ds_tmp */
                "-u",
                filename1,
                filename2,
@@ -1260,7 +1135,7 @@ static void show_diff(string* ds,
 
     /* Fallback to context diff with "diff -c" */
     if (run_tool("diff",
-                 &ds_tmp, /* Get output from diff in ds_tmp */
+                 ds_tmp, /* Get output from diff in ds_tmp */
                  "-c",
                  filename1,
                  filename2,
@@ -1271,33 +1146,32 @@ static void show_diff(string* ds,
         Fallback to dump both files to result file and inform
         about installing "diff"
       */
-      ds_tmp.clear();
-
-      ds_tmp.append(
+      ds_tmp=
                     "\n"
                     "The two files differ but it was not possible to execute 'diff' in\n"
                     "order to show only the difference, tried both 'diff -u' or 'diff -c'.\n"
-                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
+                    "Instead the whole content of the two files was shown for you to diff manually. ;)\n"
+                    "\n"
                     "To get a better report you should install 'diff' on your system, which you\n"
                     "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
-                    "\n");
+                    "\n";
 
-      ds_tmp.append(" --- ");
-      ds_tmp.append(filename1);
-      ds_tmp.append(" >>>\n");
-      cat_file(&ds_tmp, filename1);
-      ds_tmp.append("<<<\n --- ");
-      ds_tmp.append(filename1);
-      ds_tmp.append(" >>>\n");
-      cat_file(&ds_tmp, filename2);
-      ds_tmp.append("<<<<\n");
+      ds_tmp += " --- ";
+      ds_tmp += filename1;
+      ds_tmp += " >>>\n";
+      cat_file(ds_tmp, filename1);
+      ds_tmp += "<<<\n --- ";
+      ds_tmp += filename1;
+      ds_tmp += " >>>\n";
+      cat_file(ds_tmp, filename2);
+      ds_tmp += "<<<<\n";
     }
   }
 
   if (ds)
   {
     /* Add the diff to output */
-    ds->append(ds_tmp.c_str(), ds_tmp.length());
+    *ds += ds_tmp;
   }
   else
   {
@@ -1307,8 +1181,8 @@ static void show_diff(string* ds,
 
 }
 
-
-enum compare_files_result_enum {
+enum compare_files_result_enum 
+{
   RESULT_OK= 0,
   RESULT_CONTENT_MISMATCH= 1,
   RESULT_LENGTH_MISMATCH= 2
@@ -1331,21 +1205,21 @@ enum compare_files_result_enum {
 static int compare_files2(int fd, const char* filename2)
 {
   int error= RESULT_OK;
-  int fd2;
   uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
   string tmpfile;
 
-  if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
+  int fd2= internal::my_open(fname, O_RDONLY, MYF(0));
+  if (fd2 < 0)
   {
     internal::my_close(fd, MYF(0));
     if (! opt_testdir.empty())
     {
       tmpfile= opt_testdir;
       if (tmpfile[tmpfile.length()] != '/')
-        tmpfile.append("/");
-      tmpfile.append(filename2);
+        tmpfile += "/";
+      tmpfile += filename2;
       fname= tmpfile.c_str();
     }
     if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
@@ -1355,7 +1229,7 @@ static int compare_files2(int fd, const char* filename2)
       die("Failed to open second file: '%s'", fname);
     }
   }
-  while((len= internal::my_read(fd, (unsigned char*)&buff,
+  while ((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     if ((len2= internal::my_read(fd2, (unsigned char*)&buff2,
@@ -1427,19 +1301,16 @@ static int compare_files(const char* filename1, const char* filename2)
   See 'compare_files2'
 */
 
-static int string_cmp(string* ds, const char *fname)
+static int string_cmp(const string& ds, const char *fname)
 {
-  int error;
-  int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= internal::create_temp_file(temp_file_path, TMPDIR,
-                            "tmp", MYF(MY_WME))) < 0)
+  int fd= internal::create_temp_file(temp_file_path, TMPDIR, "tmp", MYF(MY_WME));
+  if (fd < 0)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
-               MYF(MY_FNABP | MY_WME)) ||
+  if (internal::my_write(fd, (unsigned char *) ds.data(), ds.length(), MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
     internal::my_close(fd, MYF(0));
@@ -1448,13 +1319,13 @@ static int string_cmp(string* ds, const char *fname)
     die("Failed to write file '%s'", temp_file_path);
   }
 
-  error= compare_files2(fd, fname);
+  int error= compare_files2(fd, fname);
 
   internal::my_close(fd, MYF(0));
   /* Remove the temporary file */
   internal::my_delete(temp_file_path, MYF(0));
 
-  return(error);
+  return error;
 }
 
 
@@ -1470,17 +1341,15 @@ static int string_cmp(string* ds, const char *fname)
 
 */
 
-static void check_result(string* ds)
+static void check_result(string& ds)
 {
   const char* mess= "Result content mismatch\n";
-
-
-  assert(result_file_name.c_str());
 
   if (access(result_file_name.c_str(), F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name.c_str());
 
-  switch (string_cmp(ds, result_file_name.c_str())) {
+  switch (string_cmp(ds, result_file_name.c_str())) 
+  {
   case RESULT_OK:
     break; /* ok */
   case RESULT_LENGTH_MISMATCH:
@@ -1499,18 +1368,16 @@ static void check_result(string* ds)
     if (access(reject_file, W_OK) == 0)
     {
       /* Result file directory is writable, save reject file there */
-      internal::fn_format(reject_file, result_file_name.c_str(), NULL,
-                ".reject", MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), NULL, ".reject", MY_REPLACE_EXT);
     }
     else
     {
       /* Put reject file in opt_logdir */
-      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(),
-                ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
+      internal::fn_format(reject_file, result_file_name.c_str(), opt_logdir.c_str(), ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
-    str_to_file(reject_file, ds->c_str(), ds->length());
+    str_to_file(reject_file, ds.data(), ds.length());
 
-    ds->erase(); /* Don't create a .log file */
+    ds.erase(); /* Don't create a .log file */
 
     show_diff(NULL, result_file_name.c_str(), reject_file);
     die("%s",mess);
@@ -1519,8 +1386,6 @@ static void check_result(string* ds)
   default: /* impossible */
     die("Unknown error code from dyn_string_cmp()");
   }
-
-  return;
 }
 
 
@@ -1539,17 +1404,14 @@ static void check_result(string* ds)
 
 */
 
-static void check_require(string* ds, const string &fname)
+static void check_require(const string& ds, const string& fname)
 {
-
-
   if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
     internal::fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
-  return;
 }
 
 
@@ -1563,7 +1425,7 @@ static int strip_surrounding(char* str, char c1, char c2)
   char* ptr= str;
 
   /* Check if the first non space character is c1 */
-  while(*ptr && my_isspace(charset_info, *ptr))
+  while (*ptr && my_isspace(charset_info, *ptr))
     ptr++;
   if (*ptr == c1)
   {
@@ -1572,7 +1434,7 @@ static int strip_surrounding(char* str, char c1, char c2)
 
     /* Last non space charecter should be c2 */
     ptr= strchr(str, '\0')-1;
-    while(*ptr && my_isspace(charset_info, *ptr))
+    while (*ptr && my_isspace(charset_info, *ptr))
       ptr--;
     if (*ptr == c2)
     {
@@ -1589,7 +1451,7 @@ static int strip_surrounding(char* str, char c1, char c2)
 }
 
 
-static void strip_parentheses(struct st_command *command)
+static void strip_parentheses(st_command* command)
 {
   if (strip_surrounding(command->first_argument, '(', ')'))
     die("%.*s - argument list started with '%c' must be ended with '%c'",
@@ -1741,8 +1603,7 @@ static void var_set(const char *var_name, const char *var_name_end,
     snprintf(buf, sizeof(buf), "%.*s=%.*s",
              v->name_len, v->name,
              v->str_val_len, v->str_val);
-    if (!(v->env_s= strdup(buf)))
-      die("Out of memory");
+    v->env_s= strdup(buf);
     putenv(v->env_s);
     free(old_env_s);
   }
@@ -1809,16 +1670,27 @@ static void var_set_drizzleclient_get_server_version(drizzle_con_st *con)
 
 */
 
+static void dt_query(drizzle::connection_c& con, drizzle::result_c& res, const std::string& query)
+{
+  if (drizzle_return_t ret= con.query(res, query))
+  {
+    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
+      die("Error running query '%s': %d %s", query.c_str(), res.error_code(), res.error());
+    }
+    else
+    {
+      die("Error running query '%s': %d %s", query.c_str(), ret, con.error());
+    }
+  }
+  if (res.column_count() == 0)
+    die("Query '%s' didn't return a result set", query.c_str());
+}
+
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
-  const char *end = (char*)((query_end && *query_end) ?
-                            *query_end : query + strlen(query));
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
-  drizzle_con_st *con= &cur_con->con;
-  string ds_query;
-
+  const char *end = ((query_end && *query_end) ? *query_end : query + strlen(query));
+  drizzle::connection_c& con= *cur_con;
 
   while (end > query && *end != '`')
     --end;
@@ -1826,57 +1698,36 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     die("Syntax error in query, missing '`'");
   ++query;
 
+  string ds_query;
   /* Eval the query, thus replacing all environment variables */
   do_eval(&ds_query, query, end, false);
 
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
-                    &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
-    }
-  }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-    die("Query '%s' didn't return a result set", ds_query.c_str());
+  drizzle::result_c res;
+  dt_query(con, res, ds_query);
 
-  if ((row= drizzle_row_next(&res)) && row[0])
+  drizzle_row_t row= res.row_next();
+  if (row && row[0])
   {
     /*
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
     string result;
-    uint32_t i;
-    size_t *lengths;
-
-    lengths= drizzle_row_field_sizes(&res);
-    for (i= 0; i < drizzle_result_column_count(&res); i++)
+    size_t* lengths= res.row_field_sizes();
+    for (uint32_t i= 0; i < res.column_count(); i++)
     {
       if (row[i])
       {
         /* Add column to tab separated string */
         result.append(row[i], lengths[i]);
       }
-      result.append("\t", 1);
+      result += "\t";
     }
-    end= result.c_str() + result.length()-1;
+    end= result.c_str() + result.length() - 1;
     eval_expr(var, result.c_str(), (const char**) &end);
   }
   else
     eval_expr(var, "", 0);
-
-  drizzle_result_free(&res);
-  return;
 }
 
 
@@ -1902,13 +1753,10 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
 */
 
-static void var_set_query_get_value(struct st_command *command, VAR *var)
+static void var_set_query_get_value(st_command* command, VAR *var)
 {
-  long row_no;
   int col_no= -1;
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle::connection_c& con= *cur_con;
 
   string ds_query;
   string ds_col;
@@ -1927,7 +1775,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
                      ',');
 
   /* Convert row number to int */
-  row_no= atoi(ds_row.c_str());
+  long row_no= atoi(ds_row.c_str());
   
   istringstream buff(ds_row);
   if ((buff >> row_no).fail())
@@ -1935,42 +1783,20 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 
   /* Remove any surrounding "'s from the query - if there is any */
   // (Don't get me started on this)
-  char * unstripped_query= strdup(ds_query.c_str());
+  char* unstripped_query= strdup(ds_query.c_str());
   if (strip_surrounding(unstripped_query, '"', '"'))
     die("Mismatched \"'s around query '%s'", ds_query.c_str());
-  ds_query.clear();
-  ds_query.append(unstripped_query);
+  ds_query= unstripped_query;
 
-  /* Run the query */
-  if (drizzle_query(con, &res, ds_query.c_str(), ds_query.length(),
-                    &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
-    }
-  }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-    die("Query '%s' didn't return a result set", ds_query.c_str());
+  drizzle::result_c res;
+  dt_query(con, res, ds_query);
 
   {
     /* Find column number from the given column name */
-    uint32_t i;
-    uint32_t num_fields= drizzle_result_column_count(&res);
-    drizzle_column_st *column;
-
-    for (i= 0; i < num_fields; i++)
+    uint32_t num_fields= res.column_count();
+    for (uint32_t i= 0; i < num_fields; i++)
     {
-      column= drizzle_column_next(&res);
+      drizzle_column_st* column= res.column_next();
       if (strcmp(drizzle_column_name(column), ds_col.c_str()) == 0 &&
           strlen(drizzle_column_name(column)) == ds_col.length())
       {
@@ -1980,35 +1806,26 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     }
     if (col_no == -1)
     {
-      drizzle_result_free(&res);
-      die("Could not find column '%s' in the result of '%s'",
-          ds_col.c_str(), ds_query.c_str());
+      die("Could not find column '%s' in the result of '%s'", ds_col.c_str(), ds_query.c_str());
     }
   }
 
   {
     /* Get the value */
-    drizzle_row_t row;
     long rows= 0;
     const char* value= "No such row";
 
-    while ((row= drizzle_row_next(&res)))
+    while (drizzle_row_t row= res.row_next())
     {
       if (++rows == row_no)
       {
-
         /* Found the row to get */
-        if (row[col_no])
-          value= row[col_no];
-        else
-          value= "NULL";
-
+        value= row[col_no] ? row[col_no] : "NULL";
         break;
       }
     }
     eval_expr(var, value, 0);
   }
-  drizzle_result_free(&res);
 }
 
 
@@ -2021,8 +1838,6 @@ static void var_copy(VAR *dest, VAR *src)
   if (dest->alloced_len < src->alloced_len)
   {
     char *tmpptr= (char *)realloc(dest->str_val, src->alloced_len);
-    if (tmpptr == NULL)
-      die("Out of memory");
     dest->str_val= tmpptr;
   }
   else
@@ -2076,8 +1891,6 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
       char *tmpptr= (char *)realloc(v->str_val, v->alloced_len+1);
-      if (tmpptr == NULL)
-        die("Out of memory");
       v->str_val= tmpptr;
     }
     v->str_val_len = new_val_len;
@@ -2090,7 +1903,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 }
 
 
-static int open_file(const char *name)
+static void open_file(const char *name)
 {
   char buff[FN_REFLEN];
 
@@ -2109,10 +1922,8 @@ static int open_file(const char *name)
     cur_file--;
     die("Could not open '%s' for reading", buff);
   }
-  if (!(cur_file->file_name= strdup(buff)))
-    die("Out of memory");
+  cur_file->file_name= strdup(buff);
   cur_file->lineno=1;
-  return(0);
 }
 
 
@@ -2130,7 +1941,7 @@ static int open_file(const char *name)
 
 */
 
-static void do_source(struct st_command *command)
+static void do_source(st_command* command)
 {
   string ds_filename;
   const struct command_arg source_args[] = {
@@ -2154,14 +1965,12 @@ static void do_source(struct st_command *command)
     {
       string testdir(opt_testdir);
       if (testdir[testdir.length()] != '/')
-        testdir.append("/");
-      testdir.append(ds_filename);
+        testdir += "/";
+      testdir += ds_filename;
       ds_filename.swap(testdir);
     }
     open_file(ds_filename.c_str());
   }
-
-  return;
 }
 
 
@@ -2224,7 +2033,7 @@ static int replace(string *ds_str,
   drizzletest commmand(s) like "remove_file" for that
 */
 
-static void do_exec(struct st_command *command)
+static void do_exec(st_command* command)
 {
   int error;
   char buf[512];
@@ -2273,8 +2082,7 @@ static void do_exec(struct st_command *command)
 
     if (command->abort_on_error)
     {
-      log_msg("exec of '%s' failed, error: %d, status: %d, errno: %d",
-              ds_cmd.c_str(), error, status, errno);
+      log_msg("exec of '%s' failed, error: %d, status: %d, errno: %d", ds_cmd.c_str(), error, status, errno);
       die("command \"%s\" failed", command->first_argument);
     }
 
@@ -2296,8 +2104,7 @@ static void do_exec(struct st_command *command)
            command->expected_errors.err[0].code.errnum != 0)
   {
     /* Error code we wanted was != 0, i.e. not an expected success */
-    log_msg("exec of '%s failed, error: %d, errno: %d",
-            ds_cmd.c_str(), error, errno);
+    log_msg("exec of '%s failed, error: %d, errno: %d", ds_cmd.c_str(), error, errno);
     die("command \"%s\" succeeded - should have failed with errno %d...",
         command->first_argument, command->expected_errors.err[0].code.errnum);
   }
@@ -2326,7 +2133,7 @@ enum enum_operator
 
 */
 
-static int do_modify_var(struct st_command *command,
+static int do_modify_var(st_command* command,
                          enum enum_operator op)
 {
   const char *p= command->first_argument;
@@ -2367,7 +2174,7 @@ static int do_modify_var(struct st_command *command,
 
 */
 
-static void do_system(struct st_command *command)
+static void do_system(st_command* command)
 {
   string ds_cmd;
 
@@ -2384,9 +2191,9 @@ static void do_system(struct st_command *command)
       die("system command '%s' failed", command->first_argument);
 
     /* If ! abort_on_error, log message and continue */
-    ds_res.append("system command '");
+    ds_res += "system command '";
     replace_append(&ds_res, command->first_argument);
-    ds_res.append("' failed\n");
+    ds_res += "' failed\n";
   }
 
   command->last_argument= command->end;
@@ -2404,9 +2211,8 @@ static void do_system(struct st_command *command)
   Remove the file <file_name>
 */
 
-static void do_remove_file(struct st_command *command)
+static void do_remove_file(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg rm_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to delete" }
@@ -2417,7 +2223,7 @@ static void do_remove_file(struct st_command *command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
+  int error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2434,9 +2240,8 @@ static void do_remove_file(struct st_command *command)
   NOTE! Will fail if <to_file> exists
 */
 
-static void do_copy_file(struct st_command *command)
+static void do_copy_file(st_command* command)
 {
-  int error;
   string ds_from_file;
   string ds_to_file;
   const struct command_arg copy_file_args[] = {
@@ -2450,7 +2255,7 @@ static void do_copy_file(struct st_command *command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
+  int error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
 }
@@ -2467,7 +2272,7 @@ static void do_copy_file(struct st_command *command)
 
 */
 
-static void do_chmod_file(struct st_command *command)
+static void do_chmod_file(st_command* command)
 {
   long mode= 0;
   string ds_mode;
@@ -2503,9 +2308,8 @@ static void do_chmod_file(struct st_command *command)
   Check if file <file_name> exists
 */
 
-static void do_file_exist(struct st_command *command)
+static void do_file_exist(st_command* command)
 {
-  int error;
   string ds_filename;
   const struct command_arg file_exist_args[] = {
     { "filename", ARG_STRING, true, &ds_filename, "File to check if it exist" }
@@ -2517,7 +2321,7 @@ static void do_file_exist(struct st_command *command)
                      sizeof(file_exist_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (access(ds_filename.c_str(), F_OK) != 0);
+  int error= access(ds_filename.c_str(), F_OK) != 0;
   handle_command_error(command, error);
 }
 
@@ -2532,10 +2336,9 @@ static void do_file_exist(struct st_command *command)
   Create the directory <dir_name>
 */
 
-static void do_mkdir(struct st_command *command)
+static void do_mkdir(st_command* command)
 {
   string ds_dirname;
-  int error;
   const struct command_arg mkdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
@@ -2545,7 +2348,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
+  int error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
 }
 
@@ -2559,9 +2362,8 @@ static void do_mkdir(struct st_command *command)
   Remove the empty directory <dir_name>
 */
 
-static void do_rmdir(struct st_command *command)
+static void do_rmdir(st_command* command)
 {
-  int error;
   string ds_dirname;
   const struct command_arg rmdir_args[] = {
     {"dirname", ARG_STRING, true, &ds_dirname, "Directory to remove"}
@@ -2572,7 +2374,7 @@ static void do_rmdir(struct st_command *command)
                      rmdir_args, sizeof(rmdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= rmdir(ds_dirname.c_str()) != 0;
+  int error= rmdir(ds_dirname.c_str()) != 0;
   handle_command_error(command, error);
 }
 
@@ -2604,15 +2406,13 @@ static void my_ungetc(int c)
 static void read_until_delimiter(string *ds,
                                  string *ds_delimiter)
 {
-  char c;
-
   if (ds_delimiter->length() > MAX_DELIMITER_LENGTH)
     die("Max delimiter length(%d) exceeded", MAX_DELIMITER_LENGTH);
 
   /* Read from file until delimiter is found */
   while (1)
   {
-    c= my_getc(cur_file->file);
+    char c= my_getc(cur_file->file);
 
     if (c == '\n')
     {
@@ -2640,11 +2440,10 @@ static void read_until_delimiter(string *ds,
 
     ds->push_back(c);
   }
-  return;
 }
 
 
-static void do_write_file_command(struct st_command *command, bool append)
+static void do_write_file_command(st_command* command, bool append)
 {
   string ds_content;
   string ds_filename;
@@ -2663,7 +2462,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter.append("EOF");
+    ds_delimiter += "EOF";
 
   if (!append && access(ds_filename.c_str(), F_OK) == 0)
   {
@@ -2672,9 +2471,7 @@ static void do_write_file_command(struct st_command *command, bool append)
   }
 
   read_until_delimiter(&ds_content, &ds_delimiter);
-  str_to_file2(ds_filename.c_str(), ds_content.c_str(),
-               ds_content.length(), append);
-  return;
+  str_to_file2(ds_filename.c_str(), ds_content.c_str(), ds_content.length(), append);
 }
 
 
@@ -2705,7 +2502,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
 */
 
-static void do_write_file(struct st_command *command)
+static void do_write_file(st_command* command)
 {
   do_write_file_command(command, false);
 }
@@ -2736,7 +2533,7 @@ static void do_write_file(struct st_command *command)
 
 */
 
-static void do_append_file(struct st_command *command)
+static void do_append_file(st_command* command)
 {
   do_write_file_command(command, true);
 }
@@ -2754,7 +2551,7 @@ static void do_append_file(struct st_command *command)
 
 */
 
-static void do_cat_file(struct st_command *command)
+static void do_cat_file(st_command* command)
 {
   static string ds_filename;
   const struct command_arg cat_file_args[] = {
@@ -2768,9 +2565,7 @@ static void do_cat_file(struct st_command *command)
                      sizeof(cat_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  cat_file(&ds_res, ds_filename.c_str());
-
-  return;
+  cat_file(ds_res, ds_filename.c_str());
 }
 
 
@@ -2786,9 +2581,8 @@ static void do_cat_file(struct st_command *command)
 
 */
 
-static void do_diff_files(struct st_command *command)
+static void do_diff_files(st_command* command)
 {
-  int error= 0;
   string ds_filename;
   string ds_filename2;
   const struct command_arg diff_file_args[] = {
@@ -2803,7 +2597,8 @@ static void do_diff_files(struct st_command *command)
                      sizeof(diff_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  if ((error= compare_files(ds_filename.c_str(), ds_filename2.c_str())))
+  int error= compare_files(ds_filename.c_str(), ds_filename2.c_str());
+  if (error)
   {
     /* Compare of the two files failed, append them to output
        so the failure can be analyzed
@@ -2813,21 +2608,6 @@ static void do_diff_files(struct st_command *command)
 
   handle_command_error(command, error);
 }
-
-
-static struct st_connection * find_connection_by_name(const char *name)
-{
-  struct st_connection *con;
-  for (con= connections; con < next_con; con++)
-  {
-    if (!strcmp(con->name, name))
-    {
-      return con;
-    }
-  }
-  return 0; /* Connection not found */
-}
-
 
 /*
   SYNOPSIS
@@ -2839,28 +2619,27 @@ static struct st_connection * find_connection_by_name(const char *name)
 
 */
 
-static void do_send_quit(struct st_command *command)
+static void do_send_quit(st_command* command)
 {
-  char *p= command->first_argument, *name;
-  struct st_connection *con;
-  drizzle_result_st result;
-  drizzle_return_t ret;
+  char* p= command->first_argument;
 
-  if (!*p)
+  if (not *p)
     die("Missing connection name in send_quit");
-  name= p;
-  while (*p && !my_isspace(charset_info,*p))
+  char* name= p;
+  while (*p && !my_isspace(charset_info, *p))
     p++;
 
   if (*p)
     *p++= 0;
   command->last_argument= p;
 
-  if (!(con= find_connection_by_name(name)))
+  st_connection* con= find_ptr2(g_connections, name);
+  if (not con)
     die("connection '%s' not found in connection pool", name);
 
-  if (drizzle_quit(&con->con,&result, &ret))
-    drizzle_result_free(&result);
+  drizzle::result_c result;
+  drizzle_return_t ret;
+  drizzle_quit(*con, &result.b_, &ret);
 }
 
 
@@ -2880,7 +2659,7 @@ static void do_send_quit(struct st_command *command)
 
 */
 
-static void do_change_user(struct st_command *)
+static void do_change_user(st_command *)
 {
   assert(0);
 }
@@ -2904,16 +2683,13 @@ static void do_change_user(struct st_command *)
   Default <delimiter> is EOF
 */
 
-static void do_perl(struct st_command *command)
+static void do_perl(st_command* command)
 {
-  int error;
-  int fd;
-  FILE *res_file;
   char buf[FN_REFLEN];
   char temp_file_path[FN_REFLEN];
   string ds_script;
   string ds_delimiter;
-  const struct command_arg perl_args[] = {
+  const command_arg perl_args[] = {
     { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
   };
 
@@ -2926,13 +2702,13 @@ static void do_perl(struct st_command *command)
 
   /* If no delimiter was provided, use EOF */
   if (ds_delimiter.length() == 0)
-    ds_delimiter.append("EOF");
+    ds_delimiter += "EOF";
 
   read_until_delimiter(&ds_script, &ds_delimiter);
 
   /* Create temporary file name */
-  if ((fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
-                            "tmp", MYF(MY_WME))) < 0)
+  int fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"), "tmp", MYF(MY_WME));
+  if (fd < 0)
     die("Failed to create temporary file for perl command");
   internal::my_close(fd, MYF(0));
 
@@ -2941,7 +2717,8 @@ static void do_perl(struct st_command *command)
   /* Format the "perl <filename>" command */
   snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
 
-  if (!(res_file= popen(buf, "r")) && command->abort_on_error)
+  FILE* res_file= popen(buf, "r");
+  if (not res_file && command->abort_on_error)
     die("popen(\"%s\", \"r\") failed", buf);
 
   while (fgets(buf, sizeof(buf), res_file))
@@ -2951,7 +2728,7 @@ static void do_perl(struct st_command *command)
     else
       replace_append(&ds_res, buf);
   }
-  error= pclose(res_file);
+  int error= pclose(res_file);
 
   /* Remove the temporary file */
   internal::my_delete(temp_file_path, MYF(0));
@@ -2984,75 +2761,37 @@ static void do_perl(struct st_command *command)
   Print "Some text" plus $<var_name> to result file
 */
 
-static int do_echo(struct st_command *command)
+static void do_echo(st_command* command)
 {
   string ds_echo;
-
-
   do_eval(&ds_echo, command->first_argument, command->end, false);
-  ds_res.append(ds_echo.c_str(), ds_echo.length());
-  ds_res.append("\n");
+  ds_res += ds_echo;
+  ds_res += "\n";
   command->last_argument= command->end;
-  return(0);
 }
 
-
-static void
-do_wait_for_slave_to_stop(struct st_command *)
+static void do_wait_for_slave_to_stop()
 {
   static int SLAVE_POLL_INTERVAL= 300000;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle::connection_c& con= *cur_con;
   for (;;)
   {
-    drizzle_result_st res;
-    drizzle_return_t ret;
-    drizzle_row_t row;
-    int done;
-
-    if (drizzle_query_str(con,&res,"show status like 'Slave_running'",
-                          &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+    drizzle::result_c res;
+    dt_query(con, res, "show status like 'Slave_running'");
+    drizzle_row_t row= res.row_next();
+    if (!row || !row[1])
     {
-      if (ret == DRIZZLE_RETURN_ERROR_CODE)
-      {
-        die("Query failed while probing slave for stop: %s",
-            drizzle_result_error(&res));
-        drizzle_result_free(&res);
-      }
-      else
-      {
-        die("Query failed while probing slave for stop: %s",
-            drizzle_con_error(con));
-      }
-    }
-
-    if (drizzle_result_column_count(&res) == 0 ||
-        drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-    {
-      die("Query failed while probing slave for stop: %s",
-          drizzle_con_error(con));
-    }
-
-    if (!(row=drizzle_row_next(&res)) || !row[1])
-    {
-      drizzle_result_free(&res);
       die("Strange result from query while probing slave for stop");
     }
-    done = !strcmp(row[1],"OFF");
-    drizzle_result_free(&res);
-    if (done)
+    if (!strcmp(row[1], "OFF"))
       break;
     usleep(SLAVE_POLL_INTERVAL);
   }
-  return;
 }
-
 
 static void do_sync_with_master2(long offset)
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle::connection_c& con= *cur_con;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
 
@@ -3064,26 +2803,12 @@ static void do_sync_with_master2(long offset)
 
 wait_for_position:
 
-  if (drizzle_query_str(con, &res, query_buf, &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("failed in '%s': %d: %s", query_buf, drizzle_result_error_code(&res),
-           drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-      die("failed in '%s': %d: %s", query_buf, ret, drizzle_con_error(con));
-  }
+  drizzle::result_c res;
+  dt_query(con, res, query_buf);
 
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-    die("drizzle_result_buffer() returned NULL for '%s'", query_buf);
-
-  if (!(row= drizzle_row_next(&res)))
+  drizzle_row_t row= res.row_next();
+  if (!row)
   {
-    drizzle_result_free(&res);
     die("empty result in %s", query_buf);
   }
   if (!row[0])
@@ -3092,7 +2817,6 @@ wait_for_position:
       It may be that the slave SQL thread has not started yet, though START
       SLAVE has been issued ?
     */
-    drizzle_result_free(&res);
     if (tries++ == 30)
     {
       show_query(con, "SHOW MASTER STATUS");
@@ -3102,12 +2826,9 @@ wait_for_position:
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
     goto wait_for_position;
   }
-  drizzle_result_free(&res);
-  return;
 }
 
-
-static void do_sync_with_master(struct st_command *command)
+static void do_sync_with_master(st_command* command)
 {
   long offset= 0;
   char *p= command->first_argument;
@@ -3130,37 +2851,15 @@ static void do_sync_with_master(struct st_command *command)
   when ndb binlog is on, this call will wait until last updated epoch
   (locally in the drizzled) has been received into the binlog
 */
-static int do_save_master_pos()
+static void do_save_master_pos()
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
-  drizzle_con_st *con= &cur_con->con;
-  const char *query;
-
-
-  if (drizzle_query_str(con, &res, query= "show master status", &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("failed in '%s': %d: %s", query, drizzle_result_error_code(&res),
-           drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-      die("failed in '%s': %d: %s", query, ret, drizzle_con_error(con));
-  }
-
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-    die("drizzleclient_store_result() retuned NULL for '%s'", query);
-  if (!(row = drizzle_row_next(&res)))
+  drizzle::result_c res;
+  dt_query(*cur_con, res, "show master status");
+  drizzle_row_t row= res.row_next();
+  if (!row)
     die("empty result in show master status");
   strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
-  drizzle_result_free(&res);
-  return(0);
 }
 
 
@@ -3183,7 +2882,7 @@ static int do_save_master_pos()
   Program will die if error detected
 */
 
-static void do_let(struct st_command *command)
+static void do_let(st_command* command)
 {
   char *p= command->first_argument;
   char *var_name, *var_name_end;
@@ -3241,9 +2940,8 @@ static void do_let(struct st_command *command)
   used for cpu-independent delays.
 */
 
-static int do_sleep(struct st_command *command, bool real_sleep)
+static void do_sleep(st_command* command, bool real_sleep)
 {
-  bool error= false;
   char *p= command->first_argument;
   char *sleep_start, *sleep_end= command->end;
   double sleep_val= 0;
@@ -3259,10 +2957,9 @@ static int do_sleep(struct st_command *command, bool real_sleep)
         command->query,command->first_argument);
   string buff_str(sleep_start, sleep_end-sleep_start);
   istringstream buff(buff_str);
-  error= (buff >> sleep_val).fail();
-  if (error)
-    die("Invalid argument to %.*s \"%s\"", command->first_word_len,
-        command->query, command->first_argument);
+  buff >> sleep_val;
+  if (buff.fail())
+    die("Invalid argument to %.*s \"%s\"", command->first_word_len, command->query, command->first_argument);
 
   /* Fixed sleep time selected by --sleep option */
   if (opt_sleep >= 0 && !real_sleep)
@@ -3271,11 +2968,10 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   if (sleep_val)
     usleep(sleep_val * 1000000);
   command->last_argument= sleep_end;
-  return 0;
 }
 
 
-static void do_get_file_name(st_command *command, string &dest)
+static void do_get_file_name(st_command* command, string &dest)
 {
   char *p= command->first_argument;
   if (!*p)
@@ -3290,13 +2986,13 @@ static void do_get_file_name(st_command *command, string &dest)
   {
     dest= opt_testdir;
     if (dest[dest.length()] != '/')
-      dest.append("/");
+      dest += "/";
   }
   dest.append(name);
 }
 
 
-static void do_set_charset(struct st_command *command)
+static void do_set_charset(st_command* command)
 {
   char *charset_name= command->first_argument;
   char *p;
@@ -3317,57 +3013,30 @@ static void do_set_charset(struct st_command *command)
 
 static void fill_global_error_names()
 {
-  drizzle_result_st res;
-  drizzle_return_t ret;
-  drizzle_row_t row;
-  drizzle_con_st *con= &cur_con->con;
+  drizzle::connection_c& con= *cur_con;
 
   global_error_names.clear();
 
-  const std::string ds_query("select error_name, error_code "
-                             "from data_dictionary.errors");
-  if (drizzle_query_str(con, &res, ds_query.c_str(), &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
+  drizzle::result_c res;
+  dt_query(con, res, "select error_name, error_code from data_dictionary.errors");
+  while (drizzle_row_t row= res.row_next())
   {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(),
-          drizzle_result_error_code(&res), drizzle_result_error(&res));
-      drizzle_result_free(&res);
-    }
-    else
-    {
-      die("Error running query '%s': %d %s", ds_query.c_str(), ret,
-          drizzle_con_error(con));
-    }
-  }
-  if (drizzle_result_column_count(&res) == 0 ||
-      drizzle_result_buffer(&res) != DRIZZLE_RETURN_OK)
-  {
-    drizzle_result_free(&res);
-    die("Query '%s' didn't return a result set", ds_query.c_str());
-  }
-
-  while ((row= drizzle_row_next(&res)) && row[0])
-  {
+    if (not row[0])
+      break;
     /*
       Concatenate all fields in the first row with tab in between
       and assign that string to the $variable
     */
-    size_t *lengths= drizzle_row_field_sizes(&res);
+    size_t *lengths= res.row_field_sizes();
     try
     {
       global_error_names[string(row[0], lengths[0])] = boost::lexical_cast<uint32_t>(string(row[1], lengths[1]));
     }
     catch (boost::bad_lexical_cast &ex)
     {
-      drizzle_result_free(&res);
       die("Invalid error_code from Drizzle: %s", ex.what());
     }
-
   }
-
-  drizzle_result_free(&res);
 }
 
 static uint32_t get_errcode_from_name(const char *error_name, const char *error_end)
@@ -3381,7 +3050,7 @@ static uint32_t get_errcode_from_name(const char *error_name, const char *error_
   return 0;
 }
 
-static void do_get_errcodes(struct st_command *command)
+static void do_get_errcodes(st_command* command)
 {
   struct st_match_err *to= saved_expected_errors.err;
   char *p= command->first_argument;
@@ -3492,7 +3161,7 @@ static void do_get_errcodes(struct st_command *command)
 */
 
 static char *get_string(char **to_ptr, char **from_ptr,
-                        struct st_command *command)
+                        st_command* command)
 {
   char c, sep;
   char *to= *to_ptr, *from= *from_ptr, *start=to;
@@ -3573,44 +3242,37 @@ static void set_reconnect(drizzle_con_st *con, int val)
 }
 
 
-static int select_connection_name(const char *name)
+static void select_connection_name(const char *name)
 {
-  if (!(cur_con= find_connection_by_name(name)))
+  if (!(cur_con= find_ptr2(g_connections, name)))
     die("connection '%s' not found in connection pool", name);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
-
-  return(0);
+  var_set_drizzleclient_get_server_version(*cur_con);
 }
 
 
-static int select_connection(struct st_command *command)
+static void select_connection(st_command* command)
 {
-  char *name;
   char *p= command->first_argument;
-
-
   if (!*p)
     die("Missing connection name in connect");
-  name= p;
+  char* name= p;
   while (*p && !my_isspace(charset_info,*p))
     p++;
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  return(select_connection_name(name));
+  select_connection_name(name);
 }
 
 
-static void do_close_connection(struct st_command *command)
+static void do_close_connection(st_command* command)
 {
-  char *p= command->first_argument, *name;
-  struct st_connection *con;
-
+  char* p= command->first_argument;
   if (!*p)
     die("Missing connection name in disconnect");
-  name= p;
+  char* name= p;
   while (*p && !my_isspace(charset_info,*p))
     p++;
 
@@ -3618,24 +3280,11 @@ static void do_close_connection(struct st_command *command)
     *p++= 0;
   command->last_argument= p;
 
-  if (!(con= find_connection_by_name(name)))
+  st_connection* con= find_ptr2(g_connections, name);
+  if (!con)
     die("connection '%s' not found in connection pool", name);
-
-  if (con->drizzle != NULL)
-  {
-    drizzle_free(con->drizzle);
-    con->drizzle= NULL;
-  }
-  free(con->name);
-
-  /*
-    When the connection is closed set name to "-closed_connection-"
-    to make it possible to reuse the connection name.
-  */
-  if (!(con->name = strdup("-closed_connection-")))
-    die("Out of memory");
-
-  return;
+  g_connections.erase(name);
+  delete con;
 }
 
 
@@ -3664,18 +3313,15 @@ static void do_close_connection(struct st_command *command)
 
 */
 
-static void safe_connect(drizzle_con_st *con, const char *name,
-                         const string host, const string user, const char *pass,
-                         const string db, uint32_t port)
+static st_connection* safe_connect(const char *name, const string host, const string user, const char *pass, const string db, uint32_t port)
 {
   uint32_t failed_attempts= 0;
-  static uint32_t connection_retry_sleep= 100000; /* Microseconds */
-  drizzle_return_t ret;
-
+  st_connection* con0= new st_connection;
+  drizzle_con_st* con= *con0;
   drizzle_con_set_tcp(con, host.c_str(), port);
   drizzle_con_set_auth(con, user.c_str(), pass);
   drizzle_con_set_db(con, db.c_str());
-  while((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
+  while (drizzle_return_t ret= drizzle_con_connect(con))
   {
     /*
       Connect failed
@@ -3689,22 +3335,19 @@ static void safe_connect(drizzle_con_st *con, const char *name,
          ret == DRIZZLE_RETURN_COULD_NOT_CONNECT) &&
         failed_attempts < opt_max_connect_retries)
     {
-      verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
-                  opt_max_connect_retries, ret, drizzle_con_error(con));
-      usleep(connection_retry_sleep);
+      verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts, opt_max_connect_retries, ret, drizzle_con_error(con));
+      usleep(100000);
     }
     else
     {
       if (failed_attempts > 0)
-        die("Could not open connection '%s' after %d attempts: %d %s", name,
-            failed_attempts, ret, drizzle_con_error(con));
+        die("Could not open connection '%s' after %d attempts: %d %s", name, failed_attempts, ret, drizzle_con_error(con));
       else
-        die("Could not open connection '%s': %d %s", name, ret,
-            drizzle_con_error(con));
+        die("Could not open connection '%s': %d %s", name, ret, drizzle_con_error(con));
     }
     failed_attempts++;
   }
-  return;
+  return con0;
 }
 
 
@@ -3731,13 +3374,11 @@ static void safe_connect(drizzle_con_st *con, const char *name,
 
 */
 
-static int connect_n_handle_errors(struct st_command *command,
+static int connect_n_handle_errors(st_command* command,
                                    drizzle_con_st *con, const char* host,
                                    const char* user, const char* pass,
                                    const char* db, int port, const char* sock)
 {
-  drizzle_return_t ret;
-
   /* Only log if an error is expected */
   if (!command->abort_on_error &&
       !disable_query_log)
@@ -3745,44 +3386,41 @@ static int connect_n_handle_errors(struct st_command *command,
     /*
       Log the connect to result log
     */
-    ds_res.append("connect(");
+    ds_res += "connect(";
     replace_append(&ds_res, host);
-    ds_res.append(",");
+    ds_res += ",";
     replace_append(&ds_res, user);
-    ds_res.append(",");
+    ds_res += ",";
     replace_append(&ds_res, pass);
-    ds_res.append(",");
+    ds_res += ",";
     if (db)
       replace_append(&ds_res, db);
-    ds_res.append(",");
-    replace_append_uint(&ds_res, port);
-    ds_res.append(",");
+    ds_res += ",";
+    replace_append_uint(ds_res, port);
+    ds_res += ",";
     if (sock)
       replace_append(&ds_res, sock);
-    ds_res.append(")");
-    ds_res.append(delimiter);
-    ds_res.append("\n");
+    ds_res += ")";
+    ds_res += delimiter;
+    ds_res += "\n";
   }
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_auth(con, user, pass);
   drizzle_con_set_db(con, db);
-  if ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
+  if (drizzle_return_t ret= drizzle_con_connect(con))
   {
     if (ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
     {
       var_set_errno(drizzle_con_error_code(con));
-      handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con),
-                   drizzle_con_sqlstate(con), &ds_res);
+      handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con), drizzle_con_sqlstate(con), &ds_res);
     }
     else
     {
       var_set_errno(ret);
       handle_error(command, ret, drizzle_con_error(con), "", &ds_res);
     }
-
     return 0; /* Not connected */
   }
-
   var_set_errno(0);
   handle_no_error(command);
   return 1; /* Connected */
@@ -3814,11 +3452,9 @@ static int connect_n_handle_errors(struct st_command *command,
 
   */
 
-static void do_connect(struct st_command *command)
+static void do_connect(st_command* command)
 {
   uint32_t con_port= opt_port;
-  const char *con_options;
-  struct st_connection* con_slot;
 
   string ds_connection_name;
   string ds_host;
@@ -3838,7 +3474,6 @@ static void do_connect(struct st_command *command)
     { "socket", ARG_STRING, false, &ds_sock, "Socket to connect with" },
     { "options", ARG_STRING, false, &ds_options, "Options to use while connecting" }
   };
-
 
   strip_parentheses(command);
   check_command_args(command, command->first_argument, connect_args,
@@ -3864,78 +3499,52 @@ static void do_connect(struct st_command *command)
     {
       char buff[FN_REFLEN];
       internal::fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
-      ds_sock.clear();
-      ds_sock.append(buff);
+      ds_sock= buff;
     }
   }
 
   /* Options */
-  con_options= ds_options.c_str();
+  const char* con_options= ds_options.c_str();
   while (*con_options)
   {
-    const char* end;
     /* Step past any spaces in beginning of option*/
     while (*con_options && my_isspace(charset_info, *con_options))
       con_options++;
     /* Find end of this option */
-    end= con_options;
+    const char* end= con_options;
     while (*end && !my_isspace(charset_info, *end))
       end++;
-    die("Illegal option to connect: %.*s",
-        (int) (end - con_options), con_options);
+    die("Illegal option to connect: %.*s", (int) (end - con_options), con_options);
     /* Process next option */
     con_options= end;
   }
 
-  if (find_connection_by_name(ds_connection_name.c_str()))
+  if (find_ptr2(g_connections, ds_connection_name))
     die("Connection %s already exists", ds_connection_name.c_str());
 
-  if (next_con != connections_end)
-  {
-    con_slot= next_con;
-  }
-  else
-  {
-    if (!(con_slot= find_connection_by_name("-closed_connection-")))
-      die("Connection limit exhausted, you can have max %d connections",
-          (int) (sizeof(connections)/sizeof(struct st_connection)));
-  }
-
-  if ((con_slot->drizzle= drizzle_create(NULL)) == NULL)
-    die("Failed on drizzle_create()");
-  if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
-    die("Failed on drizzle_con_create()");
-  drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  st_connection* con_slot= new st_connection;
 
   /* Use default db name */
-  if (ds_database.length() == 0)
-    ds_database.append(opt_db);
+  if (ds_database.empty())
+    ds_database= opt_db;
 
   /* Special database to allow one to connect without a database name */
-  if (ds_database.length() && !strcmp(ds_database.c_str(),"*NO-ONE*"))
+  if (ds_database == "*NO-ONE*")
     ds_database.clear();
 
-  if (connect_n_handle_errors(command, &con_slot->con,
-                              ds_host.c_str(),ds_user.c_str(),
-                              ds_password.c_str(), ds_database.c_str(),
-                              con_port, ds_sock.c_str()))
+  if (connect_n_handle_errors(command, *con_slot, ds_host.c_str(), ds_user.c_str(), 
+    ds_password.c_str(), ds_database.c_str(), con_port, ds_sock.c_str()))
   {
-    if (!(con_slot->name= strdup(ds_connection_name.c_str())))
-      die("Out of memory");
+    g_connections[ds_connection_name]= con_slot;
     cur_con= con_slot;
-
-    if (con_slot == next_con)
-      next_con++; /* if we used the next_con slot, advance the pointer */
   }
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
-
-  return;
+  var_set_drizzleclient_get_server_version(*cur_con);
 }
 
 
-static int do_done(struct st_command *command)
+static void do_done(st_command* command)
 {
   /* Check if empty block stack */
   if (cur_block == block_stack)
@@ -3958,7 +3567,6 @@ static int do_done(struct st_command *command)
     cur_block--;
     parser.current_line++;
   }
-  return 0;
 }
 
 
@@ -3988,7 +3596,7 @@ static int do_done(struct st_command *command)
 
 */
 
-static void do_block(enum block_cmd cmd, struct st_command* command)
+static void do_block(enum block_cmd cmd, st_command* command)
 {
   char *p= command->first_argument;
   const char *expr_start, *expr_end;
@@ -4048,12 +3656,10 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
 
   free(v.str_val);
   free(v.env_s);
-
-  return;
 }
 
 
-static void do_delimiter(struct st_command* command)
+static void do_delimiter(st_command* command)
 {
   char* p= command->first_argument;
 
@@ -4067,7 +3673,6 @@ static void do_delimiter(struct st_command* command)
   delimiter_length= strlen(delimiter);
 
   command->last_argument= p + delimiter_length;
-  return;
 }
 
 
@@ -4377,11 +3982,11 @@ static void convert_to_format_v1(char* query)
   suspicious things and generate warnings.
 */
 
-static void scan_command_for_warnings(struct st_command *command)
+static void scan_command_for_warnings(st_command* command)
 {
   const char *ptr= command->query;
 
-  while(*ptr)
+  while (*ptr)
   {
     /*
       Look for query's that lines that start with a -- comment
@@ -4406,15 +4011,11 @@ static void scan_command_for_warnings(struct st_command *command)
       *end= 0;
       type= command_typelib.find_type(start, TYPELIB::e_default);
       if (type)
-        warning_msg("Embedded drizzletest command '--%s' detected in "
-                    "query '%s' was this intentional? ",
-                    start, command->query);
+        warning_msg("Embedded drizzletest command '--%s' detected in query '%s' was this intentional? ", start, command->query);
       *end= save;
     }
-
     ptr++;
   }
-  return;
 }
 
 /*
@@ -4489,10 +4090,10 @@ static void check_eol_junk(const char *eol)
 #define MAX_QUERY (768*1024*2) /* 256K -- a test in sp-big is >128K */
 static char read_command_buf[MAX_QUERY];
 
-static int read_command(struct st_command** command_ptr)
+static int read_command(st_command** command_ptr)
 {
   char *p= read_command_buf;
-  struct st_command* command;
+  st_command* command;
 
 
   if (parser.current_line < parser.read_lines)
@@ -4500,8 +4101,7 @@ static int read_command(struct st_command** command_ptr)
     *command_ptr= q_lines[parser.current_line];
     return(0);
   }
-  if (!(*command_ptr= command= new st_command))
-    die("command construction failed");
+  *command_ptr= command= new st_command;
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -4528,8 +4128,7 @@ static int read_command(struct st_command** command_ptr)
   while (*p && my_isspace(charset_info, *p))
     p++;
 
-  if (!(command->query_buf= command->query= strdup(p)))
-    die("Out of memory");
+  command->query_buf= command->query= strdup(p);
 
   /* Calculate first word length(the command), terminated by space or ( */
   p= command->query;
@@ -4561,9 +4160,7 @@ static int read_command(struct st_command** command_ptr)
 
 void str_to_file2(const char *fname, const char *str, int size, bool append)
 {
-  int fd;
   char buff[FN_REFLEN];
-  int flags= O_WRONLY | O_CREAT;
   if (!internal::test_if_hard_path(fname))
   {
     snprintf(buff, sizeof(buff), "%s%s",opt_basedir.c_str(),fname);
@@ -4571,10 +4168,11 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   }
   internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
 
+  int flags= O_WRONLY | O_CREAT;
   if (!append)
     flags|= O_TRUNC;
-  if ((fd= internal::my_open(buff, flags,
-                   MYF(MY_WME | MY_FFNF))) < 0)
+  int fd= internal::my_open(buff, flags, MYF(MY_WME | MY_FFNF));
+  if (fd < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
@@ -4606,8 +4204,7 @@ void dump_result_to_log_file(const char *buf, int size)
                         ! opt_logdir.empty() ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               buf, size);
-  fprintf(stderr, "\nMore results from queries before failure can be found in %s\n",
-          log_file);
+  fprintf(stderr, "\nMore results from queries before failure can be found in %s\n", log_file);
 }
 
 void dump_progress()
@@ -4653,13 +4250,13 @@ static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column
   {
     if (col_idx)
       ds->append("\t");
-    replace_append_mem(ds, val, (int)len);
+    replace_append_mem(*ds, val, (int)len);
   }
   else
   {
     ds->append(drizzle_column_name(column));
     ds->append("\t");
-    replace_append_mem(ds, val, (int)len);
+    replace_append_mem(*ds, val, (int)len);
     ds->append("\n");
   }
 }
@@ -4670,26 +4267,21 @@ static void append_field(string *ds, uint32_t col_idx, drizzle_column_st *column
   Values may be converted with 'replace_column'
 */
 
-static void append_result(string *ds, drizzle_result_st *res)
+static void append_result(string *ds, drizzle::result_c& res)
 {
-  drizzle_row_t row;
-  uint32_t num_fields= drizzle_result_column_count(res);
-  drizzle_column_st *column;
-  size_t *lengths;
-
-  while ((row = drizzle_row_next(res)))
+  uint32_t num_fields= res.column_count();
+  while (drizzle_row_t row = res.row_next())
   {
-    uint32_t i;
-    lengths = drizzle_row_field_sizes(res);
-    drizzle_column_seek(res, 0);
-    for (i = 0; i < num_fields; i++)
+    size_t* lengths = res.row_field_sizes();
+    res.column_seek(0);
+    for (uint32_t i = 0; i < num_fields; i++)
     {
-      column= drizzle_column_next(res);
-      if (row[i] && (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY))
+      drizzle_column_st* column= res.column_next();
+      if (row[i] && drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
       {
         if (boost::lexical_cast<uint32_t>(row[i]))
         {
-          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          if (drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED)
           {
             append_field(ds, i, column, "YES", 3, false);
           }
@@ -4700,7 +4292,7 @@ static void append_result(string *ds, drizzle_result_st *res)
         }
         else
         {
-          if ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED))
+          if (drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_UNSIGNED)
           {
             append_field(ds, i, column, "NO", 2, false);
           }
@@ -4712,13 +4304,11 @@ static void append_result(string *ds, drizzle_result_st *res)
       }
       else
       {
-        append_field(ds, i, column,
-                     (const char*)row[i], lengths[i], !row[i]);
+        append_field(ds, i, column, (const char*)row[i], lengths[i], !row[i]);
       }
     }
     if (!display_result_vertically)
       ds->append("\n");
-
   }
 }
 
@@ -4727,54 +4317,38 @@ static void append_result(string *ds, drizzle_result_st *res)
   Append metadata for fields to output
 */
 
-static void append_metadata(string *ds, drizzle_result_st *res)
+static void append_metadata(string& ds, drizzle::result_c& res)
 {
-  drizzle_column_st *column;
-  ds->append("Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
-             "Column_alias\tType\tLength\tMax length\tIs_null\t"
-             "Flags\tDecimals\tCharsetnr\n");
-
-  drizzle_column_seek(res, 0);
-  while ((column= drizzle_column_next(res)))
+  ds += "Catalog\tDatabase\tTable\tTable_alias\tColumn\tColumn_alias\tType\tLength\tMax length\tIs_null\tFlags\tDecimals\tCharsetnr\n";
+  res.column_seek(0);
+  while (drizzle_column_st* column= res.column_next())
   {
-    ds->append(drizzle_column_catalog(column),
-               strlen(drizzle_column_catalog(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_db(column), strlen(drizzle_column_db(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_orig_table(column),
-               strlen(drizzle_column_orig_table(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_table(column),
-               strlen(drizzle_column_table(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_orig_name(column),
-               strlen(drizzle_column_orig_name(column)));
-    ds->append("\t", 1);
-    ds->append(drizzle_column_name(column),
-               strlen(drizzle_column_name(column)));
-    ds->append("\t", 1);
+    ds += drizzle_column_catalog(column);
+    ds += "\t";
+    ds += drizzle_column_db(column);
+    ds += "\t";
+    ds += drizzle_column_orig_table(column);
+    ds += "\t";
+    ds += drizzle_column_table(column);
+    ds += "\t";
+    ds += drizzle_column_orig_name(column);
+    ds += "\t";
+    ds += drizzle_column_name(column);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_type_drizzle(column));
-    ds->append("\t", 1);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_size(column));
-    ds->append("\t", 1);
-    if (drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY)
-    {
-      replace_append_uint(ds, 1);
-    }
-    else
-    {
-      replace_append_uint(ds, drizzle_column_max_size(column));
-    }
-    ds->append("\t", 1);
-    ds->append((char*) ((drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL) ? "N" : "Y"), 1);
-    ds->append("\t", 1);
+    ds += "\t";
+    replace_append_uint(ds, drizzle_column_type(column) == DRIZZLE_COLUMN_TYPE_TINY ? 1 : drizzle_column_max_size(column));
+    ds += "\t";
+    ds += drizzle_column_flags(column) & DRIZZLE_COLUMN_FLAGS_NOT_NULL ? "N" : "Y";
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_flags(column));
-    ds->append("\t", 1);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_decimals(column));
-    ds->append("\t", 1);
+    ds += "\t";
     replace_append_uint(ds, drizzle_column_charset(column));
-    ds->append("\n", 1);
+    ds += "\n";
   }
 }
 
@@ -4802,19 +4376,18 @@ static void append_info(string *ds, uint64_t affected_rows,
   Display the table headings with the names tab separated
 */
 
-static void append_table_headings(string *ds, drizzle_result_st *res)
+static void append_table_headings(string& ds, drizzle::result_c& res)
 {
   uint32_t col_idx= 0;
-  drizzle_column_st *column;
-  drizzle_column_seek(res, 0);
-  while ((column= drizzle_column_next(res)))
+  res.column_seek(0);
+  while (drizzle_column_st* column= res.column_next())
   {
     if (col_idx)
-      ds->append("\t", 1);
-    replace_append(ds, drizzle_column_name(column));
+      ds += "\t";
+    replace_append(&ds, drizzle_column_name(column));
     col_idx++;
   }
-  ds->append("\n", 1);
+  ds += "\n";
 }
 
 /*
@@ -4824,34 +4397,16 @@ static void append_table_headings(string *ds, drizzle_result_st *res)
   Number of warnings appended to ds
 */
 
-static int append_warnings(string *ds, drizzle_con_st *con,
-                           drizzle_result_st *res)
+static int append_warnings(string& ds, drizzle::connection_c& con, drizzle::result_c& res)
 {
-  uint32_t count;
-  drizzle_result_st warn_res;
-  drizzle_return_t ret;
+  uint32_t count= drizzle_result_warning_count(&res.b_);
+  if (!count)
+    return 0;
 
-
-  if (!(count= drizzle_result_warning_count(res)))
-    return(0);
-
-  if (drizzle_query_str(con, &warn_res, "SHOW WARNINGS", &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
-      die("Error running query \"SHOW WARNINGS\": %s", drizzle_result_error(&warn_res));
-    else
-      die("Error running query \"SHOW WARNINGS\": %s", drizzle_con_error(con));
-  }
-
-  if (drizzle_result_column_count(&warn_res) == 0 ||
-      drizzle_result_buffer(&warn_res) != DRIZZLE_RETURN_OK)
-    die("Warning count is %u but didn't get any warnings", count);
-
-  append_result(ds, &warn_res);
-  drizzle_result_free(&warn_res);
-
-  return(count);
+  drizzle::result_c warn_res;
+  dt_query(con, warn_res, "show warnings");
+  append_result(&ds, warn_res);
+  return count;
 }
 
 
@@ -4868,35 +4423,32 @@ static int append_warnings(string *ds, drizzle_con_st *con,
   ds    output buffer where to store result form query
 */
 
-static void run_query_normal(struct st_connection *cn,
-                             struct st_command *command,
+static void run_query_normal(st_connection& cn,
+                             st_command* command,
                              int flags, char *query, int query_len,
-                             string *ds, string *ds_warnings)
+                             string *ds, string& ds_warnings)
 {
-  drizzle_result_st res;
   drizzle_return_t ret;
-  drizzle_con_st *con= &cn->con;
+  drizzle_con_st *con= cn;
   int err= 0;
 
   drizzle_con_add_options(con, DRIZZLE_CON_NO_RESULT_READ);
 
+  drizzle::result_c res;
   if (flags & QUERY_SEND_FLAG)
   {
     /*
      * Send the query
      */
 
-    (void) drizzle_query(con, &res, query, query_len, &ret);
+    (void) drizzle_query(con, &res.b_, query, query_len, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE ||
           ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
       {
-        err= drizzle_result_error_code(&res);
-        handle_error(command, err, drizzle_result_error(&res),
-                     drizzle_result_sqlstate(&res), ds);
-        if (ret == DRIZZLE_RETURN_ERROR_CODE)
-          drizzle_result_free(&res);
+        err= res.error_code();
+        handle_error(command, err, res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
       {
@@ -4913,18 +4465,15 @@ static void run_query_normal(struct st_connection *cn,
     /*
      * Read the result packet
      */
-    if (drizzle_result_read(con, &res, &ret) == NULL ||
+    if (drizzle_result_read(con, &res.b_, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, drizzle_result_error_code(&res),
-                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
-                     ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
-      drizzle_result_free(&res);
       err= ret;
       goto end;
     }
@@ -4932,18 +4481,15 @@ static void run_query_normal(struct st_connection *cn,
     /*
       Store the result of the query if it will return any fields
     */
-    if (drizzle_result_column_count(&res) &&
-        (ret= drizzle_result_buffer(&res)) != DRIZZLE_RETURN_OK)
+    if (res.column_count() &&
+        (ret= drizzle_result_buffer(&res.b_)) != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, drizzle_result_error_code(&res),
-                     drizzle_result_error(&res), drizzle_result_sqlstate(&res),
-                     ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
-      drizzle_result_free(&res);
       err= ret;
       goto end;
     }
@@ -4952,15 +4498,15 @@ static void run_query_normal(struct st_connection *cn,
     {
       uint64_t affected_rows= 0;    /* Ok to be undef if 'disable_info' is set */
 
-      if (drizzle_result_column_count(&res))
+      if (res.column_count())
       {
         if (display_metadata)
-          append_metadata(ds, &res);
+          append_metadata(*ds, res);
 
         if (!display_result_vertically)
-          append_table_headings(ds, &res);
+          append_table_headings(*ds, res);
 
-        append_result(ds, &res);
+        append_result(ds, res);
       }
 
       /*
@@ -4968,7 +4514,7 @@ static void run_query_normal(struct st_connection *cn,
         query to find the warnings
       */
       if (!disable_info)
-        affected_rows= drizzle_result_affected_rows(&res);
+        affected_rows= drizzle_result_affected_rows(&res.b_);
 
       /*
         Add all warnings to the result. We can't do this if we are in
@@ -4978,18 +4524,17 @@ static void run_query_normal(struct st_connection *cn,
       if (!disable_warnings)
       {
         drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
-        if (append_warnings(ds_warnings, con, &res) || ds_warnings->length())
+        if (append_warnings(ds_warnings, cn, res) || not ds_warnings.empty())
         {
           ds->append("Warnings:\n", 10);
-          ds->append(ds_warnings->c_str(), ds_warnings->length());
+          *ds += ds_warnings;
         }
       }
 
       if (!disable_info)
-        append_info(ds, affected_rows, drizzle_result_info(&res));
+        append_info(ds, affected_rows, drizzle_result_info(&res.b_));
     }
 
-    drizzle_result_free(&res);
   }
 
   /* If we come here the query is both executed and read successfully */
@@ -5004,7 +4549,6 @@ end:
   */
   drizzle_con_remove_options(con, DRIZZLE_CON_NO_RESULT_READ);
   var_set_errno(err);
-  return;
 }
 
 
@@ -5024,13 +4568,10 @@ end:
   immediately.
 */
 
-void handle_error(struct st_command *command,
+void handle_error(st_command* command,
                   unsigned int err_errno, const char *err_error,
                   const char *err_sqlstate, string *ds)
 {
-  uint32_t i;
-
-
   if (! command->require_file.empty())
   {
     /*
@@ -5039,18 +4580,17 @@ void handle_error(struct st_command *command,
       abort_not_supported_test
     */
     if (err_errno == DRIZZLE_RETURN_SERVER_GONE)
-      die("require query '%s' failed: %d: %s", command->query,
-          err_errno, err_error);
+      die("require query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
     /* Abort the run of this test, pass the failed query as reason */
-    abort_not_supported_test("Query '%s' failed, required functionality " \
-                             "not supported", command->query);
+    abort_not_supported_test("Query '%s' failed, required functionality not supported", command->query);
   }
 
   if (command->abort_on_error)
     die("query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
-  for (i= 0 ; (uint32_t) i < command->expected_errors.count ; i++)
+  uint32_t i= 0;
+  for (; i < command->expected_errors.count; i++)
   {
     if (((command->expected_errors.err[i].type == ERR_ERRNO) &&
          (command->expected_errors.err[i].code.errnum == err_errno)) ||
@@ -5100,8 +4640,6 @@ void handle_error(struct st_command *command,
           command->query, err_sqlstate, err_error,
           command->expected_errors.err[0].code.sqlstate);
   }
-
-  return;
 }
 
 
@@ -5116,26 +4654,20 @@ void handle_error(struct st_command *command,
   error - function will not return
 */
 
-void handle_no_error(struct st_command *command)
+void handle_no_error(st_command* command)
 {
-
-
   if (command->expected_errors.err[0].type == ERR_ERRNO &&
       command->expected_errors.err[0].code.errnum != 0)
   {
     /* Error code we wanted was != 0, i.e. not an expected success */
-    die("query '%s' succeeded - should have failed with errno %d...",
-        command->query, command->expected_errors.err[0].code.errnum);
+    die("query '%s' succeeded - should have failed with errno %d...", command->query, command->expected_errors.err[0].code.errnum);
   }
   else if (command->expected_errors.err[0].type == ERR_SQLSTATE &&
            strcmp(command->expected_errors.err[0].code.sqlstate,"00000") != 0)
   {
     /* SQLSTATE we wanted was != "00000", i.e. not an expected success */
-    die("query '%s' succeeded - should have failed with sqlstate %s...",
-        command->query, command->expected_errors.err[0].code.sqlstate);
+    die("query '%s' succeeded - should have failed with sqlstate %s...", command->query, command->expected_errors.err[0].code.sqlstate);
   }
-
-  return;
 }
 
 
@@ -5152,15 +4684,10 @@ void handle_no_error(struct st_command *command)
   is on the result will be read - for regular query, both bits must be on
 */
 
-static void run_query(struct st_connection *cn,
-                      struct st_command *command,
+static void run_query(st_connection& cn,
+                      st_command* command,
                       int flags)
 {
-  string *ds= NULL;
-  string *save_ds= NULL;
-  string ds_result;
-  string ds_sorted;
-  string ds_warnings;
   string eval_query;
   char *query;
   int query_len;
@@ -5190,24 +4717,20 @@ static void run_query(struct st_connection *cn,
     Create a temporary dynamic string to contain the output from
     this query.
   */
-  if (! command->require_file.empty())
-  {
-    ds= &ds_result;
-  }
-  else
-  {
-    ds= &ds_res;
-  }
+  string ds_result;
+  string* ds= command->require_file.empty() ? &ds_res : &ds_result;
   /*
     Log the query into the output buffer
   */
   if (!disable_query_log && (flags & QUERY_SEND_FLAG))
   {
-    replace_append_mem(ds, query, query_len);
+    replace_append_mem(*ds, query, query_len);
     ds->append(delimiter, delimiter_length);
     ds->append("\n");
   }
 
+  string* save_ds= NULL;
+  string ds_sorted;
   if (display_result_sorted)
   {
     /*
@@ -5223,13 +4746,13 @@ static void run_query(struct st_connection *cn,
     Always run with normal C API if it's not a complete
     SEND + REAP
   */
-  run_query_normal(cn, command, flags, query, query_len,
-                   ds, &ds_warnings);
+  string ds_warnings;
+  run_query_normal(cn, command, flags, query, query_len, ds, ds_warnings);
 
   if (display_result_sorted)
   {
     /* Sort the result set and append it to result */
-    append_sorted(save_ds, &ds_sorted);
+    append_sorted(*save_ds, ds_sorted);
     ds= save_ds;
   }
 
@@ -5239,30 +4762,24 @@ static void run_query(struct st_connection *cn,
        and the output should be checked against an already
        existing file which has been specified using --require or --result
     */
-    check_require(ds, command->require_file);
+    check_require(*ds, command->require_file);
   }
-
-  return;
 }
 
 
 /****************************************************************************/
 
-static void get_command_type(struct st_command* command)
+static void get_command_type(st_command* command)
 {
-  char save;
-  uint32_t type;
-
-
   if (*command->query == '}')
   {
     command->type = Q_END_BLOCK;
     return;
   }
 
-  save= command->query[command->first_word_len];
+  char save= command->query[command->first_word_len];
   command->query[command->first_word_len]= 0;
-  type= command_typelib.find_type(command->query, TYPELIB::e_default);
+  uint32_t type= command_typelib.find_type(command->query, TYPELIB::e_default);
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
@@ -5315,12 +4832,8 @@ static void get_command_type(struct st_command* command)
   }
 
   /* Set expected error on command */
-  memcpy(&command->expected_errors, &saved_expected_errors,
-         sizeof(saved_expected_errors));
-  command->abort_on_error= (command->expected_errors.count == 0 &&
-                            abort_on_error);
-
-  return;
+  memcpy(&command->expected_errors, &saved_expected_errors, sizeof(saved_expected_errors));
+  command->abort_on_error= (command->expected_errors.count == 0 && abort_on_error);
 }
 
 
@@ -5334,7 +4847,7 @@ static void get_command_type(struct st_command* command)
 
 */
 
-static void mark_progress(struct st_command*, int line)
+static void mark_progress(st_command*, int line)
 {
   uint64_t timer= timer_now();
   if (!progress_start)
@@ -5354,7 +4867,7 @@ static void mark_progress(struct st_command*, int line)
   /* Line in file */
   buf << cur_file->lineno << endl;
 
-  ds_progress.append(buf.str());
+  ds_progress += buf.str();
 
 }
 
@@ -5392,11 +4905,9 @@ int main(int argc, char **argv)
 {
 try
 {
-  struct st_command *command;
   bool q_send_flag= 0, abort_flag= 0;
   uint32_t command_executed= 0, last_command_executed= 0;
-  string save_file("");
-  struct stat res_info;
+  string save_file;
 
   TMPDIR[0]= 0;
 
@@ -5471,10 +4982,10 @@ try
   long_options.add(commandline_options).add(test_options).add(client_options);
 
   std::string system_config_dir_test(SYSCONFDIR); 
-  system_config_dir_test.append("/drizzle/drizzletest.cnf");
+  system_config_dir_test += "/drizzle/drizzletest.cnf";
 
   std::string system_config_dir_client(SYSCONFDIR); 
-  system_config_dir_client.append("/drizzle/client.cnf");
+  system_config_dir_client += "/drizzle/client.cnf";
 
   std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
 
@@ -5497,10 +5008,10 @@ try
   if (! vm["no-defaults"].as<bool>())
   {
     std::string user_config_dir_test(user_config_dir);
-    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
+    user_config_dir_test += "/drizzle/drizzletest.cnf"; 
 
     std::string user_config_dir_client(user_config_dir);
-    user_config_dir_client.append("/drizzle/client.cnf");
+    user_config_dir_client += "/drizzle/client.cnf";
 
     ifstream user_test_ifs(user_config_dir_test.c_str());
     po::store(parse_config_file(user_test_ifs, test_options), vm);
@@ -5519,12 +5030,6 @@ try
 
   /* Init expected errors */
   memset(&saved_expected_errors, 0, sizeof(saved_expected_errors));
-
-  /* Init connections */
-  memset(connections, 0, sizeof(connections));
-  connections_end= connections +
-    (sizeof(connections)/sizeof(struct st_connection)) - 1;
-  next_con= connections + 1;
 
   /* Init file stack */
   memset(file_stack.data(), 0, sizeof(file_stack));
@@ -5573,11 +5078,7 @@ try
       fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
       return EXIT_ARGUMENT_INVALID;
     }
-    if (!(cur_file->file_name= strdup(buff)))
-    {
-      fprintf(stderr, _("Out of memory"));
-      return EXIT_OUT_OF_MEMORY;
-    }
+    cur_file->file_name= strdup(buff);
     cur_file->lineno= 1;
   }
 
@@ -5597,9 +5098,7 @@ try
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
       use_drizzle_protocol=false;
     else if (not opt_protocol.compare("drizzle"))
@@ -5676,21 +5175,10 @@ try
   {
     cur_file->file= stdin;
     cur_file->file_name= strdup("<stdin>");
-    if (cur_file->file_name == NULL)
-      die("Out of memory");
     cur_file->lineno= 1;
   }
-  cur_con= connections;
-  if ((cur_con->drizzle= drizzle_create(NULL)) == NULL)
-    die("Failed in drizzle_create()");
-  if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
-    die("Failed in drizzle_con_create()");
-  drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
-
-  if (!(cur_con->name = strdup("default")))
-    die("Out of memory");
-  safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
-               opt_db, opt_port);
+  cur_con= safe_connect("default", opt_host, opt_user, opt_pass, opt_db, opt_port);
+  g_connections["default"] = cur_con;
 
   fill_global_error_names();
 
@@ -5705,13 +5193,14 @@ try
   var_set_errno(-1);
 
   /* Update $drizzleclient_get_server_version to that of current connection */
-  var_set_drizzleclient_get_server_version(&cur_con->con);
+  var_set_drizzleclient_get_server_version(*cur_con);
 
   if (! opt_include.empty())
   {
     open_file(opt_include.c_str());
   }
 
+  st_command* command;
   while (!read_command(&command) && !abort_flag)
   {
     int current_line_inc = 1, processed = 0;
@@ -5755,7 +5244,7 @@ try
       case Q_SOURCE: do_source(command); break;
       case Q_SLEEP: do_sleep(command, 0); break;
       case Q_REAL_SLEEP: do_sleep(command, 1); break;
-      case Q_WAIT_FOR_SLAVE_TO_STOP: do_wait_for_slave_to_stop(command); break;
+      case Q_WAIT_FOR_SLAVE_TO_STOP: do_wait_for_slave_to_stop(); break;
       case Q_INC: do_modify_var(command, DO_INC); break;
       case Q_DEC: do_modify_var(command, DO_DEC); break;
       case Q_ECHO: do_echo(command); command_executed++; break;
@@ -5828,7 +5317,7 @@ try
           command->require_file= save_file;
           save_file.clear();
         }
-        run_query(cur_con, command, flags);
+        run_query(*cur_con, command, flags);
         command_executed++;
         command->last_argument= command->end;
 
@@ -5858,7 +5347,7 @@ try
           the query and read the result some time later when reap instruction
           is given on this connection.
         */
-        run_query(cur_con, command, QUERY_SEND_FLAG);
+        run_query(*cur_con, command, QUERY_SEND_FLAG);
         command_executed++;
         command->last_argument= command->end;
         break;
@@ -5894,11 +5383,9 @@ try
         break;
       case Q_PING:
         {
-          drizzle_result_st result;
+          drizzle::result_c result;
           drizzle_return_t ret;
-          (void) drizzle_ping(&cur_con->con, &result, &ret);
-          if (ret == DRIZZLE_RETURN_OK || ret == DRIZZLE_RETURN_ERROR_CODE)
-            drizzle_result_free(&result);
+          (void) drizzle_ping(*cur_con, &result.b_, &ret);
         }
         break;
       case Q_EXEC:
@@ -5917,10 +5404,10 @@ try
         do_set_charset(command);
         break;
       case Q_DISABLE_RECONNECT:
-        set_reconnect(&cur_con->con, 0);
+        set_reconnect(*cur_con, 0);
         break;
       case Q_ENABLE_RECONNECT:
-        set_reconnect(&cur_con->con, 1);
+        set_reconnect(*cur_con, 1);
         break;
       case Q_DISABLE_PARSING:
         if (parsing_disabled == 0)
@@ -6013,7 +5500,7 @@ try
   */
   if (ds_res.length())
   {
-    if (! result_file_name.empty())
+    if (not result_file_name.empty())
     {
       /* A result file has been specified */
 
@@ -6028,7 +5515,7 @@ try
            - detect missing result file
            - detect zero size result file
         */
-        check_result(&ds_res);
+        check_result(ds_res);
       }
     }
     else
@@ -6042,8 +5529,8 @@ try
     die("The test didn't produce any output");
   }
 
-  if (!command_executed &&
-      ! result_file_name.empty() && !stat(result_file_name.c_str(), &res_info))
+  struct stat res_info;
+  if (!command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
@@ -6137,7 +5624,7 @@ uint64_t timer_now()
   variable is replaced.
 */
 
-void do_get_replace_column(struct st_command *command)
+void do_get_replace_column(st_command* command)
 {
   char *from= command->first_argument;
   char *buff, *start;
@@ -6161,8 +5648,6 @@ void do_get_replace_column(struct st_command *command)
     to= get_string(&buff, &from, command);
     free(replace_column[column_number-1]);
     replace_column[column_number-1]= strdup(to);
-    if (replace_column[column_number-1] == NULL)
-      die("Out of memory");
     set_if_bigger(max_replace_column, column_number);
   }
   free(start);
@@ -6172,7 +5657,7 @@ void do_get_replace_column(struct st_command *command)
 
 void free_replace_column()
 {
-  for (uint32_t i= 0 ; i < max_replace_column; i++)
+  for (uint32_t i= 0; i < max_replace_column; i++)
   {
     free(replace_column[i]);
     replace_column[i]= 0;
@@ -6212,8 +5697,7 @@ struct st_replace;
 struct st_replace *init_replace(const char **from, const char **to, uint32_t count,
                                 char *word_end_chars);
 
-void replace_strings_append(struct st_replace *rep, string* ds,
-                            const char *from, int len);
+void replace_strings_append(struct st_replace *rep, string& ds, const char *from, int len);
 
 st_replace *glob_replace= NULL;
 // boost::scoped_ptr<st_replace> glob_replace;
@@ -6236,7 +5720,7 @@ POINTER_ARRAY::~POINTER_ARRAY()
   free(str);
 }
 
-void do_get_replace(st_command *command)
+void do_get_replace(st_command* command)
 {
   char *from= command->first_argument;
   if (!*from)
@@ -6293,16 +5777,13 @@ typedef struct st_replace_found {
 } REPLACE_STRING;
 
 
-void replace_strings_append(REPLACE *rep, string* ds,
-                            const char *str, int len)
+void replace_strings_append(REPLACE *rep, string& ds, const char *str, int len)
 {
-  REPLACE *rep_pos;
   REPLACE_STRING *rep_str;
-  const char *start, *from;
+  const char* start= str;
+  const char* from= str;
 
-
-  start= from= str;
-  rep_pos=rep+1;
+  REPLACE* rep_pos=rep+1;
   for (;;)
   {
     /* Loop through states */
@@ -6313,16 +5794,15 @@ void replace_strings_append(REPLACE *rep, string* ds,
     if (!(rep_str = ((REPLACE_STRING*) rep_pos))->replace_string)
     {
       /* No match found */
-      ds->append(start, from - start - 1);
+      ds.append(start, from - start - 1);
       return;
     }
 
     /* Append part of original string before replace string */
-    ds->append(start, (from - rep_str->to_offset) - start);
+    ds.append(start, (from - rep_str->to_offset) - start);
 
     /* Append replace string */
-    ds->append(rep_str->replace_string,
-               strlen(rep_str->replace_string));
+    ds.append(rep_str->replace_string, strlen(rep_str->replace_string));
 
     if (!*(from-=rep_str->from_offset) && rep_pos->found != 2)
       return;
@@ -6554,7 +6034,7 @@ int st_replace_regex::multi_reg_replace(char* val)
   case-sensitive
 
 */
-void do_get_replace_regex(struct st_command *command)
+void do_get_replace_regex(st_command* command)
 {
   char *expr= command->first_argument;
   glob_replace_regex.reset(new st_replace_regex(expr));
@@ -6599,12 +6079,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     char *substring_to_replace= in_string + ovector[0];
     int substring_length= ovector[1] - ovector[0];
     *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
-    char * new_buf = (char *)malloc(*buf_len_p+1);
-    if (new_buf == NULL)
-    {
-      pcre_free(re);
-      return 1;
-    }
+    char* new_buf= (char*)malloc(*buf_len_p+1);
 
     memset(new_buf, 0, *buf_len_p+1);
     strncpy(new_buf, in_string, substring_to_replace-in_string);
@@ -6643,12 +6118,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
       current_position= current_position + length_of_replacement;
     }
 
-    char *new_buf = (char *) malloc(subject.length() + 1);
-    if (new_buf == NULL)
-    {
-      pcre_free(re);
-      return 1;
-    }
+    char* new_buf = (char*) malloc(subject.length() + 1);
     memset(new_buf, 0, subject.length() + 1);
     strncpy(new_buf, subject.c_str(), subject.length());
     *buf_len_p= subject.length() + 1;
@@ -6714,7 +6184,7 @@ struct FOLLOWS
   uint32_t len;
 };
 
-int init_sets(REP_SETS *sets, uint32_t states);
+void init_sets(REP_SETS *sets, uint32_t states);
 REP_SET *make_new_set(REP_SETS *sets);
 int find_found(FOUND_SET *found_set, uint32_t table_offset, int found_offset);
 
@@ -6737,7 +6207,7 @@ static uint32_t replace_len(const char *str)
 
 static bool start_at_word(const char *pos)
 {
-  return ((!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2));
+  return (!memcmp(pos, "\\b",2) && pos[2]) || !memcmp(pos, "\\^", 2);
 }
 
 static bool end_of_word(const char *pos)
@@ -6760,7 +6230,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   char *to_pos, **to_array;
 
   /* Count number of states */
-  for (i=result_len=max_length=0 , states=2 ; i < count ; i++)
+  for (i=result_len=max_length=0 , states=2; i < count; i++)
   {
     len=replace_len(from[i]);
     if (!len)
@@ -6774,14 +6244,13 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       max_length=len;
   }
   memset(is_word_end, 0, sizeof(is_word_end));
-  for (i=0 ; word_end_chars[i] ; i++)
+  for (i=0; word_end_chars[i]; i++)
     is_word_end[(unsigned char) word_end_chars[i]]=1;
 
   REP_SETS sets;
   REP_SET *set,*start_states,*word_states,*new_set;
   REPLACE_STRING *rep_str;
-  if (init_sets(&sets, states))
-    return 0;
+  init_sets(&sets, states);
   found_sets=0;
   vector<FOUND_SET> found_set(max_length * count);
   make_new_set(&sets);      /* Set starting set */
@@ -6822,7 +6291,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         start_states->internal_set_bit(states);
     }
     const char *pos;
-    for (pos= from[i], len=0; *pos ; pos++)
+    for (pos= from[i], len=0; *pos; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
@@ -6865,14 +6334,14 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
   }
 
 
-  for (set_nr=0; set_nr < sets.count ; set_nr++)
+  for (set_nr=0; set_nr < sets.count; set_nr++)
   {
     set=sets.set+set_nr;
     default_state= 0;        /* Start from beginning */
 
     /* If end of found-string not found or start-set with current set */
 
-    for (i= UINT32_MAX; (i= set->get_next_bit(i)) ;)
+    for (i= UINT32_MAX; (i= set->get_next_bit(i));)
     {
       if (!follow[i].chr && !default_state)
         default_state= find_found(&found_set.front(), set->table_offset, set->found_offset+1);
@@ -6883,7 +6352,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
-    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i)) ;)
+    for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i));)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
@@ -6893,11 +6362,11 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
-      for (const char *pos= word_end_chars ; *pos ; pos++)
+      for (const char *pos= word_end_chars; *pos; pos++)
         used_chars[(int) (unsigned char) *pos] = 1;
 
     /* Handle other used characters */
-    for (chr= 0 ; chr < 256 ; chr++)
+    for (chr= 0; chr < 256; chr++)
     {
       if (! used_chars[chr])
         set->next[chr]= chr ? default_state : -1;
@@ -6910,7 +6379,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         new_set->found_offset=set->found_offset+1;
         found_end=0;
 
-        for (i= UINT32_MAX ; (i= sets.set[used_sets].get_next_bit(i)) ; )
+        for (i= UINT32_MAX; (i= sets.set[used_sets].get_next_bit(i));)
         {
           if (!follow[i].chr || follow[i].chr == chr ||
               (follow[i].chr == SPACE_CHAR &&
@@ -6931,7 +6400,7 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
         {
           new_set->found_len=0;      /* Set for testing if first */
           bits_set=0;
-          for (i= UINT32_MAX; (i= new_set->get_next_bit(i)) ;)
+          for (i= UINT32_MAX; (i= new_set->get_next_bit(i));)
           {
             if ((follow[i].chr == SPACE_CHAR ||
                  follow[i].chr == END_OF_LINE) && ! chr)
@@ -6973,7 +6442,6 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 
   REPLACE *replace= (REPLACE*)malloc(sizeof(REPLACE) * (sets.count)
     + sizeof(REPLACE_STRING) * (found_sets + 1) + sizeof(char*) * count + result_len);
-  if (replace)
   {
     memset(replace, 0, sizeof(REPLACE)*(sets.count)+
                        sizeof(REPLACE_STRING)*(found_sets+1)+
@@ -6981,14 +6449,14 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
     to_pos=(char *) (to_array+count);
-    for (i=0 ; i < count ; i++)
+    for (i=0; i < count; i++)
     {
       to_array[i]=to_pos;
       to_pos=strcpy(to_pos,to[i])+strlen(to[i])+1;
     }
     rep_str[0].found=1;
     rep_str[0].replace_string=0;
-    for (i=1 ; i <= found_sets ; i++)
+    for (i=1; i <= found_sets; i++)
     {
       const char *pos= from[found_set[i-1].table_offset];
       rep_str[i].found= !memcmp(pos, "\\^", 3) ? 2 : 1;
@@ -6996,9 +6464,9 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
       rep_str[i].to_offset= found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset= found_set[i-1].found_offset-replace_len(pos) + end_of_word(pos);
     }
-    for (i=0 ; i < sets.count ; i++)
+    for (i=0; i < sets.count; i++)
     {
-      for (j=0 ; j < 256 ; j++)
+      for (j=0; j < 256; j++)
         if (sets.set[i].next[j] >= 0)
           replace[i].next[j]=replace+sets.set[i].next[j];
         else
@@ -7010,19 +6478,12 @@ REPLACE *init_replace(const char **from, const char **to, uint32_t count, char *
 }
 
 
-int init_sets(REP_SETS *sets,uint32_t states)
+void init_sets(REP_SETS *sets,uint32_t states)
 {
   memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
-  if (!(sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET)*SET_MALLOC_HUNC)))
-    return 1;
-  if (!(sets->bit_buffer=(uint*) malloc(sizeof(uint32_t)*sets->size_of_bits*
-                                        SET_MALLOC_HUNC)))
-  {
-    free(sets->set);
-    return 1;
-  }
-  return 0;
+  sets->set_buffer=(REP_SET*) malloc(sizeof(REP_SET) * SET_MALLOC_HUNC);
+  sets->bit_buffer=(uint*) malloc(sizeof(uint32_t) * sets->size_of_bits * SET_MALLOC_HUNC);
 }
 
 /* Make help sets invisible for nicer codeing */
@@ -7036,7 +6497,6 @@ void REP_SETS::make_sets_invisible()
 
 REP_SET *make_new_set(REP_SETS *sets)
 {
-  uint32_t i,count,*bit_buffer;
   REP_SET *set;
   if (sets->extra)
   {
@@ -7050,17 +6510,13 @@ REP_SET *make_new_set(REP_SETS *sets)
     set->size_of_bits=sets->size_of_bits;
     return set;
   }
-  count=sets->count+sets->invisible+SET_MALLOC_HUNC;
-  if (!(set=(REP_SET*) realloc((unsigned char*) sets->set_buffer,
-                                  sizeof(REP_SET)*count)))
-    return 0;
+  uint32_t count= sets->count + sets->invisible + SET_MALLOC_HUNC;
+  set= (REP_SET*) realloc((unsigned char*) sets->set_buffer, sizeof(REP_SET)*count);
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
-  if (!(bit_buffer=(uint*) realloc((unsigned char*) sets->bit_buffer,
-                                   (sizeof(uint32_t)*sets->size_of_bits)*count)))
-    return 0;
+  uint32_t* bit_buffer= (uint*) realloc((unsigned char*) sets->bit_buffer, (sizeof(uint32_t)*sets->size_of_bits)*count);
   sets->bit_buffer=bit_buffer;
-  for (i=0 ; i < count ; i++)
+  for (uint32_t i= 0; i < count; i++)
   {
     sets->set_buffer[i].bits=bit_buffer;
     bit_buffer+=sets->size_of_bits;
@@ -7094,7 +6550,7 @@ void REP_SET::internal_clear_bit(uint32_t bit)
 
 void REP_SET::or_bits(const REP_SET *from)
 {
-  for (uint32_t i= 0 ; i < size_of_bits; i++)
+  for (uint32_t i= 0; i < size_of_bits; i++)
     bits[i]|=from->bits[i];
 }
 
@@ -7185,16 +6641,11 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
 
   if (! pa->typelib.count)
   {
-    if (!(pa->typelib.type_names=(const char **)
+    pa->typelib.type_names=(const char **)
           malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
                      (sizeof(char *)+sizeof(*pa->flag))*
-                     (sizeof(char *)+sizeof(*pa->flag))))))
-      return(-1);
-    if (!(pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD)))
-    {
-      free((char*) pa->typelib.type_names);
-      return (-1);
-    }
+                     (sizeof(char *)+sizeof(*pa->flag))));
+    pa->str= (unsigned char*) malloc(PS_MALLOC-MALLOC_OVERHEAD);
     pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(unsigned char*)+
                                                sizeof(*pa->flag));
     pa->flag= (uint8_t*) (pa->typelib.type_names+pa->max_count);
@@ -7205,13 +6656,11 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
   length=(uint32_t) strlen(name)+1;
   if (pa->length+length >= pa->max_length)
   {
-    if (!(new_pos= (unsigned char*)realloc((unsigned char*)pa->str,
-                                           (size_t)(pa->max_length+PS_MALLOC))))
-      return(1);
+    new_pos= (unsigned char*)realloc((unsigned char*)pa->str, (size_t)(pa->max_length+PS_MALLOC));
     if (new_pos != pa->str)
     {
       ptrdiff_t diff= PTR_BYTE_DIFF(new_pos,pa->str);
-      for (i=0 ; i < pa->typelib.count ; i++)
+      for (i=0; i < pa->typelib.count; i++)
         pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
                                               char*);
       pa->str=new_pos;
@@ -7223,12 +6672,10 @@ static int insert_pointer_name(POINTER_ARRAY* pa, char* name)
     size_t len;
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
-    if (!(new_array=
-         (const char **)realloc((unsigned char*) pa->typelib.type_names,
+    new_array= (const char **)realloc((unsigned char*) pa->typelib.type_names,
                                  len/
                                   (sizeof(unsigned char*)+sizeof(*pa->flag))*
-                                  (sizeof(unsigned char*)+sizeof(*pa->flag)))))
-      return(1);
+                                  (sizeof(unsigned char*)+sizeof(*pa->flag)));
     pa->typelib.type_names=new_array;
     old_count=pa->max_count;
     pa->max_count=len/(sizeof(unsigned char*) + sizeof(*pa->flag));
@@ -7253,7 +6700,7 @@ int POINTER_ARRAY::insert(char* name)
 /* Functions that uses replace and replace_regex */
 
 /* Append the string to ds, with optional replace */
-void replace_append_mem(string *ds, const char *val, int len)
+void replace_append_mem(string& ds, const char *val, int len)
 {
   char *v= strdup(val);
 
@@ -7268,18 +6715,18 @@ void replace_append_mem(string *ds, const char *val, int len)
     replace_strings_append(glob_replace, ds, v, len);
   }
   else
-    ds->append(v, len);
+    ds.append(v, len);
 }
 
 
 /* Append zero-terminated string to ds, with optional replace */
 void replace_append(string *ds, const char *val)
 {
-  replace_append_mem(ds, val, strlen(val));
+  replace_append_mem(*ds, val, strlen(val));
 }
 
 /* Append uint32_t to ds, with optional replace */
-void replace_append_uint(string *ds, uint32_t val)
+void replace_append_uint(string& ds, uint32_t val)
 {
   ostringstream buff;
   buff << val;
@@ -7302,40 +6749,37 @@ void replace_append_uint(string *ds, uint32_t val)
 */
 
 
-void append_sorted(string* ds, string *ds_input)
+void append_sorted(string& ds, const string& ds_input)
 {
   priority_queue<string, vector<string>, greater<string> > lines;
 
-  if (ds_input->empty())
+  if (ds_input.empty())
     return;  /* No input */
 
-  unsigned long eol_pos= 0;
-
-  eol_pos= ds_input->find_first_of('\n', 0);
+  unsigned long eol_pos= ds_input.find_first_of('\n', 0);
   if (eol_pos == string::npos)
     return; // We should have at least one header here
 
-  ds->append(ds_input->substr(0, eol_pos+1));
+  ds.append(ds_input.substr(0, eol_pos+1));
 
   unsigned long start_pos= eol_pos+1;
 
   /* Insert line(s) in array */
   do {
 
-    eol_pos= ds_input->find_first_of('\n', start_pos);
+    eol_pos= ds_input.find_first_of('\n', start_pos);
     /* Find end of line */
-    lines.push(ds_input->substr(start_pos, eol_pos-start_pos+1));
+    lines.push(ds_input.substr(start_pos, eol_pos-start_pos+1));
     start_pos= eol_pos+1;
 
   } while ( eol_pos != string::npos);
 
   /* Create new result */
-  while (!lines.empty()) {
-    ds->append(lines.top());
+  while (!lines.empty()) 
+  {
+    ds.append(lines.top());
     lines.pop();
   }
-
-  return;
 }
 
 static void free_all_replace()

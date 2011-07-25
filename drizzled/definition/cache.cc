@@ -54,8 +54,7 @@ void Cache::erase(const identifier::Table::Key &key)
 bool Cache::insert(const identifier::Table::Key &key, table::instance::Shared::shared_ptr share)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  std::pair<Map::iterator, bool> ret=
-    cache.insert(std::make_pair(key, share));
+  std::pair<Map::iterator, bool> ret= cache.insert(std::make_pair(key, share));
 
   return ret.second;
 }

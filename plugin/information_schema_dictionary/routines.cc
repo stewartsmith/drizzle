@@ -27,37 +27,37 @@ using namespace drizzled;
 Routines::Routines() :
   InformationSchema("ROUTINES")
 {
-  add_field("SPECIFIC_CATALOG");
-  add_field("SPECIFIC_SCHEMA");
-  add_field("SPECIFIC_NAME");
+  add_field("SPECIFIC_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SPECIFIC_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SPECIFIC_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("ROUTINE_CATALOG");
-  add_field("ROUTINE_SCHEMA");
-  add_field("ROUTINE_NAME");
+  add_field("ROUTINE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("ROUTINE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("ROUTINE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("MODULE_CATALOG");
-  add_field("MODULE_SCHEMA");
-  add_field("MODULE_NAME");
+  add_field("MODULE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("MODULE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("MODULE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("UDT_CATALOG");
-  add_field("UDT_SCHEMA");
-  add_field("UDT_NAME");
+  add_field("UDT_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("UDT_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("UDT_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
   add_field("DATA_TYPE");
   add_field("CHARACTER_MAXIMUM_LENGTH");
   add_field("CHARACTER_OCTET_LENGTH");
 
-  add_field("COLLATION_CATALOG");
-  add_field("COLLATION_SCHEMA");
-  add_field("COLLATION_NAME");
+  add_field("COLLATION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLLATION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLLATION_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("CHARACTER_SET_CATALOG");
-  add_field("CHARACTER_SET_SCHEMA");
-  add_field("CHARACTER_SET_NAME");
+  add_field("CHARACTER_SET_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CHARACTER_SET_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CHARACTER_SET_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 
   add_field("NUMERIC_PRECISION");
   add_field("NUMERIC_PRECISION_RADIX");

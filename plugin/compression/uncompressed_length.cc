@@ -38,7 +38,7 @@ int64_t Item_func_uncompressed_length::val_int()
     return 0;
   }
   null_value=0;
-  if (res->is_empty()) return 0;
+  if (res->empty()) return 0;
 
   /*
     res->ptr() using is safe because we have tested that string is not empty,

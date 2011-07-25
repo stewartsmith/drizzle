@@ -78,7 +78,7 @@ void MultiThreadScheduler::runSession(drizzled::session_id_t id)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 
-    TransactionServices::singleton().sendShutdownEvent(*session.get());
+    TransactionServices::sendShutdownEvent(*session.get());
   }
   // @todo remove hard spin by disconnection the session first from the
   // thread.
@@ -123,7 +123,7 @@ void MultiThreadScheduler::setStackSize()
 #endif
 }
 
-bool MultiThreadScheduler::addSession(Session::shared_ptr &session)
+bool MultiThreadScheduler::addSession(const Session::shared_ptr& session)
 {
   if (thread_count >= max_threads)
     return true;
@@ -165,7 +165,7 @@ void MultiThreadScheduler::killSession(Session *session)
   }
 }
 
-void MultiThreadScheduler::killSessionNow(Session::shared_ptr &session)
+void MultiThreadScheduler::killSessionNow(const Session::shared_ptr& session)
 {
   killSession(session.get());
 

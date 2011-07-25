@@ -16,11 +16,9 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
-
 #include <drizzled/item/row.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Row items used for comparing rows and IN operations on rows:
@@ -47,8 +45,7 @@ Item_row::Item_row(List<Item> &arg):
     items= 0;
   List<Item>::iterator li(arg.begin());
   uint32_t i= 0;
-  Item *item;
-  while ((item= li++))
+  while (Item* item= li++)
   {
     items[i]= item;
     i++;
@@ -57,9 +54,8 @@ Item_row::Item_row(List<Item> &arg):
 
 void Item_row::illegal_method_call(const char *)
 {
-  assert(0);
+  assert(false);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
-  return;
 }
 
 bool Item_row::fix_fields(Session *session, Item **)

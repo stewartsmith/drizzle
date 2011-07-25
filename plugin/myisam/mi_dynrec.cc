@@ -1505,8 +1505,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
   if (info->s->base.blobs)
   {
     void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);
-    if (rec_buff_ptr != NULL)
-      free(rec_buff_ptr);
+    free(rec_buff_ptr);
     info->rec_buff=rec_buff;
   }
   free(old_record);

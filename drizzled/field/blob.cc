@@ -160,8 +160,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
 
   if (from == value.ptr())
   {
-    size_t dummy_offset;
-    if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
+    if (!String::needs_conversion(length, cs, field_charset))
     {
       Field_blob::store_length(length);
       memmove(ptr+sizeof(uint32_t), &from, sizeof(char*));
@@ -257,7 +256,7 @@ String *Field_blob::val_str(String *, String *val_ptr) const
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
   else
-    val_ptr->set((const char*) blob,get_length(ptr),charset());
+    val_ptr->set(blob,get_length(ptr),charset());
   return val_ptr;
 }
 
@@ -447,14 +446,6 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
 uint32_t Field_blob::pack_length() const
 {
   return (uint32_t) (sizeof(uint32_t) + portable_sizeof_char_ptr);
-}
-
-void Field_blob::sql_type(String &res) const
-{
-  if (charset() == &my_charset_bin)
-    res.set_ascii(STRING_WITH_LEN("blob"));
-  else
-    res.set_ascii(STRING_WITH_LEN("text"));
 }
 
 unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,

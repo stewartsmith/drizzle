@@ -108,8 +108,8 @@ public:
   void pushSQL(const std::string &arg)
   {
     ::drizzled::error_t err_msg;
-    ::drizzled::execute::Context *context= new ::drizzled::execute::Context(arg.data(), arg.size(), err_msg);
-    std::vector<std::string> parsed_tokens= context->start();
+    ::drizzled::execute::Context context(arg.data(), arg.size(), err_msg);
+    std::vector<std::string> parsed_tokens= context.start();
 
     {
       drizzled::util::String byte;

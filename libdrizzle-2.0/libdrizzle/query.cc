@@ -98,12 +98,6 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
   if (query == NULL)
   {
     query= new drizzle_query_st;
-    if (query == NULL)
-    {
-      drizzle_set_error(drizzle, "drizzle_query_create", "malloc");
-      return NULL;
-    }
-
     query->options|= DRIZZLE_CON_ALLOCATED;
   }
   else

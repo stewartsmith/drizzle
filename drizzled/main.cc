@@ -323,9 +323,8 @@ int main(int argc, char **argv)
       unireg_abort(1);
     }
 
-    boost::filesystem::path &full_data_home= getFullDataHome();
-    full_data_home= boost::filesystem::system_complete(getDataHome());
-    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
+    setFullDataHome(boost::filesystem::system_complete(getDataHome()));
+    errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native_file_string().c_str());
   }
 
   if (server_id == 0)
@@ -335,8 +334,7 @@ int main(int argc, char **argv)
 
   try
   {
-    if (init_server_components(modules))
-      DRIZZLE_ABORT;
+    init_server_components(modules);
   }
   catch (abort_exception& ex)
   {
@@ -361,8 +359,7 @@ int main(int argc, char **argv)
    *
    * not checking return since unireg_abort() hangs
    */
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-    (void) replication_services.evaluateRegisteredPlugins();
+  (void) ReplicationServices::evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
     unireg_abort(1);
@@ -371,14 +368,11 @@ int main(int argc, char **argv)
   drizzle_rm_tmp_tables();
   errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname, PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
-
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   /* Send server startup event */
   {
     Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-    currentSession().reset(session.get());
-    transaction_services.sendStartupEvent(*session);
+    setCurrentSession(session.get());
+    TransactionServices::sendStartupEvent(*session);
     plugin_startup_window(modules, *session.get());
   }
 
@@ -402,8 +396,8 @@ int main(int argc, char **argv)
   /* Send server shutdown event */
   {
     Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-    currentSession().reset(session.get());
-    transaction_services.sendShutdownEvent(*session.get());
+    setCurrentSession(session.get());
+    TransactionServices::sendShutdownEvent(*session.get());
   }
 
   {

@@ -40,7 +40,6 @@
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
-#include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/charset.h>
@@ -188,7 +187,7 @@ void Table::resetTable(Session *session,
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
 }
 
 
@@ -207,18 +206,12 @@ void free_blobs(Table *table)
 }
 
 
-TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
+TYPELIB *typelib(memory::Root& mem_root, List<String> &strings)
 {
-  TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
-  if (!result)
-    return 0;
+  TYPELIB *result= new (mem_root) TYPELIB;
   result->count= strings.size();
   result->name= "";
-  uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
-  
-  if (!(result->type_names= (const char**) mem_root->alloc_root(nbytes)))
-    return 0;
-    
+  result->type_names= (const char**) mem_root.alloc((sizeof(char*) + sizeof(uint32_t)) * (result->count + 1));
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
   List<String>::iterator it(strings.begin());
@@ -670,19 +663,14 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     Make sure that the blob fits into a Field_varstring which has
     2-byte lenght.
   */
-  if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE &&
-      (org_field->flags & BLOB_FLAG))
+  if (convert_blob_length && convert_blob_length <= Field_varstring::MAX_SIZE && (org_field->flags & BLOB_FLAG))
   {
     table->setVariableWidth();
-    new_field= new Field_varstring(convert_blob_length,
-                                   org_field->maybe_null(),
-                                   org_field->field_name,
-                                   org_field->charset());
+    new_field= new Field_varstring(convert_blob_length, org_field->maybe_null(), org_field->field_name, org_field->charset());
   }
   else
   {
-    new_field= org_field->new_field(session->mem_root, table,
-                                    table == org_field->getTable());
+    new_field= org_field->new_field(session->mem_root, table, table == org_field->getTable());
   }
   if (new_field)
   {
@@ -736,7 +724,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  memory::Root *mem_root_save;
   uint	i,field_count,null_count,null_pack_length;
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
@@ -800,32 +787,25 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table::Singular* table= &session->getInstanceTable(); // This will not go into the tableshare cache, so no key is used.
 
-  if (not table->getMemRoot()->multi_alloc_root(0,
-                                                &default_field, sizeof(Field*) * (field_count),
-                                                &from_field, sizeof(Field*)*field_count,
-                                                &copy_func, sizeof(*copy_func)*(copy_func_count+1),
-                                                &param->keyinfo, sizeof(*param->keyinfo),
-                                                &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
-                                                &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
-                                                &group_buff, (group && ! using_unique_constraint ?
-                                                              param->group_length : 0),
-                                                NULL))
-  {
-    return NULL;
-  }
+  table->mem().multi_alloc(0,
+    &default_field, sizeof(Field*) * (field_count),
+    &from_field, sizeof(Field*)*field_count,
+    &copy_func, sizeof(*copy_func)*(copy_func_count+1),
+    &param->keyinfo, sizeof(*param->keyinfo),
+    &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
+    &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
+    &group_buff, (group && ! using_unique_constraint ? param->group_length : 0),
+    NULL);
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
-  if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
-  {
-    return NULL;
-  }
+  param->copy_field= copy= new (session->mem_root) CopyField[field_count];
   param->items_to_copy= copy_func;
   /* make table according to fields */
 
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
-  mem_root_save= session->mem_root;
-  session->mem_root= table->getMemRoot();
+  memory::Root* mem_root_save= session->mem_root;
+  session->mem_root= &table->mem();
 
   table->getMutableShare()->setFields(field_count+1);
   table->setFields(table->getMutableShare()->getFields(true));
@@ -855,9 +835,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   param->using_indirect_summary_function= 0;
 
   List<Item>::iterator li(fields.begin());
-  Item *item;
   Field **tmp_from_field=from_field;
-  while ((item=li++))
+  while (Item* item=li++)
   {
     Item::Type type=item->type();
     if (not_all_columns)
@@ -913,7 +892,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
           }
           session->mem_root= mem_root_save;
           *argp= new Item_field(new_field);
-          session->mem_root= table->getMemRoot();
+          session->mem_root= &table->mem();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
 	    null_count++;
@@ -1043,10 +1022,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     table->getMutableShare()->rec_buff_length= alloc_length;
-    if (!(table->record[0]= (unsigned char*) table->alloc_root(alloc_length*2)))
-    {
-      goto err;
-    }
+    table->record[0]= table->alloc(alloc_length*2);
     table->record[1]= table->getInsertRecord()+alloc_length;
     table->getMutableShare()->resizeDefaultValues(alloc_length);
   }
@@ -1056,7 +1032,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->setup_tmp_table_column_bitmaps();
 
   recinfo=param->start_recinfo;
-  null_flags=(unsigned char*) table->getInsertRecord();
+  null_flags= table->getInsertRecord();
   pos=table->getInsertRecord()+ null_pack_length;
   if (null_pack_length)
   {
@@ -1066,7 +1042,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     recinfo++;
     memset(null_flags, 255, null_pack_length);	// Set null fields
 
-    table->null_flags= (unsigned char*) table->getInsertRecord();
+    table->null_flags= table->getInsertRecord();
     table->getMutableShare()->null_fields= null_count+ hidden_null_count;
     table->getMutableShare()->null_bytes= null_pack_length;
   }
@@ -1262,9 +1238,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			 (table->getMutableShare()->uniques ? test(null_pack_length) : 0));
     table->distinct= 1;
     table->getMutableShare()->keys= 1;
-    if (!(key_part_info= (KeyPartInfo*)
-         table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
-      goto err;
+    key_part_info= new (table->mem()) KeyPartInfo[keyinfo->key_parts];
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;

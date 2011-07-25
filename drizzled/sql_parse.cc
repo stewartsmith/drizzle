@@ -295,8 +295,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da().can_overwrite_status= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(*session, session->is_error());
+  TransactionServices::autocommitOrRollback(*session, session->is_error());
   session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -400,8 +399,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
-static bool _schema_select(Session *session, Select_Lex *sel,
-                           const string& schema_table_name)
+static bool _schema_select(Session& session, Select_Lex& sel, const string& schema_table_name)
 {
   LEX_STRING db, table;
   bitset<NUM_OF_TABLE_OPTIONS> table_options;
@@ -409,31 +407,18 @@ static bool _schema_select(Session *session, Select_Lex *sel,
      We have to make non const db_name & table_name
      because of lower_case_table_names
   */
-  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
-  session->make_lex_string(&table, schema_table_name, false);
-
-  if (not sel->add_table_to_list(session, new Table_ident(db, table), NULL, table_options, TL_READ))
-  {
-    return true;
-  }
-  return false;
+  session.make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session.make_lex_string(&table, schema_table_name, false);
+  return not sel.add_table_to_list(&session, new Table_ident(db, table), NULL, table_options, TL_READ);
 }
 
-int prepare_new_schema_table(Session *session, LEX& lex,
-                             const string& schema_table_name)
+int prepare_new_schema_table(Session *session, LEX& lex0, const string& schema_table_name)
 {
-  Select_Lex *schema_select_lex= NULL;
-
-  Select_Lex *select_lex= lex.current_select;
-  assert(select_lex);
-  if (_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
+  Select_Lex& lex= *lex0.current_select;
+  if (_schema_select(*session, lex, schema_table_name))
+    return 1;
+  TableList *table_list= (TableList*)lex.table_list.first;
+  table_list->schema_select_lex= NULL;
   return 0;
 }
 
@@ -509,16 +494,16 @@ static int execute_command(Session *session)
   */
   if (all_tables || ! session->lex().is_single_level_stmt())
   {
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, 0);
   }
 
-  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
+  assert(not session->transaction.stmt.hasModifiedNonTransData());
 
   if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
       && ! session->inTransaction()
       && session->lex().statement->isTransactional())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -559,7 +544,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       && ! session->inTransaction()
       && ! lex->statement->isShow())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -663,14 +648,10 @@ init_select(LEX *lex)
 }
 
 
-bool
-new_select(LEX *lex, bool move_down)
+bool new_select(LEX *lex, bool move_down)
 {
-  Select_Lex *select_lex;
-  Session *session= lex->session;
-
-  if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return true;
+  Session* session= lex->session;
+  Select_Lex* select_lex= new (session->mem_root) Select_Lex;
 
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
@@ -681,16 +662,14 @@ new_select(LEX *lex, bool move_down)
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
-    return(1);
+    return 1;
   }
 
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
-    Select_Lex_Unit *unit;
     /* first select_lex of subselect or derived table */
-    if (!(unit= new (session->mem_root) Select_Lex_Unit()))
-      return(1);
+    Select_Lex_Unit* unit= new (session->mem_root) Select_Lex_Unit();
 
     unit->init_query();
     unit->init_select();
@@ -900,10 +879,9 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return true;
   }
 
-  if (!(new_field= new CreateField())
-      || new_field->init(session, field_name->str, type, length, decimals,
-                         type_modifier, comment, change, interval_list,
-                         cs, 0, column_format)
+  new_field= new CreateField;
+  if (new_field->init(session, field_name->str, type, length, decimals,
+                         type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -955,7 +933,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
 
@@ -976,10 +954,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
-      return NULL;
+    alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
   }
-  TableList *ptr = (TableList *) session->calloc(sizeof(TableList));
+  TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
   if (table->db.str)
   {
@@ -1073,16 +1050,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     1   otherwise
 */
 
-bool Select_Lex::init_nested_join(Session *session)
+void Select_Lex::init_nested_join(Session& session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(NestedJoin))))
-    return true;
+  TableList* ptr= (TableList*) session.mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
@@ -1090,7 +1062,6 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->clear();
-  return false;
 }
 
 
@@ -1151,19 +1122,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 
 TableList *Select_Lex::nest_last_join(Session *session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-  List<TableList> *embedded_list;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(NestedJoin))))
-    return NULL;
+  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
-  embedded_list= &nested_join->join_list;
+  List<TableList>* embedded_list= &nested_join->join_list;
   embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
@@ -1307,10 +1272,8 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   Select_Lex *first_sl= first_select();
   assert(!fake_select_lex);
 
-  if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
-      return(1);
-  fake_select_lex->include_standalone(this,
-                                      (Select_Lex_Node**)&fake_select_lex);
+  fake_select_lex= new (session_arg->mem_root) Select_Lex();
+  fake_select_lex->include_standalone(this, (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
   fake_select_lex->parent_lex= &session_arg->lex(); /* Used in init_query. */
   fake_select_lex->make_empty_select();
@@ -1335,7 +1298,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     session_arg->lex().current_select= fake_select_lex;
   }
   session_arg->lex().pop_context();
-  return(0);
+  return 0;
 }
 
 
@@ -1519,7 +1482,7 @@ bool update_precheck(Session *session, TableList *)
   if (session->lex().select_lex.item_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (session->lex().select_lex.table_list.size() > 1)
@@ -1531,10 +1494,10 @@ bool update_precheck(Session *session, TableList *)
     if (msg)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-      return(true);
+      return true;
     }
   }
-  return(false);
+  return false;
 }
 
 
@@ -1559,9 +1522,9 @@ bool insert_precheck(Session *session, TableList *)
   if (session->lex().update_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 

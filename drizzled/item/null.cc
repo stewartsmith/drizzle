@@ -24,8 +24,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/plugin/client.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }

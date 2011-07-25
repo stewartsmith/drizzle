@@ -71,13 +71,6 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
       return NULL;
 
     result->row= new drizzle_row_t_type[result->column_count *2];
-    if (result->row == NULL)
-    {
-      drizzle_set_error(result->con->drizzle, "drizzle_row_buffer", "malloc");
-      *ret_ptr= DRIZZLE_RETURN_MEMORY;
-      return NULL;
-    }
-
     result->field_sizes= reinterpret_cast<size_t *>(result->row + result->column_count);
   }
 

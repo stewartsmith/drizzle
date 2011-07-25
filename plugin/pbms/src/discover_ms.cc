@@ -317,12 +317,11 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         for (uint i= 0; (tmp= int_it++); i++)
         {
           uint lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(),
-                                       cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
             uint cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
-            interval->type_names[i]= strmake_root(thd->mem_root, conv.ptr(),
+            interval->type_names[i]= strmake(thd->mem_root, conv.ptr(),
                                                   conv.length());
             interval->type_lengths[i]= conv.length();
           }

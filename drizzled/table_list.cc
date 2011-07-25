@@ -294,7 +294,7 @@ void TableList::print(Session *session, String *str)
         str->append(' ');
 
         string t_alias(alias);
-        transform(t_alias.begin(), t_alias.end(), t_alias.begin(), ::tolower);
+        boost::to_lower(t_alias);
         str->append_identifier(t_alias.c_str(), t_alias.length());
       }
     }

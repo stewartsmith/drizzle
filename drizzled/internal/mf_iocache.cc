@@ -237,36 +237,18 @@ int io_cache_st::init_io_cache(int file_arg, size_t cachesize,
   {
     /* Retry allocating memory in smaller blocks until we get one */
     cachesize= ((cachesize + min_cache-1) & ~(min_cache-1));
-    for (;;)
+    if (cachesize < min_cache)
+      cachesize = min_cache;
+    size_t buffer_block= cachesize;
+    if (type_arg == READ_CACHE && not global_read_buffer.add(buffer_block))
     {
-      size_t buffer_block;
-      if (cachesize < min_cache)
-	cachesize = min_cache;
-      buffer_block= cachesize;
-      if ((type_arg == READ_CACHE) and (not global_read_buffer.add(buffer_block)))
-      {
-        my_error(ER_OUT_OF_GLOBAL_READMEMORY, MYF(ME_ERROR+ME_WAITTANG));
-        return 2;
-      }
-
-      if ((buffer=
-	   (unsigned char*) malloc(buffer_block)) != 0)
-      {
-	write_buffer=buffer;
-	alloced_buffer= true;
-	break;					/* Enough memory found */
-      }
-      if (cachesize == min_cache)
-      {
-        if (type_arg == READ_CACHE)
-          global_read_buffer.sub(buffer_block);
-	return 2;				/* Can't alloc cache */
-      }
-      /* Try with less memory */
-      if (type_arg == READ_CACHE)
-        global_read_buffer.sub(buffer_block);
-      cachesize= (cachesize*3/4 & ~(min_cache-1));
+      my_error(ER_OUT_OF_GLOBAL_READMEMORY, MYF(ME_ERROR+ME_WAITTANG));
+      return 2;
     }
+
+    buffer= (unsigned char*) malloc(buffer_block);
+    write_buffer=buffer;
+    alloced_buffer= true;
   }
 
   read_length=buffer_length=cachesize;
@@ -429,7 +411,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
       */
       assert(errno != ESPIPE);
       info->error= -1;
-      return(1);
+      return 1;
     }
   }
 
@@ -440,14 +422,14 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     if (info->end_of_file <= pos_in_file_local)
     {					/* End of file */
       info->error= (int) left_length;
-      return(1);
+      return 1;
     }
     length_local=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
     if ((read_length= my_read(info->file,Buffer, length_local, info->myflags)) != length_local)
     {
       info->error= (read_length == (size_t) -1 ? -1 :
 		    (int) (read_length+left_length));
-      return(1);
+      return 1;
     }
     Count-= length_local;
     Buffer+= length_local;
@@ -465,7 +447,7 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     if (Count)
     {
       info->error= static_cast<int>(left_length);	/* We only got this many char */
-      return(1);
+      return 1;
     }
      length_local=0;				/* Didn't read any chars */
   }
@@ -478,13 +460,13 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
     info->pos_in_file= pos_in_file_local;
     info->error=  length_local == (size_t) -1 ? -1 : (int) ( length_local+left_length);
     info->read_pos=info->read_end=info->buffer;
-    return(1);
+    return 1;
   }
   info->read_pos=info->buffer+Count;
   info->read_end=info->buffer+ length_local;
   info->pos_in_file=pos_in_file_local;
   memcpy(Buffer, info->buffer, Count);
-  return(0);
+  return 0;
 }
 
 /**
@@ -676,7 +658,7 @@ int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
     }
   }
   unlock_append_buffer(info, need_append_buffer_lock);
-  return(0);
+  return 0;
 }
 
 /**

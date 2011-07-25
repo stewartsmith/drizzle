@@ -64,7 +64,7 @@ public:
   static const uint32_t FLUSH_FREQUENCY_EVERY_WRITE= 1; //< Sync on every write to the log file
   static const uint32_t FLUSH_FREQUENCY_EVERY_SECOND= 2; ///< Sync no more than once a second
 public:
-  TransactionLog(const std::string in_log_file_path,
+  TransactionLog(const std::string &in_log_file_path,
                  uint32_t in_flush_frequency,
                  bool in_do_checksum);
 

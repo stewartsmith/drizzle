@@ -50,22 +50,37 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-ReplicationServices::ReplicationServices() :
-  is_active(false)
-{
-}
+typedef std::vector<plugin::TransactionReplicator*> Replicators;
+typedef std::vector<std::pair<std::string, plugin::TransactionApplier*> > Appliers;
 
-void ReplicationServices::normalizeReplicatorName(string &name)
+/** 
+  * Atomic boolean set to true if any *active* replicators
+  * or appliers are actually registered.
+  */
+static bool is_active= false;
+/**
+  * The timestamp of the last time a Transaction message was successfully
+  * applied (sent to an Applier)
+  */
+static atomic<uint64_t> last_applied_timestamp;
+/** Our collection of registered replicator plugins */
+static Replicators replicators;
+/** Our collection of registered applier plugins and their requested replicator plugin names */
+static Appliers appliers;
+/** Our replication streams */
+static ReplicationServices::ReplicationStreams replication_streams;
+
+  /**
+   * Strips underscores and lowercases supplied replicator name
+   * or requested name, and appends the suffix "replicator" if missing...
+   */
+static void normalizeReplicatorName(string &name)
 {
-  transform(name.begin(),
-            name.end(),
-            name.begin(),
-            ::tolower);
+  boost::to_lower(name);
   if (name.find("replicator") == string::npos)
-    name.append("replicator", 10);
+    name.append("replicator");
   {
     size_t found_underscore= name.find('_');
     while (found_underscore != string::npos)
@@ -97,19 +112,15 @@ bool ReplicationServices::evaluateRegisteredPlugins()
     return false;
   }
 
-  for (Appliers::iterator appl_iter= appliers.begin();
-       appl_iter != appliers.end();
-       ++appl_iter)
+  BOOST_FOREACH(Appliers::reference appl_iter, appliers)
   {
-    plugin::TransactionApplier *applier= (*appl_iter).second;
-    string requested_replicator_name= (*appl_iter).first;
+    plugin::TransactionApplier *applier= appl_iter.second;
+    string requested_replicator_name= appl_iter.first;
     normalizeReplicatorName(requested_replicator_name);
 
     bool found= false;
     Replicators::iterator repl_iter;
-    for (repl_iter= replicators.begin();
-         repl_iter != replicators.end();
-         ++repl_iter)
+    for (repl_iter= replicators.begin(); repl_iter != replicators.end(); ++repl_iter)
     {
       string replicator_name= (*repl_iter)->getName();
       normalizeReplicatorName(replicator_name);
@@ -160,7 +171,7 @@ void ReplicationServices::detachApplier(plugin::TransactionApplier *)
 {
 }
 
-bool ReplicationServices::isActive() const
+bool ReplicationServices::isActive()
 {
   return is_active;
 }
@@ -170,12 +181,10 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Sessio
 {
   plugin::ReplicationReturnCode result= plugin::SUCCESS;
 
-  for (ReplicationStreams::iterator iter= replication_streams.begin();
-       iter != replication_streams.end();
-       ++iter)
+  BOOST_FOREACH(ReplicationStreams::reference iter, replication_streams)
   {
-    plugin::TransactionReplicator *cur_repl= iter->first;
-    plugin::TransactionApplier *cur_appl= iter->second;
+    plugin::TransactionReplicator *cur_repl= iter.first;
+    plugin::TransactionApplier *cur_appl= iter.second;
 
     result= cur_repl->replicate(cur_appl, in_session, to_push);
 

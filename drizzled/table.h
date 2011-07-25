@@ -315,37 +315,26 @@ private:
 
   void init_mem_root()
   {
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    if (not mem_root.alloc_root_inited())
+      mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
-  memory::Root *getMemRoot()
+  memory::Root& mem()
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return &mem_root;
+    init_mem_root();
+    return mem_root;
   }
 
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return mem_root.alloc_root(arg);
+    init_mem_root();
+    return mem_root.alloc(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char* strmake(const char* str_arg, size_t len_arg)
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return mem_root.strmake_root(str_arg, len_arg);
+    init_mem_root();
+    return mem_root.strmake(str_arg, len_arg);
   }
 
   filesort_info sort;
@@ -802,8 +791,8 @@ void change_double_for_sort(double nr,unsigned char *to);
 int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
-TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
+TYPELIB* convert_strings_to_array_type(char** typelibs, char** end);
+TYPELIB* typelib(memory::Root&, List<String>&);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 

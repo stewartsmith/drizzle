@@ -21,8 +21,7 @@
 
 #include <drizzled/item/empty_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_empty_string::make_field(SendField *tmp_field)
 { 

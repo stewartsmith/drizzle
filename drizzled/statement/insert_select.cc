@@ -36,10 +36,6 @@ bool statement::InsertSelect::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
-  Select_Lex_Unit *unit= &lex().unit;
-  select_result *sel_result= NULL;
-  bool res= false;
-  bool need_start_waiting= false;
 
   if (insert_precheck(&session(), all_tables))
   {
@@ -49,34 +45,26 @@ bool statement::InsertSelect::execute()
   /* Don't unlock tables until command is written to binary log */
   select_lex->options|= SELECT_NO_UNLOCK;
 
-  unit->set_limit(select_lex);
+  lex().unit.set_limit(select_lex);
 
-  if (! (need_start_waiting= not session().wait_if_global_read_lock(false, true)))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
+  bool res;
   if (! (res= session().openTablesLock(all_tables)))
   {
     DRIZZLE_INSERT_SELECT_START(session().getQueryString()->c_str());
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
-    select_lex->context.table_list=
-      select_lex->context.first_name_resolution_table= second_table;
+    select_lex->context.table_list= select_lex->context.first_name_resolution_table= second_table;
     res= insert_select_prepare(&session());
-    if (! res && (sel_result= new select_insert(first_table,
-                                                first_table->table,
-                                                &lex().field_list,
-                                                &lex().update_list,
-                                                &lex().value_list,
-                                                lex().duplicates,
-                                                lex().ignore)))
+    if (not res)
     {
-      res= handle_select(&session(), 
-                         &lex(), 
-                         sel_result, 
-                         OPTION_SETUP_TABLES_DONE);
+      select_insert sel_result(first_table, first_table->table, &lex().field_list, &lex().update_list, &lex().value_list, lex().duplicates, lex().ignore);
+      res= handle_select(&session(), &lex(), &sel_result, OPTION_SETUP_TABLES_DONE);
 
       /*
          Invalidate the table in the query cache if something changed
@@ -91,7 +79,6 @@ bool statement::InsertSelect::execute()
         first_table->next_local= 0;
         first_table->next_local= save_table;
       }
-      delete sel_result;
     }
     /* revert changes for SP */
     select_lex->table_list.first= (unsigned char*) first_table;

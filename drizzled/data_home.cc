@@ -19,31 +19,44 @@
  */
 
 #include <config.h>
-#include <drizzled/configmake.h>
-
 #include <boost/filesystem.hpp>
-
+#include <drizzled/configmake.h>
 #include <drizzled/data_home.h>
 
 namespace drizzled {
 
 static boost::filesystem::path data_home(LOCALSTATEDIR);
 static boost::filesystem::path full_data_home(LOCALSTATEDIR);
+static boost::filesystem::path data_home_catalog(LOCALSTATEDIR);
 
-boost::filesystem::path& getFullDataHome()
+const boost::filesystem::path& getFullDataHome()
 {
   return full_data_home;
 }
 
-boost::filesystem::path& getDataHome()
+const boost::filesystem::path& getDataHome()
 {
   return data_home;
 }
 
-boost::filesystem::path& getDataHomeCatalog()
+const boost::filesystem::path& getDataHomeCatalog()
 {
-  static boost::filesystem::path data_home_catalog(getDataHome());
   return data_home_catalog;
+}
+
+boost::filesystem::path& getMutableDataHome()
+{
+  return data_home;
+}
+
+void setFullDataHome(const boost::filesystem::path& v)
+{
+  full_data_home= v;
+}
+
+void setDataHomeCatalog(const boost::filesystem::path& v)
+{
+  data_home_catalog= v;
 }
 
 } // namespace drizzled

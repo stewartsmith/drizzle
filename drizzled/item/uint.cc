@@ -22,8 +22,7 @@
 #include <drizzled/charset.h>
 #include <drizzled/item/uint.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_uint::Item_uint(const char *str_arg, uint32_t length):
   Item_int(str_arg, length)

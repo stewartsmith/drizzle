@@ -455,12 +455,9 @@ void Session::abortLock(Table *table)
 
 bool Session::abortLockForThread(Table *table)
 {
-  DrizzleLock *locked;
-  Table *write_lock_used;
   bool result= false;
-
-  if ((locked= get_lock_data(&table, 1, false,
-                             &write_lock_used)))
+  Table* write_lock_used;
+  if (DrizzleLock* locked= get_lock_data(&table, 1, false, &write_lock_used))
   {
     for (uint32_t i= 0; i < locked->sizeLock(); i++)
     {
@@ -476,9 +473,9 @@ bool Session::abortLockForThread(Table *table)
 
 int Session::unlock_external(Table **table, uint32_t count)
 {
-  int error,error_code;
+  int error;
 
-  error_code=0;
+  int error_code=0;
   do
   {
     if ((*table)->current_lock != F_UNLCK)
@@ -542,7 +539,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
   for (uint32_t i= 0; i < count ; i++)
   {
     Table *table;
-    enum thr_lock_type lock_type;
+    thr_lock_type lock_type;
 
     if (table_ptr[i]->getEngine()->check_flag(HTON_BIT_SKIP_STORE_LOCK))
       continue;
@@ -563,7 +560,7 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
       }
     }
     locks_start= locks;
-    locks= table->cursor->store_lock(this, locks, should_lock == false ? TL_IGNORE : lock_type);
+    locks= table->cursor->store_lock(this, locks, should_lock ? lock_type : TL_IGNORE);
     if (should_lock)
     {
       table->lock_position=   (uint32_t) (to - table_buf);
@@ -659,15 +656,14 @@ void TableList::unlock_table_name()
 
 static bool locked_named_table(TableList *table_list)
 {
-  for (; table_list ; table_list=table_list->next_local)
+  for (; table_list; table_list=table_list->next_local)
   {
     Table *table= table_list->table;
     if (table)
     {
       Table *save_next= table->getNext();
-      bool result;
       table->setNext(NULL);
-      result= table::Cache::areTablesUsed(table_list->table, 0);
+      bool result= table::Cache::areTablesUsed(table_list->table, 0);
       table->setNext(save_next);
       if (result)
         return 1;
@@ -689,7 +685,7 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
   {
     if (getKilled())
     {
-      result=1;
+      result= true;
       break;
     }
     wait_for_condition(table::Cache::mutex(), COND_refresh);
@@ -716,17 +712,14 @@ bool Session::wait_for_locked_table_names(TableList *table_list)
 bool Session::lock_table_names(TableList *table_list)
 {
   bool got_all_locks= true;
-  TableList *lock_table;
-
-  for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
+  for (TableList* lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
-    int got_lock;
-    if ((got_lock= lock_table_name(lock_table)) < 0)
+    int got_lock= lock_table_name(lock_table);
+    if (got_lock < 0)
     {
       table_list->unlock_table_names(table_list);
       return true; // Fatal error
     }
-
     if (got_lock)
       got_all_locks= false;				// Someone is using table
   }
@@ -735,10 +728,8 @@ bool Session::lock_table_names(TableList *table_list)
   if (not got_all_locks && wait_for_locked_table_names(table_list))
   {
     table_list->unlock_table_names(table_list);
-
     return true;
   }
-
   return false;
 }
 
@@ -802,13 +793,10 @@ bool Session::lock_table_names_exclusively(TableList *table_list)
 
 void TableList::unlock_table_names(TableList *last_table)
 {
-  for (TableList *table_iter= this;
-       table_iter != last_table;
-       table_iter= table_iter->next_local)
+  for (TableList *table_iter= this; table_iter != last_table; table_iter= table_iter->next_local)
   {
     table_iter->unlock_table_name();
   }
-
   locking::broadcast_refresh();
 }
 
@@ -816,8 +804,8 @@ void TableList::unlock_table_names(TableList *last_table)
 static void print_lock_error(int error, const char *table)
 {
   drizzled::error_t textno;
-
-  switch (error) {
+  switch (error) 
+  {
   case HA_ERR_LOCK_WAIT_TIMEOUT:
     textno=ER_LOCK_WAIT_TIMEOUT;
     break;
@@ -1051,13 +1039,11 @@ bool Session::wait_if_global_read_lock(bool abort_on_refresh, bool is_not_commit
 
 void Session::startWaitingGlobalReadLock()
 {
-  bool tmp;
   if (unlikely(isGlobalReadLock()))
     return;
 
   LOCK_global_read_lock.lock();
-  tmp= (!--protect_against_global_read_lock &&
-        (waiting_for_read_lock || global_read_lock_blocks_commit));
+  bool tmp= (!--protect_against_global_read_lock && (waiting_for_read_lock || global_read_lock_blocks_commit));
   LOCK_global_read_lock.unlock();
 
   if (tmp)
@@ -1120,19 +1106,10 @@ bool Session::makeGlobalReadLockBlockCommit()
     handling, it is not necessary to also signal COND_refresh.
 */
 
-namespace locking {
-
-void broadcast_refresh(void)
+void locking::broadcast_refresh()
 {
   COND_refresh.notify_all();
   COND_global_read_lock.notify_all();
 }
-
-}
-
-
-/**
-  @} (end of group Locking)
-*/
 
 } /* namespace drizzled */

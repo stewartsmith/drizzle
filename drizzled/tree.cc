@@ -126,7 +126,7 @@ void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
   }
   if (! (tree->with_delete= with_delete))
   {
-    tree->mem_root.init_alloc_root(default_alloc_size);
+    tree->mem_root.init(default_alloc_size);
     tree->mem_root.min_malloc= (sizeof(TREE_ELEMENT)+tree->size_of_element);
   }
 }
@@ -228,9 +228,7 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint32_t key_size,
     if (tree->with_delete)
       element= (TREE_ELEMENT *) malloc(alloc_size);
     else
-      element= (TREE_ELEMENT *) tree->mem_root.alloc_root(alloc_size);
-    if (!element)
-      return(NULL);
+      element= (TREE_ELEMENT *) tree->mem_root.alloc(alloc_size);
     **parent= element;
     element->left= element->right= &tree->null_element;
     if (!tree->offset_to_key)
