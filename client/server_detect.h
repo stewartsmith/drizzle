@@ -18,11 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_SERVER_DETECT_H
-#define CLIENT_SERVER_DETECT_H
+#pragma once
 
 #include <boost/regex.hpp>
-#include <iostream>
+#include <iosfwd>
 
 class ServerDetect
 {
@@ -66,5 +65,3 @@ class ServerDetect
     server_type type;
     std::string version;
 };
-
-#endif /* CLIENT_SERVER_DETECT_H */

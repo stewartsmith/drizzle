@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_DRIZZLEDUMP_MYSQL_H
-#define CLIENT_DRIZZLEDUMP_MYSQL_H
+#pragma once
 
 #include "drizzledump_data.h"
 
@@ -103,5 +102,3 @@ class DrizzleDumpDataMySQL : public DrizzleDumpData
     long convertTime(const char* oldTime) const;
     std::string checkDateTime(const char* item, uint32_t field) const;
 };
-
-#endif /* CLIENT_DRIZZLEDUMP_MYSQL_H */

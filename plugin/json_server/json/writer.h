@@ -36,13 +36,11 @@
  */
 
 #pragma once
-#ifndef JSON_WRITER_H_INCLUDED
-# define JSON_WRITER_H_INCLUDED
 
 # include "value.h"
 # include <vector>
 # include <string>
-# include <iostream>
+# include <iosfwd>
 
 namespace Json {
 
@@ -206,7 +204,3 @@ namespace Json {
    std::ostream& operator<<( std::ostream&, const Value &root );
 
 } // namespace Json
-
-
-
-#endif // JSON_WRITER_H_INCLUDED

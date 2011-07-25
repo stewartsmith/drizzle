@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_USER_DETECT_H
-#define CLIENT_USER_DETECT_H
+#pragma once
 
 #include <unistd.h>
 #include <pwd.h>
@@ -46,5 +45,3 @@ class UserDetect
   private:
     std::vector<char> user;
 };
-
-#endif /* CLIENT_USER_DETECT_H */
