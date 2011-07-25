@@ -35,7 +35,7 @@ public:
   const char *field_name; /**< Name of the field to be created */
   const char *change; /**< If done with alter table */
   const char *after; /**< Put this new Field after this Field */
-  LEX_STRING comment; /**< A comment for this field */
+  lex_string_t comment; /**< A comment for this field */
   Item *def; /**< Default value for the new field */
   enum enum_field_types sql_type; /**< The data type of the new field */
 
@@ -114,7 +114,7 @@ public:
             char *length,
             char *decimals,
             uint32_t type_modifier,
-            LEX_STRING *comment,
+            lex_string_t *comment,
             char *change,
             List<String> *interval_list,
             const charset_info_st * const cs,

@@ -259,10 +259,10 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  LEX_STRING db;                        /* Pointer to db */
-  LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to table (from datadir) */
-  LEX_STRING normalized_path;		/* unpack_filename(path) */
+  lex_string_t db;                        /* Pointer to db */
+  lex_string_t table_name;                /* Table name (for open) */
+  lex_string_t path;	/* Path to table (from datadir) */
+  lex_string_t normalized_path;		/* unpack_filename(path) */
 
 public:
 

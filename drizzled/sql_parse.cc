@@ -401,7 +401,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 */
 static bool _schema_select(Session& session, Select_Lex& sel, const string& schema_table_name)
 {
-  LEX_STRING db, table;
+  lex_string_t db, table;
   bitset<NUM_OF_TABLE_OPTIONS> table_options;
   /*
      We have to make non const db_name & table_name
@@ -730,10 +730,10 @@ void create_select_for_variable(Session *session, const char *var_name)
   LEX& lex= session->lex();
   init_select(&lex);
   lex.sql_command= SQLCOM_SELECT;
-  LEX_STRING tmp;
+  lex_string_t tmp;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  LEX_STRING null_lex_string;
+  lex_string_t null_lex_string;
   memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
@@ -804,12 +804,12 @@ void parse(Session& session, const char *inBuf, uint32_t length)
     Return 0 if ok
 */
 
-bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_types type,
+bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
 		       char *length, char *decimals,
 		       uint32_t type_modifier,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
-                       LEX_STRING *comment,
+                       lex_string_t *comment,
 		       char *change,
                        List<String> *interval_list, const charset_info_st * const cs)
 {
@@ -824,7 +824,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   {
     Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::PRIMARY, null_lex_str,
+    key= new Key(Key::PRIMARY, null_lex_string(),
                       &default_key_create_info,
                       0, lex->col_list);
     statement->alter_info.key_list.push_back(key);
@@ -834,7 +834,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   {
     Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::UNIQUE, null_lex_str,
+    key= new Key(Key::UNIQUE, null_lex_string(),
                  &default_key_create_info, 0,
                  lex->col_list);
     statement->alter_info.key_list.push_back(key);
@@ -913,11 +913,11 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 
 TableList *Select_Lex::add_table_to_list(Session *session,
                                          Table_ident *table,
-                                         LEX_STRING *alias,
+                                         lex_string_t *alias,
                                          const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                          thr_lock_type lock_type,
                                          List<Index_hint> *index_hints_arg,
-                                         LEX_STRING *option)
+                                         lex_string_t *option)
 {
   TableList *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
@@ -1578,7 +1578,7 @@ Item *negate_expression(Session *session, Item *expr)
 */
 
 
-bool check_string_char_length(LEX_STRING *str, const char *err_msg,
+bool check_string_char_length(lex_string_t *str, const char *err_msg,
                               uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
@@ -1595,7 +1595,7 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(LEX_STRING *str, error_t err_code,
+bool check_identifier_name(lex_string_t *str, error_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {

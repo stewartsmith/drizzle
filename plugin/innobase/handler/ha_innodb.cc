@@ -7795,7 +7795,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   while (foreign != NULL) {
 
     uint i;
-    LEX_STRING *name = 0;
+    lex_string_t *name = 0;
     uint ulen;
     char uname[NAME_LEN + 1];           /* Unencoded name */
     char db_name[NAME_LEN + 1];
@@ -7807,7 +7807,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
     while (tmp_buff[i] != '/')
       i++;
     tmp_buff += i + 1;
-    LEX_STRING *tmp_foreign_id = session->make_lex_string(NULL, tmp_buff, strlen(tmp_buff), true);
+    lex_string_t *tmp_foreign_id = session->make_lex_string(NULL, tmp_buff, strlen(tmp_buff), true);
 
     /* Database name */
     tmp_buff = foreign->referenced_table_name;
@@ -7820,16 +7820,16 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
     }
     db_name[i] = 0;
     ulen= identifier::Table::filename_to_tablename(db_name, uname, sizeof(uname));
-    LEX_STRING *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
+    lex_string_t *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
     /* Table name */
     tmp_buff += i + 1;
     ulen= identifier::Table::filename_to_tablename(tmp_buff, uname, sizeof(uname));
-    LEX_STRING *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
+    lex_string_t *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
     /** Foreign Fields **/
-    List<LEX_STRING> tmp_foreign_fields;
-    List<LEX_STRING> tmp_referenced_fields;
+    List<lex_string_t> tmp_foreign_fields;
+    List<lex_string_t> tmp_referenced_fields;
     for (i= 0;;) {
       tmp_buff= foreign->foreign_col_names[i];
       name = session->make_lex_string(name, tmp_buff, strlen(tmp_buff), true);
@@ -7862,7 +7862,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       length=8;
       tmp_buff= "RESTRICT";
     }
-    LEX_STRING *tmp_delete_method = session->make_lex_string(NULL, tmp_buff, length, true);
+    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, tmp_buff, length, true);
 
 
     if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
@@ -7885,9 +7885,9 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       length=8;
       tmp_buff= "RESTRICT";
     }
-    LEX_STRING *tmp_update_method = session->make_lex_string(NULL, tmp_buff, length, true);
+    lex_string_t *tmp_update_method = session->make_lex_string(NULL, tmp_buff, length, true);
 
-    LEX_STRING *tmp_referenced_key_name = NULL;
+    lex_string_t *tmp_referenced_key_name = NULL;
 
     if (foreign->referenced_index &&
         foreign->referenced_index->name)

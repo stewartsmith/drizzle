@@ -128,7 +128,7 @@ static bool has_named_parameters(List<Item>& params)
 class Create_native_func : public Create_func
 {
 public:
-  virtual Item* create(Session* session, LEX_STRING name, List<Item>* item_list)
+  virtual Item* create(Session* session, lex_string_t name, List<Item>* item_list)
   {
     if (item_list && has_named_parameters(*item_list))
     {
@@ -145,7 +145,7 @@ public:
     @param item_list The function parameters, none of which are named
     @return An item representing the function call
   */
-  virtual Item* create_native(Session*, LEX_STRING name, List<Item>*) = 0;
+  virtual Item* create_native(Session*, lex_string_t name, List<Item>*) = 0;
 };
 
 
@@ -156,7 +156,7 @@ public:
 class Create_func_arg0 : public Create_func
 {
 public:
-  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, lex_string_t name, List<Item> *item_list);
 
   /**
     Builder method, with no arguments.
@@ -174,7 +174,7 @@ public:
 class Create_func_arg1 : public Create_func
 {
 public:
-  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, lex_string_t name, List<Item> *item_list);
 
   /**
     Builder method, with one argument.
@@ -193,7 +193,7 @@ public:
 class Create_func_arg2 : public Create_func
 {
 public:
-  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, lex_string_t name, List<Item> *item_list);
 
   /**
     Builder method, with two arguments.
@@ -213,7 +213,7 @@ public:
 class Create_func_arg3 : public Create_func
 {
 public:
-  virtual Item* create(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create(Session *session, lex_string_t name, List<Item> *item_list);
 
   /**
     Builder method, with three arguments.
@@ -254,7 +254,7 @@ protected:
 class Create_func_concat : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_concat s_singleton;
 
@@ -266,7 +266,7 @@ protected:
 class Create_func_concat_ws : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_concat_ws s_singleton;
 
@@ -440,7 +440,7 @@ class Create_func_export_set : public Create_native_func
 {
 
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_export_set s_singleton;
 
@@ -452,7 +452,7 @@ protected:
 class Create_func_field : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_field s_singleton;
 
@@ -505,7 +505,7 @@ protected:
 class Create_func_from_unixtime : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_from_unixtime s_singleton;
 
@@ -517,7 +517,7 @@ protected:
 class Create_func_greatest : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_greatest s_singleton;
 
@@ -585,7 +585,7 @@ protected:
 class Create_func_last_insert_id : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_last_insert_id s_singleton;
 
@@ -611,7 +611,7 @@ protected:
 class Create_func_least : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_least s_singleton;
 
@@ -636,7 +636,7 @@ protected:
 class Create_func_locate : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_locate s_singleton;
 
@@ -699,7 +699,7 @@ Create_func_makedate Create_func_makedate::s_singleton;
 class Create_func_make_set : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_make_set s_singleton;
 
@@ -826,7 +826,7 @@ protected:
 class Create_func_round : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_round s_singleton;
 protected:
@@ -1003,7 +1003,7 @@ Create_func_ucase Create_func_ucase::s_singleton;
 class Create_func_unix_timestamp : public Create_native_func
 {
 public:
-  virtual Item* create_native(Session *session, LEX_STRING name, List<Item> *item_list);
+  virtual Item* create_native(Session *session, lex_string_t name, List<Item> *item_list);
 
   static Create_func_unix_timestamp s_singleton;
 protected:
@@ -1036,7 +1036,7 @@ Create_func_weekday Create_func_weekday::s_singleton;
 
 Create_udf_func Create_udf_func::s_singleton;
 
-Item* Create_udf_func::create(Session *session, LEX_STRING name, List<Item> *item_list)
+Item* Create_udf_func::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
   return create(session, plugin::Function::get(std::string(name.str, name.length)), item_list);
 }
@@ -1056,7 +1056,7 @@ Item* Create_udf_func::create(Session *session, const plugin::Function *udf, Lis
   return func;
 }
 
-Item* Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_list)
+Item* Create_func_arg0::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
   if (item_list && item_list->size())
   {
@@ -1066,7 +1066,7 @@ Item* Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *it
   return create(session);
 }
 
-Item* Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *item_list)
+Item* Create_func_arg1::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 1)
@@ -1088,7 +1088,7 @@ Item* Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *it
 
 
 Item*
-Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_list)
+Create_func_arg2::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 2)
@@ -1112,7 +1112,7 @@ Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_lis
 
 
 Item*
-Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_list)
+Create_func_arg3::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
   if (arg_count != 3)
@@ -1149,7 +1149,7 @@ Create_func_bin::create(Session *session, Item *arg1)
 Create_func_concat Create_func_concat::s_singleton;
 
 Item*
-Create_func_concat::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
+Create_func_concat::create_native(Session *session, lex_string_t name, List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
   if (arg_count < 1)
@@ -1165,7 +1165,7 @@ Create_func_concat::create_native(Session *session, LEX_STRING name, List<Item> 
 Create_func_concat_ws Create_func_concat_ws::s_singleton;
 
 Item*
-Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
+Create_func_concat_ws::create_native(Session *session, lex_string_t name,
                                      List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1202,7 +1202,7 @@ Create_func_datediff::create(Session *session, Item *arg1, Item *arg2)
 Create_func_export_set Create_func_export_set::s_singleton;
 
 Item*
-Create_func_export_set::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
+Create_func_export_set::create_native(Session *session, lex_string_t name, List<Item> *item_list)
 {
   switch (item_list ? item_list->size() : 0) 
   {
@@ -1240,7 +1240,7 @@ Create_func_export_set::create_native(Session *session, LEX_STRING name, List<It
 Create_func_field Create_func_field::s_singleton;
 
 Item*
-Create_func_field::create_native(Session *session, LEX_STRING name,
+Create_func_field::create_native(Session *session, lex_string_t name,
                                  List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1283,7 +1283,7 @@ Create_func_from_days::create(Session *session, Item *arg1)
 Create_func_from_unixtime Create_func_from_unixtime::s_singleton;
 
 Item*
-Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
+Create_func_from_unixtime::create_native(Session *session, lex_string_t name,
                                          List<Item> *item_list)
 {
   switch (item_list ? item_list->size() : 0) 
@@ -1310,7 +1310,7 @@ Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
 Create_func_greatest Create_func_greatest::s_singleton;
 
 Item*
-Create_func_greatest::create_native(Session *session, LEX_STRING name,
+Create_func_greatest::create_native(Session *session, lex_string_t name,
                                     List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1362,7 +1362,7 @@ Create_func_last_day::create(Session *session, Item *arg1)
 Create_func_last_insert_id Create_func_last_insert_id::s_singleton;
 
 Item*
-Create_func_last_insert_id::create_native(Session *session, LEX_STRING name,
+Create_func_last_insert_id::create_native(Session *session, lex_string_t name,
                                           List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1395,7 +1395,7 @@ Create_func_lcase::create(Session *session, Item *arg1)
 Create_func_least Create_func_least::s_singleton;
 
 Item*
-Create_func_least::create_native(Session *session, LEX_STRING name,
+Create_func_least::create_native(Session *session, lex_string_t name,
                                  List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1420,7 +1420,7 @@ Create_func_load_file::create(Session *session, Item *arg1)
 Create_func_locate Create_func_locate::s_singleton;
 
 Item*
-Create_func_locate::create_native(Session *session, LEX_STRING name,
+Create_func_locate::create_native(Session *session, lex_string_t name,
                                   List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1450,7 +1450,7 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
 Create_func_make_set Create_func_make_set::s_singleton;
 
 Item*
-Create_func_make_set::create_native(Session *session_arg, LEX_STRING name,
+Create_func_make_set::create_native(Session *session_arg, lex_string_t name,
                                     List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
@@ -1511,7 +1511,7 @@ Create_func_radians::create(Session *session, Item *arg1)
 
 Create_func_round Create_func_round::s_singleton;
 
-Item* Create_func_round::create_native(Session *session, LEX_STRING name, List<Item> *item_list)
+Item* Create_func_round::create_native(Session *session, lex_string_t name, List<Item> *item_list)
 {
   switch (item_list ? item_list->size() : 0) 
   {
@@ -1562,7 +1562,7 @@ Create_func_space::create(Session *session, Item *arg1)
 Create_func_unix_timestamp Create_func_unix_timestamp::s_singleton;
 
 Item*
-Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
+Create_func_unix_timestamp::create_native(Session *session, lex_string_t name,
                                           List<Item> *item_list)
 {
   switch (item_list ? item_list->size() : 0) 
@@ -1580,7 +1580,7 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
 
 struct Native_func_registry
 {
-  LEX_STRING name;
+  lex_string_t name;
   Create_func *builder;
 };
 
@@ -1665,7 +1665,7 @@ void item_create_init()
     FunctionContainer::getMutableMap()[string(func->name.str, func->name.length)]= func->builder;
 }
 
-Create_func* find_native_function_builder(LEX_STRING name)
+Create_func* find_native_function_builder(lex_string_t name)
 {
   return find_ptr2(FunctionContainer::getMap(), string(name.str, name.length));
 }

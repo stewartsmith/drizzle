@@ -42,8 +42,8 @@ class Item_func_set_user_var :public Item_func
   } save_result;
 
 public:
-  LEX_STRING name; // keep it public
-  Item_func_set_user_var(LEX_STRING a,Item *b)
+  lex_string_t name; // keep it public
+  Item_func_set_user_var(lex_string_t a,Item *b)
     :Item_func(b), cached_result_type(INT_RESULT), name(a)
   {}
   enum Functype functype() const { return SUSERVAR_FUNC; }

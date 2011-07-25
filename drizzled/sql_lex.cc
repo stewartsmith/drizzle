@@ -66,11 +66,6 @@ static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
 }
 
-/**
-  LEX_STRING constant for null-string to be used in parser and other places.
-*/
-const LEX_STRING null_lex_str= {NULL, 0};
-
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
                                    unsigned int length) :
@@ -165,7 +160,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
+void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
@@ -297,9 +292,9 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 }
 
 /* make a copy of token before ptr and set yytoklen */
-static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
+static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  LEX_STRING tmp;
+  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
   tmp.str= lip->m_session->mem.strmake(lip->get_tok_start() + skip, tmp.length);
@@ -316,11 +311,11 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
    get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
-static LEX_STRING get_quoted_token(Lex_input_stream *lip,
+static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  LEX_STRING tmp;
+  lex_string_t tmp;
   const char *from, *end;
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
@@ -1569,11 +1564,11 @@ List<Item>* Select_Lex_Node::get_item_list()
 
 TableList *Select_Lex_Node::add_table_to_list(Session *,
                                               Table_ident *,
-                                              LEX_STRING *,
+                                              lex_string_t *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
                                               thr_lock_type,
                                               List<Index_hint> *,
-                                              LEX_STRING *)
+                                              lex_string_t *)
 {
   return 0;
 }

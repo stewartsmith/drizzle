@@ -41,14 +41,14 @@ DRIZZLED_API int get_quote_char_for_identifier();
 namespace show {
 
 bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident);
-bool buildCreateSchema(Session *session, LEX_STRING &ident);
+bool buildCreateSchema(Session *session, lex_string_t &ident);
 bool buildCreateTable(Session *session, Table_ident *ident);
 bool buildDescribe(Session *session, Table_ident *ident);
 bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident);
 bool buildProcesslist(Session *session);
 bool buildSchemas(Session*);
 bool buildStatus(Session *session, const drizzled::sql_var_t is_global);
-bool buildEngineStatus(Session *session, LEX_STRING);
+bool buildEngineStatus(Session *session, lex_string_t);
 bool buildTableStatus(Session *session, const char *ident);
 bool buildTables(Session *session, const char *ident);
 bool buildTemporaryTables(Session *session);

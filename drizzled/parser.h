@@ -116,21 +116,21 @@ bool setup_select_in_parentheses(Session *session, LEX *lex);
 Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list);
 void my_parse_error(Lex_input_stream *lip);
 void my_parse_error(const char *message);
-bool check_reserved_words(LEX_STRING *name);
+bool check_reserved_words(lex_string_t *name);
 void errorOn(drizzled::Session *session, const char *s);
 
 
 bool buildOrderBy(LEX *lex);
-void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value);
 void buildEngineOption(LEX *lex, const char *key, uint64_t value);
-void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value);
+void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value);
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
-void buildSchemaDefiner(LEX *lex, const LEX_STRING &value);
+void buildSchemaDefiner(LEX *lex, const lex_string_t &value);
 void buildSchemaDefiner(LEX *lex, const identifier::User &user);
-bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name);
 
-Item *buildIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name, const LEX_STRING &field_name);
-Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name);
+Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name);
+Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name);
 
 void buildCreateFieldIdent(LEX *lex);
 
