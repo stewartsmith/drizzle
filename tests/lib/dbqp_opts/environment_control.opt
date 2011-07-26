@@ -111,7 +111,7 @@ environment_control_group.add_option(
        "--randgen-path"
      , dest="randgenpath"
      , action='store'
-     , default=None
+     , default=randgen_path_default
      , help = "The path to a randgen installation that can be used to execute randgen-based tests"
      )
 

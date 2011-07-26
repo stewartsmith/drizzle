@@ -29,4 +29,5 @@ valgrind_suppression_default = os.path.join(testdir_default,'valgrind.supp')
 suitepaths_default = [ os.path.join(basedir_default,'plugin')
                      , os.path.join(testdir_default,'suite')
                      ]
+randgen_path_default = os.path.join(testdir_default,'randgen')
 
