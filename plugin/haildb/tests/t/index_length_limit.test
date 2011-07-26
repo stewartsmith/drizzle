@@ -1,4 +1,0 @@
-CREATE TABLE t1 (pk int primary key, a varbinary(767) unique);
-drop table t1;
---error ER_TOO_LONG_KEY
-CREATE TABLE t1 (pk int primary key, a varbinary(4097) unique);

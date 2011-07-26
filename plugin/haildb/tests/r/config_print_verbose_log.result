@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_print_verbose_log';
-Variable_name	Value
-innodb_print_verbose_log	ON
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='print_verbose_log';
-NAME	TYPE	VALUE
-print_verbose_log	BOOL	true
