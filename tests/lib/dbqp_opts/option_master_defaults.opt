@@ -22,12 +22,11 @@
 
 testdir_default = os.path.abspath(os.getcwd())
 workdir_default = os.path.join(testdir_default,'workdir')
-clientbindir_default = os.path.abspath(os.path.join(testdir_default,
-                                       '../client'))
+clientbindir_default = os.path.abspath(os.path.join(testdir_default,'../client'))
 basedir_default = os.path.split(testdir_default)[0]
 server_type_default = 'drizzle'
 valgrind_suppression_default = os.path.join(testdir_default,'valgrind.supp')
 suitepaths_default = [ os.path.join(basedir_default,'plugin')
-                           , os.path.join(testdir_default,'suite')
-                           ]
+                     , os.path.join(testdir_default,'suite')
+                     ]
 

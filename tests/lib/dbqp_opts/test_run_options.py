@@ -74,6 +74,18 @@ def organize_options(args, test_cases):
         variables['noshm']=True
     return variables
 
+def populate_defaults(variables, basedir_default):
+    """ We fill in any default values that need
+        to be put in post-parsing
+
+    """
+    if not variables['basedir']:
+        # We populate this value with the default now
+        # it allows us to have a default and have user
+        # supplied opts to override them
+        variables['basedir'].append(basedir_default)
+    return variables
+
 # Create the CLI option parser
 parser= optparse.OptionParser(version='%prog (database quality platform aka project steve austin) version 0.1.1')
 
@@ -81,11 +93,8 @@ parser= optparse.OptionParser(version='%prog (database quality platform aka proj
 # assume we are in-tree testing in general and operating from root/test(?)
 option_module = 'lib/dbqp_opts/option_master_defaults.opt'
 execfile(option_module)
-
-
 config_control_group = optparse.OptionGroup(parser, 
                      "Configuration controls - allows you to specify a file with a number of options already specified")
-
 config_control_group.add_option(
    "--sys_config_file"
     , dest="sysconfigfilepath"
@@ -93,7 +102,6 @@ config_control_group.add_option(
     , default=None # We want to have a file that will be our default defaults file...
     , help="The file that specifies system configuration specs for dbqp to execute tests (not yet implemented)"
     )
-
 parser.add_option_group(config_control_group)
 
 # We start adding our option groups to the parser
@@ -123,4 +131,5 @@ for option_module in option_modules:
 
 variables = {}
 variables = organize_options(args, test_cases)
+variables = populate_defaults(variables, basedir_default)
 

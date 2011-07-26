@@ -43,9 +43,9 @@ test_subject_control_group.add_option(
     "--basedir"
   , dest="basedir"
   , type='string'
-  , default = [ basedir_default ]
+  , default = []
   , action='append'
-  , help = "Pass this argument to signal to the test-runner that this is an in-tree test.  We automatically set a number of variables relative to the argument (client-bindir, serverdir, testdir) [%default]"
+  , help = "Pass this argument to signal to the test-runner that this is an in-tree test.  We automatically set a number of variables relative to the argument (client-bindir, serverdir, testdir) [%basedir_default]"
   )
 
 test_subject_control_group.add_option(

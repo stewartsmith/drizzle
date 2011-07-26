@@ -29,6 +29,7 @@
 """
 # imports
 import os
+import sys
 
 
 class codeTree:
@@ -187,6 +188,10 @@ class mysqlTree(codeTree):
         self.charsetdir = self.system_manager.find_path([os.path.join(self.basedir, 'mysql/charsets')
                                                        , os.path.join(self.basedir, 'sql/share/charsets')
                                                        , os.path.join(self.basedir, 'share/charsets')])
+        self.langdir = self.system_manager.find_path([os.path.join(self.basedir, 'share/mysql')
+                                                    , os.path.join(self.basedir, 'sql/share')
+                                                    , os.path.join(self.basedir, 'share')])
+
 
         self.srcdir = self.system_manager.find_path([self.basedir])
         self.suite_paths = variables['suitepaths']
@@ -232,7 +237,6 @@ class mysqlTree(codeTree):
 
         self.mysqltest = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                    'mysqltest')])
-
         self.server_version_string = None
         self.server_executable = None
         self.server_version = None
@@ -240,9 +244,11 @@ class mysqlTree(codeTree):
         self.server_platform = None
         self.server_compile_comment = None
         self.type = 'mysql'
-
         self.process_server_version()
         self.ld_lib_paths = self.get_ld_lib_paths()
+        self.bootstrap_path = os.path.join( self.system_manager.workdir
+                                          , 'mysql_bootstrap.sql' )
+        self.generate_bootstrap()
          
         self.report()
 
@@ -288,6 +294,67 @@ class mysqlTree(codeTree):
             ld_lib_paths = [ os.path.join(self.basedir,"lib")
                            , os.path.join(self.basedir,"lib/mysql")]
         return ld_lib_paths
+
+    def generate_bootstrap(self):
+        """ We do the voodoo that we need to in order to create the bootstrap
+            file needed by MySQL
+
+        """
+        found_new_sql = False
+        # determine if we have a proper area for our sql or if we
+        # use the rigged method from 5.0 / 5.1
+        # first we search various possible locations
+        test_file = "mysql_system_tables.sql"
+        for candidate_dir in [ "mysql"
+                         , "sql/share"
+                         , "share/mysql"
+			                   , "share"
+                         , "scripts"]:
+            candidate_path = os.path.join(self.basedir, candidate_dir, test_file)
+            if os.path.exists(candidate_path):
+                bootstrap_file = open(self.bootstrap_path,'w')
+                bootstrap_file.write("use mysql\n")
+                for sql_file in [ 'mysql_system_tables.sql' #official mysql system tables
+                                , 'mysql_system_tables_data.sql' #initial data for sys tables
+                                , 'mysql_test_data_timezone.sql' # subset of full tz table data for testing
+                                , 'fill_help_tables.sql' # fill help tables populated only w/ src dist(?)
+                                ]:
+                    sql_file_path = os.path.join(self.basedir,candidate_dir,sql_file)
+                    sql_file_handle = open(sql_file_path,'r')
+                    bootstrap_file.write(sql_file_handle.readlines())
+                    sql_file_handle.close()
+                found_new_sql = True
+                break
+        if not found_new_sql:
+            # Install the system db's from init_db.sql
+            # that is in early 5.1 and 5.0 versions of MySQL
+            sql_file_path = os.path.join(self.basedir,'mysql-test/lib/init_db.sql')
+            self.logging.info("Attempting to use bootstrap file - %s" %(sql_file_path))
+            try:
+                in_file = open(sql_file_path,'r')
+                bootstrap_file = open(self.bootstrap_path,'w')
+                bootstrap_file.write(in_file.readlines())
+                in_file.close()
+            except IOError:
+                self.logging.error("Cannot find data for generating bootstrap file")
+                self.logging.error("Cannot proceed without this, system exiting...")
+                sys.exit(1)
+        # Remove anonymous users
+        bootstrap_file.write("DELETE FROM mysql.user where user= '';\n")
+        # Create mtr database
+        bootstrap_file.write("CREATE DATABASE mtr;\n")
+        for sql_file in [ 'mtr_warnings.sql' # help tables + data for warning detection / suppression
+                        , 'mtr_check.sql' # Procs for checking proper restore post-testcase
+                        ]:
+            sql_file_path = os.path.join(self.basedir,'mysql-test/include',sql_file)
+            sql_file_handle = open(sql_file_path,'r')
+            bootstrap_file.write(sql_file_handle.readlines())
+            sql_file_handle.close()
+        bootstrap_file.close()
+        return
+
+
+        
 
 
         
