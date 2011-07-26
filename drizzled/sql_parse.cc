@@ -295,8 +295,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da().can_overwrite_status= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(*session, session->is_error());
+  TransactionServices::autocommitOrRollback(*session, session->is_error());
   session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -495,16 +494,16 @@ static int execute_command(Session *session)
   */
   if (all_tables || ! session->lex().is_single_level_stmt())
   {
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, 0);
   }
 
-  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
+  assert(not session->transaction.stmt.hasModifiedNonTransData());
 
   if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
       && ! session->inTransaction()
       && session->lex().statement->isTransactional())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -545,7 +544,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       && ! session->inTransaction()
       && ! lex->statement->isShow())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -649,14 +648,10 @@ init_select(LEX *lex)
 }
 
 
-bool
-new_select(LEX *lex, bool move_down)
+bool new_select(LEX *lex, bool move_down)
 {
-  Select_Lex *select_lex;
-  Session *session= lex->session;
-
-  if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return true;
+  Session* session= lex->session;
+  Select_Lex* select_lex= new (session->mem_root) Select_Lex;
 
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
@@ -667,16 +662,14 @@ new_select(LEX *lex, bool move_down)
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
-    return(1);
+    return 1;
   }
 
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
-    Select_Lex_Unit *unit;
     /* first select_lex of subselect or derived table */
-    if (!(unit= new (session->mem_root) Select_Lex_Unit()))
-      return(1);
+    Select_Lex_Unit* unit= new (session->mem_root) Select_Lex_Unit();
 
     unit->init_query();
     unit->init_select();
@@ -886,10 +879,9 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return true;
   }
 
-  if (!(new_field= new CreateField())
-      || new_field->init(session, field_name->str, type, length, decimals,
-                         type_modifier, comment, change, interval_list,
-                         cs, 0, column_format)
+  new_field= new CreateField;
+  if (new_field->init(session, field_name->str, type, length, decimals,
+                         type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -941,7 +933,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
 
@@ -1280,10 +1272,8 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   Select_Lex *first_sl= first_select();
   assert(!fake_select_lex);
 
-  if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
-      return(1);
-  fake_select_lex->include_standalone(this,
-                                      (Select_Lex_Node**)&fake_select_lex);
+  fake_select_lex= new (session_arg->mem_root) Select_Lex();
+  fake_select_lex->include_standalone(this, (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
   fake_select_lex->parent_lex= &session_arg->lex(); /* Used in init_query. */
   fake_select_lex->make_empty_select();
@@ -1308,7 +1298,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     session_arg->lex().current_select= fake_select_lex;
   }
   session_arg->lex().pop_context();
-  return(0);
+  return 0;
 }
 
 

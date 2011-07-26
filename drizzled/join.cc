@@ -634,8 +634,10 @@ int Join::optimize()
       conds= having;
       having= 0;
     }
-    else if ((conds=new Item_cond_and(conds,having)))
+    else
     {
+      conds= new Item_cond_and(conds,having);
+
       /*
         Item_cond_and can't be fixed after creation, so we do not check
         conds->fixed
@@ -734,7 +736,7 @@ int Join::optimize()
   if (!tables_list)
   {
     error= 0;
-    return(0);
+    return 0;
   }
   error= -1;          // Error is sent to client
   sort_by_table= get_sort_by_table(order, group_list, select_lex->leaf_tables);
@@ -1134,7 +1136,7 @@ int Join::optimize()
   if (select_options & SELECT_DESCRIBE)
   {
     error= 0;
-    return(0);
+    return 0;
   }
   having= 0;
 
@@ -1327,7 +1329,7 @@ int Join::reinit()
       func->clear();
   }
 
-  return(0);
+  return 0;
 }
 
 /**
@@ -1741,16 +1743,12 @@ void Join::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new optimizer::SqlSelect()))
-            return;
+          curr_table->select= new optimizer::SqlSelect;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
         else          // This should never happen
         {
-          if (!(curr_table->select->cond=
-          new Item_cond_and(curr_table->select->cond,
-                sort_table_cond)))
-            return;
+          curr_table->select->cond= new Item_cond_and(curr_table->select->cond, sort_table_cond);
           /*
             Item_cond_and do not need fix_fields for execution, its parameters
             are fixed or do not need fix_fields, too
@@ -1759,9 +1757,7 @@ void Join::exec()
         }
         curr_table->select_cond= curr_table->select->cond;
         curr_table->select_cond->top_level_item();
-        curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having,
-                    ~ (table_map) 0,
-                    ~used_tables, 0);
+        curr_join->tmp_having= make_cond_for_table(curr_join->tmp_having, ~ (table_map) 0, ~used_tables, 0);
       }
     }
     {
@@ -2243,7 +2239,7 @@ bool Join::rollup_init()
   */
   for (uint32_t i= 0 ; i < send_group_parts ; i++)
   {
-    rollup.getNullItems()[i]= new (session->mem_root) Item_null_result();
+    rollup.getNullItems()[i]= new (session->mem) Item_null_result();
     List<Item> *rollup_fields= &rollup.getFields()[i];
     rollup_fields->clear();
     rollup.getRefPointerArrays()[i]= ref_array;
@@ -2286,8 +2282,6 @@ bool Join::rollup_init()
             result we do not include fields for constant expressions.
           */
           Item* new_item= new Item_func_rollup_const(item);
-          if (!new_item)
-            return 1;
           new_item->fix_fields(session, NULL);
           *it.ref()= new_item;
           for (Order *tmp= group_tmp; tmp; tmp= tmp->next)
@@ -2417,9 +2411,7 @@ bool Join::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, It
               This is an element that is used by the GROUP BY and should be
               set to NULL in this level
             */
-                  Item_null_result *null_item= new (session->mem_root) Item_null_result();
-                  if (!null_item)
-                    return 1;
+                  Item_null_result *null_item= new (session->mem) Item_null_result();
             item->maybe_null= 1;    // Value will be null sometimes
                   null_item->result_field= item->get_tmp_table_field();
                   item= null_item;
@@ -2814,11 +2806,8 @@ enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, boo
 
   if (join_tab->use_quick == 2)
   {
-    if (join_tab->select->quick)
-    {					/* Used quick select last. reset it */
-      delete join_tab->select->quick;
-      join_tab->select->quick=0;
-    }
+    delete join_tab->select->quick;
+    join_tab->select->quick= 0;
   }
   /* read through all records */
   if ((error=join_init_read_record(join_tab)))
@@ -3366,11 +3355,7 @@ static bool get_best_combination(Join *join)
   optimizer::Position cur_pos;
 
   table_count=join->tables;
-  join->join_tab=join_tab= (JoinTable*) session->mem.alloc(sizeof(JoinTable)*table_count);
-
-  for (i= 0; i < table_count; i++)
-    new (join_tab+i) JoinTable();
-
+  join->join_tab=join_tab= new (session->mem) JoinTable[table_count];
   join->full_join=0;
 
   used_tables= OUTER_REF_TABLE_BIT;   // Outer row is already read
@@ -3405,7 +3390,7 @@ static bool get_best_combination(Join *join)
   for (i=0 ; i < table_count ; i++)
     join->map2table[join->join_tab[i].table->tablenr]=join->join_tab+i;
   update_depend_map(join);
-  return(0);
+  return 0;
 }
 
 /** Save const tables first as used tables. */
@@ -4520,14 +4505,13 @@ static void make_simple_join(Join *join,Table *tmp_table)
   */
   if (!join->table_reexec)
   {
-    join->table_reexec= (Table**) join->session->mem.alloc(sizeof(Table*));
+    join->table_reexec= new (join->session->mem) Table*;
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
   }
   if (!join->join_tab_reexec)
   {
-    join->join_tab_reexec= (JoinTable*) join->session->mem.alloc(sizeof(JoinTable));
-    new (join->join_tab_reexec) JoinTable();
+    join->join_tab_reexec= new (join->session->mem) JoinTable;
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }
@@ -5015,7 +4999,7 @@ static bool make_join_select(Join *join,
       }
     }
   }
-  return(0);
+  return 0;
 }
 
 /*
@@ -5062,20 +5046,7 @@ static void make_join_readinfo(Join& join)
       tab->insideout_buf= join.session->mem.alloc(tab->table->key_info[tab->index].key_length);
     }
 
-    optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
-    boost::shared_ptr<optimizer::AccessMethod> access_method(factory.createAccessMethod(tab->type));
-
-    if (! access_method)
-    {
-      /**
-       * @todo
-       * Is abort() the correct thing to call here? I call this here because it was what was called in
-       * the default case for the switch statement that used to be here.
-       */
-      abort();
-    }
-
-    access_method->getStats(table, tab);
+    optimizer::AccessMethodFactory::create(tab->type)->getStats(*table, *tab);
   }
 
   join.join_tab[join.tables-1].next_select= NULL; /* Set by do_select */
@@ -5528,7 +5499,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
   if (!field_count && !(join->select_options & OPTION_FOUND_ROWS) && !having)
   {                    // only const items with no OPTION_FOUND_ROWS
     join->unit->select_limit_cnt= 1;		// Only send first row
-    return(0);
+    return 0;
   }
   Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   uint32_t offset= field_count ? entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0;
@@ -5615,9 +5586,8 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
 
   table_count= join->tables;
   stat= (JoinTable*) join->session->mem.calloc(sizeof(JoinTable)*table_count);
-  stat_ref= (JoinTable**) join->session->mem.alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector= (Table**) join->session->mem.alloc(sizeof(Table*)*(table_count*2));
-  // table_vector= new (join->session->mem) Table*[2 * table_count];
+  stat_ref= new (join->session->mem) JoinTable*[MAX_TABLES];
+  table_vector= new (join->session->mem) Table*[2 * table_count];
 
   join->best_ref=stat_vector;
 

@@ -961,7 +961,7 @@ after_n_copied_inc:
 gok_or_after_err:
   if (!table->cursor->has_transactions())
     session->transaction.stmt.markModifiedNonTransData();
-  return(0);
+  return 0;
 
 err:
   info->last_errno= error;
@@ -988,7 +988,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
   for (Field **field=entry->getFields() ; *field ; field++)
   {
-    if (((*field)->isWriteSet()) == false)
+    if (not (*field)->isWriteSet())
     {
       /*
        * If the field doesn't have any default value
@@ -1171,7 +1171,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   session->lex().current_select= lex_current_select_save;
   if (res)
-    return(1);
+    return 1;
   /*
     if it is INSERT into join view then check_insert_fields already found
     real table for insert
@@ -1244,7 +1244,7 @@ int select_insert::prepare2(void)
   if (session->lex().current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
 
-  return(0);
+  return 0;
 }
 
 
@@ -1724,11 +1724,11 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->cursor->ha_start_bulk_insert((ha_rows) 0);
   session->setAbortOnWarning(not info.ignore);
   if (check_that_all_fields_are_given_values(session, table, table_list))
-    return(1);
+    return 1;
 
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
-  return(0);
+  return 0;
 }
 
 void select_create::store_values(List<Item> &values)
@@ -1768,8 +1768,7 @@ bool select_create::send_eof()
     */
     if (!table->getShare()->getType())
     {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(*session, 0);
+      TransactionServices::autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

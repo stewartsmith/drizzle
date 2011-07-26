@@ -31,10 +31,9 @@
 # endif
 #endif
 
-#include <drizzled/sql_string.h>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
@@ -98,23 +97,15 @@ enum cut_t
 /*
   datatime_t while being stored in an integer is actually a formatted value.
 */
-typedef int64_t datetime_t;
-typedef int64_t date_t;
 
-inline bool is_valid(const datetime_t &value)
+inline bool is_valid(datetime_t value)
 {
-  if (value == -1L)
-    return false;
-
-  return true;
+  return value != -1;
 }
 
 class Time
 {
 public:
-  typedef uint32_t usec_t;
-  typedef int64_t epoch_t;
-
   Time()
   {
     reset();
@@ -136,8 +127,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(false),
-    time_type(type_arg),
-    _is_local_time(false)
+    time_type(type_arg)
   {
   }
 
@@ -154,8 +144,7 @@ public:
     second(second_arg),
     second_part(second_part_arg),
     neg(neg_arg),
-    time_type(DRIZZLE_TIMESTAMP_TIME),
-    _is_local_time(false)
+    time_type(DRIZZLE_TIMESTAMP_TIME)
   {
   }
 
@@ -163,14 +152,12 @@ public:
   usec_t second_part;
   bool neg;
   timestamp_t time_type;
-  bool _is_local_time;
 
   void reset()
   {
     year= month= day= hour= minute= second= second_part= 0;
     neg= false;
     time_type= DRIZZLE_TIMESTAMP_DATE;
-    _is_local_time= false;
   }
 
   timestamp_t type() const
@@ -183,18 +170,17 @@ public:
   void convert(datetime_t &datetime, timestamp_t arg= type::DRIZZLE_TIMESTAMP_DATETIME);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags);
   void convert(datetime_t &ret, int64_t nr, uint32_t flags, type::cut_t &was_cut);
-  void convert(type::Time::epoch_t &epoch, long *my_timezone,
-               bool *in_dst_time_gap, bool skip_timezone= false) const;
+  void convert(type::epoch_t &epoch, long *my_timezone) const;
 
   void truncate(const timestamp_t arg);
 
   bool store(const char *str,uint32_t length, int &warning, type::timestamp_t arg= DRIZZLE_TIMESTAMP_TIME);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags, type::cut_t &was_cut);
   type::timestamp_t store(const char *str, uint32_t length, uint32_t flags);
-  void store(const type::Time::epoch_t &from, bool use_localtime= false);
-  void store(const type::Time::epoch_t &from, const usec_t &from_fractional_seconds, bool use_localtime= false);
-  void store(const struct tm &from);
-  void store(const struct timeval &from);
+  void store(type::epoch_t from);
+  void store(type::epoch_t from, usec_t from_fractional_seconds);
+  void store(const tm&);
+  void store(const timeval&);
 
 
   static const uint32_t FRACTIONAL_DIGITS= 1000000;
@@ -219,7 +205,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
 uint32_t year_2000_handling(uint32_t year);
 
-void init_time(void);
+void init_time();
 
 /*
   Available interval types used in any statement.
@@ -247,4 +233,3 @@ enum interval_type
 };
 
 } /* namespace drizzled */
-

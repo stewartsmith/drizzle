@@ -21,20 +21,18 @@
 
 #include <drizzled/item/num.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_float :public Item_num
+class Item_float : public Item_num
 {
-  char *presentation;
+  const char *presentation;
 public:
   double value;
-  // Item_real() :value(0) {}
   Item_float(const char *str_arg, uint32_t length);
   Item_float(const char *str,double val_arg,uint32_t decimal_par,uint32_t length)
     :value(val_arg)
   {
-    presentation= name=(char*) str;
+    presentation= name= str;
     decimals=(uint8_t) decimal_par;
     max_length=length;
     fixed= 1;

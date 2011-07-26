@@ -52,9 +52,9 @@ namespace drizzled {
 
 extern plugin::StorageEngine *myisam_engine;
 
-inline Item * and_items(Item* cond, Item *item)
+inline Item* and_items(Item* cond, Item *item)
 {
-  return (cond? (new Item_cond_and(cond, item)) : item);
+  return cond ? new Item_cond_and(cond, item) : item;
 }
 
 Item_subselect::Item_subselect() :
@@ -149,14 +149,12 @@ void Item_subselect::cleanup()
     engine->cleanup();
   reset();
   value_assigned= 0;
-  return;
 }
 
 void Item_singlerow_subselect::cleanup()
 {
   value= 0; row= 0;
   Item_subselect::cleanup();
-  return;
 }
 
 
@@ -170,7 +168,6 @@ void Item_in_subselect::cleanup()
   }
   first_execution= true;
   Item_subselect::cleanup();
-  return;
 }
 
 Item_subselect::~Item_subselect()
@@ -181,7 +178,7 @@ Item_subselect::~Item_subselect()
 Item_subselect::trans_res
 Item_subselect::select_transformer(Join *)
 {
-  return(RES_OK);
+  return RES_OK;
 }
 
 
@@ -421,7 +418,6 @@ Item_singlerow_subselect::Item_singlerow_subselect(Select_Lex *select_lex)
   init(select_lex, new select_singlerow_subselect(this));
   maybe_null= 1;
   max_columns= UINT_MAX;
-  return;
 }
 
 Select_Lex *
@@ -467,8 +463,6 @@ Item_maxmin_subselect::Item_maxmin_subselect(Session *session_param,
     session here
   */
   session= session_param;
-
-  return;
 }
 
 void Item_maxmin_subselect::cleanup()
@@ -484,7 +478,6 @@ void Item_maxmin_subselect::cleanup()
     value will be found.
   */
   was_values= true;
-  return;
 }
 
 
@@ -730,15 +723,15 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 {
   if (unit_arg->fake_select_lex &&
       unit_arg->fake_select_lex->test_limit())
-    return(1);
+    return 1;
 
   Select_Lex *sl= unit_arg->first_select();
   for (; sl; sl= sl->next_select())
   {
     if (sl->test_limit())
-      return(1);
+      return 1;
   }
-  return(0);
+  return 0;
 }
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
@@ -1112,17 +1105,14 @@ Item_in_subselect::single_value_transformer(Join *join,
       As far as  Item_ref_in_optimizer do not substitute itself on fix_fields
       we can use same item for all selects.
     */
-    expr= new Item_direct_ref(&select_lex->context,
-                              (Item**)optimizer->get_cache(),
-			      (char *)"<no matter>",
-			      (char *)in_left_expr_name);
+    expr= new Item_direct_ref(&select_lex->context, (Item**)optimizer->get_cache(), "<no matter>", in_left_expr_name);
 
     master_unit->uncacheable.set(UNCACHEABLE_DEPENDENT);
   }
 
   if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
   {
-    pushed_cond_guards= (bool*)join->session->mem.alloc(sizeof(bool));
+    pushed_cond_guards= new (join->session->mem) bool;
     pushed_cond_guards[0]= true;
   }
 
@@ -1184,13 +1174,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       select_lex->group_list.elements)
   {
     bool tmp;
-    Item *item= func->create(expr,
-                             new Item_ref_null_helper(&select_lex->context,
-                                                      this,
-                                                      select_lex->
-                                                      ref_pointer_array,
-                                                      (char *)"<ref>",
-                                                      this->full_name()));
+    Item *item= func->create(expr, new Item_ref_null_helper(&select_lex->context, this, select_lex->ref_pointer_array, "<ref>", this->full_name()));
     if (!abort_on_null && left_expr->maybe_null)
     {
       /*
@@ -1228,9 +1212,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       bool tmp;
       Item *having= item, *orig_item= item;
       select_lex->item_list.clear();
-      select_lex->item_list.push_back(new Item_int("Not_used",
-                                                   (int64_t) 1,
-                                                   MY_INT64_NUM_DECIMAL_DIGITS));
+      select_lex->item_list.push_back(new Item_int("Not_used", 1, MY_INT64_NUM_DECIMAL_DIGITS));
       select_lex->ref_pointer_array[0]= &select_lex->item_list.front();
 
       item= func->create(expr, item);
@@ -1238,11 +1220,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
       {
 	having= new Item_is_not_null_test(this, having);
         if (left_expr->maybe_null)
-        {
-          if (!(having= new Item_func_trig_cond(having,
-                                                get_cond_guard(0))))
-            return(RES_ERROR);
-        }
+          having= new Item_func_trig_cond(having, get_cond_guard(0));
 	/*
 	  Item_is_not_null_test can't be changed during fix_fields()
 	  we can assign select_lex->having here, and pass 0 as last
@@ -1260,18 +1238,14 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
         select_lex->having_fix_field= 0;
         if (tmp)
 	  return(RES_ERROR);
-	item= new Item_cond_or(item,
-			       new Item_func_isnull(orig_item));
+	item= new Item_cond_or(item, new Item_func_isnull(orig_item));
       }
       /*
         If we may encounter NULL IN (SELECT ...) and care whether subquery
         result is NULL or false, wrap condition in a trig_cond.
       */
       if (!abort_on_null && left_expr->maybe_null)
-      {
-        if (!(item= new Item_func_trig_cond(item, get_cond_guard(0))))
-          return(RES_ERROR);
-      }
+        item= new Item_func_trig_cond(item, get_cond_guard(0));
       /*
         TODO: figure out why the following is done here in
         single_value_transformer but there is no corresponding action in
@@ -1303,19 +1277,10 @@ Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp
 	  we can assign select_lex->having here, and pass 0 as last
 	  argument (reference) to fix_fields()
 	*/
-        Item *new_having=
-          func->create(expr,
-                       new Item_ref_null_helper(&select_lex->context, this,
-                                            select_lex->ref_pointer_array,
-                                            (char *)"<no matter>",
-                                            (char *)"<result>"));
+        Item *new_having= func->create(expr, new Item_ref_null_helper(&select_lex->context, this, select_lex->ref_pointer_array, "<no matter>", "<result>"));
         if (!abort_on_null && left_expr->maybe_null)
-        {
-          if (!(new_having= new Item_func_trig_cond(new_having,
-                                                    get_cond_guard(0))))
-            return(RES_ERROR);
-        }
-        new_having->name= (char*)in_having_cond;
+          new_having= new Item_func_trig_cond(new_having, get_cond_guard(0));
+        new_having->name= in_having_cond;
 	select_lex->having= join->having= new_having;
 	select_lex->having_fix_field= 1;
 
@@ -1390,7 +1355,7 @@ Item_in_subselect::row_value_transformer(Join *join)
 
     if (!abort_on_null && left_expr->maybe_null && !pushed_cond_guards)
     {
-      pushed_cond_guards= (bool*)join->session->mem.alloc(sizeof(bool) * left_expr->cols());
+      pushed_cond_guards= new (join->session->mem) bool[left_expr->cols()];
       for (uint32_t i= 0; i < cols_num; i++)
         pushed_cond_guards[i]= true;
     }
@@ -1467,27 +1432,24 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                          Item_ref(&select_lex->context,
                                   (*optimizer->get_cache())->
                                   addr(i),
-                                  (char *)"<no matter>",
-                                  (char *)in_left_expr_name),
+                                  "<no matter>",
+                                  in_left_expr_name),
                          new
                          Item_ref(&select_lex->context,
                                   select_lex->ref_pointer_array + i,
-                                  (char *)"<no matter>",
-                                  (char *)"<list ref>")
+                                  "<no matter>",
+                                  "<list ref>")
                         );
       Item *item_isnull=
         new Item_func_isnull(new
                              Item_ref(&select_lex->context,
                                       select_lex->ref_pointer_array+i,
-                                      (char *)"<no matter>",
-                                      (char *)"<list ref>")
+                                      "<no matter>",
+                                      "<list ref>")
                             );
       Item *col_item= new Item_cond_or(item_eq, item_isnull);
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
-      {
-        if (!(col_item= new Item_func_trig_cond(col_item, get_cond_guard(i))))
-          return(RES_ERROR);
-      }
+        col_item= new Item_func_trig_cond(col_item, get_cond_guard(i));
       having_item= and_items(having_item, col_item);
 
       Item *item_nnull_test=
@@ -1495,13 +1457,11 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                                    new Item_ref(&select_lex->context,
                                                 select_lex->
                                                 ref_pointer_array + i,
-                                                (char *)"<no matter>",
-                                                (char *)"<list ref>"));
+                                                "<no matter>",
+                                                "<list ref>"));
       if (!abort_on_null && left_expr->element_index(i)->maybe_null)
       {
-        if (!(item_nnull_test=
-              new Item_func_trig_cond(item_nnull_test, get_cond_guard(i))))
-          return(RES_ERROR);
+        item_nnull_test= new Item_func_trig_cond(item_nnull_test, get_cond_guard(i));
       }
       item_having_part2= and_items(item_having_part2, item_nnull_test);
       item_having_part2->top_level_item();
@@ -1544,14 +1504,14 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                          Item_direct_ref(&select_lex->context,
                                          (*optimizer->get_cache())->
                                          addr(i),
-                                         (char *)"<no matter>",
-                                         (char *)in_left_expr_name),
+                                         "<no matter>",
+                                         in_left_expr_name),
                          new
                          Item_direct_ref(&select_lex->context,
                                          select_lex->
                                          ref_pointer_array+i,
-                                         (char *)"<no matter>",
-                                         (char *)"<list ref>")
+                                         "<no matter>",
+                                         "<list ref>")
                         );
       if (!abort_on_null)
       {
@@ -1560,8 +1520,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                                     new
                                     Item_ref(&select_lex->context,
                                              select_lex->ref_pointer_array + i,
-                                             (char *)"<no matter>",
-                                             (char *)"<list ref>"));
+                                             "<no matter>",
+                                             "<list ref>"));
 
 
         item_isnull= new
@@ -1569,8 +1529,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
                            Item_direct_ref(&select_lex->context,
                                            select_lex->
                                            ref_pointer_array+i,
-                                           (char *)"<no matter>",
-                                           (char *)"<list ref>")
+                                           "<no matter>",
+                                           "<list ref>")
                           );
         item= new Item_cond_or(item, item_isnull);
         /*
@@ -1579,11 +1539,8 @@ Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
         */
         if (left_expr->element_index(i)->maybe_null)
         {
-          if (!(item= new Item_func_trig_cond(item, get_cond_guard(i))))
-            return(RES_ERROR);
-          if (!(having_col_item=
-                  new Item_func_trig_cond(having_col_item, get_cond_guard(i))))
-            return(RES_ERROR);
+          item= new Item_func_trig_cond(item, get_cond_guard(i));
+          having_col_item= new Item_func_trig_cond(having_col_item, get_cond_guard(i));
         }
         having_item= and_items(having_item, having_col_item);
       }
@@ -1857,8 +1814,7 @@ bool Item_in_subselect::init_left_expr_cache()
   if (! outer_join || ! outer_join->tables || ! outer_join->join_tab)
     return true;
 
-  if (!(left_expr_cache= new List<Cached_item>))
-    return true;
+  left_expr_cache= new List<Cached_item>;
 
   for (uint32_t i= 0; i < left_expr->cols(); i++)
   {
@@ -2028,9 +1984,8 @@ int subselect_single_select_engine::prepare()
 {
   if (prepared)
     return 0;
-  join= new Join(session, select_lex->item_list,
-		 select_lex->options | SELECT_NO_UNLOCK, result);
-  if (!join || !result)
+  join= new Join(session, select_lex->item_list, select_lex->options | SELECT_NO_UNLOCK, result);
+  if (not result)
     return 1; /* Fatal error is set already. */
   prepared= 1;
   Select_Lex *save_select= session->lex().current_select;
@@ -2162,7 +2117,7 @@ int subselect_single_select_engine::exec()
     save_join_if_explain();
     if (item->engine_changed)
     {
-      return(1);
+      return 1;
     }
   }
   if (select_lex->uncacheable.any() &&
@@ -2236,7 +2191,7 @@ int subselect_single_select_engine::exec()
   }
   session->setWhere(save_where);
   session->lex().current_select= save_select;
-  return(0);
+  return 0;
 }
 
 void subselect_single_select_engine::save_join_if_explain()
@@ -2408,7 +2363,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
       if (top_level)
       {
         /* Partial match on top level */
-        return(1);
+        return 1;
       }
       else
       {
@@ -2435,7 +2390,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
       break;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -2478,7 +2433,7 @@ int subselect_uniquesubquery_engine::exec()
 
   /* TODO: change to use of 'full_scan' here? */
   if (copy_ref_key())
-    return(1);
+    return 1;
   if (table->status)
   {
     /*
@@ -2486,7 +2441,7 @@ int subselect_uniquesubquery_engine::exec()
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
-    return(0);
+    return 0;
   }
 
   if (null_keypart)
@@ -2599,7 +2554,7 @@ int subselect_indexsubquery_engine::exec()
 
   /* Copy the ref key and check for nulls... */
   if (copy_ref_key())
-    return(1);
+    return 1;
 
   if (table->status)
   {
@@ -2608,7 +2563,7 @@ int subselect_indexsubquery_engine::exec()
       Can be set in copy_ref_key.
     */
     ((Item_in_subselect *) item)->value= 0;
-    return(0);
+    return 0;
   }
 
   if (null_keypart)
@@ -3057,14 +3012,13 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  tab= (JoinTable*) session->mem.alloc(sizeof(JoinTable));
-  new (tab) JoinTable();
+  tab= new (session->mem) JoinTable;
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
   tab->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(tmp_key->key_length) * 2);
-  tab->ref.key_copy= (StoredKey**) session->mem.alloc((sizeof(StoredKey*) * (tmp_key_parts + 1)));
-  tab->ref.items= (Item**) session->mem.alloc(sizeof(Item*) * tmp_key_parts);
+  tab->ref.key_copy= new (session->mem) StoredKey*[tmp_key_parts + 1];
+  tab->ref.items= new (session->mem) Item*[tmp_key_parts];
 
   KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;

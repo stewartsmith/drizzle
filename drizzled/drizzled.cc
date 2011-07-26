@@ -1418,12 +1418,11 @@ int init_remaining_variables(module::Registry &plugins)
 
   init_time();				/* Init time-functions (read zone) */
 
-  if (item_create_init())
-    return 1;
+  item_create_init();
   if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
-  if (! init_temporal_formats())
+  if (not init_temporal_formats())
     return 1;
 
   if (!(default_charset_info=
@@ -1479,7 +1478,7 @@ int init_remaining_variables(module::Registry &plugins)
 }
 
 
-int init_server_components(module::Registry &plugins)
+void init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1538,8 +1537,6 @@ int init_server_components(module::Registry &plugins)
   }
 
   init_update_queries();
-
-  return(0);
 }
 
 
@@ -2205,7 +2202,7 @@ static void fix_paths()
       }
     }
 
-    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
     {
       errmsg_printf(error::ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
       exit(1);

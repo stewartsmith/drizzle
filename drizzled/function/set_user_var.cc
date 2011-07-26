@@ -144,8 +144,10 @@ Item_func_set_user_var::check(bool use_result_field)
     {
       save_result.vint= use_result_field ? result_field->val_int() :
         args[0]->val_int();
+
       unsigned_flag= use_result_field ? ((Field_num*)result_field)->unsigned_flag:
         args[0]->unsigned_flag;
+
       break;
     }
   case STRING_RESULT:

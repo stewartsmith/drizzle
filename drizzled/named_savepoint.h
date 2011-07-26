@@ -50,7 +50,7 @@ public:
 
   void setResourceContexts(TransactionContext::ResourceContexts &new_contexts)
   {
-    resource_contexts.assign(new_contexts.begin(), new_contexts.end());
+    resource_contexts= new_contexts;
   }
   const TransactionContext::ResourceContexts &getResourceContexts() const
   {
@@ -81,10 +81,8 @@ public:
     if (this == &other)
       return *this;
 
-    name.assign(other.getName());
-    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
-    resource_contexts.assign(other_resource_contexts.begin(),
-                             other_resource_contexts.end());
+    name= other.getName();
+    resource_contexts= other.getResourceContexts();
     return *this;
   }
 private:

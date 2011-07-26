@@ -23,8 +23,7 @@
 #include <drizzled/field.h>
 #include <drizzled/item/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
                            const charset_info_st * const charset)

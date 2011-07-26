@@ -28,12 +28,12 @@
 #include <drizzled/item/cache_str.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_cache* Item_cache::get_cache(const Item *item)
 {
-  switch (item->result_type()) {
+  switch (item->result_type()) 
+  {
   case INT_RESULT:
     return new Item_cache_int();
 
@@ -50,7 +50,7 @@ Item_cache* Item_cache::get_cache(const Item *item)
     return new Item_cache_row();
   }
 
-  assert(0);
+  assert(false);
   abort();
 }
 
@@ -67,7 +67,7 @@ void Item_cache::print(String *str)
 
 bool Item_cache::eq_def(Field *field)
 {
-  return cached_field ? cached_field->eq_def (field) : false;
+  return cached_field ? cached_field->eq_def(field) : false;
 }
 
 } /* namespace drizzled */

@@ -29,7 +29,6 @@
 
 namespace drizzled {
 
-typedef struct st_ha_check_opt HA_CHECK_OPT;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 int rm_table_part2(Session *session, TableList *tables, bool if_exists,
@@ -39,12 +38,9 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool check_table(Session* session, TableList* table_list,
-                 HA_CHECK_OPT* check_opt);
-bool analyze_table(Session* session, TableList* table_list,
-                   HA_CHECK_OPT* check_opt);
-bool optimize_table(Session* session, TableList* table_list,
-                    HA_CHECK_OPT* check_opt);
+bool check_table(Session* session, TableList* table_list);
+bool analyze_table(Session* session, TableList* table_list);
+bool optimize_table(Session* session, TableList* table_list);
 
 bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);

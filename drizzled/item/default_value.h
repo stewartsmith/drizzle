@@ -22,8 +22,7 @@
 #include <drizzled/item/ident.h>
 #include <drizzled/item/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_default_value : public Item_field
 {

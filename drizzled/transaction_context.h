@@ -39,7 +39,7 @@ public:
 
   void setResourceContexts(ResourceContexts &new_contexts)
   {
-    resource_contexts.assign(new_contexts.begin(), new_contexts.end());
+    resource_contexts= new_contexts;
   }
 
   ResourceContexts &getResourceContexts()

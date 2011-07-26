@@ -49,7 +49,7 @@ String *Item_load_file::val_str(String *str)
   if (!(file_name= args[0]->val_str(str)))
   {
     null_value = 1;
-    return(0);
+    return 0;
   }
 
   fs::path target_path(fs::system_complete(getDataHomeCatalog()));
@@ -121,7 +121,7 @@ String *Item_load_file::val_str(String *str)
 
 err:
   null_value = 1;
-  return(0);
+  return 0;
 }
 
 

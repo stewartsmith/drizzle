@@ -18,7 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <config.h>
 #include <drizzled/util/backtrace.h>
 
@@ -33,14 +32,14 @@
 #endif // HAVE_BACKTRACE
 #endif // __GNUC__
 
-
 namespace drizzled
 {
 namespace util
 {
 
-void custom_backtrace(void)
+void custom_backtrace(const char *file, int line, const char *func)
 {
+  std::cerr << std::endl << "call_backtrace() began at " << file << ":" << line << " for " << func << "()" << std::endl;
 #ifdef __GNUC__
 #ifdef HAVE_BACKTRACE
   void *array[50];

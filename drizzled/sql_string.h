@@ -80,40 +80,42 @@ public:
   inline size_t length() const { return str_length;}
   inline size_t alloced_length() const { return Alloced_length;}
   inline char& operator [] (size_t i) const { return Ptr[i]; }
-  inline void length(size_t len) { str_length=len ; }
-  inline bool is_empty() { return (str_length == 0); }
-  inline void mark_as_const() { Alloced_length= 0;}
+  inline void length(size_t len) { str_length=len; }
+  inline bool empty() const { return str_length == 0; }
+  inline void mark_as_const() { Alloced_length= 0; }
   inline char *ptr() { return Ptr; }
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {
     if (str_length == Alloced_length)
-      (void) realloc(str_length);
+      realloc(str_length);
     else
       Ptr[str_length]= 0;
 
     return Ptr;
   }
-  inline char *c_ptr_quick()
+  inline const char* begin() const
   {
-    if (Ptr && str_length < Alloced_length)
-      Ptr[str_length]=0;
     return Ptr;
   }
-  inline char *c_ptr_safe()
+  inline const char* end() const
+  {
+    return begin() + size();
+  }
+  inline const char* data() const
+  {
+    return Ptr;
+  }
+  inline size_t size() const
+  {
+    return length();
+  }
+  inline const char* c_str()
   {
     if (Ptr && str_length < Alloced_length)
       Ptr[str_length]=0;
     else
-      (void) realloc(str_length);
-    return Ptr;
-  }
-  inline char *c_str()
-  {
-    if (Ptr && str_length < Alloced_length)
-      Ptr[str_length]=0;
-    else
-      (void) realloc(str_length);
+      realloc(str_length);
     return Ptr;
   }
   void append_identifier(const char *name, size_t length);
@@ -135,6 +137,7 @@ public:
     Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
+
   inline void set(const char *str,size_t arg_length, const charset_info_st * const cs)
   {
     free();
@@ -143,6 +146,7 @@ public:
     str_charset=cs;
   }
   void set_ascii(const char *str, size_t arg_length);
+
   inline void set_quick(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     if (!alloced)
@@ -151,6 +155,7 @@ public:
     }
     str_charset= cs;
   }
+
   void set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
   void set(int64_t num, const charset_info_st * const cs)
   { set_int(num, false, cs); }
@@ -241,17 +246,13 @@ public:
   void copy(const String&);			// Allocate new string
   void copy(const std::string&, const charset_info_st*);	// Allocate new string
   void copy(const char*, size_t, const charset_info_st*); // Allocate new string
-  static bool needs_conversion(size_t arg_length,
-  			       const charset_info_st* cs_from, const charset_info_st* cs_to,
-			       size_t *offset);
+  static bool needs_conversion(size_t arg_length, const charset_info_st* cs_from, const charset_info_st* cs_to);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
   void append(const String &s);
   void append(const char *s);
   void append(const char *s,size_t arg_length);
-  void append(const char *s,size_t arg_length, const charset_info_st * const cs);
-  void append_with_prefill(const char *s, size_t arg_length,
-			   size_t full_length, char fill_char);
+  void append_with_prefill(const char *s, size_t arg_length, size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   void replace(size_t offset,size_t arg_length,const char *to,size_t length);
@@ -281,30 +282,6 @@ public:
   }
   void reserve(size_t space_needed, size_t grow_by);
 
-  /*
-    The following append operations do NOT check alloced memory
-    q_*** methods writes values of parameters itself
-    qs_*** methods writes string representation of value
-  */
-  void q_append(const char c);
-  void q_append(const size_t n);
-  void q_append(double d);
-  void q_append(double *d);
-  void q_append(const char *data, size_t data_len);
-  void write_at_position(int position, size_t value);
-
-  /* Inline (general) functions used by the protocol functions */
-
-  inline char *prep_append(size_t arg_length, size_t step_alloc)
-  {
-    size_t new_length= arg_length + str_length;
-    if (new_length > Alloced_length)
-      realloc(new_length + step_alloc);
-    size_t old_length= str_length;
-    str_length+= arg_length;
-    return Ptr+ old_length;			/* Area to use */
-  }
-
   inline void append(const char *s, size_t arg_length, size_t step_alloc)
   {
     size_t new_length= arg_length + str_length;
@@ -314,7 +291,7 @@ public:
     str_length+= arg_length;
   }
 
-  void print(String *print);
+  void print(String&) const;
 
   /* Swap two string objects. Efficient way to exchange data without memcpy. */
   void swap(String &s);
@@ -325,14 +302,11 @@ public:
   }
 };
 
-bool check_if_only_end_space(const charset_info_st * const cs, char *str,
-                             char *end);
+bool check_if_only_end_space(const charset_info_st* const, char *str, char *end);
 
-std::ostream& operator<<(std::ostream& output, const String &str);
+std::ostream& operator<<(std::ostream&, const String&);
 
 } /* namespace drizzled */
 
 bool operator==(const drizzled::String &s1, const drizzled::String &s2);
 bool operator!=(const drizzled::String &s1, const drizzled::String &s2);
-
-

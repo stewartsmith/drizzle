@@ -374,9 +374,8 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   path.length= normalized_path.length= 0;
 
   std::string tb_name(identifier.getTableName());
-  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
+  boost::to_lower(tb_name);
   assert(strcmp(tb_name.c_str(), table_name.str) == 0);
-
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 
@@ -1605,7 +1604,7 @@ int TableShare::open_table_from_share(Session *session,
   boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.getMemRoot().free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.mem().free_root(MYF(0));       // Safe to call on zeroed root
   outparam.clearAlias();
 
   return ret;
@@ -1671,21 +1670,21 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  field_ptr = (Field **) outparam.alloc((_field_size+1) * sizeof(Field*));
+  field_ptr = new (outparam.mem()) Field*[_field_size + 1];
 
   outparam.setFields(field_ptr);
 
-  record= (unsigned char*) outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
+  record= outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
 
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= _fields[i]->clone(&outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(&outparam.mem(), &outparam)))
       return local_error;
   }
-  (*field_ptr)= 0;                              // End marker
+  *field_ptr= 0;                              // End marker
 
   if (found_next_number_field)
     outparam.found_next_number_field=
@@ -1730,7 +1729,7 @@ int TableShare::open_table_from_share_inner(Session *session,
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(&outparam.getMemRoot(), &outparam, 0);
+          local_field= key_part->field= local_field->new_field(&outparam.mem(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }

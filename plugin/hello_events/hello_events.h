@@ -58,7 +58,7 @@ private:
 public:
   void setDatabasesOfInterest(const char *list) 
   {
-    db_list.assign(list);
+    db_list= list;
   }
   
   const char *getDatabasesOfInterest() 
@@ -84,7 +84,7 @@ private:
 public:
   void setTablesOfInterest(const char *list) 
   {
-    table_list.assign(list);
+    table_list= list;
   }
   
   const char *getTablesOfInterest() 

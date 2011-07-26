@@ -24,7 +24,7 @@
 namespace drizzled {
 namespace item {
 
-class False: public Boolean
+class False : public Boolean
 {
 public:
   False() :

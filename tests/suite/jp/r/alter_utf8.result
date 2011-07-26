@@ -39,9 +39,9 @@ Table	Create Table
   `ｷｷｷ` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ｷｷｷ`),
-  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`),
-  KEY `ｶｶｶ` (`ｶｶ`)
+  PRIMARY KEY (`ｷｷｷ`) USING BTREE,
+  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`) USING BTREE,
+  KEY `ｶｶｶ` (`ｶｶ`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE `ｱｱｱ` DROP INDEX `ｶｶｶ`;
 ALTER TABLE `ｱｱｱ` DROP PRIMARY KEY;
@@ -88,9 +88,9 @@ Table	Create Table
   `ききき` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ききき`),
-  UNIQUE KEY `くくく` (`くくく`),
-  KEY `かかか` (`かか`)
+  PRIMARY KEY (`ききき`) USING BTREE,
+  UNIQUE KEY `くくく` (`くくく`) USING BTREE,
+  KEY `かかか` (`かか`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE `あああ` DROP INDEX `かかか`;
 ALTER TABLE `あああ` DROP PRIMARY KEY;
@@ -137,9 +137,9 @@ Table	Create Table
   `丂丂丂` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `乚乚乚` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`丂丂丂`),
-  UNIQUE KEY `丅丅丅` (`丅丅丅`),
-  KEY `丄丄丄` (`丄丄`)
+  PRIMARY KEY (`丂丂丂`) USING BTREE,
+  UNIQUE KEY `丅丅丅` (`丅丅丅`) USING BTREE,
+  KEY `丄丄丄` (`丄丄`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE `龖龖龖` DROP INDEX `丄丄丄`;
 ALTER TABLE `龖龖龖` DROP PRIMARY KEY;
@@ -201,9 +201,9 @@ Table	Create Table
   `ｷｷｷ` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ｷｷｷ`),
-  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`),
-  KEY `ｶｶｶ` (`ｶｶ`)
+  PRIMARY KEY (`ｷｷｷ`) USING BTREE,
+  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`) USING BTREE,
+  KEY `ｶｶｶ` (`ｶｶ`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE `ｱｱｱ` DROP INDEX `ｶｶｶ`;
 ALTER TABLE `ｱｱｱ` DROP PRIMARY KEY;
@@ -250,9 +250,9 @@ Table	Create Table
   `ききき` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ききき`),
-  UNIQUE KEY `くくく` (`くくく`),
-  KEY `かかか` (`かか`)
+  PRIMARY KEY (`ききき`) USING BTREE,
+  UNIQUE KEY `くくく` (`くくく`) USING BTREE,
+  KEY `かかか` (`かか`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE `あああ` DROP INDEX `かかか`;
 ALTER TABLE `あああ` DROP PRIMARY KEY;
@@ -299,9 +299,9 @@ Table	Create Table
   `丂丂丂` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `乚乚乚` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`丂丂丂`),
-  UNIQUE KEY `丅丅丅` (`丅丅丅`),
-  KEY `丄丄丄` (`丄丄`)
+  PRIMARY KEY (`丂丂丂`) USING BTREE,
+  UNIQUE KEY `丅丅丅` (`丅丅丅`) USING BTREE,
+  KEY `丄丄丄` (`丄丄`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE `龖龖龖` DROP INDEX `丄丄丄`;
 ALTER TABLE `龖龖龖` DROP PRIMARY KEY;
@@ -363,9 +363,9 @@ Table	Create Table
   `ｷｷｷ` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ｷｷｷ`),
-  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`),
-  KEY `ｶｶｶ` (`ｶｶ`)
+  PRIMARY KEY (`ｷｷｷ`) USING HASH,
+  UNIQUE KEY `ｸｸｸ` (`ｸｸｸ`) USING HASH,
+  KEY `ｶｶｶ` (`ｶｶ`) USING HASH
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 ALTER TABLE `ｱｱｱ` DROP INDEX `ｶｶｶ`;
 ALTER TABLE `ｱｱｱ` DROP PRIMARY KEY;
@@ -412,9 +412,9 @@ Table	Create Table
   `ききき` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ききき`),
-  UNIQUE KEY `くくく` (`くくく`),
-  KEY `かかか` (`かか`)
+  PRIMARY KEY (`ききき`) USING HASH,
+  UNIQUE KEY `くくく` (`くくく`) USING HASH,
+  KEY `かかか` (`かか`) USING HASH
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 ALTER TABLE `あああ` DROP INDEX `かかか`;
 ALTER TABLE `あああ` DROP PRIMARY KEY;
@@ -461,9 +461,9 @@ Table	Create Table
   `丂丂丂` VARCHAR(6) COLLATE utf8_general_ci NOT NULL,
   `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
   `乚乚乚` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`丂丂丂`),
-  UNIQUE KEY `丅丅丅` (`丅丅丅`),
-  KEY `丄丄丄` (`丄丄`)
+  PRIMARY KEY (`丂丂丂`) USING HASH,
+  UNIQUE KEY `丅丅丅` (`丅丅丅`) USING HASH,
+  KEY `丄丄丄` (`丄丄`) USING HASH
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 ALTER TABLE `龖龖龖` DROP INDEX `丄丄丄`;
 ALTER TABLE `龖龖龖` DROP PRIMARY KEY;

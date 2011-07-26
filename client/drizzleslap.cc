@@ -100,6 +100,7 @@
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -611,9 +612,7 @@ int main(int argc, char **argv)
 
     if (vm.count("protocol"))
     {
-      std::transform(opt_protocol.begin(), opt_protocol.end(),
-        opt_protocol.begin(), ::tolower);
-
+      boost::to_lower(opt_protocol);
       if (not opt_protocol.compare("mysql"))
         use_drizzle_protocol=false;
       else if (not opt_protocol.compare("drizzle"))
@@ -731,8 +730,7 @@ burnin:
     option_cleanup(query_options);
 
 #ifdef HAVE_SMEM
-    if (shared_memory_base_name)
-      free(shared_memory_base_name);
+    free(shared_memory_base_name);
 #endif
 
   }

@@ -44,7 +44,7 @@ String *Item_func_compress::val_str(String *str)
     return 0;
   }
   null_value= 0;
-  if (res->is_empty()) return res;
+  if (res->empty()) return res;
 
   /*
     Citation from zlib.h (comment for compress function):
@@ -67,18 +67,16 @@ String *Item_func_compress::val_str(String *str)
 
   body= ((Byte*)buffer.ptr()) + 4;
 
-  // As far as we have checked res->is_empty() we can use ptr()
-  if ((err= compress(body, &new_size,
-                     (const Bytef*)res->ptr(), res->length())) != Z_OK)
+  // As far as we have checked res->empty() we can use ptr()
+  if ((err= compress(body, &new_size, (const Bytef*)res->ptr(), res->length())) != Z_OK)
   {
     code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
-    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                 code, ER(code));
+    push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
     null_value= 1;
     return 0;
   }
 
-  tmp= (char*)buffer.ptr(); // int4store is a macro; avoid side effects
+  tmp= buffer.ptr(); // int4store is a macro; avoid side effects
   int4store(tmp, res->length() & 0x3FFFFFFF);
 
   /* This is to ensure that things works for CHAR fields, which trim ' ': */

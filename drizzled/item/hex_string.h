@@ -21,10 +21,9 @@
 
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_hex_string: public Item_basic_constant
+class Item_hex_string : public Item_basic_constant
 {
 public:
   Item_hex_string() {}

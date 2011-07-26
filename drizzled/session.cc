@@ -25,6 +25,7 @@
 
 #include <boost/checked_delete.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/ptr_container/ptr_container.hpp>
 #include <drizzled/copy_field.h>
 #include <drizzled/data_home.h>
 #include <drizzled/diagnostics_area.h>
@@ -184,7 +185,7 @@ public:
   session::TableMessages table_message_cache;
   util::string::mptr schema;
   boost::shared_ptr<session::State> state;
-  std::vector<table::Singular*> temporary_shares;
+  boost::ptr_vector<table::Singular> temporary_shares;
 	session::Times times;
 	session::Transactions transaction;
   drizzle_system_variables variables;
@@ -406,8 +407,7 @@ void Session::cleanup()
   }
 #endif
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rollbackTransaction(*this, true);
+    TransactionServices::rollbackTransaction(*this, true);
   }
 
   BOOST_FOREACH(UserVars::reference iter, user_vars)
@@ -745,7 +745,6 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   bool result= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -761,7 +760,7 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.commitTransaction(*this, true))
+      if (TransactionServices::commitTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       break;
@@ -778,7 +777,7 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (transaction_services.rollbackTransaction(*this, true))
+      if (TransactionServices::rollbackTransaction(*this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
@@ -805,7 +804,6 @@ bool Session::endTransaction(enum_mysql_completiontype completion)
 bool Session::endActiveTransaction()
 {
   bool result= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -815,7 +813,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (transaction_services.commitTransaction(*this, true))
+    if (TransactionServices::commitTransaction(*this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -857,7 +855,6 @@ void Session::cleanup_after_query()
   _where= Session::DEFAULT_WHERE;
 
   /* Reset the temporary shares we built */
-  for_each(impl_->temporary_shares.begin(), impl_->temporary_shares.end(), DeletePtr());
   impl_->temporary_shares.clear();
 }
 
@@ -883,7 +880,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= (LEX_STRING *)mem.alloc(sizeof(LEX_STRING));
+    lex_str= new (mem) LEX_STRING;
   lex_str->str= mem_root->strmake(str, length);
   lex_str->length= length;
   return lex_str;
@@ -1110,24 +1107,19 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
                    (int) (unsigned char) (*exchange->field_term)[0] : INT_MAX;
   if (!exchange->line_term->length())
     exchange->line_term=exchange->field_term;	// Use this if it exists
-  field_sep_char= (exchange->enclosed->length() ?
-                  (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char);
-  escape_char=	(exchange->escaped->length() ?
-                (int) (unsigned char) (*exchange->escaped)[0] : -1);
+  field_sep_char= exchange->enclosed->length() ? (int) (unsigned char) (*exchange->enclosed)[0] : field_term_char;
+  escape_char= exchange->escaped->length() ? (int) (unsigned char) (*exchange->escaped)[0] : -1;
   is_ambiguous_field_sep= test(strchr(ESCAPE_CHARS, field_sep_char));
   is_unsafe_field_sep= test(strchr(NUMERIC_CHARS, field_sep_char));
-  line_sep_char= (exchange->line_term->length() ?
-                 (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX);
+  line_sep_char= exchange->line_term->length() ? (int) (unsigned char) (*exchange->line_term)[0] : INT_MAX;
   if (!field_term_length)
     exchange->opt_enclosed=0;
   if (!exchange->enclosed->length())
     exchange->opt_enclosed=1;			// A little quicker loop
   fixed_row_size= (!field_term_length && !exchange->enclosed->length() &&
 		   !blob_flag);
-  if ((is_ambiguous_field_sep && exchange->enclosed->is_empty() &&
-       (string_results || is_unsafe_field_sep)) ||
-      (exchange->opt_enclosed && non_string_results &&
-       field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
+  if ((is_ambiguous_field_sep && exchange->enclosed->empty() && (string_results || is_unsafe_field_sep)) ||
+      (exchange->opt_enclosed && non_string_results && field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
     my_error(ER_AMBIGUOUS_FIELD_TERM, MYF(0));
     return 1;
@@ -1352,7 +1344,7 @@ bool select_dump::send_data(List<Item> &items)
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   if (row_count++ > 1)
   {
@@ -1373,7 +1365,7 @@ bool select_dump::send_data(List<Item> &items)
       return 1;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1389,19 +1381,19 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
   if (it->assigned())
   {
     my_message(ER_SUBQUERY_NO_1_ROW, ER(ER_SUBQUERY_NO_1_ROW), MYF(0));
-    return(1);
+    return 1;
   }
   if (unit->offset_limit_cnt)
   {				          // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   List<Item>::iterator li(items.begin());
   Item *val_item;
   for (uint32_t i= 0; (val_item= li++); i++)
     it->store(i, val_item);
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 
@@ -1452,7 +1444,7 @@ bool select_max_min_finder_subselect::send_data(List<Item> &items)
     it->store(0, cache);
   }
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 bool select_max_min_finder_subselect::cmp_real()
@@ -1520,11 +1512,11 @@ bool select_exists_subselect::send_data(List<Item> &)
   if (unit->offset_limit_cnt)
   { // Using limit offset,count
     unit->offset_limit_cnt--;
-    return(0);
+    return 0;
   }
   it->value= 1;
   it->assigned(1);
-  return(0);
+  return 0;
 }
 
 /*
@@ -1814,9 +1806,8 @@ void Session::close_thread_tables()
     TODO: This should be fixed in later releases.
    */
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
     main_da().can_overwrite_status= true;
-    transaction_services.autocommitOrRollback(*this, is_error());
+    TransactionServices::autocommitOrRollback(*this, is_error());
     main_da().can_overwrite_status= false;
     transaction.stmt.reset();
   }
@@ -1909,7 +1900,7 @@ bool Open_tables_state::rm_temporary_table(plugin::StorageEngine& base, const id
 table::Singular& Session::getInstanceTable()
 {
   impl_->temporary_shares.push_back(new table::Singular); // This will not go into the tableshare cache, so no key is used.
-  return *impl_->temporary_shares.back();
+  return impl_->temporary_shares.back();
 }
 
 
@@ -1934,7 +1925,7 @@ table::Singular& Session::getInstanceTable()
 table::Singular& Session::getInstanceTable(std::list<CreateField>& field_list)
 {
   impl_->temporary_shares.push_back(new table::Singular(this, field_list)); // This will not go into the tableshare cache, so no key is used.
-  return *impl_->temporary_shares.back();
+  return impl_->temporary_shares.back();
 }
 
 void Session::clear_error(bool full)
@@ -1943,9 +1934,7 @@ void Session::clear_error(bool full)
     main_da().reset_diagnostics_area();
 
   if (full)
-  {
-    drizzle_reset_errors(this, true);
-  }
+    drizzle_reset_errors(*this, true);
 }
 
 void Session::clearDiagnostics()

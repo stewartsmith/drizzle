@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
@@ -29,7 +30,7 @@ namespace optimizer {
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
   objects from table read plans.
 */
-class TableReadPlan
+class TableReadPlan : public memory::SqlAlloc
 {
 public:
   /*
@@ -65,20 +66,7 @@ public:
                                            bool retrieve_full_rows,
                                            memory::Root *parent_alloc= NULL) = 0;
 
-  /* Table read plans are allocated on memory::Root and are never deleted */
-  static void *operator new(size_t size, memory::Root *mem_root)
-  {
-    return mem_root->alloc(size);
-  }
-
-  static void operator delete(void *, size_t)
-  { }
-
-  static void operator delete(void *, memory::Root *)
-    { /* Never called */ }
-
   virtual ~TableReadPlan() {} /* Remove gcc warning */
-
 };
 
 

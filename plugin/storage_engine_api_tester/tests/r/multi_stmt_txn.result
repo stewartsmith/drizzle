@@ -12,21 +12,57 @@ select * from data_dictionary.seapitester_engine_state_history;
 STATE
 ::max_supported_key_length()
 ::max_supported_keys()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 BEGIN
 In Transaction
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
 COMMIT
 ::SEAPITester()
 select seapitester_clear_engine_state_history();
@@ -56,45 +92,142 @@ commit;
 drop table t1;
 select * from data_dictionary.seapitester_engine_state_history;
 STATE
+Cursor 2 ::close()
+Cursor 2 Cursor()
+Cursor 2 ~Cursor()
 ::max_supported_key_length()
 ::max_supported_keys()
+Cursor 1 Cursor()
 ::doCreateTable()
 ::SEAPITester()
+Cursor 1 ~Cursor()
 BEGIN
 In Transaction
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
 START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
 END STATEMENT
 COMMIT STATEMENT
 In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
 COMMIT
 ::SEAPITester()
+Cursor 2 ::close()
+Cursor 2 Cursor()
+Cursor 2 ~Cursor()
 select seapitester_clear_engine_state_history();
 seapitester_clear_engine_state_history()
 0

@@ -24,8 +24,7 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/item/int.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Create an item from a string we KNOW points to a valid int64_t

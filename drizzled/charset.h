@@ -28,8 +28,7 @@
 #include <drizzled/visibility.h>
 #include <drizzled/definitions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define MY_CS_NAME_SIZE			32
 #define MY_CS_CTYPE_TABLE_SIZE		257
@@ -167,7 +166,7 @@ struct charset_info_st;
 /* See strings/charset_info_st.txt for information about this structure  */
 typedef struct my_collation_handler_st
 {
-  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
+  bool (*init)(charset_info_st&, unsigned char *(*alloc)(size_t));
   /* Collation routines */
   int     (*strnncoll)(const struct charset_info_st * const,
 		       const unsigned char *, size_t, const unsigned char *, size_t, bool);
@@ -205,7 +204,7 @@ typedef struct my_collation_handler_st
 /* See strings/charset_info_st.txt about information on this structure  */
 typedef struct my_charset_handler_st
 {
-  bool (*init)(struct charset_info_st *, unsigned char *(*alloc)(size_t));
+  void (*init_unused)();
   /* Multibyte routines */
   uint32_t    (*ismbchar)(const struct charset_info_st * const, const char *, const char *);
   uint32_t    (*mbcharlen)(const struct charset_info_st * const, uint32_t c);
@@ -320,11 +319,9 @@ extern bool resolve_charset(const char *cs_name,
 extern bool resolve_collation(const char *cl_name,
 			     const charset_info_st *default_cl,
 			     const charset_info_st **cl);
-extern void free_charsets(void);
+extern void free_charsets();
 extern char *get_charsets_dir(char *buf);
 extern bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2);
-extern bool init_compiled_charsets(myf flags);
-extern void add_compiled_collation(charset_info_st *cs);
 extern size_t escape_string_for_drizzle(const charset_info_st *charset_info,
 					char *to, size_t to_length,
 					const char *from, size_t length);
@@ -576,8 +573,6 @@ size_t my_casedn_utf8mb4(const charset_info_st * const cs,
                   char *src, size_t srclen,
                   char *dst, size_t dstlen);
 
-
-bool my_coll_init_uca(charset_info_st *cs, cs_alloc_func alloc);
 
 int my_strnncoll_any_uca(const charset_info_st * const cs,
                          const unsigned char *s, size_t slen,

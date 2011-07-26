@@ -93,8 +93,7 @@ public: // overridden from ValueArrayAllocator
    virtual void releaseArrayPageIndex( Value **indexes, 
                                        ValueInternalArray::PageIndex indexCount )
    {
-      if ( indexes )
-         free( indexes );
+      free( indexes );
    }
 
    virtual Value *allocateArrayPage()
@@ -104,8 +103,7 @@ public: // overridden from ValueArrayAllocator
 
    virtual void releaseArrayPage( Value *value )
    {
-      if ( value )
-         free( value );
+      free( value );
    }
 };
 
@@ -157,8 +155,7 @@ public: // overridden from ValueArrayAllocator
    virtual void releaseArrayPageIndex( Value **indexes, 
                                        ValueInternalArray::PageIndex indexCount )
    {
-      if ( indexes )
-         free( indexes );
+      free( indexes );
    }
 
    virtual Value *allocateArrayPage()

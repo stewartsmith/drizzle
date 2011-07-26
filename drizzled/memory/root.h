@@ -138,3 +138,15 @@ inline void* operator new(size_t size, drizzled::memory::Root& root)
   return root.alloc(size);
 }
 
+inline void* operator new[](size_t size, drizzled::memory::Root& root)
+{
+  return root.alloc(size);
+}
+
+inline void operator delete(void*, drizzled::memory::Root&)
+{
+}
+
+inline void operator delete[](void*, drizzled::memory::Root&)
+{
+}

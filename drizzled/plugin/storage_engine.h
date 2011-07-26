@@ -166,6 +166,11 @@ public:
     return table_definition_ext;
   }
 
+  virtual message::Table::Index::IndexType default_index_type() const
+  {
+    return message::Table::Index::BTREE;
+  }
+
 private:
   std::vector<std::string> aliases;
 
@@ -191,7 +196,7 @@ protected:
   pthread_mutex_t proto_cache_mutex;
 
 public:
-  StorageEngine(const std::string name_arg,
+  StorageEngine(const std::string &name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~StorageEngine();

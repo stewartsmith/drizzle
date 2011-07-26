@@ -146,8 +146,7 @@ public:
     if (success)
     {
       success_count++;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.allocateNewTransactionId();
+      TransactionServices::allocateNewTransactionId();
     }
   }
 };
@@ -161,8 +160,7 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
 
   if (success_count)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.allocateNewTransactionId();
+    TransactionServices::allocateNewTransactionId();
   }
 
   return (bool)success_count;
@@ -190,8 +188,7 @@ public:
     if (success)
     {
       success_count++;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.allocateNewTransactionId();
+      TransactionServices::allocateNewTransactionId();
     }
   }
 };
@@ -201,13 +198,9 @@ static bool drop_all_tables_in_schema(Session& session,
                                       identifier::table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   plugin::StorageEngine::getIdentifiers(session, identifier, dropped_tables);
 
-  for (identifier::table::vector::iterator it= dropped_tables.begin();
-       it != dropped_tables.end();
-       it++)
+  for (identifier::table::vector::iterator it= dropped_tables.begin(); it != dropped_tables.end(); it++)
   {
     boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
@@ -224,7 +217,7 @@ static bool drop_all_tables_in_schema(Session& session,
       my_error(ER_TABLE_DROP, *it);
       return false;
     }
-    transaction_services.dropTable(session, *it, *message, true);
+    TransactionServices::dropTable(session, *it, *message, true);
     deleted++;
   }
 
@@ -284,8 +277,7 @@ bool StorageEngine::dropSchema(Session& session,
     else
     {
       /* We've already verified that the schema does exist, so safe to log it */
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, identifier, schema_message);
+      TransactionServices::dropSchema(session, identifier, schema_message);
     }
   } while (0);
 
@@ -337,8 +329,7 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
   if (success_count)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.allocateNewTransactionId();
+    TransactionServices::allocateNewTransactionId();
   }
 
   return success_count ? true : false;

@@ -21,8 +21,7 @@
 
 #include <drizzled/item/cache_decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_cache_decimal::store(Item *item)
 {
@@ -50,8 +49,7 @@ int64_t Item_cache_decimal::val_int()
 String* Item_cache_decimal::val_str(String *str)
 {
   assert(fixed);
-  class_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false,
-                   &decimal_value);
+  class_decimal_round(E_DEC_FATAL_ERROR, &decimal_value, decimals, false, &decimal_value);
   class_decimal2string(&decimal_value, 0, str);
   return str;
 }

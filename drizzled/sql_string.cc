@@ -146,11 +146,9 @@ void String::realloc(size_t alloc_length)
 
 void String::set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs)
 {
-  size_t l=20*cs->mbmaxlen+1;
-  int base= unsigned_flag ? 10 : -10;
-
+  size_t l= 20 * cs->mbmaxlen + 1;
   alloc(l);
-  str_length=(size_t) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
+  str_length=(size_t) (cs->cset->int64_t10_to_str)(cs, Ptr, l, unsigned_flag ? 10 : -10,num);
   str_charset=cs;
 }
 
@@ -231,33 +229,15 @@ void String::copy(const char *str,size_t arg_length, const charset_info_st* cs)
   character_set_results is NULL.
 */
 
-bool String::needs_conversion(size_t arg_length,
-			      const charset_info_st * const from_cs,
-			      const charset_info_st * const to_cs,
-			      size_t *offset)
+bool String::needs_conversion(size_t arg_length, const charset_info_st* from_cs, const charset_info_st* to_cs)
 {
-  *offset= 0;
   if (!to_cs ||
-      (to_cs == &my_charset_bin) ||
-      (to_cs == from_cs) ||
+      to_cs == &my_charset_bin ||
+      to_cs == from_cs ||
       my_charset_same(from_cs, to_cs) ||
-      ((from_cs == &my_charset_bin) &&
-       (!(*offset=(arg_length % to_cs->mbminlen)))))
+      (from_cs == &my_charset_bin && not (arg_length % to_cs->mbminlen)))
     return false;
   return true;
-}
-
-
-
-
-void String::set_or_copy_aligned(const char *str,size_t arg_length, const charset_info_st* cs)
-{
-  /* How many bytes are in incomplete character */
-  size_t offset= (arg_length % cs->mbminlen);
-
-  assert(!offset); /* All characters are complete, just copy */
-
-  set(str, arg_length, cs);
 }
 
 /*
@@ -306,14 +286,14 @@ void String::append(const String &s)
 
 void String::append(const char *s,size_t arg_length)
 {
-  if (!arg_length)
+  if (arg_length == 0)
     return;
 
   /*
     For an ASCII compatinble string we can just append.
   */
   realloc(str_length+arg_length);
-  memcpy(Ptr+str_length,s,arg_length);
+  memcpy(Ptr +str_length, s, arg_length);
   str_length+=arg_length;
 }
 
@@ -327,22 +307,7 @@ void String::append(const char *s)
   append(s, strlen(s));
 }
 
-
-/*
-  Append a string in the given charset to the string
-  with character set recoding
-*/
-
-void String::append(const char *s,size_t arg_length, const charset_info_st * const)
-{
-  realloc(str_length + arg_length);
-  memcpy(Ptr + str_length, s, arg_length);
-  str_length+= arg_length;
-}
-
-
-void String::append_with_prefill(const char *s,size_t arg_length,
-		 size_t full_length, char fill_char)
+void String::append_with_prefill(const char *s,size_t arg_length, size_t full_length, char fill_char)
 {
   int t_length= arg_length > full_length ? arg_length : full_length;
 
@@ -370,25 +335,25 @@ int String::charpos(int i,size_t offset)
 
 int String::strstr(const String &s,size_t offset)
 {
-  if (s.length()+offset <= str_length)
+  if (s.length() + offset <= str_length)
   {
     if (!s.length())
       return ((int) offset);	// Empty string is always found
 
     const char *str = Ptr+offset;
     const char *search=s.ptr();
-    const char *end=Ptr+str_length-s.length()+1;
+    const char *last=Ptr+str_length-s.length()+1;
     const char *search_end=s.ptr()+s.length();
 skip:
-    while (str != end)
+    while (str != last)
     {
       if (*str++ == *search)
       {
-	char *i,*j;
-	i=(char*) str; j=(char*) search+1;
-	while (j != search_end)
-	  if (*i++ != *j++) goto skip;
-	return (int) (str-Ptr) -1;
+        const char* i= str; 
+        const char* j= search + 1;
+        while (j != search_end)
+          if (*i++ != *j++) goto skip;
+        return (int) (str - Ptr) - 1;
       }
     }
   }
@@ -408,18 +373,18 @@ int String::strrstr(const String &s,size_t offset)
     const char *str = Ptr+offset-1;
     const char *search=s.ptr()+s.length()-1;
 
-    const char *end=Ptr+s.length()-2;
+    const char *last=Ptr+s.length()-2;
     const char *search_end=s.ptr()-1;
 skip:
-    while (str != end)
+    while (str != last)
     {
       if (*str-- == *search)
       {
-	char *i,*j;
-	i=(char*) str; j=(char*) search-1;
-	while (j != search_end)
-	  if (*i-- != *j--) goto skip;
-	return (int) (i-Ptr) +1;
+        const char* i= str; 
+        const char* j= search-1;
+        while (j != search_end)
+          if (*i-- != *j--) goto skip;
+        return (int) (i-Ptr) + 1;
       }
     }
   }
@@ -638,37 +603,34 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
   return res;
 }
 
-
-
-
-void String::print(String *str)
+void String::print(String& str) const
 {
-  char *st= (char*)Ptr, *end= st+str_length;
-  for (; st < end; st++)
+  const char* last= Ptr + str_length;
+  for (const char* st= Ptr; st < last; st++)
   {
     unsigned char c= *st;
     switch (c)
     {
     case '\\':
-      str->append("\\\\", sizeof("\\\\")-1);
+      str.append("\\\\", sizeof("\\\\")-1);
       break;
     case '\0':
-      str->append("\\0", sizeof("\\0")-1);
+      str.append("\\0", sizeof("\\0")-1);
       break;
     case '\'':
-      str->append("\\'", sizeof("\\'")-1);
+      str.append("\\'", sizeof("\\'")-1);
       break;
     case '\n':
-      str->append("\\n", sizeof("\\n")-1);
+      str.append("\\n", sizeof("\\n")-1);
       break;
     case '\r':
-      str->append("\\r", sizeof("\\r")-1);
+      str.append("\\r", sizeof("\\r")-1);
       break;
     case '\032': // Ctrl-Z
-      str->append("\\Z", sizeof("\\Z")-1);
+      str.append("\\Z", sizeof("\\Z")-1);
       break;
     default:
-      str->append(c);
+      str.append(c);
     }
   }
 }
@@ -684,24 +646,17 @@ void String::print(String *str)
 */
 
 /* Factor the extern out */
-extern const charset_info_st *system_charset_info, *files_charset_info;
+extern const charset_info_st *system_charset_info;
 
 void String::append_identifier(const char *name, size_t in_length)
 {
-  const char *name_end;
-  char quote_char;
-  int q= '`';
+  // The identifier must be quoted as it includes a quote character or it's a keyword
 
-  /*
-    The identifier must be quoted as it includes a quote character or
-   it's a keyword
-  */
+  reserve(in_length * 2 + 2);
+  const char quote_char= '`';
+  append(&quote_char, 1);
 
-  reserve(in_length*2 + 2);
-  quote_char= (char) q;
-  append(&quote_char, 1, system_charset_info);
-
-  for (name_end= name+in_length ; name < name_end ; name+= in_length)
+  for (const char* name_end= name+in_length ; name < name_end ; name+= in_length)
   {
     unsigned char chr= (unsigned char) *name;
     in_length= my_mbcharlen(system_charset_info, chr);
@@ -715,10 +670,10 @@ void String::append_identifier(const char *name, size_t in_length)
     if (!in_length)
       in_length= 1;
     if (in_length == 1 && chr == (unsigned char) quote_char)
-      append(&quote_char, 1, system_charset_info);
-    append(name, in_length, system_charset_info);
+      append(&quote_char, 1);
+    append(name, in_length);
   }
-  append(&quote_char, 1, system_charset_info);
+  append(&quote_char, 1);
 }
 
 bool check_if_only_end_space(const charset_info_st * const cs, char *str,

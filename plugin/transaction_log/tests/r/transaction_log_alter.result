@@ -88,7 +88,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -101,7 +101,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -186,7 +186,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -199,7 +199,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -274,8 +274,8 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
-  PRIMARY KEY (`a`),
-  KEY `b_key` (`b`),
+  PRIMARY KEY (`a`) USING BTREE,
+  KEY `b_key` (`b`) USING BTREE,
   CONSTRAINT `fk_constraint_t2` FOREIGN KEY (`b`) REFERENCES `t1` (`b`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t2, t1_new_name;
@@ -370,7 +370,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -644,7 +644,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -942,7 +942,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -955,7 +955,7 @@ statement {
         name: "b_key"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1
@@ -1039,7 +1039,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1112,7 +1112,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` INT NOT NULL DEFAULT '999',
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 ALTER TABLE t1 ALTER COLUMN b DROP DEFAULT ;
 Check transaction_log_entries
@@ -1151,7 +1151,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` INT NOT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1196,7 +1196,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `new_b_name` VARCHAR(500) COLLATE utf8_general_ci DEFAULT 'I am not an int now',
   `a` INT NOT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1242,7 +1242,7 @@ t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `c` DATE DEFAULT NULL,
   `b` VARCHAR(50) COLLATE utf8_general_ci DEFAULT 'I am now a CHAR field',
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1305,7 +1305,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1341,7 +1341,7 @@ t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` INT NOT NULL,
   `c` DATE DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1387,7 +1387,7 @@ t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` INT NOT NULL,
   `c` DATE DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1;
 SET GLOBAL transaction_log_truncate_debug= true;
@@ -1441,7 +1441,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0
@@ -1454,7 +1454,7 @@ statement {
         name: "b_key1"
         is_primary: false
         is_unique: false
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 1

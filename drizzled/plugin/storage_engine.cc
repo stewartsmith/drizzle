@@ -75,7 +75,7 @@ EngineVector &StorageEngine::getSchemaEngines()
   return g_schema_engines;
 }
 
-StorageEngine::StorageEngine(const std::string name_arg,
+StorageEngine::StorageEngine(const std::string &name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg) :
   Plugin(name_arg, "StorageEngine"),
   MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
@@ -719,14 +719,14 @@ void StorageEngine::print_error(int error, myf errflag, const Table &table) cons
   {
     String str;
     get_error_message(error, &str);
-    my_error(ER_ROW_IS_REFERENCED_2, MYF(0), str.c_ptr_safe());
+    my_error(ER_ROW_IS_REFERENCED_2, MYF(0), str.c_str());
     return;
   }
   case HA_ERR_NO_REFERENCED_ROW:
   {
     String str;
     get_error_message(error, &str);
-    my_error(ER_NO_REFERENCED_ROW_2, MYF(0), str.c_ptr_safe());
+    my_error(ER_NO_REFERENCED_ROW_2, MYF(0), str.c_str());
     return;
   }
   case HA_ERR_TABLE_DEF_CHANGED:
@@ -763,8 +763,7 @@ void StorageEngine::print_error(int error, myf errflag, const Table &table) cons
     textno= ER_WARN_DATA_OUT_OF_RANGE;
     break;
   case HA_ERR_LOCK_OR_ACTIVE_TRANSACTION:
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return;
   default:
     {
@@ -775,12 +774,11 @@ void StorageEngine::print_error(int error, myf errflag, const Table &table) cons
       bool temporary= false;
       String str;
       temporary= get_error_message(error, &str);
-      if (!str.is_empty())
+      if (!str.empty())
       {
         const char* engine_name= getName().c_str();
         if (temporary)
-          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
-                   engine_name);
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(), engine_name);
         else
           my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }

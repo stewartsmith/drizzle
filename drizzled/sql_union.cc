@@ -35,10 +35,10 @@ bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
   bool res= unit->prepare(session, result, SELECT_NO_UNLOCK | setup_tables_done_option);
-  if (!res)
+  if (not res)
     res= unit->exec();
   if (res)
-    res|= unit->cleanup();
+    unit->cleanup();
   return res;
 }
 
@@ -242,8 +242,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
 
   if (is_union_select)
   {
-    if (!(tmp_result= union_result= new select_union))
-      goto err;
+    tmp_result= union_result= new select_union;
     if (describe)
       tmp_result= sel_result;
   }
@@ -377,7 +376,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
       */
-      assert(1); // Olaf: should this be assert(false)?
+      assert(false);
     }
   }
 
@@ -472,7 +471,7 @@ bool Select_Lex_Unit::exec()
 	  if (union_result->flush())
 	  {
 	    session->lex().current_select= lex_select_save;
-	    return(1);
+	    return 1;
 	  }
 	}
       }
@@ -486,7 +485,7 @@ bool Select_Lex_Unit::exec()
       if (error)
       {
         table->print_error(error, MYF(0));
-        return(1);
+        return 1;
       }
       if (found_rows_for_union && !sl->braces &&
           select_limit_cnt != HA_POS_ERROR)
@@ -522,13 +521,8 @@ bool Select_Lex_Unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new Join(session, item_list,
-					      fake_select_lex->options, result)))
-	{
-	  fake_select_lex->table_list.clear();
-	  return true;
-	}
-        fake_select_lex->join->no_const_tables= true;
+	fake_select_lex->join= new Join(session, item_list, fake_select_lex->options, result);
+  fake_select_lex->join->no_const_tables= true;
 
 	/*
 	  Fake Select_Lex should have item list for correctref_array

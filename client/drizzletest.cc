@@ -4101,8 +4101,7 @@ static int read_command(st_command** command_ptr)
     *command_ptr= q_lines[parser.current_line];
     return(0);
   }
-  if (!(*command_ptr= command= new st_command))
-    die("command construction failed");
+  *command_ptr= command= new st_command;
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -5099,9 +5098,7 @@ try
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
       use_drizzle_protocol=false;
     else if (not opt_protocol.compare("drizzle"))

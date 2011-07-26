@@ -225,13 +225,13 @@ public:
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
-  int ha_check(Session *session, HA_CHECK_OPT *check_opt);
+  int ha_check(Session*);
 
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
+  int ha_analyze(Session*);
 
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);

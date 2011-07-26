@@ -732,7 +732,6 @@ static int discard_or_import_tablespace(Session *session,
     Note that DISCARD/IMPORT TABLESPACE always is the only operation in an
     ALTER Table
   */
-  TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
  /*
@@ -757,20 +756,20 @@ static int discard_or_import_tablespace(Session *session,
       break;
 
     /* The ALTER Table is always in its own transaction */
-    error= transaction_services.autocommitOrRollback(*session, false);
+    error= TransactionServices::autocommitOrRollback(*session, false);
     if (not session->endActiveTransaction())
       error= 1;
 
     if (error)
       break;
 
-    transaction_services.rawStatement(*session,
+    TransactionServices::rawStatement(*session,
                                       *session->getQueryString(),
                                       *session->schema());
 
   } while(0);
 
-  (void) transaction_services.autocommitOrRollback(*session, error);
+  (void) TransactionServices::autocommitOrRollback(*session, error);
   session->setDoingTablespaceOperation(false);
 
   if (error == 0)
@@ -1040,9 +1039,8 @@ static bool internal_alter_table(Session *session,
 
       if (not error)
       {
-        TransactionServices &transaction_services= TransactionServices::singleton();
-        transaction_services.allocateNewTransactionId();
-        transaction_services.rawStatement(*session,
+        TransactionServices::allocateNewTransactionId();
+        TransactionServices::rawStatement(*session,
                                           *session->getQueryString(),
                                           *session->schema());
         session->my_ok();
@@ -1315,8 +1313,7 @@ static bool internal_alter_table(Session *session,
 
     session->set_proc_info("end");
 
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rawStatement(*session,
+    TransactionServices::rawStatement(*session,
                                       *session->getQueryString(),
                                       *session->schema());
     table_list->table= NULL;
@@ -1539,7 +1536,6 @@ copy_data_between_tables(Session *session,
 
     This needs to be done before external_lock
   */
-  TransactionServices &transaction_services= TransactionServices::singleton();
 
   /*
    * LP Bug #552420
@@ -1550,8 +1546,7 @@ copy_data_between_tables(Session *session,
    */
   to->getMutableShare()->getEngine()->startStatement(session);
 
-  if (!(copy= new CopyField[to->getShare()->sizeFields()]))
-    return -1;
+  copy= new CopyField[to->getShare()->sizeFields()];
 
   if (to->cursor->ha_external_lock(session, F_WRLCK))
     return -1;
@@ -1712,7 +1707,7 @@ copy_data_between_tables(Session *session,
       Ensure that the new table is saved properly to disk so that we
       can do a rename
     */
-    if (transaction_services.autocommitOrRollback(*session, false))
+    if (TransactionServices::autocommitOrRollback(*session, false))
       error= 1;
 
     if (not session->endActiveTransaction())

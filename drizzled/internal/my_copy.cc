@@ -106,7 +106,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
     /* Copy modes if possible */
 
     if (MyFlags & MY_HOLD_ORIGINAL_MODES && !new_file_stat)
-	return(0);			/* File copyed but not stat */
+	return 0;			/* File copyed but not stat */
     chmod(to, stat_buff.st_mode & 07777); /* Copy modes */
     if(chown(to, stat_buff.st_uid,stat_buff.st_gid)!=0)
         return 0;
@@ -117,7 +117,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
       timep.modtime = stat_buff.st_mtime;
       utime((char*) to, &timep); /* last accessed and modified times */
     }
-    return(0);
+    return 0;
   }
 
 err:

@@ -75,7 +75,7 @@ int64_t Item_func_from_unixtime::val_int()
 bool Item_func_from_unixtime::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t tmp= 0;
-  type::Time::usec_t fractional_tmp= 0;
+  type::usec_t fractional_tmp= 0;
 
   switch (args[0]->result_type()) {
   case REAL_RESULT:
@@ -86,7 +86,7 @@ bool Item_func_from_unixtime::get_date(type::Time &ltime, uint32_t)
       double double_tmp= args[0]->val_real();
 
       tmp= (uint64_t)(double_tmp);
-      fractional_tmp=  (type::Time::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
+      fractional_tmp=  (type::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
 
       break;
     }

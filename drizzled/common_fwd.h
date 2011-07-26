@@ -21,6 +21,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 #include <cstring>
+#include <drizzled/visibility.h>
 #include <string>
 #include <vector>
 
@@ -213,6 +214,11 @@ namespace type
 { 
   class Decimal;
   class Time; 
+
+  typedef int64_t datetime_t;
+  typedef int64_t date_t;
+  typedef int64_t epoch_t;
+  typedef uint32_t usec_t;
 }
 
 namespace util

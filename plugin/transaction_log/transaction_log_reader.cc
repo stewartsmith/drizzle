@@ -180,8 +180,7 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
       previous_length= length;
     }
-    if (buffer)
-      free(buffer);
+    free(buffer);
     
     delete coded_input;
     delete raw_input;

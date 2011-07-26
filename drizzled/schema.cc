@@ -72,7 +72,6 @@ namespace schema {
 
 bool create(Session &session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
 
   /*
@@ -123,7 +122,7 @@ bool create(Session &session, const message::Schema &schema_message, const bool 
     }
     else // Created !
     {
-      transaction_services.createSchema(session, schema_message);
+      TransactionServices::createSchema(session, schema_message);
       session.my_ok(1);
     }
   }
@@ -139,8 +138,6 @@ bool alter(Session &session,
            const message::Schema &schema_message,
            const message::Schema &original_schema)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   /*
     Do not alter database if another thread is holding read lock.
     Wait for global read lock before acquiring session->catalog()->schemaLock().
@@ -172,7 +169,7 @@ bool alter(Session &session,
 
     if (success)
     {
-      transaction_services.alterSchema(session, original_schema, schema_message);
+      TransactionServices::alterSchema(session, original_schema, schema_message);
       session.my_ok(1);
     }
     else

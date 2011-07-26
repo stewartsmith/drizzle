@@ -29,11 +29,9 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-static char _dig_vec_lower[] =
-  "0123456789abcdefghijklmnopqrstuvwxyz";
+static char _dig_vec_lower[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 inline uint32_t char_val(char X)
 {
@@ -90,8 +88,7 @@ int Item_hex_string::save_in_field(Field *field, bool)
 {
   field->set_notnull();
   if (field->result_type() == STRING_RESULT)
-    return field->store(str_value.ptr(), str_value.length(),
-                        collation.collation);
+    return field->store(str_value.ptr(), str_value.length(), collation.collation);
 
   uint64_t nr;
   uint32_t length= str_value.length();
@@ -110,8 +107,7 @@ int Item_hex_string::save_in_field(Field *field, bool)
 
 warn:
   if (!field->store((int64_t) nr, true))
-    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE,
-                       1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   return 1;
 }
 
@@ -139,13 +135,10 @@ bool Item_hex_string::eq(const Item *arg, bool binary_cmp) const
   return false;
 }
 
-Item *Item_hex_string::safe_charset_converter(const charset_info_st * const tocs)
+Item *Item_hex_string::safe_charset_converter(const charset_info_st* tocs)
 {
-  Item_string *conv;
   String tmp, *str= val_str(&tmp);
-
-  if (!(conv= new Item_string(str->ptr(), str->length(), tocs)))
-    return NULL;
+  Item_string* conv= new Item_string(str->ptr(), str->length(), tocs);
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

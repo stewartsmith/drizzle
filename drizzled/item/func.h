@@ -19,7 +19,6 @@
 
 #pragma once
 
-
 /* If you fix the parser to no longer create functions these can be moved to create.cc */
 #include <drizzled/function/math/divide.h>
 #include <drizzled/function/get_user_var.h>
@@ -36,8 +35,7 @@
 
 /* For type casts */
 
-namespace drizzled
-{
+namespace drizzled {
 
 enum Cast_target
 {

@@ -24,19 +24,19 @@
 
 namespace drizzled {
 
-class Item_null :public Item_basic_constant
+class Item_null : public Item_basic_constant
 {
 public:
 
-  Item_null(char *name_par=0)
+  Item_null(const char *name_par=0)
   {
     maybe_null= null_value= true;
     max_length= 0;
-    name= name_par ? name_par : (char*) "NULL";
+    name= name_par ? name_par : "NULL";
     fixed= 1;
     collation.set(&my_charset_bin, DERIVATION_IGNORABLE);
   }
-  enum Type type() const { return NULL_ITEM; }
+  Type type() const { return NULL_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
   int64_t val_int();

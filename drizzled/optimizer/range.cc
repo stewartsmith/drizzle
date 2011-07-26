@@ -291,8 +291,8 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
 static
 optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree);
 
-static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param, 
-                                     optimizer::SEL_TREE *tree1, 
+static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param,
+                                     optimizer::SEL_TREE *tree1,
                                      optimizer::SEL_TREE *tree2);
 
 static optimizer::SEL_ARG *sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
@@ -310,8 +310,8 @@ static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
                              uint32_t length);
 
-bool sel_trees_can_be_ored(optimizer::SEL_TREE *tree1, 
-                           optimizer::SEL_TREE *tree2, 
+bool sel_trees_can_be_ored(optimizer::SEL_TREE *tree1,
+                           optimizer::SEL_TREE *tree2,
                            optimizer::RangeParameter *param);
 
 
@@ -346,19 +346,13 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
                                              bool allow_null_cond,
                                              int *error)
 {
-  optimizer::SqlSelect *select= NULL;
-
   *error= 0;
 
   if (! conds && ! allow_null_cond)
   {
     return 0;
   }
-  if (! (select= new optimizer::SqlSelect()))
-  {
-    *error= 1;			// out of memory
-    return 0;
-  }
+  optimizer::SqlSelect* select= new optimizer::SqlSelect;
   select->read_tables=read_tables;
   select->const_tables=const_tables;
   select->head=head;
@@ -376,7 +370,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 }
 
 
-optimizer::SqlSelect::SqlSelect() 
+optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
@@ -391,11 +385,9 @@ optimizer::SqlSelect::SqlSelect()
 
 void optimizer::SqlSelect::cleanup()
 {
-  if (quick)
-  {
-    delete quick;
-    quick= NULL;
-  }
+
+  delete quick;
+  quick= NULL;
 
   if (free_cond)
   {
@@ -413,17 +405,17 @@ optimizer::SqlSelect::~SqlSelect()
 }
 
 
-bool optimizer::SqlSelect::check_quick(Session *session, 
+bool optimizer::SqlSelect::check_quick(Session *session,
                                        bool force_quick_range,
                                        ha_rows limit)
 {
   key_map tmp;
   tmp.set();
-  return (test_quick_select(session, 
-                           tmp, 
-                           0, 
+  return (test_quick_select(session,
+                           tmp,
+                           0,
                            limit,
-                           force_quick_range, 
+                           force_quick_range,
                            false) < 0);
 }
 
@@ -646,11 +638,10 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 {
   uint32_t idx;
   double scan_time;
-  if (quick)
-  {
-    delete quick;
-    quick= NULL;
-  }
+
+  delete quick;
+  quick= NULL;
+
   needed_reg.reset();
   quick_keys.reset();
   if (keys_to_use.none())
@@ -696,7 +687,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
     session->no_errors=1;				// Don't warn about NULL
     alloc.init(session->variables.range_alloc_block_size);
-    param.key_parts= (KEY_PART*) alloc.alloc( sizeof(KEY_PART) * head->getShare()->key_parts);
+    param.key_parts= new (alloc) KEY_PART[head->getShare()->key_parts];
     if (fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
@@ -865,12 +856,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       records= best_trp->records;
       if (! (quick= best_trp->make_quick(&param, true)) || quick->init())
       {
-        /* quick can already be free here */
-        if (quick)
-        {
-          delete quick;
-          quick= NULL;
-        }
+        delete quick;
+        quick= NULL;
       }
     }
 
@@ -979,7 +966,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc(sizeof(optimizer::RangeReadPlan*)* n_child_scans);
+  range_scans= new (*param->mem_root) optimizer::RangeReadPlan*[n_child_scans];
 
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1067,16 +1054,13 @@ optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
-    if ((imerge_trp= new (param->mem_root) optimizer::IndexMergeReadPlan))
-    {
-      imerge_trp->read_cost= imerge_cost;
-      imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
-      imerge_trp->records= min(imerge_trp->records,
-                               param->table->cursor->stats.records);
-      imerge_trp->range_scans= range_scans;
-      imerge_trp->range_scans_end= range_scans + n_child_scans;
-      read_time= imerge_cost;
-    }
+    imerge_trp= new (*param->mem_root) optimizer::IndexMergeReadPlan;
+    imerge_trp->read_cost= imerge_cost;
+    imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
+    imerge_trp->records= min(imerge_trp->records, param->table->cursor->stats.records);
+    imerge_trp->range_scans= range_scans;
+    imerge_trp->range_scans_end= range_scans + n_child_scans;
+    read_time= imerge_cost;
   }
 
 build_ror_index_merge:
@@ -1085,7 +1069,7 @@ build_ror_index_merge:
 
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
-  roru_read_plans= (optimizer::TableReadPlan **) param->mem_root->alloc(sizeof(optimizer::TableReadPlan*) * n_child_scans);
+  roru_read_plans= new (*param->mem_root) optimizer::TableReadPlan*[n_child_scans];
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1164,7 +1148,7 @@ skip_to_ror_scan:
   optimizer::RorUnionReadPlan *roru= NULL;
   if (roru_total_cost < read_time)
   {
-    if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
+    if ((roru= new (*param->mem_root) optimizer::RorUnionReadPlan))
     {
       roru->first_ror= roru_read_plans;
       roru->last_ror= roru_read_plans + n_child_scans;
@@ -1197,7 +1181,7 @@ static
 optimizer::RorScanInfo *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
   uint32_t keynr;
-  optimizer::RorScanInfo* ror_scan= (optimizer::RorScanInfo*)param->mem_root->alloc(sizeof(optimizer::RorScanInfo));
+  optimizer::RorScanInfo* ror_scan= new (*param->mem_root) optimizer::RorScanInfo;
 
   ror_scan->idx= idx;
   ror_scan->keynr= keynr= param->real_keynr[idx];
@@ -1694,10 +1678,10 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   if (total_cost > read_time)
     return NULL;
 
-  optimizer::RorIntersectReadPlan* trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
+  optimizer::RorIntersectReadPlan* trp= new (*param->mem_root) optimizer::RorIntersectReadPlan;
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* best_num);
+  trp->first_scan= new (*param->mem_root) optimizer::RorScanInfo*[best_num];
   memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(optimizer::RorScanInfo*));
   trp->last_scan=  trp->first_scan + best_num;
   trp->is_covering= true;
@@ -1795,7 +1779,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  tree->ror_scans= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)* param->keys);
+  tree->ror_scans= new (*param->mem_root) optimizer::RorScanInfo*[param->keys];
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ? param->table->getShare()->getPrimaryKey() : MAX_KEY);
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
@@ -1824,8 +1808,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
                      (qsort_cmp)cmp_ror_scan_info);
 
   optimizer::RorScanInfo **intersect_scans= NULL; /* ROR scans used in index intersection */
-  optimizer::RorScanInfo **intersect_scans_end= intersect_scans= 
-    (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*) * tree->n_ror_scans);
+  optimizer::RorScanInfo **intersect_scans_end= intersect_scans=  new (*param->mem_root) optimizer::RorScanInfo*[tree->n_ror_scans];
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
@@ -1884,8 +1867,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   optimizer::RorIntersectReadPlan *trp= NULL;
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
-    trp= new (param->mem_root) optimizer::RorIntersectReadPlan;
-    trp->first_scan= (optimizer::RorScanInfo**)param->mem_root->alloc(sizeof(optimizer::RorScanInfo*)*best_num);
+    trp= new (*param->mem_root) optimizer::RorIntersectReadPlan;
+    trp->first_scan= new (*param->mem_root) optimizer::RorScanInfo*[best_num];
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(optimizer::RorScanInfo*));
     trp->last_scan=  trp->first_scan + best_num;
     trp->is_covering= intersect_best.is_covering;
@@ -1991,17 +1974,13 @@ static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
-                                                                   best_mrr_flags)))
-    {
-      read_plan->records= best_records;
-      read_plan->is_ror= tree->ror_scans_map.test(idx);
-      read_plan->read_cost= read_time;
-      read_plan->mrr_buf_size= best_buf_size;
-    }
+    read_plan= new (*param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx, best_mrr_flags);
+    read_plan->records= best_records;
+    read_plan->is_ror= tree->ror_scans_map.test(idx);
+    read_plan->read_cost= read_time;
+    read_plan->mrr_buf_size= best_buf_size;
   }
-
-  return(read_plan);
+  return read_plan;
 }
 
 
@@ -2152,14 +2131,14 @@ static optimizer::SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
 */
 static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
                                   Item_func *cond_func,
-                                  Field *field, 
+                                  Field *field,
                                   Item *value,
-                                  Item_result cmp_type, 
+                                  Item_result cmp_type,
                                   bool inv)
 {
   optimizer::SEL_TREE *tree= NULL;
 
-  switch (cond_func->functype()) 
+  switch (cond_func->functype())
   {
 
   case Item_func::NE_FUNC:
@@ -2172,25 +2151,25 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
     {
       if (inv)
       {
-        tree= get_ne_mm_tree(param, 
-                             cond_func, 
-                             field, 
+        tree= get_ne_mm_tree(param,
+                             cond_func,
+                             field,
                              cond_func->arguments()[1],
-                             cond_func->arguments()[2], 
+                             cond_func->arguments()[2],
                              cmp_type);
       }
       else
       {
-        tree= get_mm_parts(param, 
-                           cond_func, 
-                           field, 
+        tree= get_mm_parts(param,
+                           cond_func,
+                           field,
                            Item_func::GE_FUNC,
 		                       cond_func->arguments()[1],
                            cmp_type);
         if (tree)
         {
-          tree= tree_and(param, 
-                         tree, 
+          tree= tree_and(param,
+                         tree,
                          get_mm_parts(param, cond_func, field,
 					               Item_func::LE_FUNC,
 					               cond_func->arguments()[2],
@@ -2199,15 +2178,15 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
       }
     }
     else
-      tree= get_mm_parts(param, 
-                         cond_func, 
+      tree= get_mm_parts(param,
+                         cond_func,
                          field,
                          (inv ?
                           (value == (Item*)1 ? Item_func::GT_FUNC :
                                                Item_func::LT_FUNC):
                           (value == (Item*)1 ? Item_func::LE_FUNC :
                                                Item_func::GE_FUNC)),
-                         cond_func->arguments()[0], 
+                         cond_func->arguments()[0],
                          cmp_type);
     break;
   }
@@ -2276,10 +2255,10 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         do
         {
           func->array->value_to_item(i, value_item);
-          tree= get_mm_parts(param, 
-                             cond_func, 
+          tree= get_mm_parts(param,
+                             cond_func,
                              field, Item_func::LT_FUNC,
-                             value_item, 
+                             value_item,
                              cmp_type);
           if (! tree)
             break;
@@ -2526,8 +2505,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
       tree=0;
-      Item *item;
-      while ((item=li++))
+      while (Item* item=li++)
       {
 	optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	if (param->session->is_fatal_error ||
@@ -2543,8 +2521,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
       tree= get_mm_tree(param,li++);
       if (tree)
       {
-	Item *item;
-	while ((item=li++))
+	while (Item* item= li++)
 	{
 	  optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	  if (!new_tree)
@@ -2706,12 +2683,11 @@ get_mm_parts(optimizer::RangeParameter *param,
     if (field->eq(key_part->field))
     {
       optimizer::SEL_ARG *sel_arg=0;
-      if (!tree && !(tree=new optimizer::SEL_TREE()))
-        return 0;				// OOM
+      if (!tree)
+        tree= new optimizer::SEL_TREE;
       if (!value || !(value->used_tables() & ~param->read_tables))
       {
-        sel_arg= get_mm_leaf(param,cond_func,
-            key_part->field,key_part,type,value);
+        sel_arg= get_mm_leaf(param,cond_func, key_part->field,key_part,type,value);
         if (! sel_arg)
           continue;
         if (sel_arg->type == optimizer::SEL_ARG::IMPOSSIBLE)
@@ -2723,8 +2699,7 @@ get_mm_parts(optimizer::RangeParameter *param,
       else
       {
         // This key may be used later
-        if (! (sel_arg= new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY)))
-          return 0;			// OOM
+        sel_arg= new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY);
       }
       sel_arg->part=(unsigned char) key_part->part;
       tree->keys[key_part->key]=sel_add(tree->keys[key_part->key],sel_arg);
@@ -2770,8 +2745,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
         tree= &optimizer::null_element;
       goto end;
     }
-    if (!(tree= new (alloc) optimizer::SEL_ARG(field,is_null_string,is_null_string)))
-      goto end;                                 // out of memory
+    tree= new (*alloc) optimizer::SEL_ARG(field,is_null_string,is_null_string);
     if (type == Item_func::ISNOTNULL_FUNC)
     {
       tree->min_flag=NEAR_MIN;		    /* IS NOT NULL ->  X > NULL */
@@ -2799,8 +2773,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     goto end;
 
   if (param->using_real_indexes)
-    optimize_range= field->optimize_range(param->real_keynr[key_part->key],
-                                          key_part->part);
+    optimize_range= field->optimize_range(param->real_keynr[key_part->key], key_part->part);
   else
     optimize_range= true;
 
@@ -3086,7 +3059,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     Any predicate except "<=>"(null-safe equality operator) involving NULL as a
     constant is always FALSE
     Put IMPOSSIBLE Tree(null_element) here.
-  */  
+  */
   if (type != Item_func::EQUAL_FUNC && field->is_real_null())
   {
     tree= &optimizer::null_element;
@@ -3434,8 +3407,6 @@ key_and(optimizer::RangeParameter *param,
     if (! next || next->type != optimizer::SEL_ARG::IMPOSSIBLE)
     {
       optimizer::SEL_ARG *new_arg= e1->clone_and(e2);
-      if (! new_arg)
-        return &optimizer::null_element;			// End of memory
       new_arg->next_key_part=next;
       if (! new_tree)
       {
@@ -4098,16 +4069,13 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
   }
 
   /* Get range for retrieving rows in QUICK_SELECT::get_next */
-  if (! (range= new optimizer::QuickRange(param->min_key,
+  range= new optimizer::QuickRange(param->min_key,
 			                                     (uint32_t) (tmp_min_key - param->min_key),
                                            min_part >=0 ? make_keypart_map(min_part) : 0,
 			                                     param->max_key,
 			                                     (uint32_t) (tmp_max_key - param->max_key),
                                            max_part >=0 ? make_keypart_map(max_part) : 0,
-			                                     flag)))
-  {
-    return 1;			// out of memory
-  }
+			                                     flag);
 
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->min_length);
   set_if_bigger(quick->max_used_key_length, (uint32_t)range->max_length);
@@ -4211,9 +4179,9 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     goto err;
   quick->records= records;
 
-  if ((cp_buffer_from_ref(session, ref) && session->is_fatal_error) ||
-      !(range= new(alloc) optimizer::QuickRange()))
+  if (cp_buffer_from_ref(session, ref) && session->is_fatal_error)
     goto err;                                   // out of memory
+  range= new (*alloc) optimizer::QuickRange;
 
   range->min_key= range->max_key= ref->key_buff;
   range->min_length= range->max_length= ref->key_length;
@@ -4221,7 +4189,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     make_prev_keypart_map(ref->key_parts);
   range->flag= (ref->key_length == key_info->key_length && (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0;
 
-  quick->key_parts=key_part=(KEY_PART *)quick->alloc.alloc(sizeof(KEY_PART)*ref->key_parts);
+  quick->key_parts=key_part= new (quick->alloc) KEY_PART[ref->key_parts];
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)
   {
@@ -4245,12 +4213,11 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     optimizer::QuickRange *null_range= NULL;
 
     *ref->null_ref_key= 1;		// Set null byte then create a range
-    if (!(null_range= new (alloc)
+    null_range= new (alloc)
           optimizer::QuickRange(ref->key_buff, ref->key_length,
                                  make_prev_keypart_map(ref->key_parts),
                                  ref->key_buff, ref->key_length,
-                                 make_prev_keypart_map(ref->key_parts), EQ_RANGE)))
-      goto err;
+                                 make_prev_keypart_map(ref->key_parts), EQ_RANGE);
     *ref->null_ref_key= 0;		// Clear null byte
     quick->ranges.push_back(&null_range);
   }
@@ -4262,9 +4229,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
-  if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records,
-                                           &quick->mrr_buf_size,
-                                           &quick->mrr_flags, &cost))
+  if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records, &quick->mrr_buf_size, &quick->mrr_flags, &cost))
     goto err;
 
   return quick;
@@ -4918,8 +4883,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     return NULL;
 
   /* The query passes all tests, so construct a new TRP object. */
-  read_plan=
-    new(param->mem_root) optimizer::GroupMinMaxReadPlan(have_min,
+  read_plan= new (*param->mem_root) optimizer::GroupMinMaxReadPlan(have_min,
                                                         have_max,
                                                         min_max_arg_part,
                                                         group_prefix_len,
@@ -4933,15 +4897,10 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
                                                         best_index_tree,
                                                         best_param_idx,
                                                         best_quick_prefix_records);
-  if (read_plan)
-  {
-    if (tree && read_plan->quick_prefix_records == 0)
-      return NULL;
-
-    read_plan->read_cost= best_read_cost;
-    read_plan->records= best_records;
-  }
-
+  if (tree && read_plan->quick_prefix_records == 0)
+    return NULL;
+  read_plan->read_cost= best_read_cost;
+  read_plan->records= best_records;
   return read_plan;
 }
 
@@ -5488,13 +5447,8 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
 
 optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
-  optimizer::QuickRangeSelect *quick= NULL;
-  if ((quick= optimizer::get_quick_select(param,
-                                          key_idx,
-                                          key,
-                                          mrr_flags,
-                                          mrr_buf_size,
-                                          parent_alloc)))
+  optimizer::QuickRangeSelect *quick= optimizer::get_quick_select(param, key_idx, key, mrr_flags, mrr_buf_size, parent_alloc);
+  if (quick)
   {
     quick->records= records;
     quick->read_time= read_cost;
@@ -5508,10 +5462,8 @@ uint32_t optimizer::RorScanInfo::findFirstNotSet() const
   boost::dynamic_bitset<> map= bitsToBitset();
   for (boost::dynamic_bitset<>::size_type i= 0; i < map.size(); i++)
   {
-    if (! map.test(i))
-    {
+    if (not map.test(i))
       return i;
-    }
   }
   return map.size();
 }
@@ -5547,7 +5499,7 @@ boost::dynamic_bitset<> optimizer::RorScanInfo::bitsToBitset() const
   }
   string final(covered_fields_size - res.length(), '0');
   final.append(res);
-  return (boost::dynamic_bitset<>(final));
+  return boost::dynamic_bitset<>(final);
 }
 
 

@@ -68,9 +68,9 @@ Cursor::Cursor(plugin::StorageEngine &engine_arg,
     next_insert_id(0), insert_id_for_cur_row(0)
 { }
 
-Cursor::~Cursor(void)
+Cursor::~Cursor()
 {
-  assert(locked == false);
+  assert(not locked);
   /* TODO: assert(inited == NONE); */
 }
 
@@ -608,7 +608,6 @@ void Cursor::drop_table(const char *)
   Performs checks upon the table.
 
   @param session                thread doing CHECK Table operation
-  @param check_opt          options from the parser
 
   @retval
     HA_ADMIN_OK               Successful upgrade
@@ -619,7 +618,7 @@ void Cursor::drop_table(const char *)
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
-int Cursor::ha_check(Session *, HA_CHECK_OPT *)
+int Cursor::ha_check(Session *)
 {
   return HA_ADMIN_OK;
 }
@@ -680,9 +679,8 @@ Cursor::ha_delete_all_rows()
      * @todo Make TransactionServices generic to AfterTriggerServices
      * or similar...
      */
-    Session *const session= getTable()->in_use;
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.truncateTable(*session, *getTable());
+    Session& session= *getTable()->in_use;
+    TransactionServices::truncateTable(session, *getTable());
   }
 
   return result;
@@ -711,7 +709,7 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 */
 
 int
-Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
+Cursor::ha_analyze(Session* session)
 {
   setTransactionReadWrite();
 
@@ -1263,10 +1261,9 @@ static bool log_row_for_replication(Table* table,
                                     const unsigned char *before_record,
                                     const unsigned char *after_record)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->getShare()->getType() || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->getType() || not TransactionServices::shouldConstructMessages())
     return false;
 
   bool result= false;
@@ -1283,7 +1280,7 @@ static bool log_row_for_replication(Table* table,
      * CREATE TABLE will commit the transaction containing
      * it).
      */
-    result= transaction_services.insertRecord(*session, *table);
+    result= TransactionServices::insertRecord(*session, *table);
     break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
@@ -1312,20 +1309,20 @@ static bool log_row_for_replication(Table* table,
        * as the row to delete (this is the conflicting row), so
        * we need to notify TransactionService to use that row.
        */
-      transaction_services.deleteRecord(*session, *table, true);
+      TransactionServices::deleteRecord(*session, *table, true);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
        * message for the inserted record which will come next.
        */
-      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), *session);
+      TransactionServices::finalizeStatementMessage(*session->getStatementMessage(), *session);
     }
     else
     {
       if (before_record == NULL)
-        result= transaction_services.insertRecord(*session, *table);
+        result= TransactionServices::insertRecord(*session, *table);
       else
-        transaction_services.updateRecord(*session, *table, before_record, after_record);
+        TransactionServices::updateRecord(*session, *table, before_record, after_record);
     }
     break;
   case SQLCOM_INSERT:
@@ -1338,17 +1335,17 @@ static bool log_row_for_replication(Table* table,
      * an update.
      */
     if (before_record == NULL)
-      result= transaction_services.insertRecord(*session, *table);
+      result= TransactionServices::insertRecord(*session, *table);
     else
-      transaction_services.updateRecord(*session, *table, before_record, after_record);
+      TransactionServices::updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
-    transaction_services.updateRecord(*session, *table, before_record, after_record);
+    TransactionServices::updateRecord(*session, *table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-    transaction_services.deleteRecord(*session, *table);
+    TransactionServices::deleteRecord(*session, *table);
     break;
   default:
     break;

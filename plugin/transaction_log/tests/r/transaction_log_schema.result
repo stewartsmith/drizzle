@@ -166,7 +166,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL AUTO_INCREMENT,
   `b` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
-  PRIMARY KEY (`a`)
+  PRIMARY KEY (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 Check transaction_log_entries
 SELECT COUNT(*) FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
@@ -281,7 +281,7 @@ statement {
         name: "PRIMARY"
         is_primary: true
         is_unique: true
-        type: UNKNOWN_INDEX
+        type: BTREE
         key_length: 4
         index_part {
           fieldnr: 0

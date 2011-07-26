@@ -91,7 +91,7 @@ int my_wildcmp_mb(const charset_info_st * const cs,
       }
       else
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return (str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char */
@@ -129,7 +129,7 @@ int my_wildcmp_mb(const charset_info_st * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 
@@ -727,7 +727,7 @@ int my_wildcmp_mb_bin(const charset_info_st * const cs,
       }
       else
       if (str == str_end || *wildstr++ != *str++)
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return (str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char */
@@ -765,7 +765,7 @@ int my_wildcmp_mb_bin(const charset_info_st * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 

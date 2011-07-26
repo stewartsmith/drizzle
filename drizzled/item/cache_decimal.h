@@ -22,22 +22,19 @@
 #include <drizzled/type/decimal.h>
 #include <drizzled/item/cache.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache_decimal: public Item_cache
+class Item_cache_decimal : public Item_cache
 {
-protected:
-  type::Decimal decimal_value;
 public:
-  Item_cache_decimal(): Item_cache() {}
-
-  void store(Item *item);
+  void store(Item*);
   double val_real();
   int64_t val_int();
-  String* val_str(String *str);
-  type::Decimal *val_decimal(type::Decimal *);
+  String* val_str(String*);
+  type::Decimal *val_decimal(type::Decimal*);
   enum Item_result result_type() const { return DECIMAL_RESULT; }
+protected:
+  type::Decimal decimal_value;
 };
 
 } /* namespace drizzled */

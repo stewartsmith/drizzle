@@ -170,8 +170,7 @@ void drizzle_free(drizzle_st *drizzle)
     assert(drizzle->query_list == NULL);
   }
 
-  if (drizzle->pfds != NULL)
-    free(drizzle->pfds);
+  free(drizzle->pfds);
 
   if (drizzle->options & DRIZZLE_ALLOCATED)
     delete drizzle;

@@ -34,46 +34,60 @@ void* sql_memdup(const void*, size_t);
 class DRIZZLED_API SqlAlloc
 {
 public:
-  static void *operator new(size_t size)
+  static void* operator new(size_t size)
   {
     return memory::sql_alloc(size);
   }
 
-  static void *operator new[](size_t size)
+  static void* operator new[](size_t size)
   {
     return memory::sql_alloc(size);
   }
 
-  static void *operator new[](size_t size, Root& root)
+  static void* operator new(size_t size, Root& root)
   {
     return root.alloc(size);
   }
 
-  static void *operator new(size_t size, Root& root)
+  static void* operator new[](size_t size, Root& root)
   {
     return root.alloc(size);
   }
 
-  static void *operator new[](size_t size, Root* root)
+  static void* operator new(size_t size, Root* root)
   {
     return root->alloc(size);
   }
 
-  static void *operator new(size_t size, Root* root)
+  static void* operator new[](size_t size, Root* root)
   {
     return root->alloc(size);
   }
 
-  static void operator delete(void*, size_t)
-  {  }
+  static void operator delete(void*)
+  {  
+  }
+
+  static void operator delete[](void*)
+  {  
+  }
+
+  static void operator delete(void*, Root&)
+  {  
+  }
+
+  static void operator delete[](void*, Root&)
+  {  
+  }
+
   static void operator delete(void*, Root*)
-  {  }
+  {  
+  }
+
   static void operator delete[](void*, Root*)
-  {  }
-  static void operator delete[](void*, size_t)
-  {  }
+  {  
+  }
 };
 
 }
 }
-

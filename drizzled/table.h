@@ -319,7 +319,7 @@ private:
       mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
-  memory::Root& getMemRoot()
+  memory::Root& mem()
   {
     init_mem_root();
     return mem_root;

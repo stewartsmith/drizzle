@@ -104,7 +104,7 @@ int64_t Boolean::val_int() const
 String *Boolean::val_str(String *val_buffer, String *) const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
-  (void)type::convert(*val_buffer, isTrue(), ansi_display);
+  type::convert(*val_buffer, isTrue(), ansi_display);
   return val_buffer;
 }
 

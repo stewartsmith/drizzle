@@ -33,11 +33,11 @@
 #include <drizzled/item/int_with_ref.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/system_variables.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/system_variables.h>
 
 #include <math.h>
 #include <algorithm>
@@ -94,7 +94,9 @@ static void agg_result_type(Item_result *type, Item **items, uint32_t nitems)
   for (; item < item_end; item++)
   {
     if ((*item)->type() != Item::NULL_ITEM)
+    {
       *type= item_store_type(*type, *item, unsigned_flag);
+    }
   }
 }
 
@@ -603,8 +605,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
         comparators= 0;
         return 1;
       }
-      if (!(comparators= new Arg_comparator[n]))
-        return 1;
+      comparators= new Arg_comparator[n];
       for (uint32_t i=0; i < n; i++)
       {
         if ((*a)->element_index(i)->cols() != (*b)->element_index(i)->cols())
@@ -714,8 +715,7 @@ WHERE col= 'j'
 */
 
 static int64_t
-get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
-                  char *warn_name, bool *error_arg)
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type, const char *warn_name, bool *error_arg)
 {
   int64_t value= 0;
   type::cut_t error= type::VALID;
@@ -2373,8 +2373,7 @@ Item_func_if::fix_fields(Session *session, Item **ref)
 }
 
 
-void
-Item_func_if::fix_length_and_dec()
+void Item_func_if::fix_length_and_dec()
 {
   maybe_null= args[1]->maybe_null || args[2]->maybe_null;
   decimals= max(args[1]->decimals, args[2]->decimals);
@@ -2399,32 +2398,38 @@ Item_func_if::fix_length_and_dec()
   }
   else
   {
-    agg_result_type(&cached_result_type, args+1, 2);
+    agg_result_type(&cached_result_type, args +1, 2);
     if (cached_result_type == STRING_RESULT)
     {
-      if (agg_arg_charsets(collation, args+1, 2, MY_COLL_ALLOW_CONV, 1))
+      if (agg_arg_charsets(collation, args +1, 2, MY_COLL_ALLOW_CONV, 1))
         return;
     }
     else
     {
       collation.set(&my_charset_bin);	// Number
     }
-    cached_field_type= agg_field_type(args + 1, 2);
+    cached_field_type= agg_field_type(args +1, 2);
   }
 
-  if ((cached_result_type == DECIMAL_RESULT )
-      || (cached_result_type == INT_RESULT))
+  switch (cached_result_type)
   {
-    int len1= args[1]->max_length - args[1]->decimals
-      - (args[1]->unsigned_flag ? 0 : 1);
-
-    int len2= args[2]->max_length - args[2]->decimals
-      - (args[2]->unsigned_flag ? 0 : 1);
-
-    max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
-  }
-  else
+  case DECIMAL_RESULT: 
+  case INT_RESULT:
+    {
+      int len1= args[1]->max_length -args[1]->decimals -(args[1]->unsigned_flag ? 0 : 1);
+      int len2= args[2]->max_length -args[2]->decimals -(args[2]->unsigned_flag ? 0 : 1);
+      max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
+    }
+    break;
+  case REAL_RESULT:
+  case STRING_RESULT:
     max_length= max(args[1]->max_length, args[2]->max_length);
+    break;
+
+  case ROW_RESULT:
+    assert(0);
+    break;
+  }
 }
 
 
@@ -2451,8 +2456,8 @@ Item_func_if::val_int()
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  int64_t value=arg->val_int();
-  null_value=arg->null_value;
+  int64_t value= arg->val_int();
+  null_value= arg->null_value;
   return value;
 }
 
@@ -2461,10 +2466,12 @@ Item_func_if::val_str(String *str)
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  String *res=arg->val_str(str);
+  String *res= arg->val_str(str);
   if (res)
+  {
     res->set_charset(collation.collation);
-  null_value=arg->null_value;
+  }
+  null_value= arg->null_value;
   return res;
 }
 
@@ -3183,8 +3190,7 @@ in_row::in_row(uint32_t elements, Item *)
 
 in_row::~in_row()
 {
-  if (base)
-    delete [] (cmp_item_row*) base;
+  delete [] (cmp_item_row*) base;
 }
 
 unsigned char *in_row::get_value(Item *item)
@@ -3630,8 +3636,7 @@ void Item_func_in::fix_length_and_dec()
       }
       else
       {
-        if (!(cmp= new cmp_item_row))
-          return;
+        cmp= new cmp_item_row;
         cmp_items[ROW_RESULT]= cmp;
       }
       cmp->n= args[0]->cols();
@@ -4196,10 +4201,7 @@ void Item_cond::neg_arguments(Session *session)
   {
     Item *new_item= item->neg_transformer(session);
     if (!new_item)
-    {
-      if (!(new_item= new Item_func_not(item)))
-	return;					// Fatal OEM error
-    }
+      new_item= new Item_func_not(item);
     li.replace(new_item);
   }
 }
@@ -4289,11 +4291,9 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
   if (a == *org_item)
   {
     Item_cond *res;
-    if ((res= new Item_cond_and(a, (Item*) b)))
-    {
-      res->used_tables_cache= a->used_tables() | b->used_tables();
-      res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
-    }
+    res= new Item_cond_and(a, (Item*) b);
+    res->used_tables_cache= a->used_tables() | b->used_tables();
+    res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
     return res;
   }
   ((Item_cond_and*) a)->add((Item*) b);
@@ -4326,10 +4326,10 @@ int64_t Item_is_not_null_test::val_int()
   if (args[0]->is_null())
   {
     owner->was_null|= 1;
-    return(0);
+    return 0;
   }
   else
-    return(1);
+    return 1;
 }
 
 /**

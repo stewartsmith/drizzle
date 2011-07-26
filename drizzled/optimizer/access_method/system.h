@@ -31,14 +31,9 @@ namespace optimizer {
 class System : public AccessMethod
 {
 public:
-  System() {}
-
-  bool getStats(Table *table,
-                JoinTable *join_tab);
-
+  void getStats(Table&, JoinTable&);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
 
