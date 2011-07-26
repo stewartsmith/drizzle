@@ -81,7 +81,7 @@ err:
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/
 set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
-                 const LEX_STRING *base_name_arg, Item *value_arg) :
+                 const lex_string_t *base_name_arg, Item *value_arg) :
   uint64_t_value(0),
   str_value(""),
   var(var_arg),

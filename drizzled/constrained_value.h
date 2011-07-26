@@ -22,7 +22,7 @@
 #include <boost/exception/info.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
-#include <iostream>
+#include <iosfwd>
 #include <netinet/in.h> /* for in_port_t */
 
 namespace drizzled

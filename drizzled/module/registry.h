@@ -23,7 +23,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <iostream>
+#include <iosfwd>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>

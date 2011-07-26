@@ -59,10 +59,10 @@ public:
   sys_var *var;
   Item *value;
   sql_var_t type;
-  LEX_STRING base;			/* for structs */
+  lex_string_t base;			/* for structs */
 
   set_var(sql_var_t type_arg, sys_var *var_arg,
-          const LEX_STRING *base_name_arg, Item *value_arg);
+          const lex_string_t *base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
   void setValue(const std::string &new_value);

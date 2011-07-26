@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_GET_PASSWORD_H
-#define CLIENT_GET_PASSWORD_H
+#pragma once
 
 #include <string>
 
@@ -28,5 +27,3 @@ std::pair<std::string, std::string> parse_password_arg(std::string s);
 
 extern bool tty_password;
 extern const std::string PASSWORD_SENTINEL;
-
-#endif /* CLIENT_GET_PASSWORD_H */

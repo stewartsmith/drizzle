@@ -104,7 +104,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
     {
       show_type= ((sys_var*) value)->show_type();
       value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type,
-                                                   &null_lex_str);
+                                                   &(null_lex_string()));
     }
 
     return_value= StatusHelper::fillHelper(NULL, value, show_type); 

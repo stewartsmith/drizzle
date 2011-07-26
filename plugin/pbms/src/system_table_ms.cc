@@ -949,6 +949,8 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	Field		*curr_field;
 	byte		*save;
 	MY_BITMAP	*save_write_set;
+
+        (void)alias_offset;
 	
 	enter_();
 

@@ -24,7 +24,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <sstream>
 
 #include <drizzled/visibility.h>
