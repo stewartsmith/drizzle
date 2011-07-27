@@ -83,6 +83,5 @@ void		cs_bin_to_hex(size_t size, char *hex, size_t len, const void *bin);
 void		cs_strToUpper(char *ptr);
 void		cs_strToLower(char *ptr);
 
-const char *cs_version();
 bool		cs_str_to_value(const char *ptr, uint32_t *value, uint8_t base);
 #endif

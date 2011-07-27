@@ -1735,17 +1735,7 @@ MSDatabase *MSDatabase::loadDatabase(CSString *db_name, bool create)
 	MSDatabase *db;
 	enter_();
 	
-	try_(a) {
-		db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);
-	}
-	catch_(a);
-	{
-		fprintf(stderr, "newDatabase(\"%s\", \"%s\") failed\n", ms_my_get_mysql_home_path(), db_name->getCString());
-		self->logException();
-		throw_();
-	}
-	cont_(a);
-	
+	db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);	
 	if (db) {
 		push_(db);
 		
