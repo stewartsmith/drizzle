@@ -1363,6 +1363,8 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   */
   assert(next_insert_id == 0);
 
+  // OS X Lion broke if() based d-trace probes 
+#ifndef TARGET_OS_OSX
   if (DRIZZLE_CURSOR_RDLOCK_START_ENABLED() ||
       DRIZZLE_CURSOR_WRLOCK_START_ENABLED() ||
       DRIZZLE_CURSOR_UNLOCK_START_ENABLED())
@@ -1383,6 +1385,7 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
                                   getTable()->getShare()->getTableName());
     }
   }
+#endif
 
   /*
     We cache the table flags if the locking succeeded. Otherwise, we
@@ -1391,6 +1394,7 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
 
   int error= external_lock(session, lock_type);
 
+#ifndef TARGET_OS_OSX
   if (DRIZZLE_CURSOR_RDLOCK_DONE_ENABLED() ||
       DRIZZLE_CURSOR_WRLOCK_DONE_ENABLED() ||
       DRIZZLE_CURSOR_UNLOCK_DONE_ENABLED())
@@ -1408,6 +1412,7 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
       DRIZZLE_CURSOR_UNLOCK_DONE(error);
     }
   }
+#endif
 
   return error;
 }

@@ -361,6 +361,8 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->set_proc_info(NULL);
   session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
+  // OS X Lion broke if() based d-trace probes 
+#ifndef TARGET_OS_OSX
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
     if (command == COM_QUERY)
@@ -369,6 +371,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     }
     DRIZZLE_COMMAND_DONE(session->is_error());
   }
+#endif;
 
   return error;
 }

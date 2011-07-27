@@ -1428,10 +1428,13 @@ void select_insert::abort() {
     table->cursor->ha_release_auto_increment();
   }
 
+  // OS X Lion broke if() based d-trace probes 
+#ifndef TARGET_OS_OSX
   if (DRIZZLE_INSERT_SELECT_DONE_ENABLED())
   {
     DRIZZLE_INSERT_SELECT_DONE(0, info.copied + info.deleted + info.updated);
   }
+#endif
 
   return;
 }
