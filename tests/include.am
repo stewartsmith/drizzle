@@ -62,6 +62,7 @@ EXTRA_DIST += \
 	${srcdir}/tests/crashme_tests \
 	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/dbqp_data \
+	${srcdir}/tests/randgen \
 	${srcdir}/tests/randgen_tests \
 	${srcdir}/tests/sql-bench \
 	${srcdir}/tests/sqlbench_tests \
