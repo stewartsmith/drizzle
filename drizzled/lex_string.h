@@ -19,29 +19,29 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
 namespace drizzled
 {
 
 /*
-  LEX_STRING -- a pair of a C-string and its length.
+  lex_string_t -- a pair of a C-string and its length.
 */
 
 /* This definition must match the one given in mysql/plugin.h */
-typedef struct lex_string_t
+struct lex_string_t
 {
   char *str;
   size_t length;
-} LEX_STRING;
+};
 
-inline const LEX_STRING &null_lex_string()
+inline const lex_string_t &null_lex_string()
 {
-  static LEX_STRING tmp= { NULL, 0 };
+  static lex_string_t tmp= { NULL, 0 };
   return tmp;
 }
 
-#define NULL_LEX_STRING null_lex_string()
+#define NULL_lex_string_t null_lex_string()
 
 struct execute_string_t : public lex_string_t
 {

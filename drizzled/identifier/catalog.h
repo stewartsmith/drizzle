@@ -24,13 +24,13 @@
 #include <drizzled/definitions.h>
 #include <string.h>
 
-#include <assert.h>
+#include <cassert>
 
 #include <ostream>
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <iostream>
+#include <iosfwd>
 
 #include <boost/algorithm/string.hpp>
 

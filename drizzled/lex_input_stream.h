@@ -267,7 +267,7 @@ public:
 
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(const LEX_STRING *txt,
+  void body_utf8_append_literal(const lex_string_t *txt,
                                 const char *end_ptr);
 
   /** Current thread. */

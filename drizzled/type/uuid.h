@@ -65,7 +65,7 @@
 #pragma once
 
 #include <cstdio>
-#include <iostream>
+#include <iosfwd>
 
 namespace drizzled
 {

@@ -33,15 +33,15 @@ extern char internal_table_name[2];
 class Table_ident :public memory::SqlAlloc
 {
 public:
-  LEX_STRING db;
-  LEX_STRING table;
+  lex_string_t db;
+  lex_string_t table;
   Select_Lex_Unit *sel;
-  inline Table_ident(LEX_STRING db_arg, LEX_STRING table_arg)
+  inline Table_ident(lex_string_t db_arg, lex_string_t table_arg)
     :table(table_arg), sel((Select_Lex_Unit *)0)
   {
     db= db_arg;
   }
-  explicit Table_ident(LEX_STRING table_arg)
+  explicit Table_ident(lex_string_t table_arg)
     :table(table_arg), sel((Select_Lex_Unit *)0)
   {
     db.str=0;

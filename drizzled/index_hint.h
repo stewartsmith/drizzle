@@ -66,7 +66,7 @@ public:
     The index name. Empty (str=NULL) name represents an empty list
     USE INDEX () clause
   */
-  LEX_STRING key_name;
+  lex_string_t key_name;
 
   Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
               char *str, uint32_t length) :

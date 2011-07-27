@@ -134,7 +134,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   if (sym == NULL)
   {
     const char* errmsg= dlerror();
-    errmsg_printf(error::ERROR, errmsg);
+    errmsg_printf(error::ERROR, "%s", errmsg);
     errmsg_printf(error::ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                   plugin_decl_sym.c_str(), dlpath.c_str());
     (void)dlerror();

@@ -25,11 +25,11 @@ namespace drizzled
 
 class var : public memory::SqlAlloc  {
 public:
-  LEX_STRING s;
+  lex_string_t s;
   bool local;
   uint32_t offset;
   enum_field_types type;
-  var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
+  var (lex_string_t& j, bool i, uint32_t o, enum_field_types t)
     :s(j), local(i), offset(o), type(t)
   {}
   ~var() {}

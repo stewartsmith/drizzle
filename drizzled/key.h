@@ -38,7 +38,7 @@ public:
   Keytype type;
   KEY_CREATE_INFO key_create_info;
   List<Key_part_spec> columns;
-  LEX_STRING name;
+  lex_string_t name;
   bool generated;
 
   Key(Keytype type_par,

@@ -195,7 +195,7 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
     true  Error sending data to client
 */
 
-const LEX_STRING warning_level_names[]=
+const lex_string_t warning_level_names[]=
 {
   { C_STRING_WITH_LEN("Note") },
   { C_STRING_WITH_LEN("Warning") },
