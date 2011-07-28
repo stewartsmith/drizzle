@@ -1009,9 +1009,6 @@ drizzled/generated_probes.h : drizzled/probes.d
 	mv drizzled/generated_probes.h drizzled/generated_probes.h.bak
 	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
-	sed -e 's,void \*,const void \*,g' drizzled/generated_probes.h | \
-		sed -e 's,char \*,const char \*,g' | sed -e 's,const const ,const ,g' | tr '\t' ' ' > dtrace_probes.tmp
-	mv dtrace_probes.tmp drizzled/generated_probes.h
 
 
 SUFFIXES+= .d .gch .gperf .stamp-h
