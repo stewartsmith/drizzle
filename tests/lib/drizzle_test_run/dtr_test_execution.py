@@ -106,6 +106,7 @@ class testExecutor(test_execution.testExecutor):
         drizzletest_output = open(drizzletest_outfile,'w')
         drizzletest_subproc = subprocess.Popen( drizzletest_cmd
                                          , shell=True
+                                         , cwd=self.system_manager.testdir
                                          , env=self.working_environment
                                          , stdout = drizzletest_output
                                          , stderr = subprocess.STDOUT
