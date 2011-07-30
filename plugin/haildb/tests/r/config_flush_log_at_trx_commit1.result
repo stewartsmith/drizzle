@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_flush_log_at_trx_commit';
-Variable_name	Value
-innodb_flush_log_at_trx_commit	1
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='flush_log_at_trx_commit';
-NAME	TYPE	VALUE
-flush_log_at_trx_commit	ULONG	1

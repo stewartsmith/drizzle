@@ -1,8 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_file_per_table';
-Variable_name	Value
-innodb_file_per_table	OFF
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='file_per_table';
-NAME	TYPE	VALUE
-file_per_table	BOOL	false
-CREATE TABLE t1 (a int primary key);
-DROP TABLE t1;
