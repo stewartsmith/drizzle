@@ -59,8 +59,6 @@ bool QueryLoggerFile::logEvent(const event_t *event)
 
 bool QueryLoggerFile::openLogFile(const char *file)
 {
-  assert(file != NULL);
-
   closeLogFile();
 
   _fh.open(file, ios::app);
