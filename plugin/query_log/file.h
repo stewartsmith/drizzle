@@ -17,10 +17,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/format.hpp>
+#include <iostream>
+#include <fstream>
 #include "event.h"
-
-#define LOG_FILE_CLOSED -1
 
 /**
  * @brief
@@ -86,6 +85,5 @@ public:
   bool closeLogFile();
 
 private:
-  int _fd;                   ///< File descriptor for open log file
-  boost::format _formatter;  ///< Log file format printer
+  std::ofstream _fh;  ///< File handle for open log file
 };
