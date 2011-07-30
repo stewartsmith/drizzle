@@ -1,4 +1,0 @@
-create table t1 (a int primary key);
-rename table t1 to t2;
-show tables;
-drop table t2;

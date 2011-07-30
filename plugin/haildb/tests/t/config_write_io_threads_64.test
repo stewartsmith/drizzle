@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_write_io_threads';
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='write_io_threads';

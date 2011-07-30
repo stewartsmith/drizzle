@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_autoextend_increment';
-Variable_name	Value
-innodb_autoextend_increment	8
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='autoextend_increment';
-NAME	TYPE	VALUE
-autoextend_increment	ULONG	8

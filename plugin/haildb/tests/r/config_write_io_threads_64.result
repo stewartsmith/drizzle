@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_write_io_threads';
-Variable_name	Value
-innodb_write_io_threads	64
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='write_io_threads';
-NAME	TYPE	VALUE
-write_io_threads	ULINT	64

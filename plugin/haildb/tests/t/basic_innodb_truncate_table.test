@@ -1,7 +1,0 @@
-CREATE TABLE t1 (a int PRIMARY KEY);
-insert into t1 values (1),(2),(3),(4);
-SELECT * FROM t1;
-TRUNCATE TABLE t1;
-SELECT * FROM t1;
-DROP TABLE t1;
-

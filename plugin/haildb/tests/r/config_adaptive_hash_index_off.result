@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_adaptive_hash_index';
-Variable_name	Value
-innodb_adaptive_hash_index	OFF
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='adaptive_hash_index';
-NAME	TYPE	VALUE
-adaptive_hash_index	BOOL	false

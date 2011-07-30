@@ -1,6 +1,0 @@
-create table t1 (a int primary key, b int, index bindex(b));
-insert into t1 values (1,2),(2,2),(3,NULL),(4,NULL);
---replace_column 9 #
-explain select * from t1 force index (bindex) where b is NULL;
-select * from t1 force index (bindex) where b is NULL;
-drop table t1;
