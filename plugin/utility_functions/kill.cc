@@ -24,11 +24,8 @@
 #include <drizzled/session/cache.h>
 #include <plugin/utility_functions/functions.h>
 
-namespace drizzled
-{
-
-namespace utility_functions
-{
+namespace drizzled {
+namespace utility_functions {
 
 int64_t Kill::val_int()
 {
@@ -40,7 +37,7 @@ int64_t Kill::val_int()
     return 0;
   }
 
-  Session::shared_ptr die_session(session::Cache::singleton().find(session_id_for_kill));
+  Session::shared_ptr die_session(session::Cache::find(session_id_for_kill));
 
   if (not die_session)
   {

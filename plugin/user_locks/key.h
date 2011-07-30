@@ -28,7 +28,6 @@
 #include <drizzled/session.h>
 #include <drizzled/util/string.h>
 
-
 #pragma once
 
 namespace user_locks {

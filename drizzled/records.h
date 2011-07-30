@@ -51,7 +51,7 @@ public:
   unsigned char *cache_pos;
   unsigned char *cache_end;
   unsigned char *read_positions;
-  internal::IO_CACHE *io_cache;
+  internal::io_cache_st *io_cache;
   bool print_error;
   bool ignore_not_found_rows;
   JoinTable *do_insideout_scan;

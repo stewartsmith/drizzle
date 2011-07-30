@@ -52,12 +52,6 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
   if (result == NULL)
   {
     result= new drizzle_result_st;
-    if (result == NULL)
-    {
-      drizzle_set_error(con->drizzle, "drizzle_result_create", "malloc");
-      return NULL;
-    }
-
     result->options|= DRIZZLE_RESULT_ALLOCATED;
   }
   else
@@ -137,10 +131,7 @@ void drizzle_result_free(drizzle_result_st *result)
   for (column= result->column_list; column != NULL; column= result->column_list)
     drizzle_column_free(column);
 
-  if (result->column_buffer != NULL)
-  {
-    delete[] result->column_buffer;
-  }
+  delete[] result->column_buffer;
 
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {
@@ -281,27 +272,13 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
     if (result->row_list == NULL)
     {
-      result->row_list= new (std::nothrow) drizzle_row_list_t;
-      if (result->row_list == NULL)
-      {
-        drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
-        return DRIZZLE_RETURN_MEMORY;
-      }
+      result->row_list= new drizzle_row_list_t;
     }
 
 
     if (result->field_sizes_list == NULL)
     {
-      result->field_sizes_list= new (std::nothrow) drizzle_field_sizes_list_t;
-      if (result->field_sizes_list == NULL)
-      {
-        drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
-        return DRIZZLE_RETURN_MEMORY;
-      }
+      result->field_sizes_list= new drizzle_field_sizes_list_t;
     }
 
     result->row_list->push_back(row);
@@ -504,8 +481,10 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
   {
     snprintf(con->drizzle->last_error, DRIZZLE_MAX_ERROR_SIZE, "%.*s",
              (int32_t)con->packet_size, con->buffer_ptr);
+    con->drizzle->last_error[DRIZZLE_MAX_ERROR_SIZE-1]= 0;
     snprintf(con->result->info, DRIZZLE_MAX_INFO_SIZE, "%.*s",
              (int32_t)con->packet_size, con->buffer_ptr);
+    con->result->info[DRIZZLE_MAX_INFO_SIZE-1]= 0;
     con->buffer_ptr+= con->packet_size;
     con->buffer_size-= con->packet_size;
     con->packet_size= 0;

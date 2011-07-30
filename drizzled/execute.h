@@ -31,11 +31,10 @@ class DRIZZLED_API Execute
 
 public:
   Execute(Session&, bool wait_arg);
-  ~Execute();
 
-  void run(std::string &to_execute);
-  void run(const char *arg, size_t length);
-  void run(std::string &execution_string, sql::ResultSet &result_set);
+  void run(const std::string&);
+  void run(const char*, size_t);
+  void run(const std::string&, sql::ResultSet&);
 
   Session &session()
   {

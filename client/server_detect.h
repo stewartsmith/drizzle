@@ -5,7 +5,8 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_SERVER_DETECT_H
-#define CLIENT_SERVER_DETECT_H
+#pragma once
 
 #include <boost/regex.hpp>
+#include <iosfwd>
 
 class ServerDetect
 {
@@ -34,28 +35,9 @@ class ServerDetect
     server_type getServerType() { return type; }
     std::string& getServerVersion() { return version; }
 
-    ServerDetect(drizzle_con_st *connection) :
-      type(SERVER_UNKNOWN_FOUND),
-      version("")
-    {
-      boost::match_flag_type flags = boost::match_default;
-
-      boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
-      boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
-
-      version= drizzle_con_server_version(connection);
-
-      if (regex_search(version, mysql_regex, flags))
-        type= SERVER_MYSQL_FOUND;
-      else if (regex_search(version, drizzle_regex, flags))
-        type= SERVER_DRIZZLE_FOUND;
-      else
-        type= SERVER_UNKNOWN_FOUND;
-    }
+    ServerDetect(drizzle_con_st *connection);
 
   private:
     server_type type;
     std::string version;
 };
-
-#endif /* CLIENT_SERVER_DETECT_H */

@@ -114,19 +114,18 @@ public:
 
   ~SortParam()
   {
-    if (tmp_buffer)
-      free(tmp_buffer);
+    free(tmp_buffer);
   }
 
   int write_keys(unsigned char * *sort_keys,
                  uint32_t count,
-                 internal::IO_CACHE *buffer_file,
-                 internal::IO_CACHE *tempfile);
+                 internal::io_cache_st *buffer_file,
+                 internal::io_cache_st *tempfile);
 
   void make_sortkey(unsigned char *to,
                     unsigned char *ref_pos);
   void register_used_fields();
-  bool save_index(unsigned char **sort_keys,
+  void save_index(unsigned char **sort_keys,
                   uint32_t count,
                   filesort_info *table_sort);
 
@@ -137,7 +136,7 @@ public:
 static char **make_char_array(char **old_pos, uint32_t fields,
                               uint32_t length);
 
-static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffer_file,
+static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffer_file,
                                              uint32_t count,
                                              unsigned char *buf);
 
@@ -196,10 +195,10 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   buffpek *buffpek_inst= 0;
   ha_rows records= HA_POS_ERROR;
   unsigned char **sort_keys= 0;
-  internal::IO_CACHE tempfile;
-  internal::IO_CACHE buffpek_pointers;
-  internal::IO_CACHE *selected_records_file;
-  internal::IO_CACHE *outfile;
+  internal::io_cache_st tempfile;
+  internal::io_cache_st buffpek_pointers;
+  internal::io_cache_st *selected_records_file;
+  internal::io_cache_st *outfile;
   SortParam param;
   bool multi_byte_charset;
 
@@ -248,10 +247,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   if (param.addon_field)
   {
     param.res_length= param.addon_length;
-    if (!(table_sort.addon_buf= (unsigned char *) malloc(param.addon_length)))
-    {
-      goto err;
-    }
+    table_sort.addon_buf= (unsigned char *) malloc(param.addon_length);
   }
   else
   {
@@ -293,10 +289,8 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     selected_records_file= 0;
   }
 
-  if (multi_byte_charset && !(param.tmp_buffer= (char*) malloc(param.sort_length)))
-  {
-    goto err;
-  }
+  if (multi_byte_charset)
+    param.tmp_buffer= (char*) malloc(param.sort_length);
 
   memavl= getSession().variables.sortbuff_size;
   min_sort_memory= max((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
@@ -347,17 +341,13 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
   if (maxbuffer == 0)			// The whole set is in memory
   {
-    if (param.save_index(sort_keys,(uint32_t) records, &table_sort))
-    {
-      goto err;
-    }
+    param.save_index(sort_keys,(uint32_t) records, &table_sort);
   }
   else
   {
     if (table_sort.buffpek && table_sort.buffpek_len < maxbuffer)
     {
-      if (table_sort.buffpek)
-        free(table_sort.buffpek);
+      free(table_sort.buffpek);
       table_sort.buffpek = 0;
     }
     if (!(table_sort.buffpek=
@@ -459,23 +449,20 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 static char **make_char_array(char **old_pos, uint32_t fields,
                               uint32_t length)
 {
-  char **pos;
-  char *char_pos;
+  if (not old_pos)
+    old_pos= (char**) malloc((uint32_t) fields * (length + sizeof(char*)));
+  char** pos= old_pos; 
+  char* char_pos= ((char*) (pos+fields)) - length;
+  while (fields--) 
+    *(pos++) = (char_pos+= length);
 
-  if (old_pos ||
-      (old_pos= (char**) malloc((uint32_t) fields*(length+sizeof(char*)))))
-  {
-    pos=old_pos; char_pos=((char*) (pos+fields)) -length;
-    while (fields--) *(pos++) = (char_pos+= length);
-  }
-
-  return(old_pos);
+  return old_pos;
 } /* make_char_array */
 
 
 /** Read 'count' number of buffer pointers into memory. */
 
-static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointers, uint32_t count,
+static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffpek_pointers, uint32_t count,
                                      unsigned char *buf)
 {
   uint32_t length= sizeof(buffpek)*count;
@@ -484,7 +471,6 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointer
     return 0; /* sizeof(buffpek)*count will overflow */
   if (!tmp)
     tmp= (unsigned char *)malloc(length);
-  if (tmp)
   {
     if (buffpek_pointers->reinit_io_cache(internal::READ_CACHE,0L,0,0) ||
 	my_b_read(buffpek_pointers, (unsigned char*) tmp, length))
@@ -537,8 +523,8 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointer
 ha_rows FileSort::find_all_keys(SortParam *param, 
                                 optimizer::SqlSelect *select,
                                 unsigned char **sort_keys,
-                                internal::IO_CACHE *buffpek_pointers,
-                                internal::IO_CACHE *tempfile, internal::IO_CACHE *indexfile)
+                                internal::io_cache_st *buffpek_pointers,
+                                internal::io_cache_st *tempfile, internal::io_cache_st *indexfile)
 {
   int error,flag,quick_select;
   uint32_t idx,indexpos,ref_length;
@@ -724,7 +710,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
 */
 
 int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
-                          internal::IO_CACHE *buffpek_pointers, internal::IO_CACHE *tempfile)
+                          internal::io_cache_st *buffpek_pointers, internal::io_cache_st *tempfile)
 {
   buffpek buffpek;
 
@@ -1061,36 +1047,30 @@ void SortParam::register_used_fields()
 }
 
 
-bool SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
+void SortParam::save_index(unsigned char **sort_keys, uint32_t count, filesort_info *table_sort)
 {
-  uint32_t offset;
-  unsigned char *to;
-
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
-  offset= rec_length - res_length;
+  uint32_t offset= rec_length - res_length;
 
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
 
-  if (!(to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count)))
-    return true;
+  unsigned char* to= table_sort->record_pointers= (unsigned char*) malloc(res_length*count);
 
   for (unsigned char **end_ptr= sort_keys+count ; sort_keys != end_ptr ; sort_keys++)
   {
     memcpy(to, *sort_keys+offset, res_length);
     to+= res_length;
   }
-
-  return false;
 }
 
 
 /** Merge buffers to make < MERGEBUFF2 buffers. */
 
 int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
-                              buffpek *buffpek_inst, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
+                              buffpek *buffpek_inst, uint32_t *maxbuffer, internal::io_cache_st *t_file)
 {
-  internal::IO_CACHE t_file2,*from_file,*to_file,*temp;
+  internal::io_cache_st t_file2,*from_file,*to_file,*temp;
   buffpek *lastbuff;
 
   if (*maxbuffer < MERGEBUFF2)
@@ -1162,7 +1142,7 @@ cleanup:
     (uint32_t)-1 if something goes wrong
 */
 
-uint32_t FileSort::read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek_inst, uint32_t rec_length)
+uint32_t FileSort::read_to_buffer(internal::io_cache_st *fromfile, buffpek *buffpek_inst, uint32_t rec_length)
 {
   uint32_t count;
   uint32_t length;
@@ -1219,8 +1199,8 @@ class compare_functor
     other  error
 */
 
-int FileSort::merge_buffers(SortParam *param, internal::IO_CACHE *from_file,
-                            internal::IO_CACHE *to_file, unsigned char *sort_buffer,
+int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
+                            internal::io_cache_st *to_file, unsigned char *sort_buffer,
                             buffpek *lastbuff, buffpek *Fb, buffpek *Tb,
                             int flag)
 {
@@ -1434,7 +1414,7 @@ end:
 
 int FileSort::merge_index(SortParam *param, unsigned char *sort_buffer,
                           buffpek *buffpek_inst, uint32_t maxbuffer,
-                          internal::IO_CACHE *tempfile, internal::IO_CACHE *outfile)
+                          internal::io_cache_st *tempfile, internal::io_cache_st *outfile)
 {
   if (merge_buffers(param,tempfile,outfile,sort_buffer,buffpek_inst,buffpek_inst,
 		    buffpek_inst+maxbuffer,1))
@@ -1612,10 +1592,9 @@ sort_addon_field *FileSort::get_addon_fields(Field **ptabfield, uint32_t sortlen
     return 0;
   length+= (null_fields+7)/8;
 
-  if (length+sortlength_arg > getSession().variables.max_length_for_sort_data ||
-      !(addonf= (sort_addon_field *) malloc(sizeof(sort_addon_field)*
-                                            (fields+1))))
+  if (length+sortlength_arg > getSession().variables.max_length_for_sort_data)
     return 0;
+  addonf= (sort_addon_field *) malloc(sizeof(sort_addon_field) * (fields+1));
 
   *plength= length;
   length= (null_fields+7)/8;

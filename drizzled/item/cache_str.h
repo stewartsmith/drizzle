@@ -21,10 +21,9 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache_str: public Item_cache
+class Item_cache_str : public Item_cache
 {
   char buffer[STRING_BUFFER_USUAL_SIZE];
   String *value, value_buff;

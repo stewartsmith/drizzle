@@ -22,6 +22,7 @@
 #include <drizzled/function/time/now.h>
 #include <drizzled/current_session.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/temporal.h>
 #include <drizzled/field.h>
 
@@ -63,7 +64,7 @@ void Item_func_now_local::store_now_in_TIME(type::Time &now_time)
 {
   Session *session= current_session;
   uint32_t fractional_seconds= 0;
-  time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
+  time_t tmp= session->times.getCurrentTimestampEpoch(fractional_seconds);
 
 #if 0
   now_time->store(tmp, fractional_seconds, true);
@@ -78,10 +79,8 @@ void Item_func_now_local::store_now_in_TIME(type::Time &now_time)
 */
 void Item_func_now_utc::store_now_in_TIME(type::Time &now_time)
 {
-  Session *session= current_session;
   uint32_t fractional_seconds= 0;
-  time_t tmp= session->getCurrentTimestampEpoch(fractional_seconds);
-
+  time_t tmp= current_session->times.getCurrentTimestampEpoch(fractional_seconds);
   now_time.store(tmp, fractional_seconds);
 }
 

@@ -33,14 +33,8 @@ namespace optimizer {
 class Scan : public AccessMethod
 {
 public:
-  Scan() {}
-
-  bool getStats(Table *table,
-                JoinTable *join_tab);
-
+  void getStats(Table&, JoinTable&);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
-

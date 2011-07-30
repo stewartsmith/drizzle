@@ -106,8 +106,7 @@ void drizzle_result_free(drizzle_result_st *result)
   for (column= result->column_list; column != NULL; column= result->column_list)
     drizzle_column_free(column);
 
-  if (result->column_buffer != NULL)
-    free(result->column_buffer);
+  free(result->column_buffer);
 
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {
@@ -479,8 +478,10 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
   {
     snprintf(con->drizzle->last_error, DRIZZLE_MAX_ERROR_SIZE, "%.*s",
              (int32_t)con->packet_size, con->buffer_ptr);
+    con->drizzle->last_error[DRIZZLE_MAX_ERROR_SIZE-1]= 0;
     snprintf(con->result->info, DRIZZLE_MAX_INFO_SIZE, "%.*s",
              (int32_t)con->packet_size, con->buffer_ptr);
+    con->result->info[DRIZZLE_MAX_INFO_SIZE-1]= 0;
     con->buffer_ptr+= con->packet_size;
     con->buffer_size-= con->packet_size;
     con->packet_size= 0;

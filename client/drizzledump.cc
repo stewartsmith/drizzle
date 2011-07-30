@@ -48,6 +48,8 @@
 #include "drizzledump_mysql.h"
 #include "drizzledump_drizzle.h"
 
+#include "user_detect.h"
+
 using namespace std;
 using namespace drizzled;
 namespace po= boost::program_options;
@@ -533,8 +535,6 @@ try
   _("Do not make a UTF8 connection to MySQL, use if you have UTF8 data in a non-UTF8 table"))
   ;
 
-  const char* unix_user= getlogin();
-
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -543,7 +543,7 @@ try
   _("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
   _("Port number to use for connection."))
-  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
   _("The protocol of connection (mysql or drizzle)."))
@@ -639,18 +639,16 @@ try
 
   /* Inverted Booleans */
 
-  opt_drop= (vm.count("skip-drop-table")) ? false : true;
-  opt_comments= (vm.count("skip-comments")) ? false : true;
-  extended_insert= (vm.count("skip-extended-insert")) ? false : true;
-  opt_dump_date= (vm.count("skip-dump-date")) ? false : true;
-  opt_disable_keys= (vm.count("skip-disable-keys")) ? false : true;
-  opt_quoted= (vm.count("skip-quote-names")) ? false : true;
+  opt_drop= not vm.count("skip-drop-table");
+  opt_comments= not vm.count("skip-comments");
+  extended_insert= not vm.count("skip-extended-insert");
+  opt_dump_date= not vm.count("skip-dump-date");
+  opt_disable_keys= not vm.count("skip-disable-keys");
+  opt_quoted= not vm.count("skip-quote-names");
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
       use_drizzle_protocol=false;
     else if (not opt_protocol.compare("drizzle"))
@@ -675,7 +673,7 @@ try
     }
   }
 
-  if(vm.count("password"))
+  if (vm.count("password"))
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -786,14 +784,14 @@ try
     dump_all_databases();
     dump_all_tables();
   }
-  if (vm.count("database-used") && vm.count("Table-used") && ! opt_databases)
+  if (vm.count("database-used") && vm.count("Table-used") && not opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
     dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("Table-used") and opt_databases)
+  if (vm.count("Table-used") && opt_databases)
   {
     vector<string> database_used= vm["database-used"].as< vector<string> >();
     vector<string> table_used= vm["Table-used"].as< vector<string> >();
@@ -809,7 +807,7 @@ try
     dump_all_tables();
   }
 
-  if (vm.count("database-used") && ! vm.count("Table-used"))
+  if (vm.count("database-used") && not vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
     dump_all_tables();

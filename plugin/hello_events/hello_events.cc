@@ -344,7 +344,7 @@ static int set_db_list(Session *, set_var *var)
   if (hello_events)
   {
     hello_events->setDatabasesOfInterest(db_list);
-    sysvar_db_list.assign(db_list);
+    sysvar_db_list= db_list;
   }
   return 0;
 }
@@ -358,7 +358,7 @@ static int set_table_list(Session *, set_var *var)
   if (hello_events)
   {
     hello_events->setTablesOfInterest(table_list);
-    sysvar_table_list.assign(table_list);
+    sysvar_table_list= table_list;
   }
   return 0;
 }

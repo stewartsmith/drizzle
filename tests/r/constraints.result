@@ -22,8 +22,8 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT DEFAULT NULL,
-  UNIQUE KEY `constraint_1` (`a`),
-  UNIQUE KEY `key_1` (`a`),
-  UNIQUE KEY `key_2` (`a`)
+  UNIQUE KEY `constraint_1` (`a`) USING BTREE,
+  UNIQUE KEY `key_1` (`a`) USING BTREE,
+  UNIQUE KEY `key_2` (`a`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;

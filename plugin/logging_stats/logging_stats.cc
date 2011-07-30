@@ -94,6 +94,7 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 
@@ -217,7 +218,9 @@ bool LoggingStats::postEnd(Session *session)
   }
 
   scoreboard_slot->getStatusVars()->logStatusVar(session);
-  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= session->getConnectSeconds(); 
+  boost::posix_time::ptime end(boost::posix_time::microsec_clock::universal_time());
+  uint64_t end_time= (end - session->times.epoch()).total_seconds();
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= end_time - session->times.getConnectSeconds();
 
   cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
   cumulative_stats->logGlobalStats(scoreboard_slot);

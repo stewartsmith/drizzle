@@ -32,9 +32,9 @@
 #include <drizzled/key_map.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/structs.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <string>
 #include <vector>
@@ -66,12 +66,8 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class DRIZZLED_API Field
+class DRIZZLED_API Field : boost::noncopyable
 {
-  /* Prevent use of these */
-  Field(const Field&);
-  void operator=(Field &);
-
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -105,7 +101,7 @@ public:
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char *field_name; /**< Name of the field */
-  LEX_STRING comment; /**< A comment about the field */
+  lex_string_t comment; /**< A comment about the field */
 
   /** The field is part of the following keys */
   key_map	key_start;
@@ -339,13 +335,6 @@ public:
   virtual int key_cmp(const unsigned char *str, uint32_t length);
   virtual uint32_t decimals() const;
 
-  /*
-    Caller beware: sql_type can change str.Ptr, so check
-    ptr() to see if it changed if you are using your own buffer
-    in str and restore it with set() if needed
-  */
-  virtual void sql_type(String &str) const =0;
-
   // For new field
   virtual uint32_t size_of() const =0;
 
@@ -373,15 +362,13 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(memory::Root *root,
-                           Table *new_table,
-                           bool keep_type);
+  virtual Field *new_field(memory::Root*, Table*, bool keep_type);
   virtual Field *new_key_field(memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(memory::Root *mem_root, Table *new_table);
+  Field* clone(memory::Root*, Table*);
   void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;

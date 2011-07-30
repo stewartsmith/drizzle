@@ -29,8 +29,7 @@
 #include <drizzled/util/find_ptr.h>
 #include <drizzled/util/string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static plugin::Function::UdfMap udf_registry;
 
@@ -43,27 +42,19 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
   if (FunctionContainer::getMap().count(udf->getName()))
   {
-    errmsg_printf(error::ERROR,
-                  _("A function named %s already exists!\n"),
-                  udf->getName().c_str());
+    errmsg_printf(error::ERROR, _("A function named %s already exists!\n"), udf->getName().c_str());
     return true;
   }
 
   if (udf_registry.count(udf->getName()))
   {
-    errmsg_printf(error::ERROR,
-                  _("A function named %s already exists!\n"),
-                  udf->getName().c_str());
+    errmsg_printf(error::ERROR, _("A function named %s already exists!\n"), udf->getName().c_str());
     return true;
   }
 
-  std::pair<UdfMap::iterator, bool> ret=
-    udf_registry.insert(make_pair(udf->getName(), udf));
-
-  if (ret.second == false)
+  if (not udf_registry.insert(make_pair(udf->getName(), udf)).second)
   {
-    errmsg_printf(error::ERROR,
-                  _("Could not add Function!\n"));
+    errmsg_printf(error::ERROR, _("Could not add Function!\n"));
     return true;
   }
 
@@ -78,8 +69,7 @@ void plugin::Function::removePlugin(const plugin::Function *udf)
 
 const plugin::Function *plugin::Function::get(const std::string &name)
 {
-  UdfMap::mapped_type* ptr= find_ptr(udf_registry, name);
-  return ptr ? *ptr : NULL;
+  return find_ptr2(udf_registry, name);
 }
 
 } /* namespace drizzled */

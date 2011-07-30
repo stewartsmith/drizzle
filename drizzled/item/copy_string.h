@@ -19,14 +19,13 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_copy_string :public Item
+class Item_copy_string : public Item
 {
   enum enum_field_types cached_field_type;
 public:
@@ -65,8 +64,8 @@ public:
   {
     return save_str_value_in_field(field, &str_value);
   }
-  table_map used_tables() const { return (table_map) 1L; }
-  bool const_item() const { return 0; }
+  table_map used_tables() const { return (table_map) 1; }
+  bool const_item() const { return false; }
   bool is_null() { return null_value; }
 };
 

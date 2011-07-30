@@ -72,7 +72,7 @@ public:
   String *str_result(String* tmp);
   type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
-  bool send(plugin::Client *client, String *str_arg);
+  void send(plugin::Client *client, String *str_arg);
   void reset_field(Field *f);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);

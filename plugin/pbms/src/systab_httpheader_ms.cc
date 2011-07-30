@@ -403,7 +403,7 @@ void MSHTTPHeaderTable::insertRow(char *data)
 	
 	getFieldValue(data, 0, &name);
 
-	header = CSString::newString(name.c_ptr_safe());
+	header = CSString::newString(name.c_str());
 	myShare->mySysDatabase->iHTTPMetaDataHeaders.add(header);
 	iDirty = true;
 	
@@ -418,7 +418,7 @@ void MSHTTPHeaderTable::deleteRow(char *data)
 	
 	getFieldValue(data, 0, &name);
 	
-	header = CSString::newString(name.c_ptr_safe());
+	header = CSString::newString(name.c_str());
 	push_(header);
 	myShare->mySysDatabase->iHTTPMetaDataHeaders.remove(header);
 	release_(header);

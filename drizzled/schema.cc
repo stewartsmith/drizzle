@@ -38,14 +38,11 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/catalog/instance.h>
 #include <boost/thread/mutex.hpp>
-
-#define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
 
@@ -75,7 +72,6 @@ namespace schema {
 
 bool create(Session &session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
 
   /*
@@ -126,7 +122,7 @@ bool create(Session &session, const message::Schema &schema_message, const bool 
     }
     else // Created !
     {
-      transaction_services.createSchema(session, schema_message);
+      TransactionServices::createSchema(session, schema_message);
       session.my_ok(1);
     }
   }
@@ -142,8 +138,6 @@ bool alter(Session &session,
            const message::Schema &schema_message,
            const message::Schema &original_schema)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   /*
     Do not alter database if another thread is holding read lock.
     Wait for global read lock before acquiring session->catalog()->schemaLock().
@@ -175,7 +169,7 @@ bool alter(Session &session,
 
     if (success)
     {
-      transaction_services.alterSchema(session, original_schema, schema_message);
+      TransactionServices::alterSchema(session, original_schema, schema_message);
       session.my_ok(1);
     }
     else
@@ -229,13 +223,13 @@ bool drop(Session &session, const identifier::Schema &schema_identifier, bool if
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
     if (message::schema::shared_ptr message= plugin::StorageEngine::getSchemaDefinition(schema_identifier))
-		{
-			error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
-		}
-		else if (if_exists)
+    {
+      error= plugin::StorageEngine::dropSchema(session, schema_identifier, *message);
+    }
+    else if (if_exists)
     {
       push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-				schema_identifier.getSQLPath().c_str());
+                          schema_identifier.getSQLPath().c_str());
     }
     else
     {

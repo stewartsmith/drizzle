@@ -42,8 +42,8 @@ class Item_func_set_user_var :public Item_func
   } save_result;
 
 public:
-  LEX_STRING name; // keep it public
-  Item_func_set_user_var(LEX_STRING a,Item *b)
+  lex_string_t name; // keep it public
+  Item_func_set_user_var(lex_string_t a,Item *b)
     :Item_func(b), cached_result_type(INT_RESULT), name(a)
   {}
   enum Functype functype() const { return SUSERVAR_FUNC; }
@@ -57,7 +57,7 @@ public:
   type::Decimal *val_decimal_result(type::Decimal *);
   void update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const charset_info_st * const cs, Derivation dv, bool unsigned_arg);
-  bool send(plugin::Client *client, String *str_arg);
+  void send(plugin::Client *client, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
   void update();

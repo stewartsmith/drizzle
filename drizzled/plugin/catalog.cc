@@ -127,7 +127,7 @@ bool Catalog::lock(const identifier::Catalog& identifier)
   drizzled::error_t error;
   
   // We insert a lock into the cache, if this fails we bail.
-  if (not catalog::Cache::singleton().lock(identifier, error))
+  if (not catalog::Cache::lock(identifier, error))
   {
     my_error(error, identifier);
 
@@ -141,7 +141,7 @@ bool Catalog::lock(const identifier::Catalog& identifier)
 bool Catalog::unlock(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  if (not catalog::Cache::singleton().unlock(identifier, error))
+  if (not catalog::Cache::unlock(identifier, error))
   {
     my_error(error, identifier);
   }
@@ -158,7 +158,7 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
 
 bool plugin::Catalog::exist(const identifier::Catalog& identifier)
 {
-  if (catalog::Cache::singleton().exist(identifier))
+  if (catalog::Cache::exist(identifier))
     return true;
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
@@ -189,7 +189,7 @@ void plugin::Catalog::getMessages(message::catalog::vector &messages)
 message::catalog::shared_ptr plugin::Catalog::getMessage(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+  catalog::Instance::shared_ptr instance= catalog::Cache::find(identifier, error);
   message::catalog::shared_ptr message;
 
   if (instance and instance->message())
@@ -209,7 +209,7 @@ message::catalog::shared_ptr plugin::Catalog::getMessage(const identifier::Catal
 catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Catalog& identifier)
 {
   drizzled::error_t error;
-  catalog::Instance::shared_ptr instance= catalog::Cache::singleton().find(identifier, error);
+  catalog::Instance::shared_ptr instance= catalog::Cache::find(identifier, error);
 
   if (instance)
     return instance;
@@ -222,7 +222,7 @@ catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Cat
       instance= catalog::Instance::make_shared(message);
       // If this should fail inserting into the cache, we are in a world of
       // pain.
-      catalog::Cache::singleton().insert(identifier, instance, error);
+      catalog::Cache::insert(identifier, instance, error);
 
       return instance;
     }

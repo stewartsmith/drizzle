@@ -18,8 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* The old structures from unireg */
-
 #pragma once
 
 #include <drizzled/base.h>
@@ -79,7 +77,7 @@ public:
   */
   ulong *rec_per_key;
   Table *table;
-  LEX_STRING comment;
+  lex_string_t comment;
 };
 
 

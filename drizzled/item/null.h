@@ -19,25 +19,24 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_null :public Item_basic_constant
+class Item_null : public Item_basic_constant
 {
 public:
 
-  Item_null(char *name_par=0)
+  Item_null(const char *name_par=0)
   {
     maybe_null= null_value= true;
     max_length= 0;
-    name= name_par ? name_par : (char*) "NULL";
+    name= name_par ? name_par : "NULL";
     fixed= 1;
     collation.set(&my_charset_bin, DERIVATION_IGNORABLE);
   }
-  enum Type type() const { return NULL_ITEM; }
+  Type type() const { return NULL_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
   int64_t val_int();
@@ -45,7 +44,7 @@ public:
   type::Decimal *val_decimal(type::Decimal *);
   int save_in_field(Field *field, bool no_conversions);
   int save_safe_in_field(Field *field);
-  bool send(plugin::Client *client, String *str);
+  void send(plugin::Client *client, String *str);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum_field_types field_type() const   { return DRIZZLE_TYPE_NULL; }
   bool basic_const_item() const { return 1; }

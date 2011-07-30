@@ -33,22 +33,15 @@ namespace plugin {
 
 class DRIZZLED_API Authentication : public Plugin
 {
-  Authentication();
-  Authentication(const Authentication &);
-  Authentication& operator=(const Authentication &);
 public:
   explicit Authentication(std::string name_arg)
     : Plugin(name_arg, "Authentication")
   {}
-  virtual ~Authentication() {}
+  virtual bool authenticate(const identifier::User&, const std::string &passwd)= 0;
 
-  virtual bool authenticate(const identifier::User &sctx,
-                            const std::string &passwd)= 0;
-
-  static bool addPlugin(plugin::Authentication *auth);
-  static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(const drizzled::identifier::User& sctx,
-                              const std::string &password);
+  static bool addPlugin(plugin::Authentication*);
+  static void removePlugin(plugin::Authentication*);
+  static bool isAuthenticated(const drizzled::identifier::User&, const std::string &password);
 };
 
 } /* namespace plugin */

@@ -29,8 +29,7 @@
 #include <sstream>
 #include <string>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /****************************************************************************
 ** enum type.
@@ -179,36 +178,13 @@ void Field_enum::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Field_enum::sql_type(String &res) const
-{
-  char buffer[255];
-  String enum_item(buffer, sizeof(buffer), res.charset());
-
-  res.length(0);
-  res.append(STRING_WITH_LEN("enum("));
-
-  bool flag=0;
-  uint32_t *len= typelib->type_lengths;
-  for (const char **pos= typelib->type_names; *pos; pos++, len++)
-  {
-    size_t dummy_errors;
-    if (flag)
-      res.append(',');
-    /* convert to res.charset() == utf8, then quote */
-    enum_item.copy(*pos, *len, charset(), res.charset(), &dummy_errors);
-    append_unescaped(&res, enum_item.c_ptr(), enum_item.length());
-    flag= 1;
-  }
-  res.append(')');
-}
-
 Field *Field_enum::new_field(memory::Root *root, Table *new_table,
                              bool keep_type)
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
   if (res)
   {
-    res->typelib= typelib->copy_typelib(root);
+    res->typelib= typelib->copy_typelib(*root);
   }
   return res;
 }

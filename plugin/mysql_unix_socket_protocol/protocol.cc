@@ -43,21 +43,19 @@ namespace fs= boost::filesystem;
 using namespace drizzled;
 using namespace std;
 
-namespace drizzle_plugin
-{
-namespace mysql_unix_socket_protocol
-{
+namespace drizzle_plugin {
+namespace mysql_unix_socket_protocol {
 
 static bool clobber= false;
 
-ProtocolCounters *Protocol::mysql_unix_counters= new ProtocolCounters();
+ProtocolCounters Protocol::mysql_unix_counters;
 
 Protocol::~Protocol()
 {
   fs::remove(_unix_socket_path);
 }
 
-in_port_t Protocol::getPort(void) const
+in_port_t Protocol::getPort() const
 {
   return 0;
 }
@@ -69,14 +67,12 @@ static int init(drizzled::module::Context &context)
   fs::path uds_path(vm["path"].as<fs::path>());
   if (not fs::exists(uds_path))
   {
-    Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol",
-                             true,
-                             uds_path);
+    Protocol *listen_obj= new Protocol("mysql_unix_socket_protocol", uds_path);
     listen_obj->addCountersToTable();
     context.add(listen_obj);
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
-    context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &Protocol::mysql_unix_counters->max_connections));
+    context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &Protocol::mysql_unix_counters.max_connections));
   }
   else
   {
@@ -91,9 +87,8 @@ static int init(drizzled::module::Context &context)
 
 bool Protocol::getFileDescriptors(std::vector<int> &fds)
 {
-  int unix_sock;
-
-  if ((unix_sock= socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+  int unix_sock= socket(AF_UNIX, SOCK_STREAM, 0);
+  if (unix_sock < 0)
   {
     std::cerr << "Can't start server : UNIX Socket";
     return false;
@@ -114,7 +109,7 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
   (void) setsockopt(unix_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
   unlink(_unix_socket_path.file_string().c_str());
 
-  struct sockaddr_un servAddr;
+  sockaddr_un servAddr;
   memset(&servAddr, 0, sizeof(servAddr));
 
   servAddr.sun_family= AF_UNIX;
@@ -152,12 +147,8 @@ bool Protocol::getFileDescriptors(std::vector<int> &fds)
 
 plugin::Client *Protocol::getClient(int fd)
 {
-  int new_fd;
-  new_fd= acceptTcp(fd);
-  if (new_fd == -1)
-    return NULL;
-
-  return new ClientMySQLUnixSocketProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  int new_fd= acceptTcp(fd);
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, getCounters());
 }
 
 static void init_options(drizzled::module::option_context &context)
@@ -168,7 +159,7 @@ static void init_options(drizzled::module::option_context &context)
   context("clobber",
           _("Clobber socket file if one is there already."));
   context("max-connections",
-          po::value<uint32_t>(&Protocol::mysql_unix_counters->max_connections)->default_value(1000),
+          po::value<uint32_t>(&Protocol::mysql_unix_counters.max_connections)->default_value(1000),
           _("Maximum simultaneous connections."));
 }
 

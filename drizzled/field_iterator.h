@@ -34,7 +34,6 @@ namespace drizzled {
 class Field_iterator: public memory::SqlAlloc
 {
 public:
-  Field_iterator() {}                         /* Remove gcc warning */
   virtual ~Field_iterator() {}
   virtual void set(TableList *)= 0;
   virtual void next()= 0;

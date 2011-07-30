@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <plugin/show_dictionary/dictionary.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 using namespace drizzled;
@@ -28,8 +29,8 @@ using namespace drizzled;
 ShowTemporaryTables::ShowTemporaryTables() :
   show_dictionary::Show("SHOW_TEMPORARY_TABLES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("RECORDS", plugin::TableFunction::NUMBER, 0, false);
   add_field("RECORD_LENGTH", plugin::TableFunction::NUMBER, 0, false);
   add_field("ENGINE");
@@ -39,7 +40,7 @@ ShowTemporaryTables::Generator::Generator(Field **arg) :
   show_dictionary::Show::Generator(arg),
   session(getSession())
 {
-  table= session.getTemporaryTables();
+  table= session.open_tables.getTemporaryTables();
 }
 
 bool ShowTemporaryTables::Generator::populate()

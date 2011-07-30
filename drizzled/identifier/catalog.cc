@@ -28,7 +28,7 @@
 
 #include <drizzled/util/tablename_to_filename.h>
 #include <drizzled/util/backtrace.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 #include <sstream>
@@ -47,7 +47,7 @@ Catalog::Catalog(const std::string &name_arg) :
   init();
 }
 
-Catalog::Catalog(const drizzled::LEX_STRING &name_arg) :
+Catalog::Catalog(const drizzled::lex_string_t &name_arg) :
   _name(name_arg.str, name_arg.length)
 {
   init();

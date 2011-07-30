@@ -34,11 +34,8 @@
 
 namespace drizzled {
 
-class Join :public memory::SqlAlloc
+class Join : public memory::SqlAlloc, boost::noncopyable
 {
-  Join(const Join &rhs);                        /**< not implemented */
-  Join& operator=(const Join &rhs);             /**< not implemented */
-
   /**
    * Contains a partial query execution plan which is extended during
    * cost-based optimization.
@@ -293,8 +290,8 @@ public:
   /** Cleanup this Join, possibly for reuse */
   void cleanup(bool full);
   void clear();
-  bool save_join_tab();
-  bool init_save_join_tab();
+  void save_join_tab();
+  void init_save_join_tab();
   bool send_row_on_empty_set()
   {
     return (do_send_rows && tmp_table_param.sum_func_count != 0 &&

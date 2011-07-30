@@ -77,9 +77,7 @@ public:
   read can be constructed for "cond_of_tree1 OR cond_of_tree2" ) without
   using index_merge.
 */
-bool sel_trees_can_be_ored(SEL_TREE *tree1, 
-                           SEL_TREE *tree2,
-                           RangeParameter* param);
+bool sel_trees_can_be_ored(const SEL_TREE&, const SEL_TREE&, const RangeParameter&);
 
 SEL_TREE *
 tree_or(RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);

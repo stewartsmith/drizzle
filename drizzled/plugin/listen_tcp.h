@@ -20,15 +20,11 @@
 #pragma once
 
 #include <drizzled/plugin/listen.h>
-
 #include <netinet/in.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class is used by client plugins to provide and manage TCP listening
@@ -36,9 +32,6 @@ namespace plugin
  */
 class DRIZZLED_API ListenTcp : public Listen
 {
-  ListenTcp();
-  ListenTcp(const ListenTcp&);
-  ListenTcp& operator=(const ListenTcp&);
 protected:
   /** Count of errors encountered in acceptTcp. */
   uint32_t accept_error_count;
@@ -57,26 +50,24 @@ public:
       accept_error_count(0)
   {}
 
-  virtual ~ListenTcp() {}
-
   /**
    * This will bind the port to the host interfaces.
    * @fds[out] Vector of file descriptors that were bound.
    * @retval true on failure, false on success.
    */
-  virtual bool getFileDescriptors(std::vector<int> &fds);
+  virtual bool getFileDescriptors(std::vector<int>&);
 
   /**
    * Get the host address to bind to.
    * @retval The host address.
    */
-  virtual const std::string getHost(void) const;
+  virtual const std::string getHost() const;
 
   /**
    * Get the port to bind to.
    * @retval The port number.
    */
-  virtual in_port_t getPort(void) const= 0;
+  virtual in_port_t getPort() const= 0;
 };
 
 } /* end namespace plugin */

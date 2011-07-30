@@ -1,0 +1,29 @@
+#
+# Test syntax of foreign keys
+#
+
+show create table product_order;
+
+SHOW CREATE TABLE bug56143_2;
+
+--disable_query_log
+begin;
+let $i=257;
+while ($i)
+{
+insert into B(f1) values(1);
+dec $i;
+}
+let $i=486;
+while ($i)
+{
+insert into C(f1) values(2);
+dec $i;
+}
+commit;
+--enable_query_log
+
+# Following Deletes should not report error
+DELETE FROM A where id = 1;
+DELETE FROM C where f1 = 2;
+DELETE FROM A where id = 1;

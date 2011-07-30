@@ -67,8 +67,8 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
   }
 
   /*
-    Acquire table::Cache::singleton().mutex() after wait_if_global_read_lock(). If we would hold
-    table::Cache::singleton().mutex() during wait_if_global_read_lock(), other threads could not
+    Acquire table::Cache::mutex() after wait_if_global_read_lock(). If we would hold
+    table::Cache::mutex() during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
   error= rm_table_part2(session, tables, if_exists, drop_temporary);
@@ -101,7 +101,7 @@ bool statement::DropTable::execute()
     }
   }
 
-  /* DDL and binlog write order protected by table::Cache::singleton().mutex() */
+  /* DDL and binlog write order protected by table::Cache::mutex() */
 
   return rm_table(&session(), first_table, drop_if_exists, drop_temporary);
 }

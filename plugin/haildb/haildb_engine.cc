@@ -91,7 +91,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
 
-#include <drizzled/global_charset_info.h>
 
 #include "haildb_datadict_dump_func.h"
 #include "config_table_function.h"
@@ -225,7 +224,7 @@ public:
 
   typedef std::map<std::string, HailDBTableShare*> HailDBMap;
   HailDBMap haildb_open_tables;
-  HailDBTableShare *findOpenTable(const std::string table_name);
+  HailDBTableShare *findOpenTable(const std::string &table_name);
   void addOpenTable(const std::string &table_name, HailDBTableShare *);
   void deleteOpenTable(const std::string &table_name);
 
@@ -463,7 +462,7 @@ int HailDBEngine::doRollback(Session* session, bool all)
   return 0;
 }
 
-HailDBTableShare *HailDBEngine::findOpenTable(const string table_name)
+HailDBTableShare *HailDBEngine::findOpenTable(const string &table_name)
 {
   HailDBMap::iterator find_iter=
     haildb_open_tables.find(table_name);
@@ -551,7 +550,7 @@ uint64_t HailDBCursor::getInitialAutoIncrementValue()
 HailDBTableShare::HailDBTableShare(const char* name, bool hidden_primary_key)
   : use_count(0), has_hidden_primary_key(hidden_primary_key)
 {
-  table_name.assign(name);
+  table_name= name;
 }
 
 uint64_t HailDBEngine::getInitialAutoIncrementValue(HailDBCursor *cursor)
@@ -1847,9 +1846,8 @@ static ib_err_t write_row_to_haildb_tuple(const unsigned char* buf,
     else if ((**field).type() == DRIZZLE_TYPE_BLOB)
     {
       Field_blob *blob= reinterpret_cast<Field_blob*>(*field);
-      unsigned char* blob_ptr;
       uint32_t blob_length= blob->get_length();
-      blob->get_ptr(&blob_ptr);
+      unsigned char* blob_ptr= blob->get_ptr();
       err= ib_col_set_value(tuple, colnr, blob_ptr, blob_length);
     }
     else
@@ -2288,19 +2286,17 @@ int read_row_from_haildb(Session *session, unsigned char* buf, ib_crsr_t cursor,
     }
     else if ((**field).type() == DRIZZLE_TYPE_BLOB)
     {
-      if (blobroot == NULL)
-        (reinterpret_cast<Field_blob*>(*field))->set_ptr(length,
-                                      (unsigned char*)ib_col_get_value(tuple,
-                                                                       colnr));
+      if (not blobroot)
+        (reinterpret_cast<Field_blob*>(*field))->set_ptr(length, (unsigned char*)ib_col_get_value(tuple, colnr));
       else
       {
-        if (*blobroot == NULL)
+        if (not *blobroot)
         {
           *blobroot= new drizzled::memory::Root();
-          (**blobroot).init_alloc_root();
+          (*blobroot)->init();
         }
 
-        unsigned char *blob_ptr= (unsigned char*)(**blobroot).alloc_root(length);
+        unsigned char *blob_ptr= (*blobroot)->alloc(length);
         memcpy(blob_ptr, ib_col_get_value(tuple, colnr), length);
         (reinterpret_cast<Field_blob*>(*field))->set_ptr(length, blob_ptr);
       }
@@ -3176,12 +3172,12 @@ static int haildb_init(drizzled::module::Context &context)
 
   /* Inverted Booleans */
 
-  innobase_adaptive_hash_index= (vm.count("disable-adaptive-hash-index")) ? false : true;
-  srv_adaptive_flushing= (vm.count("disable-adaptive-flushing")) ? false : true;
-  innobase_use_checksums= (vm.count("disable-checksums")) ? false : true;
-  innobase_use_doublewrite= (vm.count("disable-doublewrite")) ? false : true;
-  innobase_print_verbose_log= (vm.count("disable-print-verbose-log")) ? false : true;
-  srv_use_sys_malloc= (vm.count("use-internal-malloc")) ? false : true;
+  innobase_adaptive_hash_index= not vm.count("disable-adaptive-hash-index");
+  srv_adaptive_flushing= not vm.count("disable-adaptive-flushing");
+  innobase_use_checksums= not vm.count("disable-checksums");
+  innobase_use_doublewrite= not vm.count("disable-doublewrite");
+  innobase_print_verbose_log= not vm.count("disable-print-verbose-log");
+  srv_use_sys_malloc= not vm.count("use-internal-malloc");
 
 
   ib_err_t err;
@@ -3275,7 +3271,7 @@ static int haildb_init(drizzled::module::Context &context)
   if (err != DB_SUCCESS)
     goto haildb_error;
 
-  if (vm.count("flush-method") != 0)
+  if (vm.count("flush-method"))
   {
     err= ib_cfg_set_text("flush_method", 
                          vm["flush-method"].as<string>().c_str());
@@ -3384,11 +3380,9 @@ static int haildb_init(drizzled::module::Context &context)
                                                   innobase_file_format_name,
                                                   haildb_file_format_name_validate));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("flush_log_at_trx_commit", srv_flush_log_at_trx_commit));
-  context.registerVariable(new sys_var_const_string_val("flush_method",
-                                                vm.count("flush-method") ?  vm["flush-method"].as<string>() : ""));
+  context.registerVariable(new sys_var_const_string_val("flush_method", vm["flush-method"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<uint32_t>("force_recovery", innobase_force_recovery));
-  context.registerVariable(new sys_var_const_string_val("log_group_home_dir",
-                                                vm.count("log-group-home-dir") ?  vm["log-group-home-dir"].as<string>() : ""));
+  context.registerVariable(new sys_var_const_string_val("log_group_home_dir", vm["log-group-home-dir"].as<string>()));
   context.registerVariable(new sys_var_constrained_value<int64_t>("log_file_size", haildb_log_file_size));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("log_files_in_group", haildb_log_files_in_group));
   context.registerVariable(new sys_var_constrained_value_readonly<unsigned int>("lock_wait_timeout", innobase_lock_wait_timeout));

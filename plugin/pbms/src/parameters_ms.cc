@@ -385,7 +385,7 @@ void PBMSParameters::startup()
 #ifdef DRIZZLED
 	my_table_match = set_match_type(my_table_list.c_str());
         const module::option_map &vm= context.getOptions();
-	my_events_enabled= (vm.count("watch-disable")) ? false : true;
+	my_events_enabled= not vm.count("watch-disable");
 
         context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port",
                                                                          pbms_port_number));

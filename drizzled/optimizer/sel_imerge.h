@@ -60,7 +60,7 @@ public:
      0 - OK
      -1 - Out of memory.
    */
-  int or_sel_tree(RangeParameter *param, SEL_TREE *tree);
+  void or_sel_tree(RangeParameter *param, SEL_TREE *tree);
 
   /*
      Perform OR operation on this SEL_IMERGE and supplied optimizer::SEL_TREE new_tree,
@@ -91,7 +91,7 @@ public:
      and (*this) should be discarded.
      -1  An error occurred.
    */
-  int or_sel_tree_with_checks(optimizer::RangeParameter *param, optimizer::SEL_TREE *new_tree);
+  int or_sel_tree_with_checks(RangeParameter&, SEL_TREE&);
 
   /*
      Perform OR operation on this index_merge and supplied index_merge list.
@@ -102,7 +102,7 @@ public:
      should be discarded.
      -1 - An error occurred
    */
-  int or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge);
+  int or_sel_imerge_with_checks(RangeParameter&, SEL_IMERGE&);
 
 };
 

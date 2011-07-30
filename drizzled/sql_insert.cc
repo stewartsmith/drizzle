@@ -39,6 +39,8 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 
@@ -552,9 +554,9 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
                                     table_list,
                                     &session->lex().select_lex.leaf_tables,
                                     select_insert))
-    return(true);
+    return true;
 
-  return(false);
+  return false;
 }
 
 
@@ -631,11 +633,11 @@ bool prepare_insert(Session *session, TableList *table_list,
   {
     /* it should be allocated before Item::fix_fields() */
     if (table_list->set_insert_values(session->mem_root))
-      return(true);
+      return true;
   }
 
   if (prepare_insert_check_table(session, table_list, fields, select_insert))
-    return(true);
+    return true;
 
 
   /* Prepare the fields in the statement. */
@@ -683,7 +685,7 @@ bool prepare_insert(Session *session, TableList *table_list,
   }
 
   if (res)
-    return(res);
+    return res;
 
   if (not table)
     table= table_list->table;
@@ -959,7 +961,7 @@ after_n_copied_inc:
 gok_or_after_err:
   if (!table->cursor->has_transactions())
     session->transaction.stmt.markModifiedNonTransData();
-  return(0);
+  return 0;
 
 err:
   info->last_errno= error;
@@ -986,7 +988,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
   for (Field **field=entry->getFields() ; *field ; field++)
   {
-    if (((*field)->isWriteSet()) == false)
+    if (not (*field)->isWriteSet())
     {
       /*
        * If the field doesn't have any default value
@@ -1053,7 +1055,7 @@ bool insert_select_prepare(Session *session)
                            lex->update_list, lex->value_list,
                            lex->duplicates,
                            &select_lex->where, true, false, false))
-    return(true);
+    return true;
 
   /*
     exclude first table from leaf tables list, because it belong to
@@ -1063,7 +1065,7 @@ bool insert_select_prepare(Session *session)
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
   select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
-  return(false);
+  return false;
 }
 
 
@@ -1169,7 +1171,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   session->lex().current_select= lex_current_select_save;
   if (res)
-    return(1);
+    return 1;
   /*
     if it is INSERT into join view then check_insert_fields already found
     real table for insert
@@ -1217,7 +1219,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->mark_columns_needed_for_insert();
 
 
-  return(res);
+  return res;
 }
 
 
@@ -1242,7 +1244,7 @@ int select_insert::prepare2(void)
   if (session->lex().current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
 
-  return(0);
+  return 0;
 }
 
 
@@ -1594,7 +1596,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+        boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
         if (create_table->table)
         {
@@ -1625,7 +1627,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(identifier);
+          session->open_tables.drop_temporary_table(identifier);
         }
       }
     }
@@ -1684,7 +1686,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     if (identifier.isTmp())
       m_plock= &m_lock;
     else
-      m_plock= &session->extra_lock;
+      m_plock= &session->open_tables.extra_lock;
 
     *m_plock= extra_lock;
   }
@@ -1722,11 +1724,11 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->cursor->ha_start_bulk_insert((ha_rows) 0);
   session->setAbortOnWarning(not info.ignore);
   if (check_that_all_fields_are_given_values(session, table, table_list))
-    return(1);
+    return 1;
 
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
-  return(0);
+  return 0;
 }
 
 void select_create::store_values(List<Item> &values)
@@ -1766,8 +1768,7 @@ bool select_create::send_eof()
     */
     if (!table->getShare()->getType())
     {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(*session, 0);
+      TransactionServices::autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

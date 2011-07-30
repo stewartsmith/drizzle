@@ -53,10 +53,15 @@ protected:
   {
   }
 
+  void setColumnCount(size_t fields)
+  {
+    _columns= fields;
+  }
+
 private: // Member methods
 
 private: // Member variables
-  const size_t _columns;
+  size_t _columns;
 };
 
 std::ostream& operator<<(std::ostream& output, const ResultSetMetaData &result_set);

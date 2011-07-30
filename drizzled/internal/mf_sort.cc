@@ -20,23 +20,21 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 void my_string_ptr_sort(unsigned char *base, uint32_t items, size_t size)
 {
 #if INT_MAX > 65536L
-  unsigned char **ptr= NULL;
-
-  if (size <= 20 && items >= 1000 && items < 100000 &&
-      (ptr= (unsigned char**) malloc(items*sizeof(char*))))
+  if (size <= 20 && items >= 1000 && items < 100000)
   {
+    unsigned char** ptr= (unsigned char**) malloc(items*sizeof(char*));
     radixsort_for_str_ptr((unsigned char**) base,items,size,ptr);
     free((unsigned char*) ptr);
   }
   else
+#else
+  assert(false);
 #endif
   {
     if (size && items)

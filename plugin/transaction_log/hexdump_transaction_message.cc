@@ -170,11 +170,7 @@ String *HexdumpTransactionMessageFunction::val_str(String *str)
       fprintf(stderr, _("BUFFER: %s\n"), buffer);
   }
 
-  if (str->alloc(message_size * 4)) /* Hex representation is ~4 times number of bytes */
-  {
-    null_value= true;
-    return NULL;
-  }
+  str->alloc(message_size * 4); /* Hex representation is ~4 times number of bytes */
 
   strncpy(str->ptr(), hexdump.c_str(), hexdump.length());
   str->length(hexdump.length());

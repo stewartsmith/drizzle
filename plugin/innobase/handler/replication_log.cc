@@ -70,6 +70,5 @@ ReplicationLog::ReplicationLog() :
 
 void ReplicationLog::setup(ReplicationLog *logger)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.attachApplier(logger, "default");
+  ReplicationServices::attachApplier(logger, "default");
 }

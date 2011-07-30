@@ -38,7 +38,6 @@
 #include <drizzled/util/string.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
-#include <drizzled/table/cache.h>
 #include <drizzled/field.h>
 
 namespace drizzled {
@@ -171,19 +170,19 @@ public:
 private:
   memory::Root mem_root;
 
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
-    return mem_root.alloc_root(arg);
+    return mem_root.alloc(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char *strmake(const char *str_arg, size_t len_arg)
   {
-    return mem_root.strmake_root(str_arg, len_arg);
+    return mem_root.strmake(str_arg, len_arg);
   }
 
-  memory::Root *getMemRoot()
+  memory::Root& mem()
   {
-    return &mem_root;
+    return mem_root;
   }
 
   std::vector<std::string> _keynames;
@@ -260,10 +259,10 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  LEX_STRING db;                        /* Pointer to db */
-  LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to table (from datadir) */
-  LEX_STRING normalized_path;		/* unpack_filename(path) */
+  lex_string_t db;                        /* Pointer to db */
+  lex_string_t table_name;                /* Table name (for open) */
+  lex_string_t path;	/* Path to table (from datadir) */
+  lex_string_t normalized_path;		/* unpack_filename(path) */
 
 public:
 

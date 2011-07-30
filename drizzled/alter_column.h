@@ -32,15 +32,6 @@ public:
     name(par_name),
     def(literal)
   {}
-  
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  AlterColumn *clone(memory::Root *mem_root) const
-  {
-    return new (mem_root) AlterColumn(*this);
-  }
 };
 
 } /* namespace drizzled */

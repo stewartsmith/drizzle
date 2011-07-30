@@ -22,7 +22,6 @@
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/time.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/temporal.h>
@@ -264,11 +263,6 @@ void Time::sort_string(unsigned char *to,uint32_t )
     to[2] = ptr[1];
     to[3] = ptr[0];
   }
-}
-
-void Time::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
 
 long Time::get_timestamp(bool *null_value) const

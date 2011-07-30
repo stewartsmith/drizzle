@@ -106,6 +106,7 @@ class testExecutor(test_execution.testExecutor):
         drizzletest_output = open(drizzletest_outfile,'w')
         drizzletest_subproc = subprocess.Popen( drizzletest_cmd
                                          , shell=True
+                                         , cwd=self.system_manager.testdir
                                          , env=self.working_environment
                                          , stdout = drizzletest_output
                                          , stderr = subprocess.STDOUT
@@ -169,6 +170,7 @@ class testExecutor(test_execution.testExecutor):
                    ,  'MASTER_MYPORT': str(self.master_server.master_port)
                    ,  'MC_PORT': str(self.master_server.mc_port)
                    ,  'PBMS_PORT': str(self.master_server.pbms_port)
+                   ,  'JSON_SERVER_PORT': str(self.master_server.json_server_port)
                    ,  'RABBITMQ_NODE_PORT': str(self.master_server.rabbitmq_node_port)
                    ,  'DRIZZLE_TCP_PORT': str(self.master_server.drizzle_tcp_port)
                    ,  'EXE_DRIZZLE': self.master_server.drizzle_client
@@ -181,8 +183,6 @@ class testExecutor(test_execution.testExecutor):
                                                           , self.master_server.master_port)
                    ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
                                                    , self.master_server.master_port)
-                   ,  'DRIZZLE_ADMIN' : "%s -uroot -p%d" %( self.master_server.drizzleadmin
-                                                         , self.master_server.master_port)
                    ,  'DRIZZLE_TRX_READER' : self.system_manager.code_tree.drizzle_trx_reader
                    }     
 

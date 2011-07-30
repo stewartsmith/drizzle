@@ -24,8 +24,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 const char *Field_iterator_table::name()
 {
@@ -226,8 +225,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     if (!add_table_ref->join_columns)
     {
       /* Create a list of natural join columns on demand. */
-      if (!(add_table_ref->join_columns= new List<Natural_join_column>))
-        return NULL;
+      add_table_ref->join_columns= new List<Natural_join_column>;
       add_table_ref->is_join_columns_complete= false;
     }
     add_table_ref->join_columns->push_back(nj_col);

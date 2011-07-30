@@ -19,20 +19,17 @@
  */
 
 #include <config.h>
-#include <boost/lexical_cast.hpp>
 #include "status_helper.h"
+#include <boost/lexical_cast.hpp>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/set_var.h>
 #include <drizzled/drizzled.h>
 #include <plugin/myisam/myisam.h>
-
-#include <drizzled/refresh_version.h>
-
 #include <sstream>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern time_t server_start_time;
 extern time_t flush_status_time;
@@ -140,7 +137,7 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Connections",               (char*) &current_global_counters.connections,  SHOW_LONGLONG},
   {"Created_tmp_disk_tables",   (char*) offsetof(system_status_var, created_tmp_disk_tables), SHOW_LONGLONG_STATUS},
   {"Created_tmp_tables",        (char*) offsetof(system_status_var, created_tmp_tables), SHOW_LONGLONG_STATUS},
-  {"Flush_commands",            (char*) &refresh_version,    SHOW_INT_NOFLUSH},
+  {"Flush_commands",            (char*) &g_refresh_version, SHOW_INT_NOFLUSH},
   {"Handler_commit",            (char*) offsetof(system_status_var, ha_commit_count), SHOW_LONGLONG_STATUS},
   {"Handler_delete",            (char*) offsetof(system_status_var, ha_delete_count), SHOW_LONGLONG_STATUS},
   {"Handler_prepare",           (char*) offsetof(system_status_var, ha_prepare_count),  SHOW_LONGLONG_STATUS},

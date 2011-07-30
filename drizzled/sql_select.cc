@@ -87,7 +87,7 @@ static void change_cond_ref_to_const(Session *session,
                                      Item *cond,
                                      Item *field,
                                      Item *value);
-static bool copy_blobs(Field **ptr);
+static void copy_blobs(Field **ptr);
 
 static bool eval_const_cond(COND *cond)
 {
@@ -102,15 +102,13 @@ static bool eval_const_cond(COND *cond)
 const char *subq_sj_cond_name=
   "0123456789ABCDEF0123456789abcdef0123456789ABCDEF0123456789abcdef-sj-cond";
 
-static bool copy_blobs(Field **ptr)
+static void copy_blobs(Field **ptr)
 {
   for (; *ptr ; ptr++)
   {
     if ((*ptr)->flags & BLOB_FLAG)
-      if (((Field_blob *) (*ptr))->copy())
-	return 1;				// Error
+      ((Field_blob *) (*ptr))->copy();
   }
-  return 0;
 }
 
 /**
@@ -260,8 +258,6 @@ bool fix_inner_refs(Session *session,
                           ref->field_name, ref->alias_name_used) :
               new Item_ref(ref->context, item_ref, ref->table_name,
                           ref->field_name, ref->alias_name_used);
-    if (!new_ref)
-      return true;
     ref->outer_ref= new_ref;
     ref->ref= &ref->outer_ref;
 
@@ -389,7 +385,7 @@ bool select_query(Session *session,
         //here is EXPLAIN of subselect or derived table
         if (join->change_result(result))
         {
-          return(true);
+          return true;
         }
       }
       else
@@ -406,16 +402,11 @@ bool select_query(Session *session,
   }
   else
   {
-    if (!(join= new Join(session, fields, select_options, result)))
-      return(true);
+    join= new Join(session, fields, select_options, result);
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
-    if ((err= join->prepare(rref_pointer_array, tables, wild_num,
-                           conds, og_num, order, group, having,
-                           select_lex, unit)) == true)
-    {
+    if ((err= join->prepare(rref_pointer_array, tables, wild_num, conds, og_num, order, group, having, select_lex, unit)))
       goto err;
-    }
   }
 
   err= join->optimize();
@@ -464,7 +455,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
 {
   int error;
   if (check_stack_overrun(session, STACK_MIN_SIZE, NULL))
-    return(0);                           // Fatal error flag is set
+    return 0;                           // Fatal error flag is set
   if (select)
   {
     select->head=table;
@@ -475,7 +466,7 @@ ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, T
     if (error == -1)
     {
       table->reginfo.impossible_range=1;
-      return(0);
+      return 0;
     }
   }
   return(HA_POS_ERROR);			/* This shouldn't happend */
@@ -541,7 +532,7 @@ static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b)
    @retval
      1  Out of memory.
 */
-bool update_ref_and_keys(Session *session,
+void update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,
@@ -551,9 +542,6 @@ bool update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          vector<optimizer::SargableParam> &sargables)
 {
-  uint	and_level,found_eq_constant;
-  optimizer::KeyField *key_fields, *end, *field;
-  uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
@@ -573,16 +561,12 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= sizeof(optimizer::KeyField) *
-      (((session->lex().current_select->cond_count+1)*2 +
-	session->lex().current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KeyField*) session->getMemRoot()->allocate(sz)))
-    return true;
-  and_level= 0;
+  optimizer::KeyField* key_fields= new (session->mem) optimizer::KeyField[((session->lex().current_select->cond_count+1)*2 + session->lex().current_select->between_count)*m+1];
+  uint and_level= 0;
+  optimizer::KeyField* end, *field;
   field= end= key_fields;
 
-  if (my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64))
-    return true;
+  my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64);
   if (cond)
   {
     add_key_fields(join_tab->join, &end, &and_level, cond, normal_tables,
@@ -652,7 +636,7 @@ bool update_ref_and_keys(Session *session,
 
     use= save_pos= (optimizer::KeyUse*)keyuse->buffer;
     prev= &key_end;
-    found_eq_constant= 0;
+    uint found_eq_constant= 0;
     {
       uint32_t i;
 
@@ -687,7 +671,6 @@ bool update_ref_and_keys(Session *session,
       keyuse->set_size(i);
     }
   }
-  return false;
 }
 
 /**
@@ -946,12 +929,9 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
 {
   if (*e1)
   {
-    Item *res;
-    if ((res= new Item_cond_and(*e1, e2)))
-    {
-      *e1= res;
-      res->quick_fix_field();
-    }
+    Item* res= new Item_cond_and(*e1, e2);
+    *e1= res;
+    res->quick_fix_field();
   }
   else
     *e1= e2;
@@ -1004,14 +984,10 @@ bool create_ref_for_key(Join *join,
   j->ref.key_parts=keyparts;
   j->ref.key_length=length;
   j->ref.key=(int) key;
-  if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (StoredKey**) session->getMemRoot()->allocate((sizeof(StoredKey*) *
-               (keyparts+1)))) ||
-      !(j->ref.items=    (Item**) session->getMemRoot()->allocate(sizeof(Item*)*keyparts)) ||
-      !(j->ref.cond_guards= (bool**) session->getMemRoot()->allocate(sizeof(uint*)*keyparts)))
-  {
-    return(true);
-  }
+  j->ref.key_buff= (unsigned char*) session->mem.calloc(ALIGN_SIZE(length)*2);
+  j->ref.key_copy= new (session->mem) StoredKey*[keyparts + 1];
+  j->ref.items= new (session->mem) Item*[keyparts];
+  j->ref.cond_guards= new (session->mem) bool*[keyparts];
   j->ref.key_buff2=j->ref.key_buff+ALIGN_SIZE(length);
   j->ref.key_err=1;
   j->ref.null_rejecting= 0;
@@ -1041,7 +1017,7 @@ bool create_ref_for_key(Join *join,
                            maybe_null ?  key_buff : 0,
                            keyinfo->key_part[i].length, keyuse->getVal());
         if (session->is_fatal_error)
-          return(true);
+          return true;
         tmp.copy();
       }
       else
@@ -1160,8 +1136,7 @@ void add_not_null_conds(Join *join)
           */
           if (!referred_tab || referred_tab->join != join)
             continue;
-          if (!(notnull= new Item_func_isnotnull(not_null_item)))
-            return;
+          notnull= new Item_func_isnotnull(not_null_item);
           /*
             We need to do full fix_fields() call here in order to have correct
             notnull->const_item(). This is needed e.g. by test_quick_select
@@ -1208,9 +1183,6 @@ COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
   }
   return tmp;
 }
-
-#define ICP_COND_USES_INDEX_ONLY 10
-
 
 /**
   cleanup JoinTable.
@@ -1570,8 +1542,7 @@ static bool check_simple_equality(Item *left_item,
         if (!item)
         {
           Item_func_eq *eq_item;
-          if ((eq_item= new Item_func_eq(left_item, right_item)))
-            return false;
+          eq_item= new Item_func_eq(left_item, right_item);
           eq_item->set_cmp_func();
           eq_item->quick_fix_field();
           item= eq_item;
@@ -1664,8 +1635,7 @@ static bool check_row_equality(Session *session,
     if (!is_converted)
     {
       Item_func_eq *eq_item;
-      if (!(eq_item= new Item_func_eq(left_item, right_item)))
-        return false;
+      eq_item= new Item_func_eq(left_item, right_item);
       eq_item->set_cmp_func();
       eq_item->quick_fix_field();
       eq_list->push_back(eq_item);
@@ -2795,19 +2765,15 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
             )
           )
       {
-        COND *new_cond;
-        if ((new_cond= new Item_func_eq(args[0], new Item_int("last_insert_id()",
-                                                          session->read_first_successful_insert_id_in_prev_stmt(),
-                                                          MY_INT64_NUM_DECIMAL_DIGITS))))
-        {
-          cond= new_cond;
-          /*
-            Item_func_eq can't be fixed after creation so we do not check
-            cond->fixed, also it do not need tables so we use 0 as second
-            argument.
-          */
-          cond->fix_fields(session, &cond);
-        }
+        COND *new_cond= new Item_func_eq(args[0], new Item_int("last_insert_id()", 
+          session->read_first_successful_insert_id_in_prev_stmt(), MY_INT64_NUM_DECIMAL_DIGITS));
+        cond= new_cond;
+        /*
+        Item_func_eq can't be fixed after creation so we do not check
+        cond->fixed, also it do not need tables so we use 0 as second
+        argument.
+        */
+        cond->fix_fields(session, &cond);
         /*
           IS NULL should be mapped to LAST_INSERT_ID only for first row, so
           clear for next row
@@ -2821,17 +2787,14 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
           && (field->flags & NOT_NULL_FLAG)
           && ! field->table->maybe_null)
       {
-        COND *new_cond;
-        if ((new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2))))
-        {
-          cond= new_cond;
-          /*
-            Item_func_eq can't be fixed after creation so we do not check
-            cond->fixed, also it do not need tables so we use 0 as second
-            argument.
-          */
-          cond->fix_fields(session, &cond);
-        }
+        COND* new_cond= new Item_func_eq(args[0],new Item_int("0", 0, 2));
+        cond= new_cond;
+        /*
+        Item_func_eq can't be fixed after creation so we do not check
+        cond->fixed, also it do not need tables so we use 0 as second
+        argument.
+        */
+        cond->fix_fields(session, &cond);
       }
 #endif /* NOTDEFINED */
     }
@@ -4241,20 +4204,20 @@ static int test_if_order_by_key(Order *order, Table *table, uint32_t idx, uint32
          one row).  The sorting doesn't matter.
         */
         if (key_part == key_part_end && reverse == 0)
-          return(1);
+          return 1;
       }
       else
-        return(0);
+        return 0;
     }
 
     if (key_part->field != field)
-      return(0);
+      return 0;
 
     /* set flag to 1 if we can use read-next on key, else to -1 */
     flag= ((order->asc == !(key_part->key_part_flag & HA_REVERSE_SORT)) ?
            1 : -1);
     if (reverse && flag != reverse)
-      return(0);
+      return 0;
     reverse=flag;				// Remember if reverse
     key_part++;
   }
@@ -4499,11 +4462,11 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     if (item->type() != Item::FIELD_ITEM)
     {
       usable_keys.reset();
-      return(0);
+      return 0;
     }
     usable_keys&= ((Item_field*) item)->field->part_of_sortkey;
     if (usable_keys.none())
-      return(0);					// No usable keys
+      return 0;					// No usable keys
   }
 
   ref_key= -1;
@@ -4513,7 +4476,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     ref_key=	   tab->ref.key;
     ref_key_parts= tab->ref.key_parts;
     if (tab->type == AM_REF_OR_NULL)
-      return(0);
+      return 0;
   }
   else if (select && select->quick)		// Range found by optimizer/range
   {
@@ -4528,7 +4491,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
     if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE ||
         quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
         quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT)
-      return(0);
+      return 0;
     ref_key=	   select->quick->index;
     ref_key_parts= select->quick->used_key_parts;
   }
@@ -4572,7 +4535,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
 
           if (create_ref_for_key(tab->join, tab, keyuse,
                                  tab->join->const_table_map))
-            return(0);
+            return 0;
         }
         else
         {
@@ -4595,7 +4558,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
                                         tab->join->unit->select_limit_cnt,0,
                                         true) <=
               0)
-            return(0);
+            return 0;
         }
         ref_key= new_ref_key;
       }
@@ -4640,7 +4603,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
         index order and not using join cache
         */
       if (tab->type == AM_ALL && tab->join->tables > tab->join->const_tables + 1)
-        return(0);
+        return 0;
       keys= *table->cursor->keys_to_use_for_scanning();
       keys|= table->covering_keys;
 
@@ -4831,7 +4794,7 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
       order_direction= best_key_direction;
     }
     else
-      return(0);
+      return 0;
   }
 
 check_reverse_order:
@@ -4927,7 +4890,7 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
   JoinTable *tab;
 
   if (join->tables == join->const_tables)
-    return(0);				// One row, no need to sort
+    return 0;				// One row, no need to sort
   tab=    join->join_tab + join->const_tables;
   table=  tab->table;
   select= tab->select;
@@ -4944,15 +4907,11 @@ int create_sort_index(Session *session, Join *join, Order *order, ha_rows fileso
       test_if_skip_sort_order(tab,order,select_limit,0,
                               is_order_by ?  &table->keys_in_use_for_order_by :
                               &table->keys_in_use_for_group_by))
-    return(0);
+    return 0;
   for (Order *ord= join->order; ord; ord= ord->next)
     length++;
-  if (!(join->sortorder= make_unireg_sortorder(order, &length, join->sortorder)))
-  {
-    return(-1);
-  }
-
-  table->sort.io_cache= new internal::IO_CACHE;
+  join->sortorder= make_unireg_sortorder(order, &length, join->sortorder);
+  table->sort.io_cache= new internal::io_cache_st;
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -5056,12 +5015,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       error=cursor->rnd_next(record);
       continue;
     }
-    if (copy_blobs(first_field))
-    {
-      my_message(ER_OUTOFMEMORY, ER(ER_OUTOFMEMORY), MYF(0));
-      error=0;
-      goto err;
-    }
+    copy_blobs(first_field);
     memcpy(new_record,org_record,reclength);
 
     /* Read through rest of cursor and mark duplicated rows deleted */
@@ -5094,12 +5048,12 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   }
 
   cursor->extra(HA_EXTRA_NO_CACHE);
-  return(0);
+  return 0;
 err:
   cursor->extra(HA_EXTRA_NO_CACHE);
   if (error)
     table->print_error(error,MYF(0));
-  return(1);
+  return 1;
 }
 
 /**
@@ -5139,8 +5093,7 @@ int remove_dup_with_hash_index(Session *session,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0))
-    return 1;
+  hash_init(&hash, &my_charset_bin, (uint32_t) cursor.stats.records, 0, key_length, (hash_get_key) 0, 0, 0);
 
   if ((error= cursor.startTableScan(1)))
     goto err;
@@ -5202,23 +5155,18 @@ err:
   return 1;
 }
 
-SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sortorder)
+SortField* make_unireg_sortorder(Order* order, uint32_t* length, SortField* sortorder)
 {
-  uint32_t count;
   SortField *sort,*pos;
 
-  count=0;
+  uint32_t count= 0;
   for (Order *tmp = order; tmp; tmp=tmp->next)
     count++;
-  if (!sortorder)
-    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) *
-                                       (max(count, *length) + 1));
+  if (not sortorder)
+    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) * (max(count, *length) + 1));
   pos= sort= sortorder;
 
-  if (!pos)
-    return 0;
-
-  for (;order;order=order->next,pos++)
+  for (; order; order= order->next,pos++)
   {
     Item *item= order->item[0]->real_item();
     pos->field= 0; pos->item= 0;
@@ -5235,7 +5183,7 @@ SortField *make_unireg_sortorder(Order *order, uint32_t *length, SortField *sort
     pos->reverse=! order->asc;
   }
   *length=count;
-  return(sort);
+  return sort;
 }
 
 /*
@@ -5354,8 +5302,7 @@ static bool find_order_in_list(Session *session,
     uint32_t count= (uint32_t) order_item->val_int();
     if (!count || count > fields.size())
     {
-      my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               order_item->full_name(), session->where());
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), order_item->full_name(), session->where());
       return true;
     }
     order->item= ref_pointer_array + count - 1;
@@ -5365,8 +5312,7 @@ static bool find_order_in_list(Session *session,
     return false;
   }
   /* Lookup the current GROUP/order_st field in the SELECT clause. */
-  select_item= find_item_in_list(session, order_item, fields, &counter,
-                                 REPORT_EXCEPT_NOT_FOUND, &resolution);
+  select_item= find_item_in_list(session, order_item, fields, &counter, REPORT_EXCEPT_NOT_FOUND, &resolution);
   if (!select_item)
     return true; /* The item is not unique, or some other error occured. */
 
@@ -5475,10 +5421,9 @@ int setup_order(Session *session,
                 Order *order)
 {
   session->setWhere("order clause");
-  for (; order; order=order->next)
+  for (; order; order= order->next)
   {
-    if (find_order_in_list(session, ref_pointer_array, tables, order, fields,
-			   all_fields, false))
+    if (find_order_in_list(session, ref_pointer_array, tables, order, fields, all_fields, false))
       return 1;
   }
   return 0;
@@ -5615,11 +5560,10 @@ Order *create_distinct_group(Session *session,
                                 bool *all_order_by_fields_used)
 {
   List<Item>::iterator li(fields.begin());
-  Item *item;
   Order *order,*group,**prev;
 
   *all_order_by_fields_used= 1;
-  while ((item=li++))
+  while (Item* item=li++)
     item->marker=0;			/* Marker that field is not used */
 
   prev= &group;  group=0;
@@ -5627,9 +5571,7 @@ Order *create_distinct_group(Session *session,
   {
     if (order->in_field_list)
     {
-      Order *ord=(Order*) session->getMemRoot()->duplicate((char*) order,sizeof(Order));
-      if (!ord)
-        return 0;
+      Order *ord=(Order*) session->mem.memdup(order,sizeof(Order));
       *prev=ord;
       prev= &ord->next;
       (*ord->item)->marker=1;
@@ -5639,7 +5581,7 @@ Order *create_distinct_group(Session *session,
   }
 
   li= fields.begin();
-  while ((item=li++))
+  while (Item* item=li++)
   {
     if (!item->const_item() && !item->with_sum_func && !item->marker)
     {
@@ -5652,9 +5594,7 @@ Order *create_distinct_group(Session *session,
         if ((*ord_iter->item)->eq(item, 1))
           goto next_item;
 
-      Order *ord=(Order*) session->calloc(sizeof(Order));
-      if (!ord)
-        return 0;
+      Order *ord=(Order*) session->mem.calloc(sizeof(Order));
 
       /*
         We have here only field_list (not all_field_list), so we can use
@@ -5804,9 +5744,7 @@ bool setup_copy_fields(Session *session,
     Item *real_pos= pos->real_item();
     if (real_pos->type() == Item::FIELD_ITEM)
     {
-      Item_field *item;
-      if (!(item= new Item_field(session, ((Item_field*) real_pos))))
-        goto err;
+      Item_field* item= new Item_field(session, ((Item_field*) real_pos));
       if (pos->type() == Item::REF_ITEM)
       {
         /* preserve the names of the ref when dereferncing */
@@ -5818,8 +5756,7 @@ bool setup_copy_fields(Session *session,
       pos= item;
       if (item->field->flags & BLOB_FLAG)
       {
-        if (!(pos= new Item_copy_string(pos)))
-          goto err;
+        pos= new Item_copy_string(pos);
             /*
               Item_copy_string::copy for function can call
               Item_copy_string::val_int for blob via Item_ref.
@@ -5891,7 +5828,7 @@ bool setup_copy_fields(Session *session,
   */
   param->copy_funcs.concat(&extra_funcs);
 
-  return(0);
+  return 0;
 
 err:
   if (copy)
@@ -5971,7 +5908,7 @@ bool change_to_use_tmp_fields(Session *session,
         else
           item_field= (Item*) new Item_field(field);
         if (!item_field)
-          return(true);                    // Fatal error
+          return true;                    // Fatal error
 
         if (item->real_item()->type() != Item::FIELD_ITEM)
           field->orig_table= 0;
@@ -5996,7 +5933,7 @@ bool change_to_use_tmp_fields(Session *session,
   for (i= 0; i < border; i++)
     itr++;
   itr.sublist(res_selected_fields, elements);
-  return(false);
+  return false;
 }
 
 /**
@@ -6064,9 +6001,9 @@ bool setup_sum_funcs(Session *session, Item_sum **func_ptr)
   while ((func= *(func_ptr++)))
   {
     if (func->setup(session))
-      return(true);
+      return true;
   }
-  return(false);
+  return false;
 }
 
 void init_tmptable_sum_functions(Item_sum **func_ptr)
@@ -6212,10 +6149,7 @@ bool change_group_ref(Session *session, Item_func *expr, Order *group_list, bool
         {
           if (item->eq(*group_tmp->item,0))
           {
-            Item *new_item;
-            if (!(new_item= new Item_ref(context, group_tmp->item, 0,
-                                        item->name)))
-              return 1;                                 // fatal_error is set
+            Item* new_item= new Item_ref(context, group_tmp->item, 0, item->name);
             *arg= new_item;
             arg_changed= true;
           }
@@ -6275,10 +6209,7 @@ void print_join(Session *session, String *str,
 {
   /* List is reversed => we should reverse it before using */
   List<TableList>::iterator ti(tables->begin());
-  TableList **table= (TableList **)session->getMemRoot()->allocate(sizeof(TableList*) *
-                                                tables->size());
-  if (table == 0)
-    return;  // out of memory
+  TableList **table= new (session->mem) TableList*[tables->size()];
 
   for (TableList **t= table + (tables->size() - 1); t >= table; t--)
     *t= ti++;

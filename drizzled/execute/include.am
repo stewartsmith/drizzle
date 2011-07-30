@@ -1,0 +1,57 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+
+#  Copyright (C) 2011 Brian Aker
+# 
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+# 
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+DISTCLEANFILES+= \
+		 drizzled/execute/parser.output \
+		 drizzled/execute/parser.cc \
+		 drizzled/execute/parser.h \
+		 drizzled/execute/scanner.cc \
+		 drizzled/execute/scanner.h
+
+noinst_HEADERS+= \
+		 drizzled/execute/context.h \
+		 drizzled/execute/parser.h \
+		 drizzled/execute/scanner.h \
+		 drizzled/execute/symbol.h
+
+
+drizzled_drizzled_SOURCES+= \
+			   drizzled/execute/parser.cc \
+			   drizzled/execute/scanner.cc
+
+EXTRA_DIST+= \
+      drizzled/execute/parser.yy\
+      drizzled/execute/scanner.l
+
+BUILT_SOURCES+= \
+      drizzled/execute/scanner.cc\
+      drizzled/execute/parser.h\
+      drizzled/execute/parser.cc
+           
+drizzled/execute/parser.h: drizzled/execute/parser.cc
+
+drizzled/execute/parser.cc: drizzled/execute/parser.yy drizzled/execute/scanner.l drizzled/execute/scanner.h
+	  $(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
+
+drizzled/execute/scanner.h: drizzled/execute/scanner.cc
+
+drizzled/execute/scanner.cc: drizzled/execute/scanner.l drizzled/execute/parser.yy
+	  $(AM_V_GEN)$(LEX) $<

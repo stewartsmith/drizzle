@@ -369,6 +369,7 @@ bool MSDumpTable::returnInfoRow(char *buf)
 void MSDumpTable::setUpRepository(const char *info_buffer, uint32_t length)
 {
 	uint32_t tab_id, magic;
+        (void)magic;
 	MSDatabase *myDB = myShare->mySysDatabase;
 	RepInfoPtr	rep_info = (RepInfoPtr) info_buffer;
 	TabInfoPtr	tab_info;

@@ -17,70 +17,9 @@
 #include <config.h>
 
 #include <drizzled/typelib.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 
-namespace drizzled
-{
-
-/*
-  Return bitmap for strings used in a set
-
-  SYNOPSIS
-  find_set()
-  lib			Strings in set
-  str			Strings of set-strings separated by ','
-  err_pos		If error, set to point to start of wrong set string
-  err_len		If error, set to the length of wrong set string
-  set_warning		Set to 1 if some string in set couldn't be used
-
-  NOTE
-    We delete all end space from str before comparison
-
-  RETURN
-    bitmap of all sets found in x.
-    set_warning is set to 1 if there was any sets that couldn't be set
-*/
-
-static const char field_separator=',';
-
-uint64_t TYPELIB::find_set(const char *str, uint32_t length,
-                  const charset_info_st * const cs,
-                  char **err_pos, uint32_t *err_len, bool *set_warning) const
-{
-  const charset_info_st * const strip= cs ? cs : &my_charset_utf8_general_ci;
-  const char *end= str + strip->cset->lengthsp(strip, str, length);
-  uint64_t found= 0;
-  *err_pos= 0;                  // No error yet
-  if (str != end)
-  {
-    const char *start= str;
-    for (;;)
-    {
-      const char *pos= start;
-      uint32_t var_len;
-      int mblen= 1;
-
-      for (; pos != end && *pos != field_separator; pos++) 
-      {}
-      var_len= (uint32_t) (pos - start);
-      uint32_t find= cs ? find_type2(start, var_len, cs) : find_type(start, var_len, false);
-      if (!find)
-      {
-        *err_pos= (char*) start;
-        *err_len= var_len;
-        *set_warning= 1;
-      }
-      else
-        found|= ((int64_t) 1 << (find - 1));
-      if (pos >= end)
-        break;
-      start= pos + mblen;
-    }
-  }
-  return found;
-}
-
+namespace drizzled {
 
 /*
   Function to find a string in a TYPELIB
@@ -101,23 +40,23 @@ uint64_t TYPELIB::find_set(const char *str, uint32_t length,
 uint32_t TYPELIB::find_type(const char *find, uint32_t length, bool part_match) const
 {
   uint32_t found_count=0, found_pos=0;
-  const char *end= find+length;
-  const char *i;
-  const char *j;
+  const char* end= find + length;
+  const char* i;
+  const char* j;
   for (uint32_t pos= 0 ; (j= type_names[pos++]) ; )
   {
-    for (i=find ; i != end &&
-	   my_toupper(system_charset_info,*i) ==
-	   my_toupper(system_charset_info,*j) ; i++, j++) ;
+    for (i= find ; i != end && my_toupper(system_charset_info, *i) == my_toupper(system_charset_info, *j); i++, j++) 
+    {
+    }
     if (i == end)
     {
-      if (! *j)
-	return(pos);
+      if (not *j)
+        return pos;
       found_count++;
       found_pos= pos;
     }
   }
-  return(found_count == 1 && part_match ? found_pos : 0);
+  return found_count == 1 && part_match ? found_pos : 0;
 }
 
 

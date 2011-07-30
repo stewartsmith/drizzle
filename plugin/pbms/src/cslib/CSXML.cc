@@ -1414,8 +1414,7 @@ void CSXMLString::setEmpty()
 
 void CSXMLString::setNull()
 {
-	if (stringPtr)
-		free(stringPtr);
+	free(stringPtr);
 	stringPtr = NULL;
 	stringLen = 0;
 	stringSize = 0;

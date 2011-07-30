@@ -7,3 +7,6 @@ SELECT "1" || "2";
 SELECT 1 || 2;
 1 || 2
 12
+SELECT "this" || "dog" || "does" || "not" || "hunt";
+"this" || "dog" || "does" || "not" || "hunt"
+thisdogdoesnothunt

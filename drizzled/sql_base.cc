@@ -48,7 +48,7 @@
 #include <drizzled/field/epoch.h>
 #include <drizzled/field/null.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/drizzled.h>
@@ -60,8 +60,9 @@
 #include <drizzled/session.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/catalog/local.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 
 using namespace std;
 
@@ -69,19 +70,9 @@ namespace drizzled {
 
 extern bool volatile shutdown_in_progress;
 
-bool table_cache_init(void)
+void table_cache_free()
 {
-  return false;
-}
-
-uint32_t cached_open_tables(void)
-{
-  return table::getCache().size();
-}
-
-void table_cache_free(void)
-{
-  refresh_version++;				// Force close of open tables
+  g_refresh_version++;				// Force close of open tables
 
   table::getUnused().clear();
   table::getCache().clear();
@@ -159,7 +150,7 @@ void Table::free_io_cache()
 
   @param session Thread context (may be NULL)
   @param tables List of tables to remove from the cache
-  @param have_lock If table::Cache::singleton().mutex() is locked
+  @param have_lock If table::Cache::mutex() is locked
   @param wait_for_refresh Wait for a impending flush
   @param wait_for_placeholders Wait for tables being reopened so that the GRL
   won't proceed while write-locked tables are being reopened by other
@@ -175,68 +166,18 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   Session *session= this;
 
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
-
-    if (tables == NULL)
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Optionally lock for remove tables from open_cahe if not in use */
+    if (not tables)
     {
-      refresh_version++;				// Force close of open tables
-
+      g_refresh_version++;				// Force close of open tables
       table::getUnused().clear();
-
-      if (wait_for_refresh)
-      {
-        /*
-          Other threads could wait in a loop in open_and_lock_tables(),
-          trying to lock one or more of our tables.
-
-          If they wait for the locks in thr_multi_lock(), their lock
-          request is aborted. They loop in open_and_lock_tables() and
-          enter open_table(). Here they notice the table is refreshed and
-          wait for COND_refresh. Then they loop again in
-          openTablesLock() and this time open_table() succeeds. At
-          this moment, if we (the FLUSH TABLES thread) are scheduled and
-          on another FLUSH TABLES enter close_cached_tables(), they could
-          awake while we sleep below, waiting for others threads (us) to
-          close their open tables. If this happens, the other threads
-          would find the tables unlocked. They would get the locks, one
-          after the other, and could do their destructive work. This is an
-          issue if we have LOCK TABLES in effect.
-
-          The problem is that the other threads passed all checks in
-          open_table() before we refresh the table.
-
-          The fix for this problem is to set some_tables_deleted for all
-          threads with open tables. These threads can still get their
-          locks, but will immediately release them again after checking
-          this variable. They will then loop in openTablesLock()
-          again. There they will wait until we update all tables version
-          below.
-
-          Setting some_tables_deleted is done by table::Cache::singleton().removeTable()
-          in the other branch.
-
-          In other words (reviewer suggestion): You need this setting of
-          some_tables_deleted for the case when table was opened and all
-          related checks were passed before incrementing refresh_version
-          (which you already have) but attempt to lock the table happened
-          after the call to Session::close_old_data_files() i.e. after removal of
-          current thread locks.
-        */
-        BOOST_FOREACH(table::CacheMap::const_reference iter, table::getCache())
-        {
-          if (iter.second->in_use)
-            iter.second->in_use->some_tables_deleted= false;
-        }
-      }
     }
     else
     {
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        identifier::Table identifier(table->getSchemaName(), table->getTableName());
-        if (table::Cache::singleton().removeTable(session, identifier,
-                                    RTFC_OWNED_BY_Session_FLAG))
+        if (table::Cache::removeTable(*session, identifier::Table(table->getSchemaName(), table->getTableName()), RTFC_OWNED_BY_Session_FLAG))
         {
           found= true;
         }
@@ -251,7 +192,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
         If there is any table that has a lower refresh_version, wait until
         this is closed (or this thread is killed) before returning
       */
-      session->mysys_var->current_mutex= &table::Cache::singleton().mutex();
+      session->mysys_var->current_mutex= &table::Cache::mutex();
       session->mysys_var->current_cond= &COND_refresh;
       session->set_proc_info("Flushing tables");
 
@@ -301,7 +242,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       result= session->reopen_tables();
 
       /* Set version for table */
-      for (Table *table= session->open_tables; table ; table= table->getNext())
+      for (Table *table= session->open_tables.open_tables_; table ; table= table->getNext())
       {
         /*
           Preserve the version (0) of write locked tables so that a impending
@@ -315,7 +256,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
 
   if (wait_for_refresh)
   {
-    boost_unique_lock_t scopedLock(session->mysys_var->mutex);
+    boost::mutex::scoped_lock scopedLock(session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
@@ -329,42 +270,34 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   move one table to free list
 */
 
-bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
+bool Open_tables_state::free_cached_table()
 {
-  bool found_old_table= false;
+  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables_);
 
-  (void)scopedLock;
-
-  table::Concurrent *table= static_cast<table::Concurrent *>(open_tables);
-
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   assert(table->key_read == 0);
-  assert(!table->cursor || table->cursor->inited == Cursor::NONE);
+  assert(not table->cursor || table->cursor->inited == Cursor::NONE);
 
-  open_tables= table->getNext();
+  open_tables_= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
-      version != refresh_version || !table->db_stat)
+      version != g_refresh_version || !table->db_stat)
   {
     table::remove_table(table);
-    found_old_table= true;
+    return true;
   }
-  else
-  {
-    /*
-      Open placeholders have Table::db_stat set to 0, so they should be
-      handled by the first alternative.
-    */
-    assert(not table->open_placeholder);
+  /*
+    Open placeholders have Table::db_stat set to 0, so they should be
+    handled by the first alternative.
+  */
+  assert(not table->open_placeholder);
 
-    /* Free memory and reset for next loop */
-    table->cursor->ha_reset();
-    table->in_use= NULL;
+  /* Free memory and reset for next loop */
+  table->cursor->ha_reset();
+  table->in_use= NULL;
 
-    table::getUnused().link(table);
-  }
-
-  return found_old_table;
+  table::getUnused().link(table);
+  return false;
 }
 
 
@@ -376,20 +309,18 @@ bool Session::free_cached_table(boost::mutex::scoped_lock &scopedLock)
   @remark It should not ordinarily be called directly.
 */
 
-void Session::close_open_tables()
+void Open_tables_state::close_open_tables()
 {
   bool found_old_table= false;
 
-  safe_mutex_assert_not_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_not_owner(table::Cache::mutex().native_handle());
 
-  boost_unique_lock_t scoped_lock(table::Cache::singleton().mutex()); /* Close all open tables on Session */
+  boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close all open tables on Session */
 
-  while (open_tables)
+  while (open_tables_)
   {
-    found_old_table|= free_cached_table(scoped_lock);
+    found_old_table|= free_cached_table();
   }
-  some_tables_deleted= false;
-
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
@@ -515,7 +446,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
     */
     table_list= res->next_global;
   }
-  return(res);
+  return res;
 }
 
 
@@ -634,20 +565,17 @@ Table *Open_tables_state::find_temporary_table(const identifier::Table &identifi
 
 int Open_tables_state::drop_temporary_table(const drizzled::identifier::Table &identifier)
 {
-  Table *table;
-
-  if (not (table= find_temporary_table(identifier)))
+  Table* table= find_temporary_table(identifier);
+  if (not table)
     return 1;
 
   /* Table might be in use by some outer statement. */
-  if (table->query_id && table->query_id != getQueryId())
+  if (table->query_id && table->query_id != session_.getQueryId())
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
   }
-
   close_temporary_table(table);
-
   return 0;
 }
 
@@ -666,16 +594,16 @@ void Session::unlink_open_table(Table *find)
 {
   const identifier::Table::Key find_key(find->getShare()->getCacheKey());
   Table **prev;
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  for (prev= &open_tables; *prev; )
+  for (prev= &open_tables.open_tables_; *prev; )
   {
     Table *list= *prev;
 
@@ -722,11 +650,11 @@ void Session::drop_open_table(Table *table, const identifier::Table &identifier)
 {
   if (table->getShare()->getType())
   {
-    close_temporary_table(table);
+    open_tables.close_temporary_table(table);
   }
   else
   {
-    boost_unique_lock_t scoped_lock(table::Cache::singleton().mutex()); /* Close and drop a table (AUX routine) */
+    boost::mutex::scoped_lock scoped_lock(table::Cache::mutex()); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
@@ -767,13 +695,13 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
       condition variables that are guranteed to not disapper (freed) even if this
       mutex is unlocked
     */
-    boost_unique_lock_t scopedLock(mutex, boost::adopt_lock_t());
+    boost::mutex::scoped_lock scopedLock(mutex, boost::adopt_lock_t());
     if (not getKilled())
     {
       cond.wait(scopedLock);
     }
   }
-  boost_unique_lock_t mysys_scopedLock(mysys_var->mutex);
+  boost::mutex::scoped_lock mysys_scopedLock(mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
   set_proc_info(saved_proc_info);
@@ -793,24 +721,17 @@ void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable_
   case of failure.
 */
 
-table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
+table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::identifier::Table &arg)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
   */
   identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
-  table::Placeholder *table= new table::Placeholder(this, identifier);
-
-  if (not table::Cache::singleton().insert(table))
-  {
-    safe_delete(table);
-
-    return NULL;
-  }
-
-  return table;
+  table::Placeholder* table= new table::Placeholder(this, identifier);
+  table::Cache::insert(table);
+  return *table;
 }
 
 
@@ -835,27 +756,17 @@ table::Placeholder *Session::table_cache_insert_placeholder(const drizzled::iden
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
-bool Session::lock_table_name_if_not_cached(const identifier::Table &identifier, Table **table)
+Table* Session::lock_table_name_if_not_cached(const identifier::Table &identifier)
 {
   const identifier::Table::Key &key(identifier.getKey());
-
-  boost_unique_lock_t scope_lock(table::Cache::singleton().mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
-
+  boost::mutex::scoped_lock scope_lock(table::Cache::mutex()); /* Obtain a name lock even though table is not in cache (like for create table)  */
   if (find_ptr(table::getCache(), key))
-  {
-    *table= 0;
-    return false;
-  }
-
-  if (not (*table= table_cache_insert_placeholder(identifier)))
-  {
-    return true;
-  }
-  (*table)->open_placeholder= true;
-  (*table)->setNext(open_tables);
-  open_tables= *table;
-
-  return false;
+    return NULL;
+  Table& table= table_cache_insert_placeholder(identifier);
+  table.open_placeholder= true;
+  table.setNext(open_tables.open_tables_);
+  open_tables.open_tables_= &table;
+  return &table;
 }
 
 /*
@@ -922,7 +833,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     TODO -> move this block into a separate function.
   */
   bool reset= false;
-  for (table= getTemporaryTables(); table ; table=table->getNext())
+  for (table= open_tables.getTemporaryTables(); table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == key)
     {
@@ -960,11 +871,11 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
       Note-> refresh_version is currently changed only during FLUSH TABLES.
     */
-    if (!open_tables)
+    if (!open_tables.open_tables_)
     {
-      version= refresh_version;
+      open_tables.version= g_refresh_version;
     }
-    else if ((version != refresh_version) &&
+    else if ((open_tables.version != g_refresh_version) &&
              ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
     {
       /* Someone did a refresh while thread was opening tables */
@@ -984,13 +895,13 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       until no one holds a name lock on the table.
       - if there is no such Table in the name cache, read the table definition
       and insert it into the cache.
-      We perform all of the above under table::Cache::singleton().mutex() which currently protects
+      We perform all of the above under table::Cache::mutex() which currently protects
       the open cache (also known as table cache) and table definitions stored
       on disk.
     */
 
     {
-      boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+      boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
       /*
         Actually try to find the table in the open_cache.
@@ -1034,7 +945,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
           {
             /* Force close at once after usage */
-            version= table->getShare()->getVersion();
+            open_tables.version= table->getShare()->getVersion();
             continue;
           }
 
@@ -1073,8 +984,8 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
           */
           if (table->in_use != this)
           {
-            /* wait_for_conditionwill unlock table::Cache::singleton().mutex() for us */
-            wait_for_condition(table::Cache::singleton().mutex(), COND_refresh);
+            /* wait_for_conditionwill unlock table::Cache::mutex() for us */
+            wait_for_condition(table::Cache::mutex(), COND_refresh);
             scopedLock.release();
           }
           else
@@ -1101,7 +1012,6 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       else
       {
         /* Insert a new Table instance into the open cache */
-        int error;
         /* Free cache if too big */
         table::getUnused().cull();
 
@@ -1114,18 +1024,15 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
             /*
               Table to be created, so we need to create placeholder in table-cache.
             */
-            if (!(table= table_cache_insert_placeholder(lock_table_identifier)))
-            {
-              return NULL;
-            }
+            table= &table_cache_insert_placeholder(lock_table_identifier);
             /*
               Link placeholder to the open tables list so it will be automatically
               removed once tables are closed. Also mark it so it won't be ignored
               by other trying to take name-lock.
             */
             table->open_placeholder= true;
-            table->setNext(open_tables);
-            open_tables= table;
+            table->setNext(open_tables.open_tables_);
+            open_tables.open_tables_= table;
 
             return table ;
           }
@@ -1136,21 +1043,20 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         {
           table::Concurrent *new_table= new table::Concurrent;
           table= new_table;
-          error= new_table->open_unireg_entry(this, alias, identifier);
-          if (error != 0)
+          if (new_table->open_unireg_entry(this, alias, identifier))
           {
             delete new_table;
             return NULL;
           }
-          (void)table::Cache::singleton().insert(new_table);
+          (void)table::Cache::insert(new_table);
         }
       }
     }
 
     if (refresh)
     {
-      table->setNext(open_tables); /* Link into simple list */
-      open_tables= table;
+      table->setNext(open_tables.open_tables_); /* Link into simple list */
+      open_tables.open_tables_= table;
     }
     table->reginfo.lock_type= TL_READ; /* Assume read */
 
@@ -1164,7 +1070,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   }
 
   /* These variables are also set in reopen_table() */
-  table->tablenr= current_tablenr++;
+  table->tablenr= open_tables.current_tablenr++;
   table->used_fields= 0;
   table->const_table= 0;
   table->null_row= false;
@@ -1206,16 +1112,16 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
 void Session::close_data_files_and_morph_locks(const identifier::Table &identifier)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle()); /* Adjust locks at the end of ALTER TABLEL */
 
-  if (lock)
+  if (open_tables.lock)
   {
     /*
       If we are not under LOCK TABLES we should have only one table
       open and locked so it makes sense to remove the lock at once.
     */
-    unlockTables(lock);
-    lock= 0;
+    unlockTables(open_tables.lock);
+    open_tables.lock= 0;
   }
 
   /*
@@ -1223,7 +1129,7 @@ void Session::close_data_files_and_morph_locks(const identifier::Table &identifi
     for target table name if we process ALTER Table ... RENAME.
     So loop below makes sense even if we are not under LOCK TABLES.
   */
-  for (Table *table= open_tables; table ; table=table->getNext())
+  for (Table *table= open_tables.open_tables_; table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
@@ -1249,7 +1155,7 @@ void Session::close_data_files_and_morph_locks(const identifier::Table &identifi
   combination when one needs tables to be reopened (for
   example see openTablesLock()).
 
-  @note One should have lock on table::Cache::singleton().mutex() when calling this.
+  @note One should have lock on table::Cache::mutex() when calling this.
 
   @return false in case of success, true - otherwise.
 */
@@ -1264,10 +1170,10 @@ bool Session::reopen_tables()
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
     DRIZZLE_LOCK_IGNORE_FLUSH;
 
-  if (open_tables == NULL)
+  if (open_tables.open_tables_ == NULL)
     return false;
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
   {
     /*
       The ptr is checked later
@@ -1275,7 +1181,7 @@ bool Session::reopen_tables()
     */
     uint32_t opens= 0;
 
-    for (table= open_tables; table ; table=table->getNext())
+    for (table= open_tables.open_tables_; table ; table=table->getNext())
     {
       opens++;
     }
@@ -1284,8 +1190,8 @@ bool Session::reopen_tables()
 
   tables_ptr =tables;
 
-  prev= &open_tables;
-  for (table= open_tables; table ; table=next)
+  prev= &open_tables.open_tables_;
+  for (table= open_tables.open_tables_; table ; table=next)
   {
     next= table->getNext();
 
@@ -1297,19 +1203,13 @@ bool Session::reopen_tables()
 
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    DrizzleLock *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
-      wait_for_tables() as it tries to acquire table::Cache::singleton().mutex(), which is
+      wait_for_tables() as it tries to acquire table::Cache::mutex(), which is
       already locked.
     */
-    some_tables_deleted= false;
 
-    if ((local_lock= lockTables(tables, (uint32_t) (tables_ptr - tables), flags)))
-    {
-      /* unused */
-    }
-    else
+    if (not lockTables(tables, (uint32_t) (tables_ptr - tables), flags))
     {
       /*
         This case should only happen if there is a bug in the reopen logic.
@@ -1347,7 +1247,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 {
   bool found= send_refresh;
 
-  Table *table= open_tables;
+  Table *table= open_tables.open_tables_;
 
   for (; table ; table=table->getNext())
   {
@@ -1442,16 +1342,16 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table,*next,**prev, *found= 0;
-  prev= &session->open_tables;
+  prev= &session->open_tables.open_tables_;
 
   /*
-    Note that we need to hold table::Cache::singleton().mutex() while changing the
+    Note that we need to hold table::Cache::mutex() while changing the
     open_tables list. Another thread may work on it.
-    (See: table::Cache::singleton().removeTable(), wait_completed_table())
+    (See: table::Cache::removeTable(), wait_completed_table())
     Closing a MERGE child before the parent would be fatal if the
     other thread tries to abort the MERGE lock in between.
   */
-  for (table= session->open_tables; table ; table=next)
+  for (table= session->open_tables.open_tables_; table ; table=next)
   {
     next=table->getNext();
     if (table->getShare()->getCacheKey() == identifier.getKey())
@@ -1498,7 +1398,7 @@ Table *drop_locked_tables(Session *session, const drizzled::identifier::Table &i
 void abort_locked_tables(Session *session, const drizzled::identifier::Table &identifier)
 {
   Table *table;
-  for (table= session->open_tables; table ; table= table->getNext())
+  for (table= session->open_tables.open_tables_; table ; table= table->getNext())
   {
     if (table->getShare()->getCacheKey() == identifier.getKey())
     {
@@ -1547,7 +1447,7 @@ int Session::open_tables_from_list(TableList **start, uint32_t *counter, uint32_
   /* Also used for indicating that prelocking is need */
   bool safe_to_ignore_table;
 
-  current_tablenr= 0;
+  open_tables.current_tablenr= 0;
 restart:
   *counter= 0;
   set_proc_info("Opening tables");
@@ -1674,7 +1574,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
   bool refresh;
 
   set_proc_info("Opening table");
-  current_tablenr= 0;
+  open_tables.current_tablenr= 0;
   while (!(table= openTable(table_list, &refresh)) && refresh) ;
 
   if (table)
@@ -1682,10 +1582,10 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
     table_list->lock_type= lock_type;
     table_list->table=	   table;
 
-    assert(lock == 0);	// You must lock everything at once
+    assert(open_tables.lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
     {
-      if (not (lock= lockTables(&table_list->table, 1, 0)))
+      if (not (open_tables.lock= lockTables(&table_list->table, 1, 0)))
         table= NULL;
     }
   }
@@ -1725,9 +1625,6 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
 int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 {
-  TableList *table;
-  Session *session= this;
-
   /*
     We can't meet statement requiring prelocking if we already
     in prelocked mode.
@@ -1737,24 +1634,19 @@ int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
   if (tables == NULL)
     return 0;
 
-  assert(session->lock == 0);	// You must lock everything at once
-  Table **start,**ptr;
-  uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
+  assert(not open_tables.lock);	// You must lock everything at once
 
-  if (!(ptr=start=(Table**) session->getMemRoot()->allocate(sizeof(Table*)*count)))
-    return -1;
-
-  for (table= tables; table; table= table->next_global)
+  Table** start;
+  Table** ptr=start= new (mem) Table*[count];
+  for (TableList* table= tables; table; table= table->next_global)
   {
     if (!table->placeholder())
       *(ptr++)= table->table;
   }
-
-  if (not (session->lock= session->lockTables(start, (uint32_t) (ptr - start), lock_flag)))
+  if (not (open_tables.lock= lockTables(start, (uint32_t) (ptr - start), DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN)))
   {
     return -1;
   }
-
   return 0;
 }
 
@@ -1779,8 +1671,7 @@ RETURN
 #  Table object
 */
 
-Table *Open_tables_state::open_temporary_table(const identifier::Table &identifier,
-                                               bool link_in_list)
+Table* Session::open_temporary_table(const identifier::Table &identifier, bool link_in_list)
 {
   assert(identifier.isTmp());
 
@@ -1814,13 +1705,13 @@ Table *Open_tables_state::open_temporary_table(const identifier::Table &identifi
   if (link_in_list)
   {
     /* growing temp list at the head */
-    new_tmp_table->setNext(this->temporary_tables);
+    new_tmp_table->setNext(open_tables.temporary_tables);
     if (new_tmp_table->getNext())
     {
       new_tmp_table->getNext()->setPrev(new_tmp_table);
     }
-    this->temporary_tables= new_tmp_table;
-    this->temporary_tables->setPrev(0);
+    open_tables.temporary_tables= new_tmp_table;
+    open_tables.temporary_tables->setPrev(0);
   }
   new_tmp_table->pos_in_table_list= 0;
 
@@ -2660,17 +2551,12 @@ test_if_string_in_list(const char *find, List<String> *str_list)
   true   otherwise
 */
 
-static bool
-set_new_item_local_context(Session *session, Item_ident *item, TableList *table_ref)
+static void set_new_item_local_context(Session *session, Item_ident *item, TableList *table_ref)
 {
-  Name_resolution_context *context;
-  if (!(context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context* context= new (session->mem_root) Name_resolution_context;
   context->init();
-  context->first_name_resolution_table=
-    context->last_name_resolution_table= table_ref;
+  context->first_name_resolution_table= context->last_name_resolution_table= table_ref;
   item->context= context;
-  return false;
 }
 
 
@@ -2711,7 +2597,6 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
 {
   Field_iterator_table_ref it_1, it_2;
   Natural_join_column *nj_col_1, *nj_col_2;
-  bool result= true;
   bool first_outer_loop= true;
   /*
     Leaf table references to which new natural join columns are added
@@ -2733,7 +2618,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     /* true if field_name_1 is a member of using_fields */
     bool is_using_column_1;
     if (!(nj_col_1= it_1.get_or_create_column_ref(leaf_1)))
-      return(result);
+      return true;
     field_name_1= nj_col_1->name();
     is_using_column_1= using_fields &&
       test_if_string_in_list(field_name_1, using_fields);
@@ -2751,7 +2636,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Natural_join_column *cur_nj_col_2;
       const char *cur_field_name_2;
       if (!(cur_nj_col_2= it_2.get_or_create_column_ref(leaf_2)))
-        return(result);
+        return true;
       cur_field_name_2= cur_nj_col_2->name();
 
       /*
@@ -2771,7 +2656,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
             (found && (!using_fields || is_using_column_1)))
         {
           my_error(ER_NON_UNIQ_ERROR, MYF(0), field_name_1, session->where());
-          return(result);
+          return true;
         }
         nj_col_2= cur_nj_col_2;
         found= true;
@@ -2800,11 +2685,9 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       Item *item_2=   nj_col_2->create_item(session);
       Field *field_1= nj_col_1->field();
       Field *field_2= nj_col_2->field();
-      Item_ident *item_ident_1, *item_ident_2;
-      Item_func_eq *eq_cond;
-
+ 
       if (!item_1 || !item_2)
-        return(result); // out of memory
+        return true; // out of memory
 
       /*
         In the case of no_wrap_view_item == 0, the created items must be
@@ -2819,20 +2702,18 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         We need to cast item_1,2 to Item_ident, because we need to hook name
         resolution contexts specific to each item.
       */
-      item_ident_1= (Item_ident*) item_1;
-      item_ident_2= (Item_ident*) item_2;
+      Item_ident* item_ident_1= (Item_ident*) item_1;
+      Item_ident* item_ident_2= (Item_ident*) item_2;
       /*
         Create and hook special name resolution contexts to each item in the
         new join condition . We need this to both speed-up subsequent name
         resolution of these items, and to enable proper name resolution of
         the items during the execute phase of PS.
       */
-      if (set_new_item_local_context(session, item_ident_1, nj_col_1->table_ref) ||
-          set_new_item_local_context(session, item_ident_2, nj_col_2->table_ref))
-        return(result);
+      set_new_item_local_context(session, item_ident_1, nj_col_1->table_ref);
+      set_new_item_local_context(session, item_ident_2, nj_col_2->table_ref);
 
-      if (!(eq_cond= new Item_func_eq(item_ident_1, item_ident_2)))
-        return(result);                               /* Out of memory. */
+      Item_func_eq* eq_cond= new Item_func_eq(item_ident_1, item_ident_2);
 
       /*
         Add the new equi-join condition to the ON clause. Notice that
@@ -2876,9 +2757,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     we check for this error in store_natural_using_join_columns() when
     (found_using_fields < length(join_using_fields)).
   */
-  result= false;
-
-  return(result);
+  return false;
 }
 
 
@@ -2928,16 +2807,11 @@ store_natural_using_join_columns(Session *session,
 {
   Field_iterator_table_ref it_1, it_2;
   Natural_join_column *nj_col_1, *nj_col_2;
-  bool result= true;
-  List<Natural_join_column> *non_join_columns;
 
   assert(!natural_using_join->join_columns);
 
-  if (!(non_join_columns= new List<Natural_join_column>) ||
-      !(natural_using_join->join_columns= new List<Natural_join_column>))
-  {
-    return(result);
-  }
+  List<Natural_join_column>* non_join_columns= new List<Natural_join_column>;
+  natural_using_join->join_columns= new List<Natural_join_column>;
 
   /* Append the columns of the first join operand. */
   for (it_1.set(table_ref_1); !it_1.end_of_fields(); it_1.next())
@@ -2960,26 +2834,21 @@ store_natural_using_join_columns(Session *session,
   */
   if (using_fields && found_using_fields < using_fields->size())
   {
-    String *using_field_name;
     List<String>::iterator using_fields_it(using_fields->begin());
-    while ((using_field_name= using_fields_it++))
+    while (String* using_field_name= using_fields_it++)
     {
       const char *using_field_name_ptr= using_field_name->c_ptr();
-      List<Natural_join_column>::iterator
-        it(natural_using_join->join_columns->begin());
-      Natural_join_column *common_field;
-
+      List<Natural_join_column>::iterator  it(natural_using_join->join_columns->begin());
       for (;;)
       {
         /* If reached the end of fields, and none was found, report error. */
-        if (!(common_field= it++))
+        Natural_join_column* common_field= it++;
+        if (not common_field)
         {
-          my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
-                   session->where());
-          return(result);
+          my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr, session->where());
+          return true;
         }
-        if (!my_strcasecmp(system_charset_info,
-                           common_field->name(), using_field_name_ptr))
+        if (!my_strcasecmp(system_charset_info, common_field->name(), using_field_name_ptr))
           break;                                // Found match
       }
     }
@@ -3002,9 +2871,7 @@ store_natural_using_join_columns(Session *session,
     natural_using_join->join_columns->concat(non_join_columns);
   natural_using_join->is_join_columns_complete= true;
 
-  result= false;
-
-  return(result);
+  return false;
 }
 
 
@@ -3043,8 +2910,6 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
                              TableList *left_neighbor,
                              TableList *right_neighbor)
 {
-  bool result= true;
-
   /* Call the procedure recursively for each nested table reference. */
   if (table_ref->getNestedJoin())
   {
@@ -3087,9 +2952,8 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
         same_level_right_neighbor : right_neighbor;
 
       if (cur_table_ref->getNestedJoin() &&
-          store_top_level_join_columns(session, cur_table_ref,
-                                       real_left_neighbor, real_right_neighbor))
-        return(result);
+          store_top_level_join_columns(session, cur_table_ref, real_left_neighbor, real_right_neighbor))
+        return true;
       same_level_right_neighbor= cur_table_ref;
     }
   }
@@ -3121,7 +2985,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
       std::swap(table_ref_1, table_ref_2);
     if (mark_common_columns(session, table_ref_1, table_ref_2,
                             using_fields, &found_using_fields))
-      return(result);
+      return true;
 
     /*
       Swap the join operands back, so that we pick the columns of the second
@@ -3133,7 +2997,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
     if (store_natural_using_join_columns(session, table_ref, table_ref_1,
                                          table_ref_2, using_fields,
                                          found_using_fields))
-      return(result);
+      return true;
 
     /*
       Change NATURAL JOIN to JOIN ... ON. We do this for both operands
@@ -3164,9 +3028,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
     else
       table_ref->next_name_resolution_table= NULL;
   }
-  result= false; /* All is OK. */
-
-  return(result);
+  return false;
 }
 
 
@@ -3214,8 +3076,7 @@ static bool setup_natural_join_row_types(Session *session,
   {
     table_ref= left_neighbor;
     left_neighbor= table_ref_it++;
-    if (store_top_level_join_columns(session, table_ref,
-                                     left_neighbor, right_neighbor))
+    if (store_top_level_join_columns(session, table_ref, left_neighbor, right_neighbor))
       return true;
     if (left_neighbor)
     {
@@ -3310,7 +3171,7 @@ bool setup_fields(Session *session, Item **ref_pointer_array,
                   List<Item> &fields, enum_mark_columns mark_used_columns,
                   List<Item> *sum_func_list, bool allow_sum_func)
 {
-  register Item *item;
+  Item *item;
   enum_mark_columns save_mark_used_columns= session->mark_used_columns;
   nesting_map save_allow_sum_func= session->lex().allow_sum_func;
   List<Item>::iterator it(fields.begin());
@@ -3891,30 +3752,14 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 }
 
 
-bool drizzle_rm_tmp_tables()
+void drizzle_rm_tmp_tables()
 {
-
   assert(drizzle_tmpdir.size());
   Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
-
-  if (not session)
-    return true;
   session->thread_stack= (char*) session.get();
   session->storeGlobals();
-
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
-
-  return false;
 }
-
-
-
-/*****************************************************************************
-  unireg support functions
- *****************************************************************************/
-
-
-
 
 /**
   @} (end of group Data_Dictionary)

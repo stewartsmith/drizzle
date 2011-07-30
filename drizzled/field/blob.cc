@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
@@ -161,21 +160,18 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
 
   if (from == value.ptr())
   {
-    size_t dummy_offset;
-    if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
+    if (!String::needs_conversion(length, cs, field_charset))
     {
       Field_blob::store_length(length);
       memmove(ptr+sizeof(uint32_t), &from, sizeof(char*));
       return 0;
     }
-    if (tmpstr.copy(from, length, cs))
-      goto oom_error;
+    tmpstr.copy(from, length, cs);
     from= tmpstr.ptr();
   }
 
   new_length= min(max_data_length(), field_charset->mbmaxlen * length);
-  if (value.alloc(new_length))
-    goto oom_error;
+  value.alloc(new_length);
 
   /*
     "length" is OK as "nchars" argument to well_formed_copy_nchars as this
@@ -199,13 +195,7 @@ int Field_blob::store(const char *from,uint32_t length, const charset_info_st * 
     return 2;
 
   return report_if_important_data(from_end_pos, from + length);
-
-oom_error:
-  /* Fatal OOM error */
-  memset(ptr, 0, Field_blob::pack_length());
-  return -1;
 }
-
 
 int Field_blob::store(double nr)
 {
@@ -214,7 +204,6 @@ int Field_blob::store(double nr)
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
 }
-
 
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
@@ -267,7 +256,7 @@ String *Field_blob::val_str(String *, String *val_ptr) const
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
   else
-    val_ptr->set((const char*) blob,get_length(ptr),charset());
+    val_ptr->set(blob,get_length(ptr),charset());
   return val_ptr;
 }
 
@@ -346,9 +335,7 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
 uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
-  unsigned char *blob;
-
-  get_ptr(&blob);
+  unsigned char *blob= get_ptr();
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   local_char_length= my_charpos(field_charset, blob, blob + blob_length,
                           local_char_length);
@@ -368,13 +355,10 @@ uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
   return HA_KEY_BLOB_LENGTH+length;
 }
 
-
 uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
-  unsigned char *blob;
-
-  get_ptr(&blob);
+  unsigned char* blob= get_ptr();
   uint32_t local_char_length= length / field_charset->mbmaxlen;
   local_char_length= my_charpos(field_charset, blob, blob + blob_length,
                                 local_char_length);
@@ -464,14 +448,6 @@ uint32_t Field_blob::pack_length() const
   return (uint32_t) (sizeof(uint32_t) + portable_sizeof_char_ptr);
 }
 
-void Field_blob::sql_type(String &res) const
-{
-  if (charset() == &my_charset_bin)
-    res.set_ascii(STRING_WITH_LEN("blob"));
-  else
-    res.set_ascii(STRING_WITH_LEN("text"));
-}
-
 unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
                                 uint32_t max_length, bool low_byte_first)
 {
@@ -491,7 +467,7 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
    */
   if (length > 0)
   {
-    get_ptr((unsigned char**) &from);
+    from= get_ptr();
     memcpy(to+sizeof(uint32_t), from,length);
   }
 
@@ -540,7 +516,7 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
   uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
                            max_length/field_charset->mbmaxlen : max_length);
   if (length)
-    get_ptr((unsigned char**) &from);
+    from= get_ptr();
   if (length > local_char_length)
     local_char_length= my_charpos(field_charset, from, from+length,
                                   local_char_length);

@@ -18,7 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <config.h>
 #include <plugin/slave/queue_producer.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/sql/result_set.h>
@@ -27,6 +26,8 @@
 #include <drizzled/message/transaction.pb.h>
 #include <boost/lexical_cast.hpp>
 #include <google/protobuf/text_format.h>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace drizzled;
@@ -199,8 +200,12 @@ bool QueueProducer::queryForMaxCommitId(uint64_t *max_commit_id)
    */
   string sql("SELECT MAX(x.cid) FROM"
              " (SELECT MAX(`commit_order`) AS cid FROM `sys_replication`.`queue`"
-             "  UNION ALL SELECT `last_applied_commit_id` AS cid"
-             "  FROM `sys_replication`.`applier_state`) AS x");
+             "  WHERE `master_id` = "
+             + boost::lexical_cast<string>(masterId())
+             + "  UNION ALL SELECT `last_applied_commit_id` AS cid"
+             + "  FROM `sys_replication`.`applier_state` WHERE `master_id` = "
+             + boost::lexical_cast<string>(masterId())
+             + ") AS x");
 
   sql::ResultSet result_set(1);
   Execute execute(*(_session.get()), true);
@@ -291,6 +296,8 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
 bool QueueProducer::queueInsert(const char *trx_id,
                                 const char *seg_id,
                                 const char *commit_id,
+                                const char *originating_server_uuid,
+                                const char *originating_commit_id,
                                 const char *msg,
                                 const char *msg_length)
 {
@@ -302,12 +309,19 @@ bool QueueProducer::queueInsert(const char *trx_id,
    * The SQL to insert our results into the local queue.
    */
   string sql= "INSERT INTO `sys_replication`.`queue`"
-              " (`trx_id`, `seg_id`, `commit_order`, `msg`) VALUES (";
+              " (`master_id`, `trx_id`, `seg_id`, `commit_order`,"
+              "  `originating_server_uuid`, `originating_commit_id`, `msg`) VALUES (";
+  sql.append(boost::lexical_cast<string>(masterId()));
+  sql.append(", ", 2);
   sql.append(trx_id);
   sql.append(", ", 2);
   sql.append(seg_id);
   sql.append(", ", 2);
   sql.append(commit_id);
+  sql.append(", '", 3);
+  sql.append(originating_server_uuid);
+  sql.append("' , ", 4);
+  sql.append(originating_commit_id);
   sql.append(", '", 3);
 
   /*
@@ -388,7 +402,8 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   /*
    * The SQL to pull everything we need from the master.
    */
-  string sql= "SELECT `id`, `segid`, `commit_id`, `message`, `message_len` "
+  string sql= "SELECT `id`, `segid`, `commit_id`, `originating_server_uuid`,"
+              " `originating_commit_id`, `message`, `message_len` "
               " FROM `data_dictionary`.`sys_replication_log` WHERE `id` IN (";
 
   for (size_t x= 0; x < trx_id_list.size(); x++)
@@ -399,6 +414,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   }
 
   sql.append(")", 1);
+  sql.append(" ORDER BY `commit_id` ASC");
 
   drizzle_return_t ret;
   drizzle_result_st result;
@@ -432,7 +448,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
 
   while ((row= drizzle_row_next(&result)) != NULL)
   {
-    if (not queueInsert(row[0], row[1], row[2], row[3], row[4]))
+    if (not queueInsert(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
     {
       errmsg_printf(error::ERROR,
                     _("Replication slave: Unable to insert into queue."));
@@ -481,7 +497,8 @@ void QueueProducer::setIOState(const string &err_msg, bool status)
   }
   
   sql.append(msg);
-  sql.append("'", 1);
+  sql.append("' WHERE `master_id` = ");
+  sql.append(boost::lexical_cast<string>(masterId()));
 
   statements.push_back(sql);
   executeSQL(statements);

@@ -45,22 +45,20 @@ class DRIZZLED_API XaStorageEngine :
   public XaResourceManager
 {
 public:
-  XaStorageEngine(const std::string name_arg,
+  XaStorageEngine(const std::string &name_arg,
                   const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~XaStorageEngine();
 
   int startTransaction(Session *session, start_transaction_option_t options)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(*session, this, this, this);
+    TransactionServices::registerResourceForTransaction(*session, this, this, this);
     return doStartTransaction(session, options);
   }
 
   void startStatement(Session *session)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(*session, this, this, this);
+    TransactionServices::registerResourceForStatement(*session, this, this, this);
     doStartStatement(session);
   }
 

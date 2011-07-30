@@ -50,8 +50,7 @@ optimizer::QuickIndexMergeSelect::QuickIndexMergeSelect(Session *session_param,
   index= MAX_KEY;
   head= table;
   memset(&read_record, 0, sizeof(read_record));
-  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  return;
+  alloc.init(session->variables.range_alloc_block_size);
 }
 
 int optimizer::QuickIndexMergeSelect::init()
@@ -64,8 +63,7 @@ int optimizer::QuickIndexMergeSelect::reset()
   return (read_keys_and_merge());
 }
 
-bool
-optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
+void optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
 {
   /*
     Save quick_select that does scan on clustered primary key as it will be
@@ -80,24 +78,16 @@ optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *q
   {
     quick_selects.push_back(quick_sel_range);
   }
-  return false;
 }
 
 optimizer::QuickIndexMergeSelect::~QuickIndexMergeSelect()
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
-  {
-    (*it)->cursor= NULL;
-  }
-  for_each(quick_selects.begin(),
-           quick_selects.end(),
-           DeletePtr());
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
+    it->cursor= NULL;
+  for_each(quick_selects.begin(), quick_selects.end(), DeletePtr());
   quick_selects.clear();
   delete pk_quick_select;
   alloc.free_root(MYF(0));
-  return;
 }
 
 
@@ -216,14 +206,10 @@ int optimizer::QuickIndexMergeSelect::get_next()
 
 bool optimizer::QuickIndexMergeSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    if (is_key_used(head, (*it)->index, fields))
-    {
+    if (is_key_used(head, it->index, fields))
       return 1;
-    }
   }
   return 0;
 }
@@ -233,15 +219,13 @@ void optimizer::QuickIndexMergeSelect::add_info_string(string *str)
 {
   bool first= true;
   str->append("sort_union(");
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
     if (! first)
       str->append(",");
     else
       first= false;
-    (*it)->add_info_string(str);
+    it->add_info_string(str);
   }
   if (pk_quick_select)
   {
@@ -259,9 +243,7 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
   uint32_t length= 0;
   bool first= true;
 
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
     if (first)
       first= false;
@@ -271,9 +253,9 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(string *key_names,
       used_lengths->append(",");
     }
 
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     key_names->append(key_info->name);
-    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(it->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)

@@ -30,7 +30,7 @@ namespace drizzled
 
 namespace internal
 {
-typedef struct st_io_cache IO_CACHE;
+struct st_io_cache;
 }
 
 class select_to_file :
@@ -39,7 +39,7 @@ class select_to_file :
 protected:
   file_exchange *exchange;
   int file;
-  internal::IO_CACHE *cache;
+  internal::io_cache_st *cache;
   ha_rows row_count;
   boost::filesystem::path path;
 

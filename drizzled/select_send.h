@@ -25,19 +25,13 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/select_result.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
-namespace drizzled
+namespace drizzled {
+
+class select_send : public select_result 
 {
-
-class select_send :public select_result {
-  /**
-    True if we have sent result set metadata to the client.
-    In this case the client always expects us to end the result
-    set with an eof or error packet
-  */
-  bool is_result_set_started;
 public:
-  select_send() :is_result_set_started(false) {}
   bool send_eof()
   {
     /*
@@ -48,44 +42,23 @@ public:
     plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
-    if (session->lock)
+    if (session->open_tables.lock)
     {
-      session->unlockTables(session->lock);
-      session->lock= 0;
+      session->unlockTables(session->open_tables.lock);
+      session->open_tables.lock= 0;
     }
     session->my_eof();
-    is_result_set_started= 0;
     return false;
   }
 
-  bool send_fields(List<Item> &list)
+  void send_fields(List<Item>& list)
   {
-    bool res;
-    if (! (res= session->getClient()->sendFields(&list)))
-      is_result_set_started= 1;
-    return res;
-  }
-
-  void abort()
-  {
-    return;
-  }
-
-
-  /**
-    Cleanup an instance of this class for re-use
-    at next execution of a prepared statement/
-    stored procedure statement.
-  */
-
-  virtual void cleanup()
-  {
-    is_result_set_started= false;
+    session->getClient()->sendFields(list);
   }
 
   /* Send data to client. Returns 0 if ok */
 
-  bool send_data(List<Item> &items)
+  bool send_data(List<Item>& items)
   {
     if (unit->offset_limit_cnt)
     {						// using limit offset,count
@@ -104,14 +77,9 @@ public:
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    Item *item;
-    while ((item=li++))
+    while (Item* item= li++)
     {
-      if (item->send(session->getClient(), &buffer))
-      {
-        my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-        break;
-      }
+      item->send(session->getClient(), &buffer);
     }
     /* Insert this record to the Resultset into the cache */
     if (session->query_cache_key != "" && session->getResultsetMessage() != NULL)

@@ -28,7 +28,7 @@
 #include <drizzled/show_type.h>
 #include <drizzled/item_result.h>
 #include <drizzled/base.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/visibility.h>
 
@@ -52,13 +52,13 @@ extern const char *in_having_cond;
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
 extern boost::filesystem::path secure_file_priv;
-extern char *opt_tc_log_file;
+extern const char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
-extern char *drizzled_bind_host;
+extern const char *drizzled_bind_host;
 extern uint32_t dropping_tables;
 extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
@@ -67,7 +67,7 @@ extern bool opt_readonly;
 extern const char *opt_scheduler;
 extern size_t transaction_message_threshold;
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
+uint64_t fix_unsigned(Session*, uint64_t, const option&);
 
 DRIZZLED_API const std::string &getServerHostname();
 int sys_var_init();
@@ -153,7 +153,7 @@ public:
   {
     return SHOW_UNDEF;
   }
-  virtual unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  virtual unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return 0;
   }
@@ -169,7 +169,7 @@ public:
   {
     return option_limits == 0;
   }
-  Item *item(Session *session, sql_var_t type, const LEX_STRING *base);
+  Item *item(Session *session, sql_var_t type, const lex_string_t *base);
   virtual bool is_readonly() const
   {
     return 0;
@@ -211,7 +211,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_INT; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   { return (unsigned char*) value; }
 };
 
@@ -286,7 +286,7 @@ public:
   }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *, sql_var_t,
-                           const LEX_STRING *)
+                           const lex_string_t *)
   { return (unsigned char*) value; }
 };
 
@@ -304,7 +304,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   { return (unsigned char*) value; }
 };
 
@@ -335,7 +335,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   { return (unsigned char*) value; }
   bool check_update_type(Item_result)
   { return 0; }
@@ -379,7 +379,7 @@ public:
     (*set_default_func)(session, type);
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   { return (unsigned char*) value; }
   bool check_update_type(Item_result type)
   {
@@ -413,7 +413,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*)(value.file_string().c_str());
   }
@@ -480,7 +480,7 @@ public:
     value= default_value;
   }
 
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     basic_value= value.get();
     return (unsigned char*)&basic_value;
@@ -592,7 +592,7 @@ public:
     return false;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -628,7 +628,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -663,7 +663,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -696,7 +696,7 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*) value;
   }
@@ -726,7 +726,7 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   {
     return (unsigned char*) *value;
   }
@@ -772,7 +772,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_INT; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 
@@ -793,7 +793,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_HA_ROWS; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 
@@ -826,7 +826,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -866,7 +866,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -894,7 +894,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_update_type(Item_result)
   { return 0; }
@@ -926,7 +926,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
   bool check_update_type(Item_result)
   { return 0; }
 };
@@ -949,7 +949,7 @@ public:
   void set_default(Session *session, sql_var_t type);
   bool update(Session *session, set_var *var);
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 class DRIZZLED_API sys_var_session_bit :public sys_var_session
@@ -972,7 +972,7 @@ public:
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 /* some variables that require special handling */
@@ -990,7 +990,7 @@ public:
   { return 0; }
   SHOW_TYPE show_type(void) { return SHOW_LONG; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 
@@ -1004,7 +1004,7 @@ public:
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 
@@ -1039,7 +1039,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
 };
 
 /* Variable that you can only read from */
@@ -1064,7 +1064,7 @@ public:
   bool check_update_type(Item_result)
   { return 1; }
   unsigned char *value_ptr(Session *session, sql_var_t,
-                           const LEX_STRING *)
+                           const lex_string_t *)
   {
     return (*value_ptr_func)(session);
   }
@@ -1107,7 +1107,7 @@ public:
   { return 0; }
   bool update(Session *session, set_var *var);
   unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+                           const lex_string_t *base);
   virtual void set_default(Session *session, sql_var_t type);
 };
 
@@ -1117,7 +1117,7 @@ public:
 struct sys_var_with_base
 {
   sys_var *var;
-  LEX_STRING base_name;
+  lex_string_t base_name;
 };
 
 /*

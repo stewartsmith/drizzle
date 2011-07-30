@@ -40,17 +40,10 @@
 
 using namespace std;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 Vio::Vio(int nsd) :
-  closed(false),
-  sd(nsd),
-  fcntl_mode(0),
-  local(),
-  remote(),
-  read_pos(NULL),
-  read_end(NULL)
+  sd(nsd)
 {
   /*
     We call fcntl() to set the flags and then immediately read them back
@@ -68,45 +61,32 @@ Vio::Vio(int nsd) :
 
 Vio::~Vio()
 {
- if (!closed)
-    close();
+  close();
 }
 
 int Vio::close()
 {
-  int r=0;
-  if (!closed)
+  int r= 0;
+  if (sd != -1)
   {
     assert(sd >= 0);
     if (shutdown(sd, SHUT_RDWR))
       r= -1;
     if (::close(sd))
       r= -1;
+    sd=   -1;
   }
-  closed= true;
-  sd=   -1;
-
   return r;
 }
 
 size_t Vio::read(unsigned char* buf, size_t size)
 {
-  size_t r;
-
-  /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
-  assert(read_end == read_pos);
-  r= ::read(sd, buf, size);
-
-  return r;
+  return ::read(sd, buf, size);
 }
 
 size_t Vio::write(const unsigned char* buf, size_t size)
 {
-  size_t r;
-
-  r = ::write(sd, buf, size);
-
-  return r;
+  return ::write(sd, buf, size);
 }
 
 int Vio::blocking(bool set_blocking_mode, bool *old_mode)
@@ -140,88 +120,64 @@ int Vio::blocking(bool set_blocking_mode, bool *old_mode)
 int Vio::fastsend()
 {
   int nodelay = 1;
-  int error;
-
-  error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY,
-                    &nodelay, sizeof(nodelay));
-  if (error != 0)
-  {
+  int error= setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
+  if (error)
     perror("setsockopt");
-  }
-
   return error;
 }
 
 int32_t Vio::keepalive(bool set_keep_alive)
 {
-  int r= 0;
-  uint32_t opt= 0;
-
-  if (set_keep_alive)
-    opt= 1;
-
-  r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
-  if (r != 0)
+  uint32_t opt= set_keep_alive;
+  int r= setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
+  if (r)
   {
     perror("setsockopt");
-    assert(r == 0);
+    assert(false);
   }
-
   return r;
 }
 
 bool Vio::should_retry() const
 {
   int en = errno;
-  return (en == EAGAIN || en == EINTR ||
-          en == EWOULDBLOCK);
+  return en == EAGAIN || en == EINTR || en == EWOULDBLOCK;
 }
 
 bool Vio::was_interrupted() const
 {
   int en= errno;
-  return (en == EAGAIN || en == EINTR ||
-          en == EWOULDBLOCK || en == ETIMEDOUT);
+  return en == EAGAIN || en == EINTR || en == EWOULDBLOCK || en == ETIMEDOUT;
 }
 
-bool Vio::peer_addr(char *buf, uint16_t *port, size_t buflen) const
+bool Vio::peer_addr(char *buf, size_t buflen, uint16_t& port) const
 {
-  int error;
   char port_buf[NI_MAXSERV];
+  sockaddr_storage remote;
   socklen_t al = sizeof(remote);
 
-  if (getpeername(sd, (struct sockaddr *) (&remote),
-                  &al) != 0)
+  if (getpeername(sd, (sockaddr *) (&remote), &al) != 0)
+    return true;
+
+  if (getnameinfo((struct sockaddr *)(&remote), al, buf, buflen, port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV))
   {
     return true;
   }
 
-  if ((error= getnameinfo((struct sockaddr *)(&remote),
-                          al,
-                          buf, buflen,
-                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
-  {
-    return true;
-  }
-
-  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
+  port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
 
   return false;
 }
 
 void Vio::timeout(bool is_sndtimeo, int32_t t)
 {
-  int error;
-
-  /* POSIX specifies time as struct timeval. */
-  struct timeval wait_timeout;
+  timeval wait_timeout;
   wait_timeout.tv_sec= t;
   wait_timeout.tv_usec= 0;
 
   assert(t >= 0 && t <= INT32_MAX);
   assert(sd != -1);
-  error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
-                    &wait_timeout,
+  int error= setsockopt(sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO, &wait_timeout,
                     (socklen_t)sizeof(struct timeval));
   if (error == -1 && errno != ENOPROTOOPT)
   {
@@ -238,17 +194,6 @@ int Vio::get_errno() const
 int Vio::get_fd() const
 {
   return sd;
-}
-
-
-char *Vio::get_read_pos() const
-{
-  return read_pos;
-}
-
-char *Vio::get_read_end() const
-{
-  return read_end;
 }
 
 } /* namespace drizzle_plugin */

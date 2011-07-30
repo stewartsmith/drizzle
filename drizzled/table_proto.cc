@@ -16,9 +16,7 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
-#include <drizzled/unireg.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/message/statement_transform.h>
 
 #include <drizzled/plugin/storage_engine.h>
@@ -345,15 +343,10 @@ bool fill_table_proto(const identifier::Table& identifier,
           }
         }
 
-	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
-	    && field_arg->charset==&my_charset_bin)
-	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
-	    && field_arg->charset==&my_charset_bin))
+	if ((field_arg->sql_type == DRIZZLE_TYPE_VARCHAR && field_arg->charset == &my_charset_bin)
+	   || (field_arg->sql_type == DRIZZLE_TYPE_BLOB && field_arg->charset == &my_charset_bin))
 	{
-	  string bin_default;
-	  bin_default.assign(default_value->c_ptr(),
-			     default_value->length());
-	  field_options->set_default_bin_value(bin_default);
+	  field_options->set_default_bin_value(string(default_value->c_ptr(), default_value->length()));
 	}
 	else
 	{
@@ -439,11 +432,10 @@ bool fill_table_proto(const identifier::Table& identifier,
       break;
 
     case HA_KEY_ALG_UNDEF:
-      idx->set_type(message::Table::Index::UNKNOWN_INDEX);
-      break;
-
-    default:
-      abort(); /* Somebody's brain broke. haven't added index type to proto */
+      {
+        idx->set_type(create_info->db_type->default_index_type());
+        break;
+      }
     }
 
     if (key_info[i].flags & HA_NOSAME)

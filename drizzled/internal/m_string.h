@@ -41,10 +41,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
@@ -64,7 +62,8 @@ extern	char *strxncat(char *dst,size_t len, const char *src, ...);
 extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
 
 /* Conversion routines */
-typedef enum {
+typedef enum 
+{
   MY_GCVT_ARG_FLOAT,
   MY_GCVT_ARG_DOUBLE
 } my_gcvt_arg_type;
@@ -93,14 +92,6 @@ DRIZZLED_API size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to
   We don't lose precision, but make cases like "1e200" or "0.00001" look nicer.
 */
 #define MAX_DECPT_FOR_F_FORMAT DBL_DIG
-
-/*
-  The maximum possible field width for my_gcvt() conversion.
-  (DBL_DIG + 2) significant digits + sign + "." + ("e-NNN" or
-  MAX_DECPT_FOR_F_FORMAT zeros for cases when |x|<1 and the 'f' format is used).
-*/
-#define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + cmax(5, MAX_DECPT_FOR_F_FORMAT))
-
 
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);

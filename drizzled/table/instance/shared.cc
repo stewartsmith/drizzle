@@ -27,14 +27,9 @@
 #include <drizzled/table/instance/shared.h>
 #include <drizzled/plugin/storage_engine.h>
 
-namespace drizzled
-{
-
-namespace table
-{
-
-namespace instance
-{
+namespace drizzled {
+namespace table {
+namespace instance {
 
 Shared::Shared(const identifier::Table::Type type_arg,
                const identifier::Table &identifier,
@@ -107,7 +102,7 @@ Shared::shared_ptr Shared::foundTableShare(Shared::shared_ptr share)
   If it doesn't exist, create a new from the table definition file.
 
   NOTES
-  We must have wrlock on table::Cache::singleton().mutex() when we come here
+  We must have wrlock on table::Cache::mutex() when we come here
   (To be changed later)
 
   RETURN
@@ -124,7 +119,7 @@ Shared::shared_ptr Shared::make_shared(Session *session,
   in_error= 0;
 
   /* Read table definition from cache */
-  if ((share= definition::Cache::singleton().find(identifier.getKey())))
+  if ((share= definition::Cache::find(identifier.getKey())))
     return foundTableShare(share);
   
   drizzled::message::schema::shared_ptr schema_message_ptr= plugin::StorageEngine::getSchemaDefinition(identifier);
@@ -147,7 +142,7 @@ Shared::shared_ptr Shared::make_shared(Session *session,
   
   plugin::EventObserver::registerTableEvents(*share);
 
-  bool ret= definition::Cache::singleton().insert(identifier.getKey(), share);
+  bool ret= definition::Cache::insert(identifier.getKey(), share);
 
   if (not ret)
   {
@@ -184,7 +179,7 @@ Shared::~Shared()
 void release(TableShare *share)
 {
   bool to_be_deleted= false;
-  //safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
+  //safe_mutex_assert_owner(table::Cache::mutex().native_handle);
 
   share->lock();
   if (not share->decrementTableCount())
@@ -195,7 +190,7 @@ void release(TableShare *share)
 
   if (to_be_deleted)
   {
-    definition::Cache::singleton().erase(share->getCacheKey());
+    definition::Cache::erase(share->getCacheKey());
   }
 }
 
@@ -203,7 +198,7 @@ void release(TableShare::shared_ptr &share)
 {
   bool to_be_deleted= false;
 #if 0
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle);
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle);
 #endif
 
   share->lock();
@@ -215,19 +210,19 @@ void release(TableShare::shared_ptr &share)
 
   if (to_be_deleted)
   {
-    definition::Cache::singleton().erase(share->getCacheKey());
+    definition::Cache::erase(share->getCacheKey());
   }
 }
 
 void release(const identifier::Table &identifier)
 {
-  TableShare::shared_ptr share= definition::Cache::singleton().find(identifier.getKey());
+  TableShare::shared_ptr share= definition::Cache::find(identifier.getKey());
   if (share)
   {
     share->resetVersion(); 
     if (share->getTableCount() == 0)
     {
-      definition::Cache::singleton().erase(identifier.getKey());
+      definition::Cache::erase(identifier.getKey());
     }
   }
 }

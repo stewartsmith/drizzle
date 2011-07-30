@@ -18,11 +18,10 @@
  */
 
 #include <config.h>
-#include <math.h>
+#include <cmath>
 #include <drizzled/item/cache_real.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_cache_real::store(Item *item)
 {
@@ -30,13 +29,11 @@ void Item_cache_real::store(Item *item)
   null_value= item->null_value;
 }
 
-
 int64_t Item_cache_real::val_int()
 {
   assert(fixed == 1);
   return (int64_t) rint(value);
 }
-
 
 String* Item_cache_real::val_str(String *str)
 {
@@ -44,7 +41,6 @@ String* Item_cache_real::val_str(String *str)
   str->set_real(value, decimals, default_charset());
   return str;
 }
-
 
 type::Decimal *Item_cache_real::val_decimal(type::Decimal *decimal_val)
 {

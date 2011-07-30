@@ -78,7 +78,7 @@ public:
   uint64_t last_insert_id() const;
   uint32_t total_warn_count() const;
 
-  List<DRIZZLE_ERROR> m_warn_list;
+  std::list<DRIZZLE_ERROR*> m_warn_list;
 
   Diagnostics_area() { reset_diagnostics_area(); }
 

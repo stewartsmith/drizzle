@@ -29,12 +29,12 @@
 using namespace std;
 using namespace drizzled;
 
-class Crc32Function :public Item_int_func
+class Crc32Function : public Item_int_func
 {
 public:
   int64_t val_int();
   
-  Crc32Function() :Item_int_func() 
+  Crc32Function()
   { 
     unsigned_flag= true; 
   }
@@ -71,12 +71,9 @@ int64_t Crc32Function::val_int()
   return static_cast<int64_t>(drizzled::algorithm::crc32(res->ptr(), res->length()));
 }
 
-plugin::Create_function<Crc32Function> *crc32udf= NULL;
-
 static int initialize(module::Context &context)
 {
-  crc32udf= new plugin::Create_function<Crc32Function>("crc32");
-  context.add(crc32udf);
+  context.add(new plugin::Create_function<Crc32Function>("crc32"));
   return 0;
 }
 

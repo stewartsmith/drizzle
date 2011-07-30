@@ -234,10 +234,10 @@ public:
     return memory::sql_alloc(size);
   }
   static void *operator new(size_t size, memory::Root *mem_root)
-  { return (void*) mem_root->alloc_root((uint32_t) size); }
-  static void operator delete(void *, size_t)
+  { return mem_root->alloc(size); }
+  static void operator delete(void*, size_t)
   {  }
-  static void operator delete(void *, memory::Root *)
+  static void operator delete(void*, memory::Root*)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -260,11 +260,11 @@ public:
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
   virtual TableList *add_table_to_list(Session *session, Table_ident *table,
-                                       LEX_STRING *alias,
+                                       lex_string_t *alias,
                                        const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                        thr_lock_type flags= TL_UNLOCK,
                                        List<Index_hint> *hints= 0,
-                                       LEX_STRING *option= 0);
+                                       lex_string_t *option= 0);
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
@@ -578,18 +578,18 @@ public:
   bool inc_in_sum_expr();
   uint32_t get_in_sum_expr();
 
-  bool add_item_to_list(Session *session, Item *item);
-  bool add_group_to_list(Session *session, Item *item, bool asc);
-  bool add_order_to_list(Session *session, Item *item, bool asc);
+  void add_item_to_list(Session *session, Item *item);
+  void add_group_to_list(Session *session, Item *item, bool asc);
+  void add_order_to_list(Session *session, Item *item, bool asc);
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
-                               LEX_STRING *alias,
+                               lex_string_t *alias,
                                const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                thr_lock_type flags= TL_UNLOCK,
                                List<Index_hint> *hints= 0,
-                               LEX_STRING *option= 0);
+                               lex_string_t *option= 0);
   TableList* get_table_list();
-  bool init_nested_join(Session *session);
+  void init_nested_join(Session&);
   TableList *end_nested_join(Session *session);
   TableList *nest_last_join(Session *session);
   void add_joined_table(TableList *table);
@@ -620,7 +620,7 @@ public:
     init_query();
     init_select();
   }
-  bool setup_ref_array(Session *session, uint32_t order_group_num);
+  void setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str);
   static void print_order(String *str, Order *order);
 
@@ -680,8 +680,6 @@ enum xa_option_words
 , XA_SUSPEND
 , XA_FOR_MIGRATE
 };
-
-extern const LEX_STRING null_lex_str;
 
 /*
   Class representing list of all tables used by statement.
@@ -796,7 +794,7 @@ public:
    * is used differently depending on the Command (SELECT on a derived
    * table vs CREATE)
    */
-  LEX_STRING name;
+  lex_string_t name;
   /* The string literal used in a LIKE expression */
   String *wild;
   file_exchange *exchange;
@@ -808,7 +806,7 @@ public:
    * the eventual Command class built for the Keycache and Savepoint
    * commands.
    */
-  LEX_STRING ident;
+  lex_string_t ident;
 
   unsigned char* yacc_yyss, *yacc_yyvs;
   /* The owning Session of this LEX */
@@ -1019,11 +1017,6 @@ private:
 };
 
 extern void lex_start(Session *session);
-extern void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str);
-extern bool is_lex_native_function(const LEX_STRING *name);
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const&);
-bool check_for_sql_keyword(drizzled::lex_string_t const&);
 
 /**
   @} (End of group Semantic_Analysis)

@@ -47,21 +47,16 @@ using namespace std;
 /* Stay outside of the namespace because otherwise bison goes nuts */
 int base_sql_lex(ParserType *arg, drizzled::Session *yysession);
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 
 /**
   save order by and tables in own lists.
 */
-static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
+static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
-  Order *order;
-
-  if (!(order = (Order *) session->getMemRoot()->allocate(sizeof(Order))))
-    return true;
-
+  Order* order = new (session->mem) Order;
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
@@ -69,14 +64,7 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   order->used=0;
   order->counter_used= 0;
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
-
-  return false;
 }
-
-/**
-  LEX_STRING constant for null-string to be used in parser and other places.
-*/
-const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
@@ -104,38 +92,8 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
+  m_cpp_buf= (char*) session->mem.alloc(length + 1);
   m_cpp_ptr= m_cpp_buf;
-}
-
-Lex_input_stream::~Lex_input_stream()
-{}
-
-/**
-  The operation is called from the parser in order to
-  1) designate the intention to have utf8 body;
-  1) Indicate to the lexer that we will need a utf8 representation of this
-     statement;
-  2) Determine the beginning of the body.
-
-  @param session        Thread context.
-  @param begin_ptr  Pointer to the start of the body in the pre-processed
-                    buffer.
-*/
-void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
-{
-  assert(begin_ptr);
-  assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
-
-  uint32_t body_utf8_length=
-    (m_buf_length / default_charset_info->mbminlen) *
-    my_charset_utf8_bin.mbmaxlen;
-
-  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
-  m_body_utf8_ptr= m_body_utf8;
-  *m_body_utf8_ptr= 0;
-
-  m_cpp_utf8_processed_ptr= begin_ptr;
 }
 
 /**
@@ -202,7 +160,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
+void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
@@ -333,19 +291,13 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   return 0;
 }
 
-bool is_lex_native_function(const LEX_STRING *name)
-{
-  assert(name != NULL);
-  return (lookup_symbol(name->str, name->length, 1) != 0);
-}
-
 /* make a copy of token before ptr and set yytoklen */
-static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
+static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  LEX_STRING tmp;
+  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->strmake(lip->get_tok_start() + skip, tmp.length);
+  tmp.str= lip->m_session->mem.strmake(lip->get_tok_start() + skip, tmp.length);
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
@@ -359,16 +311,16 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
    get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
-static LEX_STRING get_quoted_token(Lex_input_stream *lip,
+static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  LEX_STRING tmp;
+  lex_string_t tmp;
   const char *from, *end;
   char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->getMemRoot()->allocate(tmp.length+1);
+  tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
   from= lip->get_tok_start() + skip;
   to= tmp.str;
   end= to+length;
@@ -434,18 +386,14 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
         lip->yyUnget();
 
       /* Found end. Unescape and return string */
-      const char *str, *end;
-      char *start;
-
-      str= lip->get_tok_start();
-      end= lip->get_ptr();
+      const char* str= lip->get_tok_start();
+      const char* end= lip->get_ptr();
       /* Extract the text from the token */
       str+= pre_skip;
       end-= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->getMemRoot()->allocate((uint32_t) (end-str)+1)))
-        return (char*) "";		// memory::SqlAlloc has set error flag
+      char* start= (char*) lip->m_session->mem.alloc((uint32_t) (end-str)+1);
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
@@ -1303,29 +1251,6 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   }
 }
 
-void trim_whitespace(const charset_info_st * const cs, LEX_STRING *str)
-{
-  /*
-    TODO:
-    This code assumes that there are no multi-bytes characters
-    that can be considered white-space.
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[0])))
-  {
-    str->length--;
-    str->str++;
-  }
-
-  /*
-    FIXME:
-    Also, parsing backward is not safe with multi bytes characters
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[str->length-1])))
-  {
-    str->length--;
-  }
-}
-
 /*
   Select_Lex structures initialisations
 */
@@ -1639,11 +1564,11 @@ List<Item>* Select_Lex_Node::get_item_list()
 
 TableList *Select_Lex_Node::add_table_to_list(Session *,
                                               Table_ident *,
-                                              LEX_STRING *,
+                                              lex_string_t *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
                                               thr_lock_type,
                                               List<Index_hint> *,
-                                              LEX_STRING *)
+                                              lex_string_t *)
 {
   return 0;
 }
@@ -1673,20 +1598,19 @@ Select_Lex* Select_Lex_Unit::outer_select()
   return (Select_Lex*) master;
 }
 
-bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, order_list, item, asc);
+  add_to_list(session, order_list, item, asc);
 }
 
-bool Select_Lex::add_item_to_list(Session *, Item *item)
+void Select_Lex::add_item_to_list(Session *, Item *item)
 {
 	item_list.push_back(item);
-  return false;
 }
 
-bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, group_list, item, asc);
+  add_to_list(session, group_list, item, asc);
 }
 
 Select_Lex_Unit* Select_Lex::master_unit()
@@ -1726,18 +1650,10 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-
-bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
+void Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
-  if (ref_pointer_array)
-    return false;
-
-  return (ref_pointer_array=
-          (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.size() +
-                                                 select_n_having_items +
-                                                 select_n_where_fields +
-                                                 order_group_num)*5)) == 0;
+  if (not ref_pointer_array)
+    ref_pointer_array= new (session->mem) Item*[5 * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)];
 }
 
 void Select_Lex_Unit::print(String *str)
@@ -2172,16 +2088,6 @@ void Select_Lex::alloc_index_hints (Session *session)
 void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
 {
   index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
-}
-
-bool check_for_sql_keyword(drizzled::lex_string_t const& string)
-{
-  return sql_reserved_words::in_word_set(string.str, string.length);
-}
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
-{
-  return sql_reserved_words::in_word_set(string.str, string.length);
 }
 
 message::AlterTable *LEX::alter_table()

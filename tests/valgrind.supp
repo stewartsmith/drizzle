@@ -46,6 +46,13 @@
   ...
 }
 
+{
+  glibc nss issue
+  Memcheck:Leak
+  ...
+  fun:__nss_database_lookup
+  ...
+}
 # Masking an issue in system tzset call
 {
   tzset() on debian reports issues

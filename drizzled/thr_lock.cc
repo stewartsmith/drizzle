@@ -170,7 +170,7 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
 
   while (not thread_var->abort)
   {
-    boost_unique_lock_t scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+    boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
 
     if (can_deadlock)
     {
@@ -227,7 +227,7 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  boost_unique_lock_t scopedLock(thread_var->mutex);
+  boost::mutex::scoped_lock scopedLock(thread_var->mutex);
   thread_var->current_mutex= NULL;
   thread_var->current_cond= NULL;
   return(result);
@@ -633,7 +633,7 @@ void DrizzleLock::unlock(uint32_t count)
 
 void THR_LOCK::abort_locks()
 {
-  boost_unique_lock_t scopedLock(mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
 
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
@@ -666,7 +666,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
 {
   bool found= false;
 
-  boost_unique_lock_t scopedLock(mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     if (local_data->owner->info->thread_id == thread_id_arg)

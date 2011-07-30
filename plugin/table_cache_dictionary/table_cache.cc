@@ -22,6 +22,7 @@
 
 #include <plugin/table_cache_dictionary/dictionary.h>
 #include <drizzled/table.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/pthread_globals.h>
 
 using namespace drizzled;
@@ -31,8 +32,8 @@ table_cache_dictionary::TableCache::TableCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_CACHE")
 {
   add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
   add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("ROWS", plugin::TableFunction::NUMBER, 0, false);
@@ -44,7 +45,7 @@ table_cache_dictionary::TableCache::TableCache() :
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false),
-  scopedLock(table::Cache::singleton().mutex())
+  scopedLock(table::Cache::mutex())
 {
 
   for (table::CacheMap::const_iterator iter= table::getCache().begin();

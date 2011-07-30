@@ -196,9 +196,7 @@ static int init(drizzled::module::Context &context)
                                                                  transaction_log_index, 
                                                                  static_cast<uint32_t>(sysvar_transaction_log_num_write_buffers));
     context.add(transaction_log_applier);
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.attachApplier(transaction_log_applier,
-                                       sysvar_transaction_log_use_replicator);
+    ReplicationServices::attachApplier(transaction_log_applier, sysvar_transaction_log_use_replicator);
 
     /* Setup DATA_DICTIONARY views */
 

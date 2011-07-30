@@ -62,11 +62,11 @@ DRIZZLED_API DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_w
 DRIZZLED_API void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                          drizzled::error_t code, const char *format, ...);
 
-void drizzle_reset_errors(Session *session, bool force);
+void drizzle_reset_errors(Session&, bool force);
 bool show_warnings(Session *session, 
                    std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
-extern const LEX_STRING warning_level_names[];
+extern const lex_string_t warning_level_names[];
 
 } /* namespace drizzled */
 

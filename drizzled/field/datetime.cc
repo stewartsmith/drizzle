@@ -288,10 +288,4 @@ void Field_datetime::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-
-void Field_datetime::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("datetime"));
-}
-
 } /* namespace drizzled */

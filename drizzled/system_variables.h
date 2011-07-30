@@ -89,8 +89,6 @@ struct drizzle_system_variables
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
-
-  Time_zone *time_zone;
 };
 
 

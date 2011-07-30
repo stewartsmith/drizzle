@@ -21,15 +21,11 @@
 #pragma once
 
 #include <drizzled/field/str.h>
-
-#include <drizzled/global_charset_info.h>
-
+#include <drizzled/charset.h>
 #include <string>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * Class representing a BLOB data type column
@@ -135,13 +131,11 @@ public:
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr, bool low_byte_first) const;
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr_arg) const;
   void put_length(unsigned char *pos, uint32_t length);
-  inline void get_ptr(unsigned char **str)
+  inline unsigned char* get_ptr() const
     {
-      memcpy(str,ptr+sizeof(uint32_t),sizeof(unsigned char*));
-    }
-  inline void get_ptr(unsigned char **str, uint32_t row_offset)
-    {
-      memcpy(str,ptr+sizeof(uint32_t)+row_offset,sizeof(char*));
+      unsigned char* str;
+      memcpy(&str, ptr + sizeof(uint32_t), sizeof(unsigned char*));
+      return str;
     }
   inline void set_ptr(unsigned char *length, unsigned char *data)
     {
@@ -161,19 +155,12 @@ public:
   uint32_t get_key_image(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(std::basic_string<unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
-  void sql_type(String &str) const;
-  inline bool copy()
+  inline void copy()
   {
-    unsigned char *tmp;
-    get_ptr(&tmp);
-    if (value.copy((char*) tmp, get_length(), charset()))
-    {
-      Field_blob::reset();
-      return 1;
-    }
+    unsigned char* tmp= get_ptr();
+    value.copy((char*) tmp, get_length(), charset());
     tmp=(unsigned char*) value.ptr();
     memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
-    return 0;
   }
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
                       uint32_t max_length, bool low_byte_first);

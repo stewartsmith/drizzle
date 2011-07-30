@@ -22,13 +22,10 @@
 #include <string>
 
 #include <drizzled/util/tablename_to_filename.h>
-
 #include <drizzled/internal/my_sys.h>
 
-namespace drizzled
-{
-namespace util
-{
+namespace drizzled {
+namespace util {
 
 static const char hexchars[]= "0123456789abcdef";
 

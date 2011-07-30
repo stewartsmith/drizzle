@@ -77,7 +77,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   null_value= false;
 
-  const char* db= db_sptr->c_ptr_safe();
+  const char* db= db_sptr->c_str();
 
   string proto_as_text("");
   message::schema::shared_ptr proto;
@@ -92,12 +92,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   protobuf::TextFormat::PrintToString(*proto, &proto_as_text);
 
-  if (str->alloc(proto_as_text.length()))
-  {
-    null_value= true;
-    return NULL;
-  }
-
+  str->alloc(proto_as_text.length());
   str->length(proto_as_text.length());
 
   strncpy(str->ptr(),proto_as_text.c_str(), proto_as_text.length());

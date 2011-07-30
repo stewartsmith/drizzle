@@ -28,8 +28,8 @@ using namespace std;
 table_cache_dictionary::TableDefinitionCache::TableDefinitionCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_DEFINITION_CACHE")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_COUNT", plugin::TableFunction::NUMBER, 0, false);
   add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);

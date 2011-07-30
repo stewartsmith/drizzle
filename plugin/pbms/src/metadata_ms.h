@@ -31,7 +31,7 @@
 
 #ifdef DRIZZLED
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #else
 #include "m_ctype.h"
 #endif

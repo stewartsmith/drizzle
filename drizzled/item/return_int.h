@@ -21,10 +21,9 @@
 
 #include <drizzled/item/int.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_return_int :public Item_int
+class Item_return_int : public Item_int
 {
   enum_field_types int_field_type;
 public:

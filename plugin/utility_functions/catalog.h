@@ -20,9 +20,8 @@
 
 #pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/global_charset_info.h>
 
 namespace drizzled
 {

@@ -63,34 +63,25 @@ static bool make_date_time(Session &session,
       case 'M':
         if (!l_time->month)
           return 1;
-        str->append(locale->month_names->type_names[l_time->month-1],
-                    strlen(locale->month_names->type_names[l_time->month-1]),
-                    system_charset_info);
+        str->append(locale->month_names->type_names[l_time->month-1], strlen(locale->month_names->type_names[l_time->month-1]));
         break;
       case 'b':
         if (!l_time->month)
           return 1;
-        str->append(locale->ab_month_names->type_names[l_time->month-1],
-                    strlen(locale->ab_month_names->type_names[l_time->month-1]),
-                    system_charset_info);
+        str->append(locale->ab_month_names->type_names[l_time->month-1], strlen(locale->ab_month_names->type_names[l_time->month-1]));
         break;
       case 'W':
         if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday= calc_weekday(calc_daynr(l_time->year,l_time->month,
                               l_time->day),0);
-        str->append(locale->day_names->type_names[weekday],
-                    strlen(locale->day_names->type_names[weekday]),
-                    system_charset_info);
+        str->append(locale->day_names->type_names[weekday], strlen(locale->day_names->type_names[weekday]));
         break;
       case 'a':
         if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
-        weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
-                             l_time->day),0);
-        str->append(locale->ab_day_names->type_names[weekday],
-                    strlen(locale->ab_day_names->type_names[weekday]),
-                    system_charset_info);
+        weekday=calc_weekday(calc_daynr(l_time->year,l_time->month, l_time->day),0);
+        str->append(locale->ab_day_names->type_names[weekday], strlen(locale->ab_day_names->type_names[weekday]));
         break;
       case 'D':
 	if (type == type::DRIZZLE_TIMESTAMP_TIME)
@@ -420,8 +411,7 @@ String *Item_func_date_format::val_str(String *str)
   if (format == str)
     str= &value;				// Save result here
 
-  if (str->alloc(size))
-    goto null_date;
+  str->alloc(size);
 
   /* Create the result string */
   str->set_charset(collation.collation);

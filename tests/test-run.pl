@@ -156,7 +156,6 @@ our $opt_repeat_test= 1;
 
 our $exe_master_drizzled;
 our $exe_drizzle;
-our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -230,6 +229,7 @@ our $opt_master_myport;
 our $opt_slave_myport;
 our $opt_memc_myport;
 our $opt_pbms_myport;
+our $opt_json_server_myport;
 our $opt_rabbitmq_myport;
 our $opt_record;
 my $opt_report_features;
@@ -509,6 +509,7 @@ sub command_line_setup () {
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
 	     'pbms_port=i'              => \$opt_pbms_myport,
+	     'json_server_port=i'              => \$opt_json_server_myport,
 	     'rabbitmq_port=i'              => \$opt_rabbitmq_myport,
 	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
@@ -1171,6 +1172,7 @@ sub set_dtr_build_thread_ports($) {
   $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
   $opt_pbms_myport= gimme_a_good_port($opt_master_myport + 11);
   $opt_rabbitmq_myport= gimme_a_good_port($opt_master_myport + 12);
+  $opt_json_server_myport= gimme_a_good_port($opt_master_myport + 13);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1297,7 +1299,6 @@ sub executable_setup () {
   $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
-  $exe_drizzleadmin= dtr_exe_exists("$path_client_bindir/drizzleadmin");
 
   if (!$opt_extern)
   {
@@ -1349,13 +1350,6 @@ sub generate_cmdline_drizzle ($) {
   my($drizzled) = @_;
   return
     dtr_native_path($exe_drizzle) .
-    " -uroot --port=$drizzled->{'port'} ";
-}
-
-sub generate_cmdline_drizzleadmin ($) {
-  my($drizzled) = @_;
-  return
-    dtr_native_path($exe_drizzleadmin) .
     " -uroot --port=$drizzled->{'port'} ";
 }
 
@@ -1501,6 +1495,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
   $ENV{'PBMS_PORT'}=          $opt_pbms_myport;
+  $ENV{'JSON_SERVER_PORT'}=          $opt_json_server_myport;
   $ENV{'RABBITMQ_NODE_PORT'}= $opt_rabbitmq_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=   $drizzled_variables{'drizzle-protocol.port'};
   $ENV{'DRIZZLE_TRX_READER'} = $opt_top_builddir.'/plugin/transaction_log/utilities/drizzletrx';
@@ -1513,7 +1508,6 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
-  my $cmdline_drizzleadmin= generate_cmdline_drizzleadmin($master->[0]);
   my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
   my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
   my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
@@ -1529,7 +1523,6 @@ sub environment_setup () {
     $cmdline_drizzledump_secondary .=
       " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
-  $ENV{'DRIZZLE_ADMIN'}= $cmdline_drizzleadmin;
   $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;
@@ -1662,6 +1655,7 @@ sub environment_setup () {
     print "Using MC_PORT               = $ENV{MC_PORT}\n";
     print "Using PBMS_PORT             = $ENV{PBMS_PORT}\n";
     print "Using RABBITMQ_NODE_PORT    = $ENV{RABBITMQ_NODE_PORT}\n";
+    print "Using JSON_SERVER_PORT      = $ENV{JSON_SERVER_PORT}\n";
   }
 
   # Create an environment variable to make it possible

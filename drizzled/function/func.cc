@@ -43,7 +43,6 @@ namespace drizzled
 
 
 Item_func::Item_func(void):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(0),
   const_item_cache(false)
   {
@@ -52,7 +51,6 @@ Item_func::Item_func(void):
   }
 
 Item_func::Item_func(Item *a):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(1),
   const_item_cache(false)
   {
@@ -63,7 +61,6 @@ Item_func::Item_func(Item *a):
   }
 
 Item_func::Item_func(Item *a,Item *b):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(2),
   const_item_cache(false)
   {
@@ -74,7 +71,6 @@ Item_func::Item_func(Item *a,Item *b):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -89,7 +85,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -105,7 +100,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -128,10 +122,9 @@ void Item_func::set_arguments(List<Item> &list)
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     List<Item>::iterator li(list.begin());
-    Item *item;
     Item **save_args= args;
 
-    while ((item=li++))
+    while (Item* item=li++)
     {
       *(save_args++)= item;
       with_sum_func|=item->with_sum_func;
@@ -141,7 +134,6 @@ void Item_func::set_arguments(List<Item> &list)
 }
 
 Item_func::Item_func(List<Item> &list) :
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
 {
@@ -151,7 +143,6 @@ Item_func::Item_func(List<Item> &list) :
 
 Item_func::Item_func(Session *session, Item_func *item) :
   Item_result_field(session, item),
-  _session(*current_session),
   allowed_arg_cols(item->allowed_arg_cols),
   arg_count(item->arg_count),
   used_tables_cache(item->used_tables_cache),
@@ -164,8 +155,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-        return;
+      args= new (getSession().mem) Item*[arg_count];
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
   }

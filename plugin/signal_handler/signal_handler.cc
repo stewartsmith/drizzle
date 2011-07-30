@@ -16,25 +16,19 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <config.h>
-
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/signal_handler.h>
-
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-
 #include <drizzled/debug.h>
-
 #include <drizzled/drizzled.h>
-
-#include <drizzled/refresh_version.h>
+#include <drizzled/open_tables_state.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>
@@ -124,7 +118,6 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((drizzled::getDebug().test(drizzled::debug::ALLOW_SIGINT)))
@@ -168,8 +161,8 @@ void signal_hand()
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  session::Cache::singleton().mutex().lock();
-  session::Cache::singleton().mutex().unlock();
+  session::Cache::mutex().lock();
+  session::Cache::mutex().unlock();
   COND_thread_count.notify_all();
 
   if (pthread_sigmask(SIG_BLOCK, &set, NULL))
@@ -212,7 +205,7 @@ void signal_hand()
     case SIGHUP:
       if (!abort_loop)
       {
-        refresh_version++;
+        g_refresh_version++;
         drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
       break;
@@ -234,7 +227,7 @@ public:
     drizzled::plugin::Daemon("Signal Handler")
   {
     // @todo fix spurious wakeup issue
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     thread= boost::thread(signal_hand);
     signal_thread= thread.native_handle();
     COND_thread_count.wait(scopedLock);

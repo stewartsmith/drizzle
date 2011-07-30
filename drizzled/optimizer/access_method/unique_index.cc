@@ -23,29 +23,28 @@
 #include <drizzled/join_table.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/optimizer/access_method/unique_index.h>
+#include <drizzled/table.h>
 
 using namespace drizzled;
 
-bool optimizer::UniqueIndex::getStats(Table *table,
-                                      JoinTable *join_tab)
+void optimizer::UniqueIndex::getStats(Table& table, JoinTable& join_tab)
 {
-  table->status= STATUS_NO_RECORD;
-  if (join_tab->select)
+  table.status= STATUS_NO_RECORD;
+  if (join_tab.select)
   {
-    delete join_tab->select->quick;
-    join_tab->select->quick= 0;
+    delete join_tab.select->quick;
+    join_tab.select->quick= 0;
   }
-  delete join_tab->quick;
+  delete join_tab.quick;
 
-  join_tab->quick= 0;
-  join_tab->read_first_record= join_read_key;
-  join_tab->read_record.read_record= join_no_more_records;
+  join_tab.quick= 0;
+  join_tab.read_first_record= join_read_key;
+  join_tab.read_record.read_record= join_no_more_records;
 
-  if (table->covering_keys.test(join_tab->ref.key) && 
-      ! table->no_keyread)
+  if (table.covering_keys.test(join_tab.ref.key) && 
+      ! table.no_keyread)
   {
-    table->key_read= 1;
-    table->cursor->extra(HA_EXTRA_KEYREAD);
+    table.key_read= 1;
+    table.cursor->extra(HA_EXTRA_KEYREAD);
   }
-  return false;
 }

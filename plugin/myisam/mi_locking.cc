@@ -21,7 +21,7 @@
 */
 
 #include "myisam_priv.h"
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/util/test.h>
 
 using namespace std;

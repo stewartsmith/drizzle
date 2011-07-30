@@ -81,7 +81,7 @@ int ReadRecord::init_read_record(Session *session_arg,
                                  int use_record_cache,
                                  bool print_error_arg)
 {
-  internal::IO_CACHE *tempfile;
+  internal::io_cache_st *tempfile;
   int error= 0;
 
   session= session_arg;
@@ -430,11 +430,9 @@ bool ReadRecord::init_rr_cache()
   }
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
-  if (cache_records <= 2 ||
-      !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
-  {
+  if (cache_records <= 2)
     return false;
-  }
+  cache= (unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1);
 #ifdef HAVE_VALGRIND
   // Avoid warnings in qsort
   memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);

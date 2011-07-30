@@ -82,8 +82,7 @@ String *Item_func_quote::val_str(String *str)
   for (from= (char*) arg->ptr(), end= from + arg_length; from < end; from++)
     new_length+= get_esc_bit(escmask, (unsigned char) *from);
 
-  if (tmp_value.alloc(new_length))
-    goto null;
+  tmp_value.alloc(new_length);
 
   /*
     We replace characters from the end to the beginning
@@ -120,10 +119,6 @@ String *Item_func_quote::val_str(String *str)
   tmp_value.set_charset(collation.collation);
   null_value= 0;
   return &tmp_value;
-
-null:
-  null_value= 1;
-  return 0;
 }
 
 } /* namespace drizzled */

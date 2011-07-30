@@ -19,71 +19,38 @@
  */
 
 #include <config.h>
+#include <boost/foreach.hpp>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/identifier.h>
-
 #include <vector>
 
-namespace drizzled
+namespace drizzled {
+
+static std::vector<plugin::Authentication*> all_authentication;
+
+bool plugin::Authentication::addPlugin(plugin::Authentication* auth)
 {
-
-std::vector<plugin::Authentication *> all_authentication;
-
-
-bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
-{
-  if (auth != NULL)
+  if (auth)
     all_authentication.push_back(auth);
-
   return false;
 }
 
-void plugin::Authentication::removePlugin(plugin::Authentication *auth)
+void plugin::Authentication::removePlugin(plugin::Authentication* auth)
 {
-  if (auth != NULL)
-    all_authentication.erase(std::find(all_authentication.begin(),
-                                       all_authentication.end(),
-                                       auth));
+  all_authentication.erase(std::find(all_authentication.begin(), all_authentication.end(), auth));
 }
 
-class AuthenticateBy : public std::unary_function<plugin::Authentication *, bool>
+bool plugin::Authentication::isAuthenticated(const drizzled::identifier::User& sctx, const std::string& password)
 {
-  const identifier::User &sctx;
-  const std::string &password;
-
-public:
-  AuthenticateBy(const identifier::User &sctx_arg, const std::string &password_arg) :
-    std::unary_function<plugin::Authentication *, bool>(),
-    sctx(sctx_arg), password(password_arg) {}
-
-  inline result_type operator()(argument_type auth)
+  BOOST_FOREACH(plugin::Authentication* auth, all_authentication)
   {
-    return auth->authenticate(sctx, password);
+    if (auth->authenticate(sctx, password))
+      return true;
   }
-};
-
-bool plugin::Authentication::isAuthenticated(const drizzled::identifier::User& sctx,
-                                             const std::string &password)
-{
-  /* Use find_if instead of foreach so that we can collect return codes */
-  std::vector<plugin::Authentication *>::iterator iter=
-    std::find_if(all_authentication.begin(), all_authentication.end(),
-                 AuthenticateBy(sctx, password));
-
-  /* We only require one plugin to return success in order to authenticate.
-   * If iter is == end() here, that means that all of the plugins returned
-   * false, which means they all failed.
-   */
-  if (iter == all_authentication.end())
-  {
-    error::access(sctx);
-
-    return false;
-  }
-
-  return true;
+  error::access(sctx);
+  return false;
 }
 
 } /* namespace drizzled */

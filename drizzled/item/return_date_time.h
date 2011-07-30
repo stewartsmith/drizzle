@@ -19,11 +19,10 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* for show tables */
-class Item_return_date_time :public Item_string
+class Item_return_date_time : public Item_string
 {
   enum_field_types date_time_field_type;
 public:

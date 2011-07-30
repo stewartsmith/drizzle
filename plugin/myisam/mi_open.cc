@@ -23,10 +23,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
-#include <drizzled/charset_info.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/test.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/identifier.h>
@@ -506,8 +504,7 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
   return(m_info);
 
 err:
-  if (disk_cache != NULL)
-    free(disk_cache);
+  free(disk_cache);
   save_errno=errno ? errno : HA_ERR_END_OF_FILE;
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||

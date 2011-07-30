@@ -302,7 +302,7 @@ struct st_myisam_info {
   uint	data_changed;			/* Somebody has changed data */
   uint	save_update;			/* When using KEY_READ */
   int	save_lastinx;
-  drizzled::internal::IO_CACHE rec_cache;			/* When cacheing records */
+  drizzled::internal::io_cache_st rec_cache;			/* When cacheing records */
   uint32_t  preload_buff_size;              /* When preloading indexes */
   drizzled::myf lock_wait;			/* is 0 or MY_DONT_WAIT */
   bool was_locked;			/* Was locked in panic */
@@ -330,7 +330,7 @@ typedef struct st_buffpek {
 typedef struct st_mi_sort_param
 {
   pthread_t  thr;
-  drizzled::internal::IO_CACHE read_cache, tempfile, tempfile_for_exceptions;
+  drizzled::internal::io_cache_st read_cache, tempfile, tempfile_for_exceptions;
   drizzled::DYNAMIC_ARRAY buffpek;
   MI_BIT_BUFF   bit_buff;               /* For parallel repair of packrec. */
 
@@ -359,9 +359,9 @@ typedef struct st_mi_sort_param
   int (*key_write)(struct st_mi_sort_param *, const void *);
   void (*lock_in_memory)(MI_CHECK *);
   int (*write_keys)(struct st_mi_sort_param *, register unsigned char **,
-                     uint32_t , struct st_buffpek *, drizzled::internal::IO_CACHE *);
-  unsigned int (*read_to_buffer)(drizzled::internal::IO_CACHE *,struct st_buffpek *, uint);
-  int (*write_key)(struct st_mi_sort_param *, drizzled::internal::IO_CACHE *,unsigned char *,
+                     uint32_t , struct st_buffpek *, drizzled::internal::io_cache_st *);
+  unsigned int (*read_to_buffer)(drizzled::internal::io_cache_st *,struct st_buffpek *, uint);
+  int (*write_key)(struct st_mi_sort_param *, drizzled::internal::io_cache_st *,unsigned char *,
                        uint, uint);
 } MI_SORT_PARAM;
 
@@ -608,7 +608,7 @@ extern uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned ch
                          unsigned char *old, drizzled::key_part_map keypart_map,
                          HA_KEYSEG **last_used_keyseg);
 extern int _mi_read_key_record(MI_INFO *info,drizzled::internal::my_off_t filepos,unsigned char *buf);
-extern int _mi_read_cache(drizzled::internal::IO_CACHE *info,unsigned char *buff,drizzled::internal::my_off_t pos,
+extern int _mi_read_cache(drizzled::internal::io_cache_st *info,unsigned char *buff,drizzled::internal::my_off_t pos,
 			  uint32_t length,int re_read_if_possibly);
 extern uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record);
 

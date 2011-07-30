@@ -144,8 +144,10 @@ Item_func_set_user_var::check(bool use_result_field)
     {
       save_result.vint= use_result_field ? result_field->val_int() :
         args[0]->val_int();
+
       unsigned_flag= use_result_field ? ((Field_num*)result_field)->unsigned_flag:
         args[0]->unsigned_flag;
+
       break;
     }
   case STRING_RESULT:
@@ -311,15 +313,16 @@ void Item_func_set_user_var::print(String *str)
   str->append(')');
 }
 
-bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
+void Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)
   {
     check(1);
     update();
-    return client->store(result_field);
+    client->store(result_field);
+    return;
   }
-  return Item::send(client, str_arg);
+  Item::send(client, str_arg);
 }
 
 void Item_func_set_user_var::make_field(SendField *tmp_field)

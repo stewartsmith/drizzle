@@ -29,7 +29,7 @@ namespace drizzled {
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                       LEX_STRING *component_arg, const char *name_arg,
+                       lex_string_t *component_arg, const char *name_arg,
                        size_t name_len_arg)
   :var(var_arg), var_type(var_type_arg), component(*component_arg)
 {
@@ -49,19 +49,19 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
     the error is reported in sys_var::item().
   */
   if (!(item= var->item(session, var_type, &component)))
-    return(1);                             // Impossible
+    return 1;                             // Impossible
 
   item->set_name(name, 0, system_charset_info); // don't allocate a new name
   *ref= item;
 
-  return(0);
+  return 0;
 }
 
-Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
-                     LEX_STRING component)
+Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
+                     lex_string_t component)
 {
   sys_var *var;
-  LEX_STRING *base_name, *component_name;
+  lex_string_t *base_name, *component_name;
 
   if (component.str)
   {

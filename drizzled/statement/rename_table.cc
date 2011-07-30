@@ -27,6 +27,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/table/cache.h>
 
 namespace drizzled {
 
@@ -81,7 +82,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
 
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex()); /* Rename table lock for exclusive access */
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex()); /* Rename table lock for exclusive access */
 
     if (not session().lock_table_names_exclusively(table_list))
     {
@@ -116,10 +117,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /* Lets hope this doesn't fail as the result will be messy */
   if (not error)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.rawStatement(session(),
-                                      *session().getQueryString(),
-                                      *session().schema());        
+    TransactionServices::rawStatement(session(), *session().getQueryString(), *session().schema());        
     session().my_ok();
   }
 

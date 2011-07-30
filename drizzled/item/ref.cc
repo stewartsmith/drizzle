@@ -118,9 +118,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 
   if (!ref || ref == not_found_item)
   {
-    if (!(ref= resolve_ref_in_select_and_group(session, this,
-                                               context->select_lex)))
-      goto error;             /* Some error occurred (e.g. ambiguous names). */
+    if (!(ref= resolve_ref_in_select_and_group(session, this, context->select_lex)))
+      return true;             /* Some error occurred (e.g. ambiguous names). */
 
     if (ref == not_found_item) /* This reference was not resolved. */
     {
@@ -132,9 +131,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (!outer_context)
       {
         /* The current reference cannot be resolved in this query. */
-        my_error(ER_BAD_FIELD_ERROR,MYF(0),
-                 full_name(), session->where());
-        goto error;
+        my_error(ER_BAD_FIELD_ERROR,MYF(0), full_name(), session->where());
+        return true;
       }
 
       /*
@@ -159,7 +157,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         if (outer_context->resolve_in_select_list)
         {
           if (!(ref= resolve_ref_in_select_and_group(session, this, select)))
-            goto error; /* Some error occurred (e.g. ambiguous names). */
+            return true; /* Some error occurred (e.g. ambiguous names). */
           if (ref != not_found_item)
           {
             assert(*ref && (*ref)->fixed);
@@ -205,7 +203,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                                            reference,
                                            IGNORE_EXCEPT_NON_UNIQUE, true);
           if (! from_field)
-            goto error;
+            return true;
           if (from_field == view_ref_found)
           {
             Item::Type refer_type= (*reference)->type();
@@ -265,8 +263,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (from_field != not_found_field)
       {
         Item_field* fld;
-        if (!(fld= new Item_field(from_field)))
-          goto error;
+        fld= new Item_field(from_field);
         *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
                           session->lex().current_select, this, fld);
@@ -285,9 +282,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (ref == 0)
       {
         /* The item was not a table field and not a reference */
-        my_error(ER_BAD_FIELD_ERROR, MYF(0),
-                 full_name(), session->where());
-        goto error;
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
+        return true;
       }
       /* Should be checked in resolve_ref_in_select_and_group(). */
       assert(*ref && (*ref)->fixed);
@@ -320,22 +316,15 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           current_sel->having_fix_field)) ||
        !(*ref)->fixed))
   {
-    my_error(ER_ILLEGAL_REFERENCE, MYF(0),
-             name, ((*ref)->with_sum_func?
-                    "reference to group function":
-                    "forward reference in item list"));
-    goto error;
+    my_error(ER_ILLEGAL_REFERENCE, MYF(0), name, ((*ref)->with_sum_func ? "reference to group function" : "forward reference in item list"));
+    return true;
   }
 
   set_properties();
 
   if ((*ref)->check_cols(1))
-    goto error;
+    return true;
   return false;
-
-error:
-  context->process_error(session);
-  return true;
 }
 
 
@@ -386,10 +375,13 @@ void Item_ref::print(String *str)
 }
 
 
-bool Item_ref::send(plugin::Client *client, String *tmp)
+void Item_ref::send(plugin::Client *client, String *tmp)
 {
   if (result_field)
-    return client->store(result_field);
+  {
+    client->store(result_field);
+    return;
+  }
   return (*ref)->send(client, tmp);
 }
 

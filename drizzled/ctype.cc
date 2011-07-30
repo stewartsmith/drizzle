@@ -15,7 +15,7 @@
 
 #include <config.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 namespace drizzled
 {

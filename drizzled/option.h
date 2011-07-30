@@ -29,15 +29,10 @@ namespace drizzled {
 #define GET_ULL        8
 #define GET_STR        9
 #define GET_STR_ALLOC 10
-#define GET_DISABLED  11
-#define GET_ENUM      12
-#define GET_SET       13
-#define GET_DOUBLE    14
 #define GET_SIZE      15
 #define GET_UINT64    16
 #define GET_ULONG_IS_FAIL 17
 
-#define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
 
 enum loglevel {
@@ -54,16 +49,16 @@ struct option
   int        id;                        /* unique id or short option */
   const char *comment;                  /* option comment, for autom. --help */
   char      **value;                   /* The variable value */
-  char      **u_max_value;             /* The user def. max variable value */
+  void      **u_max_value_unused;             /* The user def. max variable value */
   TYPELIB *typelib;           /* Pointer to possible values */
   uint32_t     var_type;
-  enum get_opt_arg_type arg_type;
+  get_opt_arg_type arg_type;
   int64_t   def_value;                 /* Default value */
   int64_t   min_value;                 /* Min allowed value */
   int64_t   max_value;                 /* Max allowed value */
   int64_t   sub_size;                  /* Subtract this from given value */
-  long       block_size;                /* Value should be a mult. of this */
-  void       *app_type;                 /* To be used by an application */
+  int       block_size;                /* Value should be a mult. of this */
+  void*     app_type_unused;
 };
 
 
@@ -71,20 +66,13 @@ typedef int (* my_get_one_option) (int, const struct option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct option *);
 
-extern char *disabled_my_option;
-extern bool my_getopt_skip_unknown;
-extern my_error_reporter my_getopt_error_reporter;
-
-extern int handle_options (int *argc, char ***argv,
-			   const struct option *longopts, my_get_one_option);
+extern int handle_options (int *argc, char ***argv, const option*, my_get_one_option);
 extern void my_cleanup_options(const struct option *options);
 extern void my_print_help(const struct option *options);
 extern void my_print_variables(const struct option *options);
 
-uint64_t getopt_ull_limit_value(uint64_t num, const struct option *optp,
-                                 bool *fix);
-int64_t getopt_ll_limit_value(int64_t, const struct option *,
-                               bool *fix);
+uint64_t getopt_ull_limit_value(uint64_t num, const option&, bool* fix);
+int64_t getopt_ll_limit_value(int64_t, const option&, bool* fix);
 bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 } /* namespace drizzled */

@@ -6,7 +6,7 @@ show create table a;
 Table	Create Table
 a	CREATE TABLE `a` (
   `a` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  UNIQUE KEY `a` (`a`)
+  UNIQUE KEY `a` (`a`) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table b ( b int);
 show fields from b;

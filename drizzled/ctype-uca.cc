@@ -33,7 +33,7 @@
 
 
 #include <config.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/internal/m_string.h>
 #include <stdio.h>
 
@@ -41,8 +41,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
@@ -7732,13 +7731,10 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
     return 1;
   }
 
-  if (!(newweights= (uint16_t**) (*alloc)(256*sizeof(uint16_t*))))
-    return 1;
+  newweights= (uint16_t**) (*alloc)(256*sizeof(uint16_t*));
   memset(newweights, 0, 256*sizeof(uint16_t*));
 
-  if (!(newlengths= (unsigned char*) (*alloc)(256)))
-    return 1;
-
+  newlengths= (unsigned char*) (*alloc)(256);
   memcpy(newlengths, deflengths, 256);
 
   /*
@@ -7773,8 +7769,7 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
       /* Alloc new page and copy the default UCA weights */
       uint32_t size= 256*newlengths[pagec]*sizeof(uint16_t);
 
-      if (!(newweights[pagec]= (uint16_t*) (*alloc)(size)))
-        return 1;
+      newweights[pagec]= (uint16_t*) (*alloc)(size);
       memset(newweights[pagec], 0, size);
 
       for (chc=0 ; chc < 256; chc++)
@@ -7818,8 +7813,7 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
     */
     uint32_t size= 0x40*0x40*sizeof(uint16_t) + 256;
     char *contraction_flags;
-    if (!(cs->contractions= (uint16_t*) (*alloc)(size)))
-        return 1;
+    cs->contractions= (uint16_t*) (*alloc)(size);
     memset(cs->contractions, 0, size);
     contraction_flags= ((char*) cs->contractions) + 0x40*0x40;
     for (i=0; i < rc; i++)
@@ -7863,10 +7857,10 @@ static bool create_tailoring(charset_info_st *cs, cs_alloc_func alloc)
   Should work for any character set.
 */
 
-bool my_coll_init_uca(charset_info_st *cs, cs_alloc_func alloc)
+static bool my_coll_init_uca(charset_info_st& cs, cs_alloc_func alloc)
 {
-  cs->pad_char= ' ';
-  return create_tailoring(cs, alloc);
+  cs.pad_char= ' ';
+  return create_tailoring(&cs, alloc);
 }
 
 int my_strnncoll_any_uca(const charset_info_st * const cs,

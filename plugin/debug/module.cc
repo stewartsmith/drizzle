@@ -101,7 +101,7 @@ public:
 
   bool val_bool()
   {
-    util::custom_backtrace();
+    call_backtrace();
     return true;
   }
 

@@ -33,14 +33,8 @@ namespace optimizer {
 class Const : public AccessMethod
 {
 public:
-  Const() {}
-
-  bool getStats(Table *table,
-                JoinTable *join_tab);
-
+  void getStats(Table&, JoinTable&);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
-

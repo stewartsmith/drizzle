@@ -105,7 +105,7 @@ int JoinTable::joinReadConstTable(optimizer::Position *pos)
            &embedding->getNestedJoin()->join_list.front() == embedded);
   }
 
-  return(0);
+  return 0;
 }
 
 void JoinTable::readCachedRecord()

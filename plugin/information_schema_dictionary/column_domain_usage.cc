@@ -27,13 +27,13 @@ using namespace drizzled;
 ColumnDomainUsage::ColumnDomainUsage() :
   InformationSchema("COLUMN_DOMAIN_USAGE")
 {
-  add_field("DOMAIN_CATALOG");
-  add_field("DOMAIN_SCHEMA");
-  add_field("DOMAIN_NAME");
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("COLUMN_NAME");
+  add_field("DOMAIN_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("DOMAIN_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("DOMAIN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 void ColumnDomainUsage::Generator::fill()

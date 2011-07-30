@@ -66,7 +66,6 @@ public:
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);
   void store_type(uint64_t value);
-  void sql_type(String &str) const;
   bool eq_def(Field *field);
   enum_field_types type() const
   {

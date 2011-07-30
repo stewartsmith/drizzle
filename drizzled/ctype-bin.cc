@@ -21,7 +21,7 @@
 #include <config.h>
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 
@@ -79,13 +79,6 @@ static unsigned char bin_char_array[] =
   240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
 };
 
-
-bool my_coll_init_8bit_bin(charset_info_st *cs,
-                           cs_alloc_func)
-{
-  cs->max_sort_char=255;
-  return false;
-}
 
 int my_strnncoll_binary(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
@@ -333,7 +326,7 @@ int my_wildcmp_bin(const charset_info_st * const cs,
       if (*wildstr == escape && wildstr+1 != wildend)
 	wildstr++;
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);			/* No match */
+	return 1;			/* No match */
       if (wildstr == wildend)
 	return(str != str_end);		/* Match if both are at end */
       result=1;				/* Found an anchor char */
@@ -368,7 +361,7 @@ int my_wildcmp_bin(const charset_info_st * const cs,
 	break;				/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);			/* match if w_many is last */
+	return 0;			/* match if w_many is last */
       if (str == str_end)
 	return(-1);
 

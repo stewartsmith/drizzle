@@ -22,7 +22,6 @@
 
 #include <drizzled/session/state.h>
 #include <drizzled/definitions.h>
-#include <cstring>
 #include <string>
 
 namespace drizzled {

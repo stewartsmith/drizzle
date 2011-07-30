@@ -18,8 +18,8 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/definitions.h>
 #include <drizzled/type/time.h>
-namespace drizzled
-{
+
+namespace drizzled {
 
 typedef enum
 {

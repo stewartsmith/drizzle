@@ -107,7 +107,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>
@@ -214,8 +214,7 @@ int class_decimal2string(const type::Decimal *d,
                     ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
-  if (str->alloc(length))
-    return check_result(mask, E_DEC_OOM);
+  str->alloc(length);
 
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
                          &length, (int)0, fixed_dec,
@@ -291,8 +290,7 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    size_t dummy_errors;
-    tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
+    tmp.copy(from, length, &my_charset_utf8_general_ci);
     from= tmp.ptr();
     length=  tmp.length();
     charset= &my_charset_bin;
@@ -1180,16 +1178,13 @@ fatal_error:
 
 int decimal2double(const decimal_t *from, double *to)
 {
-  char strbuf[FLOATING_POINT_BUFFER], *end;
+  char strbuf[FLOATING_POINT_BUFFER];
   int len= sizeof(strbuf);
-  int rc, error;
-
-  rc = decimal2string(from, strbuf, &len, 0, 0, 0);
-  end= strbuf + len;
-
+  int rc = decimal2string(from, strbuf, &len, 0, 0, 0);
+  char* end= strbuf + len;
+  int error;
   *to= internal::my_strtod(strbuf, &end, &error);
-
-  return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
+  return rc != E_DEC_OK ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
 
 /**
@@ -1210,7 +1205,7 @@ int double2decimal(const double from, decimal_t *to)
                                 internal::MY_GCVT_ARG_DOUBLE,
                                 sizeof(buff) - 1, buff, NULL);
   res= string2decimal(buff, to, &end);
-  return(res);
+  return res;
 }
 
 

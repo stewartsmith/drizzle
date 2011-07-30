@@ -281,19 +281,6 @@ enum ha_base_keytype Field_varstring::key_type() const
 }
 
 
-void Field_varstring::sql_type(String &res) const
-{
-  const charset_info_st * const cs=res.charset();
-  uint32_t length;
-
-  length= cs->cset->snprintf(cs,(char*) res.ptr(),
-                             res.alloced_length(), "%s(%d)",
-                              (has_charset() ? "varchar" : "varbinary"),
-                             (int) field_length / charset()->mbmaxlen);
-  res.length(length);
-}
-
-
 uint32_t Field_varstring::used_length()
 {
   return length_bytes == 1 ? 1 + (uint32_t) (unsigned char) *ptr : 2 + uint2korr(ptr);

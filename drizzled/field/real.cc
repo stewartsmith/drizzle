@@ -29,8 +29,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const double log_10[309];
 

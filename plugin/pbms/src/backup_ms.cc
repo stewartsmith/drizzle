@@ -38,7 +38,7 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/field.h>
 #include <drizzled/field/varstring.h>
@@ -491,6 +491,7 @@ bool MSBackup::doWork()
 		
 		new_(head, CSStringBuffer(100));
 		push_(head);
+                (void)src_repo_id;
 
 		src_repo = (MSRepository*)bu_BackupList->get(0);
 		while (src_repo && !myMustQuit) {

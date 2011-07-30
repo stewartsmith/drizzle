@@ -56,7 +56,7 @@ in buf_pool, or if the page is in the doublewrite buffer blocks in
 which case it is never read into the pool, or if the tablespace does
 not exist or is being dropped 
 @return 1 if read request is issued. 0 if it is not */
-static
+UNIV_INTERN
 ulint
 buf_read_page_low(
 /*==============*/
@@ -255,6 +255,10 @@ buf_read_ahead_linear(
 	const ulint	buf_read_ahead_linear_area
 		= BUF_READ_AHEAD_LINEAR_AREA(buf_pool);
 	ulint		threshold;
+
+	if ((srv_read_ahead & 2) == false) {
+		return(0);
+	}
 
 	if (UNIV_UNLIKELY(srv_startup_is_before_trx_rollback_phase)) {
 		/* No read-ahead to avoid thread deadlocks */

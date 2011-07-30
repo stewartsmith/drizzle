@@ -23,36 +23,30 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 struct st_my_thread_var
 {
   boost::condition_variable_any suspend;
   boost::mutex mutex;
-  boost::mutex * volatile current_mutex;
-  boost::condition_variable_any * volatile current_cond;
+  boost::mutex* volatile current_mutex;
+  boost::condition_variable_any* volatile current_cond;
   uint64_t id;
-  int volatile abort;
-  void *opt_info;
+  bool volatile abort;
+  void* opt_info;
 
-  st_my_thread_var() :
-    current_mutex(0),
-    current_cond(0),
-    id(0),
+  st_my_thread_var(uint64_t id0) :
+    current_mutex(NULL),
+    current_cond(NULL),
+    id(id0),
     abort(false),
-    opt_info(0)
+    opt_info(NULL)
   { 
-  }
-
-  ~st_my_thread_var()
-  {
   }
 };
 
-extern struct st_my_thread_var *_my_thread_var(void);
+extern struct st_my_thread_var* _my_thread_var();
 #define my_thread_var (::drizzled::internal::_my_thread_var())
 
 } /* namespace internal */

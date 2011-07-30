@@ -20,7 +20,7 @@
 #include <drizzled/util/gmtime.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/util/test.h>
 #include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>
@@ -30,8 +30,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int check_time_range(type::Time *my_time, int *warning);
 
@@ -735,15 +734,13 @@ static int check_time_range(type::Time *my_time, int *warning)
 */
 void init_time(void)
 {
-  time_t seconds;
-  struct tm *l_time,tm_tmp;
   type::Time my_time;
-  type::Time::epoch_t epoch;
-  bool not_used;
+  type::epoch_t epoch;
 
-  seconds= (time_t) time((time_t*) 0);
+  time_t seconds= time(NULL);
+  tm tm_tmp;
   localtime_r(&seconds, &tm_tmp);
-  l_time= &tm_tmp;
+  tm* l_time= &tm_tmp;
   my_time_zone=		3600;		/* Comp. for -3600 in my_gmt_sec */
   my_time.year=		(uint32_t) l_time->tm_year+1900;
   my_time.month=	(uint32_t) l_time->tm_mon+1;
@@ -754,7 +751,7 @@ void init_time(void)
   my_time.time_type=	type::DRIZZLE_TIMESTAMP_NONE;
   my_time.second_part=  0;
   my_time.neg=          false;
-  my_time.convert(epoch, &my_time_zone, &not_used); /* Init my_time_zone */
+  my_time.convert(epoch, &my_time_zone); /* Init my_time_zone */
 }
 
 
@@ -798,7 +795,7 @@ long calc_daynr(uint32_t year,uint32_t month,uint32_t day)
   int temp;
 
   if (year == 0 && month == 0 && day == 0)
-    return(0);				/* Skip errors */
+    return 0;				/* Skip errors */
   delsum= (long) (365L * year+ 31*(month-1) +day);
   if (month <= 2)
       year--;
@@ -832,20 +829,18 @@ namespace type {
   RETURN VALUE
     Time in UTC seconds since Unix Epoch representation.
 */
-void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, bool skip_timezone) const
+void Time::convert(epoch_t &epoch, long *my_timezone) const
 {
-  uint32_t loop;
   int shift= 0;
-  type::Time tmp_time;
-  type::Time *t= &tmp_time;
   struct tm *l_time,tm_tmp;
-  long diff, current_timezone;
+  long diff;
 
   /*
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  tmp_time= *this;
+  type::Time tmp_time= *this;
+  type::Time* t= &tmp_time;
 
   if (not t->isValidEpoch())
   {
@@ -932,24 +927,16 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
   }
 #endif
 
-  epoch= (type::Time::epoch_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
+  epoch= (type::epoch_t) (((calc_daynr((uint32_t) t->year, (uint32_t) t->month, (uint32_t) t->day) -
                    (long) days_at_timestart)*86400L + (long) t->hour*3600L +
                   (long) (t->minute*60 + t->second)) + (time_t) my_time_zone -
                  3600);
 
-  current_timezone= my_time_zone;
-  if (skip_timezone)
-  {
-    util::gmtime(epoch, &tm_tmp);
-  }
-  else
-  {
-    util::localtime(epoch, &tm_tmp);
-  }
-
+  long current_timezone= my_time_zone;
+  util::gmtime(epoch, &tm_tmp);
   l_time= &tm_tmp;
-  for (loop=0;
-       loop < 2 &&
+  int loop= 0;
+  for (; loop < 2 &&
 	 (t->hour != (uint32_t) l_time->tm_hour ||
 	  t->minute != (uint32_t) l_time->tm_min ||
           t->second != (uint32_t) l_time->tm_sec);
@@ -966,14 +953,7 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
           (long) ((int) t->second - (int) l_time->tm_sec));
     current_timezone+= diff+3600;		/* Compensate for -3600 above */
     epoch+= (time_t) diff;
-    if (skip_timezone)
-    {
-      util::gmtime(epoch, &tm_tmp);
-    }
-    else
-    {
-      util::localtime(epoch, &tm_tmp);
-    }
+    util::gmtime(epoch, &tm_tmp);
     l_time=&tm_tmp;
   }
   /*
@@ -1000,8 +980,6 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
       epoch+=3600 - t->minute*60 - t->second;	/* Move to next hour */
     else if (diff == -3600)
       epoch-=t->minute*60 + t->second;		/* Move to previous hour */
-
-    *in_dst_time_gap= true;
   }
   *my_timezone= current_timezone;
 
@@ -1026,7 +1004,6 @@ void Time::convert(epoch_t &epoch, long *my_timezone, bool *in_dst_time_gap, boo
 
 void Time::store(const struct tm &from)
 {
-  _is_local_time= false;
   neg= 0;
   second_part= 0;
   year=	(int32_t) ((from.tm_year+1900) % 10000);
@@ -1046,24 +1023,15 @@ void Time::store(const struct timeval &from)
 }
 
 
-void Time::store(const type::Time::epoch_t &from, bool use_localtime)
+void Time::store(type::epoch_t from)
 {
-  store(from, 0, use_localtime);
+  store(from, 0);
 }
 
-void Time::store(const type::Time::epoch_t &from_arg, const usec_t &from_fractional_seconds, bool use_localtime)
+void Time::store(type::epoch_t from_arg, usec_t from_fractional_seconds)
 {
   epoch_t from= from_arg;
-
-  if (use_localtime)
-  {
-    util::localtime(from, *this);
-    _is_local_time= true;
-  }
-  else
-  {
-    util::gmtime(from, *this);
-  }
+  util::gmtime(from, *this);
 
   // Since time_t/epoch_t doesn't have fractional seconds, we have to
   // collect them outside of the gmtime function.

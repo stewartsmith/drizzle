@@ -67,8 +67,6 @@ int auth_pam_talker(int num_msg,
 
   /* allocate memory to store response */
   response= (struct pam_response*)malloc(num_msg * sizeof(struct pam_response));
-  if(!response)
-    return PAM_CONV_ERR;
 
   /* copy values */
   for(int x= 0; x < num_msg; x++)
@@ -88,8 +86,7 @@ int auth_pam_talker(int num_msg,
       response[x].resp = strdup(userinfo->password);
       break;
     default:
-      if(response)
-        free(response);
+      free(response);
       return PAM_CONV_ERR;
     }
   }

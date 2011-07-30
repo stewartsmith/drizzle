@@ -28,16 +28,14 @@
 #include <drizzled/identifier.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/set_var.h>
-
+#include <drizzled/table/cache.h>
 #include <drizzled/table/unused.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern uint64_t table_cache_size;
 
-namespace table
-{
+namespace table {
 
 UnusedTables &getUnused(void)
 {
@@ -49,7 +47,7 @@ UnusedTables &getUnused(void)
 void UnusedTables::cull()
 {
   /* Free cache if too big */
-  while (cached_open_tables() > table_cache_size && getTable())
+  while (table::getCache().size() > table_cache_size && getTable())
     remove_table(getTable());
 }
 

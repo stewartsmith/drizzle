@@ -67,7 +67,6 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 4; }
-  void sql_type(String &str) const;
   uint32_t max_display_length() { return MY_INT32_NUM_DECIMAL_DIGITS; }
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                               uint32_t max_length,

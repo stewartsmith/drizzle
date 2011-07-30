@@ -67,7 +67,7 @@ namespace drizzled {
 */
 void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 {
-  msg= session->warn_root.strdup_root(msg_arg);
+  msg= session->warn_root.strdup(msg_arg);
 }
 
 /*
@@ -84,17 +84,17 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
     in which case push_warnings() has already called this function.
 */
 
-void drizzle_reset_errors(Session *session, bool force)
+void drizzle_reset_errors(Session& session, bool force)
 {
-  if (session->getQueryId() != session->getWarningQueryId() || force)
+  if (session.getQueryId() != session.getWarningQueryId() || force)
   {
-    session->setWarningQueryId(session->getQueryId());
-    session->warn_root.free_root(MYF(0));
-    memset(session->warn_count, 0, sizeof(session->warn_count));
+    session.setWarningQueryId(session.getQueryId());
+    session.warn_root.free_root(MYF(0));
+    memset(session.warn_count, 0, sizeof(session.warn_count));
     if (force)
-      session->total_warn_count= 0;
-    session->main_da().m_warn_list.clear();
-    session->row_count= 1; // by default point to row 1
+      session.total_warn_count= 0;
+    session.main_da().m_warn_list.clear();
+    session.row_count= 1; // by default point to row 1
   }
 }
 
@@ -122,7 +122,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
   }
 
   if (session->getQueryId() != session->getWarningQueryId())
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, false);
   session->got_warning= 1;
 
   /* Abort if we are using strict mode and we are not using IGNORE */
@@ -142,17 +142,14 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
     level= DRIZZLE_ERROR::WARN_LEVEL_ERROR;
   }
 
-  if (session->handle_error(code, msg, level))
-    return NULL;
-
   DRIZZLE_ERROR *err= NULL;
   if (session->main_da().m_warn_list.size() < session->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
-    err= new (&session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
-    session->main_da().m_warn_list.push_back(err, &session->warn_root);
+    err= new (session->warn_root) DRIZZLE_ERROR(session, code, level, msg);
+    session->main_da().m_warn_list.push_back(err);
   }
-  session->warn_count[(uint32_t) level]++;
+  session->warn_count[level]++;
   session->total_warn_count++;
 
   return err;
@@ -198,7 +195,7 @@ void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level lev
     true  Error sending data to client
 */
 
-const LEX_STRING warning_level_names[]=
+const lex_string_t warning_level_names[]=
 {
   { C_STRING_WITH_LEN("Note") },
   { C_STRING_WITH_LEN("Warning") },
@@ -215,8 +212,7 @@ bool show_warnings(Session *session,
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->getClient()->sendFields(&field_list))
-    return true;
+  session->getClient()->sendFields(field_list);
 
   Select_Lex *sel= &session->lex().select_lex;
   Select_Lex_Unit *unit= &session->lex().unit;
@@ -224,8 +220,7 @@ bool show_warnings(Session *session,
 
   unit->set_limit(sel);
 
-  List<DRIZZLE_ERROR>::iterator it(session->main_da().m_warn_list.begin());
-  while (DRIZZLE_ERROR* err= it++)
+  BOOST_FOREACH(DRIZZLE_ERROR* err, session->main_da().m_warn_list)
   {
     /* Skip levels that the user is not interested in */
     if (! levels_to_show.test(err->level))
@@ -239,10 +234,10 @@ bool show_warnings(Session *session,
     session->getClient()->store((uint32_t) err->code);
     session->getClient()->store(err->msg, strlen(err->msg));
     if (session->getClient()->flush())
-      return(true);
+      return true;
   }
   session->my_eof();
-  return(false);
+  return false;
 }
 
 } /* namespace drizzled */

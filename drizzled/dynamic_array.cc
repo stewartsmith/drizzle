@@ -46,7 +46,7 @@ namespace drizzled {
     false	Ok
 */
 
-bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
+void init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
                             void *init_buffer, uint32_t init_alloc,
                             uint32_t alloc_increment)
 {
@@ -67,13 +67,8 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
   array->alloc_increment=alloc_increment;
   array->size_of_element=element_size;
   if ((array->buffer= (unsigned char*) init_buffer))
-    return(false);
-  if (!(array->buffer=(unsigned char*) malloc(element_size*init_alloc)))
-  {
-    array->max_element=0;
-    return(true);
-  }
-  return(false);
+    return;
+  array->buffer= (unsigned char*) malloc(element_size*init_alloc);
 }
 
 /*
@@ -136,44 +131,16 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
         In this senerio, the buffer is statically preallocated,
         so we have to create an all-new malloc since we overflowed
       */
-      if (!(new_ptr= (char *) malloc((array->max_element+
-                                     array->alloc_increment) *
-                                     array->size_of_element)))
-        return 0;
-      memcpy(new_ptr, array->buffer,
-             array->size() * array->size_of_element);
+      new_ptr= (char*) malloc((array->max_element + array->alloc_increment) * array->size_of_element);
+      memcpy(new_ptr, array->buffer, array->size() * array->size_of_element);
     }
-    else if (!(new_ptr= (char*) realloc(array->buffer,
-                                        (array->max_element+
-                                         array->alloc_increment)*
-                                        array->size_of_element)))
-      return 0;
+    else 
+      new_ptr= (char*) realloc(array->buffer, (array->max_element + array->alloc_increment) * array->size_of_element);
     array->buffer= (unsigned char*) new_ptr;
     array->max_element+=array->alloc_increment;
   }
   array->set_size(array->size() + 1);
   return array->buffer + ((array->size() - 1) * array->size_of_element);
-}
-
-
-/*
-  Pop last element from array.
-
-  SYNOPSIS
-    pop_dynamic()
-      array
-
-  RETURN VALUE
-    pointer	Ok
-    0		Array is empty
-*/
-
-unsigned char *pop_dynamic(DYNAMIC_ARRAY *array)
-{
-  if (!array->size())
-    return 0;
-  array->set_size(array->size() - 1);
-  return array->buffer+(array->size() * array->size_of_element);
 }
 
 /*

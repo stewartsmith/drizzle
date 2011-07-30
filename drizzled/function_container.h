@@ -20,17 +20,19 @@
 
 #pragma once
 
-#include <set>
 #include <boost/unordered_map.hpp>
+#include <drizzled/plugin/table_function.h>
 #include <drizzled/util/string.h>
 
 namespace drizzled {
 
-class FunctionContainer {
+class FunctionContainer 
+{
 public:
-  typedef boost::unordered_map<std::string, Create_func *, util::insensitive_hash, util::insensitive_equal_to> Map;
+  typedef boost::unordered_map<std::string, Create_func*, util::insensitive_hash, util::insensitive_equal_to> Map;
 
-  static Map &getMap();
+  static const Map& getMap();
+  static Map& getMutableMap();
 };
 
 } /* namepsace drizzled */

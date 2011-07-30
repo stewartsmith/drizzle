@@ -22,6 +22,7 @@
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/temporal.h>
 #include <drizzled/item/field.h>
 
@@ -33,7 +34,7 @@ int64_t Item_func_unix_timestamp::val_int()
 
   assert(fixed == 1);
   if (arg_count == 0)
-    return (int64_t) getSession().getCurrentTimestampEpoch();
+    return (int64_t) getSession().times.getCurrentTimestampEpoch();
 
   if (args[0]->type() == FIELD_ITEM)
   {                                             // Optimize timestamp field

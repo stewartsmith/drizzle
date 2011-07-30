@@ -27,10 +27,6 @@
 
 extern const drizzled::charset_info_st *default_charset_info;
 
-static const char *schema_exts[] = {
-  NULL
-};
-
 class Schema : public drizzled::plugin::StorageEngine
 {
   bool writeSchemaFile(const drizzled::identifier::Schema &schema_identifier, const drizzled::message::Schema &db);
@@ -38,7 +34,6 @@ class Schema : public drizzled::plugin::StorageEngine
   bool readSchemaFile(std::string filename, drizzled::message::Schema &schema);
 
   void prime();
-  void startup(drizzled::Session &session);
 
   typedef boost::unordered_map<std::string, drizzled::message::schema::shared_ptr> SchemaCache;
   SchemaCache schema_cache;
@@ -49,20 +44,17 @@ class Schema : public drizzled::plugin::StorageEngine
 public:
   Schema();
 
-  ~Schema();
-
-
-  drizzled::Cursor *create(drizzled::Table &)
+  drizzled::Cursor* create(drizzled::Table&)
   {
     return NULL;
   }
 
-  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector &set_of_names);
+  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector&);
   drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&);
 
-  bool doCreateSchema(const drizzled::message::Schema &schema_message);
+  bool doCreateSchema(const drizzled::message::Schema&);
 
-  bool doAlterSchema(const drizzled::message::Schema &schema_message);
+  bool doAlterSchema(const drizzled::message::Schema&);
 
   bool doDropSchema(const drizzled::identifier::Schema&);
 
@@ -98,10 +90,7 @@ public:
     return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
 
-  const char **bas_ext() const 
-  {
-    return schema_exts;
-  }
+  const char** bas_ext() const;
 
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,

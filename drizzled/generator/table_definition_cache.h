@@ -34,12 +34,8 @@ public:
 
   TableDefinitionCache()
   {
-    definition::Cache::singleton().CopyFrom(local_vector);
+    definition::Cache::CopyFrom(local_vector);
     iter= local_vector.begin();
-  }
-
-  ~TableDefinitionCache()
-  {
   }
 
   operator drizzled::TableShare::shared_ptr()

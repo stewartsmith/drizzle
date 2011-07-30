@@ -317,12 +317,11 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         for (uint i= 0; (tmp= int_it++); i++)
         {
           uint lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(),
-                                       cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
             uint cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
-            interval->type_names[i]= strmake_root(thd->mem_root, conv.ptr(),
+            interval->type_names[i]= strmake(thd->mem_root, conv.ptr(),
                                                   conv.length());
             interval->type_lengths[i]= conv.length();
           }
@@ -554,7 +553,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   {
     DBUG_PRINT("info", ("key name: '%s'  type: %d", key->DOT_STR(name) ? key->DOT_STR(name) :
                         "(none)" , key->type));
-    LEX_STRING key_name_str;
+    lex_string_t key_name_str;
     if (key->type == Key::FOREIGN_KEY)
     {
       fk_key_count++;
@@ -1300,7 +1299,7 @@ int ms_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 	
 	/* setup the column info. */
 	while (info->field_name) {		
-		 LEX_STRING field_name, comment;		 
+		 lex_string_t field_name, comment;		 
 		 field_name.str = (char*)(info->field_name);
 		 field_name.length = strlen(info->field_name);
 		 
@@ -1330,7 +1329,7 @@ int ms_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 	if (keys) {
 #ifdef HAVE_KEYS
 		while (keys->key_name) {
-			LEX_STRING lex;
+			lex_string_t lex;
 			Key *key;
 			enum Key::Keytype type;
 			List<Key_part_spec> col_list;

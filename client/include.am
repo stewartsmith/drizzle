@@ -32,7 +32,6 @@ noinst_PROGRAMS+= \
 
 bin_PROGRAMS+= \
 	       client/drizzle \
-               client/drizzleadmin \
 	       client/drizzledump \
 	       client/drizzleimport \
 	       client/drizzleslap
@@ -58,9 +57,13 @@ noinst_HEADERS+= \
                  client/statement.h \
                  client/stats.h \
                  client/thread_context.h \
+                 client/user_detect.h \
                  client/wakeup.h
 
-client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
+client_drizzle_SOURCES= \
+			client/drizzle.cc \
+			client/linebuffer.cc \
+			client/server_detect.cc
 client_drizzle_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
@@ -68,20 +71,13 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBZ) \
 				client/libgetpassword.la
 
-client_drizzleadmin_CXXFLAGS=   ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS} -DDRIZZLE_ADMIN_TOOL
-client_drizzleadmin_SOURCES=    client/drizzle.cc client/linebuffer.cc
-client_drizzleadmin_LDADD=      ${READLINE_LIBS} ${BOOST_LIBS} \
-                                libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
-                                $(LIBINTL) \
-                                $(LIBZ) \
-                                client/libgetpassword.la
-
 client_drizzledump_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \
 			    client/drizzledump_data.cc \
 			    client/drizzledump_drizzle.cc \
-			    client/drizzledump_mysql.cc
+			    client/drizzledump_mysql.cc \
+			    client/server_detect.cc
 
 client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 

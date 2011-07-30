@@ -22,10 +22,9 @@
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/definitions.h>
 
-namespace drizzled
-{
-namespace memory
-{
+namespace drizzled {
+namespace memory {
+
 /*
   Malloc many pointers at the same time
   Only ptr1 can be free'd, and doing this will free all
@@ -63,10 +62,9 @@ void* multi_malloc(bool zerofill, ...)
 
 #ifdef HAVE_VALGRIND
   if (!(start= calloc(0, tot_length)))
-    return(0);
+    return 0;
 #else
-  if (!(start= malloc(tot_length)))
-    return(0);
+  start= malloc(tot_length);
   if (zerofill)
     memset(start, 0, tot_length);
 #endif
