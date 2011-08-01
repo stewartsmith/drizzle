@@ -490,7 +490,6 @@ bool MSBackup::doWork()
 		
 		new_(head, CSStringBuffer(100));
 		push_(head);
-                (void)src_repo_id;
 
 		src_repo = (MSRepository*)bu_BackupList->get(0);
 		while (src_repo && !myMustQuit) {
