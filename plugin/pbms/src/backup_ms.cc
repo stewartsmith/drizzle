@@ -464,7 +464,6 @@ bool MSBackup::doWork()
 		uint32_t				tab_id;
 		uint64_t				blob_id;
 		MSOpenTable			*otab;
-		uint32_t				src_repo_id;
 		uint8_t				status;
 		uint8_t				blob_storage_type;
 		uint16_t				tab_index;
@@ -504,7 +503,6 @@ bool MSBackup::doWork()
 			dst_file = dst_repo->openRepoFile();
 			push_(dst_file);
 			
-			src_repo_id = src_repo->myRepoID;
 			src_offset = src_repo->myRepoHeadSize;
 			prev_offset = 0;
 			while (src_offset < src_repo->myRepoFileSize) {	
