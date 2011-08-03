@@ -172,7 +172,7 @@ void drizzle_free(drizzle_st *drizzle)
   else if (drizzle->options & DRIZZLE_ASSERT_DANGLING)
   {
     assert(drizzle->con_list == NULL);
-    assert(drizzle->con_list == NULL);
+    assert(drizzle->query_list == NULL);
   }
 
   free(drizzle->pfds);
