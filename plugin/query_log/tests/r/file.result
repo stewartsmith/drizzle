@@ -72,14 +72,14 @@ this is the second log file
 this is the second log file
 Log file exists
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
@@ -94,21 +94,21 @@ SELECT 'this is the third log file';
 this is the third log file
 this is the third log file
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
 SET GLOBAL query_log_file="third-log-file";
 #
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
 SELECT @@query_log_enabled, @@query_log_file_enabled, @@query_log_file;
 #
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
@@ -129,14 +129,14 @@ SET GLOBAL query_log_file_enabled=TRUE;
 SELECT @@query_log_enabled, @@query_log_file_enabled;
 #
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
 # 0000-00-00T00:00:00.000000
-# session_id=0 query_id=00 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
@@ -160,3 +160,5 @@ SLEEP(0.5)
 0
 Checking attributes and values of query SELECT SLEEP(0.5);
 execution_time value between 0.5 and 0.59 OK
+SET GLOBAL query_log_enabled=TRUE;
+SET GLOBAL query_log_file_enabled=FALSE;
