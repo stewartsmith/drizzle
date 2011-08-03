@@ -1,9 +1,0 @@
-create table t1 (a int auto_increment primary key);
-insert into t1 values (),(),(),();
-select * from t1;
-a
-1
-2
-3
-4
-drop table t1;

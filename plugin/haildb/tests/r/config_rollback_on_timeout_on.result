@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_rollback_on_timeout';
-Variable_name	Value
-innodb_rollback_on_timeout	ON
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='rollback_on_timeout';
-NAME	TYPE	VALUE
-rollback_on_timeout	BOOL	true

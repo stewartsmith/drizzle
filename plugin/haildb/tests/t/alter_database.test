@@ -1,8 +1,0 @@
-create database foo;
-show create database foo;
-alter database foo collate = utf8_bin;
-show create database foo;
-alter database foo collate = utf8_esperanto_ci;
-show create database foo;
-drop database foo;
-

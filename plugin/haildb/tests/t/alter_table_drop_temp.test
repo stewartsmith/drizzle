@@ -1,4 +1,0 @@
-create table t1 (a int primary key);
-alter table t1 add column b varchar(10);
-show tables;
-drop table t1;
