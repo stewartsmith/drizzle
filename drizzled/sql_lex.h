@@ -767,10 +767,7 @@ enum enum_comment_state
 
 } /* namespace drizzled */
 
-#include <drizzled/lex_input_stream.h>
-
-namespace drizzled
-{
+namespace drizzled {
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -784,9 +781,9 @@ public:
   Select_Lex *all_selects_list;
 
   /* This is the "scale" for DECIMAL (S,P) notation */
-  char *length;
+  const char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
-  char *dec;
+  const char *dec;
 
   /**
    * This is used kind of like the "ident" member variable below, as
@@ -919,8 +916,6 @@ public:
   {
     context_stack.pop();
   }
-
-  bool copy_db_to(char **p_db, size_t *p_db_length) const;
 
   Name_resolution_context *current_context()
   {

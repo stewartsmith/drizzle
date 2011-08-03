@@ -43,7 +43,7 @@ void XID::set(long g, long b, const char *d)
   memcpy(data, d, g+b);
 }
 
-bool XID::is_null()
+bool XID::is_null() const
 {
   return formatID == -1;
 }

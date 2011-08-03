@@ -33,14 +33,13 @@ bool statement::Insert::execute()
   TableList *first_table= (TableList *) lex().select_lex.table_list.first;
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool need_start_waiting= false;
 
   if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
 
-  if (! (need_start_waiting= ! session().wait_if_global_read_lock(false, true)))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }

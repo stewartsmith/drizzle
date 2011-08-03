@@ -156,14 +156,12 @@ bool TableList::process_index_hints(Table *tbl)
     key_map index_join[INDEX_HINT_FORCE + 1];
     key_map index_order[INDEX_HINT_FORCE + 1];
     key_map index_group[INDEX_HINT_FORCE + 1];
-    Index_hint *hint;
-    int type;
     bool have_empty_use_join= false, have_empty_use_order= false,
          have_empty_use_group= false;
     List_iterator <Index_hint> iter(index_hints->begin());
 
     /* initialize temporary variables used to collect hints of each kind */
-    for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
+    for (int type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
     {
       index_join[type].reset();
       index_order[type].reset();
@@ -171,10 +169,8 @@ bool TableList::process_index_hints(Table *tbl)
     }
 
     /* iterate over the hints list */
-    while ((hint= iter++))
+    while (Index_hint* hint= iter++)
     {
-      uint32_t pos= 0;
-
       /* process empty USE INDEX () */
       if (hint->type == INDEX_HINT_USE && !hint->key_name.str)
       {
@@ -200,6 +196,7 @@ bool TableList::process_index_hints(Table *tbl)
         Check if an index with the given name exists and get his offset in
         the keys bitmask for the table
       */
+      uint32_t pos= 0;
       if (not tbl->getShare()->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
       {
         my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
@@ -292,10 +289,9 @@ void TableList::print(Session *session, String *str)
       if (alias && alias[0])
       {
         str->append(' ');
-
         string t_alias(alias);
         boost::to_lower(t_alias);
-        str->append_identifier(t_alias.c_str(), t_alias.length());
+        str->append_identifier(t_alias);
       }
     }
 
@@ -304,8 +300,8 @@ void TableList::print(Session *session, String *str)
       List<Index_hint>::iterator it(index_hints->begin());
       while (Index_hint* hint= it++)
       {
-        str->append (STRING_WITH_LEN(" "));
-        hint->print (session, str);
+        str->append(STRING_WITH_LEN(" "));
+        hint->print(session, str);
       }
     }
   }

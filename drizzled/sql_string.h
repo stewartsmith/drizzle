@@ -22,6 +22,7 @@
 /* This file is originally from the mysql distribution. Coded by monty */
 
 #include <drizzled/common.h>
+#include <drizzled/util/data_ref.h>
 
 #include <cassert>
 #include <cstdlib>
@@ -119,6 +120,7 @@ public:
     return Ptr;
   }
   void append_identifier(const char *name, size_t length);
+  void append_identifier(str_ref);
 
   void set(String &str,size_t offset,size_t arg_length)
   {

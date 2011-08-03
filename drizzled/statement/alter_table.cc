@@ -50,6 +50,7 @@
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 using namespace std;
 
@@ -105,7 +106,6 @@ bool statement::AlterTable::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
-  bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
 
@@ -157,7 +157,7 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  if (not (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
+  if (session().wait_if_global_read_lock(0, 1))
     return true;
 
   bool res;
@@ -1598,9 +1598,9 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
-        tables.setTableName(from->getMutableShare()->getTableName());
+        tables.setTableName(from->getMutableShare()->getTableName(), from->getMutableShare()->getTableNameSize());
         tables.alias= tables.getTableName();
-        tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
+        tables.setSchemaName(from->getMutableShare()->getSchemaName(), from->getMutableShare()->getSchemaNameSize());
         error= 1;
 
         session->lex().select_lex.setup_ref_array(session, order_num);
@@ -1615,7 +1615,7 @@ copy_data_between_tables(Session *session,
     /* Tell handler that we have values for all columns in the to table */
     to->use_all_columns();
 
-    error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+    error= info.init_read_record(session, from, NULL, 1, true);
     if (error)
     {
       to->print_error(errno, MYF(0));
@@ -1735,12 +1735,12 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
   if (table->getShare()->getType())
   {
     TableList tbl;
-    tbl.setSchemaName(const_cast<char *>(identifier.getSchemaName().c_str()));
-    tbl.alias= const_cast<char *>(identifier.getTableName().c_str());
-    tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
+    tbl.setSchemaName(identifier.getSchemaName().c_str(), identifier.getSchemaName().size());
+    tbl.alias= identifier.getTableName().c_str();
+    tbl.setTableName(identifier.getTableName().c_str(), identifier.getTableName().size());
 
     /* Table is in session->temporary_tables */
-    return session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {

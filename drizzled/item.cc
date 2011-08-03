@@ -371,7 +371,7 @@ void Item::print_item_w_name(String *str)
   if (name)
   {
     str->append(STRING_WITH_LEN(" AS "));
-    str->append_identifier(name, (uint32_t) strlen(name));
+    str->append_identifier(str_ref(name));
   }
 }
 

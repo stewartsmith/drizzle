@@ -39,9 +39,8 @@ bool statement::Delete::execute()
   assert(first_table == all_tables && first_table != 0);
   assert(select_lex->offset_limit == 0);
   unit->set_limit(select_lex);
-  bool need_start_waiting= false;
 
-  if (! (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
+  if (session().wait_if_global_read_lock(0, 1))
   {
     return true;
   }

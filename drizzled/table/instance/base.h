@@ -187,11 +187,9 @@ private:
 
   std::vector<std::string> _keynames;
 
-  void addKeyName(std::string arg)
+  void addKeyName(const std::string& arg)
   {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-    _keynames.push_back(arg);
+    _keynames.push_back(boost::to_upper_copy(arg));
   }
 
 public:
@@ -200,12 +198,9 @@ public:
     return doesKeyNameExist(std::string(name_arg, name_length), position);
   }
 
-  bool doesKeyNameExist(std::string arg, uint32_t &position) const
+  bool doesKeyNameExist(const std::string& arg, uint32_t &position) const
   {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), boost::to_upper_copy(arg));
 
     if (iter == _keynames.end())
     {
@@ -214,7 +209,6 @@ public:
     }
 
     position= iter -  _keynames.begin();
-
     return true;
   }
 
@@ -314,9 +308,7 @@ public:
 
   const std::string &getTableName(std::string &name_arg) const
   {
-    name_arg.clear();
-    name_arg.append(table_name.str, table_name.length);
-
+    name_arg.assign(table_name.str, table_name.length);
     return name_arg;
   }
 
@@ -325,11 +317,14 @@ public:
     return db.str;
   }
 
+  size_t getSchemaNameSize() const
+  {
+    return db.length;
+  }
+
   const std::string &getSchemaName(std::string &schema_name_arg) const
   {
-    schema_name_arg.clear();
-    schema_name_arg.append(db.str, db.length);
-
+    schema_name_arg.assign(db.str, db.length);
     return schema_name_arg;
   }
 

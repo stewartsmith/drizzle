@@ -633,13 +633,10 @@ bool prepare_update(Session *session, TableList *table_list,
     return true;
 
   /* Check that we are not using table that we are updating in a sub select */
+  if (unique_table(table_list, table_list->next_global))
   {
-    TableList *duplicate;
-    if ((duplicate= unique_table(table_list, table_list->next_global)))
-    {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
-      return true;
-    }
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
+    return true;
   }
 
   return false;

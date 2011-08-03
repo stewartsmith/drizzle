@@ -45,6 +45,7 @@
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 #include <algorithm>
 #include <sstream>

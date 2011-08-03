@@ -1014,12 +1014,10 @@ drizzled/generated_probes.h : drizzled/probes.d
 	mv dtrace_probes.tmp drizzled/generated_probes.h
 
 
-SUFFIXES+= .d .gch .gperf .stamp-h
+SUFFIXES+= .d .gperf .stamp-h
 
-if BUILD_GCC_PCH
-.h.gch:
-	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
-endif
+config.h.gch: config.h
+	${CXXCOMPILE} $<
 
 drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
 

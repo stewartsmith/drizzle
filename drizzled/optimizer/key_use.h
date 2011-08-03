@@ -75,7 +75,7 @@ public:
     return val;
   }
 
-  table_map getUsedTables()
+  table_map getUsedTables() const
   {
     return used_tables;
   }
@@ -95,7 +95,7 @@ public:
     return optimize;
   }
 
-  key_part_map getKeypartMap()
+  key_part_map getKeypartMap() const
   {
     return keypart_map;
   }

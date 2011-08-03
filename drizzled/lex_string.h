@@ -21,8 +21,7 @@
 
 #include <cstddef>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   lex_string_t -- a pair of a C-string and its length.
@@ -31,7 +30,17 @@ namespace drizzled
 /* This definition must match the one given in mysql/plugin.h */
 struct lex_string_t
 {
-  char *str;
+  const char* begin() const
+  {
+    return str;
+  }
+
+  const char* end() const
+  {
+    return str + length;
+  }
+
+  char* str;
   size_t length;
 };
 
@@ -63,9 +72,8 @@ public:
 
 };
 
-
-#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
-#define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))
+#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1))) // remove size_t cast
+#define C_STRING_WITH_LEN(X) (const_cast<char*>((X))), (static_cast<size_t>((sizeof(X) - 1)))
 
 } /* namespace drizzled */
 

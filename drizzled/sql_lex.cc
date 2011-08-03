@@ -34,6 +34,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/plugin.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -316,14 +317,12 @@ static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t length, char quote)
 {
   lex_string_t tmp;
-  const char *from, *end;
-  char *to;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
   tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
-  from= lip->get_tok_start() + skip;
-  to= tmp.str;
-  end= to+length;
+  const char* from= lip->get_tok_start() + skip;
+  char* to= (char*)tmp.str;
+  const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + length;
@@ -1818,29 +1817,6 @@ LEX::LEX() :
     _exists(false)
 {
   reset_query_tables_list(true);
-}
-
-/**
-  This method should be called only during parsing.
-  It is aware of compound statements (stored routine bodies)
-  and will initialize the destination with the default
-  database of the stored routine, rather than the default
-  database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database
-  set to 'bar' and then issues:
-
-  CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
-
-  t1 is meant to refer to foo.t1, not to bar.t1.
-
-  This method is needed to support this rule.
-
-  @return true in case of error (parsing should be aborted, false in
-  case of success
-*/
-bool LEX::copy_db_to(char **p_db, size_t *p_db_length) const
-{
-  return session->copy_db_to(p_db, p_db_length);
 }
 
 /*

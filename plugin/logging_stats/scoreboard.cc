@@ -63,39 +63,25 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
   /* calculate the number of elements in each bucket */
   number_per_bucket= static_cast<uint32_t> ( ceil( static_cast<double>(number_sessions) / static_cast<double>(number_buckets) ) );
 
+  vector_of_scoreboard_vectors.reserve(number_buckets);
   /* populate the vector of scoreboard vectors */
   for (uint32_t j= 0; j < number_buckets; ++j)
   {
-    vector<ScoreboardSlot* > *scoreboard_vector= new vector<ScoreboardSlot* >();
+    vector<ScoreboardSlot* > *scoreboard_vector= new vector<ScoreboardSlot*>;
 
+    scoreboard_vector->reserve(number_per_bucket);
     /* preallocate the individual vectors */
-    vector<ScoreboardSlot* >::iterator scoreboard_vector_iterator= scoreboard_vector->begin();
     for (uint32_t h= 0; h < number_per_bucket; ++h)
-    {
-      ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
-      scoreboard_vector_iterator= scoreboard_vector->insert(scoreboard_vector_iterator, scoreboard_slot);
-    }  
-    scoreboard_vector->resize(number_per_bucket);
-
+      scoreboard_vector->push_back(new ScoreboardSlot);
 
     /* insert the vector into the vector of scoreboard vectors */
-    vector<vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_iterator= 
-      vector_of_scoreboard_vectors.begin();
-
-    vector_of_scoreboard_vectors_iterator= 
-      vector_of_scoreboard_vectors.insert(vector_of_scoreboard_vectors_iterator, scoreboard_vector); 
+    vector_of_scoreboard_vectors.push_back(scoreboard_vector); 
   }
-  vector_of_scoreboard_vectors.resize(number_buckets);
   
+  vector_of_scoreboard_locks.reserve(number_buckets);
   /* populate the scoreboard locks vector each ScoreboardSlot vector gets a lock */
-  vector<boost::shared_mutex* >::iterator vector_of_scoreboard_locks_iterator= vector_of_scoreboard_locks.begin();
   for (uint32_t k= 0; k < number_buckets; ++k)
-  {
-    boost::shared_mutex* lock= new boost::shared_mutex();
-    vector_of_scoreboard_locks_iterator= 
-      vector_of_scoreboard_locks.insert(vector_of_scoreboard_locks_iterator, lock);   
-  } 
-  vector_of_scoreboard_locks.resize(number_buckets);
+    vector_of_scoreboard_locks.push_back(new boost::shared_mutex);
 
   /* calculate the approximate memory allocation of the scoreboard */
   size_t statusVarsSize= sizeof(StatusVars) + sizeof(system_status_var);
@@ -106,37 +92,19 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
 
 Scoreboard::~Scoreboard()
 {
-  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors.begin();
-  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors.end();
-
-  for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
+  BOOST_FOREACH(std::vector<ScoreboardSlot*>* it0, vector_of_scoreboard_vectors)
   {
-    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it; 
-
-    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
-    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
-    for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
-    {
-      delete *scoreboard_vector_it; 
-    }
-    
-    scoreboard_vector->clear();
-    delete scoreboard_vector;
-  } // vector_of_scoreboard_vectors is not on the stack and does not deletion
-  
-  vector<boost::shared_mutex* >::iterator vector_of_scoreboard_locks_it= vector_of_scoreboard_locks.begin();
-  vector<boost::shared_mutex* >::iterator vector_of_scoreboard_locks_end= vector_of_scoreboard_locks.end();
-
-  for (; vector_of_scoreboard_locks_it != vector_of_scoreboard_locks_end; ++vector_of_scoreboard_locks_it)
-  {
-    boost::shared_mutex* lock= *vector_of_scoreboard_locks_it;
-    delete lock;
+    BOOST_FOREACH(ScoreboardSlot* it, *it0)
+      delete it; 
+    delete it0;
   }
+  BOOST_FOREACH(boost::shared_mutex* it, vector_of_scoreboard_locks)
+    delete it;
 }
 
-uint32_t Scoreboard::getBucketNumber(Session *session)
+uint32_t Scoreboard::getBucketNumber(Session *session) const
 {
-  return (session->getSessionId() % number_buckets);
+  return session->getSessionId() % number_buckets;
 }
 
 ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session) 
@@ -150,38 +118,28 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
   /* Check if this session has already claimed a slot */
   int32_t session_scoreboard_slot= session->getScoreboardIndex();
 
-  if (session_scoreboard_slot == -1)
-  {
-    boost::shared_mutex* LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
-    LOCK_scoreboard_vector->lock();
- 
-    ScoreboardSlot *scoreboard_slot= NULL;
+  if (session_scoreboard_slot != -1)
+    return scoreboard_vector->at(session_scoreboard_slot);
 
-    int32_t slot_index= 0;
-    for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-         it != scoreboard_vector->end(); ++it, ++slot_index)
-    {
-      scoreboard_slot= *it;
+  boost::shared_mutex* LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
+  LOCK_scoreboard_vector->lock();
 
-      if (scoreboard_slot->isInUse() == false)
-      {
-        scoreboard_slot->setInUse(true);
-        scoreboard_slot->setSessionId(session->getSessionId());
-        scoreboard_slot->setUser(session->user()->username());
-        scoreboard_slot->setIp(session->user()->address());
-        session->setScoreboardIndex(slot_index);
-        LOCK_scoreboard_vector->unlock();
-        return scoreboard_slot; 
-      }
-    }
-  
-    LOCK_scoreboard_vector->unlock(); 
-  } 
-  else // already claimed a slot just do a lookup
+  int32_t slot_index= 0;
+  for (vector<ScoreboardSlot*>::iterator it= scoreboard_vector->begin(); it != scoreboard_vector->end(); ++it, ++slot_index)
   {
-    ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
-    return scoreboard_slot;  
+    ScoreboardSlot& slot= **it;
+    if (slot.isInUse())
+      continue;
+    slot.setInUse(true);
+    slot.setSessionId(session->getSessionId());
+    slot.setUser(session->user()->username());
+    slot.setIp(session->user()->address());
+    session->setScoreboardIndex(slot_index);
+    LOCK_scoreboard_vector->unlock();
+    return &slot; 
   }
+
+  LOCK_scoreboard_vector->unlock(); 
 
   /* its possible we did not claim a slot if the scoreboard size is somehow smaller then the 
      active connections */ 
@@ -190,20 +148,9 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
 
 ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session)
 {
-  /* our bucket */
-  uint32_t bucket_number= getBucketNumber(session);
-
-  /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
-
   /* Check if this session has already claimed a slot */
   int32_t session_scoreboard_slot= session->getScoreboardIndex();
-
   if (session_scoreboard_slot == -1) 
-  {
     return NULL;
-  }
-
-  ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
-  return scoreboard_slot;
+  return vector_of_scoreboard_vectors.at(getBucketNumber(session))->at(session_scoreboard_slot);
 }

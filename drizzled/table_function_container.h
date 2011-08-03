@@ -34,13 +34,12 @@ class TableFunctionContainer {
 public:
   plugin::TableFunction *getFunction(const std::string &path);
 
-  void getNames(const std::string &predicate,
-                std::set<std::string> &set_of_names);
+  void getNames(const std::string &predicate, std::set<std::string> &set_of_names);
 
 
   void addFunction(plugin::TableFunction *tool);
 
-  const ToolMap& getTableContainer()
+  const ToolMap& getTableContainer() const
   {
     return table_map;
   }

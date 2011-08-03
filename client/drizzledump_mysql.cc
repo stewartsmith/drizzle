@@ -382,7 +382,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     old_type.erase(pos, std::string::npos);
   }
 
-  std::transform(old_type.begin(), old_type.end(), old_type.begin(), ::toupper);
+  boost::to_upper(old_type);
   if ((old_type.find("CHAR") != std::string::npos) or 
     (old_type.find("TEXT") != std::string::npos))
     setCollate(raw_collation);

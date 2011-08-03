@@ -302,8 +302,7 @@ void FilteredReplicator::populateFilter(std::string input,
    * Convert the input string to lowercase so that all entries in the vector
    * will be in lowercase.
    */
-  std::transform(input.begin(), input.end(),
-                 input.begin(), ::tolower);
+  boost::to_lower(input);
   string::size_type last_pos= input.find_first_not_of(',', 0);
   string::size_type pos= input.find_first_of(',', last_pos);
 
@@ -382,8 +381,7 @@ void FilteredReplicator::parseQuery(const string &sql,
    * Convert the type string to uppercase here so that it doesn't
    * matter what case the user entered the statement in.
    */
-  std::transform(type.begin(), type.end(),
-                 type.begin(), ::toupper);
+  boost::to_upper(type);
 
   if (type.compare("DROP") == 0)
   {

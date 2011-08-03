@@ -59,6 +59,8 @@
 #include <drizzled/system_variables.h>
 #include <drizzled/session/times.h>
 #include <drizzled/session/transactions.h>
+#include <drizzled/create_field.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <limits.h>
 
@@ -805,12 +807,12 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 */
 
 bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
-		       char *length, char *decimals,
+		       const char *length, const char *decimals,
 		       uint32_t type_modifier,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
                        lex_string_t *comment,
-		       char *change,
+		       const char *change,
                        List<String> *interval_list, const charset_info_st * const cs)
 {
   register CreateField *new_field;
@@ -920,12 +922,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                                          lex_string_t *option)
 {
   TableList *previous_table_ref; /* The table preceding the current one. */
-  char *alias_str;
   LEX *lex= &session->lex();
 
   if (!table)
     return NULL;				// End of memory
-  alias_str= alias ? alias->str : table->table.str;
+  const char* alias_str= alias ? alias->str : table->table.str;
   if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
@@ -961,18 +962,16 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str);
-    ptr->db_length= table->db.length;
+    ptr->setSchemaName(table->db.str, table->db.length);
   }
-  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
+  else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
     return NULL;
   else
     ptr->setIsFqtn(false);
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str);
-  ptr->table_name_length=table->table.length;
+  ptr->setTableName(table->table.str, table->table.length);
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
@@ -984,15 +983,13 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (lock_type != TL_IGNORE)
   {
     TableList *first_table= (TableList*) table_list.first;
-    for (TableList *tables= first_table ;
-	 tables ;
-	 tables=tables->next_local)
+    for (TableList *tables= first_table; tables; tables= tables->next_local)
     {
       if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
+        not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
-	return NULL;
+        my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+        return NULL;
       }
     }
   }

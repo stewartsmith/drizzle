@@ -42,6 +42,7 @@
 #include <drizzled/item/subselect.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
+#include <drizzled/create_field.h>
 
 #include <algorithm>
 
