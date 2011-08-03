@@ -1,8 +1,0 @@
-CREATE TABLE t1 (a decimal(2,1));
-insert into t1 values (1.0),(1.1),(2.0);
-select * from t1 order by a;
-a
-1.0
-1.1
-2.0
-drop table t1;

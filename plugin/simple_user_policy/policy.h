@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <iostream>
+#include <iosfwd>
 
 #include <drizzled/plugin/authorization.h>
 

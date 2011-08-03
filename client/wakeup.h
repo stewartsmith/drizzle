@@ -18,12 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#pragma once
+
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/shared_ptr.hpp>
-
-#ifndef CLIENT_WAKEUP_H
-#define CLIENT_WAKEUP_H
 
 namespace client {
 
@@ -68,5 +67,3 @@ private:
 };
 
 } // namespace client
-
-#endif /* CLIENT_WAKEUP_H */

@@ -110,7 +110,7 @@ static void init_state_maps(charset_info_st *cs)
       state_map[i]= MY_LEX_CHAR;
   }
   state_map['_']=state_map['$']= MY_LEX_IDENT;
-  state_map['\'']= MY_LEX_STRING;
+  state_map['\'']= MY_lex_string_t;
   state_map['.']= MY_LEX_REAL_OR_POINT;
   state_map['>']=state_map['=']=state_map['!']=  MY_LEX_CMP_OP;
   state_map['<']=  MY_LEX_LONG_CMP_OP;

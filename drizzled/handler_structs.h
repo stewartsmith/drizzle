@@ -86,7 +86,7 @@ typedef struct key_create_information_st
 {
   ha_key_alg algorithm;
   uint32_t block_size;
-  LEX_STRING comment;
+  lex_string_t comment;
 } KEY_CREATE_INFO;
 
 

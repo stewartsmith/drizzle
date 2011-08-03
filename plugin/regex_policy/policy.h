@@ -24,8 +24,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 #include <boost/regex.hpp>
 #include <boost/unordered_map.hpp>

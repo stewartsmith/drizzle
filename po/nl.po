@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-07-19 21:27+0000\n"
+"POT-Creation-Date: 2011-08-02 16:49+0000\n"
 "PO-Revision-Date: 2010-07-26 20:28+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
-"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-07-27 03:57+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -923,8 +923,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -3149,8 +3149,8 @@ msgstr "Data afgebroken voor kolom '%s' in rij %ld"
 #, c-format
 msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
 msgstr ""
-"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking "
-"'%s'"
+"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking '%"
+"s'"
 
 #: ../drizzled/error.cc:460
 #, c-format
@@ -3218,8 +3218,8 @@ msgid ""
 "The '%s' feature is disabled; you need Drizzle built with '%s' to have it "
 "working"
 msgstr ""
-"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met "
-"'%s' nodig om dit te laten werken"
+"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met '%"
+"s' nodig om dit te laten werken"
 
 #: ../drizzled/error.cc:471
 #, c-format
@@ -3522,8 +3522,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 "Het behoud van foreign key constraints voor tabel '%.192s', waarde "
 "'%-.192s', sleutel %d zou leiden tot een dubbele vermelding"
@@ -4290,8 +4290,8 @@ msgid ""
 "\n"
 msgstr ""
 "Het is mogelijk dat drizzled tot \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-"%<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+"<PRIu64> K\n"
 "bytes geheugen gebruikt\n"
 "Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen in "
 "deze vergelijking.\n"
@@ -4510,204 +4510,6 @@ msgstr "Reguliere expressie toe te passen op de te filteren schema's"
 #, fuzzy
 msgid "Regular expression to apply to tables to exclude"
 msgstr "Reguliere expressie toe te passen op de te filteren tabellen"
-
-#: ../plugin/haildb/haildb_engine.cc:1086
-#: ../plugin/haildb/haildb_engine.cc:1223
-#: ../plugin/haildb/haildb_engine.cc:1253
-#, fuzzy, c-format
-msgid "Cannot create table %s. HailDB Error %d (%s)\n"
-msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
-
-#: ../plugin/haildb/haildb_engine.cc:1105
-#, fuzzy, c-format
-msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
-msgstr "Kan symlink '%s' verwijzend naar '%s' niet creëren (Fout %d)"
-
-#: ../plugin/haildb/haildb_engine.cc:1202
-#: ../plugin/haildb/haildb_engine.cc:1315
-#: ../plugin/haildb/haildb_engine.cc:1496
-#: ../plugin/haildb/haildb_engine.cc:2161
-#, fuzzy, c-format
-msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
-msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
-
-#: ../plugin/haildb/haildb_engine.cc:1354
-#: ../plugin/haildb/haildb_engine.cc:1370
-#, fuzzy, c-format
-msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
-msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
-
-#: ../plugin/haildb/haildb_engine.cc:3407
-#, c-format
-msgid "Error starting HailDB %d (%s)\n"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3436
-msgid "Disable HailDB adaptive hash index (enabled by default)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3438
-msgid "Do not attempt to flush dirty pages to avoid IO bursts at checkpoints."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3441
-msgid ""
-"Size of a memory pool HailDB uses to store data dictionary information and "
-"other internal data structures."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3444
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
-msgid "Data file autoextend increment in megabytes"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3447
-#, fuzzy
-msgid ""
-"The size of the memory buffer HailDB uses to cache data and indexes of its "
-"tables."
-msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
-
-#: ../plugin/haildb/haildb_engine.cc:3450
-msgid "The common part for HailDB table spaces."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3452
-msgid "Disable HailDB checksums validation (enabled by default)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3454
-msgid "Disable HailDB doublewrite buffer (enabled by default)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3457
-msgid "Number of IOPs the server can do. Tunes the background IO rate"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3460
-msgid ""
-"Speeds up the shutdown process of the HailDB storage engine. Possible values "
-"are 0, 1 (faster) or 2 (fastest - crash-like)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3463
-msgid "Stores each HailDB table to an .ibd file in the database dir."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3466
-msgid "File format to use for new tables in .ibd files."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3469
-msgid ""
-"Set to 0 (write and flush once per second),1 (write and flush at each "
-"commit) or 2 (write at commit, flush once per second)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3472
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
-msgid "With which method to flush data."
-msgstr ""
-
-#. ####### Should we use this option? #######
-#: ../plugin/haildb/haildb_engine.cc:3475
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
-msgid ""
-"Helps to save your data in case the disk image of the database becomes "
-"corrupt."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3478
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
-msgid "Path to individual files and their sizes."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3481
-#, fuzzy
-msgid "Path to HailDB log files."
-msgstr "Pad voor tijdelijke bestanden."
-
-#: ../plugin/haildb/haildb_engine.cc:3484
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
-msgid "Size of each log file in a log group."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3487
-msgid ""
-"Number of log files in the log group. HailDB writes to the files in a "
-"circular fashion. Value 3 is recommended here."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3490
-msgid ""
-"Timeout in seconds an HailDB transaction may wait for a lock before being "
-"rolled back. Values above 100000000 disable the timeout."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3493
-#, fuzzy
-msgid ""
-"The size of the buffer which HailDB uses to write log to the log files on "
-"disk."
-msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
-
-#: ../plugin/haildb/haildb_engine.cc:3496
-msgid ""
-"Sets the point in the LRU list from where all pages are classified as old "
-"(Advanced users)"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3499
-msgid ""
-"Milliseconds between accesses to a block at which it is made young. "
-"0=disabled (Advanced users)"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3502
-#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
-msgid "Percentage of dirty pages allowed in bufferpool."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3505
-msgid "Desired maximum length of the purge queue (0 = no limit)"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3508
-msgid ""
-"Roll back the complete transaction on lock wait timeout, for 4.x "
-"compatibility (disabled by default)"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3511
-msgid "How many files at the maximum HailDB keeps open at the same time."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3514
-msgid "Number of background read I/O threads in HailDB."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3517
-msgid "Number of background write I/O threads in HailDB."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3519
-msgid ""
-"Disable if you want to reduce the number of messages written to the log "
-"(default: enabled)."
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3522
-msgid "Enable SHOW HAILDB STATUS output in the log"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3525
-msgid "Count of spin-loop rounds in HailDB mutexes (30 by default)"
-msgstr ""
-
-#: ../plugin/haildb/haildb_engine.cc:3527
-msgid ""
-"Use HailDB's internal memory allocator instead of the OS memory allocator"
-msgstr ""
 
 #: ../plugin/hello_events/hello_events.cc:402
 msgid "Enable Example Events Plugin"
@@ -4959,6 +4761,10 @@ msgid ""
 "other internal data structures."
 msgstr ""
 
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4773
+msgid "Data file autoextend increment in megabytes"
+msgstr ""
+
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4774
 #, fuzzy
 msgid ""
@@ -4970,6 +4776,10 @@ msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
 msgid ""
 "Enable InnoDB checksums validation (enabled by default). Disable with --skip-"
 "innodb-checksums."
+msgstr ""
+
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4776
+msgid "Path to individual files and their sizes."
 msgstr ""
 
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4777
@@ -4996,6 +4806,17 @@ msgid ""
 "commit) or 2 (write at commit, flush once per second)."
 msgstr ""
 
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4782
+msgid "With which method to flush data."
+msgstr ""
+
+#. ####### Should we use this option? #######
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4784
+msgid ""
+"Helps to save your data in case the disk image of the database becomes "
+"corrupt."
+msgstr ""
+
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4785
 msgid ""
 "Timeout in seconds an InnoDB transaction may wait for a lock before being "
@@ -5009,6 +4830,10 @@ msgid ""
 "disk."
 msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
 
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4787
+msgid "Size of each log file in a log group."
+msgstr ""
+
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4788
 msgid ""
 "Number of log files in the log group. InnoDB writes to the files in a "
@@ -5019,6 +4844,10 @@ msgstr ""
 #, fuzzy
 msgid "Path to InnoDB log files."
 msgstr "Pad voor tijdelijke bestanden."
+
+#: ../plugin/innobase/xtrabackup/xtrabackup.cc:4790
+msgid "Percentage of dirty pages allowed in bufferpool."
+msgstr ""
 
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4791
 msgid "How many files at the maximum InnoDB keeps open at the same time."
@@ -5759,8 +5588,8 @@ msgid ""
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
 "Kon niet de volledige log entry schrijven. Probeerde %<PRId64> bytes tes "
-"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: "
-"%s\n"
+"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: %"
+"s\n"
 
 #: ../plugin/transaction_log/transaction_log.cc:233
 #, fuzzy
@@ -5943,34 +5772,66 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: ../plugin/regex_policy/module.cc:46
+#: ../plugin/regex_policy/module.cc:48
 #, fuzzy, c-format
 msgid "Could not load regex policy file: %s\n"
 msgstr "Kon variabele niet toevoegen: %s\n"
 
-#: ../plugin/regex_policy/module.cc:47
+#: ../plugin/regex_policy/module.cc:49
 #, fuzzy
 msgid "Unknown"
 msgstr "Onbekende fout"
 
-#: ../plugin/regex_policy/module.cc:62
+#: ../plugin/regex_policy/module.cc:64
 msgid "File to load for regex authorization policies"
 msgstr ""
 
-#: ../plugin/regex_policy/module.cc:218
+#: ../plugin/regex_policy/module.cc:220
 #, c-format
 msgid "User %s matches regex\n"
 msgstr ""
 
-#: ../plugin/regex_policy/module.cc:221
+#: ../plugin/regex_policy/module.cc:223
 #, c-format
 msgid "Object %s matches regex %s (%s)\n"
 msgstr ""
 
-#: ../plugin/regex_policy/module.cc:227
+#: ../plugin/regex_policy/module.cc:229
 #, c-format
 msgid "Object %s NOT restricted by regex %s (%s)\n"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Cannot create table %s. HailDB Error %d (%s)\n"
+#~ msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
+
+#, fuzzy
+#~ msgid "Cannot create field %s on table %s. HailDB Error %d (%s)\n"
+#~ msgstr "Kan symlink '%s' verwijzend naar '%s' niet creëren (Fout %d)"
+
+#, fuzzy
+#~ msgid "Cannot Lock HailDB Data Dictionary. HailDB Error %d (%s)\n"
+#~ msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
+
+#, fuzzy
+#~ msgid "Cannot DROP table %s. HailDB Error %d (%s)\n"
+#~ msgstr "Kan tabel '%-.200s' niet aanmaken (Foutcode: %d)"
+
+#, fuzzy
+#~ msgid ""
+#~ "The size of the memory buffer HailDB uses to cache data and indexes of "
+#~ "its tables."
+#~ msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
+
+#, fuzzy
+#~ msgid "Path to HailDB log files."
+#~ msgstr "Pad voor tijdelijke bestanden."
+
+#, fuzzy
+#~ msgid ""
+#~ "The size of the buffer which HailDB uses to write log to the log files on "
+#~ "disk."
+#~ msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
 
 #~ msgid "Couldn't allocate memory for temp histfile!\n"
 #~ msgstr "Kon geen geheugen toewijzen voor tijdelijk geschiedenisbestand !\n"
@@ -6480,8 +6341,8 @@ msgstr ""
 
 #~ msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 #~ msgstr ""
-#~ "Kan status van named pipe naar host: %-.64s niet instellen pipe: %-.32s "
-#~ "(%lu)"
+#~ "Kan status van named pipe naar host: %-.64s niet instellen pipe: %-.32s (%"
+#~ "lu)"
 
 #~ msgid "Can't initialize character set %-.32s (path: %-.100s)"
 #~ msgstr "Kan karakterset %-.32s niet initialiseren (path: %-.100s)"
@@ -6829,8 +6690,8 @@ msgstr ""
 
 #~ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 #~ msgstr ""
-#~ "Fout bij verwijderen van databank ( rmdir '%-.192s' lukt niet, foutcode: "
-#~ "%d)"
+#~ "Fout bij verwijderen van databank ( rmdir '%-.192s' lukt niet, foutcode: %"
+#~ "d)"
 
 #~ msgid "Can't read record in system table"
 #~ msgstr "Kan record in systeemtabel niet lezen"
@@ -8742,8 +8603,8 @@ msgstr ""
 
 #~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 #~ msgstr ""
-#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand "
-#~ "'%s' (Foutcode: %d)"
+#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%"
+#~ "s' (Foutcode: %d)"
 
 #~ msgid "Can't read dir of '%s' (Errcode: %d)"
 #~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
@@ -9004,8 +8865,8 @@ msgstr ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 #~ "found '%s'."
 #~ msgstr ""
-#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, "
-#~ "'%s' gevonden."
+#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, '%"
+#~ "s' gevonden."
 
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "

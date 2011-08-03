@@ -36,15 +36,13 @@
  */
 
 #pragma once
-#ifndef CPPTL_JSON_READER_H_INCLUDED
-# define CPPTL_JSON_READER_H_INCLUDED
 
-# include "features.h"
-# include "value.h"
-# include <deque>
-# include <stack>
-# include <string>
-# include <iostream>
+#include "features.h"
+#include "value.h"
+#include <deque>
+#include <stack>
+#include <string>
+#include <iosfwd>
 
 namespace Json {
 
@@ -230,5 +228,3 @@ namespace Json {
    std::istream& operator>>( std::istream&, Value& );
 
 } // namespace Json
-
-#endif // CPPTL_JSON_READER_H_INCLUDED

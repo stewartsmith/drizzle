@@ -829,11 +829,11 @@ public:
     return server_status & SERVER_STATUS_IN_TRANS;
   }
 
-  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
+  lex_string_t *make_lex_string(lex_string_t *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
+  lex_string_t *make_lex_string(lex_string_t *lex_str,
                               const std::string &str,
                               bool allocate_lex_string);
 
@@ -1032,7 +1032,7 @@ public:
   void add_group_to_list(Item *item, bool asc);
 
   void refresh_status();
-  user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(lex_string_t &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
   void setVariable(const std::string &name, const std::string &value);
 

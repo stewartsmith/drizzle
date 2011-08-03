@@ -22,7 +22,7 @@
 #pragma once
 
 #include <drizzled/item/function/boolean.h>
-#include <iostream>
+#include <iosfwd>
 
 namespace drizzled
 {

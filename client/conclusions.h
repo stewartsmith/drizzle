@@ -18,12 +18,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifndef CLIENT_CONCLUSIONS_H
-#define CLIENT_CONCLUSIONS_H
+
+#pragma once
 
 #include "client_priv.h"
 #include <string>
-#include <iostream>
+#include <iosfwd>
 
 class Conclusions 
 {
@@ -248,5 +248,3 @@ private:
   uint64_t max_rows;
   uint64_t min_rows;
 };
-
-#endif /* CLIENT_CONCLUSIONS_H */

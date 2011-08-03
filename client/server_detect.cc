@@ -1,5 +1,5 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2011 Andrew Hutchings
  *
@@ -18,26 +18,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#pragma once
+#include "client_priv.h"
 
-#include <boost/regex.hpp>
-#include <iosfwd>
+#include <iostream>
+#include <client/server_detect.h>
 
-class ServerDetect
+ServerDetect::ServerDetect(drizzle_con_st *connection) :
+  type(SERVER_UNKNOWN_FOUND),
+  version("")
 {
-  public:
-    enum server_type {
-      SERVER_MYSQL_FOUND,
-      SERVER_DRIZZLE_FOUND,
-      SERVER_UNKNOWN_FOUND
-    };
+  boost::match_flag_type flags = boost::match_default;
 
-    server_type getServerType() { return type; }
-    std::string& getServerVersion() { return version; }
+  boost::regex mysql_regex("^([3-9]\\.[0-9]+\\.[0-9]+)");
+  boost::regex drizzle_regex("^(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
 
-    ServerDetect(drizzle_con_st *connection);
+  version= drizzle_con_server_version(connection);
 
-  private:
-    server_type type;
-    std::string version;
-};
+  if (regex_search(version, drizzle_regex, flags))
+  {
+    type= SERVER_DRIZZLE_FOUND;
+  }
+  else if (regex_search(version, mysql_regex, flags))
+  {
+    type= SERVER_MYSQL_FOUND;
+  }
+  else
+  {
+    std::cerr << "Server version not detectable. Assuming MySQL." << std::endl;
+    type= SERVER_MYSQL_FOUND;
+  }
+}
