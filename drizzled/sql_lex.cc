@@ -995,7 +995,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         break;
       }
       /* " used for strings */
-    case MY_lex_string_t:			// Incomplete text string
+    case MY_LEX_STRING:			// Incomplete text string
       if (!(yylval->lex_str.str = get_text(lip, 1, 1)))
       {
         state= MY_LEX_CHAR;		// Read char by char
@@ -1184,7 +1184,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
     case MY_LEX_USER_END:		// end '@' of user@hostname
       switch (state_map[(uint8_t)lip->yyPeek()]) {
-      case MY_lex_string_t:
+      case MY_LEX_STRING:
       case MY_LEX_USER_VARIABLE_DELIMITER:
       case MY_LEX_STRING_OR_DELIMITER:
       	break;
