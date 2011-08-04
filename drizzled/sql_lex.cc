@@ -298,7 +298,7 @@ static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t len
   lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->mem.strmake(lip->get_tok_start() + skip, tmp.length);
+  tmp.str= lip->m_session->mem.strdup(lip->get_tok_start() + skip, tmp.length);
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;

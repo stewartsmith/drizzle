@@ -60,7 +60,7 @@ public:
 
   TableShare(const identifier::Table::Type type_arg,
              const identifier::Table &identifier,
-             char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
+             const char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   virtual ~TableShare();
 
@@ -175,9 +175,9 @@ private:
     return mem_root.alloc(arg);
   }
 
-  char *strmake(const char *str_arg, size_t len_arg)
+  char *strdup(const char *str_arg, size_t len_arg)
   {
-    return mem_root.strmake(str_arg, len_arg);
+    return mem_root.strdup(str_arg, len_arg);
   }
 
   memory::Root& mem()

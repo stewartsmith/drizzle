@@ -51,9 +51,7 @@ BOOST_AUTO_TEST_CASE(CreateInternal)
 
 BOOST_AUTO_TEST_CASE(StaticTmpTable)
 {
-  std::vector<char> pathname;
-
-  identifier::Table::build_tmptable_filename(pathname);
+  std::string pathname(identifier::Table::build_tmptable_filename());
 
   BOOST_REQUIRE_GT(pathname.size(), 0);
   BOOST_REQUIRE_GT(strlen(&pathname[0]), 0);

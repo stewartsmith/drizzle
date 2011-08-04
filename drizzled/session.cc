@@ -881,7 +881,7 @@ lex_string_t *Session::make_lex_string(lex_string_t *lex_str,
 {
   if (allocate_lex_string)
     lex_str= new (mem) lex_string_t;
-  lex_str->str= mem_root->strmake(str, length);
+  lex_str->str= mem_root->strdup(str, length);
   lex_str->length= length;
   return lex_str;
 }
@@ -1538,7 +1538,7 @@ bool Session::copy_db_to(const char*& db, size_t& db_length)
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  db= mem.strmake(*impl_->schema);
+  db= mem.strdup(*impl_->schema);
   db_length= impl_->schema->size();
   return false;
 }

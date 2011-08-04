@@ -22,18 +22,13 @@
 
 #include <drizzled/table/instance.h>
 
-namespace drizzled
-{
-
-namespace table
-{
-
-namespace instance
-{
+namespace drizzled {
+namespace table {
+namespace instance {
 
 Singular::Singular(const identifier::Table::Type type_arg,
                    const identifier::Table &identifier,
-                   char *path_arg, uint32_t path_length_arg) :
+                   const char *path_arg, uint32_t path_length_arg) :
   TableShare(type_arg, identifier, path_arg, path_length_arg)
 {
 }

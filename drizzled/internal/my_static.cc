@@ -43,7 +43,6 @@ DRIZZLED_API int my_umask=0664;
 int my_umask_dir=0777;
 
 	/* From mf_brkhant */
-int my_dont_interrupt=0;
 volatile int		_my_signals=0;
 sigset_t my_signals;			/* signals blocked by mf_brkhant */
 
@@ -55,8 +54,6 @@ int volatile my_have_got_alarm=0;	/* declare variable to reset */
 uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 
 	/* How to disable options */
-bool my_disable_async_io= true;
-bool my_disable_flush_key_blocks=0;
 bool my_disable_symlinks=0;
 
 } /* namespace internal */

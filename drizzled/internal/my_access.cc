@@ -19,10 +19,8 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 /*
   List of file names that causes problem on windows

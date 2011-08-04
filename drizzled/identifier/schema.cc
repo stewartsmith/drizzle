@@ -41,25 +41,6 @@ using namespace std;
 namespace drizzled {
 namespace identifier {
 
-extern string drizzle_tmpdir;
-
-static size_t build_schema_filename(string &path, const string &db)
-{
-  path.append("");
-  bool conversion_error= false;
-
-  conversion_error= util::tablename_to_filename(db, path);
-  if (conversion_error)
-  {
-    errmsg_printf(error::ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
-    return 0;
-  }
-
-  return path.length();
-}
-
 Schema::Schema(const std::string &db_arg) :
   db(db_arg)
 { 
@@ -75,7 +56,7 @@ Schema::Schema(const std::string &db_arg) :
 
   if (not db_arg.empty())
   {
-    build_schema_filename(db_path, db);
+    db_path += util::tablename_to_filename(db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }

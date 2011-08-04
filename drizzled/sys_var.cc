@@ -961,7 +961,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t *ba
     if (str)
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->mem.strmake(str, length), length, system_charset_info, DERIVATION_SYSCONST);
+      tmp= new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
     else
     {
@@ -1575,7 +1575,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   string engine_name= engine->getName();
-  return (unsigned char *) session->mem.strmake(engine_name);
+  return (unsigned char *) session->mem.strdup(engine_name);
 }
 
 

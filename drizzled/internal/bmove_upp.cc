@@ -26,10 +26,8 @@
 
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 void bmove_upp(unsigned char *dst, const unsigned char *src, size_t len)
 {

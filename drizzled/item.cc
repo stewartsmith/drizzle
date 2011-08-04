@@ -425,7 +425,7 @@ void Item::set_name(const char *str, uint32_t length, const charset_info_st * co
         push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_REMOVED_SPACES, ER(ER_REMOVED_SPACES), str + length - orig_len);
     }
   }
-  name= memory::sql_strmake(str, length);
+  name= memory::sql_strdup(str_ref(str, length));
 }
 
 bool Item::eq(const Item *item, bool) const
@@ -1431,11 +1431,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
       if (item->null_value)
         new_item= new Item_null(name);
       else
-      {
-        uint32_t length= result->length();
-        char *tmp_str= memory::sql_strmake(result->ptr(), length);
-        new_item= new Item_string(name, tmp_str, length, result->charset());
-      }
+        new_item= new Item_string(name, memory::sql_strdup(*result), result->length(), result->charset());
       break;
     }
   case INT_RESULT:

@@ -122,16 +122,12 @@ extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 
 extern DRIZZLED_API int my_umask,		/* Default creation mask  */
-	   my_umask_dir,
-	   my_recived_signals,	/* Signals we have got */
-	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
-	   my_dont_interrupt;	/* call remember_intr when set */
+	   my_umask_dir;
 extern bool my_use_symdir;
 
 extern uint32_t	my_default_record_cache_size;
-extern bool my_disable_async_io,
-               my_disable_flush_key_blocks, my_disable_symlinks;
-extern char	wild_many, wild_one, wild_prefix;
+extern bool my_disable_symlinks;
+extern const char wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
 
 extern bool timed_mutexes;
@@ -247,29 +243,12 @@ bool test_if_hard_path(const char *dir_name);
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
-DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir,
-                              const char *form, uint32_t flag);
+DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir, const char *form, uint32_t flag);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
 extern int pack_filename(char * to, const char *name, size_t max_length);
-extern char * my_load_path(char * to, const char *path,
-			      const char *own_path_prefix);
-extern int wild_compare(const char *str,const char *wildstr,
-                        bool str_is_pattern);
-
-extern bool array_append_string_unique(const char *str,
-                                          const char **array, size_t size);
-extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
-			     size_t reclength,enum cache_type type,
-			     bool use_async_io);
-extern int read_cache_record(RECORD_CACHE *info,unsigned char *to);
-extern int end_record_cache(RECORD_CACHE *info);
-extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
-			      const unsigned char *record,size_t length);
-extern int flush_write_cache(RECORD_CACHE *info);
-extern void sigtstp_handler(int signal_number);
-extern void handle_recived_signals(void);
+extern char * my_load_path(char * to, const char *path, const char *own_path_prefix);
 
 extern void my_set_alarm_variable(int signo);
 extern void my_string_ptr_sort(unsigned char *base,uint32_t items,size_t size);

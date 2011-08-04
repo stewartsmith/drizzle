@@ -170,17 +170,14 @@ public:
 
   virtual ~Item()
   {
-#ifdef EXTRA_DEBUG
-    name= NULL;
-#endif
   }
 
   void set_name(const std::string &arg)
   {
-    set_name(arg.c_str(), arg.length(), system_charset_info);
+    set_name(arg.c_str(), arg.length());
   }
 
-  void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
+  void set_name(const char *str, uint32_t length, const charset_info_st* cs= system_charset_info);
   void init_make_field(SendField *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);

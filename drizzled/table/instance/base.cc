@@ -297,7 +297,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
 {
   if (type_arg == message::Table::INTERNAL)
   {
-    identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    string s= identifier::Table::build_tmptable_filename();
+    private_key_for_cache.vectorPtr().assign(s.c_str(), s.c_str() + s.size() + 1);
     init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
@@ -455,7 +456,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
 */
 TableShare::TableShare(const identifier::Table::Type type_arg,
                        const identifier::Table &identifier,
-                       char *path_arg,
+                       const char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
@@ -507,8 +508,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_in_use(0),
   keys_for_keyread(0)
 {
-  char *path_buff;
-  std::string _path;
 
   private_key_for_cache= identifier.getKey();
   /*
@@ -520,18 +519,18 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
+  std::string _path;
   if (path_arg)
   {
-    _path.append(path_arg, path_length_arg);
+    _path.assign(path_arg, path_length_arg);
   }
   else
   {
-    identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
+    _path= identifier::Table::build_table_filename(db.str, table_name.str, false);
   }
 
-  path_buff= (char *)mem_root.alloc(_path.length() + 1);
+  char* path_buff= mem_root.strdup(_path);
   setPath(path_buff, _path.length());
-  strcpy(path_buff, _path.c_str());
   setNormalizedPath(path_buff, _path.length());
 
   version= g_refresh_version;
@@ -610,8 +609,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   db_create_options= (local_db_create_options & 0x0000FFFF);
   db_options_in_use= db_create_options;
 
-  block_size= table_options.has_block_size() ?
-    table_options.block_size() : 0;
+  block_size= table_options.has_block_size() ? table_options.block_size() : 0;
 
   table_charset= get_charset(table_options.collation_id());
 
@@ -764,10 +762,10 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strmake(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.str= strdup(indx.comment().c_str(), keyinfo->comment.length);
     }
 
-    keyinfo->name= strmake(indx.name().c_str(), indx.name().length());
+    keyinfo->name= strdup(indx.name().c_str(), indx.name().length());
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -933,7 +931,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strmake(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= strdup(field_options.field_value(n).c_str(), field_options.field_value(n).length());
 
       /* 
        * Go ask the charset what the length is as for "" length=1
@@ -1006,7 +1004,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       size_t len= pfield.comment().length();
       const char* str= pfield.comment().c_str();
 
-      comment.str= strmake(str, len);
+      comment.str= strdup(str, len);
       comment.length= len;
     }
 

@@ -41,10 +41,8 @@
 
 #include "m_string.h"
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)
 
