@@ -1422,7 +1422,7 @@ int init_remaining_variables(module::Registry &plugins)
   if (sys_var_init())
     return 1;
   /* Creates static regex matching for temporal values */
-  if (! init_temporal_formats())
+  if (not init_temporal_formats())
     return 1;
 
   if (!(default_charset_info=

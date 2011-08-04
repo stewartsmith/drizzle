@@ -48,7 +48,7 @@ class user_var_entry
     free(value);
   }
 
-  LEX_STRING name;
+  lex_string_t name;
   char *value;
   ulong length;
   size_t size;

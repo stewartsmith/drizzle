@@ -60,7 +60,10 @@ noinst_HEADERS+= \
                  client/user_detect.h \
                  client/wakeup.h
 
-client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
+client_drizzle_SOURCES= \
+			client/drizzle.cc \
+			client/linebuffer.cc \
+			client/server_detect.cc
 client_drizzle_CXXFLAGS=	${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la \
@@ -73,7 +76,8 @@ client_drizzledump_SOURCES= \
 			    client/drizzledump.cc \
 			    client/drizzledump_data.cc \
 			    client/drizzledump_drizzle.cc \
-			    client/drizzledump_mysql.cc
+			    client/drizzledump_mysql.cc \
+			    client/server_detect.cc
 
 client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 

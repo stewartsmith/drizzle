@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
 namespace drizzled {
 
 /*
-  LEX_STRING -- a pair of a C-string and its length.
+  lex_string_t -- a pair of a C-string and its length.
 */
 
 /* This definition must match the one given in mysql/plugin.h */
-struct LEX_STRING
+struct lex_string_t
 {
   const char* begin() const
   {
@@ -44,15 +44,15 @@ struct LEX_STRING
   size_t length;
 };
 
-inline const LEX_STRING &null_lex_string()
+inline const lex_string_t &null_lex_string()
 {
-  static LEX_STRING tmp= { NULL, 0 };
+  static lex_string_t tmp= { NULL, 0 };
   return tmp;
 }
 
-#define NULL_LEX_STRING null_lex_string()
+#define NULL_lex_string_t null_lex_string()
 
-struct execute_string_t : public LEX_STRING
+struct execute_string_t : public lex_string_t
 {
 private:
   bool is_variable;
@@ -63,7 +63,7 @@ public:
     return is_variable;
   }
 
-  void set(const LEX_STRING& ptr, bool is_variable_arg= false)
+  void set(const lex_string_t& ptr, bool is_variable_arg= false)
   {
     is_variable= is_variable_arg;
     str= ptr.str;
@@ -72,8 +72,8 @@ public:
 
 };
 
-#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
-#define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))
+#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1))) // remove size_t cast
+#define C_STRING_WITH_LEN(X) (const_cast<char*>((X))), (static_cast<size_t>((sizeof(X) - 1)))
 
 } /* namespace drizzled */
 

@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_lock_wait_timeout';
-Variable_name	Value
-innodb_lock_wait_timeout	1
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='lock_wait_timeout';
-NAME	TYPE	VALUE
-lock_wait_timeout	ULINT	1

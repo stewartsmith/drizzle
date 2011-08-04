@@ -1,3 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_max_dirty_pages_pct';
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='max_dirty_pages_pct';
-

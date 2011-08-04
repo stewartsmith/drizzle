@@ -47,7 +47,7 @@ Catalog::Catalog(const std::string &name_arg) :
   init();
 }
 
-Catalog::Catalog(const drizzled::LEX_STRING &name_arg) :
+Catalog::Catalog(const drizzled::lex_string_t &name_arg) :
   _name(name_arg.str, name_arg.length)
 {
   init();

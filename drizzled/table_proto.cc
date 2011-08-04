@@ -432,11 +432,10 @@ bool fill_table_proto(const identifier::Table& identifier,
       break;
 
     case HA_KEY_ALG_UNDEF:
-      idx->set_type(message::Table::Index::UNKNOWN_INDEX);
-      break;
-
-    default:
-      abort(); /* Somebody's brain broke. haven't added index type to proto */
+      {
+        idx->set_type(create_info->db_type->default_index_type());
+        break;
+      }
     }
 
     if (key_info[i].flags & HA_NOSAME)

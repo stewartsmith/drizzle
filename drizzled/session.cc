@@ -859,28 +859,28 @@ void Session::cleanup_after_query()
 }
 
 /**
-  Create a LEX_STRING in this connection.
+  Create a lex_string_t in this connection.
 
-  @param lex_str  pointer to LEX_STRING object to be initialized
+  @param lex_str  pointer to lex_string_t object to be initialized
   @param str      initializer to be copied into lex_str
   @param length   length of str, in bytes
-  @param allocate_lex_string  if true, allocate new LEX_STRING object,
+  @param allocate_lex_string  if true, allocate new lex_string_t object,
                               instead of using lex_str value
-  @return  NULL on failure, or pointer to the LEX_STRING object
+  @return  NULL on failure, or pointer to the lex_string_t object
 */
-LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
+lex_string_t *Session::make_lex_string(lex_string_t *lex_str,
                                      const std::string &str,
                                      bool allocate_lex_string)
 {
   return make_lex_string(lex_str, str.c_str(), str.length(), allocate_lex_string);
 }
 
-LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
+lex_string_t *Session::make_lex_string(lex_string_t *lex_str,
                                      const char* str, uint32_t length,
                                      bool allocate_lex_string)
 {
   if (allocate_lex_string)
-    lex_str= new (mem) LEX_STRING;
+    lex_str= new (mem) lex_string_t;
   lex_str->str= mem_root->strdup(str, length);
   lex_str->length= length;
   return lex_str;
@@ -1727,7 +1727,7 @@ void Session::refresh_status()
   current_global_counters.connections= 0;
 }
 
-user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
+user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
 {
   return getVariable(std::string(name.str, name.length), create_if_not_exists);
 }

@@ -139,6 +139,7 @@ public:
     Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
+
   inline void set(const char *str,size_t arg_length, const charset_info_st * const cs)
   {
     free();
@@ -147,6 +148,7 @@ public:
     str_charset=cs;
   }
   void set_ascii(const char *str, size_t arg_length);
+
   inline void set_quick(char *str,size_t arg_length, const charset_info_st * const cs)
   {
     if (!alloced)
@@ -155,6 +157,7 @@ public:
     }
     str_charset= cs;
   }
+
   void set_int(int64_t num, bool unsigned_flag, const charset_info_st * const cs);
   void set(int64_t num, const charset_info_st * const cs)
   { set_int(num, false, cs); }

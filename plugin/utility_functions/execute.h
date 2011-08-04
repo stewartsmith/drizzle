@@ -23,7 +23,7 @@
 
 #include <drizzled/item/function/boolean.h>
 #include <drizzled/execute.h>
-#include <iostream>
+#include <iosfwd>
 
 namespace drizzled
 {

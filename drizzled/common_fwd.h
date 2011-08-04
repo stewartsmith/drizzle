@@ -291,7 +291,7 @@ class KeyInfo;
 class LEX;
 class Lex_Column;
 class Lex_input_stream;
-class LEX_STRING;
+class lex_string_t;
 class Name_resolution_context;
 class NamedSavepoint;
 class Natural_join_column;

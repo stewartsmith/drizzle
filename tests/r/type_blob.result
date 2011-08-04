@@ -343,7 +343,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` TEXT COLLATE utf8_general_ci,
-  KEY `a` (`a`(255))
+  KEY `a` (`a`(255)) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
@@ -590,8 +590,8 @@ t1	CREATE TABLE `t1` (
   `c` BLOB NOT NULL,
   `d` INT NOT NULL,
   `e` INT DEFAULT NULL,
-  PRIMARY KEY (`a`,`b`,`c`(255),`d`),
-  KEY `a` (`a`,`b`,`d`,`e`)
+  PRIMARY KEY (`a`,`b`,`c`(255),`d`) USING BTREE,
+  KEY `a` (`a`,`b`,`d`,`e`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 CREATE table t1 (a blob);

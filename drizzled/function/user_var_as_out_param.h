@@ -35,10 +35,10 @@ namespace drizzled
 */
 class Item_user_var_as_out_param :public Item
 {
-  LEX_STRING name;
+  lex_string_t name;
   user_var_entry *entry;
 public:
-  Item_user_var_as_out_param(LEX_STRING a) : name(a) {}
+  Item_user_var_as_out_param(lex_string_t a) : name(a) {}
   /* We should return something different from FIELD_ITEM here */
   enum Type type() const { return STRING_ITEM;}
   double val_real();

@@ -1,0 +1,6 @@
+SELECT IF(true, result_type(1), 'yes');
+SELECT IF(true, typeof(1), 'yes');
+SELECT IF(true, result_type(true), 'yes');
+SELECT IF(true, typeof(true), 'yes');
+SELECT IF(true, true, 'yes');
+SELECT IF(true, true, '');

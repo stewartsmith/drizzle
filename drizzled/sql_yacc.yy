@@ -129,8 +129,8 @@ using namespace drizzled;
   unsigned long ulong_num;
   uint64_t ulonglong_number;
   int64_t longlong_number;
-  drizzled::LEX_STRING lex_str;
-  drizzled::LEX_STRING *lex_str_ptr;
+  drizzled::lex_string_t lex_str;
+  drizzled::lex_string_t *lex_str_ptr;
   drizzled::LEX_SYMBOL symbol;
   drizzled::Table_ident *table;
   char *simple_string;
@@ -1211,7 +1211,7 @@ check_constraint:
         ;
 
 opt_constraint:
-          /* empty */ { $$= null_lex_str; }
+          /* empty */ { $$= null_lex_string(); }
         | constraint { $$= $1; }
         ;
 
@@ -1795,12 +1795,12 @@ key_part:
         ;
 
 opt_ident:
-          /* empty */ { $$= null_lex_str; }
+          /* empty */ { $$= null_lex_string(); }
         | field_ident { $$= $1; }
         ;
 
 opt_component:
-          /* empty */    { $$= null_lex_str; }
+          /* empty */    { $$= null_lex_string(); }
         | '.' ident      { $$= $2; }
         ;
 
@@ -1916,7 +1916,7 @@ alter_list_item:
             Lex.length= Lex.dec=0;
             Lex.type= 0;
             statement->default_value= statement->on_update_value= 0;
-            statement->comment= null_lex_str;
+            statement->comment= null_lex_string();
             Lex.charset= NULL;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
@@ -2363,7 +2363,7 @@ remember_end:
         ;
 
 select_alias:
-          /* empty */ { $$=null_lex_str;}
+          /* empty */ { $$= null_lex_string();}
         | AS ident { $$=$2; }
         | AS TEXT_STRING_sys { $$=$2; }
         | ident { $$=$1; }
@@ -3000,7 +3000,9 @@ function_call_conflict:
             }
           }
         | IF '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_if($3,$5,$7);
+          }
         | KILL_SYM kill_option '(' expr ')'
           {
             List<Item> *args= new (YYSession->mem_root) List<Item>;
@@ -3885,7 +3887,7 @@ opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
           {
-            $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING));
+            $$= (drizzled::lex_string_t*) memory::sql_memdup(&$2,sizeof(drizzled::lex_string_t));
           }
         ;
 
@@ -5061,7 +5063,7 @@ insert_ident:
 table_wild:
           ident '.' '*'
           {
-            $$= parser::buildTableWild(&Lex, NULL_LEX_STRING, $1);
+            $$= parser::buildTableWild(&Lex, null_lex_string(), $1);
           }
         | ident '.' ident '.' '*'
           {
@@ -5076,7 +5078,7 @@ order_ident:
 simple_ident:
           ident
           {
-            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, NULL_LEX_STRING, $1);
+            $$= parser::buildIdent(&Lex, null_lex_string(), null_lex_string(), $1);
           }
         | simple_ident_q { $$= $1; }
         ;
@@ -5084,11 +5086,11 @@ simple_ident:
 simple_ident_q:
           ident '.' ident
           {
-            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, $1, $3);
+            $$= parser::buildIdent(&Lex, null_lex_string(), $1, $3);
           }
         | '.' ident '.' ident
           {
-            $$= parser::buildIdent(&Lex, NULL_LEX_STRING, $2, $4);
+            $$= parser::buildIdent(&Lex, null_lex_string(), $2, $4);
           }
         | ident '.' ident '.' ident
           {
@@ -5110,7 +5112,7 @@ field_ident:
           }
         | ident '.' ident
           {
-            if (not parser::checkFieldIdent(&Lex, NULL_LEX_STRING, $1))
+            if (not parser::checkFieldIdent(&Lex, null_lex_string(), $1))
               DRIZZLE_YYABORT;
 
             $$=$3;
@@ -5447,7 +5449,7 @@ sys_option_value:
             Lex.option_type= $1;
             Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type,
                                               find_sys_var("tx_isolation"),
-                                              &null_lex_str,
+                                              &(null_lex_string()),
                                               new Item_int((int32_t)
                                               $5))));
           }
@@ -5489,7 +5491,7 @@ internal_variable_name:
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
-              $$.base_name= null_lex_str;
+              $$.base_name= null_lex_string();
             }
           }
         ;

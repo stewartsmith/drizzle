@@ -29,7 +29,7 @@ namespace statement {
 class Savepoint : public Statement
 {
 public:
-  Savepoint(Session *in_session, const LEX_STRING &ident) :
+  Savepoint(Session *in_session, const lex_string_t &ident) :
     Statement(in_session)
   {
     set_command(SQLCOM_SAVEPOINT);

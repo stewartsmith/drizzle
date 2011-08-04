@@ -28,6 +28,8 @@
 
 #include "policy.h"
 
+#include <fstream>
+
 namespace po= boost::program_options;
 
 using namespace std;
