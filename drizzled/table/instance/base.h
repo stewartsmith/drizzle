@@ -305,24 +305,14 @@ public:
     return table_name.str;
   }
 
-  std::string getTableNameStr() const
-  {
-    return std::string(table_name.str, table_name.length);
-  }
-
-  const char *getSchemaName() const
-  {
-    return db.str;
-  }
-
   str_ref getSchemaNameRef() const
   {
     return db;
   }
 
-  std::string getSchemaNameStr() const
+  const char *getSchemaName() const
   {
-    return std::string(db.str, db.length);
+    return db.str;
   }
 
   uint32_t   block_size;                   /* create information */
@@ -625,23 +615,11 @@ protected:
 
 public:
 
-  static TableShare::shared_ptr getShareCreate(Session *session, 
-                                               const identifier::Table &identifier,
-                                               int &error);
+  static TableShare::shared_ptr getShareCreate(Session*, const identifier::Table&, int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
-    output << "TableShare:(";
-    output <<  share.getSchemaName();
-    output << ", ";
-    output << share.getTableName();
-    output << ", ";
-    output << share.getTableTypeAsString();
-    output << ", ";
-    output << share.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "TableShare:(" <<  share.getSchemaNameRef() << ", " << share.getTableName() << ", " << share.getTableTypeAsString() << ", " << share.getPath() << ")";
   }
 
 protected:

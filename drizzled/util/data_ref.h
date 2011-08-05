@@ -19,6 +19,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <ostream>
 
 template <class T>
 class data_ref_basic
@@ -93,6 +94,12 @@ public:
   bool empty() const
   {
     return begin() == end();
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, data_ref_basic<T> v)
+  {
+    os.write(v.data(), v.size());
+    return os;
   }
 private:
   T begin_;

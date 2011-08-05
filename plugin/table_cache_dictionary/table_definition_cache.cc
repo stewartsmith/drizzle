@@ -50,10 +50,10 @@ bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
     */
 
     /* TABLE_SCHEMA 1 */
-    push(share->getSchemaNameStr());
+    push(share->getSchemaNameRef());
 
     /* TABLE_NAME  2 */
-    push(share->getTableNameStr()); // Use str_ref
+    push(share->getTableNameRef());
 
     /* VERSION 3 */
     push(static_cast<int64_t>(share->getVersion()));

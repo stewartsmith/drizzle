@@ -114,10 +114,10 @@ void table_cache_dictionary::TableCache::Generator::fill()
     push(static_cast<int64_t>(0));
 
   /* TABLE_SCHEMA 2 */
-  push(table->getShare()->getSchemaNameStr());
+  push(table->getShare()->getSchemaNameRef());
 
   /* TABLE_NAME  3 */
-  push(table->getShare()->getTableNameStr());
+  push(table->getShare()->getTableNameRef());
 
   /* VERSION 4 */
   push(static_cast<int64_t>(table->getShare()->getVersion()));

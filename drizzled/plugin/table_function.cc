@@ -207,9 +207,14 @@ void plugin::TableFunction::Generator::push()
   columns_iterator++;
 }
 
+void plugin::TableFunction::Generator::push(str_ref arg)
+{
+  push(arg.data(), arg.size());
+}
+
 void plugin::TableFunction::Generator::push(const std::string& arg)
 {
-  push(arg.c_str(), arg.length());
+  push(arg.data(), arg.size());
 }
 
 void plugin::TableFunction::Generator::push(bool arg)
