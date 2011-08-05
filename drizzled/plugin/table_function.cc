@@ -212,11 +212,6 @@ void plugin::TableFunction::Generator::push(str_ref arg)
   push(arg.data(), arg.size());
 }
 
-void plugin::TableFunction::Generator::push(const std::string& arg)
-{
-  push(arg.data(), arg.size());
-}
-
 void plugin::TableFunction::Generator::push(bool arg)
 {
   if (arg)

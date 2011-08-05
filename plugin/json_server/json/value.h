@@ -602,7 +602,7 @@ namespace Json {
 
          virtual void releaseMapBuckets( ValueInternalLink *links )
          {
-            delete [] links;
+            delete[] links;
          }
 
          virtual ValueInternalLink *allocateMapLink()

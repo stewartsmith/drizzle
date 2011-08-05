@@ -1694,7 +1694,7 @@ copy_data_between_tables(Session *session,
 
     info.end_read_record();
     from->free_io_cache();
-    delete [] copy;
+    delete[] copy;
 
     if (to->cursor->ha_end_bulk_insert() && error <= 0)
     {
