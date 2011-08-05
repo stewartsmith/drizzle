@@ -30,19 +30,19 @@ extern char empty_c_string[1];
 extern char internal_table_name[2];
 
 /* Structure for db & table in sql_yacc */
-class Table_ident :public memory::SqlAlloc
+class Table_ident : public memory::SqlAlloc
 {
 public:
   lex_string_t db;
   lex_string_t table;
   Select_Lex_Unit *sel;
   inline Table_ident(lex_string_t db_arg, lex_string_t table_arg)
-    :table(table_arg), sel((Select_Lex_Unit *)0)
+    : table(table_arg), sel(NULL)
   {
     db= db_arg;
   }
   explicit Table_ident(lex_string_t table_arg)
-    :table(table_arg), sel((Select_Lex_Unit *)0)
+    : table(table_arg), sel(NULL)
   {
     db.str=0;
   }
@@ -61,10 +61,6 @@ public:
     table.length=1;
   }
   bool is_derived_table() const { return test(sel); }
-  inline void change_db(char *db_name)
-  {
-    db.str= db_name; db.length= (uint32_t) strlen(db_name);
-  }
 };
 
 } /* namespace drizzled */

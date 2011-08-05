@@ -2722,7 +2722,6 @@ void subselect_union_engine::print(String *str)
 
 void subselect_uniquesubquery_engine::print(String *str)
 {
-  const char *table_name= tab->table->getShare()->getTableName();
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
@@ -2735,10 +2734,9 @@ void subselect_uniquesubquery_engine::print(String *str)
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(table_name, tab->table->getShare()->getTableNameSize());
-  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
+    str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   str->append(STRING_WITH_LEN(" on "));
-  str->append(key_info->name);
+  str->append(tab->table->key_info[tab->ref.key].name);
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));

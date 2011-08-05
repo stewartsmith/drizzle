@@ -72,8 +72,8 @@ public:
 
 };
 
-#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1))) // remove size_t cast
-#define C_STRING_WITH_LEN(X) (const_cast<char*>((X))), (static_cast<size_t>((sizeof(X) - 1)))
+#define STRING_WITH_LEN(X) (X), (sizeof(X) - 1)
+#define C_STRING_WITH_LEN(X) const_cast<char*>(X), (sizeof(X) - 1)
 
 } /* namespace drizzled */
 
