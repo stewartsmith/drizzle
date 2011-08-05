@@ -276,10 +276,10 @@ void TableList::print(Session *session, String *str)
     else
     {
       // A normal table
-      str->append_identifier(schema);
+      str->append_identifier(str_ref(schema));
       str->append('.');
-      str->append_identifier(table_name);
-      cmp_name= table_name.data();
+      str->append_identifier(str_ref(table_name));
+      cmp_name= table_name;
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias) && alias && alias[0])
     {

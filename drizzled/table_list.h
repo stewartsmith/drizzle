@@ -95,8 +95,8 @@ public:
     is_fqtn(false),
     create(false)
   {
-    schema.clear();
-    table_name.clear();
+    schema= NULL;
+    table_name= NULL;
   }
 
   /**
@@ -111,33 +111,33 @@ public:
   TableList **prev_global;
 
 private:
-  str_ref schema;
+  const char* schema;
 
 public:
   const char *getSchemaName() const
   {
-    return schema.data();
+    return schema;
   }
 
   void setSchemaName(str_ref v)
   {
-    schema= v;
+    schema= v.data();
   }
 
   const char *alias;
 
 private:
-  str_ref table_name;
+  const char* table_name;
 
 public:
   const char *getTableName() const
   {
-    return table_name.data();
+    return table_name;
   }
 
   void setTableName(str_ref v)
   {
-    table_name= v;
+    table_name= v.data();
   }
 
   const char *option; ///< Used by cache index
