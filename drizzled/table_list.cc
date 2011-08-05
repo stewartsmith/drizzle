@@ -276,23 +276,15 @@ void TableList::print(Session *session, String *str)
     else
     {
       // A normal table
-      {
-        str->append_identifier(db, db_length);
-        str->append('.');
-      }
+      str->append_identifier(schema);
+      str->append('.');
       str->append_identifier(table_name);
       cmp_name= table_name.data();
     }
-    if (my_strcasecmp(table_alias_charset, cmp_name, alias))
+    if (my_strcasecmp(table_alias_charset, cmp_name, alias) && alias && alias[0])
     {
-
-      if (alias && alias[0])
-      {
-        str->append(' ');
-        string t_alias(alias);
-        boost::to_lower(t_alias);
-        str->append_identifier(t_alias);
-      }
+      str->append(' ');
+      str->append_identifier(boost::to_lower_copy(string(alias)));
     }
 
     if (index_hints)

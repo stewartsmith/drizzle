@@ -30,7 +30,7 @@ public:
   }
 
   template <class U>
-  data_ref_basic(U& c)
+  data_ref_basic(const U& c)
   {
     if (c.begin() == c.end())
       clear();

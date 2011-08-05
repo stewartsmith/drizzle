@@ -62,7 +62,6 @@ public:
     next_local(NULL),
     next_global(NULL),
     prev_global(NULL),
-    db(NULL),
     alias(NULL),
     option(NULL),
     on_expr(NULL),
@@ -85,7 +84,6 @@ public:
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
-    db_length(0),
     dep_tables(0),
     on_expr_dep_tables(0),
     nested_join(NULL),
@@ -97,6 +95,7 @@ public:
     is_fqtn(false),
     create(false)
   {
+    schema.clear();
     table_name.clear();
   }
 
@@ -112,23 +111,17 @@ public:
   TableList **prev_global;
 
 private:
-  const char *db;
+  str_ref schema;
 
 public:
   const char *getSchemaName() const
   {
-    return db;
-  }
-
-  const char** getSchemaNamePtr()
-  {
-    return &db;
+    return schema.data();
   }
 
   void setSchemaName(str_ref v)
   {
-    db= v.data();
-    db_length= v.size();
+    schema= v;
   }
 
   const char *alias;
@@ -221,7 +214,6 @@ public:
   TableList *next_leaf;
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
-  size_t db_length;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -378,7 +370,7 @@ public:
   friend std::ostream& operator<<(std::ostream& output, const TableList &list)
   {
     output << "TableList:(";
-    output << list.db;
+    output << list.getSchemaName();
     output << ", ";
     output << list.getTableName();
     output << ", ";

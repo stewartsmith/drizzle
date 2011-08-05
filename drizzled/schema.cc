@@ -245,7 +245,7 @@ bool drop(Session &session, const identifier::Schema &schema_identifier, bool if
     it to 0.
   */
   if (not error and schema_identifier.compare(*session.schema()))
-    session.set_db("");
+    session.set_schema("");
 
   session.startWaitingGlobalReadLock();
 
@@ -339,7 +339,7 @@ bool change(Session &session, const identifier::Schema &schema_identifier)
     return true;
   }
 
-  session.set_db(schema_identifier.getSchemaName());
+  session.set_schema(schema_identifier.getSchemaName());
 
   return false;
 }

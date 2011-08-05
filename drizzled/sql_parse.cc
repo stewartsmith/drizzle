@@ -957,15 +957,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
+  char* name;
+  size_t name_size;
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
     ptr->setSchemaName(table->db);
   }
-  else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
+  else if (lex->session->copy_db_to(name, name_size))
     return NULL;
   else
+  {
     ptr->setIsFqtn(false);
+    ptr->setSchemaName(str_ref(name, name_size));
+  }
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
