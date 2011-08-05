@@ -26,9 +26,6 @@
 
 namespace drizzled {
 
-extern char empty_c_string[1];
-extern char internal_table_name[2];
-
 /* Structure for db & table in sql_yacc */
 class Table_ident : public memory::SqlAlloc
 {
@@ -36,16 +33,18 @@ public:
   lex_string_t db;
   lex_string_t table;
   Select_Lex_Unit *sel;
+
   inline Table_ident(lex_string_t db_arg, lex_string_t table_arg)
-    : table(table_arg), sel(NULL)
+    : db(db_arg), table(table_arg), sel(NULL)
   {
-    db= db_arg;
   }
+
   explicit Table_ident(lex_string_t table_arg)
     : table(table_arg), sel(NULL)
   {
-    db.str=0;
+    db.str= 0;
   }
+
   /*
     This constructor is used only for the case when we create a derived
     table. A derived table has no name and doesn't belong to any database.
@@ -55,10 +54,10 @@ public:
   explicit Table_ident(Select_Lex_Unit *s) : sel(s)
   {
     /* We must have a table name here as this is used with add_table_to_list */
-    db.str= empty_c_string;                    /* a subject to casedn_str */
+    db.str= const_cast<char*>("");                    /* a subject to casedn_str */
     db.length= 0;
-    table.str= internal_table_name;
-    table.length=1;
+    table.str= const_cast<char*>("*");
+    table.length= 1;
   }
   bool is_derived_table() const { return test(sel); }
 };

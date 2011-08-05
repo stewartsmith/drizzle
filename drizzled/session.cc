@@ -97,13 +97,6 @@ namespace fs= boost::filesystem;
 
 namespace drizzled {
 
-/*
-  The following is used to initialise Table_ident with a internal
-  table name
-*/
-char internal_table_name[2]= "*";
-char empty_c_string[1]= {0};    /* used for not defined db */
-
 const char* const Session::DEFAULT_WHERE= "field list";
 
 uint64_t g_refresh_version = 1;

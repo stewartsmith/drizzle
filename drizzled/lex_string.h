@@ -50,8 +50,6 @@ inline const lex_string_t &null_lex_string()
   return tmp;
 }
 
-#define NULL_lex_string_t null_lex_string()
-
 struct execute_string_t : public lex_string_t
 {
 private:

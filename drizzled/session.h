@@ -47,9 +47,6 @@
 
 namespace drizzled {
 
-extern char internal_table_name[2];
-extern char empty_c_string[1];
-extern const char **errmesg;
 extern uint32_t server_id;
 extern std::string server_uuid;
 
