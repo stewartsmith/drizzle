@@ -2734,7 +2734,7 @@ void subselect_uniquesubquery_engine::print(String *str)
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
+    str->append(tab->table->getShare()->getTableNameRef());
   str->append(STRING_WITH_LEN(" on "));
   str->append(tab->table->key_info[tab->ref.key].name);
   if (cond)
@@ -2774,7 +2774,7 @@ void subselect_indexsubquery_engine::print(String *str)
   str->append(STRING_WITH_LEN("<index_lookup>("));
   tab->ref.items[0]->print(str);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
+  str->append(tab->table->getShare()->getTableNameRef());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);

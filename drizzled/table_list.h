@@ -148,6 +148,11 @@ public:
     table_name_length= arg_size;
   }
 
+  void setTableName(str_ref v)
+  {
+    setTableName(v.data(), v.size());
+  }
+
   const char *option; ///< Used by cache index
   Item *on_expr; ///< Used with outer join
   Table *table; ///< opened table

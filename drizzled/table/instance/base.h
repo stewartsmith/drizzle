@@ -295,15 +295,14 @@ private:
   }
 
 public:
+  str_ref getTableNameRef() const
+  {
+    return table_name;
+  }
 
   const char *getTableName() const
   {
     return table_name.str;
-  }
-
-  uint32_t getTableNameSize() const
-  {
-    return table_name.length;
   }
 
   const std::string &getTableName(std::string &name_arg) const

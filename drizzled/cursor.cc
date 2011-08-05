@@ -83,23 +83,14 @@ Cursor::~Cursor()
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
-
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
     on this->table->mem_root and we will not be able to reclaim that memory
     when the clone Cursor object is destroyed.
   */
   new_handler->ref= mem_root->alloc(ALIGN_SIZE(ref_length)*2);
-
-  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
-                             getTable()->getShare()->getTableName(),
-                             getTable()->getShare()->getType());
-
-  if (new_handler && !new_handler->ha_open(identifier,
-                                           getTable()->getDBStat(),
-                                           HA_OPEN_IGNORE_IF_LOCKED))
-    return new_handler;
-  return NULL;
+  identifier::Table identifier(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName(), getTable()->getShare()->getType());
+  return new_handler->ha_open(identifier, getTable()->getDBStat(), HA_OPEN_IGNORE_IF_LOCKED) ? NULL : new_handler;
 }
 
 /*

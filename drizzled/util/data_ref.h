@@ -31,7 +31,7 @@ public:
   template <class U>
   data_ref_basic(U& c)
   {
-    if (c.empty())
+    if (c.begin() == c.end())
       clear();
     else
       assign(&*c.begin(), &*c.end());

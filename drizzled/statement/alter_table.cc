@@ -1598,7 +1598,7 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
-        tables.setTableName(from->getMutableShare()->getTableName(), from->getMutableShare()->getTableNameSize());
+        tables.setTableName(from->getMutableShare()->getTableNameRef());
         tables.alias= tables.getTableName();
         tables.setSchemaName(from->getMutableShare()->getSchemaName(), from->getMutableShare()->getSchemaNameSize());
         error= 1;

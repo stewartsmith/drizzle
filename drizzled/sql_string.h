@@ -254,6 +254,7 @@ public:
   void append(const String &s);
   void append(const char *s);
   void append(const char *s,size_t arg_length);
+  void append(str_ref);
   void append_with_prefill(const char *s, size_t arg_length, size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
