@@ -305,10 +305,9 @@ public:
     return table_name.str;
   }
 
-  const std::string &getTableName(std::string &name_arg) const
+  std::string getTableNameStr() const
   {
-    name_arg.assign(table_name.str, table_name.length);
-    return name_arg;
+    return std::string(table_name.str, table_name.length);
   }
 
   const char *getSchemaName() const
@@ -316,15 +315,14 @@ public:
     return db.str;
   }
 
-  size_t getSchemaNameSize() const
+  str_ref getSchemaNameRef() const
   {
-    return db.length;
+    return db;
   }
 
-  const std::string &getSchemaName(std::string &schema_name_arg) const
+  std::string getSchemaNameStr() const
   {
-    schema_name_arg.assign(db.str, db.length);
-    return schema_name_arg;
+    return std::string(db.str, db.length);
   }
 
   uint32_t   block_size;                   /* create information */

@@ -960,7 +960,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str, table->db.length);
+    ptr->setSchemaName(table->db);
   }
   else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
     return NULL;

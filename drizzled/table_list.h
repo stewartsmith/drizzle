@@ -64,7 +64,6 @@ public:
     prev_global(NULL),
     db(NULL),
     alias(NULL),
-    table_name(NULL),
     option(NULL),
     on_expr(NULL),
     table(NULL),
@@ -87,7 +86,6 @@ public:
     next_leaf(NULL),
     outer_join(0),
     db_length(0),
-    table_name_length(0),
     dep_tables(0),
     on_expr_dep_tables(0),
     nested_join(NULL),
@@ -98,7 +96,9 @@ public:
     is_alias(false),
     is_fqtn(false),
     create(false)
-  {}
+  {
+    table_name.clear();
+  }
 
   /**
    * List of tables local to a subquery (used by SQL_LIST). Considers
@@ -125,27 +125,26 @@ public:
     return &db;
   }
 
-  void setSchemaName(const char *arg, size_t arg_size)
+  void setSchemaName(str_ref v)
   {
-    db= arg;
-    db_length= arg_size;
+    db= v.data();
+    db_length= v.size();
   }
 
   const char *alias;
 
 private:
-  const char *table_name;
+  str_ref table_name;
 
 public:
   const char *getTableName() const
   {
-    return table_name;
+    return table_name.data();
   }
 
   void setTableName(str_ref v)
   {
-    table_name= v.data();
-    table_name_length= v.size();
+    table_name= v;
   }
 
   const char *option; ///< Used by cache index
@@ -223,7 +222,6 @@ public:
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
   size_t db_length;
-  size_t table_name_length;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -382,7 +380,7 @@ public:
     output << "TableList:(";
     output << list.db;
     output << ", ";
-    output << list.table_name;
+    output << list.getTableName();
     output << ", ";
     output << list.alias;
     output << ", ";

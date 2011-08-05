@@ -280,8 +280,8 @@ void TableList::print(Session *session, String *str)
         str->append_identifier(db, db_length);
         str->append('.');
       }
-      str->append_identifier(table_name, table_name_length);
-      cmp_name= table_name;
+      str->append_identifier(table_name);
+      cmp_name= table_name.data();
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {

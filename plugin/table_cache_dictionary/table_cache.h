@@ -44,7 +44,6 @@ public:
     bool populate();
 
     Generator(drizzled::Field **arg);
-    ~Generator();
   };
 
   Generator *generator(drizzled::Field **arg)

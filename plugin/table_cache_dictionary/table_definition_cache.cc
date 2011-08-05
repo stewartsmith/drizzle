@@ -40,15 +40,9 @@ table_cache_dictionary::TableDefinitionCache::Generator::Generator(drizzled::Fie
 {
 }
 
-table_cache_dictionary::TableDefinitionCache::Generator::~Generator()
-{
-}
-
 bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
 {
-  drizzled::TableShare::shared_ptr share;
-
-  while ((share= table_definition_cache_generator))
+  while (drizzled::TableShare::shared_ptr share= table_definition_cache_generator)
   {
     /**
       For test cases use:
@@ -56,11 +50,10 @@ bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
     */
 
     /* TABLE_SCHEMA 1 */
-    string arg;
-    push(share->getSchemaName(arg));
+    push(share->getSchemaNameStr());
 
     /* TABLE_NAME  2 */
-    push(share->getTableName(arg));
+    push(share->getTableNameStr()); // Use str_ref
 
     /* VERSION 3 */
     push(static_cast<int64_t>(share->getVersion()));
