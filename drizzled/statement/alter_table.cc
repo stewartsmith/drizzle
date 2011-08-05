@@ -1726,7 +1726,7 @@ copy_data_between_tables(Session *session,
     error=1;
   }
 
-  return(error > 0 ? -1 : 0);
+  return error > 0 ? -1 : 0;
 }
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
@@ -1737,7 +1737,7 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
     TableList tbl;
     tbl.setSchemaName(identifier.getSchemaName().c_str(), identifier.getSchemaName().size());
     tbl.alias= identifier.getTableName().c_str();
-    tbl.setTableName(identifier.getTableName().c_str(), identifier.getTableName().size());
+    tbl.setTableName(identifier.getTableName());
 
     /* Table is in session->temporary_tables */
     return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);

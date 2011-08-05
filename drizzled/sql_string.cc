@@ -269,11 +269,6 @@ void String::set_ascii(const char *str, size_t arg_length)
   copy(str, arg_length, str_charset);
 }
 
-void String::append(const String &s)
-{
-  append(s.data(), s.size());
-}
-
 
 /*
   Append an ASCII string to the a string of the current character set

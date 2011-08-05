@@ -969,7 +969,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str, table->table.length);
+  ptr->setTableName(table->table);
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
