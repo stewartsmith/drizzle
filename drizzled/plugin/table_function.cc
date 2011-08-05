@@ -163,10 +163,8 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
   columns_iterator= columns;
   bool ret= populate();
-  uint64_t difference= columns_iterator - columns;
-
   if (ret)
-    assert(difference == field_size);
+    assert(columns_iterator - columns == field_size);
   return ret;
 }
 
@@ -188,8 +186,8 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 {
   assert(columns_iterator);
   assert(*columns_iterator);
-  assert(arg);
-  length= length ? length : strlen(arg);
+  if (arg && not length)
+    length= strlen(arg);
 
   if ((*columns_iterator)->char_length() < length)
     length= (*columns_iterator)->char_length();
