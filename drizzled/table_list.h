@@ -62,7 +62,9 @@ public:
     next_local(NULL),
     next_global(NULL),
     prev_global(NULL),
+    schema(NULL),
     alias(NULL),
+    table_name(NULL),
     option(NULL),
     on_expr(NULL),
     table(NULL),
@@ -95,8 +97,6 @@ public:
     is_fqtn(false),
     create(false)
   {
-    schema= NULL;
-    table_name= NULL;
   }
 
   /**
@@ -119,9 +119,9 @@ public:
     return schema;
   }
 
-  void setSchemaName(str_ref v)
+  void setSchemaName(const char* v)
   {
-    schema= v.data();
+    schema= v;
   }
 
   const char *alias;
@@ -135,9 +135,9 @@ public:
     return table_name;
   }
 
-  void setTableName(str_ref v)
+  void setTableName(const char* v)
   {
-    table_name= v.data();
+    table_name= v;
   }
 
   const char *option; ///< Used by cache index

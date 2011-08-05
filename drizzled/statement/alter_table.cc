@@ -1598,9 +1598,9 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
-        tables.setTableName(from->getMutableShare()->getTableNameRef());
+        tables.setTableName(from->getMutableShare()->getTableName());
         tables.alias= tables.getTableName();
-        tables.setSchemaName(from->getMutableShare()->getSchemaNameRef());
+        tables.setSchemaName(from->getMutableShare()->getSchemaName());
         error= 1;
 
         session->lex().select_lex.setup_ref_array(session, order_num);
@@ -1735,9 +1735,9 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
   if (table->getShare()->getType())
   {
     TableList tbl;
-    tbl.setSchemaName(identifier.getSchemaName());
+    tbl.setSchemaName(identifier.getSchemaName().c_str());
     tbl.alias= identifier.getTableName().c_str();
-    tbl.setTableName(identifier.getTableName());
+    tbl.setTableName(identifier.getTableName().c_str());
 
     /* Table is in session->temporary_tables */
     return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);

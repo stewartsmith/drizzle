@@ -962,19 +962,19 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db);
+    ptr->setSchemaName(table->db.str);
   }
   else if (lex->session->copy_db_to(name, name_size))
     return NULL;
   else
   {
     ptr->setIsFqtn(false);
-    ptr->setSchemaName(str_ref(name, name_size));
+    ptr->setSchemaName(name);
   }
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table);
+  ptr->setTableName(table->table.str);
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
