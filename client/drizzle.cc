@@ -2751,7 +2751,7 @@ int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
       drizzle_result_free(result);
     }
 
-    if (ret != DRIZZLE_RETURN_SERVER_GONE || retry > 1 ||
+    if (ret != DRIZZLE_RETURN_LOST_CONNECTION || retry > 1 ||
         !opt_reconnect)
     {
       return error;
@@ -4036,7 +4036,7 @@ com_use(string *, const char *line)
           return error;
         }
 
-        if (ret != DRIZZLE_RETURN_SERVER_GONE || !try_again)
+        if (ret != DRIZZLE_RETURN_LOST_CONNECTION || !try_again)
           return put_error(&con, NULL);
 
         if (reconnect())
@@ -4763,14 +4763,14 @@ static int com_prompt(string *, const char *line)
 
 static const char * strcont(const char *str, const char *set)
 {
-  const char * start = (const char *) set;
+  const char * start = set;
 
   while (*str)
   {
     while (*set)
     {
       if (*set++ == *str)
-        return ((const char*) str);
+        return str;
     }
     set=start; str++;
   }
