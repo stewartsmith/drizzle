@@ -23,8 +23,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern uint64_t max_write_lock_count;
 extern uint64_t table_lock_wait_timeout;
@@ -153,9 +152,6 @@ public:
     read_no_write_count(0)
   { }
 
-  ~THR_LOCK()
-  { }
-
   void abort_locks();
   bool abort_locks_for_thread(uint64_t thread);
 
@@ -167,14 +163,6 @@ public:
   void unlock()
   {
     mutex.unlock();
-  }
-
-  void init()
-  {
-  }
-
-  void deinit()
-  {
   }
 
   boost::mutex *native_handle()

@@ -8481,7 +8481,6 @@ static void free_share(INNOBASE_SHARE* share)
 
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
-    share->lock.deinit();
 
     /* Free any memory from index translation table */
     free(share->idx_trans_tbl.index_mapping);

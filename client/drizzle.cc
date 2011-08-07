@@ -1566,16 +1566,16 @@ try
   pager= "stdout";  // the default, if --pager wasn't given
   if (const char* tmp= getenv("PAGER"))
   {
-    if (strlen(tmp))
+    if (*tmp)
     {
       default_pager_set= 1;
       default_pager= tmp;
     }
   }
-  if (! isatty(0) || ! isatty(1))
+  if (not isatty(0) || not isatty(1))
   {
     status.setBatch(1); 
-    opt_silent=1;
+    opt_silent= 1;
   }
   else
     status.setAddToHistory(1);

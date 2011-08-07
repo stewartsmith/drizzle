@@ -277,7 +277,7 @@ protected:
   base_list *list;
   list_node **el,**prev,*current;
 public:
-  void sublist(base_list &ls, uint32_t elm)
+  void sublist(base_list &ls, uint32_t elm) const
   {
     ls.first= *el;
     ls.last= list->last;
