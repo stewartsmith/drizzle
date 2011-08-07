@@ -108,3 +108,4 @@ plugin/slave/replication_slave.cc
 plugin/slave/sql_executor.cc
 plugin/session_dictionary/sessions.cc
 plugin/regex_policy/module.cc
+plugin/query_log/module.cc
