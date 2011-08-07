@@ -20,6 +20,7 @@
 
 #include "client_priv.h"
 
+#include <boost/regex.hpp>
 #include <iostream>
 #include <client/server_detect.h>
 

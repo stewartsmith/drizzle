@@ -22,6 +22,7 @@
 #define DRIZZLE_MAX_LINE_LENGTH 1024*1024L-1025
 #include "client_priv.h"
 #include "server_detect.h"
+#include <cstdio>
 #include <string>
 #include <iosfwd>
 #include <iomanip>

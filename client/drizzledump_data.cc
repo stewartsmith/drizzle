@@ -23,7 +23,6 @@
 #include <drizzled/gettext.h>
 #include <string>
 #include <iostream>
-#include <boost/regex.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/lexical_cast.hpp>
 
