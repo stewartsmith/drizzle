@@ -1316,7 +1316,6 @@ bool select_dump::send_data(List<Item> &items)
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   tmp.length(0);
-  Item *item;
 
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
@@ -1328,7 +1327,7 @@ bool select_dump::send_data(List<Item> &items)
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
     return 1;
   }
-  while ((item=li++))
+  while (Item* item=li++)
   {
     res=item->str_result(&tmp);
     if (!res)					// If NULL
