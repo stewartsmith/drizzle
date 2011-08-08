@@ -861,21 +861,12 @@ void Session::cleanup_after_query()
                               instead of using lex_str value
   @return  NULL on failure, or pointer to the lex_string_t object
 */
-lex_string_t *Session::make_lex_string(lex_string_t *lex_str,
-                                     const std::string &str,
-                                     bool allocate_lex_string)
+lex_string_t* Session::make_lex_string(lex_string_t* lex_str, str_ref str)
 {
-  return make_lex_string(lex_str, str.c_str(), str.length(), allocate_lex_string);
-}
-
-lex_string_t *Session::make_lex_string(lex_string_t *lex_str,
-                                     const char* str, uint32_t length,
-                                     bool allocate_lex_string)
-{
-  if (allocate_lex_string)
+  if (not lex_str)
     lex_str= new (mem) lex_string_t;
-  lex_str->str= mem_root->strdup(str, length);
-  lex_str->length= length;
+  lex_str->str= mem_root->strdup(str);
+  lex_str->length= str.size();
   return lex_str;
 }
 
@@ -894,18 +885,11 @@ void Session::send_explain_fields(select_result *result)
   item->maybe_null=1;
   field_list.push_back(item= new Item_empty_string("key", NAME_CHAR_LEN, cs));
   item->maybe_null=1;
-  field_list.push_back(item=
-    new Item_empty_string("key_len",
-                          MAX_KEY *
-                          (MAX_KEY_LENGTH_DECIMAL_WIDTH + 1 /* for comma */),
-                          cs));
+  field_list.push_back(item= new Item_empty_string("key_len", MAX_KEY * (MAX_KEY_LENGTH_DECIMAL_WIDTH + 1 /* for comma */), cs));
   item->maybe_null=1;
-  field_list.push_back(item=new Item_empty_string("ref",
-                                                  NAME_CHAR_LEN*MAX_REF_PARTS,
-                                                  cs));
+  field_list.push_back(item= new Item_empty_string("ref", NAME_CHAR_LEN*MAX_REF_PARTS, cs));
   item->maybe_null=1;
-  field_list.push_back(item= new Item_return_int("rows", 10,
-                                                 DRIZZLE_TYPE_LONGLONG));
+  field_list.push_back(item= new Item_return_int("rows", 10, DRIZZLE_TYPE_LONGLONG));
   if (lex().describe & DESCRIBE_EXTENDED)
   {
     field_list.push_back(item= new Item_float("filtered", 0.1234, 2, 4));

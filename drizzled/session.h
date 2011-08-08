@@ -826,13 +826,7 @@ public:
     return server_status & SERVER_STATUS_IN_TRANS;
   }
 
-  lex_string_t *make_lex_string(lex_string_t *lex_str,
-                              const char* str, uint32_t length,
-                              bool allocate_lex_string);
-
-  lex_string_t *make_lex_string(lex_string_t *lex_str,
-                              const std::string &str,
-                              bool allocate_lex_string);
+  lex_string_t* make_lex_string(lex_string_t*, str_ref);
 
   void send_explain_fields(select_result*);
 

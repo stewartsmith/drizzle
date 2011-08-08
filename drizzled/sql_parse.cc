@@ -409,8 +409,8 @@ static bool _schema_select(Session& session, Select_Lex& sel, const string& sche
      We have to make non const db_name & table_name
      because of lower_case_table_names
   */
-  session.make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
-  session.make_lex_string(&table, schema_table_name, false);
+  session.make_lex_string(&db, str_ref("data_dictionary"));
+  session.make_lex_string(&table, schema_table_name);
   return not sel.add_table_to_list(&session, new Table_ident(db, table), NULL, table_options, TL_READ);
 }
 
