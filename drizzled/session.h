@@ -117,7 +117,7 @@ public:
   memory::Root& mem;
   memory::Root* mem_root; /**< Pointer to current memroot */
 
-  uint64_t getXaId()
+  uint64_t getXaId() const
   {
     return xa_id;
   }
@@ -232,7 +232,7 @@ public:
     scoreboard_index= in_scoreboard_index;
   }
 
-  bool isOriginatingServerUUIDSet()
+  bool isOriginatingServerUUIDSet() const
   {
     return originating_server_uuid_set;
   }
@@ -243,7 +243,7 @@ public:
     originating_server_uuid_set= true;
   }
 
-  std::string &getOriginatingServerUUID()
+  const std::string &getOriginatingServerUUID() const
   {
     return originating_server_uuid;
   }
@@ -253,7 +253,7 @@ public:
     originating_commit_id= in_originating_commit_id;
   }
 
-  uint64_t getOriginatingCommitID()
+  uint64_t getOriginatingCommitID() const
   {
     return originating_commit_id;
   }
@@ -272,7 +272,7 @@ private:
   const char *_where;
 
 public:
-  const char *where()
+  const char *where() const
   {
     return _where;
   }
@@ -535,7 +535,7 @@ public:
     _killed= arg;
   }
 
-  killed_state_t getKilled()
+  killed_state_t getKilled() const
   {
     return _killed;
   }
@@ -583,7 +583,7 @@ public:
   /** set during loop of derived table processing */
   bool derived_tables_processing;
 
-  bool doing_tablespace_operation()
+  bool doing_tablespace_operation() const
   {
     return tablespace_op;
   }
@@ -716,7 +716,7 @@ public:
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline uint64_t read_first_successful_insert_id_in_prev_stmt()
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt() const
   {
     return first_successful_insert_id_in_prev_stmt;
   }

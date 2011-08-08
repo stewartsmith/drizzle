@@ -29,19 +29,17 @@ using namespace std;
 
 namespace drizzled {
 
-bool TableList::set_insert_values(memory::Root *)
+void TableList::set_insert_values()
 {
   if (table)
   {
     table->insert_values.resize(table->getShare()->rec_buff_length);
   }
-
-  return false;
 }
 
-bool TableList::is_leaf_for_name_resolution()
+bool TableList::is_leaf_for_name_resolution() const
 {
-  return (is_natural_join || is_join_columns_complete || !nested_join);
+  return is_natural_join || is_join_columns_complete || not nested_join;
 }
 
 TableList *TableList::find_underlying_table(Table *table_to_find)

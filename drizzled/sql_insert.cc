@@ -550,14 +550,8 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
      than INSERT.
   */
 
-  if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
-                                    &session->lex().select_lex.top_join_list,
-                                    table_list,
-                                    &session->lex().select_lex.leaf_tables,
-                                    select_insert))
-    return true;
-
-  return false;
+  return setup_tables_and_check_access(session, &session->lex().select_lex.context,
+    &session->lex().select_lex.top_join_list, table_list, &session->lex().select_lex.leaf_tables, select_insert);
 }
 
 
@@ -633,8 +627,7 @@ bool prepare_insert(Session *session, TableList *table_list,
   if (duplic == DUP_UPDATE)
   {
     /* it should be allocated before Item::fix_fields() */
-    if (table_list->set_insert_values(session->mem_root))
-      return true;
+    table_list->set_insert_values();
   }
 
   if (prepare_insert_check_table(session, table_list, fields, select_insert))
