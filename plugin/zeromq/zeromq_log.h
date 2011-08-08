@@ -46,6 +46,7 @@ class ZeroMQLog :
 private:
   void *_socket;
   pthread_mutex_t publishLock;
+  std::string getSchemaName(const drizzled::message::Transaction &txn);
 public:
 
   /**

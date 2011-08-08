@@ -72,19 +72,55 @@ ZeroMQLog::apply(Session &, const message::Transaction &to_apply)
     return plugin::UNKNOWN_ERROR;
   }
 
+  string schema= getSchemaName(to_apply);
+  zmq_msg_t schemamsg;
+  int rc= zmq_msg_init_size(&schemamsg, schema.length());
+  memcpy(zmq_msg_data(&schemamsg), schema.c_str(), schema.length());
+
   to_apply.SerializeWithCachedSizesToArray(buffer);
   zmq_msg_t msg;
-  int rc= zmq_msg_init_size (&msg, message_byte_length);
+  rc= zmq_msg_init_size(&msg, message_byte_length);
   assert (rc == 0);
   memcpy(zmq_msg_data(&msg), buffer, message_byte_length);
 
+  // need a mutex around this since several threads can call this method at the same time
   pthread_mutex_lock(&publishLock);
-  rc= zmq_send (_socket, &msg, 0);
+  rc= zmq_send(_socket, &schemamsg, ZMQ_SNDMORE);
+  rc= zmq_send(_socket, &msg, 0);
   pthread_mutex_unlock(&publishLock);
 
-  zmq_msg_close (&msg);
+  zmq_msg_close(&msg);
+  zmq_msg_close(&schemamsg);
   delete[] buffer;
   return plugin::SUCCESS;
+}
+
+string ZeroMQLog::getSchemaName(const message::Transaction &txn) {
+  if(txn.statement_size() == 0) return "";
+
+  const message::Statement &statement= txn.statement(0);
+
+  switch(statement.type())
+  {
+	case message::Statement::INSERT:
+	  return statement.insert_header().table_metadata().schema_name();
+	case message::Statement::UPDATE:
+	  return statement.update_header().table_metadata().schema_name();
+	case message::Statement::DELETE:
+	  return statement.delete_header().table_metadata().schema_name();
+	case message::Statement::CREATE_TABLE:
+	  return statement.create_table_statement().table().schema();
+	case message::Statement::TRUNCATE_TABLE:
+	  return statement.truncate_table_statement().table_metadata().schema_name();
+	case message::Statement::DROP_TABLE:
+	  return statement.drop_table_statement().table_metadata().schema_name();
+	case message::Statement::CREATE_SCHEMA:
+	  return statement.create_schema_statement().schema().name();
+	case message::Statement::DROP_SCHEMA:
+	  return statement.drop_schema_statement().schema_name();
+    default:
+	  return "";
+  }
 }
 
 static ZeroMQLog *zeromqLogger; ///< the actual plugin
