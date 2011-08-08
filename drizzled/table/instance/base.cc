@@ -762,10 +762,10 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strdup(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.str= mem().strdup(indx.comment());
     }
 
-    keyinfo->name= strdup(indx.name().c_str(), indx.name().length());
+    keyinfo->name= mem().strdup(indx.name());
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -931,17 +931,13 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strdup(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= mem().strdup(field_options.field_value(n));
 
       /* 
        * Go ask the charset what the length is as for "" length=1
        * and there's stripping spaces or some other crack going on.
      */
-      uint32_t lengthsp;
-      lengthsp= charset->cset->lengthsp(charset,
-                                        t->type_names[n],
-                                        field_options.field_value(n).length());
-      t->type_lengths[n]= lengthsp;
+      t->type_lengths[n]= charset->cset->lengthsp(charset, t->type_names[n], field_options.field_value(n).length());
     }
     interval_nr++;
   }
@@ -1001,11 +997,8 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     }
     else
     {
-      size_t len= pfield.comment().length();
-      const char* str= pfield.comment().c_str();
-
-      comment.str= strdup(str, len);
-      comment.length= len;
+      comment.str= mem().strdup(pfield.comment());
+      comment.length= pfield.comment().size();
     }
 
     enum_field_types field_type;
@@ -1608,17 +1601,9 @@ int TableShare::open_table_from_share(Session *session,
   return ret;
 }
 
-int TableShare::open_table_from_share_inner(Session *session,
-                                            const char *alias,
-                                            uint32_t db_stat,
-                                            Table &outparam)
+int TableShare::open_table_from_share_inner(Session *session, const char *alias, uint32_t db_stat, Table &outparam)
 {
-  int local_error;
-  uint32_t records;
-  unsigned char *record= NULL;
-  Field **field_ptr;
-
-  local_error= 1;
+  int local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
   outparam.setAlias(alias);
@@ -1628,13 +1613,13 @@ int TableShare::open_table_from_share_inner(Session *session,
     return local_error;
 
   local_error= 4;
-  records= 0;
-  if ((db_stat & HA_OPEN_KEYFILE))
+  uint32_t records= 0;
+  if (db_stat & HA_OPEN_KEYFILE)
     records=1;
 
   records++;
 
-  record= outparam.alloc(rec_buff_length * records);
+  unsigned char* record= outparam.alloc(rec_buff_length * records);
 
   if (records == 0)
   {
@@ -1668,7 +1653,7 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  field_ptr = new (outparam.mem()) Field*[_field_size + 1];
+  Field** field_ptr = new (outparam.mem()) Field*[_field_size + 1];
 
   outparam.setFields(field_ptr);
 
@@ -1693,35 +1678,24 @@ int TableShare::open_table_from_share_inner(Session *session,
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    KeyInfo	*local_key_info, *key_info_end;
-    KeyPartInfo *key_part;
-    uint32_t n_length;
-    n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    local_key_info= (KeyInfo*) outparam.alloc(n_length);
+    uint32_t n_length= keys * sizeof(KeyInfo) + key_parts * sizeof(KeyPartInfo);
+    KeyInfo* local_key_info= (KeyInfo*) outparam.alloc(n_length);
     outparam.key_info= local_key_info;
-    key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
+    KeyPartInfo* key_part= reinterpret_cast<KeyPartInfo*>(local_key_info+keys);
 
     memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
-    memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
-                                            key_parts));
+    memcpy(key_part, key_info[0].key_part, sizeof(*key_part) * key_parts);
 
-    for (key_info_end= local_key_info + keys ;
-         local_key_info < key_info_end ;
-         local_key_info++)
+    for (KeyInfo* key_info_end= local_key_info + keys; local_key_info < key_info_end; local_key_info++)
     {
-      KeyPartInfo *key_part_end;
-
       local_key_info->table= &outparam;
       local_key_info->key_part= key_part;
 
-      for (key_part_end= key_part+ local_key_info->key_parts ;
-           key_part < key_part_end ;
-           key_part++)
+      for (KeyPartInfo* key_part_end= key_part+ local_key_info->key_parts; key_part < key_part_end; key_part++)
       {
         Field *local_field= key_part->field= outparam.getField(key_part->fieldnr-1);
 
-        if (local_field->key_length() != key_part->length &&
-            !(local_field->flags & BLOB_FLAG))
+        if (local_field->key_length() != key_part->length && not (local_field->flags & BLOB_FLAG))
         {
           /*
             We are using only a prefix of the column as a key:
@@ -2003,27 +1977,15 @@ Field *TableShare::make_field(const message::Table::Field &,
                                         field_name,
                                         this);
   case DRIZZLE_TYPE_TIME:
-    return new (&mem_root) field::Time(ptr,
-                                       field_length,
-                                       null_pos,
-                                       null_bit,
-                                       field_name);
+    return new (&mem_root) field::Time(ptr, field_length, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_DATE:
-    return new (&mem_root) Field_date(ptr,
-                                 null_pos,
-                                 null_bit,
-                                 field_name);
+    return new (&mem_root) Field_date(ptr, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_DATETIME:
-    return new (&mem_root) Field_datetime(ptr,
-                                     null_pos,
-                                     null_bit,
-                                     field_name);
+    return new (&mem_root) Field_datetime(ptr, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_NULL:
-    return new (&mem_root) Field_null(ptr,
-                                      field_length,
-                                      field_name);
+    return new (&mem_root) Field_null(ptr, field_length, field_name);
   }
-  assert(0);
+  assert(false);
   abort();
 }
 
