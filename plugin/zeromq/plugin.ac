@@ -1,0 +1,8 @@
+AC_LIB_HAVE_LINKFLAGS(zmq,,[
+    #include <zmq.h>
+  ],[
+	 void *context = zmq_init (1);
+  ])
+AS_IF([test "x$ac_cv_libzmq" = "xno"],[
+    AC_MSG_WARN([zeromq not found: not building zmq plugin.])
+])
