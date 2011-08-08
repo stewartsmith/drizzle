@@ -184,16 +184,14 @@ void String::copy(const String &str)
   str_length=str.str_length;
   memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
-  str_charset=str.str_charset;
+  str_charset= str.str_charset;
 }
 
-void String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
+void String::copy(const std::string& arg, const charset_info_st* cs) // Allocate new string
 {
   alloc(arg.size());
-
-  if ((str_length= arg.size()))
-    memcpy(Ptr, arg.c_str(), arg.size());
-
+  str_length= arg.size();
+  memcpy(Ptr, arg.c_str(), arg.size());
   Ptr[arg.size()]= 0;
   str_charset= cs;
 }
@@ -315,19 +313,17 @@ void String::append_with_prefill(const char *s,size_t arg_length, size_t full_le
   append(s, arg_length);
 }
 
-size_t String::numchars()
+size_t String::numchars() const
 {
   return str_charset->cset->numchars(str_charset, Ptr, Ptr+str_length);
 }
 
-int String::charpos(int i,size_t offset)
+int String::charpos(int i,size_t offset) const
 {
-  if (i <= 0)
-    return i;
-  return str_charset->cset->charpos(str_charset,Ptr+offset,Ptr+str_length,i);
+  return i <= 0 ? i : str_charset->cset->charpos(str_charset, Ptr + offset, Ptr + str_length, i);
 }
 
-int String::strstr(const String &s,size_t offset)
+int String::strstr(const String &s, size_t offset)
 {
   if (s.length() + offset <= str_length)
   {
