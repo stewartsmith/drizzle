@@ -1580,7 +1580,7 @@ Create_func_unix_timestamp::create_native(Session *session, lex_string_t name,
 
 struct Native_func_registry
 {
-  lex_string_t name;
+  const char* name;
   Create_func *builder;
 };
 
@@ -1595,62 +1595,61 @@ struct Native_func_registry
 
 static Native_func_registry func_array[] =
 {
-  { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
-  { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
-  { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
-  { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
-  { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
-  { { C_STRING_WITH_LEN("DATEDIFF") }, BUILDER(Create_func_datediff)},
-  { { C_STRING_WITH_LEN("DATE_FORMAT") }, BUILDER(Create_func_date_format)},
-  { { C_STRING_WITH_LEN("DAYNAME") }, BUILDER(Create_func_dayname)},
-  { { C_STRING_WITH_LEN("DAYOFMONTH") }, BUILDER(Create_func_dayofmonth)},
-  { { C_STRING_WITH_LEN("DAYOFWEEK") }, BUILDER(Create_func_dayofweek)},
-  { { C_STRING_WITH_LEN("DAYOFYEAR") }, BUILDER(Create_func_dayofyear)},
-  { { C_STRING_WITH_LEN("DEGREES") }, BUILDER(Create_func_degrees)},
-  { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
-  { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},
-  { { C_STRING_WITH_LEN("FIND_IN_SET") }, BUILDER(Create_func_find_in_set)},
-  { { C_STRING_WITH_LEN("FOUND_ROWS") }, BUILDER(Create_func_found_rows)},
-  { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
-  { { C_STRING_WITH_LEN("FROM_UNIXTIME") }, BUILDER(Create_func_from_unixtime)},
-  { { C_STRING_WITH_LEN("GREATEST") }, BUILDER(Create_func_greatest)},
-  { { C_STRING_WITH_LEN("IFNULL") }, BUILDER(Create_func_ifnull)},
-  { { C_STRING_WITH_LEN("INSTR") }, BUILDER(Create_func_instr)},
-  { { C_STRING_WITH_LEN("ISNULL") }, BUILDER(Create_func_isnull)},
-  { { C_STRING_WITH_LEN("LAST_DAY") }, BUILDER(Create_func_last_day)},
-  { { C_STRING_WITH_LEN("LAST_INSERT_ID") }, BUILDER(Create_func_last_insert_id)},
-  { { C_STRING_WITH_LEN("LCASE") }, BUILDER(Create_func_lcase)},
-  { { C_STRING_WITH_LEN("LEAST") }, BUILDER(Create_func_least)},
-  { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
-  { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
-  { { C_STRING_WITH_LEN("LOWER") }, BUILDER(Create_func_lcase)},
-  { { C_STRING_WITH_LEN("LPAD") }, BUILDER(Create_func_lpad)},
-  { { C_STRING_WITH_LEN("LTRIM") }, BUILDER(Create_func_ltrim)},
-  { { C_STRING_WITH_LEN("MAKEDATE") }, BUILDER(Create_func_makedate)},
-  { { C_STRING_WITH_LEN("MAKE_SET") }, BUILDER(Create_func_make_set)},
-  { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
-  { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
-  { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},
-  { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
-  { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
-  { { C_STRING_WITH_LEN("PI") }, BUILDER(Create_func_pi)},
-  { { C_STRING_WITH_LEN("RADIANS") }, BUILDER(Create_func_radians)},
-  { { C_STRING_WITH_LEN("ROUND") }, BUILDER(Create_func_round)},
-  { { C_STRING_WITH_LEN("ROW_COUNT") }, BUILDER(Create_func_row_count)},
-  { { C_STRING_WITH_LEN("RPAD") }, BUILDER(Create_func_rpad)},
-  { { C_STRING_WITH_LEN("RTRIM") }, BUILDER(Create_func_rtrim)},
-  { { C_STRING_WITH_LEN("SIGN") }, BUILDER(Create_func_sign)},
-  { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
-  { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
-  { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
-  { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
-  { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},
-  { { C_STRING_WITH_LEN("UCASE") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
-  { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
-
-  { {0, 0}, NULL}
+  { "BIN", BUILDER(Create_func_bin)},
+  { "CONCAT", BUILDER(Create_func_concat)},
+  { "CONCAT_WS", BUILDER(Create_func_concat_ws)},
+  { "CONV", BUILDER(Create_func_conv)},
+  { "COT", BUILDER(Create_func_cot)},
+  { "DATEDIFF", BUILDER(Create_func_datediff)},
+  { "DATE_FORMAT", BUILDER(Create_func_date_format)},
+  { "DAYNAME", BUILDER(Create_func_dayname)},
+  { "DAYOFMONTH", BUILDER(Create_func_dayofmonth)},
+  { "DAYOFWEEK", BUILDER(Create_func_dayofweek)},
+  { "DAYOFYEAR", BUILDER(Create_func_dayofyear)},
+  { "DEGREES", BUILDER(Create_func_degrees)},
+  { "EXPORT_SET", BUILDER(Create_func_export_set)},
+  { "FIELD", BUILDER(Create_func_field)},
+  { "FIND_IN_SET", BUILDER(Create_func_find_in_set)},
+  { "FOUND_ROWS", BUILDER(Create_func_found_rows)},
+  { "FROM_DAYS", BUILDER(Create_func_from_days)},
+  { "FROM_UNIXTIME", BUILDER(Create_func_from_unixtime)},
+  { "GREATEST", BUILDER(Create_func_greatest)},
+  { "IFNULL", BUILDER(Create_func_ifnull)},
+  { "INSTR", BUILDER(Create_func_instr)},
+  { "ISNULL", BUILDER(Create_func_isnull)},
+  { "LAST_DAY", BUILDER(Create_func_last_day)},
+  { "LAST_INSERT_ID", BUILDER(Create_func_last_insert_id)},
+  { "LCASE", BUILDER(Create_func_lcase)},
+  { "LEAST", BUILDER(Create_func_least)},
+  { "LOAD_FILE", BUILDER(Create_func_load_file)},
+  { "LOCATE", BUILDER(Create_func_locate)},
+  { "LOWER", BUILDER(Create_func_lcase)},
+  { "LPAD", BUILDER(Create_func_lpad)},
+  { "LTRIM", BUILDER(Create_func_ltrim)},
+  { "MAKEDATE", BUILDER(Create_func_makedate)},
+  { "MAKE_SET", BUILDER(Create_func_make_set)},
+  { "MONTHNAME", BUILDER(Create_func_monthname)},
+  { "NULLIF", BUILDER(Create_func_nullif)},
+  { "OCT", BUILDER(Create_func_oct)},
+  { "PERIOD_ADD", BUILDER(Create_func_period_add)},
+  { "PERIOD_DIFF", BUILDER(Create_func_period_diff)},
+  { "PI", BUILDER(Create_func_pi)},
+  { "RADIANS", BUILDER(Create_func_radians)},
+  { "ROUND", BUILDER(Create_func_round)},
+  { "ROW_COUNT", BUILDER(Create_func_row_count)},
+  { "RPAD", BUILDER(Create_func_rpad)},
+  { "RTRIM", BUILDER(Create_func_rtrim)},
+  { "SIGN", BUILDER(Create_func_sign)},
+  { "SPACE", BUILDER(Create_func_space)},
+  { "STRCMP", BUILDER(Create_func_strcmp)},
+  { "TAN", BUILDER(Create_func_tan)},
+  { "TIME_FORMAT", BUILDER(Create_func_time_format)},
+  { "TO_DAYS", BUILDER(Create_func_to_days)},
+  { "UCASE", BUILDER(Create_func_ucase)},
+  { "UNIX_TIMESTAMP", BUILDER(Create_func_unix_timestamp)},
+  { "UPPER", BUILDER(Create_func_ucase)},
+  { "WEEKDAY", BUILDER(Create_func_weekday)},
+  { NULL, NULL}
 };
 
 /*
@@ -1662,15 +1661,15 @@ static Native_func_registry func_array[] =
 void item_create_init()
 {
   for (Native_func_registry* func= func_array; func->builder; func++)
-    FunctionContainer::getMutableMap()[string(func->name.str, func->name.length)]= func->builder;
+    FunctionContainer::getMutableMap()[func->name]= func->builder;
 }
 
 Create_func* find_native_function_builder(lex_string_t name)
 {
-  return find_ptr2(FunctionContainer::getMap(), string(name.str, name.length));
+  return find_ptr2(FunctionContainer::getMap(), name.str);
 }
 
-Item* create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs)
+Item* create_func_char_cast(Session *session, Item *a, int len, const charset_info_st* cs)
 {
   return new (session->mem) Item_char_typecast(a, len, cs ? cs : session->variables.getCollation());
 }
