@@ -145,9 +145,9 @@ public:
     End of file indicator for the query text to parse.
     @return true if there are no more characters to parse
   */
-  bool eof()
+  bool eof() const
   {
-    return (m_ptr >= m_end_of_query);
+    return m_ptr >= m_end_of_query;
   }
 
   /**
@@ -155,25 +155,25 @@ public:
     @param n number of characters expected
     @return true if there are less than n characters to parse
   */
-  bool eof(int n)
+  bool eof(int n) const
   {
-    return ((m_ptr + n) >= m_end_of_query);
+    return m_ptr + n >= m_end_of_query;
   }
 
   /** Get the raw query buffer. */
-  const char *get_buf()
+  const char *get_buf() const
   {
     return m_buf;
   }
 
   /** Get the pre-processed query buffer. */
-  const char *get_cpp_buf()
+  const char *get_cpp_buf() const
   {
     return m_cpp_buf;
   }
 
   /** Get the end of the raw query buffer. */
-  const char *get_end_of_query()
+  const char *get_end_of_query() const
   {
     return m_end_of_query;
   }

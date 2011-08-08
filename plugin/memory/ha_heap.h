@@ -83,7 +83,7 @@ public:
   drizzled::ha_rows records_in_range(uint32_t inx,
                                      drizzled::key_range *min_key,
                                      drizzled::key_range *max_key);
-  void drop_table(const char *name);
+  void drop_table();
 
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   int reset_auto_increment(uint64_t value)
