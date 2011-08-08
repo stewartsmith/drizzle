@@ -369,11 +369,8 @@ void ClientMySQLProtocol::sendEOF()
 
 void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err)
 {
-  uint32_t length;
-  /*
-    buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
-  */
-  unsigned char buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
+  // buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
+  unsigned char buff[2 + 1 + SQLSTATE_LENGTH + DRIZZLE_ERRMSG_SIZE];
 
   assert(sql_errno != EE_OK);
   assert(err && err[0]);
@@ -401,19 +398,16 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   }
 
   int2store(buff, static_cast<uint16_t>(sql_errno));
-  pos= buff+2;
 
   /* The first # is to make the client backward compatible */
   buff[2]= '#';
-  pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
+  unsigned char* pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
   pos+= strlen(error::convert_to_sqlstate(sql_errno));
 
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
   tmp[0]= '\0';
-  length= (uint32_t)(tmp-(char*)buff);
-  err= (char*) buff;
-  net.write_command((unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+  net.write_command(255, data_ref().clear(), data_ref(buff, tmp));
   net.flush();
   session->main_da().can_overwrite_status= false;
 }
@@ -690,13 +684,8 @@ bool ClientMySQLProtocol::checkConnection()
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
-    if (net.write_command(
-            (unsigned char) PROTOCOL_VERSION
-          , (unsigned char*) ""
-          , 0
-          , (unsigned char*) buff
-          , (size_t) (end-buff)) 
-        ||    (pkt_len= net.read()) == packet_error 
+    if (net.write_command(PROTOCOL_VERSION, data_ref().clear(), data_ref(buff, end)) 
+        || (pkt_len= net.read()) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
@@ -822,8 +811,7 @@ void ClientMySQLProtocol::netStoreData(const void* from, size_t length)
   write it to the network output buffer.
 */
 
-void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
-                                         uint32_t total_warn_count)
+void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status, uint32_t total_warn_count)
 {
   unsigned char buff[5];
   /*
