@@ -109,3 +109,4 @@ plugin/slave/sql_executor.cc
 plugin/session_dictionary/sessions.cc
 plugin/regex_policy/module.cc
 plugin/query_log/module.cc
+plugin/zeromq/zeromq_log.cc
