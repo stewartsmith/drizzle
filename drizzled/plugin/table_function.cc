@@ -164,7 +164,7 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
   columns_iterator= columns;
   bool ret= populate();
   if (ret)
-    assert(columns_iterator - columns == field_size);
+    assert(columns_iterator == columns + field_size);
   return ret;
 }
 
