@@ -105,7 +105,7 @@ public:
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 
-  void pushSQL(const std::string &arg)
+  void pushSQL(str_ref arg)
   {
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context context(arg.data(), arg.size(), err_msg);
