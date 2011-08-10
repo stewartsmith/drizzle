@@ -2885,8 +2885,9 @@ reread_log_header:
 				0, 0, LOG_FILE_HDR_SIZE);
 	} else {
 		/* Stream */
-		if (write(fileno(stdout), log_hdr_buf, LOG_FILE_HDR_SIZE)
-				== LOG_FILE_HDR_SIZE) {
+		if ((write(fileno(stdout), log_hdr_buf, LOG_FILE_HDR_SIZE)
+			- LOG_FILE_HDR_SIZE) == 0)
+		{
 			success = TRUE;
 		} else {
 			success = FALSE;
