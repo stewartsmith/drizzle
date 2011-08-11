@@ -175,4 +175,81 @@ public:
   drizzle_con_st b_;
 };
 
+class query_c
+{
+public:
+  query_c(connection_c& con, const std::string& in = "") :
+    con_(con),
+    in_(in)
+  {
+  }
+
+  void operator=(const std::string& v)
+  {
+    in_ = v;
+    out_.clear();
+  }
+
+  void operator+=(const std::string& v)
+  {
+    in_ += v;
+  }
+
+  query_c& p_name(const std::string& v)
+  {
+    std::vector<char> r(2 * v.size() + 2);
+    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.front() = '`';
+    r.back() = '`';
+    p_raw(&r.front(), r.size());
+    return *this;
+  }
+
+  query_c& p_raw(const char* v, size_t sz)
+  {
+    size_t i = in_.find('?');
+    assert(i != std::string::npos);
+    if (i == std::string::npos)
+      return *this;
+    out_.append(in_.substr(0, i));
+    in_.erase(0, i + 1);
+    out_.append(v, sz);
+    return *this;
+  }
+
+  query_c& p_raw(const std::string& v)
+  {
+    return p_raw(v.data(), v.size());
+  }
+
+  query_c& p(const std::string& v)
+  {
+    std::vector<char> r(2 * v.size() + 2);
+    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.front() = '\'';
+    r.back() = '\'';
+    p_raw(&r.front(), r.size());
+    return *this;
+  }
+
+  query_c& p(long long)
+  {
+    return *this;
+  }
+
+  drizzle_return_t execute(result_c& result)
+  {
+    return con_.query(result, read());
+  }
+
+  std::string read() const
+  {
+    return out_ + in_;
+  }
+private:
+  connection_c& con_;
+  std::string in_;
+  std::string out_;
+};
+
 }

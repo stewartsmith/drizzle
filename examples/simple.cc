@@ -52,7 +52,6 @@ int main(int argc, char *argv[])
   const char* password= NULL;
   bool mysql= false;
   in_port_t port= 0;
-  const char* query= "select table_schema, table_name from tables";
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
 
   for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
@@ -83,10 +82,6 @@ int main(int argc, char *argv[])
       password = optarg;
       break;
 
-    case 'q':
-      query= optarg;
-      break;
-
     case 'v':
       if (verbose < DRIZZLE_VERBOSE_MAX)
         verbose= static_cast<drizzle_verbose_t>(verbose + 1);
@@ -94,7 +89,7 @@ int main(int argc, char *argv[])
 
     default:
       cout << 
-        "usage: " << argv[0] << " [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] [-v]\n"
+        "usage:\n"
         "\t-d <db>    - Database to use for query\n"
         "\t-h <host>  - Host to connect to\n"
         "\t-m         - Use the MySQL protocol\n"
@@ -116,7 +111,10 @@ int main(int argc, char *argv[])
   con->set_auth(user, password);
   con->set_db(db);
   drizzle::result_c result;
-  if (con->query(result, query))
+  drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
+  q.p("%");
+  cout << q.read() << endl;
+  if (q.execute(result))
   {
     cerr << "query: " << con->error() << endl;
     return 1;
