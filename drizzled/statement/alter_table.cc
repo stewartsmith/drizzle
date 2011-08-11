@@ -1598,9 +1598,9 @@ copy_data_between_tables(Session *session,
         from->sort.io_cache= new internal::io_cache_st;
 
         tables.table= from;
-        tables.setTableName(from->getMutableShare()->getTableName(), from->getMutableShare()->getTableNameSize());
+        tables.setTableName(from->getMutableShare()->getTableName());
         tables.alias= tables.getTableName();
-        tables.setSchemaName(from->getMutableShare()->getSchemaName(), from->getMutableShare()->getSchemaNameSize());
+        tables.setSchemaName(from->getMutableShare()->getSchemaName());
         error= 1;
 
         session->lex().select_lex.setup_ref_array(session, order_num);
@@ -1694,7 +1694,7 @@ copy_data_between_tables(Session *session,
 
     info.end_read_record();
     from->free_io_cache();
-    delete [] copy;				// This is never 0
+    delete[] copy;
 
     if (to->cursor->ha_end_bulk_insert() && error <= 0)
     {
@@ -1723,10 +1723,10 @@ copy_data_between_tables(Session *session,
 
   if (to->cursor->ha_external_lock(session, F_UNLCK))
   {
-    error=1;
+    error= 1;
   }
 
-  return(error > 0 ? -1 : 0);
+  return error > 0 ? -1 : 0;
 }
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
@@ -1735,9 +1735,9 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
   if (table->getShare()->getType())
   {
     TableList tbl;
-    tbl.setSchemaName(identifier.getSchemaName().c_str(), identifier.getSchemaName().size());
+    tbl.setSchemaName(identifier.getSchemaName().c_str());
     tbl.alias= identifier.getTableName().c_str();
-    tbl.setTableName(identifier.getTableName().c_str(), identifier.getTableName().size());
+    tbl.setTableName(identifier.getTableName().c_str());
 
     /* Table is in session->temporary_tables */
     return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);

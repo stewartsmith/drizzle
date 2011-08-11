@@ -133,7 +133,7 @@ public:
     void push(uint64_t arg);
     void push(int64_t arg);
     void push(const char *arg, uint32_t length= 0);
-    void push(const std::string& arg);
+    void push(str_ref);
     void push(bool arg);
     void push();
 

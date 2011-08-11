@@ -830,7 +830,7 @@ void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr)
   if (not opt_csv_str.empty())
     print_conclusions_csv(conclusion);
 
-  delete [] head_sptr;
+  delete[] head_sptr;
 }
 
 

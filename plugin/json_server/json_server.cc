@@ -185,7 +185,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
   user_id->setUser("");
   _session->setUser(user_id);
-  _session->set_db("test");
+  _session->set_schema("test");
 
   drizzled::Execute execute(*(_session.get()), true);
 

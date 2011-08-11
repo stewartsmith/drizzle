@@ -56,7 +56,7 @@ void Execute::run(const std::string &execution_string, sql::ResultSet &result_se
     // We set the current schema.  @todo do the same with catalog
     util::string::ptr schema(_session.schema());
     if (not schema->empty())
-      new_session->set_db(*schema);
+      new_session->set_schema(*schema);
     
     new_session->setConcurrentExecute(false);
     
@@ -117,7 +117,7 @@ void Execute::run(const std::string &execution_string)
     // We set the current schema.  @todo do the same with catalog
     util::string::ptr schema(_session.schema());
     if (not schema->empty())
-      new_session->set_db(*schema);
+      new_session->set_schema(*schema);
 
     new_session->setConcurrentExecute(false);
 

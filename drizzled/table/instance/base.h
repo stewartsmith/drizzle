@@ -295,37 +295,24 @@ private:
   }
 
 public:
+  str_ref getTableNameRef() const
+  {
+    return table_name;
+  }
 
   const char *getTableName() const
   {
     return table_name.str;
   }
 
-  uint32_t getTableNameSize() const
+  str_ref getSchemaNameRef() const
   {
-    return table_name.length;
-  }
-
-  const std::string &getTableName(std::string &name_arg) const
-  {
-    name_arg.assign(table_name.str, table_name.length);
-    return name_arg;
+    return db;
   }
 
   const char *getSchemaName() const
   {
     return db.str;
-  }
-
-  size_t getSchemaNameSize() const
-  {
-    return db.length;
-  }
-
-  const std::string &getSchemaName(std::string &schema_name_arg) const
-  {
-    schema_name_arg.assign(db.str, db.length);
-    return schema_name_arg;
   }
 
   uint32_t   block_size;                   /* create information */
@@ -628,23 +615,11 @@ protected:
 
 public:
 
-  static TableShare::shared_ptr getShareCreate(Session *session, 
-                                               const identifier::Table &identifier,
-                                               int &error);
+  static TableShare::shared_ptr getShareCreate(Session*, const identifier::Table&, int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
-    output << "TableShare:(";
-    output <<  share.getSchemaName();
-    output << ", ";
-    output << share.getTableName();
-    output << ", ";
-    output << share.getTableTypeAsString();
-    output << ", ";
-    output << share.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "TableShare:(" <<  share.getSchemaNameRef() << ", " << share.getTableName() << ", " << share.getTableTypeAsString() << ", " << share.getPath() << ")";
   }
 
 protected:

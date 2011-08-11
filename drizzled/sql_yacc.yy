@@ -1836,7 +1836,7 @@ alter:
           default_collation_schema
           {
             Lex.name= $3;
-            if (Lex.name.str == NULL && Lex.session->copy_db_to((const char*&)Lex.name.str, Lex.name.length))
+            if (Lex.name.str == NULL && Lex.session->copy_db_to(Lex.name.str, Lex.name.length))
               DRIZZLE_YYABORT;
           }
         ;
@@ -2000,7 +2000,7 @@ alter_list_item:
 
             Lex.select_lex.db=$3->db.str;
             if (Lex.select_lex.db == NULL &&
-                Lex.session->copy_db_to((const char*&)Lex.select_lex.db, dummy))
+                Lex.session->copy_db_to(Lex.select_lex.db, dummy))
             {
               DRIZZLE_YYABORT;
             }

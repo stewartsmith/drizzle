@@ -415,7 +415,7 @@ void storeAlterColumnPosition(LEX *lex, const char *position)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  lex->last_field->after=const_cast<char*> (position);
+  lex->last_field->after= position;
   statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
 }
 
@@ -441,8 +441,7 @@ bool buildCollation(LEX *lex, const charset_info_st *arg)
 void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
-  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
-                    lex->col_list);
+  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0, lex->col_list);
   statement->alter_info.key_list.push_back(key);
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
@@ -458,9 +457,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
                             statement->fk_match_option);
 
   statement->alter_info.key_list.push_back(key);
-  key= new Key(Key::MULTIPLE, name_arg,
-               &default_key_create_info, 1,
-               lex->col_list);
+  key= new Key(Key::MULTIPLE, name_arg, &default_key_create_info, 1, lex->col_list);
   statement->alter_info.key_list.push_back(key);
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
   /* Only used for ALTER TABLE. Ignored otherwise. */
@@ -469,7 +466,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
 
 drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned)
 { 
-  lex->length=(char*) 0; /* use default length */
+  lex->length= NULL; /* use default length */
 
   if (is_unsigned)
   {
@@ -518,7 +515,7 @@ drizzled::enum_field_types buildSerialColumn(LEX *lex)
 
 drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
 {
-  lex->length= const_cast<char *>(length);
+  lex->length= length;
 
   if (lex->field())
   {
@@ -544,7 +541,7 @@ drizzled::enum_field_types buildDecimalColumn(LEX *lex)
 
 drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
 {
-  lex->length= const_cast<char *>(length);
+  lex->length= length;
   lex->charset= &my_charset_bin;
 
   if (lex->field())
@@ -616,7 +613,7 @@ drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length)
 
   if (length)
   {
-    lex->length= const_cast<char *>(length);
+    lex->length= length;
     return DRIZZLE_TYPE_MICROTIME;
   }
 

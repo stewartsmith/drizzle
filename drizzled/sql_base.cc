@@ -1218,7 +1218,7 @@ bool Session::reopen_tables()
     }
   }
 
-  delete [] tables;
+  delete[] tables;
 
   locking::broadcast_refresh();
 

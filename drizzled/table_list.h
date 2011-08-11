@@ -62,7 +62,7 @@ public:
     next_local(NULL),
     next_global(NULL),
     prev_global(NULL),
-    db(NULL),
+    schema(NULL),
     alias(NULL),
     table_name(NULL),
     option(NULL),
@@ -86,8 +86,6 @@ public:
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
-    db_length(0),
-    table_name_length(0),
     dep_tables(0),
     on_expr_dep_tables(0),
     nested_join(NULL),
@@ -98,7 +96,8 @@ public:
     is_alias(false),
     is_fqtn(false),
     create(false)
-  {}
+  {
+  }
 
   /**
    * List of tables local to a subquery (used by SQL_LIST). Considers
@@ -112,29 +111,23 @@ public:
   TableList **prev_global;
 
 private:
-  const char *db;
+  const char* schema;
 
 public:
   const char *getSchemaName() const
   {
-    return db;
+    return schema;
   }
 
-  const char** getSchemaNamePtr()
+  void setSchemaName(const char* v)
   {
-    return &db;
-  }
-
-  void setSchemaName(const char *arg, size_t arg_size)
-  {
-    db= arg;
-    db_length= arg_size;
+    schema= v;
   }
 
   const char *alias;
 
 private:
-  const char *table_name;
+  const char* table_name;
 
 public:
   const char *getTableName() const
@@ -142,10 +135,9 @@ public:
     return table_name;
   }
 
-  void setTableName(const char *arg, size_t arg_size)
+  void setTableName(const char* v)
   {
-    table_name= arg;
-    table_name_length= arg_size;
+    table_name= v;
   }
 
   const char *option; ///< Used by cache index
@@ -222,8 +214,6 @@ public:
   TableList *next_leaf;
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
-  size_t db_length;
-  size_t table_name_length;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -380,9 +370,9 @@ public:
   friend std::ostream& operator<<(std::ostream& output, const TableList &list)
   {
     output << "TableList:(";
-    output << list.db;
+    output << list.getSchemaName();
     output << ", ";
-    output << list.table_name;
+    output << list.getTableName();
     output << ", ";
     output << list.alias;
     output << ", ";

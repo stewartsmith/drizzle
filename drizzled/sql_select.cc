@@ -5832,7 +5832,7 @@ bool setup_copy_fields(Session *session,
 
 err:
   if (copy)
-    delete [] param->copy_field;			// This is never 0
+    delete[] param->copy_field;
   param->copy_field=0;
   return true;
 }

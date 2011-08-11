@@ -97,13 +97,6 @@ namespace fs= boost::filesystem;
 
 namespace drizzled {
 
-/*
-  The following is used to initialise Table_ident with a internal
-  table name
-*/
-char internal_table_name[2]= "*";
-char empty_c_string[1]= {0};    /* used for not defined db */
-
 const char* const Session::DEFAULT_WHERE= "field list";
 
 uint64_t g_refresh_version = 1;
@@ -1531,7 +1524,7 @@ void Session::end_statement()
   resetResultsetMessage();
 }
 
-bool Session::copy_db_to(const char*& db, size_t& db_length)
+bool Session::copy_db_to(char*& db, size_t& db_length)
 {
   if (impl_->schema->empty())
   {
@@ -1573,7 +1566,7 @@ void Session::send_kill_message() const
     my_message(err, ER(err), MYF(0));
 }
 
-void Session::set_db(const std::string& new_db)
+void Session::set_schema(const std::string& new_db)
 {
   impl_->schema = boost::make_shared<std::string>(new_db);
 }

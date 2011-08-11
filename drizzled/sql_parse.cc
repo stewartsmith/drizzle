@@ -941,7 +941,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     identifier::Schema schema_identifier(string(table->db.str));
     if (not schema::check(*session, schema_identifier))
     {
-
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
       return NULL;
     }
@@ -951,27 +950,31 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     if (table->sel)
     {
-      my_message(ER_DERIVED_MUST_HAVE_ALIAS,
-                 ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
+      my_message(ER_DERIVED_MUST_HAVE_ALIAS, ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
     alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
+  char* name;
+  size_t name_size;
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str, table->db.length);
+    ptr->setSchemaName(table->db.str);
   }
-  else if (lex->session->copy_db_to(*ptr->getSchemaNamePtr(), ptr->db_length))
+  else if (lex->session->copy_db_to(name, name_size))
     return NULL;
   else
+  {
     ptr->setIsFqtn(false);
+    ptr->setSchemaName(name);
+  }
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str, table->table.length);
+  ptr->setTableName(table->table.str);
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);

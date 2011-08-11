@@ -102,7 +102,7 @@ public: // overridden from ValueMapAllocator
 
    virtual void releaseMapBuckets( ValueInternalLink *links )
    {
-      delete [] links;
+      delete[] links;
    }
 
    virtual ValueInternalLink *allocateMapLink()
@@ -150,7 +150,7 @@ public: // overridden from ValueMapAllocator
 
    virtual void releaseMapBuckets( ValueInternalLink *links )
    {
-      delete [] links;
+      delete[] links;
    }
 
    virtual ValueInternalLink *allocateMapLink()

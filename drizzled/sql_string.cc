@@ -269,16 +269,6 @@ void String::set_ascii(const char *str, size_t arg_length)
   copy(str, arg_length, str_charset);
 }
 
-void String::append(const String &s)
-{
-  if (s.length())
-  {
-    realloc(str_length+s.length());
-    memcpy(Ptr+str_length,s.ptr(),s.length());
-    str_length+=s.length();
-  }
-}
-
 
 /*
   Append an ASCII string to the a string of the current character set
@@ -292,11 +282,10 @@ void String::append(const char *s,size_t arg_length)
   /*
     For an ASCII compatinble string we can just append.
   */
-  realloc(str_length+arg_length);
-  memcpy(Ptr +str_length, s, arg_length);
-  str_length+=arg_length;
+  realloc(str_length + arg_length);
+  memcpy(Ptr + str_length, s, arg_length);
+  str_length+= arg_length;
 }
-
 
 /*
   Append a 0-terminated ASCII string
@@ -305,6 +294,11 @@ void String::append(const char *s,size_t arg_length)
 void String::append(const char *s)
 {
   append(s, strlen(s));
+}
+
+void String::append(str_ref s)
+{
+  append(s.data(), s.size());
 }
 
 void String::append_with_prefill(const char *s,size_t arg_length, size_t full_length, char fill_char)

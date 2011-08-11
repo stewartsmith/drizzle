@@ -251,9 +251,9 @@ public:
   static bool needs_conversion(size_t arg_length, const charset_info_st* cs_from, const charset_info_st* cs_to);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
-  void append(const String &s);
-  void append(const char *s);
-  void append(const char *s,size_t arg_length);
+  void append(const char*);
+  void append(const char*, size_t);
+  void append(str_ref);
   void append_with_prefill(const char *s, size_t arg_length, size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
