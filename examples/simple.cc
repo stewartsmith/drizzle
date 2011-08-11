@@ -46,7 +46,6 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  const char* db= "information_schema";
   const char* host= NULL;
   const char* user= NULL;
   const char* password= NULL;
@@ -56,10 +55,6 @@ int main(int argc, char *argv[])
   {
     switch (c)
     {
-    case 'd':
-      db= optarg;
-      break;
-
     case 'h':
       host= optarg;
       break;
@@ -79,7 +74,6 @@ int main(int argc, char *argv[])
     default:
       cout << 
         "usage:\n"
-        "\t-d <db>    - Database to use for query\n"
         "\t-h <host>  - Host to connect to\n"
         "\t-p <port>  - Port to connect to\n"
         "\t-u <user>  - User\n"
@@ -92,7 +86,7 @@ int main(int argc, char *argv[])
   drizzle::connection_c* con= new drizzle::connection_c(drizzle);
   con->set_tcp(host, port);
   con->set_auth(user, password);
-  con->set_db(db);
+  con->set_db("information_schema");
   drizzle::result_c result;
   drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
   q.p("%");

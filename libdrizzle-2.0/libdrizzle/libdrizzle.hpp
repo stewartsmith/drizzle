@@ -43,7 +43,18 @@ class bad_query : public std::runtime_error
 {
 };
 
-class drizzle_c
+class noncopyable
+{
+protected:
+  noncopyable()
+  {
+  }
+private:
+  noncopyable(const noncopyable&);
+  void operator=(const noncopyable&);
+};
+
+class drizzle_c : noncopyable
 {
 public:
   drizzle_c()
@@ -59,7 +70,7 @@ public:
   drizzle_st b_;
 };
 
-class result_c
+class result_c : noncopyable
 {
 public:
   result_c()
@@ -120,7 +131,7 @@ public:
   drizzle_result_st b_;
 };
 
-class connection_c
+class connection_c : noncopyable
 {
 public:
   explicit connection_c(drizzle_c& drizzle)
