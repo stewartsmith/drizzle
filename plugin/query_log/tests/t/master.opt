@@ -1,0 +1,1 @@
+--plugin-add query-log --query-log.file $DRIZZLETEST_VARDIR/query.log

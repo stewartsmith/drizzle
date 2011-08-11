@@ -49,7 +49,7 @@ Created June 2005 by Marko Makela
 
 #ifndef UNIV_HOTBACKUP
 /** Statistics on compression, indexed by page_zip_des_t::ssize - 1 */
-UNIV_INTERN page_zip_stat_t page_zip_stat[PAGE_ZIP_NUM_SSIZE - 1];
+UNIV_INTERN page_zip_stat_t page_zip_stat[PAGE_ZIP_NUM_SSIZE_MAX - 1];
 #endif /* !UNIV_HOTBACKUP */
 
 /* Please refer to ../include/page0zip.ic for a description of the
@@ -589,9 +589,6 @@ page_zip_dir_encode(
 		ut_a(offs >= PAGE_ZIP_START);
 #if PAGE_ZIP_DIR_SLOT_MASK & (PAGE_ZIP_DIR_SLOT_MASK + 1)
 # error "PAGE_ZIP_DIR_SLOT_MASK is not 1 less than a power of 2"
-#endif
-#if PAGE_ZIP_DIR_SLOT_MASK < UNIV_PAGE_SIZE - 1
-# error "PAGE_ZIP_DIR_SLOT_MASK < UNIV_PAGE_SIZE - 1"
 #endif
 		if (UNIV_UNLIKELY(rec_get_n_owned_new(rec))) {
 			offs |= PAGE_ZIP_DIR_SLOT_OWNED;
