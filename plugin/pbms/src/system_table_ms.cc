@@ -2390,9 +2390,7 @@ iOpenCount(0)
 
 MSSystemTableShare::~MSSystemTableShare()
 {
-#ifdef DRIZZLED
-	myThrLock.deinit();
-#else
+#ifndef DRIZZLED
 	thr_lock_delete(&myThrLock);
 #endif
 	if (myTablePath) {

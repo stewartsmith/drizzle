@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <libdrizzle/libdrizzle.h>
+#include <sstream>
 #include <stdexcept>
 
 namespace drizzle {
@@ -243,8 +244,11 @@ public:
     return *this;
   }
 
-  query_c& p(long long)
+  query_c& p(long long v)
   {
+    std::stringstream ss;
+    ss << v;
+    p_raw(ss.str());
     return *this;
   }
 

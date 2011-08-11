@@ -95,7 +95,7 @@ public:
 	uint	max_supported_key_part_length() const { return 1024; }
 
 	int open(const char *name, int mode, uint test_if_locked);
-	void drop_table(const char *name) {UNUSED(name);}
+	void drop_table() {}
 
 	int close(void);
 #ifdef DRIZZLED
