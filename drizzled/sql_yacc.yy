@@ -3077,7 +3077,6 @@ function_call_generic:
           }
           opt_udf_expr_list ')'
           {
-            Create_func *builder;
             Item *item= NULL;
 
             /*
@@ -3089,25 +3088,21 @@ function_call_generic:
 
               This will be revised with WL#2128 (SQL PATH)
             */
-            builder= find_native_function_builder($1);
-            if (builder)
+            if (Create_func* builder= find_native_function_builder($1))
             {
               item= builder->create(YYSession, $1, $4);
             }
-            else
+            else if (const plugin::Function* udf= $<udf>3) /* Retrieving the result of service::Function::get */
             {
-              /* Retrieving the result of service::Function::get */
-              const plugin::Function *udf= $<udf>3;
-              if (udf)
-              {
-                item= Create_udf_func::s_singleton.create(YYSession, udf, $4);
-              } else {
-                /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
-                my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
-              }
+	          item= Create_udf_func::s_singleton.create(YYSession, udf, $4);
+            } 
+			else 
+			{
+              /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
+              my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
             }
 
-            if (! ($$= item))
+            if (not ($$= item))
             {
               DRIZZLE_YYABORT;
             }

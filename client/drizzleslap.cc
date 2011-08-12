@@ -309,7 +309,6 @@ limit_not_met:
     if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
         (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
     {
-      int length;
       uint32_t key_val;
       char buffer[HUGE_STRING_LENGTH];
 
@@ -324,13 +323,11 @@ limit_not_met:
       if (primary_keys.size())
       {
         key_val= (uint32_t)(random() % primary_keys.size());
-        const char *key;
-        key= primary_keys[key_val].c_str();
+        const char *key= primary_keys[key_val].c_str();
 
         assert(key);
 
-        length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
-                         (int)ptr->getLength(), ptr->getString(), key);
+        int length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'", (int)ptr->getLength(), ptr->getString(), key);
 
         if (run_query(con, &result, buffer, length))
         {
@@ -1262,7 +1259,6 @@ static int
 process_options(void)
 {
   struct stat sbuf;
-  OptionString *sql_type;
   uint32_t sql_type_count= 0;
   ssize_t bytes_read= 0;
   
@@ -1405,7 +1401,7 @@ process_options(void)
 
     query_statements.resize(query_statements_count);
 
-    sql_type= query_options;
+    OptionString* sql_type= query_options;
     do
     {
       if (sql_type->getString()[0] == 'r')

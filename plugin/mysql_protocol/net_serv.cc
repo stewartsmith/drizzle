@@ -751,11 +751,9 @@ bool NET::write(const void* data, size_t size)
   return drizzleclient_net_write(this, data, size);
 }
 
-bool NET::write_command(unsigned char command,
-  const unsigned char *header, size_t head_len,
-  const unsigned char *packet, size_t len)
+bool NET::write_command(unsigned char command, data_ref header, data_ref body)
 {
-  return drizzleclient_net_write_command(this, command, header, head_len, packet, len);
+  return drizzleclient_net_write_command(this, command, header.data(), header.size(), body.data(), body.size());
 }
 
 uint32_t NET::read()

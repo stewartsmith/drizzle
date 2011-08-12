@@ -49,8 +49,7 @@ public:
       do {
         if (foreign_keys_iterator != table_message.fk_constraint_size())
         {
-          const message::Table::ForeignKeyConstraint &fk_constraint(table_message.fk_constraint(foreign_keys_iterator++));
-          return &fk_constraint;
+          return &table_message.fk_constraint(foreign_keys_iterator++);
         }
 
       } while ((table_ptr= all_tables_generator) && table_setup());
@@ -71,8 +70,7 @@ public:
       } while ((table_ptr= all_tables_generator) && table_setup());
     }
 
-    ForeignKeyConstraintPair null_pair;
-    return null_pair;
+    return ForeignKeyConstraintPair();
   }
 };
 

@@ -175,11 +175,6 @@ private:
     return mem_root.alloc(arg);
   }
 
-  char *strdup(const char *str_arg, size_t len_arg)
-  {
-    return mem_root.strdup(str_arg, len_arg);
-  }
-
   memory::Root& mem()
   {
     return mem_root;

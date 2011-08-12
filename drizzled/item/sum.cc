@@ -434,11 +434,10 @@ void Item_sum::make_field(SendField *tmp_field)
   {
     ((Item_field*) args[0])->field->make_field(tmp_field);
     /* For expressions only col_name should be non-empty string. */
-    char *empty_string= (char*)"";
-    tmp_field->db_name= empty_string;
-    tmp_field->org_table_name= empty_string;
-    tmp_field->table_name= empty_string;
-    tmp_field->org_col_name= empty_string;
+    tmp_field->db_name= "";
+    tmp_field->org_table_name= "";
+    tmp_field->table_name= "";
+    tmp_field->org_col_name= "";
     tmp_field->col_name= name;
     if (maybe_null)
       tmp_field->flags&= ~NOT_NULL_FLAG;
@@ -2587,7 +2586,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   tmp_table_param= new Tmp_Table_Param;
 
   /* Create a table with an unique key over all parameters */
-  for (uint32_t i=0; i < arg_count ; i++)
+  for (uint32_t i= 0; i < arg_count; i++)
   {
     Item *item=args[i];
     list.push_back(item);
@@ -2600,10 +2599,7 @@ bool Item_sum_count_distinct::setup(Session *session)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(session, tmp_table_param, list, (Order*) 0, 1,
-				0,
-				(select_lex->options | session->options),
-				HA_POS_ERROR, (char*)"")))
+  if (!(table= create_tmp_table(session, tmp_table_param, list, NULL, 1, 0, (select_lex->options | session->options), HA_POS_ERROR, "")))
   {
     return true;
   }

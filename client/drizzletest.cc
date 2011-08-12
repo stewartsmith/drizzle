@@ -2790,13 +2790,12 @@ static void do_sync_with_master2(long offset)
 {
   drizzle::connection_c& con= *cur_con;
   char query_buf[FN_REFLEN+128];
-  int tries= 0;
 
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
-  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file,
-          master_pos.pos + offset);
+  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
+  int tries= 0;
 
 wait_for_position:
 

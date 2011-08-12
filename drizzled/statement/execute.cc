@@ -37,7 +37,7 @@ void parse(drizzled::Session&, const char *inBuf, uint32_t length);
 namespace statement {
 
 Execute::Execute(Session *in_session,
-                 drizzled::execute_string_t to_execute_arg,
+                 execute_string_t to_execute_arg,
                  bool is_quiet_arg,
                  bool is_concurrent_arg,
                  bool should_wait_arg) :
@@ -121,7 +121,7 @@ bool statement::Execute::execute_shell()
     }
 
     drizzled::Execute executer(session(), should_wait);
-    executer.run(to_execute.str, to_execute.length);
+    executer.run(to_execute);
   }
   else // Non-concurrent run.
   {

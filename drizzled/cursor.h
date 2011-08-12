@@ -170,7 +170,7 @@ public:
     get_auto_increment().
   */
   uint64_t next_insert_id;
-  uint64_t getNextInsertId()
+  uint64_t getNextInsertId() const
   {
     return next_insert_id;
   }
@@ -178,7 +178,7 @@ public:
   /**
     Used by SHOW TABLE STATUS to get the current auto_inc from the engine
   */
-  uint64_t getAutoIncrement()
+  uint64_t getAutoIncrement() const
   {
     return stats.auto_increment_value;
   }
@@ -223,10 +223,7 @@ public:
   int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
   int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
-
-  /** to be actually called to get 'check()' functionality*/
   int ha_check(Session*);
-
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_delete_all_rows();
@@ -236,7 +233,7 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void closeMarkForDelete(const char *name);
+  void closeMarkForDelete();
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -603,7 +600,7 @@ private:
     no new engine should ever use it). Right
     now HEAP does rely on it, so we cannot remove it.
   */
-  virtual void drop_table(const char *name);
+  virtual void drop_table();
 };
 
 extern const char *ha_row_type[];

@@ -2137,16 +2137,13 @@ bool create_like_table(Session* session,
 
 bool analyze_table(Session* session, TableList* tables)
 {
-  thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, "analyze", lock_type, true, &Cursor::ha_analyze));
+  return admin_table(session, tables, "analyze", TL_READ_NO_INSERT, true, &Cursor::ha_analyze);
 }
 
 
 bool check_table(Session* session, TableList* tables)
 {
-  thr_lock_type lock_type = TL_READ_NO_INSERT;
-  return admin_table(session, tables, "check", lock_type, false, &Cursor::ha_check);
+  return admin_table(session, tables, "check", TL_READ_NO_INSERT, false, &Cursor::ha_check);
 }
 
 } /* namespace drizzled */

@@ -203,8 +203,7 @@ const lex_string_t warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool show_warnings(Session *session,
-                   bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
+bool show_warnings(Session *session, bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
 {
   List<Item> field_list;
 
@@ -229,8 +228,7 @@ bool show_warnings(Session *session,
       continue;
     if (idx > unit->select_limit_cnt)
       break;
-    session->getClient()->store(warning_level_names[err->level].str,
-                                warning_level_names[err->level].length);
+    session->getClient()->store(warning_level_names[err->level]);
     session->getClient()->store((uint32_t) err->code);
     session->getClient()->store(err->msg, strlen(err->msg));
     if (session->getClient()->flush())

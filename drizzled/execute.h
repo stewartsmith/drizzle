@@ -32,9 +32,8 @@ class DRIZZLED_API Execute
 public:
   Execute(Session&, bool wait_arg);
 
-  void run(const std::string&);
-  void run(const char*, size_t);
-  void run(const std::string&, sql::ResultSet&);
+  void run(str_ref);
+  void run(str_ref, sql::ResultSet&);
 
   Session &session()
   {

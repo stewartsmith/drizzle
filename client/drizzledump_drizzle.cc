@@ -68,7 +68,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables()
     else
       table->comment= "";
 
-    table->replicate= (strcmp(row[5], "1") == 0) ? true : false;
+    table->replicate= strcmp(row[5], "1") == 0;
     table->database= this;
     if ((not table->populateFields()) or (not table->populateIndexes()) or
       (not table->populateFkeys()))
@@ -126,7 +126,7 @@ bool DrizzleDumpDatabaseDrizzle::populateTables(const std::vector<std::string> &
       table->displayName= displayName;
       table->collate= row[1];
       table->engineName= row[2];
-      table->replicate= (strcmp(row[3], "1") == 0) ? true : false;
+      table->replicate= strcmp(row[3], "1") == 0;
       table->autoIncrement= 0;
       table->database= this;
       if ((not table->populateFields()) or (not table->populateIndexes()))

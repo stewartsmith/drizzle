@@ -20,24 +20,24 @@
 
 #pragma once
 
-#include <boost/regex.hpp>
-#include <iosfwd>
+#include <string>
 
 class ServerDetect
 {
-  public:
-    enum server_type {
-      SERVER_MYSQL_FOUND,
-      SERVER_DRIZZLE_FOUND,
-      SERVER_UNKNOWN_FOUND
-    };
+public:
+  enum server_type 
+  {
+    SERVER_MYSQL_FOUND,
+    SERVER_DRIZZLE_FOUND,
+    SERVER_UNKNOWN_FOUND
+  };
 
-    server_type getServerType() { return type; }
-    std::string& getServerVersion() { return version; }
+  server_type getServerType() const { return type; }
+  const std::string& getServerVersion() const { return version; }
 
-    ServerDetect(drizzle_con_st *connection);
+  ServerDetect(drizzle_con_st*);
 
-  private:
-    server_type type;
-    std::string version;
+private:
+  server_type type;
+  std::string version;
 };

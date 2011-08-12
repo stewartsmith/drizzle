@@ -70,12 +70,12 @@ void ListenMySQLProtocol::addCountersToTable()
   counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters().failedConnections));
 }
 
-const std::string ListenMySQLProtocol::getHost(void) const
+const std::string ListenMySQLProtocol::getHost() const
 {
   return _hostname;
 }
 
-in_port_t ListenMySQLProtocol::getPort(void) const
+in_port_t ListenMySQLProtocol::getPort() const
 {
   return port.get();
 }
@@ -219,7 +219,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
   if (packet_length == 0)                       /* safety */
   {
     /* Initialize with COM_SLEEP packet */
-    (*l_packet)[0]= (unsigned char) COM_SLEEP;
+    (*l_packet)[0]= COM_SLEEP;
     packet_length= 1;
   }
   else
@@ -258,8 +258,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
 #ifdef NEVER
   /* See comment above. */
   /* Restore read timeout value */
-  drizzleclient_net_set_read_timeout(&net,
-                                     session->variables.net_read_timeout);
+  drizzleclient_net_set_read_timeout(&net, session->variables.net_read_timeout);
 #endif
 
   return true;
@@ -369,11 +368,8 @@ void ClientMySQLProtocol::sendEOF()
 
 void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err)
 {
-  uint32_t length;
-  /*
-    buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
-  */
-  unsigned char buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
+  // buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
+  unsigned char buff[2 + 1 + SQLSTATE_LENGTH + DRIZZLE_ERRMSG_SIZE];
 
   assert(sql_errno != EE_OK);
   assert(err && err[0]);
@@ -401,19 +397,16 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   }
 
   int2store(buff, static_cast<uint16_t>(sql_errno));
-  pos= buff+2;
 
   /* The first # is to make the client backward compatible */
   buff[2]= '#';
-  pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
+  unsigned char* pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
   pos+= strlen(error::convert_to_sqlstate(sql_errno));
 
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
   tmp[0]= '\0';
-  length= (uint32_t)(tmp-(char*)buff);
-  err= (char*) buff;
-  net.write_command((unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
+  net.write_command(255, data_ref().clear(), data_ref(buff, tmp));
   net.flush();
   session->main_da().can_overwrite_status= false;
 }
@@ -585,25 +578,25 @@ void ClientMySQLProtocol::store()
 void ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
-  netStoreData(buff, (internal::int10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, internal::int10_to_str(from, buff, -10) - buff);
 }
 
 void ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
-  netStoreData(buff, (size_t) (internal::int10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, internal::int10_to_str(from, buff, 10) - buff);
 }
 
 void ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
-  netStoreData(buff, (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, internal::int64_t10_to_str(from, buff, -10) - buff);
 }
 
 void ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
-  netStoreData(buff, (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, internal::int64_t10_to_str(from, buff, 10) - buff);
 }
 
 void ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
@@ -690,13 +683,8 @@ bool ClientMySQLProtocol::checkConnection()
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
-    if (net.write_command(
-            (unsigned char) PROTOCOL_VERSION
-          , (unsigned char*) ""
-          , 0
-          , (unsigned char*) buff
-          , (size_t) (end-buff)) 
-        ||    (pkt_len= net.read()) == packet_error 
+    if (net.write_command(PROTOCOL_VERSION, data_ref().clear(), data_ref(buff, end)) 
+        || (pkt_len= net.read()) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
@@ -706,7 +694,7 @@ bool ClientMySQLProtocol::checkConnection()
   packet.alloc(buffer_length.get());
 
   client_capabilities= uint2korr(net.read_pos);
-  if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
+  if (not (client_capabilities & CLIENT_PROTOCOL_MYSQL41))
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
@@ -822,8 +810,7 @@ void ClientMySQLProtocol::netStoreData(const void* from, size_t length)
   write it to the network output buffer.
 */
 
-void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
-                                         uint32_t total_warn_count)
+void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status, uint32_t total_warn_count)
 {
   unsigned char buff[5];
   /*
@@ -859,26 +846,26 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
 
 unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t length)
 {
-  if (length < (uint64_t) 251LL)
+  if (length < 251)
   {
-    *buffer=(unsigned char) length;
+    *buffer= (unsigned char) length;
     return buffer+1;
   }
   /* 251 is reserved for NULL */
-  if (length < (uint64_t) 65536LL)
+  if (length < 65536)
   {
-    *buffer++=252;
-    int2store(buffer,(uint32_t) length);
+    *buffer++= 252;
+    int2store(buffer, (uint32_t) length);
     return buffer+2;
   }
-  if (length < (uint64_t) 16777216LL)
+  if (length < 16777216)
   {
     *buffer++=253;
-    int3store(buffer,(uint32_t) length);
+    int3store(buffer, (uint32_t) length);
     return buffer+3;
   }
   *buffer++=254;
-  int8store(buffer,length);
+  int8store(buffer, length);
   return buffer+8;
 }
 

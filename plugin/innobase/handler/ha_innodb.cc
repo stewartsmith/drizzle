@@ -6957,7 +6957,7 @@ ha_innobase::records_in_range(
 
   ut_a(prebuilt->trx == session_to_trx(getTable()->in_use));
 
-  prebuilt->trx->op_info = (char*)"estimating records in index range";
+  prebuilt->trx->op_info = "estimating records in index range";
 
   /* In case MySQL calls this in the middle of a SELECT query, release
   possible adaptive hash latch to avoid deadlocks of threads */
@@ -7029,7 +7029,7 @@ ha_innobase::records_in_range(
 func_exit:
   free(key_val_buff2);
 
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   /* The MySQL optimizer seems to believe an estimate of 0 rows is
   always accurate and may return the result 'Empty set' based on that.
@@ -7090,7 +7090,7 @@ ha_innobase::estimate_rows_upper_bound(void)
   estimate = 2 * local_data_file_length /
            dict_index_calc_min_rec_len(index);
 
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   return((ha_rows) estimate);
 }
@@ -7280,7 +7280,7 @@ ha_innobase::info(
   /* In case MySQL calls this in the middle of a SELECT query, release
   possible adaptive hash latch to avoid deadlocks of threads */
 
-  prebuilt->trx->op_info = (char*)"returning various info to MySQL";
+  prebuilt->trx->op_info = "returning various info to MySQL";
 
   trx_search_latch_release_if_reserved(prebuilt->trx);
 
@@ -7527,7 +7527,7 @@ ha_innobase::info(
   }
 
 func_exit:
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   return(0);
 }
@@ -7738,7 +7738,7 @@ ha_innobase::update_table_comment(
 
   update_session(getTable()->in_use);
 
-  prebuilt->trx->op_info = (char*)"returning table comment";
+  prebuilt->trx->op_info = "returning table comment";
 
   /* In case MySQL calls this in the middle of a SELECT query, release
   possible adaptive hash latch to avoid deadlocks of threads */
@@ -7783,7 +7783,7 @@ ha_innobase::update_table_comment(
 
   mutex_exit(&srv_dict_tmpfile_mutex);
 
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   return(str ? str : (char*) comment);
 }
@@ -7809,7 +7809,7 @@ ha_innobase::get_foreign_key_create_info(void)
 
   update_session(getTable()->in_use);
 
-  prebuilt->trx->op_info = (char*)"getting info on foreign keys";
+  prebuilt->trx->op_info = "getting info on foreign keys";
 
   /* In case MySQL calls this in the middle of a SELECT query,
   release possible adaptive hash latch to avoid
@@ -7823,7 +7823,7 @@ ha_innobase::get_foreign_key_create_info(void)
   /* output the data to a temporary file */
   dict_print_info_on_foreign_keys(TRUE, srv_dict_tmpfile,
         prebuilt->trx, prebuilt->table);
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   flen = ftell(srv_dict_tmpfile);
   if (flen < 0) {
@@ -7851,19 +7851,15 @@ UNIV_INTERN
 int
 ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_list)
 {
-  dict_foreign_t* foreign;
-
   ut_a(prebuilt != NULL);
   update_session(getTable()->in_use);
-  prebuilt->trx->op_info = (char*)"getting list of foreign keys";
+  prebuilt->trx->op_info = "getting list of foreign keys";
   trx_search_latch_release_if_reserved(prebuilt->trx);
   mutex_enter(&(dict_sys->mutex));
-  foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
+  dict_foreign_t* foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
 
   while (foreign != NULL) {
 
-    uint i;
-    lex_string_t *name = 0;
     uint ulen;
     char uname[NAME_LEN + 1];           /* Unencoded name */
     char db_name[NAME_LEN + 1];
@@ -7871,11 +7867,11 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
 
     /** Foreign id **/
     tmp_buff = foreign->id;
-    i = 0;
+    uint i = 0;
     while (tmp_buff[i] != '/')
       i++;
     tmp_buff += i + 1;
-    lex_string_t *tmp_foreign_id = session->make_lex_string(NULL, tmp_buff, strlen(tmp_buff), true);
+    lex_string_t *tmp_foreign_id = session->make_lex_string(NULL, str_ref(tmp_buff));
 
     /* Database name */
     tmp_buff = foreign->referenced_table_name;
@@ -7888,23 +7884,20 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
     }
     db_name[i] = 0;
     ulen= identifier::Table::filename_to_tablename(db_name, uname, sizeof(uname));
-    lex_string_t *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
+    lex_string_t *tmp_referenced_db = session->make_lex_string(NULL, str_ref(uname, ulen));
 
     /* Table name */
     tmp_buff += i + 1;
     ulen= identifier::Table::filename_to_tablename(tmp_buff, uname, sizeof(uname));
-    lex_string_t *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
+    lex_string_t *tmp_referenced_table = session->make_lex_string(NULL, str_ref(uname, ulen));
 
     /** Foreign Fields **/
     List<lex_string_t> tmp_foreign_fields;
     List<lex_string_t> tmp_referenced_fields;
-    for (i= 0;;) {
-      tmp_buff= foreign->foreign_col_names[i];
-      name = session->make_lex_string(name, tmp_buff, strlen(tmp_buff), true);
-      tmp_foreign_fields.push_back(name);
-      tmp_buff= foreign->referenced_col_names[i];
-      name = session->make_lex_string(name, tmp_buff, strlen(tmp_buff), true);
-      tmp_referenced_fields.push_back(name);
+    for (i= 0;;) 
+		{
+      tmp_foreign_fields.push_back(session->make_lex_string(NULL, str_ref(foreign->foreign_col_names[i])));
+      tmp_referenced_fields.push_back(session->make_lex_string(NULL, str_ref(foreign->referenced_col_names[i])));
       if (++i >= foreign->n_fields)
         break;
     }
@@ -7930,7 +7923,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       length=8;
       tmp_buff= "RESTRICT";
     }
-    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, tmp_buff, length, true);
+    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
 
 
     if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
@@ -7953,15 +7946,13 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       length=8;
       tmp_buff= "RESTRICT";
     }
-    lex_string_t *tmp_update_method = session->make_lex_string(NULL, tmp_buff, length, true);
+    lex_string_t *tmp_update_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
 
     lex_string_t *tmp_referenced_key_name = NULL;
 
-    if (foreign->referenced_index &&
-        foreign->referenced_index->name)
+    if (foreign->referenced_index && foreign->referenced_index->name)
     {
-      tmp_referenced_key_name = session->make_lex_string(NULL,
-                                                         foreign->referenced_index->name, strlen(foreign->referenced_index->name), true);
+      tmp_referenced_key_name = session->make_lex_string(NULL, str_ref(foreign->referenced_index->name));
     }
 
     ForeignKeyInfo f_key_info(
@@ -7969,12 +7960,11 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
                               tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
                               tmp_foreign_fields, tmp_referenced_fields);
 
-    ForeignKeyInfo *pf_key_info = (ForeignKeyInfo*)session->mem.memdup(&f_key_info, sizeof(ForeignKeyInfo));
-    f_key_list->push_back(pf_key_info);
+    f_key_list->push_back((ForeignKeyInfo*)session->mem.memdup(&f_key_info, sizeof(ForeignKeyInfo)));
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
   }
   mutex_exit(&(dict_sys->mutex));
-  prebuilt->trx->op_info = (char*)"";
+  prebuilt->trx->op_info = "";
 
   return(0);
 }
@@ -8549,7 +8539,6 @@ static void free_share(INNOBASE_SHARE* share)
 
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
-    share->lock.deinit();
 
     /* Free any memory from index translation table */
     free(share->idx_trans_tbl.index_mapping);

@@ -115,7 +115,7 @@ public:
   char* strdup(str_ref);
   void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
-  inline bool alloc_root_inited()
+  bool alloc_root_inited() const
   {
     return min_malloc != 0;
   }

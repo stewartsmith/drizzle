@@ -3268,23 +3268,19 @@ bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
                   TableList **leaves, bool select_insert)
 {
-  uint32_t tablenr= 0;
-
-  assert ((select_insert && !tables->next_name_resolution_table) || !tables ||
+  assert((select_insert && !tables->next_name_resolution_table) || !tables ||
           (context->table_list && context->first_name_resolution_table));
   /*
     this is used for INSERT ... SELECT.
     For select we setup tables except first (and its underlying tables)
   */
-  TableList *first_select_table= (select_insert ?  tables->next_local: NULL);
+  TableList *first_select_table= select_insert ? tables->next_local : NULL;
 
-  if (!(*leaves))
+  if (not *leaves)
     make_leaves_list(leaves, tables);
 
-  TableList *table_list;
-  for (table_list= *leaves;
-       table_list;
-       table_list= table_list->next_leaf, tablenr++)
+  uint32_t tablenr= 0;
+  for (TableList* table_list= *leaves; table_list; table_list= table_list->next_leaf, tablenr++)
   {
     Table *table= table_list->table;
     table->pos_in_table_list= table_list;
@@ -3345,8 +3341,7 @@ bool setup_tables_and_check_access(Session *session,
 {
   TableList *leaves_tmp= NULL;
 
-  if (setup_tables(session, context, from_clause, tables,
-                   &leaves_tmp, select_insert))
+  if (setup_tables(session, context, from_clause, tables, &leaves_tmp, select_insert))
     return true;
 
   if (leaves)
@@ -3435,12 +3430,11 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
 
     for (; !field_iterator.end_of_fields(); field_iterator.next())
     {
-      Item *item;
-
-      if (!(item= field_iterator.create_item(session)))
+      Item *item= field_iterator.create_item(session);
+      if (not item)
         return true;
 
-      if (!found)
+      if (not found)
       {
         found= true;
         it->replace(item); /* Replace '*' with the first found item. */

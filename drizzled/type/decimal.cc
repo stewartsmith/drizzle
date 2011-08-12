@@ -2669,17 +2669,17 @@ void test_d2f(const char *s, int ex)
 void test_d2b2d(const char *str, int p, int s, const char *orig, int ex)
 {
   char s1[100], buf[100], *end;
-  int res, i, size=decimal_bin_size(p, s);
+  int size=decimal_bin_size(p, s);
 
   snprintf(s1, sizeof(s1), "'%s'", str);
   end= strend(str);
   string2decimal(str, &a, &end);
-  res=decimal2bin(&a, buf, p, s);
+  int res=decimal2bin(&a, buf, p, s);
   printf("%-31s {%2d, %2d} => res=%d size=%-2d ", s1, p, s, res, size);
   if (full)
   {
     printf("0x");
-    for (i=0; i < size; i++)
+    for (int i= 0; i < size; i++)
       printf("%02x", ((unsigned char *)buf)[i]);
   }
   res=bin2decimal(buf, &a, p, s);

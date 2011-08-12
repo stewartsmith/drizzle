@@ -31,14 +31,14 @@ namespace drizzled {
   Iterator over the fields of a generic table reference.
 */
 
-class Field_iterator: public memory::SqlAlloc
+class Field_iterator : public memory::SqlAlloc
 {
 public:
   virtual ~Field_iterator() {}
   virtual void set(TableList *)= 0;
   virtual void next()= 0;
-  virtual bool end_of_fields()= 0;              /* Return 1 at end of list */
-  virtual const char *name()= 0;
+  virtual bool end_of_fields() const= 0;              /* Return true at end of list */
+  virtual const char *name() const= 0;
   virtual Item *create_item(Session *)= 0;
   virtual Field *field()= 0;
 };
@@ -49,7 +49,7 @@ public:
   table, or subquery.
 */
 
-class Field_iterator_table: public Field_iterator
+class Field_iterator_table : public Field_iterator
 {
   Field **ptr;
 public:
@@ -57,8 +57,8 @@ public:
   void set(TableList *table);
   void set_table(Table *table);
   void next() { ptr++; }
-  bool end_of_fields() { return *ptr == 0; }
-  const char *name();
+  bool end_of_fields() const { return *ptr == 0; }
+  const char *name() const;
   Item *create_item(Session *session);
   Field *field() { return *ptr; }
 };
@@ -76,12 +76,11 @@ class Field_iterator_natural_join: public Field_iterator
   List<Natural_join_column>::iterator column_ref_it;
   Natural_join_column *cur_column_ref;
 public:
-  Field_iterator_natural_join() :cur_column_ref(NULL) {}
-  ~Field_iterator_natural_join() {}
+  Field_iterator_natural_join() : cur_column_ref(NULL) {}
   void set(TableList *table);
   void next();
-  bool end_of_fields() { return !cur_column_ref; }
-  const char *name() { return cur_column_ref->name(); }
+  bool end_of_fields() const { return not cur_column_ref; }
+  const char *name() const { return cur_column_ref->name(); }
   Item *create_item(Session *session) { return cur_column_ref->create_item(session); }
   Field *field() { return cur_column_ref->field(); }
   Natural_join_column *column_ref() { return cur_column_ref; }
@@ -115,9 +114,9 @@ public:
   Field_iterator_table_ref() :field_it(NULL) {}
   void set(TableList *table);
   void next();
-  bool end_of_fields()
+  bool end_of_fields() const
   { return (table_ref == last_leaf && field_it->end_of_fields()); }
-  const char *name() { return field_it->name(); }
+  const char *name() const { return field_it->name(); }
   const char *table_name();
   const char *db_name();
   Item *create_item(Session *session) { return field_it->create_item(session); }

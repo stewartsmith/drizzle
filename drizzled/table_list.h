@@ -239,7 +239,7 @@ public:
    * @retval
    *  true - out of memory
    */
-  bool set_insert_values(memory::Root *mem_root);
+  void set_insert_values();
   /**
    * Find underlying base tables (TableList) which represent given
    * table_to_find (Table)
@@ -298,7 +298,7 @@ public:
    * @retval
    *  true if a leaf, false otherwise.
    */
-  bool is_leaf_for_name_resolution();
+  bool is_leaf_for_name_resolution() const;
   inline TableList *top_table()
   { return this; }
 

@@ -101,11 +101,11 @@ public:
   virtual void store(const type::Time*) {}
   virtual void store(const char*) {}
   virtual void store(const char*, size_t) {}
-  virtual void store(const std::string &) {}
+  virtual void store(str_ref) {}
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }
 
-  void pushSQL(const std::string &arg)
+  void pushSQL(str_ref arg)
   {
     ::drizzled::error_t err_msg;
     ::drizzled::execute::Context context(arg.data(), arg.size(), err_msg);

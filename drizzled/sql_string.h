@@ -275,8 +275,8 @@ public:
   friend int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
-  size_t numchars();
-  int charpos(int i,size_t offset=0);
+  size_t numchars() const;
+  int charpos(int i, size_t offset= 0) const;
 
   void reserve(size_t space_needed)
   {
