@@ -46,29 +46,17 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  const char* db= "information_schema";
   const char* host= NULL;
   const char* user= NULL;
   const char* password= NULL;
-  bool mysql= false;
   in_port_t port= 0;
-  const char* query= "select table_schema, table_name from tables";
-  drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
 
   for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
   {
     switch (c)
     {
-    case 'd':
-      db= optarg;
-      break;
-
     case 'h':
       host= optarg;
-      break;
-
-    case 'm':
-      mysql= true;
       break;
 
     case 'p':
@@ -83,40 +71,27 @@ int main(int argc, char *argv[])
       password = optarg;
       break;
 
-    case 'q':
-      query= optarg;
-      break;
-
-    case 'v':
-      if (verbose < DRIZZLE_VERBOSE_MAX)
-        verbose= static_cast<drizzle_verbose_t>(verbose + 1);
-      break;
-
     default:
       cout << 
-        "usage: " << argv[0] << " [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] [-v]\n"
-        "\t-d <db>    - Database to use for query\n"
+        "usage:\n"
         "\t-h <host>  - Host to connect to\n"
-        "\t-m         - Use the MySQL protocol\n"
         "\t-p <port>  - Port to connect to\n"
         "\t-u <user>  - User\n"
-        "\t-P <pass>  - Password\n"
-        "\t-q <query> - Query to run\n"
-        "\t-v         - Increase verbosity level\n";
+        "\t-P <pass>  - Password\n";
       return 1;
     }
   }
 
   drizzle::drizzle_c drizzle;
-  drizzle_set_verbose(&drizzle.b_, verbose);
   drizzle::connection_c* con= new drizzle::connection_c(drizzle);
-  if (mysql)
-    drizzle_con_add_options(&con->b_, DRIZZLE_CON_MYSQL);
   con->set_tcp(host, port);
   con->set_auth(user, password);
-  con->set_db(db);
+  con->set_db("information_schema");
   drizzle::result_c result;
-  if (con->query(result, query))
+  drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
+  q.p("%");
+  cout << q.read() << endl;
+  if (q.execute(result))
   {
     cerr << "query: " << con->error() << endl;
     return 1;
