@@ -524,7 +524,7 @@ void Session::storeGlobals()
   setCurrentSession(this);
   setCurrentMemRoot(&mem);
 
-  mysys_var= my_thread_var;
+  mysys_var= internal::my_thread_var();
 
   /*
     Let mysqld define the thread id (not mysys)

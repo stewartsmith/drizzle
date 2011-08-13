@@ -114,8 +114,7 @@ void thr_lock_init(THR_LOCK *lock)
 
 void THR_LOCK_INFO::init()
 {
-  internal::st_my_thread_var *tmp= my_thread_var;
-  thread_id= tmp->id;
+  thread_id= internal::my_thread_var()->id;
   n_cursors= 0;
 }
 
