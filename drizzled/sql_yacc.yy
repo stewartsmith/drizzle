@@ -3256,9 +3256,7 @@ opt_gorder_clause:
         | order_clause
           {
             Select_Lex *select= Lex.current_select;
-            select->gorder_list=
-              (SQL_LIST*) memory::sql_memdup((char*) &select->order_list,
-                                     sizeof(st_sql_list));
+            select->gorder_list= (SQL_LIST*) memory::sql_memdup(&select->order_list, sizeof(SQL_LIST));
             select->order_list.clear();
           }
         ;

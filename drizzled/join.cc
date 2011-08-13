@@ -1875,9 +1875,8 @@ int Join::destroy()
   exec_tmp_table1= NULL;
   exec_tmp_table2= NULL;
   delete select;
-  delete_dynamic(&keyuse);
-
-  return(error);
+  keyuse.free();
+  return error;
 }
 
 /**

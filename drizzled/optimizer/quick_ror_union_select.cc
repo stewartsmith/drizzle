@@ -79,7 +79,7 @@ int optimizer::QuickRorUnionSelect::init()
 int optimizer::QuickRorUnionSelect::reset()
 {
   have_prev_rowid= false;
-  if (! scans_inited)
+  if (not scans_inited)
   {
     BOOST_FOREACH(QuickSelectInterface* it, quick_selects)
     {
@@ -90,7 +90,7 @@ int optimizer::QuickRorUnionSelect::reset()
     }
     scans_inited= true;
   }
-  while (! queue->empty())
+  while (not queue->empty())
   {
     queue->pop();
   }

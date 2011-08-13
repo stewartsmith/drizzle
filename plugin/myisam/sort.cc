@@ -154,7 +154,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       while ((maxbuffer= (size_t)(records/(keys-1)+1)) != skr);
 
     sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)));
-    my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
+    buffpek.init(sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
     break;
   }
   if (memavl < MIN_SORT_MEMORY)
@@ -228,11 +228,11 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 
 err:
   free(sort_keys);
-  delete_dynamic(&buffpek);
+  buffpek.free();
   tempfile.close_cached_file();
   tempfile_for_exceptions.close_cached_file();
 
-  return(error ? -1 : 0);
+  return error ? -1 : 0;
 } /* _create_index_by_sort */
 
 
@@ -261,9 +261,8 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
 
     if (++idx == keys)
     {
-      if (info->write_keys(info,sort_keys,idx-1,(BUFFPEK *)alloc_dynamic(buffpek),
-		     tempfile))
-      return(HA_POS_ERROR);
+      if (info->write_keys(info,sort_keys,idx-1,(BUFFPEK *)buffpek->alloc(), tempfile))
+        return HA_POS_ERROR;
 
       sort_keys[0]=(unsigned char*) (sort_keys+keys);
       memcpy(sort_keys[0],sort_keys[idx-1],(size_t) info->key_length);
@@ -275,9 +274,8 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
     return(HA_POS_ERROR);
   if (buffpek->size())
   {
-    if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)alloc_dynamic(buffpek),
-		   tempfile))
-      return(HA_POS_ERROR);
+    if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)buffpek->alloc(), tempfile))
+      return HA_POS_ERROR;
     *maxbuffer=buffpek->size() - 1;
   }
   else
@@ -336,10 +334,8 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     sinfo->sort_keys=0;
   }
 
-  for (i= 0, sinfo= sort_param ;
-       i < sort_info->total_keys ;
-       i++,
-	 delete_dynamic(&sinfo->buffpek),
+  for (i= 0, sinfo= sort_param; i < sort_info->total_keys; i++,
+	 sinfo->buffpek.free(),
 	 sinfo->tempfile.close_cached_file(),
 	 sinfo->tempfile_for_exceptions.close_cached_file(),
 	 sinfo++)
