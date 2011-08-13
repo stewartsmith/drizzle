@@ -12,8 +12,8 @@ Configuration
 
 .. option:: --query-log.file FILE
 
-  | Default: :file:`drizzled-queries.log`
-  | Variable: ``query_log_file``
+  :Default: :file:`drizzled-queries.log`
+  :Variable: ``query_log_file``
 
   The query log file.  The file is created if it does not exist.  If a full
   path is not specified, the default relative path is the :file:`local`
@@ -21,8 +21,8 @@ Configuration
 
 .. option:: --query-log.file-enabled
 
-  | Default: ``FALSE``
-  | Variable: ``query_log_file_enabled``
+  :Default: ``FALSE``
+  :Variable: ``query_log_file_enabled``
 
   Enable logging to :option:`--query-log.file`.
   This logging destination is disabled by default.  Specify this option to
@@ -31,8 +31,8 @@ Configuration
 
 .. option:: --query-log.threshold-execution-time MICROSECONDS
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_execution_time``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_execution_time``
 
   Log queries with execution times greater than ``MICROSECONDS``.
   The query log file writes ``execution_time`` as seconds with six decimal
@@ -41,8 +41,8 @@ Configuration
 
 .. option:: --query-log.threshold-lock-time MICROSECONDS
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_lock_time``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_lock_time``
 
   Log queries with lock times greater than ``MICROSECONDS``.
   The query log file writes ``lock_time`` as seconds with six decimal
@@ -51,22 +51,22 @@ Configuration
 
 .. option:: --query-log.threshold-rows-examined N
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_rows_examined``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_rows_examined``
 
   Log queries that examine more than ``N`` rows.
 
 .. option:: --query-log.threshold-rows-sent N
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_rows_sent``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_rows_sent``
 
   Log queries that send (return) more than ``N`` rows.
 
 .. option:: --query-log.threshold-session-time MICROSECONDS
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_session_time``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_session_time``
 
   Log queries form sessions active longer than ``MICROSECONDS``.
   The query log file writes ``session_time`` as seconds with six decimal
@@ -75,15 +75,15 @@ Configuration
 
 .. option:: --query-log.threshold-tmp-tables N
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_tmp_tables``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_tmp_tables``
 
   Log queries that use more than ``N`` temporary tables.
 
 .. option:: --query-log.threshold-warnings N
 
-  | Default: ``0``
-  | Variable: ``query_log_threshold_warnings``
+  :Default: ``0``
+  :Variable: ``query_log_threshold_warnings``
 
   Log queries that cause more than ``N`` errors.
 
@@ -179,3 +179,26 @@ To convert from seconds to microseconds, multiply the seconds value by
   0.5 second *  1000000 = 500000 microseconds
 
 To convert back, multiple the number of microseconds by ``0.000001`` (that's zero point five zeros and a one).
+
+Authors
+-------
+
+Daniel Nichter
+
+Version
+-------
+
+This documentation applies to **query_log 0.1**.
+
+To see which version of the plugin a Drizzle server is running, execute:
+
+.. code-block:: mysql
+
+   SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='query_log'
+
+Changelog
+---------
+
+v0.1
+^^^^
+* First release.

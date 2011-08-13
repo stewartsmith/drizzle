@@ -24,8 +24,8 @@ Scope
  * Reliable, ACID transactional
 
 
-Introduction:
--------------
+Introduction
+------------
 .. toctree::
    :maxdepth: 2
    
@@ -37,8 +37,8 @@ Introduction:
    versioning
    mysql_differences
 
-Compiling and Installing:
--------------------------
+Compiling and Installing
+------------------------
 .. toctree::
    :maxdepth: 2
 
@@ -47,8 +47,8 @@ Compiling and Installing:
    installing/ubuntu
    installing/redhat
 
-Contributing:
--------------
+Contributing
+------------
 .. toctree::
    :maxdepth: 2
 
@@ -56,8 +56,8 @@ Contributing:
    contributing/code
    contributing/documentation
 
-SQL Language:
--------------
+SQL Language
+------------
 .. toctree::
    :maxdepth: 2
 
@@ -76,39 +76,37 @@ SQL Language:
    administrative
    resources/index
 
-Replication:
-------------
+Replication
+-----------
 .. toctree::
    :maxdepth: 2
 
    replication
 
-Configuration:
---------------
+Configuration
+-------------
 .. toctree::
    :maxdepth: 2
 
    configuration
    options
 
-Administrative:
----------------
+Administration
+--------------
 .. toctree::
    :maxdepth: 2
 
-   logging
-   authentication
-   storage_engines
+   administration/index
 
-Plugins:
-^^^^^^^^
+Plugins
+-------
 .. toctree::
    :maxdepth: 2
 
    plugins/list
 
-Clients:
---------
+Clients
+-------
 .. toctree::
    :maxdepth: 2
 
@@ -116,8 +114,8 @@ Clients:
    clients/drizzledump.rst
    clients/errors.rst
 
-libdrizzle:
------------
+libdrizzle
+----------
 .. toctree::
    :maxdepth: 2
 
@@ -125,8 +123,8 @@ libdrizzle:
    libdrizzle/developer.rst
    protocol
 
-Testing:
---------
+Testing
+-------
 .. toctree::
    :maxdepth: 2
  

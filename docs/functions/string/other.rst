@@ -1,68 +1,94 @@
 Other String Functions
 ======================
 
-LOAD_FILE()
------------
+.. _coercibility-function:
 
-Load the named file
-
-ELT()
------
-
-Return string at index number
-
-EXPORT_SET()
+COERCIBILITY
 ------------
+
+Gets coercibility for an expression.
+
+.. _elt-function:
+
+ELT
+---
+
+Return string at index number.
+
+.. _export-set-function:
+
+EXPORT_SET
+----------
 
 Return a string
 
-FORMAT()
---------
+.. _format-function:
 
-Return a number formatted to specified number of decimal places
+FORMAT
+------
 
-LOAD_FILE()
------------
+Return a number formatted to specified number of decimal places.
 
-Load the named file
+.. _load-file-function:
 
-LPAD()
--------
-
-Return the string argument, left-padded with the specified string
-
-MAKE_SET()
-----------
-
-Return a set of comma-separated strings that have the corresponding bit in bits set
-
-MATCH()
--------
-
-Perform full-text search
-
-MID()
------
-
-Return a substring starting from the specified position
-
-ORD()
------
-
-Return character code for leftmost character of the argument
-
-QUOTE()
--------
-
-Escape the argument for use in an SQL statement
-
-REPEAT()
---------
-
-Repeat a string the specified number of times
-
-REPLACE()
+LOAD_FILE
 ---------
+
+Load the named file.
+
+.. _lpad-function:
+
+LPAD
+----
+
+Return the string argument, left-padded with the specified string.
+
+.. _make-set-function:
+
+MAKE_SET
+--------
+
+Return a set of comma-separated strings that have the corresponding bit in bits set.
+
+.. _match-function:
+
+MATCH
+-----
+
+Perform full-text search.
+
+.. _mid-function:
+
+MID
+---
+
+Return a substring starting from the specified position.
+
+.. _ord-function:
+
+ORD
+---
+
+Return character code for leftmost character of the argument.
+
+.. _quote-function:
+
+QUOTE
+-----
+
+Escape the argument for use in an SQL statement.
+
+.. _repeat-function:
+
+REPEAT
+------
+
+Repeat a string the specified number of times.
+
+.. _replace-function:
+
+REPLACE
+-------
 
 The REPLACE() function returns a string with all occurrences of the 'from_str' replaced by 'to_str'. REPLACE is case-sensitive when searching for 'from_str'.
 
@@ -78,8 +104,10 @@ For example:
 
 Returns: vvv.google.com
 
-REVERSE()
----------
+.. _reverse-function:
+
+REVERSE
+-------
 
 This function returns a string argument with the characters in reverse order.
 
@@ -89,24 +117,38 @@ This function returns a string argument with the characters in reverse order.
 
 Returns: dcba
 
-RIGHT()
--------
+.. _right-function:
+
+RIGHT
+-----
 
 Return the specified rightmost number of characters
 
-RPAD()
-------
+.. _rpad-function:
+
+RPAD
+----
 
 Append string the specified number of times
 
-SOUNDEX()
----------
+.. _soundex-function:
+
+SOUNDEX
+-------
 
 Return a soundex string
 
+.. _substr-function:
 
-SUBSTRING()
------------
+SUBSTR
+------
+
+Synonym for SUBSTRING().
+
+.. _substring-function:
+
+SUBSTRING
+---------
 
 Returns the substring as specified
 
@@ -132,4 +174,10 @@ You can also format a column using SUBSTRING() in combination with functions lik
 	FROM Students
 	LIMIT 10;
 
+.. _substring-index-function:
 
+
+SUBSTRING_INDEX
+---------------
+
+Return a substring from a string before the specified number of occurrences of the delimiter.

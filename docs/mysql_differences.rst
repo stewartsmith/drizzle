@@ -118,15 +118,15 @@ DATA_DICTIONARY schema. Use of tables in DATA_DICTIONARY is non-portable.
 
 This allows developers to easily know if the query is portable or not.
 
-Authentication, Authorization and Access
-----------------------------------------
+Authentication, Authorization, and Access
+-----------------------------------------
 
-Authentication lies in Drizzle plugins. Currently there are PAM and HTTP AUTH plugins for authentication.
-Through the PAM plugin, you can use any PAM module (such as LDAP).
+There are no grant or privilege tables.  Drizzle authentication, authorization,
+and access are provided by plugins.
 
-For more information, see our :doc:`authentication` doc.
+.. seealso:: :doc:`/administration/authentication`
 
-Command line clients
+Command Line Clients
 --------------------
 
 We've stopped the confusion: -p means port and -P means password.
