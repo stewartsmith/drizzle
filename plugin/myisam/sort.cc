@@ -442,7 +442,7 @@ static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
   if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  buffpek->file_pos=my_b_tell(tempfile);
+  buffpek->file_pos= tempfile->tell();
   buffpek->count=count;
 
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
@@ -481,7 +481,7 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,
   if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  buffpek->file_pos=my_b_tell(tempfile);
+  buffpek->file_pos= tempfile->tell();
   buffpek->count=count;
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
   {
@@ -700,7 +700,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, internal::io_cache_st *from_fi
   maxcount=keys/((uint) (Tb-Fb) +1);
   assert(maxcount > 0);
   if (to_file)
-    to_start_filepos=my_b_tell(to_file);
+    to_start_filepos= to_file->tell();
   strpos=(unsigned char*) sort_keys;
   sort_length=info->key_length;
 

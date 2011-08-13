@@ -337,7 +337,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   {
     goto err;
   }
-  maxbuffer= (uint32_t) (my_b_tell(&buffpek_pointers)/sizeof(*buffpek_inst));
+  maxbuffer= (uint32_t)(buffpek_pointers.tell() / sizeof(*buffpek_inst));
 
   if (maxbuffer == 0)			// The whole set is in memory
   {
@@ -681,7 +681,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     return(HA_POS_ERROR);
   }
 
-  return tempfile->inited() ? (ha_rows) (my_b_tell(tempfile)/param->rec_length) : idx;
+  return tempfile->inited() ? (ha_rows) (tempfile->tell() / param->rec_length) : idx;
 } /* find_all_keys */
 
 
@@ -719,12 +719,12 @@ int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
     return 1;
   }
   /* check we won't have more buffpeks than we can possibly keep in memory */
-  if (my_b_tell(buffpek_pointers) + sizeof(buffpek) > (uint64_t)UINT_MAX)
+  if (buffpek_pointers->tell() + sizeof(buffpek) > UINT_MAX)
   {
     return 1;
   }
 
-  buffpek.file_pos= my_b_tell(tempfile);
+  buffpek.file_pos= tempfile->tell();
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
 
@@ -1213,7 +1213,7 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
   sort_length= param->sort_length;
   offset= rec_length-res_length;
   maxcount= (uint32_t) (param->keys/((uint32_t) (Tb-Fb) +1));
-  to_start_filepos= my_b_tell(to_file);
+  to_start_filepos= to_file->tell();
   strpos= (unsigned char*) sort_buffer;
   org_max_rows=max_rows= param->max_rows;
 

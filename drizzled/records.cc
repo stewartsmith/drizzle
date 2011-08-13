@@ -469,7 +469,7 @@ static int rr_from_cache(ReadRecord *info)
       return ((int) error);
     }
     length=info->rec_cache_size;
-    rest_of_file= info->io_cache->end_of_file - my_b_tell(info->io_cache);
+    rest_of_file= info->io_cache->end_of_file - info->io_cache->tell();
     if ((internal::my_off_t) length > rest_of_file)
     {
       length= (uint32_t) rest_of_file;

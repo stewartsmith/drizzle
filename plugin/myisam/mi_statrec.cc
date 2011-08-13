@@ -205,7 +205,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
     return(errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */
-    if (filepos == my_b_tell(&info->rec_cache) &&
+    if (filepos == info->rec_cache.tell() &&
 	(skip_deleted_blocks || !filepos))
     {
       cache_read=1;				/* Read record using cache */

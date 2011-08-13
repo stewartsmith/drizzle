@@ -42,8 +42,7 @@ namespace internal {
 #define my_b_get(info) \
   ((info)->read_pos != (info)->read_end ? ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) : (info)->get())
 
-#define my_b_tell(info) ((info)->pos_in_file + \
-			 (size_t) (*(info)->current_pos - (info)->request_pos))
+#define my_b_tell(info) ((info)->tell())
 
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - *(info)->current_pos)
 
@@ -199,6 +198,11 @@ public:
   bool inited() const
   {
     return buffer;
+  }
+
+  my_off_t tell() const
+  {
+    return pos_in_file + (*current_pos - request_pos);
   }
 };
 

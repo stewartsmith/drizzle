@@ -289,14 +289,14 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
   /* If the whole file is in memory, avoid flushing to disk */
   if (! clear_cache &&
       seek_offset >= pos_in_file &&
-      seek_offset <= my_b_tell(this))
+      seek_offset <= tell())
   {
     /* Reuse current buffer without flushing it to disk */
     unsigned char *pos;
     if (type == WRITE_CACHE && type_arg == READ_CACHE)
     {
       read_end=write_pos;
-      end_of_file=my_b_tell(this);
+      end_of_file= tell();
       /*
         Trigger a new seek only if we have a valid
         file handle.
@@ -325,7 +325,7 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
       after the current positions should be ignored
     */
     if (type == WRITE_CACHE && type_arg == READ_CACHE)
-      end_of_file=my_b_tell(this);
+      end_of_file= tell();
     /* flush cache if we want to reuse it */
     if (!clear_cache && flush(1))
       return 1;

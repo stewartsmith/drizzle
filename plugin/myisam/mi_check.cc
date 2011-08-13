@@ -903,7 +903,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   got_error=error=0;
   empty=info->s->pack.header_length;
 
-  pos=my_b_tell(&param->read_cache);
+  pos= param->read_cache.tell();
   memset(key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));
   while (pos < info->state->data_file_length)
   {
