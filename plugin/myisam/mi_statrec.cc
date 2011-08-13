@@ -115,7 +115,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
 {
   if (info->opt_flag & WRITE_CACHE_USED)
   {
-    if (flush_io_cache(&info->rec_cache))
+    if (info->rec_cache.flush())
     {
       return(-1);
     }
@@ -166,7 +166,7 @@ int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t p
   {
     if (info->opt_flag & WRITE_CACHE_USED &&
 	info->rec_cache.pos_in_file <= pos &&
-	flush_io_cache(&info->rec_cache))
+	info->rec_cache.flush())
       return(-1);
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
 
@@ -201,7 +201,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   cache_read=0;
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
-      flush_io_cache(&info->rec_cache))
+      info->rec_cache.flush())
     return(errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */

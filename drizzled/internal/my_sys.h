@@ -73,14 +73,6 @@ namespace internal
 #define EDQUOT (-1)
 #endif
 
-/* Sun Studio does not inject this into main namespace yet */
-#if defined(__cplusplus)
-  using std::FILE;
-#endif
-
-#define MY_INIT(name);		{ ::drizzled::internal::my_progname= name; ::drizzled::internal::my_init(); }
-
-
 	/* General bitmaps for my_func's */
 #define MY_FFNF		1	/* Fatal if file not found */
 #define MY_FNABP	2	/* Fatal if not all bytes read/writen */

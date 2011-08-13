@@ -22,13 +22,11 @@
 
 #include <drizzled/internal/my_sys.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 struct io_cache_st;
-typedef int (*IO_CACHE_CALLBACK)(struct io_cache_st*);
+typedef int (*IO_CACHE_CALLBACK)(io_cache_st*);
 
 struct io_cache_st    /* Used when cacheing files */
 {
@@ -157,9 +155,6 @@ struct io_cache_st    /* Used when cacheing files */
     alloced_buffer(0)
   { }
 
-  ~io_cache_st()
-  { }
-
   void close_cached_file();
   bool real_open_cached_file();
   int end_io_cache();
@@ -173,23 +168,15 @@ struct io_cache_st    /* Used when cacheing files */
                        bool use_async_io,
                        bool clear_cache);
   void setup_io_cache();
-  bool open_cached_file(const char *dir,
-                        const char *prefix, size_t cache_size,
-                        myf cache_myflags);
-
+  bool open_cached_file(const char *dir, const char *prefix, size_t cache_size, myf cache_myflags);
+  int flush(int need_append_buffer_lock= 1);
 };
 
-typedef struct io_cache_st IO_CACHE;    /* Used when cacheing files */
+typedef io_cache_st IO_CACHE;    /* Used when cacheing files */
 
 extern int _my_b_get(io_cache_st *info);
 extern int _my_b_async_read(io_cache_st *info,unsigned char *Buffer,size_t Count);
-
-extern int my_block_write(io_cache_st *info, const unsigned char *Buffer,
-                          size_t Count, my_off_t pos);
-extern int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock);
-
-#define flush_io_cache(info) my_b_flush_io_cache((info),1)
-
+extern int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count, my_off_t pos);
 } /* namespace internal */
 } /* namespace drizzled */
 

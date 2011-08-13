@@ -1405,7 +1405,7 @@ int _mi_read_dynamic_record(MI_INFO *info, internal::my_off_t filepos, unsigned 
         goto panic;
       if (info->opt_flag & WRITE_CACHE_USED &&
 	  info->rec_cache.pos_in_file < filepos + MI_BLOCK_INFO_HEADER_LENGTH &&
-	  flush_io_cache(&info->rec_cache))
+	  info->rec_cache.flush())
 	goto err;
       info->rec_cache.seek_not_done=1;
       if ((b_type= _mi_get_block_info(&block_info, file, filepos))
@@ -1453,7 +1453,7 @@ int _mi_read_dynamic_record(MI_INFO *info, internal::my_off_t filepos, unsigned 
       {
         if (info->opt_flag & WRITE_CACHE_USED &&
             info->rec_cache.pos_in_file < filepos + block_info.data_len &&
-            flush_io_cache(&info->rec_cache))
+            info->rec_cache.flush())
           goto err;
         /*
           What a pity that this method is not called 'file_pread' and that
@@ -1525,7 +1525,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char 
   if (info->opt_flag & WRITE_CACHE_USED)
   {
     info->update&= ~(HA_STATE_WRITE_AT_END | HA_STATE_EXTEND_BLOCK);
-    if (flush_io_cache(&info->rec_cache))
+    if (info->rec_cache.flush())
       return(-1);
   }
   info->rec_cache.seek_not_done=1;
@@ -1704,7 +1704,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
     {
       if (info->opt_flag & WRITE_CACHE_USED &&
 	  info->rec_cache.pos_in_file < filepos + MI_BLOCK_INFO_HEADER_LENGTH &&
-	  flush_io_cache(&info->rec_cache))
+	  info->rec_cache.flush())
 	return(errno);
       info->rec_cache.seek_not_done=1;
       b_type=_mi_get_block_info(&block_info,info->dfile,filepos);
@@ -1779,7 +1779,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
         if (info->opt_flag & WRITE_CACHE_USED &&
             info->rec_cache.pos_in_file <
             block_info.filepos + block_info.data_len &&
-            flush_io_cache(&info->rec_cache))
+            info->rec_cache.flush())
           goto err;
 	/* lseek(info->dfile,filepos,SEEK_SET); */
 	if (internal::my_read(info->dfile,(unsigned char*) to,block_info.data_len,MYF(MY_NABP)))

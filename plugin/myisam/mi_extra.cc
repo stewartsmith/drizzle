@@ -150,7 +150,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_FLUSH_CACHE:
     if (info->opt_flag & WRITE_CACHE_USED)
     {
-      if ((error=flush_io_cache(&info->rec_cache)))
+      if ((error= info->rec_cache.flush()))
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
 	mi_mark_crashed(info);			/* Fatal error found */

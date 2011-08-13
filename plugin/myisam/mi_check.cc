@@ -1520,7 +1520,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
       goto err;
   }
   if (error > 0 || write_data_suffix(&sort_info, (bool)!rep_quick) ||
-      flush_io_cache(&info->rec_cache) || param->read_cache.error < 0)
+      info->rec_cache.flush() || param->read_cache.error < 0)
     goto err;
 
   if (param->testflag & T_WRITE_LOOP)
@@ -3047,7 +3047,7 @@ int sort_delete_record(MI_SORT_PARAM *sort_param)
     if (sort_param->calc_checksum)
       param->glob_crc-=(*info->s->calc_checksum)(info, sort_param->record);
   }
-  error=flush_io_cache(&info->rec_cache) || (*info->s->delete_record)(info);
+  error= info->rec_cache.flush() || (*info->s->delete_record)(info);
   info->dfile=old_file;				/* restore actual value */
   info->state->records--;
   return(error);

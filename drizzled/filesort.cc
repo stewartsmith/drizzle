@@ -381,7 +381,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       goto err;
     }
 
-    if (flush_io_cache(&tempfile) || tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+    if (tempfile.flush() || tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
     {
       goto err;
     }
@@ -413,7 +413,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
 
   if (my_b_inited(outfile))
   {
-    if (flush_io_cache(outfile))
+    if (outfile->flush())
     {
       error=1;
     }
@@ -1075,7 +1075,7 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
 
   if (*maxbuffer < MERGEBUFF2)
     return 0;
-  if (flush_io_cache(t_file) ||
+  if (t_file->flush() ||
       t_file2.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;
@@ -1084,38 +1084,23 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
   {
-    uint32_t i;
-
-    if (from_file->reinit_io_cache(internal::READ_CACHE,0L,0,0))
-    {
+    if (from_file->reinit_io_cache(internal::READ_CACHE, 0, 0, 0)
+      || to_file->reinit_io_cache(internal::WRITE_CACHE, 0, 0, 0))
       break;
-    }
 
-    if (to_file->reinit_io_cache(internal::WRITE_CACHE,0L,0,0))
+    uint32_t i= 0;
+    lastbuff= buffpek_inst;
+    for (; i <= *maxbuffer - MERGEBUFF * 3 / 2; i += MERGEBUFF)
     {
-      break;
-    }
-
-    lastbuff=buffpek_inst;
-    for (i=0 ; i <= *maxbuffer-MERGEBUFF*3/2 ; i+=MERGEBUFF)
-    {
-      if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
-			buffpek_inst+i,buffpek_inst+i+MERGEBUFF-1,0))
+      if (merge_buffers(param, from_file, to_file, sort_buffer, lastbuff++, buffpek_inst + i, buffpek_inst + i + MERGEBUFF - 1, 0))
       {
         goto cleanup;
       }
     }
 
-    if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
-		      buffpek_inst+i,buffpek_inst+ *maxbuffer,0))
-    {
+    if (merge_buffers(param, from_file, to_file, sort_buffer, lastbuff++, buffpek_inst + i, buffpek_inst + *maxbuffer, 0)
+      || to_file->flush())
       break;
-    }
-
-    if (flush_io_cache(to_file))
-    {
-      break;
-    }
 
     temp=from_file; from_file=to_file; to_file=temp;
     from_file->setup_io_cache();

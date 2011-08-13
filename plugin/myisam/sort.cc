@@ -188,7 +188,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       if (merge_many_buff(info,keys,sort_keys, (BUFFPEK*)buffpek.buffer, &maxbuffer, &tempfile))
 	goto err;
     }
-    if (internal::flush_io_cache(&tempfile) ||
+    if (tempfile.flush() ||
 	tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       goto err;
     if (!no_messages)
@@ -209,7 +209,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     if (not no_messages)
       printf("  - Adding exceptions\n");
 
-    if (flush_io_cache(&tempfile_for_exceptions) || tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+    if (tempfile_for_exceptions.flush() || tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
     {
       goto err;
     }
@@ -384,7 +384,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
           continue;
         }
       }
-      if (flush_io_cache(&sinfo->tempfile) || sinfo->tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+      if (sinfo->tempfile.flush() || sinfo->tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
@@ -406,7 +406,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Dumping 'long' keys\n", sinfo->key+1);
 
-      if (flush_io_cache(&sinfo->tempfile_for_exceptions) || sinfo->tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+      if (sinfo->tempfile_for_exceptions.flush() || sinfo->tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
@@ -537,8 +537,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
 
   if (*maxbuffer < MERGEBUFF2)
     return(0);
-  if (flush_io_cache(t_file) || t_file2.open_cached_file(P_tmpdir, "ST",
-                       DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  if (t_file->flush() || t_file2.open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
   from_file= t_file ; to_file= &t_file2;
@@ -556,7 +555,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
     if (merge_buffers(info,keys,from_file,to_file,sort_keys,lastbuff++,
                       buffpek+i,buffpek+ *maxbuffer))
       break;
-    if (flush_io_cache(to_file))
+    if (to_file->flush())
       break;
     temp=from_file; from_file=to_file; to_file=temp;
     *maxbuffer= (int) (lastbuff-buffpek)-1;

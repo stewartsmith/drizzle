@@ -63,10 +63,8 @@ TODO:
 
 using namespace std;
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count);
@@ -329,7 +327,7 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
     if (type == WRITE_CACHE && type_arg == READ_CACHE)
       end_of_file=my_b_tell(this);
     /* flush cache if we want to reuse it */
-    if (!clear_cache && my_b_flush_io_cache(this, 1))
+    if (!clear_cache && flush(1))
       return 1;
     pos_in_file=seek_offset;
     /* Better to do always do a seek */
@@ -341,8 +339,7 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
     }
     else
     {
-      write_end=(buffer + buffer_length -
-		       (seek_offset & (IO_SIZE-1)));
+      write_end= (buffer + buffer_length - (seek_offset & (IO_SIZE-1)));
       end_of_file= ~(my_off_t) 0;
     }
   }
@@ -514,7 +511,7 @@ int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count)
   Count-=rest_length;
   info->write_pos+=rest_length;
 
-  if (my_b_flush_io_cache(info,1))
+  if (info->flush(1))
     return 1;
   if (Count >= IO_SIZE)
   {					/* Fill first intern buffer */
@@ -599,7 +596,7 @@ int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
  * @brief
  *   Flush write cache 
  */
-int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
+static int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
 {
   size_t length_local;
   bool append_cache= false;
@@ -659,6 +656,11 @@ int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
   }
   unlock_append_buffer(info, need_append_buffer_lock);
   return 0;
+}
+
+int io_cache_st::flush(int need_append_buffer_lock)
+{
+  return my_b_flush_io_cache(this, need_append_buffer_lock);
 }
 
 /**
