@@ -18,26 +18,21 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/error.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 int my_delete(const char *name, myf MyFlags)
 {
-  int err;
-
-  if ((err = unlink(name)) == -1)
+  int err= unlink(name);
+  if (err == -1)
   {
-    errno=errno;
-    if (MyFlags & (MY_FAE+MY_WME))
-      my_error(EE_DELETE,MYF(ME_BELL+ME_WAITTANG+(MyFlags & ME_NOINPUT)),
-	       name,errno);
+    errno= errno;
+    if (MyFlags & (MY_FAE + MY_WME))
+      my_error(EE_DELETE, MYF(ME_BELL + ME_WAITTANG + (MyFlags & ME_NOINPUT)), name, errno);
   }
-  else if ((MyFlags & MY_SYNC_DIR) &&
-           my_sync_dir_by_file(name, MyFlags))
+  else if ((MyFlags & MY_SYNC_DIR) && my_sync_dir_by_file(name, MyFlags))
     err= -1;
-  return(err);
+  return err;
 } /* my_delete */
 
 } /* namespace internal */

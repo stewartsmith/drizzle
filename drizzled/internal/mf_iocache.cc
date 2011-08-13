@@ -470,17 +470,17 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
  * @brief
  *   Read one byte when buffer is empty
  */
-int _my_b_get(io_cache_st *info)
+int io_cache_st::get()
 {
-  if (info->pre_read)
-    (*info->pre_read)(info);
+  if (pre_read)
+    (*pre_read)(this);
 
   unsigned char buff;
-  if ((*(info)->read_function)(info,&buff,1))
+  if ((*read_function)(this, &buff, 1))
     return my_b_EOF;
 
-  if (info->post_read)
-    (*info->post_read)(info);
+  if (post_read)
+    (*post_read)(this);
 
   return buff;
 }

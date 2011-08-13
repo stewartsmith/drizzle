@@ -717,7 +717,7 @@ int _mi_write_part_record(MI_INFO *info,
     if (info->update & HA_STATE_EXTEND_BLOCK)
     {
       info->update&= ~HA_STATE_EXTEND_BLOCK;
-      if (info->rec_cache.block_write((unsigned char*) *record-head_length,
+      if (info->rec_cache.block_write(*record - head_length,
 			 length+extra_length+del_length,filepos))
       goto err;
     }

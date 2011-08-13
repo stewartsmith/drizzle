@@ -159,31 +159,6 @@ public:
 
 } RECORD_CACHE;
 
-
-	/* defines for mf_iocache */
-
-#define my_b_EOF INT_MIN
-
-#define my_b_read(info,Buffer,Count) \
-  ((info)->read_pos + (Count) <= (info)->read_end ?\
-   (memcpy(Buffer,(info)->read_pos,(size_t) (Count)), \
-    ((info)->read_pos+=(Count)),0) :\
-   (*(info)->read_function)((info),Buffer,Count))
-
-#define my_b_write(info,Buffer,Count) \
- ((info)->write_pos + (Count) <=(info)->write_end ?\
-  (memcpy((info)->write_pos, (Buffer), (size_t)(Count)),\
-   ((info)->write_pos+=(Count)),0) : \
-   (*(info)->write_function)((info),(Buffer),(Count)))
-
-#define my_b_get(info) \
-  ((info)->read_pos != (info)->read_end ? ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) : _my_b_get(info))
-
-#define my_b_tell(info) ((info)->pos_in_file + \
-			 (size_t) (*(info)->current_pos - (info)->request_pos))
-
-#define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - *(info)->current_pos)
-
 /* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);

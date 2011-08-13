@@ -25,11 +25,34 @@
 namespace drizzled {
 namespace internal {
 
-struct io_cache_st;
+#define my_b_EOF INT_MIN
+
+#define my_b_read(info,Buffer,Count) \
+  ((info)->read_pos + (Count) <= (info)->read_end ?\
+   (memcpy(Buffer,(info)->read_pos,(size_t) (Count)), \
+    ((info)->read_pos+=(Count)),0) :\
+   (*(info)->read_function)((info),Buffer,Count))
+
+#define my_b_write(info,Buffer,Count) \
+ ((info)->write_pos + (Count) <=(info)->write_end ?\
+  (memcpy((info)->write_pos, (Buffer), (size_t)(Count)),\
+   ((info)->write_pos+=(Count)),0) : \
+   (*(info)->write_function)((info),(Buffer),(Count)))
+
+#define my_b_get(info) \
+  ((info)->read_pos != (info)->read_end ? ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) : (info)->get())
+
+#define my_b_tell(info) ((info)->pos_in_file + \
+			 (size_t) (*(info)->current_pos - (info)->request_pos))
+
+#define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - *(info)->current_pos)
+
+class io_cache_st;
 typedef int (*IO_CACHE_CALLBACK)(io_cache_st*);
 
-struct io_cache_st    /* Used when cacheing files */
+class io_cache_st    /* Used when cacheing files */
 {
+public:
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
   /*
@@ -75,12 +98,12 @@ struct io_cache_st    /* Used when cacheing files */
     my_b_read() will call read_function to fetch the data. read_function
     must never be invoked directly.
   */
-  int (*read_function)(struct io_cache_st *,unsigned char *,size_t);
+  int (*read_function)(io_cache_st* ,unsigned char *,size_t);
   /*
     Same idea as in the case of read_function, except my_b_write() needs to
     be replaced with my_b_append() for a SEQ_READ_APPEND cache
   */
-  int (*write_function)(struct io_cache_st *,const unsigned char *,size_t);
+  int (*write_function)(io_cache_st* ,const unsigned char *,size_t);
   /*
     Specifies the type of the cache. Depending on the type of the cache
     certain operations might not be available and yield unpredicatable
@@ -155,6 +178,7 @@ struct io_cache_st    /* Used when cacheing files */
     alloced_buffer(0)
   { }
 
+  int get();
   int block_write(const void*, size_t, my_off_t);
   void close_cached_file();
   bool real_open_cached_file();
@@ -179,9 +203,6 @@ struct io_cache_st    /* Used when cacheing files */
 };
 
 typedef io_cache_st IO_CACHE;    /* Used when cacheing files */
-
-int _my_b_get(io_cache_st *info);
-int _my_b_async_read(io_cache_st *info,unsigned char *Buffer,size_t Count);
 
 } /* namespace internal */
 } /* namespace drizzled */
