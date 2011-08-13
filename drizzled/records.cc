@@ -105,7 +105,7 @@ int ReadRecord::init_read_record(Session *session_arg,
   ignore_not_found_rows= 0;
   table->status=0;			/* And it's always found */
 
-  if (select && my_b_inited(select->file))
+  if (select && select->file->inited())
   {
     tempfile= select->file;
   }
@@ -114,10 +114,9 @@ int ReadRecord::init_read_record(Session *session_arg,
     tempfile= table->sort.io_cache;
   }
 
-  if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used
+  if (tempfile && tempfile->inited()) // Test if ref-records was used
   {
-    read_record= (table->sort.addon_field ?
-                  rr_unpack_from_tempfile : rr_from_tempfile);
+    read_record= table->sort.addon_field ? rr_unpack_from_tempfile : rr_from_tempfile;
 
     io_cache=tempfile;
     io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);

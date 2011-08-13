@@ -155,28 +155,33 @@ struct io_cache_st    /* Used when cacheing files */
     alloced_buffer(0)
   { }
 
+  int block_write(const void*, size_t, my_off_t);
   void close_cached_file();
   bool real_open_cached_file();
   int end_io_cache();
-  int init_io_cache(int file, size_t cachesize,
-                    enum cache_type type, my_off_t seek_offset,
-                    bool use_async_io, myf cache_myflags);
+  int init_io_cache(int file, size_t cachesize, cache_type type, my_off_t seek_offset, bool use_async_io, myf cache_myflags);
   void init_functions();
 
-  bool reinit_io_cache(enum cache_type type_arg,
-                       my_off_t seek_offset,
-                       bool use_async_io,
-                       bool clear_cache);
+  bool reinit_io_cache(cache_type type_arg, my_off_t seek_offset, bool use_async_io, bool clear_cache);
   void setup_io_cache();
   bool open_cached_file(const char *dir, const char *prefix, size_t cache_size, myf cache_myflags);
   int flush(int need_append_buffer_lock= 1);
+
+  void clear()
+  {
+    buffer= NULL;
+  }
+
+  bool inited() const
+  {
+    return buffer;
+  }
 };
 
 typedef io_cache_st IO_CACHE;    /* Used when cacheing files */
 
-extern int _my_b_get(io_cache_st *info);
-extern int _my_b_async_read(io_cache_st *info,unsigned char *Buffer,size_t Count);
-extern int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count, my_off_t pos);
+int _my_b_get(io_cache_st *info);
+int _my_b_async_read(io_cache_st *info,unsigned char *Buffer,size_t Count);
+
 } /* namespace internal */
 } /* namespace drizzled */
-

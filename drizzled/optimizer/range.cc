@@ -379,13 +379,12 @@ optimizer::SqlSelect::SqlSelect()
 {
   quick_keys.reset();
   needed_reg.reset();
-  my_b_clear(file);
+  file->clear();
 }
 
 
 void optimizer::SqlSelect::cleanup()
 {
-
   delete quick;
   quick= NULL;
 

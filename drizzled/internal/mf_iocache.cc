@@ -472,19 +472,17 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
  */
 int _my_b_get(io_cache_st *info)
 {
+  if (info->pre_read)
+    (*info->pre_read)(info);
+
   unsigned char buff;
-  IO_CACHE_CALLBACK pre_read,post_read;
-
-  if ((pre_read = info->pre_read))
-    (*pre_read)(info);
-
   if ((*(info)->read_function)(info,&buff,1))
     return my_b_EOF;
 
-  if ((post_read = info->post_read))
-    (*post_read)(info);
+  if (info->post_read)
+    (*info->post_read)(info);
 
-  return (int) (unsigned char) buff;
+  return buff;
 }
 
 /**
@@ -549,8 +547,7 @@ int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count)
  *   As all write calls to the data goes through the cache,
  *   we will never get a seek over the end of the buffer.
  */
-int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
-		   my_off_t pos)
+static int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count, my_off_t pos)
 {
   size_t length_local;
   int error=0;
@@ -590,6 +587,11 @@ int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
   if (_my_b_write(info, Buffer, Count))
     error= -1;
   return error;
+}
+
+int io_cache_st::block_write(const void* Buffer, size_t Count, my_off_t pos)
+{
+  return my_block_write(this, reinterpret_cast<const unsigned char*>(Buffer), Count, pos);
 }
 
 /**

@@ -359,7 +359,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     table_sort.buffpek_len= maxbuffer;
     buffpek_pointers.close_cached_file();
 	/* Open cached file if it isn't open */
-    if (! my_b_inited(outfile) && outfile->open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
+    if (not outfile->inited() && outfile->open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
     {
       goto err;
     }
@@ -411,18 +411,18 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   tempfile.close_cached_file();
   buffpek_pointers.close_cached_file();
 
-  if (my_b_inited(outfile))
+  if (outfile->inited())
   {
     if (outfile->flush())
     {
-      error=1;
+      error= 1;
     }
     {
       internal::my_off_t save_pos= outfile->pos_in_file;
       /* For following reads */
       if (outfile->reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
-	error=1;
+        error=1;
       }
       outfile->end_of_file=save_pos;
     }
@@ -681,9 +681,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     return(HA_POS_ERROR);
   }
 
-  return(my_b_inited(tempfile) ?
-	      (ha_rows) (my_b_tell(tempfile)/param->rec_length) :
-	      idx);
+  return tempfile->inited() ? (ha_rows) (my_b_tell(tempfile)/param->rec_length) : idx;
 } /* find_all_keys */
 
 
@@ -715,7 +713,7 @@ int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
   buffpek buffpek;
 
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
-  if (!my_b_inited(tempfile) &&
+  if (not tempfile->inited() &&
       tempfile->open_cached_file(drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;

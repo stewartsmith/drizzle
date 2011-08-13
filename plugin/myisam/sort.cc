@@ -121,8 +121,8 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     info->write_key=write_merge_key;
   }
 
-  my_b_clear(&tempfile);
-  my_b_clear(&tempfile_for_exceptions);
+  tempfile.clear();
+  tempfile_for_exceptions.clear();
   memset(&buffpek, 0, sizeof(buffpek));
   unsigned char** sort_keys= (unsigned char **) NULL; 
   int error= 1;
@@ -200,7 +200,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   if (flush_pending_blocks(info))
     goto err;
 
-  if (my_b_inited(&tempfile_for_exceptions))
+  if (tempfile_for_exceptions.inited())
   {
     MI_INFO *idx=info->sort_info->info;
     uint32_t     keyno=info->key;
@@ -399,7 +399,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         continue;
       }
     }
-    if (my_b_inited(&sinfo->tempfile_for_exceptions))
+    if (sinfo->tempfile_for_exceptions.inited())
     {
       uint32_t key_length;
 
@@ -438,9 +438,8 @@ static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
   unsigned char **end;
   uint32_t sort_length=info->key_length;
 
-  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
-            info);
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp, info);
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
   buffpek->file_pos=my_b_tell(tempfile);
@@ -478,9 +477,8 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,
   unsigned char **end;
   int err;
 
-  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
-            info);
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp, info);
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
   buffpek->file_pos=my_b_tell(tempfile);
@@ -499,7 +497,7 @@ static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 {
   uint32_t key_length=info->real_key_length;
 
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
   if (my_b_write(tempfile,(unsigned char*)&key_length,sizeof(key_length)) ||

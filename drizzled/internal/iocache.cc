@@ -73,7 +73,7 @@ bool io_cache_st::real_open_cached_file()
 
 void io_cache_st::close_cached_file()
 {
-  if (my_b_inited(this))
+  if (inited())
   {
     int _file= file;
     file= -1;				/* Don't flush data */
