@@ -600,7 +600,6 @@ typedef struct Bigint
 {
   union {
     ULong *x;              /* points right after this Bigint object */
-    struct Bigint *next;   /* to maintain free lists */
   } p;
   int k;                   /* 2^k = maxwds */
   int maxwds;              /* maximum length in 32-bit words */

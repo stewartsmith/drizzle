@@ -1259,7 +1259,6 @@ static int
 process_options(void)
 {
   struct stat sbuf;
-  uint32_t sql_type_count= 0;
   ssize_t bytes_read= 0;
   
   if (user.empty())
@@ -1343,6 +1342,7 @@ process_options(void)
     option_cleanup(str);
   }
 
+  uint32_t sql_type_count= 0;
   if (not num_blob_cols_opt.empty())
   {
     OptionString *str;

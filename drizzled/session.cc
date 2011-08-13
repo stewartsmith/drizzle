@@ -381,7 +381,7 @@ void Session::lockOnSys()
   }
 }
 
-void Session::get_xid(DrizzleXid *xid)
+void Session::get_xid(DrizzleXid *xid) const
 {
   *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
@@ -1954,7 +1954,7 @@ plugin::StorageEngine* Session::getDefaultStorageEngine()
   return variables.storage_engine ? variables.storage_engine : global_system_variables.storage_engine;
 }
 
-enum_tx_isolation Session::getTxIsolation()
+enum_tx_isolation Session::getTxIsolation() const
 {
   return (enum_tx_isolation)variables.tx_isolation;
 }

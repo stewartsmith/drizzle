@@ -234,7 +234,6 @@ public:
 
   bool check_list(const char *name)
   {
-    base_list *list= this;
     list_node *node= first;
     uint32_t cnt= 0;
 

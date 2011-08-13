@@ -20,13 +20,10 @@
 #pragma once
 
 #include <drizzled/sql_select.h>
-
 #include <vector>
 
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * Class used when finding key fields
@@ -83,7 +80,7 @@ public:
     val= in_val;
   }
 
-  uint32_t getLevel()
+  uint32_t getLevel() const
   {
     return level;
   }
@@ -93,7 +90,7 @@ public:
     level= in_level;
   }
 
-  uint32_t getOptimizeFlags()
+  uint32_t getOptimizeFlags() const
   {
     return optimize;
   }
