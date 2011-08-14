@@ -911,9 +911,8 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       goto err2;
     switch (info->s->data_file_type) {
     case STATIC_RECORD:
-      if (my_b_read(&param->read_cache,(unsigned char*) record,
-		    info->s->base.pack_reclength))
-	goto err;
+      if (param->read_cache.read(record, info->s->base.pack_reclength))
+        goto err;
       start_recpos=pos;
       pos+=info->s->base.pack_reclength;
       splits++;
@@ -2398,8 +2397,7 @@ int sort_get_next_record(MI_SORT_PARAM *sort_param)
   case STATIC_RECORD:
     for (;;)
     {
-      if (my_b_read(&sort_param->read_cache,sort_param->record,
-		    share->base.pack_reclength))
+      if (sort_param->read_cache.read(sort_param->record, share->base.pack_reclength))
       {
 	if (sort_param->read_cache.error)
 	  param->out_flag |= O_DATA_LOST;
@@ -2757,8 +2755,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
   {
     switch (sort_info->new_data_file_type) {
     case STATIC_RECORD:
-      if (my_b_write(&info->rec_cache,sort_param->record,
-		     share->base.pack_reclength))
+      if (info->rec_cache.write(sort_param->record, share->base.pack_reclength))
       {
 	mi_check_print_error(param,"%d when writing to datafile",errno);
 	return(1);
@@ -3140,7 +3137,7 @@ int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile)
   {
     unsigned char buff[MEMMAP_EXTRA_MARGIN];
     memset(buff, 0, sizeof(buff));
-    if (my_b_write(&info->rec_cache,buff,sizeof(buff)))
+    if (info->rec_cache.write(buff, sizeof(buff)))
     {
       mi_check_print_error(sort_info->param,
 			   "%d when writing to datafile",errno);

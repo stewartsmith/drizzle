@@ -214,13 +214,11 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       goto err;
     }
 
-    while (!my_b_read(&tempfile_for_exceptions,(unsigned char*)&key_length,
-		      sizeof(key_length))
-        && !my_b_read(&tempfile_for_exceptions,(unsigned char*)sort_keys,
-		      (uint) key_length))
+    while (not tempfile_for_exceptions.read(&key_length, sizeof(key_length))
+        && not tempfile_for_exceptions.read(sort_keys, key_length))
     {
-	if (_mi_ck_write(idx,keyno,(unsigned char*) sort_keys,key_length-ref_length))
-	  goto err;
+      if (_mi_ck_write(idx,keyno,(unsigned char*) sort_keys,key_length-ref_length))
+        goto err;
     }
   }
 
@@ -412,17 +410,12 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         continue;
       }
 
-      while (!got_error &&
-	     !my_b_read(&sinfo->tempfile_for_exceptions,(unsigned char*)&key_length,
-			sizeof(key_length)))
+      while (!got_error && not sinfo->tempfile_for_exceptions.read(&key_length, sizeof(key_length)))
       {
         unsigned char ft_buf[10];
-        if (key_length > sizeof(ft_buf) ||
-            my_b_read(&sinfo->tempfile_for_exceptions, (unsigned char*)ft_buf,
-                      (uint)key_length) ||
-            _mi_ck_write(info, sinfo->key, (unsigned char*)ft_buf,
-                         key_length - info->s->rec_reflength))
-          got_error=1;
+        if (key_length > sizeof(ft_buf) || sinfo->tempfile_for_exceptions.read(ft_buf, (uint)key_length) 
+          || _mi_ck_write(info, sinfo->key, (unsigned char*)ft_buf, key_length - info->s->rec_reflength))
+          got_error= 1;
       }
     }
   }
@@ -447,7 +440,7 @@ static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
 
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
   {
-    if (my_b_write(tempfile,(unsigned char*) *sort_keys,(uint) sort_length))
+    if (tempfile->write(*sort_keys, sort_length))
       return(1);
   }
   return(0);
@@ -461,9 +454,9 @@ my_var_write(MI_SORT_PARAM *info, internal::io_cache_st *to_file, unsigned char 
   uint16_t len = _mi_keylength(info->keyinfo, (unsigned char*) bufs);
 
   /* The following is safe as this is a local file */
-  if ((err= my_b_write(to_file, (unsigned char*)&len, sizeof(len))))
+  if ((err= to_file->write(&len, sizeof(len))))
     return (err);
-  if ((err= my_b_write(to_file,bufs, (uint) len)))
+  if ((err= to_file->write(bufs, len)))
     return (err);
   return (0);
 }
@@ -500,8 +493,8 @@ static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
   if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  if (my_b_write(tempfile,(unsigned char*)&key_length,sizeof(key_length)) ||
-      my_b_write(tempfile,(unsigned char*)key,(uint) key_length))
+  if (tempfile->write(&key_length, sizeof(key_length)) ||
+      tempfile->write(key, key_length))
     return(1);
   return(0);
 } /* write_key */
@@ -649,12 +642,11 @@ static int  write_merge_key_varlen(MI_SORT_PARAM *info,
 }
 
 
-static int  write_merge_key(MI_SORT_PARAM *info,
+static int  write_merge_key(MI_SORT_PARAM*,
 				  internal::io_cache_st *to_file, unsigned char *key,
 				  uint32_t sort_length, uint32_t count)
 {
-  (void)info;
-  return my_b_write(to_file, key, (size_t) sort_length*count);
+  return to_file->write(key, sort_length*count);
 }
 
 /*

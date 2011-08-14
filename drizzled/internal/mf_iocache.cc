@@ -472,15 +472,18 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
  */
 int io_cache_st::get()
 {
+  if (read_pos != read_end)
+    return *read_pos++;
+
   if (pre_read)
-    (*pre_read)(this);
+    pre_read(this);
 
   unsigned char buff;
-  if ((*read_function)(this, &buff, 1))
+  if (read_function(this, &buff, 1))
     return my_b_EOF;
 
   if (post_read)
-    (*post_read)(this);
+    post_read(this);
 
   return buff;
 }

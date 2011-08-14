@@ -49,14 +49,13 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
     }
     if (info->opt_flag & WRITE_CACHE_USED)
     {				/* Cash in use */
-      if (my_b_write(&info->rec_cache, record,
-		     info->s->base.reclength))
+      if (info->rec_cache.write(record, info->s->base.reclength))
 	goto err;
       if (info->s->base.pack_reclength != info->s->base.reclength)
       {
 	uint32_t length=info->s->base.pack_reclength - info->s->base.reclength;
 	memset(temp, 0, length);
-	if (my_b_write(&info->rec_cache, temp,length))
+	if (info->rec_cache.write(temp,length))
 	  goto err;
       }
     }
@@ -252,12 +251,11 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   }
 
 	/* Read record with cacheing */
-  error=my_b_read(&info->rec_cache,(unsigned char*) buf,share->base.reclength);
+  error= info->rec_cache.read(buf, share->base.reclength);
   if (info->s->base.pack_reclength != info->s->base.reclength && !error)
   {
     char tmp[8];				/* Skill fill bytes */
-    error=my_b_read(&info->rec_cache,(unsigned char*) tmp,
-		    info->s->base.pack_reclength - info->s->base.reclength);
+    error= info->rec_cache.read(tmp, info->s->base.pack_reclength - info->s->base.reclength);
   }
   if (locked)
     _mi_writeinfo(info,0);		/* Unlock keyfile */

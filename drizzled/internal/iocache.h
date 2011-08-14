@@ -27,31 +27,11 @@ namespace internal {
 
 #define my_b_EOF INT_MIN
 
-#define my_b_read(info,Buffer,Count) \
-  ((info)->read_pos + (Count) <= (info)->read_end ?\
-   (memcpy(Buffer,(info)->read_pos,(size_t) (Count)), \
-    ((info)->read_pos+=(Count)),0) :\
-   (*(info)->read_function)((info),Buffer,Count))
-
-#define my_b_write(info,Buffer,Count) \
- ((info)->write_pos + (Count) <=(info)->write_end ?\
-  (memcpy((info)->write_pos, (Buffer), (size_t)(Count)),\
-   ((info)->write_pos+=(Count)),0) : \
-   (*(info)->write_function)((info),(Buffer),(Count)))
-
-#define my_b_get(info) \
-  ((info)->read_pos != (info)->read_end ? ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) : (info)->get())
-
-#define my_b_tell(info) ((info)->tell())
-
-#define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - *(info)->current_pos)
-
-class io_cache_st;
-typedef int (*IO_CACHE_CALLBACK)(io_cache_st*);
-
 class io_cache_st    /* Used when cacheing files */
 {
 public:
+  typedef int (*IO_CACHE_CALLBACK)(io_cache_st*);
+
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
   /*
@@ -108,7 +88,7 @@ public:
     certain operations might not be available and yield unpredicatable
     results. Details to be documented later
   */
-  enum cache_type type;
+  cache_type type;
   int error;
   /*
     Callbacks when the actual read I/O happens. These were added and
@@ -202,11 +182,29 @@ public:
 
   my_off_t tell() const
   {
-    return pos_in_file + (*current_pos - request_pos);
+    return pos_in_file + *current_pos - request_pos;
+  }
+
+  int read(void* Buffer0, size_t Count)
+  {
+    unsigned char* Buffer= reinterpret_cast<unsigned char*>(Buffer0);
+    if (read_pos + Count > read_end)
+      return read_function(this, Buffer, Count);
+    memcpy(Buffer, read_pos, Count);
+    read_pos += Count;
+    return 0;
+  }
+
+  int write(const void* Buffer0, size_t Count)
+  {
+    const unsigned char* Buffer= reinterpret_cast<const unsigned char*>(Buffer0);
+    if (write_pos + Count > write_end)
+      return write_function(this, Buffer, Count);
+    memcpy(write_pos, Buffer, Count);
+    write_pos += Count;
+    return 0;
   }
 };
-
-typedef io_cache_st IO_CACHE;    /* Used when cacheing files */
 
 } /* namespace internal */
 } /* namespace drizzled */

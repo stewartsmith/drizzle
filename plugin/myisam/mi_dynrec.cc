@@ -721,8 +721,7 @@ int _mi_write_part_record(MI_INFO *info,
 			 length+extra_length+del_length,filepos))
       goto err;
     }
-    else if (my_b_write(&info->rec_cache,(unsigned char*) *record-head_length,
-			length+extra_length+del_length))
+    else if (info->rec_cache.write(*record-head_length, length+extra_length+del_length))
       goto err;
   }
   else

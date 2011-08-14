@@ -315,7 +315,7 @@ static int rr_from_tempfile(ReadRecord *info)
   int tmp;
   for (;;)
   {
-    if (my_b_read(info->io_cache,info->ref_pos,info->ref_length))
+    if (info->io_cache->read(info->ref_pos, info->ref_length))
       return -1;					/* End of cursor */
     if (!(tmp=info->cursor->rnd_pos(info->record,info->ref_pos)))
       break;
@@ -346,7 +346,7 @@ static int rr_from_tempfile(ReadRecord *info)
 */
 static int rr_unpack_from_tempfile(ReadRecord *info)
 {
-  if (my_b_read(info->io_cache, info->rec_buf, info->ref_length))
+  if (info->io_cache->read(info->rec_buf, info->ref_length))
     return -1;
   Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->rec_buf);
@@ -475,7 +475,7 @@ static int rr_from_cache(ReadRecord *info)
       length= (uint32_t) rest_of_file;
     }
 
-    if (!length || my_b_read(info->io_cache, info->getCache(), length))
+    if (!length || info->io_cache->read(info->getCache(), length))
     {
       return -1;			/* End of cursor */
     }

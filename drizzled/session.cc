@@ -1121,15 +1121,13 @@ bool select_export::send_data(List<Item> &items)
     return false;
   }
   row_count++;
-  Item *item;
   uint32_t used_length=0,items_left=items.size();
   List<Item>::iterator li(items.begin());
 
-  if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
-                 exchange->line_start->length()))
+  if (cache->write(exchange->line_start->ptr(), exchange->line_start->length()))
     return true;
 
-  while ((item=li++))
+  while (Item* item=li++)
   {
     Item_result result_type=item->result_type();
     bool enclosed = (exchange->enclosed->length() &&
@@ -1137,8 +1135,7 @@ bool select_export::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (res && enclosed)
     {
-      if (my_b_write(cache,(unsigned char*) exchange->enclosed->ptr(),
-                     exchange->enclosed->length()))
+      if (cache->write(exchange->enclosed->ptr(), exchange->enclosed->length()))
         return true;
     }
     if (!res)
@@ -1149,10 +1146,10 @@ bool select_export::send_data(List<Item> &items)
         {
           null_buff[0]=escape_char;
           null_buff[1]='N';
-          if (my_b_write(cache,(unsigned char*) null_buff,2))
+          if (cache->write(null_buff, 2))
             return true;
         }
-        else if (my_b_write(cache,(unsigned char*) "NULL",4))
+        else if (cache->write("NULL", 4))
           return true;
       }
       else
@@ -1242,16 +1239,15 @@ bool select_export::send_data(List<Item> &items)
                           is_ambiguous_field_sep) ?
               field_sep_char : escape_char;
             tmp_buff[1]= *pos ? *pos : '0';
-            if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
-                my_b_write(cache,(unsigned char*) tmp_buff,2))
+            if (cache->write(start, pos - start) || cache->write(tmp_buff, 2))
               return true;
             start=pos+1;
           }
         }
-        if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)))
+        if (cache->write(start, pos - start))
           return true;
       }
-      else if (my_b_write(cache,(unsigned char*) res->ptr(),used_length))
+      else if (cache->write(res->ptr(), used_length))
         return true;
     }
     if (fixed_row_size)
@@ -1267,28 +1263,25 @@ bool select_export::send_data(List<Item> &items)
         uint32_t length=item->max_length-used_length;
         for (; length > sizeof(space) ; length-=sizeof(space))
         {
-          if (my_b_write(cache,(unsigned char*) space,sizeof(space)))
+          if (cache->write(space, sizeof(space)))
             return true;
         }
-        if (my_b_write(cache,(unsigned char*) space,length))
+        if (cache->write(space, length))
           return true;
       }
     }
     if (res && enclosed)
     {
-      if (my_b_write(cache, (unsigned char*) exchange->enclosed->ptr(),
-                     exchange->enclosed->length()))
+      if (cache->write(exchange->enclosed->ptr(), exchange->enclosed->length()))
         return true;
     }
     if (--items_left)
     {
-      if (my_b_write(cache, (unsigned char*) exchange->field_term->ptr(),
-                     field_term_length))
+      if (cache->write(exchange->field_term->ptr(), field_term_length))
         return true;
     }
   }
-  if (my_b_write(cache,(unsigned char*) exchange->line_term->ptr(),
-                 exchange->line_term->length()))
+  if (cache->write(exchange->line_term->ptr(), exchange->line_term->length()))
   {
     return true;
   }
@@ -1332,10 +1325,10 @@ bool select_dump::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (!res)					// If NULL
     {
-      if (my_b_write(cache,(unsigned char*) "",1))
+      if (cache->write("", 1))
         return 1;
     }
-    else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
+    else if (cache->write(res->ptr(), res->length()))
     {
       my_error(ER_ERROR_ON_WRITE, MYF(0), path.file_string().c_str(), errno);
       return 1;
