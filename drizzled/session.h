@@ -165,8 +165,6 @@ public:
 
   util::string::ptr schema() const;
 
-  /* current cache key */
-  std::string query_cache_key;
   /**
     Constant for Session::where initialization in the beginning of every query.
 

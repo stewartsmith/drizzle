@@ -254,8 +254,6 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
   originating_commit_id= 0;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
 
-  /* query_cache init */
-  query_cache_key= "";
   resultset= NULL;
 
   /* Variables with default values */
@@ -1064,8 +1062,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   /* Check if there is any blobs in data */
   {
     List<Item>::iterator li(list.begin());
-    Item *item;
-    while ((item=li++))
+    while (Item* item= li++)
     {
       if (item->max_length >= MAX_BLOB_WIDTH)
       {
@@ -1496,7 +1493,6 @@ void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex().end();
-  query_cache_key= ""; // reset the cache key
   resetResultsetMessage();
 }
 
@@ -1525,7 +1521,7 @@ void Tmp_Table_Param::init()
   precomputed_group_by= 0;
 }
 
-void Tmp_Table_Param::cleanup(void)
+void Tmp_Table_Param::cleanup()
 {
   /* Fix for Intel compiler */
   if (copy_field)
