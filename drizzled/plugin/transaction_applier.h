@@ -45,15 +45,11 @@ namespace plugin {
  */
 class DRIZZLED_API TransactionApplier : public Plugin
 {
-  TransactionApplier();
-  TransactionApplier(const TransactionApplier &);
-  TransactionApplier& operator=(const TransactionApplier &);
 public:
   explicit TransactionApplier(std::string name_arg)
     : Plugin(name_arg, "TransactionApplier")
   {
   }
-  virtual ~TransactionApplier() {}
   /**
    * Apply something to a target.
    *

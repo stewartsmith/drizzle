@@ -100,10 +100,6 @@ ValueAllocator::~ValueAllocator()
 class DefaultValueAllocator : public ValueAllocator
 {
 public:
-   virtual ~DefaultValueAllocator()
-   {
-   }
-
    virtual char *makeMemberName( const char *memberName )
    {
       return duplicateStringValue( memberName );

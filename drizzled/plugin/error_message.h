@@ -38,15 +38,10 @@ namespace plugin
 
 class DRIZZLED_API ErrorMessage : public Plugin
 {
-  ErrorMessage();
-  ErrorMessage(const ErrorMessage &);
-  ErrorMessage& operator=(const ErrorMessage &);
-
 public:
   explicit ErrorMessage(std::string name_arg)
    : Plugin(name_arg, "ErrorMessage")
   {}
-  virtual ~ErrorMessage() {}
 
   virtual bool errmsg(error::level_t priority, const char *format, va_list ap)=0;
 

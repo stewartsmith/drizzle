@@ -22,16 +22,9 @@
 
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/file_exchange.h>
-
 #include <boost/filesystem.hpp>
 
-namespace drizzled
-{
-
-namespace internal
-{
-struct st_io_cache;
-}
+namespace drizzled {
 
 class select_to_file :
   public select_result_interceptor

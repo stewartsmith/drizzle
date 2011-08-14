@@ -710,8 +710,7 @@ public:
     These constructor and destructor serve for creation/destruction
     of Query_tables_list instances which are used as backup storage.
   */
-  Query_tables_list() {}
-  virtual ~Query_tables_list() {}
+  // Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
