@@ -54,7 +54,6 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/probes.h>
 #include <drizzled/pthread_globals.h>
-#include <drizzled/query_id.h>
 #include <drizzled/schema.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_exists_subselect.h>
