@@ -246,9 +246,6 @@ static void run(struct event_base *base)
 class JsonServer : public drizzled::plugin::Daemon
 {
 private:
-  JsonServer(const JsonServer &);
-  JsonServer& operator=(const JsonServer &);
-
   drizzled::thread_ptr json_thread;
   in_port_t _port;
   struct evhttp *httpd;

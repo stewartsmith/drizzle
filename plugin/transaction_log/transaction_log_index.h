@@ -115,10 +115,6 @@ public:
   size_t getEntriesSizeInBytes();
   size_t getSizeInBytes();
 private:
-  /* Don't allows these */
-  TransactionLogIndex();
-  TransactionLogIndex(const TransactionLogIndex &other);
-  TransactionLogIndex &operator=(const TransactionLogIndex &other);
   /**
    * Helper function to open/create the index from 
    * the transaction log.

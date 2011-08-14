@@ -23,20 +23,14 @@
 
 #include <string>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 class WrapSyslog
 {
 private:
   bool _check;
 
-  WrapSyslog(const WrapSyslog&);
-  WrapSyslog& operator=(const WrapSyslog&);
-
   WrapSyslog();
-
-
 public:
   ~WrapSyslog();
   static WrapSyslog& singleton();
