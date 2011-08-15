@@ -114,7 +114,7 @@ class False;
   to abort from the parser.
 */
 
-static void base_sql_error(drizzled::Session *session, const char *s)
+static void base_sql_error(drizzled::Session *session, const char* s)
 {
   parser::errorOn(session, s);
 }
@@ -1825,7 +1825,7 @@ alter:
 
             Lex.col_list.clear();
             Lex.select_lex.init_order();
-            Lex.select_lex.db= const_cast<char *>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
+            Lex.select_lex.db= const_cast<char*>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
           }
           alter_commands
           {}
@@ -4086,20 +4086,20 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (unsigned long) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | HEX_NUM       { $$= (unsigned long) strtol($1.str, NULL, 16); }
+        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
         ;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
         ;
 
 select_var_list_init:
@@ -4653,9 +4653,7 @@ opt_describe_column:
         | text_string { Lex.wild= $1; }
         | ident
           {
-            Lex.wild= new (YYSession->mem_root) String((const char*) $1.str,
-                                                    $1.length,
-                                                    system_charset_info);
+            Lex.wild= new (YYSession->mem_root) String($1.str, $1.length, system_charset_info);
           }
         ;
 
