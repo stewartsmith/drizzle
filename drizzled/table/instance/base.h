@@ -232,21 +232,21 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  lex_string_t db;                        /* Pointer to db */
+  str_ref db;                        /* Pointer to db */
   str_ref table_name;                /* Table name (for open) */
-  lex_string_t path;	/* Path to table (from datadir) */
-  lex_string_t normalized_path;		/* unpack_filename(path) */
+  str_ref path;	/* Path to table (from datadir) */
+  str_ref normalized_path;		/* unpack_filename(path) */
 
 public:
 
   const char *getNormalizedPath() const
   {
-    return normalized_path.str;
+    return normalized_path.data();
   }
 
   const char *getPath() const
   {
-    return path.str;
+    return path.data();
   }
 
   const identifier::Table::Key& getCacheKey() const // This should never be called when we aren't looking at a cache.
@@ -261,16 +261,14 @@ public:
   }
 
 private:
-  void setPath(char *str_arg, uint32_t size_arg)
+  void setPath(const char *str_arg, uint32_t size_arg)
   {
-    path.str= str_arg;
-    path.length= size_arg;
+    path.assign(str_arg, size_arg);
   }
 
   void setNormalizedPath(char *str_arg, uint32_t size_arg)
   {
-    normalized_path.str= str_arg;
-    normalized_path.length= size_arg;
+    normalized_path.assign(str_arg, size_arg);
   }
 
 public:
@@ -291,7 +289,7 @@ public:
 
   const char *getSchemaName() const
   {
-    return db.str;
+    return db.data();
   }
 
   uint32_t   block_size;                   /* create information */

@@ -365,20 +365,17 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length= strlen(private_key_for_cache.vector());
+  db= str_ref(private_key_for_cache.vector());
 
   table_name= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
-  path.str= (char *)"";
-  normalized_path.str= path.str;
-  path.length= normalized_path.length= 0;
+  path= str_ref("");
+  normalized_path= str_ref("");
 
   std::string tb_name(identifier.getTableName());
   boost::to_lower(tb_name);
   assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
-  assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
+  assert(strcmp(identifier.getSchemaName().c_str(), db.data()) == 0);
 }
-
 
 TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -437,14 +434,12 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   memcpy(&private_normalized_path[0], identifier.getPath().c_str(), identifier.getPath().size());
 
   {
-    table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              message::Table::INTERNAL;
-    db.str= const_cast<char *>(private_key_for_cache.vector());
-    db.length= strlen(private_key_for_cache.vector());
-    table_name= str_ref(static_cast<const char*>(db.str + 1));
-    path.str= &private_normalized_path[0];
-    normalized_path.str= path.str;
-    path.length= normalized_path.length= private_normalized_path.size();
+    table_category= TABLE_CATEGORY_TEMPORARY;
+    tmp_table= message::Table::INTERNAL;
+    db= str_ref(private_key_for_cache.vector());
+    table_name= str_ref(db.data() + 1);
+    path.assign(&private_normalized_path[0], private_normalized_path.size());
+    normalized_path= path;
   }
 }
 
@@ -512,9 +507,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name= str_ref(static_cast<const char*>(db.str + db.length + 1));
+  db= str_ref(private_key_for_cache.vector());
+  table_name= str_ref(db.data() + db.size() + 1);
 
   std::string _path;
   if (path_arg)
@@ -523,7 +517,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    _path= identifier::Table::build_table_filename(db.str, table_name.data(), false);
+    _path= identifier::Table::build_table_filename(db.data(), table_name.data(), false);
   }
 
   char* path_buff= mem_root.strdup(_path);
@@ -533,18 +527,15 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   version= g_refresh_version;
 }
 
-void TableShare::init(const char *new_table_name,
-                      const char *new_path)
+void TableShare::init(const char *new_table_name, const char *new_path)
 {
 
-  table_category=         TABLE_CATEGORY_TEMPORARY;
-  tmp_table=              message::Table::INTERNAL;
-  db.str= (char *)"";
-  db.length= 0;
+  table_category= TABLE_CATEGORY_TEMPORARY;
+  tmp_table= message::Table::INTERNAL;
+  db= str_ref("");
   table_name= str_ref(new_table_name);
-  path.str=               (char*) new_path;
-  normalized_path.str=    (char*) new_path;
-  path.length= normalized_path.length= strlen(new_path);
+  path= str_ref(new_path);
+  normalized_path= str_ref(new_path);
 }
 
 TableShare::~TableShare() 
@@ -562,9 +553,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name= str_ref(static_cast<const char*>(db.str + db.length + 1));
+  db= str_ref(private_key_for_cache.vector());
+  table_name= str_ref(db.data() + db.size() + 1);
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
@@ -1770,19 +1760,19 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      identifier::Table identifier(db.str, table_name.data());
+      identifier::Table identifier(db.data(), table_name.data());
       my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
-      snprintf(buff, sizeof(buff), "%s",normalized_path.str);
+      snprintf(buff, sizeof(buff), "%s",normalized_path.data());
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND, errortype, buff, db_errno);
     }
     break;
   case 2:
     {
       drizzled::error_t err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ? ER_FILE_USED : ER_CANT_OPEN_FILE;
-      my_error(err_no, errortype, normalized_path.str, db_errno);
+      my_error(err_no, errortype, normalized_path.data(), db_errno);
       break;
     }
   case 5:
@@ -1798,14 +1788,14 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
       break;
     }
   case 6:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
     my_printf_error(ER_NOT_FORM_FILE, _("Table '%-.64s' was created with a different version of Drizzle and cannot be read"), MYF(0), buff);
     break;
   case 8:
     break;
   default:				/* Better wrong error than none */
   case 4:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
