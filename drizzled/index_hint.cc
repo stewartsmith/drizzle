@@ -54,18 +54,13 @@ const char *index_hint_type_name[] =
  * @param Session pointer
  * @param[out] Appends the index hint here
  */
-void Index_hint::print(Session *session, String *str)
+void Index_hint::print(String& str)
 {
-  str->append(STRING_WITH_LEN(index_hint_type_name[type]));
-  str->append(STRING_WITH_LEN(" ("));
-  if (key_name.length)
-  {
-    if (session && is_primary_key_name(key_name.str))
-      str->append(is_primary_key_name(key_name.str));
-    else
-      str->append_identifier(key_name.str, key_name.length);
-  }
-  str->append(')');
+  str.append(STRING_WITH_LEN(index_hint_type_name[type]));
+  str.append(STRING_WITH_LEN(" ("));
+  if (*key_name)
+    str.append_identifier(str_ref(key_name));
+  str.append(')');
 }
 
 } /* namespace drizzled */

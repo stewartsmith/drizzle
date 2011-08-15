@@ -58,17 +58,12 @@ namespace drizzled {
 
 bool is_primary_key(KeyInfo *key_info)
 {
-  static const char * primary_key_name="PRIMARY";
-  return (strcmp(key_info->name, primary_key_name)==0);
+  return strcmp(key_info->name, "PRIMARY") == 0;
 }
 
 const char* is_primary_key_name(const char* key_name)
 {
-  static const char * primary_key_name="PRIMARY";
-  if (strcmp(key_name, primary_key_name)==0)
-    return key_name;
-  else
-    return NULL;
+  return strcmp(key_name, "PRIMARY") == 0 ? key_name : NULL;
 }
 
 static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);

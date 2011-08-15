@@ -2030,7 +2030,7 @@ void LEX::cleanup_after_one_table_open()
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
-void Select_Lex::set_index_hint_type(enum index_hint_type type_arg, index_clause_map clause)
+void Select_Lex::set_index_hint_type(index_hint_type type_arg, index_clause_map clause)
 {
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;

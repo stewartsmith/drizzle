@@ -1320,9 +1320,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   /* Fix key stuff */
   if (key_parts)
   {
-    uint32_t local_primary_key= 0;
-    doesKeyNameExist("PRIMARY", local_primary_key);
-
+    uint32_t local_primary_key= doesKeyNameExist("PRIMARY");
     keyinfo= key_info;
     key_part= keyinfo->key_part;
 

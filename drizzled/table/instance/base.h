@@ -39,6 +39,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
 #include <drizzled/field.h>
+#include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
 
@@ -147,8 +148,7 @@ public:
 
 private:
   /* hash of field names (contains pointers to elements of field array) */
-  typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
-  typedef std::pair< std::string, Field ** > FieldMapPair;
+  typedef boost::unordered_map<std::string, Field**, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
   FieldMap name_hash; /* hash of field names */
 
 public:
@@ -159,12 +159,7 @@ public:
 
   Field **getNamedField(const std::string &arg)
   {
-    FieldMap::iterator iter= name_hash.find(arg);
-
-    if (iter == name_hash.end())
-        return 0;
-
-    return iter->second;
+    return find_ptr2(name_hash, arg);
   }
 
 private:
@@ -180,7 +175,9 @@ private:
     return mem_root;
   }
 
-  std::vector<std::string> _keynames;
+  typedef std::vector<std::string> keynames_t;
+
+  keynames_t _keynames;
 
   void addKeyName(const std::string& arg)
   {
@@ -188,23 +185,10 @@ private:
   }
 
 public:
-  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
+  uint32_t doesKeyNameExist(const std::string& arg) const
   {
-    return doesKeyNameExist(std::string(name_arg, name_length), position);
-  }
-
-  bool doesKeyNameExist(const std::string& arg, uint32_t &position) const
-  {
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), boost::to_upper_copy(arg));
-
-    if (iter == _keynames.end())
-    {
-      position= UINT32_MAX; //historical, required for finding primary key from unique
-      return false;
-    }
-
-    position= iter -  _keynames.begin();
-    return true;
+    keynames_t::const_iterator it= find(_keynames.begin(), _keynames.end(), boost::to_upper_copy(arg));
+    return it == _keynames.end() ? UINT32_MAX : it - _keynames.begin(); // historical, required for finding primary key from unique
   }
 
 private:

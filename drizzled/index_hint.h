@@ -32,7 +32,7 @@ namespace drizzled {
   String names used to print a statement with index hints.
   Keep in sync with index_hint_type.
 */
-extern const char * index_hint_type_name[];
+extern const char* index_hint_type_name[];
 typedef unsigned char index_clause_map;
 
 enum index_hint_type
@@ -50,8 +50,7 @@ enum index_hint_type
 #define INDEX_HINT_MASK_GROUP (1 << 1)
 #define INDEX_HINT_MASK_ORDER (1 << 2)
 
-#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | \
-                             INDEX_HINT_MASK_ORDER)
+#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | INDEX_HINT_MASK_ORDER)
 
 /* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
 class Index_hint : public memory::SqlAlloc
@@ -65,17 +64,17 @@ public:
     The index name. Empty (str=NULL) name represents an empty list
     USE INDEX () clause
   */
-  lex_string_t key_name;
+  const char* key_name;
 
-  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str, uint32_t length) :
+  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str, uint32_t) :
     type(type_arg), clause(clause_arg)
   {
-    key_name.str= const_cast<char*>(str);
-    key_name.length= length;
+    // key_name.str= const_cast<char*>(str);
+    // key_name.length= length;
+    key_name= str;
   }
 
-  void print(Session *session, String *str);
+  void print(String&);
 };
 
 } /* namespace drizzled */
-
