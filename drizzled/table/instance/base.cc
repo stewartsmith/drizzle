@@ -368,15 +368,14 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length= strlen(private_key_for_cache.vector());
 
-  table_name.str= const_cast<char *>(private_key_for_cache.vector()) + strlen(private_key_for_cache.vector()) + 1;
-  table_name.length= strlen(table_name.str);
+  table_name= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
   path.str= (char *)"";
   normalized_path.str= path.str;
   path.length= normalized_path.length= 0;
 
   std::string tb_name(identifier.getTableName());
   boost::to_lower(tb_name);
-  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
+  assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
   assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
 }
 
@@ -442,8 +441,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
     tmp_table=              message::Table::INTERNAL;
     db.str= const_cast<char *>(private_key_for_cache.vector());
     db.length= strlen(private_key_for_cache.vector());
-    table_name.str= db.str + 1;
-    table_name.length= strlen(table_name.str);
+    table_name= str_ref(static_cast<const char*>(db.str + 1));
     path.str= &private_normalized_path[0];
     normalized_path.str= path.str;
     path.length= normalized_path.length= private_normalized_path.size();
@@ -516,8 +514,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   */
   db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  table_name= str_ref(static_cast<const char*>(db.str + db.length + 1));
 
   std::string _path;
   if (path_arg)
@@ -526,7 +523,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    _path= identifier::Table::build_table_filename(db.str, table_name.str, false);
+    _path= identifier::Table::build_table_filename(db.str, table_name.data(), false);
   }
 
   char* path_buff= mem_root.strdup(_path);
@@ -544,8 +541,7 @@ void TableShare::init(const char *new_table_name,
   tmp_table=              message::Table::INTERNAL;
   db.str= (char *)"";
   db.length= 0;
-  table_name.str=         (char*) new_table_name;
-  table_name.length=      strlen(new_table_name);
+  table_name= str_ref(new_table_name);
   path.str=               (char*) new_path;
   normalized_path.str=    (char*) new_path;
   path.length= normalized_path.length= strlen(new_path);
@@ -568,8 +564,7 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
   */
   db.str= const_cast<char *>(private_key_for_cache.vector());
   db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  table_name= str_ref(static_cast<const char*>(db.str + db.length + 1));
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
@@ -1775,23 +1770,18 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      identifier::Table identifier(db.str, table_name.str);
+      identifier::Table identifier(db.str, table_name.data());
       my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
       snprintf(buff, sizeof(buff), "%s",normalized_path.str);
-      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
-               errortype, buff, db_errno);
+      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND, errortype, buff, db_errno);
     }
     break;
   case 2:
     {
-      drizzled::error_t err_no;
-
-      err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
-        ER_FILE_USED : ER_CANT_OPEN_FILE;
-
+      drizzled::error_t err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ? ER_FILE_USED : ER_CANT_OPEN_FILE;
       my_error(err_no, errortype, normalized_path.str, db_errno);
       break;
     }
@@ -1804,17 +1794,12 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
         snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
         csname= tmp;
       }
-      my_printf_error(ER_UNKNOWN_COLLATION,
-                      _("Unknown collation '%s' in table '%-.64s' definition"),
-                      MYF(0), csname, table_name.str);
+      my_printf_error(ER_UNKNOWN_COLLATION, _("Unknown collation '%s' in table '%-.64s' definition"), MYF(0), csname, table_name.data());
       break;
     }
   case 6:
     snprintf(buff, sizeof(buff), "%s", normalized_path.str);
-    my_printf_error(ER_NOT_FORM_FILE,
-                    _("Table '%-.64s' was created with a different version "
-                      "of Drizzle and cannot be read"),
-                    MYF(0), buff);
+    my_printf_error(ER_NOT_FORM_FILE, _("Table '%-.64s' was created with a different version of Drizzle and cannot be read"), MYF(0), buff);
     break;
   case 8:
     break;
