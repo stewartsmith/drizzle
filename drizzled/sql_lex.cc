@@ -2061,9 +2061,9 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-void Select_Lex::add_index_hint(Session *session, const char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, const char *str)
 {
-  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
+  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str));
 }
 
 message::AlterTable *LEX::alter_table()

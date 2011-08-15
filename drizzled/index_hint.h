@@ -66,15 +66,12 @@ public:
   */
   const char* key_name;
 
-  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str, uint32_t) :
-    type(type_arg), clause(clause_arg)
+  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str) :
+    type(type_arg), clause(clause_arg), key_name(str)
   {
-    // key_name.str= const_cast<char*>(str);
-    // key_name.length= length;
-    key_name= str;
   }
 
-  void print(String&);
+  void print(String&) const;
 };
 
 } /* namespace drizzled */

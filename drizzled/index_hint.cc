@@ -54,7 +54,7 @@ const char *index_hint_type_name[] =
  * @param Session pointer
  * @param[out] Appends the index hint here
  */
-void Index_hint::print(String& str)
+void Index_hint::print(String& str) const
 {
   str.append(STRING_WITH_LEN(index_hint_type_name[type]));
   str.append(STRING_WITH_LEN(" ("));
