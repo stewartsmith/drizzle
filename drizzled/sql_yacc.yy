@@ -133,7 +133,7 @@ using namespace drizzled;
   drizzled::lex_string_t *lex_str_ptr;
   drizzled::LEX_SYMBOL symbol;
   drizzled::Table_ident *table;
-  char *simple_string;
+  const char* simple_string;
   drizzled::Item *item;
   drizzled::Item_num *item_num;
   drizzled::List<drizzled::Item> *item_list;

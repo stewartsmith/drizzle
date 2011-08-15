@@ -201,14 +201,9 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->times.set_time();
   session->setQueryId(query_id.value());
 
-  switch (command)
+  if (command != COM_PING)
   {
-  /* Ignore these statements. */
-  case COM_PING:
-    break;
-
-  /* Increase id and count all other statements. */
-  default:
+    // Increase id and count all other statements
     session->status_var.questions++;
     query_id.next();
   }
@@ -221,8 +216,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     // We should do something about an error...
   }
 
-  session->server_status&=
-           ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+  session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
   switch (command)
   {

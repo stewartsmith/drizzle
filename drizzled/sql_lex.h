@@ -361,9 +361,9 @@ public:
                      select_result_interceptor *old_result);
   void set_limit(Select_Lex *values);
   void set_session(Session *session_arg) { session= session_arg; }
-  inline bool is_union ();
+  inline bool is_union();
 
-  friend void lex_start(Session *session);
+  friend void lex_start(Session*);
 
   List<Item> *get_unit_column_types();
 };
@@ -371,7 +371,7 @@ public:
 /*
   Select_Lex - store information of parsed SELECT statment
 */
-class Select_Lex: public Select_Lex_Node
+class Select_Lex : public Select_Lex_Node
 {
 public:
 
@@ -614,7 +614,7 @@ public:
   }
   bool test_limit();
 
-  friend void lex_start(Session *session);
+  friend void lex_start(Session*);
   void make_empty_select()
   {
     init_query();
@@ -648,14 +648,14 @@ public:
   /* make a list to hold index hints */
   void alloc_index_hints (Session *session);
   /* read and clear the index hints */
-  List<Index_hint>* pop_index_hints(void)
+  List<Index_hint>* pop_index_hints()
   {
     List<Index_hint> *hints= index_hints;
     index_hints= NULL;
     return hints;
   }
 
-  void clear_index_hints(void) { index_hints= NULL; }
+  void clear_index_hints() { index_hints= NULL; }
 
 private:
   /* current index hint kind. used in filling up index_hints */
@@ -665,20 +665,19 @@ private:
   List<Index_hint> *index_hints;
 };
 
-inline bool Select_Lex_Unit::is_union ()
+inline bool Select_Lex_Unit::is_union()
 {
-  return first_select()->next_select() &&
-    first_select()->next_select()->linkage == UNION_TYPE;
+  return first_select()->next_select() && first_select()->next_select()->linkage == UNION_TYPE;
 }
 
 enum xa_option_words
 {
-  XA_NONE
-, XA_JOIN
-, XA_RESUME
-, XA_ONE_PHASE
-, XA_SUSPEND
-, XA_FOR_MIGRATE
+  XA_NONE,
+  XA_JOIN,
+  XA_RESUME,
+  XA_ONE_PHASE,
+  XA_SUSPEND,
+  XA_FOR_MIGRATE
 };
 
 /*
@@ -705,12 +704,6 @@ public:
     0 - indicates that this query does not need prelocking.
   */
   TableList **query_tables_own_last;
-
-  /*
-    These constructor and destructor serve for creation/destruction
-    of Query_tables_list instances which are used as backup storage.
-  */
-  // Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
