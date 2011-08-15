@@ -469,9 +469,9 @@ static bool prepare_alter_table(Session *session,
     char *key_name= key_info->name;
 
     vector<string>::iterator it= drop_keys.begin();
-    while ((it != drop_keys.end()))
+    while (it != drop_keys.end())
     {
-      if (! my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
         break;
       it++;
     }

@@ -26,8 +26,7 @@
 
 #pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   String names used to print a statement with index hints.
@@ -59,7 +58,7 @@ class Index_hint : public memory::SqlAlloc
 {
 public:
   /* The type of the hint : USE/FORCE/IGNORE */
-  enum index_hint_type type;
+  index_hint_type type;
   /* Where the hit applies to. A bitmask of INDEX_HINT_MASK_<place> values */
   index_clause_map clause;
   /*
@@ -68,11 +67,10 @@ public:
   */
   lex_string_t key_name;
 
-  Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
-              char *str, uint32_t length) :
+  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str, uint32_t length) :
     type(type_arg), clause(clause_arg)
   {
-    key_name.str= str;
+    key_name.str= const_cast<char*>(str);
     key_name.length= length;
   }
 

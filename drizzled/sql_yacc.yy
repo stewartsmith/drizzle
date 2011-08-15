@@ -1276,7 +1276,7 @@ field_def:
         | TEXT_SYM opt_attribute_string
           {
             $$=DRIZZLE_TYPE_BLOB;
-            Lex.length=(char*) 0; /* use default length */
+            Lex.length= NULL; /* use default length */
 
             if (Lex.field())
               Lex.field()->set_type(message::Table::Field::BLOB);
@@ -1382,9 +1382,9 @@ real_type:
 
 float_options:
           /* empty */
-          { Lex.dec=Lex.length= (char*)0; }
+          { Lex.dec=Lex.length= NULL; }
         | '(' NUM ')'
-          { Lex.length=$2.str; Lex.dec= (char*)0; }
+          { Lex.length=$2.str; Lex.dec= NULL; }
         | precision
           {}
         ;
@@ -1398,7 +1398,7 @@ precision:
         ;
 
 opt_len:
-          /* empty */ { Lex.length=(char*) 0; /* use default length */ }
+          /* empty */ { Lex.length= NULL; /* use default length */ }
         | '(' NUM ')' { Lex.length= $2.str; }
         ;
 
@@ -1420,9 +1420,9 @@ opt_zerofill:
 
 opt_precision:
           /* empty */
-          { Lex.dec=Lex.length= (char*)0; }
+          { Lex.dec=Lex.length= NULL; }
         | '(' NUM ')'
-          { Lex.length=Lex.dec= (char*)0; }
+          { Lex.length=Lex.dec= NULL; }
         | precision
           {}
         ;
@@ -2351,14 +2351,14 @@ select_item:
 remember_name:
           {
             Lex_input_stream *lip= YYSession->m_lip;
-            $$= (char*) lip->get_cpp_tok_start();
+            $$= lip->get_cpp_tok_start();
           }
         ;
 
 remember_end:
           {
             Lex_input_stream *lip= YYSession->m_lip;
-            $$= (char*) lip->get_cpp_tok_end();
+            $$= lip->get_cpp_tok_end();
           }
         ;
 
@@ -3283,23 +3283,23 @@ cast_type:
         | BOOLEAN_SYM
           { $$=ITEM_CAST_BOOLEAN; Lex.charset= &my_charset_bin; Lex.dec= 0; }
         | SIGNED_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | SIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | UNSIGNED_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | UNSIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex.dec= 0; }
         | DATE_SYM
-          { $$=ITEM_CAST_DATE; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_DATE; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | TIME_SYM
-          { $$=ITEM_CAST_TIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_TIME; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | DATETIME_SYM
-          { $$=ITEM_CAST_DATETIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_DATETIME; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | DECIMAL_SYM float_options
           { $$=ITEM_CAST_DECIMAL; Lex.charset= NULL; }
         ;
@@ -3800,7 +3800,7 @@ key_usage_element:
           ident
           { Lex.current_select->add_index_hint(YYSession, $1.str, $1.length); }
         | PRIMARY_SYM
-          { Lex.current_select->add_index_hint(YYSession, (char *)"PRIMARY", 7); }
+          { Lex.current_select->add_index_hint(YYSession, "PRIMARY", 7); }
         ;
 
 key_usage_list:
