@@ -260,11 +260,11 @@ public:
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
   virtual TableList *add_table_to_list(Session *session, Table_ident *table,
-                                       LEX_STRING *alias,
+                                       lex_string_t *alias,
                                        const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                        thr_lock_type flags= TL_UNLOCK,
                                        List<Index_hint> *hints= 0,
-                                       LEX_STRING *option= 0);
+                                       lex_string_t *option= 0);
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
@@ -583,11 +583,11 @@ public:
   void add_order_to_list(Session *session, Item *item, bool asc);
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
-                               LEX_STRING *alias,
+                               lex_string_t *alias,
                                const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                thr_lock_type flags= TL_UNLOCK,
                                List<Index_hint> *hints= 0,
-                               LEX_STRING *option= 0);
+                               lex_string_t *option= 0);
   TableList* get_table_list();
   void init_nested_join(Session&);
   TableList *end_nested_join(Session *session);
@@ -681,8 +681,6 @@ enum xa_option_words
 , XA_FOR_MIGRATE
 };
 
-extern const LEX_STRING null_lex_str;
-
 /*
   Class representing list of all tables used by statement.
   It also contains information about stored functions used by statement
@@ -769,10 +767,7 @@ enum enum_comment_state
 
 } /* namespace drizzled */
 
-#include <drizzled/lex_input_stream.h>
-
-namespace drizzled
-{
+namespace drizzled {
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -786,9 +781,9 @@ public:
   Select_Lex *all_selects_list;
 
   /* This is the "scale" for DECIMAL (S,P) notation */
-  char *length;
+  const char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
-  char *dec;
+  const char *dec;
 
   /**
    * This is used kind of like the "ident" member variable below, as
@@ -796,7 +791,7 @@ public:
    * is used differently depending on the Command (SELECT on a derived
    * table vs CREATE)
    */
-  LEX_STRING name;
+  lex_string_t name;
   /* The string literal used in a LIKE expression */
   String *wild;
   file_exchange *exchange;
@@ -808,7 +803,7 @@ public:
    * the eventual Command class built for the Keycache and Savepoint
    * commands.
    */
-  LEX_STRING ident;
+  lex_string_t ident;
 
   unsigned char* yacc_yyss, *yacc_yyvs;
   /* The owning Session of this LEX */
@@ -921,8 +916,6 @@ public:
   {
     context_stack.pop();
   }
-
-  bool copy_db_to(char **p_db, size_t *p_db_length) const;
 
   Name_resolution_context *current_context()
   {

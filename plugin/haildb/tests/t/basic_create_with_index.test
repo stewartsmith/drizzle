@@ -1,6 +1,0 @@
-CREATE TABLE t1 (a int primary key);
-SHOW CREATE TABLE t1;
-DROP TABLE t1;
-CREATE TABLE t2 (a int primary key, b int unique, c varchar(100) unique);
-SHOW CREATE TABLE t2;
-DROP TABLE t2;

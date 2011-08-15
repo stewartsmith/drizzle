@@ -24,7 +24,7 @@
 #include <drizzled/field.h>
 #include <drizzled/plugin/client/concurrent.h>
 #include <drizzled/sql/result_set.h>
-#include <iostream>
+#include <iosfwd>
 
 namespace drizzled {
 namespace plugin {

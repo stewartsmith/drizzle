@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <libdrizzle/libdrizzle.h>
+#include <sstream>
 #include <stdexcept>
 
 namespace drizzle {
@@ -43,7 +44,18 @@ class bad_query : public std::runtime_error
 {
 };
 
-class drizzle_c
+class noncopyable
+{
+protected:
+  noncopyable()
+  {
+  }
+private:
+  noncopyable(const noncopyable&);
+  void operator=(const noncopyable&);
+};
+
+class drizzle_c : noncopyable
 {
 public:
   drizzle_c()
@@ -59,7 +71,7 @@ public:
   drizzle_st b_;
 };
 
-class result_c
+class result_c : noncopyable
 {
 public:
   result_c()
@@ -120,7 +132,7 @@ public:
   drizzle_result_st b_;
 };
 
-class connection_c
+class connection_c : noncopyable
 {
 public:
   explicit connection_c(drizzle_c& drizzle)
@@ -136,6 +148,21 @@ public:
   const char* error()
   {
     return drizzle_con_error(&b_);
+  }
+
+  void set_tcp(const char* host, in_port_t port)
+  {
+    drizzle_con_set_tcp(&b_, host, port);
+  }
+
+  void set_auth(const char* user, const char* password)
+  {
+    drizzle_con_set_auth(&b_, user, password);
+  }
+
+  void set_db(const char* db)
+  {
+    drizzle_con_set_db(&b_, db);
   }
 
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
@@ -160,25 +187,84 @@ public:
   drizzle_con_st b_;
 };
 
-/*
-inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str, size_t str_size)
+class query_c
 {
-  drizzle_return_t ret;
-  drizzle_query(con, &result.b_, str, str_size, &ret);
-  if (ret == DRIZZLE_RETURN_OK)
-    ret = drizzle_result_buffer(&result.b_);
-  return ret;
-}
+public:
+  query_c(connection_c& con, const std::string& in = "") :
+    con_(con),
+    in_(in)
+  {
+  }
 
-inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const std::string& str)
-{
-  return query(con, result, str.data(), str.size());
-}
+  void operator=(const std::string& v)
+  {
+    in_ = v;
+    out_.clear();
+  }
 
-inline drizzle_return_t query(drizzle_con_st* con, result_c& result, const char* str)
-{
-  return query(con, result, str, strlen(str));
-}
-*/
+  void operator+=(const std::string& v)
+  {
+    in_ += v;
+  }
+
+  query_c& p_name(const std::string& v)
+  {
+    std::vector<char> r(2 * v.size() + 2);
+    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.front() = '`';
+    r.back() = '`';
+    p_raw(&r.front(), r.size());
+    return *this;
+  }
+
+  query_c& p_raw(const char* v, size_t sz)
+  {
+    size_t i = in_.find('?');
+    assert(i != std::string::npos);
+    if (i == std::string::npos)
+      return *this;
+    out_.append(in_.substr(0, i));
+    in_.erase(0, i + 1);
+    out_.append(v, sz);
+    return *this;
+  }
+
+  query_c& p_raw(const std::string& v)
+  {
+    return p_raw(v.data(), v.size());
+  }
+
+  query_c& p(const std::string& v)
+  {
+    std::vector<char> r(2 * v.size() + 2);
+    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.front() = '\'';
+    r.back() = '\'';
+    p_raw(&r.front(), r.size());
+    return *this;
+  }
+
+  query_c& p(long long v)
+  {
+    std::stringstream ss;
+    ss << v;
+    p_raw(ss.str());
+    return *this;
+  }
+
+  drizzle_return_t execute(result_c& result)
+  {
+    return con_.query(result, read());
+  }
+
+  std::string read() const
+  {
+    return out_ + in_;
+  }
+private:
+  connection_c& con_;
+  std::string in_;
+  std::string out_;
+};
 
 }

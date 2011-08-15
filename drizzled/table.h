@@ -331,10 +331,10 @@ public:
     return mem_root.alloc(arg);
   }
 
-  char* strmake(const char* str_arg, size_t len_arg)
+  char* strdup(const char* str_arg, size_t len_arg)
   {
     init_mem_root();
-    return mem_root.strmake(str_arg, len_arg);
+    return mem_root.strdup(str_arg, len_arg);
   }
 
   filesort_info sort;
@@ -420,8 +420,8 @@ public:
 
 
   /* See if this can be blown away */
-  inline uint32_t getDBStat () { return db_stat; }
-  inline uint32_t setDBStat () { return db_stat; }
+  inline uint32_t getDBStat () const { return db_stat; }
+
   /**
    * Create Item_field for each column in the table.
    *
@@ -518,7 +518,7 @@ public:
   }
 
   /* Is table open or should be treated as such by name-locking? */
-  inline bool is_name_opened()
+  bool is_name_opened() const
   {
     return db_stat || open_placeholder;
   }
@@ -627,14 +627,14 @@ public:
      * @param[in] in_foreign_fields The foreign fields
      * @param[in] in_referenced_fields The referenced fields
      */
-    ForeignKeyInfo(LEX_STRING *in_foreign_id,
-                   LEX_STRING *in_referenced_db,
-                   LEX_STRING *in_referenced_table,
-                   LEX_STRING *in_update_method,
-                   LEX_STRING *in_delete_method,
-                   LEX_STRING *in_referenced_key_name,
-                   List<LEX_STRING> in_foreign_fields,
-                   List<LEX_STRING> in_referenced_fields)
+    ForeignKeyInfo(lex_string_t *in_foreign_id,
+                   lex_string_t *in_referenced_db,
+                   lex_string_t *in_referenced_table,
+                   lex_string_t *in_update_method,
+                   lex_string_t *in_delete_method,
+                   lex_string_t *in_referenced_key_name,
+                   List<lex_string_t> in_foreign_fields,
+                   List<lex_string_t> in_referenced_fields)
     :
       foreign_id(in_foreign_id),
       referenced_db(in_referenced_db),
@@ -661,7 +661,7 @@ public:
      *
      * @ retval  the foreign id
      */
-    const LEX_STRING *getForeignId() const
+    const lex_string_t *getForeignId() const
     {
         return foreign_id;
     }
@@ -672,7 +672,7 @@ public:
      *
      * @ retval  the name of the referenced database
      */
-    const LEX_STRING *getReferencedDb() const
+    const lex_string_t *getReferencedDb() const
     {
         return referenced_db;
     }
@@ -683,7 +683,7 @@ public:
      *
      * @ retval  the name of the referenced table
      */
-    const LEX_STRING *getReferencedTable() const
+    const lex_string_t *getReferencedTable() const
     {
         return referenced_table;
     }
@@ -694,7 +694,7 @@ public:
      *
      * @ retval  the update method
      */
-    const LEX_STRING *getUpdateMethod() const
+    const lex_string_t *getUpdateMethod() const
     {
         return update_method;
     }
@@ -705,7 +705,7 @@ public:
      *
      * @ retval  the delete method
      */
-    const LEX_STRING *getDeleteMethod() const
+    const lex_string_t *getDeleteMethod() const
     {
         return delete_method;
     }
@@ -716,7 +716,7 @@ public:
      *
      * @ retval  the name of the referenced key
      */
-    const LEX_STRING *getReferencedKeyName() const
+    const lex_string_t *getReferencedKeyName() const
     {
         return referenced_key_name;
     }
@@ -727,7 +727,7 @@ public:
      *
      * @ retval  the foreign fields
      */
-    const List<LEX_STRING> &getForeignFields() const
+    const List<lex_string_t> &getForeignFields() const
     {
         return foreign_fields;
     }
@@ -738,7 +738,7 @@ public:
      *
      * @ retval  the referenced fields
      */
-    const List<LEX_STRING> &getReferencedFields() const
+    const List<lex_string_t> &getReferencedFields() const
     {
         return referenced_fields;
     }
@@ -746,35 +746,35 @@ private:
     /**
      * The foreign id.
      */
-    LEX_STRING *foreign_id;
+    lex_string_t *foreign_id;
     /**
      * The name of the reference database.
      */
-    LEX_STRING *referenced_db;
+    lex_string_t *referenced_db;
     /**
      * The name of the reference table.
      */
-    LEX_STRING *referenced_table;
+    lex_string_t *referenced_table;
     /**
      * The update method.
      */
-    LEX_STRING *update_method;
+    lex_string_t *update_method;
     /**
      * The delete method.
      */
-    LEX_STRING *delete_method;
+    lex_string_t *delete_method;
     /**
      * The name of the referenced key.
      */
-    LEX_STRING *referenced_key_name;
+    lex_string_t *referenced_key_name;
     /**
      * The foreign fields.
      */
-    List<LEX_STRING> foreign_fields;
+    List<lex_string_t> foreign_fields;
     /**
      * The referenced fields.
      */
-    List<LEX_STRING> referenced_fields;
+    List<lex_string_t> referenced_fields;
 };
 
 #define JOIN_TYPE_LEFT  1

@@ -24,26 +24,19 @@
 namespace drizzled {
 namespace module {
 
-class VertexHandle
+class VertexHandle : boost::noncopyable
 {
-
-private:
-  VertexDesc vertex_desc_;
-
-  VertexHandle();
-  VertexHandle(const VertexHandle&);
-  VertexHandle& operator=(const VertexHandle&);
-
 public:
   explicit VertexHandle(VertexDesc vertex_desc) :
     vertex_desc_(vertex_desc)
   { }
 
-  VertexDesc getVertexDesc()
+  VertexDesc getVertexDesc() const
   {
     return vertex_desc_;
   }
-
+private:
+  VertexDesc vertex_desc_;
 };
 
 } /* namespace module */

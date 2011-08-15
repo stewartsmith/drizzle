@@ -287,9 +287,8 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
   }
 
   message::Table message;
-  EngineVector::iterator iter=
-    std::find_if(g_engines.begin(), g_engines.end(),
-                 StorageEngineGetTableDefinition(session, identifier, message, error));
+  EngineVector::iterator iter= std::find_if(g_engines.begin(), g_engines.end(), 
+    StorageEngineGetTableDefinition(session, identifier, message, error));
 
   if (iter == g_engines.end())
   {

@@ -24,8 +24,8 @@
 
   Tool used for executing a .test file
 
-  See the "DRIZZLE Test framework manual" for more information
-  http://dev.mysql.com/doc/drizzletest/en/index.html
+  See the "MySQL Test framework manual" for more information
+  http://dev.mysql.com/doc/mysqltest/en/index.html
 
   Please keep the test framework tools identical in all versions!
 
@@ -81,9 +81,6 @@
 
 #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
 
-#ifndef DRIZZLE_RETURN_SERVER_GONE
-#define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
-#endif
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
@@ -2793,13 +2790,12 @@ static void do_sync_with_master2(long offset)
 {
   drizzle::connection_c& con= *cur_con;
   char query_buf[FN_REFLEN+128];
-  int tries= 0;
 
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
-  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file,
-          master_pos.pos + offset);
+  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
+  int tries= 0;
 
 wait_for_position:
 
@@ -4579,7 +4575,7 @@ void handle_error(st_command* command,
       returned a valid reponse. Don't allow 2013 or 2006 to trigger an
       abort_not_supported_test
     */
-    if (err_errno == DRIZZLE_RETURN_SERVER_GONE)
+    if (err_errno == DRIZZLE_RETURN_LOST_CONNECTION)
       die("require query '%s' failed: %d: %s", command->query, err_errno, err_error);
 
     /* Abort the run of this test, pass the failed query as reason */
@@ -4991,8 +4987,7 @@ try
 
   if (user_config_dir.compare(0, 2, "~/") == 0)
   {
-    const char *homedir= getenv("HOME");
-    if (homedir != NULL)
+    if (const char *homedir= getenv("HOME"))
       user_config_dir.replace(0, 1, homedir);
   }
 
@@ -5498,39 +5493,29 @@ try
     Time to compare result or save it to record file.
     The entire output from test is now kept in ds_res.
   */
-  if (ds_res.length())
+  if (ds_res.empty())
+    die("The test didn't produce any output");
+  if (result_file_name.empty())
   {
-    if (not result_file_name.empty())
-    {
-      /* A result file has been specified */
-
-      if (record)
-      {
-        /* Recording - dump the output from test to result file */
-        str_to_file(result_file_name.c_str(), ds_res.c_str(), ds_res.length());
-      }
-      else
-      {
-        /* Check that the output from test is equal to result file
-           - detect missing result file
-           - detect zero size result file
-        */
-        check_result(ds_res);
-      }
-    }
-    else
-    {
-      /* No result_file_name specified to compare with, print to stdout */
-      printf("%s", ds_res.c_str());
-    }
+    /* No result_file_name specified to compare with, print to stdout */
+    printf("%s", ds_res.c_str());
+  }
+  else if (record)
+  {
+    /* Recording - dump the output from test to result file */
+    str_to_file(result_file_name.c_str(), ds_res.c_str(), ds_res.length());
   }
   else
   {
-    die("The test didn't produce any output");
+    /* Check that the output from test is equal to result file
+    - detect missing result file
+    - detect zero size result file
+    */
+    check_result(ds_res);
   }
 
   struct stat res_info;
-  if (!command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
+  if (not command_executed && not result_file_name.empty() && not stat(result_file_name.c_str(), &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
@@ -5546,7 +5531,7 @@ try
     dump_progress();
 
   /* Dump warning messages */
-  if (! result_file_name.empty() && ds_warning_messages.length())
+  if (not result_file_name.empty() && ds_warning_messages.length())
     dump_warning_messages();
 
   timer_output();
@@ -5559,7 +5544,7 @@ try
     cerr<<err.what()<<endl;
   }
 
-  return 0; /* Keep compiler happy too */
+  return 0;
 }
 
 

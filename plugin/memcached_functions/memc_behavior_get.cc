@@ -54,9 +54,6 @@ void MemcachedBehaviorGet::setFailureString(const char *error)
 
 String *MemcachedBehaviorGet::val_str(String *str)
 {
-  memcached_behavior mbehavior;
-  uint64_t isetting;
-  map<const string, memcached_behavior>::iterator it;
   String *tmp_behavior;
 
   if (arg_count != 1 ||
@@ -67,25 +64,21 @@ String *MemcachedBehaviorGet::val_str(String *str)
     return &failure_buff;
   }
 
-  string behavior(tmp_behavior->c_ptr());
-
   /*
    * We don't want the user to have to type in all input in upper
    * case so we transform the input strings to upper case here.
    */
-  std::transform(behavior.begin(), behavior.end(),
-                 behavior.begin(), ::toupper);
 
-  it = behavior_map.find(behavior);
-  if (it == behavior_map.end()) 
+  memcached_behavior* it = find_ptr(behavior_map, boost::to_upper_copy(string(tmp_behavior->c_ptr())));
+  if (not it) 
   {
     setFailureString("UNKNOWN BEHAVIOR TYPE!");
     return &failure_buff;
   }
 	
-  mbehavior= behavior_map[behavior];
+  memcached_behavior mbehavior= *it;
 
-  isetting= memcached_behavior_get(memc, mbehavior);
+  uint64_t isetting= memcached_behavior_get(memc, mbehavior);
 
   switch (mbehavior)
   {

@@ -26,7 +26,7 @@
 
 namespace drizzled {
 
-const char *Field_iterator_table::name()
+const char *Field_iterator_table::name() const
 {
   return (*ptr)->field_name;
 }
@@ -264,18 +264,14 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
 Natural_join_column *
 Field_iterator_table_ref::get_natural_column_ref()
 {
-  Natural_join_column *nj_col;
-
   assert(field_it == &natural_join_it);
   /*
     The field belongs to a NATURAL join, therefore the column reference was
     already created via one of the two constructor calls above. In this case
     we just return the already created column reference.
   */
-  nj_col= natural_join_it.column_ref();
-  assert(nj_col &&
-              (!nj_col->table_field ||
-               nj_col->table_ref->table == nj_col->table_field->getTable()));
+  Natural_join_column* nj_col= natural_join_it.column_ref();
+  assert(nj_col && (!nj_col->table_field || nj_col->table_ref->table == nj_col->table_field->getTable()));
   return nj_col;
 }
 

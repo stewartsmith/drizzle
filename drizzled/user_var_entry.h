@@ -44,11 +44,11 @@ class user_var_entry
 
   ~user_var_entry()
   {
-    free(name.str);
+    free(const_cast<char*>(name.str));
     free(value);
   }
 
-  LEX_STRING name;
+  lex_string_t name;
   char *value;
   ulong length;
   size_t size;

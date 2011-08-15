@@ -13,12 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef CLIENT_LINEBUFFER_H
-#define CLIENT_LINEBUFFER_H
+#pragma once
 
 #include <vector>
 #include <sstream>
-#include <iostream>
+#include <iosfwd>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
@@ -34,5 +33,3 @@ private:
   std::iostream *file_stream;
   uint32_t max_size;
 };
-
-#endif /* CLIENT_LINEBUFFER_H */

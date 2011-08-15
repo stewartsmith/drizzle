@@ -36,7 +36,7 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &lex().name;
+  lex_string_t *db= &lex().name;
   message::schema::shared_ptr old_definition;
 
   if (not validateSchemaOptions())
@@ -84,9 +84,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= schema::alter(session(), schema_message, *old_definition);
-
-  return not res;
+  return not schema::alter(session(), schema_message, *old_definition);
 }
 
 } /* namespace drizzled */

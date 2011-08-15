@@ -24,9 +24,9 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/create_field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /****************************************************************************
  ** File_decimal

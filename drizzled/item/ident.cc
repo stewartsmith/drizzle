@@ -118,30 +118,27 @@ void Item_ident::print(String *str)
 
   if (!table_name || !field_name || !field_name[0])
   {
-    const char *nm= (field_name && field_name[0]) ? field_name : name ? name : "tmp_field";
-    str->append_identifier(nm, (uint32_t) strlen(nm));
+    str->append_identifier(str_ref((field_name && field_name[0]) ? field_name : name ? name : "tmp_field"));
     return;
   }
   if (db_name && db_name[0] && !alias_name_used)
   {
-    {
-      str->append_identifier(d_name.c_str(), d_name.length());
-      str->append('.');
-    }
-    str->append_identifier(t_name.c_str(), t_name.length());
+    str->append_identifier(d_name);
     str->append('.');
-    str->append_identifier(field_name, (uint32_t)strlen(field_name));
+    str->append_identifier(t_name);
+    str->append('.');
+    str->append_identifier(str_ref(field_name));
   }
   else
   {
     if (table_name[0])
     {
-      str->append_identifier(t_name.c_str(), t_name.length());
+      str->append_identifier(t_name);
       str->append('.');
-      str->append_identifier(field_name, (uint32_t) strlen(field_name));
+      str->append_identifier(str_ref(field_name));
     }
     else
-      str->append_identifier(field_name, (uint32_t) strlen(field_name));
+      str->append_identifier(str_ref(field_name));
   }
 }
 

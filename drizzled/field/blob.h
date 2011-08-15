@@ -157,23 +157,18 @@ public:
   void set_key_image(const unsigned char *buff,uint32_t length);
   inline void copy()
   {
-    unsigned char* tmp= get_ptr();
-    value.copy((char*) tmp, get_length(), charset());
-    tmp=(unsigned char*) value.ptr();
-    memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
+    value.copy((char*)get_ptr(), get_length(), charset());
+    char* tmp= value.ptr();
+    memcpy(ptr + sizeof(uint32_t), &tmp, sizeof(char*));
   }
-  virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
-                      uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key(unsigned char *to, const unsigned char *from,
-                  uint32_t max_length, bool low_byte_first);
-  virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from,
-                              uint32_t , bool low_byte_first);
+  virtual unsigned char *pack(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
+  unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
+  virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from, uint32_t , bool low_byte_first);
   void free() { value.free(); }
-  inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
   uint32_t size_of() const { return sizeof(*this); }
   bool has_charset(void) const
-  { return charset() == &my_charset_bin ? false : true; }
+  { return charset() != &my_charset_bin; }
   uint32_t max_display_length();
 };
 

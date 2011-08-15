@@ -34,132 +34,77 @@
  *
  */
 
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
-#include <libdrizzle/drizzle_client.h>
+#include <iostream>
+#include <libdrizzle/libdrizzle.hpp>
 #include <netdb.h>
 #include <unistd.h>
 
+using namespace std;
+
 int main(int argc, char *argv[])
 {
-  const char* db= "information_schema";
   const char* host= NULL;
-  bool mysql= false;
+  const char* user= NULL;
+  const char* password= NULL;
   in_port_t port= 0;
-  const char* query= "select table_schema, table_name from tables";
-  drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
 
-  for (int c; (c = getopt(argc, argv, "d:h:mp:q:v")) != -1; )
+  for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
   {
     switch (c)
     {
-    case 'd':
-      db= optarg;
-      break;
-
     case 'h':
       host= optarg;
       break;
 
-    case 'm':
-      mysql= true;
-      break;
-
     case 'p':
-      port= (in_port_t)atoi(optarg);
+      port= static_cast<in_port_t>(atoi(optarg));
       break;
 
-    case 'q':
-      query= optarg;
+    case 'u':
+      user= optarg;
       break;
 
-    case 'v':
-      switch (verbose)
-      {
-      case DRIZZLE_VERBOSE_NEVER:
-        verbose= DRIZZLE_VERBOSE_FATAL;
-        break;
-      case DRIZZLE_VERBOSE_FATAL:
-        verbose= DRIZZLE_VERBOSE_ERROR;
-        break;
-      case DRIZZLE_VERBOSE_ERROR:
-        verbose= DRIZZLE_VERBOSE_INFO;
-        break;
-      case DRIZZLE_VERBOSE_INFO:
-        verbose= DRIZZLE_VERBOSE_DEBUG;
-        break;
-      case DRIZZLE_VERBOSE_DEBUG:
-        verbose= DRIZZLE_VERBOSE_CRAZY;
-        break;
-      case DRIZZLE_VERBOSE_CRAZY:
-      case DRIZZLE_VERBOSE_MAX:
-        break;
-      }
+    case 'P':
+      password = optarg;
       break;
 
     default:
-      printf("usage: %s [-d <db>] [-h <host>] [-m] [-p <port>] [-q <query>] "
-             "[-v]\n", argv[0]);
-      printf("\t-d <db>    - Database to use for query\n");
-      printf("\t-h <host>  - Host to listen on\n");
-      printf("\t-m         - Use the MySQL protocol\n");
-      printf("\t-p <port>  - Port to listen on\n");
-      printf("\t-q <query> - Query to run\n");
-      printf("\t-v         - Increase verbosity level\n");
+      cout << 
+        "usage:\n"
+        "\t-h <host>  - Host to connect to\n"
+        "\t-p <port>  - Port to connect to\n"
+        "\t-u <user>  - User\n"
+        "\t-P <pass>  - Password\n";
       return 1;
     }
   }
 
-  drizzle_st drizzle;
-  if (drizzle_create(&drizzle) == NULL)
+  drizzle::drizzle_c drizzle;
+  drizzle::connection_c* con= new drizzle::connection_c(drizzle);
+  con->set_tcp(host, port);
+  con->set_auth(user, password);
+  con->set_db("information_schema");
+  drizzle::result_c result;
+  drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
+  q.p("%");
+  cout << q.read() << endl;
+  if (q.execute(result))
   {
-    printf("drizzle_create:NULL\n");
+    cerr << "query: " << con->error() << endl;
     return 1;
   }
-
-  drizzle_set_verbose(&drizzle, verbose);
-
-  drizzle_con_st* con= new drizzle_con_st;
-  if (drizzle_con_create(&drizzle, con) == NULL)
+  while (drizzle_row_t row= result.row_next())
   {
-    printf("drizzle_con_create:NULL\n");
-    return 1;
+    for (int x= 0; x < result.column_count(); x++)
+    {
+      if (x)
+        cout << ", ";
+      cout << (row[x] ? row[x] : "NULL");
+    }
+    cout << endl;
   }
-
-  if (mysql)
-    drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
-
-  drizzle_con_set_tcp(con, host, port);
-  drizzle_con_set_db(con, db);
-
-  drizzle_result_st result;
-  drizzle_return_t ret;
-  (void)drizzle_query_str(con, &result, query, &ret);
-  if (ret != DRIZZLE_RETURN_OK)
-  {
-    printf("drizzle_query:%s\n", drizzle_con_error(con));
-    return 1;
-  }
-
-  ret= drizzle_result_buffer(&result);
-  if (ret != DRIZZLE_RETURN_OK)
-  {
-    printf("drizzle_result_buffer:%s\n", drizzle_con_error(con));
-    return 1;
-  }
-
-  while (drizzle_row_t row= drizzle_row_next(&result))
-  {
-    for (int x= 0; x < drizzle_result_column_count(&result); x++)
-      printf("%s%s", x == 0 ? "" : ":", row[x] == NULL ? "NULL" : row[x]);
-    printf("\n");
-  }
-
-  drizzle_result_free(&result);
-  drizzle_con_free(con);
-  drizzle_free(&drizzle);
-  delete con;
   return 0;
 }

@@ -19,11 +19,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_OPTION_STRING_H
-#define CLIENT_OPTION_STRING_H
+#pragma once
 
 #include "client_priv.h"
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <cstdlib>
 #include <drizzled/gettext.h>
@@ -108,5 +107,3 @@ private:
   size_t option_length;
   OptionString *next;
 };
-
-#endif /* CLIENT_OPTION_STRING_H */

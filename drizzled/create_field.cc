@@ -117,7 +117,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       char buff[MAX_FIELD_WIDTH];
       String tmp(buff, sizeof(buff), charset);
       String* res= orig_field->val_str_internal(&tmp);
-      char* pos= (char*) memory::sql_strmake(res->ptr(), res->length());
+      char* pos= memory::sql_strdup(*res);
       def= new Item_string(pos, res->length(), charset);
     }
     orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
@@ -172,24 +172,21 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   charset= &my_charset_bin;
   decimals= decimals_arg & FIELDFLAG_MAX_DEC;
 
-  if (! maybe_null)
-    flags= NOT_NULL_FLAG;
-  else
-    flags= 0;
+  flags= maybe_null ? 0 : NOT_NULL_FLAG;
 }
 
 bool CreateField::init(Session *,
-                        char *fld_name,
+                        const char *fld_name,
                         enum_field_types fld_type,
-                        char *fld_length,
-                        char *fld_decimals,
+                        const char *fld_length,
+                        const char *fld_decimals,
                         uint32_t fld_type_modifier,
-                        LEX_STRING *fld_comment,
-                        char *fld_change,
+                        lex_string_t *fld_comment,
+                        const char *fld_change,
                         List<String> *fld_interval_list,
-                        const charset_info_st * const fld_charset,
+                        const charset_info_st* fld_charset,
                         uint32_t,
-                        enum column_format_type column_format_in)
+                        column_format_type column_format_in)
 {
   uint32_t sign_len= 0;
   uint32_t allowed_type_modifier= 0;

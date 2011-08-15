@@ -24,8 +24,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 #include <boost/regex.hpp>
 #include <boost/unordered_map.hpp>
@@ -140,7 +139,7 @@ inline bool PolicyItem::objectMatches(std::string &object_id)
 
 inline bool PolicyItem::isRestricted()
 {
-  return action == POLICY_DENY ? true : false;
+  return action == POLICY_DENY;
 }
 
 void clearPolicyItemList(PolicyItemList policies);

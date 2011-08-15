@@ -33,7 +33,7 @@ public:
 
   Singular(const identifier::Table::Type type_arg,
            const identifier::Table &identifier,
-           char *path_arg= NULL, uint32_t path_length_arg= 0);
+           const char *path_arg= NULL, uint32_t path_length_arg= 0);
 
   ~Singular();
 };

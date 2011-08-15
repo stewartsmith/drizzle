@@ -130,9 +130,9 @@ public:
   virtual void store(const type::Time *from);
   virtual void store(const char *from);
   virtual void store(const char *from, size_t length)= 0;
-  virtual void store(const std::string &from)
+  virtual void store(str_ref from)
   {
-    store(from.c_str(), from.size());
+    store(from.data(), from.size());
   }
 
   /* Try to remove these. */

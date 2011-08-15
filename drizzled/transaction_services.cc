@@ -1303,15 +1303,9 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   message::InsertHeader *header= statement.mutable_insert_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
-
-  Field *current_field;
   Field **table_fields= table.getFields();
 
   message::FieldMetadata *field_metadata;
@@ -1319,7 +1313,7 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   /* We will read all the table's fields... */
   table.setReadSet();
 
-  while ((current_field= *table_fields++) != NULL) 
+  while (Field* current_field= *table_fields++) 
   {
     field_metadata= header->add_field_metadata();
     field_metadata->set_name(current_field->field_name);
@@ -1493,13 +1487,8 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   message::UpdateHeader *header= statement.mutable_update_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   Field *current_field;
   Field **table_fields= table.getFields();
@@ -1765,13 +1754,8 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   message::DeleteHeader *header= statement.mutable_delete_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   Field *current_field;
   Field **table_fields= table.getFields();
@@ -2043,14 +2027,8 @@ void TransactionServices::truncateTable(Session& session, Table &table)
   message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   finalizeStatementMessage(*statement, session);
 

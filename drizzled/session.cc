@@ -97,13 +97,6 @@ namespace fs= boost::filesystem;
 
 namespace drizzled {
 
-/*
-  The following is used to initialise Table_ident with a internal
-  table name
-*/
-char internal_table_name[2]= "*";
-char empty_c_string[1]= {0};    /* used for not defined db */
-
 const char* const Session::DEFAULT_WHERE= "field list";
 
 uint64_t g_refresh_version = 1;
@@ -388,7 +381,7 @@ void Session::lockOnSys()
   }
 }
 
-void Session::get_xid(DrizzleXid *xid)
+void Session::get_xid(DrizzleXid *xid) const
 {
   *xid = *(DrizzleXid *) &transaction.xid_state.xid;
 }
@@ -859,30 +852,21 @@ void Session::cleanup_after_query()
 }
 
 /**
-  Create a LEX_STRING in this connection.
+  Create a lex_string_t in this connection.
 
-  @param lex_str  pointer to LEX_STRING object to be initialized
+  @param lex_str  pointer to lex_string_t object to be initialized
   @param str      initializer to be copied into lex_str
   @param length   length of str, in bytes
-  @param allocate_lex_string  if true, allocate new LEX_STRING object,
+  @param allocate_lex_string  if true, allocate new lex_string_t object,
                               instead of using lex_str value
-  @return  NULL on failure, or pointer to the LEX_STRING object
+  @return  NULL on failure, or pointer to the lex_string_t object
 */
-LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
-                                     const std::string &str,
-                                     bool allocate_lex_string)
+lex_string_t* Session::make_lex_string(lex_string_t* lex_str, str_ref str)
 {
-  return make_lex_string(lex_str, str.c_str(), str.length(), allocate_lex_string);
-}
-
-LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
-                                     const char* str, uint32_t length,
-                                     bool allocate_lex_string)
-{
-  if (allocate_lex_string)
-    lex_str= new (mem) LEX_STRING;
-  lex_str->str= mem_root->strmake(str, length);
-  lex_str->length= length;
+  if (not lex_str)
+    lex_str= new (mem) lex_string_t;
+  lex_str->str= mem_root->strdup(str);
+  lex_str->length= str.size();
   return lex_str;
 }
 
@@ -901,18 +885,11 @@ void Session::send_explain_fields(select_result *result)
   item->maybe_null=1;
   field_list.push_back(item= new Item_empty_string("key", NAME_CHAR_LEN, cs));
   item->maybe_null=1;
-  field_list.push_back(item=
-    new Item_empty_string("key_len",
-                          MAX_KEY *
-                          (MAX_KEY_LENGTH_DECIMAL_WIDTH + 1 /* for comma */),
-                          cs));
+  field_list.push_back(item= new Item_empty_string("key_len", MAX_KEY * (MAX_KEY_LENGTH_DECIMAL_WIDTH + 1 /* for comma */), cs));
   item->maybe_null=1;
-  field_list.push_back(item=new Item_empty_string("ref",
-                                                  NAME_CHAR_LEN*MAX_REF_PARTS,
-                                                  cs));
+  field_list.push_back(item= new Item_empty_string("ref", NAME_CHAR_LEN*MAX_REF_PARTS, cs));
   item->maybe_null=1;
-  field_list.push_back(item= new Item_return_int("rows", 10,
-                                                 DRIZZLE_TYPE_LONGLONG));
+  field_list.push_back(item= new Item_return_int("rows", 10, DRIZZLE_TYPE_LONGLONG));
   if (lex().describe & DESCRIBE_EXTENDED)
   {
     field_list.push_back(item= new Item_float("filtered", 0.1234, 2, 4));
@@ -1339,7 +1316,6 @@ bool select_dump::send_data(List<Item> &items)
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   tmp.length(0);
-  Item *item;
 
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
@@ -1351,7 +1327,7 @@ bool select_dump::send_data(List<Item> &items)
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
     return 1;
   }
-  while ((item=li++))
+  while (Item* item=li++)
   {
     res=item->str_result(&tmp);
     if (!res)					// If NULL
@@ -1531,15 +1507,15 @@ void Session::end_statement()
   resetResultsetMessage();
 }
 
-bool Session::copy_db_to(char **p_db, size_t *p_db_length)
+bool Session::copy_db_to(char*& db, size_t& db_length)
 {
   if (impl_->schema->empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= mem.strmake(*impl_->schema);
-  *p_db_length= impl_->schema->size();
+  db= mem.strdup(*impl_->schema);
+  db_length= impl_->schema->size();
   return false;
 }
 
@@ -1573,7 +1549,7 @@ void Session::send_kill_message() const
     my_message(err, ER(err), MYF(0));
 }
 
-void Session::set_db(const std::string& new_db)
+void Session::set_schema(const std::string& new_db)
 {
   impl_->schema = boost::make_shared<std::string>(new_db);
 }
@@ -1727,7 +1703,7 @@ void Session::refresh_status()
   current_global_counters.connections= 0;
 }
 
-user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
+user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
 {
   return getVariable(std::string(name.str, name.length), create_if_not_exists);
 }
@@ -1978,7 +1954,7 @@ plugin::StorageEngine* Session::getDefaultStorageEngine()
   return variables.storage_engine ? variables.storage_engine : global_system_variables.storage_engine;
 }
 
-enum_tx_isolation Session::getTxIsolation()
+enum_tx_isolation Session::getTxIsolation() const
 {
   return (enum_tx_isolation)variables.tx_isolation;
 }

@@ -85,7 +85,6 @@ bool statement::CreateTable::execute()
   TableList *first_table= (TableList *) lex().select_lex.table_list.first;
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool need_start_waiting= false;
   lex_identified_temp_table= createTableMessage().type() == message::Table::TEMPORARY;
 
   is_engine_set= not createTableMessage().engine().name().empty();
@@ -153,7 +152,7 @@ bool statement::CreateTable::execute()
      TABLE in the same way. That way we avoid that a new table is
      created during a gobal read lock.
    */
-  if (! (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
+  if (session().wait_if_global_read_lock(0, 1))
   {
     /* put tables back for PS rexecuting */
     lex().link_first_table_back(create_table_list, link_to_local);
@@ -201,10 +200,9 @@ bool statement::CreateTable::executeInner(const identifier::Table& new_table_ide
         */
         if (not lex_identified_temp_table)
         {
-          TableList *duplicate= NULL;
           create_table_list= lex().unlink_first_table(&link_to_local);
 
-          if ((duplicate= unique_table(create_table_list, select_tables)))
+          if (unique_table(create_table_list, select_tables))
           {
             my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table_list->alias);
             /* put tables back for PS rexecuting */

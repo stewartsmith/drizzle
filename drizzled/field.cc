@@ -56,6 +56,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/display.h>
 #include <drizzled/typelib.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 
@@ -831,7 +832,7 @@ Field::Field(unsigned char *ptr_arg,
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
-    comment(NULL_LEX_STRING),
+    comment(null_lex_string()),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),

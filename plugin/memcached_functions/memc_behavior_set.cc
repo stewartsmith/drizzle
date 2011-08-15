@@ -79,10 +79,8 @@ String *MemcachedBehaviorSet::val_str(String *str)
    * We don't want the user to have to type in all input in upper
    * case so we transform the input strings to upper case here.
    */
-  std::transform(behavior.begin(), behavior.end(),
-                 behavior.begin(), ::toupper);
-  std::transform(setting.begin(), setting.end(),
-                 setting.begin(), ::toupper);
+  boost::to_upper(behavior);
+  boost::to_upper(setting);
 
   it_behav= behavior_map.find(behavior);
   if (it_behav == behavior_map.end())

@@ -37,7 +37,7 @@ void parse(drizzled::Session&, const char *inBuf, uint32_t length);
 namespace statement {
 
 Execute::Execute(Session *in_session,
-                 drizzled::execute_string_t to_execute_arg,
+                 execute_string_t to_execute_arg,
                  bool is_quiet_arg,
                  bool is_concurrent_arg,
                  bool should_wait_arg) :
@@ -58,7 +58,7 @@ bool statement::Execute::parseVariable()
 
     if (var && var->length && var->value && var->type == STRING_RESULT)
     {
-      LEX_STRING tmp_for_var;
+      lex_string_t tmp_for_var;
       tmp_for_var.str= var->value; 
       tmp_for_var.length= var->length; 
       to_execute.set(tmp_for_var);
@@ -121,7 +121,7 @@ bool statement::Execute::execute_shell()
     }
 
     drizzled::Execute executer(session(), should_wait);
-    executer.run(to_execute.str, to_execute.length);
+    executer.run(to_execute);
   }
   else // Non-concurrent run.
   {

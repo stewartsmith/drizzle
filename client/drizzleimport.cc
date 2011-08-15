@@ -354,8 +354,6 @@ int main(int argc, char **argv)
 {
 try
 {
-  int error=0;
-
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
 
@@ -601,7 +599,7 @@ try
     }
 
     for (; *argv != NULL; argv++)
-      if ((error= write_to_table(*argv, con)))
+      if (int error= write_to_table(*argv, con))
         if (exitcode == 0)
           exitcode= error;
     db_disconnect(current_host, con);

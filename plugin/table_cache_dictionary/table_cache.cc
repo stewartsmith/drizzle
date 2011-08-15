@@ -57,10 +57,6 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
   std::sort(table_list.begin(), table_list.end(), Table::compare);
 }
 
-table_cache_dictionary::TableCache::Generator::~Generator()
-{
-}
-
 bool table_cache_dictionary::TableCache::Generator::nextCore()
 {
   if (is_primed)
@@ -118,11 +114,10 @@ void table_cache_dictionary::TableCache::Generator::fill()
     push(static_cast<int64_t>(0));
 
   /* TABLE_SCHEMA 2 */
-  string arg;
-  push(table->getShare()->getSchemaName(arg));
+  push(table->getShare()->getSchemaNameRef());
 
   /* TABLE_NAME  3 */
-  push(table->getShare()->getTableName(arg));
+  push(table->getShare()->getTableNameRef());
 
   /* VERSION 4 */
   push(static_cast<int64_t>(table->getShare()->getVersion()));

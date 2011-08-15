@@ -183,6 +183,7 @@ void MSConnectionHandler::parseRequestURI()
 	CSString	*uri = iInputStream->getRequestURI();
 	uint32_t		pos = 0, end;
 	enter_();
+        (void)end;
 	
 	freeRequestURI();
 	pos = uri->locate(0, "://");

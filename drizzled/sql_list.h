@@ -234,7 +234,6 @@ public:
 
   bool check_list(const char *name)
   {
-    base_list *list= this;
     list_node *node= first;
     uint32_t cnt= 0;
 
@@ -277,7 +276,7 @@ protected:
   base_list *list;
   list_node **el,**prev,*current;
 public:
-  void sublist(base_list &ls, uint32_t elm)
+  void sublist(base_list &ls, uint32_t elm) const
   {
     ls.first= *el;
     ls.last= list->last;

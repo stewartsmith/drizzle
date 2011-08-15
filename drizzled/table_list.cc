@@ -29,19 +29,17 @@ using namespace std;
 
 namespace drizzled {
 
-bool TableList::set_insert_values(memory::Root *)
+void TableList::set_insert_values()
 {
   if (table)
   {
     table->insert_values.resize(table->getShare()->rec_buff_length);
   }
-
-  return false;
 }
 
-bool TableList::is_leaf_for_name_resolution()
+bool TableList::is_leaf_for_name_resolution() const
 {
-  return (is_natural_join || is_join_columns_complete || !nested_join);
+  return is_natural_join || is_join_columns_complete || not nested_join;
 }
 
 TableList *TableList::find_underlying_table(Table *table_to_find)
@@ -156,14 +154,12 @@ bool TableList::process_index_hints(Table *tbl)
     key_map index_join[INDEX_HINT_FORCE + 1];
     key_map index_order[INDEX_HINT_FORCE + 1];
     key_map index_group[INDEX_HINT_FORCE + 1];
-    Index_hint *hint;
-    int type;
     bool have_empty_use_join= false, have_empty_use_order= false,
          have_empty_use_group= false;
     List_iterator <Index_hint> iter(index_hints->begin());
 
     /* initialize temporary variables used to collect hints of each kind */
-    for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
+    for (int type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
     {
       index_join[type].reset();
       index_order[type].reset();
@@ -171,10 +167,8 @@ bool TableList::process_index_hints(Table *tbl)
     }
 
     /* iterate over the hints list */
-    while ((hint= iter++))
+    while (Index_hint* hint= iter++)
     {
-      uint32_t pos= 0;
-
       /* process empty USE INDEX () */
       if (hint->type == INDEX_HINT_USE && !hint->key_name.str)
       {
@@ -200,6 +194,7 @@ bool TableList::process_index_hints(Table *tbl)
         Check if an index with the given name exists and get his offset in
         the keys bitmask for the table
       */
+      uint32_t pos= 0;
       if (not tbl->getShare()->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
       {
         my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
@@ -279,24 +274,15 @@ void TableList::print(Session *session, String *str)
     else
     {
       // A normal table
-      {
-        str->append_identifier(db, db_length);
-        str->append('.');
-      }
-      str->append_identifier(table_name, table_name_length);
+      str->append_identifier(str_ref(schema));
+      str->append('.');
+      str->append_identifier(str_ref(table_name));
       cmp_name= table_name;
     }
-    if (my_strcasecmp(table_alias_charset, cmp_name, alias))
+    if (my_strcasecmp(table_alias_charset, cmp_name, alias) && alias && alias[0])
     {
-
-      if (alias && alias[0])
-      {
-        str->append(' ');
-
-        string t_alias(alias);
-        boost::to_lower(t_alias);
-        str->append_identifier(t_alias.c_str(), t_alias.length());
-      }
+      str->append(' ');
+      str->append_identifier(boost::to_lower_copy(string(alias)));
     }
 
     if (index_hints)
@@ -304,8 +290,8 @@ void TableList::print(Session *session, String *str)
       List<Index_hint>::iterator it(index_hints->begin());
       while (Index_hint* hint= it++)
       {
-        str->append (STRING_WITH_LEN(" "));
-        hint->print (session, str);
+        str->append(STRING_WITH_LEN(" "));
+        hint->print(session, str);
       }
     }
   }

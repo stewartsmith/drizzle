@@ -64,7 +64,7 @@ public:
     rc= EE_OK;
   }
 
-  bool end()
+  bool end() const
   {
     return _end;
   }

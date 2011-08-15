@@ -82,7 +82,7 @@ struct drizzle_system_variables
   /* Both charset and collation parts of these variables are important */
   const charset_info_st	*collation_server;
 
-  inline const charset_info_st  *getCollation(void) 
+  const charset_info_st* getCollation() const
   {
     return collation_server;
   }

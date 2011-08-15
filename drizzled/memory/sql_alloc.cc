@@ -45,9 +45,9 @@ char* sql_strdup(const char* str)
   return current_mem_root()->strdup(str);
 }
 
-char* sql_strmake(const char* str, size_t len)
+char* sql_strdup(str_ref str)
 {
-  return current_mem_root()->strmake(str, len);
+  return current_mem_root()->strdup(str);
 }
 
 void* sql_memdup(const void* ptr, size_t len)

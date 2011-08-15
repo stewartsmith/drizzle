@@ -77,10 +77,7 @@ void plugin::Client::store(const type::Time *from)
 
 void plugin::Client::store(const char *from)
 {
-  if (from == NULL)
-    return store();
-
-  return store(from, strlen(from));
+  return from ? store(from, strlen(from)) : store();
 }
 
 

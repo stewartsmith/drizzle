@@ -14,8 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* Common defines for all clients */
-#ifndef CLIENT_CLIENT_PRIV_H
-#define CLIENT_CLIENT_PRIV_H
+#pragma once
 
 #include <config.h>
 #include <libdrizzle/libdrizzle.h>
@@ -94,5 +93,3 @@ enum options_client
   OPT_MAX_CLIENT_OPTION,
   OPT_SHOW_PROGRESS_SIZE
 };
-
-#endif /* CLIENT_CLIENT_PRIV_H */

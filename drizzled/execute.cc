@@ -35,12 +35,7 @@ Execute::Execute(Session &arg, bool wait_arg) :
 {
 }
 
-void Execute::run(const char *arg, size_t length)
-{
-  run(std::string(arg, length));
-}
-
-void Execute::run(const std::string &execution_string, sql::ResultSet &result_set)
+void Execute::run(str_ref execution_string, sql::ResultSet &result_set)
 {
   if (not _session.isConcurrentExecuteAllowed())
   {
@@ -56,7 +51,7 @@ void Execute::run(const std::string &execution_string, sql::ResultSet &result_se
     // We set the current schema.  @todo do the same with catalog
     util::string::ptr schema(_session.schema());
     if (not schema->empty())
-      new_session->set_db(*schema);
+      new_session->set_schema(*schema);
     
     new_session->setConcurrentExecute(false);
     
@@ -84,7 +79,8 @@ void Execute::run(const std::string &execution_string, sql::ResultSet &result_se
     {
       boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
       
-      try {
+      try 
+      {
         thread->join();
       }
       catch(boost::thread_interrupted const&)
@@ -101,7 +97,7 @@ void Execute::run(const std::string &execution_string, sql::ResultSet &result_se
   }
 }
 
-void Execute::run(const std::string &execution_string)
+void Execute::run(str_ref execution_string)
 {
   if (not _session.isConcurrentExecuteAllowed())
   {
@@ -117,7 +113,7 @@ void Execute::run(const std::string &execution_string)
     // We set the current schema.  @todo do the same with catalog
     util::string::ptr schema(_session.schema());
     if (not schema->empty())
-      new_session->set_db(*schema);
+      new_session->set_schema(*schema);
 
     new_session->setConcurrentExecute(false);
 
@@ -143,7 +139,8 @@ void Execute::run(const std::string &execution_string)
     {
       boost::this_thread::restore_interruption dl(_session.getThreadInterupt());
 
-      try {
+      try 
+      {
         thread->join();
       }
       catch(boost::thread_interrupted const&)

@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_open_files';
-Variable_name	Value
-innodb_open_files	800
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='open_files';
-NAME	TYPE	VALUE
-open_files	ULINT	800

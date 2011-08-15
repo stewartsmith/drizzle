@@ -17,14 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_DRIZZLEDUMP_DATA_H
-#define CLIENT_DRIZZLEDUMP_DATA_H
+#pragma once
 
 #define DRIZZLE_MAX_LINE_LENGTH 1024*1024L-1025
 #include "client_priv.h"
 #include "server_detect.h"
+#include <cstdio>
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <iomanip>
 #include <vector>
 #include <sstream>
@@ -313,5 +313,3 @@ class DrizzleStringBuf : public std::streambuf
       return 0;
     }
 };
-
-#endif /* CLIENT_DRIZZLEDUMP_DATA_H */

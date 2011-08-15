@@ -60,7 +60,7 @@ public:
 
   TableShare(const identifier::Table::Type type_arg,
              const identifier::Table &identifier,
-             char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
+             const char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   virtual ~TableShare();
 
@@ -175,11 +175,6 @@ private:
     return mem_root.alloc(arg);
   }
 
-  char *strmake(const char *str_arg, size_t len_arg)
-  {
-    return mem_root.strmake(str_arg, len_arg);
-  }
-
   memory::Root& mem()
   {
     return mem_root;
@@ -187,11 +182,9 @@ private:
 
   std::vector<std::string> _keynames;
 
-  void addKeyName(std::string arg)
+  void addKeyName(const std::string& arg)
   {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-    _keynames.push_back(arg);
+    _keynames.push_back(boost::to_upper_copy(arg));
   }
 
 public:
@@ -200,12 +193,9 @@ public:
     return doesKeyNameExist(std::string(name_arg, name_length), position);
   }
 
-  bool doesKeyNameExist(std::string arg, uint32_t &position) const
+  bool doesKeyNameExist(const std::string& arg, uint32_t &position) const
   {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), boost::to_upper_copy(arg));
 
     if (iter == _keynames.end())
     {
@@ -214,7 +204,6 @@ public:
     }
 
     position= iter -  _keynames.begin();
-
     return true;
   }
 
@@ -259,10 +248,10 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  LEX_STRING db;                        /* Pointer to db */
-  LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to table (from datadir) */
-  LEX_STRING normalized_path;		/* unpack_filename(path) */
+  lex_string_t db;                        /* Pointer to db */
+  lex_string_t table_name;                /* Table name (for open) */
+  lex_string_t path;	/* Path to table (from datadir) */
+  lex_string_t normalized_path;		/* unpack_filename(path) */
 
 public:
 
@@ -301,36 +290,24 @@ private:
   }
 
 public:
+  str_ref getTableNameRef() const
+  {
+    return table_name;
+  }
 
   const char *getTableName() const
   {
     return table_name.str;
   }
 
-  uint32_t getTableNameSize() const
+  str_ref getSchemaNameRef() const
   {
-    return table_name.length;
-  }
-
-  const std::string &getTableName(std::string &name_arg) const
-  {
-    name_arg.clear();
-    name_arg.append(table_name.str, table_name.length);
-
-    return name_arg;
+    return db;
   }
 
   const char *getSchemaName() const
   {
     return db.str;
-  }
-
-  const std::string &getSchemaName(std::string &schema_name_arg) const
-  {
-    schema_name_arg.clear();
-    schema_name_arg.append(db.str, db.length);
-
-    return schema_name_arg;
   }
 
   uint32_t   block_size;                   /* create information */
@@ -633,23 +610,11 @@ protected:
 
 public:
 
-  static TableShare::shared_ptr getShareCreate(Session *session, 
-                                               const identifier::Table &identifier,
-                                               int &error);
+  static TableShare::shared_ptr getShareCreate(Session*, const identifier::Table&, int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
-    output << "TableShare:(";
-    output <<  share.getSchemaName();
-    output << ", ";
-    output << share.getTableName();
-    output << ", ";
-    output << share.getTableTypeAsString();
-    output << ", ";
-    output << share.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "TableShare:(" <<  share.getSchemaNameRef() << ", " << share.getTableName() << ", " << share.getTableTypeAsString() << ", " << share.getPath() << ")";
   }
 
 protected:
