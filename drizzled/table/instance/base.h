@@ -260,18 +260,6 @@ public:
     return private_key_for_cache.size();
   }
 
-private:
-  void setPath(const char *str_arg, uint32_t size_arg)
-  {
-    path.assign(str_arg, size_arg);
-  }
-
-  void setNormalizedPath(char *str_arg, uint32_t size_arg)
-  {
-    normalized_path.assign(str_arg, size_arg);
-  }
-
-public:
   str_ref getTableNameRef() const
   {
     return table_name;

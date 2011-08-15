@@ -521,15 +521,14 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
 
   char* path_buff= mem_root.strdup(_path);
-  setPath(path_buff, _path.length());
-  setNormalizedPath(path_buff, _path.length());
+  path= str_ref(path_buff, _path.length());
+  normalized_path= str_ref(path_buff, _path.length());
 
   version= g_refresh_version;
 }
 
 void TableShare::init(const char *new_table_name, const char *new_path)
 {
-
   table_category= TABLE_CATEGORY_TEMPORARY;
   tmp_table= message::Table::INTERNAL;
   db= str_ref("");
@@ -615,7 +614,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   for (int indx= 0; indx < table.indexes_size(); indx++)
     key_parts+= table.indexes(indx).index_part_size();
 
-  key_info= (KeyInfo*) alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
+  key_info= (KeyInfo*) mem().alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
 
   KeyPartInfo *key_part;
 
@@ -623,7 +622,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     (key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc(sizeof(ulong*)*key_parts);
+  ulong *rec_per_key= (ulong*) mem().alloc(sizeof(ulong*)*key_parts);
 
   KeyInfo* keyinfo= key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
@@ -904,9 +903,8 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     TYPELIB *t= (&intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc((field_options.field_value_size() + 1) * sizeof(char*));
-
-    t->type_lengths= (unsigned int*)alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_names= (const char**)mem().alloc((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_lengths= (unsigned int*)mem().alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;

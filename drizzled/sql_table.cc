@@ -1957,15 +1957,7 @@ static bool create_table_wrapper(Session &session,
   }
 
   new_table_message.CopyFrom(*source_table_message);
-
-  if (destination_identifier.isTmp())
-  {
-    new_table_message.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    new_table_message.set_type(message::Table::STANDARD);
-  }
+  new_table_message.set_type(destination_identifier.isTmp() ? message::Table::TEMPORARY : message::Table::STANDARD);
 
   if (is_engine_set)
   {
@@ -1999,9 +1991,7 @@ static bool create_table_wrapper(Session &session,
     As mysql_truncate don't work on a new table at this stage of
     creation, instead create the table directly (for both normal and temporary tables).
   */
-  bool success= plugin::StorageEngine::createTable(session,
-                                                   destination_identifier,
-                                                   new_table_message);
+  bool success= plugin::StorageEngine::createTable(session, destination_identifier, new_table_message);
 
   if (success && not destination_identifier.isTmp())
   {
