@@ -48,6 +48,7 @@
 #include <drizzled/field/microtime.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/uuid.h>
+#include <drizzled/field/ipv6.h>
 #include <drizzled/time_functions.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/table.h>
@@ -99,6 +100,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DOUBLE -> */
   {
@@ -131,6 +134,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_NULL -> */
@@ -165,6 +170,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_UUID,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_MICROTIME,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_TIMESTAMP -> */
   {
@@ -198,6 +205,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_LONGLONG -> */
   {
@@ -229,6 +238,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DATETIME -> */
@@ -263,6 +274,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DATE -> */
   {
@@ -295,6 +308,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_VARCHAR -> */
@@ -329,6 +344,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_DECIMAL -> */
   {
@@ -361,6 +378,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_ENUM -> */
@@ -395,6 +414,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
    },
   /* DRIZZLE_TYPE_BLOB -> */
   {
@@ -427,6 +448,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_TIME -> */
@@ -461,6 +484,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_UUID,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_BOOLEAN -> */
   {
@@ -493,6 +518,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     //DRIZZLE_TYPE_UUID
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
     DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_UUID -> */
@@ -527,6 +554,8 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_UUID,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
   /* DRIZZLE_TYPE_MICROTIME -> */
   {
@@ -560,6 +589,43 @@ field_types_merge_rules [enum_field_types_size][enum_field_types_size]=
     DRIZZLE_TYPE_UUID,
     //DRIZZLE_TYPE_MICROTIME
     DRIZZLE_TYPE_MICROTIME,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
+  },
+  /* DRIZZLE_TYPE_IPV6 -> */
+  {
+    //DRIZZLE_TYPE_LONG
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DOUBLE
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_NULL
+    DRIZZLE_TYPE_IPV6,
+    //DRIZZLE_TYPE_TIMESTAMP
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_LONGLONG
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DATETIME
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DATE
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_VARCHAR
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_DECIMAL
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_VARCHAR,
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_BLOB
+    DRIZZLE_TYPE_BLOB,
+    //DRIZZLE_TYPE_TIME
+    DRIZZLE_TYPE_TIME,
+    //DRIZZLE_TYPE_BOOLEAN
+    DRIZZLE_TYPE_VARCHAR,
+    //DRIZZLE_TYPE_UUID
+    DRIZZLE_TYPE_UUID,
+    //DRIZZLE_TYPE_MICROTIME
+    DRIZZLE_TYPE_MICROTIME,
+    //DRIZZLE_TYPE_IPV6
+    DRIZZLE_TYPE_VARCHAR,
   },
 };
 
@@ -594,6 +660,8 @@ static Item_result field_types_result_type [enum_field_types_size]=
   //DRIZZLE_TYPE_UUID
   STRING_RESULT,
   //DRIZZLE_TYPE_MICROTIME
+  STRING_RESULT,
+  //DRIZZLE_TYPE_IPV6
   STRING_RESULT,
 };
 
@@ -1111,6 +1179,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_MICROTIME: return field::Microtime::max_string_length();
   case DRIZZLE_TYPE_TIMESTAMP: return field::Epoch::max_string_length();
   case DRIZZLE_TYPE_BOOLEAN: return field::Boolean::max_string_length();
+  case DRIZZLE_TYPE_IPV6: return field::IPv6::max_string_length();
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_LONG: return 4;

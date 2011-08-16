@@ -80,6 +80,7 @@
 #include <drizzled/field/microtime.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/uuid.h>
+#include <drizzled/field/ipv6.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/typelib.h>
@@ -131,6 +132,9 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
 
   case message::Table::Field::UUID:
     return  DRIZZLE_TYPE_UUID;
+
+  case message::Table::Field::IPV6:
+    return  DRIZZLE_TYPE_IPV6;
 
   case message::Table::Field::BOOLEAN:
     return DRIZZLE_TYPE_BOOLEAN;
@@ -185,6 +189,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
@@ -1162,6 +1167,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
+    case DRIZZLE_TYPE_IPV6:
+      field_length= field::IPv6::max_string_length();
+      break;
     case DRIZZLE_TYPE_BOOLEAN:
       field_length= field::Boolean::max_string_length();
       break;
@@ -1221,6 +1229,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     case DRIZZLE_TYPE_LONGLONG:
     case DRIZZLE_TYPE_NULL:
     case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_IPV6:
     case DRIZZLE_TYPE_BOOLEAN:
       break;
     }
@@ -1925,6 +1934,12 @@ Field *TableShare::make_field(const message::Table::Field &,
                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_UUID:
     return new (&mem_root) field::Uuid(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
+  case DRIZZLE_TYPE_IPV6:
+    return new (&mem_root) field::IPv6(ptr,
                                        field_length,
                                        null_pos,
                                        null_bit,

@@ -135,6 +135,7 @@ bool fill_table_proto(const identifier::Table& identifier,
     case message::Table::Field::DATE:
     case message::Table::Field::DATETIME:
     case message::Table::Field::UUID:
+    case message::Table::Field::IPV6:
     case message::Table::Field::TIME:
     case message::Table::Field::BOOLEAN:
       break;

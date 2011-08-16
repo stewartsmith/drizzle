@@ -365,6 +365,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  IS                            /* SQL-2003-R */
 %token  ISOLATION                     /* SQL-2003-R */
 %token  ITERATE_SYM
+%token  IPV6_SYM
 %token  JOIN_SYM                      /* SQL-2003-R */
 %token  KEYS
 %token  KEY_BLOCK_SIZE
@@ -1334,6 +1335,10 @@ field_def:
         | UUID_SYM opt_attribute
           {
             $$= parser::buildUuidColumn(&Lex);
+          }
+        | IPV6_SYM opt_attribute
+          {
+            $$= parser::buildIPv6Column(&Lex);
           }
         | BOOLEAN_SYM opt_attribute_boolean
           {
@@ -3042,6 +3047,14 @@ function_call_conflict:
         | UUID_SYM '(' ')'
           {
             if (! ($$= parser::reserved_keyword_function(YYSession, "uuid", NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+            Lex.setCacheable(false);
+	  }
+        | IPV6_SYM '(' ')'
+          {
+            if (! ($$= parser::reserved_keyword_function(YYSession, "ipv6", NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -5296,6 +5309,7 @@ keyword_sp:
         | IMPORT                   {}
         | INDEXES                  {}
         | ISOLATION                {}
+        | IPV6_SYM                 {}
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
         | LEVEL_SYM                {}

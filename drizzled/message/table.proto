@@ -82,6 +82,7 @@ message Table {
       UUID = 11;
       TIME = 12;
       BOOLEAN = 13;
+      IPV6 = 14;
     }
 
     message FieldOptions {
