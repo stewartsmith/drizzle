@@ -263,7 +263,7 @@ my $opt_valgrind= 0;
 my $opt_valgrind_drizzled= 0;
 my $opt_valgrind_drizzletest= 0;
 my $opt_valgrind_drizzleslap= 0;
-my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
+my @default_valgrind_args= qw|--tool=memcheck --error-exitcode=1 --leak-check=yes --show-reachable=yes --track-fds=yes --malloc-fill=A5 --free-fill=DE|;
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -553,17 +553,6 @@ sub command_line_setup () {
              'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
              'valgrind-drizzleslap'       => \$opt_valgrind_drizzleslap,
              'valgrind-drizzled'          => \$opt_valgrind_drizzled,
-             'valgrind-options=s'       => sub {
-	       my ($opt, $value)= @_;
-	       # Deprecated option unless it's what we know pushbuild uses
-	       if ($value eq "--gen-suppressions=all --show-reachable=yes") {
-		 push(@valgrind_args, $_) for (split(' ', $value));
-		 return;
-	       }
-	       die("--valgrind-options=s is deprecated. Use ",
-		   "--valgrind-option=s, to be specified several",
-		   " times if necessary");
-	     },
              'valgrind-option=s'        => \@valgrind_args,
              'valgrind-path=s'          => \$opt_valgrind_path,
 	     'callgrind'                => \$opt_callgrind,

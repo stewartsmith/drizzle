@@ -36,7 +36,7 @@
 namespace drizzled
 {
 
-bool daemonize(bool nochdir= true, bool noclose= true, bool wait_sigusr1= true);
+bool daemonize();
 void daemon_is_ready();
 
 }
