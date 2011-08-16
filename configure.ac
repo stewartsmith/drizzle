@@ -42,6 +42,7 @@ LIBDRIZZLE_LIBRARY_VERSION=3:0:0
 #                   +- increment if interfaces have been added, removed or
 #                      changed
 AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
+
 OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                             | | |
 #                      +------+ | +---+

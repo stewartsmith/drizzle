@@ -76,6 +76,9 @@ MAINTAINERCLEANFILES= \
 		      autom4te.cache \
 		      ChangeLog
 
+datahomedir = $(localstatedir)
+datahome_DATA=
+
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/pandora-plugin.am
