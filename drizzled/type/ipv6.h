@@ -163,7 +163,7 @@ class IPv6 {
         char temp[IPV6_BUFFER_LENGTH];
         char *ptr_src ,*ptr_char, *ptr_src1;
         const char *char_ptr_src;  // get the src char
-        int char_int = NULL, index_ip6 = 0 ,octet_count=0, not_colon = 0, colon =0, count_colon = 0;
+        int char_int = 0, index_ip6 = 0, octet_count = 0, not_colon = 0, colon = 0, count_colon = 0;
         char temp_first[IPV6_BUFFER_LENGTH],temp_end[IPV6_BUFFER_LENGTH];
 
         memset(temp_first, 0, IPV6_BUFFER_LENGTH);
