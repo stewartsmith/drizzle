@@ -14,7 +14,7 @@ a
 2
 START TRANSACTION;
 Warnings:
-Warning	1746	There is already a transaction in progress
+Warning	1747	There is already a transaction in progress
 EXECUTE @insert_var;
 ROLLBACK;
 SELECT a FROM t1;
@@ -23,7 +23,7 @@ a
 2
 START TRANSACTION;
 Warnings:
-Warning	1746	There is already a transaction in progress
+Warning	1747	There is already a transaction in progress
 SET @insert_var= "INSERT INTO t1 VALUES(); SELECT WILL_ERROR;";
 EXECUTE @insert_var;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '; SELECT WILL_ERROR;' at line 1
