@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include<cstdio>
-#include<cstring>
+#include <cstdio>
+#include <cstring>
 #include <iostream>
 
 namespace drizzled
@@ -38,7 +38,7 @@ class IPv6 {
     struct ipv6_ds
     {
     	unsigned short ip6[8];
-    }str;
+    } str;
     
     //Function to store the IPv4 address in IPv6 Data Structure
     int ipv4_inet_pton(const char *src)
@@ -46,17 +46,17 @@ class IPv6 {
 
 	    char *ptr_src ;
 
-	    char ipv4_map_ipv6[20],ipv4[16], octet_1[5],octet_2[5],concat_octets[20];
-	    int octet[4],octet_index = 0;
+	    char ipv4_map_ipv6[20], ipv4[16], octet_1[5], octet_2[5], concat_octets[20];
+	    int octet[4], octet_index = 0;
 
-	    memset(ipv4_map_ipv6, NULL, sizeof(ipv4_map_ipv6));
-	    strcpy(ipv4_map_ipv6,src);
+	    memset(ipv4_map_ipv6, 0, sizeof(ipv4_map_ipv6));
+	    strcpy(ipv4_map_ipv6, src);
 
-	    memset(octet, NULL, sizeof(octet));
-	    memset(ipv4, NULL, sizeof(ipv4));
-	    memset(octet_1, NULL, sizeof(octet_1));
-	    memset(octet_2, NULL, sizeof(octet_2));
-	    memset(concat_octets, NULL, sizeof(concat_octets));
+	    memset(octet, 0, sizeof(octet));
+	    memset(ipv4, 0, sizeof(ipv4));
+	    memset(octet_1, 0, sizeof(octet_1));
+	    memset(octet_2, 0, sizeof(octet_2));
+	    memset(concat_octets, 0, sizeof(concat_octets));
 
 	    ptr_src = strtok(ipv4_map_ipv6,"::");
 
@@ -67,7 +67,7 @@ class IPv6 {
 	    while (ptr_src != '\0')
 	    {
 
-		sscanf( ptr_src,"%d", &octet[octet_index]);
+		sscanf(ptr_src, "%d", &octet[octet_index]);
 
 		 if(octet[octet_index++] > 255)
 		 {
@@ -106,11 +106,11 @@ class IPv6 {
 
 		sscanf(concat_octets,"%x",(unsigned int *)&str.ip6[i]);
 
-		memset(octet_1, NULL, sizeof(octet_1));
+		memset(octet_1, 0, sizeof(octet_1));
 
-		memset(octet_2, NULL, sizeof(octet_2));
+		memset(octet_2, 0, sizeof(octet_2));
 
-		memset(concat_octets, NULL, sizeof(concat_octets));
+		memset(concat_octets, 0, sizeof(concat_octets));
 	    }
 
 	    return 1;
@@ -120,9 +120,9 @@ class IPv6 {
     char * ipv4_inet_ntop(char *destination)
     {
 
-	    memset(destination,NULL,sizeof(destination));
+	    memset(destination, 0, sizeof(destination));
 
-	    snprintf( destination ,IPV6_BUFFER_LENGTH, "%03x:%03x:%03x:%03x:%03x:%03x:%03d.%03d.%03d.%03d" ,
+	    snprintf(destination, IPV6_BUFFER_LENGTH, "%03x:%03x:%03x:%03x:%03x:%03x:%03d.%03d.%03d.%03d" ,
 	    str.ip6[0],str.ip6[1],str.ip6[2],str.ip6[3],str.ip6[4],str.ip6[5],
 	    (((unsigned int )str.ip6[6]>>8) & 0xFF),
 	    ((unsigned int )str.ip6[6] & 0xFF),
@@ -140,21 +140,21 @@ class IPv6 {
         //Local variables
         char ipv6[IPV6_BUFFER_LENGTH];
         
-        memset(ipv6,NULL,IPV6_BUFFER_LENGTH);
+        memset(ipv6, 0, IPV6_BUFFER_LENGTH);
         
         strcpy(ipv6,src);
         
         char ipv6_temp[IPV6_BUFFER_LENGTH], ipv6_temp1[IPV6_BUFFER_LENGTH], ipv6_temp2[IPV6_BUFFER_LENGTH];
 
-        memset(ipv6_temp,NULL,IPV6_BUFFER_LENGTH);
+        memset(ipv6_temp, 0, IPV6_BUFFER_LENGTH);
 
-        strcpy(ipv6_temp,ipv6);
+        strcpy(ipv6_temp, ipv6);
 
-        memset(ipv6_temp1,NULL,IPV6_BUFFER_LENGTH);
+        memset(ipv6_temp1, 0, IPV6_BUFFER_LENGTH);
 
-        strcpy(ipv6_temp1,ipv6);
+        strcpy(ipv6_temp1, ipv6);
 
-        memset(ipv6_temp2,NULL,IPV6_BUFFER_LENGTH);
+        memset(ipv6_temp2, 0, IPV6_BUFFER_LENGTH);
 
         strcpy(ipv6_temp2,ipv6);
 
@@ -166,9 +166,9 @@ class IPv6 {
         int char_int = NULL, index_ip6 = 0 ,octet_count=0, not_colon = 0, colon =0, count_colon = 0;
         char temp_first[IPV6_BUFFER_LENGTH],temp_end[IPV6_BUFFER_LENGTH];
 
-        memset(temp_first, NULL,IPV6_BUFFER_LENGTH);
+        memset(temp_first, 0, IPV6_BUFFER_LENGTH);
 
-        memset(temp_end, NULL,IPV6_BUFFER_LENGTH);
+        memset(temp_end, 0, IPV6_BUFFER_LENGTH);
 
         ptr_src = ipv6;
         //while loop check three consective colons
@@ -207,7 +207,7 @@ class IPv6 {
         
 	char * zero_append = new char[size];
 
-        memset(zero_append,NULL,sizeof(zero_append));
+        memset(zero_append, 0, sizeof(zero_append));
 
 
         ptr_src = ipv6_temp;
@@ -304,7 +304,7 @@ class IPv6 {
                 strcat(temp_first,temp_end);
             }
 
-            memset(ipv6,NULL,IPV6_BUFFER_LENGTH);
+            memset(ipv6, 0, IPV6_BUFFER_LENGTH);
 
             strcpy(ipv6,temp_first);
         }// end of main if statement
@@ -344,15 +344,15 @@ class IPv6 {
                         ptr_char++;
                 }//end of inner while loop
 
-                ptr_char-= octet_length;
+                ptr_char -= octet_length;
 
 
-                unsigned int  *ptr  =  (unsigned int *)&(str.ip6[index_ip6++]);
+                unsigned int *ptr = (unsigned int *)&(str.ip6[index_ip6++]);
 
-                sscanf( ptr_char,"%x", ptr);
+                sscanf(ptr_char, "%x", ptr);
 
 
-                memset(temp,NULL,IPV6_BUFFER_LENGTH);
+                memset(temp, 0, IPV6_BUFFER_LENGTH);
 
 
                 ptr_src = strtok (NULL, ":");
@@ -368,9 +368,9 @@ class IPv6 {
     {
         char temp[10];
 
-        memset(temp,NULL,sizeof(temp));
+        memset(temp, 0, sizeof(temp));
 
-        memset(destination,NULL,IPV6_BUFFER_LENGTH);
+        memset(destination, 0, IPV6_BUFFER_LENGTH);
         
     
         for (int i= 0; i <= 7; i++)
@@ -388,7 +388,7 @@ class IPv6 {
                 strcat(destination,temp);
             }
 
-            memset(temp,NULL,sizeof(temp));
+            memset(temp, 0, sizeof(temp));
         }
 
 
