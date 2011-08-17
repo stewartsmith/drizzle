@@ -762,6 +762,7 @@ inline bool isDateTime(const enum_field_types &arg)
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     return false;
   }
