@@ -41,7 +41,7 @@ namespace drizzled {
 /*
  * Provides a mapping from the error enum values to std::strings.
  */
-class ErrorMap
+class ErrorMap : boost::noncopyable
 {
 public:
   typedef std::pair<std::string, std::string> value_type;
@@ -57,10 +57,6 @@ public:
 
   static const ErrorMessageMap& get_error_message_map();
 private:
-  // Disable copy and assignment.
-  ErrorMap(const ErrorMap &e);
-  ErrorMap& operator=(const ErrorMap &e);
-
   ErrorMessageMap mapping_;
 };
 

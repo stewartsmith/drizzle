@@ -121,8 +121,8 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     info->write_key=write_merge_key;
   }
 
-  my_b_clear(&tempfile);
-  my_b_clear(&tempfile_for_exceptions);
+  tempfile.clear();
+  tempfile_for_exceptions.clear();
   memset(&buffpek, 0, sizeof(buffpek));
   unsigned char** sort_keys= (unsigned char **) NULL; 
   int error= 1;
@@ -154,7 +154,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       while ((maxbuffer= (size_t)(records/(keys-1)+1)) != skr);
 
     sort_keys=(unsigned char **)malloc(keys*(sort_length+sizeof(char*)));
-    my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
+    buffpek.init(sizeof(BUFFPEK), maxbuffer, maxbuffer/2);
     break;
   }
   if (memavl < MIN_SORT_MEMORY)
@@ -188,7 +188,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
       if (merge_many_buff(info,keys,sort_keys, (BUFFPEK*)buffpek.buffer, &maxbuffer, &tempfile))
 	goto err;
     }
-    if (internal::flush_io_cache(&tempfile) ||
+    if (tempfile.flush() ||
 	tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       goto err;
     if (!no_messages)
@@ -200,7 +200,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   if (flush_pending_blocks(info))
     goto err;
 
-  if (my_b_inited(&tempfile_for_exceptions))
+  if (tempfile_for_exceptions.inited())
   {
     MI_INFO *idx=info->sort_info->info;
     uint32_t     keyno=info->key;
@@ -209,18 +209,16 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     if (not no_messages)
       printf("  - Adding exceptions\n");
 
-    if (flush_io_cache(&tempfile_for_exceptions) || tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+    if (tempfile_for_exceptions.flush() || tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
     {
       goto err;
     }
 
-    while (!my_b_read(&tempfile_for_exceptions,(unsigned char*)&key_length,
-		      sizeof(key_length))
-        && !my_b_read(&tempfile_for_exceptions,(unsigned char*)sort_keys,
-		      (uint) key_length))
+    while (not tempfile_for_exceptions.read(&key_length, sizeof(key_length))
+        && not tempfile_for_exceptions.read(sort_keys, key_length))
     {
-	if (_mi_ck_write(idx,keyno,(unsigned char*) sort_keys,key_length-ref_length))
-	  goto err;
+      if (_mi_ck_write(idx,keyno,(unsigned char*) sort_keys,key_length-ref_length))
+        goto err;
     }
   }
 
@@ -228,11 +226,11 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
 
 err:
   free(sort_keys);
-  delete_dynamic(&buffpek);
+  buffpek.free();
   tempfile.close_cached_file();
   tempfile_for_exceptions.close_cached_file();
 
-  return(error ? -1 : 0);
+  return error ? -1 : 0;
 } /* _create_index_by_sort */
 
 
@@ -261,9 +259,8 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
 
     if (++idx == keys)
     {
-      if (info->write_keys(info,sort_keys,idx-1,(BUFFPEK *)alloc_dynamic(buffpek),
-		     tempfile))
-      return(HA_POS_ERROR);
+      if (info->write_keys(info,sort_keys,idx-1,(BUFFPEK *)buffpek->alloc(), tempfile))
+        return HA_POS_ERROR;
 
       sort_keys[0]=(unsigned char*) (sort_keys+keys);
       memcpy(sort_keys[0],sort_keys[idx-1],(size_t) info->key_length);
@@ -275,9 +272,8 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
     return(HA_POS_ERROR);
   if (buffpek->size())
   {
-    if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)alloc_dynamic(buffpek),
-		   tempfile))
-      return(HA_POS_ERROR);
+    if (info->write_keys(info,sort_keys,idx,(BUFFPEK *)buffpek->alloc(), tempfile))
+      return HA_POS_ERROR;
     *maxbuffer=buffpek->size() - 1;
   }
   else
@@ -336,10 +332,8 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
     sinfo->sort_keys=0;
   }
 
-  for (i= 0, sinfo= sort_param ;
-       i < sort_info->total_keys ;
-       i++,
-	 delete_dynamic(&sinfo->buffpek),
+  for (i= 0, sinfo= sort_param; i < sort_info->total_keys; i++,
+	 sinfo->buffpek.free(),
 	 sinfo->tempfile.close_cached_file(),
 	 sinfo->tempfile_for_exceptions.close_cached_file(),
 	 sinfo++)
@@ -388,7 +382,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
           continue;
         }
       }
-      if (flush_io_cache(&sinfo->tempfile) || sinfo->tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+      if (sinfo->tempfile.flush() || sinfo->tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
@@ -403,30 +397,25 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         continue;
       }
     }
-    if (my_b_inited(&sinfo->tempfile_for_exceptions))
+    if (sinfo->tempfile_for_exceptions.inited())
     {
       uint32_t key_length;
 
       if (param->testflag & T_VERBOSE)
         printf("Key %d  - Dumping 'long' keys\n", sinfo->key+1);
 
-      if (flush_io_cache(&sinfo->tempfile_for_exceptions) || sinfo->tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+      if (sinfo->tempfile_for_exceptions.flush() || sinfo->tempfile_for_exceptions.reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
         got_error=1;
         continue;
       }
 
-      while (!got_error &&
-	     !my_b_read(&sinfo->tempfile_for_exceptions,(unsigned char*)&key_length,
-			sizeof(key_length)))
+      while (!got_error && not sinfo->tempfile_for_exceptions.read(&key_length, sizeof(key_length)))
       {
         unsigned char ft_buf[10];
-        if (key_length > sizeof(ft_buf) ||
-            my_b_read(&sinfo->tempfile_for_exceptions, (unsigned char*)ft_buf,
-                      (uint)key_length) ||
-            _mi_ck_write(info, sinfo->key, (unsigned char*)ft_buf,
-                         key_length - info->s->rec_reflength))
-          got_error=1;
+        if (key_length > sizeof(ft_buf) || sinfo->tempfile_for_exceptions.read(ft_buf, (uint)key_length) 
+          || _mi_ck_write(info, sinfo->key, (unsigned char*)ft_buf, key_length - info->s->rec_reflength))
+          got_error= 1;
       }
     }
   }
@@ -442,17 +431,16 @@ static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
   unsigned char **end;
   uint32_t sort_length=info->key_length;
 
-  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
-            info);
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp, info);
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  buffpek->file_pos=my_b_tell(tempfile);
+  buffpek->file_pos= tempfile->tell();
   buffpek->count=count;
 
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
   {
-    if (my_b_write(tempfile,(unsigned char*) *sort_keys,(uint) sort_length))
+    if (tempfile->write(*sort_keys, sort_length))
       return(1);
   }
   return(0);
@@ -466,9 +454,9 @@ my_var_write(MI_SORT_PARAM *info, internal::io_cache_st *to_file, unsigned char 
   uint16_t len = _mi_keylength(info->keyinfo, (unsigned char*) bufs);
 
   /* The following is safe as this is a local file */
-  if ((err= my_b_write(to_file, (unsigned char*)&len, sizeof(len))))
+  if ((err= to_file->write(&len, sizeof(len))))
     return (err);
-  if ((err= my_b_write(to_file,bufs, (uint) len)))
+  if ((err= to_file->write(bufs, len)))
     return (err);
   return (0);
 }
@@ -482,12 +470,11 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,
   unsigned char **end;
   int err;
 
-  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp,
-            info);
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  internal::my_qsort2((unsigned char*) sort_keys,count,sizeof(unsigned char*),(qsort2_cmp) info->key_cmp, info);
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  buffpek->file_pos=my_b_tell(tempfile);
+  buffpek->file_pos= tempfile->tell();
   buffpek->count=count;
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
   {
@@ -503,11 +490,11 @@ static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 {
   uint32_t key_length=info->real_key_length;
 
-  if (!my_b_inited(tempfile) && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  if (not tempfile->inited() && tempfile->open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
-  if (my_b_write(tempfile,(unsigned char*)&key_length,sizeof(key_length)) ||
-      my_b_write(tempfile,(unsigned char*)key,(uint) key_length))
+  if (tempfile->write(&key_length, sizeof(key_length)) ||
+      tempfile->write(key, key_length))
     return(1);
   return(0);
 } /* write_key */
@@ -541,8 +528,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
 
   if (*maxbuffer < MERGEBUFF2)
     return(0);
-  if (flush_io_cache(t_file) || t_file2.open_cached_file(P_tmpdir, "ST",
-                       DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
+  if (t_file->flush() || t_file2.open_cached_file(P_tmpdir, "ST", DISK_BUFFER_SIZE, info->sort_info->param->myf_rw))
     return(1);
 
   from_file= t_file ; to_file= &t_file2;
@@ -560,7 +546,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
     if (merge_buffers(info,keys,from_file,to_file,sort_keys,lastbuff++,
                       buffpek+i,buffpek+ *maxbuffer))
       break;
-    if (flush_io_cache(to_file))
+    if (to_file->flush())
       break;
     temp=from_file; from_file=to_file; to_file=temp;
     *maxbuffer= (int) (lastbuff-buffpek)-1;
@@ -656,12 +642,11 @@ static int  write_merge_key_varlen(MI_SORT_PARAM *info,
 }
 
 
-static int  write_merge_key(MI_SORT_PARAM *info,
+static int  write_merge_key(MI_SORT_PARAM*,
 				  internal::io_cache_st *to_file, unsigned char *key,
 				  uint32_t sort_length, uint32_t count)
 {
-  (void)info;
-  return my_b_write(to_file, key, (size_t) sort_length*count);
+  return to_file->write(key, sort_length*count);
 }
 
 /*
@@ -707,7 +692,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, internal::io_cache_st *from_fi
   maxcount=keys/((uint) (Tb-Fb) +1);
   assert(maxcount > 0);
   if (to_file)
-    to_start_filepos=my_b_tell(to_file);
+    to_start_filepos= to_file->tell();
   strpos=(unsigned char*) sort_keys;
   sort_length=info->key_length;
 

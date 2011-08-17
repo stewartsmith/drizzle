@@ -46,29 +46,26 @@ namespace drizzled {
     false	Ok
 */
 
-void init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
-                            void *init_buffer, uint32_t init_alloc,
-                            uint32_t alloc_increment)
+static void init_dynamic_array2(DYNAMIC_ARRAY* array, uint32_t element_size, uint32_t init_alloc, uint32_t alloc_increment)
 {
   if (!alloc_increment)
   {
-    alloc_increment=max((8192-MALLOC_OVERHEAD)/element_size,16U);
+    alloc_increment= max((8192 - MALLOC_OVERHEAD) / element_size, 16U);
     if (init_alloc > 8 && alloc_increment > init_alloc * 2)
-      alloc_increment=init_alloc*2;
+      alloc_increment= init_alloc * 2;
   }
-
-  if (!init_alloc)
-  {
-    init_alloc=alloc_increment;
-    init_buffer= 0;
-  }
+  if (not init_alloc)
+    init_alloc= alloc_increment;
   array->set_size(0);
-  array->max_element=init_alloc;
-  array->alloc_increment=alloc_increment;
-  array->size_of_element=element_size;
-  if ((array->buffer= (unsigned char*) init_buffer))
-    return;
-  array->buffer= (unsigned char*) malloc(element_size*init_alloc);
+  array->max_element= init_alloc;
+  array->alloc_increment= alloc_increment;
+  array->size_of_element= element_size;
+  array->buffer= (unsigned char*) malloc(element_size * init_alloc);
+}
+
+void DYNAMIC_ARRAY::init(uint32_t element_size, uint32_t init_alloc, uint32_t alloc_increment0)
+{
+  init_dynamic_array2(this, element_size, init_alloc, alloc_increment0);
 }
 
 /*
@@ -84,11 +81,11 @@ void init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
     false	Ok
 */
 
-static void insert_dynamic(DYNAMIC_ARRAY *array, void* element)
+static void insert_dynamic(DYNAMIC_ARRAY* array, void* element)
 {
   unsigned char* buffer;
   if (array->size() == array->max_element)
-    buffer= alloc_dynamic(array);
+    buffer= array->alloc();
   else
   {
     buffer= array->buffer+(array->size() * array->size_of_element);
@@ -120,12 +117,12 @@ void DYNAMIC_ARRAY::push_back(void* v)
     0		Error
 */
 
-unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
+static unsigned char* alloc_dynamic(DYNAMIC_ARRAY* array)
 {
   if (array->size() == array->max_element)
   {
-    char *new_ptr;
-    if (array->buffer == (unsigned char *)(array + 1))
+    char* new_ptr;
+    if (array->buffer == (unsigned char*)(array + 1))
     {
       /*
         In this senerio, the buffer is statically preallocated,
@@ -143,6 +140,11 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
   return array->buffer + ((array->size() - 1) * array->size_of_element);
 }
 
+unsigned char* DYNAMIC_ARRAY::alloc()
+{
+  return alloc_dynamic(this);
+}
+
 /*
   Empty array by freeing all memory
 
@@ -151,20 +153,24 @@ unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array)
       array	Array to be deleted
 */
 
-void delete_dynamic(DYNAMIC_ARRAY *array)
+static void delete_dynamic(DYNAMIC_ARRAY* array)
 {
   /*
     Just mark as empty if we are using a static buffer
   */
-  if (array->buffer == (unsigned char *)(array + 1))
+  if (array->buffer == (unsigned char*)(array + 1))
     array->set_size(0);
-  else
-  if (array->buffer)
+  else if (array->buffer)
   {
     free(array->buffer);
     array->buffer=0;
     array->set_size(array->max_element=0);
   }
+}
+
+void DYNAMIC_ARRAY::free()
+{
+  delete_dynamic(this);
 }
 
 } /* namespace drizzled */

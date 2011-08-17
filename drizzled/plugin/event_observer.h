@@ -56,14 +56,10 @@ typedef EventObserver* EventObserverPtr;
 
 class DRIZZLED_API EventObserver : public Plugin
 {
-  EventObserver();
-  EventObserver(const EventObserver &);
-  EventObserver& operator=(const EventObserver &);
 public:
   explicit EventObserver(std::string name_arg)
     : Plugin(name_arg, "EventObserver")
   {}
-  virtual ~EventObserver() {}
 
   enum EventType{
     /* Session events: */
@@ -278,8 +274,6 @@ public:
     EventData(event_arg),
     session(session_arg)
   {}
-  virtual ~SessionEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
@@ -299,8 +293,6 @@ public:
     session(session_arg),
     db(db_arg)
   {}
-  virtual ~SchemaEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
@@ -319,8 +311,6 @@ public:
     session(session_arg),
     table(table_arg)
   {}
-  virtual ~TableEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();

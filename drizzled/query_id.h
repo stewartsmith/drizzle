@@ -20,33 +20,38 @@
 #pragma once
 
 #include <drizzled/atomics.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
-
-typedef uint64_t query_id_t;
 
 class Query_id
 {
 public:
   static Query_id& get_query_id() 
   {
-    static Query_id the_id;
     return the_id;
   }
 
   /* return current query_id value */
-  query_id_t value() const;
+  query_id_t value() const
+  {
+    return the_query_id;
+  }
 
   /* increment query_id and return it.  */
-  query_id_t next();
+  query_id_t next()
+  {
+    return the_query_id.increment();
+  }
 
 private:
-  atomic<uint64_t> the_query_id;
+  Query_id()
+  {
+    the_query_id= 1;
+  }
 
-  Query_id();
-  Query_id(Query_id const&);
-  Query_id& operator=(Query_id const&);
+  static Query_id the_id;
+  atomic<uint64_t> the_query_id;
 };
 
 } /* namespace drizzled */
-

@@ -90,24 +90,25 @@ extern const charset_info_st *character_set_filesystem;
 
 namespace
 {
-
-static const std::string command_name[COM_END+1]={
-  "Sleep",
-  "Quit",
-  "Init DB",
-  "Query",
-  "Shutdown",
-  "Connect",
-  "Ping",
-  "Kill",
-  "Error"  // Last command number
-};
-
+  static const std::string command_name[]=
+  {
+    "Sleep",
+    "Quit",
+    "Init DB",
+    "Query",
+    "Shutdown",
+    "Connect",
+    "Ping",
+    "Kill",
+    "Error"  // Last command number
+  };
 }
 
-const char *xa_state_names[]={
+const char *xa_state_names[]=
+{
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
 };
+
 
 /**
   Mark all commands that somehow changes a table.
@@ -191,7 +192,7 @@ bool dispatch_command(enum_server_command command, Session *session,
                       const char* packet, uint32_t packet_length)
 {
   bool error= false;
-  Query_id &query_id= Query_id::get_query_id();
+  Query_id& query_id= Query_id::get_query_id();
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
 

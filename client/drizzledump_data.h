@@ -45,8 +45,6 @@ class DrizzleDumpForeignKey
       constraintName(name)
     { }
 
-    virtual ~DrizzleDumpForeignKey() { }
-
     std::string parentColumns;
     std::string childColumns;
     std::string childTable;
@@ -54,7 +52,7 @@ class DrizzleDumpForeignKey
     std::string deleteRule;
     std::string updateRule;
 
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpForeignKey &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpForeignKey &obj);
 };
 
 class DrizzleDumpIndex
@@ -80,7 +78,7 @@ class DrizzleDumpIndex
     /* Stores the column name and the length of the index part */
     typedef std::pair<std::string,uint32_t> columnData;
     std::vector<columnData> columns;
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpIndex &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpIndex &obj);
 };
 
 class DrizzleDumpField
@@ -102,7 +100,7 @@ class DrizzleDumpField
 
     std::stringstream errmsg;
 
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpField &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpField &obj);
     std::string fieldName;
 
     std::string type;
@@ -151,7 +149,7 @@ class DrizzleDumpTable
     std::vector<DrizzleDumpIndex*> indexes;
     std::vector<DrizzleDumpForeignKey*> fkeys;
 
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpTable &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpTable &obj);
     std::string tableName;
     std::string displayName;
     std::string engineName;
@@ -177,7 +175,7 @@ class DrizzleDumpDatabase
 
     std::stringstream errmsg;
 
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpDatabase &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpDatabase &obj);
 
     virtual bool populateTables(void) { return false; }
     virtual bool populateTables(const std::vector<std::string> &table_names) { return table_names.empty(); }
@@ -204,7 +202,7 @@ class DrizzleDumpData
     { }
 
     virtual ~DrizzleDumpData() { }
-    friend std::ostream& operator <<(std::ostream &os, const DrizzleDumpData &obj);
+    friend std::ostream& operator<<(std::ostream &os, const DrizzleDumpData &obj);
 
     virtual std::string checkDateTime(const char*, uint32_t) const { return std::string(""); }
     std::string convertHex(const unsigned char* from, size_t from_size) const;

@@ -87,11 +87,11 @@ int optimizer::QuickRorIntersectSelect::init()
 
 int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 {
-  vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+  vector<optimizer::QuickRangeSelect*>::iterator it= quick_selects.begin();
 
   /* Initialize all merged "children" quick selects */
   assert(! need_to_fetch_row || reuse_handler);
-  if (! need_to_fetch_row && reuse_handler)
+  if (not need_to_fetch_row && reuse_handler)
   {
     optimizer::QuickRangeSelect *quick= *it;
     ++it;

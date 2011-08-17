@@ -31,8 +31,7 @@
 # include <syslog.h>
 #endif
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 WrapSyslog::WrapSyslog () :
   _check(false)

@@ -23,17 +23,12 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzle_plugin
-{
-namespace udf
-{
+namespace drizzle_plugin {
+namespace udf {
 
 class Syslog : public drizzled::Item_str_func
 {
 private:
-  Syslog(const Syslog&);
-  Syslog& operator=(const Syslog&);
-
 public:
   Syslog();
 

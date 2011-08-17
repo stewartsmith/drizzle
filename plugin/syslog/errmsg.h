@@ -33,13 +33,8 @@ private:
   int _facility;
   int _priority;
 
-  Syslog();
-  Syslog(const Syslog&);
-  Syslog& operator=(const Syslog&);
-
 public:
-  explicit Syslog(const std::string& facility,
-                  const std::string& priority);
+  explicit Syslog(const std::string& facility, const std::string& priority);
 
   virtual bool errmsg(drizzled::error::level_t, const char *format, va_list ap);
 };

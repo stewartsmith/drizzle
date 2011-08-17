@@ -21,7 +21,7 @@ int mi_scan_init(register MI_INFO *info)
 {
   info->nextpos=info->s->pack.header_length;	/* Read first record */
   info->lastinx= -1;				/* Can't forward or backward */
-  if (info->opt_flag & WRITE_CACHE_USED && flush_io_cache(&info->rec_cache))
+  if (info->opt_flag & WRITE_CACHE_USED && info->rec_cache.flush())
     return(errno);
   return(0);
 }

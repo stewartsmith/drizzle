@@ -903,7 +903,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   got_error=error=0;
   empty=info->s->pack.header_length;
 
-  pos=my_b_tell(&param->read_cache);
+  pos= param->read_cache.tell();
   memset(key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));
   while (pos < info->state->data_file_length)
   {
@@ -911,9 +911,8 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       goto err2;
     switch (info->s->data_file_type) {
     case STATIC_RECORD:
-      if (my_b_read(&param->read_cache,(unsigned char*) record,
-		    info->s->base.pack_reclength))
-	goto err;
+      if (param->read_cache.read(record, info->s->base.pack_reclength))
+        goto err;
       start_recpos=pos;
       pos+=info->s->base.pack_reclength;
       splits++;
@@ -1520,7 +1519,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
       goto err;
   }
   if (error > 0 || write_data_suffix(&sort_info, (bool)!rep_quick) ||
-      flush_io_cache(&info->rec_cache) || param->read_cache.error < 0)
+      info->rec_cache.flush() || param->read_cache.error < 0)
     goto err;
 
   if (param->testflag & T_WRITE_LOOP)
@@ -2398,8 +2397,7 @@ int sort_get_next_record(MI_SORT_PARAM *sort_param)
   case STATIC_RECORD:
     for (;;)
     {
-      if (my_b_read(&sort_param->read_cache,sort_param->record,
-		    share->base.pack_reclength))
+      if (sort_param->read_cache.read(sort_param->record, share->base.pack_reclength))
       {
 	if (sort_param->read_cache.error)
 	  param->out_flag |= O_DATA_LOST;
@@ -2757,8 +2755,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
   {
     switch (sort_info->new_data_file_type) {
     case STATIC_RECORD:
-      if (my_b_write(&info->rec_cache,sort_param->record,
-		     share->base.pack_reclength))
+      if (info->rec_cache.write(sort_param->record, share->base.pack_reclength))
       {
 	mi_check_print_error(param,"%d when writing to datafile",errno);
 	return(1);
@@ -3047,7 +3044,7 @@ int sort_delete_record(MI_SORT_PARAM *sort_param)
     if (sort_param->calc_checksum)
       param->glob_crc-=(*info->s->calc_checksum)(info, sort_param->record);
   }
-  error=flush_io_cache(&info->rec_cache) || (*info->s->delete_record)(info);
+  error= info->rec_cache.flush() || (*info->s->delete_record)(info);
   info->dfile=old_file;				/* restore actual value */
   info->state->records--;
   return(error);
@@ -3140,7 +3137,7 @@ int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile)
   {
     unsigned char buff[MEMMAP_EXTRA_MARGIN];
     memset(buff, 0, sizeof(buff));
-    if (my_b_write(&info->rec_cache,buff,sizeof(buff)))
+    if (info->rec_cache.write(buff, sizeof(buff)))
     {
       mi_check_print_error(sort_info->param,
 			   "%d when writing to datafile",errno);

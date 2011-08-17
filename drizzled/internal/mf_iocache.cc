@@ -63,10 +63,8 @@ TODO:
 
 using namespace std;
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count);
@@ -291,14 +289,14 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
   /* If the whole file is in memory, avoid flushing to disk */
   if (! clear_cache &&
       seek_offset >= pos_in_file &&
-      seek_offset <= my_b_tell(this))
+      seek_offset <= tell())
   {
     /* Reuse current buffer without flushing it to disk */
     unsigned char *pos;
     if (type == WRITE_CACHE && type_arg == READ_CACHE)
     {
       read_end=write_pos;
-      end_of_file=my_b_tell(this);
+      end_of_file= tell();
       /*
         Trigger a new seek only if we have a valid
         file handle.
@@ -327,9 +325,9 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
       after the current positions should be ignored
     */
     if (type == WRITE_CACHE && type_arg == READ_CACHE)
-      end_of_file=my_b_tell(this);
+      end_of_file= tell();
     /* flush cache if we want to reuse it */
-    if (!clear_cache && my_b_flush_io_cache(this, 1))
+    if (!clear_cache && flush(1))
       return 1;
     pos_in_file=seek_offset;
     /* Better to do always do a seek */
@@ -341,8 +339,7 @@ bool io_cache_st::reinit_io_cache(enum cache_type type_arg,
     }
     else
     {
-      write_end=(buffer + buffer_length -
-		       (seek_offset & (IO_SIZE-1)));
+      write_end= (buffer + buffer_length - (seek_offset & (IO_SIZE-1)));
       end_of_file= ~(my_off_t) 0;
     }
   }
@@ -473,21 +470,22 @@ static int _my_b_read(io_cache_st *info, unsigned char *Buffer, size_t Count)
  * @brief
  *   Read one byte when buffer is empty
  */
-int _my_b_get(io_cache_st *info)
+int io_cache_st::get()
 {
+  if (read_pos != read_end)
+    return *read_pos++;
+
+  if (pre_read)
+    pre_read(this);
+
   unsigned char buff;
-  IO_CACHE_CALLBACK pre_read,post_read;
-
-  if ((pre_read = info->pre_read))
-    (*pre_read)(info);
-
-  if ((*(info)->read_function)(info,&buff,1))
+  if (read_function(this, &buff, 1))
     return my_b_EOF;
 
-  if ((post_read = info->post_read))
-    (*post_read)(info);
+  if (post_read)
+    post_read(this);
 
-  return (int) (unsigned char) buff;
+  return buff;
 }
 
 /**
@@ -514,7 +512,7 @@ int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count)
   Count-=rest_length;
   info->write_pos+=rest_length;
 
-  if (my_b_flush_io_cache(info,1))
+  if (info->flush(1))
     return 1;
   if (Count >= IO_SIZE)
   {					/* Fill first intern buffer */
@@ -552,8 +550,7 @@ int _my_b_write(io_cache_st *info, const unsigned char *Buffer, size_t Count)
  *   As all write calls to the data goes through the cache,
  *   we will never get a seek over the end of the buffer.
  */
-int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
-		   my_off_t pos)
+static int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count, my_off_t pos)
 {
   size_t length_local;
   int error=0;
@@ -595,11 +592,16 @@ int my_block_write(io_cache_st *info, const unsigned char *Buffer, size_t Count,
   return error;
 }
 
+int io_cache_st::block_write(const void* Buffer, size_t Count, my_off_t pos)
+{
+  return my_block_write(this, reinterpret_cast<const unsigned char*>(Buffer), Count, pos);
+}
+
 /**
  * @brief
  *   Flush write cache 
  */
-int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
+static int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
 {
   size_t length_local;
   bool append_cache= false;
@@ -659,6 +661,11 @@ int my_b_flush_io_cache(io_cache_st *info, int need_append_buffer_lock)
   }
   unlock_append_buffer(info, need_append_buffer_lock);
   return 0;
+}
+
+int io_cache_st::flush(int need_append_buffer_lock)
+{
+  return my_b_flush_io_cache(this, need_append_buffer_lock);
 }
 
 /**

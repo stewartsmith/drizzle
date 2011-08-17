@@ -55,7 +55,7 @@ _hash_init(HASH *hash,uint32_t growth_size, const charset_info_st * const charse
            hash_free_key free_element, uint32_t flags)
 {
   hash->records=0;
-  my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size, growth_size);
+  hash->array.init(sizeof(HASH_LINK), size, growth_size);
   hash->key_offset=key_offset;
   hash->key_length=key_length;
   hash->blength=1;
@@ -104,7 +104,7 @@ void hash_free(HASH *hash)
 {
   hash_free_elements(hash);
   hash->free= 0;
-  delete_dynamic(&hash->array);
+  hash->array.free();
 }
 
 /* some helper functions */
@@ -266,9 +266,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   }
 
   flag=0;
-  if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
-    /* No more memory */
-    return true;
+  empty=(HASH_LINK*)info->array.alloc();
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;

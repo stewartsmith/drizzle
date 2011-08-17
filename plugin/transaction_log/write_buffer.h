@@ -30,11 +30,12 @@
 
 #pragma once
 
+#include <boost/noncopyable.hpp>
 #include <stdint.h>
 #include <vector>
 #include <pthread.h>
 
-class WriteBuffer
+class WriteBuffer : boost::noncopyable
 {
 public:
   static const size_t DEFAULT_WRITE_BUFFER_SIZE= 1024; /* Many GPB messages are < 1 KB... */
@@ -78,10 +79,6 @@ public:
     return buffer.size();
   }
 private:
-  /* Prohibit these */
-  WriteBuffer(const WriteBuffer&);
-  WriteBuffer &operator=(const WriteBuffer&);
-
   std::vector<uint8_t> buffer; ///< Raw memory buffer managed by the log
   pthread_mutex_t latch; ///< Lock around the synchronized parts of the log (the write buffer)
 };

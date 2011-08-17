@@ -35,11 +35,8 @@
 #  include <drizzled/atomic/pthread_traits.h>
 # endif
 
-
 namespace drizzled {
-
 namespace internal {
-
 
 template<typename I>            // Primary template
 struct atomic_base {

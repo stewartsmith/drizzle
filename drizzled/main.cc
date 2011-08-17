@@ -241,7 +241,9 @@ int main(int argc, char **argv)
 
   module::Registry &modules= module::Registry::singleton();
 
-  MY_INIT(argv[0]);		// init my_sys library & pthreads
+  drizzled::internal::my_progname= argv[0]; 
+  drizzled::internal::my_init();
+
   /* nothing should come before this line ^^^ */
 
   /* Set signal used to kill Drizzle */

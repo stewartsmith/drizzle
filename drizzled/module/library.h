@@ -28,32 +28,22 @@
  */
 
 #include <string>
-
 #include <boost/filesystem.hpp>
 
-namespace drizzled
-{
-namespace module
-{
+namespace drizzled {
+namespace module {
 
 struct Manifest;
 
 /* A handle for the dynamic library containing a plugin or plugins. */
-class Library
+class Library : boost::noncopyable
 {
   std::string name;
   void *handle;
   const Manifest *manifest;
 
-  /* We don't want these */
-  Library();
-  Library(const Library &);
-  Library& operator=(const Library &);
-
   /* Construction should only happen through the static factory method */
-  Library(const std::string &name_arg,
-          void *handle_arg,
-          const Manifest *manifest_arg);
+  Library(const std::string &name_arg, void *handle_arg, const Manifest*);
 
 public:
   ~Library();
@@ -74,4 +64,3 @@ public:
 
 } /* namespace module */
 } /* namespace drizzled */
-

@@ -1233,7 +1233,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   ("table-lock-wait-timeout", po::value<uint64_t>(&table_lock_wait_timeout)->default_value(50)->notifier(&check_limits_tlwt),
   _("Timeout in seconds to wait for a table level lock before returning an "
      "error. Used only if the connection has active cursors."))
-  ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(DEFAULT_THREAD_STACK)->notifier(&check_limits_thread_stack),
+  ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(0)->notifier(&check_limits_thread_stack),
   _("The stack size for each thread."))
   ("tmp-table-size",
   po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
@@ -1848,7 +1848,7 @@ struct option my_long_options[] =
    N_("The stack size for each thread."),
    (char**) &my_thread_stack_size,
    NULL, 0, GET_SIZE,
-   REQUIRED_ARG,DEFAULT_THREAD_STACK,
+   REQUIRED_ARG,0,
    UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"

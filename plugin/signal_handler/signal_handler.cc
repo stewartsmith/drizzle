@@ -218,8 +218,6 @@ void signal_hand()
 class SignalHandler :
   public drizzled::plugin::Daemon
 {
-  SignalHandler(const SignalHandler &);
-  SignalHandler& operator=(const SignalHandler &);
   boost::thread thread;
 
 public:

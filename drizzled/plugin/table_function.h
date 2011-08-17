@@ -58,19 +58,13 @@ static const char *local_string_append(const char *arg1, const char *arg2)
 
 class DRIZZLED_API TableFunction : public Plugin
 {
-  TableFunction();
-  TableFunction(const TableFunction &);
-  TableFunction& operator=(const TableFunction &);
-
   message::Table proto;
   identifier::Table identifier;
   std::string local_path;
   std::string original_table_label;
 
   void setName(); // init name
-
   void init();
-
 
 public:
   TableFunction(const char *schema_arg, const char *table_arg) :
@@ -80,8 +74,6 @@ public:
   {
     init();
   }
-
-  virtual ~TableFunction() {}
 
   static bool addPlugin(TableFunction *function);
   static void removePlugin(TableFunction *)

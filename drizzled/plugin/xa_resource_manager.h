@@ -33,7 +33,6 @@ namespace plugin {
 class DRIZZLED_API XaResourceManager
 {
 public:
-  XaResourceManager() {}
   virtual ~XaResourceManager() {}
 
   int xaPrepare(Session *session, bool normal_transaction)

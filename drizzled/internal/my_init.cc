@@ -59,7 +59,7 @@ void my_init()
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
-  my_thread_global_init();
+  my_thread_init();
   sigfillset(&my_signals);		/* signals blocked by mf_brkhant */
     if (!home_dir)
     {					/* Don't initialize twice */
