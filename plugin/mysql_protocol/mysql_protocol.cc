@@ -508,6 +508,10 @@ void ClientMySQLProtocol::sendFields(List<Item>& list)
         pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
+      case DRIZZLE_TYPE_IPV6:
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
+        break;
+
       case DRIZZLE_TYPE_BOOLEAN:
         pos[6]= DRIZZLE_COLUMN_TYPE_TINY;
         break;

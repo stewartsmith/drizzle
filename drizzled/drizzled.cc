@@ -204,11 +204,6 @@ const char *tx_isolation_names[] = {"READ-UNCOMMITTED", "READ-COMMITTED", "REPEA
 
 TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names) - 1, "", tx_isolation_names, NULL};
 
-/*
-  Used with --help for detailed option
-*/
-bool opt_help= false;
-
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
  {&Arg_comparator::compare_real,       &Arg_comparator::compare_e_real},
@@ -356,11 +351,11 @@ static void drizzle_init_variables();
 static void get_options();
 static void fix_paths();
 
-static void usage();
 void close_connections();
 
 fs::path base_plugin_dir(PKGPLUGINDIR);
 
+po::options_description general_options(_("General Options"));
 po::options_description config_options(_("Config File Options"));
 po::options_description long_options(_("Kernel Options"));
 po::options_description plugin_load_options(_("Plugin Loading Options"));
@@ -381,6 +376,16 @@ static std::string g_hostname= "localhost";
 const std::string& getServerHostname()
 {
   return g_hostname;
+}
+
+static void print_version()
+{
+  /*
+    Note: the instance manager keys off the string 'Ver' so it can find the
+    version from the output of 'drizzled --version', so don't change it!
+  */
+  printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
+	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
 /****************************************************************************
@@ -454,21 +459,30 @@ void close_connections()
   }
 }
 
-
-void unireg_abort(int exit_code)
+static bool unireg_startup_completed= false;
+void unireg_startup_finished()
 {
-  if (exit_code)
-  {
-    errmsg_printf(error::ERROR, _("Aborting"));
-  }
-  else if (opt_help)
-  {
-    usage();
-  }
+  unireg_startup_completed= true;
+}
 
-  clean_up(!opt_help && exit_code);
+void unireg_exit()
+{
   internal::my_end();
-  exit(exit_code);
+  assert(unireg_startup_completed == false);
+  exit(EXIT_SUCCESS);
+}
+
+void unireg_actual_abort(const char *file, int line, const char *func, const std::string& message)
+{
+  std::stringstream temp;
+  temp << _("Aborting:") << "\"" << message << "\"" << ". Abort was called from " << file << ":" << line << " in " << func << "()";
+  errmsg_printf(error::ERROR, temp.str().c_str());
+
+  clean_up(vm.count("help") == 0);
+  internal::my_end();
+
+  assert(unireg_startup_completed == false);
+  exit(EXIT_FAILURE);
 }
 
 
@@ -518,37 +532,37 @@ passwd *check_user(const char *user)
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
-            errmsg_printf(error::WARN, _("One can only use the --user switch "
-                            "if running as root\n"));
+      {
+        errmsg_printf(error::WARN, _("One can only use the --user switch if running as root"));
+      }
     }
     return NULL;
   }
   if (not user)
   {
-      errmsg_printf(error::ERROR, _("Fatal error: Please read \"Security\" section of "
-                                    "the manual to find out how to run drizzled as root"));
-    unireg_abort(1);
+    unireg_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
   }
 
   if (not strcmp(user, "root"))
+  {
     return NULL;                        // Avoid problem with dynamic libraries
+  }
 
-  if (!(tmp_user_info= getpwnam(user)))
+  if ((tmp_user_info= getpwnam(user)) == NULL)
   {
     // Allow a numeric uid to be used
     const char *pos;
     for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
     if (*pos)                                   // Not numeric id
       goto err;
-    if (!(tmp_user_info= getpwuid(atoi(user))))
+
+    if ((tmp_user_info= getpwuid(atoi(user))) == NULL)
       goto err;
   }
   return tmp_user_info;
 
 err:
-  errmsg_printf(error::ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
-                    "Please check that the user exists!\n"),user);
-  unireg_abort(1);
+  unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
 
 #ifdef PR_SET_DUMPABLE
   if (getDebug().test(debug::CORE_ON_SIGNAL))
@@ -558,11 +572,7 @@ err:
   }
 #endif
 
-/* Sun Studio 5.10 doesn't like this line.  5.9 requires it */
-#if defined(__SUNPRO_CC) && (__SUNPRO_CC <= 0x590)
   return NULL;
-#endif
-
 }
 
 void set_user(const char *user, passwd *user_info_arg)
@@ -571,13 +581,11 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    sql_perror(_("Set process group ID failed"));
-    unireg_abort(1);
+    unireg_abort << _("Set process group ID failed ") << strerror(errno); 
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
-    sql_perror(_("Set process user ID failed"));
-    unireg_abort(1);
+    unireg_abort << _("Set process user ID failed") << strerror(errno);
   }
 }
 
@@ -586,10 +594,9 @@ void set_user(const char *user, passwd *user_info_arg)
 /** Change root user if started with @c --chroot . */
 static void set_root(const char *path)
 {
-  if ((chroot(path) == -1) || !chdir("/"))
+  if ((chroot(path) == -1) or chdir("/") == 0)
   {
-    sql_perror(_("Process chroot failed"));
-    unireg_abort(1);
+    unireg_abort << _("Process chroot failed");
   }
 }
 
@@ -688,8 +695,7 @@ static void check_limits_aii(uint64_t in_auto_increment_increment)
   global_system_variables.auto_increment_increment= 1;
   if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
   {
-    cout << _("Error: Invalid Value for auto_increment_increment");
-    exit(-1);
+    unireg_abort << _("Invalid Value for auto_increment_increment");
   }
   global_system_variables.auto_increment_increment= in_auto_increment_increment;
 }
@@ -699,8 +705,7 @@ static void check_limits_aio(uint64_t in_auto_increment_offset)
   global_system_variables.auto_increment_offset= 1;
   if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
   {
-    cout << _("Error: Invalid Value for auto_increment_offset");
-    exit(-1);
+    unireg_abort << _("Invalid Value for auto_increment_offset");
   }
   global_system_variables.auto_increment_offset= in_auto_increment_offset;
 }
@@ -710,8 +715,7 @@ static void check_limits_completion_type(uint32_t in_completion_type)
   global_system_variables.completion_type= 0;
   if (in_completion_type > 2)
   {
-    cout << _("Error: Invalid Value for completion_type");
-    exit(-1);
+    unireg_abort << _("Invalid Value for completion_type");
   }
   global_system_variables.completion_type= in_completion_type;
 }
@@ -722,8 +726,7 @@ static void check_limits_dpi(uint32_t in_div_precincrement)
   global_system_variables.div_precincrement= 4;
   if (in_div_precincrement > DECIMAL_MAX_SCALE)
   {
-    cout << _("Error: Invalid Value for div-precision-increment");
-    exit(-1);
+    unireg_abort << _("Invalid Value for div-precision-increment");
   }
   global_system_variables.div_precincrement= in_div_precincrement;
 }
@@ -733,8 +736,7 @@ static void check_limits_gcml(uint64_t in_group_concat_max_len)
   global_system_variables.group_concat_max_len= 1024;
   if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
   {
-    cout << _("Error: Invalid Value for group_concat_max_len");
-    exit(-1);
+    unireg_abort << _("Invalid Value for group_concat_max_len");
   }
   global_system_variables.group_concat_max_len= in_group_concat_max_len;
 }
@@ -744,8 +746,7 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
   global_system_variables.join_buff_size= (128*1024L);
   if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
   {
-    cout << _("Error: Invalid Value for join_buffer_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for join_buffer_size");
   }
   in_join_buffer_size-= in_join_buffer_size % IO_SIZE;
   global_system_variables.join_buff_size= in_join_buffer_size;
@@ -756,8 +757,7 @@ static void check_limits_map(uint32_t in_max_allowed_packet)
   global_system_variables.max_allowed_packet= (64*1024*1024L);
   if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
   {
-    cout << _("Error: Invalid Value for max_allowed_packet");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_allowed_packet");
   }
   in_max_allowed_packet-= in_max_allowed_packet % 1024;
   global_system_variables.max_allowed_packet= in_max_allowed_packet;
@@ -768,8 +768,7 @@ static void check_limits_max_err_cnt(uint64_t in_max_error_count)
   global_system_variables.max_error_count= DEFAULT_ERROR_COUNT;
   if (in_max_error_count > 65535)
   {
-    cout << _("Error: Invalid Value for max_error_count");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_error_count");
   }
   global_system_variables.max_error_count= in_max_error_count;
 }
@@ -779,8 +778,7 @@ static void check_limits_mhts(uint64_t in_max_heap_table_size)
   global_system_variables.max_heap_table_size= (16*1024*1024L);
   if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
   {
-    cout << _("Error: Invalid Value for max_heap_table_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_heap_table_size");
   }
   in_max_heap_table_size-= in_max_heap_table_size % 1024;
   global_system_variables.max_heap_table_size= in_max_heap_table_size;
@@ -791,8 +789,7 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
   global_system_variables.min_examined_row_limit= 0;
   if (in_min_examined_row_limit > ULONG_MAX)
   {
-    cout << _("Error: Invalid Value for min_examined_row_limit");
-    exit(-1);
+    unireg_abort << _("Invalid Value for min_examined_row_limit");
   }
   global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
@@ -802,8 +799,7 @@ static void check_limits_max_join_size(ha_rows in_max_join_size)
   global_system_variables.max_join_size= INT32_MAX;
   if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
   {
-    cout << _("Error: Invalid Value for max_join_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_join_size");
   }
   global_system_variables.max_join_size= in_max_join_size;
 }
@@ -813,8 +809,7 @@ static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
   global_system_variables.max_length_for_sort_data= 1024;
   if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
   {
-    cout << _("Error: Invalid Value for max_length_for_sort_data");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_length_for_sort_data");
   }
   global_system_variables.max_length_for_sort_data= in_max_length_for_sort_data;
 }
@@ -824,8 +819,7 @@ static void check_limits_msfk(uint64_t in_max_seeks_for_key)
   global_system_variables.max_seeks_for_key= ULONG_MAX;
   if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
   {
-    cout << _("Error: Invalid Value for max_seeks_for_key");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_seeks_for_key");
   }
   global_system_variables.max_seeks_for_key= in_max_seeks_for_key;
 }
@@ -835,8 +829,7 @@ static void check_limits_max_sort_length(size_t in_max_sort_length)
   global_system_variables.max_sort_length= 1024;
   if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
   {
-    cout << _("Error: Invalid Value for max_sort_length");
-    exit(-1);
+    unireg_abort << _("Invalid Value for max_sort_length");
   }
   global_system_variables.max_sort_length= in_max_sort_length;
 }
@@ -846,8 +839,7 @@ static void check_limits_osd(uint32_t in_optimizer_search_depth)
   global_system_variables.optimizer_search_depth= 0;
   if (in_optimizer_search_depth > MAX_TABLES + 2)
   {
-    cout << _("Error: Invalid Value for optimizer_search_depth");
-    exit(-1);
+    unireg_abort << _("Invalid Value for optimizer_search_depth");
   }
   global_system_variables.optimizer_search_depth= in_optimizer_search_depth;
 }
@@ -857,8 +849,7 @@ static void check_limits_pbs(uint64_t in_preload_buff_size)
   global_system_variables.preload_buff_size= (32*1024L);
   if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
   {
-    cout << _("Error: Invalid Value for preload_buff_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for preload_buff_size");
   }
   global_system_variables.preload_buff_size= in_preload_buff_size;
 }
@@ -868,8 +859,7 @@ static void check_limits_qabs(uint32_t in_query_alloc_block_size)
   global_system_variables.query_alloc_block_size= QUERY_ALLOC_BLOCK_SIZE;
   if (in_query_alloc_block_size < 1024)
   {
-    cout << _("Error: Invalid Value for query_alloc_block_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for query_alloc_block_size");
   }
   in_query_alloc_block_size-= in_query_alloc_block_size % 1024;
   global_system_variables.query_alloc_block_size= in_query_alloc_block_size;
@@ -880,8 +870,7 @@ static void check_limits_qps(uint32_t in_query_prealloc_size)
   global_system_variables.query_prealloc_size= QUERY_ALLOC_PREALLOC_SIZE;
   if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
   {
-    cout << _("Error: Invalid Value for query_prealloc_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for query_prealloc_size");
   }
   in_query_prealloc_size-= in_query_prealloc_size % 1024;
   global_system_variables.query_prealloc_size= in_query_prealloc_size;
@@ -892,8 +881,7 @@ static void check_limits_rabs(size_t in_range_alloc_block_size)
   global_system_variables.range_alloc_block_size= RANGE_ALLOC_BLOCK_SIZE;
   if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
   {
-    cout << _("Error: Invalid Value for range_alloc_block_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for range_alloc_block_size");
   }
   in_range_alloc_block_size-= in_range_alloc_block_size % 1024;
   global_system_variables.range_alloc_block_size= in_range_alloc_block_size;
@@ -904,8 +892,7 @@ static void check_limits_read_buffer_size(int32_t in_read_buff_size)
   global_system_variables.read_buff_size= (128*1024L);
   if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
   {
-    cout << _("Error: Invalid Value for read_buff_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for read_buff_size");
   }
   in_read_buff_size-= in_read_buff_size % IO_SIZE;
   global_system_variables.read_buff_size= in_read_buff_size;
@@ -916,8 +903,7 @@ static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
   global_system_variables.read_rnd_buff_size= (256*1024L);
   if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
   {
-    cout << _("Error: Invalid Value for read_rnd_buff_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for read_rnd_buff_size");
   }
   global_system_variables.read_rnd_buff_size= in_read_rnd_buff_size;
 }
@@ -927,8 +913,7 @@ static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
   global_system_variables.sortbuff_size= MAX_SORT_MEMORY;
   if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
   {
-    cout << _("Error: Invalid Value for sort_buff_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for sort_buff_size");
   }
   global_system_variables.sortbuff_size= in_sortbuff_size;
 }
@@ -938,8 +923,7 @@ static void check_limits_tdc(uint32_t in_table_def_size)
   table_def_size= 128;
   if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
   {
-    cout << _("Error: Invalid Value for table_def_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for table_def_size");
   }
   table_def_size= in_table_def_size;
 }
@@ -949,8 +933,7 @@ static void check_limits_toc(uint32_t in_table_cache_size)
   table_cache_size= TABLE_OPEN_CACHE_DEFAULT;
   if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
   {
-    cout << _("Error: Invalid Value for table_cache_size");
-    exit(-1);
+    unireg_abort << _("Invalid Value for table_cache_size");
   }
   table_cache_size= in_table_cache_size;
 }
@@ -960,8 +943,7 @@ static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
   table_lock_wait_timeout= 50;
   if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
   {
-    cout << _("Error: Invalid Value for table_lock_wait_timeout");
-    exit(-1);
+    unireg_abort <<  _("Invalid Value for table_lock_wait_timeout");
   }
   table_lock_wait_timeout= in_table_lock_wait_timeout;
 }
@@ -976,8 +958,7 @@ static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
   global_system_variables.tmp_table_size= 16*1024*1024L;
   if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
   {
-    cout << _("Error: Invalid Value for table_lock_wait_timeout");
-    exit(-1);
+    unireg_abort << _("Invalid Value for table_lock_wait_timeout");
   }
   global_system_variables.tmp_table_size= in_tmp_table_size;
 }
@@ -987,8 +968,7 @@ static void check_limits_transaction_message_threshold(size_t in_transaction_mes
   transaction_message_threshold= 1024*1024;
   if ((int64_t) in_transaction_message_threshold < 128*1024 || (int64_t)in_transaction_message_threshold > 1024*1024)
   {
-    cout << _("Error: Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
-    exit(-1);
+    unireg_abort << _("Invalid Value for transaction_message_threshold valid values are between 131072 - 1048576 bytes");
   }
   transaction_message_threshold= in_transaction_message_threshold;
 }
@@ -1024,16 +1004,17 @@ static void compose_defaults_file_list(const vector<string>& in_options)
   {
     fs::path p(it);
     if (fs::is_regular_file(p))
+    {
       defaults_file_list.push_back(it);
+    }
     else
     {
-      errmsg_printf(error::ERROR, _("Defaults file '%s' not found\n"), it.c_str());
-      unireg_abort(1);
+      unireg_abort << "Defaults file '" << it << "' not found";
     }
   }
 }
 
-int init_basic_variables(int argc, char **argv)
+bool init_variables_before_daemonizing(int argc, char **argv)
 {
   umask(((~internal::my_umask) & 0666));
   decimal_zero.set_zero(); // set decimal_zero constant;
@@ -1041,7 +1022,9 @@ int init_basic_variables(int argc, char **argv)
 
   time_t curr_time= time(NULL);
   if (curr_time == (time_t)-1)
-    return 1;
+  {
+    return false;
+  }
 
   max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= curr_time;
@@ -1065,11 +1048,18 @@ int init_basic_variables(int argc, char **argv)
 
   system_config_dir /= "drizzle";
 
-  config_options.add_options()
-  ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
-  _("Display this help and exit."))
+  general_options.add_options()
+  ("help,?",
+  _("Display help and exit."))
   ("daemon,d", po::value<bool>(&opt_daemon)->default_value(false)->zero_tokens(),
   _("Run as a daemon."))
+  ("user,u", po::value<string>(),
+  _("Run drizzled daemon as user."))
+  ("version,V",
+  _("Print version information and exit."))
+    ;
+
+  config_options.add_options()
   ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
   _("Configuration file defaults are not used if no-defaults is set"))
   ("defaults-file", po::value<vector<string> >()->composing()->notifier(&compose_defaults_file_list),
@@ -1149,10 +1139,6 @@ int init_basic_variables(int argc, char **argv)
   _("Default transaction isolation level."))
   ("transaction-message-threshold", po::value<size_t>(&transaction_message_threshold)->default_value(1024*1024)->notifier(&check_limits_transaction_message_threshold),
   _("Max message size written to transaction log, valid values 131072 - 1048576 bytes."))
-  ("user,u", po::value<string>(),
-  _("Run drizzled daemon as user."))
-  ("version,V",
-  _("Output version information and exit."))
   ("back-log", po::value<back_log_constraints>(&back_log),
   _("The number of outstanding connection requests Drizzle can have. This "
      "comes into play when the main Drizzle thread gets very many connection "
@@ -1260,15 +1246,17 @@ int init_basic_variables(int argc, char **argv)
   full_options.add(long_options);
   full_options.add(plugin_load_options);
 
+  initial_options.add(general_options);
   initial_options.add(config_options);
   initial_options.add(plugin_load_options);
 
   int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
+
   /* Get options about where config files and the like are */
   po::parsed_options parsed= po::command_line_parser(argc, argv).style(style).
     options(initial_options).allow_unregistered().run();
-  unknown_options=
-    po::collect_unrecognized(parsed.options, po::include_positional);
+
+  unknown_options= po::collect_unrecognized(parsed.options, po::include_positional);
 
   try
   {
@@ -1276,11 +1264,28 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (std::exception&)
   {
-    errmsg_printf(error::ERROR, _("Duplicate entry for command line option\n"));
-    unireg_abort(1);
+    unireg_abort << _("Duplicate entry for command line option");
   }
 
-  if (not vm["no-defaults"].as<bool>())
+  /* TODO: here is where we should add a process_env_vars */
+
+  /* We need a notify here so that plugin_init will work properly */
+  try
+  {
+    po::notify(vm);
+  }
+  catch (po::validation_error &err)
+  {
+    unireg_abort << "Use --help to get a list of available options. " << err.what(); 
+  }
+
+  if (vm.count("version"))
+  {
+    print_version();
+    unireg_exit();
+  }
+
+  if (vm.count("no-defaults"))
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
@@ -1301,19 +1306,6 @@ int init_basic_variables(int argc, char **argv)
     }
   }
 
-  /* TODO: here is where we should add a process_env_vars */
-
-  /* We need a notify here so that plugin_init will work properly */
-  try
-  {
-    po::notify(vm);
-  }
-  catch (po::validation_error &err)
-  {
-    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
-    unireg_abort(1);
-  }
-
   process_defaults_files();
 
   /* Process with notify a second time because a config file may contain
@@ -1325,14 +1317,15 @@ int init_basic_variables(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR, _("%s: %s.\nUse --help to get a list of available options\n"), internal::my_progname, err.what());
-    unireg_abort(1);
+    unireg_abort << "Use --help to get a list of available options. " << err.what();
   }
 
-  return 0;
+  return true;
 }
 
-int init_remaining_variables(module::Registry &plugins)
+// Return failure if we can't pass this, unireg_abort() will then be called
+// by the caller.
+bool init_variables_after_daemonizing(module::Registry &plugins)
 {
   int style = po::command_line_style::default_style & ~po::command_line_style::allow_guessing;
 
@@ -1344,8 +1337,7 @@ int init_remaining_variables(module::Registry &plugins)
 
   if (plugin_init(plugins, plugin_options))
   {
-    errmsg_printf(error::ERROR, _("Failed to initialize plugins\n"));
-    unireg_abort(1);
+    unireg_abort << _("Failed to initialize plugins");
   }
 
   full_options.add(plugin_options);
@@ -1365,26 +1357,15 @@ int init_remaining_variables(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
-    unireg_abort(1);
+    unireg_abort << "Use --help to get a list of available options. " << err.what();
   }
   catch (po::invalid_command_line_syntax &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
-    unireg_abort(1);
+    unireg_abort << "Use --help to get a list of available options. " << err.what();
   }
   catch (po::unknown_option &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s\nUse --help to get a list of available options\n"),
-                  err.what());
-    unireg_abort(1);
+    unireg_abort << "Use --help to get a list of available options. " << err.what();
   }
 
   try
@@ -1393,11 +1374,7 @@ int init_remaining_variables(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    errmsg_printf(error::ERROR,
-                  _("%s: %s.\n"
-                    "Use --help to get a list of available options\n"),
-                  internal::my_progname, err.what());
-    unireg_abort(1);
+    unireg_abort << "Use --help to get a list of available options. " << err.what();
   }
 
   get_options();
@@ -1406,12 +1383,9 @@ int init_remaining_variables(module::Registry &plugins)
 
   global_system_variables.optimizer_prune_level= not vm.count("disable-optimizer-prune");
 
-  if (! vm["help"].as<bool>())
+  if ((user_info= check_user(drizzled_user)))
   {
-    if ((user_info= check_user(drizzled_user)))
-    {
-      set_user(drizzled_user, user_info);
-    }
+    set_user(drizzled_user, user_info);
   }
 
   fix_paths();
@@ -1420,38 +1394,27 @@ int init_remaining_variables(module::Registry &plugins)
 
   item_create_init();
   if (sys_var_init())
-    return 1;
+  {
+    return false;
+  }
+
   /* Creates static regex matching for temporal values */
   if (not init_temporal_formats())
-    return 1;
+  {
+    return false;
+  }
 
-  if (!(default_charset_info=
-        get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
+  if (!(default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
     errmsg_printf(error::ERROR, _("Error getting default charset"));
-    return 1;                           // Eof of the list
+    return false;                           // Eof of the list
   }
 
   if (vm.count("scheduler"))
-    opt_scheduler= vm["scheduler"].as<string>().c_str();
-
-  if (default_collation_name)
   {
-    const charset_info_st * const default_collation= get_charset_by_name(default_collation_name);
-    if (not default_collation)
-    {
-      errmsg_printf(error::ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
-      return 1;
-    }
-    if (not my_charset_same(default_charset_info, default_collation))
-    {
-      errmsg_printf(error::ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
-                    default_collation_name,
-                    default_charset_info->csname);
-      return 1;
-    }
-    default_charset_info= default_collation;
+    opt_scheduler= vm["scheduler"].as<string>().c_str();
   }
+
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
@@ -1459,27 +1422,42 @@ int init_remaining_variables(module::Registry &plugins)
            get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
   {
     errmsg_printf(error::ERROR, _("Error setting collation"));
-    return 1;
+    return false;
   }
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
-  if (!(my_default_lc_time_names=
-        my_locale_by_name(lc_time_names_name)))
+  if ((my_default_lc_time_names= my_locale_by_name(lc_time_names_name)) == NULL)
   {
     errmsg_printf(error::ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
-    return 1;
+    return false;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
   /* Reset table_alias_charset */
   table_alias_charset= files_charset_info;
 
-  return 0;
+  return true;
 }
 
+bool was_help_requested()
+{
+  if (vm.count("help") == 0)
+  {
+    return false;
+  }
+
+  return true;
+}
+
+void usage();
 
 void init_server_components(module::Registry &plugins)
 {
+  if (was_help_requested())
+  {
+    usage();
+  }
+
   /*
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
@@ -1495,18 +1473,14 @@ void init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (opt_help)
-    unireg_abort(0);
-
   if (plugin_finalize(plugins))
   {
-    unireg_abort(1);
+    unireg_abort << "plugin_finalize() failed";
   }
 
   if (plugin::Scheduler::setPlugin(opt_scheduler))
   {
-      errmsg_printf(error::ERROR, _("No scheduler found, cannot continue!\n"));
-      unireg_abort(1);
+    unireg_abort << _("No scheduler found");
   }
 
   /*
@@ -1524,8 +1498,7 @@ void init_server_components(module::Registry &plugins)
     plugin::StorageEngine *engine= plugin::StorageEngine::findByName(default_storage_engine_str);
     if (engine == NULL)
     {
-      errmsg_printf(error::ERROR, _("Unknown/unsupported storage engine: %s\n"), default_storage_engine_str);
-      unireg_abort(1);
+      unireg_abort << _("Unknown/unsupported storage engine: ") << default_storage_engine_str;
     }
     global_system_variables.storage_engine= engine;
   }
@@ -1533,7 +1506,7 @@ void init_server_components(module::Registry &plugins)
   if (plugin::XaResourceManager::recoverAllXids())
   {
     /* This function alredy generates error messages */
-    unireg_abort(1);
+    unireg_abort << "plugin::XaResourceManager::recoverAllXids() failed";
   }
 
   init_update_queries();
@@ -1611,13 +1584,6 @@ enum options_drizzled
 
 struct option my_long_options[] =
 {
-
-  {"help", '?', N_("Display this help and exit."),
-   (char**) &opt_help, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"daemon", 'd', N_("Run as daemon."),
-   (char**) &opt_daemon, NULL, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1638,10 +1604,6 @@ struct option my_long_options[] =
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, NULL, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"collation-server", OPT_DEFAULT_COLLATION,
-   N_("Set the default collation."),
-   (char**) &default_collation_name, NULL,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"completion-type", OPT_COMPLETION_TYPE,
    N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
@@ -1897,24 +1859,20 @@ struct option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static void print_version()
+void usage()
 {
-  /*
-    Note: the instance manager keys off the string 'Ver' so it can find the
-    version from the output of 'drizzled --version', so don't change it!
-  */
-  printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
-	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
-}
+  if ((default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)) == NULL)
+  {
+    unireg_abort << "Failed to load default_charset_info:" << default_character_set_name;
+  }
 
-static void usage()
-{
-  if (!(default_charset_info= get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
-    exit(1);
-  if (!default_collation_name)
+  if (default_collation_name == NULL)
+  {
     default_collation_name= default_charset_info->name;
+  }
+
   print_version();
-  puts(_("Copyright (C) 2008 Sun Microsystems\n"
+  puts(_("Copyright (C) 2010-2011 Drizzle Developers, Copyright (C) 2008 Sun Microsystems\n"
          "This software comes with ABSOLUTELY NO WARRANTY. "
          "This is free software,\n"
          "and you are welcome to modify and redistribute it under the GPL "
@@ -1924,12 +1882,14 @@ static void usage()
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
 
   po::options_description all_options("Drizzled Options");
+  all_options.add(general_options);
   all_options.add(config_options);
   all_options.add(plugin_load_options);
   all_options.add(long_options);
   all_options.add(plugin_options);
   cout << all_options << endl;
 
+  unireg_exit();
 }
 
 /**
@@ -2026,29 +1986,23 @@ static void get_options()
 
   if (vm.count("user"))
   {
-    if (! drizzled_user || ! strcmp(drizzled_user, vm["user"].as<string>().c_str()))
+    if (drizzled_user == NULL or strcmp(drizzled_user, vm["user"].as<string>().c_str()) == 0)
+    {
       drizzled_user= (char *)vm["user"].as<string>().c_str();
-
+    }
     else
-      errmsg_printf(error::WARN, _("Ignoring user change to '%s' because the user was "
-                                       "set to '%s' earlier on the command line\n"),
+    {
+      errmsg_printf(error::WARN, _("Ignoring user change to '%s' because the user was set to '%s' earlier on the command line"),
                     vm["user"].as<string>().c_str(), drizzled_user);
-  }
-
-  if (vm.count("version"))
-  {
-    print_version();
-    exit(0);
+    }
   }
 
   if (vm.count("sort-heap-threshold"))
   {
     if ((vm["sort-heap-threshold"].as<uint64_t>() > 0) and
-      (vm["sort-heap-threshold"].as<uint64_t>() <
-      global_system_variables.sortbuff_size))
+      (vm["sort-heap-threshold"].as<uint64_t>() < global_system_variables.sortbuff_size))
     {
-      cout << _("Error: sort-heap-threshold cannot be less than sort-buffer-size") << endl;
-      exit(-1);
+      unireg_abort << _("sort-heap-threshold cannot be less than sort-buffer-size");
     }
 
     global_sort_buffer.setMaxSize(vm["sort-heap-threshold"].as<uint64_t>());
@@ -2057,11 +2011,9 @@ static void get_options()
   if (vm.count("join-heap-threshold"))
   {
     if ((vm["join-heap-threshold"].as<uint64_t>() > 0) and
-      (vm["join-heap-threshold"].as<uint64_t>() <
-      global_system_variables.join_buff_size))
+      (vm["join-heap-threshold"].as<uint64_t>() < global_system_variables.join_buff_size))
     {
-      cout << _("Error: join-heap-threshold cannot be less than join-buffer-size") << endl;
-      exit(-1);
+      unireg_abort << _("join-heap-threshold cannot be less than join-buffer-size");
     }
 
     global_join_buffer.setMaxSize(vm["join-heap-threshold"].as<uint64_t>());
@@ -2070,11 +2022,9 @@ static void get_options()
   if (vm.count("read-rnd-threshold"))
   {
     if ((vm["read-rnd-threshold"].as<uint64_t>() > 0) and
-      (vm["read-rnd-threshold"].as<uint64_t>() <
-      global_system_variables.read_rnd_buff_size))
+      (vm["read-rnd-threshold"].as<uint64_t>() < global_system_variables.read_rnd_buff_size))
     {
-      cout << _("Error: read-rnd-threshold cannot be less than read-rnd-buffer-size") << endl;
-      exit(-1);
+      unireg_abort << _("read-rnd-threshold cannot be less than read-rnd-buffer-size");
     }
 
     global_read_rnd_buffer.setMaxSize(vm["read-rnd-threshold"].as<uint64_t>());
@@ -2083,11 +2033,9 @@ static void get_options()
   if (vm.count("read-buffer-threshold"))
   {
     if ((vm["read-buffer-threshold"].as<uint64_t>() > 0) and
-      (vm["read-buffer-threshold"].as<uint64_t>() <
-      global_system_variables.read_buff_size))
+      (vm["read-buffer-threshold"].as<uint64_t>() < global_system_variables.read_buff_size))
     {
-      cout << _("Error: read-buffer-threshold cannot be less than read-buffer-size") << endl;
-      exit(-1);
+      unireg_abort << _("read-buffer-threshold cannot be less than read-buffer-size");
     }
 
     global_read_buffer.setMaxSize(vm["read-buffer-threshold"].as<uint64_t>());
@@ -2113,7 +2061,22 @@ static void get_options()
 
   if (vm.count("skip-symlinks"))
   {
-    internal::my_use_symdir=0;
+    internal::my_use_symdir= 0;
+  }
+
+  if (vm.count("collation-server"))
+  {
+    const charset_info_st * const default_collation= get_charset_by_name(vm["collation-server"].as<string>().c_str());
+    if (not default_collation)
+    {
+      unireg_abort << "Unknown collation: " << default_collation_name;
+    }
+
+    if (not my_charset_same(default_charset_info, default_collation))
+    {
+      unireg_abort << "COLLATION '" << default_collation_name << "' is not valid for CHARACTER SET '" << default_charset_info->csname << "'";
+    }
+    default_charset_info= default_collation;
   }
 
   if (vm.count("transaction-isolation"))
@@ -2149,7 +2112,9 @@ static void get_options()
   }
 
   if (drizzled_chroot)
+  {
     set_root(drizzled_chroot);
+  }
 
   /*
     Set some global variables from the global_system_variables
@@ -2161,6 +2126,9 @@ static void get_options()
 
 static void fix_paths()
 {
+  if (vm.count("help"))
+    return;
+
   fs::path pid_file_path(pid_file);
   if (pid_file_path.root_path().string() == "")
   {
@@ -2169,46 +2137,50 @@ static void fix_paths()
   }
   pid_file= fs::system_complete(pid_file_path);
 
-  if (not opt_help)
+  const char *tmp_string= getenv("TMPDIR");
+  struct stat buf;
+  drizzle_tmpdir.clear();
+
+  if (vm.count("tmpdir"))
   {
-    const char *tmp_string= getenv("TMPDIR");
-    struct stat buf;
-    drizzle_tmpdir.clear();
+    drizzle_tmpdir.append(vm["tmpdir"].as<string>());
+  }
+  else if (tmp_string == NULL)
+  {
+    drizzle_tmpdir.append(getDataHome().file_string());
+    drizzle_tmpdir.push_back(FN_LIBCHAR);
+    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+  }
+  else
+  {
+    drizzle_tmpdir.append(tmp_string);
+  }
 
-    if (vm.count("tmpdir"))
-    {
-      drizzle_tmpdir.append(vm["tmpdir"].as<string>());
-    }
-    else if (tmp_string == NULL)
-    {
-      drizzle_tmpdir.append(getDataHome().file_string());
-      drizzle_tmpdir.push_back(FN_LIBCHAR);
-      drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
-    }
-    else
-    {
-      drizzle_tmpdir.append(tmp_string);
-    }
+  drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
+  assert(drizzle_tmpdir.size());
 
-    drizzle_tmpdir= fs::path(fs::system_complete(fs::path(drizzle_tmpdir))).file_string();
-    assert(drizzle_tmpdir.size());
+  assert(getuid() != 0 and geteuid() != 0);
+  if (getuid() == 0 or geteuid() == 0)
+  {
+    unireg_abort << "Drizzle cannot be run as root, please see the Security piece of the manual for more information.";
+  }
 
-    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+  if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+  {
+    if (errno != EEXIST)
     {
-      if (errno != EEXIST)
-      {
-        errmsg_printf(error::ERROR, _("There was an error creating the '%s' part of the path '%s'.  Please check the path exists and is writable.\n"), fs::path(drizzle_tmpdir).leaf().c_str(), drizzle_tmpdir.c_str());
-        exit(1);
-      }
-    }
-
-    if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
-    {
-      errmsg_printf(error::ERROR, _("There was an error opening the path '%s', please check the path exists and is writable.\n"), drizzle_tmpdir.c_str());
-      exit(1);
+      unireg_abort << "There was an error creating the '" 
+        << fs::path(drizzle_tmpdir).leaf() 
+        << "' part of the path '" 
+        << drizzle_tmpdir 
+        << "'.  Please check the path exists and is writable.";
     }
   }
 
+  if (stat(drizzle_tmpdir.c_str(), &buf) || not S_ISDIR(buf.st_mode))
+  {
+    unireg_abort << "There was an error opening the path '" << drizzle_tmpdir << "', please check the path exists and is writable.";
+  }
 }
 
 } /* namespace drizzled */

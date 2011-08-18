@@ -1178,6 +1178,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     break;
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
@@ -1326,6 +1327,7 @@ void Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_DECIMAL:
     {
       if (String* res=val_str(buffer))

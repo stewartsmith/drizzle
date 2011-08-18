@@ -4140,6 +4140,7 @@ static int read_command(st_command** command_ptr)
   command->end= strchr(command->query, '\0');
   command->query_len= (command->end - command->query);
   parser.read_lines++;
+
   return(0);
 }
 

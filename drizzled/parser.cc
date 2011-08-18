@@ -594,6 +594,14 @@ drizzled::enum_field_types buildUuidColumn(LEX *lex)
   return DRIZZLE_TYPE_UUID;
 }
 
+drizzled::enum_field_types buildIPv6Column(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::IPV6);
+
+  return DRIZZLE_TYPE_IPV6;
+}
+
 drizzled::enum_field_types buildDoubleColumn(LEX *lex)
 {
   if (lex->field())

@@ -498,6 +498,7 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     break;
   }

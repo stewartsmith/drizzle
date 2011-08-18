@@ -1425,6 +1425,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   case Table::Field::UUID:
     destination.append(" UUID");
     break;
+  case Table::Field::IPV6:
+    destination.append(" IPV6");
+    break;
   case Table::Field::BOOLEAN:
     destination.append(" BOOLEAN");
     break;
@@ -1606,6 +1609,8 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
     return Table::Field::UUID;
   case DRIZZLE_TYPE_BOOLEAN:
     return Table::Field::BOOLEAN;
+  case DRIZZLE_TYPE_IPV6:
+    return Table::Field::IPV6;
   }
 
   assert(false);
