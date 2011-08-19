@@ -2789,39 +2789,31 @@ static void do_wait_for_slave_to_stop()
 static void do_sync_with_master2(long offset)
 {
   drizzle::connection_c& con= *cur_con;
-  char query_buf[FN_REFLEN+128];
 
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
+  char query_buf[FN_REFLEN+128];
   snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
-  int tries= 0;
-
-wait_for_position:
-
-  drizzle::result_c res;
-  dt_query(con, res, query_buf);
-
-  drizzle_row_t row= res.row_next();
-  if (!row)
+  for (int tires= 0; tries < 30; tries++)
   {
-    die("empty result in %s", query_buf);
-  }
-  if (!row[0])
-  {
+    drizzle::result_c res;
+    dt_query(con, res, query_buf);
+
+    drizzle_row_t row= res.row_next();
+    if (not row)
+      die("empty result in %s", query_buf);
+    if (row[0])
+      return;
     /*
-      It may be that the slave SQL thread has not started yet, though START
-      SLAVE has been issued ?
+    It may be that the slave SQL thread has not started yet, though START
+    SLAVE has been issued ?
     */
-    if (tries++ == 30)
-    {
-      show_query(con, "SHOW MASTER STATUS");
-      show_query(con, "SHOW SLAVE STATUS");
-      die("could not sync with master ('%s' returned NULL)", query_buf);
-    }
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
-    goto wait_for_position;
   }
+  show_query(con, "SHOW MASTER STATUS");
+  show_query(con, "SHOW SLAVE STATUS");
+  die("could not sync with master ('%s' returned NULL)", query_buf);
 }
 
 static void do_sync_with_master(st_command* command)
