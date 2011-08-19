@@ -24,8 +24,7 @@
 #include <vector>
 #include <drizzled/session.h>
 
-namespace slave
-{
+namespace slave {
 
 class SQLExecutor
 {
@@ -43,7 +42,7 @@ public:
     _in_error_state= false;
   }
 
-  const std::string &getErrorMessage()
+  const std::string &getErrorMessage() const
   {
     return _error_message;
   }

@@ -31,8 +31,8 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+
 /**
  * Forward declarations.
  * Mac OS X 10.6 with gcc 4.2.1 misses this warning (but still compiles):
@@ -78,13 +78,13 @@ bool update_file(Session *, set_var *var)
 {
   const char *new_file= var->value->str_value.ptr();
 
-  if (!new_file)
+  if (not new_file)
   {
     errmsg_printf(error::ERROR, _("The query log file name must be defined."));
     return false;
   }
 
-  if (strlen(new_file) == 0)
+  if (not *new_file)
   {
     errmsg_printf(error::ERROR, _("The query log file name must have a value."));
     return false;

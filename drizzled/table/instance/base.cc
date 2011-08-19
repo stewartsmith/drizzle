@@ -443,7 +443,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
     tmp_table= message::Table::INTERNAL;
     db= str_ref(private_key_for_cache.vector());
     table_name= str_ref(db.data() + 1);
-    path.assign(&private_normalized_path[0], private_normalized_path.size());
+    path= private_normalized_path;
     normalized_path= path;
   }
 }

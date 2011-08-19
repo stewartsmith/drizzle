@@ -316,9 +316,9 @@ static bool prepare_alter_table(Session *session,
   {
     /* Check if field should be dropped */
     vector<string>::iterator it= drop_columns.begin();
-    while ((it != drop_columns.end()))
+    while (it != drop_columns.end())
     {
-      if (! my_strcasecmp(system_charset_info, field->field_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, field->field_name, it->c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -561,9 +561,9 @@ static bool prepare_alter_table(Session *session,
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     vector<string>::iterator it= drop_fkeys.begin();
-    while ((it != drop_fkeys.end()))
+    while (it != drop_fkeys.end())
     {
-      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), (*it).c_str()))
+      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), it->c_str()))
       {
         break;
       }
