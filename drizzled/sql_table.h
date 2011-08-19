@@ -42,9 +42,8 @@ bool check_table(Session* session, TableList* table_list);
 bool analyze_table(Session* session, TableList* table_list);
 bool optimize_table(Session* session, TableList* table_list);
 
-bool is_primary_key(KeyInfo *key_info);
-const char* is_primary_key_name(const char* key_name);
-bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
+bool is_primary_key(const char* name);
+bool check_engine(Session*, const char*, message::Table*, HA_CREATE_INFO*);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 } /* namespace drizzled */
 

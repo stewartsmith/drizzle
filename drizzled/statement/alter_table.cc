@@ -536,9 +536,6 @@ static bool prepare_alter_table(Session *session,
     if (key_parts.size())
     {
       key_create_information_st key_create_info= default_key_create_info;
-      Key *key;
-      Key::Keytype key_type;
-
       key_create_info.algorithm= key_info->algorithm;
 
       if (key_info->flags & HA_USES_BLOCK_SIZE)
@@ -547,25 +544,16 @@ static bool prepare_alter_table(Session *session,
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
+      Key::Keytype key_type;
       if (key_info->flags & HA_NOSAME)
       {
-        if (is_primary_key_name(key_name))
-          key_type= Key::PRIMARY;
-        else
-          key_type= Key::UNIQUE;
+        key_type= is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE;
       }
       else
       {
         key_type= Key::MULTIPLE;
       }
-
-      key= new Key(key_type,
-                   key_name,
-                   strlen(key_name),
-                   &key_create_info,
-                   test(key_info->flags & HA_GENERATED_KEY),
-                   key_parts);
-      new_key_list.push_back(key);
+      new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }
 
@@ -618,11 +606,9 @@ static bool prepare_alter_table(Session *session,
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
 
-      if (key->name.str && is_primary_key_name(key->name.str))
+      if (key->name.str && is_primary_key(key->name.str))
       {
-        my_error(ER_WRONG_NAME_FOR_INDEX,
-                 MYF(0),
-                 key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
         return true;
       }
     }

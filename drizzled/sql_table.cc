@@ -56,19 +56,13 @@ using namespace std;
 
 namespace drizzled {
 
-bool is_primary_key(KeyInfo *key_info)
+bool is_primary_key(const char* name)
 {
-  return strcmp(key_info->name, "PRIMARY") == 0;
-}
-
-const char* is_primary_key_name(const char* key_name)
-{
-  return strcmp(key_name, "PRIMARY") == 0 ? key_name : NULL;
+  return strcmp(name, "PRIMARY") == 0;
 }
 
 static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
-static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
-
+static const char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
@@ -78,9 +72,8 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
-  identifier::Schema identifier(db);
-  if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+  if (not create_info->default_table_charset)
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(db));
 }
 
 /*
@@ -277,9 +270,9 @@ static int sort_keys(KeyInfo *a, KeyInfo *b)
       /* Sort NOT NULL keys before other keys */
       return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
-    if (is_primary_key(a))
+    if (is_primary_key(a->name))
       return -1;
-    if (is_primary_key(b))
+    if (is_primary_key(b->name))
       return 1;
     /* Sort keys don't containing partial segments before others */
     if ((a_flags ^ b_flags) & HA_KEY_HAS_PART_KEY_SEG)
@@ -875,8 +868,7 @@ static int prepare_create_table(Session *session,
       key_parts+=key->columns.size();
     else
       (*key_count)--;
-    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
-        is_primary_key_name(key->name.str))
+    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
       return true;
@@ -1550,14 +1542,13 @@ check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 }
 
 
-static char *
+static const char*
 make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
-  if (!check_if_keyname_exists(field_name,start,end) &&
-      !is_primary_key_name(field_name))
-    return (char*) field_name;			// Use fieldname
+  if (not check_if_keyname_exists(field_name,start,end) && not is_primary_key(field_name))
+    return field_name;			// Use fieldname
 
   buff_end= strncpy(buff, field_name, sizeof(buff)-4);
   buff_end+= strlen(buff);

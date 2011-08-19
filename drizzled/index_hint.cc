@@ -60,7 +60,7 @@ void Index_hint::print(String& str) const
   str.append(STRING_WITH_LEN(" ("));
   if (*key_name)
   {
-    if (is_primary_key_name(key_name))
+    if (is_primary_key(key_name))
       str.append(key_name);
     else
       str.append_identifier(str_ref(key_name));
