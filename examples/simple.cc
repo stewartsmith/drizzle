@@ -84,15 +84,17 @@ int main(int argc, char *argv[])
 
   drizzle::drizzle_c drizzle;
   drizzle::connection_c* con= new drizzle::connection_c(drizzle);
-  con->set_tcp(host, port);
-  con->set_auth(user, password);
+  if (host || port)
+    con->set_tcp(host, port);
+  if (user || password)
+    con->set_auth(user, password);
   con->set_db("information_schema");
   drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
   q.p("%");
-  cout << q.read() << endl;
   try
   {
     drizzle::result_c result= q.execute();
+    cout << q.read() << endl;
     while (drizzle_row_t row= result.row_next())
     {
       for (int x= 0; x < result.column_count(); x++)
