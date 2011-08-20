@@ -1657,7 +1657,7 @@ Path::addPathInArg( const std::string &,
 
 void 
 Path::invalidPath( const std::string &, 
-                   int  )
+                   int  ) const
 {
    // Error: invalid path.
 }
