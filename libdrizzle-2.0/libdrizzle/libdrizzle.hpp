@@ -363,8 +363,6 @@ void connection_c::read_conf_files()
       if (i == string::npos)
         continue;
       conf[boost::trim_copy(s.substr(0, i))] = boost::trim_copy(s.substr(i + 1));
-      if (s.empty() || !client_section)
-        continue;
     }
   }
   if (conf.count("host") || conf.count("port"))
