@@ -340,8 +340,7 @@ void connection_c::read_conf_files()
     conf_files.push_back(string(d) + "/.drizzle.conf");
   }
   
-  typedef map<string, string> conf_t;
-  conf_t conf;
+  map<string, string> conf;
   BOOST_FOREACH(string& it, conf_files)
   {
     ifstream is(it.c_str());
@@ -360,9 +359,8 @@ void connection_c::read_conf_files()
       else if (!client_section)
         continue;
       i = s.find('=');
-      if (i == string::npos)
-        continue;
-      conf[boost::trim_copy(s.substr(0, i))] = boost::trim_copy(s.substr(i + 1));
+      if (i != string::npos)
+        conf[boost::trim_copy(s.substr(0, i))] = boost::trim_copy(s.substr(i + 1));
     }
   }
   if (conf.count("host") || conf.count("port"))
