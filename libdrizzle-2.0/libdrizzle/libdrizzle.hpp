@@ -43,6 +43,10 @@ namespace drizzle {
 
 class bad_query : public std::runtime_error
 {
+public:
+  bad_query(const std::string& v) : std::runtime_error(v)
+  {
+  }
 };
 
 class noncopyable
@@ -177,7 +181,7 @@ public:
   {
     drizzle_return_t ret;
     drizzle_query(*this, result, str, str_size, &ret);
-    if (ret == DRIZZLE_RETURN_OK)
+    if (!ret)
       ret = drizzle_result_buffer(result);
     return ret;
   }
@@ -190,6 +194,24 @@ public:
   drizzle_return_t query(result_c& result, const char* str)
   {
     return query(result, str, strlen(str));
+  }
+
+  result_c query(const char* str, size_t str_size)
+  {
+    result_c result;
+    if (query(result, str, str_size))
+      throw bad_query(error());
+    return result;
+  }
+
+  result_c query(const std::string& str)
+  {
+    return query(str.data(), str.size());
+  }
+
+  result_c query(const char* str)
+  {
+    return query(str, strlen(str));
   }
 private:
   drizzle_con_st b_;
@@ -263,6 +285,11 @@ public:
   drizzle_return_t execute(result_c& result)
   {
     return con_.query(result, read());
+  }
+
+  result_c execute()
+  {
+    return con_.query(read());
   }
 
   std::string read() const
