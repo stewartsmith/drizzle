@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include <boost/shared_ptr.hpp>
 #include <cstring>
 #include <libdrizzle/libdrizzle.h>
 #include <sstream>
@@ -71,65 +72,62 @@ public:
   drizzle_st b_;
 };
 
-class result_c : noncopyable
+class result_c
 {
 public:
-  result_c()
+  operator drizzle_result_st*()
   {
-    memset(&b_, 0, sizeof(b_));
-  }
-
-  ~result_c()
-  {
-    drizzle_result_free(&b_);
+    if (!b_)
+      b_.reset(new drizzle_result_st, drizzle_result_free);
+    return b_.get();
   }
 
   const char* error()
   {
-    return drizzle_result_error(&b_);
+    return drizzle_result_error(*this);
   }
 
   uint16_t error_code()
   {
-    return drizzle_result_error_code(&b_);
+    return drizzle_result_error_code(*this);
   }
 
   uint16_t column_count()
   {
-    return drizzle_result_column_count(&b_);    
+    return drizzle_result_column_count(*this);    
   }
 
   uint64_t row_count()
   {
-    return drizzle_result_row_count(&b_);
+    return drizzle_result_row_count(*this);
   }
 
   drizzle_column_st* column_next()
   {
-    return drizzle_column_next(&b_);
+    return drizzle_column_next(*this);
   }
 
   drizzle_row_t row_next()
   {
-    return drizzle_row_next(&b_);
+    return drizzle_row_next(*this);
   }
 
   void column_seek(uint16_t i)
   {
-    drizzle_column_seek(&b_, i);
+    drizzle_column_seek(*this, i);
   }
 
   void row_seek(uint64_t i)
   {
-    drizzle_row_seek(&b_, i);
+    drizzle_row_seek(*this, i);
   }
 
   size_t* row_field_sizes()
   {
-    return drizzle_row_field_sizes(&b_);
+    return drizzle_row_field_sizes(*this);
   }
-
-  drizzle_result_st b_;
+private:
+  boost::shared_ptr<drizzle_result_st> b_;
 };
 
 class connection_c : noncopyable
@@ -168,9 +166,9 @@ public:
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;
-    drizzle_query(&b_, &result.b_, str, str_size, &ret);
+    drizzle_query(&b_, result, str, str_size, &ret);
     if (ret == DRIZZLE_RETURN_OK)
-      ret = drizzle_result_buffer(&result.b_);
+      ret = drizzle_result_buffer(result);
     return ret;
   }
 
