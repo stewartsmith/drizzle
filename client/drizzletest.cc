@@ -2795,7 +2795,7 @@ static void do_sync_with_master2(long offset)
 
   char query_buf[FN_REFLEN+128];
   snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
-  for (int tires= 0; tries < 30; tries++)
+  for (int tries= 0; tries < 30; tries++)
   {
     drizzle::result_c res;
     dt_query(con, res, query_buf);
