@@ -242,7 +242,7 @@ public:
 
   operator drizzle_con_st*()
   {
-    return &con.b_;
+    return con;
   }
 
   drizzle::drizzle_c drizzle;

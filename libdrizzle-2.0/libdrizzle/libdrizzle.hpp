@@ -61,14 +61,19 @@ class drizzle_c : noncopyable
 public:
   drizzle_c()
   {
-    drizzle_create(&b_);
+    drizzle_create(*this);
   }
 
   ~drizzle_c()
   {
-    drizzle_free(&b_);
+    drizzle_free(*this);
   }
 
+  operator drizzle_st*()
+  {
+    return &b_;
+  }
+private:
   drizzle_st b_;
 };
 
@@ -135,38 +140,43 @@ class connection_c : noncopyable
 public:
   explicit connection_c(drizzle_c& drizzle)
   {
-    drizzle_con_create(&drizzle.b_, &b_);
+    drizzle_con_create(drizzle, *this);
   }
 
   ~connection_c()
   {
-    drizzle_con_free(&b_);
+    drizzle_con_free(*this);
+  }
+
+  operator drizzle_con_st*()
+  {
+    return &b_;
   }
 
   const char* error()
   {
-    return drizzle_con_error(&b_);
+    return drizzle_con_error(*this);
   }
 
   void set_tcp(const char* host, in_port_t port)
   {
-    drizzle_con_set_tcp(&b_, host, port);
+    drizzle_con_set_tcp(*this, host, port);
   }
 
   void set_auth(const char* user, const char* password)
   {
-    drizzle_con_set_auth(&b_, user, password);
+    drizzle_con_set_auth(*this, user, password);
   }
 
   void set_db(const char* db)
   {
-    drizzle_con_set_db(&b_, db);
+    drizzle_con_set_db(*this, db);
   }
 
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;
-    drizzle_query(&b_, result, str, str_size, &ret);
+    drizzle_query(*this, result, str, str_size, &ret);
     if (ret == DRIZZLE_RETURN_OK)
       ret = drizzle_result_buffer(result);
     return ret;
@@ -181,7 +191,7 @@ public:
   {
     return query(result, str, strlen(str));
   }
-
+private:
   drizzle_con_st b_;
 };
 
