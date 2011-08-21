@@ -144,14 +144,12 @@ int chk_status(MI_CHECK *param, register MI_INFO *info)
 
 int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
 {
-  register ha_rows i;
   uint32_t delete_link_length;
   my_off_t empty, next_link, old_link= 0;
   char buff[22],buff2[22];
 
   param->record_checksum=0;
-  delete_link_length=((info->s->options & HA_OPTION_PACK_RECORD) ? 20 :
-		      info->s->rec_reflength+1);
+  delete_link_length=((info->s->options & HA_OPTION_PACK_RECORD) ? 20 : info->s->rec_reflength+1);
 
   if (!(test_flag & T_SILENT))
     puts("- check record delete-chain");
@@ -169,47 +167,47 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
     if (test_flag & T_VERBOSE)
       printf("Recordlinks:    ");
     empty=0;
-    for (i= info->state->del ; i > 0L && next_link != HA_OFFSET_ERROR ; i--)
+    ha_rows i= info->state->del;
+    for (; i > 0 && next_link != HA_OFFSET_ERROR; i--)
     {
       if (*killed_ptr(param))
         return(1);
       if (test_flag & T_VERBOSE)
-	printf(" %9s",llstr(next_link,buff));
+        printf(" %9s",llstr(next_link,buff));
       if (next_link >= info->state->data_file_length)
-	goto wrong;
-      if (my_pread(info->dfile, (unsigned char*) buff,delete_link_length,
-		   next_link,MYF(MY_NABP)))
+        goto wrong;
+      if (my_pread(info->dfile, (unsigned char*) buff,delete_link_length, next_link,MYF(MY_NABP)))
       {
-	if (test_flag & T_VERBOSE) puts("");
-	mi_check_print_error(param,"Can't read delete-link at filepos: %s",
-		    llstr(next_link,buff));
-	return(1);
+        if (test_flag & T_VERBOSE) puts("");
+        mi_check_print_error(param,"Can't read delete-link at filepos: %s",
+          llstr(next_link,buff));
+        return(1);
       }
       if (*buff != '\0')
       {
-	if (test_flag & T_VERBOSE) puts("");
-	mi_check_print_error(param,"Record at pos: %s is not remove-marked",
-		    llstr(next_link,buff));
-	goto wrong;
+        if (test_flag & T_VERBOSE) puts("");
+        mi_check_print_error(param,"Record at pos: %s is not remove-marked",
+          llstr(next_link,buff));
+        goto wrong;
       }
       if (info->s->options & HA_OPTION_PACK_RECORD)
       {
-	my_off_t prev_link=mi_sizekorr(buff+12);
-	if (empty && prev_link != old_link)
-	{
-	  if (test_flag & T_VERBOSE) puts("");
-	  mi_check_print_error(param,"Deleted block at %s doesn't point back at previous delete link",llstr(next_link,buff2));
-	  goto wrong;
-	}
-	old_link=next_link;
-	next_link=mi_sizekorr(buff+4);
-	empty+=mi_uint3korr(buff+1);
+        my_off_t prev_link=mi_sizekorr(buff+12);
+        if (empty && prev_link != old_link)
+        {
+          if (test_flag & T_VERBOSE) puts("");
+          mi_check_print_error(param,"Deleted block at %s doesn't point back at previous delete link",llstr(next_link,buff2));
+          goto wrong;
+        }
+        old_link=next_link;
+        next_link=mi_sizekorr(buff+4);
+        empty+=mi_uint3korr(buff+1);
       }
       else
       {
-	param->record_checksum+=(ha_checksum) next_link;
-	next_link=_mi_rec_pos(info->s,(unsigned char*) buff+1);
-	empty+=info->s->base.pack_reclength;
+        param->record_checksum+=(ha_checksum) next_link;
+        next_link=_mi_rec_pos(info->s,(unsigned char*) buff+1);
+        empty+=info->s->base.pack_reclength;
       }
     }
     if (test_flag & T_VERBOSE)
@@ -217,33 +215,30 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
     if (empty != info->state->empty)
     {
       mi_check_print_warning(param,
-			     "Found %s deleted space in delete link chain. Should be %s",
-			     llstr(empty,buff2),
-			     llstr(info->state->empty,buff));
+        "Found %s deleted space in delete link chain. Should be %s",
+        llstr(empty,buff2),
+        llstr(info->state->empty,buff));
     }
     if (next_link != HA_OFFSET_ERROR)
     {
       mi_check_print_error(param,
-			   "Found more than the expected %s deleted rows in delete link chain",
-			   llstr(info->state->del, buff));
+        "Found more than the expected %s deleted rows in delete link chain",
+        llstr(info->state->del, buff));
       goto wrong;
     }
     if (i != 0)
     {
-      mi_check_print_error(param,
-			   "Found %s deleted rows in delete link chain. Should be %s",
-			   llstr(info->state->del - i, buff2),
-			   llstr(info->state->del, buff));
+      mi_check_print_error(param, "Found %s deleted rows in delete link chain. Should be %s", llstr(info->state->del - i, buff2), llstr(info->state->del, buff));
       goto wrong;
     }
   }
-  return(0);
+  return 0;
 
 wrong:
   param->testflag|=T_RETRY_WITHOUT_QUICK;
   if (test_flag & T_VERBOSE) puts("");
   mi_check_print_error(param,"record delete-link-chain corrupted");
-  return(1);
+  return 1;
 } /* chk_del */
 
 

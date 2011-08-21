@@ -68,7 +68,7 @@ public:
   /**
    * Get the error message from the last failed operation.
    */
-  std::string getErrorString()
+  const std::string& getErrorString() const
   {
     return error;
   }

@@ -57,7 +57,7 @@ int yylex(union ParserType *yylval, drizzled::Session *session);
     unsigned long val= *(F);                          \
     if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
-      yyerror(NULL, (char*) (A));                   \
+      yyerror(NULL, (A));                   \
       return 2;                               \
     }                                         \
     else                                      \
@@ -114,7 +114,7 @@ class False;
   to abort from the parser.
 */
 
-static void base_sql_error(drizzled::Session *session, const char *s)
+static void base_sql_error(drizzled::Session *session, const char* s)
 {
   parser::errorOn(session, s);
 }
@@ -133,7 +133,7 @@ using namespace drizzled;
   drizzled::lex_string_t *lex_str_ptr;
   drizzled::LEX_SYMBOL symbol;
   drizzled::Table_ident *table;
-  char *simple_string;
+  const char* simple_string;
   drizzled::Item *item;
   drizzled::Item_num *item_num;
   drizzled::List<drizzled::Item> *item_list;
@@ -1227,7 +1227,7 @@ field_spec:
           }
           field_def opt_attribute_comment
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex.statement;
+            statement::CreateTable *statement= (statement::CreateTable*)Lex.statement;
 
             if (Lex.field())
             {
@@ -1277,7 +1277,7 @@ field_def:
         | TEXT_SYM opt_attribute_string
           {
             $$=DRIZZLE_TYPE_BLOB;
-            Lex.length=(char*) 0; /* use default length */
+            Lex.length= NULL; /* use default length */
 
             if (Lex.field())
               Lex.field()->set_type(message::Table::Field::BLOB);
@@ -1387,9 +1387,9 @@ real_type:
 
 float_options:
           /* empty */
-          { Lex.dec=Lex.length= (char*)0; }
+          { Lex.dec=Lex.length= NULL; }
         | '(' NUM ')'
-          { Lex.length=$2.str; Lex.dec= (char*)0; }
+          { Lex.length=$2.str; Lex.dec= NULL; }
         | precision
           {}
         ;
@@ -1403,7 +1403,7 @@ precision:
         ;
 
 opt_len:
-          /* empty */ { Lex.length=(char*) 0; /* use default length */ }
+          /* empty */ { Lex.length= NULL; /* use default length */ }
         | '(' NUM ')' { Lex.length= $2.str; }
         ;
 
@@ -1425,9 +1425,9 @@ opt_zerofill:
 
 opt_precision:
           /* empty */
-          { Lex.dec=Lex.length= (char*)0; }
+          { Lex.dec=Lex.length= NULL; }
         | '(' NUM ')'
-          { Lex.length=Lex.dec= (char*)0; }
+          { Lex.length=Lex.dec= NULL; }
         | precision
           {}
         ;
@@ -1469,7 +1469,7 @@ opt_attribute:
           { }
         | opt_attribute DEFAULT signed_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value= $3;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1484,7 +1484,7 @@ opt_attribute_boolean:
           { }
         | opt_attribute_boolean DEFAULT boolean_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value= $3;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1508,7 +1508,7 @@ attribute_string:
           { }
         | DEFAULT signed_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1553,7 +1553,7 @@ attribute_integer:
           }
         | DEFAULT integer_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
@@ -1577,21 +1577,21 @@ attribute_timestamp:
           { }
         | DEFAULT NOW_SYM optional_braces
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value= new Item_func_now_local();
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | DEFAULT date_literal
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
 
             statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces
           {
-            ((statement::AlterTable *)Lex.statement)->on_update_value= new Item_func_now_local();
+            ((statement::AlterTable*)Lex.statement)->on_update_value= new Item_func_now_local();
           }
         | opt_attribute_index
           { }
@@ -1601,7 +1601,7 @@ opt_attribute_comment:
           /* empty */ { }
         | COMMENT_SYM TEXT_STRING_sys
           {
-            statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
+            statement::AlterTable *statement= (statement::AlterTable*)Lex.statement;
             statement->comment= $2;
 
             if (Lex.field())
@@ -1660,30 +1660,30 @@ ref_list:
 
 opt_match_clause:
           /* empty */
-          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
+          { ((statement::CreateTable*)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
         | MATCH FULL
-          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
+          { ((statement::CreateTable*)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
         | MATCH PARTIAL
-          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
+          { ((statement::CreateTable*)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { ((statement::CreateTable *)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
+          { ((statement::CreateTable*)Lex.statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            ((statement::CreateTable *)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable*)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable*)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex.statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable*)Lex.statement)->fk_update_opt= $3;
+            ((statement::CreateTable*)Lex.statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-            ((statement::CreateTable *)Lex.statement)->fk_delete_opt= $3;
+            ((statement::CreateTable*)Lex.statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable*)Lex.statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
           ON DELETE_SYM delete_option
@@ -1830,7 +1830,7 @@ alter:
 
             Lex.col_list.clear();
             Lex.select_lex.init_order();
-            Lex.select_lex.db= const_cast<char *>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
+            Lex.select_lex.db= const_cast<char*>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
           }
           alter_commands
           {}
@@ -2356,14 +2356,14 @@ select_item:
 remember_name:
           {
             Lex_input_stream *lip= YYSession->m_lip;
-            $$= (char*) lip->get_cpp_tok_start();
+            $$= lip->get_cpp_tok_start();
           }
         ;
 
 remember_end:
           {
             Lex_input_stream *lip= YYSession->m_lip;
-            $$= (char*) lip->get_cpp_tok_end();
+            $$= lip->get_cpp_tok_end();
           }
         ;
 
@@ -3296,23 +3296,23 @@ cast_type:
         | BOOLEAN_SYM
           { $$=ITEM_CAST_BOOLEAN; Lex.charset= &my_charset_bin; Lex.dec= 0; }
         | SIGNED_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | SIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | INT_SYM
-          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_SIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | UNSIGNED_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | UNSIGNED_SYM INT_SYM
-          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_UNSIGNED; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex.dec= 0; }
         | DATE_SYM
-          { $$=ITEM_CAST_DATE; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_DATE; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | TIME_SYM
-          { $$=ITEM_CAST_TIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_TIME; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | DATETIME_SYM
-          { $$=ITEM_CAST_DATETIME; Lex.charset= NULL; Lex.dec=Lex.length= (char*)0; }
+          { $$=ITEM_CAST_DATETIME; Lex.charset= NULL; Lex.dec=Lex.length= NULL; }
         | DECIMAL_SYM float_options
           { $$=ITEM_CAST_DECIMAL; Lex.charset= NULL; }
         ;
@@ -3805,15 +3805,15 @@ opt_key_definition:
         ;
 
 opt_key_usage_list:
-          /* empty */ { Lex.current_select->add_index_hint(YYSession, NULL, 0); }
+          /* empty */ { Lex.current_select->add_index_hint(YYSession, NULL); }
         | key_usage_list {}
         ;
 
 key_usage_element:
           ident
-          { Lex.current_select->add_index_hint(YYSession, $1.str, $1.length); }
+          { Lex.current_select->add_index_hint(YYSession, $1.str); }
         | PRIMARY_SYM
-          { Lex.current_select->add_index_hint(YYSession, (char *)"PRIMARY", 7); }
+          { Lex.current_select->add_index_hint(YYSession, "PRIMARY"); }
         ;
 
 key_usage_list:
@@ -3825,15 +3825,11 @@ using_list:
           ident
           {
             $$= new List<String>;
-            $$->push_back(new (YYSession->mem_root)
-                              String((const char *) $1.str, $1.length,
-                                      system_charset_info));
+            $$->push_back(new (YYSession->mem_root) String($1.str, $1.length, system_charset_info));
           }
         | using_list ',' ident
           {
-            $1->push_back(new (YYSession->mem_root)
-                              String((const char *) $3.str, $3.length,
-                                      system_charset_info));
+            $1->push_back(new (YYSession->mem_root) String($3.str, $3.length, system_charset_info));
             $$= $1;
           }
         ;
@@ -4103,20 +4099,20 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (unsigned long) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | HEX_NUM       { $$= (unsigned long) strtol($1.str, NULL, 16); }
+        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
         ;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
         ;
 
 select_var_list_init:
@@ -4670,9 +4666,7 @@ opt_describe_column:
         | text_string { Lex.wild= $1; }
         | ident
           {
-            Lex.wild= new (YYSession->mem_root) String((const char*) $1.str,
-                                                    $1.length,
-                                                    system_charset_info);
+            Lex.wild= new (YYSession->mem_root) String($1.str, $1.length, system_charset_info);
           }
         ;
 

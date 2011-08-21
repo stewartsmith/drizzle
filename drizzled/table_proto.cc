@@ -406,21 +406,13 @@ bool fill_table_proto(const identifier::Table& identifier,
 
   for (uint32_t i= 0; i < keys; i++)
   {
-    message::Table::Index *idx;
+    message::Table::Index *idx= table_proto.add_indexes();
 
-    idx= table_proto.add_indexes();
-
-    assert(test(key_info[i].flags & HA_USES_COMMENT) ==
-           (key_info[i].comment.length > 0));
+    assert(test(key_info[i].flags & HA_USES_COMMENT) == (key_info[i].comment.length > 0));
 
     idx->set_name(key_info[i].name);
-
     idx->set_key_length(key_info[i].key_length);
-
-    if (is_primary_key_name(key_info[i].name))
-      idx->set_is_primary(true);
-    else
-      idx->set_is_primary(false);
+    idx->set_is_primary(is_primary_key(key_info[i].name));
 
     switch(key_info[i].algorithm)
     {
