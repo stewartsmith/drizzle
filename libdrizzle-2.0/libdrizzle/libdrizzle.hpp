@@ -33,8 +33,13 @@
 
 #pragma once
 
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 #include <cstring>
+#include <fstream>
 #include <libdrizzle/libdrizzle.h>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 
@@ -42,6 +47,10 @@ namespace drizzle {
 
 class bad_query : public std::runtime_error
 {
+public:
+  bad_query(const std::string& v) : std::runtime_error(v)
+  {
+  }
 };
 
 class noncopyable
@@ -60,76 +69,78 @@ class drizzle_c : noncopyable
 public:
   drizzle_c()
   {
-    drizzle_create(&b_);
+    drizzle_create(*this);
   }
 
   ~drizzle_c()
   {
-    drizzle_free(&b_);
+    drizzle_free(*this);
   }
 
+  operator drizzle_st*()
+  {
+    return &b_;
+  }
+private:
   drizzle_st b_;
 };
 
-class result_c : noncopyable
+class result_c
 {
 public:
-  result_c()
+  operator drizzle_result_st*()
   {
-    memset(&b_, 0, sizeof(b_));
-  }
-
-  ~result_c()
-  {
-    drizzle_result_free(&b_);
+    if (!b_)
+      b_.reset(new drizzle_result_st, drizzle_result_free);
+    return b_.get();
   }
 
   const char* error()
   {
-    return drizzle_result_error(&b_);
+    return drizzle_result_error(*this);
   }
 
   uint16_t error_code()
   {
-    return drizzle_result_error_code(&b_);
+    return drizzle_result_error_code(*this);
   }
 
   uint16_t column_count()
   {
-    return drizzle_result_column_count(&b_);    
+    return drizzle_result_column_count(*this);    
   }
 
   uint64_t row_count()
   {
-    return drizzle_result_row_count(&b_);
+    return drizzle_result_row_count(*this);
   }
 
   drizzle_column_st* column_next()
   {
-    return drizzle_column_next(&b_);
+    return drizzle_column_next(*this);
   }
 
   drizzle_row_t row_next()
   {
-    return drizzle_row_next(&b_);
+    return drizzle_row_next(*this);
   }
 
   void column_seek(uint16_t i)
   {
-    drizzle_column_seek(&b_, i);
+    drizzle_column_seek(*this, i);
   }
 
   void row_seek(uint64_t i)
   {
-    drizzle_row_seek(&b_, i);
+    drizzle_row_seek(*this, i);
   }
 
   size_t* row_field_sizes()
   {
-    return drizzle_row_field_sizes(&b_);
+    return drizzle_row_field_sizes(*this);
   }
-
-  drizzle_result_st b_;
+private:
+  boost::shared_ptr<drizzle_result_st> b_;
 };
 
 class connection_c : noncopyable
@@ -137,40 +148,46 @@ class connection_c : noncopyable
 public:
   explicit connection_c(drizzle_c& drizzle)
   {
-    drizzle_con_create(&drizzle.b_, &b_);
+    drizzle_con_create(drizzle, *this);
+    read_conf_files();
   }
 
   ~connection_c()
   {
-    drizzle_con_free(&b_);
+    drizzle_con_free(*this);
+  }
+
+  operator drizzle_con_st*()
+  {
+    return &b_;
   }
 
   const char* error()
   {
-    return drizzle_con_error(&b_);
+    return drizzle_con_error(*this);
   }
 
   void set_tcp(const char* host, in_port_t port)
   {
-    drizzle_con_set_tcp(&b_, host, port);
+    drizzle_con_set_tcp(*this, host, port);
   }
 
   void set_auth(const char* user, const char* password)
   {
-    drizzle_con_set_auth(&b_, user, password);
+    drizzle_con_set_auth(*this, user, password);
   }
 
   void set_db(const char* db)
   {
-    drizzle_con_set_db(&b_, db);
+    drizzle_con_set_db(*this, db);
   }
 
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;
-    drizzle_query(&b_, &result.b_, str, str_size, &ret);
-    if (ret == DRIZZLE_RETURN_OK)
-      ret = drizzle_result_buffer(&result.b_);
+    drizzle_query(*this, result, str, str_size, &ret);
+    if (!ret)
+      ret = drizzle_result_buffer(result);
     return ret;
   }
 
@@ -183,6 +200,26 @@ public:
   {
     return query(result, str, strlen(str));
   }
+
+  result_c query(const char* str, size_t str_size)
+  {
+    result_c result;
+    if (query(result, str, str_size))
+      throw bad_query(error());
+    return result;
+  }
+
+  result_c query(const std::string& str)
+  {
+    return query(str.data(), str.size());
+  }
+
+  result_c query(const char* str)
+  {
+    return query(str, strlen(str));
+  }
+private:
+  void read_conf_files();
 
   drizzle_con_st b_;
 };
@@ -257,6 +294,11 @@ public:
     return con_.query(result, read());
   }
 
+  result_c execute()
+  {
+    return con_.query(read());
+  }
+
   std::string read() const
   {
     return out_ + in_;
@@ -266,5 +308,65 @@ private:
   std::string in_;
   std::string out_;
 };
+
+template<class T>
+const char* get_conf(const T& c, const std::string& v)
+{
+  typename T::const_iterator i = c.find(v);
+  return i == c.end() ? NULL : i->second.c_str();
+}
+
+void connection_c::read_conf_files()
+{
+  using namespace std;
+
+  vector<string> conf_files;
+#ifdef WIN32
+  {
+    boost::array<char, MAX_PATH> d;
+    GetWindowsDirectoryA(d.data(), d.size());
+    conf_files.push_back(string(d.data()) + "/my.cnf");
+    conf_files.push_back(string(d.data()) + "/drizzle.cnf");
+    conf_files.push_back(string(d.data()) + "/drizzle.conf");
+  }
+#else
+  conf_files.push_back("/etc/mysql/my.cnf");
+  conf_files.push_back("/etc/drizzle/drizzle.cnf");
+  conf_files.push_back("/etc/drizzle/drizzle.conf");
+#endif
+  if (const char* d = getenv("HOME"))
+  {
+    conf_files.push_back(string(d) + "/.my.cnf");  
+    conf_files.push_back(string(d) + "/.drizzle.conf");
+  }
+  
+  map<string, string> conf;
+  BOOST_FOREACH(string& it, conf_files)
+  {
+    ifstream is(it.c_str());
+    bool client_section = false;
+    for (string s; getline(is, s); )
+    {
+      size_t i = s.find('#');
+      if (i != string::npos)
+        s.erase(i);
+      boost::trim(s);
+      if (boost::starts_with(s, "["))
+      {
+        client_section = s == "[client]";
+        continue;
+      }
+      else if (!client_section)
+        continue;
+      i = s.find('=');
+      if (i != string::npos)
+        conf[boost::trim_copy(s.substr(0, i))] = boost::trim_copy(s.substr(i + 1));
+    }
+  }
+  if (conf.count("host") || conf.count("port"))
+    set_tcp(get_conf(conf, "host"), atoi(get_conf(conf, "port")));
+  if (conf.count("user") || conf.count("password"))
+    set_auth(get_conf(conf, "user"), get_conf(conf, "password"));
+}
 
 }
