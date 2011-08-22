@@ -66,7 +66,6 @@ int mi_close(MI_INFO *info)
 			 share->temporary ? FLUSH_IGNORE_CHANGED :
 			 FLUSH_RELEASE))
       error=errno;
-    end_key_cache(share->getKeyCache(), true);
     if (share->kfile >= 0)
     {
       /*

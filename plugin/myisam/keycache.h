@@ -36,22 +36,14 @@ struct st_block_link;
 typedef struct st_block_link BLOCK_LINK;
 struct st_keycache_page;
 typedef struct st_keycache_page KEYCACHE_PAGE;
-struct st_hash_link;
-typedef struct st_hash_link HASH_LINK;
+struct HASH_LINK;
 
 namespace drizzled {
 
 namespace internal 
 {
   typedef uint64_t my_off_t;
-  struct st_my_thread_var;
 }
-
-/* info about requests in a waiting queue */
-typedef struct st_keycache_wqueue
-{
-  drizzled::internal::st_my_thread_var *last_thread;  /* circular list of waiting threads */
-} KEYCACHE_WQUEUE;
 
 #define CHANGED_BLOCKS_HASH 128             /* must be power of 2 */
 
@@ -60,26 +52,9 @@ typedef struct st_keycache_wqueue
   It also contains read-only statistics parameters.
 */
 
-typedef struct st_key_cache
+struct KEY_CACHE
 {
-  bool key_cache_inited;
-  bool can_be_used;           /* usage of cache for read/write is allowed */
-
-  uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
-
-  int blocks;                   /* max number of blocks in the cache        */
-
-  bool in_init;		/* Set to 1 in MySQL during init/resize     */
-
-  st_key_cache():
-    key_cache_inited(false),
-    can_be_used(false),
-    key_cache_block_size(0),
-    blocks(0),
-    in_init(0)
-  { }
-
-} KEY_CACHE;
+};
 
 } /* namespace drizzled */
 
@@ -98,9 +73,7 @@ extern int key_cache_write(drizzled::KEY_CACHE *keycache,
                            int file, drizzled::internal::my_off_t filepos, int level,
                            unsigned char *buff, uint32_t length,
 			   uint32_t block_length,int force_write);
-extern int flush_key_blocks(drizzled::KEY_CACHE *keycache,
-                            int file, enum flush_type type);
-extern void end_key_cache(drizzled::KEY_CACHE *keycache, bool cleanup);
+extern int flush_key_blocks(drizzled::KEY_CACHE *keycache, int file, enum flush_type type);
 
 /*
   Next highest power of two

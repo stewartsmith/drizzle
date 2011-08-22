@@ -1739,8 +1739,6 @@ int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file)
     mi_check_print_error(param,"%d when trying to write bufferts",errno);
     return(1);
   }
-  if (!param->using_global_keycache)
-    end_key_cache(key_cache,1);
   return 0;
 } /* flush_blocks */
 

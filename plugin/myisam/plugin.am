@@ -15,7 +15,7 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 if BUILD_MYISAM_PLUGIN
-noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la 
+noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la
 endif
 noinst_HEADERS+=	\
 			plugin/myisam/ha_myisam.h \
@@ -43,7 +43,6 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/mi_open.cc \
 			plugin/myisam/mi_page.cc \
 			plugin/myisam/mi_panic.cc \
-			plugin/myisam/mi_preload.cc \
 			plugin/myisam/mi_range.cc \
 			plugin/myisam/mi_rename.cc \
 			plugin/myisam/mi_rfirst.cc \
@@ -64,4 +63,4 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/my_handler.cc \
 			plugin/myisam/my_handler_errors.cc \
 			plugin/myisam/my_pread.cc \
-			plugin/myisam/sort.cc 
+			plugin/myisam/sort.cc
