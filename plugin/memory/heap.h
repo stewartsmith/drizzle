@@ -302,10 +302,3 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
 extern unsigned char *heap_position(HP_INFO *info);
-
-/* The following is for programs that uses the old HEAP interface where
-   pointer to rows where a long instead of a (unsigned char*).
-*/
-
-typedef unsigned char *HEAP_PTR;
-

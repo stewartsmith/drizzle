@@ -28,7 +28,6 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 {
   int error,changed;
   uint32_t flag;
-  int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
     return(errno);
@@ -66,6 +65,7 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 
   if (!error)
   {
+    int res= 0;
     while ((info->s->concurrent_insert &&
             info->lastpos >= info->state->data_file_length) ||
            (info->index_cond_func &&

@@ -126,7 +126,6 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 
 unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsigned char *last_pos)
 {
-  int max_pos;
   unsigned char *next_ptr;
 
   if (level == 1)
@@ -135,9 +134,7 @@ unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsi
   }
   else
   {
-    max_pos= (block->level_info[level-1].last_blocks == pos) ?
-      HP_PTRS_IN_NOD - block->level_info[level-1].free_ptrs_in_block :
-    HP_PTRS_IN_NOD;
+    int max_pos= (block->level_info[level-1].last_blocks == pos) ? HP_PTRS_IN_NOD - block->level_info[level-1].free_ptrs_in_block : HP_PTRS_IN_NOD;
 
     next_ptr=(unsigned char*) (pos+1);
     for (int i= 0; i < max_pos ; i++)
@@ -147,7 +144,7 @@ unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsi
 
   if ((unsigned char*) pos != last_pos)
   {
-    free((unsigned char*) pos);
+    free(pos);
     return last_pos;
   }
   return next_ptr;			/* next memory position */

@@ -25,8 +25,7 @@
 typedef struct st_heap_info HP_INFO;
 typedef unsigned char *HEAP_PTR;
 
-
-class ha_heap: public drizzled::Cursor
+class ha_heap : public drizzled::Cursor
 {
   HP_INFO *file;
   /* number of records changed since last statistics update */
