@@ -27,8 +27,7 @@
 #include "sha1.h"
 #include <string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
@@ -194,6 +193,14 @@ SHA1Final(uint8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 		}
 		memset(context, 0, sizeof(*context));
 	}
+}
+
+void do_sha1(data_ref in, uint8_t out[SHA1_DIGEST_LENGTH])
+{
+  SHA1_CTX ctx;
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, in.data(), in.size());
+  SHA1Final(out, &ctx);
 }
 
 } /* namespace drizzled */

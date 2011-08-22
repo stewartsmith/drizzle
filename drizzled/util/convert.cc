@@ -27,15 +27,13 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 uint64_t drizzled_string_to_hex(char *to, const char *from, uint64_t from_size)
 {
-  static const char hex_map[]= "0123456789ABCDEF";
-  const char *from_end;
-
-  for (from_end= from + from_size; from != from_end; from++)
+  static const char* hex_map= "0123456789ABCDEF";
+  
+  for (const char *from_end= from + from_size; from != from_end; from++)
   {
     *to++= hex_map[((unsigned char) *from) >> 4];
     *to++= hex_map[((unsigned char) *from) & 0xF];
@@ -60,7 +58,6 @@ static inline char hex_char_value(char c)
 void drizzled_hex_to_string(char *to, const char *from, uint64_t from_size)
 {
   const char *from_end = from + from_size;
-
   while (from != from_end)
   {
     *to= hex_char_value(*from++) << 4;
@@ -71,20 +68,18 @@ void drizzled_hex_to_string(char *to, const char *from, uint64_t from_size)
 
 void bytesToHexdumpFormat(string &to, const unsigned char *from, size_t from_length)
 {
-  static const char hex_map[]= "0123456789abcdef";
-  unsigned int x, y;
+  static const char* hex_map= "0123456789abcdef";
   ostringstream line_number;
 
-  for (x= 0; x < from_length; x+= 16)
+  for (size_t x= 0; x < from_length; x+= 16)
   {
-    line_number << setfill('0') << setw(6);
-    line_number << x;
+    line_number << setfill('0') << setw(6) << x;
     to.append(line_number.str());
     to.append(": ", 2);
 
-    for (y= 0; y < 16; y++)
+    for (size_t y= 0; y < 16; y++)
     {
-      if ((x + y) < from_length)
+      if (x + y < from_length)
       {
         to.push_back(hex_map[(from[x+y]) >> 4]);
         to.push_back(hex_map[(from[x+y]) & 0xF]);
@@ -94,9 +89,9 @@ void bytesToHexdumpFormat(string &to, const unsigned char *from, size_t from_len
         to.append("   ");
     }
     to.push_back(' ');
-    for (y= 0; y < 16; y++)
+    for (size_t y= 0; y < 16; y++)
     {
-      if ((x + y) < from_length)
+      if (x + y < from_length)
         to.push_back(isprint(from[x + y]) ? from[x + y] : '.');
     }
     to.push_back('\n');
