@@ -33,7 +33,6 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
-#include <drizzled/algorithm/crc32.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/charset.h>
 #include <drizzled/errmsg_print.h>

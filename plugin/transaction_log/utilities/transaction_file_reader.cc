@@ -189,6 +189,5 @@ bool TransactionFileReader::getNextTransaction(message::Transaction &transaction
 
 uint32_t TransactionFileReader::checksumLastReadTransaction()
 {
-  return drizzled::algorithm::crc32(buffer,
-                                    static_cast<size_t>(previous_length));
+  return drizzled::algorithm::crc32(buffer, static_cast<size_t>(previous_length));
 }
