@@ -61,11 +61,6 @@ int mi_close(MI_INFO *info)
   free(rec_buff_ptr);
   if (flag)
   {
-    if (share->kfile >= 0 &&
-	flush_key_blocks(share->getKeyCache(), share->kfile,
-			 share->temporary ? FLUSH_IGNORE_CHANGED :
-			 FLUSH_RELEASE))
-      error=errno;
     if (share->kfile >= 0)
     {
       /*

@@ -48,8 +48,6 @@ int mi_panic(enum ha_panic_function flag)
       if (info->s->options & HA_OPTION_READ_ONLY_DATA)
 	break;
 #endif
-      if (flush_key_blocks(info->s->getKeyCache(), info->s->kfile, FLUSH_RELEASE))
-	error=errno;
       if (info->opt_flag & WRITE_CACHE_USED)
 	if (info->rec_cache.flush())
 	  error=errno;

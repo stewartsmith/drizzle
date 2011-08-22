@@ -288,15 +288,13 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
       If the key cache block size is smaller than block_size, we can so
       avoid unecessary eviction of cache block.
     */
-    if (!(buff=key_cache_read(info->s->getKeyCache(),
-                              info->s->kfile, next_link, DFLT_INIT_HITS,
-                              (unsigned char*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
-                              MI_MIN_KEY_BLOCK_LENGTH, 1)))
+
+    if (not pread(info->s->kfile, info->buff, MI_MIN_KEY_BLOCK_LENGTH, next_link))
     {
-      mi_check_print_error(param, "key cache read error for block: %s",
-			   llstr(next_link,llbuff));
+      mi_check_print_error(param, "key cache read error for block: %s", llstr(next_link,llbuff));
       return(1);
     }
+    buff= info->buff;
     next_link=mi_sizekorr(buff);
     records--;
     param->key_file_blocks+=block_size;
@@ -321,10 +319,6 @@ int chk_size(MI_CHECK *param, register MI_INFO *info)
   char buff[22],buff2[22];
 
   if (!(param->testflag & T_SILENT)) puts("- check file-size");
-
-  /* The following is needed if called externally (not from myisamchk) */
-  flush_key_blocks(info->s->getKeyCache(),
-		   info->s->kfile, FLUSH_FORCE_WRITE);
 
   size= lseek(info->s->kfile, 0, SEEK_END);
   if ((skr=(my_off_t) info->state->key_file_length) != size)
@@ -1339,8 +1333,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
         Flush dirty blocks of this index file from key cache and remove
         all blocks of this index file from key cache.
       */
-      error= flush_key_blocks(share->getKeyCache(), share->kfile,
-                              FLUSH_FORCE_WRITE);
+      error= 0;
       goto end;
     }
     /*
@@ -1352,8 +1345,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
   }
 
   /* Remove all key blocks of this index file from key cache. */
-  if ((error= flush_key_blocks(share->getKeyCache(), share->kfile,
-                               FLUSH_IGNORE_CHANGED)))
+  if ((error= 0))
     goto end;
 
   /* Clear index root block pointers. */
@@ -1618,7 +1610,6 @@ err:
   param->read_cache.end_io_cache();
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   info->rec_cache.end_io_cache();
-  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   if (not got_error && param->testflag & T_UNPACK)
   {
     share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
@@ -1730,20 +1721,7 @@ void lock_memory(MI_CHECK *)
 } /* lock_memory */
 
 
-	/* Flush all changed blocks to disk */
-
-int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file)
-{
-  if (flush_key_blocks(key_cache, file, FLUSH_RELEASE))
-  {
-    mi_check_print_error(param,"%d when trying to write bufferts",errno);
-    return(1);
-  }
-  return 0;
-} /* flush_blocks */
-
-
-	/* Sort index for more efficent reads */
+/* Sort index for more efficent reads */
 
 int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
 {
@@ -1795,10 +1773,7 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
       index_pos[key]= HA_OFFSET_ERROR;		/* No blocks */
   }
 
-  /* Flush key cache for this file if we are calling this outside myisamchk */
-  flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_IGNORE_CHANGED);
-
-  share->state.version=(ulong) time((time_t*) 0);
+  share->state.version=(ulong) time(NULL);
   old_state= share->state;			/* save state if not stored */
   r_locks=   share->r_locks;
   w_locks=   share->w_locks;
@@ -2257,7 +2232,6 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     memcpy( &share->state.state, info->state, sizeof(*info->state));
 
 err:
-  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   info->rec_cache.end_io_cache();
   if (!got_error)
   {

@@ -119,7 +119,6 @@ MI_INFO *mi_open(const drizzled::identifier::Table &identifier, int mode, uint32
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.setKeyCache();
 
     if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
