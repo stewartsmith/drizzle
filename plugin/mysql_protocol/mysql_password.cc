@@ -24,10 +24,6 @@ namespace drizzle_plugin {
 
 const char* MySQLPasswordName = "mysql_password";
 
-MySQLPassword::MySQLPassword()
-{ 
-}
-
 const char *MySQLPassword::func_name() const
 {
   return MySQLPasswordName;
