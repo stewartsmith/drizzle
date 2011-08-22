@@ -19,7 +19,6 @@ noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la
 endif
 noinst_HEADERS+=	\
 			plugin/myisam/ha_myisam.h \
-			plugin/myisam/keycache.h \
 			plugin/myisam/my_handler.h \
 			plugin/myisam/myisam.h \
 			plugin/myisam/myisam_priv.h \
