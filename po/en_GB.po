@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-16 18:42+0000\n"
+"POT-Creation-Date: 2011-08-30 12:15-0400\n"
 "PO-Revision-Date: 2010-08-18 09:04+0000\n"
 "Last-Translator: Vincent Palmer <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-08-19 03:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -545,7 +545,7 @@ msgstr "DELIMITER cannot contain a backslash character"
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5103
+#: ../client/drizzletest.cc:5095
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "Wrong or unknown protocol"
@@ -896,8 +896,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: %"
-"lu\n"
+"             Max number of examined row combination in a join is set to: "
+"%lu\n"
 "\n"
 msgstr ""
 
@@ -1242,7 +1242,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5115
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "Value supplied for port is not valid.\n"
@@ -1323,19 +1323,19 @@ msgstr "-- Retrieving rows...\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4874
+#: ../client/drizzletest.cc:4866
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr "Error: Invalid Value for opt_max_connect_retries"
 
-#: ../client/drizzletest.cc:4884
+#: ../client/drizzletest.cc:4876
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "Error: Invalid Value for opt_tail_lines"
 
-#: ../client/drizzletest.cc:4894
+#: ../client/drizzletest.cc:4886
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "Error: Invalid Value for opt_sleep"
 
-#: ../client/drizzletest.cc:5073
+#: ../client/drizzletest.cc:5065
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "Could not open '%s' for reading: errno = %d"
@@ -3377,11 +3377,11 @@ msgstr "Cannot drop index '%-.192s': needed in a foreign key constraint"
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 
 #: ../drizzled/error.cc:524
 msgid ""
@@ -3685,90 +3685,96 @@ msgstr "Received an invalid enum value '%s'."
 msgid "The UUID was not created with a valid time"
 msgstr ""
 
-#. For BOOL type
+#. For IPV6 type
 #: ../drizzled/error.cc:602
+#, fuzzy
+msgid "Received an invalid IPV6 value"
+msgstr "Received an invalid enum value '%s'."
+
+#. For BOOL type
+#: ../drizzled/error.cc:605
 #, fuzzy, c-format
 msgid "Received an invalid BOOLEAN value '%s'."
 msgstr "Received an invalid enum value '%s'."
 
-#: ../drizzled/error.cc:603
+#: ../drizzled/error.cc:606
 #, c-format
 msgid "Invalid cast to BOOLEAN: '%s'."
 msgstr ""
 
 #. Transactional DDL
-#: ../drizzled/error.cc:606
+#: ../drizzled/error.cc:609
 msgid "Transactional DDL not supported"
 msgstr ""
 
 #. ASSERT Message
-#: ../drizzled/error.cc:608
+#: ../drizzled/error.cc:611
 #, fuzzy, c-format
 msgid "Assertion '%s' failed."
 msgstr "Operation %s failed for %.256s"
 
-#: ../drizzled/error.cc:609
+#: ../drizzled/error.cc:612
 #, c-format
 msgid "Assertion '%s' failed, the result was NULL."
 msgstr ""
 
 #. Catalog related errors
-#: ../drizzled/error.cc:627
+#: ../drizzled/error.cc:630
 #, fuzzy, c-format
 msgid "Cannot create catalog '%s'."
 msgstr "Can't reopen table: '%-.192s'"
 
-#: ../drizzled/error.cc:628
+#: ../drizzled/error.cc:631
 #, c-format
 msgid "Permission is denied to create '%s' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:629
+#: ../drizzled/error.cc:632
 #, fuzzy, c-format
 msgid "Cannot drop catalog '%s'."
 msgstr "Can't reopen table: '%-.192s'"
 
-#: ../drizzled/error.cc:630
+#: ../drizzled/error.cc:633
 #, c-format
 msgid "Permission is denied to drop '%s' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:631
+#: ../drizzled/error.cc:634
 #, fuzzy, c-format
 msgid "Catalog '%s' does not exist."
 msgstr "%s %s does not exist"
 
-#: ../drizzled/error.cc:632
+#: ../drizzled/error.cc:635
 msgid "You cannot drop the 'local' catalog."
 msgstr ""
 
-#: ../drizzled/error.cc:633
+#: ../drizzled/error.cc:636
 #, fuzzy, c-format
 msgid "Could not gain lock on '%s'."
 msgstr "Couldn't load plugin named '%s'.\n"
 
-#: ../drizzled/error.cc:634
+#: ../drizzled/error.cc:637
 #, fuzzy, c-format
 msgid "Corrupt or invalid catalog definition for '%s' : '%s'."
 msgstr "Corrupt or invalid table definition: %s"
 
-#: ../drizzled/error.cc:635
+#: ../drizzled/error.cc:638
 #, fuzzy
 msgid "Invalid catalog name."
 msgstr "Invalid parameter number"
 
-#: ../drizzled/error.cc:636
+#: ../drizzled/error.cc:639
 msgid ""
 "Engine status is now stored in the data_dictionary tables, please use these "
 "instead."
 msgstr ""
 
-#: ../drizzled/error.cc:637
+#: ../drizzled/error.cc:640
 #, fuzzy
 msgid "There is already a transaction in progress"
 msgstr "Server shutdown in progress"
 
-#: ../drizzled/error.cc:638
+#: ../drizzled/error.cc:641
 msgid "No lock is held by this connection."
 msgstr ""
 
@@ -3780,19 +3786,19 @@ msgstr ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 
-#: ../drizzled/main.cc:356 ../plugin/multi_thread/multi_thread.cc:76
+#: ../drizzled/main.cc:358 ../plugin/multi_thread/multi_thread.cc:76
 msgid "Drizzle has receieved an abort event."
 msgstr ""
 
-#: ../drizzled/main.cc:357 ../plugin/multi_thread/multi_thread.cc:77
+#: ../drizzled/main.cc:359 ../plugin/multi_thread/multi_thread.cc:77
 msgid "In Function: "
 msgstr ""
 
-#: ../drizzled/main.cc:358 ../plugin/multi_thread/multi_thread.cc:78
+#: ../drizzled/main.cc:360 ../plugin/multi_thread/multi_thread.cc:78
 msgid "In File: "
 msgstr ""
 
-#: ../drizzled/main.cc:359 ../plugin/multi_thread/multi_thread.cc:79
+#: ../drizzled/main.cc:361 ../plugin/multi_thread/multi_thread.cc:79
 msgid "On Line: "
 msgstr ""
 
@@ -3827,12 +3833,12 @@ msgstr ""
 msgid "Plugin '%s' init function returned error.\n"
 msgstr "Plugin '%s' init function returned error.\n"
 
-#: ../drizzled/module/loader.cc:381
+#: ../drizzled/module/loader.cc:379
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
 msgstr "Couldn't load plugin library named '%s'.\n"
 
-#: ../drizzled/module/loader.cc:391
+#: ../drizzled/module/loader.cc:389
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
 msgstr "Couldn't load plugin named '%s'.\n"
@@ -4057,7 +4063,7 @@ msgstr ""
 "plugins were registered that match the requested replicator name of '%s'.\n"
 "We have deactivated the TransactionApplier '%s'.\n"
 
-#: ../drizzled/session.cc:1863 ../drizzled/session.cc:1872
+#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Could not remove temporary table: '%s', error: %d"
@@ -4115,18 +4121,18 @@ msgid ""
 "\n"
 msgstr ""
 "It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes of memory\n"
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 
-#: ../drizzled/sql_table.cc:1882
+#: ../drizzled/sql_table.cc:1869
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Unknown - internal error %d during operation"
 
-#: ../drizzled/statement/alter_table.cc:1589
+#: ../drizzled/statement/alter_table.cc:1575
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -4155,12 +4161,12 @@ msgstr "Failed to initialise plugins."
 msgid "Got error %d when reading table '%s'"
 msgstr "Got error %d when reading table '%s'"
 
-#: ../drizzled/table/instance/base.cc:1810
+#: ../drizzled/table/instance/base.cc:1794
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Unknown collation '%s' in table '%-.64s' definition"
 
-#: ../drizzled/table/instance/base.cc:1817
+#: ../drizzled/table/instance/base.cc:1799
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
@@ -4267,46 +4273,46 @@ msgstr "Default database to use."
 msgid "Default schema to use."
 msgstr "Default database to use."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:89
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:88
 #, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with Drizzle/MySQL "
 "protocol."
 msgstr "Port number to use for connection or use 0 for MySQL protocol default."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:92
-#: ../plugin/mysql_protocol/mysql_protocol.cc:927
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:91
+#: ../plugin/mysql_protocol/mysql_protocol.cc:930
 msgid "Connect Timeout."
 msgstr "Connect Timeout."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:95
-#: ../plugin/mysql_protocol/mysql_protocol.cc:930
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:94
+#: ../plugin/mysql_protocol/mysql_protocol.cc:933
 msgid "Read Timeout."
 msgstr "Read Timeout."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:98
-#: ../plugin/mysql_protocol/mysql_protocol.cc:933
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:97
+#: ../plugin/mysql_protocol/mysql_protocol.cc:936
 msgid "Write Timeout."
 msgstr "Write Timeout."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:101
-#: ../plugin/mysql_protocol/mysql_protocol.cc:936
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:100
+#: ../plugin/mysql_protocol/mysql_protocol.cc:939
 msgid "Retry Count."
 msgstr "Retry Count."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:104
-#: ../plugin/mysql_protocol/mysql_protocol.cc:939
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:103
+#: ../plugin/mysql_protocol/mysql_protocol.cc:942
 msgid "Buffer length."
 msgstr "Buffer length."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:107
-#: ../plugin/mysql_protocol/mysql_protocol.cc:942
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:106
+#: ../plugin/mysql_protocol/mysql_protocol.cc:945
 msgid "Address to bind to."
 msgstr "Address to bind to."
 
-#: ../plugin/drizzle_protocol/drizzle_protocol.cc:110
-#: ../plugin/mysql_protocol/mysql_protocol.cc:945
-#: ../plugin/mysql_unix_socket_protocol/protocol.cc:163
+#: ../plugin/drizzle_protocol/drizzle_protocol.cc:109
+#: ../plugin/mysql_protocol/mysql_protocol.cc:948
+#: ../plugin/mysql_unix_socket_protocol/protocol.cc:162
 #, fuzzy
 msgid "Maximum simultaneous connections."
 msgstr "Too many connections"
@@ -4383,26 +4389,26 @@ msgid ""
 "or its equivalent numeric id"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9448
+#: ../plugin/innobase/handler/ha_innodb.cc:9450
 msgid "Do not use Native AIO library for IO, even if available"
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9489
+#: ../plugin/innobase/handler/ha_innodb.cc:9491
 #, fuzzy
 msgid "Enable internal replication log."
 msgstr "Enable transaction log"
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9492
+#: ../plugin/innobase/handler/ha_innodb.cc:9494
 msgid ""
 "Timeout in seconds an InnoDB transaction may wait for a lock before being "
 "rolled back. Values above 100000000 disable the timeout."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9495
+#: ../plugin/innobase/handler/ha_innodb.cc:9497
 msgid "Percentage of the buffer pool to reserve for 'old' blocks."
 msgstr ""
 
-#: ../plugin/innobase/handler/ha_innodb.cc:9498
+#: ../plugin/innobase/handler/ha_innodb.cc:9500
 msgid ""
 "ove blocks to the 'new' end of the buffer pool if the first access was at "
 "least this many milliseconds ago. The timeout is disabled if 0 (the default)."
@@ -4702,7 +4708,7 @@ msgid ""
 "Path to special datafile for doublewrite buffer. (default is : not used)"
 msgstr ""
 
-#: ../plugin/json_server/json_server.cc:363
+#: ../plugin/json_server/json_server.cc:359
 #, fuzzy
 msgid "Port number to use for connection or 0 for default (port 8086) "
 msgstr "Port number to use for connection or use 0 for MySQL protocol default."
@@ -4832,21 +4838,21 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:540
+#: ../plugin/myisam/ha_myisam.cc:537
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr "Got an error from thread_id=%<PRIu64>, %s:%d"
 
-#: ../plugin/myisam/ha_myisam.cc:546
+#: ../plugin/myisam/ha_myisam.cc:543
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr "Got an error from unknown thread, %s:%d"
 
-#: ../plugin/myisam/ha_myisam.cc:555
+#: ../plugin/myisam/ha_myisam.cc:552
 msgid "Unknown thread accessing table"
 msgstr "Unknown thread accessing table"
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1516
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
@@ -4854,7 +4860,7 @@ msgstr ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
 
-#: ../plugin/myisam/ha_myisam.cc:1522
+#: ../plugin/myisam/ha_myisam.cc:1519
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -5103,28 +5109,28 @@ msgstr "No such table space"
 msgid "Tablespace not empty"
 msgstr "Tablespace not empty"
 
-#: ../plugin/mysql_protocol/mysql_protocol.cc:923
+#: ../plugin/mysql_protocol/mysql_protocol.cc:926
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr "Port number to use for connection or use 0 for MySQL protocol default."
 
-#: ../plugin/mysql_unix_socket_protocol/protocol.cc:79
+#: ../plugin/mysql_unix_socket_protocol/protocol.cc:78
 msgid ""
 " exists already. Do you have another Drizzle or MySQL running? Or perhaps "
 "the file is stale and should be removed?"
 msgstr ""
 
-#: ../plugin/mysql_unix_socket_protocol/protocol.cc:140
+#: ../plugin/mysql_unix_socket_protocol/protocol.cc:139
 #, fuzzy, c-format
 msgid "Listening on %s"
 msgstr "Listening on %s:%s\n"
 
-#: ../plugin/mysql_unix_socket_protocol/protocol.cc:158
+#: ../plugin/mysql_unix_socket_protocol/protocol.cc:157
 #, fuzzy
 msgid "Path used for MySQL UNIX Socket Protocol."
 msgstr "Use MySQL Protocol."
 
-#: ../plugin/mysql_unix_socket_protocol/protocol.cc:160
+#: ../plugin/mysql_unix_socket_protocol/protocol.cc:159
 msgid "Clobber socket file if one is there already."
 msgstr ""
 
