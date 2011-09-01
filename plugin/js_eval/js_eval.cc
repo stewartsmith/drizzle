@@ -81,8 +81,8 @@ const char* ToCString(const v8::String::Utf8Value& value) {
  * together with the NULL result. When that is done, this function can be 
  * deleted.
  * 
- * @note This is copied from v8 samples/shell.cc. It's not GPL. 
- * Don't ever merge into drizzle.
+ * @note This is copied from v8 samples/shell.cc. It's not GPL. (Otoh, it's BSD...?)
+ * Anyway, don't merge into drizzle.
  */
 void ReportException(v8::TryCatch* try_catch) {
   v8::HandleScope handle_scope;
@@ -137,7 +137,7 @@ void ReportException(v8::TryCatch* try_catch) {
  * @param res Pointer to the drizzled::String object that will contain the result
  * @return a drizzled::String containing the value returned by executed JavaScript code (value of last executed statement) 
  */
-String *JsEvalFunction::val_str(String *res)
+String *JsEvalFunction::val_str(String *str)
 {
   assert(fixed == 1);
   // If we return from any of the error conditions during method, then 
@@ -145,9 +145,9 @@ String *JsEvalFunction::val_str(String *res)
   null_value= true; 
   
   String *source_str=NULL;
-  source_str = args[0]->val_str(source_str); 
+  source_str = args[0]->val_str(str); 
   
-  // TODO Some of this (FunctionTemplate and other bindings) should probably be 
+  // TODO Some of this (ObjectTemplate bindings) should probably be 
   // moved to initialize, but then it must be allocated on the heap.
   
   // Need to use Locker in multi-threaded app. v8 is unlocked by the destructor 
@@ -161,38 +161,40 @@ String *JsEvalFunction::val_str(String *res)
   // Create a template for the global object and populate a drizzle object.
   v8::Handle<v8::ObjectTemplate> global  = v8::ObjectTemplate::New();
   // Drizzle will contain API's to drizzle variables, functions and tables
-  v8::Handle<v8::ObjectTemplate> drizzle = v8::ObjectTemplate::New();
-  v8::Handle<v8::ObjectTemplate> js      = v8::ObjectTemplate::New();
+  v8::Handle<v8::ObjectTemplate> db = v8::ObjectTemplate::New();
+  v8::Handle<v8::ObjectTemplate> js = v8::ObjectTemplate::New();
   // Bind the 'version' function 
-  global->Set(v8::String::New("drizzle"), drizzle);
-  drizzle->Set(v8::String::New("js"), js);
+  global->Set(v8::String::New("db"), db);
+  db->Set(v8::String::New("js"), js);
   js->Set(v8::String::New("version"), v8::FunctionTemplate::New(V8Version));
   js->Set(v8::String::New("engine"), v8::FunctionTemplate::New(JsEngine));
-  // TODO: Now bind the arguments into argv[]
   
-  // Create a v8 string containing the JavaScript source code.
-  // Convert from drizzled::String to char* string to v8::String.
-  v8::Handle<v8::String> source = v8::String::New(source_str->c_str());
-
-  
-  for( uint64_t n = 1; n < arg_count; n++ )
-  {
-    //TODO: collect other arguments into some array passed into v8 as js array "argv"
-    //... = args[n];
-  }
+  // Now bind the arguments into argv[]
+  // v8::Array can only be created when context is already entered (otherwise v8 segfaults!)
   v8::Persistent<v8::Context> context = v8::Context::New(NULL, global);
-  //v8::Handle<v8::Context> context = v8::Context::New(NULL, global);
   if (context.IsEmpty()) {
     // TODO: how do I set warning/error in the drizzle result?
     printf("Error in js_eval() while creating JavaScript context in v8.\n");
     return NULL;
   }
   context->Enter();
+   
+  v8::Handle<v8::Array> a = v8::Array::New(arg_count-1);
+  for( uint64_t n = 1; n < arg_count; n++ )
+  {
+    a->Set(n-1, v8::String::New(args[n]->val_str(str)->c_str()));
+  }
+  //Need to fetch the global element back from context, global doesn't work anymore
+  context->Global()->Set(v8::String::New("argv"), a);
+
   
   
   // Compile the source code.
   v8::TryCatch try_catch;
   v8::Handle<v8::Value> result;
+  // Create a v8 string containing the JavaScript source code.
+  // Convert from drizzled::String to char* string to v8::String.
+  v8::Handle<v8::String> source = v8::String::New(source_str->c_str());
   v8::Handle<v8::Script> script = v8::Script::Compile(source);
   if (script.IsEmpty()) {
     // TODO: how do I set warning/error in the drizzle result?
@@ -228,19 +230,19 @@ String *JsEvalFunction::val_str(String *res)
   
   // Convert the result to a drizzled::String and print it.
   // Allocate space to the drizzled::String 
-  res->free(); //TODO: Check the source for alloc(), but apparently I don't need this line?
-  res->alloc(rstring->Utf8Length());
+  str->free(); //TODO: Check the source for alloc(), but apparently I don't need this line?
+  str->alloc(rstring->Utf8Length());
   // Now copy string from v8 heap to drizzled heap
-  rstring->WriteUtf8(res->ptr());
+  rstring->WriteUtf8(str->ptr());
   // drizzled::String doesn't actually set string length properly in alloc(), so set it now
-  res->length(rstring->Utf8Length());
+  str->length(rstring->Utf8Length());
  
   context->Exit();
   context.Dispose();
 
   // There was no error and value returned is not undefined, so it's not null.
   null_value= false;
-  return res;
+  return str;
 }
 
 
