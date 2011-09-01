@@ -24,14 +24,17 @@
 #include <drizzled/function/str/strfunc.h>
 
 #include <v8.h>
+#define JS_ENGINE "v8"
 
 using namespace std;
 using namespace drizzled;
 
 
+// TODO: Can I just declare functions like this? Do I need to use a namespace? Naming convention?
+v8::Handle<v8::Value> V8Version(const v8::Arguments& args);
+v8::Handle<v8::Value> JsEngine(const v8::Arguments& args);
 const char* ToCString(const v8::String::Utf8Value& value);
 void ReportException(v8::TryCatch* try_catch);
-v8::Handle<v8::Value> V8Version(const v8::Arguments& args);
 
 
 // TODO: So this is a function that returns strings? 
@@ -121,14 +124,15 @@ void ReportException(v8::TryCatch* try_catch) {
 /**
  * Implements js_eval(), evaluate JavaScript code
  * 
- * @note: I only compiled this with -O0 but should work with default O2 also.
+ * @note I only compiled this with -O0 but should work with default O2 also.
  *
- * @todo: Accepts more than one parameter, but doesn't use them.
- * @todo: How does it work if I want to return integers and doubles?
- * @todo: v8 exceptions are printed to the log. Should be converted to 
+ * @todo Accepts more than one parameter, but doesn't use them.
+ * @todo How does it work if I want to return integers and doubles?
+ * @todo v8 exceptions are printed to the log. Should be converted to 
  * drizzle warning/error and returned with result.
- * @todo: Probably the v8 stuff will be moved to it's own function in the future.
- * @todo: Documentation for drizzle manual in .rst format
+ * @todo Probably the v8 stuff will be moved to it's own function in the future.
+ * @todo Documentation for drizzle manual in .rst format
+ * @todo When available, use v8::Isolate instead of v8::Locker for multithreading
  * 
  * @param res Pointer to the drizzled::String object that will contain the result
  * @return a drizzled::String containing the value returned by executed JavaScript code (value of last executed statement) 
@@ -143,17 +147,31 @@ String *JsEvalFunction::val_str(String *res)
   String *source_str=NULL;
   source_str = args[0]->val_str(source_str); 
   
+  // TODO Some of this (FunctionTemplate and other bindings) should probably be 
+  // moved to initialize, but then it must be allocated on the heap.
+  
+  // Need to use Locker in multi-threaded app. v8 is unlocked by the destructor 
+  // when locker goes out of scope.
+  // TODO: Newer versions of v8 provide an Isolate class where you can get a 
+  // separate instance of v8 (ie one per thread). v8 2.5.9.9 in Ubuntu 11.04 does 
+  // not yet offer it.
+  v8::Locker locker;
   // Pass code and arguments into v8...
-  // TODO Some of this should probably be moved to initialize, but then 
-  // it must be allocated on the heap.
   v8::HandleScope handle_scope;
-  // Create a template for the global object.
-  v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
-  // Bind the 'version' function (TODO: just an example but this is how we bind arguments too...)
-  global->Set(v8::String::New("version"), v8::FunctionTemplate::New(V8Version));
-
+  // Create a template for the global object and populate a drizzle object.
+  v8::Handle<v8::ObjectTemplate> global  = v8::ObjectTemplate::New();
+  // Drizzle will contain API's to drizzle variables, functions and tables
+  v8::Handle<v8::ObjectTemplate> drizzle = v8::ObjectTemplate::New();
+  v8::Handle<v8::ObjectTemplate> js      = v8::ObjectTemplate::New();
+  // Bind the 'version' function 
+  global->Set(v8::String::New("drizzle"), drizzle);
+  drizzle->Set(v8::String::New("js"), js);
+  js->Set(v8::String::New("version"), v8::FunctionTemplate::New(V8Version));
+  js->Set(v8::String::New("engine"), v8::FunctionTemplate::New(JsEngine));
+  // TODO: Now bind the arguments into argv[]
+  
   // Create a v8 string containing the JavaScript source code.
-  // Convert from drizzled::String to char[] string to v8::String.
+  // Convert from drizzled::String to char* string to v8::String.
   v8::Handle<v8::String> source = v8::String::New(source_str->c_str());
 
   
@@ -163,6 +181,7 @@ String *JsEvalFunction::val_str(String *res)
     //... = args[n];
   }
   v8::Persistent<v8::Context> context = v8::Context::New(NULL, global);
+  //v8::Handle<v8::Context> context = v8::Context::New(NULL, global);
   if (context.IsEmpty()) {
     // TODO: how do I set warning/error in the drizzle result?
     printf("Error in js_eval() while creating JavaScript context in v8.\n");
@@ -187,11 +206,17 @@ String *JsEvalFunction::val_str(String *res)
       // TODO: how do I set warning/error in the drizzle result?
       // Print errors that happened during execution.
       ReportException(&try_catch);
+      // Dispose of Persistent objects before returning. (Is it needed?)
+      context->Exit();
+      context.Dispose();
       return NULL;
     } else {
       assert(!try_catch.HasCaught());
       if (result->IsUndefined()) {
         printf("js_eval() got Undefined result back from v8.\n");
+        // Dispose of Persistent objects before returning. (Is it needed?)
+        context->Exit();
+        context.Dispose();
         return NULL;
       }
     }
@@ -227,6 +252,8 @@ static int initialize(module::Context &context)
 {
   js_eval_function = new plugin::Create_function<JsEvalFunction>("js_eval");
   context.add(js_eval_function);
+  // Initialize V8
+  v8::V8::Initialize();
   return 0;
 }
 
@@ -237,6 +264,9 @@ v8::Handle<v8::Value> V8Version(const v8::Arguments&) {
   return v8::String::New(v8::V8::GetVersion());
 }
 
+v8::Handle<v8::Value> JsEngine(const v8::Arguments&) {
+  return v8::String::New(JS_ENGINE);
+}
 
 
 DRIZZLE_DECLARE_PLUGIN
