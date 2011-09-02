@@ -27,16 +27,12 @@
 
 #include <config.h>
 #include <zlib.h>
-#include <drizzled/query_id.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
 using namespace std;
 
-namespace drizzled
-{
-
-Item_str_func::~Item_str_func() {}
+namespace drizzled {
 
 bool Item_str_func::fix_fields(Session *session, Item **ref)
 {
@@ -45,10 +41,9 @@ bool Item_str_func::fix_fields(Session *session, Item **ref)
     In Item_str_func::check_well_formed_result() we may set null_value
     flag on the same condition as in test() below.
   */
-  maybe_null= (maybe_null || true);
+  maybe_null= true;
   return res;
 }
-
 
 type::Decimal *Item_str_func::val_decimal(type::Decimal *decimal_value)
 {

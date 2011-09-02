@@ -835,7 +835,7 @@ READ_INFO::~READ_INFO()
 }
 
 
-#define GET (stack_pos != stack ? *--stack_pos : my_b_get(&cache))
+#define GET (stack_pos != stack ? *--stack_pos : cache.get())
 #define PUSH(A) *(stack_pos++)=(A)
 
 

@@ -1875,9 +1875,8 @@ int Join::destroy()
   exec_tmp_table1= NULL;
   exec_tmp_table2= NULL;
   delete select;
-  delete_dynamic(&keyuse);
-
-  return(error);
+  keyuse.free();
+  return error;
 }
 
 /**
@@ -2917,7 +2916,7 @@ enum_nested_loop_state end_send(Join *join, JoinTable *, bool end_of_records)
 
           join->select_options^= OPTION_FOUND_ROWS;
           if (table->sort.record_pointers ||
-              (table->sort.io_cache && my_b_inited(table->sort.io_cache)))
+              (table->sort.io_cache && table->sort.io_cache->inited()))
           {
             /* Using filesort */
             join->send_records= table->sort.found_records;

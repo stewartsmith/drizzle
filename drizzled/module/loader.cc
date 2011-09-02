@@ -336,8 +336,6 @@ class PrunePlugin :
   public unary_function<string, bool>
 {
   const string to_match;
-  PrunePlugin();
-  PrunePlugin& operator=(const PrunePlugin&);
 public:
   explicit PrunePlugin(const string &match_in) :
     to_match(match_in)

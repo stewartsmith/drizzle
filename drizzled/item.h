@@ -53,12 +53,8 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class DRIZZLED_API Item : public memory::SqlAlloc
+class DRIZZLED_API Item : public memory::SqlAlloc, boost::noncopyable
 {
-  /* Prevent use of these */
-  Item(const Item &);
-  void operator=(Item &);
-
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
   virtual bool is_expensive_processor(unsigned char *arg);

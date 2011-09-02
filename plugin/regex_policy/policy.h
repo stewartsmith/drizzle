@@ -35,8 +35,7 @@
 
 namespace fs= boost::filesystem;
 
-namespace regex_policy
-{
+namespace regex_policy {
 
 static const fs::path DEFAULT_POLICY_FILE= SYSCONFDIR "/drizzle.policy";
 
@@ -85,7 +84,7 @@ public:
   }
   bool userMatches(std::string &str);
   bool objectMatches(std::string &object_id);
-  bool isRestricted();
+  bool isRestricted() const;
   const std::string&getUser() const
   {
     return user;
@@ -137,7 +136,7 @@ inline bool PolicyItem::objectMatches(std::string &object_id)
   return boost::regex_match(object_id, object_re);
 }
 
-inline bool PolicyItem::isRestricted()
+inline bool PolicyItem::isRestricted() const
 {
   return action == POLICY_DENY;
 }

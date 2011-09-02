@@ -316,9 +316,9 @@ static bool prepare_alter_table(Session *session,
   {
     /* Check if field should be dropped */
     vector<string>::iterator it= drop_columns.begin();
-    while ((it != drop_columns.end()))
+    while (it != drop_columns.end())
     {
-      if (! my_strcasecmp(system_charset_info, field->field_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, field->field_name, it->c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -469,9 +469,9 @@ static bool prepare_alter_table(Session *session,
     char *key_name= key_info->name;
 
     vector<string>::iterator it= drop_keys.begin();
-    while ((it != drop_keys.end()))
+    while (it != drop_keys.end())
     {
-      if (! my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
         break;
       it++;
     }
@@ -536,9 +536,6 @@ static bool prepare_alter_table(Session *session,
     if (key_parts.size())
     {
       key_create_information_st key_create_info= default_key_create_info;
-      Key *key;
-      Key::Keytype key_type;
-
       key_create_info.algorithm= key_info->algorithm;
 
       if (key_info->flags & HA_USES_BLOCK_SIZE)
@@ -547,25 +544,16 @@ static bool prepare_alter_table(Session *session,
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
+      Key::Keytype key_type;
       if (key_info->flags & HA_NOSAME)
       {
-        if (is_primary_key_name(key_name))
-          key_type= Key::PRIMARY;
-        else
-          key_type= Key::UNIQUE;
+        key_type= is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE;
       }
       else
       {
         key_type= Key::MULTIPLE;
       }
-
-      key= new Key(key_type,
-                   key_name,
-                   strlen(key_name),
-                   &key_create_info,
-                   test(key_info->flags & HA_GENERATED_KEY),
-                   key_parts);
-      new_key_list.push_back(key);
+      new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }
 
@@ -573,9 +561,9 @@ static bool prepare_alter_table(Session *session,
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     vector<string>::iterator it= drop_fkeys.begin();
-    while ((it != drop_fkeys.end()))
+    while (it != drop_fkeys.end())
     {
-      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), (*it).c_str()))
+      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), it->c_str()))
       {
         break;
       }
@@ -618,11 +606,9 @@ static bool prepare_alter_table(Session *session,
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
 
-      if (key->name.str && is_primary_key_name(key->name.str))
+      if (key->name.str && is_primary_key(key->name.str))
       {
-        my_error(ER_WRONG_NAME_FOR_INDEX,
-                 MYF(0),
-                 key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
         return true;
       }
     }

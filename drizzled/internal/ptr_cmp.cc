@@ -26,10 +26,8 @@
 
 #include <plugin/myisam/myisampack.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);
 static int ptr_compare_0(size_t *compare_length, unsigned char **a, unsigned char **b);

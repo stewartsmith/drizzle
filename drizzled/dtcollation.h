@@ -27,16 +27,14 @@ namespace drizzled {
 class DRIZZLED_API DTCollation
 {
 public:
-  const charset_info_st *collation;
-  enum Derivation derivation;
+  const charset_info_st* collation;
+  Derivation derivation;
 
   DRIZZLED_LOCAL DTCollation();
-  DRIZZLED_LOCAL DTCollation(const charset_info_st * const collation_arg,
-                             Derivation derivation_arg);
+  DRIZZLED_LOCAL DTCollation(const charset_info_st*, Derivation);
   void set(DTCollation &dt);
-  void set(const charset_info_st * const collation_arg,
-           Derivation derivation_arg);
-  void set(const charset_info_st * const collation_arg);
+  void set(const charset_info_st*, Derivation);
+  void set(const charset_info_st*);
   void set(Derivation derivation_arg);
   bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0);
 

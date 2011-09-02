@@ -67,83 +67,84 @@ static void sigusr1_handler(int sig)
 
 void daemon_is_ready()
 {
+  int fd;
   kill(parent_pid, SIGUSR1);
+
+  if ((fd = open("/dev/null", O_RDWR, 0)) != -1) 
+  {
+    if(dup2(fd, STDIN_FILENO) < 0)
+    {
+      perror("dup2 stdin");
+      return;
+    }
+
+    if(dup2(fd, STDOUT_FILENO) < 0)
+    {
+      perror("dup2 stdout");
+      return;
+    }
+
+    if(dup2(fd, STDERR_FILENO) < 0)
+    {
+      perror("dup2 stderr");
+      return;
+    }
+
+    if (fd > STDERR_FILENO)
+    {
+      if (close(fd) < 0)
+      {
+        perror("close");
+        return;
+      }
+    }
+  }
 }
 
-bool daemonize(bool nochdir, bool noclose, bool wait_sigusr1)
+bool daemonize()
 {
-    int fd;
-    pid_t child= -1;
+  pid_t child= -1;
 
-    parent_pid= getpid();
-    signal(SIGUSR1, sigusr1_handler);
+  parent_pid= getpid();
+  signal(SIGUSR1, sigusr1_handler);
 
-    child= fork();
+  child= fork();
 
-    switch (child)
+  switch (child)
+  {
+  case -1:
+    return true;
+
+  case 0:
+    break;
+
+  default:
     {
-    case -1:
-        return true;
-    case 0:
-        break;
-    default:
-      if (wait_sigusr1)
+      /* parent */
+      int exit_code= -1;
+      int status;
+      while (waitpid(child, &status, 0) != child)
+      { }
+
+      if (WIFEXITED(status))
       {
-        /* parent */
-        int exit_code= -1;
-        int status;
-        while (waitpid(child, &status, 0) != child)
-        { }
-
-        if (WIFEXITED(status))
-        {
-          exit_code= WEXITSTATUS(status);
-        }
-        if (WIFSIGNALED(status))
-        {
-          exit_code= -1;
-        }
-        _exit(exit_code);
+        exit_code= WEXITSTATUS(status);
       }
-      else
+      if (WIFSIGNALED(status))
       {
-        _exit(EXIT_SUCCESS);
+        exit_code= -1;
       }
+      _exit(exit_code);
     }
+  }
 
-    /* child */
-    if (setsid() == -1)
-        return true;
+  /* child */
+  if (setsid() == -1)
+  {
+    return true;
+  }
 
-    if (nochdir == 0) {
-        if(chdir("/") != 0) {
-            perror("chdir");
-            return true;
-        }
-    }
-
-    if (noclose == 0 && (fd = open("/dev/null", O_RDWR, 0)) != -1) {
-        if(dup2(fd, STDIN_FILENO) < 0) {
-            perror("dup2 stdin");
-            return true;
-        }
-        if(dup2(fd, STDOUT_FILENO) < 0) {
-            perror("dup2 stdout");
-            return true;
-        }
-        if(dup2(fd, STDERR_FILENO) < 0) {
-            perror("dup2 stderr");
-            return true;
-        }
-
-        if (fd > STDERR_FILENO) {
-            if(close(fd) < 0) {
-                perror("close");
-                return true;
-            }
-        }
-    }
-    return false; 
+  return false; 
 }
 
 } /* namespace drizzled */

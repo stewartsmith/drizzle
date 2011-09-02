@@ -62,7 +62,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   index= key_nr;
   head= table;
   key_part_info= head->key_info[index].key_part;
-  my_init_dynamic_array(&ranges, sizeof(optimizer::QuickRange*), 16, 16);
+  ranges.init(sizeof(optimizer::QuickRange*), 16, 16);
 
   /* 'session' is not accessible in QuickRangeSelect::reset(). */
   mrr_buf_size= session->variables.read_rnd_buff_size;
@@ -121,7 +121,7 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
         delete cursor;
       }
     }
-    delete_dynamic(&ranges); /* ranges are allocated in alloc */
+    ranges.free(); /* ranges are allocated in alloc */
     delete column_bitmap;
     alloc.free_root(MYF(0));
   }
@@ -131,8 +131,9 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
 
 int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
 {
-  Cursor *save_file= cursor, *org_file;
-  Session *session;
+  Cursor* org_file;
+  Cursor* save_file= cursor;
+  Session* session;
 
   in_ror_merged_scan= 1;
   if (reuse_handler)
@@ -153,7 +154,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
   }
 
   session= head->in_use;
-  if (! (cursor= head->cursor->clone(session->mem_root)))
+  if (not (cursor= head->cursor->clone(session->mem_root)))
   {
     /*
       Manually set the error flag. Note: there seems to be quite a few
@@ -191,7 +192,7 @@ end:
   org_file= head->cursor;
   head->cursor= cursor;
   /* We don't have to set 'head->keyread' here as the 'cursor' is unique */
-  if (! head->no_keyread)
+  if (not head->no_keyread)
   {
     head->key_read= 1;
     head->mark_columns_used_by_index(index);

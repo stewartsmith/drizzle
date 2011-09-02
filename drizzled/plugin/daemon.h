@@ -30,15 +30,10 @@ namespace plugin {
 
 class DRIZZLED_API Daemon : public Plugin
 {
-  Daemon();
-  Daemon(const Daemon &);
-  Daemon& operator=(const Daemon &);
 public:
   explicit Daemon(std::string name_arg)
     : Plugin(name_arg, "Daemon")
   {}
-
-  virtual ~Daemon() {}
 
   /**
    * Standard plugin system registration hooks

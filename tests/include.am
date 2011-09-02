@@ -58,56 +58,60 @@ TEST_RUN_DBQP= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
 
 
 EXTRA_DIST += \
-	$(EXTRA_SCRIPTS) \
-	${srcdir}/tests/crashme_tests \
-	${srcdir}/tests/dbqp.py \
-	${srcdir}/tests/dbqp_data \
-	${srcdir}/tests/randgen_tests \
-	${srcdir}/tests/sql-bench \
-	${srcdir}/tests/sqlbench_tests \
-	${srcdir}/tests/sysbench_tests \
-	${srcdir}/tests/README.stress \
-	${srcdir}/tests/suite \
-	${srcdir}/tests/t \
-	${srcdir}/tests/include/*.inc \
-	${srcdir}/tests/include/*.sql \
-	${srcdir}/tests/include/*.test \
-	${srcdir}/tests/r/*.result \
-	${srcdir}/tests/r/*.require \
-	${srcdir}/tests/r/pbxt/*result \
-	${srcdir}/tests/std_data \
-	${srcdir}/tests/lib/*.pl \
-        ${srcdir}/tests/lib/*.py \
-	${srcdir}/tests/lib/drizzle_test_run/*.py \
-	${srcdir}/tests/lib/My/*.pm \
-	${srcdir}/tests/lib/randgen/*.py \
-        ${srcdir}/tests/lib/server_mgmt/*py \
-	${srcdir}/tests/lib/sqlbench/*py \
-	${srcdir}/tests/lib/sysbench/*py \
-	${srcdir}/tests/lib/sys_mgmt/*py \
-	${srcdir}/tests/lib/test_mgmt/*py \
-	tests/strip-valgrind
+	      $(EXTRA_SCRIPTS) \
+	      ${srcdir}/tests/crashme_tests \
+	      ${srcdir}/tests/dbqp.py \
+	      ${srcdir}/tests/dbqp_data \
+	      ${srcdir}/tests/randgen_tests \
+	      ${srcdir}/tests/sql-bench \
+	      ${srcdir}/tests/sqlbench_tests \
+	      ${srcdir}/tests/sysbench_tests \
+	      ${srcdir}/tests/README.stress \
+	      ${srcdir}/tests/suite \
+	      ${srcdir}/tests/t \
+	      ${srcdir}/tests/include/*.inc \
+	      ${srcdir}/tests/include/*.sql \
+	      ${srcdir}/tests/include/*.test \
+	      ${srcdir}/tests/r/*.result \
+	      ${srcdir}/tests/r/*.require \
+	      ${srcdir}/tests/r/pbxt/*result \
+	      ${srcdir}/tests/std_data \
+	      ${srcdir}/tests/lib/*.pl \
+	      ${srcdir}/tests/lib/*.py \
+	      ${srcdir}/tests/lib/drizzle_test_run/*.py \
+	      ${srcdir}/tests/lib/My/*.pm \
+	      ${srcdir}/tests/lib/randgen/*.py \
+	      ${srcdir}/tests/lib/server_mgmt/*py \
+	      ${srcdir}/tests/lib/sqlbench/*py \
+	      ${srcdir}/tests/lib/sysbench/*py \
+	      ${srcdir}/tests/lib/sys_mgmt/*py \
+	      ${srcdir}/tests/lib/test_mgmt/*py \
+	      tests/strip-valgrind
 
-check-local: test-drizzle
-
-# dtr - a shortcut for executing test-run.pl
-tests/dtr:
-	$(RM) -f tests/dtr
-	$(LN_S) test-run.pl tests/dtr
+check-local: tests/var/drizzle test-drizzle
 
 tests/var:
 	$(mkdir_p) tests/var
 
-tests/mtr:
+tests/var/drizzle: tests/var
+	$(mkdir_p) tests/var/drizzle
+
+
+# dtr - a shortcut for executing test-run.pl
+tests/dtr: tests/var/drizzle
+	$(RM) -f tests/dtr
+	$(LN_S) test-run.pl tests/dtr
+
+tests/mtr: tests/var/drizzle
 	$(RM) -f tests/mtr
 	$(LN_S) test-run.pl tests/mtr
 
 # test-run - a shortcut for executing test-run.pl
-tests/test-run: tests/var
+tests/test-run: tests/var/drizzle
 	$(RM) -f tests/test-run
 	$(LN_S) test-run.pl tests/test-run
 
-tests/dbqp:  
+tests/dbqp: tests/var/drizzle
 	$(RM) -f tests/dbqp
 	$(LN_S) dbqp.py tests/dbqp
 
@@ -127,49 +131,48 @@ tests/dbqp:
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: check
+test: tests/var/drizzle check
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification
 
 #check_PROGRAMS+= test-all
 
-test-all: 
+test-all: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS)
 
-test-mem: 
+test-mem: tests/var/drizzle
 	$(TEST_RUN_MEM) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
 
-test-drizzle: 
+test-drizzle: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
 
-gdb-drizzled: 
+gdb-drizzled: tests/var/drizzle
 	./libtool --mode=execute gdb ./drizzled/drizzled
 
-test-valgrind: 
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python strip-valgrind
+test-valgrind: tests/var/drizzle
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=$(NORMAL_TESTS) && python tests/strip-valgrind
 
-test-valgrind-suppressions: 
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python strip-valgrind)
+test-valgrind-suppressions: tests/var/drizzle
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=$(NORMAL_TESTS) && python tests/strip-valgrind)
 
-test-junitxml: 
+test-junitxml: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml
 
-test-big: 
+test-big: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big
 
-test-big-junitxml: 
+test-big-junitxml: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml
 
-test-jp: 
+test-jp: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp
 
-test-plugins: 
+test-plugins: tests/var/drizzle
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS)
 
-test-dbqp: 
+test-dbqp: tests/var/drizzle
 	$(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
-
 
 distclean-local: nukevar
 

@@ -36,19 +36,14 @@ namespace plugin
 /* 
   This object handles the aggregate of all operations for any/all of the Catalog engines.
 */
-class DRIZZLED_API Catalog : public Plugin {
-  /* Disable default constructors */
-  Catalog();
-  Catalog(const Catalog &);
-  Catalog& operator=(const Catalog &);
-
+class DRIZZLED_API Catalog : public Plugin 
+{
 public:
   typedef std::vector<Catalog *> vector;
 
   explicit Catalog(std::string name_arg) :
     Plugin(name_arg, "Catalog")
   {}
-  virtual ~Catalog();
 
   virtual catalog::Engine::shared_ptr engine()= 0;
 

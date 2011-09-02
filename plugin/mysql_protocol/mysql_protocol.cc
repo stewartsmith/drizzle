@@ -20,7 +20,6 @@
 #include <config.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/query_id.h>
 #include <drizzled/error/sql_state.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
@@ -506,6 +505,10 @@ void ClientMySQLProtocol::sendFields(List<Item>& list)
         break;
 
       case DRIZZLE_TYPE_UUID:
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
+        break;
+
+      case DRIZZLE_TYPE_IPV6:
         pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 

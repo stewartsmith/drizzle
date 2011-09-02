@@ -90,24 +90,25 @@ extern const charset_info_st *character_set_filesystem;
 
 namespace
 {
-
-static const std::string command_name[COM_END+1]={
-  "Sleep",
-  "Quit",
-  "Init DB",
-  "Query",
-  "Shutdown",
-  "Connect",
-  "Ping",
-  "Kill",
-  "Error"  // Last command number
-};
-
+  static const std::string command_name[]=
+  {
+    "Sleep",
+    "Quit",
+    "Init DB",
+    "Query",
+    "Shutdown",
+    "Connect",
+    "Ping",
+    "Kill",
+    "Error"  // Last command number
+  };
 }
 
-const char *xa_state_names[]={
+const char *xa_state_names[]=
+{
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
 };
+
 
 /**
   Mark all commands that somehow changes a table.
@@ -191,7 +192,7 @@ bool dispatch_command(enum_server_command command, Session *session,
                       const char* packet, uint32_t packet_length)
 {
   bool error= false;
-  Query_id &query_id= Query_id::get_query_id();
+  Query_id& query_id= Query_id::get_query_id();
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
 
@@ -200,14 +201,9 @@ bool dispatch_command(enum_server_command command, Session *session,
   session->times.set_time();
   session->setQueryId(query_id.value());
 
-  switch (command)
+  if (command != COM_PING)
   {
-  /* Ignore these statements. */
-  case COM_PING:
-    break;
-
-  /* Increase id and count all other statements. */
-  default:
+    // Increase id and count all other statements
     session->status_var.questions++;
     query_id.next();
   }
@@ -220,8 +216,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     // We should do something about an error...
   }
 
-  session->server_status&=
-           ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+  session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
   switch (command)
   {

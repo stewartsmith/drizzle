@@ -170,7 +170,7 @@ bool TableList::process_index_hints(Table *tbl)
     while (Index_hint* hint= iter++)
     {
       /* process empty USE INDEX () */
-      if (hint->type == INDEX_HINT_USE && !hint->key_name.str)
+      if (hint->type == INDEX_HINT_USE && !hint->key_name)
       {
         if (hint->clause & INDEX_HINT_MASK_JOIN)
         {
@@ -194,10 +194,10 @@ bool TableList::process_index_hints(Table *tbl)
         Check if an index with the given name exists and get his offset in
         the keys bitmask for the table
       */
-      uint32_t pos= 0;
-      if (not tbl->getShare()->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
+      uint32_t pos= tbl->getShare()->doesKeyNameExist(hint->key_name);
+      if (pos == UINT32_MAX)
       {
-        my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
+        my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name, alias);
         return 1;
       }
       /* add to the appropriate clause mask */
@@ -217,8 +217,7 @@ bool TableList::process_index_hints(Table *tbl)
          index_order[INDEX_HINT_USE].any() || have_empty_use_order ||
          index_group[INDEX_HINT_USE].any() || have_empty_use_group))
     {
-      my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE],
-               index_hint_type_name[INDEX_HINT_FORCE]);
+      my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE], index_hint_type_name[INDEX_HINT_FORCE]);
       return 1;
     }
 
@@ -291,7 +290,7 @@ void TableList::print(Session *session, String *str)
       while (Index_hint* hint= it++)
       {
         str->append(STRING_WITH_LEN(" "));
-        hint->print(session, str);
+        hint->print(*str);
       }
     }
   }

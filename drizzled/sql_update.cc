@@ -385,8 +385,7 @@ int update_query(Session *session, TableList *table_list,
 	    continue;  /* repeat the read of the same row if it still exists */
 
 	  table->cursor->position(table->getInsertRecord());
-	  if (my_b_write(&tempfile,table->cursor->ref,
-			 table->cursor->ref_length))
+	  if (tempfile.write(table->cursor->ref, table->cursor->ref_length))
 	  {
 	    error=1;
 	    break;

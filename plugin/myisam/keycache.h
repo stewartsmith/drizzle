@@ -39,12 +39,12 @@ typedef struct st_keycache_page KEYCACHE_PAGE;
 struct st_hash_link;
 typedef struct st_hash_link HASH_LINK;
 
-namespace drizzled
+namespace drizzled {
+
+namespace internal 
 {
-namespace internal
-{
-typedef uint64_t my_off_t;
-struct st_my_thread_var;
+  typedef uint64_t my_off_t;
+  struct st_my_thread_var;
 }
 
 /* info about requests in a waiting queue */

@@ -36,8 +36,6 @@ extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;
 extern bool volatile abort_loop;
 extern bool volatile ready_to_exit;
-extern bool opt_help;
-extern bool opt_help_extended;
 extern passwd *user_info;
 
 extern global_buffer_constraint<uint64_t> global_sort_buffer;
@@ -53,12 +51,13 @@ boost::program_options::variables_map &getVariablesMap();
 
 int init_thread_environment();
 void init_server_components(module::Registry&);
-int init_basic_variables(int argc, char **argv);
-int init_remaining_variables(module::Registry&);
+bool init_variables_before_daemonizing(int argc, char **argv);
+bool init_variables_after_daemonizing(module::Registry&);
 
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);
 void clean_up(bool print_message);
+bool was_help_requested();
 
 } /* namespace drizzled */
 

@@ -27,8 +27,7 @@
 #include <drizzled/session.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 DTCollation::DTCollation()
 {

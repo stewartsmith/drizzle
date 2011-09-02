@@ -80,6 +80,7 @@
 #include <drizzled/field/microtime.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/uuid.h>
+#include <drizzled/field/ipv6.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/typelib.h>
@@ -131,6 +132,9 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
 
   case message::Table::Field::UUID:
     return  DRIZZLE_TYPE_UUID;
+
+  case message::Table::Field::IPV6:
+    return  DRIZZLE_TYPE_IPV6;
 
   case message::Table::Field::BOOLEAN:
     return DRIZZLE_TYPE_BOOLEAN;
@@ -185,6 +189,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
     default_item= new Item_string(default_value->c_str(),
@@ -365,21 +370,17 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length= strlen(private_key_for_cache.vector());
+  db= str_ref(private_key_for_cache.vector());
 
-  table_name.str= const_cast<char *>(private_key_for_cache.vector()) + strlen(private_key_for_cache.vector()) + 1;
-  table_name.length= strlen(table_name.str);
-  path.str= (char *)"";
-  normalized_path.str= path.str;
-  path.length= normalized_path.length= 0;
+  table_name= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
+  path= str_ref("");
+  normalized_path= str_ref("");
 
   std::string tb_name(identifier.getTableName());
   boost::to_lower(tb_name);
-  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
-  assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
+  assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
+  assert(strcmp(identifier.getSchemaName().c_str(), db.data()) == 0);
 }
-
 
 TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -438,15 +439,12 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   memcpy(&private_normalized_path[0], identifier.getPath().c_str(), identifier.getPath().size());
 
   {
-    table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              message::Table::INTERNAL;
-    db.str= const_cast<char *>(private_key_for_cache.vector());
-    db.length= strlen(private_key_for_cache.vector());
-    table_name.str= db.str + 1;
-    table_name.length= strlen(table_name.str);
-    path.str= &private_normalized_path[0];
-    normalized_path.str= path.str;
-    path.length= normalized_path.length= private_normalized_path.size();
+    table_category= TABLE_CATEGORY_TEMPORARY;
+    tmp_table= message::Table::INTERNAL;
+    db= str_ref(private_key_for_cache.vector());
+    table_name= str_ref(db.data() + 1);
+    path= private_normalized_path;
+    normalized_path= path;
   }
 }
 
@@ -514,10 +512,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  db= str_ref(private_key_for_cache.vector());
+  table_name= str_ref(db.data() + db.size() + 1);
 
   std::string _path;
   if (path_arg)
@@ -526,29 +522,24 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    _path= identifier::Table::build_table_filename(db.str, table_name.str, false);
+    _path= identifier::Table::build_table_filename(db.data(), table_name.data(), false);
   }
 
   char* path_buff= mem_root.strdup(_path);
-  setPath(path_buff, _path.length());
-  setNormalizedPath(path_buff, _path.length());
+  path= str_ref(path_buff, _path.length());
+  normalized_path= str_ref(path_buff, _path.length());
 
   version= g_refresh_version;
 }
 
-void TableShare::init(const char *new_table_name,
-                      const char *new_path)
+void TableShare::init(const char *new_table_name, const char *new_path)
 {
-
-  table_category=         TABLE_CATEGORY_TEMPORARY;
-  tmp_table=              message::Table::INTERNAL;
-  db.str= (char *)"";
-  db.length= 0;
-  table_name.str=         (char*) new_table_name;
-  table_name.length=      strlen(new_table_name);
-  path.str=               (char*) new_path;
-  normalized_path.str=    (char*) new_path;
-  path.length= normalized_path.length= strlen(new_path);
+  table_category= TABLE_CATEGORY_TEMPORARY;
+  tmp_table= message::Table::INTERNAL;
+  db= str_ref("");
+  table_name= str_ref(new_table_name);
+  path= str_ref(new_path);
+  normalized_path= str_ref(new_path);
 }
 
 TableShare::~TableShare() 
@@ -566,10 +557,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  db= str_ref(private_key_for_cache.vector());
+  table_name= str_ref(db.data() + db.size() + 1);
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
@@ -630,7 +619,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   for (int indx= 0; indx < table.indexes_size(); indx++)
     key_parts+= table.indexes(indx).index_part_size();
 
-  key_info= (KeyInfo*) alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
+  key_info= (KeyInfo*) mem().alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
 
   KeyPartInfo *key_part;
 
@@ -638,7 +627,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     (key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc(sizeof(ulong*)*key_parts);
+  ulong *rec_per_key= (ulong*) mem().alloc(sizeof(ulong*)*key_parts);
 
   KeyInfo* keyinfo= key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
@@ -919,9 +908,8 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     TYPELIB *t= (&intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc((field_options.field_value_size() + 1) * sizeof(char*));
-
-    t->type_lengths= (unsigned int*)alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_names= (const char**)mem().alloc((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_lengths= (unsigned int*)mem().alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -1162,6 +1150,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
+    case DRIZZLE_TYPE_IPV6:
+      field_length= field::IPv6::max_string_length();
+      break;
     case DRIZZLE_TYPE_BOOLEAN:
       field_length= field::Boolean::max_string_length();
       break;
@@ -1221,6 +1212,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     case DRIZZLE_TYPE_LONGLONG:
     case DRIZZLE_TYPE_NULL:
     case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_IPV6:
     case DRIZZLE_TYPE_BOOLEAN:
       break;
     }
@@ -1320,9 +1312,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
   /* Fix key stuff */
   if (key_parts)
   {
-    uint32_t local_primary_key= 0;
-    doesKeyNameExist("PRIMARY", local_primary_key);
-
+    uint32_t local_primary_key= doesKeyNameExist("PRIMARY");
     keyinfo= key_info;
     key_part= keyinfo->key_part;
 
@@ -1777,24 +1767,19 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      identifier::Table identifier(db.str, table_name.str);
+      identifier::Table identifier(db.data(), table_name.data());
       my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
-      snprintf(buff, sizeof(buff), "%s",normalized_path.str);
-      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
-               errortype, buff, db_errno);
+      snprintf(buff, sizeof(buff), "%s",normalized_path.data());
+      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND, errortype, buff, db_errno);
     }
     break;
   case 2:
     {
-      drizzled::error_t err_no;
-
-      err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
-        ER_FILE_USED : ER_CANT_OPEN_FILE;
-
-      my_error(err_no, errortype, normalized_path.str, db_errno);
+      drizzled::error_t err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ? ER_FILE_USED : ER_CANT_OPEN_FILE;
+      my_error(err_no, errortype, normalized_path.data(), db_errno);
       break;
     }
   case 5:
@@ -1806,23 +1791,18 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
         snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
         csname= tmp;
       }
-      my_printf_error(ER_UNKNOWN_COLLATION,
-                      _("Unknown collation '%s' in table '%-.64s' definition"),
-                      MYF(0), csname, table_name.str);
+      my_printf_error(ER_UNKNOWN_COLLATION, _("Unknown collation '%s' in table '%-.64s' definition"), MYF(0), csname, table_name.data());
       break;
     }
   case 6:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
-    my_printf_error(ER_NOT_FORM_FILE,
-                    _("Table '%-.64s' was created with a different version "
-                      "of Drizzle and cannot be read"),
-                    MYF(0), buff);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
+    my_printf_error(ER_NOT_FORM_FILE, _("Table '%-.64s' was created with a different version of Drizzle and cannot be read"), MYF(0), buff);
     break;
   case 8:
     break;
   default:				/* Better wrong error than none */
   case 4:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -1925,6 +1905,12 @@ Field *TableShare::make_field(const message::Table::Field &,
                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_UUID:
     return new (&mem_root) field::Uuid(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
+  case DRIZZLE_TYPE_IPV6:
+    return new (&mem_root) field::IPv6(ptr,
                                        field_length,
                                        null_pos,
                                        null_bit,

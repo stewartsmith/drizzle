@@ -242,7 +242,7 @@ public:
 
   operator drizzle_con_st*()
   {
-    return &con.b_;
+    return con;
   }
 
   drizzle::drizzle_c drizzle;
@@ -2636,7 +2636,7 @@ static void do_send_quit(st_command* command)
 
   drizzle::result_c result;
   drizzle_return_t ret;
-  drizzle_quit(*con, &result.b_, &ret);
+  drizzle_quit(*con, result, &ret);
 }
 
 
@@ -2789,39 +2789,31 @@ static void do_wait_for_slave_to_stop()
 static void do_sync_with_master2(long offset)
 {
   drizzle::connection_c& con= *cur_con;
-  char query_buf[FN_REFLEN+128];
 
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
+  char query_buf[FN_REFLEN+128];
   snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
-  int tries= 0;
-
-wait_for_position:
-
-  drizzle::result_c res;
-  dt_query(con, res, query_buf);
-
-  drizzle_row_t row= res.row_next();
-  if (!row)
+  for (int tries= 0; tries < 30; tries++)
   {
-    die("empty result in %s", query_buf);
-  }
-  if (!row[0])
-  {
+    drizzle::result_c res;
+    dt_query(con, res, query_buf);
+
+    drizzle_row_t row= res.row_next();
+    if (not row)
+      die("empty result in %s", query_buf);
+    if (row[0])
+      return;
     /*
-      It may be that the slave SQL thread has not started yet, though START
-      SLAVE has been issued ?
+    It may be that the slave SQL thread has not started yet, though START
+    SLAVE has been issued ?
     */
-    if (tries++ == 30)
-    {
-      show_query(con, "SHOW MASTER STATUS");
-      show_query(con, "SHOW SLAVE STATUS");
-      die("could not sync with master ('%s' returned NULL)", query_buf);
-    }
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
-    goto wait_for_position;
   }
+  show_query(con, "SHOW MASTER STATUS");
+  show_query(con, "SHOW SLAVE STATUS");
+  die("could not sync with master ('%s' returned NULL)", query_buf);
 }
 
 static void do_sync_with_master(st_command* command)
@@ -4140,6 +4132,7 @@ static int read_command(st_command** command_ptr)
   command->end= strchr(command->query, '\0');
   command->query_len= (command->end - command->query);
   parser.read_lines++;
+
   return(0);
 }
 
@@ -4395,7 +4388,7 @@ static void append_table_headings(string& ds, drizzle::result_c& res)
 
 static int append_warnings(string& ds, drizzle::connection_c& con, drizzle::result_c& res)
 {
-  uint32_t count= drizzle_result_warning_count(&res.b_);
+  uint32_t count= drizzle_result_warning_count(res);
   if (!count)
     return 0;
 
@@ -4437,14 +4430,14 @@ static void run_query_normal(st_connection& cn,
      * Send the query
      */
 
-    (void) drizzle_query(con, &res.b_, query, query_len, &ret);
+    (void) drizzle_query(con, res, query, query_len, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE ||
           ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
       {
         err= res.error_code();
-        handle_error(command, err, res.error(), drizzle_result_sqlstate(&res.b_), ds);
+        handle_error(command, err, res.error(), drizzle_result_sqlstate(res), ds);
       }
       else
       {
@@ -4461,12 +4454,12 @@ static void run_query_normal(st_connection& cn,
     /*
      * Read the result packet
      */
-    if (drizzle_result_read(con, &res.b_, &ret) == NULL ||
+    if (drizzle_result_read(con, res, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(res), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
@@ -4477,12 +4470,11 @@ static void run_query_normal(st_connection& cn,
     /*
       Store the result of the query if it will return any fields
     */
-    if (res.column_count() &&
-        (ret= drizzle_result_buffer(&res.b_)) != DRIZZLE_RETURN_OK)
+    if (res.column_count() && (ret= drizzle_result_buffer(res)) != DRIZZLE_RETURN_OK)
     {
       if (ret == DRIZZLE_RETURN_ERROR_CODE)
       {
-        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(&res.b_), ds);
+        handle_error(command, res.error_code(), res.error(), drizzle_result_sqlstate(res), ds);
       }
       else
         handle_error(command, ret, drizzle_con_error(con), "", ds);
@@ -4510,7 +4502,7 @@ static void run_query_normal(st_connection& cn,
         query to find the warnings
       */
       if (!disable_info)
-        affected_rows= drizzle_result_affected_rows(&res.b_);
+        affected_rows= drizzle_result_affected_rows(res);
 
       /*
         Add all warnings to the result. We can't do this if we are in
@@ -4528,7 +4520,7 @@ static void run_query_normal(st_connection& cn,
       }
 
       if (!disable_info)
-        append_info(ds, affected_rows, drizzle_result_info(&res.b_));
+        append_info(ds, affected_rows, drizzle_result_info(res));
     }
 
   }
@@ -5380,7 +5372,7 @@ try
         {
           drizzle::result_c result;
           drizzle_return_t ret;
-          (void) drizzle_ping(*cur_con, &result.b_, &ret);
+          (void) drizzle_ping(*cur_con, result, &ret);
         }
         break;
       case Q_EXEC:

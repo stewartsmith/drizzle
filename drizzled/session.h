@@ -165,8 +165,6 @@ public:
 
   util::string::ptr schema() const;
 
-  /* current cache key */
-  std::string query_cache_key;
   /**
     Constant for Session::where initialization in the beginning of every query.
 
@@ -199,7 +197,7 @@ public:
   }
 
   drizzle_system_variables& variables; /**< Mutable local variables local to the session */
-  enum_tx_isolation getTxIsolation();
+  enum_tx_isolation getTxIsolation() const;
   system_status_var& status_var;
 
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
@@ -1107,7 +1105,7 @@ public:
     pointer to plugin::StorageEngine
   */
   plugin::StorageEngine *getDefaultStorageEngine();
-  void get_xid(DrizzleXid *xid); // Innodb only
+  void get_xid(DrizzleXid *xid) const; // Innodb only
 
   table::Singular& getInstanceTable();
   table::Singular& getInstanceTable(std::list<CreateField>&);

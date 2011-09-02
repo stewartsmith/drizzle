@@ -3976,6 +3976,8 @@ get_innobase_type_from_mysql_type(
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
     return(DATA_FIXBINARY);
+  case DRIZZLE_TYPE_IPV6:
+   return(DATA_FIXBINARY);
   case DRIZZLE_TYPE_NULL:
     ut_error;
   }

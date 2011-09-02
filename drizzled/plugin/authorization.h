@@ -38,14 +38,10 @@ namespace plugin
 
 class DRIZZLED_API Authorization : public Plugin
 {
-  Authorization();
-  Authorization(const Authorization &);
-  Authorization& operator=(const Authorization &);
 public:
   explicit Authorization(std::string name_arg)
     : Plugin(name_arg, "Authorization")
   {}
-  virtual ~Authorization() {}
 
   /**
    * Should we restrict the current user's access to this schema?

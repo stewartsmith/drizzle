@@ -56,24 +56,13 @@ using namespace std;
 
 namespace drizzled {
 
-bool is_primary_key(KeyInfo *key_info)
+bool is_primary_key(const char* name)
 {
-  static const char * primary_key_name="PRIMARY";
-  return (strcmp(key_info->name, primary_key_name)==0);
-}
-
-const char* is_primary_key_name(const char* key_name)
-{
-  static const char * primary_key_name="PRIMARY";
-  if (strcmp(key_name, primary_key_name)==0)
-    return key_name;
-  else
-    return NULL;
+  return strcmp(name, "PRIMARY") == 0;
 }
 
 static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
-static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
-
+static const char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
@@ -83,9 +72,8 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
-  identifier::Schema identifier(db);
-  if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+  if (not create_info->default_table_charset)
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(db));
 }
 
 /*
@@ -282,9 +270,9 @@ static int sort_keys(KeyInfo *a, KeyInfo *b)
       /* Sort NOT NULL keys before other keys */
       return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
-    if (is_primary_key(a))
+    if (is_primary_key(a->name))
       return -1;
-    if (is_primary_key(b))
+    if (is_primary_key(b->name))
       return 1;
     /* Sort keys don't containing partial segments before others */
     if ((a_flags ^ b_flags) & HA_KEY_HAS_PART_KEY_SEG)
@@ -503,6 +491,7 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     break;
   }
@@ -879,8 +868,7 @@ static int prepare_create_table(Session *session,
       key_parts+=key->columns.size();
     else
       (*key_count)--;
-    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
-        is_primary_key_name(key->name.str))
+    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.str))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
       return true;
@@ -1554,14 +1542,13 @@ check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 }
 
 
-static char *
+static const char*
 make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
-  if (!check_if_keyname_exists(field_name,start,end) &&
-      !is_primary_key_name(field_name))
-    return (char*) field_name;			// Use fieldname
+  if (not check_if_keyname_exists(field_name,start,end) && not is_primary_key(field_name))
+    return field_name;			// Use fieldname
 
   buff_end= strncpy(buff, field_name, sizeof(buff)-4);
   buff_end+= strlen(buff);
@@ -1962,15 +1949,7 @@ static bool create_table_wrapper(Session &session,
   }
 
   new_table_message.CopyFrom(*source_table_message);
-
-  if (destination_identifier.isTmp())
-  {
-    new_table_message.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    new_table_message.set_type(message::Table::STANDARD);
-  }
+  new_table_message.set_type(destination_identifier.isTmp() ? message::Table::TEMPORARY : message::Table::STANDARD);
 
   if (is_engine_set)
   {
@@ -2004,9 +1983,7 @@ static bool create_table_wrapper(Session &session,
     As mysql_truncate don't work on a new table at this stage of
     creation, instead create the table directly (for both normal and temporary tables).
   */
-  bool success= plugin::StorageEngine::createTable(session,
-                                                   destination_identifier,
-                                                   new_table_message);
+  bool success= plugin::StorageEngine::createTable(session, destination_identifier, new_table_message);
 
   if (success && not destination_identifier.isTmp())
   {

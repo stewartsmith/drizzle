@@ -64,10 +64,6 @@ public:
   {
     return name;
   }
-  const std::string &getName()
-  {
-    return name;
-  }
   message::Transaction *getTransactionMessage() const
   {
     return transaction_message;
@@ -89,7 +85,6 @@ private:
   std::string name;
   TransactionContext::ResourceContexts resource_contexts;
   message::Transaction *transaction_message;
-  NamedSavepoint();
 };
 
 } /* namespace drizzled */

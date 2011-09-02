@@ -36,10 +36,10 @@ private:
 
 public:
   /* Save the state of a name resolution context. */
-  void save_state(Name_resolution_context *context, TableList *table_list);
+  void save_state(Name_resolution_context*, TableList*);
 
   /* Restore a name resolution context from saved state. */
-  void restore_state(Name_resolution_context *context, TableList *table_list);
+  void restore_state(Name_resolution_context*, TableList*) const;
 
   TableList *get_first_name_resolution_table();
 

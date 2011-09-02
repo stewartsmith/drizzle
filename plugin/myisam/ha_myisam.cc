@@ -88,9 +88,6 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public plugin::StorageEngine
 {
-  MyisamEngine();
-  MyisamEngine(const MyisamEngine&);
-  MyisamEngine& operator=(const MyisamEngine&);
 public:
   explicit MyisamEngine(string name_arg) :
     plugin::StorageEngine(name_arg,

@@ -420,8 +420,8 @@ public:
 
 
   /* See if this can be blown away */
-  inline uint32_t getDBStat () { return db_stat; }
-  inline uint32_t setDBStat () { return db_stat; }
+  inline uint32_t getDBStat () const { return db_stat; }
+
   /**
    * Create Item_field for each column in the table.
    *
@@ -518,7 +518,7 @@ public:
   }
 
   /* Is table open or should be treated as such by name-locking? */
-  inline bool is_name_opened()
+  bool is_name_opened() const
   {
     return db_stat || open_placeholder;
   }

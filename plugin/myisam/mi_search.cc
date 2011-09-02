@@ -44,7 +44,7 @@ int _mi_check_index(MI_INFO *info, int inx)
     info->update= ((info->update & (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED)) |
                    HA_STATE_NEXT_FOUND | HA_STATE_PREV_FOUND);
   }
-  if (info->opt_flag & WRITE_CACHE_USED && flush_io_cache(&info->rec_cache))
+  if (info->opt_flag & WRITE_CACHE_USED && info->rec_cache.flush())
     return(-1);
   return(inx);
 } /* mi_check_index */

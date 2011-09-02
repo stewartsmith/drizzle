@@ -45,6 +45,7 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/uuid.h>
+#include <drizzled/field/ipv6.h>
 #include <drizzled/temporal.h>
 #include <drizzled/item/string.h>
 #include <drizzled/table.h>
@@ -289,6 +290,9 @@ bool CreateField::init(Session *,
       break;
     case DRIZZLE_TYPE_UUID:
       length= field::Uuid::max_string_length();
+      break;
+    case DRIZZLE_TYPE_IPV6:
+      length= field::IPv6::max_string_length();
       break;
     case DRIZZLE_TYPE_BOOLEAN:
       length= field::Boolean::max_string_length();

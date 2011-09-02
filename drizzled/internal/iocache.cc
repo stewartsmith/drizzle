@@ -23,10 +23,8 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/error.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 /*
 ** Open tempfile cached by io_cache_st
@@ -39,8 +37,8 @@ namespace internal
 bool io_cache_st::open_cached_file(const char *dir_arg, const char *prefix_arg,
 		      size_t cache_size_arg, myf cache_myflags)
 {
-  dir=	 dir_arg ? strdup(dir_arg) : (char*) 0;
-  prefix= (prefix_arg ? strdup(prefix_arg) : (char*) 0);
+  dir= dir_arg ? strdup(dir_arg) : NULL;
+  prefix= prefix_arg ? strdup(prefix_arg) : NULL;
 
   if ((dir == NULL) || (prefix == NULL))
     return true;
@@ -75,7 +73,7 @@ bool io_cache_st::real_open_cached_file()
 
 void io_cache_st::close_cached_file()
 {
-  if (my_b_inited(this))
+  if (inited())
   {
     int _file= file;
     file= -1;				/* Don't flush data */

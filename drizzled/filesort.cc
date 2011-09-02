@@ -337,7 +337,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   {
     goto err;
   }
-  maxbuffer= (uint32_t) (my_b_tell(&buffpek_pointers)/sizeof(*buffpek_inst));
+  maxbuffer= (uint32_t)(buffpek_pointers.tell() / sizeof(*buffpek_inst));
 
   if (maxbuffer == 0)			// The whole set is in memory
   {
@@ -359,7 +359,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
     table_sort.buffpek_len= maxbuffer;
     buffpek_pointers.close_cached_file();
 	/* Open cached file if it isn't open */
-    if (! my_b_inited(outfile) && outfile->open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
+    if (not outfile->inited() && outfile->open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME)))
     {
       goto err;
     }
@@ -381,7 +381,7 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
       goto err;
     }
 
-    if (flush_io_cache(&tempfile) || tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
+    if (tempfile.flush() || tempfile.reinit_io_cache(internal::READ_CACHE,0L,0,0))
     {
       goto err;
     }
@@ -411,18 +411,18 @@ ha_rows FileSort::run(Table *table, SortField *sortorder, uint32_t s_length,
   tempfile.close_cached_file();
   buffpek_pointers.close_cached_file();
 
-  if (my_b_inited(outfile))
+  if (outfile->inited())
   {
-    if (flush_io_cache(outfile))
+    if (outfile->flush())
     {
-      error=1;
+      error= 1;
     }
     {
       internal::my_off_t save_pos= outfile->pos_in_file;
       /* For following reads */
       if (outfile->reinit_io_cache(internal::READ_CACHE,0L,0,0))
       {
-	error=1;
+        error=1;
       }
       outfile->end_of_file=save_pos;
     }
@@ -462,8 +462,7 @@ static char **make_char_array(char **old_pos, uint32_t fields,
 
 /** Read 'count' number of buffer pointers into memory. */
 
-static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffpek_pointers, uint32_t count,
-                                     unsigned char *buf)
+static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffpek_pointers, uint32_t count, unsigned char *buf)
 {
   uint32_t length= sizeof(buffpek)*count;
   unsigned char *tmp= buf;
@@ -473,13 +472,13 @@ static unsigned char *read_buffpek_from_file(internal::io_cache_st *buffpek_poin
     tmp= (unsigned char *)malloc(length);
   {
     if (buffpek_pointers->reinit_io_cache(internal::READ_CACHE,0L,0,0) ||
-	my_b_read(buffpek_pointers, (unsigned char*) tmp, length))
+      buffpek_pointers->read(tmp, length))
     {
-      free((char*) tmp);
-      tmp=0;
+      free(tmp);
+      tmp= 0;
     }
   }
-  return(tmp);
+  return tmp;
 }
 
 
@@ -595,7 +594,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     {
       if (indexfile)
       {
-	if (my_b_read(indexfile,(unsigned char*) ref_pos,ref_length))
+	if (indexfile->read(ref_pos, ref_length))
 	{
 	  error= errno ? errno : -1;		/* Abort */
 	  break;
@@ -681,9 +680,7 @@ ha_rows FileSort::find_all_keys(SortParam *param,
     return(HA_POS_ERROR);
   }
 
-  return(my_b_inited(tempfile) ?
-	      (ha_rows) (my_b_tell(tempfile)/param->rec_length) :
-	      idx);
+  return tempfile->inited() ? (ha_rows) (tempfile->tell() / param->rec_length) : idx;
 } /* find_all_keys */
 
 
@@ -715,18 +712,18 @@ int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
   buffpek buffpek;
 
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
-  if (!my_b_inited(tempfile) &&
+  if (not tempfile->inited() &&
       tempfile->open_cached_file(drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;
   }
   /* check we won't have more buffpeks than we can possibly keep in memory */
-  if (my_b_tell(buffpek_pointers) + sizeof(buffpek) > (uint64_t)UINT_MAX)
+  if (buffpek_pointers->tell() + sizeof(buffpek) > UINT_MAX)
   {
     return 1;
   }
 
-  buffpek.file_pos= my_b_tell(tempfile);
+  buffpek.file_pos= tempfile->tell();
   if ((ha_rows) count > max_rows)
     count=(uint32_t) max_rows;
 
@@ -734,13 +731,13 @@ int SortParam::write_keys(unsigned char **sort_keys, uint32_t count,
 
   for (unsigned char **ptr= sort_keys + count ; sort_keys != ptr ; sort_keys++)
   {
-    if (my_b_write(tempfile, (unsigned char*) *sort_keys, (uint32_t) rec_length))
+    if (tempfile->write(*sort_keys, rec_length))
     {
       return 1;
     }
   }
 
-  if (my_b_write(buffpek_pointers, (unsigned char*) &buffpek, sizeof(buffpek)))
+  if (buffpek_pointers->write(&buffpek, sizeof(buffpek)))
   {
     return 1;
   }
@@ -1075,7 +1072,7 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
 
   if (*maxbuffer < MERGEBUFF2)
     return 0;
-  if (flush_io_cache(t_file) ||
+  if (t_file->flush() ||
       t_file2.open_cached_file(drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE, MYF(MY_WME)))
   {
     return 1;
@@ -1084,38 +1081,23 @@ int FileSort::merge_many_buff(SortParam *param, unsigned char *sort_buffer,
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
   {
-    uint32_t i;
-
-    if (from_file->reinit_io_cache(internal::READ_CACHE,0L,0,0))
-    {
+    if (from_file->reinit_io_cache(internal::READ_CACHE, 0, 0, 0)
+      || to_file->reinit_io_cache(internal::WRITE_CACHE, 0, 0, 0))
       break;
-    }
 
-    if (to_file->reinit_io_cache(internal::WRITE_CACHE,0L,0,0))
+    uint32_t i= 0;
+    lastbuff= buffpek_inst;
+    for (; i <= *maxbuffer - MERGEBUFF * 3 / 2; i += MERGEBUFF)
     {
-      break;
-    }
-
-    lastbuff=buffpek_inst;
-    for (i=0 ; i <= *maxbuffer-MERGEBUFF*3/2 ; i+=MERGEBUFF)
-    {
-      if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
-			buffpek_inst+i,buffpek_inst+i+MERGEBUFF-1,0))
+      if (merge_buffers(param, from_file, to_file, sort_buffer, lastbuff++, buffpek_inst + i, buffpek_inst + i + MERGEBUFF - 1, 0))
       {
         goto cleanup;
       }
     }
 
-    if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
-		      buffpek_inst+i,buffpek_inst+ *maxbuffer,0))
-    {
+    if (merge_buffers(param, from_file, to_file, sort_buffer, lastbuff++, buffpek_inst + i, buffpek_inst + *maxbuffer, 0)
+      || to_file->flush())
       break;
-    }
-
-    if (flush_io_cache(to_file))
-    {
-      break;
-    }
 
     temp=from_file; from_file=to_file; to_file=temp;
     from_file->setup_io_cache();
@@ -1230,7 +1212,7 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
   sort_length= param->sort_length;
   offset= rec_length-res_length;
   maxcount= (uint32_t) (param->keys/((uint32_t) (Tb-Fb) +1));
-  to_start_filepos= my_b_tell(to_file);
+  to_start_filepos= to_file->tell();
   strpos= (unsigned char*) sort_buffer;
   org_max_rows=max_rows= param->max_rows;
 
@@ -1274,7 +1256,7 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
     */
     buffpek_inst= queue.top();
     memcpy(param->unique_buff, buffpek_inst->key, rec_length);
-    if (my_b_write(to_file, (unsigned char*) buffpek_inst->key, rec_length))
+    if (to_file->write(buffpek_inst->key, rec_length))
     {
       return 1;
     }
@@ -1312,14 +1294,14 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
       }
       if (flag == 0)
       {
-        if (my_b_write(to_file,(unsigned char*) buffpek_inst->key, rec_length))
+        if (to_file->write(buffpek_inst->key, rec_length))
         {
           return 1;
         }
       }
       else
       {
-        if (my_b_write(to_file, (unsigned char*) buffpek_inst->key+offset, res_length))
+        if (to_file->write(buffpek_inst->key+offset, res_length))
         {
           return 1;
         }
@@ -1377,8 +1359,7 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
     max_rows-= buffpek_inst->mem_count;
     if (flag == 0)
     {
-      if (my_b_write(to_file,(unsigned char*) buffpek_inst->key,
-                     (rec_length*buffpek_inst->mem_count)))
+      if (to_file->write(buffpek_inst->key, (rec_length*buffpek_inst->mem_count)))
       {
         return 1;
       }
@@ -1391,7 +1372,7 @@ int FileSort::merge_buffers(SortParam *param, internal::io_cache_st *from_file,
            strpos != end ;
            strpos+= rec_length)
       {
-        if (my_b_write(to_file, (unsigned char *) strpos, res_length))
+        if (to_file->write(strpos, res_length))
         {
           return 1;
         }
