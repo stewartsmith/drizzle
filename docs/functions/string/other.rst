@@ -64,13 +64,6 @@ MID
 
 Return a substring starting from the specified position.
 
-.. _ord-function:
-
-ORD
----
-
-Return character code for leftmost character of the argument.
-
 .. _quote-function:
 
 QUOTE

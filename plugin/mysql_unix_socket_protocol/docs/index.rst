@@ -1,7 +1,8 @@
 MySQL Unix Socket Protocol
 ==========================
 
-MySQL Unix Socket Protocol Module.
+:program:`mysql_unix_socket_protocol` implements the MySQL UNIX socket
+protocol.
 
 .. _mysql_unix_socket_protocol_loading:
 
@@ -33,7 +34,7 @@ command line options.
 .. option:: --mysql-unix-socket-protocol.clobber 
 
    :Default: 
-   :Variable:
+   :Variable: :ref:`mysql_unix_socket_protocol_clobber <mysql_unix_socket_protocol_clobber>`
 
    Clobber socket file if one is there already.
 
@@ -46,8 +47,8 @@ command line options.
 
 .. option:: --mysql-unix-socket-protocol.path ARG
 
-   :Default: DRIZZLE_UNIX_SOCKET_PATH
-   :Variable:
+   :Default: :file:`/tmp/mysql.socket`
+   :Variable: :ref:`mysql_unix_socket_protocol_path <mysql_unix_socket_protocol_path>`
 
    Path used for MySQL UNIX Socket Protocol.
 
@@ -67,7 +68,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option:
 
-   Unknown
+   Clobber socket file if one is there already.
 
 .. _mysql_unix_socket_protocol_max_connections:
 
@@ -85,9 +86,9 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option:
+   :Option: :option:`--mysql-unix-socket-protocol.path`
 
-   Unknown
+   Path used for MySQL UNIX Socket Protocol.
 
 .. _mysql_unix_socket_protocol_examples:
 
@@ -116,3 +117,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='mysql_unix_socket_protocol'
 
+Changelog
+---------
+
+v0.3
+^^^^
+* First Drizzle version.

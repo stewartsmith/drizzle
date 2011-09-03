@@ -1,45 +1,7 @@
 Math Functions
 ==============
 
-The ``math_functions`` plugin provides these :doc:`/functions/overview`:
-
-* :ref:`abs-function`
-
-* :ref:`acos-function`
-
-* :ref:`asin-function`
-
-* :ref:`atan-function`
-
-* :ref:`atan2-function`
-
-* :ref:`cos-function`
-
-* :ref:`log-function`
-
-* :ref:`log2-function`
-
-* :ref:`log10-function`
-
-* :ref:`sin-function`
-
-* :ref:`pow-function`
-
-* :ref:`power-function`
-
-* :ref:`ln-function`
-
-* :ref:`sqrt-function`
-
-* :ref:`ceil-function`
-
-* :ref:`ceiling-function`
-
-* :ref:`exp-function`
-
-* :ref:`floor-function`
-
-* :ref:`ord-function`
+The ``math_functions`` plugin provides :ref:`mathematical functions <math_functions>`.
 
 .. _math_functions_loading:
 
@@ -73,3 +35,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='math_functions'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

@@ -1,7 +1,7 @@
 Gearman Logging
 ===============
 
-N_("Log queries to a Gearman server").
+The :program:`logging_gearman` plugin logs queries to a Gearman server.
 
 .. _logging_gearman_loading:
 
@@ -33,14 +33,14 @@ command line options.
    :Default: drizzlelog
    :Variable: :ref:`logging_gearman_function <logging_gearman_function>`
 
-   Gearman Function to send logging to
+   Gearman function to send logging to.
 
 .. option:: --logging-gearman.host ARG
 
    :Default: localhost
    :Variable: :ref:`logging_gearman_host <logging_gearman_host>`
 
-   Hostname for logging to a Gearman server
+   Hostname for logging to a Gearman server.
 
 .. _logging_gearman_variables:
 
@@ -97,3 +97,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='logging_gearman'
 
+Changelog
+---------
+
+v0.1
+^^^^
+* First release.

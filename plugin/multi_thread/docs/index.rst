@@ -1,23 +1,14 @@
 Multi-Thread Scheduler
 ======================
 
-One Thread Per Session Scheduler.
+The :program:`multi_thread` plugin provides the low-level thread scheduler.
 
 .. _multi_thread_loading:
 
 Loading
 -------
 
-This plugin is loaded by default, but it may need to be configured.  See
-the plugin's :ref:`multi_thread_configuration` and
-:ref:`multi_thread_variables`.
-
-To stop the plugin from loading by default, start :program:`drizzled`
-with::
-
-   --plugin-remove=multi_thread
-
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+This plugin is loaded by default and it should not be unloaded because Drizzle will not start without this plugin.
 
 .. _multi_thread_configuration:
 
@@ -42,15 +33,7 @@ command line options.
 Variables
 ---------
 
-These variables show the running configuration of the plugin.
-See `variables` for more information about querying and setting variables.
-
-.. _multi_thread_examples:
-
-Examples
---------
-
-Sorry, there are no examples for this plugin.
+The plugin does not register any variables.
 
 .. _multi_thread_authors:
 
@@ -72,3 +55,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='multi_thread'
 
+Changelog
+---------
+
+v0.1
+^^^^
+* First release.

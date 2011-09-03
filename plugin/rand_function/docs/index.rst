@@ -22,3 +22,11 @@ default, start :program:`drizzled` with::
 Authors
 -------
 
+Unknown
+
+.. _rand_function_version:
+
+Version
+-------
+
+Unknown

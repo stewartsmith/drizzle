@@ -1,17 +1,15 @@
 Protocol Dictionary
 ===================
 
-Provides dictionary for protocol counters.
+The :program:`protocol_dictionary` plugin provides the
+DATA_DICTIONARY.PROTOCOL_COUNTERS table.
 
 .. _protocol_dictionary_loading:
 
 Loading
 -------
 
-This plugin is loaded by default, but it may need to be configured.  See
-the plugin's :ref:`protocol_dictionary_configuration` and
-:ref:`protocol_dictionary_variables`.
-
+This plugin is loaded by default.
 To stop the plugin from loading by default, start :program:`drizzled`
 with::
 
@@ -19,31 +17,27 @@ with::
 
 .. seealso:: :doc:`/options` for more information about adding and removing plugins.
 
-.. _protocol_dictionary_configuration:
-
-Configuration
--------------
-
-These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
-command line options.
-
-.. program:: drizzled
-
-.. _protocol_dictionary_variables:
-
-Variables
----------
-
-These variables show the running configuration of the plugin.
-See `variables` for more information about querying and setting variables.
-
 .. _protocol_dictionary_examples:
 
 Examples
 --------
 
-Sorry, there are no examples for this plugin.
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.PROTOCOL_COUNTERS;
+   +----------------------------+--------------------+-------+
+   | PROTOCOL                   | COUNTER            | VALUE |
+   +----------------------------+--------------------+-------+
+   | drizzle_protocol           | connection_count   |     2 | 
+   | drizzle_protocol           | connected          |     1 | 
+   | drizzle_protocol           | failed_connections |     0 | 
+   | mysql_protocol             | connection_count   |     0 | 
+   | mysql_protocol             | connected          |     0 | 
+   | mysql_protocol             | failed_connections |     0 | 
+   | mysql_unix_socket_protocol | connection_count   |     0 | 
+   | mysql_unix_socket_protocol | connected          |     0 | 
+   | mysql_unix_socket_protocol | failed_connections |     0 | 
+   +----------------------------+--------------------+-------+
 
 .. _protocol_dictionary_authors:
 
@@ -65,3 +59,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='protocol_dictionary'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

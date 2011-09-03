@@ -1,7 +1,8 @@
-Statistics
-==========
+User Statistics
+===============
 
-N_("User Statistics as DATA_DICTIONARY tables").
+The :program:`logging_stats` plugin provides user statistics as
+DATA_DICTIONARY tables.
 
 .. _logging_stats_loading:
 
@@ -35,28 +36,28 @@ command line options.
    :Default: 10
    :Variable: :ref:`logging_stats_bucket_count <logging_stats_bucket_count>`
 
-   Max number of range locks to use for Scoreboard
+   Max number of range locks to use for Scoreboard.
 
 .. option:: --logging-stats.disable 
 
    :Default: 
    :Variable:
 
-   Enable Logging Statistics Collection
+   Disable logging statistics collection.
 
 .. option:: --logging-stats.max-user-count ARG
 
    :Default: 500
    :Variable: :ref:`logging_stats_max_user_count <logging_stats_max_user_count>`
 
-   Max number of users that will be logged
+   Max number of users to log.
 
 .. option:: --logging-stats.scoreboard-size ARG
 
    :Default: 2000
    :Variable: :ref:`logging_stats_scoreboard_size <logging_stats_scoreboard_size>`
 
-   Max number of concurrent sessions that will be logged
+   Max number of concurrent sessions to log.
 
 .. _logging_stats_variables:
 
@@ -74,7 +75,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-stats.bucket-count`
 
-   Max number of range locks to use for Scoreboard
+   Max number of range locks to use for Scoreboard.
 
 .. _logging_stats_enable:
 
@@ -84,7 +85,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option:
 
-   Unknown
+   If logging stats is enabled or not.
 
 .. _logging_stats_max_user_count:
 
@@ -94,7 +95,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-stats.max-user-count`
 
-   Max number of users that will be logged
+   Max number of users to log.
 
 .. _logging_stats_scoreboard_size:
 
@@ -104,7 +105,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-stats.scoreboard-size`
 
-   Max number of concurrent sessions that will be logged
+   Max number of concurrent sessions to log.
 
 .. _logging_stats_examples:
 
@@ -133,3 +134,10 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='logging_stats'
 
+
+Changelog
+---------
+
+v0.1
+^^^^
+* First release.

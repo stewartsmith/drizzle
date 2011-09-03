@@ -1,7 +1,7 @@
 Query Logging
 =============
 
-N_("Log queries to a CSV file").
+The :program:`logging_query` plugin logs queries to a CSV file.
 
 .. _logging_query_loading:
 
@@ -33,42 +33,42 @@ command line options.
    :Default: false
    :Variable: :ref:`logging_query_enable <logging_query_enable>`
 
-   Enable logging to CSV file
+   Enable logging to CSV file.
 
 .. option:: --logging-query.filename 
 
    :Default: 
    :Variable: :ref:`logging_query_filename <logging_query_filename>`
 
-   File to log to
+   File to log to.
 
 .. option:: --logging-query.pcre ARG
 
    :Default: 
    :Variable: :ref:`logging_query_pcre <logging_query_pcre>`
 
-   PCRE to match the query against
+   PCRE to match the query against.
 
 .. option:: --logging-query.threshold-big-examined 
 
    :Default: 0
    :Variable: :ref:`logging_query_threshold_big_examined <logging_query_threshold_big_examined>`
 
-   Threshold for logging big queries
+   Threshold for logging big queries by rows examined.
 
 .. option:: --logging-query.threshold-big-resultset 
 
    :Default: 0
    :Variable: :ref:`logging_query_threshold_big_resultset <logging_query_threshold_big_resultset>`
 
-   Threshold for logging big queries
+   Threshold for logging big queries by result set size.
 
 .. option:: --logging-query.threshold-slow 
 
    :Default: 0
    :Variable: :ref:`logging_query_threshold_slow <logging_query_threshold_slow>`
 
-   Threshold for logging slow queries
+   Threshold for logging slow queries by execution time.
 
 .. _logging_query_variables:
 
@@ -86,7 +86,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.enable`
 
-   Enable logging to CSV file
+   Enable logging to CSV file.
 
 .. _logging_query_filename:
 
@@ -96,7 +96,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.filename`
 
-   File to log to
+   File to log to.
 
 .. _logging_query_pcre:
 
@@ -106,7 +106,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.pcre`
 
-   PCRE to match the query against
+   PCRE to match the query against.
 
 .. _logging_query_threshold_big_examined:
 
@@ -116,7 +116,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.threshold-big-examined`
 
-   Threshold for logging big queries
+   Threshold for logging big queries by rows examined.
 
 .. _logging_query_threshold_big_resultset:
 
@@ -126,7 +126,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.threshold-big-resultset`
 
-   Threshold for logging big queries
+   Threshold for logging big queries by result set size.
 
 .. _logging_query_threshold_slow:
 
@@ -136,7 +136,7 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--logging-query.threshold-slow`
 
-   Threshold for logging slow queries
+   Threshold for logging slow queries by execution time.
 
 .. _logging_query_examples:
 
@@ -165,3 +165,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='logging_query'
 
+Changelog
+---------
+
+v0.2
+^^^^
+* First release.

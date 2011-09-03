@@ -1,7 +1,9 @@
 MyISAM Storage Engine
 =====================
 
-Default engine as of MySQL 3.23 with great performance.
+The :program:`myisam` plugin provides the classic MySQL MyISAM storage engine.
+Unlike MySQL, however, the :doc:`/plugins/innobase/index` is the
+default storage engine in Drizzle.
 
 .. _myisam_loading:
 
@@ -39,7 +41,7 @@ command line options.
 
 .. option:: --myisam.sort-buffer-size ARG
 
-   :Default: 8192*1024
+   :Default: 8388608 (8M)
    :Variable: :ref:`myisam_sort_buffer_size <myisam_sort_buffer_size>`
 
    The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE.
@@ -74,11 +76,6 @@ See `variables` for more information about querying and setting variables.
 
 .. _myisam_examples:
 
-Examples
---------
-
-Sorry, there are no examples for this plugin.
-
 .. _myisam_authors:
 
 Authors
@@ -99,3 +96,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='myisam'
 
+Changelog
+---------
+
+v2.0
+^^^^
+* First Drizzle version.

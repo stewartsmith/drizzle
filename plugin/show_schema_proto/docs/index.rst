@@ -37,3 +37,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='show_schema_proto'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

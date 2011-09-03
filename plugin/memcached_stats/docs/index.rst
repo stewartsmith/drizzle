@@ -1,7 +1,7 @@
 Memcached Statistics
 ====================
 
-N_("Memcached Stats as I_S tables").
+The :program:`memcached_stats` plugin provides `memcached <http://memcached.org/>`_ statistics as INFORMATION_SCHEMA tables.
 
 .. _memcached_stats_loading:
 
@@ -49,9 +49,9 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option:
+   :Option: :option:`--memcached-stats.servers`
 
-   Unknown
+   Memcached servers.
 
 .. _memcached_stats_examples:
 
@@ -80,3 +80,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='memcached_stats'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

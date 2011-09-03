@@ -1,9 +1,25 @@
 Query Log
 =========
 
-The Query Log plugin logs queries to :ref:`logging-destinations`.  When :program:`drizzled` is started with  ``--plugin-add=query-log``, the query log plugin is enabled but all logging destinations are disabled to prevent flooding on busy servers because *all* queries are logged by default.  A destination can be enabled on the command line or later with ``SET GLOBAL``, and various thresholds can be set which restrict logging.
+The :program:`query_log` plugin logs queries to :ref:`logging-destinations`.  When :program:`drizzled` is started with  ``--plugin-add=query-log``, the query log plugin is enabled but all logging destinations are disabled to prevent flooding on busy servers because *all* queries are logged by default.  A destination can be enabled on the command line or later with ``SET GLOBAL``, and various thresholds can be set which restrict logging.
 
 All query log system variables are global and dynamic so they can be changed while Drizzle is running.
+
+.. _query_log_loading:
+
+Loading
+-------
+
+To load this plugin, start :program:`drizzled` with::
+
+   --plugin-add=query_log
+
+Loading the plugin may not enable or configure it.  See the plugin's
+:ref:`query_log_configuration` and :ref:`query_log_variables`.
+
+.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+
+.. _query_log_configuration:
 
 Configuration
 -------------
@@ -86,6 +102,114 @@ Configuration
   :Variable: ``query_log_threshold_warnings``
 
   Log queries that cause more than ``N`` errors.
+
+.. _query_log_variables:
+
+Variables
+---------
+
+These variables show the running configuration of the plugin.
+See `variables` for more information about querying and setting variables.
+
+.. _query_log_enabled:
+
+* ``query_log_enabled``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option:
+
+   If query logging is globally enabled or not.
+
+.. _query_log_file:
+
+* ``query_log_file``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.file`
+
+   Query log file.
+
+.. _query_log_file_enabled:
+
+* ``query_log_file_enabled``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.file-enabled`
+
+   If query logging to a file is enabled.
+
+.. _query_log_threshold_execution_time:
+
+* ``query_log_threshold_execution_time``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-execution-time`
+
+   Threshold for logging slow queries.
+
+.. _query_log_threshold_lock_time:
+
+* ``query_log_threshold_lock_time``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-lock-time`
+
+   Threshold for logging long locking queries.
+
+.. _query_log_threshold_rows_examined:
+
+* ``query_log_threshold_rows_examined``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-rows-examined`
+
+   Threshold for logging queries that examine too many rows.
+
+.. _query_log_threshold_rows_sent:
+
+* ``query_log_threshold_rows_sent``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-rows-sent`
+
+   Threshold for logging queries that return too many rows.
+
+.. _query_log_threshold_session_time:
+
+* ``query_log_threshold_session_time``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-session-time`
+
+   Threshold for logging queries that are active too long.
+
+.. _query_log_threshold_tmp_tables:
+
+* ``query_log_threshold_tmp_tables``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-tmp-tables`
+
+   Threshold for logging queries that use too many temporary tables.
+
+.. _query_log_threshold_warnings:
+
+* ``query_log_threshold_warnings``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--query-log.threshold-warnings`
+
+   Threshold for logging queries that cause too many warnings.
 
 Examples
 --------
@@ -180,10 +304,14 @@ To convert from seconds to microseconds, multiply the seconds value by
 
 To convert back, multiple the number of microseconds by ``0.000001`` (that's zero point five zeros and a one).
 
+.. _query_log_authors:
+
 Authors
 -------
 
 Daniel Nichter
+
+.. _query_log_version:
 
 Version
 -------

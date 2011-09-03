@@ -1,7 +1,7 @@
 MySQL Protocol
 ==============
 
-MySQL Protocol Module.
+:program:`mysql_protocol` implements the MySQL network protocol.
 
 .. _mysql_protocol_loading:
 
@@ -201,3 +201,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='mysql_protocol'
 
+Changelog
+---------
+
+v0.1
+^^^^
+* First Drizzle version.

@@ -1,7 +1,8 @@
 Memcached Functions
 ===================
 
-Ronald Bradford.
+The :program:`memcahed_functions` plugin provide functions for accessing
+a `memcached <http://memcached.org/>`_ server.
 
 .. _memcached_functions_loading:
 
@@ -12,31 +13,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=memcached_functions
 
-Loading the plugin may not enable or configure it.  See the plugin's
-:ref:`memcached_functions_configuration` and :ref:`memcached_functions_variables`.
-
 .. seealso:: :doc:`/options` for more information about adding and removing plugins.
-
-.. _memcached_functions_configuration:
-
-Configuration
--------------
-
-These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
-command line options.
-
-.. program:: drizzled
-
-.. _memcached_functions_variables:
-
-Variables
----------
-
-These variables show the running configuration of the plugin.
-See `variables` for more information about querying and setting variables.
-
-.. _memcached_functions_examples:
 
 Examples
 --------
@@ -48,7 +25,7 @@ Sorry, there are no examples for this plugin.
 Authors
 -------
 
-Patrick Galbraith
+Patrick Galbraith, Ronald Bradford, Padraig O'Sullivan
 
 .. _memcached_functions_version:
 
@@ -63,3 +40,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='memcached_functions'
 
+Changelog
+---------
+
+v0.1
+^^^^
+* First release.

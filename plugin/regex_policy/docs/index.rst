@@ -1,7 +1,8 @@
 Regex-based Authorization
 =========================
 
-Authorization plugin which implements a regex to object mapping.
+:program:`regex_policy` is an :doc:`/administration/authorization` plugin
+that uses regex patterns to match policies.
 
 .. _regex_policy_loading:
 
@@ -30,10 +31,10 @@ command line options.
 
 .. option:: --regex-policy.policy ARG
 
-   :Default: DEFAULT_POLICY_FILE.string(
+   :Default: :file:`drizzle.policy`
    :Variable: :ref:`regex_policy_policy <regex_policy_policy>`
 
-   File to load for regex authorization policies
+   File to load for regex authorization policies.
 
 .. _regex_policy_variables:
 
@@ -51,9 +52,34 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
    :Option: :option:`--regex-policy.policy`
 
-   File to load for regex authorization policies
+   File to load for regex authorization policies.
 
-.. _regex_policy_examples:
+.. _regex_policy_file_format:
+
+Regex Policy File Format
+------------------------
+
+The general line format of a regex policy file is::
+
+   USER_PATTERN SCHEMA_OBJECT_PATTERN POLICY
+
+For example::
+
+   # This is a comment line and should be skipped
+   .+ schema=DATA_DICTIONARY ACCEPT
+   .+ schema=INFORMATION_SCHEMA ACCEPT
+   .+ schema=data_dictionary ACCEPT
+   .+ schema=information_schema ACCEPT
+   root table=.+ ACCEPT
+   root schema=.+ ACCEPT
+   root process=.+ ACCEPT
+   user1 schema=user1 ACCEPT
+   user2 schema=user2 ACCEPT
+   user1 process=user1 ACCEPT
+   user2 process=user2 ACCEPT
+   # Default to denying everything
+   .+ schema=.+ DENY
+   .+ process=.+ DENY
 
 Examples
 --------
@@ -80,3 +106,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='regex_policy'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

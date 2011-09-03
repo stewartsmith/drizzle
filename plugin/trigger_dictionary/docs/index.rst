@@ -1,7 +1,7 @@
 Trigger Dictionary
 ==================
 
-Table for describing what triggers have been loaded.
+The :program:`trigger_dictionary` provides the DATA_DICTIONARY.EVENT_OBSERVERS table which lists loaded event observer plugins.
 
 .. _trigger_dictionary_loading:
 
@@ -12,36 +12,23 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=trigger_dictionary
 
-Loading the plugin may not enable or configure it.  See the plugin's
-:ref:`trigger_dictionary_configuration` and :ref:`trigger_dictionary_variables`.
-
 .. seealso:: :doc:`/options` for more information about adding and removing plugins.
-
-.. _trigger_dictionary_configuration:
-
-Configuration
--------------
-
-These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
-command line options.
-
-.. program:: drizzled
-
-.. _trigger_dictionary_variables:
-
-Variables
----------
-
-These variables show the running configuration of the plugin.
-See `variables` for more information about querying and setting variables.
-
-.. _trigger_dictionary_examples:
 
 Examples
 --------
 
-Sorry, there are no examples for this plugin.
+
+If the :doc:`/plugins/query_log/index` plugin is loaded, then the
+DATA_DICTIONARY.EVENT_OBSERVERS table should list it:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.EVENT_OBSERVERS;
+   +---------------------+
+   | EVENT_OBSERVER_NAME |
+   +---------------------+
+   | query_log           | 
+   +---------------------+
 
 .. _trigger_dictionary_authors:
 
@@ -63,3 +50,9 @@ To see which version of the plugin a Drizzle server is running, execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='trigger_dictionary'
 
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.
