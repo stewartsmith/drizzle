@@ -41,17 +41,17 @@ void ReportException(v8::TryCatch* try_catch);
 // TODO: So this is a function that returns strings? 
 // What is the class for functions that return mixed types?
 
-class JsEvalFunction :public Item_str_func
+class JsFunction :public Item_str_func
 {
 public:
-  JsEvalFunction() :Item_str_func() {}
-  ~JsEvalFunction() {}
+  JsFunction() :Item_str_func() {}
+  ~JsFunction() {}
 
   String *val_str(String *);
 
   const char *func_name() const 
   { 
-    return "js_eval"; 
+    return "js"; 
   }
 
   void fix_length_and_dec() 
@@ -116,7 +116,7 @@ void ReportException(v8::TryCatch* try_catch) {
 }
 
 /**
- * Implements js_eval(), evaluate JavaScript code
+ * Implements js() - execute JavaScript code
  * 
  * @note I only compiled this with -O0 but should work with default O2 also.
  *
@@ -137,7 +137,7 @@ void ReportException(v8::TryCatch* try_catch) {
  * @param res Pointer to the drizzled::String object that will contain the result
  * @return a drizzled::String containing the value returned by executed JavaScript code (value of last executed statement) 
  */
-String *JsEvalFunction::val_str( String *str )
+String *JsFunction::val_str( String *str )
 {
   assert( fixed == 1 );
   // If we return from any of the error conditions during method, then 
@@ -171,7 +171,7 @@ String *JsEvalFunction::val_str( String *str )
   v8::Persistent<v8::Context> context = v8::Context::New( NULL, global );
   if ( context.IsEmpty() ) {
     char buf[100];
-    sprintf(buf, "Error in js_eval() while creating JavaScript context in %s.", JS_ENGINE);
+    sprintf(buf, "Error in js() while creating JavaScript context in %s.", JS_ENGINE);
     my_error(ER_SCRIPT, MYF(0), buf);
     return NULL;
   }
@@ -270,12 +270,12 @@ String *JsEvalFunction::val_str( String *str )
 
 
 
-plugin::Create_function<JsEvalFunction> *js_eval_function = NULL;
+plugin::Create_function<JsFunction> *js_function = NULL;
 
 static int initialize( module::Context &context )
 {
-  js_eval_function = new plugin::Create_function<JsEvalFunction>( "js_eval" );
-  context.add( js_eval_function );
+  js_function = new plugin::Create_function<JsFunction>("js");
+  context.add( js_function );
   // Initialize V8
   v8::V8::Initialize();
   return 0;
@@ -296,7 +296,7 @@ v8::Handle<v8::Value> JsEngine( const v8::Arguments& ) {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "js_eval",
+  "js",
   "0.1",
   "Henrik Ingo",
   "Execute JavaScript code with supplied arguments",
