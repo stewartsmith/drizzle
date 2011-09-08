@@ -20,6 +20,7 @@
 #include <config.h>
 #include <stdio.h>
 
+#include <drizzled/error.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -92,31 +93,24 @@ void ReportException(v8::TryCatch* try_catch) {
   if (message.IsEmpty()) {
     // V8 didn't provide any extra information about this error; just
     // print the exception.
-    printf("%s\n", exception_string);
+    my_error(ER_SCRIPT, MYF(0), exception_string);
   } else {
-    // Print (filename):(line number): (message).
-    v8::String::Utf8Value filename(message->GetScriptResourceName());
-    const char* filename_string = ToCString(filename);
+    char buf[2048]; // TODO: magic number. I'm sure this will crash if you supply a line of javascript longer than 2048.
     int linenum = message->GetLineNumber();
-    printf("%s:%i: %s\n", filename_string, linenum, exception_string);
+    sprintf(buf, "At line %i: %s (Do SHOW ERRORS for more information.)", linenum, exception_string);
+    my_error(ER_SCRIPT, MYF(0), buf);
     // Print line of source code.
     v8::String::Utf8Value sourceline(message->GetSourceLine());
     const char* sourceline_string = ToCString(sourceline);
-    printf("%s\n", sourceline_string);
-    // Print wavy underline (GetUnderline is deprecated).
+    sprintf(buf, "Line %i: %s", linenum, sourceline_string);
+    my_error(ER_SCRIPT, MYF(0), buf);    
     int start = message->GetStartColumn();
-    for (int i = 0; i < start; i++) {
-      printf(" ");
-    }
-    int end = message->GetEndColumn();
-    for (int i = start; i < end; i++) {
-      printf("^");
-    }
-    printf("\n");
+    sprintf(buf, "Check your script starting at: '%.50s'", &sourceline_string[start]);
+    my_error(ER_SCRIPT, MYF(0), buf);
     v8::String::Utf8Value stack_trace(try_catch->StackTrace());
     if (stack_trace.length() > 0) {
       const char* stack_trace_string = ToCString(stack_trace);
-      printf("%s\n", stack_trace_string);
+      my_error(ER_SCRIPT, MYF(0), stack_trace_string);
     }
   }
 }
@@ -126,13 +120,19 @@ void ReportException(v8::TryCatch* try_catch) {
  * 
  * @note I only compiled this with -O0 but should work with default O2 also.
  *
- * @todo Accepts more than one parameter, but doesn't use them.
- * @todo How does it work if I want to return integers and doubles?
+ * @todo datetime and row_result types are not yet handled
  * @todo v8 exceptions are printed to the log. Should be converted to 
  * drizzle warning/error and returned with result.
  * @todo Probably the v8 stuff will be moved to it's own function in the future.
+ * @todo Some of the v8 stuff should be done in initialize()
  * @todo Documentation for drizzle manual in .rst format
- * @todo When available, use v8::Isolate instead of v8::Locker for multithreading
+ * @todo When available, use v8::Isolate instead of v8::Locker for multithreading (or a mix of both)
+ * 
+ * @note DECIMAL_RESULT type is now a double in JavaScript. This could lose precision.
+ * But to send them as strings would also be awkward (+ operator will do unexpected things).
+ * In any case, we'd need some biginteger (bigdecimal?) kind of library to do anything with higher
+ * precision values anyway. If you want to keep the precision, you can cast your
+ * decimal values to strings explicitly when passing them as arguments.
  * 
  * @param res Pointer to the drizzled::String object that will contain the result
  * @return a drizzled::String containing the value returned by executed JavaScript code (value of last executed statement) 
@@ -146,9 +146,6 @@ String *JsEvalFunction::val_str( String *str )
   
   String *source_str=NULL;
   source_str = args[0]->val_str( str ); 
-  
-  // TODO Some of this (ObjectTemplate bindings) should probably be 
-  // moved to initialize, but then it must be allocated on the heap.
   
   // Need to use Locker in multi-threaded app. v8 is unlocked by the destructor 
   // when locker goes out of scope.
@@ -173,8 +170,9 @@ String *JsEvalFunction::val_str( String *str )
   // v8::Array can only be created when context is already entered (otherwise v8 segfaults!)
   v8::Persistent<v8::Context> context = v8::Context::New( NULL, global );
   if ( context.IsEmpty() ) {
-    // TODO: how do I set warning/error in the drizzle result?
-    printf( "Error in js_eval() while creating JavaScript context in v8.\n" );
+    char buf[100];
+    sprintf(buf, "Error in js_eval() while creating JavaScript context in %s.", JS_ENGINE);
+    my_error(ER_SCRIPT, MYF(0), buf);
     return NULL;
   }
   context->Enter();
@@ -183,6 +181,7 @@ String *JsEvalFunction::val_str( String *str )
   for( uint64_t n = 1; n < arg_count; n++ )
   {
     // Need to do this differently for ints, doubles and strings
+    // TODO: Should also handle dates. See is_datetime() in drizzled/item.h.
     // TODO: There is also ROW_RESULT. Is that relevant here? What does it look like? I could pass rows as an array or object.
     if( args[n]->result_type() == INT_RESULT ){
       if( args[n]->is_unsigned() ) {
@@ -192,8 +191,6 @@ String *JsEvalFunction::val_str( String *str )
       }
     } else if ( args[n]->result_type() == REAL_RESULT || args[n]->result_type() == DECIMAL_RESULT ) {
       a->Set( n-1, v8::Number::New(args[n]->val_real() ) );
-    // TODO: Here's a question: Should DECIMAL_RESULT be sent as double or string?
-    // Kind of unusable either way, we'd need to bind some biginteger arithmetic library into the js environment to make them usable
     } else if ( true || args[n]->result_type() == STRING_RESULT ) {
       // Default to creating string values in JavaScript
       a->Set( n-1, v8::String::New(args[n]->val_str(str)->c_str() ) );
@@ -226,16 +223,12 @@ String *JsEvalFunction::val_str( String *str )
   v8::Handle<v8::String> source = v8::String::New(source_str->c_str());
   v8::Handle<v8::Script> script = v8::Script::Compile(source);
   if ( script.IsEmpty() ) {
-    // TODO: how do I set warning/error in the drizzle result?
-    // Print errors that happened during compilation.
     ReportException(&try_catch);
     return NULL;
   } else {
     result = script->Run();
     if ( result.IsEmpty() ) {
       assert( try_catch.HasCaught() );
-      // TODO: how do I set warning/error in the drizzle result?
-      // Print errors that happened during execution.
       ReportException( &try_catch );
       // Dispose of Persistent objects before returning. (Is it needed?)
       context->Exit();

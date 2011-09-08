@@ -865,7 +865,8 @@ enum error_t {
   ER_USE_DATA_DICTIONARY,
   ER_TRANSACTION_ALREADY_STARTED,
   ER_CARTESIAN_JOIN_ATTEMPTED,
-  ER_NO_LOCK_HELD
+  ER_NO_LOCK_HELD,
+  ER_SCRIPT                                         /* Error executing script: (such as JavaScript) */
 };
 
 
