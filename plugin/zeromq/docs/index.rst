@@ -1,5 +1,6 @@
-ZeroMQ integration
-==================
+ZeroMQ
+======
+
 ZeroMQ is a messaging library that allows you to easily build complex
 communication systems. The ZeroMQ plugin allows drizzle to publish
 transactions to a local PUB socket. Many clients can subscribe to
@@ -11,6 +12,7 @@ frame is empty).
 
 Getting started
 ---------------
+
 First, install zeromq, get the code from `zeromq.org
 <http://zeromq.org>`_, then you can build drizzle, watch the
 ./configure output to verify that drizzle finds the libraries needed.
