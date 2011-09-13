@@ -638,7 +638,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_NO_LOCK_HELD, N_("No lock is held by this connection."));
   
   // Errors in scripts, such as JavaScript
-  ADD_ERROR_MESSAGE(ER_SCRIPT, N_("Error executing script: %s"));
+  ADD_ERROR_MESSAGE(ER_SCRIPT, N_("Script error: %s"));
 }
 
 } /* namespace drizzled */
