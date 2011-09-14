@@ -159,8 +159,6 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t pos,
 			   register unsigned char *record)
 {
-  int error;
-
   if (pos != HA_OFFSET_ERROR)
   {
     if (info->opt_flag & WRITE_CACHE_USED &&
@@ -169,8 +167,7 @@ int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t p
       return(-1);
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
 
-    error=info->s->file_read(info, record, info->s->base.reclength,
-		   pos,MYF(MY_NABP)) != 0;
+    int error= info->s->file_read(info, record, info->s->base.reclength, pos,MYF(MY_NABP)) != 0;
     fast_mi_writeinfo(info);
     if (! error)
     {

@@ -18,13 +18,8 @@
 #pragma once
 
 #include <drizzled/common_fwd.h>
-
 #include <drizzled/key_map.h>
-
 #include <drizzled/base.h>
-#ifndef _keycache_h
-#include "keycache.h"
-#endif
 #include <plugin/myisam/my_handler.h>
 #include <drizzled/internal/iocache.h>
 

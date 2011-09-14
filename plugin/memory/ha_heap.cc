@@ -228,7 +228,7 @@ int ha_heap::doOpen(const drizzled::identifier::Table &identifier, int mode, uin
     */
     key_stat_version= file->getShare()->key_stat_version - 1;
   }
-  return (file ? 0 : 1);
+  return file ? 0 : 1;
 }
 
 int ha_heap::close(void)

@@ -67,29 +67,27 @@ public:
     return global_status_vars;
   }
 
-  int32_t getCumulativeStatsByUserMax()
+  int32_t getCumulativeStatsByUserMax() const
   {
     return cumulative_stats_by_user_max; 
   }
 
-  uint64_t getCumulativeSizeBytes()
+  uint64_t getCumulativeSizeBytes() const
   {
     return cumulative_size_bytes;
   }
 
-  int32_t getCumulativeStatsLastValidIndex();
+  int32_t getCumulativeStatsLastValidIndex() const;
 
-  bool hasOpenUserSlots()
+  bool hasOpenUserSlots() const
   {
     return isOpenUserSlots;
   }
 
-  void sumCurrentScoreboard(Scoreboard *scoreboard, 
-                            StatusVars *current_status_vars,
-                            UserCommands *current_user_commands);
+  void sumCurrentScoreboard(Scoreboard*,  StatusVars*, UserCommands*);
 
 private:
-  std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
+  std::vector<ScoreboardSlot*>* cumulative_stats_by_user_vector;
   GlobalStats *global_stats; 
   StatusVars *global_status_vars;
   uint64_t cumulative_size_bytes;

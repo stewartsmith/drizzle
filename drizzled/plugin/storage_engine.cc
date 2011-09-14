@@ -262,7 +262,7 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
 
 bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifier::Table&)
 {
-  std::cerr << " Engine was called for doDoesTableExist() and does not implement it: " << this->getName() << "\n";
+  std::cerr << " Engine was called for doDoesTableExist() and does not implement it: " << getName() << "\n";
   assert(0);
   return false;
 }

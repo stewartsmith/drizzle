@@ -695,9 +695,9 @@ MSOpenTablePool::~MSOpenTablePool()
 void MSOpenTablePool::check()
 {
 	MSOpenTable	*otab, *ptab;
-	bool		found;
 
 	if ((otab = (MSOpenTable *) iPoolTables.getBack())) {
+  	bool found;
 		do {
 			found = false;
 			ptab = iTablePool;

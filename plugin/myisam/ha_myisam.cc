@@ -60,21 +60,9 @@ static const string engine_name("MyISAM");
 boost::mutex THR_LOCK_myisam;
 
 static uint32_t myisam_key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
-static uint32_t myisam_key_cache_size;
-static uint32_t myisam_key_cache_division_limit;
-static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
 typedef constrained_check<size_t, SIZE_MAX, 1024, 1024> sort_buffer_constraint;
 static sort_buffer_constraint sort_buffer_size;
-
-void st_mi_isam_share::setKeyCache()
-{
-  (void)init_key_cache(&key_cache,
-                       myisam_key_cache_block_size,
-                       myisam_key_cache_size,
-                       myisam_key_cache_division_limit, 
-                       myisam_key_cache_age_threshold);
-}
 
 /*****************************************************************************
 ** MyISAM tables
