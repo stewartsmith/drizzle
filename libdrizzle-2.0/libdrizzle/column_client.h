@@ -58,10 +58,16 @@ extern "C" {
  */
 
 /**
- * Skip all columns in result.
+ * Skip a column in result.
  */
 DRIZZLE_API
 drizzle_return_t drizzle_column_skip(drizzle_result_st *result);
+
+/**
+ * Skip all columns in a result.
+ */
+DRIZZLE_API
+drizzle_return_t drizzle_column_skip_all(drizzle_result_st *result);
 
 /**
  * Read column information.
