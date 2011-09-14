@@ -39,61 +39,109 @@ class IPv6 {
     {
     	unsigned short ip6[8];
     } str;
-    
+
     //Function to store the IPv4 address in IPv6 Data Structure
     int ipv4_inet_pton(const char *src)
     {
+	char *ptr_src ;
+	char ipv4_map_ipv6[20], ipv4[16], octet_1[5], octet_2[5], concat_octets[20];
+	int octet[4], octet_index = 0 , dot_count = 0;
 
-	    char *ptr_src ;
+	static const char hex[] = "0123456789";
+	const char * char_ptr_src;
 
-	    char ipv4_map_ipv6[20], ipv4[16], octet_1[5], octet_2[5], concat_octets[20];
-	    int octet[4], octet_index = 0;
+	memset(ipv4_map_ipv6, 0, sizeof(ipv4_map_ipv6));
+	strcpy(ipv4_map_ipv6, src);
 
-	    memset(ipv4_map_ipv6, 0, sizeof(ipv4_map_ipv6));
-	    strcpy(ipv4_map_ipv6, src);
+	memset(octet, 0, sizeof(octet));
+	memset(ipv4, 0, sizeof(ipv4));
+	memset(octet_1, 0, sizeof(octet_1));
+	memset(octet_2, 0, sizeof(octet_2));
+	memset(concat_octets, 0, sizeof(concat_octets));
 
-	    memset(octet, 0, sizeof(octet));
-	    memset(ipv4, 0, sizeof(ipv4));
-	    memset(octet_1, 0, sizeof(octet_1));
-	    memset(octet_2, 0, sizeof(octet_2));
-	    memset(concat_octets, 0, sizeof(concat_octets));
+        ptr_src = ipv4_map_ipv6;
 
-	    ptr_src = strtok(ipv4_map_ipv6,"::");
+        if (*ptr_src == ':' && *++ptr_src != ':')
+            return 0; // Invalid IP Address
 
-	    strcpy(ipv4,ptr_src);
+        if (*ptr_src == ':' && *++ptr_src == ':')
+            ++ptr_src;
 
-	    ptr_src = strtok(ipv4,".");
+	strcpy(ipv4,ptr_src);
 
-	    while (ptr_src != '\0')
-	    {
+	ptr_src = ipv4;
 
+        while(*ptr_src != '\0')
+        {
+            dot_count++;
+
+            if (*ptr_src == '.' && *++ptr_src != '.')
+            {
+                if (dot_count == 1)
+                    return 0; // Invalid IP Address
+            }
+
+            char_ptr_src = strchr (hex, *ptr_src);
+
+            if(char_ptr_src == NULL)
+            {
+                return 0; // Invalid IP Address
+            }
+            ++ptr_src;
+        }
+
+        ptr_src = ipv4;
+
+	while(*ptr_src != '\0')
+        {
+            if ( *ptr_src == ':' && *++ptr_src == '\0')
+            {
+                    return 0; // Invalid IP Address
+            }
+
+            if ( *ptr_src == '.' && *++ptr_src == '\0')
+            {
+                    return 0; // Invalid IP Address
+            }
+          ++ptr_src;
+        }
+
+	ptr_src = strtok(ipv4,".");
+
+	while (ptr_src != '\0')
+	{
 		sscanf(ptr_src, "%d", &octet[octet_index]);
 
-		 if(octet[octet_index++] > 255)
-		 {
-		    return 0; // Invalid IP Address
-		 }
+		if(octet[octet_index++] > 255)
+		{
+			return 0; // Invalid IP Address
+		}
 
 		ptr_src = strtok (NULL, ".");
+	}// end of main while loop
 
-	    }// end of main while loop
+        if(octet[3] == 0)
+        {
+            octet[3] = octet[2];
+            octet[2] = octet[1];
+            octet[1] = octet[0];
+            octet[0] = 0;
+        }
 
-
-	    if(octet_index < 4 || octet_index > 4)
-	    {
+	if(octet_index < 3 || octet_index > 4)
+	{
 		return 0; // Invalid IP Address
-	    }
+	}
 
+	octet_index = 0;
 
-	    octet_index = 0;
+        str.ip6[0] = str.ip6[1] = str.ip6[2] = str.ip6[3] = str.ip6[4] = str.ip6[5] = 0;
 
-            str.ip6[0] = str.ip6[1] = str.ip6[2] = str.ip6[3] = str.ip6[4] = str.ip6[5] = 0;
-
-	    for (int i=6 ; i <= 7; i++)
-	    {
+	for (int i=6 ; i <= 7; i++)
+	{
 		if (i == 7)
 		{
-		    ++octet_index;
+			++octet_index;
 		}
 
 		sprintf(octet_1, "%02x", octet[octet_index]);
@@ -111,39 +159,41 @@ class IPv6 {
 		memset(octet_2, 0, sizeof(octet_2));
 
 		memset(concat_octets, 0, sizeof(concat_octets));
-	    }
+    	}
 
-	    return 1;
+	return 1;
     }//end of ipv4_inet_pton() function
 
     //Function to retain the IPv4 address from IPv6 Data Structure
     char * ipv4_inet_ntop(char *destination)
     {
+	memset(destination, 0, sizeof(destination));
 
-	    memset(destination, 0, sizeof(destination));
+	snprintf(destination, IPV6_BUFFER_LENGTH, "%03x:%03x:%03x:%03x:%03x:%03x:%03d.%03d.%03d.%03d" ,
+	str.ip6[0],str.ip6[1],str.ip6[2],str.ip6[3],str.ip6[4],str.ip6[5],
+	(((unsigned int )str.ip6[6]>>8) & 0xFF),
+	((unsigned int )str.ip6[6] & 0xFF),
+	(((unsigned int )str.ip6[7]>>8) & 0xFF),
+	((unsigned int )str.ip6[7] & 0xFF));
 
-	    snprintf(destination, IPV6_BUFFER_LENGTH, "%03x:%03x:%03x:%03x:%03x:%03x:%03d.%03d.%03d.%03d" ,
-	    str.ip6[0],str.ip6[1],str.ip6[2],str.ip6[3],str.ip6[4],str.ip6[5],
-	    (((unsigned int )str.ip6[6]>>8) & 0xFF),
-	    ((unsigned int )str.ip6[6] & 0xFF),
-	    (((unsigned int )str.ip6[7]>>8) & 0xFF),
-	    ((unsigned int )str.ip6[7] & 0xFF));
+	return destination;
 
-	    return destination;
-
-     }// end of ipv4_inet_ntop function
+    }// end of ipv4_inet_ntop function
 
 
     //Function to store the IPv6 address in IPv6 Data Structure
     int ipv6_inet_pton(const char *src)
     {
+        if (strlen(src)> IPV6_DISPLAY_LENGTH)
+            return 0;   //Invalid IPaddress
+
         //Local variables
         char ipv6[IPV6_BUFFER_LENGTH];
-        
+
         memset(ipv6, 0, IPV6_BUFFER_LENGTH);
-        
+
         strcpy(ipv6,src);
-        
+
         char ipv6_temp[IPV6_BUFFER_LENGTH], ipv6_temp1[IPV6_BUFFER_LENGTH], ipv6_temp2[IPV6_BUFFER_LENGTH];
 
         memset(ipv6_temp, 0, IPV6_BUFFER_LENGTH);
@@ -180,8 +230,39 @@ class IPv6 {
                 return 0; // Invalid IP Address
             }
 
-            ++ptr_src;
+          ++ptr_src;
           }
+
+        ptr_src = ipv6;
+
+        //Check first colon position
+        while (*ptr_src != '\0')
+        {
+            count_colon++;
+
+            if (*ptr_src == ':' && *++ptr_src != ':')
+            {
+                if (count_colon == 1)
+                    return 0; // Invalid IP Address
+            }
+
+          ++ptr_src;
+        }
+
+        ptr_src = ipv6;
+
+        //Check last colon position
+        while (*ptr_src != '\0')
+        {
+            if ( *ptr_src == ':' && *++ptr_src == '\0')
+            {
+                    return 0; // Invalid IP Address
+            }
+
+            ++ptr_src;
+        }
+
+        count_colon = 0;
 
         //while loop count the total number of octets
         ptr_src = strtok (ipv6_temp2,":");
@@ -193,22 +274,38 @@ class IPv6 {
 
             ptr_src = strtok (NULL, ":");
         }
-
         //Retrun zero if total number of octets are greater than 8
         if(octet_count > 8)
         {
             return 0 ; // Invalid IP Address
         }
 
-        int num_miss_octet =0, size =0; 
+       bool colon_flag = true;
+       ptr_src = ipv6;
+
+	//Check the existance of consective two colons
+        while (*ptr_src != '\0')
+        {
+            if (*ptr_src == ':' && *++ptr_src == ':')
+            {
+                colon_flag = false;
+            }
+            ++ptr_src;
+        }
+
+        if (colon_flag ==  true && octet_count < 8)
+        {
+            return 0;
+        }
+
+        int num_miss_octet =0, size =0;
 
 	num_miss_octet = 8 - octet_count;
         size = 2*num_miss_octet +1;
-        
+
 	char * zero_append = new char[size];
 
         memset(zero_append, 0, sizeof(zero_append));
-
 
         ptr_src = ipv6_temp;
 
@@ -247,7 +344,6 @@ class IPv6 {
         {
             //zero padding format according to the '::' position
             strcpy(zero_append,"");
-
 
             for (int i= 0; i < num_miss_octet; i++)
             {
@@ -289,7 +385,6 @@ class IPv6 {
             ptr_src1 = strstr (ipv6_temp1,"::");
 
             *ptr_src1 ='\0';
-
 
             strcpy(temp_first,ipv6_temp1);
 
@@ -346,19 +441,27 @@ class IPv6 {
 
                 ptr_char -= octet_length;
 
+                unsigned int ptr_char_val = 0;
+
+                sscanf(ptr_char, "%x", (unsigned int *)&ptr_char_val);
+
+                //check if "xxxx" value greater than "ffff=65535"
+                if (ptr_char_val > 65535)
+                {
+                    str.ip6[0] = str.ip6[1] = str.ip6[2] = str.ip6[3] = str.ip6[4] = str.ip6[5] = str.ip6[6] = str.ip6[7] = 0;
+                    return 0;
+                }
 
                 unsigned int *ptr = (unsigned int *)&(str.ip6[index_ip6++]);
 
                 sscanf(ptr_char, "%x", ptr);
 
-
                 memset(temp, 0, IPV6_BUFFER_LENGTH);
-
 
                 ptr_src = strtok (NULL, ":");
         }// end of main while loop
-	
-	delete [] zero_append;
+
+        delete [] zero_append;
 
         return 1;
     }// end of Ipv6_Inet_pton function
@@ -371,8 +474,8 @@ class IPv6 {
         memset(temp, 0, sizeof(temp));
 
         memset(destination, 0, IPV6_BUFFER_LENGTH);
-        
-    
+
+
         for (int i= 0; i <= 7; i++)
         {
             if(i==7)
@@ -400,19 +503,19 @@ class IPv6 {
 
     IPv6()
     {
-        str.ip6[0] = str.ip6[1] = str.ip6[2] = str.ip6[3] = str.ip6[4] = str.ip6[5] = str.ip6[6] = str.ip6[7] = 0;    
+        str.ip6[0] = str.ip6[1] = str.ip6[2] = str.ip6[3] = str.ip6[4] = str.ip6[5] = str.ip6[6] = str.ip6[7] = 0;
     }
 
 
     void store_object(unsigned char *out)
     {
-	memcpy(out, (unsigned char *)&str, sizeof(str));
+        memcpy(out, (unsigned char *)&str, sizeof(str));
     }
 
     void restore_object(const unsigned char * in)
     {
     	memcpy(&str, (struct ipv6_ds *)in,  sizeof(str));
-    } 
+    }
 
     int inet_pton(const char *ip)
     {
@@ -436,12 +539,12 @@ class IPv6 {
         {
             return ipv4_inet_ntop(dest);
         }
-        else
+       else
         {
             return ipv6_inet_ntop(dest);
         }
     }
-    
+
     static const size_t LENGTH= 16;
     static const size_t IPV6_DISPLAY_LENGTH= 39;
     static const size_t IPV6_BUFFER_LENGTH= IPV6_DISPLAY_LENGTH+1;
@@ -450,5 +553,4 @@ class IPv6 {
 
 } /* namespace type */
 } /* namespace drizzled */
-
 

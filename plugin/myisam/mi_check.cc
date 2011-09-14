@@ -1297,12 +1297,11 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
     then recrate all indexes.
 */
 
-static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
+static void mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
 {
   MYISAM_SHARE *share= info->s;
   MI_STATE_INFO *state= &share->state;
   uint32_t i;
-  int error;
 
   /*
     If any of the disabled indexes has a key block assigned, we must
@@ -1333,8 +1332,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
         Flush dirty blocks of this index file from key cache and remove
         all blocks of this index file from key cache.
       */
-      error= 0;
-      goto end;
+      return;
     }
     /*
       We do now drop all indexes and declare them disabled. With the
@@ -1343,10 +1341,6 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
     */
     mi_clear_all_keys_active(state->key_map);
   }
-
-  /* Remove all key blocks of this index file from key cache. */
-  if ((error= 0))
-    goto end;
 
   /* Clear index root block pointers. */
   for (i= 0; i < share->base.keys; i++)
@@ -1358,11 +1352,6 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
 
   /* Reset index file length to end of index file header. */
   info->state->key_file_length= share->base.keystart;
-
-  /* error= 0; set by last (error= flush_key_bocks()). */
-
- end:
-  return(error);
 }
 
 

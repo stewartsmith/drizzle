@@ -19,10 +19,10 @@ may be represented as:
          ::1                         the loopback address
          ::                          the unspecified addresses
 
-The IPV6 data type support to store IPv4 address in specific format. 
+The IPV6 data type support to store IPv4 address in both formats. 
 For example:
 
-::192.168.1.10
+::192.168.1.10 or 192.168.1.10
 
 IPV6 are documented as part of Standard Track :rfc:'2373'.
 

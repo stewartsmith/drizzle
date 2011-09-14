@@ -1,6 +1,8 @@
 Position Functions
 ==================
 
+.. _field-function:
+
 FIELD
 -----
 
@@ -26,10 +28,14 @@ Returns 2
 
 Returns 0
 
+.. _find-in-set-function:
+
 FIND_IN_SET
 -----------
 
 Return the index position of the first argument within the second argument
+
+.. _instr-function:
 
 INSTR
 -----
@@ -43,10 +49,14 @@ INSTR(str, substr) returns the index of the first occurrence of substring str in
 	SELECT INSTR('burger', 'salad');
         	-> 0
 
+.. _left-function:
+
 LEFT
 ----
 
 Return the leftmost number of characters as specified
+
+.. _insert-function:
 
 INSERT
 ------
@@ -70,14 +80,16 @@ It returns str (a string), with the substring beginning at pos (position) and le
 	SELECT INSERT('Aquatic', 3, 100, 'This');
         	-> 'AqThis'
 
+.. _locate-function:
 
 LOCATE
 ------
 
 Return the position of the first occurrence of substring.
 
+.. _position-function:
+
 POSITION
 --------
 
 A synonym for LOCATE()
-

@@ -1,53 +1,143 @@
-*******************
 Filtered Replicator
-*******************
+===================
 
-Description
-###########
+The Filtered Replicator plugin registers itself in the Drizzle kernel
+replication stream process as a new replicator (see :ref:`replication_streams`
+for more information). It provides a way to filter replication messages by
+schema name or table name.  Regular expressions can be used for the schema and
+table names.
 
-The Filtered Replicator plugin registers itself in the Drizzle kernel replication
-stream process as a new replicator (see :ref:`replication_streams` for more
-information). It provides a way to filter replication messages by schema name or
-table name. Regular expressions can be used for the schema and table names.
+.. _filtered_replicator_loading:
 
-To make the filtered replicator available, you must enable the plugin when the
-server is started using the :option:`--plugin-add` option.
+Loading
+-------
+
+To load this plugin, start :program:`drizzled` with::
+
+   --plugin-add=filtered_replicator
+
+Loading the plugin may not enable or configure it.  See the plugin's
+:ref:`filtered_replicator_configuration` and :ref:`filtered_replicator_variables`.
+
+.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+
+.. _filtered_replicator_configuration:
 
 Configuration
-#############
+-------------
+
+These command line options configure the plugin when :program:`drizzled`
+is started.  See :doc:`/configuration` for more information about specifying
+command line options.
 
 .. program:: drizzled
 
-.. option:: --filtered-replicator.filteredschemas
+.. option:: --filtered-replicator.filteredschemas ARG
 
-   Comma-separated list of schema names to exclude from replication.
+   :Default: 
+   :Variable: :ref:`filtered_replicator_filteredschemas <filtered_replicator_filteredschemas>`
 
-.. option:: --filtered-replicator.filteredtables
+   Comma-separated list of schemas to exclude from replication.
 
-   Comma-separated list of table names to exclude from replication.
+.. option:: --filtered-replicator.filteredtables ARG
 
-.. option:: --filtered-replicator.schemaregex
+   :Default: 
+   :Variable: :ref:`filtered_replicator_filteredtables <filtered_replicator_filteredtables>`
+
+   Comma-separated list of tables to exclude from replication.
+
+.. option:: --filtered-replicator.schemaregex ARG
+
+   :Default: 
+   :Variable: :ref:`filtered_replicator_schemaregex <filtered_replicator_schemaregex>`
 
    Regular expression to apply to schemas to exclude from replication.
 
-.. option:: --filtered-replicator.tableregex
+.. option:: --filtered-replicator.tableregex ARG
+
+   :Default: 
+   :Variable: :ref:`filtered_replicator_tableregex <filtered_replicator_tableregex>`
 
    Regular expression to apply to tables to exclude from replication.
 
+.. _filtered_replicator_variables:
+
+Variables
+---------
+
+These variables show the running configuration of the plugin.
+See `variables` for more information about querying and setting variables.
+
+.. _filtered_replicator_filteredschemas:
+
+* ``filtered_replicator_filteredschemas``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--filtered-replicator.filteredschemas`
+
+   Comma-separated list of schemas to exclude from replication.
+
+.. _filtered_replicator_filteredtables:
+
+* ``filtered_replicator_filteredtables``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--filtered-replicator.filteredtables`
+
+   Comma-separated list of tables to exclude from replication.
+
+.. _filtered_replicator_schemaregex:
+
+* ``filtered_replicator_schemaregex``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--filtered-replicator.schemaregex`
+
+   Regular expression to apply to schemas to exclude from replication.
+
+.. _filtered_replicator_tableregex:
+
+* ``filtered_replicator_tableregex``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--filtered-replicator.tableregex`
+
+   Regular expression to apply to tables to exclude from replication.
+
+.. _filtered_replicator_examples:
+
 Examples
-########
+--------
 
-To prevent changes to the *foo* schema from being replicated::
+Sorry, there are no examples for this plugin.
 
-  sbin/drizzled --plugin-add=filtered_replicator \
-                --filtered-replicator.filteredschemas=foo
+.. _filtered_replicator_authors:
 
-To prevent changes to any schema beginning with *test* from being replicated::
+Authors
+-------
 
-  sbin/drizzled --plugin-add=filtered_replicator \
-                --filtered-replicator.schemaregex="test*"
+Padraig O Sullivan
 
-To prevent changes to any table beginning with *junk* from being replicated::
+.. _filtered_replicator_version:
 
-  sbin/drizzled --plugin-add=filtered_replicator \
-                --filtered-replicator.tableregex="junk*"
+Version
+-------
+
+This documentation applies to **filtered_replicator 0.2**.
+
+To see which version of the plugin a Drizzle server is running, execute:
+
+.. code-block:: mysql
+
+   SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='filtered_replicator'
+
+Chagnelog
+---------
+
+v0.2
+^^^^
+* First release.
