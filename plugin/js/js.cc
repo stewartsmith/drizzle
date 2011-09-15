@@ -31,15 +31,19 @@ using namespace std;
 using namespace drizzled;
 
 
-// TODO: Can I just declare functions like this? Do I need to use a namespace? Naming convention?
+namespace drizzle_plugin {
+
+namespace js {
+
 v8::Handle<v8::Value> V8Version(const v8::Arguments& args);
 v8::Handle<v8::Value> JsEngine(const v8::Arguments& args);
-const char* ToCString(const v8::String::Utf8Value& value);
-void ReportException(v8::TryCatch* try_catch);
+const char* v8_to_char(const v8::String::Utf8Value& value);
+void emit_drizzle_error(v8::TryCatch* try_catch);
 
 
 // TODO: So this is a function that returns strings? 
 // What is the class for functions that return mixed types?
+// Or is this as it should be, apparently js('1') + js('2') does the right thing already.
 
 class JsFunction :public Item_str_func
 {
@@ -69,47 +73,43 @@ public:
 /**
  * Extracts a C string from a V8 Utf8Value
  * 
- * @todo Only used in ReportException(). When that is deleted, delete this too.
+ * Idea copied from v8 sources, samples/shell.cc. Makes code easier to read than
+ * (char *)(*utf8value)
  */
-const char* ToCString(const v8::String::Utf8Value& value) {
-  return *value ? *value : "<string conversion failed>";
+const char* v8_to_char(const v8::String::Utf8Value& value) {
+  return *value ? *value : "<javascript v8 string conversion failed>";
 }
 
 /**
- * Print v8 error message to stdout (ie usually piped to log file)
+ * Take v8 exception and emit Drizzle error to client
  * 
- * @todo The TryCatch error should be returned as a drizzle warning/error
- * together with the NULL result. When that is done, this function can be 
- * deleted.
- * 
- * @note This is copied from v8 samples/shell.cc. It's not GPL. (Otoh, it's BSD...?)
- * Anyway, don't merge into drizzle.
+ * This is adapted from ReportException() in v8 samples/shell.cc. 
  */
-void ReportException(v8::TryCatch* try_catch) {
+void emit_drizzle_error(v8::TryCatch* try_catch) {
   v8::HandleScope handle_scope;
   v8::String::Utf8Value exception(try_catch->Exception());
-  const char* exception_string = ToCString(exception);
+  const char* exception_string = v8_to_char(exception);
   v8::Handle<v8::Message> message = try_catch->Message();
   if (message.IsEmpty()) {
     // V8 didn't provide any extra information about this error; just
     // print the exception.
     my_error(ER_SCRIPT, MYF(0), exception_string);
   } else {
-    char buf[2048]; // TODO: magic number. I'm sure this will crash if you supply a line of javascript longer than 2048.
+    char buf[2048]; 
     int linenum = message->GetLineNumber();
-    sprintf(buf, "At line %i: %s (Do SHOW ERRORS for more information.)", linenum, exception_string);
+    sprintf(buf, "At line %i: %.1900s (Do SHOW ERRORS for more information.)", linenum, exception_string);
     my_error(ER_SCRIPT, MYF(0), buf);
-    // Print line of source code.
+    // Print line of source code and where error happened.
     v8::String::Utf8Value sourceline(message->GetSourceLine());
-    const char* sourceline_string = ToCString(sourceline);
-    sprintf(buf, "Line %i: %s", linenum, sourceline_string);
+    const char* sourceline_string = v8_to_char(sourceline);
+    sprintf(buf, "Line %i: %.160s", linenum, sourceline_string);
     my_error(ER_SCRIPT, MYF(0), buf);    
     int start = message->GetStartColumn();
     sprintf(buf, "Check your script starting at: '%.50s'", &sourceline_string[start]);
     my_error(ER_SCRIPT, MYF(0), buf);
     v8::String::Utf8Value stack_trace(try_catch->StackTrace());
     if (stack_trace.length() > 0) {
-      const char* stack_trace_string = ToCString(stack_trace);
+      const char* stack_trace_string = v8_to_char(stack_trace);
       my_error(ER_SCRIPT, MYF(0), stack_trace_string);
     }
   }
@@ -118,21 +118,19 @@ void ReportException(v8::TryCatch* try_catch) {
 /**
  * Implements js() - execute JavaScript code
  * 
- * @note I only compiled this with -O0 but should work with default O2 also.
- *
  * @todo datetime and row_result types are not yet handled
- * @todo v8 exceptions are printed to the log. Should be converted to 
- * drizzle warning/error and returned with result.
- * @todo Probably the v8 stuff will be moved to it's own function in the future.
  * @todo Some of the v8 stuff should be done in initialize()
+ * @todo When available, use v8::Isolate instead of v8::Locker for multithreading 
+ * (or a mix of both). As part of this work, refactor v8 stuff into separate 
+ * function, proxy, factory or something...
  * @todo Documentation for drizzle manual in .rst format
- * @todo When available, use v8::Isolate instead of v8::Locker for multithreading (or a mix of both)
  * 
- * @note DECIMAL_RESULT type is now a double in JavaScript. This could lose precision.
- * But to send them as strings would also be awkward (+ operator will do unexpected things).
- * In any case, we'd need some biginteger (bigdecimal?) kind of library to do anything with higher
- * precision values anyway. If you want to keep the precision, you can cast your
- * decimal values to strings explicitly when passing them as arguments.
+ * @note DECIMAL_RESULT type is now a double in JavaScript. This could lose 
+ * precision. But to send them as strings would also be awkward (+ operator will 
+ * do unexpected things). In any case, we'd need some biginteger (bigdecimal?) 
+ * kind of library to do anything with higher precision values anyway. If you 
+ * want to keep the precision, you can cast your decimal values to strings 
+ * explicitly when passing them as arguments.
  * 
  * @param res Pointer to the drizzled::String object that will contain the result
  * @return a drizzled::String containing the value returned by executed JavaScript code (value of last executed statement) 
@@ -223,13 +221,13 @@ String *JsFunction::val_str( String *str )
   v8::Handle<v8::String> source = v8::String::New(source_str->c_str());
   v8::Handle<v8::Script> script = v8::Script::Compile(source);
   if ( script.IsEmpty() ) {
-    ReportException(&try_catch);
+    emit_drizzle_error(&try_catch);
     return NULL;
   } else {
     result = script->Run();
     if ( result.IsEmpty() ) {
       assert( try_catch.HasCaught() );
-      ReportException( &try_catch );
+      emit_drizzle_error( &try_catch );
       // Dispose of Persistent objects before returning. (Is it needed?)
       context->Exit();
       context.Dispose();
@@ -292,6 +290,9 @@ v8::Handle<v8::Value> JsEngine( const v8::Arguments& ) {
   return v8::String::New( JS_ENGINE );
 }
 
+} // namespace js
+
+} // namespace drizzle_plugin
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -301,7 +302,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Henrik Ingo",
   "Execute JavaScript code with supplied arguments",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
+  drizzle_plugin::js::initialize, /* Plugin Init */
   NULL,   /* depends */              
   NULL    /* config options */
 }
