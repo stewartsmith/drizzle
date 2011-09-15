@@ -35,6 +35,13 @@ FIND_IN_SET
 
 Return the index position of the first argument within the second argument
 
+.. code-block:: mysql
+
+	SELECT FIND_IN_SET('2', '1,2,3,4');
+        	-> 2
+	SELECT FIND_IN_SET('1', '123');
+        	-> 0
+        	
 .. _instr-function:
 
 INSTR
@@ -45,7 +52,7 @@ INSTR(str, substr) returns the index of the first occurrence of substring str in
 .. code-block:: mysql
 
 	SELECT INSTR('tacosalad', 'salad');
-        	-> 4
+        	-> 5
 	SELECT INSTR('burger', 'salad');
         	-> 0
 
@@ -55,6 +62,11 @@ LEFT
 ----
 
 Return the leftmost number of characters as specified
+
+.. code-block:: mysql
+
+	SELECT LEFT('drizzled', 7);
+        	-> 'drizzle'
 
 .. _insert-function:
 
@@ -86,6 +98,13 @@ LOCATE
 ------
 
 Return the position of the first occurrence of substring.
+
+.. code-block:: mysql
+
+	SELECT LOCATE('salad', 'tacosalad');
+        	-> 5
+	SELECT LOCATE('burger', 'salad');
+        	-> 0
 
 .. _position-function:
 
