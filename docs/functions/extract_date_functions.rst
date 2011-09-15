@@ -175,19 +175,3 @@ year
 
 *Result: 2009*
 
-date_part
-^^^^^^^^^
-
-The valid field names for date_part are the same as for extract.
-
-.. code-block:: mysql
-
-	SELECT date_part('day', TIMESTAMP '2010-07-16 10:12:05');
-
-*Result: 16*
-
-.. code-block:: mysql
-
-	SELECT date_part('hour', INTERVAL '5 hours 12 minutes');
-
-*Result: 4*
