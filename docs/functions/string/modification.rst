@@ -45,7 +45,7 @@ CONCAT WS (With Separator) [1]_ allows you to specify that the first argument is
 
 Syntax:
 
-CONCAT_WS(separator str1, str2,....)
+CONCAT_WS(separator, str1, str2,....)
 
 For example:
 
@@ -74,12 +74,28 @@ TRIM([{BOTH | LEADING | TRAILING} [remstr] FROM] str), TRIM([remstr FROM] str)
 
 [remstr] is optional (if it's not specified, spaces are removed).
 
+For example:
+
+.. code-block:: mysql
+
+	SELECT TRIM(BOTH 'hello,' FROM 'hello,Drizzlehello,');
+
+Returns: 'Drizzle'
+
 .. _ltrim-function:
 
-LTRIM
+LTRIM 
 -----
 
 This version of the TRIM function removes leading spaces from the beginning of a string.
+
+For example:
+
+.. code-block:: mysql
+
+	SELECT LTRIM('   Drizzle');
+
+Returns: 'Drizzle'
 
 .. _rtrim-function:
 
@@ -87,6 +103,14 @@ RTRIM
 -----
 
 This version of the TRIM function removes trailing spaces from the end of a function. 
+
+For example:
+
+.. code-block:: mysql
+
+	SELECT RTRIM('Drizzle   ');
+
+Returns: 'Drizzle'
 
 .. rubric:: Footnotes
 
