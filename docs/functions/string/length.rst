@@ -1,19 +1,6 @@
 Length and Size Functions
 =========================
 
-.. _bit-lenght-function:
-
-BIT_LENGTH
-----------
-The BIT_LENGTH(str) function return the String str length in bits. Here are the some example of the BIT_LENGTH(str) function: 
-For example:
-
-.. code-block:: mysql
-
-	SELECT BIT_LENGTH('a');
-
-Returns 8
-
 .. _char-length-function:
 
 CHAR_LENGTH
@@ -42,7 +29,7 @@ The LENGTH function returns the length of the string argument in bytes. A multi-
 
 .. code-block:: mysql
 
-	select length(_utf8 '€');
+	select length('€');
 
 Returns 3
 
