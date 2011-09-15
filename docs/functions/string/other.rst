@@ -93,7 +93,7 @@ For example:
 
 .. code-block:: mysql
 	
-	SELECT REPLACE('wwww.google.com', 'w', 'v');
+	SELECT REPLACE('www.google.com', 'w', 'v');
 
 Returns: vvv.google.com
 
