@@ -20,14 +20,9 @@
 
 using namespace std;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 const char* MySQLPasswordName = "mysql_password";
-
-MySQLPassword::MySQLPassword(void):
-  Item_str_func()
-{ }
 
 const char *MySQLPassword::func_name() const
 {
@@ -41,30 +36,20 @@ void MySQLPassword::fix_length_and_dec()
 
 bool MySQLPassword::check_argument_count(int n)
 {
-  return (n == 1);
+  return n == 1;
 }
 
 drizzled::String *MySQLPassword::val_str(drizzled::String *str)
 {
-  drizzled::String argument;
-  drizzled::String *password= args[0]->val_str(&argument);
-  drizzled::SHA1_CTX ctx;
   uint8_t hash_tmp1[SHA1_DIGEST_LENGTH];
   uint8_t hash_tmp2[SHA1_DIGEST_LENGTH];
 
-  drizzled::SHA1Init(&ctx);
-  drizzled::SHA1Update(&ctx, reinterpret_cast<uint8_t *>(password->ptr()),
-                       password->length());
-  drizzled::SHA1Final(hash_tmp1, &ctx);
-
-  drizzled::SHA1Init(&ctx);
-  drizzled::SHA1Update(&ctx, hash_tmp1, SHA1_DIGEST_LENGTH);
-  drizzled::SHA1Final(hash_tmp2, &ctx);
+  drizzled::String argument;
+  drizzled::do_sha1(*args[0]->val_str(&argument), hash_tmp1);
+  drizzled::do_sha1(data_ref(hash_tmp1, SHA1_DIGEST_LENGTH), hash_tmp2);
 
   str->realloc(SHA1_DIGEST_LENGTH * 2);
-  drizzled::drizzled_string_to_hex(str->ptr(),
-                                   reinterpret_cast<const char*>(hash_tmp2),
-                                   SHA1_DIGEST_LENGTH);
+  drizzled::drizzled_string_to_hex(str->ptr(), reinterpret_cast<const char*>(hash_tmp2), SHA1_DIGEST_LENGTH);
   str->length(SHA1_DIGEST_LENGTH * 2);
 
   return str;

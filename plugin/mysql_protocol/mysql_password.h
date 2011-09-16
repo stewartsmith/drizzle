@@ -18,17 +18,15 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 extern const char* MySQLPasswordName;
 
 class MySQLPassword: public drizzled::Item_str_func
 {
 public:
-  MySQLPassword(void);
-  const char *func_name(void) const;
-  void fix_length_and_dec(void);
+  const char *func_name() const;
+  void fix_length_and_dec();
   bool check_argument_count(int n);
   drizzled::String *val_str(drizzled::String *);
 };
