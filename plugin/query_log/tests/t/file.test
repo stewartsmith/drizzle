@@ -100,7 +100,7 @@ eval SET GLOBAL query_log_file="$DRIZZLETEST_VARDIR/query.log";
 # YYYY-MM-DDTHH:MM:SS.uuuuuu.  We just check that the start of the ts
 # matches today's date.
 let $today= `SELECT DATE(NOW())`;
---exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log ts matches "^$today"
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log start_ts matches "^$today"
 
 # The 3rd line of an event should be microsecond times like 1.123456
 --exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log execution_time,lock_time,session_time matches '\d\.\d{6}','\d\.\d{6}','\d\.\d{6}'

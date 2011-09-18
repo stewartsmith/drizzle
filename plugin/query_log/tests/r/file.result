@@ -21,14 +21,14 @@ SET GLOBAL query_log_file_enabled=TRUE;
 SELECT @@query_log_enabled, @@query_log_file_enabled;
 @@query_log_enabled	@@query_log_file_enabled
 1	1
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
@@ -42,14 +42,14 @@ SELECT @@query_log_enabled, @@query_log_file_enabled;
 SELECT 2;
 2
 2
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
@@ -71,14 +71,14 @@ SELECT 'this is the second log file';
 this is the second log file
 this is the second log file
 Log file exists
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
@@ -93,49 +93,49 @@ Log file exists
 SELECT 'this is the third log file';
 this is the third log file
 this is the third log file
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
 SET GLOBAL query_log_file="third-log-file";
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
 SELECT @@query_log_enabled, @@query_log_file_enabled, @@query_log_file;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="third-log-file"
 SELECT 'this is the third log file';
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SELECT @@query_log_enabled, @@query_log_file_enabled;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
 # schema="test"
 SET GLOBAL query_log_file_enabled=TRUE;
 #
-# 0000-00-00T00:00:00.000000
+# start_ts=0-00-00T00:00:00.000000
 # session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
 # execution_time=0.000000 lock_time=0.000000 session_time=0.000000
 # error=false
@@ -144,7 +144,7 @@ SELECT 'this is the second log file';
 #
 SET GLOBAL query_log_file="DRIZZLETEST_VARDIR/query.log";
 Checking attributes and values of query SELECT DATE(NOW());
-ts value matches OK
+start_ts value matches OK
 Checking attributes and values of query SELECT DATE(NOW());
 execution_time value matches OK
 lock_time value matches OK

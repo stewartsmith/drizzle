@@ -103,10 +103,7 @@ sub parse_event {
    my $lineno = 1;
    foreach my $line ( @event_lines ) { 
       next if $line =~ m/^$/;
-      if ( $lineno == 1 ) { # timestamp
-         push @props, 'ts', $line =~ m/^# (\S+)/;
-      }
-      elsif ( $lineno >= 2 && $lineno <= 4 ) { # ints, floats and bools
+      if ( $lineno <= 4 ) { # ts, ints, floats and bools
          push @props, $line =~ m/([a-z_]+)=(\S+)/g;
       }
       elsif ( $lineno == 5 ) { # strings

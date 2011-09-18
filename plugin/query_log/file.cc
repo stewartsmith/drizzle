@@ -37,7 +37,8 @@ bool QueryLoggerFile::logEvent(const event_t *event)
 {
   if (_fh.is_open())
   {
-    _fh << "# " << event->ts << "\n"
+    _fh << "# start_ts=" << event->ts
+        << "\n"
         << "# session_id="     << event->session_id
         <<  " query_id="       << event->query_id
         <<  " rows_examined="  << event->rows_examined
