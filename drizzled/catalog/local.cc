@@ -18,21 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <config.h>
-
 #include <drizzled/catalog/local.h>
 #include <drizzled/plugin/catalog.h>
-
 #include <boost/thread/once.hpp>
 
-namespace drizzled
-{
-namespace catalog
-{
+namespace drizzled {
+namespace catalog {
 
 /* Setup the local catalog for us to use with session */
-static identifier::Catalog default_catalog("LOCAL");
+static identifier::Catalog default_catalog(str_ref("LOCAL"));
 static catalog::Instance::shared_ptr _local_catalog;
 
 static boost::once_flag run_once= BOOST_ONCE_INIT;

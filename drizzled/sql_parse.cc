@@ -915,7 +915,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
-    if (not schema::check(*session, identifier::Schema(string(table->db.str))))
+    if (not schema::check(*session, identifier::Schema(table->db.str)))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
       return NULL;

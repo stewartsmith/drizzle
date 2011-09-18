@@ -27,7 +27,7 @@ namespace catalog {
 class Drop : public Catalog
 {
 public:
-  Drop(Session*, lex_string_t&);
+  Drop(Session*, str_ref);
   bool authorized() const;
   bool perform() const;
 };
