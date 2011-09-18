@@ -42,19 +42,18 @@ using namespace std;
 
 namespace drizzled {
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
+KEY_CREATE_INFO default_key_create_info;
 
-const char *ha_row_type[] = {
+const char *ha_row_type[] = 
+{
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
-
-
 
 /**
   Register Cursor error messages for use with my_error().
 */
 
-void ha_init_errors(void)
+void ha_init_errors()
 {
   // Set the dedicated error messages.
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_KEY_NOT_FOUND,          ER(ER_KEY_NOT_FOUND));

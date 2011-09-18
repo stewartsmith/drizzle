@@ -921,24 +921,21 @@ static int prepare_create_table(Session *session,
     key_info->algorithm= key->key_create_info.algorithm;
 
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
-                                           key->key_create_info.comment.str,
-                                           key->key_create_info.comment.str +
-                                           key->key_create_info.comment.length,
+                                           key->key_create_info.comment.begin(),
+                                           key->key_create_info.comment.end(),
                                            INDEX_COMMENT_MAXLEN);
 
-    if (tmp_len < key->key_create_info.comment.length)
+    if (tmp_len < key->key_create_info.comment.size())
     {
-      my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-               key->key_create_info.comment.str,"INDEX COMMENT",
-               (uint32_t) INDEX_COMMENT_MAXLEN);
+      my_error(ER_WRONG_STRING_LENGTH, MYF(0), key->key_create_info.comment.data(), "INDEX COMMENT", (uint32_t) INDEX_COMMENT_MAXLEN);
       return -1;
     }
 
-    key_info->comment.length= key->key_create_info.comment.length;
+    key_info->comment.length= key->key_create_info.comment.size();
     if (key_info->comment.length > 0)
     {
       key_info->flags|= HA_USES_COMMENT;
-      key_info->comment.str= key->key_create_info.comment.str;
+      key_info->comment.str= (char*)key->key_create_info.comment.data();
     }
 
     message::Table::Field *protofield= NULL;

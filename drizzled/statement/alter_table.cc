@@ -529,13 +529,11 @@ static bool prepare_alter_table(Session *session,
           key_part_length= 0; /* Use whole field */
       }
       key_part_length/= key_part->field->charset()->mbmaxlen;
-      key_parts.push_back(new Key_part_spec(cfield->field_name,
-                                            strlen(cfield->field_name),
-                                            key_part_length));
+      key_parts.push_back(new Key_part_spec(cfield->field_name, strlen(cfield->field_name), key_part_length));
     }
     if (key_parts.size())
     {
-      key_create_information_st key_create_info= default_key_create_info;
+      KEY_CREATE_INFO key_create_info= default_key_create_info;
       key_create_info.algorithm= key_info->algorithm;
 
       if (key_info->flags & HA_USES_BLOCK_SIZE)
