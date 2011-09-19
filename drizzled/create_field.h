@@ -29,13 +29,13 @@ namespace drizzled {
  * Basically, all information for a new or altered field
  * definition is contained in the Create_field class.
  */
-class CreateField :public memory::SqlAlloc
+class CreateField : public memory::SqlAlloc
 {
 public:
   const char *field_name; /**< Name of the field to be created */
   const char *change; /**< If done with alter table */
   const char *after; /**< Put this new Field after this Field */
-  lex_string_t comment; /**< A comment for this field */
+  str_ref comment; /**< A comment for this field */
   Item *def; /**< Default value for the new field */
   enum_field_types sql_type; /**< The data type of the new field */
 
@@ -114,7 +114,7 @@ public:
             const char *length,
             const char *decimals,
             uint32_t type_modifier,
-            lex_string_t *comment,
+            str_ref comment,
             const char *change,
             List<String> *interval_list,
             const charset_info_st*,

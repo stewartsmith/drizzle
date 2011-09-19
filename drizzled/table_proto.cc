@@ -231,27 +231,23 @@ bool fill_table_proto(const identifier::Table& identifier,
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
 
-    if (field_arg->comment.length)
+    if (not field_arg->comment.empty())
     {
-      uint32_t tmp_len;
-      tmp_len= system_charset_info->cset->charpos(system_charset_info,
-						  field_arg->comment.str,
-						  field_arg->comment.str +
-						  field_arg->comment.length,
+      uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
+						  field_arg->comment.begin(),
+						  field_arg->comment.end(),
 						  COLUMN_COMMENT_MAXLEN);
 
-      if (tmp_len < field_arg->comment.length)
+      if (tmp_len < field_arg->comment.size())
       {
-	my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-		 field_arg->comment.str,"COLUMN COMMENT",
-		 (uint32_t) COLUMN_COMMENT_MAXLEN);
-	return true;
+        my_error(ER_WRONG_STRING_LENGTH, MYF(0), field_arg->comment.data(), "COLUMN COMMENT", (uint32_t) COLUMN_COMMENT_MAXLEN);
+        return true;
       }
 
-      if (! use_existing_fields)
-        attribute->set_comment(field_arg->comment.str);
+      if (not use_existing_fields)
+        attribute->set_comment(field_arg->comment.data());
 
-      assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
+      assert(strcmp(attribute->comment().c_str(), field_arg->comment.data())==0);
     }
 
     if (field_arg->unireg_check == Field::NEXT_NUMBER)

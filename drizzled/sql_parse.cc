@@ -843,8 +843,8 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return true;
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+        return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
@@ -861,7 +861,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   }
 
   CreateField* new_field= new CreateField;
-  if (new_field->init(session, field_name->str, type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
+  if (new_field->init(session, field_name->str, type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
