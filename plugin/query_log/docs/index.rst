@@ -116,7 +116,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_enabled``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option:
 
    If query logging is globally enabled or not.
@@ -126,7 +126,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_file``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.file`
 
    Query log file.
@@ -136,7 +136,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_file_enabled``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.file-enabled`
 
    If query logging to a file is enabled.
@@ -146,7 +146,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_execution_time``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-execution-time`
 
    Threshold for logging slow queries.
@@ -156,7 +156,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_lock_time``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-lock-time`
 
    Threshold for logging long locking queries.
@@ -166,7 +166,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_rows_examined``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-rows-examined`
 
    Threshold for logging queries that examine too many rows.
@@ -176,7 +176,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_rows_sent``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-rows-sent`
 
    Threshold for logging queries that return too many rows.
@@ -186,7 +186,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_session_time``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-session-time`
 
    Threshold for logging queries that are active too long.
@@ -196,7 +196,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_tmp_tables``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-tmp-tables`
 
    Threshold for logging queries that use too many temporary tables.
@@ -206,7 +206,7 @@ See `variables` for more information about querying and setting variables.
 * ``query_log_threshold_warnings``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--query-log.threshold-warnings`
 
    Threshold for logging queries that cause too many warnings.
@@ -214,7 +214,7 @@ See `variables` for more information about querying and setting variables.
 Examples
 --------
 
-Start Drizzle with the query plugin and log queries that take longer than 1 second to execute to the default log file:
+Start Drizzle with the query plugin and log queries that take longer than 1 second to execute to the default query log file:
 
 .. code-block:: none
 
@@ -257,20 +257,20 @@ There is currently only one logging destination: the :ref:`log-file` specified b
 Log File
 ^^^^^^^^
 
-The log file destination is enabled when both ``query_log_enabled`` and ``query_log_file_enabled`` are true (``SHOW VARIABLES`` lists ``ON`` and ``OFF`` instead of ``TRUE`` and ``FASLE``).  When ``query_log_file_enabled`` is true, the ``query_log_file`` is open.  When ``query_log_file_enabled`` is set false, the log file is closed.  This is helpful if you want to rotate the log file.
+The query log file destination is enabled when both ``query_log_enabled`` and ``query_log_file_enabled`` are true (``SHOW VARIABLES`` lists ``ON`` and ``OFF`` instead of ``TRUE`` and ``FASLE``).  When ``query_log_file_enabled`` is true, the ``query_log_file`` is open.  When ``query_log_file_enabled`` is set false, the query log file is closed.  This is helpful if you want to rotate the query log file.
 
-The log file is a plain text, structured file that is readable by humans and easily parsable by tools.  It looks like:
+The query log file is a plain text, structured file that is readable by humans and easily parsable by tools.  It looks like:
 
 .. code-block:: none
 
-  # 2011-05-15T01:48:17.814985
+  # start_ts=2011-05-15T01:48:17.814985
   # session_id=1 query_id=6 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=1
   # execution_time=0.000315 lock_time=0.000315 session_time=16.723020
   # error=true
   # schema=""
   set query_log_file_enabled=true;
   #
-  # 2011-05-15T01:48:21.526746
+  # start_ts=2011-05-15T01:48:21.526746
   # session_id=1 query_id=7 rows_examined=10 rows_sent=10 tmp_tables=0 warnings=0
   # execution_time=0.000979 lock_time=0.000562 session_time=20.435445
   # error=false
@@ -280,7 +280,31 @@ The log file is a plain text, structured file that is readable by humans and eas
 
 Events are separated by a single ``#`` character.  This record separator can be used by programs like :program:`awk` and :program:`perl` to easily separate events in a log.
 
-The first line line of each event is a UTC/GMT timestamp with microsecond precision; the timezone cannot be changed.  The second line has attributes with integer values.  The third line has attributes with high-precision time values, always with six decimals places of precision.  The fourth line has attributes with boolean values, either ``true`` or ``false``.  The fifth line has attributes with string values, always double-quoted.  Remaining lines are the query which can contain multiple lines, blank lines, et.  The record separator marks the event of the event.
+The first line of each event has UTC/GMT timestamps with microsecond precision; the timezone cannot be changed.  The second line has attributes with integer values.  The third line has attributes with high-precision time values, always with six decimals places of precision.  The fourth line has attributes with boolean values, either ``true`` or ``false``.  The fifth line has attributes with string values, always double-quoted.  Remaining lines are the query which can contain multiple lines, blank lines, et.  The record separator marks the event of the event.
+
+As the example above demonstrates, the meta-format for each event in the query log is::
+
+  # attribute=value
+  query
+  #
+
+Parsing a query log file should be easy since the format is static, consistent, and follows
+these rules:
+
+  * Attribute-value pairs are on comment lines that begin with one ``#`` character followed
+    by a space.
+  * Comment lines have one or more attribute-value pairs.
+  * Attribute-value pairs are separated by one space.
+  * Attribute names are lowercase with only characters ``a`` to ``z`` and ``_`` (underscore).
+  * Attribute names with suffix ``_ts`` have microsecond UTC/GMT timestamp values.
+  * Attribute names with suffix ``_time`` have values with an amount of time in seconds with
+    microsecond precision.
+  * One or more comment line precedes the query.
+  * A query is always printed; there are no "admin commands" or special queries.
+  * Every query is terminated by one ``#`` character followed by a newline (``\n``),
+    even the last query in the log file.
+  * There are no blank lines between events.
+  * Only events with this format are printed; there are no special or "fluff" lines.
 
 Bugs and Limitations
 --------------------
@@ -316,7 +340,7 @@ Daniel Nichter
 Version
 -------
 
-This documentation applies to **query_log 0.1**.
+This documentation applies to **query_log 1.0**.
 
 To see which version of the plugin a Drizzle server is running, execute:
 
@@ -327,6 +351,6 @@ To see which version of the plugin a Drizzle server is running, execute:
 Changelog
 ---------
 
-v0.1
+v1.0
 ^^^^
 * First release.
