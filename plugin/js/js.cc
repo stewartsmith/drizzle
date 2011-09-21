@@ -82,7 +82,7 @@ const char* v8_to_char(const v8::String::Utf8Value& value) {
 }
 
 /**
- * Take v8 exception and emit Drizzle error to client
+ * @brief Take v8 exception and emit Drizzle error to client
  * 
  * This is adapted from ReportException() in v8 samples/shell.cc. 
  */
@@ -180,7 +180,6 @@ String *JsFunction::val_str( String *str )
   for( uint64_t n = 1; n < arg_count; n++ )
   {
     // Need to do this differently for ints, doubles and strings
-    // TODO: Should also handle dates. See is_datetime() in drizzled/item.h.
     // TODO: There is also ROW_RESULT. Is that relevant here? What does it look like? I could pass rows as an array or object.
     if( args[n]->result_type() == INT_RESULT ){
       if( args[n]->is_unsigned() ) {
@@ -333,12 +332,20 @@ static int initialize( module::Context &context )
 }
 
 
-/* v8 related functions ********************************/
+/* Functions that are part of the JavaScript API ***************************/
 
+/**
+ * @brief Binds as db.js.version() inside JavaScript.
+ * @return Version number of v8 engine
+ */
 v8::Handle<v8::Value> V8Version( const v8::Arguments& ) {
   return v8::String::New( v8::V8::GetVersion() );
 }
 
+/**
+ * @brief Binds as db.js.engine() inside JavaScript.
+ * @return The string "v8"
+ */
 v8::Handle<v8::Value> JsEngine( const v8::Arguments& ) {
   return v8::String::New( JS_ENGINE );
 }
