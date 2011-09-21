@@ -185,7 +185,9 @@ class IPv6 {
     int ipv6_inet_pton(const char *src)
     {
         if (strlen(src)> IPV6_DISPLAY_LENGTH)
-            return 0;   //Invalid IPaddress
+        {
+          return 0;   //Invalid IPaddress
+        }
 
         //Local variables
         char ipv6[IPV6_BUFFER_LENGTH];
@@ -298,14 +300,14 @@ class IPv6 {
             return 0;
         }
 
-        int num_miss_octet =0, size =0;
+        int num_miss_octet =0;
 
 	num_miss_octet = 8 - octet_count;
+#if 0
         size = 2*num_miss_octet +1;
+#endif
 
-	char * zero_append = new char[size];
-
-        memset(zero_append, 0, sizeof(zero_append));
+        std::string zero_append;
 
         ptr_src = ipv6_temp;
 
@@ -343,22 +345,24 @@ class IPv6 {
         if(colon>0)
         {
             //zero padding format according to the '::' position
-            strcpy(zero_append,"");
+            zero_append+= "";
 
             for (int i= 0; i < num_miss_octet; i++)
             {
                 if(colon==1) // start
                 {
-                    strcat(zero_append,"0:");
+                    zero_append+= "0:";
                 }
+
                 if(colon==2 || colon==3)  //middle or end colon =2 shows at end
                 {
-                    strcat(zero_append,":0");
+                    zero_append+= ":0";
                 }
             }
+
             if(colon==3)
             {
-                strcat(zero_append,":");
+                zero_append+= ":";
             }
 
             ptr_src = temp_end;
@@ -390,11 +394,11 @@ class IPv6 {
 
             if(colon==2) // end
             {
-                strcat(temp_first,zero_append);
+                strcat(temp_first, zero_append.c_str());
             }
             else
             {
-                strcat(temp_first,zero_append);
+                strcat(temp_first, zero_append.c_str());
 
                 strcat(temp_first,temp_end);
             }
@@ -460,8 +464,6 @@ class IPv6 {
 
                 ptr_src = strtok (NULL, ":");
         }// end of main while loop
-
-        delete [] zero_append;
 
         return 1;
     }// end of Ipv6_Inet_pton function
