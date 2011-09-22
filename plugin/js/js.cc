@@ -119,12 +119,17 @@ void emit_drizzle_error(v8::TryCatch* try_catch) {
 /**
  * @brief Implements js() - execute JavaScript code
  * 
- * @todo datetime and row_result types are not yet handled
- * @todo Some of the v8 stuff should be done in initialize()
- * @todo When available, use v8::Isolate instead of v8::Locker for multithreading 
- * (or a mix of both). As part of this work, refactor v8 stuff into separate 
+ * @todo row_result types are not yet handled, what are they anyway?
+ * @todo Lot's of performance optimizations postponed for later version:
+ *  * When available, use v8::Isolate instead of v8::Locker for multithreading 
+ * (or a mix of both). 
+ *  * As part of this work, refactor v8 stuff into separate 
  * function, proxy, factory or something...
+ *  * Save the compiled script so it can be used again if same script is run
+ * many times
+ *  * Some of the v8 stuff should be done in initialize()
  * @todo Documentation for drizzle manual in .rst format
+ * @todo tests
  * 
  * @note DECIMAL_RESULT type is now a double in JavaScript. This could lose 
  * precision. But to send them as strings would also be awkward (+ operator will 
