@@ -379,3 +379,6 @@ explain select t1.c11 from t7, t6, t5, t4, t3, t2, t1 where t1.c11 = t2.c21 and 
 show status like 'Last_query_cost';
 
 drop table t1,t2,t3,t4,t5,t6,t7;
+set optimizer_search_depth=default;
+set optimizer_prune_level=default;
+set optimizer_search_depth=default;

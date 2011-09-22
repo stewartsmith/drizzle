@@ -5,6 +5,9 @@
 drop table if exists t1,t2;
 --enable_warnings
 
+#Store original
+set @my_sort_buffer_size	  =@@global.sort_buffer_size;
+
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
@@ -482,7 +485,7 @@ SHOW LOCAL VARIABLES LIKE 'max_join_size';
 set GLOBAL bulk_insert_buffer_size=DEFAULT;
 set GLOBAL join_buffer_size=DEFAULT;
 set GLOBAL max_allowed_packet=DEFAULT;
-set GLOBAL max_heap_table_size=DEFAULT;
+set GLOBAL max_heap_table_size=@my_max_heap_table_size;
 set GLOBAL max_join_size=DEFAULT;
 set GLOBAL max_sort_length=DEFAULT;
 set GLOBAL max_write_lock_count=DEFAULT;
@@ -490,8 +493,8 @@ set GLOBAL myisam_sort_buffer_size=DEFAULT;
 set GLOBAL mysql_protocol_buffer_length=DEFAULT;
 set GLOBAL read_buffer_size=DEFAULT;
 set GLOBAL read_rnd_buffer_size=DEFAULT;
-set GLOBAL server_id=DEFAULT;
-set GLOBAL sort_buffer_size=DEFAULT;
+set global server_id=@my_server_id;
+set GLOBAL sort_buffer_size=@my_sort_buffer_size;
 set GLOBAL table_open_cache=DEFAULT;
 set GLOBAL storage_engine= @my_storage_engine;
 set GLOBAL tmp_table_size=DEFAULT;
@@ -500,7 +503,7 @@ set GLOBAL tx_isolation= @my_tx_isolation;
 set SESSION bulk_insert_buffer_size=DEFAULT;
 set SESSION join_buffer_size=DEFAULT;
 set SESSION max_allowed_packet=DEFAULT;
-set SESSION max_heap_table_size=DEFAULT;
+set SESSION max_heap_table_size=@my_max_heap_table_size;
 set SESSION max_join_size=DEFAULT;
 set SESSION max_sort_length=DEFAULT;
 set SESSION read_buffer_size=DEFAULT;
