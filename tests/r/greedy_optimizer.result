@@ -655,3 +655,6 @@ show status like 'Last_query_cost';
 Variable_name	Value
 Last_query_cost	#
 drop table t1,t2,t3,t4,t5,t6,t7;
+set optimizer_search_depth=default;
+set optimizer_prune_level=default;
+set optimizer_search_depth=default;
