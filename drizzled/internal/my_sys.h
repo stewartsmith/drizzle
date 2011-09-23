@@ -18,8 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-
 #pragma once
 
 #ifdef __cplusplus
@@ -53,10 +51,8 @@ extern int errno;			/* declare errno */
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC      0
@@ -72,14 +68,6 @@ namespace internal
 #ifndef EDQUOT
 #define EDQUOT (-1)
 #endif
-
-/* Sun Studio does not inject this into main namespace yet */
-#if defined(__cplusplus)
-  using std::FILE;
-#endif
-
-#define MY_INIT(name);		{ ::drizzled::internal::my_progname= name; ::drizzled::internal::my_init(); }
-
 
 	/* General bitmaps for my_func's */
 #define MY_FFNF		1	/* Fatal if file not found */
@@ -122,16 +110,12 @@ extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 
 extern DRIZZLED_API int my_umask,		/* Default creation mask  */
-	   my_umask_dir,
-	   my_recived_signals,	/* Signals we have got */
-	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
-	   my_dont_interrupt;	/* call remember_intr when set */
+	   my_umask_dir;
 extern bool my_use_symdir;
 
 extern uint32_t	my_default_record_cache_size;
-extern bool my_disable_async_io,
-               my_disable_flush_key_blocks, my_disable_symlinks;
-extern char	wild_many, wild_one, wild_prefix;
+extern bool my_disable_symlinks;
+extern const char wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
 
 extern bool timed_mutexes;
@@ -175,58 +159,23 @@ public:
 
 } RECORD_CACHE;
 
-
-	/* defines for mf_iocache */
-
-	/* Test if buffer is inited */
-#define my_b_clear(info) (info)->buffer=0
-#define my_b_inited(info) (info)->buffer
-#define my_b_EOF INT_MIN
-
-#define my_b_read(info,Buffer,Count) \
-  ((info)->read_pos + (Count) <= (info)->read_end ?\
-   (memcpy(Buffer,(info)->read_pos,(size_t) (Count)), \
-    ((info)->read_pos+=(Count)),0) :\
-   (*(info)->read_function)((info),Buffer,Count))
-
-#define my_b_write(info,Buffer,Count) \
- ((info)->write_pos + (Count) <=(info)->write_end ?\
-  (memcpy((info)->write_pos, (Buffer), (size_t)(Count)),\
-   ((info)->write_pos+=(Count)),0) : \
-   (*(info)->write_function)((info),(Buffer),(Count)))
-
-#define my_b_get(info) \
-  ((info)->read_pos != (info)->read_end ?\
-   ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
-   _my_b_get(info))
-
-#define my_b_tell(info) ((info)->pos_in_file + \
-			 (size_t) (*(info)->current_pos - (info)->request_pos))
-
-#define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
-					  *(info)->current_pos)
-
 /* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 DRIZZLED_API int my_delete(const char *name,myf MyFlags);
 DRIZZLED_API int my_open(const char *FileName,int Flags,myf MyFlags);
-extern int my_register_filename(int fd, const char *FileName,
-                                uint32_t error_message_number, myf MyFlags);
-DRIZZLED_API int my_create(const char *FileName,int CreateFlags,
-                           int AccessFlags, myf MyFlags);
+extern int my_register_filename(int fd, const char *FileName, uint32_t error_message_number, myf MyFlags);
+DRIZZLED_API int my_create(const char *FileName,int CreateFlags, int AccessFlags, myf MyFlags);
 DRIZZLED_API int my_close(int Filedes,myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern int my_create_with_symlink(const char *linkname, const char *filename,
-                                  int createflags, int access_flags,
-                                  myf MyFlags);
+                                  int createflags, int access_flags, myf MyFlags);
 DRIZZLED_API int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
 DRIZZLED_API size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 DRIZZLED_API int my_rename(const char *from, const char *to,myf MyFlags);
-DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer,
-                             size_t Count, myf MyFlags);
+DRIZZLED_API size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFlags);
 
 extern int check_if_legal_tablename(const char *path);
 
@@ -247,38 +196,16 @@ bool test_if_hard_path(const char *dir_name);
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern char * fn_ext(const char *name);
 extern char * fn_same(char * toname,const char *name,int flag);
-DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir,
-                              const char *form, uint32_t flag);
+DRIZZLED_API char * fn_format(char * to,const char *name,const char *dir, const char *form, uint32_t flag);
 extern size_t unpack_dirname(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
 extern int pack_filename(char * to, const char *name, size_t max_length);
-extern char * my_load_path(char * to, const char *path,
-			      const char *own_path_prefix);
-extern int wild_compare(const char *str,const char *wildstr,
-                        bool str_is_pattern);
-
-extern bool array_append_string_unique(const char *str,
-                                          const char **array, size_t size);
-extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
-			     size_t reclength,enum cache_type type,
-			     bool use_async_io);
-extern int read_cache_record(RECORD_CACHE *info,unsigned char *to);
-extern int end_record_cache(RECORD_CACHE *info);
-extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
-			      const unsigned char *record,size_t length);
-extern int flush_write_cache(RECORD_CACHE *info);
-extern void sigtstp_handler(int signal_number);
-extern void handle_recived_signals(void);
-
-extern void my_set_alarm_variable(int signo);
+extern char * my_load_path(char * to, const char *path, const char *own_path_prefix);
 extern void my_string_ptr_sort(unsigned char *base,uint32_t items,size_t size);
-extern void radixsort_for_str_ptr(unsigned char* base[], uint32_t number_of_elements,
-				  size_t size_of_element,unsigned char *buffer[]);
-extern void my_qsort(void *base_ptr, size_t total_elems, size_t size,
-                     qsort_cmp cmp);
-extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
-                      qsort2_cmp cmp, void *cmp_argument);
+extern void radixsort_for_str_ptr(unsigned char* base[], uint32_t number_of_elements, size_t size_of_element,unsigned char *buffer[]);
+extern void my_qsort(void *base_ptr, size_t total_elems, size_t size, qsort_cmp cmp);
+extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size, qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
 DRIZZLED_API void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 DRIZZLED_API my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
@@ -286,4 +213,3 @@ int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
 } /* namespace internal */
 } /* namespace drizzled */
-

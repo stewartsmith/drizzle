@@ -53,8 +53,6 @@ public:
     last_call_char_ptr= ptr;
   }
 
-  virtual ~ClientStub() {}
-
   /**
   * Get attached session from the client object.
   * @retval Session object that is attached, NULL if none.

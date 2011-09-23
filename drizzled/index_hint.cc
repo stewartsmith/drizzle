@@ -33,8 +33,7 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/sql_table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
  * Names of the index hints (for error messages). Keep in sync with
@@ -55,18 +54,18 @@ const char *index_hint_type_name[] =
  * @param Session pointer
  * @param[out] Appends the index hint here
  */
-void Index_hint::print(Session *session, String *str)
+void Index_hint::print(String& str) const
 {
-  str->append(STRING_WITH_LEN(index_hint_type_name[type]));
-  str->append(STRING_WITH_LEN(" ("));
-  if (key_name.length)
+  str.append(STRING_WITH_LEN(index_hint_type_name[type]));
+  str.append(STRING_WITH_LEN(" ("));
+  if (*key_name)
   {
-    if (session && is_primary_key_name(key_name.str))
-      str->append(is_primary_key_name(key_name.str));
+    if (is_primary_key(key_name))
+      str.append(key_name);
     else
-      str->append_identifier(key_name.str, key_name.length);
+      str.append_identifier(str_ref(key_name));
   }
-  str->append(')');
+  str.append(')');
 }
 
 } /* namespace drizzled */

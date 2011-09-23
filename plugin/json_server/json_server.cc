@@ -32,7 +32,6 @@
 #include <drizzled/sys_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/query_id.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
@@ -185,7 +184,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
   user_id->setUser("");
   _session->setUser(user_id);
-  _session->set_db("test");
+  _session->set_schema("test");
 
   drizzled::Execute execute(*(_session.get()), true);
 
@@ -247,9 +246,6 @@ static void run(struct event_base *base)
 class JsonServer : public drizzled::plugin::Daemon
 {
 private:
-  JsonServer(const JsonServer &);
-  JsonServer& operator=(const JsonServer &);
-
   drizzled::thread_ptr json_thread;
   in_port_t _port;
   struct evhttp *httpd;

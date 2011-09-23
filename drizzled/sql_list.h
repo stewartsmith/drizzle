@@ -28,7 +28,7 @@
 
 namespace drizzled {
 
-typedef struct st_sql_list 
+struct SQL_LIST 
 {
   uint32_t elements;
   unsigned char *first;
@@ -53,18 +53,18 @@ typedef struct st_sql_list
     next= next_ptr;
     *next=0;
   }
-  void save_and_clear(struct st_sql_list *save)
+  void save_and_clear(SQL_LIST *save)
   {
     *save= *this;
     clear();
   }
-  void push_front(struct st_sql_list *save)
+  void push_front(SQL_LIST *save)
   {
     *save->next= first;				/* link current list last */
     first= save->first;
     elements+= save->elements;
   }
-  void push_back(struct st_sql_list *save)
+  void push_back(SQL_LIST *save)
   {
     if (save->first)
     {
@@ -73,7 +73,7 @@ typedef struct st_sql_list
       elements+= save->elements;
     }
   }
-} SQL_LIST;
+};
 
 /*
   Basic single linked list
@@ -234,7 +234,6 @@ public:
 
   bool check_list(const char *name)
   {
-    base_list *list= this;
     list_node *node= first;
     uint32_t cnt= 0;
 
@@ -277,7 +276,7 @@ protected:
   base_list *list;
   list_node **el,**prev,*current;
 public:
-  void sublist(base_list &ls, uint32_t elm)
+  void sublist(base_list &ls, uint32_t elm) const
   {
     ls.first= *el;
     ls.last= list->last;

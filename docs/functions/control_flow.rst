@@ -49,7 +49,7 @@ Syntax for IF/ELSE: ::
 IFNULL
 -------
 
-Given IFNULL(arg1,arg2), if arg1 is not NULL, IFNULL() returns arg1; it otherwise returns arg2. IFNULL() returns a numeric or string value, depending on how it's used. ::
+Given IFNULL(arg1,arg2), if arg1 is not NULL, IFNULL() returns arg1; it otherwise returns arg2. IFNULL() returns a numeric or string value, depending on how it's used.
 
 .. code-block:: mysql
 
@@ -68,12 +68,13 @@ Given IFNULL(arg1,arg2), if arg1 is not NULL, IFNULL() returns arg1; it otherwis
 NULLIF
 -------
 
-NULLIF(arg1,arg2) returns NULL if arg1 = arg2 is true, otherwise returns arg1. ::
+NULLIF(arg1,arg2) returns NULL if arg1 = arg2 is true, otherwise returns arg1.
 
 .. code-block:: mysql
 
 	SELECT NULLIF(1,1);
-	-> NULL
+        -> NULL
 
 	SELECT NULLIF(1,2);
         -> 1
+

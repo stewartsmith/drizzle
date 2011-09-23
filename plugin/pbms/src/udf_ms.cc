@@ -298,8 +298,7 @@ my_bool pbms_insert_blob_trig_init(UDF_INIT *initid, UDF_ARGS *args, char *messa
 
 void pbms_insert_blob_trig_deinit(UDF_INIT *initid)
 {
-	if (initid->ptr)
-		free(initid->ptr);
+  free(initid->ptr);
 }
 
 #define INT_ARG(a)  (*((longlong*) a))

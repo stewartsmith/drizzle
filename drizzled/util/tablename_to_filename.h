@@ -23,7 +23,7 @@
 namespace drizzled {
 namespace util {
 
-bool tablename_to_filename(const std::string &from, std::string &to);
+std::string tablename_to_filename(const std::string&);
 
 } /* namespace util */
 } /* namespace drizzled */

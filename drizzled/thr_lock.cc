@@ -82,8 +82,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 uint64_t table_lock_wait_timeout;
 static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
@@ -106,7 +105,6 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  lock->init();
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
@@ -116,8 +114,7 @@ void thr_lock_init(THR_LOCK *lock)
 
 void THR_LOCK_INFO::init()
 {
-  internal::st_my_thread_var *tmp= my_thread_var;
-  thread_id= tmp->id;
+  thread_id= internal::my_thread_var()->id;
   n_cursors= 0;
 }
 
@@ -612,7 +609,6 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
     if ((*pos)->type != TL_UNLOCK)
       thr_unlock(*pos);
   }
-  return;
 }
 
 void DrizzleLock::unlock(uint32_t count)

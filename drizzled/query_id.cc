@@ -24,19 +24,6 @@
 
 namespace drizzled {
 
-Query_id::Query_id()
-{
-  the_query_id= 1;
-}
-
-uint64_t Query_id::value() const
-{
-  return the_query_id;
-}
-
-uint64_t Query_id::next()
-{
-  return the_query_id.increment();
-}
+Query_id Query_id::the_id;
 
 } /* namespace drizzled */

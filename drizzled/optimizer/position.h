@@ -137,7 +137,7 @@ public:
     return key;
   }
 
-  table_map getRefDependMap()
+  table_map getRefDependMap() const
   {
     return ref_depend_map;
   }

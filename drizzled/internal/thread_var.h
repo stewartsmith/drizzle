@@ -46,9 +46,7 @@ struct st_my_thread_var
   }
 };
 
-extern struct st_my_thread_var* _my_thread_var();
-#define my_thread_var (::drizzled::internal::_my_thread_var())
+st_my_thread_var* my_thread_var();
 
 } /* namespace internal */
 } /* namespace drizzled */
-

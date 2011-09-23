@@ -107,10 +107,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     the table defintion cache as soon as the last instance is removed
   */
   identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
-  const identifier::Table::Key &key(identifier.getKey());
-  TableShare *share= new TableShare(identifier.getType(),
-                                    identifier,
-                                    const_cast<char *>(key.vector()),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
+  TableShare *share= new TableShare(identifier.getType(), identifier, identifier.getKey().vector(),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -1221,7 +1218,7 @@ bool Session::reopen_tables()
     }
   }
 
-  delete [] tables;
+  delete[] tables;
 
   locking::broadcast_refresh();
 
@@ -1674,30 +1671,19 @@ RETURN
 Table* Session::open_temporary_table(const identifier::Table &identifier, bool link_in_list)
 {
   assert(identifier.isTmp());
-
-
-  table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(),
-                                                        identifier,
-                                                        const_cast<char *>(const_cast<identifier::Table&>(identifier).getPath().c_str()),
-                                                        static_cast<uint32_t>(identifier.getPath().length()));
-  if (not new_tmp_table)
-    return NULL;
-
+  table::Temporary *new_tmp_table= new table::Temporary(identifier.getType(), identifier, 
+    identifier.getPath().c_str(), static_cast<uint32_t>(identifier.getPath().length()));
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (new_tmp_table->getMutableShare()->open_table_def(*static_cast<Session *>(this), identifier) ||
-      new_tmp_table->getMutableShare()->open_table_from_share(static_cast<Session *>(this), identifier, identifier.getTableName().c_str(),
-                                                              (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                                                          HA_GET_INDEX),
-                                                              ha_open_options,
-                                                              *new_tmp_table))
+  if (new_tmp_table->getMutableShare()->open_table_def(*this, identifier) ||
+      new_tmp_table->getMutableShare()->open_table_from_share(this, identifier, identifier.getTableName().c_str(),
+        (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE | HA_GET_INDEX), ha_open_options, *new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     delete new_tmp_table->getMutableShare();
     delete new_tmp_table;
-
-    return 0;
+    return NULL;
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
@@ -3282,23 +3268,19 @@ bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
                   TableList **leaves, bool select_insert)
 {
-  uint32_t tablenr= 0;
-
-  assert ((select_insert && !tables->next_name_resolution_table) || !tables ||
+  assert((select_insert && !tables->next_name_resolution_table) || !tables ||
           (context->table_list && context->first_name_resolution_table));
   /*
     this is used for INSERT ... SELECT.
     For select we setup tables except first (and its underlying tables)
   */
-  TableList *first_select_table= (select_insert ?  tables->next_local: NULL);
+  TableList *first_select_table= select_insert ? tables->next_local : NULL;
 
-  if (!(*leaves))
+  if (not *leaves)
     make_leaves_list(leaves, tables);
 
-  TableList *table_list;
-  for (table_list= *leaves;
-       table_list;
-       table_list= table_list->next_leaf, tablenr++)
+  uint32_t tablenr= 0;
+  for (TableList* table_list= *leaves; table_list; table_list= table_list->next_leaf, tablenr++)
   {
     Table *table= table_list->table;
     table->pos_in_table_list= table_list;
@@ -3359,8 +3341,7 @@ bool setup_tables_and_check_access(Session *session,
 {
   TableList *leaves_tmp= NULL;
 
-  if (setup_tables(session, context, from_clause, tables,
-                   &leaves_tmp, select_insert))
+  if (setup_tables(session, context, from_clause, tables, &leaves_tmp, select_insert))
     return true;
 
   if (leaves)
@@ -3449,12 +3430,11 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
 
     for (; !field_iterator.end_of_fields(); field_iterator.next())
     {
-      Item *item;
-
-      if (!(item= field_iterator.create_item(session)))
+      Item *item= field_iterator.create_item(session);
+      if (not item)
         return true;
 
-      if (!found)
+      if (not found)
       {
         found= true;
         it->replace(item); /* Replace '*' with the first found item. */

@@ -209,6 +209,7 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:

@@ -27,8 +27,7 @@
 #include <drizzled/item.h>
 #include <drizzled/type/time.h>
 
-namespace drizzled 
-{
+namespace drizzled {
 
 /**
  * @brief
@@ -93,25 +92,25 @@ public:
     return neg;
   }
 
-  inline uint32_t  get_year() { return year; }
+  inline uint32_t  get_year() const { return year; }
   inline void set_year(uint32_t new_year) { year = new_year; }
 
-  inline uint32_t  get_month(){ return month; }
+  inline uint32_t  get_month() const { return month; }
   inline void set_month(uint32_t new_month) { month = new_month; }
 
-  inline uint32_t  get_day(){ return day; }
+  inline uint32_t  get_day() const { return day; }
   inline void set_day(uint32_t new_day) { day = new_day; }
 
-  inline uint32_t  get_hour(){ return hour; }
+  inline uint32_t  get_hour() const { return hour; }
   inline void set_hour(uint32_t new_hour) { hour = new_hour; }
 
-  inline uint64_t  get_minute(){ return minute; }
+  inline uint64_t  get_minute() const { return minute; }
   inline void set_minute(uint32_t new_minute) { minute = new_minute; }
 
-  inline uint64_t  get_second(){ return second; }
+  inline uint64_t  get_second() const { return second; }
   inline void set_second(uint32_t new_second) { second = new_second; }
 
-  inline uint64_t  get_second_part(){ return second_part; }
+  inline uint64_t  get_second_part() const { return second_part; }
   inline void set_second_part(uint32_t new_second_part) { second_part = new_second_part; }
 
   /**

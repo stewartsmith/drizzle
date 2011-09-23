@@ -263,7 +263,7 @@ my $opt_valgrind= 0;
 my $opt_valgrind_drizzled= 0;
 my $opt_valgrind_drizzletest= 0;
 my $opt_valgrind_drizzleslap= 0;
-my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
+my @default_valgrind_args= qw|--tool=memcheck --error-exitcode=1 --leak-check=yes --show-reachable=yes --track-fds=yes --malloc-fill=A5 --free-fill=DE|;
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -553,17 +553,6 @@ sub command_line_setup () {
              'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
              'valgrind-drizzleslap'       => \$opt_valgrind_drizzleslap,
              'valgrind-drizzled'          => \$opt_valgrind_drizzled,
-             'valgrind-options=s'       => sub {
-	       my ($opt, $value)= @_;
-	       # Deprecated option unless it's what we know pushbuild uses
-	       if ($value eq "--gen-suppressions=all --show-reachable=yes") {
-		 push(@valgrind_args, $_) for (split(' ', $value));
-		 return;
-	       }
-	       die("--valgrind-options=s is deprecated. Use ",
-		   "--valgrind-option=s, to be specified several",
-		   " times if necessary");
-	     },
              'valgrind-option=s'        => \@valgrind_args,
              'valgrind-path=s'          => \$opt_valgrind_path,
 	     'callgrind'                => \$opt_callgrind,
@@ -1223,16 +1212,16 @@ sub collect_drizzled_features () {
     # First look for version
     if ( !$drizzle_version_id )
     {
-      # Look for version
-      my $exe_name= basename($exe_drizzled);
-      dtr_verbose("exe_name: $exe_name");
-      if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
-      {
-	#print "Major: $1 Minor: $2 Build: $3\n";
-	$drizzle_version_id= $1*10000 + $2*100 + $3;
-	#print "drizzle_version_id: $drizzle_version_id\n";
-	dtr_report("Drizzle Version $1.$2.$3");
-      }
+        # Look for version
+        my $exe_name= basename($exe_drizzled);
+        dtr_verbose("exe_name: $exe_name");
+        if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
+        {
+            #print "Major: $1 Minor: $2 Build: $3\n";
+            $drizzle_version_id= $1*10000 + $2*100 + $3;
+            #print "drizzle_version_id: $drizzle_version_id\n";
+            dtr_report("Drizzle Version $1.$2.$3");
+        }
     }
   }
   rmtree($tmpdir);
@@ -1286,6 +1275,14 @@ sub executable_setup () {
   if ( -x "../libtool")
   {
     $exe_libtool= "../libtool";
+    if ($opt_valgrind or $glob_debugger)
+    {
+      dtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
+    }
+  }
+  elsif ( -x "./libtool")
+  {
+    $exe_libtool= "./libtool";
     if ($opt_valgrind or $glob_debugger)
     {
       dtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
@@ -1366,9 +1363,12 @@ sub drizzle_client_test_arguments()
 
   my $args;
   dtr_init_args(\$args);
-  if ( $opt_valgrind_drizzletest )
+  if (0)
   {
-    valgrind_arguments($args, \$exe);
+      if ( $opt_valgrind_drizzletest )
+      {
+          valgrind_arguments($args, \$exe);
+      }
   }
 
   dtr_add_arg($args, "--no-defaults");
@@ -1606,22 +1606,6 @@ sub environment_setup () {
   # Setup env so childs can execute drizzle_client_test
   # ----------------------------------------------------
   $ENV{'DRIZZLE_CLIENT_TEST'}=  drizzle_client_test_arguments();
-
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute drizzle_fix_system_tables
-  # ----------------------------------------------------
-  #if ( !$opt_extern)
-  if ( 0 )
-  {
-    my $cmdline_drizzle_fix_system_tables=
-      "$exe_drizzle_fix_system_tables --no-defaults --host=localhost " .
-      "--user=root --password= " .
-      "--basedir=$glob_basedir --bindir=$path_client_bindir --verbose " .
-      "--port=$master->[0]->{'port'} ";
-    $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_drizzle_fix_system_tables;
-
-  }
 
   # ----------------------------------------------------
   # Setup env so childs can shutdown the server
@@ -3030,12 +3014,12 @@ sub run_testcase_start_servers($) {
 
     for ( my $idx= 0; $idx <  $tinfo->{'slave_num'}; $idx++ )
     {
-      if ( ! $slave->[$idx]->{'pid'} )
-      {
-	drizzled_start($slave->[$idx],$tinfo->{'slave_opt'},
-		     $tinfo->{'slave_mi'});
+        if ( ! $slave->[$idx]->{'pid'} )
+        {
+            drizzled_start($slave->[$idx],$tinfo->{'slave_opt'},
+                $tinfo->{'slave_mi'});
 
-      }
+        }
     }
 
     # Save this test case information, so next can examine it
@@ -3222,7 +3206,7 @@ sub run_drizzletest ($) {
   # Add arguments that should not go into the DRIZZLE_TEST env var
   # ----------------------------------------------------------------------
 
-  if ( $opt_valgrind_drizzletest )
+  if ( 0 )
   {
     # Prefix the Valgrind options to the argument list.
     # We do this here, since we do not want to Valgrind the nested invocations

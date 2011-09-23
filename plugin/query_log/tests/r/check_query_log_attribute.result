@@ -1,0 +1,14 @@
+Checking attributes and values of query SET GLOBAL query_log_file_enabled=TRUE;
+arg=SET GLOBAL query_log_file_enabled=TRUE;
+error=false
+execution_time=7.890123
+lock_time=4.567890
+query_id=2
+rows_examined=3
+rows_sent=4
+schema=test
+session_id=1
+session_time=1.234567
+start_ts=1234-56-78T90:12:34.567890
+tmp_tables=5
+warnings=6

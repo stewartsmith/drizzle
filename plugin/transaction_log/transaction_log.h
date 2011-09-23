@@ -45,7 +45,7 @@
 #include <vector>
 #include <string>
 
-class TransactionLog
+class TransactionLog : boost::noncopyable
 {
 public:
   typedef std::vector<TransactionLogEntry> Entries;
@@ -178,10 +178,6 @@ private:
                                               sizeof(uint32_t) + /* 4-byte length header */
                                               sizeof(uint32_t); /* 4 byte checksum trailer */
 
-  /* Don't allows these */
-  TransactionLog();
-  TransactionLog(const TransactionLog &other);
-  TransactionLog &operator=(const TransactionLog &other);
   /**
    * Clears the current error message
    */

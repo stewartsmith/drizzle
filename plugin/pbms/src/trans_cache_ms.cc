@@ -561,6 +561,7 @@ void MSTransCache::tc_FreeTransaction(TRef tref)
 {
 static uint32_t last_tid = 0;
 static bool last_state = false;
+(void)last_tid;
 if (tc_Recovering != last_state)
 	last_tid = 0;
 	
@@ -616,6 +617,7 @@ bool MSTransCache::tc_GetRecAt(TRef tref, size_t index, MSTransPtr rec, MS_TxnSt
 #ifdef CHECK_TIDS
 {
 	static uint32_t last_tid = 0;
+        (void)last_tid;
 	ASSERT( ((last_tid + 1) == tc_List[tref].tid) || (last_tid  == tc_List[tref].tid) || !last_tid);
 	last_tid = tc_List[tref].tid;
 }

@@ -1,0 +1,75 @@
+
+# ###########################################################################
+# This tests the various query_log_threshold_ variables.
+# ###########################################################################
+
+# First make sure the query log is on.
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL query_log_file="$DRIZZLETEST_VARDIR/query.log";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+SET GLOBAL query_log_file_enabled=TRUE;
+
+# Make sure we have all our threshold variables and that they're all
+# off (zero) by default.
+SHOW VARIABLES LIKE 'query_log_threshold%';
+
+# ###########################################################################
+# query_log_execution_time
+# ###########################################################################
+
+# Set a 0.5s execution time threshold.
+SET GLOBAL query_log_threshold_execution_time=500000;
+SELECT @@query_log_threshold_execution_time;
+
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/query.log
+# Double-check that log file is clear.
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# This query should *not* log since it's below the threshold.
+SELECT SLEEP(0.4);
+# This should not print anything.
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# This query should log since it's just a few microseconds past the threshold.
+SELECT SLEEP(0.5);
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log execution_time between 0.5 0.59
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log arg equals 'SELECT SLEEP(0.5);'
+
+# We zero-out the values so the event is kind of useless; that's why we check
+# it with check-query-log-attribute.pl.  We print it just to make sure there's
+# only 1 event, i.e. that the sleep(0.4) really wasn't logged.
+# The extra sed line here accounts for the query ids becoming double-digit
+# when the whole test suite is ran; it's single when only this test file is run.
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query.log
+--system sed -e 's/query_id=00/query_id=0/g' -i.bak $DRIZZLETEST_VARDIR/query.log
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# query_log doesn't like when sed modifies the log file in-place (-i.bak).
+# Unless we re-open the log file, no more queries will be logged.
+SET GLOBAL query_log_file_enabled=FALSE;
+SET GLOBAL query_log_file_enabled=TRUE;
+
+# Set query_log_threshold_execution_time back to zero.
+SET GLOBAL query_log_threshold_execution_time=0;
+SELECT @@query_log_threshold_execution_time;
+--exec echo "" > $DRIZZLETEST_VARDIR/query.log
+SELECT 'one';
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log arg equals "SELECT 'one';"
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query.log
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# ###########################################################################
+# TODO: the other threshold variables
+# ###########################################################################
+
+# ############################################################################
+# Clean up.  Tests must be idempotent and not leave behind a trace, so
+# dtr --repeat-test 2 --suite query_log must pass.
+# ############################################################################
+--exec rm $DRIZZLETEST_VARDIR/query*.log
+--exec rm $DRIZZLETEST_VARDIR/*.bak
+
+# ###########################################################################
+# Done.
+# ###########################################################################

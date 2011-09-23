@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_fast_shutdown';
-

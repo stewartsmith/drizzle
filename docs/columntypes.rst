@@ -61,3 +61,9 @@ SERIAL
 A SERIAL is a meta type that creates a column where a number is inserted in
 increasing order as rows are inserted into the table. The actual type is a
 BIGINT.
+
+.. toctree::
+   :maxdepth: 2
+
+   ipv6_data_type
+

@@ -29,6 +29,7 @@
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 namespace table {
@@ -125,12 +126,8 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
 
 bool Singular::open_tmp_table()
 {
-  int error;
-  
   identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
-  if ((error=cursor->ha_open(identifier,
-                             O_RDWR,
-                             HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
+  if (int error= cursor->ha_open(identifier, O_RDWR, HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE))
   {
     print_error(error, MYF(0));
     db_stat= 0;
@@ -302,17 +299,11 @@ Singular::~Singular()
   if (cursor)
   {
     if (db_stat)
-    {
-      cursor->closeMarkForDelete(getShare()->getTableName());
-    }
+      cursor->closeMarkForDelete();
 
     identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
     drizzled::error_t ignored;
-    plugin::StorageEngine::dropTable(*in_use,
-                                     *getShare()->getEngine(),
-                                     identifier,
-                                     ignored);
-
+    plugin::StorageEngine::dropTable(*in_use, *getShare()->getEngine(), identifier, ignored);
     delete cursor;
   }
 
@@ -326,7 +317,6 @@ Singular::~Singular()
   mem().free_root(MYF(0));
   in_use->set_proc_info(save_proc_info);
 }
-
 
 } /* namespace table */
 } /* namespace drizzled */

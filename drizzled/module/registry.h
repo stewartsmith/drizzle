@@ -23,7 +23,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <iostream>
+#include <iosfwd>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -97,18 +97,27 @@ public:
     std::string plugin_name(boost::to_lower_copy(plugin->getName()));
     if (find_ptr(plugin_registry, std::make_pair(plugin_type, plugin_name)))
     {
-      errmsg_printf(error::ERROR, _("Loading plugin %s failed: a %s plugin by that name already exists.\n"), 
-        plugin->getTypeName().c_str(), plugin->getName().c_str());
-      failed= true;
+      std::string error_message;
+      error_message+=  _("Loading plugin failed, a plugin by that name already exists.");
+      error_message+= plugin->getTypeName();
+      error_message+= ":";
+      error_message+= plugin->getName();
+      unireg_actual_abort(__FILE__, __LINE__, __func__, error_message);
     }
-    if (T::addPlugin(plugin)) // Olaf: Should addPlugin be called when failed is already true?
-      failed= true; 
+
+    if (T::addPlugin(plugin))
+    {
+      std::string error_message;
+      error_message+= _("Fatal error: Failed initializing: ");
+      error_message+= plugin->getTypeName();
+      error_message+= ":";
+      error_message+= plugin->getName();
+      unireg_actual_abort(__FILE__, __LINE__, __func__, error_message);
+    }
 
     if (failed)
     {
-      errmsg_printf(error::ERROR, _("Fatal error: Failed initializing %s::%s plugin.\n"), 
-        plugin->getTypeName().c_str(), plugin->getName().c_str());
-      unireg_abort(1);
+      unireg_abort << _("Fatal error: Failed initializing: ") << plugin->getTypeName() << ":" << plugin->getName();
     }
     plugin_registry.insert(std::make_pair(std::make_pair(plugin_type, plugin_name), plugin));
   }

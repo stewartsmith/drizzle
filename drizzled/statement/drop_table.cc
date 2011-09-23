@@ -56,7 +56,7 @@ namespace drizzled
 
 static bool rm_table(Session *session, TableList *tables, bool if_exists, bool drop_temporary)
 {
-  bool error, need_start_waiting= false;
+  bool need_start_waiting= false;
 
   /* mark for close and remove all cached entries */
 
@@ -71,7 +71,7 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
     table::Cache::mutex() during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
-  error= rm_table_part2(session, tables, if_exists, drop_temporary);
+  bool error= rm_table_part2(session, tables, if_exists, drop_temporary);
 
   if (need_start_waiting)
   {

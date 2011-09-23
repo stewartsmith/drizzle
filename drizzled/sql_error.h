@@ -66,7 +66,7 @@ void drizzle_reset_errors(Session&, bool force);
 bool show_warnings(Session *session, 
                    std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
-extern const LEX_STRING warning_level_names[];
+extern const lex_string_t warning_level_names[];
 
 } /* namespace drizzled */
 

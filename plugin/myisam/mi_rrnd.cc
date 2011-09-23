@@ -53,7 +53,7 @@ int mi_rrnd(MI_INFO *info, unsigned char *buf, register internal::my_off_t filep
   /* Init all but update-flag */
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
 
-  if (info->opt_flag & WRITE_CACHE_USED && flush_io_cache(&info->rec_cache))
+  if (info->opt_flag & WRITE_CACHE_USED && info->rec_cache.flush())
     return(errno);
 
   return ((*info->s->read_rnd)(info,buf,filepos,skip_deleted_blocks));

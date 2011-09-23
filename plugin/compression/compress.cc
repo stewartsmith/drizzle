@@ -30,8 +30,6 @@ using namespace drizzled;
 
 String *Item_func_compress::val_str(String *str)
 {
-  int err= Z_OK;
-  drizzled::error_t code;
   ulong new_size;
   String *res;
   Byte *body;
@@ -68,9 +66,10 @@ String *Item_func_compress::val_str(String *str)
   body= ((Byte*)buffer.ptr()) + 4;
 
   // As far as we have checked res->empty() we can use ptr()
-  if ((err= compress(body, &new_size, (const Bytef*)res->ptr(), res->length())) != Z_OK)
+  int err= compress(body, &new_size, (const Bytef*)res->ptr(), res->length());
+  if (err != Z_OK)
   {
-    code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
+    drizzled::error_t code= err==Z_MEM_ERROR ? ER_ZLIB_Z_MEM_ERROR : ER_ZLIB_Z_BUF_ERROR;
     push_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, code, ER(code));
     null_value= 1;
     return 0;
@@ -90,5 +89,3 @@ String *Item_func_compress::val_str(String *str)
   buffer.length((uint32_t)new_size + 4);
   return &buffer;
 }
-
-

@@ -630,7 +630,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 
 unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
                                                 sql_var_t type,
-                                                const LEX_STRING *)
+                                                const lex_string_t *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -682,7 +682,7 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
 
 unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
                                                   sql_var_t type,
-                                                  const LEX_STRING *)
+                                                  const lex_string_t *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -740,7 +740,7 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
 
 unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
                                                    sql_var_t type,
-                                                   const LEX_STRING *)
+                                                   const lex_string_t *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -795,7 +795,7 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
 
 unsigned char *sys_var_session_size_t::value_ptr(Session *session,
                                                  sql_var_t type,
-                                                 const LEX_STRING *)
+                                                 const lex_string_t *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -829,7 +829,7 @@ void sys_var_session_bool::set_default(Session *session,  sql_var_t type)
 
 unsigned char *sys_var_session_bool::value_ptr(Session *session,
                                                sql_var_t type,
-                                               const LEX_STRING *)
+                                               const lex_string_t *)
 {
   if (type == OPT_GLOBAL)
     return (unsigned char*) &(global_system_variables.*offset);
@@ -888,7 +888,7 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base)
+Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t *base)
 {
   if (check_type(var_type))
   {
@@ -961,7 +961,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
     if (str)
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->mem.strmake(str, length), length, system_charset_info, DERIVATION_SYSCONST);
+      tmp= new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
     else
     {
@@ -1015,7 +1015,7 @@ void sys_var_session_enum::set_default(Session *session, sql_var_t type)
 
 unsigned char *sys_var_session_enum::value_ptr(Session *session,
                                                sql_var_t type,
-                                               const LEX_STRING *)
+                                               const lex_string_t *)
 {
   uint32_t tmp= ((type == OPT_GLOBAL) ?
 	      global_system_variables.*offset :
@@ -1037,7 +1037,7 @@ bool sys_var_session_bit::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
-                                              const LEX_STRING *)
+                                              const lex_string_t *)
 {
   /*
     If reverse is 0 (default) return 1 if bit is set.
@@ -1103,7 +1103,7 @@ void sys_var_collation_sv::set_default(Session *session, sql_var_t type)
 
 unsigned char *sys_var_collation_sv::value_ptr(Session *session,
                                                sql_var_t type,
-                                               const LEX_STRING *)
+                                               const lex_string_t *)
 {
   const charset_info_st *cs= ((type == OPT_GLOBAL) ?
                            global_system_variables.*offset :
@@ -1127,7 +1127,7 @@ void sys_var_timestamp::set_default(Session *session, sql_var_t)
 
 
 unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
-                                            const LEX_STRING *)
+                                            const lex_string_t *)
 {
   session->sys_var_tmp.int32_t_value= (int32_t) session->times.getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
@@ -1143,7 +1143,7 @@ bool sys_var_last_insert_id::update(Session *session, set_var *var)
 
 unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
                                                  sql_var_t,
-                                                 const LEX_STRING *)
+                                                 const lex_string_t *)
 {
   /*
     this tmp var makes it robust againt change of type of
@@ -1196,7 +1196,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 
 unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
                                                         sql_var_t type,
-                                                        const LEX_STRING *)
+                                                        const lex_string_t *)
 {
   return type == OPT_GLOBAL ?
                  (unsigned char *) global_system_variables.lc_time_names->name :
@@ -1375,7 +1375,7 @@ static option* find_option(struct option *opt, const char *name)
   uint32_t length= strlen(name);
   for (; opt->name; opt++)
   {
-    if (!getopt_compare_strings(opt->name, name, length) && !opt->name[length])
+    if (not getopt_compare_strings(opt->name, name, length) and not opt->name[length])
     {
       /*
       Only accept the option if one can set values through it.
@@ -1569,13 +1569,13 @@ sys_var *find_sys_var(const std::string &name)
 
 unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
                                                          sql_var_t type,
-                                                         const LEX_STRING *)
+                                                         const lex_string_t *)
 {
   plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   string engine_name= engine->getName();
-  return (unsigned char *) session->mem.strmake(engine_name);
+  return (unsigned char *) session->mem.strdup(engine_name);
 }
 
 

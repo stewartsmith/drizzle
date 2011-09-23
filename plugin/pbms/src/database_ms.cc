@@ -1735,8 +1735,7 @@ MSDatabase *MSDatabase::loadDatabase(CSString *db_name, bool create)
 	MSDatabase *db;
 	enter_();
 	
-	db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);
-	
+	db = newDatabase(ms_my_get_mysql_home_path(), db_name, 0, create);	
 	if (db) {
 		push_(db);
 		

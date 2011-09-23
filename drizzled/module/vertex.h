@@ -33,7 +33,7 @@ namespace drizzled
 
 namespace boost
 {
-  template <> struct property_kind<drizzled::vertex_properties_t>
+  template<> struct property_kind<drizzled::vertex_properties_t>
   {
     typedef vertex_property_tag type;
   };

@@ -385,8 +385,7 @@ int update_query(Session *session, TableList *table_list,
 	    continue;  /* repeat the read of the same row if it still exists */
 
 	  table->cursor->position(table->getInsertRecord());
-	  if (my_b_write(&tempfile,table->cursor->ref,
-			 table->cursor->ref_length))
+	  if (tempfile.write(table->cursor->ref, table->cursor->ref_length))
 	  {
 	    error=1;
 	    break;
@@ -633,13 +632,10 @@ bool prepare_update(Session *session, TableList *table_list,
     return true;
 
   /* Check that we are not using table that we are updating in a sub select */
+  if (unique_table(table_list, table_list->next_global))
   {
-    TableList *duplicate;
-    if ((duplicate= unique_table(table_list, table_list->next_global)))
-    {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
-      return true;
-    }
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
+    return true;
   }
 
   return false;

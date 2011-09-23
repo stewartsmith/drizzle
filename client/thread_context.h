@@ -19,13 +19,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_THREAD_CONTEXT_H
-#define CLIENT_THREAD_CONTEXT_H
+#pragma once
 
 #include "client_priv.h"
 #include "statement.h"
 #include <string>
-#include <iostream>
+#include <iosfwd>
 
 class ThreadContext 
 {
@@ -65,5 +64,3 @@ private:
   Statement *stmt;
   uint64_t limit;
 };
-
-#endif /* CLIENT_THREAD_CONTEXT_H */

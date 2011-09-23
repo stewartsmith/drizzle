@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_log_group_home_dir';
-Variable_name	Value
-innodb_log_group_home_dir	 
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='log_group_home_dir';
-NAME	TYPE	VALUE
-log_group_home_dir	TEXT	NULL

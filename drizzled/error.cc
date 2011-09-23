@@ -598,6 +598,9 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_UUID_VALUE, N_("Received an invalid UUID value"));
   ADD_ERROR_MESSAGE(ER_INVALID_UUID_TIME, N_("The UUID was not created with a valid time"));
 
+  // For IPV6 type
+  ADD_ERROR_MESSAGE(ER_INVALID_IPV6_VALUE, N_("Received an invalid IPV6 value"));
+
   // For BOOL type
   ADD_ERROR_MESSAGE(ER_INVALID_BOOLEAN_VALUE, N_("Received an invalid BOOLEAN value '%s'."));
   ADD_ERROR_MESSAGE(ER_INVALID_CAST_TO_BOOLEAN, N_("Invalid cast to BOOLEAN: '%s'."));

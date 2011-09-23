@@ -30,13 +30,8 @@ namespace drizzled {
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public memory::SqlAlloc
+class Tmp_Table_Param : public memory::SqlAlloc, boost::noncopyable
 {
-private:
-  /* Prevent use of these (not safe because of lists and copy_field) */
-  Tmp_Table_Param(const Tmp_Table_Param &);
-  void operator=(Tmp_Table_Param &);
-
 public:
   KeyInfo *keyinfo;
   List<Item> copy_funcs;

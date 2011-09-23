@@ -111,6 +111,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/field/str.h \
 			      drizzled/field/time.h \
 			      drizzled/field/uuid.h \
+			      drizzled/field/ipv6.h \
 			      drizzled/field/varstring.h \
 			      drizzled/field_iterator.h \
 			      drizzled/file_exchange.h \
@@ -506,6 +507,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/type/decimal.h \
 			      drizzled/type/time.h \
 			      drizzled/type/uuid.h \
+			      drizzled/type/ipv6.h \
 			      drizzled/typelib.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
@@ -586,6 +588,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/field/str.cc \
 			   drizzled/field/time.cc \
 			   drizzled/field/uuid.cc \
+			   drizzled/field/ipv6.cc \
 			   drizzled/field/varstring.cc \
 			   drizzled/field_conv.cc \
 			   drizzled/field_iterator.cc \
@@ -922,7 +925,6 @@ drizzled_libcharset_la_SOURCES= \
 				drizzled/ctype-uca.cc \
 				drizzled/ctype-uni.cc \
 				drizzled/ctype-utf8.cc \
-				drizzled/ctype.cc \
 				drizzled/dtoa.cc \
 				drizzled/my_strtoll10.cc
 
@@ -945,7 +947,6 @@ drizzled_libmemory_la_SOURCES= \
 			       drizzled/memory/sql_alloc.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
-
 
 if BUILD_GCC_PCH
 PCHHEADERS= config.h.gch
@@ -1010,16 +1011,14 @@ drizzled/generated_probes.h : drizzled/probes.d
 	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
 	sed -e 's,void \*,const void \*,g' drizzled/generated_probes.h | \
-		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
+		sed -e 's,char \*,const char \*,g' | sed -e 's,const const ,const ,g' | tr '\t' ' ' > dtrace_probes.tmp
 	mv dtrace_probes.tmp drizzled/generated_probes.h
 
 
-SUFFIXES+= .d .gch .gperf .stamp-h
+SUFFIXES+= .d .gperf .stamp-h
 
-if BUILD_GCC_PCH
-.h.gch:
-	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
-endif
+config.h.gch: config.h
+	${CXXCOMPILE} $<
 
 drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
 

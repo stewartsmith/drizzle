@@ -48,23 +48,6 @@ namespace internal {
 boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
 
-/*
-  initialize thread environment
-
-  SYNOPSIS
-    my_thread_global_init()
-
-  RETURN
-    0  ok
-    1  error (Couldn't create THR_KEY_mysys)
-*/
-
-void my_thread_global_init()
-{
-  my_thread_init();
-}
-
-
 static uint64_t thread_id= 0;
 
 /*
@@ -80,7 +63,7 @@ static uint64_t thread_id= 0;
 
 void my_thread_init()
 {
-  // We should mever see my_thread_init()  called twice
+  // We should never see my_thread_init() called twice
   if (THR_KEY_mysys.get())
   {
     abort();
@@ -89,7 +72,7 @@ void my_thread_init()
   THR_KEY_mysys.reset(new st_my_thread_var(++thread_id));
 }
 
-st_my_thread_var* _my_thread_var()
+st_my_thread_var* my_thread_var()
 {
   return THR_KEY_mysys.get();
 }

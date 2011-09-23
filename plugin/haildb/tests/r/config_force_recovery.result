@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_force_recovery';
-Variable_name	Value
-innodb_force_recovery	1
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='force_recovery';
-NAME	TYPE	VALUE
-force_recovery	ULINT	1

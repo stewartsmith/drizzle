@@ -36,12 +36,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 static bool kill_in_progress= false;
 void signal_hand(void);
 
-namespace drizzled
-{
+namespace drizzled {
+
 extern int cleanup_done;
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
@@ -172,25 +171,24 @@ void signal_hand()
 
   for (;;)
   {
-    int error;					// Used when debugging
-
-    if (shutdown_in_progress && !abort_loop)
+    if (shutdown_in_progress && not abort_loop)
     {
       sig= SIGTERM;
-      error=0;
     }
     else
     {
-      while ((error= sigwait(&set, &sig)) == EINTR) ;
+      while (sigwait(&set, &sig) == EINTR) 
+      {
+      }
     }
 
     if (cleanup_done)
     {
       signal_thread_in_use= false;
-
       return;
     }
-    switch (sig) {
+    switch (sig) 
+    {
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
@@ -198,18 +196,16 @@ void signal_hand()
       /* switch to the old log message processing */
       if (!abort_loop)
       {
-        abort_loop=1;				// mark abort for threads
+        abort_loop= 1;				// mark abort for threads
         kill_server(sig);		// MIT THREAD has a alarm thread
       }
       break;
     case SIGHUP:
-      if (!abort_loop)
+      if (not abort_loop)
       {
         g_refresh_version++;
         drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
-      break;
-    default:
       break;
     }
   }
@@ -218,8 +214,6 @@ void signal_hand()
 class SignalHandler :
   public drizzled::plugin::Daemon
 {
-  SignalHandler(const SignalHandler &);
-  SignalHandler& operator=(const SignalHandler &);
   boost::thread thread;
 
 public:
@@ -252,10 +246,9 @@ public:
     uint32_t count= 2; // How many times to try join and see if the caller died.
     while (not completed and count--)
     {
-      int error;
       int signal= count == 1 ? SIGTSTP : SIGTERM;
       
-      if ((error= pthread_kill(thread.native_handle(), signal)))
+      if (int error= pthread_kill(thread.native_handle(), signal))
       {
         char buffer[1024]; // No reason for number;
         strerror_r(error, buffer, sizeof(buffer));

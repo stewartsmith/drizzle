@@ -50,10 +50,6 @@ public:
   }
 };
 
-Catalog::~Catalog()
-{
-}
-
 bool Catalog::create(const identifier::Catalog& identifier)
 {
   message::catalog::shared_ptr message= message::catalog::make_shared(identifier);

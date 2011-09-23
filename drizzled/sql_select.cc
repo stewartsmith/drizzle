@@ -566,7 +566,7 @@ void update_ref_and_keys(Session *session,
   optimizer::KeyField* end, *field;
   field= end= key_fields;
 
-  my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64);
+  keyuse->init(sizeof(optimizer::KeyUse), 20, 64);
   if (cond)
   {
     add_key_fields(join_tab->join, &end, &and_level, cond, normal_tables,
@@ -5832,7 +5832,7 @@ bool setup_copy_fields(Session *session,
 
 err:
   if (copy)
-    delete [] param->copy_field;			// This is never 0
+    delete[] param->copy_field;
   param->copy_field=0;
   return true;
 }

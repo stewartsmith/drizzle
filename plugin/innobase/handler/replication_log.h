@@ -27,13 +27,10 @@
 class ReplicationLog :
   public drizzled::plugin::TransactionApplier 
 {
-  ReplicationLog(const ReplicationLog&);
-  ReplicationLog& operator=(const ReplicationLog&);
 public:
   ReplicationLog();
 
-  static void setup(ReplicationLog *logger);
-  drizzled::plugin::ReplicationReturnCode apply(drizzled::Session &session,
-                                                const drizzled::message::Transaction &to_apply);
+  static void setup(ReplicationLog*);
+  drizzled::plugin::ReplicationReturnCode apply(drizzled::Session&, const drizzled::message::Transaction &to_apply);
 };
 

@@ -1,0 +1,24 @@
+CREATE TABLE t1 (a IPV6, PRIMARY KEY(a));
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` IPV6 NOT NULL,
+  PRIMARY KEY (`a`) USING BTREE
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+INSERT INTO t1 VALUES ("10FB::C:ABC:1F0C:44DA");
+SELECT a FROM t1;
+a
+10fb:0000:0000:0000:000c:0abc:1f0c:44da
+CREATE TABLE t2 (a REAL);
+INSERT INTO t2 SELECT a FROM t1 LIMIT 1;
+ERROR 01000: Data truncated for column 'a' at row 1
+SELECT a FROM t2;
+a
+CREATE TABLE t3 (a REAL);
+INSERT INTO t3 SELECT a FROM t1 LIMIT 1;
+ERROR 01000: Data truncated for column 'a' at row 1
+SELECT a FROM t3;
+a
+DROP TABLE t3;
+DROP TABLE t2;
+DROP TABLE t1;

@@ -32,8 +32,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class DRIZZLED_API Item_func : public Item_result_field
 {

@@ -53,9 +53,7 @@ public:
   void set_write_timeout(uint32_t timeout);
   void set_read_timeout(uint32_t timeout);
   bool write(const void*, size_t);
-  bool write_command(unsigned char command,
-    const unsigned char *header, size_t head_len,
-    const unsigned char *packet, size_t len);
+  bool write_command(unsigned char command, data_ref header, data_ref body);
   uint32_t read();
 };
 

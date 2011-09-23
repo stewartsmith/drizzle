@@ -82,10 +82,6 @@ public:
   apply(drizzled::Session &in_session,
         const drizzled::message::Transaction &to_apply);
 private:
-  /* Don't allows these */
-  TransactionLogApplier();
-  TransactionLogApplier(const TransactionLogApplier &other);
-  TransactionLogApplier &operator=(const TransactionLogApplier &other);
   /** 
    * This Applier owns the memory of the associated TransactionLog 
    * and its index - so we have to track it. 

@@ -101,7 +101,7 @@ public:
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char *field_name; /**< Name of the field */
-  LEX_STRING comment; /**< A comment about the field */
+  lex_string_t comment; /**< A comment about the field */
 
   /** The field is part of the following keys */
   key_map	key_start;
@@ -762,6 +762,7 @@ inline bool isDateTime(const enum_field_types &arg)
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     return false;
   }
@@ -773,14 +774,6 @@ inline bool isDateTime(const enum_field_types &arg)
 } // namespace field
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
-
-} /* namespace drizzled */
-
-/** @TODO Why is this in the middle of the file???*/
-#include <drizzled/create_field.h>
-
-namespace drizzled
-{
 
 /**
  * A class for sending field information to a client.
@@ -803,7 +796,6 @@ public:
   uint32_t flags;
   uint32_t decimals;
   enum_field_types type;
-  SendField() {}
 };
 
 uint32_t pack_length_to_packflag(uint32_t type);

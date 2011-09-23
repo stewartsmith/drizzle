@@ -38,31 +38,26 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
   : _in_error_state(false)
 {
   /* setup a Session object */
-  _session= Session::make_shared(plugin::Listen::getNullClient(),
-                                 catalog::local());
+  _session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
   identifier::user::mptr user_id= identifier::User::make_shared();
   user_id->setUser(user);
   _session->setUser(user_id);
-  _session->set_db(schema);
+  _session->set_schema(schema);
 }
 
 
 bool SQLExecutor::executeSQL(vector<string> &sql)
 {
-  string combined_sql;
-
   if (not _in_error_state)
     _error_message.clear();
 
   Execute execute(*(_session.get()), true);
 
-  vector<string>::iterator iter= sql.begin();
-
-  while (iter != sql.end())
+  string combined_sql;
+  BOOST_FOREACH(string& it, sql)
   {
-    combined_sql.append(*iter);
+    combined_sql.append(it);
     combined_sql.append("; ");
-    ++iter;
   }
 
   sql::ResultSet result_set(1);
@@ -93,8 +88,7 @@ bool SQLExecutor::executeSQL(vector<string> &sql)
       bad_sql.append("\n");
     }
 
-    errmsg_printf(error::ERROR, _("%s\n%s\n"),
-                  _error_message.c_str(), bad_sql.c_str());
+    errmsg_printf(error::ERROR, _("%s\n%s\n"), _error_message.c_str(), bad_sql.c_str());
     return false;
   }
 

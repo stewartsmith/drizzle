@@ -83,23 +83,14 @@ Cursor::~Cursor()
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
-
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
     on this->table->mem_root and we will not be able to reclaim that memory
     when the clone Cursor object is destroyed.
   */
   new_handler->ref= mem_root->alloc(ALIGN_SIZE(ref_length)*2);
-
-  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
-                             getTable()->getShare()->getTableName(),
-                             getTable()->getShare()->getType());
-
-  if (new_handler && !new_handler->ha_open(identifier,
-                                           getTable()->getDBStat(),
-                                           HA_OPEN_IGNORE_IF_LOCKED))
-    return new_handler;
-  return NULL;
+  identifier::Table identifier(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName(), getTable()->getShare()->getType());
+  return new_handler->ha_open(identifier, getTable()->getDBStat(), HA_OPEN_IGNORE_IF_LOCKED) ? NULL : new_handler;
 }
 
 /*
@@ -598,27 +589,12 @@ void Cursor::ha_release_auto_increment()
   next_insert_id= 0;
 }
 
-void Cursor::drop_table(const char *)
+void Cursor::drop_table()
 {
   close();
 }
 
-
-/**
-  Performs checks upon the table.
-
-  @param session                thread doing CHECK Table operation
-
-  @retval
-    HA_ADMIN_OK               Successful upgrade
-  @retval
-    HA_ADMIN_NEEDS_UPGRADE    Table has structures requiring upgrade
-  @retval
-    HA_ADMIN_NEEDS_ALTER      Table has structures requiring ALTER Table
-  @retval
-    HA_ADMIN_NOT_IMPLEMENTED
-*/
-int Cursor::ha_check(Session *)
+int Cursor::ha_check(Session*)
 {
   return HA_ADMIN_OK;
 }
@@ -752,11 +728,9 @@ Cursor::ha_enable_indexes(uint32_t mode)
   @sa Cursor::discard_or_import_tablespace()
 */
 
-int
-Cursor::ha_discard_or_import_tablespace(bool discard)
+int Cursor::ha_discard_or_import_tablespace(bool discard)
 {
   setTransactionReadWrite();
-
   return discard_or_import_tablespace(discard);
 }
 
@@ -766,60 +740,58 @@ Cursor::ha_discard_or_import_tablespace(bool discard)
   @sa Cursor::drop_table()
 */
 
-void
-Cursor::closeMarkForDelete(const char *name)
+void Cursor::closeMarkForDelete()
 {
   setTransactionReadWrite();
-
-  return drop_table(name);
+  return drop_table();
 }
 
 int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
 {
-  int error;
-  if (!(error=index_next(buf)))
+  int error= index_next(buf);
+  if (error)
+    return error;
+
+  ptrdiff_t ptrdiff= buf - getTable()->getInsertRecord();
+  unsigned char *save_record_0= NULL;
+  KeyInfo *key_info= NULL;
+  KeyPartInfo *key_part;
+  KeyPartInfo *key_part_end= NULL;
+
+  /*
+  key_cmp_if_same() compares table->getInsertRecord() against 'key'.
+  In parts it uses table->getInsertRecord() directly, in parts it uses
+  field objects with their local pointers into table->getInsertRecord().
+  If 'buf' is distinct from table->getInsertRecord(), we need to move
+  all record references. This is table->getInsertRecord() itself and
+  the field pointers of the fields used in this key.
+  */
+  if (ptrdiff)
   {
-    ptrdiff_t ptrdiff= buf - getTable()->getInsertRecord();
-    unsigned char *save_record_0= NULL;
-    KeyInfo *key_info= NULL;
-    KeyPartInfo *key_part;
-    KeyPartInfo *key_part_end= NULL;
-
-    /*
-      key_cmp_if_same() compares table->getInsertRecord() against 'key'.
-      In parts it uses table->getInsertRecord() directly, in parts it uses
-      field objects with their local pointers into table->getInsertRecord().
-      If 'buf' is distinct from table->getInsertRecord(), we need to move
-      all record references. This is table->getInsertRecord() itself and
-      the field pointers of the fields used in this key.
-    */
-    if (ptrdiff)
+    save_record_0= getTable()->getInsertRecord();
+    getTable()->record[0]= buf;
+    key_info= getTable()->key_info + active_index;
+    key_part= key_info->key_part;
+    key_part_end= key_part + key_info->key_parts;
+    for (; key_part < key_part_end; key_part++)
     {
-      save_record_0= getTable()->getInsertRecord();
-      getTable()->record[0]= buf;
-      key_info= getTable()->key_info + active_index;
-      key_part= key_info->key_part;
-      key_part_end= key_part + key_info->key_parts;
-      for (; key_part < key_part_end; key_part++)
-      {
-        assert(key_part->field);
-        key_part->field->move_field_offset(ptrdiff);
-      }
+      assert(key_part->field);
+      key_part->field->move_field_offset(ptrdiff);
     }
+  }
 
-    if (key_cmp_if_same(getTable(), key, active_index, keylen))
-    {
-      getTable()->status=STATUS_NOT_FOUND;
-      error=HA_ERR_END_OF_FILE;
-    }
+  if (key_cmp_if_same(getTable(), key, active_index, keylen))
+  {
+    getTable()->status=STATUS_NOT_FOUND;
+    error= HA_ERR_END_OF_FILE;
+  }
 
-    /* Move back if necessary. */
-    if (ptrdiff)
-    {
-      getTable()->record[0]= save_record_0;
-      for (key_part= key_info->key_part; key_part < key_part_end; key_part++)
-        key_part->field->move_field_offset(-ptrdiff);
-    }
+  /* Move back if necessary. */
+  if (ptrdiff)
+  {
+    getTable()->record[0]= save_record_0;
+    for (key_part= key_info->key_part; key_part < key_part_end; key_part++)
+      key_part->field->move_field_offset(-ptrdiff);
   }
   return error;
 }

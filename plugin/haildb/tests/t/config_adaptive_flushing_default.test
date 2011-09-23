@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_adaptive_flushing';
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='adaptive_flushing';

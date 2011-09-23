@@ -371,7 +371,7 @@ void Item::print_item_w_name(String *str)
   if (name)
   {
     str->append(STRING_WITH_LEN(" AS "));
-    str->append_identifier(name, (uint32_t) strlen(name));
+    str->append_identifier(str_ref(name));
   }
 }
 
@@ -425,7 +425,7 @@ void Item::set_name(const char *str, uint32_t length, const charset_info_st * co
         push_warning_printf(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_REMOVED_SPACES, ER(ER_REMOVED_SPACES), str + length - orig_len);
     }
   }
-  name= memory::sql_strmake(str, length);
+  name= memory::sql_strdup(str_ref(str, length));
 }
 
 bool Item::eq(const Item *item, bool) const
@@ -1003,19 +1003,15 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
   return (Item**) not_found_item;
 }
 
-void Item::init_make_field(SendField *tmp_field,
-                           enum enum_field_types field_type_arg)
+void Item::init_make_field(SendField *tmp_field, enum_field_types field_type_arg)
 {
-  char *empty_name= (char*) "";
-  tmp_field->db_name=	empty_name;
-  tmp_field->org_table_name= empty_name;
-  tmp_field->org_col_name= empty_name;
-  tmp_field->table_name= empty_name;
+  tmp_field->db_name=	"";
+  tmp_field->org_table_name= "";
+  tmp_field->org_col_name= "";
+  tmp_field->table_name= "";
   tmp_field->col_name= name;
   tmp_field->charsetnr= collation.collation->number;
-  tmp_field->flags= (maybe_null ? 0 : NOT_NULL_FLAG) |
-                    (my_binary_compare(collation.collation) ?
-                      BINARY_FLAG : 0);
+  tmp_field->flags= (maybe_null ? 0 : NOT_NULL_FLAG) | (my_binary_compare(collation.collation) ? BINARY_FLAG : 0);
   tmp_field->type= field_type_arg;
   tmp_field->length= max_length;
   tmp_field->decimals= decimals;
@@ -1182,6 +1178,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
     break;
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
@@ -1330,6 +1327,7 @@ void Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BOOLEAN:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_DECIMAL:
     {
       if (String* res=val_str(buffer))
@@ -1431,11 +1429,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
       if (item->null_value)
         new_item= new Item_null(name);
       else
-      {
-        uint32_t length= result->length();
-        char *tmp_str= memory::sql_strmake(result->ptr(), length);
-        new_item= new Item_string(name, tmp_str, length, result->charset());
-      }
+        new_item= new Item_string(name, memory::sql_strdup(*result), result->length(), result->charset());
       break;
     }
   case INT_RESULT:

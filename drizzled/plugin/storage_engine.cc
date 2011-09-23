@@ -262,7 +262,7 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
 
 bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::identifier::Table&)
 {
-  std::cerr << " Engine was called for doDoesTableExist() and does not implement it: " << this->getName() << "\n";
+  std::cerr << " Engine was called for doDoesTableExist() and does not implement it: " << getName() << "\n";
   assert(0);
   return false;
 }
@@ -287,9 +287,8 @@ message::table::shared_ptr StorageEngine::getTableMessage(Session& session,
   }
 
   message::Table message;
-  EngineVector::iterator iter=
-    std::find_if(g_engines.begin(), g_engines.end(),
-                 StorageEngineGetTableDefinition(session, identifier, message, error));
+  EngineVector::iterator iter= std::find_if(g_engines.begin(), g_engines.end(), 
+    StorageEngineGetTableDefinition(session, identifier, message, error));
 
   if (iter == g_engines.end())
   {

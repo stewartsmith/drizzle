@@ -25,10 +25,8 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 /* We need to use qsort with 2 different compare functions */
 #ifdef QSORT_EXTRA_CMP_ARGUMENT

@@ -1,6 +1,0 @@
-CREATE TABLE t1 (a int primary key);
-insert into t1 values (1),(2);
---replace_column 9 #
-explain select * from t1;
-select * from t1;
-DROP TABLE t1;

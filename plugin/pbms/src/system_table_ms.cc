@@ -949,6 +949,8 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	Field		*curr_field;
 	byte		*save;
 	MY_BITMAP	*save_write_set;
+
+        (void)alias_offset;
 	
 	enter_();
 
@@ -2388,9 +2390,7 @@ iOpenCount(0)
 
 MSSystemTableShare::~MSSystemTableShare()
 {
-#ifdef DRIZZLED
-	myThrLock.deinit();
-#else
+#ifndef DRIZZLED
 	thr_lock_delete(&myThrLock);
 #endif
 	if (myTablePath) {

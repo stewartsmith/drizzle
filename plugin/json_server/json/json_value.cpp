@@ -100,10 +100,6 @@ ValueAllocator::~ValueAllocator()
 class DefaultValueAllocator : public ValueAllocator
 {
 public:
-   virtual ~DefaultValueAllocator()
-   {
-   }
-
    virtual char *makeMemberName( const char *memberName )
    {
       return duplicateStringValue( memberName );
@@ -1661,7 +1657,7 @@ Path::addPathInArg( const std::string &,
 
 void 
 Path::invalidPath( const std::string &, 
-                   int  )
+                   int  ) const
 {
    // Error: invalid path.
 }

@@ -518,6 +518,7 @@ const uint8_t *drizzle_column_default_value(drizzle_column_st *column,
 
 drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
 {
+  drizzle_return_t ret;
   if (drizzle_state_none(result->con))
   {
     result->options|= DRIZZLE_RESULT_SKIP_COLUMN;
@@ -525,8 +526,24 @@ drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
     drizzle_state_push(result->con, drizzle_state_column_read);
     drizzle_state_push(result->con, drizzle_state_packet_read);
   }
+  ret= drizzle_state_loop(result->con);
+  result->options&= ~DRIZZLE_RESULT_SKIP_COLUMN;
+  return ret;
+}
 
-  return drizzle_state_loop(result->con);
+drizzle_return_t drizzle_column_skip_all(drizzle_result_st *result)
+{
+  drizzle_return_t ret;
+  uint16_t it;
+
+  for (it= 1; it <= result->column_count; it++)
+  {
+    ret= drizzle_column_skip(result);
+    if (ret != DRIZZLE_RETURN_OK)
+      return ret;
+  }
+
+  return DRIZZLE_RETURN_OK;
 }
 
 drizzle_column_st *drizzle_column_read(drizzle_result_st *result,
@@ -789,8 +806,9 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
     con->buffer_ptr+= con->packet_size;
     con->buffer_size-= con->packet_size;
     con->packet_size= 0;
+    con->result->column_current++;
 
-    drizzle_state_push(con, drizzle_state_packet_read);
+    drizzle_state_pop(con);
   }
   else
   {

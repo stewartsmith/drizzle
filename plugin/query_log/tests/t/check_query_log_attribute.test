@@ -1,0 +1,9 @@
+
+# ###########################################################################
+# This is *not* a test for the query_log pluging but rather a test for the
+# helper script check-query-log-attribute.pl which the real query_log tests
+# use to parse and check query logs.
+# ###########################################################################
+
+# Make sure the script correctly parses a log event.
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $TOP_SRCDIR/plugin/query_log/tests/samples/sample-event.log all

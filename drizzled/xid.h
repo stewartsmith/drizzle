@@ -58,7 +58,7 @@ public:
   }
   void set(uint64_t xid);
   void set(long g, long b, const char *d);
-  bool is_null();
+  bool is_null() const;
   void set_null();
   my_xid quick_get_my_xid();
   my_xid get_my_xid();

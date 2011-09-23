@@ -65,29 +65,6 @@ bool ReplicationSchema::create()
   if (not executeSQL(sql))
     return false;
 
-#if 0
-  sql.clear();
-  sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`io_state`");
-
-  {
-    sql::ResultSet result_set(1);
-    Execute execute(*(_session.get()), true);
-    execute.run(sql[0], result_set);
-    result_set.next();
-    string count= result_set.getString(0);
-
-    /* Must always be at least one row in the table */
-    if (count == "0")
-    {
-      sql.clear();
-      sql.push_back("INSERT INTO `sys_replication`.`io_state` (`status`)"
-                    " VALUES ('STOPPED')");
-      if (not executeSQL(sql))
-        return false;
-    }
-  }
-#endif
-
   /*
    * Create our applier thread state information table if we need to.
    */
@@ -102,8 +79,8 @@ bool ReplicationSchema::create()
   sql.clear();
   sql.push_back("COMMIT");
   sql.push_back("CREATE TABLE IF NOT EXISTS `sys_replication`.`applier_state`"
-                " (`last_applied_commit_id` BIGINT NOT NULL PRIMARY KEY,"
-                " `master_id` BIGINT NOT NULL,"
+                " (`master_id` BIGINT NOT NULL,"      
+                " `last_applied_commit_id` BIGINT NOT NULL,"
                 " `originating_server_uuid` VARCHAR(36) NOT NULL,"
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `status` VARCHAR(20) NOT NULL,"
@@ -112,31 +89,6 @@ bool ReplicationSchema::create()
 
   if (not executeSQL(sql))
     return false;
-
-#if 0
-  sql.clear();
-  sql.push_back("SELECT COUNT(*) FROM `sys_replication`.`applier_state`");
-
-  {
-    sql::ResultSet result_set(1);
-    Execute execute(*(_session.get()), true);
-    execute.run(sql[0], result_set);
-    result_set.next();
-    string count= result_set.getString(0);
-
-    /* Must always be at least one row in the table */
-    if (count == "0")
-    {
-      sql.clear();
-      sql.push_back("INSERT INTO `sys_replication`.`applier_state`"
-                    " (`last_applied_commit_id`, `originating_server_uuid`,"
-                    "  `originating_commit_id`, `status`)"
-                    " VALUES (0, '', 0, 'STOPPED')");
-      if (not executeSQL(sql))
-        return false;
-    }
-  }
-#endif
 
   /*
    * Create our message queue table if we need to.
@@ -203,9 +155,14 @@ bool ReplicationSchema::createInitialApplierRow(uint32_t master_id)
   {
     sql.clear();
     sql.push_back("INSERT INTO `sys_replication`.`applier_state`"
-                  " (`master_id`, `last_applied_commit_id`, `status`) VALUES ("
+                  " (`master_id`, `last_applied_commit_id`,"
+                  " `originating_server_uuid`, `originating_commit_id`," 
+                  " `status`) VALUES ("
                   + boost::lexical_cast<string>(master_id)
-                  + ",0 , 'STOPPED')");
+                  + ",0,"
+                  + "'" + _session.get()->getServerUUID() + "'"
+                  + ",0,'STOPPED')");
+     
     if (not executeSQL(sql))
       return false;
   }

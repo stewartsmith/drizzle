@@ -336,6 +336,7 @@ void MSOpenTable::useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t bl
 	uint32_t			repo_id;
 
 	enter_();
+        (void)state;
 
 	blob_db = getDB();
 		
@@ -694,9 +695,9 @@ MSOpenTablePool::~MSOpenTablePool()
 void MSOpenTablePool::check()
 {
 	MSOpenTable	*otab, *ptab;
-	bool		found;
 
 	if ((otab = (MSOpenTable *) iPoolTables.getBack())) {
+  	bool found;
 		do {
 			found = false;
 			ptab = iTablePool;

@@ -17,11 +17,9 @@
 
 #include "heap_priv.h"
 
-
 unsigned char *heap_position(HP_INFO *info)
 {
-  return ((info->update & HA_STATE_AKTIV) ? info->current_ptr :
-	  (HEAP_PTR) 0);
+  return (info->update & HA_STATE_AKTIV) ? info->current_ptr : NULL;
 }
 
 /* Note that heap_info does NOT return information about the

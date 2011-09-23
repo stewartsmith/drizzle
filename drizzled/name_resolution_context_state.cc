@@ -23,12 +23,9 @@
 #include <drizzled/name_resolution_context_state.h>
 #include <drizzled/table_list.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-void
-Name_resolution_context_state::save_state(Name_resolution_context *context,
-                                          TableList *table_list)
+void Name_resolution_context_state::save_state(Name_resolution_context *context, TableList *table_list)
 {
   save_table_list=                  context->table_list;
   save_first_name_resolution_table= context->first_name_resolution_table;
@@ -37,9 +34,7 @@ Name_resolution_context_state::save_state(Name_resolution_context *context,
   save_next_name_resolution_table=  table_list->next_name_resolution_table;
 }
 
-void
-Name_resolution_context_state::restore_state(Name_resolution_context *context,
-                                             TableList *table_list)
+void Name_resolution_context_state::restore_state(Name_resolution_context *context, TableList *table_list) const
 {
   table_list->next_local=                save_next_local;
   table_list->next_name_resolution_table= save_next_name_resolution_table;
@@ -47,7 +42,6 @@ Name_resolution_context_state::restore_state(Name_resolution_context *context,
   context->first_name_resolution_table=  save_first_name_resolution_table;
   context->resolve_in_select_list=       save_resolve_in_select_list;
 }
-
 
 TableList *Name_resolution_context_state::get_first_name_resolution_table()
 {

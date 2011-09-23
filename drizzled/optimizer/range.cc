@@ -147,7 +147,7 @@ using namespace std;
 
 namespace drizzled {
 
-#define HA_END_SPACE_KEY 0
+static const int HA_END_SPACE_KEY= 0;
 
 /*
   Convert double value to #rows. Currently this does floor(), and we
@@ -379,13 +379,12 @@ optimizer::SqlSelect::SqlSelect()
 {
   quick_keys.reset();
   needed_reg.reset();
-  my_b_clear(file);
+  file->clear();
 }
 
 
 void optimizer::SqlSelect::cleanup()
 {
-
   delete quick;
   quick= NULL;
 
@@ -2233,7 +2232,7 @@ static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
             NOT_IN_IGNORE_THRESHOLD, construct the optimizer::SEL_TREE (*) manually.
           * Otherwise, don't produce a optimizer::SEL_TREE.
         */
-#define NOT_IN_IGNORE_THRESHOLD 1000
+        const unsigned int NOT_IN_IGNORE_THRESHOLD= 1000;
         memory::Root *tmp_root= param->mem_root;
         param->session->mem_root= param->old_root;
         /*
@@ -3184,8 +3183,8 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
   return root;
 }
 
-#define CLONE_KEY1_MAYBE 1
-#define CLONE_KEY2_MAYBE 2
+static const int CLONE_KEY1_MAYBE= 1;
+static const int CLONE_KEY2_MAYBE= 2;
 
 static uint32_t swap_clone_flag(uint32_t a)
 {

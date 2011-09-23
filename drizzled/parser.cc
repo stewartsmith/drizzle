@@ -19,12 +19,13 @@
  */
 
 #include <config.h>
-#include <drizzled/session.h>
 #include <drizzled/parser.h>
 #include <drizzled/alter_info.h>
-
-#include <drizzled/message/alter_table.pb.h>
+#include <drizzled/create_field.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/lex_input_stream.h>
+#include <drizzled/message/alter_table.pb.h>
+#include <drizzled/session.h>
 #include <drizzled/sql_lex.h>
 
 namespace drizzled {
@@ -220,7 +221,7 @@ void my_parse_error(const char *message)
   my_printf_error(ER_PARSE_ERROR_UNKNOWN, ER(ER_PARSE_ERROR_UNKNOWN), MYF(0), message);
 }
 
-bool check_reserved_words(LEX_STRING *name)
+bool check_reserved_words(lex_string_t *name)
 {
   if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
       !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
@@ -300,7 +301,7 @@ bool buildOrderBy(LEX *lex)
   return true;
 }
 
-void buildEngineOption(LEX *lex, const char *key, const LEX_STRING &value)
+void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value)
 {
   message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
@@ -314,7 +315,7 @@ void buildEngineOption(LEX *lex, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value)
+void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
@@ -322,7 +323,7 @@ void buildSchemaOption(LEX *lex, const char *key, const LEX_STRING &value)
   opt->set_state(value.str, value.length);
 }
 
-void buildSchemaDefiner(LEX *lex, const LEX_STRING &value)
+void buildSchemaDefiner(LEX *lex, const lex_string_t &value)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   identifier::User user(value.str);
@@ -343,7 +344,7 @@ void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
 {
   TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
@@ -367,9 +368,9 @@ bool checkFieldIdent(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &
 }
 
 Item *buildIdent(LEX *lex,
-                 const LEX_STRING &schema_name,
-                 const LEX_STRING &table_name,
-                 const LEX_STRING &field_name)
+                 const lex_string_t &schema_name,
+                 const lex_string_t &table_name,
+                 const lex_string_t &field_name)
 {
   Select_Lex *sel= lex->current_select;
 
@@ -387,7 +388,7 @@ Item *buildIdent(LEX *lex,
   return item;
 }
 
-Item *buildTableWild(LEX *lex, const LEX_STRING &schema_name, const LEX_STRING &table_name)
+Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
 {
   Select_Lex *sel= lex->current_select;
   Item *item= new Item_field(lex->current_context(), schema_name.str, table_name.str, "*");
@@ -402,7 +403,7 @@ void buildCreateFieldIdent(LEX *lex)
   lex->length= lex->dec=0;
   lex->type=0;
   statement->default_value= statement->on_update_value= 0;
-  statement->comment= null_lex_str;
+  statement->comment= null_lex_string();
   lex->charset= NULL;
   statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
@@ -414,7 +415,7 @@ void storeAlterColumnPosition(LEX *lex, const char *position)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  lex->last_field->after=const_cast<char*> (position);
+  lex->last_field->after= position;
   statement->alter_info.flags.set(ALTER_COLUMN_ORDER);
 }
 
@@ -440,8 +441,7 @@ bool buildCollation(LEX *lex, const charset_info_st *arg)
 void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
-  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0,
-                    lex->col_list);
+  Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0, lex->col_list);
   statement->alter_info.key_list.push_back(key);
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
@@ -457,9 +457,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
                             statement->fk_match_option);
 
   statement->alter_info.key_list.push_back(key);
-  key= new Key(Key::MULTIPLE, name_arg,
-               &default_key_create_info, 1,
-               lex->col_list);
+  key= new Key(Key::MULTIPLE, name_arg, &default_key_create_info, 1, lex->col_list);
   statement->alter_info.key_list.push_back(key);
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
   /* Only used for ALTER TABLE. Ignored otherwise. */
@@ -468,7 +466,7 @@ void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ide
 
 drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned)
 { 
-  lex->length=(char*) 0; /* use default length */
+  lex->length= NULL; /* use default length */
 
   if (is_unsigned)
   {
@@ -517,7 +515,7 @@ drizzled::enum_field_types buildSerialColumn(LEX *lex)
 
 drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length)
 {
-  lex->length= const_cast<char *>(length);
+  lex->length= length;
 
   if (lex->field())
   {
@@ -543,7 +541,7 @@ drizzled::enum_field_types buildDecimalColumn(LEX *lex)
 
 drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length)
 {
-  lex->length= const_cast<char *>(length);
+  lex->length= length;
   lex->charset= &my_charset_bin;
 
   if (lex->field())
@@ -596,6 +594,14 @@ drizzled::enum_field_types buildUuidColumn(LEX *lex)
   return DRIZZLE_TYPE_UUID;
 }
 
+drizzled::enum_field_types buildIPv6Column(LEX *lex)
+{
+  if (lex->field())
+    lex->field()->set_type(message::Table::Field::IPV6);
+
+  return DRIZZLE_TYPE_IPV6;
+}
+
 drizzled::enum_field_types buildDoubleColumn(LEX *lex)
 {
   if (lex->field())
@@ -615,7 +621,7 @@ drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length)
 
   if (length)
   {
-    lex->length= const_cast<char *>(length);
+    lex->length= length;
     return DRIZZLE_TYPE_MICROTIME;
   }
 

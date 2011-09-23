@@ -22,6 +22,7 @@
 /* This file is originally from the mysql distribution. Coded by monty */
 
 #include <drizzled/common.h>
+#include <drizzled/util/data_ref.h>
 
 #include <cassert>
 #include <cstdlib>
@@ -119,6 +120,7 @@ public:
     return Ptr;
   }
   void append_identifier(const char *name, size_t length);
+  void append_identifier(str_ref);
 
   void set(String &str,size_t offset,size_t arg_length)
   {
@@ -249,9 +251,9 @@ public:
   static bool needs_conversion(size_t arg_length, const charset_info_st* cs_from, const charset_info_st* cs_to);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
-  void append(const String &s);
-  void append(const char *s);
-  void append(const char *s,size_t arg_length);
+  void append(const char*);
+  void append(const char*, size_t);
+  void append(str_ref);
   void append_with_prefill(const char *s, size_t arg_length, size_t full_length, char fill_char);
   int strstr(const String &search,size_t offset=0); // Returns offset to substring or -1
   int strrstr(const String &search,size_t offset=0); // Returns offset to substring or -1
@@ -273,8 +275,8 @@ public:
   friend int sortcmp(const String *a,const String *b, const charset_info_st * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,size_t arg_length);
-  size_t numchars();
-  int charpos(int i,size_t offset=0);
+  size_t numchars() const;
+  int charpos(int i, size_t offset= 0) const;
 
   void reserve(size_t space_needed)
   {

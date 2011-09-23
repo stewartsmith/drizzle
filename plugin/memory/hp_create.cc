@@ -242,9 +242,9 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
 err:
   if (share && share->keydef)
-    delete [] share->keydef->seg;
+    delete[] share->keydef->seg;
   if (share)
-    delete [] share->keydef;
+    delete[] share->keydef;
   delete share;
   if (not create_info->internal_table)
     THR_LOCK_heap.unlock();
@@ -317,7 +317,7 @@ void hp_free(HP_SHARE *share)
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   if (share->keydef)
-    delete [] share->keydef->seg;
-  delete [] share->keydef;
+    delete[] share->keydef->seg;
+  delete[] share->keydef;
   delete share;
 }

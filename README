@@ -3,12 +3,16 @@ Drizzle
 
 A Lightweight SQL Database for Cloud and Web
 
-http://www.drizzle.org
-#drizzle on FreeNode
+WWW: http://www.drizzle.org
+IRC: #drizzle on FreeNode
+Mailing-list: https://launchpad.net/~drizzle-discuss
 
-Drizzle is a community-driven open source project that is forked from the popular MySQL database.  
 
-The Drizzle team has removed non-essential code, re-factored the remaining code and modernized the code base moving to C++.
+Drizzle is a community-driven open source project that is forked from the 
+popular MySQL database.  
+
+The Drizzle team has removed non-essential code, re-factored the remaining code 
+and modernized the code base moving to C++.
 
 Charter
  * A database optimized for Cloud infrastructure and Web applications
@@ -22,13 +26,41 @@ Scope
  * Reliable, ACID transactional
 
 
-The most current information is on the wiki, but are some essential links
-and notes for getting started.
+Documentation and support
+-------------------------
 
-http://drizzle.org/wiki/
-https://launchpad.net/drizzle
+Documentation on building, installing and using Drizzle is available at
+http://docs.drizzle.org/
 
-Compiling:
+If the documentation doesn't answer your questions, please use
+ - IRC
+ - mailing list
+ - https://answers.launchpad.net/drizzle
+...for community support.
+
+Commercial troubleshooting and 24/7 production support is available from a few
+vendors at http://www.drizzle.org/content/support-and-services
+
+
+Compiling from source
+---------------------
+
+### Installing library dependencies:
+# The easiest and recommended way is to use your package manager to install
+# all build dependencies for the drizzle package. This will always
+# install an up to date list of dependencies.
+# If drizzle is not yet included in your distribution, then please configure
+# your package manager to use these Drizzle repositories:
+#  DEB: http://docs.drizzle.org/installing/ubuntu.html
+#  RPM: http://docs.drizzle.org/installing/redhat.html
+
+
+# Then start the build process with executing
+sudo apt-get build-dep drizzle
+# or
+yum-builddep drizzle
+
+### Compiling:
 # If you got the source from bzr, run:
 ./config/autorun.sh
 # The following steps are the same regardless of where you got the source
@@ -38,18 +70,21 @@ make test ||
 echo "FAIL $?"
 
 More information on compiling can be found at:
-http://drizzle.org/wiki/Compiling
+http://docs.drizzle.org/installing/from_source.html
 
-Running Drizzle:
+### Running Drizzle:
 # be sure you configured with a prefix before running make install
 make install
 cd ${HOME}/builds/drizzle
-./sbin/drizzled --no-defaults --port=XXXX \
+./sbin/drizzled --no-defaults --mysql-protocol.port=3306 \
      --basedir=$PWD --datadir=$PWD/var \
      >> $PWD/var/drizzle.err 2>&1 &
 
-See also:
-http://drizzle.org/wiki/Starting_drizzled
-http://drizzle.org/wiki/Contributing_Code
+# See also:
+# http://docs.drizzle.org/installing/from_source.html#dependencies
+# http://wiki.drizzle.org/Starting_drizzled
+# http://docs.drizzle.org/contributing/introduction.html
+
 
 Cheers!
+  - The Drizzle team

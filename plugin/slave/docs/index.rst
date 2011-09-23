@@ -34,16 +34,19 @@ can only be given in a configuration file. The only exceptions are the
 
 .. program:: drizzled
 
-.. option:: --slave.config-file=arg
+.. option:: --slave.config-file FILE
+
+   :Default: :file:`etc/slave.cfg`
+   :Variable:
 
    Path to the replication slave configuration file. By default, the
-   plugin will look for a file named `slave.cfg` in the `etc` directory
+   plugin will look for a file named :file:`slave.cfg` in the `etc` directory
    of the Drizzle installation. If you want to specify a different path or
    configuration file name, it is best to specify a full path to the
    file. The relative path used by plugins is within the :option:`--datadir`
    directory, so a full path is recommended.
 
-.. option:: --slave.max-commit-id=arg
+.. option:: --slave.max-commit-id ID
 
    Manually set the maximum commit ID the slave is assumed to have retrieved
    from the master. This value will be used by the slave to determine where
@@ -132,3 +135,29 @@ following are the tables that it will create:
 
    The replication event queue.
 
+.. _slave_authors:
+
+Authors
+-------
+
+David Shrewsbury
+
+.. _slave_version:
+
+Version
+-------
+
+This documentation applies to **slave 1.0**.
+
+To see which version of the plugin a Drizzle server is running, execute:
+
+.. code-block:: mysql
+
+   SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='slave'
+
+Changelog
+---------
+
+v1.0
+^^^^
+* First release.

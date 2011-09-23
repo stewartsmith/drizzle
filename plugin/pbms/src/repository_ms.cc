@@ -584,6 +584,7 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 			//Shift the metadata in the header
 			if (CS_GET_DISK_2(ptr.rp_head->rb_mdata_size_2)) {
 				uint16_t  mdata_size, mdata_offset, alias_offset, shift;
+                                (void)mdata_size;
 				
 				shift = new_size - head_size;
 				mdata_size = CS_GET_DISK_2(ptr.rp_head->rb_mdata_size_2);
@@ -774,6 +775,9 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 	MSRepoTableRefPtr	tab_ref;
 	uint16_t			alias_offset;
 	uint32_t			alias_hash;
+
+        (void)alias_offset;
+        (void)alias_hash;
 
 	enter_();
 	/* Lock the BLOB: */
@@ -1188,6 +1192,8 @@ void MSRepoFile::checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t aut
 	MSRepoTempRefPtr	my_ref = NULL;
 	uint16_t				ref_type = MS_BLOB_FREE_REF;
 	enter_();
+        (void)modified;
+        (void)my_ref;
 	
 	/* Lock the BLOB: */
 	mylock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
@@ -1630,6 +1636,7 @@ MSRepoFile *MSRepository::openRepoFile()
 					break;
 				}
 				uint16_t ref_count, mdata_size, mdata_offset;
+                                (void)ref_count;
 				
 				status = CS_GET_DISK_1(blob.rb_status_1);
 				ref_size = CS_GET_DISK_1(blob.rb_ref_size_1);

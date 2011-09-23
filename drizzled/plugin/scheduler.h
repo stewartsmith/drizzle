@@ -34,10 +34,6 @@ namespace plugin {
  */
 class DRIZZLED_API Scheduler : public Plugin
 {
-  /* Disable default constructors */
-  Scheduler();
-  Scheduler(const Scheduler &);
-  Scheduler& operator=(const Scheduler &);
 public:
   explicit Scheduler(std::string name_arg)
     : Plugin(name_arg, "Scheduler")

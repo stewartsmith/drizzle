@@ -228,7 +228,7 @@ int ha_heap::doOpen(const drizzled::identifier::Table &identifier, int mode, uin
     */
     key_stat_version= file->getShare()->key_stat_version - 1;
   }
-  return (file ? 0 : 1);
+  return file ? 0 : 1;
 }
 
 int ha_heap::close(void)
@@ -621,12 +621,12 @@ int ha_heap::enable_indexes(uint32_t mode)
    [2  non-unique indexes are disabled - NOT YET IMPLEMENTED]
 */
 
-int ha_heap::indexes_are_disabled(void)
+int ha_heap::indexes_are_disabled()
 {
   return heap_indexes_are_disabled(file);
 }
 
-void ha_heap::drop_table(const char *)
+void ha_heap::drop_table()
 {
   file->getShare()->delete_on_close= 1;
   close();

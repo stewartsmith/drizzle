@@ -23,7 +23,6 @@
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/sql_list.h>
-
 #include <drizzled/visibility.h>
 
 namespace drizzled {
@@ -35,44 +34,34 @@ namespace plugin {
 
 class DRIZZLED_API QueryCache : public Plugin
 {
-private:  
-  
-  QueryCache();
-  QueryCache(const QueryCache &);
-  QueryCache& operator=(const QueryCache &);
-
 public:  
-
-  explicit QueryCache(std::string name_arg)
-    : Plugin(name_arg, "QueryCache")
+  explicit QueryCache(const std::string& name)
+    : Plugin(name, "QueryCache")
   {}
-
-  virtual ~QueryCache() {}
 
   /* these are the Query Cache interface functions */
 
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool doIsCached(Session* session)= 0;  
+  virtual bool doIsCached(Session*)= 0;  
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool doSendCachedResultset(Session *session)= 0;
+  virtual bool doSendCachedResultset(Session*)= 0;
   /* Send the current Resultset to the cache */
-  virtual bool doSetResultset(Session *session)= 0;
+  virtual bool doSetResultset(Session*)= 0;
   /* initiate a new Resultset (header) */
-  virtual bool doPrepareResultset(Session *session)= 0;
+  virtual bool doPrepareResultset(Session*)= 0;
   /* push a record to the current Resultset */
-  virtual bool doInsertRecord(Session *session, List<Item> &item)= 0;
+  virtual bool doInsertRecord(Session*, List<Item>&)= 0;
 
-  static bool addPlugin(QueryCache *handler);
-  static void removePlugin(QueryCache *handler);
+  static bool addPlugin(QueryCache*);
+  static void removePlugin(QueryCache*);
 
   /* These are the functions called by the rest of the Drizzle server */
-  static bool isCached(Session *session);
-  static bool sendCachedResultset(Session *session);
-  static bool prepareResultset(Session *session);
-  static bool setResultset(Session *session);
-  static bool insertRecord(Session *session, List<Item> &item);
+  static bool isCached(Session*);
+  static bool sendCachedResultset(Session*);
+  static bool prepareResultset(Session*);
+  static bool setResultset(Session*);
+  static bool insertRecord(Session*, List<Item>&);
 };
 
 } /* namespace plugin */
 } /* namespace drizzled */
-

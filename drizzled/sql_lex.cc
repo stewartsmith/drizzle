@@ -34,6 +34,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/plugin.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <cstdio>
 #include <ctype.h>
@@ -65,11 +66,6 @@ static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   order->counter_used= 0;
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
 }
-
-/**
-  LEX_STRING constant for null-string to be used in parser and other places.
-*/
-const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
@@ -165,7 +161,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
+void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
@@ -297,12 +293,12 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 }
 
 /* make a copy of token before ptr and set yytoklen */
-static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
+static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  LEX_STRING tmp;
+  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->mem.strmake(lip->get_tok_start() + skip, tmp.length);
+  tmp.str= lip->m_session->mem.strdup(lip->get_tok_start() + skip, tmp.length);
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
@@ -316,19 +312,17 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
    get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
-static LEX_STRING get_quoted_token(Lex_input_stream *lip,
+static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  LEX_STRING tmp;
-  const char *from, *end;
-  char *to;
+  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
   tmp.length= lip->yytoklen=length;
   tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
-  from= lip->get_tok_start() + skip;
-  to= tmp.str;
-  end= to+length;
+  const char* from= lip->get_tok_start() + skip;
+  char* to= (char*)tmp.str;
+  const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + length;
@@ -1569,11 +1563,11 @@ List<Item>* Select_Lex_Node::get_item_list()
 
 TableList *Select_Lex_Node::add_table_to_list(Session *,
                                               Table_ident *,
-                                              LEX_STRING *,
+                                              lex_string_t *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
                                               thr_lock_type,
                                               List<Index_hint> *,
-                                              LEX_STRING *)
+                                              lex_string_t *)
 {
   return 0;
 }
@@ -1825,29 +1819,6 @@ LEX::LEX() :
   reset_query_tables_list(true);
 }
 
-/**
-  This method should be called only during parsing.
-  It is aware of compound statements (stored routine bodies)
-  and will initialize the destination with the default
-  database of the stored routine, rather than the default
-  database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database
-  set to 'bar' and then issues:
-
-  CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
-
-  t1 is meant to refer to foo.t1, not to bar.t1.
-
-  This method is needed to support this rule.
-
-  @return true in case of error (parsing should be aborted, false in
-  case of success
-*/
-bool LEX::copy_db_to(char **p_db, size_t *p_db_length) const
-{
-  return session->copy_db_to(p_db, p_db_length);
-}
-
 /*
   initialize limit counters
 
@@ -2059,7 +2030,7 @@ void LEX::cleanup_after_one_table_open()
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
-void Select_Lex::set_index_hint_type(enum index_hint_type type_arg, index_clause_map clause)
+void Select_Lex::set_index_hint_type(index_hint_type type_arg, index_clause_map clause)
 {
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;
@@ -2090,9 +2061,9 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-void Select_Lex::add_index_hint(Session *session, char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, const char *str)
 {
-  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str, length));
+  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str));
 }
 
 message::AlterTable *LEX::alter_table()

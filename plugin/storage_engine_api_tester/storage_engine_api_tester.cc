@@ -23,6 +23,7 @@
 #include <drizzled/session.h> // for mark_transaction_to_rollback
 #include <string>
 #include <map>
+#include <iostream>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/internal/m_string.h>
@@ -115,11 +116,11 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
   state_multimap_iter cur= engine_state_transitions.find(engine_state);
   if (engine_state_transitions.count(engine_state) == 0)
   {
-    cerr << "ERROR: Invalid engine state: " << engine_state << endl
-         << "This should *NEVER* happen."
-         << endl
-         << "i.e. you've really screwed it up and you should be ashamed of "
-         << "yourself." << endl;
+    std::cerr << "ERROR: Invalid engine state: " << engine_state << std::endl
+      << "This should *NEVER* happen."
+      << std::endl
+      << "i.e. you've really screwed it up and you should be ashamed of "
+      << "yourself." << std::endl;
     assert(engine_state_transitions.count(engine_state));
   }
 
@@ -134,15 +135,15 @@ static inline void ENGINE_NEW_STATE(const string &new_state)
   if (cur == engine_state_transitions.end()
       || new_state.compare((*cur).second))
   {
-    cerr << "ERROR: Invalid Storage Engine state transition!" << endl
-         << "Cannot go from " << engine_state << " to " << new_state << endl;
+    std::cerr << "ERROR: Invalid Storage Engine state transition!" << std::endl
+      << "Cannot go from " << engine_state << " to " << new_state << std::endl;
     assert(false);
   }
 
   engine_state= new_state;
   engine_state_history.push_back(new_state);
 
-  cerr << "\tENGINE STATE : " << engine_state << endl;
+  std::cerr << "\tENGINE STATE : " << engine_state << std::endl;
 }
 
 static const string engine_name("STORAGE_ENGINE_API_TESTER");
@@ -431,11 +432,11 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
   state_multimap_iter cur= cursor_state_transitions.find(cursor_state);
   if (cursor_state_transitions.count(cursor_state) == 0)
   {
-    cerr << "ERROR: Invalid Cursor state: " << cursor_state << endl
-         << "This should *NEVER* happen."
-         << endl
-         << "i.e. you've really screwed it up and you should be ashamed of "
-         << "yourself." << endl;
+    std::cerr << "ERROR: Invalid Cursor state: " << cursor_state << std::endl
+      << "This should *NEVER* happen."
+      << std::endl
+      << "i.e. you've really screwed it up and you should be ashamed of "
+      << "yourself." << std::endl;
     assert(cursor_state_transitions.count(cursor_state));
   }
 
@@ -450,9 +451,9 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
   if (cur == cursor_state_transitions.end()
       || new_state.compare((*cur).second))
   {
-    cerr << "ERROR: Invalid Cursor state transition!" << endl
+    std::cerr << "ERROR: Invalid Cursor state transition!" << std::endl
          << "Cursor " << this << "Cannot go from "
-         << cursor_state << " to " << new_state << endl;
+         << cursor_state << " to " << new_state << std::endl;
     assert(false);
   }
 
@@ -467,7 +468,7 @@ void SEAPITesterCursor::CURSOR_NEW_STATE(const string &new_state)
 
   engine_state_history.push_back(cursor_state_str);
 
-  cerr << "\t\tCursor " << this << " STATE : " << cursor_state << endl;
+  std::cerr << "\t\tCursor " << this << " STATE : " << cursor_state << std::endl;
 }
 
 } /* namespace drizzled */

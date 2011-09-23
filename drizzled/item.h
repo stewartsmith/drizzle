@@ -53,12 +53,8 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class DRIZZLED_API Item : public memory::SqlAlloc
+class DRIZZLED_API Item : public memory::SqlAlloc, boost::noncopyable
 {
-  /* Prevent use of these */
-  Item(const Item &);
-  void operator=(Item &);
-
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
   virtual bool is_expensive_processor(unsigned char *arg);
@@ -170,17 +166,14 @@ public:
 
   virtual ~Item()
   {
-#ifdef EXTRA_DEBUG
-    name= NULL;
-#endif
   }
 
   void set_name(const std::string &arg)
   {
-    set_name(arg.c_str(), arg.length(), system_charset_info);
+    set_name(arg.c_str(), arg.length());
   }
 
-  void set_name(const char *str, uint32_t length, const charset_info_st * const cs= system_charset_info);
+  void set_name(const char *str, uint32_t length, const charset_info_st* cs= system_charset_info);
   void init_make_field(SendField *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);

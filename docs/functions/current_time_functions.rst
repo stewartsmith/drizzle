@@ -14,40 +14,6 @@ Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, dependin
 	SELECT CURDATE() + 0;
         	-> 20110213
 
-current_time
---------------
-
-Returns the current time as a value in 'HH:MM:SS' or HHMMSS.uuuuuu format, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
-
-.. code-block:: mysql
-
-	SELECT CURTIME();
-        	-> '10:30:09'
-	SELECT CURTIME() + 0;
-        	-> 103009.000000
-
-
-current_timestamp
-------------------
-
-See :ref:`now`
-
-CURRENT_TIMESTAMP() is a synonym for NOW(). 
-
-localtime
------------
-
-See :ref:`now`
-
-LOCALTIME() is a synonym for NOW(). 
-
-localtimestamp	                   
----------------
-
-See :ref:`now`
-
-LOCALTIMESTAMP() is a synonym for NOW(). 
-
 .. _now:
 
 now()	                            
@@ -91,4 +57,25 @@ Returns:
 +---------------------+----------+---------------------+
 
 When using replication, the binary log will include SET TIMESTAMP entries so that a database can be restored from the binary log. In doing this, values from NOW will be adjusted to the same times as when the original SQL statements were executed. SYSDATE entries will be unaffected by SET TIMESTAMP entries.
+
+current_timestamp
+------------------
+
+See :ref:`now`
+
+CURRENT_TIMESTAMP() is a synonym for NOW(). 
+
+localtime
+-----------
+
+See :ref:`now`
+
+LOCALTIME() is a synonym for NOW(). 
+
+localtimestamp	                   
+---------------
+
+See :ref:`now`
+
+LOCALTIMESTAMP() is a synonym for NOW(). 
 

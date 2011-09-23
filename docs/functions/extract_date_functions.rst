@@ -72,17 +72,6 @@ The hour field (0 - 23)
 
 *Result: 20*
 
-microseconds
-^^^^^^^^^^^^
-
-.. code-block:: mysql
-
-	SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
-
-The seconds field, including fractional parts, multiplied by 1 000 000; note that this includes full seconds
-
-*Result: 28500000*
-
 minute
 ^^^^^^
 
@@ -140,12 +129,6 @@ The seconds field, including fractional parts (0 - 59)
 	
 *Result: 27*
 
-.. code-block:: mysql
-
-	SELECT EXTRACT(SECOND FROM TIME '08:15:22.5');
-
-*Result: 22.5*
-
 timezone
 ^^^^^^^^
 
@@ -175,19 +158,3 @@ year
 
 *Result: 2009*
 
-date_part
-^^^^^^^^^
-
-The valid field names for date_part are the same as for extract.
-
-.. code-block:: mysql
-
-	SELECT date_part('day', TIMESTAMP '2010-07-16 10:12:05');
-
-*Result: 16*
-
-.. code-block:: mysql
-
-	SELECT date_part('hour', INTERVAL '5 hours 12 minutes');
-
-*Result: 4*

@@ -1,9 +1,12 @@
 Conversion Functions
 ====================
 
+.. _ascii-function:
+
 ASCII
 -----
- The ASCII(str) function returns the numeric value of the leftmost character of the string ’str’. It returns NULL if str is NULL. It works for 8-bit characters.
+
+The ASCII(str) function returns the numeric value of the leftmost character of the string ’str’. It returns NULL if str is NULL. It works for 8-bit characters.
 
 For example:
 
@@ -19,10 +22,12 @@ Returns 48
 
 Returns 100
 
+.. _bin-function:
 
 BIN
 ---
- The BIN string function returns a string value that represents the binary value of N, where N is a longlong(BIGINT) number. This function is equivalent to CONV(N, 10 , 0). If the function return the null then N is null. 
+
+The BIN string function returns a string value that represents the binary value of N, where N is a longlong(BIGINT) number. This function is equivalent to CONV(N, 10 , 0). If the function return the null then N is null. 
 
 Syntax:
 
@@ -37,9 +42,12 @@ For exempt:
 Returns: '1100'
 
 
+.. _char-function:
+
 CHAR
 ----
- SQL CHAR function is the opposite of the ASCII function. It converts an integer in range 0-255 into a ASCII character. It returns a string (the character), given the integer value. This function skips NULL values.    
+
+SQL CHAR function is the opposite of the ASCII function. It converts an integer in range 0-255 into a ASCII character. It returns a string (the character), given the integer value. This function skips NULL values.    
 For example:
 
 .. code-block:: mysql
@@ -48,8 +56,10 @@ For example:
 
 Returns "A" 
 
-HEX()
------
+.. _hex-function:
+
+HEX
+---
 
 This string function returns the hexadecimal (base-16) representation of a string or decicmal argument. Each character in the string argument is converted to two hexadecimal digits. If the argument is numeric, HEX() returns a hexadecimal string representation of the value as a BIGINT number.
 
@@ -71,9 +81,10 @@ Returns: 4452495A5AHc45
 
 (To better understand this output, you can use an :doc:`../../resources/ascii_chart` that includes both Hexadecimal and character values.)
 
+.. _unhex-function:
 
-UNHEX()
--------
+UNHEX
+-----
 
 UNHEX converts each pair of hexadecimal digits to a character. For a string argument, UNHEX() is the inverse operation of HEX(str).
 
@@ -105,18 +116,30 @@ The characters in the argument string must be legal hexadecimal digits: '0' .. '
 
 Returns NULL
 
+.. _lower-function:
 
-LOWER() 	          
-Return the argument in lowercase
+LOWER
+-----
 
+Return the argument in lowercase.
 
-LCASE() 	          
-Synonym for LOWER()
+.. _lcase-function:
 
+LCASE
+-----
 
-UCASE()
+Synonym for LOWER().
+
+.. _ucase-function:
+
+UCASE
+-----
+
 Synonym for UPPER()
 
+.. _upper-function:
 
-UPPER() 	          
-Convert to uppercase
+UPPER
+-----
+
+Convert to uppercase.

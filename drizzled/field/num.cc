@@ -26,6 +26,7 @@
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/util/test.h>
+#include <drizzled/create_field.h>
 
 namespace drizzled {
 
@@ -223,10 +224,8 @@ bool Field_num::eq_def(Field *field)
 uint32_t Field_num::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&
-          ((new_field_ptr->flags & UNSIGNED_FLAG) ==
-           (uint32_t) (flags & UNSIGNED_FLAG)) &&
-          ((new_field_ptr->flags & AUTO_INCREMENT_FLAG) ==
-           (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
+          ((new_field_ptr->flags & UNSIGNED_FLAG) == (uint32_t) (flags & UNSIGNED_FLAG)) &&
+          ((new_field_ptr->flags & AUTO_INCREMENT_FLAG) == (uint32_t) (flags & AUTO_INCREMENT_FLAG)) &&
           (new_field_ptr->length <= max_display_length()));
 }
 

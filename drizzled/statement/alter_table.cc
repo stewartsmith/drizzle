@@ -50,6 +50,7 @@
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 using namespace std;
 
@@ -105,7 +106,6 @@ bool statement::AlterTable::execute()
   TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &lex().select_lex;
-  bool need_start_waiting= false;
 
   is_engine_set= not createTableMessage().engine().name().empty();
 
@@ -157,7 +157,7 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  if (not (need_start_waiting= not session().wait_if_global_read_lock(0, 1)))
+  if (session().wait_if_global_read_lock(0, 1))
     return true;
 
   bool res;
@@ -316,9 +316,9 @@ static bool prepare_alter_table(Session *session,
   {
     /* Check if field should be dropped */
     vector<string>::iterator it= drop_columns.begin();
-    while ((it != drop_columns.end()))
+    while (it != drop_columns.end())
     {
-      if (! my_strcasecmp(system_charset_info, field->field_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, field->field_name, it->c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -469,9 +469,9 @@ static bool prepare_alter_table(Session *session,
     char *key_name= key_info->name;
 
     vector<string>::iterator it= drop_keys.begin();
-    while ((it != drop_keys.end()))
+    while (it != drop_keys.end())
     {
-      if (! my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
         break;
       it++;
     }
@@ -536,9 +536,6 @@ static bool prepare_alter_table(Session *session,
     if (key_parts.size())
     {
       key_create_information_st key_create_info= default_key_create_info;
-      Key *key;
-      Key::Keytype key_type;
-
       key_create_info.algorithm= key_info->algorithm;
 
       if (key_info->flags & HA_USES_BLOCK_SIZE)
@@ -547,25 +544,16 @@ static bool prepare_alter_table(Session *session,
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
+      Key::Keytype key_type;
       if (key_info->flags & HA_NOSAME)
       {
-        if (is_primary_key_name(key_name))
-          key_type= Key::PRIMARY;
-        else
-          key_type= Key::UNIQUE;
+        key_type= is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE;
       }
       else
       {
         key_type= Key::MULTIPLE;
       }
-
-      key= new Key(key_type,
-                   key_name,
-                   strlen(key_name),
-                   &key_create_info,
-                   test(key_info->flags & HA_GENERATED_KEY),
-                   key_parts);
-      new_key_list.push_back(key);
+      new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }
 
@@ -573,9 +561,9 @@ static bool prepare_alter_table(Session *session,
   for (int32_t j= 0; j < original_proto.fk_constraint_size(); j++)
   {
     vector<string>::iterator it= drop_fkeys.begin();
-    while ((it != drop_fkeys.end()))
+    while (it != drop_fkeys.end())
     {
-      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), (*it).c_str()))
+      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), it->c_str()))
       {
         break;
       }
@@ -618,11 +606,9 @@ static bool prepare_alter_table(Session *session,
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
 
-      if (key->name.str && is_primary_key_name(key->name.str))
+      if (key->name.str && is_primary_key(key->name.str))
       {
-        my_error(ER_WRONG_NAME_FOR_INDEX,
-                 MYF(0),
-                 key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
         return true;
       }
     }
@@ -1600,7 +1586,7 @@ copy_data_between_tables(Session *session,
         tables.table= from;
         tables.setTableName(from->getMutableShare()->getTableName());
         tables.alias= tables.getTableName();
-        tables.setSchemaName(const_cast<char *>(from->getMutableShare()->getSchemaName()));
+        tables.setSchemaName(from->getMutableShare()->getSchemaName());
         error= 1;
 
         session->lex().select_lex.setup_ref_array(session, order_num);
@@ -1615,7 +1601,7 @@ copy_data_between_tables(Session *session,
     /* Tell handler that we have values for all columns in the to table */
     to->use_all_columns();
 
-    error= info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
+    error= info.init_read_record(session, from, NULL, 1, true);
     if (error)
     {
       to->print_error(errno, MYF(0));
@@ -1694,7 +1680,7 @@ copy_data_between_tables(Session *session,
 
     info.end_read_record();
     from->free_io_cache();
-    delete [] copy;				// This is never 0
+    delete[] copy;
 
     if (to->cursor->ha_end_bulk_insert() && error <= 0)
     {
@@ -1723,10 +1709,10 @@ copy_data_between_tables(Session *session,
 
   if (to->cursor->ha_external_lock(session, F_UNLCK))
   {
-    error=1;
+    error= 1;
   }
 
-  return(error > 0 ? -1 : 0);
+  return error > 0 ? -1 : 0;
 }
 
 static Table *open_alter_table(Session *session, Table *table, identifier::Table &identifier)
@@ -1735,12 +1721,12 @@ static Table *open_alter_table(Session *session, Table *table, identifier::Table
   if (table->getShare()->getType())
   {
     TableList tbl;
-    tbl.setSchemaName(const_cast<char *>(identifier.getSchemaName().c_str()));
-    tbl.alias= const_cast<char *>(identifier.getTableName().c_str());
-    tbl.setTableName(const_cast<char *>(identifier.getTableName().c_str()));
+    tbl.setSchemaName(identifier.getSchemaName().c_str());
+    tbl.alias= identifier.getTableName().c_str();
+    tbl.setTableName(identifier.getTableName().c_str());
 
     /* Table is in session->temporary_tables */
-    return session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    return session->openTable(&tbl, NULL, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {

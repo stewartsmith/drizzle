@@ -46,15 +46,11 @@ namespace plugin {
  */
 class DRIZZLED_API TransactionReplicator : public Plugin
 {
-  TransactionReplicator();
-  TransactionReplicator(const TransactionReplicator &);
-  TransactionReplicator& operator=(const TransactionReplicator &);
 public:
   explicit TransactionReplicator(std::string name_arg)
     : Plugin(name_arg, "TransactionReplicator")
   {
   }
-  virtual ~TransactionReplicator() {}
 
   /**
    * Replicate a Transaction message to a TransactionApplier.

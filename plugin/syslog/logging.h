@@ -36,10 +36,6 @@ private:
   uint64_t _threshold_big_resultset;
   uint64_t _threshold_big_examined;
 
-  Syslog();
-  Syslog(const Syslog&);
-  Syslog& operator=(const Syslog&);
-
 public:
   Syslog(const std::string &facility,
          const std::string &priority,

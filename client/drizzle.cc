@@ -388,15 +388,12 @@ static string pager("");
 static string outfile("");
 static FILE *PAGER, *OUTFILE;
 static uint32_t prompt_counter;
-static char *delimiter= NULL;
+static const char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
-                                      drizzle_result_st *result,
-                                      uint32_t *error_code);
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length, drizzle_result_st *result, uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
-
 
 void tee_fprintf(FILE *file, const char *fmt, ...);
 void tee_fputs(const char *s, FILE *file);
@@ -1569,16 +1566,16 @@ try
   pager= "stdout";  // the default, if --pager wasn't given
   if (const char* tmp= getenv("PAGER"))
   {
-    if (strlen(tmp))
+    if (*tmp)
     {
       default_pager_set= 1;
       default_pager= tmp;
     }
   }
-  if (! isatty(0) || ! isatty(1))
+  if (not isatty(0) || not isatty(1))
   {
     status.setBatch(1); 
-    opt_silent=1;
+    opt_silent= 1;
   }
   else
     status.setAddToHistory(1);
@@ -1617,7 +1614,7 @@ try
     /* Check that delimiter does not contain a backslash */
     if (! strstr(delimiter_str.c_str(), "\\"))
     {
-      delimiter= (char *)delimiter_str.c_str();  
+      delimiter= delimiter_str.c_str();  
     }
     else
     {
@@ -2754,7 +2751,7 @@ int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
       drizzle_result_free(result);
     }
 
-    if (ret != DRIZZLE_RETURN_SERVER_GONE || retry > 1 ||
+    if (ret != DRIZZLE_RETURN_LOST_CONNECTION || retry > 1 ||
         !opt_reconnect)
     {
       return error;
@@ -3948,27 +3945,25 @@ static int com_source(string *, const char *line)
 static int
 com_delimiter(string *, const char *line)
 {
-  char buff[256], *tmp;
+  char buff[256];
 
   strncpy(buff, line, sizeof(buff) - 1);
-  tmp= get_arg(buff, 0);
+  char* tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
   {
-    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"),
-             INFO_ERROR, 0, 0);
+    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"), INFO_ERROR, 0, 0);
     return 0;
   }
   else
   {
     if (strstr(tmp, "\\"))
     {
-      put_info(_("DELIMITER cannot contain a backslash character"),
-               INFO_ERROR, 0, 0);
+      put_info(_("DELIMITER cannot contain a backslash character"), INFO_ERROR, 0, 0);
       return 0;
     }
   }
-  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
+  delimiter= strdup(tmp);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;
@@ -4041,7 +4036,7 @@ com_use(string *, const char *line)
           return error;
         }
 
-        if (ret != DRIZZLE_RETURN_SERVER_GONE || !try_again)
+        if (ret != DRIZZLE_RETURN_LOST_CONNECTION || !try_again)
           return put_error(&con, NULL);
 
         if (reconnect())
@@ -4768,14 +4763,14 @@ static int com_prompt(string *, const char *line)
 
 static const char * strcont(const char *str, const char *set)
 {
-  const char * start = (const char *) set;
+  const char * start = set;
 
   while (*str)
   {
     while (*set)
     {
       if (*set++ == *str)
-        return ((const char*) str);
+        return str;
     }
     set=start; str++;
   }

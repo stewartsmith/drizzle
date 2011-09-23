@@ -47,6 +47,13 @@
 
 uint64_t drizzle_row_read(drizzle_result_st *result, drizzle_return_t *ret_ptr)
 {
+  if ((result->column_current != result->column_count) && (!(result->options & DRIZZLE_RESULT_BUFFER_COLUMN)))
+  {
+    drizzle_set_error(result->con->drizzle, "drizzle_row_read", "cannot retrieve rows until all columns are retrieved");
+    *ret_ptr= DRIZZLE_RETURN_NOT_READY;
+    return 0;
+  }
+
   if (drizzle_state_none(result->con))
   {
     drizzle_state_push(result->con, drizzle_state_row_read);

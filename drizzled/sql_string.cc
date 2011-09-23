@@ -184,16 +184,14 @@ void String::copy(const String &str)
   str_length=str.str_length;
   memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
-  str_charset=str.str_charset;
+  str_charset= str.str_charset;
 }
 
-void String::copy(const std::string& arg, const charset_info_st * const cs)	// Allocate new string
+void String::copy(const std::string& arg, const charset_info_st* cs) // Allocate new string
 {
   alloc(arg.size());
-
-  if ((str_length= arg.size()))
-    memcpy(Ptr, arg.c_str(), arg.size());
-
+  str_length= arg.size();
+  memcpy(Ptr, arg.c_str(), arg.size());
   Ptr[arg.size()]= 0;
   str_charset= cs;
 }
@@ -269,16 +267,6 @@ void String::set_ascii(const char *str, size_t arg_length)
   copy(str, arg_length, str_charset);
 }
 
-void String::append(const String &s)
-{
-  if (s.length())
-  {
-    realloc(str_length+s.length());
-    memcpy(Ptr+str_length,s.ptr(),s.length());
-    str_length+=s.length();
-  }
-}
-
 
 /*
   Append an ASCII string to the a string of the current character set
@@ -292,11 +280,10 @@ void String::append(const char *s,size_t arg_length)
   /*
     For an ASCII compatinble string we can just append.
   */
-  realloc(str_length+arg_length);
-  memcpy(Ptr +str_length, s, arg_length);
-  str_length+=arg_length;
+  realloc(str_length + arg_length);
+  memcpy(Ptr + str_length, s, arg_length);
+  str_length+= arg_length;
 }
-
 
 /*
   Append a 0-terminated ASCII string
@@ -305,6 +292,11 @@ void String::append(const char *s,size_t arg_length)
 void String::append(const char *s)
 {
   append(s, strlen(s));
+}
+
+void String::append(str_ref s)
+{
+  append(s.data(), s.size());
 }
 
 void String::append_with_prefill(const char *s,size_t arg_length, size_t full_length, char fill_char)
@@ -321,19 +313,17 @@ void String::append_with_prefill(const char *s,size_t arg_length, size_t full_le
   append(s, arg_length);
 }
 
-size_t String::numchars()
+size_t String::numchars() const
 {
   return str_charset->cset->numchars(str_charset, Ptr, Ptr+str_length);
 }
 
-int String::charpos(int i,size_t offset)
+int String::charpos(int i,size_t offset) const
 {
-  if (i <= 0)
-    return i;
-  return str_charset->cset->charpos(str_charset,Ptr+offset,Ptr+str_length,i);
+  return i <= 0 ? i : str_charset->cset->charpos(str_charset, Ptr + offset, Ptr + str_length, i);
 }
 
-int String::strstr(const String &s,size_t offset)
+int String::strstr(const String &s, size_t offset)
 {
   if (s.length() + offset <= str_length)
   {
@@ -676,8 +666,12 @@ void String::append_identifier(const char *name, size_t in_length)
   append(&quote_char, 1);
 }
 
-bool check_if_only_end_space(const charset_info_st * const cs, char *str,
-                             char *end)
+void String::append_identifier(str_ref v)
+{
+  append_identifier(v.data(), v.size());
+}
+
+bool check_if_only_end_space(const charset_info_st * const cs, char *str, char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }

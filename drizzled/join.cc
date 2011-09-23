@@ -1875,9 +1875,8 @@ int Join::destroy()
   exec_tmp_table1= NULL;
   exec_tmp_table2= NULL;
   delete select;
-  delete_dynamic(&keyuse);
-
-  return(error);
+  keyuse.free();
+  return error;
 }
 
 /**
@@ -2502,16 +2501,14 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
            ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
-      int write_error;
-      Item *item;
       List<Item>::iterator it(rollup.getFields()[i].begin());
-      while ((item= it++))
+      while (Item* item= it++)
       {
         if (item->type() == Item::NULL_ITEM && item->is_result_field())
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->cursor->insertRecord(table_arg->getInsertRecord())))
+      if (table_arg->cursor->insertRecord(table_arg->getInsertRecord()))
       {
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return 1;
@@ -2919,7 +2916,7 @@ enum_nested_loop_state end_send(Join *join, JoinTable *, bool end_of_records)
 
           join->select_options^= OPTION_FOUND_ROWS;
           if (table->sort.record_pointers ||
-              (table->sort.io_cache && my_b_inited(table->sort.io_cache)))
+              (table->sort.io_cache && table->sort.io_cache->inited()))
           {
             /* Using filesort */
             join->send_records= table->sort.found_records;

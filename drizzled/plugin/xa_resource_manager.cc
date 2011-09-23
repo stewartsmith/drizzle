@@ -39,23 +39,15 @@
 namespace drizzled {
 namespace plugin {
 
-static std::vector<XaResourceManager *> xa_resource_managers;
+typedef std::vector<XaResourceManager*> xa_resource_managers_t;
+static xa_resource_managers_t xa_resource_managers;
 
 int XaResourceManager::commitOrRollbackXID(XID *xid, bool commit)
 {
   std::vector<int> results;
-
-  if (commit)
-    transform(xa_resource_managers.begin(), xa_resource_managers.end(), results.begin(),
-              std::bind2nd(std::mem_fun(&XaResourceManager::xaCommitXid), xid));
-  else
-    transform(xa_resource_managers.begin(), xa_resource_managers.end(), results.begin(),
-              std::bind2nd(std::mem_fun(&XaResourceManager::xaRollbackXid), xid));
-
-  if (std::find_if(results.begin(), results.end(), std::bind2nd(std::equal_to<int>(),0)) == results.end())
-    return 1;
-
-  return 0;
+  BOOST_FOREACH(XaResourceManager* it, xa_resource_managers)
+    results.push_back(commit ? it->xaCommitXid(xid) : it->xaRollbackXid(xid));
+  return std::find(results.begin(), results.end(), 0) == results.end();
 }
 
 /**

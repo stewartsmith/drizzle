@@ -186,16 +186,6 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   char  *data_file_name,		/* Resolved path names from symlinks */
         *index_file_name;
   unsigned char *file_map;			/* mem-map of file if possible */
-private:
-  drizzled::KEY_CACHE key_cache;			/* ref to the current key cache */
-public:
-  drizzled::KEY_CACHE *getKeyCache()
-  {
-    return &key_cache;
-  }
-
-  void setKeyCache();
-
   MI_DECODE_TREE *decode_trees;
   uint16_t *decode_tables;
   int (*read_record)(struct st_myisam_info*, drizzled::internal::my_off_t, unsigned char*);
@@ -737,7 +727,6 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...);
 void mi_check_print_info(MI_CHECK *param, const char *fmt,...);
 int flush_pending_blocks(MI_SORT_PARAM *param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
-int flush_blocks(MI_CHECK *param, drizzled::KEY_CACHE *key_cache, int file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
 int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, size_t);

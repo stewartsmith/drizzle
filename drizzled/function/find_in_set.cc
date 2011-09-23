@@ -61,8 +61,7 @@ int64_t Item_func_find_in_set::val_int()
   }
   null_value=0;
 
-  int diff;
-  if ((diff=buffer->length() - find->length()) >= 0)
+  if (buffer->length() >= find->length())  
   {
     my_wc_t wc;
     const charset_info_st * const cs= cmp_collation.collation;
@@ -75,8 +74,7 @@ int64_t Item_func_find_in_set::val_int()
     while (1)
     {
       int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end,
-                                       (unsigned char*) real_end)) > 0)
+      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, (unsigned char*) real_end)) > 0)
       {
         const char *substr_end= str_end + symbol_len;
         bool is_last_item= (substr_end == real_end);
@@ -100,7 +98,7 @@ int64_t Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (int64_t) ++position;
       else
-        return 0L;
+        return 0;
     }
   }
   return 0;

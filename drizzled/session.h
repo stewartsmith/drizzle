@@ -47,9 +47,6 @@
 
 namespace drizzled {
 
-extern char internal_table_name[2];
-extern char empty_c_string[1];
-extern const char **errmesg;
 extern uint32_t server_id;
 extern std::string server_uuid;
 
@@ -120,7 +117,7 @@ public:
   memory::Root& mem;
   memory::Root* mem_root; /**< Pointer to current memroot */
 
-  uint64_t getXaId()
+  uint64_t getXaId() const
   {
     return xa_id;
   }
@@ -163,13 +160,11 @@ public:
       return NULL;
     }
     length= tmp_string->length();
-    return mem.strmake(*tmp_string);
+    return mem.strdup(*tmp_string);
   }
 
   util::string::ptr schema() const;
 
-  /* current cache key */
-  std::string query_cache_key;
   /**
     Constant for Session::where initialization in the beginning of every query.
 
@@ -202,7 +197,7 @@ public:
   }
 
   drizzle_system_variables& variables; /**< Mutable local variables local to the session */
-  enum_tx_isolation getTxIsolation();
+  enum_tx_isolation getTxIsolation() const;
   system_status_var& status_var;
 
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
@@ -217,7 +212,7 @@ public:
 
   identifier::user::ptr user() const
   {
-    return security_ctx ? security_ctx : identifier::user::ptr();
+    return security_ctx;
   }
 
   void setUser(identifier::user::mptr arg)
@@ -225,7 +220,7 @@ public:
     security_ctx= arg;
   }
 
-  int32_t getScoreboardIndex()
+  int32_t getScoreboardIndex() const
   {
     return scoreboard_index;
   }
@@ -235,7 +230,7 @@ public:
     scoreboard_index= in_scoreboard_index;
   }
 
-  bool isOriginatingServerUUIDSet()
+  bool isOriginatingServerUUIDSet() const
   {
     return originating_server_uuid_set;
   }
@@ -246,7 +241,7 @@ public:
     originating_server_uuid_set= true;
   }
 
-  std::string &getOriginatingServerUUID()
+  const std::string &getOriginatingServerUUID() const
   {
     return originating_server_uuid;
   }
@@ -256,7 +251,7 @@ public:
     originating_commit_id= in_originating_commit_id;
   }
 
-  uint64_t getOriginatingCommitID()
+  uint64_t getOriginatingCommitID() const
   {
     return originating_commit_id;
   }
@@ -275,7 +270,7 @@ private:
   const char *_where;
 
 public:
-  const char *where()
+  const char *where() const
   {
     return _where;
   }
@@ -538,7 +533,7 @@ public:
     _killed= arg;
   }
 
-  killed_state_t getKilled()
+  killed_state_t getKilled() const
   {
     return _killed;
   }
@@ -586,7 +581,7 @@ public:
   /** set during loop of derived table processing */
   bool derived_tables_processing;
 
-  bool doing_tablespace_operation()
+  bool doing_tablespace_operation() const
   {
     return tablespace_op;
   }
@@ -719,7 +714,7 @@ public:
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline uint64_t read_first_successful_insert_id_in_prev_stmt()
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt() const
   {
     return first_successful_insert_id_in_prev_stmt;
   }
@@ -829,13 +824,7 @@ public:
     return server_status & SERVER_STATUS_IN_TRANS;
   }
 
-  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
-                              const char* str, uint32_t length,
-                              bool allocate_lex_string);
-
-  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
-                              const std::string &str,
-                              bool allocate_lex_string);
+  lex_string_t* make_lex_string(lex_string_t*, str_ref);
 
   void send_explain_fields(select_result*);
 
@@ -891,14 +880,14 @@ public:
     attributes including security context. In the future, this operation
     will be made private and more convenient interface will be provided.
   */
-  void set_db(const std::string&);
+  void set_schema(const std::string&);
 
   /*
     Copy the current database to the argument. Use the current arena to
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length);
+  bool copy_db_to(char*& p_db, size_t& p_db_length);
 
 public:
 
@@ -1032,7 +1021,7 @@ public:
   void add_group_to_list(Item *item, bool asc);
 
   void refresh_status();
-  user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  user_var_entry *getVariable(lex_string_t &name, bool create_if_not_exists);
   user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
   void setVariable(const std::string &name, const std::string &value);
 
@@ -1116,7 +1105,7 @@ public:
     pointer to plugin::StorageEngine
   */
   plugin::StorageEngine *getDefaultStorageEngine();
-  void get_xid(DrizzleXid *xid); // Innodb only
+  void get_xid(DrizzleXid *xid) const; // Innodb only
 
   table::Singular& getInstanceTable();
   table::Singular& getInstanceTable(std::list<CreateField>&);

@@ -22,6 +22,7 @@
 
 #include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
+#include <drizzled/util/data_ref.h>
 #include <drizzled/visibility.h>
 
 namespace drizzled {
@@ -110,12 +111,11 @@ public:
   void* memdup(const void*, size_t);
   char* strdup(const char*);
 
-  char* strmake(const char*, size_t);
-  char* strmake(const std::string&);
-  char* strmake(const String&);
+  char* strdup(const char*, size_t);
+  char* strdup(str_ref);
   void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
-  inline bool alloc_root_inited()
+  bool alloc_root_inited() const
   {
     return min_malloc != 0;
   }
