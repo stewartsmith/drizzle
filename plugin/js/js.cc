@@ -187,6 +187,7 @@ String *JsFunction::val_str( String *str )
     // Need to do this differently for ints, doubles and strings
     // TODO: There is also ROW_RESULT. Is that relevant here? What does it look like? I could pass rows as an array or object.
     if( args[n]->result_type() == INT_RESULT ){
+      // TODO: Turns out Drizzle doesn't do unsigned. So this code path can never happen? (I can't test it at least...)
       if( args[n]->is_unsigned() ) {
         a->Set( n-1, v8::Integer::NewFromUnsigned( (uint32_t) args[n]->val_uint() ) );
       } else {
