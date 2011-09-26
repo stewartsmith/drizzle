@@ -18,10 +18,12 @@
 #pragma once
 
 #include <pthread.h>
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/tss.hpp>
 
 namespace drizzled {
 namespace internal {
@@ -46,7 +48,9 @@ struct st_my_thread_var
   }
 };
 
-st_my_thread_var* my_thread_var();
+typedef boost::thread_specific_ptr<st_my_thread_var> thread_local_st;
+
+thread_local_st& my_thread_var2();
 
 } /* namespace internal */
 } /* namespace drizzled */
