@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
+"POT-Creation-Date: 2011-09-27 14:15-0400\n"
 "PO-Revision-Date: 2011-01-10 16:22+0000\n"
 "Last-Translator: Tomer <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -4096,7 +4096,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4463,7 +4463,7 @@ msgstr ""
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4510,27 +4510,27 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -4957,32 +4957,32 @@ msgstr ""
 msgid "Syslog Priority of error messages"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 msgid "Failed to open transaction log file"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format

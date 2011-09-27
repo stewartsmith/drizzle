@@ -1,5 +1,5 @@
 # Romanian translation for drizzle
-# Copyright (C) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
-"PO-Revision-Date: 2009-07-31 19:41+0000\n"
-"Last-Translator: Cosmin Giurgiu <cosmingiurgiu@yahoo.com>\n"
+"POT-Creation-Date: 2011-09-27 14:15-0400\n"
+"PO-Revision-Date: 2011-09-18 11:20+0000\n"
+"Last-Translator: svens <snevnez@yahoo.co.uk>\n"
 "Language-Team: Romanian <ro@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -17,8 +17,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1 ? 0: (((n % 100 > 19) || ((n % 100 "
 "== 0) && (n != 0))) ? 2: 1));\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-09-19 04:40+0000\n"
+"X-Generator: Launchpad (build 13955)\n"
 
 #: ../client/drizzle.cc:332
 msgid "Sun"
@@ -238,11 +238,11 @@ msgstr ""
 
 #: ../client/drizzle.cc:1349
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../client/drizzle.cc:1360
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../client/drizzle.cc:1379 ../client/drizzledump.cc:471
 #: ../plugin/innobase/xtrabackup/xtrabackup.cc:4752
@@ -250,9 +250,8 @@ msgid "Options used only in command line"
 msgstr ""
 
 #: ../client/drizzle.cc:1381
-#, fuzzy
 msgid "Displays this help and exit."
-msgstr "Afiseaza acest mesaj de ajutor si iesi."
+msgstr ""
 
 #: ../client/drizzle.cc:1382
 msgid ""
@@ -476,9 +475,8 @@ msgid "Options specific to the client"
 msgstr ""
 
 #: ../client/drizzle.cc:1477
-#, fuzzy
 msgid "Connect to host"
-msgstr "Conectare la gazda."
+msgstr ""
 
 #: ../client/drizzle.cc:1479
 msgid ""
@@ -539,9 +537,9 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzle.cc:1780
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: drizzle [OPTIONS] [schema]\n"
-msgstr "Utilizare: %s [OPTIUNI] [baza de date]\n"
+msgstr ""
 
 #: ../client/drizzle.cc:1834
 #, fuzzy, c-format
@@ -754,9 +752,8 @@ msgid "USE must be followed by a schema name"
 msgstr ""
 
 #: ../client/drizzle.cc:4053
-#, fuzzy
 msgid "Schema changed"
-msgstr "Baza de date folosita."
+msgstr ""
 
 #: ../client/drizzle.cc:4099
 #, fuzzy
@@ -1124,9 +1121,8 @@ msgid ""
 msgstr ""
 
 #: ../client/drizzledump.cc:541
-#, fuzzy
 msgid "Connect to host."
-msgstr "Conectare la gazda."
+msgstr ""
 
 #: ../client/drizzledump.cc:543
 msgid ""
@@ -1210,9 +1206,8 @@ msgid " rows dumped for table "
 msgstr ""
 
 #: ../client/drizzledump_data.cc:552
-#, fuzzy
 msgid "-- Connecting to "
-msgstr "Conectare la gazda."
+msgstr ""
 
 #: ../client/drizzledump_data.cc:552
 msgid " using protocol "
@@ -1335,104 +1330,129 @@ msgid "Process chroot failed"
 msgstr ""
 
 #: ../drizzled/drizzled.cc:698
+#, fuzzy
 msgid "Invalid Value for auto_increment_increment"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:708
+#, fuzzy
 msgid "Invalid Value for auto_increment_offset"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:718
+#, fuzzy
 msgid "Invalid Value for completion_type"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:729
+#, fuzzy
 msgid "Invalid Value for div-precision-increment"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:739
+#, fuzzy
 msgid "Invalid Value for group_concat_max_len"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:749
+#, fuzzy
 msgid "Invalid Value for join_buffer_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:760
+#, fuzzy
 msgid "Invalid Value for max_allowed_packet"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:771
+#, fuzzy
 msgid "Invalid Value for max_error_count"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:781
+#, fuzzy
 msgid "Invalid Value for max_heap_table_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:792
+#, fuzzy
 msgid "Invalid Value for min_examined_row_limit"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:802
+#, fuzzy
 msgid "Invalid Value for max_join_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:812
+#, fuzzy
 msgid "Invalid Value for max_length_for_sort_data"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:822
+#, fuzzy
 msgid "Invalid Value for max_seeks_for_key"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:832
+#, fuzzy
 msgid "Invalid Value for max_sort_length"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:842
+#, fuzzy
 msgid "Invalid Value for optimizer_search_depth"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:852
+#, fuzzy
 msgid "Invalid Value for preload_buff_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:862
+#, fuzzy
 msgid "Invalid Value for query_alloc_block_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:873
+#, fuzzy
 msgid "Invalid Value for query_prealloc_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:884
+#, fuzzy
 msgid "Invalid Value for range_alloc_block_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:895
+#, fuzzy
 msgid "Invalid Value for read_buff_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:906
+#, fuzzy
 msgid "Invalid Value for read_rnd_buff_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:916
+#, fuzzy
 msgid "Invalid Value for sort_buff_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:926
+#, fuzzy
 msgid "Invalid Value for table_def_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:936
+#, fuzzy
 msgid "Invalid Value for table_cache_size"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru max_input_line"
 
 #: ../drizzled/drizzled.cc:946 ../drizzled/drizzled.cc:961
+#, fuzzy
 msgid "Invalid Value for table_lock_wait_timeout"
-msgstr ""
+msgstr "Eroare: Valoare invalida pentru connect_timeout"
 
 #: ../drizzled/drizzled.cc:971
 msgid ""
@@ -1787,9 +1807,8 @@ msgid "Failed to initialize plugins"
 msgstr ""
 
 #: ../drizzled/drizzled.cc:1409
-#, fuzzy
 msgid "Error getting default charset"
-msgstr "Stabileste setul de caractere implicit."
+msgstr ""
 
 #: ../drizzled/drizzled.cc:1424
 msgid "Error setting collation"
@@ -4118,7 +4137,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4485,7 +4504,7 @@ msgstr ""
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4532,27 +4551,27 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -4979,32 +4998,32 @@ msgstr ""
 msgid "Syslog Priority of error messages"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 msgid "Failed to open transaction log file"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format
@@ -5304,38 +5323,18 @@ msgstr ""
 msgid "End point to bind to"
 msgstr ""
 
-#~ msgid "Display this help and exit."
-#~ msgstr "Afiseaza acest mesaj de ajutor si iesi."
-
-#~ msgid "Couldn't allocate memory for temp histfile!\n"
-#~ msgstr ""
-#~ "Nu am putut aloca memorie pentru acest fisier de istoric temporar!\n"
-
-#, fuzzy
-#~ msgid "--help           :  Display help and exit\n"
-#~ msgstr "Afiseaza acest mesaj de ajutor si iesi."
-
 #~ msgid "Use compression in server/client protocol."
 #~ msgstr "Foloseste compresia in protocolul server/client."
 
 #~ msgid "Ignore space after function names."
 #~ msgstr "Ignora caracterele spatiu aflate dupa numele de functii."
 
+#~ msgid "Couldn't allocate memory for temp histfile!\n"
+#~ msgstr ""
+#~ "Nu am putut aloca memorie pentru acest fisier de istoric temporar!\n"
+
 #~ msgid "Couldn't allocate memory"
 #~ msgstr "Nu se poate aloca memoria"
 
 #~ msgid "Input filename too long: %s"
 #~ msgstr "Numele fisierului de intrare este prea lung: %s"
-
-#, fuzzy
-#~ msgid "Writing a core file\n"
-#~ msgstr "Scrie fisierul de istoric %s\n"
-
-#~ msgid "Synonym for -?"
-#~ msgstr "Sinonim cu  -?"
-
-#~ msgid "For more options, use %s --help\n"
-#~ msgstr "Pentru mai multe optiuni, foloseste %s --help\n"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Verifică memoria și utilizarea fișierului deschis la ieșire."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
+"POT-Creation-Date: 2011-09-27 14:15-0400\n"
 "PO-Revision-Date: 2011-05-10 11:29+0000\n"
 "Last-Translator: nerjamartin <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -4507,7 +4507,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4885,7 +4885,7 @@ msgstr "Habilitar el registro a syslog"
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4932,21 +4932,21 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr "El número máximo de subprocesos disponibles para el usuario."
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr "La hebra thread_id=%<PRIu64>, %s:%d ha tenido un error"
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr "La hebra %s:%d ha tenido un error"
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr "Hebra desconocida accediendo a tabla"
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
@@ -4954,7 +4954,7 @@ msgstr ""
 "No utilice el método rápido índice de tipo de índice creado si el archivo "
 "temporal se hacen más grandes que esto."
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -5400,33 +5400,33 @@ msgstr "Habilitar el registro a syslog"
 msgid "Syslog Priority of error messages"
 msgstr "Prioridad SYslog"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 #, fuzzy
 msgid "Failed to open transaction log file"
 msgstr "Habilitar el histórico de transacciones"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr "No se pudo leer el mensaje de transacción\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr "Erorr GPB: %s.\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format
