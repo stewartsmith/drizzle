@@ -28,3 +28,8 @@ SELECT JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"
 JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"]["firstname"]);', '{ "name" : {"firstname" : "Henrik", "lastname" : "Ingo"} }')
 "Henrik"
 DROP TABLE jstest;
+SELECT JS("this is not javascript");
+ERROR HY000: Script error: At line 1: SyntaxError: Unexpected identifier (Do SHOW ERRORS for more information.)
+SELECT JS("var foo = 'Another'; foo + ' thread';");
+JS("var foo = 'Another'; foo + ' thread';")
+Another thread

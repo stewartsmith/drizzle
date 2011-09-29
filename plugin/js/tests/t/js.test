@@ -20,3 +20,16 @@ SELECT JS("var num = arguments[0] + arguments[1]; arguments[2] + num;", i, d, "T
 SELECT JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"]["firstname"]);', '{ "name" : {"firstname" : "Henrik", "lastname" : "Ingo"} }');
 
 DROP TABLE jstest;
+
+# Make deliberate error
+--error ER_SCRIPT
+SELECT JS("this is not javascript");
+
+# Why does this crash drizzletest?
+# SHOW ERRORS;
+
+# Make another connection and make sure we are handling multi-threaded mode correctly
+# (V8 is single threaded only by default.)
+connect (con2,localhost,test,jstest,mysql);
+SELECT JS("var foo = 'Another'; foo + ' thread';");
+disconnect con2;
