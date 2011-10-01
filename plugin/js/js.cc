@@ -364,7 +364,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "js",
-  "0.1",
+  "0.9",
   "Henrik Ingo",
   "Execute JavaScript code with supplied arguments",
   PLUGIN_LICENSE_GPL,
