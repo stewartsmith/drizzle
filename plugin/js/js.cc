@@ -33,7 +33,6 @@ using namespace drizzled;
 
 
 namespace drizzle_plugin {
-
 namespace js {
 
 v8::Handle<v8::Value> V8Version(const v8::Arguments& args);
@@ -46,12 +45,9 @@ void emit_drizzle_error(v8::TryCatch* try_catch);
 // What is the class for functions that return mixed types?
 // Or is this as it should be, apparently js('1') + js('2') does the right thing already.
 
-class JsFunction :public Item_str_func
+class JsFunction : public Item_str_func
 {
 public:
-  JsFunction() :Item_str_func() {}
-  ~JsFunction() {}
-
   String *val_str(String *);
 
   const char *func_name() const 
@@ -86,7 +82,8 @@ const char* v8_to_char(const v8::String::Utf8Value& value) {
  * 
  * This is adapted from ReportException() in v8 samples/shell.cc. 
  */
-void emit_drizzle_error(v8::TryCatch* try_catch) {
+void emit_drizzle_error(v8::TryCatch* try_catch)
+{
   v8::HandleScope handle_scope;
   v8::String::Utf8Value exception(try_catch->Exception());
   const char* exception_string = v8_to_char(exception);
@@ -128,8 +125,6 @@ void emit_drizzle_error(v8::TryCatch* try_catch) {
  *  * Save the compiled script so it can be used again if same script is run
  * many times
  *  * Some of the v8 stuff should be done in initialize()
- * @todo Documentation for drizzle manual in .rst format
- * @todo tests
  * 
  * @note DECIMAL_RESULT type is now a double in JavaScript. This could lose 
  * precision. But to send them as strings would also be awkward (+ operator will 
