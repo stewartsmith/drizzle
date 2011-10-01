@@ -142,6 +142,12 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 clean-local:
 	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
+	rm -Rf $(SPHINX_BUILDDIR)/html $(SPHINX_BUILDDIR)/dirhtml $(SPHINX_BUILDDIR)/singlehtml \
+	$(SPHINX_BUILDDIR)/pickle $(SPHINX_BUILDDIR)/json $(SPHINX_BUILDDIR)/htmlhelp \
+	$(SPHINX_BUILDDIR)/qthelp $(SPHINX_BUILDDIR)/devhelp $(SPHINX_BUILDDIR)/epub \
+	$(SPHINX_BUILDDIR)/latex $(SPHINX_BUILDDIR)/latexpdf $(SPHINX_BUILDDIR)/text \
+	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
+	$(SPHINX_BUILDDIR)/doctest
 
 include config/lcov.am
 
