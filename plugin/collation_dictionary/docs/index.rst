@@ -14,7 +14,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=collation_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Authors
 -------

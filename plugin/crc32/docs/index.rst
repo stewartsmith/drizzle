@@ -15,7 +15,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=crc32
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _crc32_authors:
 

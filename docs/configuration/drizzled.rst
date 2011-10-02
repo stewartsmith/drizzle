@@ -1,14 +1,14 @@
-.. _options:
+.. program:: drizzled
 
-Drizzled Options
+.. _drizzled_options:
+
+drizzled Options
 ================
 
-There are many different options one can use to configure Drizzle.
+.. _drizzled_gneral_options:
 
-Config File Options
--------------------
-
-.. program:: drizzled
+General Options
+---------------
 
 .. option:: --help-extended
 
@@ -17,6 +17,11 @@ Config File Options
 .. option:: --help, -?
 
    Display this help and exit.
+
+.. _drizzled_config_file_options:
+
+Config File Options
+-------------------
 
 .. option:: --no-defaults
 
@@ -30,6 +35,11 @@ Config File Options
 
    Base location for config files
 
+.. _drizzled_plugin_options:
+
+Plugin Options
+--------------
+
 .. option:: --plugin-dir arg
 
    Directory for plugins
@@ -37,11 +47,6 @@ Config File Options
 .. option:: --pid-file arg
 
    Pid file used by drizzled.
-
-Plugin Loading Options
-----------------------
-
-.. program:: drizzled
 
 .. option:: --plugin-add arg
 
@@ -66,10 +71,10 @@ Plugin Loading Options
    Optional comma separated list of plugins to load at starup instead of 
    the default plugin load list. This completely replaces the whole list.
 
+.. _drizzled_kernel_options:
+
 Kernel Options
 --------------
-
-.. program:: drizzled
 
 .. option:: --auto-increment-increment arg (=1)
   

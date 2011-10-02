@@ -13,7 +13,7 @@ To load this plugin, start :program:`drizzled` with::
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`rabbitmq_configuration` and :ref:`rabbitmq_variables`.
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _rabbitmq_configuration:
 
@@ -21,7 +21,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

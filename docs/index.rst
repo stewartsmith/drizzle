@@ -88,15 +88,20 @@ Configuration
 .. toctree::
    :maxdepth: 2
 
-   configuration
-   options
+   configuration/options
+   configuration/variables
+   configuration/values
+   configuration/drizzled
 
 Administration
 --------------
 .. toctree::
    :maxdepth: 2
 
-   administration/index
+   administration/authentication
+   administration/authorization
+   administration/storage_engines
+
 
 Plugins
 -------

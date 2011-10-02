@@ -33,7 +33,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=utility_functions
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _utility_functions_authors:
 

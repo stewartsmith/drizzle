@@ -19,7 +19,7 @@ with::
 
    --plugin-remove=session_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _session_dictionary_configuration:
 

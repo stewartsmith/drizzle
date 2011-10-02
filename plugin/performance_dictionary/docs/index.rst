@@ -13,7 +13,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=performance_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _performance_dictionary_examples:
 
