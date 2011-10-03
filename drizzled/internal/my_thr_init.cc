@@ -45,7 +45,7 @@
 namespace drizzled {
 namespace internal {
 
-boost::thread_specific_ptr<st_my_thread_var> THR_KEY_mysys;
+thread_local_st THR_KEY_mysys;
 boost::mutex THR_LOCK_threads;
 
 static uint64_t thread_id= 0;
@@ -72,9 +72,9 @@ void my_thread_init()
   THR_KEY_mysys.reset(new st_my_thread_var(++thread_id));
 }
 
-st_my_thread_var* my_thread_var()
+thread_local_st& my_thread_var2()
 {
-  return THR_KEY_mysys.get();
+  return THR_KEY_mysys;
 }
 
 } /* namespace internal */

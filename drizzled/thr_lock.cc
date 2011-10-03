@@ -114,7 +114,7 @@ void thr_lock_init(THR_LOCK *lock)
 
 void THR_LOCK_INFO::init()
 {
-  thread_id= internal::my_thread_var()->id;
+  thread_id= internal::my_thread_var2()->id;
   n_cursors= 0;
 }
 
@@ -146,9 +146,7 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_list *wait, THR_LOCK_DATA *data)
 {
-  internal::st_my_thread_var *thread_var= session.getThreadVar();
-
-  boost::condition_variable_any *cond= &thread_var->suspend;
+  boost::condition_variable_any *cond= &session.getThreadVar()->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -161,11 +159,11 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
   current_global_counters.locks_waited++;
 
   /* Set up control struct to allow others to abort locks */
-  thread_var->current_mutex= data->lock->native_handle();
-  thread_var->current_cond=  &thread_var->suspend;
-  data->cond= &thread_var->suspend;;
+  session.getThreadVar()->current_mutex= data->lock->native_handle();
+  session.getThreadVar()->current_cond=  &session.getThreadVar()->suspend;
+  data->cond= &session.getThreadVar()->suspend;;
 
-  while (not thread_var->abort)
+  while (not session.getThreadVar()->abort)
   {
     boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
 
@@ -187,7 +185,7 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
     }
     /*
       We must break the wait if one of the following occurs:
-      - the connection has been aborted (!thread_var->abort), but
+      - the connection has been aborted (!session.getThreadVar()->abort), but
         this is not a delayed insert thread (in_wait_list). For a delayed
         insert thread the proper action at shutdown is, apparently, to
         acquire the lock and complete the insert.
@@ -210,9 +208,13 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
     if (data->cond)                             /* aborted or timed out */
     {
       if (((*data->prev)=data->next))		/* remove from wait-list */
+      {
 	data->next->prev= data->prev;
+      }
       else
+      {
 	wait->last=data->prev;
+      }
       data->type= TL_UNLOCK;                    /* No lock */
       wake_up_waiters(data->lock);
     }
@@ -224,9 +226,10 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  boost::mutex::scoped_lock scopedLock(thread_var->mutex);
-  thread_var->current_mutex= NULL;
-  thread_var->current_cond= NULL;
+  boost::mutex::scoped_lock scopedLock(session.getThreadVar()->mutex);
+  session.getThreadVar()->current_mutex= NULL;
+  session.getThreadVar()->current_cond= NULL;
+
   return(result);
 }
 
@@ -374,6 +377,7 @@ static enum enum_thr_lock_result thr_lock(Session &session, THR_LOCK_DATA *data,
 
   /* Can't get lock yet;  Wait for it */
   return(wait_for_lock(session, wait_queue, data));
+
 end:
   lock->unlock();
 
