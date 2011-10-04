@@ -13,15 +13,15 @@ Attribute: drizzleUserMysqlPassword
 
 Schema and ldif files are located in the server specific directories. 
 
-gentestusers.sh:
+drizzle_create_ldap_user:
 
     This is a script to quickly generate users for testing the drizzle mysql ldap authentication module.  Note this is not the de facto way of doing things more of just a quick start example.
 
-./gentestusers.sh -h 
+./drizzle_create_ldap_user -h 
     This will output help on how to use the file.
 
 Example:
-./gentestusers.sh -p pass -b ../libdrizzle/bin/mysql_password_hash -u user -n 1 -l "ou=people,dc=drizzle,dc=org"
+./drizzle_create_ldap_user -p pass -b <drizzle installdir>/bin/drizzle_password_hash -u user -n 1 -l "ou=people,dc=drizzle,dc=org"
 
 Will output:
 
