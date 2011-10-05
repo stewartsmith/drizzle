@@ -40,48 +40,45 @@ class testManager(object):
 
     """
 
-    def __init__( self, verbose, debug, default_engine, dotest, skiptest
-                , reorder, suitelist, suitepaths, system_manager
-                , test_cases, mode):
+    def __init__( self, variables, system_manager):
 
         self.system_manager = system_manager
         self.time_manager = system_manager.time_manager
         self.logging = system_manager.logging
-        if verbose:
+        if variables['verbose']:
             self.logging.verbose("Initializing test manager...")
 
-        if dotest:
-            dotest = dotest.strip()
-        if skiptest:
-            skiptest = skiptest.strip()
         self.skip_keys = [ 'system_manager'
+                         , 'verbose'
+                         , 'debug'
                          ]
         self.test_list = []
         self.first_test = 1
         self.total_test_count = 0
         self.executed_tests = {} # We have a hash of 'status':[test_name..]
         self.executing_tests = {}
-        self.verbose = verbose
-        self.debug = debug
-        self.default_engine = default_engine
-        self.dotest = dotest
-        self.skiptest = skiptest
-        self.reorder = reorder
-        self.suitelist = suitelist
-        self.mode = mode
+        self.verbose = variables['verbose']
+        self.debug = variables['debug']
+        self.default_engine = variables['defaultengine']
+        self.dotest = variables['dotest']
+        if self.dotest:
+            self.dotest = self.dotest.strip()
+        self.skiptest = variables['skiptest']
+        if self.skiptest:
+            self.skiptest = self.skiptest.strip()
+        self.reorder = variables['reorder']
+        self.suitelist = variables['suitelist']
+        self.mode = variables['mode']
         
-        self.code_tree = self.system_manager.code_tree
-        self.suitepaths = suitepaths + self.code_tree.suite_paths
-        self.testdir = self.code_tree.testdir
-        self.desired_tests = test_cases
-        self.mutex = thread.allocate_lock()
+        self.suitepaths = variables['suitepaths']
+        self.testdir = variables['testdir']
+        self.desired_tests = variables['test_cases']
         
-        if self.debug:
-            self.logging.debug(self)
+        self.logging.debug_class(self)
 
     def add_test(self, new_test_case):
         """ Add a new testCase to our self.test_list """
-        if self.debug: pass
+
         self.test_list.append(new_test_case)
         
     def gather_tests(self):
@@ -120,9 +117,8 @@ class testManager(object):
         self.total_test_count = len(self.test_list)     
         self.logging.info("Found %d test(s) for execution" %(self.total_test_count))
         
-        if self.debug:
-            self.logging.debug("Found tests:")
-            self.logging.debug("%s" %(self.print_test_list()))
+        self.logging.debug("Found tests:")
+        self.logging.debug("%s" %(self.print_test_list()))
 
     def find_suite_path(self, suitename):
         """ We have a suitename, we need to locate the path to
@@ -160,8 +156,7 @@ class testManager(object):
            to the rest of the test-runner
         
         """
-        if self.verbose:
-                self.logging.verbose("Processing suite: %s" %(suite))
+        self.logging.verbose("Processing suite: %s" %(suite))
 
     def has_tests(self):
         """Return 1 if we have tests in our testlist, 0 otherwise"""

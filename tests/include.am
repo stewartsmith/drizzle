@@ -56,37 +56,48 @@ TEST_RUN_DBQP= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
 		--testdir=${top_srcdir}/tests \
                 --workdir=${top_srcdir}/tests/workdir
 
+TEST_RUN_DBQP_MODE= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
+		--top-srcdir=${top_srcdir} \
+		--top-builddir=${top_builddir} \
+		--basedir=${top_srcdir} \
+		--testdir=${top_srcdir}/tests \
+		--workdir=${top_srcdir}/tests/workdir
+
 
 EXTRA_DIST += \
-	      $(EXTRA_SCRIPTS) \
-	      ${srcdir}/tests/crashme_tests \
-	      ${srcdir}/tests/dbqp.py \
-	      ${srcdir}/tests/dbqp_data \
-	      ${srcdir}/tests/randgen_tests \
-	      ${srcdir}/tests/sql-bench \
-	      ${srcdir}/tests/sqlbench_tests \
-	      ${srcdir}/tests/sysbench_tests \
-	      ${srcdir}/tests/README.stress \
-	      ${srcdir}/tests/suite \
-	      ${srcdir}/tests/t \
-	      ${srcdir}/tests/include/*.inc \
-	      ${srcdir}/tests/include/*.sql \
-	      ${srcdir}/tests/include/*.test \
-	      ${srcdir}/tests/r/*.result \
-	      ${srcdir}/tests/r/*.require \
-	      ${srcdir}/tests/r/pbxt/*result \
-	      ${srcdir}/tests/std_data \
-	      ${srcdir}/tests/lib/*.pl \
-	      ${srcdir}/tests/lib/*.py \
-	      ${srcdir}/tests/lib/drizzle_test_run/*.py \
-	      ${srcdir}/tests/lib/My/*.pm \
-	      ${srcdir}/tests/lib/randgen/*.py \
-	      ${srcdir}/tests/lib/server_mgmt/*py \
-	      ${srcdir}/tests/lib/sqlbench/*py \
-	      ${srcdir}/tests/lib/sysbench/*py \
-	      ${srcdir}/tests/lib/sys_mgmt/*py \
-	      ${srcdir}/tests/lib/test_mgmt/*py \
-	      tests/strip-valgrind
+	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/crashme_tests \
+	${srcdir}/tests/dbqp.py \
+	${srcdir}/tests/dbqp_data \
+	${srcdir}/tests/randgen \
+	${srcdir}/tests/randgen_tests \
+	${srcdir}/tests/sql-bench \
+	${srcdir}/tests/sqlbench_tests \
+	${srcdir}/tests/sysbench_tests \
+	${srcdir}/tests/README.stress \
+	${srcdir}/tests/suite \
+	${srcdir}/tests/t \
+	${srcdir}/tests/include/*.inc \
+	${srcdir}/tests/include/*.sql \
+	${srcdir}/tests/include/*.test \
+	${srcdir}/tests/r/*.result \
+	${srcdir}/tests/r/*.require \
+	${srcdir}/tests/r/pbxt/*result \
+	${srcdir}/tests/std_data \
+	${srcdir}/tests/lib/*.pl \
+        ${srcdir}/tests/lib/*.py \
+	${srcdir}/tests/lib/dbqp_modes/crashme/*.py \
+	${srcdir}/tests/lib/dbqp_modes/dtr/*.py \
+	${srcdir}/tests/lib/dbqp_modes/randgen/*.py \
+	${srcdir}/tests/lib/dbqp_modes/sqlbench/*py \
+	${srcdir}/tests/lib/dbqp_modes/sysbench/*py \
+	${srcdir}/tests/lib/dbqp_opts/*.py \
+	${srcdir}/tests/lib/My/*.pm \
+        ${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sys_mgmt/*py \
+	${srcdir}/tests/lib/test_mgmt/*py \
+	tests/strip-valgrind
+
 
 check-local: tests/var/drizzle test-drizzle
 
@@ -173,6 +184,9 @@ test-plugins: tests/var/drizzle
 
 test-dbqp: tests/var/drizzle
 	$(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
+
+test-randgen: tests/var/drizzle
+	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main
 
 distclean-local: nukevar
 

@@ -43,8 +43,7 @@ class portManager:
         self.debug = debug
         self.logging = system_manager.logging
         self.system_manager = system_manager
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
         
 
     def get_port_block(self, requester, base_port, block_size):
@@ -180,8 +179,7 @@ class portManager:
 
        """
       
-       if self.debug:
-           self.logging.debug("Freeing port %d" %(port))
+       self.logging.debug("Freeing port %d" %(port))
        os.remove(self.get_file_name(port))
 
     def get_file_name(self, port):
