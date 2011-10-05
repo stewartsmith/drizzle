@@ -696,8 +696,7 @@ bool new_select(LEX *lex, bool move_down)
     if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return true;
 
-    select_lex->context.outer_context=
-                unit->first_select()->context.outer_context;
+    select_lex->context.outer_context= unit->first_select()->context.outer_context;
   }
 
   select_lex->master_unit()->global_parameters= select_lex;
@@ -730,13 +729,11 @@ void create_select_for_variable(Session *session, const char *var_name)
   lex_string_t tmp;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  lex_string_t null_lex_string;
-  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
   */
-  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string))
+  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string()))
   {
     char buff[MAX_SYS_VAR_LENGTH*2+4+8];
     char *end= buff;
@@ -764,14 +761,13 @@ void parse(Session& session, const char *inBuf, uint32_t length)
    * by setting the query_safe_cache param to TRUE
    */
   if (plugin::QueryCache::isCached(&session) && not plugin::QueryCache::sendCachedResultset(&session))
-      return;
+    return;
   Lex_input_stream lip(&session, inBuf, length);
   if (parse_sql(&session, &lip))
     assert(session.is_error());
   else if (not session.is_error())
   {
-    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id,
-                             const_cast<const char *>(session.schema()->c_str()));
+    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id, session.schema()->c_str());
     // Implement Views here --Brian
     /* Actually execute the query */
     try
@@ -803,14 +799,10 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 
 bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
 		       const char *length, const char *decimals,
-		       uint32_t type_modifier,
-                       enum column_format_type column_format,
-		       Item *default_value, Item *on_update_value,
-                       lex_string_t *comment,
-		       const char *change,
-                       List<String> *interval_list, const charset_info_st * const cs)
+		       uint32_t type_modifier, column_format_type column_format,
+		       Item *default_value, Item *on_update_value, lex_string_t *comment,
+		       const char *change, List<String> *interval_list, const charset_info_st* cs)
 {
-  register CreateField *new_field;
   LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
@@ -819,22 +811,14 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
 
   if (type_modifier & PRI_KEY_FLAG)
   {
-    Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::PRIMARY, null_lex_string(),
-                      &default_key_create_info,
-                      0, lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(new Key(Key::PRIMARY, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
-    Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::UNIQUE, null_lex_string(),
-                 &default_key_create_info, 0,
-                 lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(new Key(Key::UNIQUE, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
 
@@ -859,8 +843,8 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return true;
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+        return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
@@ -876,9 +860,8 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
     return true;
   }
 
-  new_field= new CreateField;
-  if (new_field->init(session, field_name->str, type, length, decimals,
-                         type_modifier, comment, change, interval_list, cs, 0, column_format)
+  CreateField* new_field= new CreateField;
+  if (new_field->init(session, field_name->str, type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -932,9 +915,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (not table->is_derived_table() && table->db.str)
   {
     my_casedn_str(files_charset_info, table->db.str);
-
-    identifier::Schema schema_identifier(string(table->db.str));
-    if (not schema::check(*session, schema_identifier))
+    if (not schema::check(*session, identifier::Schema(table->db.str)))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
       return NULL;
@@ -948,7 +929,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       my_message(ER_DERIVED_MUST_HAVE_ALIAS, ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
+    alias_str= (char*) session->mem.memdup(alias_str, table->table.length+1);
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 

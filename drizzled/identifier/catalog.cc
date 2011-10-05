@@ -41,15 +41,9 @@ using namespace std;
 namespace drizzled {
 namespace identifier {
 
-Catalog::Catalog(const std::string &name_arg) :
-  _name(name_arg)
+Catalog::Catalog(str_ref name_arg) :
+  _name(name_arg.data(), name_arg.size())
 { 
-  init();
-}
-
-Catalog::Catalog(const drizzled::lex_string_t &name_arg) :
-  _name(name_arg.str, name_arg.length)
-{
   init();
 }
 

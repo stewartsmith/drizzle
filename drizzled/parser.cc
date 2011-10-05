@@ -367,25 +367,18 @@ bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string
   return true;
 }
 
-Item *buildIdent(LEX *lex,
-                 const lex_string_t &schema_name,
-                 const lex_string_t &table_name,
-                 const lex_string_t &field_name)
+Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name)
 {
   Select_Lex *sel= lex->current_select;
 
   if (table_name.length and sel->no_table_names_allowed)
   {
-    my_error(ER_TABLENAME_NOT_ALLOWED_HERE,
-             MYF(0), table_name.str, lex->session->where());
+    my_error(ER_TABLENAME_NOT_ALLOWED_HERE, MYF(0), table_name.str, lex->session->where());
   }
 
-  Item *item= (sel->parsing_place != IN_HAVING or
-               sel->get_in_sum_expr() > 0) ?
-    (Item*) new Item_field(lex->current_context(), schema_name.str, table_name.str, field_name.str) :
-    (Item*) new Item_ref(lex->current_context(), schema_name.str, table_name.str, field_name.str);
-
-  return item;
+  return sel->parsing_place != IN_HAVING || sel->get_in_sum_expr() > 0
+    ? (Item*) new Item_field(lex->current_context(), schema_name.str, table_name.str, field_name.str) 
+    : (Item*) new Item_ref(lex->current_context(), schema_name.str, table_name.str, field_name.str);
 }
 
 Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)

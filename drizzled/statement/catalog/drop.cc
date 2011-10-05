@@ -30,7 +30,7 @@ namespace drizzled {
 namespace statement {
 namespace catalog {
 
-Drop::Drop(Session *in_session, drizzled::lex_string_t &arg) :
+Drop::Drop(Session *in_session, str_ref arg) :
   Catalog(in_session, arg)
 {
 }

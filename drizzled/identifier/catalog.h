@@ -22,16 +22,14 @@
 
 #include <drizzled/enum.h>
 #include <drizzled/definitions.h>
-#include <string.h>
-
+#include <drizzled/util/data_ref.h>
+#include <cstring>
 #include <cassert>
-
 #include <ostream>
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <iosfwd>
-
 #include <boost/algorithm/string.hpp>
 
 namespace drizzled {
@@ -40,8 +38,7 @@ namespace identifier {
 class Catalog : public Identifier
 {
 public:
-  Catalog(const std::string &name_arg);
-  Catalog(const drizzled::lex_string_t &name_arg);
+  Catalog(str_ref);
   bool isValid() const;
   bool compare(const std::string &arg) const;
 

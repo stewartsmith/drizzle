@@ -23,13 +23,10 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/catalog.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
 
-namespace statement
-{
-
-Catalog::Catalog(Session *in_session, drizzled::lex_string_t &arg) :
+Catalog::Catalog(Session *in_session, str_ref arg) :
   Statement(in_session),
   _identifier(arg)
 {

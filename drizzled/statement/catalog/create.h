@@ -28,7 +28,7 @@ namespace catalog {
 class Create : public Catalog
 {
 public:
-  Create(Session*, lex_string_t&);
+  Create(Session*, str_ref);
   bool authorized() const;
   bool perform() const;
 };

@@ -37,7 +37,7 @@ int64_t Create::val_int()
   }
 
   null_value= false;
-  return drizzled::plugin::Catalog::create(drizzled::identifier::Catalog(res->c_str()));
+  return drizzled::plugin::Catalog::create(drizzled::identifier::Catalog(*res));
 }
 
 } /* namespace functions */
