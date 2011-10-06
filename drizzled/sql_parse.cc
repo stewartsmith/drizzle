@@ -835,7 +835,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
          (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
       return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
@@ -843,25 +843,25 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
         return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
       return true;
     }
   }
 
   if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
-    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
+    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->data());
     return true;
   }
 
   CreateField* new_field= new CreateField;
-  if (new_field->init(session, field_name->str, type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
+  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -904,7 +904,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   if (!table)
     return NULL;				// End of memory
-  const char* alias_str= alias ? alias->str : table->table.data();
+  const char* alias_str= alias ? alias->data() : table->table.data();
   if (! table_options.test(TL_OPTION_ALIAS) &&
       check_table_name(table->table.data(), table->table.length))
   {
@@ -957,7 +957,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->derived=	    table->sel;
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
-  ptr->option= option ? option->str : 0;
+  ptr->option= option ? option->data() : NULL;
   /* check that used name is unique */
   if (lock_type != TL_IGNORE)
   {
@@ -1559,14 +1559,14 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
+  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(),
                                       max_char_length, &well_formed_error);
 
   if (!well_formed_error &&  str->length == res)
     return false;
 
   if (!no_error)
-    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_char_length);
+    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->data(), err_msg, max_char_length);
   return true;
 }
 
@@ -1583,12 +1583,12 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
+  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(),
                                       max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->str);
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->data());
     return true;
   }
 
@@ -1600,10 +1600,10 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str->data(), param_for_err_msg, max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(err_code, MYF(0), str->str);
+    my_error(err_code, MYF(0), str->data());
     break;
   default:
     assert(0);
