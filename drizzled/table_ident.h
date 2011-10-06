@@ -42,7 +42,7 @@ public:
   explicit Table_ident(lex_string_t table_arg)
     : table(table_arg), sel(NULL)
   {
-    db.str= 0;
+    db.assign(static_cast<const char*>(NULL), 0);
   }
 
   /*
