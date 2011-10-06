@@ -1,5 +1,5 @@
 /*  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- * 
+ *
  *  Drizzle Execute Parser
  *
  *  Copyright (C) 2011 Data Differential, http://datadifferential.com/
@@ -71,7 +71,7 @@
 
 int execute_lex(YYSTYPE* lvalp, void* scanner);
 std::string query;
-#define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0) 
+#define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0)
 
 inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scanner, const char *error)
 {
@@ -92,28 +92,28 @@ inline void execute_error(::drizzled::execute::Context *context, yyscan_t *scann
 
 %%
 
-begin:    
+begin:
 
-          STRING   {   
-                       query.append( std::string($1.str, $1.length));
+          STRING   {
+                       query.append( std::string($1.data(), $1.size()));
                        query.push_back(' ');
                    }
           |
-                         
+
           begin STRING {
-                         query.append(std::string($2.str, $2.length));
+                         query.append(std::string($2.data(), $2.size()));
                          query.push_back(' ');
                        }
         ;
 
 
-%% 
+%%
 
 
 namespace drizzled {
 namespace execute {
 
-std::vector<std::string> Context::start() 
+std::vector<std::string> Context::start()
 {
   execute_parse(this, (void **)scanner);
   std::vector<std::string> parsed_queries;
@@ -129,7 +129,7 @@ std::vector<std::string> Context::start()
       query= query.substr(pos + 1, query.length());
     }
   }
-  parsed_queries.push_back(query); 
+  parsed_queries.push_back(query);
   query.clear();
 
   return parsed_queries;
