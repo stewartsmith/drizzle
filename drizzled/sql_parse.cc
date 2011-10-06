@@ -904,20 +904,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   if (!table)
     return NULL;				// End of memory
-  const char* alias_str= alias ? alias->str : table->table.str;
+  const char* alias_str= alias ? alias->str : table->table.data();
   if (! table_options.test(TL_OPTION_ALIAS) &&
-      check_table_name(table->table.str, table->table.length))
+      check_table_name(table->table.data(), table->table.length))
   {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.data());
     return NULL;
   }
 
-  if (not table->is_derived_table() && table->db.str)
+  if (not table->is_derived_table() && table->db.data())
   {
     my_casedn_str(files_charset_info, table->db.str);
-    if (not schema::check(*session, identifier::Schema(table->db.str)))
+    if (not schema::check(*session, identifier::Schema(table->db.data())))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
       return NULL;
     }
   }
@@ -935,10 +935,10 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   char* name;
   size_t name_size;
-  if (table->db.str)
+  if (table->db.data())
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str);
+    ptr->setSchemaName(table->db.data());
   }
   else if (lex->session->copy_db_to(name, name_size))
     return NULL;
@@ -950,7 +950,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str);
+  ptr->setTableName(table->table.data());
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
