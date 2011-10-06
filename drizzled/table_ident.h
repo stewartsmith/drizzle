@@ -34,7 +34,7 @@ public:
   lex_string_t table;
   Select_Lex_Unit *sel;
 
-  inline Table_ident(lex_string_t db_arg, lex_string_t table_arg)
+  Table_ident(lex_string_t db_arg, lex_string_t table_arg)
     : db(db_arg), table(table_arg), sel(NULL)
   {
   }
@@ -54,10 +54,8 @@ public:
   explicit Table_ident(Select_Lex_Unit *s) : sel(s)
   {
     /* We must have a table name here as this is used with add_table_to_list */
-    db.str= const_cast<char*>("");                    /* a subject to casedn_str */
-    db.length= 0;
-    table.str= const_cast<char*>("*");
-    table.length= 1;
+    db.assign("", 0);
+    table.assign("*", 1);
   }
   bool is_derived_table() const { return test(sel); }
 };
