@@ -167,6 +167,7 @@ item.gcno
 key.gcno
 key_map.gcno
 libdrizzle-2.0/libdrizzle/mysql_password_hash
+libdrizzle-2.0/libdrizzle/drizzle_password_hash
 libmysql/Makefile.in
 libserialutil_la-db.gcno
 libserialutil_la-unireg.gcno

@@ -16,14 +16,20 @@
 ACLOCAL_AMFLAGS = -I m4 --force
 
 # includes append to these:
+# Pandora build system takes input from plugin.ini files that are appended to these
+# Corresponding Pandora parameter names are mentioned in comments
+# A few directory targets (libexec/ and etc/) are unused as of this writing and
+# therefore commented out. pandora-build will support them if you uncomment.
 SUFFIXES =
 TESTS =
 check_PROGRAMS =
+# headers
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
 dist_include_HEADERS =
 nobase_nodist_pkginclude_HEADERS =
+# install_headers
 nobase_dist_pkginclude_HEADERS =
 dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
@@ -34,6 +40,21 @@ extra_LTLIBRARIES =
 noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
+
+# scripts or bin_scripts
+dist_bin_SCRIPTS=
+# sbin_scripts
+dist_sbin_SCRIPTS=
+# libexec_scripts
+#dist_libexec_SCRIPTS=
+# pkg_scripts
+dist_pkgdata_SCRIPTS=
+# data
+dist_data_DATA=
+# pkg_data
+dist_pkgdata_DATA=
+# sysconf_data
+#dist_sysconf_DATA=
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
