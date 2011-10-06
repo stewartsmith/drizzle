@@ -40,6 +40,28 @@ struct lex_string_t
     return str + length;
   }
 
+  const char* data() const
+  {
+    return str;
+  }
+
+  size_t size() const
+  {
+    return length;
+  }
+
+  void assign(const char* d, size_t s)
+  {
+    str= const_cast<char*>(d);
+    length = s;
+  }
+
+  void assign(char* d, size_t s)
+  {
+    str= d;
+    length = s;
+  }
+
   char* str;
   size_t length;
 };
@@ -61,11 +83,10 @@ public:
     return is_variable;
   }
 
-  void set(const lex_string_t& ptr, bool is_variable_arg= false)
+  void set(const lex_string_t& s, bool is_variable_arg= false)
   {
     is_variable= is_variable_arg;
-    str= ptr.str;
-    length= ptr.length;
+    static_cast<lex_string_t&>(*this) = s;
   }
 
 };
