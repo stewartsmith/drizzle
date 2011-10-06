@@ -63,8 +63,7 @@ public:
     columns(cols),
     generated(generated_arg)
   {
-    name.str= const_cast<char *>(name_arg);
-    name.length= name_len_arg;
+    name.assign(name_arg, name_len_arg);
   }
 
   virtual ~Key() {}

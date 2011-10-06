@@ -286,15 +286,15 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   util::string::ptr schema(session->schema());
   if (schema_ident)
   {
-    select->setShowPredicate(schema_ident, table_ident->table.str);
+    select->setShowPredicate(schema_ident, table_ident->table.data());
   }
-  else if (table_ident->db.str)
+  else if (table_ident->db.data())
   {
-    select->setShowPredicate(table_ident->db.str, table_ident->table.str);
+    select->setShowPredicate(table_ident->db.data(), table_ident->table.data());
   }
   else if (schema)
   {
-    select->setShowPredicate(*schema, table_ident->table.str);
+    select->setShowPredicate(*schema, table_ident->table.data());
   }
   else
   {
@@ -303,7 +303,7 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.str);
+    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);
@@ -349,15 +349,15 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
   util::string::ptr schema(session->schema());
   if (schema_ident)
   {
-    select->setShowPredicate(schema_ident, table_ident->table.str);
+    select->setShowPredicate(schema_ident, table_ident->table.data());
   }
-  else if (table_ident->db.str)
+  else if (table_ident->db.data())
   {
-    select->setShowPredicate(table_ident->db.str, table_ident->table.str);
+    select->setShowPredicate(table_ident->db.data(), table_ident->table.data());
   }
   else if (schema)
   {
-    select->setShowPredicate(*schema, table_ident->table.str);
+    select->setShowPredicate(*schema, table_ident->table.data());
   }
   else
   {
@@ -366,7 +366,7 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.str);
+    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);
@@ -413,13 +413,13 @@ bool buildCreateTable(Session *session, Table_ident *ident)
     return false;
 
   util::string::ptr schema(session->schema());
-  if (ident->db.str)
+  if (ident->db.data())
   {
-    select->setShowPredicate(ident->db.str, ident->table.str);
+    select->setShowPredicate(ident->db.data(), ident->table.data());
   }
   else if (schema)
   {
-    select->setShowPredicate(*schema, ident->table.str);
+    select->setShowPredicate(*schema, ident->table.data());
   }
   else
   {
@@ -489,9 +489,9 @@ bool buildCreateSchema(Session *session, lex_string_t &ident)
     return false;
 
   util::string::ptr schema(session->schema());
-  if (ident.str)
+  if (ident.data())
   {
-    select->setShowPredicate(ident.str);
+    select->setShowPredicate(ident.data());
   }
   else if (schema)
   {
@@ -526,13 +526,13 @@ bool buildDescribe(Session *session, Table_ident *ident)
   session->lex().select_lex.db= 0;
 
   util::string::ptr schema(session->schema());
-  if (ident->db.str)
+  if (ident->db.data())
   {
-    select->setShowPredicate(ident->db.str, ident->table.str);
+    select->setShowPredicate(ident->db.data(), ident->table.data());
   }
   else if (schema)
   {
-    select->setShowPredicate(*schema, ident->table.str);
+    select->setShowPredicate(*schema, ident->table.data());
   }
   else
   {
@@ -541,7 +541,7 @@ bool buildDescribe(Session *session, Table_ident *ident)
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), ident->table.str);
+    drizzled::identifier::Table identifier(select->getShowSchema(), ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);

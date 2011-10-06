@@ -27,8 +27,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table_ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const charset_info_st *system_charset_info;
 
@@ -61,19 +60,19 @@ void add_foreign_key_to_table_message(
   pfkey->set_update_option(update_opt_arg);
   pfkey->set_delete_option(delete_opt_arg);
 
-  pfkey->set_references_table_name(table->table.str);
+  pfkey->set_references_table_name(table->table.data());
 
   Key_part_spec *keypart;
   List<Key_part_spec>::iterator col_it(cols.begin());
   while ((keypart= col_it++))
   {
-    pfkey->add_column_names(keypart->field_name.str);
+    pfkey->add_column_names(keypart->field_name.data());
   }
 
   List<Key_part_spec>::iterator ref_it(ref_cols.begin());
   while ((keypart= ref_it++))
   {
-    pfkey->add_references_columns(keypart->field_name.str);
+    pfkey->add_references_columns(keypart->field_name.data());
   }
 
 }
@@ -197,11 +196,11 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
     it= table_fields.begin();
     while ((sql_field= it++) &&
            my_strcasecmp(system_charset_info,
-                         column->field_name.str,
+                         column->field_name.data(),
                          sql_field->field_name)) {}
     if (!sql_field)
     {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
+      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.data());
       return true;
     }
   }

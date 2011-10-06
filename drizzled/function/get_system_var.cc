@@ -63,7 +63,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
   sys_var *var;
   lex_string_t *base_name, *component_name;
 
-  if (component.str)
+  if (component.data())
   {
     base_name= &component;
     component_name= &name;
@@ -74,19 +74,18 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
     component_name= &component;                 // Empty string
   }
 
-  if (!(var= find_sys_var(base_name->str)))
+  if (!(var= find_sys_var(base_name->data())))
     return 0;
-  if (component.str)
+  if (component.data())
   {
-    my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
+    my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->data());
     return 0;
   }
   session->lex().setCacheable(false);
 
   set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
 
-  return new Item_func_get_system_var(var, var_type, component_name,
-                                      NULL, 0);
+  return new Item_func_get_system_var(var, var_type, component_name, NULL, 0);
 }
 
 

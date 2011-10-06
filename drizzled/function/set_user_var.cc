@@ -307,7 +307,7 @@ type::Decimal *Item_func_set_user_var::val_decimal_result(type::Decimal *val)
 void Item_func_set_user_var::print(String *str)
 {
   str->append(STRING_WITH_LEN("(@"));
-  str->append(name.str, name.length);
+  str->append(name);
   str->append(STRING_WITH_LEN(":="));
   args[0]->print(str);
   str->append(')');
