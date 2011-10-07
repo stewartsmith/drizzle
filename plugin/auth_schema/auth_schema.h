@@ -22,16 +22,33 @@
 #include <drizzled/plugin/authentication.h>
 
 using namespace std;
+using namespace drizzled;
 
-namespace drizzled {
-namespace plugin {
+namespace drizzle_plugin {
+namespace auth_schema {
 
 class AuthSchema : public drizzled::plugin::Authentication
 {
 public:
   AuthSchema();
+
+  /**
+   * @brief
+   *   Set/change the authentication table.
+   *
+   * @param[in] table Schema-qualified table name.
+   *
+   * @returns false Always returns false currently because table isn't checked.
+   */
   bool setTable(const char *table);
-  string _table;
+
+  /**
+   * These are the query_log system variables.  So sysvar_enabled is
+   * auth_schema_enabled in SHOW VARIABLES, etc.  They are all global
+   * and dynamic.
+   */
+  bool sysvar_enabled;
+  string sysvar_table;
 
 private:
   /**
@@ -40,22 +57,32 @@ private:
   bool authenticate(const identifier::User &sctx, const string &password);
 
   /**
-   * Verify the local and remote scrambled password match using the MySQL
-   * hashing algorithm.
+   * @brief
+   *   Verify that the client password matches the real password.
    *
-   * @param[in] password Plain text password that is stored locally.
-   * @param[in] scramble_bytes The random bytes that the server sent to the
-   *  client for scrambling the password.
-   * @param[in] scrambled_password The result of the client scrambling the
-   *  password remotely.
-   * @return True if the password matched, false if not.
+   * @details
+   *   This method compares two MySQL hashed passwords: one from the
+   *   client who is trying to authenticate, and the other from an
+   *   auth table with the real password.  The client's password is
+   *   hashed with the scramble bytes that Drizzle sent when the client
+   *   connected, so we hash the real password with these bytes, too.
+   *   This method is a modified copy of auth_file::verifyMySQLHash(),
+   *   written by Eric Day, so credit the credit is his for the algos.
+   *
+   * @param[in] real_password   Real password, double-hashed but not yet
+   *                            scrambled with the scramble bytes.
+   * @param[in] scramble_bytes  Random bytes sent by Drizzle to client.
+   * @param[in] client_password Password sent by client, double-hashed and
+   *                            scrambled with the scramble bytes.
+   *
+   * @return True if the passwords match, else false.
    */
   bool verifyMySQLPassword(const string &real_password,
                            const string &scramble_bytes,
                            const string &client_password);
 
-  Session::shared_ptr _session;
+  Session::shared_ptr _session; ///< Internal session for querying auth table
 };
 
-} // namespace plugin
-} // namesapce drizzled
+} /* end namespace drizzle_plugin::auth_schema */
+} /* end namespace drizzle_plugin */

@@ -1,5 +1,6 @@
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
+auth_schema_enabled	ON
 auth_schema_table	auth.users
 SELECT MYSQL_PASSWORD('test_pass');
 MYSQL_PASSWORD('test_pass')
@@ -35,6 +36,7 @@ test_user2	34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
 SET GLOBAL auth_schema_table='auth.users2';
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
+auth_schema_enabled	ON
 auth_schema_table	auth.users2
 SELECT 'connection 2 works';
 connection 2 works
@@ -48,4 +50,19 @@ user	password
 test_user3	6C8989366EAF75BB670AD8EA7A7FC1176A95CEF4
 client 3 works
 client 3 works
+SET GLOBAL auth_schema_enabled=0;
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	OFF
+auth_schema_table	auth.users
+connect(localhost,test_user,test_pass,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'test_user' (using password: YES)
+SET GLOBAL auth_schema_enabled=1;
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	ON
+auth_schema_table	auth.users
+SELECT 'auth re-enabled';
+auth re-enabled
+auth re-enabled
 DROP SCHEMA auth;

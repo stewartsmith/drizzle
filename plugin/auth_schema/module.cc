@@ -18,34 +18,40 @@
  */
 
 #include <config.h>
-#include <boost/program_options.hpp>
-#include <drizzled/plugin.h>
 #include <drizzled/item.h>
+#include <drizzled/plugin.h>
 #include <drizzled/module/option_map.h>
+#include <boost/program_options.hpp>
 #include "auth_schema.h"
 
 namespace po= boost::program_options;
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzle_plugin {
 namespace auth_schema {
 
+/**
+ * Forward declarations.
+ */
 bool update_table(Session *, set_var *var);
 
-static drizzled::plugin::AuthSchema *auth_schema= NULL;
+/**
+ * Singleton instance of the plugin.
+ */
+static AuthSchema *auth_schema= NULL;
 
 bool update_table(Session *, set_var *var)
 {
   return auth_schema->setTable(var->value->str_value.ptr());
 }
 
-static void init_options(drizzled::module::option_context &context)
+static void init_options(module::option_context &context)
 {
-  auth_schema= new drizzled::plugin::AuthSchema();
+  auth_schema= new AuthSchema();
 
   context("table",
-    po::value<string>(&auth_schema->_table)->default_value("auth.users"),
+    po::value<string>(&auth_schema->sysvar_table)->default_value("auth.users"),
     N_("Database-qualified auth table name"));
 }
 
@@ -59,11 +65,19 @@ static int init(module::Context &context)
   context.add(auth_schema);
 
   context.registerVariable(
-    new sys_var_std_string("table", auth_schema->_table, NULL, &update_table));
+    new sys_var_bool_ptr("enabled", &auth_schema->sysvar_enabled));
+
+  context.registerVariable(
+    new sys_var_std_string("table", auth_schema->sysvar_table, NULL, &update_table));
 
   return 0;
 }
 
-} /* namespace auth_schema */
+} /* end namespace drizzle_plugin::auth_schema */
+} /* end namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(auth_schema::init, NULL, auth_schema::init_options);
+DRIZZLE_PLUGIN(
+  drizzle_plugin::auth_schema::init,
+  NULL,
+  drizzle_plugin::auth_schema::init_options
+);

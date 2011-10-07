@@ -20,7 +20,6 @@ INSERT INTO users VALUES ('test_user', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
 SELECT * FROM users ORDER BY user;
 
 connect(conn1, localhost, test_user, test_pass,,);
-connection conn1;
 SELECT 'connection 1 works';
 
 --exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 1 works'" --user=test_user --password=test_pass 2>&1
@@ -45,7 +44,6 @@ SET GLOBAL auth_schema_table='auth.users2';
 SHOW VARIABLES LIKE 'auth_schema%';
 
 connect(conn2, localhost, test_user2, test_pass,,);
-connection conn2;
 SELECT 'connection 2 works';
 
 --exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 2 works'" --user=test_user2 --password=test_pass 2>&1
@@ -58,5 +56,21 @@ INSERT INTO auth.users VALUES ('test_user3', MYSQL_PASSWORD('mypass'));
 SELECT * FROM auth.users WHERE user='test_user3';
 
 --exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 3 works'" --user=test_user3 --password=mypass 2>&1
+
+# Disable authentication.
+SET GLOBAL auth_schema_enabled=0;
+SHOW VARIABLES LIKE 'auth_schema%';
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect(conn3, localhost, test_user, test_pass,,);
+
+# Re-enable authentication.
+SET GLOBAL auth_schema_enabled=1;
+SHOW VARIABLES LIKE 'auth_schema%';
+
+connect(conn3, localhost, test_user, test_pass,,);
+SELECT 'auth re-enabled';
 
 DROP SCHEMA auth;

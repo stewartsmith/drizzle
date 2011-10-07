@@ -28,9 +28,8 @@
 #include <drizzled/catalog/local.h>
 #include "auth_schema.h"
 
-using namespace std;
-using namespace drizzled;
-using namespace plugin;
+namespace drizzle_plugin {
+namespace auth_schema {
 
 AuthSchema::AuthSchema() :
   plugin::Authentication("auth_schema")
@@ -39,7 +38,7 @@ AuthSchema::AuthSchema() :
 
 bool AuthSchema::setTable(const char *table)
 {
-  _table= table;
+  sysvar_table= table;
   return false;
 }
 
@@ -82,22 +81,32 @@ bool AuthSchema::verifyMySQLPassword(const string &real_password,
 
 bool AuthSchema::authenticate(const identifier::User &sctx, const string &password)
 {
+  // If plugin is disabled, deny everyone.
+  if (not sysvar_enabled)
+    return false;
+
+  // Plugin only works with MySQL hash passwords, so client needs
+  // to connect with --protocol mysql-plugin-auth.
   if (sctx.getPasswordType() != identifier::User::MYSQL_HASH)
     return false;
 
+  // Anonymous users are not allowed.
   string user= sctx.username();
   if (user.empty())
     return false;
 
-  if (!_session) {
-    _session= Session::make_shared(Listen::getNullClient(), catalog::local());
+  // Create an internal session for ourself the first time we're called.
+  // I don't know why but doing this in the constructor crashes Drizzle
+  if (not _session) {
+    _session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
     identifier::user::mptr user_id= identifier::User::make_shared();
     user_id->setUser("auth_schema");
     _session->setUser(user_id);
   }
-  
-  /* Execute wraps the SQL to run within a transaction */ 
-  string sql= "SELECT password FROM " + _table +
+
+  // Create an execute a SQL statement to select the user from the auth table.
+  // Execute wraps the SQL to run within a transaction.
+  string sql= "SELECT password FROM " + sysvar_table +
               " WHERE user='" + user + "'"
               " LIMIT 1;";
   Execute execute(*(_session.get()), true);
@@ -113,14 +122,21 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
     return false;
   }
 
+  // If there's a result and it's not null, verify the password from
+  // the client against the real password from the auth table.
   if (result_set.next() and not result_set.isNull(0))
   {
     string real_password= result_set.getString(0);
+    // Return true if auth succeeds, else return false.
     return verifyMySQLPassword(
       real_password,
       sctx.getPasswordContext(),
       password);
   }
 
+  // User doesn't exist in auth table; auth fails.
   return false;
 }
+
+} /* end namespace drizzle_plugin::auth_schema */
+} /* end namespace drizzle_plugin */
