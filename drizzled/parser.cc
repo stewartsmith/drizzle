@@ -223,9 +223,9 @@ void my_parse_error(const char *message)
 
 bool check_reserved_words(lex_string_t *name)
 {
-  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
+  if (!my_strcasecmp(system_charset_info, name->data(), "GLOBAL") ||
+      !my_strcasecmp(system_charset_info, name->data(), "LOCAL") ||
+      !my_strcasecmp(system_charset_info, name->data(), "SESSION"))
     return true;
 
   return false;
@@ -305,7 +305,7 @@ void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value)
 {
   message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
-  opt->set_state(value.str, value.length);
+  opt->set_state(value.data(), value.size());
 }
 
 void buildEngineOption(LEX *lex, const char *key, uint64_t value)
@@ -320,13 +320,13 @@ void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value)
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
-  opt->set_state(value.str, value.length);
+  opt->set_state(value.data(), value.size());
 }
 
 void buildSchemaDefiner(LEX *lex, const lex_string_t &value)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
-  identifier::User user(value.str);
+  identifier::User user(value.data());
   message::set_definer(statement->schema_message, user);
 }
 
@@ -348,19 +348,19 @@ bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string
 {
   TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
-  if (schema_name.length)
+  if (schema_name.size())
   {
-    if (my_strcasecmp(table_alias_charset, schema_name.str, table->getSchemaName()))
+    if (my_strcasecmp(table_alias_charset, schema_name.data(), table->getSchemaName()))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
       return false;
     }
   }
 
-  if (my_strcasecmp(table_alias_charset, table_name.str,
+  if (my_strcasecmp(table_alias_charset, table_name.data(),
                     table->getTableName()))
   {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.str);
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.data());
     return false;
   }
 
@@ -371,22 +371,21 @@ Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &
 {
   Select_Lex *sel= lex->current_select;
 
-  if (table_name.length and sel->no_table_names_allowed)
+  if (table_name.size() and sel->no_table_names_allowed)
   {
-    my_error(ER_TABLENAME_NOT_ALLOWED_HERE, MYF(0), table_name.str, lex->session->where());
+    my_error(ER_TABLENAME_NOT_ALLOWED_HERE, MYF(0), table_name.data(), lex->session->where());
   }
 
   return sel->parsing_place != IN_HAVING || sel->get_in_sum_expr() > 0
-    ? (Item*) new Item_field(lex->current_context(), schema_name.str, table_name.str, field_name.str) 
-    : (Item*) new Item_ref(lex->current_context(), schema_name.str, table_name.str, field_name.str);
+    ? (Item*) new Item_field(lex->current_context(), schema_name.data(), table_name.data(), field_name.data()) 
+    : (Item*) new Item_ref(lex->current_context(), schema_name.data(), table_name.data(), field_name.data());
 }
 
 Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
 {
   Select_Lex *sel= lex->current_select;
-  Item *item= new Item_field(lex->current_context(), schema_name.str, table_name.str, "*");
+  Item *item= new Item_field(lex->current_context(), schema_name.data(), table_name.data(), "*");
   sel->with_wild++;
-
   return item;
 }
 

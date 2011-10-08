@@ -103,8 +103,8 @@ uint64_t g_refresh_version = 1;
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
-         field_name.length == other.field_name.length &&
-    !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
+         field_name.size() == other.field_name.size() &&
+    !my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
@@ -862,8 +862,7 @@ lex_string_t* Session::make_lex_string(lex_string_t* lex_str, str_ref str)
 {
   if (not lex_str)
     lex_str= new (mem) lex_string_t;
-  lex_str->str= mem_root->strdup(str);
-  lex_str->length= str.size();
+  lex_str->assign(mem_root->strdup(str), str.size());
   return lex_str;
 }
 
@@ -1693,7 +1692,7 @@ void Session::refresh_status()
 
 user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
 {
-  return getVariable(std::string(name.str, name.length), create_if_not_exists);
+  return getVariable(std::string(name.data(), name.size()), create_if_not_exists);
 }
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)

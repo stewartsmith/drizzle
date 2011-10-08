@@ -25,8 +25,7 @@
 #include <drizzled/user_var_entry.h>
 #include <drizzled/session.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
@@ -85,11 +84,10 @@ type::Decimal* Item_user_var_as_out_param::val_decimal(type::Decimal *)
   return 0;
 }
 
-
 void Item_user_var_as_out_param::print(String *str)
 {
   str->append('@');
-  str->append(name.str,name.length);
+  str->append(name);
 }
 
 } /* namespace drizzled */

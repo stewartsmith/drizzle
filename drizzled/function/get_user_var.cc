@@ -133,7 +133,7 @@ enum Item_result Item_func_get_user_var::result_type() const
 void Item_func_get_user_var::print(String *str)
 {
   str->append(STRING_WITH_LEN("(@"));
-  str->append(name.str,name.length);
+  str->append(name);
   str->append(')');
 }
 
@@ -149,8 +149,8 @@ bool Item_func_get_user_var::eq(const Item *item,
       ((Item_func*) item)->functype() != functype())
     return 0;
   Item_func_get_user_var *other=(Item_func_get_user_var*) item;
-  return (name.length == other->name.length &&
-	  !memcmp(name.str, other->name.str, name.length));
+  return (name.size() == other->name.size() &&
+	  !memcmp(name.data(), other->name.data(), name.size()));
 }
 
 } /* namespace drizzled */

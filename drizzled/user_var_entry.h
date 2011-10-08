@@ -38,13 +38,12 @@ class user_var_entry
     unsigned_flag(false),
     collation(NULL, DERIVATION_IMPLICIT)
   { 
-    name.str= strdup(arg);
-    name.length= strlen(arg);
+    name.assign(strdup(arg), strlen(arg));
   }
 
   ~user_var_entry()
   {
-    free(const_cast<char*>(name.str));
+    free(const_cast<char*>(name.data()));
     free(value);
   }
 
