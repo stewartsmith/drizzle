@@ -42,7 +42,8 @@ command line options.
    :Default: ``auth.users``
    :Variable: :ref:`auth_schema_table <auth_schema_table>`
 
-   Schema-qualified table with ``user`` and ``password`` columns.
+   Schema-qualified table with ``user`` and ``password`` columns.  The auth table name
+   does not have to be quoted, and it cannot contain spaces (even if quoted).
 
 .. _auth_schema_variables:
 

@@ -36,10 +36,23 @@ AuthSchema::AuthSchema() :
 {
 }
 
-bool AuthSchema::setTable(const char *table)
+bool AuthSchema::setTable(const string &table)
 {
+  if (table.empty())
+  {
+    errmsg_printf(error::ERROR, _("auth_schema table cannot be an empty string"));
+    return true;  // error
+  }
+
+  if (table.find(" ") != string::npos)
+  {
+    errmsg_printf(error::ERROR, _("auth_schema table cannot contain spaces"));
+    return true;  // error
+  }
+
   sysvar_table= table;
-  return false;
+
+  return false;  // success
 }
 
 bool AuthSchema::verifyMySQLPassword(const string &real_password,
@@ -91,13 +104,14 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
     return false;
 
   // Anonymous users are not allowed.
-  string user= sctx.username();
+  string user= escapeString(sctx.username());
   if (user.empty())
     return false;
 
   // Create an internal session for ourself the first time we're called.
   // I don't know why but doing this in the constructor crashes Drizzle
-  if (not _session) {
+  if (not _session)
+  {
     _session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
     identifier::user::mptr user_id= identifier::User::make_shared();
     user_id->setUser("auth_schema");
@@ -106,9 +120,7 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
 
   // Create an execute a SQL statement to select the user from the auth table.
   // Execute wraps the SQL to run within a transaction.
-  string sql= "SELECT password FROM " + sysvar_table +
-              " WHERE user='" + user + "'"
-              " LIMIT 1;";
+  string sql= "SELECT password FROM " + sysvar_table + " WHERE user='" + user + "' LIMIT 1;";
   Execute execute(*(_session.get()), true);
   sql::ResultSet result_set(1);
   execute.run(sql, result_set);
@@ -117,8 +129,8 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
   if ((err != EE_OK) && (err != ER_EMPTY_QUERY))
   {
     errmsg_printf(error::ERROR,
-      _("Error querying authentication schema: %s (error code %d)"),
-      exception.getErrorMessage().c_str(), exception.getErrorCode());
+      _("Error querying authentication schema: %s (error code %d.  Query: %s"),
+      exception.getErrorMessage().c_str(), exception.getErrorCode(), sql.c_str());
     return false;
   }
 
@@ -136,6 +148,48 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
 
   // User doesn't exist in auth table; auth fails.
   return false;
+}
+
+string AuthSchema::escapeString(const string &input)
+{
+  return input;
+  if (input.empty())
+    return input;
+
+  const char *pos= input.c_str();
+  const char *end= input.c_str()+input.length();
+  string res;
+
+  for (; pos != end ; pos++)
+  {
+    switch (*pos) {
+    case 0:
+      res.push_back('\\');
+      res.push_back('0');
+      break;
+    case '\n':
+      res.push_back('\\');
+      res.push_back('n');
+      break;
+    case '\r':
+      res.push_back('\\');
+      res.push_back('r');
+      break;
+    case '\\':
+      res.push_back('\\');
+      res.push_back('\\');
+      break;
+    case '\'':
+      res.push_back('\\');
+      res.push_back('\'');
+      break;
+    default:
+      res.push_back(*pos);
+      break;
+    }
+  }
+
+  return res;
 }
 
 } /* end namespace drizzle_plugin::auth_schema */

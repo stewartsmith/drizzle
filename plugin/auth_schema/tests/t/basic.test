@@ -73,4 +73,22 @@ SHOW VARIABLES LIKE 'auth_schema%';
 connect(conn3, localhost, test_user, test_pass,,);
 SELECT 'auth re-enabled';
 
+# Escape user name; avoid SQL injection.
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect(conn4, localhost, "'; drop table auth.users; select '", test_pass,,);
+
+SHOW TABLES FROM auth;
+
+# Don't crash if we try to set the auth table to NULL.
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL auth_schema_table=NULL;
+SHOW VARIABLES LIKE 'auth_schema_table';
+
+# And don't permit a blank string for the auth table.
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL auth_schema_table='';
+SHOW VARIABLES LIKE 'auth_schema_table';
+
 DROP SCHEMA auth;

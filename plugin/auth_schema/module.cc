@@ -43,7 +43,13 @@ static AuthSchema *auth_schema= NULL;
 
 bool update_table(Session *, set_var *var)
 {
-  return auth_schema->setTable(var->value->str_value.ptr());
+  if (not var->value->str_value.data())
+  {
+    errmsg_printf(error::ERROR, _("auth_schema table cannot be NULL"));
+    return true; // error
+  }
+  const string table(var->value->str_value.data());
+  return auth_schema->setTable(table);
 }
 
 static void init_options(module::option_context &context)
@@ -60,7 +66,7 @@ static int init(module::Context &context)
   const module::option_map &vm= context.getOptions();
 
   if (not vm["table"].as<string>().empty())
-    auth_schema->setTable(vm["table"].as<string>().c_str());
+    auth_schema->setTable(vm["table"].as<string>());
 
   context.add(auth_schema);
 

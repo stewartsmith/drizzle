@@ -65,4 +65,20 @@ auth_schema_table	auth.users
 SELECT 'auth re-enabled';
 auth re-enabled
 auth re-enabled
+connect(localhost,"'; drop table auth.users; select '",test_pass,test,MASTER_PORT,);
+ERROR 28000: Access denied for user '"'; drop table auth.users; select '"' (using password: YES)
+SHOW TABLES FROM auth;
+Tables_in_auth
+users
+users2
+SET GLOBAL auth_schema_table=NULL;
+ERROR HY000: Incorrect arguments to SET
+SHOW VARIABLES LIKE 'auth_schema_table';
+Variable_name	Value
+auth_schema_table	auth.users
+SET GLOBAL auth_schema_table='';
+ERROR HY000: Incorrect arguments to SET
+SHOW VARIABLES LIKE 'auth_schema_table';
+Variable_name	Value
+auth_schema_table	auth.users
 DROP SCHEMA auth;

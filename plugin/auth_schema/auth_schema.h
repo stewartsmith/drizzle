@@ -34,13 +34,14 @@ public:
 
   /**
    * @brief
-   *   Set/change the authentication table.
+   *   Set the authentication table.
    *
    * @param[in] table Schema-qualified table name.
    *
-   * @returns false Always returns false currently because table isn't checked.
+   * @retval false Success, new auth table set
+   * @retval true  Failure, auth table not changed
    */
-  bool setTable(const char *table);
+  bool setTable(const string &table);
 
   /**
    * These are the query_log system variables.  So sysvar_enabled is
@@ -80,6 +81,21 @@ private:
   bool verifyMySQLPassword(const string &real_password,
                            const string &scramble_bytes,
                            const string &client_password);
+
+  /**
+   * @brief
+   *   Escape a string for use as a single-quoted string value.
+   *
+   * @details
+   *   The string is escaped so that it can be used as a value in single quotes, like:
+   *   col='untrusted value'.  Therefore, double quotes are not escaped because they're
+   *   valid inside single-quoted values.  Escaping helps avoid SQL injections.
+   *
+   * @param[in] input Untrusted string
+   *
+   * @return Escaped string
+   */
+  string escapeString(const string &input);
 
   Session::shared_ptr _session; ///< Internal session for querying auth table
 };
