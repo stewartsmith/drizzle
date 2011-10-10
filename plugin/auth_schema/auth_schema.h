@@ -20,6 +20,7 @@
 #pragma once
 #include <drizzled/session.h>
 #include <drizzled/plugin/authentication.h>
+#include PCRE_HEADER
 
 using namespace std;
 using namespace drizzled;
@@ -30,7 +31,8 @@ namespace auth_schema {
 class AuthSchema : public drizzled::plugin::Authentication
 {
 public:
-  AuthSchema();
+  AuthSchema(bool enabled);
+  ~AuthSchema();
 
   /**
    * @brief
@@ -84,6 +86,35 @@ private:
 
   /**
    * @brief
+   *   Split, escape, and quote the auth table name.
+   *
+   * @details
+   *   This function is called by setTable().
+   *   The auth table name must be schema-qualified, so it should have
+   *   the form schema.table or `schema`.`table`, etc.  This function
+   *   splits the table name on the period, checks each half (the schema
+   *   name and the table name), and escapes and backtick quotes each
+   *   if necessary.  The result is that the auth table name is always
+   *   finally of the form `schema`.`table`.
+   *
+   * @param[in] table Schema-qualified auth table name
+   *
+   * @return Escaped and backtick-quoted auth table name
+   */
+  string escapeQuoteAuthTable(const string &table);
+
+  /**
+   * @brief
+   *   Escape and quote an identifier.
+   *
+   * @param[in] input Identifer, possibly already quoted
+   *
+   * @return Escaped and backtick-quoted identifier
+   */
+  string escapeQuoteIdentifier(const string &input);
+
+  /**
+   * @brief
    *   Escape a string for use as a single-quoted string value.
    *
    * @details
@@ -97,6 +128,7 @@ private:
    */
   string escapeString(const string &input);
 
+  pcre *_ident_re;
   Session::shared_ptr _session; ///< Internal session for querying auth table
 };
 

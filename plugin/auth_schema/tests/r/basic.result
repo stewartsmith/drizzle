@@ -1,7 +1,7 @@
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
 auth_schema_enabled	ON
-auth_schema_table	auth.users
+auth_schema_table	`auth`.`users`
 SELECT MYSQL_PASSWORD('test_pass');
 MYSQL_PASSWORD('test_pass')
 34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
@@ -33,11 +33,11 @@ INSERT INTO users2 VALUES ('test_user2', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80D
 SELECT * FROM users2 ORDER BY user;
 user	password
 test_user2	34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
-SET GLOBAL auth_schema_table='auth.users2';
+SET GLOBAL auth_schema_table='`auth`.`users2`';
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
 auth_schema_enabled	ON
-auth_schema_table	auth.users2
+auth_schema_table	`auth`.`users2`
 SELECT 'connection 2 works';
 connection 2 works
 connection 2 works
@@ -54,14 +54,14 @@ SET GLOBAL auth_schema_enabled=0;
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
 auth_schema_enabled	OFF
-auth_schema_table	auth.users
+auth_schema_table	`auth`.`users`
 connect(localhost,test_user,test_pass,test,MASTER_PORT,);
 ERROR 28000: Access denied for user 'test_user' (using password: YES)
 SET GLOBAL auth_schema_enabled=1;
 SHOW VARIABLES LIKE 'auth_schema%';
 Variable_name	Value
 auth_schema_enabled	ON
-auth_schema_table	auth.users
+auth_schema_table	`auth`.`users`
 SELECT 'auth re-enabled';
 auth re-enabled
 auth re-enabled
@@ -75,10 +75,10 @@ SET GLOBAL auth_schema_table=NULL;
 ERROR HY000: Incorrect arguments to SET
 SHOW VARIABLES LIKE 'auth_schema_table';
 Variable_name	Value
-auth_schema_table	auth.users
+auth_schema_table	`auth`.`users`
 SET GLOBAL auth_schema_table='';
 ERROR HY000: Incorrect arguments to SET
 SHOW VARIABLES LIKE 'auth_schema_table';
 Variable_name	Value
-auth_schema_table	auth.users
+auth_schema_table	`auth`.`users`
 DROP SCHEMA auth;

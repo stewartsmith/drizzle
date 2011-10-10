@@ -54,7 +54,7 @@ bool update_table(Session *, set_var *var)
 
 static void init_options(module::option_context &context)
 {
-  auth_schema= new AuthSchema();
+  auth_schema= new AuthSchema(true);
 
   context("table",
     po::value<string>(&auth_schema->sysvar_table)->default_value("auth.users"),

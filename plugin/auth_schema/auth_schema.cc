@@ -31,9 +31,18 @@
 namespace drizzle_plugin {
 namespace auth_schema {
 
-AuthSchema::AuthSchema() :
-  plugin::Authentication("auth_schema")
+AuthSchema::AuthSchema(bool enabled) :
+  plugin::Authentication("auth_schema"),
+    sysvar_enabled(enabled)
 {
+  const char *error;
+  int erroffset;
+  _ident_re= pcre_compile(
+    "^`[^`]+`",   /* the pattern */
+    0,            /* default options */
+    &error,       /* for error message */
+    &erroffset,   /* for error offset */
+    NULL);        /* use default character tables */
 }
 
 bool AuthSchema::setTable(const string &table)
@@ -44,13 +53,13 @@ bool AuthSchema::setTable(const string &table)
     return true;  // error
   }
 
-  if (table.find(" ") != string::npos)
+  if (table.find(".") == string::npos)
   {
-    errmsg_printf(error::ERROR, _("auth_schema table cannot contain spaces"));
+    errmsg_printf(error::ERROR, _("auth_schema must be schema-qualified"));
     return true;  // error
   }
 
-  sysvar_table= table;
+  sysvar_table= escapeQuoteAuthTable(table);
 
   return false;  // success
 }
@@ -150,9 +159,56 @@ bool AuthSchema::authenticate(const identifier::User &sctx, const string &passwo
   return false;
 }
 
+string AuthSchema::escapeQuoteAuthTable(const string &table)
+{
+  int pos= table.find(".");
+  string quoted_schema= escapeQuoteIdentifier(table.substr(0, pos));
+  string quoted_table= escapeQuoteIdentifier(table.substr(pos + 1, table.length() - pos));
+  return quoted_schema + "." + quoted_table;
+}
+
+string AuthSchema::escapeQuoteIdentifier(const string &input)
+{
+  if (input.empty())
+    return "``";
+
+  /**
+   * The input may already be a quoted ident with no extra backticks.
+   * If so, return it.
+   */
+  int match_result= pcre_exec(
+    _ident_re, NULL, input.c_str(), input.length(), 0, 0, NULL, 0);
+  if (match_result >= 0)
+    return input;
+
+  const char *pos= input.c_str();
+  const char *end= input.c_str()+input.length();
+  string ident= "`";
+
+  for (; pos != end ; pos++)
+  {
+    switch (*pos) {
+    case '`':
+      ident.push_back('\\');
+      ident.push_back('`');
+      break;
+    case '\\':
+      ident.push_back('\\');
+      ident.push_back('\\');
+      break;
+    default:
+      ident.push_back(*pos);
+      break;
+    }
+  }
+
+  ident.push_back('`');
+
+  return ident;
+}
+
 string AuthSchema::escapeString(const string &input)
 {
-  return input;
   if (input.empty())
     return input;
 
@@ -190,6 +246,12 @@ string AuthSchema::escapeString(const string &input)
   }
 
   return res;
+}
+
+AuthSchema::~AuthSchema()
+{
+  if (_ident_re != NULL)
+    pcre_free(_ident_re);
 }
 
 } /* end namespace drizzle_plugin::auth_schema */

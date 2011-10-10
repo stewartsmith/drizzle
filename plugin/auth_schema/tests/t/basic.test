@@ -40,7 +40,7 @@ CREATE TABLE users2 (
 INSERT INTO users2 VALUES ('test_user2', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF');
 SELECT * FROM users2 ORDER BY user;
 
-SET GLOBAL auth_schema_table='auth.users2';
+SET GLOBAL auth_schema_table='`auth`.`users2`';
 SHOW VARIABLES LIKE 'auth_schema%';
 
 connect(conn2, localhost, test_user2, test_pass,,);
