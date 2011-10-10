@@ -88,7 +88,6 @@ struct KEY_CREATE_INFO
     algorithm(HA_KEY_ALG_UNDEF),
     block_size(0)
   {
-    comment.clear();
   }
 
   ha_key_alg algorithm;

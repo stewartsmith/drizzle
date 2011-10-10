@@ -27,6 +27,7 @@ class data_ref_basic
 public:
   data_ref_basic()
   {
+    clear();
   }
 
   template <class U>
