@@ -744,12 +744,12 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     if (! indx.has_comment())
     {
-      keyinfo->comment.clear();
+      keyinfo->comment.assign(NULL, 0);
     }
     else
     {
       keyinfo->flags|= HA_USES_COMMENT;
-      keyinfo->comment.assign(mem().strdup(indx.comment(), indx.comment().length());
+      keyinfo->comment.assign(mem().strdup(indx.comment()), indx.comment().length());
     }
 
     keyinfo->name= mem().strdup(indx.name());
@@ -982,7 +982,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     }
     else
     {
-      comment.assign(mem().strdup(pfield.comment(), pfield.comment().size());
+      comment.assign(mem().strdup(pfield.comment()), pfield.comment().size());
     }
 
     enum_field_types field_type;
