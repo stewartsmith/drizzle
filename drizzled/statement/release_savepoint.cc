@@ -46,11 +46,8 @@ bool statement::ReleaseSavepoint::execute()
   {
     NamedSavepoint &sv= *iter;
     const string &sv_name= sv.getName();
-    if (my_strnncoll(system_charset_info,
-                     (unsigned char *) lex().ident.str,
-                     lex().ident.length,
-                     (unsigned char *) sv_name.c_str(),
-                     sv_name.size()) == 0)
+    if (my_strnncoll(system_charset_info, (unsigned char *) lex().ident.data(), 
+      lex().ident.size(), (unsigned char *) sv_name.c_str(), sv_name.size()) == 0)
       break;
   }
   if (iter != savepoints.end())
@@ -62,10 +59,7 @@ bool statement::ReleaseSavepoint::execute()
   }
   else
   {
-    my_error(ER_SP_DOES_NOT_EXIST, 
-             MYF(0), 
-             "SAVEPOINT", 
-             lex().ident.str);
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex().ident.data());
   }
   return false;
 }

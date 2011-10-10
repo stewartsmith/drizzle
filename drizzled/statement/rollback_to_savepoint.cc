@@ -69,10 +69,7 @@ bool statement::RollbackToSavepoint::execute()
   /* Short-circuit for no savepoints */
   if (savepoints.empty())
   {
-    my_error(ER_SP_DOES_NOT_EXIST, 
-             MYF(0), 
-             "SAVEPOINT", 
-             lex().ident.str);
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex().ident.data());
     return false;
   }
 
@@ -81,8 +78,8 @@ bool statement::RollbackToSavepoint::execute()
     NamedSavepoint &first_savepoint= savepoints.front();
     const string &first_savepoint_name= first_savepoint.getName();
     if (my_strnncoll(system_charset_info,
-                     (unsigned char *) lex().ident.str, 
-                     lex().ident.length,
+                     (unsigned char *) lex().ident.data(), 
+                     lex().ident.size(),
                      (unsigned char *) first_savepoint_name.c_str(), 
                      first_savepoint_name.size()) == 0)
     {
@@ -117,8 +114,8 @@ bool statement::RollbackToSavepoint::execute()
     const string &sv_name= sv.getName();
     if (! found && 
         my_strnncoll(system_charset_info,
-                     (unsigned char *) lex().ident.str, 
-                     lex().ident.length,
+                     (unsigned char *) lex().ident.data(), 
+                     lex().ident.size(),
                      (unsigned char *) sv_name.c_str(), 
                      sv_name.size()) == 0)
     {
@@ -155,10 +152,7 @@ bool statement::RollbackToSavepoint::execute()
   {
     /* restore the original savepoint list */
     transaction().savepoints= copy_savepoints;
-    my_error(ER_SP_DOES_NOT_EXIST, 
-             MYF(0), 
-             "SAVEPOINT", 
-             lex().ident.str);
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex().ident.data());
   }
   return false;
 }
