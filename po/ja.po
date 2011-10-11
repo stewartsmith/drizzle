@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-27 14:15-0400\n"
+"POT-Creation-Date: 2011-10-11 19:39+0000\n"
 "PO-Revision-Date: 2011-09-04 18:36+0000\n"
 "Last-Translator: Shushi Kurose <md81bird@hitaki.net>\n"
 "Language-Team: Japanese <ja@li.org>\n"
-"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Launchpad-Export-Date: 2011-09-05 04:53+0000\n"
 "X-Generator: Launchpad (build 13830)\n"
@@ -556,7 +556,7 @@ msgstr "DELIMITER にはバックスラッシュを含めることはできま�
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5095
+#: ../client/drizzletest.cc:5153
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "不正、もしくは不明なプロトコル"
@@ -911,8 +911,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1261,7 +1261,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "または %s [オプション] --all-databases [オプション]\n"
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5165
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "ポート番号に指定された値は無効です。\n"
@@ -1342,19 +1342,19 @@ msgstr "-- 行データを取得しています・・・\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4866
+#: ../client/drizzletest.cc:4924
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr "エラー: opt_max_connect_retries に不正な値"
 
-#: ../client/drizzletest.cc:4876
+#: ../client/drizzletest.cc:4934
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "エラー: opt_tail_lines に不正な値"
 
-#: ../client/drizzletest.cc:4886
+#: ../client/drizzletest.cc:4944
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "エラー: opt_sleep に不正な値"
 
-#: ../client/drizzletest.cc:5065
+#: ../client/drizzletest.cc:5123
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "'%s' を読み込めません: errno = %d"
@@ -3309,8 +3309,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -3960,7 +3960,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
+#: ../drizzled/session.cc:1850 ../drizzled/session.cc:1859
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "一時テーブル: '%s' を削除できませんでした。エラー: %d"
@@ -4012,12 +4012,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../drizzled/sql_table.cc:1869
+#: ../drizzled/sql_table.cc:1866
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: ../drizzled/statement/alter_table.cc:1575
+#: ../drizzled/statement/alter_table.cc:1573
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
