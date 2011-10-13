@@ -27,6 +27,7 @@ class data_ref_basic
 public:
   data_ref_basic()
   {
+    clear();
   }
 
   template <class U>
@@ -53,11 +54,10 @@ public:
     assign(b, strlen(b));
   }
 
-  const data_ref_basic& clear()
+  void clear()
   {
     begin_ = NULL;
     end_ = NULL;
-    return *this;
   }
 
   void assign(const void* b, const void* e)

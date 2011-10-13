@@ -405,7 +405,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
   tmp[0]= '\0';
-  net.write_command(255, data_ref().clear(), data_ref(buff, tmp));
+  net.write_command(255, data_ref(), data_ref(buff, tmp));
   net.flush();
   session->main_da().can_overwrite_status= false;
 }
@@ -686,7 +686,7 @@ bool ClientMySQLProtocol::checkConnection()
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
-    if (net.write_command(PROTOCOL_VERSION, data_ref().clear(), data_ref(buff, end)) 
+    if (net.write_command(PROTOCOL_VERSION, data_ref(), data_ref(buff, end)) 
         || (pkt_len= net.read()) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {

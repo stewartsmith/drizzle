@@ -658,7 +658,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	break;
     case Key::FULLTEXT:
 	key_info->flags= HA_FULLTEXT;
-	if ((key_info->parser_name= &key->key_create_info.parser_name)->str)
+	if ((key_info->parser_name= &key->key_create_info.parser_name)->data())
           key_info->flags|= HA_USES_PARSER;
         else
           key_info->parser_name= 0;
