@@ -42,22 +42,22 @@ struct lex_string_t
 
   const char* data() const
   {
-    return str;
+    return str_;
   }
 
   size_t size() const
   {
-    return length;
+    return length_;
   }
 
   void assign(const char* d, size_t s)
   {
-    str= const_cast<char*>(d);
-    length = s;
+    str_= const_cast<char*>(d);
+    length_ = s;
   }
 
-  char* str;
-  size_t length;
+  char* str_;
+  size_t length_;
 };
 
 inline const lex_string_t &null_lex_string()

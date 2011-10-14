@@ -1494,16 +1494,12 @@ void Session::end_statement()
   resetResultsetMessage();
 }
 
-bool Session::copy_db_to(char*& db, size_t& db_length)
+str_ref Session::copy_db_to() const
 {
-  if (impl_->schema->empty())
-  {
-    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-    return true;
-  }
-  db= mem.strdup(*impl_->schema);
-  db_length= impl_->schema->size();
-  return false;
+  if (not impl_->schema->empty())
+    return str_ref(mem.strdup(*impl_->schema), impl_->schema->size());
+  my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+  return str_ref();
 }
 
 /****************************************************************************
@@ -1692,7 +1688,7 @@ void Session::refresh_status()
 
 user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
 {
-  return getVariable(std::string(name.data(), name.size()), create_if_not_exists);
+  return getVariable(to_string(name), create_if_not_exists);
 }
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)

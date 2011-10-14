@@ -27,7 +27,7 @@ class Item_hex_string : public Item_basic_constant
 {
 public:
   Item_hex_string() {}
-  Item_hex_string(const char *str,uint32_t str_length);
+  Item_hex_string(str_ref);
   enum Type type() const { return VARBIN_ITEM; }
   double val_real()
   {

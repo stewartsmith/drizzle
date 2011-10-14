@@ -545,13 +545,8 @@ Field *Item_func::tmp_table_field(Table *table)
     return make_string_field(table);
 
   case DECIMAL_RESULT:
-    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(),
-                                                            decimals,
-                                                            unsigned_flag),
-                             maybe_null,
-                             name,
-                             decimals,
-                             unsigned_flag);
+    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(), decimals, unsigned_flag),
+      maybe_null, name, decimals, unsigned_flag);
     break;
   case ROW_RESULT:
     // This case should never be chosen

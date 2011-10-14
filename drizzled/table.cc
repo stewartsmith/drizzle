@@ -311,8 +311,7 @@ bool check_table_name(const char *name, uint32_t length)
   if (!length || length > NAME_LEN || name[length - 1] == ' ')
     return 1;
   lex_string_t ident;
-  ident.str= (char*) name;
-  ident.length= length;
+  ident.assign(name, length);
   return check_identifier_name(&ident);
 }
 

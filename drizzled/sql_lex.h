@@ -434,7 +434,7 @@ public:
   }
 
   Name_resolution_context context;
-  char *db;
+  const char *db;
   /* An Item representing the WHERE clause */
   Item *where;
   /* An Item representing the HAVING clause */

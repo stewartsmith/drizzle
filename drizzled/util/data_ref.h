@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstring>
 #include <ostream>
+#include <string>
 
 template <class T>
 class data_ref_basic
@@ -96,12 +97,6 @@ public:
   {
     return begin() == end();
   }
-
-  friend std::ostream& operator<<(std::ostream& os, data_ref_basic<T> v)
-  {
-    os.write(v.data(), v.size());
-    return os;
-  }
 private:
   T begin_;
   T end_;
@@ -109,3 +104,14 @@ private:
 
 typedef data_ref_basic<const unsigned char*> data_ref;
 typedef data_ref_basic<const char*> str_ref;
+
+inline std::ostream& operator<<(std::ostream& os, str_ref v)
+{
+  os.write(v.data(), v.size());
+  return os;
+}
+
+inline std::string to_string(str_ref v)
+{
+  return std::string(v.data(), v.size());
+}

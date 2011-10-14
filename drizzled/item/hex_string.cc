@@ -40,15 +40,16 @@ inline uint32_t char_val(char X)
                  X-'a'+10);
 }
 
-Item_hex_string::Item_hex_string(const char *str, uint32_t str_length)
+Item_hex_string::Item_hex_string(str_ref arg)
 {
-  max_length=(str_length+1)/2;
+  max_length= (arg.size() + 1) / 2;
   char *ptr=(char*) memory::sql_alloc(max_length+1);
   if (!ptr)
     return;
   str_value.set(ptr,max_length,&my_charset_bin);
+  const char *str= arg.data();
   char *end=ptr+max_length;
-  if (max_length*2 != str_length)
+  if (max_length * 2 != arg.size())
     *ptr++=char_val(*str++);                    // Not even, assume 0 prefix
   while (ptr != end)
   {

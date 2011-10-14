@@ -152,8 +152,7 @@ StatsTableTool::Generator::Generator(drizzled::Field **arg) :
     return;
   }
 
-  memcached_server_st *tmp_serv=
-    memcached_servers_parse(servers_string.c_str());
+  memcached_server_st *tmp_serv= memcached_servers_parse(servers_string.c_str());
   if (tmp_serv == NULL)
   {
     my_printf_error(ER_UNKNOWN_ERROR, _("Unable to create memcached server list.  Got error from memcached_servers_parse(%s)."), MYF(0), servers_string.c_str());

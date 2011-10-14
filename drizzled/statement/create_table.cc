@@ -32,9 +32,7 @@
 
 #include <iostream>
 
-namespace drizzled
-{
-
+namespace drizzled {
 namespace statement {
 
 CreateTable::CreateTable(Session *in_session, Table_ident *ident, bool is_temporary) :
@@ -49,19 +47,12 @@ CreateTable::CreateTable(Session *in_session, Table_ident *ident, bool is_tempor
   create_table_list(NULL)
 {
   set_command(SQLCOM_CREATE_TABLE);
-  createTableMessage().set_name(ident->table.str, ident->table.length);
+  createTableMessage().set_name(ident->table.data(), ident->table.size());
 #if 0
-  createTableMessage().set_schema(ident->db.str, ident->db.length);
+  createTableMessage().set_schema(ident->db.data(), ident->db.size());
 #endif
 
-  if (is_temporary)
-  {
-    createTableMessage().set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    createTableMessage().set_type(message::Table::STANDARD);
-  }
+  createTableMessage().set_type(is_temporary ? message::Table::TEMPORARY : message::Table::STANDARD);
 }
 
 CreateTable::CreateTable(Session *in_session) :
@@ -338,4 +329,3 @@ bool statement::CreateTable::validateCreateTableOption()
 }
 
 } /* namespace drizzled */
-

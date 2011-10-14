@@ -34,7 +34,7 @@ public:
   lex_string_t table;
   Select_Lex_Unit *sel;
 
-  inline Table_ident(lex_string_t db_arg, lex_string_t table_arg)
+  Table_ident(lex_string_t db_arg, lex_string_t table_arg)
     : db(db_arg), table(table_arg), sel(NULL)
   {
   }

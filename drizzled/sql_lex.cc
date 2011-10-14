@@ -232,8 +232,7 @@ void lex_start(Session *session)
   lex->expr_allows_subselect= true;
   lex->use_only_table_context= false;
 
-  lex->name.str= 0;
-  lex->name.length= 0;
+  lex->name.assign(NULL, 0);
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
@@ -295,14 +294,12 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 /* make a copy of token before ptr and set yytoklen */
 static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->mem.strdup(lip->get_tok_start() + skip, tmp.length);
-
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign(lip->m_session->mem.strdup(lip->get_tok_start() + skip, length), length);
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
-  lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
-
+  lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.size();
   return tmp;
 }
 
@@ -316,12 +313,12 @@ static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->mem.alloc(tmp.length+1);
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign((char*)lip->m_session->mem.alloc(length + 1), length);
   const char* from= lip->get_tok_start() + skip;
-  char* to= (char*)tmp.str;
+  char* to= (char*)tmp.data();
   const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
@@ -346,15 +343,14 @@ static lex_string_t get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  unsigned char c,sep;
   bool found_escape= false;
-  const charset_info_st * const cs= lip->m_session->charset();
+  const charset_info_st* const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
-  sep= lip->yyGetLast();                        // String should end with this
-  while (! lip->eof())
+  unsigned char sep= lip->yyGetLast();                        // String should end with this
+  while (not lip->eof())
   {
-    c= lip->yyGet();
+    unsigned char c= lip->yyGet();
     lip->tok_bitmap|= c;
     {
       if (use_mb(cs))
@@ -657,8 +653,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
     case MY_LEX_ESCAPE:
       if (lip->yyGet() == 'N')
       {					// Allow \N as shortcut for NULL
-        yylval->lex_str.str=(char*) "\\N";
-        yylval->lex_str.length=2;
+        yylval->lex_str.assign("\\N", 2);
         return NULL_SYM;
       }
     case MY_LEX_CHAR:			// Unknown or single char token
@@ -766,8 +761,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       return(result_state);			// IDENT or IDENT_QUOTED
 
     case MY_LEX_IDENT_SEP:		// Found ident and now '.'
-      yylval->lex_str.str= (char*) lip->get_ptr();
-      yylval->lex_str.length= 1;
+      yylval->lex_str.assign(lip->get_ptr(), 1);
       c= lip->yyGet();                  // should be '.'
       lip->next_state= MY_LEX_IDENT_START;// Next is an ident (not a keyword)
       if (!ident_map[(uint8_t)lip->yyPeek()])            // Probably ` or "
@@ -900,7 +894,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       if (c != '.')
       {					// Found complete integer number.
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
-      	return int_token(yylval->lex_str.str,yylval->lex_str.length);
+      	return int_token(yylval->lex_str.data(), yylval->lex_str.size());
       }
       // fall through
     case MY_LEX_REAL:			// Incomplete real number
@@ -930,8 +924,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         return(ABORT_SYM);              // Illegal hex constant
       lip->yySkip();                    // Accept closing '
       length= lip->yyLength();          // Length of hexnum+3
-      if ((length % 2) == 0)
-        return(ABORT_SYM);              // odd number of hex digits
+      if (length % 2 == 0)
+        return ABORT_SYM;               // odd number of hex digits
       yylval->lex_str=get_token(lip,
                                 2,          // skip x'
                                 length-3);  // don't count x' and last '
@@ -996,15 +990,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       /* " used for strings */
     case MY_LEX_STRING:			// Incomplete text string
-      if (!(yylval->lex_str.str = get_text(lip, 1, 1)))
+      if (!(yylval->lex_str.str_ = get_text(lip, 1, 1)))
       {
         state= MY_LEX_CHAR;		// Read char by char
         break;
       }
-      yylval->lex_str.length=lip->yytoklen;
+      yylval->lex_str.assign(yylval->lex_str.data(), lip->yytoklen);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
       lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
@@ -1195,9 +1188,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->next_state=MY_LEX_HOSTNAME;
         break;
       }
-      yylval->lex_str.str=(char*) lip->get_ptr();
-      yylval->lex_str.length=1;
-      return((int) '@');
+      yylval->lex_str.assign(lip->get_ptr(), 1);
+      return '@';
 
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
@@ -1207,8 +1199,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       return(LEX_HOSTNAME);
 
     case MY_LEX_SYSTEM_VAR:
-      yylval->lex_str.str=(char*) lip->get_ptr();
-      yylval->lex_str.length=1;
+      yylval->lex_str.assign(lip->get_ptr(), 1);
       lip->yySkip();                                    // Skip '@'
       lip->next_state= (state_map[(uint8_t)lip->yyPeek()] ==
 			MY_LEX_USER_VARIABLE_DELIMITER ?

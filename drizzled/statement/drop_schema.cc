@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::DropSchema::execute()
 {
@@ -42,20 +41,17 @@ bool statement::DropSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(std::string(lex().name.str, lex().name.length));
+  identifier::Schema schema_identifier(to_string(lex().name));
 
   if (not schema::check(session(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
-
     return false;
   }
 
   if (session().inTransaction())
   {
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
-        ER(ER_LOCK_OR_ACTIVE_TRANSACTION), 
-        MYF(0));
+    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
     return true;
   }
   
@@ -80,4 +76,3 @@ bool statement::DropSchema::execute()
 }
 
 } /* namespace drizzled */
-

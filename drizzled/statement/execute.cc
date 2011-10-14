@@ -96,7 +96,7 @@ bool statement::Execute::execute()
 
 bool statement::Execute::execute_shell()
 {
-  if (to_execute.length == 0)
+  if (to_execute.size() == 0)
   {
     my_error(ER_WRONG_ARGUMENTS, MYF(0), "Invalid Variable");
     return false;
@@ -138,12 +138,12 @@ bool statement::Execute::execute_shell()
         if (session().inTransaction())
         {
           // @todo Figure out something a bit more solid then this.
-          start_sql.append("SAVEPOINT execute_internal_savepoint");
+          start_sql= "SAVEPOINT execute_internal_savepoint";
           is_savepoint= true;
         }
         else
         {
-          start_sql.append("START TRANSACTION");
+          start_sql= "START TRANSACTION";
         }
 
         error_occured= runStatement(*null_client, start_sql);
