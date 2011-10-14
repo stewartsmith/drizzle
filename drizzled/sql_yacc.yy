@@ -1842,11 +1842,10 @@ alter:
             Lex.name= $3;
             if (not Lex.name.data())
             {
-              char* db;
-              size_t db_length;
-              if (Lex.session->copy_db_to(db, db_length))
+              str_ref db = Lex.session->copy_db_to();
+              if (db.empty())
                 DRIZZLE_YYABORT;
-              Lex.name.assign(db, db_length);
+              Lex.name.assign(db.data(), db.size());
             }
           }
         ;
@@ -2006,13 +2005,13 @@ alter_list_item:
         | RENAME opt_to table_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            size_t dummy;
-
             Lex.select_lex.db= (char*)$3->db.data();
-            if (Lex.select_lex.db == NULL &&
-                Lex.session->copy_db_to(Lex.select_lex.db, dummy))
+            if (not Lex.select_lex.db)
             {
-              DRIZZLE_YYABORT;
+              str_ref db = Lex.session->copy_db_to();
+              if (db.empty())
+                DRIZZLE_YYABORT;
+              Lex.select_lex.db = db.data();
             }
 
             if (check_table_name($3->table.data(), $3->table.size()))
@@ -4160,7 +4159,7 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             Lex.setCacheable(false);
-            Lex.exchange= new file_exchange((char*)$2.data(), 0);
+            Lex.exchange= new file_exchange($2.data(), 0);
             Lex.result= new select_export(Lex.exchange);
           }
           opt_field_term opt_line_term
@@ -4169,7 +4168,7 @@ into_destination:
             if (not Lex.describe)
             {
               Lex.setCacheable(false);
-              Lex.exchange= new file_exchange((char*)$2.data(),1);
+              Lex.exchange= new file_exchange($2.data(),1);
               Lex.result= new select_dump(Lex.exchange);
             }
           }
@@ -4765,7 +4764,7 @@ load:
             Lex.lock_option= $4;
             Lex.duplicates= DUP_ERROR;
             Lex.ignore= 0;
-            Lex.exchange= new file_exchange((char*)$6.data(), 0, $2);
+            Lex.exchange= new file_exchange($6.data(), 0, $2);
           }
           opt_duplicate INTO
           {

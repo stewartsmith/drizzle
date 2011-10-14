@@ -932,19 +932,18 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
-  char* name;
-  size_t name_size;
   if (table->db.data())
   {
     ptr->setIsFqtn(true);
     ptr->setSchemaName(table->db.data());
   }
-  else if (lex->session->copy_db_to(name, name_size))
-    return NULL;
-  else
+  else 
   {
+    str_ref schema = lex->session->copy_db_to();
+    if (schema.empty())
+      return NULL;
     ptr->setIsFqtn(false);
-    ptr->setSchemaName(name);
+    ptr->setSchemaName(schema.data());
   }
 
   ptr->alias= alias_str;
