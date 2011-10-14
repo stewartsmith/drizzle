@@ -47,17 +47,17 @@ struct lex_string_t
 
   size_t size() const
   {
-    return length;
+    return length_;
   }
 
   void assign(const char* d, size_t s)
   {
     str= const_cast<char*>(d);
-    length = s;
+    length_ = s;
   }
 
   char* str;
-  size_t length;
+  size_t length_;
 };
 
 inline const lex_string_t &null_lex_string()

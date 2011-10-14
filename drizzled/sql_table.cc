@@ -930,7 +930,7 @@ static int prepare_create_table(Session *session,
       return -1;
     }
 
-    key_info->comment.length= key->key_create_info.comment.size();
+    key_info->comment.assign(key_info->comment.data(), key->key_create_info.comment.size());
     if (key_info->comment.size() > 0)
     {
       key_info->flags|= HA_USES_COMMENT;

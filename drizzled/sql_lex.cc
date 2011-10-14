@@ -294,14 +294,12 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 /* make a copy of token before ptr and set yytoklen */
 static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.str= lip->m_session->mem.strdup(lip->get_tok_start() + skip, length);
-  tmp.length= lip->yytoklen= length;
-
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign(lip->m_session->mem.strdup(lip->get_tok_start() + skip, length), length);
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.size();
-
   return tmp;
 }
 
@@ -315,10 +313,10 @@ static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  lex_string_t tmp;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.str=(char*) lip->m_session->mem.alloc(length + 1);
-  tmp.length= lip->yytoklen= length;
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign((char*)lip->m_session->mem.alloc(length + 1), length);
   const char* from= lip->get_tok_start() + skip;
   char* to= (char*)tmp.str;
   const char* end= to+length;
@@ -926,8 +924,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         return(ABORT_SYM);              // Illegal hex constant
       lip->yySkip();                    // Accept closing '
       length= lip->yyLength();          // Length of hexnum+3
-      if ((length % 2) == 0)
-        return(ABORT_SYM);              // odd number of hex digits
+      if (length % 2 == 0)
+        return ABORT_SYM;               // odd number of hex digits
       yylval->lex_str=get_token(lip,
                                 2,          // skip x'
                                 length-3);  // don't count x' and last '
@@ -997,10 +995,9 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         state= MY_LEX_CHAR;		// Read char by char
         break;
       }
-      yylval->lex_str.length= lip->yytoklen;
+      yylval->lex_str.assign(yylval->lex_str.data(), lip->yytoklen);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
       lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;

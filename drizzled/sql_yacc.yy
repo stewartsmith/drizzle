@@ -1840,8 +1840,14 @@ alter:
           default_collation_schema
           {
             Lex.name= $3;
-            if (Lex.name.str == NULL && Lex.session->copy_db_to(Lex.name.str, Lex.name.length))
-              DRIZZLE_YYABORT;
+            if (not Lex.name.data())
+            {
+              char* db;
+              size_t db_length;
+              if (Lex.session->copy_db_to(db, db_length))
+                DRIZZLE_YYABORT;
+              Lex.name.assign(db, db_length);
+            }
           }
         ;
 
