@@ -4927,7 +4927,7 @@ text_string:
           }
         | HEX_NUM
           {
-            Item *tmp= new Item_hex_string($1.data(), $1.size());
+            Item *tmp= new Item_hex_string($1);
             /*
               it is OK only emulate fix_fields, because we need only
               value of constant
@@ -4968,7 +4968,7 @@ literal:
           }
         | FALSE_SYM { $$= new drizzled::item::False(); }
         | TRUE_SYM { $$= new drizzled::item::True(); }
-        | HEX_NUM { $$ = new Item_hex_string($1.data(), $1.size());}
+        | HEX_NUM { $$ = new Item_hex_string($1);}
         | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
@@ -4976,7 +4976,7 @@ literal:
 
 integer_literal:
           text_literal { $$ = $1; }
-        | HEX_NUM { $$ = new Item_hex_string($1.data(), $1.size());}
+        | HEX_NUM { $$ = new Item_hex_string($1);}
         | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
         | NUM_literal { $$ = $1; }
         | NULL_SYM
