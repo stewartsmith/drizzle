@@ -41,13 +41,15 @@ class drizzleServer(Server):
 
     """
 
-    def __init__( self, name, server_manager, default_storage_engine
+    def __init__( self, name, server_manager, code_tree, default_storage_engine
                 , server_options, requester, workdir_root):
-        super(drizzleServer, self).__init__( name, server_manager
+        super(drizzleServer, self).__init__( name
+                                           , server_manager
+                                           , code_tree
                                            , default_storage_engine
-                                           , server_options, requester
+                                           , server_options
+                                           , requester
                                            , workdir_root)
-        self.code_tree = self.system_manager.code_tree
         self.preferred_base_port = 9306
         
         # client files
@@ -58,6 +60,7 @@ class drizzleServer(Server):
         self.server_path = self.code_tree.drizzle_server
         self.drizzle_client_path = self.code_tree.drizzle_client
         self.schemawriter = self.code_tree.schemawriter
+        self.trx_reader = self.code_tree.trx_reader
 
         # Get our ports
         self.port_block = self.system_manager.port_manager.get_port_block( self.name
@@ -112,8 +115,7 @@ class drizzleServer(Server):
         self.initialize_databases()
         self.take_db_snapshot()
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
     def report(self):
         """ We print out some general useful info """

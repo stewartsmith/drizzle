@@ -1559,8 +1559,7 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(),
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
 
   if (!well_formed_error &&  str->length == res)
     return false;
@@ -1583,8 +1582,7 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(),
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
@@ -1606,8 +1604,7 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
     my_error(err_code, MYF(0), str->data());
     break;
   default:
-    assert(0);
-    break;
+    assert(false);
   }
 
   return true;

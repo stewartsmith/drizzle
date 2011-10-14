@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-27 14:15-0400\n"
+"POT-Creation-Date: 2011-10-11 19:39+0000\n"
 "PO-Revision-Date: 2010-09-06 16:50+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
-"Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: pt\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-09-07 04:47+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -561,7 +561,7 @@ msgstr "DELIMITER não pode conter barra-invertida"
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5095
+#: ../client/drizzletest.cc:5153
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "Protocolo errado ou desconhecido"
@@ -912,8 +912,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1259,7 +1259,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5165
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "O valor fornecido para a porta não é válido.\n"
@@ -1339,19 +1339,19 @@ msgstr "-- Obtendo filas..\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4866
+#: ../client/drizzletest.cc:4924
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr "Erro: valor inválido para opt_max_connect_retries"
 
-#: ../client/drizzletest.cc:4876
+#: ../client/drizzletest.cc:4934
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "Erro: valor inválido para opt_tail_lines"
 
-#: ../client/drizzletest.cc:4886
+#: ../client/drizzletest.cc:4944
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "Erro: valor inválido para opt_sleep"
 
-#: ../client/drizzletest.cc:5065
+#: ../client/drizzletest.cc:5123
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "Não foi possível abrir '%s' para leitura: errno = %d"
@@ -2210,8 +2210,8 @@ msgstr "A tabela '%-.192s' é apenas de leitura"
 #, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
-"Memória esgotada; reinicie o servidor e tente novamente (foram necessários "
-"%lu bytes)"
+"Memória esgotada; reinicie o servidor e tente novamente (foram necessários %"
+"lu bytes)"
 
 #: ../drizzled/error.cc:289
 msgid "Out of sort memory; increase server sort buffer size"
@@ -3407,8 +3407,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -4068,7 +4068,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
+#: ../drizzled/session.cc:1850 ../drizzled/session.cc:1859
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
@@ -4126,19 +4126,19 @@ msgid ""
 "\n"
 msgstr ""
 "É possível que o drizzled possa usar até \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-"%<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+"<PRIu64> K\n"
 "bytes de memória\n"
 "Espera-se que não haja problema, senão diminua algumas variáveis na "
 "equação.\n"
 "\n"
 
-#: ../drizzled/sql_table.cc:1869
+#: ../drizzled/sql_table.cc:1866
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: ../drizzled/statement/alter_table.cc:1575
+#: ../drizzled/statement/alter_table.cc:1573
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -6945,8 +6945,8 @@ msgstr ""
 
 #~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 #~ msgstr ""
-#~ "Foi encontrado um EOF inesperado ao ler o ficheiro '%s' (Código de erro: "
-#~ "%d)"
+#~ "Foi encontrado um EOF inesperado ao ler o ficheiro '%s' (Código de erro: %"
+#~ "d)"
 
 #~ msgid "Error on close of '%s' (Errcode: %d)"
 #~ msgstr "Erro ao fechar o ficheiro '%s' (Código de erro: %d)"

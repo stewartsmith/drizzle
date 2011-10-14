@@ -34,7 +34,7 @@ class Execute : public Statement
 
   bool parseVariable(void);
 
-  bool runStatement(plugin::NullClient *client, const std::string &arg);
+  bool runStatement(plugin::NullClient&, const std::string&);
 
   bool execute_shell();
 public:
@@ -47,4 +47,3 @@ public:
 } /* namespace statement */
 
 } /* namespace drizzled */
-

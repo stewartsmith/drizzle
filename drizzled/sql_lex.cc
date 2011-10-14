@@ -169,8 +169,8 @@ void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
 
   /* NOTE: utf_txt.length is in bytes, not in symbols. */
 
-  memcpy(m_body_utf8_ptr, txt->str, txt->length);
-  m_body_utf8_ptr += txt->length;
+  memcpy(m_body_utf8_ptr, txt->data(), txt->size());
+  m_body_utf8_ptr += txt->size();
   *m_body_utf8_ptr= 0;
 
   m_cpp_utf8_processed_ptr= end_ptr;

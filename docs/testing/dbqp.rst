@@ -250,9 +250,21 @@ Options
 
 .. program:: dbqp.py
 
+.. option::  version
+
+   show program's version number and exit
+
 .. option:: -h, --help
  
    show this help message and exit
+
+Configuration controls - allows you to specify a file with a number of options already specified
+------------------------------------------------------------------------------------------------
+
+.. option:: --sys_config_file=SYSCONFIGFILEPATH
+           
+   The file that specifies system configuration specs for
+   dbqp to execute tests (not yet implemented)
 
 Options for the test-runner itself
 ----------------------------------
@@ -295,10 +307,7 @@ Options for the test-runner itself
    Don't try to cleanup from earlier runs 
    (currently just a placeholder) [False]
 
-.. option:: --randgen-path=RANDGENPATH
 
-    The path to a randgen installation that can be used to
-    execute randgen-based tests
 
 
 Options for controlling which tests are executed
@@ -352,6 +361,12 @@ Options for defining the code that will be under test
    relative to the argument (client-bindir, 
    serverdir, testdir) [../]
 
+.. option:: --default_server_type=DEFAULTSERVERTYPE
+           
+   Defines what we consider to be the default server
+   type.  We assume a server is default type unless
+   specified otherwise. [drizzle]
+
 .. option:: --serverdir=SERVERPATH
 
    Path to the server executable.  [auto-search]
@@ -394,6 +409,16 @@ Options for defining the testing environment
    By default, we symlink workdir to a location in shm.
    Use this flag to not symlink [False]
 
+.. option:: --libeatmydata      
+  
+   We use libeatmydata (if available) to disable fsyncs
+   and speed up test execution.  Implies --no-shm
+   
+.. option:: --libeatmydata-path=LIBEATMYDATAPATH
+            
+   Path to the libeatmydata install you want to use
+   [/usr/local/lib/libeatmydata.so]
+
 .. option:: --start-dirty       
 
    Don't try to clean up working directories before test
@@ -403,6 +428,11 @@ Options for defining the testing environment
                         
    Turn off the use of --secure-file-priv=vardir for
    started servers
+
+.. option:: --randgen-path=RANDGENPATH
+
+    The path to a randgen installation that can be used to
+    execute randgen-based tests
 
 Options to pass options on to the server
 -----------------------------------------
