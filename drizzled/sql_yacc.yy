@@ -1829,7 +1829,7 @@ alter:
 
             Lex.col_list.clear();
             Lex.select_lex.init_order();
-            Lex.select_lex.db= const_cast<char*>(((TableList*) Lex.select_lex.table_list.first)->getSchemaName());
+            Lex.select_lex.db= ((TableList*) Lex.select_lex.table_list.first)->getSchemaName();
           }
           alter_commands
           {}
@@ -1915,7 +1915,7 @@ alter_list_item:
         | CHANGE_SYM opt_column field_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->change= (char*)$3.data();
+            statement->change= $3.data();
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
           }
           field_spec opt_place
@@ -2005,7 +2005,7 @@ alter_list_item:
         | RENAME opt_to table_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            Lex.select_lex.db= (char*)$3->db.data();
+            Lex.select_lex.db= $3->db.data();
             if (not Lex.select_lex.db)
             {
               str_ref db = Lex.session->copy_db_to();
@@ -4744,7 +4744,7 @@ use:
           USE_SYM schema_name
           {
             Lex.statement= new statement::ChangeSchema(YYSession);
-            Lex.select_lex.db= (char*)$2.data();
+            Lex.select_lex.db= $2.data();
           }
         ;
 
@@ -4916,7 +4916,7 @@ text_literal:
         }
         | text_literal TEXT_STRING_literal
           {
-            ((Item_string*) $1)->append((char*)$2.data(), $2.size());
+            ((Item_string*) $1)->append($2);
           }
         ;
 

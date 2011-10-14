@@ -86,9 +86,9 @@ public:
     return new Item_string(name, str_value.ptr(), str_value.length(), collation.collation);
   }
   Item *safe_charset_converter(const charset_info_st * const tocs);
-  inline void append(char *str, uint32_t length)
+  inline void append(str_ref v)
   {
-    str_value.append(str, length);
+    str_value.append(v);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
   }
   virtual void print(String *str);
