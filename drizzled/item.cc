@@ -1575,18 +1575,15 @@ static Field *create_tmp_field_from_item(Session *,
     */
     if (item->unsigned_flag)
     {
-      new_field= new field::Size(item->max_length, maybe_null,
-                                  item->name, item->unsigned_flag);
+      new_field= new field::Size(item->max_length, maybe_null, item->name, item->unsigned_flag);
     }
-    else if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
+    else if (item->max_length >= MY_INT32_NUM_DECIMAL_DIGITS - 1)
     {
-      new_field= new field::Int64(item->max_length, maybe_null,
-                                  item->name, item->unsigned_flag);
+      new_field= new field::Int64(item->max_length, maybe_null, item->name, item->unsigned_flag);
     }
     else
     {
-      new_field= new field::Int32(item->max_length, maybe_null,
-                                  item->name, item->unsigned_flag);
+      new_field= new field::Int32(item->max_length, maybe_null, item->name, item->unsigned_flag);
     }
 
     break;

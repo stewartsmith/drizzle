@@ -83,7 +83,8 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
   }
   session->lex().setCacheable(false);
 
-  set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
+  if (component_name->size() > MAX_SYS_VAR_LENGTH)
+    component_name->assign(component_name->data(), MAX_SYS_VAR_LENGTH);
 
   return new Item_func_get_system_var(var, var_type, component_name, NULL, 0);
 }

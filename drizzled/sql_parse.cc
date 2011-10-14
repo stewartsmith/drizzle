@@ -727,8 +727,7 @@ void create_select_for_variable(Session *session, const char *var_name)
   init_select(&lex);
   lex.sql_command= SQLCOM_SELECT;
   lex_string_t tmp;
-  tmp.str= (char*) var_name;
-  tmp.length=strlen(var_name);
+  tmp.assign(var_name, strlen(var_name));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
@@ -905,8 +904,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!table)
     return NULL;				// End of memory
   const char* alias_str= alias ? alias->data() : table->table.data();
-  if (! table_options.test(TL_OPTION_ALIAS) &&
-      check_table_name(table->table.data(), table->table.length))
+  if (not table_options.test(TL_OPTION_ALIAS) &&
+      check_table_name(table->table.data(), table->table.size()))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.data());
     return NULL;
@@ -929,7 +928,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       my_message(ER_DERIVED_MUST_HAVE_ALIAS, ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    alias_str= (char*) session->mem.memdup(alias_str, table->table.length+1);
+    alias_str= (char*) session->mem.memdup(alias_str, table->table.size() + 1);
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
@@ -1561,7 +1560,7 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str->length == res)
+  if (!well_formed_error &&  str->size() == res)
     return false;
 
   if (!no_error)
@@ -1590,7 +1589,7 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
     return true;
   }
 
-  if (str->length == res)
+  if (str->size() == res)
     return false;
 
   switch (err_code)
