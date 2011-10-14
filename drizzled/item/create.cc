@@ -1038,7 +1038,7 @@ Create_udf_func Create_udf_func::s_singleton;
 
 Item* Create_udf_func::create(Session *session, lex_string_t name, List<Item> *item_list)
 {
-  return create(session, plugin::Function::get(std::string(name.data(), name.size())), item_list);
+  return create(session, plugin::Function::get(to_string(name)), item_list);
 }
 
 Item* Create_udf_func::create(Session *session, const plugin::Function *udf, List<Item> *item_list)

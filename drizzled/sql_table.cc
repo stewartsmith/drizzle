@@ -852,10 +852,10 @@ static int prepare_create_table(Session *session,
           if (!key2->generated ||
               (key->generated && key->columns.size() <
                key2->columns.size()))
-            key->name.str= ignore_key;
+            key->name.assign(ignore_key, 1);
           else
           {
-            key2->name.str= ignore_key;
+            key2->name.assign(ignore_key, 1);
             key_parts-= key2->columns.size();
             (*key_count)--;
           }
@@ -867,7 +867,7 @@ static int prepare_create_table(Session *session,
       key_parts+=key->columns.size();
     else
       (*key_count)--;
-    if (key->name.data() && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.str))
+    if (key->name.data() && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.data()))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.data());
       return true;
@@ -934,7 +934,7 @@ static int prepare_create_table(Session *session,
     if (key_info->comment.size() > 0)
     {
       key_info->flags|= HA_USES_COMMENT;
-      key_info->comment.str= (char*)key->key_create_info.comment.data();
+      key_info->comment.assign(key->key_create_info.comment.data(), key_info->comment.size()); // weird
     }
 
     message::Table::Field *protofield= NULL;

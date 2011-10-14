@@ -1000,7 +1000,7 @@ custom_database_option:
           ident_or_text
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex.statement;
-            statement->schema_message.mutable_engine()->add_options()->set_name($1.str);
+            statement->schema_message.mutable_engine()->add_options()->set_name($1.data());
           }
         | REPLICATE '=' TRUE_SYM
           {
@@ -1020,11 +1020,11 @@ custom_database_option:
           }
         | ident_or_text '=' ident_or_text
           {
-            parser::buildSchemaOption(&Lex, $1.str, $3);
+            parser::buildSchemaOption(&Lex, $1.data(), $3);
           }
         | ident_or_text '=' ulonglong_num
           {
-            parser::buildSchemaOption(&Lex, $1.str, $3);
+            parser::buildSchemaOption(&Lex, $1.data(), $3);
           }
         ;
 
@@ -1059,11 +1059,11 @@ create_table_option:
 custom_engine_option:
         ENGINE_SYM '=' ident_or_text
           {
-            Lex.table()->mutable_engine()->set_name($3.str);
+            Lex.table()->mutable_engine()->set_name($3.data());
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-            Lex.table()->mutable_options()->set_comment($3.str);
+            Lex.table()->mutable_options()->set_comment($3.data());
           }
         | AUTO_INC opt_equal ulonglong_num
           {
@@ -1079,7 +1079,7 @@ custom_engine_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-	    drizzled::identifier::User user($2.str);
+	    drizzled::identifier::User user($2.data());
             message::set_definer(*Lex.table(), user);
           }
         | DEFINER CURRENT_USER optional_braces
@@ -1096,11 +1096,11 @@ custom_engine_option:
           }
         |  ident_or_text '=' engine_option_value
           {
-            parser::buildEngineOption(&Lex, $1.str, $3);
+            parser::buildEngineOption(&Lex, $1.data(), $3);
           }
         | ident_or_text '=' ulonglong_num
           {
-            parser::buildEngineOption(&Lex, $1.str, $3);
+            parser::buildEngineOption(&Lex, $1.data(), $3);
           }
         | default_charset
         | default_collation
@@ -1150,7 +1150,7 @@ row_format:
 row_format_or_text:
           row_format
           {
-            $$.assign(YYSession->mem.strdup($1.str, $1.length), $1.length);
+            $$.assign(YYSession->mem.strdup($1.data(), $1.length), $1.length);
           }
         ;
 
@@ -1185,11 +1185,11 @@ key_def:
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
           {
-            parser::buildKey(&Lex, $2, $3.str ? $3 : $1);
+            parser::buildKey(&Lex, $2, $3.data() ? $3 : $1);
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
-            parser::buildForeignKey(&Lex, $1.str ? $1 : $4, $8);
+            parser::buildForeignKey(&Lex, $1.data() ? $1 : $4, $8);
           }
         | constraint opt_check_constraint
           {
@@ -1230,7 +1230,7 @@ field_spec:
 
             if (Lex.field())
             {
-              Lex.field()->set_name($1.str);
+              Lex.field()->set_name($1.data());
             }
 
             if (add_field_to_list(Lex.session, &$1, (enum enum_field_types) $3,
@@ -1252,7 +1252,7 @@ field_def:
           }
         | TIMESTAMP_SYM '(' NUM ')' opt_attribute_timestamp
           {
-            $$=parser::buildTimestampColumn(&Lex, $3.str);
+            $$=parser::buildTimestampColumn(&Lex, $3.data());
           }
         | DATETIME_SYM opt_attribute_timestamp
           {
@@ -1271,7 +1271,7 @@ field_def:
           }
         | varchar '(' NUM ')' opt_attribute_string
           {
-            $$= parser::buildVarcharColumn(&Lex, $3.str);
+            $$= parser::buildVarcharColumn(&Lex, $3.data());
           }
         | TEXT_SYM opt_attribute_string
           {
@@ -1294,7 +1294,7 @@ field_def:
           }
         | VARBINARY '(' NUM ')' opt_attribute
           {
-            $$= parser::buildVarbinaryColumn(&Lex, $3.str);
+            $$= parser::buildVarbinaryColumn(&Lex, $3.data());
           }
         | real_type opt_attribute_number
           {
@@ -1388,7 +1388,7 @@ float_options:
           /* empty */
           { Lex.dec=Lex.length= NULL; }
         | '(' NUM ')'
-          { Lex.length=$2.str; Lex.dec= NULL; }
+          { Lex.length=$2.data(); Lex.dec= NULL; }
         | precision
           {}
         ;
@@ -1396,14 +1396,14 @@ float_options:
 precision:
           '(' NUM ',' NUM ')'
           {
-            Lex.length= $2.str;
-            Lex.dec= $4.str;
+            Lex.length= $2.data();
+            Lex.dec= $4.data();
           }
         ;
 
 opt_len:
           /* empty */ { Lex.length= NULL; /* use default length */ }
-        | '(' NUM ')' { Lex.length= $2.str; }
+        | '(' NUM ')' { Lex.length= $2.data(); }
         ;
 
 opt_field_number_signed:
@@ -1604,16 +1604,16 @@ opt_attribute_comment:
             statement->comment= $2;
 
             if (Lex.field())
-              Lex.field()->set_comment($2.str);
+              Lex.field()->set_comment($2.data());
           }
         ;
 
 collation_name:
           ident_or_text
           {
-            if (!($$=get_charset_by_name($1.str)))
+            if (!($$=get_charset_by_name($1.data())))
             {
-              my_error(ER_UNKNOWN_COLLATION, MYF(0), $1.str);
+              my_error(ER_UNKNOWN_COLLATION, MYF(0), $1.data());
               DRIZZLE_YYABORT;
             }
           }
@@ -1789,10 +1789,10 @@ key_part:
           ident { $$=new Key_part_spec($1, 0); }
         | ident '(' NUM ')'
           {
-            int key_part_len= atoi($3.str);
+            int key_part_len= atoi($3.data());
             if (!key_part_len)
             {
-              my_error(ER_KEY_PART_0, MYF(0), $1.str);
+              my_error(ER_KEY_PART_0, MYF(0), $1.data());
             }
             $$=new Key_part_spec($1, (uint) key_part_len);
           }
@@ -1916,7 +1916,7 @@ alter_list_item:
         | CHANGE_SYM opt_column field_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
-            statement->change= $3.str;
+            statement->change= (char*)$3.data();
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
           }
           field_spec opt_place
@@ -1944,7 +1944,7 @@ alter_list_item:
                                   statement->default_value,
                                   statement->on_update_value,
                                   &statement->comment,
-                                  $3.str, &Lex.interval_list, Lex.charset))
+                                  $3.data(), &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
           }
           opt_place
@@ -1956,11 +1956,11 @@ alter_list_item:
             message::AlterTable::AlterTableOperation *operation;
             operation= Lex.alter_table()->add_operations();
             operation->set_operation(message::AlterTable::AlterTableOperation::DROP_COLUMN);
-            operation->set_drop_name($3.str);
+            operation->set_drop_name($3.data());
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
-            parser::buildAddAlterDropIndex(&Lex, $4.str, true);
+            parser::buildAddAlterDropIndex(&Lex, $4.data(), true);
           }
         | DROP PRIMARY_SYM KEY_SYM
           {
@@ -1968,7 +1968,7 @@ alter_list_item:
           }
         | DROP key_or_index field_ident
           {
-            parser::buildAddAlterDropIndex(&Lex, $3.str);
+            parser::buildAddAlterDropIndex(&Lex, $3.data());
           }
         | DISABLE_SYM KEYS
           {
@@ -1993,14 +1993,14 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.alter_list.push_back(AlterColumn($3.str,$6));
+            statement->alter_info.alter_list.push_back(AlterColumn($3.data(),$6));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ALTER_SYM opt_column field_ident DROP DEFAULT
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            statement->alter_info.alter_list.push_back(AlterColumn($3.str, (Item*) 0));
+            statement->alter_info.alter_list.push_back(AlterColumn($3.data(), NULL));
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | RENAME opt_to table_ident
@@ -2008,7 +2008,7 @@ alter_list_item:
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
             size_t dummy;
 
-            Lex.select_lex.db=$3->db.str;
+            Lex.select_lex.db= (char*)$3->db.data();
             if (Lex.select_lex.db == NULL &&
                 Lex.session->copy_db_to(Lex.select_lex.db, dummy))
             {
@@ -2027,7 +2027,7 @@ alter_list_item:
             message::AlterTable::RenameTable *rename_operation;
             rename_operation= Lex.alter_table()->mutable_rename();
             rename_operation->set_to_schema(Lex.select_lex.db);
-            rename_operation->set_to_name(Lex.name.str);
+            rename_operation->set_to_name(Lex.name.data());
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
@@ -2073,7 +2073,7 @@ opt_place:
           /* empty */ {}
         | AFTER_SYM ident
           {
-            parser::storeAlterColumnPosition(&Lex, $2.str);
+            parser::storeAlterColumnPosition(&Lex, $2.data());
           }
         | FIRST_SYM
           {
@@ -2346,7 +2346,7 @@ select_item:
 
             YYSession->add_item_to_list($2);
 
-            if ($4.str)
+            if ($4.data())
             {
               $2->is_autogenerated_name= false;
               $2->set_name($4.data(), $4.size(), system_charset_info);
@@ -3086,7 +3086,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            const plugin::Function *udf= plugin::Function::get(std::string($1.data(), $1.size()));
+            const plugin::Function *udf= plugin::Function::get(to_string($1));
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
@@ -3115,7 +3115,7 @@ function_call_generic:
 			else 
 			{
               /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
-              my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
+              my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.data());
             }
 
             if (not ($$= item))
@@ -3153,7 +3153,7 @@ udf_expr:
              because the syntax will not allow having an explicit name here.
              See WL#1017 re. udf attributes.
             */
-            if ($4.str)
+            if ($4.data())
             {
               $2->is_autogenerated_name= false;
               $2->set_name($4.data(), $4.size(), system_charset_info);
@@ -3241,7 +3241,7 @@ variable_aux:
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
-            if ($3.str && $4.str && parser::check_reserved_words(&$3))
+            if ($3.data() && $4.data() && parser::check_reserved_words(&$3))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -3814,7 +3814,7 @@ opt_key_usage_list:
 
 key_usage_element:
           ident
-          { Lex.current_select->add_index_hint(YYSession, $1.str); }
+          { Lex.current_select->add_index_hint(YYSession, $1.data()); }
         | PRIMARY_SYM
           { Lex.current_select->add_index_hint(YYSession, "PRIMARY"); }
         ;
@@ -4102,20 +4102,20 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
-        | HEX_NUM       { $$= (unsigned long) strtol($1.str, NULL, 16); }
-        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
-        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
-        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
-        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.str, NULL, &error); }
+          NUM           { int error; $$= (unsigned long) internal::my_strtoll10($1.data(), NULL, &error); }
+        | HEX_NUM       { $$= (unsigned long) strtol($1.data(), NULL, 16); }
+        | LONG_NUM      { int error; $$= (unsigned long) internal::my_strtoll10($1.data(), NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (unsigned long) internal::my_strtoll10($1.data(), NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (unsigned long) internal::my_strtoll10($1.data(), NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (unsigned long) internal::my_strtoll10($1.data(), NULL, &error); }
         ;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, NULL, &error); }
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.data(), NULL, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.data(), NULL, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.data(), NULL, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.data(), NULL, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.data(), NULL, &error); }
         ;
 
 select_var_list_init:
@@ -4160,7 +4160,7 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             Lex.setCacheable(false);
-            Lex.exchange= new file_exchange($2.str, 0);
+            Lex.exchange= new file_exchange((char*)$2.data(), 0);
             Lex.result= new select_export(Lex.exchange);
           }
           opt_field_term opt_line_term
@@ -4169,7 +4169,7 @@ into_destination:
             if (not Lex.describe)
             {
               Lex.setCacheable(false);
-              Lex.exchange= new file_exchange($2.str,1);
+              Lex.exchange= new file_exchange((char*)$2.data(),1);
               Lex.result= new select_dump(Lex.exchange);
             }
           }
@@ -4206,7 +4206,7 @@ drop:
             message::AlterTable::AlterTableOperation *operation;
             operation= Lex.alter_table()->add_operations();
             operation->set_operation(message::AlterTable::AlterTableOperation::DROP_KEY);
-            operation->set_drop_name($4.str);
+            operation->set_drop_name($4.data());
 
           }
         | DROP DATABASE if_exists schema_name
@@ -4614,7 +4614,7 @@ show_param:
 
 opt_db:
           /* empty */  { $$= 0; }
-        | from_or_in ident { $$= $2.str; }
+        | from_or_in ident { $$= $2.data(); }
         ;
 
 from_or_in:
@@ -4745,7 +4745,7 @@ use:
           USE_SYM schema_name
           {
             Lex.statement= new statement::ChangeSchema(YYSession);
-            Lex.select_lex.db= $2.str;
+            Lex.select_lex.db= (char*)$2.data();
           }
         ;
 
@@ -4765,7 +4765,7 @@ load:
             Lex.lock_option= $4;
             Lex.duplicates= DUP_ERROR;
             Lex.ignore= 0;
-            Lex.exchange= new file_exchange($6.str, 0, $2);
+            Lex.exchange= new file_exchange((char*)$6.data(), 0, $2);
           }
           opt_duplicate INTO
           {
@@ -4875,7 +4875,7 @@ opt_ignore_lines:
         | IGNORE_SYM NUM lines_or_rows
           {
             assert(Lex.exchange != 0);
-            Lex.exchange->skip_lines= atol($2.str);
+            Lex.exchange->skip_lines= atol($2.data());
           }
         ;
 
@@ -4917,7 +4917,7 @@ text_literal:
         }
         | text_literal TEXT_STRING_literal
           {
-            ((Item_string*) $1)->append($2.str, $2.size());
+            ((Item_string*) $1)->append((char*)$2.data(), $2.size());
           }
         ;
 
@@ -5191,7 +5191,7 @@ ident:
           IDENT_sys    { $$=$1; }
         | keyword
           {
-            $$.assign(YYSession->mem.strdup($1.str, $1.length), $1.length);
+            $$.assign(YYSession->mem.strdup($1.data(), $1.length), $1.length);
           }
         ;
 
@@ -5473,7 +5473,7 @@ user_variable_ident:
 internal_variable_ident:
           keyword_exception_for_variable
           {
-            $$.assign(YYSession->mem.strdup($1.str, $1.length), $1.length);
+            $$.assign(YYSession->mem.strdup($1.data(), $1.length), $1.length);
           }
         | IDENT_sys    { $$=$1; }
         ;
@@ -5484,7 +5484,7 @@ internal_variable_name:
             /* We have to lookup here since local vars can shadow sysvars */
             {
               /* Not an SP local variable */
-              sys_var *tmp= find_sys_var(std::string($1.data(), $1.size()));
+              sys_var *tmp= find_sys_var(to_string($1));
               if (!tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;

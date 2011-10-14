@@ -1692,7 +1692,7 @@ void Session::refresh_status()
 
 user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
 {
-  return getVariable(std::string(name.data(), name.size()), create_if_not_exists);
+  return getVariable(to_string(name), create_if_not_exists);
 }
 
 user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)

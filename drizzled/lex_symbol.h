@@ -22,25 +22,46 @@
 
 #pragma once
 
-namespace drizzled
+namespace drizzled {
+
+struct SYM_GROUP 
 {
+  const char* name;
+  const char* needed_define;
+};
 
-typedef struct st_sym_group {
-  const char *name;
-  const char *needed_define;
-} SYM_GROUP;
-
-typedef struct st_symbol {
-  const char *name;
-  uint	tok;
-} SYMBOL;
-
-typedef struct st_lex_symbol
+struct SYMBOL
 {
-  const SYMBOL *symbol;
-  char   *str;
-  uint32_t   length;
-} LEX_SYMBOL;
+  const char* name;
+  uint tok;
+};
+
+struct LEX_SYMBOL
+{
+  const char* begin() const
+  {
+    return data();
+  }
+
+  const char* end() const
+  {
+    return data() + size();
+  }
+
+  const char* data() const
+  {
+    return str;
+  }
+
+  size_t size() const
+  {
+    return length;
+  }
+
+  const SYMBOL* symbol;
+  char* str;
+  uint32_t length;
+};
 
 extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;

@@ -318,7 +318,7 @@ static lex_string_t get_quoted_token(Lex_input_stream *lip,
   lex_string_t tmp;
   tmp.assign((char*)lip->m_session->mem.alloc(length + 1), length);
   const char* from= lip->get_tok_start() + skip;
-  char* to= (char*)tmp.str;
+  char* to= (char*)tmp.data();
   const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
@@ -990,7 +990,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       /* " used for strings */
     case MY_LEX_STRING:			// Incomplete text string
-      if (!(yylval->lex_str.str = get_text(lip, 1, 1)))
+      if (!(yylval->lex_str.str_ = get_text(lip, 1, 1)))
       {
         state= MY_LEX_CHAR;		// Read char by char
         break;

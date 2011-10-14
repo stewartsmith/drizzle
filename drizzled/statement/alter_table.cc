@@ -165,7 +165,7 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   lex().name.str ? lex().name.str : first_table->getTableName());
+                                   lex().name.data() ? lex().name.data() : first_table->getTableName());
 
     res= alter_table(&session(),
                      identifier,
@@ -187,7 +187,7 @@ bool statement::AlterTable::execute()
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       lex().name.str ? lex().name.str : first_table->getTableName(),
+                                       lex().name.data() ? lex().name.data() : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
       res= alter_table(&session(),
@@ -592,7 +592,7 @@ static bool prepare_alter_table(Session *session,
 
         Foreign_key *fkey= (Foreign_key*)key;
         add_foreign_key_to_table_message(&table_message,
-                                         fkey->name.str,
+                                         fkey->name.data(),
                                          fkey->columns,
                                          fkey->ref_table,
                                          fkey->ref_columns,
@@ -604,9 +604,9 @@ static bool prepare_alter_table(Session *session,
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
 
-      if (key->name.str && is_primary_key(key->name.str))
+      if (key->name.data() && is_primary_key(key->name.data()))
       {
-        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.data());
         return true;
       }
     }
