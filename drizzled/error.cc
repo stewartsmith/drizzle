@@ -639,6 +639,9 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_USE_DATA_DICTIONARY, N_("Engine status is now stored in the data_dictionary tables, please use these instead."));
   ADD_ERROR_MESSAGE(ER_TRANSACTION_ALREADY_STARTED, N_("There is already a transaction in progress"));
   ADD_ERROR_MESSAGE(ER_NO_LOCK_HELD, N_("No lock is held by this connection."));
+  
+  // Errors in scripts, such as JavaScript
+  ADD_ERROR_MESSAGE(ER_SCRIPT, N_("Script error: %s"));
 }
 
 } /* namespace drizzled */
