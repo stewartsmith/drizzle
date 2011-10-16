@@ -805,7 +805,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
+  if (check_identifier_name(*field_name, ER_TOO_LONG_IDENT))
     return true;
 
   if (type_modifier & PRI_KEY_FLAG)
@@ -1568,7 +1568,7 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(lex_string_t *str, error_t err_code,
+bool check_identifier_name(lex_string_t str, error_t err_code,
                            uint32_t max_char_length,
                            const char *param_for_err_msg)
 {
@@ -1580,15 +1580,15 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->data());
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str.data());
     return true;
   }
 
-  if (str->size() == res)
+  if (str.size() == res)
     return false;
 
   switch (err_code)
@@ -1596,10 +1596,10 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(err_code, MYF(0), str->data(), param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str.data(), param_for_err_msg, max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(err_code, MYF(0), str->data());
+    my_error(err_code, MYF(0), str.data());
     break;
   default:
     assert(false);

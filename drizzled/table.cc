@@ -312,7 +312,7 @@ bool check_table_name(const char *name, uint32_t length)
     return 1;
   lex_string_t ident;
   ident.assign(name, length);
-  return check_identifier_name(&ident);
+  return check_identifier_name(ident);
 }
 
 

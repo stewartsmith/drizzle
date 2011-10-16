@@ -42,7 +42,7 @@ bool insert_precheck(Session *session, TableList *tables);
 
 Item *negate_expression(Session *session, Item *expr);
 
-bool check_identifier_name(lex_string_t *str, error_t err_code= EE_OK,
+bool check_identifier_name(lex_string_t str, error_t err_code= EE_OK,
                            uint32_t max_char_length= NAME_CHAR_LEN,
                            const char *param_for_err_msg= "");
 
