@@ -31,15 +31,12 @@ namespace drizzled {
 Item_bin_string::Item_bin_string(str_ref str_arg)
 {
   const char *str= str_arg.data();
-  uint32_t str_length = str_arg.size();
-  const char *end= str + str_length - 1;
+  const char *end= str + str_arg.size() - 1;
   unsigned char bits= 0;
   uint32_t power= 1;
 
-  max_length= (str_length + 7) >> 3;
+  max_length= (str_arg.size() + 7) >> 3;
   char *ptr= (char*) memory::sql_alloc(max_length + 1);
-  if (!ptr)
-    return;
   str_value.set(ptr, max_length, &my_charset_bin);
   ptr+= max_length - 1;
   ptr[1]= 0;                     // Set end null for string

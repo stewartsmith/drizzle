@@ -301,7 +301,7 @@ bool buildOrderBy(LEX *lex)
   return true;
 }
 
-void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value)
+void buildEngineOption(LEX *lex, const char *key, str_ref value)
 {
   message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
@@ -315,7 +315,7 @@ void buildEngineOption(LEX *lex, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value)
+void buildSchemaOption(LEX *lex, const char *key, str_ref value)
 {
   statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();

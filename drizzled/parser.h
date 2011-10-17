@@ -121,9 +121,9 @@ void errorOn(drizzled::Session *session, const char *s);
 
 
 bool buildOrderBy(LEX *lex);
-void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value);
+void buildEngineOption(LEX *lex, const char *key, str_ref value);
 void buildEngineOption(LEX *lex, const char *key, uint64_t value);
-void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value);
+void buildSchemaOption(LEX *lex, const char *key, str_ref value);
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
 void buildSchemaDefiner(LEX *lex, const lex_string_t &value);
 void buildSchemaDefiner(LEX *lex, const identifier::User &user);
