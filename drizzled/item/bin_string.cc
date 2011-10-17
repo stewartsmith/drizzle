@@ -28,8 +28,10 @@ namespace drizzled {
   In number context this is a int64_t value.
 */
 
-Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
+Item_bin_string::Item_bin_string(str_ref str_arg)
 {
+  const char *str= str_arg.data();
+  uint32_t str_length = str_arg.size();
   const char *end= str + str_length - 1;
   unsigned char bits= 0;
   uint32_t power= 1;

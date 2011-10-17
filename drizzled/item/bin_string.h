@@ -28,7 +28,7 @@ namespace drizzled {
 class Item_bin_string : public Item_hex_string
 {
 public:
-  Item_bin_string(const char *str,uint32_t str_length);
+  Item_bin_string(str_ref);
 };
 
 class DRIZZLED_API Item_result_field : public Item    /* Item with result field */
