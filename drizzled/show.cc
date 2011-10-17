@@ -266,7 +266,7 @@ bool buildTableStatus(Session *session, const char *ident)
   return true;
 }
 
-bool buildEngineStatus(Session *session, lex_string_t)
+bool buildEngineStatus(Session *session, str_ref)
 {
   session->lex().sql_command= SQLCOM_SELECT;
   drizzled::statement::Show *select= new statement::Show(session);
@@ -479,7 +479,7 @@ bool buildVariables(Session *session, const drizzled::sql_var_t is_global)
   return true;
 }
 
-bool buildCreateSchema(Session *session, lex_string_t &ident)
+bool buildCreateSchema(Session *session, str_ref ident)
 {
   session->lex().sql_command= SQLCOM_SELECT;
   drizzled::statement::Show *select= new statement::Show(session);
