@@ -451,13 +451,8 @@ int prepare_new_schema_table(Session *session, LEX& lex0, const string& schema_t
 
 static int execute_command(Session *session)
 {
-  bool res= false;
-
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
   Select_Lex *select_lex= &session->lex().select_lex;
-
-  /* list of all tables in query */
-  TableList *all_tables;
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -476,8 +471,9 @@ static int execute_command(Session *session)
   */
   session->lex().first_lists_tables_same();
 
+  /* list of all tables in query */
   /* should be assigned after making first tables same */
-  all_tables= session->lex().query_tables;
+  TableList* all_tables= session->lex().query_tables;
 
   /* set context for commands which do not use setup_tables */
   select_lex->context.resolve_in_table_list_only((TableList*)select_lex->table_list.first);
@@ -496,8 +492,8 @@ static int execute_command(Session *session)
 
   assert(not session->transaction.stmt.hasModifiedNonTransData());
 
-  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
-      && ! session->inTransaction()
+  if (not (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && not session->inTransaction()
       && session->lex().statement->isTransactional())
   {
     if (not session->startTransaction())
@@ -508,7 +504,7 @@ static int execute_command(Session *session)
   }
 
   /* now we are ready to execute the statement */
-  res= session->lex().statement->execute();
+  bool res= session->lex().statement->execute();
   session->set_proc_info("query end");
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
@@ -516,13 +512,14 @@ static int execute_command(Session *session)
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (! (sql_command_flags[session->lex().sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (not sql_command_flags[session->lex().sql_command].test(CF_BIT_HAS_ROW_COUNT))
   {
     session->row_count_func= -1;
   }
 
-  return (res || session->is_error());
+  return res || session->is_error();
 }
+
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= &session->lex();
@@ -805,7 +802,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
+  if (check_identifier_name(*field_name, ER_TOO_LONG_IDENT))
     return true;
 
   if (type_modifier & PRI_KEY_FLAG)
@@ -1568,10 +1565,9 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(lex_string_t *str, error_t err_code,
-                           uint32_t max_char_length,
-                           const char *param_for_err_msg)
+bool check_identifier_name(lex_string_t str, error_t err_code)
 {
+  uint32_t max_char_length= NAME_CHAR_LEN;
   /*
     We don't support non-BMP characters in identifiers at the moment,
     so they should be prohibited until such support is done.
@@ -1580,15 +1576,15 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->data());
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str.data());
     return true;
   }
 
-  if (str->size() == res)
+  if (str.size() == res)
     return false;
 
   switch (err_code)
@@ -1596,10 +1592,10 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(err_code, MYF(0), str->data(), param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str.data(), "", max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(err_code, MYF(0), str->data());
+    my_error(err_code, MYF(0), str.data());
     break;
   default:
     assert(false);

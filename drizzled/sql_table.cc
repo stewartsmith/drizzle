@@ -831,7 +831,7 @@ static int prepare_create_table(Session *session,
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
       return true;
     }
-    if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
+    if (check_identifier_name(key->name, ER_TOO_LONG_IDENT))
       return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
