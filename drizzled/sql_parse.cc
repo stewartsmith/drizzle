@@ -1549,18 +1549,18 @@ Item *negate_expression(Session *session, Item *expr)
 */
 
 
-bool check_string_char_length(lex_string_t *str, const char *err_msg,
+bool check_string_char_length(str_ref str, const char *err_msg,
                               uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str->size() == res)
+  if (!well_formed_error &&  str.size() == res)
     return false;
 
   if (!no_error)
-    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->data(), err_msg, max_char_length);
+    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }
 

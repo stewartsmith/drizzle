@@ -23,7 +23,6 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/common.h>
-#include <drizzled/lex_string.h>
 #include <drizzled/comp_creator.h>
 #include <drizzled/identifier.h>
 
@@ -34,39 +33,33 @@ namespace drizzled {
 
 DRIZZLED_API const std::string& getCommandName(const enum_server_command& command);
 
-bool execute_sqlcom_select(Session *session, TableList *all_tables);
-bool insert_select_prepare(Session *session);
-bool update_precheck(Session *session, TableList *tables);
-bool delete_precheck(Session *session, TableList *tables);
-bool insert_precheck(Session *session, TableList *tables);
+bool execute_sqlcom_select(Session*, TableList *all_tables);
+bool insert_select_prepare(Session*);
+bool update_precheck(Session*, TableList *tables);
+bool delete_precheck(Session*, TableList *tables);
+bool insert_precheck(Session*, TableList *tables);
 
-Item *negate_expression(Session *session, Item *expr);
+Item *negate_expression(Session*, Item *expr);
 
 bool check_identifier_name(str_ref, error_t err_code= EE_OK);
 
-bool check_string_byte_length(lex_string_t *str, const char *err_msg,
-                              uint32_t max_byte_length);
-bool check_string_char_length(lex_string_t *str, const char *err_msg,
-                              uint32_t max_char_length, const charset_info_st * const cs,
-                              bool no_error);
+bool check_string_byte_length(str_ref, const char *err_msg, uint32_t max_byte_length);
+bool check_string_char_length(str_ref, const char *err_msg, uint32_t max_char_length, const charset_info_st*, bool no_error);
 
+bool test_parse_for_slave(Session*, char *inBuf, uint32_t length);
 
-bool test_parse_for_slave(Session *session, char *inBuf,
-                                uint32_t length);
+void reset_session_for_next_command(Session*);
 
-void reset_session_for_next_command(Session *session);
-
-void create_select_for_variable(Session *session, const char *var_name);
+void create_select_for_variable(Session*, const char *var_name);
 
 void init_update_queries();
 
-bool dispatch_command(enum_server_command command, Session* session,
-                      const char* packet, uint32_t packet_length);
+bool dispatch_command(enum_server_command command, Session*, const char* packet, uint32_t packet_length);
 
-bool check_simple_select(Session* session);
+bool check_simple_select(Session*);
 
-void init_select(LEX *lex);
-bool new_select(LEX *lex, bool move_down);
+void init_select(LEX*);
+bool new_select(LEX*, bool move_down);
 
 int prepare_new_schema_table(Session*, LEX&, const std::string& schema_table_name);
 
@@ -75,7 +68,7 @@ Item * all_any_subquery_creator(Item *left_expr,
                                 bool all,
                                 Select_Lex *select_lex);
 
-char* query_table_status(Session *session,const char *db,const char *table_name);
+char* query_table_status(Session*,const char *db,const char *table_name);
 
 } /* namespace drizzled */
 
