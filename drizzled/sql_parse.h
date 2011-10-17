@@ -32,7 +32,7 @@
 
 namespace drizzled {
 
-DRIZZLED_API const std::string &getCommandName(const enum_server_command& command);
+DRIZZLED_API const std::string& getCommandName(const enum_server_command& command);
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool insert_select_prepare(Session *session);
@@ -42,7 +42,7 @@ bool insert_precheck(Session *session, TableList *tables);
 
 Item *negate_expression(Session *session, Item *expr);
 
-bool check_identifier_name(lex_string_t str, error_t err_code= EE_OK);
+bool check_identifier_name(str_ref, error_t err_code= EE_OK);
 
 bool check_string_byte_length(lex_string_t *str, const char *err_msg,
                               uint32_t max_byte_length);
@@ -58,9 +58,9 @@ void reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(Session *session, const char *var_name);
 
-void init_update_queries(void);
+void init_update_queries();
 
-bool dispatch_command(enum enum_server_command command, Session* session,
+bool dispatch_command(enum_server_command command, Session* session,
                       const char* packet, uint32_t packet_length);
 
 bool check_simple_select(Session* session);

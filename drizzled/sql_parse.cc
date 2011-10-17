@@ -1565,7 +1565,7 @@ bool check_string_char_length(lex_string_t *str, const char *err_msg,
 }
 
 
-bool check_identifier_name(lex_string_t str, error_t err_code)
+bool check_identifier_name(str_ref str, error_t err_code)
 {
   uint32_t max_char_length= NAME_CHAR_LEN;
   /*
