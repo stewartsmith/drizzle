@@ -106,7 +106,7 @@ bool ReplicationSchema::create()
                 " `originating_commit_id` BIGINT NOT NULL,"
                 " `msg` BLOB,"
                 " `master_id` BIGINT NOT NULL,"
-                " PRIMARY KEY(`trx_id`, `seg_id`))"
+                " PRIMARY KEY(`master_id`, `trx_id`, `seg_id`))"
                 " COMMENT = 'VERSION 1.2'");
   if (not executeSQL(sql))
     return false;
