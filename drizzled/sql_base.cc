@@ -809,14 +809,20 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
   /* find a unused table in the open table cache */
   if (refresh)
+  {
     *refresh= false;
+  }
 
   /* an open table operation needs a lot of the stack space */
   if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
+  {
     return NULL;
+  }
 
   if (getKilled())
+  {
     return NULL;
+  }
 
   identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
   const identifier::Table::Key &key(identifier.getKey());

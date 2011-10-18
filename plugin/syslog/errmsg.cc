@@ -24,8 +24,8 @@
 
 #include <stdarg.h>
 
-#include "errmsg.h"
-#include "wrap.h"
+#include <plugin/syslog/errmsg.h>
+#include <plugin/syslog/wrap.h>
 
 namespace drizzle_plugin
 {
@@ -51,6 +51,8 @@ error_message::Syslog::Syslog(const std::string& facility,
                             priority.c_str());
     _priority= WrapSyslog::getPriorityByName("warn");
   }
+
+  std::cerr << "Starting syslog with " << _facility << std::endl;
 }
 
 bool error_message::Syslog::errmsg(drizzled::error::level_t, const char *format, va_list ap)

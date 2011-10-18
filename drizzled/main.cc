@@ -95,7 +95,9 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
   if (session)
   {
     if (MyFlags & ME_FATALERROR)
+    {
       session->is_fatal_error= 1;
+    }
 
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
