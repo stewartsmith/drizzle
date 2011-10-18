@@ -99,7 +99,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 
 
 void
-Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
+Item_func_set_user_var::update_hash(const void *ptr, uint32_t length,
                                     Item_result res_type,
                                     const charset_info_st * const cs, Derivation dv,
                                     bool unsigned_arg)

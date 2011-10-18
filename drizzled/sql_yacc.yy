@@ -1238,7 +1238,7 @@ field_spec:
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value, statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   statement->change, &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
 
@@ -1943,7 +1943,7 @@ alter_list_item:
                                   statement->column_format,
                                   statement->default_value,
                                   statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   $3.data(), &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
           }

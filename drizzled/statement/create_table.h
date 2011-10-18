@@ -85,7 +85,7 @@ public:
   column_format_type column_format;
 
   /* Poly-use */
-  lex_string_t comment;
+  str_ref comment;
 
   bool is_engine_set;
   bool is_create_table_like;

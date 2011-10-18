@@ -419,10 +419,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
-                    internal::my_progname,
-                    thread_id,
-                    security_ctx->username().c_str());
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE), internal::my_progname, thread_id, security_ctx->username().c_str());
     }
 
     disconnect();
@@ -1686,16 +1683,12 @@ void Session::refresh_status()
   current_global_counters.connections= 0;
 }
 
-user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
-{
-  return getVariable(to_string(name), create_if_not_exists);
-}
-
-user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
+user_var_entry* Session::getVariable(str_ref name0, bool create_if_not_exists)
 {
   if (cleanup_done)
     return NULL;
 
+  string name(name0.data(), name0.size());
   if (UserVars::mapped_type* iter= find_ptr(user_vars, name))
     return *iter;
 
@@ -1716,14 +1709,9 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 
 void Session::setVariable(const std::string &name, const std::string &value)
 {
-  user_var_entry *updateable_var= getVariable(name.c_str(), true);
-  if (updateable_var)
+  if (user_var_entry* var= getVariable(name, true))
   {
-    updateable_var->update_hash(false,
-                                (void*)value.c_str(),
-                                static_cast<uint32_t>(value.length()), STRING_RESULT,
-                                &my_charset_bin,
-                                DERIVATION_IMPLICIT, false);
+    var->update_hash(false, (void*)value.c_str(), static_cast<uint32_t>(value.length()), STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, false);
   }
 }
 

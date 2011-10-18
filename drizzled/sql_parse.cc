@@ -796,7 +796,7 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
 		       const char *length, const char *decimals,
 		       uint32_t type_modifier, column_format_type column_format,
-		       Item *default_value, Item *on_update_value, lex_string_t *comment,
+		       Item *default_value, Item *on_update_value, str_ref comment,
 		       const char *change, List<String> *interval_list, const charset_info_st* cs)
 {
   LEX  *lex= &session->lex();
@@ -857,7 +857,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   }
 
   CreateField* new_field= new CreateField;
-  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
+  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
