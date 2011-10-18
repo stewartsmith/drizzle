@@ -25,7 +25,7 @@ namespace drizzled {
 
 /* Handling of user definable variables */
 
-class Item_func_set_user_var :public Item_func
+class Item_func_set_user_var : public Item_func
 {
   enum Item_result cached_result_type;
   user_var_entry *entry;
@@ -42,11 +42,11 @@ class Item_func_set_user_var :public Item_func
   } save_result;
 
 public:
-  lex_string_t name; // keep it public
-  Item_func_set_user_var(lex_string_t a,Item *b)
-    :Item_func(b), cached_result_type(INT_RESULT), name(a)
+  str_ref name; // keep it public
+  Item_func_set_user_var(lex_string_t a,Item *b) :
+    Item_func(b), cached_result_type(INT_RESULT), name(a)
   {}
-  enum Functype functype() const { return SUSERVAR_FUNC; }
+  Functype functype() const { return SUSERVAR_FUNC; }
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
