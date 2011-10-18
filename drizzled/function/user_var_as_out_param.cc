@@ -46,13 +46,13 @@ bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 
 void Item_user_var_as_out_param::set_null_value(const charset_info_st* cs)
 {
-  entry->update_hash(true, 0, 0, STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
+  entry->update_hash(true, data_ref(), STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
 
 void Item_user_var_as_out_param::set_value(str_ref str, const charset_info_st* cs)
 {
-  entry->update_hash(false, (void*)str.data(), str.size(), STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
+  entry->update_hash(false, str, STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
 double Item_user_var_as_out_param::val_real()

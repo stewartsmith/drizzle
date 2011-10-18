@@ -1711,7 +1711,7 @@ void Session::setVariable(const std::string &name, const std::string &value)
 {
   if (user_var_entry* var= getVariable(name, true))
   {
-    var->update_hash(false, (void*)value.c_str(), static_cast<uint32_t>(value.length()), STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, false);
+    var->update_hash(false, value, STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, false);
   }
 }
 
