@@ -96,7 +96,7 @@ void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
   BOOST_FOREACH(SchemaCache::reference iter, schema_cache)
-    set_of_names.push_back(iter.second->name());
+    set_of_names.push_back(identifier::Schema(iter.second->name()));
   mutex.unlock_shared();
 }
 

@@ -26,7 +26,7 @@
 
 namespace drizzled {
 
-class DRIZZLED_API Identifier 
+class DRIZZLED_API Identifier
 {
 public:
   virtual ~Identifier()

@@ -73,7 +73,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (not create_info->default_table_charset)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(db));
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(str_ref(db)));
 }
 
 /*

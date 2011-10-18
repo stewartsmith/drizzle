@@ -31,28 +31,24 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::AlterSchema::execute()
 {
-  lex_string_t *db= &lex().name;
-  message::schema::shared_ptr old_definition;
-
   if (not validateSchemaOptions())
     return true;
 
-  identifier::Schema schema_identifier(string(db->data(), db->size()));
+  identifier::Schema schema_identifier(lex().name);
 
   if (not schema::check(session(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
-
     return false;
   }
 
-  identifier::Schema identifier(db->data());
-  if (not (old_definition= plugin::StorageEngine::getSchemaDefinition(identifier)))
+  identifier::Schema identifier(lex().name);
+  message::schema::shared_ptr old_definition= plugin::StorageEngine::getSchemaDefinition(identifier);
+  if (not old_definition)
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
@@ -88,4 +84,3 @@ bool statement::AlterSchema::execute()
 }
 
 } /* namespace drizzled */
-
