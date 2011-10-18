@@ -49,6 +49,7 @@
 #include <drizzled/var.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/lex_input_stream.h>
+#include <drizzled/show.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -3169,7 +3170,7 @@ sum_expr:
         | AVG_SYM '(' DISTINCT in_sum_expr ')'
           { $$=new Item_sum_avg_distinct($4); }
         | COUNT_SYM '(' opt_all '*' ')'
-          { $$=new Item_sum_count(new Item_int((int32_t) 0L,1)); }
+          { $$=new Item_sum_count(new Item_int(0, 1)); }
         | COUNT_SYM '(' in_sum_expr ')'
           { $$=new Item_sum_count($3); }
         | COUNT_SYM '(' DISTINCT
@@ -4932,19 +4933,16 @@ text_string:
               it is OK only emulate fix_fields, because we need only
               value of constant
             */
-            $$= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
+            $$= tmp ? tmp->quick_fix_field(), tmp->val_str(NULL) : NULL;
           }
         | BIN_NUM
           {
-            Item *tmp= new Item_bin_string($1.data(), $1.size());
+            Item *tmp= new Item_bin_string($1);
             /*
               it is OK only emulate fix_fields, because we need only
               value of constant
             */
-            $$= tmp ? tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
+            $$= tmp ? tmp->quick_fix_field(), tmp->val_str(NULL) : NULL;
           }
         ;
 
@@ -4969,7 +4967,7 @@ literal:
         | FALSE_SYM { $$= new drizzled::item::False(); }
         | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1);}
-        | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
+        | BIN_NUM { $$= new Item_bin_string($1); }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;
@@ -4977,7 +4975,7 @@ literal:
 integer_literal:
           text_literal { $$ = $1; }
         | HEX_NUM { $$ = new Item_hex_string($1);}
-        | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
+        | BIN_NUM { $$= new Item_bin_string($1); }
         | NUM_literal { $$ = $1; }
         | NULL_SYM
           {

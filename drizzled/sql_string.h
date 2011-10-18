@@ -63,10 +63,11 @@ class DRIZZLED_API String
 public:
   String();
   String(size_t length_arg);
-  String(const char *str, const charset_info_st * const cs);
-  String(const char *str, size_t len, const charset_info_st * const cs);
-  String(char *str, size_t len, const charset_info_st * const cs);
-  String(const String &str);
+  String(const char*, const charset_info_st*);
+  String(const char*, size_t, const charset_info_st*);
+  String(char *str, size_t len, const charset_info_st*);
+  String(str_ref, const charset_info_st*);
+  String(const String&);
 
   static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
