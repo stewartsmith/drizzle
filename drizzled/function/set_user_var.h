@@ -43,7 +43,7 @@ class Item_func_set_user_var : public Item_func
 
 public:
   str_ref name; // keep it public
-  Item_func_set_user_var(lex_string_t a,Item *b) :
+  Item_func_set_user_var(str_ref a,Item *b) :
     Item_func(b), cached_result_type(INT_RESULT), name(a)
   {}
   Functype functype() const { return SUSERVAR_FUNC; }

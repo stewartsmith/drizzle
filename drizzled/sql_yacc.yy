@@ -3241,7 +3241,7 @@ variable_aux:
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
-            if ($3.data() && $4.data() && parser::check_reserved_words(&$3))
+            if ($3.data() && $4.data() && parser::check_reserved_words($3))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
