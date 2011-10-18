@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-07-09 15:15+0000\n"
-"Last-Translator: Valerii Kolem <Unknown>\n"
+"PO-Revision-Date: 2011-10-17 14:42+0000\n"
+"Last-Translator: John Akulov <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-07-10 04:34+0000\n"
-"X-Generator: Launchpad (build 13168)\n"
+"X-Launchpad-Export-Date: 2011-10-18 04:51+0000\n"
+"X-Generator: Launchpad (build 14157)\n"
 
 msgid "Synonym for `help'."
 msgstr "Синоним для `help'."
@@ -494,8 +494,9 @@ msgstr "Пустое множество"
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] "%ld результатов"
+msgstr[0] "%ld результат"
+msgstr[1] "%ld результата"
+msgstr[2] "%ld результатов"
 
 msgid "Query OK"
 msgstr "Запрос подтвержден"
@@ -505,6 +506,7 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Запрос подтвержден, %ld строка изменена"
 msgstr[1] "Запрос подтвержден, %ld строки изменены"
+msgstr[2] "Запрос подтвержден, %ld строк изменено"
 
 #, c-format
 msgid "Got errno %d on write"
@@ -567,11 +569,12 @@ msgstr ""
 
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- Извлечение структуры таблицы для таблицы %s...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 msgstr ""
+"%s: Предупреждение: Невозможно установить опцию SQL_QUOTE_SHOW_CREATE (%s)\n"
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
@@ -592,13 +595,15 @@ msgstr ""
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
 msgstr ""
+"-- Предупреждение: Пропуск данных для таблицы '%s', так как она имеет тип "
+"%s\n"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
-msgstr ""
+msgstr "-- Пропуск данных дампа для таблицы '%s', она не имеет полей\n"
 
 msgid "-- Sending SELECT query...\n"
-msgstr ""
+msgstr "-- Отправка запроса SELECT...\n"
 
 msgid "when executing 'SELECT INTO OUTFILE'"
 msgstr "при выполнении 'SELECT INTO OUTFILE'"
@@ -724,7 +729,7 @@ msgid "Out of memory"
 msgstr "Недостаточно памяти"
 
 msgid "Aborting\n"
-msgstr ""
+msgstr "Аварийное завершение\n"
 
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
@@ -765,19 +770,21 @@ msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
 msgstr ""
+"%s: Слишком много аргументов (первый лишний -  '%s').\n"
+"Используйте --verbose --help, чтобы получить список доступных функций\n"
 
 msgid "No scheduler found, cannot continue!\n"
-msgstr ""
+msgstr "Не найден планировщик, невозможно продолжить!\n"
 
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr ""
+msgstr "Неизвестный/неподдерживаемый механизм хранения: %s"
 
 msgid "Display this help and exit."
 msgstr "Показать справку и выйти."
 
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "Отобразить эту справку и выйти после инициализации плагинов."
 
 msgid "Auto-increment columns are incremented by this"
 msgstr ""
@@ -798,10 +805,10 @@ msgid "Chroot drizzled daemon during startup."
 msgstr ""
 
 msgid "Set the default collation."
-msgstr ""
+msgstr "Установить параметры сортировки по умолчанию."
 
 msgid "Default completion type."
-msgstr ""
+msgstr "Тип завершения по умолчанию."
 
 msgid "Write core on errors."
 msgstr ""
@@ -810,16 +817,16 @@ msgid "Path to the database root."
 msgstr "Путь к корню БД."
 
 msgid "Set the default storage engine (table type) for tables."
-msgstr ""
+msgstr "Установить стандартный механизм хранения (тип таблицы) для таблиц."
 
 msgid "Set the default time zone."
 msgstr "Установить временную зону по умолчанию."
 
 msgid "Used for debugging;  Use at your own risk!"
-msgstr ""
+msgstr "Используется для отладки;  Используйте это на свой собственный риск!"
 
 msgid "Set up signals usable for debugging"
-msgstr ""
+msgstr "Настроить использование сигналов для отладки"
 
 msgid "(IGNORED)"
 msgstr ""
@@ -828,7 +835,7 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr "Установить язык для вывода названий месяцев и дней недели."
 
 msgid "Log some not critical warnings to the log file."
-msgstr ""
+msgstr "Записывать некоторые некритичные предупреждения в файл лога."
 
 msgid "Pid file used by safe_mysqld."
 msgstr ""
@@ -837,6 +844,8 @@ msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
+"Максимальное время в секундах для ожидания освобождения порта. (По "
+"умолчанию: не ждать)"
 
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
@@ -4948,164 +4957,3 @@ msgstr "Невозможно разобрать транзакцию. Ошибк
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "БУФЕР: %s\n"
-
-#~ msgid "Synonym for -?"
-#~ msgstr "Синоним для -?"
-
-#~ msgid "Set the default character set."
-#~ msgstr "Установить кодировку по-умолчанию."
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Проверить использование памяти и открытых файлов при выходе."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "Отобразить отладочную информацию при выходе."
-
-#~ msgid "Connect to host."
-#~ msgstr "Подключение к хосту."
-
-#~ msgid "built-in default"
-#~ msgstr "встроено по-умолчанию"
-
-#, c-format
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Фйл '%s' не найден (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при удалении файла '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при переименовании файла '%s' в '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при создании/записи файла '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при чтении файла '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при записи файла '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr "Неожиданный конец файла при чтении '%s' (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при закрытии файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Socket file to use for connection."
-#~ msgstr "UNIX сокет, используемый для соединения."
-
-#~ msgid ""
-#~ "Port number to use for connection or 0 for default to, in order of "
-#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-#~ msgstr ""
-#~ "Номер порта для соединения или 0 для порта по умолчанию, в порядке "
-#~ "предпочтения, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-
-#, c-format
-#~ msgid "Unknown command '\\%c'."
-#~ msgstr "Неизвестная команда '\\%c'."
-
-#, c-format
-#~ msgid "Usage: %s [OPTIONS] [database]\n"
-#~ msgstr "Использование: %s [ОПЦИИ] [база данных]\n"
-
-#, c-format
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Нехватка памяти (Нужно %u байт)"
-
-#, c-format
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Ошибка при определении рабочей директории (Код ошибки: %d)"
-
-#, c-format
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Закончилось место на диске при записи '%s'. Ожидаю пока кто-нибудь освободит "
-#~ "место..."
-
-#, c-format
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Не могу перейти в директорию '%s' (Код ошибки: %d)"
-
-#~ msgid "Write more. (-v -v -v gives the table output format)."
-#~ msgstr ""
-#~ "Выводить больше подробностей. (-v -v -v выводит результат в табличном "
-#~ "формате)."
-
-#~ msgid ""
-#~ "Disable outfile. See interactive help (\\h) also. WARNING: option "
-#~ "deprecated; use --disable-tee instead"
-#~ msgstr ""
-#~ "Отключает вывод в файл. Смотри также справку (\\h). ПРЕДУПРЕЖДЕНИЕ: опция "
-#~ "устарела; вместо нее рекомендуется использовать --disable-tee"
-
-#, c-format
-#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-#~ msgstr ""
-#~ "ПРЕДУПРЕЖДЕНИЕ: опция устарела; вместо нее рекомендуется использовать --"
-#~ "disable-tee.\n"
-
-#~ msgid "Shutdown the server."
-#~ msgstr "Выключить сервер."
-
-#~ msgid "event_add error in libevent_add_session_callback\n"
-#~ msgstr "event_add error в libevent_add_session_callback\n"
-
-#~ msgid "session_add_event event_add error in libevent_init\n"
-#~ msgstr "session_add_event event_add ошибка в libevent_init\n"
-
-#~ msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-#~ msgstr "init_pipe(session_kill_pipe) ошибка в libevent_init\n"
-
-#~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-#~ msgstr "init_pipe(session_add_pipe) ошибка в libevent_init\n"
-
-#~ msgid "Size of Pool."
-#~ msgstr "Объём памяти."
-
-#~ msgid ""
-#~ "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-#~ "option deprecated; use --disable-pager instead."
-#~ msgstr ""
-#~ "Отключение пейджера и печатать через стандартный вывод. См. также "
-#~ "интерактивную справку (\\h). ПРЕДУПРЕЖДЕНИЕ: вариант не рекомендуется; "
-#~ "используйте --disable-pager."
-
-#, c-format
-#~ msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-#~ msgstr "%s Версия %s Дистрибутив %s, для %s-%s (%s) с использованием %s %s\n"
-
-#, c-format
-#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
-#~ msgstr ""
-#~ "ПРЕДУПРЕЖДЕНИЕ: опция --server-arg не поддерживается в этой конфигурации.\n"
-
-#~ msgid ""
-#~ "Non-integer value supplied for port.  If you are trying to enter a password "
-#~ "please use --password instead."
-#~ msgstr ""
-#~ "В качестве номера порта задано нецелое число. Если вы пытаетесь ввести "
-#~ "пароль, пожалуйста используйте --password."
-
-#~ msgid "Value supplied for port is not valid."
-#~ msgstr "Номер порта задан неверно."
-
-#, c-format
-#~ msgid "Unknown/unsupported table type: %s"
-#~ msgstr "Неизвестный или неподдерживаемый тип таблицы: %s"
-
-#~ msgid "Server version: "
-#~ msgstr "Версия сервера: "
-
-#, c-format
-#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-#~ msgstr ""
-#~ "ПРЕДУПРЕЖДЕНИЕ: опция устарела; используйте --disable-pager вместо нее.\n"
