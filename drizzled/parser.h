@@ -117,7 +117,7 @@ Item* reserved_keyword_function(Session*, const std::string &name, List<Item> *i
 void my_parse_error(Lex_input_stream*);
 void my_parse_error(const char*);
 bool check_reserved_words(str_ref);
-void errorOn(drizzled::Session*, const char *s);
+void errorOn(Session*, const char *s);
 
 
 bool buildOrderBy(LEX*);
@@ -125,8 +125,7 @@ void buildEngineOption(LEX*, const char *key, str_ref value);
 void buildEngineOption(LEX*, const char *key, uint64_t value);
 void buildSchemaOption(LEX*, const char *key, str_ref value);
 void buildSchemaOption(LEX*, const char *key, uint64_t value);
-void buildSchemaDefiner(LEX*, const lex_string_t &value);
-void buildSchemaDefiner(LEX*, const identifier::User &user);
+void buildSchemaDefiner(LEX*, const identifier::User&);
 bool checkFieldIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name);
 
 Item *buildIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name);
@@ -138,19 +137,19 @@ void storeAlterColumnPosition(LEX*, const char *position);
 
 bool buildCollation(LEX*, const charset_info_st *arg);
 void buildKey(LEX*, Key::Keytype type_par, const lex_string_t &name_arg);
-void buildForeignKey(LEX*, const lex_string_t &name_arg, drizzled::Table_ident *table);
+void buildForeignKey(LEX*, const lex_string_t &name_arg, Table_ident *table);
 
-drizzled::enum_field_types buildIntegerColumn(LEX*, drizzled::enum_field_types final_type, const bool is_unsigned);
-drizzled::enum_field_types buildSerialColumn(LEX*);
-drizzled::enum_field_types buildVarcharColumn(LEX*, const char *length);
-drizzled::enum_field_types buildVarbinaryColumn(LEX*, const char *length);
-drizzled::enum_field_types buildBlobColumn(LEX*);
-drizzled::enum_field_types buildBooleanColumn(LEX*);
-drizzled::enum_field_types buildUuidColumn(LEX*);
-drizzled::enum_field_types buildIPv6Column(LEX*);
-drizzled::enum_field_types buildDoubleColumn(LEX*);
-drizzled::enum_field_types buildTimestampColumn(LEX*, const char *length);
-drizzled::enum_field_types buildDecimalColumn(LEX*);
+enum_field_types buildIntegerColumn(LEX*, enum_field_types final_type, const bool is_unsigned);
+enum_field_types buildSerialColumn(LEX*);
+enum_field_types buildVarcharColumn(LEX*, const char *length);
+enum_field_types buildVarbinaryColumn(LEX*, const char *length);
+enum_field_types buildBlobColumn(LEX*);
+enum_field_types buildBooleanColumn(LEX*);
+enum_field_types buildUuidColumn(LEX*);
+enum_field_types buildIPv6Column(LEX*);
+enum_field_types buildDoubleColumn(LEX*);
+enum_field_types buildTimestampColumn(LEX*, const char *length);
+enum_field_types buildDecimalColumn(LEX*);
 
 void buildKeyOnColumn(LEX*);
 void buildAutoOnColumn(LEX*);

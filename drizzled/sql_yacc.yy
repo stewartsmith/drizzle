@@ -1013,7 +1013,7 @@ custom_database_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-            parser::buildSchemaDefiner(&Lex, $2);
+            parser::buildSchemaDefiner(&Lex, identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
@@ -1080,8 +1080,7 @@ custom_engine_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-	    drizzled::identifier::User user($2.data());
-            message::set_definer(*Lex.table(), user);
+            message::set_definer(*Lex.table(), identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
