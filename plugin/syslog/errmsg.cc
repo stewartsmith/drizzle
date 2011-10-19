@@ -30,11 +30,9 @@
 namespace drizzle_plugin
 {
 
-error_message::Syslog::Syslog(const std::string& facility,
-                              const std::string& priority) :
+error_message::Syslog::Syslog(const std::string& facility) :
   drizzled::plugin::ErrorMessage("Syslog"),
-  _facility(WrapSyslog::getFacilityByName(facility.c_str())),
-  _priority(WrapSyslog::getPriorityByName(priority.c_str()))
+  _facility(WrapSyslog::getFacilityByName(facility.c_str()))
 {
   if (_facility == -1)
   {
@@ -44,20 +42,12 @@ error_message::Syslog::Syslog(const std::string& facility,
     _facility= WrapSyslog::getFacilityByName("local0");
   }
 
-  if (_priority == -1)
-  {
-    drizzled::errmsg_printf(drizzled::error::WARN,
-                            _("syslog priority \"%s\" not known, using \"warn\""),
-                            priority.c_str());
-    _priority= WrapSyslog::getPriorityByName("warn");
-  }
-
   std::cerr << "Starting syslog with " << _facility << std::endl;
 }
 
-bool error_message::Syslog::errmsg(drizzled::error::level_t, const char *format, va_list ap)
+bool error_message::Syslog::errmsg(drizzled::error::level_t priority, const char *format, va_list ap)
 {
-  WrapSyslog::singleton().vlog(_facility, _priority, format, ap);
+  WrapSyslog::singleton().vlog(_facility, priority, format, ap);
   return false;
 }
 

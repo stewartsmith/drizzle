@@ -54,14 +54,12 @@ static int init(drizzled::module::Context &context)
   WrapSyslog::singleton().openlog(vm["ident"].as<string>());
   if (sysvar_errmsg_enable)
   {
-    context.add(new error_message::Syslog(vm["facility"].as<string>(),
-                                          vm["errmsg-priority"].as<string>()));
+    context.add(new error_message::Syslog(vm["facility"].as<string>()));
   }
 
   if (sysvar_logging_enable)
   {
     context.add(new logging::Syslog(vm["facility"].as<string>(),
-                                    vm["logging-priority"].as<string>(),
                                     sysvar_logging_threshold_slow.get(),
                                     sysvar_logging_threshold_big_resultset.get(),
                                     sysvar_logging_threshold_big_examined.get()));

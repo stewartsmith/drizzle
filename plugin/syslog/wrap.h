@@ -19,9 +19,11 @@
 
 #pragma once
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include <string>
+
+#include <drizzled/error/level_t.h>
 
 namespace drizzle_plugin {
 
@@ -39,8 +41,8 @@ public:
   static int getPriorityByName(const char *);
 
   void openlog(const std::string &ident);
-  void vlog(int facility, int priority, const char *format, va_list ap);
-  void log(int facility, int priority, const char *format, ...);
+  void vlog(int facility, const drizzled::error::level_t priority, const char *format, va_list ap);
+  void log(int facility, const drizzled::error::level_t priority, const char *format, ...);
 };
 
 inline WrapSyslog& WrapSyslog::singleton()

@@ -31,10 +31,9 @@ class Syslog : public drizzled::plugin::ErrorMessage
 {
 private:
   int _facility;
-  int _priority;
 
 public:
-  explicit Syslog(const std::string& facility, const std::string& priority);
+  explicit Syslog(const std::string& facility);
 
   virtual bool errmsg(drizzled::error::level_t, const char *format, va_list ap);
 };

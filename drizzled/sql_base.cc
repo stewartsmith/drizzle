@@ -3723,7 +3723,9 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
     table= field->getTable();
 
     if (field == table->next_number_field)
+    {
       table->auto_increment_field_not_null= true;
+    }
 
     if (value->save_in_field(field, 0) < 0)
     {
@@ -3754,7 +3756,7 @@ void drizzle_rm_tmp_tables()
 void kill_drizzle(void)
 {
   pthread_kill(signal_thread, SIGTERM);
-  shutdown_in_progress= 1;			// Safety if kill didn't work
+  shutdown_in_progress= true;			// Safety if kill didn't work
 }
 
 } /* namespace drizzled */
