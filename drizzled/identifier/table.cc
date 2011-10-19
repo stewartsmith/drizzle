@@ -184,7 +184,7 @@ std::string Table::build_table_filename(const std::string &in_db, const std::str
 }
 
 Table::Table(const drizzled::Table &table) :
-  identifier::Schema(table.getShare()->getSchemaName()),
+  identifier::Schema(str_ref(table.getShare()->getSchemaName())),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {

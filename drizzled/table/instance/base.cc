@@ -975,12 +975,8 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
 
-    lex_string_t comment;
-    if (!pfield.has_comment())
-    {
-      comment.assign("", 0);
-    }
-    else
+    str_ref comment;
+    if (pfield.has_comment())
     {
       comment.assign(mem().strdup(pfield.comment()), pfield.comment().size());
     }

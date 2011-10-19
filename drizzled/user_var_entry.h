@@ -62,9 +62,7 @@ class user_var_entry
   type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
-  void update_hash(bool set_null, void *ptr, uint32_t length,
-                   Item_result type, const charset_info_st * const cs, Derivation dv,
-                   bool unsigned_arg);
+  void update_hash(bool set_null, data_ref, Item_result type, const charset_info_st* cs, Derivation dv, bool unsigned_arg);
 };
 
 } /* namespace drizzled */

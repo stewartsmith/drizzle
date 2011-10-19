@@ -23,13 +23,12 @@
 namespace drizzled {
 namespace identifier {
 
-const identifier::Schema& data_dictionary();
-const identifier::Schema& information_schema();
-const identifier::Schema& system_schema();
+const Schema& data_dictionary();
+const Schema& information_schema();
+const Schema& system_schema();
 
 } /* namespace identifier */
 } /* namespace drizzled */
 
 #define DATA_DICTIONARY_IDENTIFIER drizzled::identifier::data_dictionary()
 #define INFORMATION_SCHEMA_IDENTIFIER drizzled::identifier::information_schema()
-

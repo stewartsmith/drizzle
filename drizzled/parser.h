@@ -110,53 +110,53 @@
 namespace drizzled {
 namespace parser {
 
-Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal, Item *expr);
-bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct);
-bool setup_select_in_parentheses(Session *session, LEX *lex);
-Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list);
-void my_parse_error(Lex_input_stream *lip);
-void my_parse_error(const char *message);
-bool check_reserved_words(lex_string_t *name);
-void errorOn(drizzled::Session *session, const char *s);
+Item* handle_sql2003_note184_exception(Session*, Item* left, bool equal, Item *expr);
+bool add_select_to_union_list(Session*, LEX*, bool is_union_distinct);
+bool setup_select_in_parentheses(Session*, LEX*);
+Item* reserved_keyword_function(Session*, const std::string &name, List<Item> *item_list);
+void my_parse_error(Lex_input_stream*);
+void my_parse_error(const char*);
+bool check_reserved_words(str_ref);
+void errorOn(drizzled::Session*, const char *s);
 
 
-bool buildOrderBy(LEX *lex);
-void buildEngineOption(LEX *lex, const char *key, str_ref value);
-void buildEngineOption(LEX *lex, const char *key, uint64_t value);
-void buildSchemaOption(LEX *lex, const char *key, str_ref value);
-void buildSchemaOption(LEX *lex, const char *key, uint64_t value);
-void buildSchemaDefiner(LEX *lex, const lex_string_t &value);
-void buildSchemaDefiner(LEX *lex, const identifier::User &user);
-bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name);
+bool buildOrderBy(LEX*);
+void buildEngineOption(LEX*, const char *key, str_ref value);
+void buildEngineOption(LEX*, const char *key, uint64_t value);
+void buildSchemaOption(LEX*, const char *key, str_ref value);
+void buildSchemaOption(LEX*, const char *key, uint64_t value);
+void buildSchemaDefiner(LEX*, const lex_string_t &value);
+void buildSchemaDefiner(LEX*, const identifier::User &user);
+bool checkFieldIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name);
 
-Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name);
-Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name);
+Item *buildIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name);
+Item *buildTableWild(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name);
 
-void buildCreateFieldIdent(LEX *lex);
+void buildCreateFieldIdent(LEX*);
 
-void storeAlterColumnPosition(LEX *lex, const char *position);
+void storeAlterColumnPosition(LEX*, const char *position);
 
-bool buildCollation(LEX *lex, const charset_info_st *arg);
-void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg);
-void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table);
+bool buildCollation(LEX*, const charset_info_st *arg);
+void buildKey(LEX*, Key::Keytype type_par, const lex_string_t &name_arg);
+void buildForeignKey(LEX*, const lex_string_t &name_arg, drizzled::Table_ident *table);
 
-drizzled::enum_field_types buildIntegerColumn(LEX *lex, drizzled::enum_field_types final_type, const bool is_unsigned);
-drizzled::enum_field_types buildSerialColumn(LEX *lex);
-drizzled::enum_field_types buildVarcharColumn(LEX *lex, const char *length);
-drizzled::enum_field_types buildVarbinaryColumn(LEX *lex, const char *length);
-drizzled::enum_field_types buildBlobColumn(LEX *lex);
-drizzled::enum_field_types buildBooleanColumn(LEX *lex);
-drizzled::enum_field_types buildUuidColumn(LEX *lex);
-drizzled::enum_field_types buildIPv6Column(LEX *lex);
-drizzled::enum_field_types buildDoubleColumn(LEX *lex);
-drizzled::enum_field_types buildTimestampColumn(LEX *lex, const char *length);
-drizzled::enum_field_types buildDecimalColumn(LEX *lex);
+drizzled::enum_field_types buildIntegerColumn(LEX*, drizzled::enum_field_types final_type, const bool is_unsigned);
+drizzled::enum_field_types buildSerialColumn(LEX*);
+drizzled::enum_field_types buildVarcharColumn(LEX*, const char *length);
+drizzled::enum_field_types buildVarbinaryColumn(LEX*, const char *length);
+drizzled::enum_field_types buildBlobColumn(LEX*);
+drizzled::enum_field_types buildBooleanColumn(LEX*);
+drizzled::enum_field_types buildUuidColumn(LEX*);
+drizzled::enum_field_types buildIPv6Column(LEX*);
+drizzled::enum_field_types buildDoubleColumn(LEX*);
+drizzled::enum_field_types buildTimestampColumn(LEX*, const char *length);
+drizzled::enum_field_types buildDecimalColumn(LEX*);
 
-void buildKeyOnColumn(LEX *lex);
-void buildAutoOnColumn(LEX *lex);
-void buildPrimaryOnColumn(LEX *lex);
-void buildReplicationOption(LEX *lex, bool arg);
-void buildAddAlterDropIndex(LEX *lex, const char *name, bool is_foreign_key= false);
+void buildKeyOnColumn(LEX*);
+void buildAutoOnColumn(LEX*);
+void buildPrimaryOnColumn(LEX*);
+void buildReplicationOption(LEX*, bool arg);
+void buildAddAlterDropIndex(LEX*, const char *name, bool is_foreign_key= false);
 
 } // namespace parser
 } // namespace drizzled

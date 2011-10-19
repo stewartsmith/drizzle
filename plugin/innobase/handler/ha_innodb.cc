@@ -6784,13 +6784,10 @@ InnobaseEngine::doDropSchema(
 
 void InnobaseEngine::dropTemporarySchema()
 {
-  identifier::Schema schema_identifier(GLOBAL_TEMPORARY_EXT);
-  trx_t*  trx= NULL;
   string schema_path(GLOBAL_TEMPORARY_EXT);
+  schema_path += "/";
 
-  schema_path.append("/");
-
-  trx = trx_allocate_for_mysql();
+  trx_t* trx = trx_allocate_for_mysql();
 
   trx->mysql_thd = NULL;
 

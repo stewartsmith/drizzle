@@ -796,7 +796,7 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
 		       const char *length, const char *decimals,
 		       uint32_t type_modifier, column_format_type column_format,
-		       Item *default_value, Item *on_update_value, lex_string_t *comment,
+		       Item *default_value, Item *on_update_value, str_ref comment,
 		       const char *change, List<String> *interval_list, const charset_info_st* cs)
 {
   LEX  *lex= &session->lex();
@@ -857,7 +857,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   }
 
   CreateField* new_field= new CreateField;
-  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, *comment, change, interval_list, cs, 0, column_format)
+  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -911,7 +911,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (not table->is_derived_table() && table->db.data())
   {
     my_casedn_str(files_charset_info, table->db.str_);
-    if (not schema::check(*session, identifier::Schema(table->db.data())))
+    if (not schema::check(*session, identifier::Schema(table->db)))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
       return NULL;
@@ -1549,23 +1549,23 @@ Item *negate_expression(Session *session, Item *expr)
 */
 
 
-bool check_string_char_length(lex_string_t *str, const char *err_msg,
+bool check_string_char_length(str_ref str, const char *err_msg,
                               uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->begin(), str->end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str->size() == res)
+  if (!well_formed_error &&  str.size() == res)
     return false;
 
   if (!no_error)
-    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->data(), err_msg, max_char_length);
+    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }
 
 
-bool check_identifier_name(lex_string_t str, error_t err_code)
+bool check_identifier_name(str_ref str, error_t err_code)
 {
   uint32_t max_char_length= NAME_CHAR_LEN;
   /*

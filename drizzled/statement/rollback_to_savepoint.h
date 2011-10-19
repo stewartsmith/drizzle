@@ -29,7 +29,7 @@ namespace statement {
 class RollbackToSavepoint : public Statement
 {
 public:
-  RollbackToSavepoint(Session *in_session, const lex_string_t &ident) :
+  RollbackToSavepoint(Session *in_session, str_ref ident) :
     Statement(in_session)
   {
     set_command(SQLCOM_ROLLBACK_TO_SAVEPOINT);

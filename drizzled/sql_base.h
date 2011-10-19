@@ -42,7 +42,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum enum_fie
                        uint32_t type_modifier,
                        enum column_format_type column_format,
                        Item *default_value, Item *on_update_value,
-                       lex_string_t *comment,
+                       str_ref comment,
                        const char *change, List<String> *interval_list,
                        const charset_info_st * const cs);
 CreateField * new_create_field(Session *session, const char *field_name, enum_field_types type,

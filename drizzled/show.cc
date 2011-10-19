@@ -174,9 +174,9 @@ bool buildTables(Session *session, const char *ident)
   util::string::ptr schema(session->schema());
   if (ident)
   {
-    identifier::Schema identifier(ident);
+    identifier::Schema identifier= str_ref(ident);
     column_name.append(ident);
-    session->lex().select_lex.db= const_cast<char *>(ident);
+    session->lex().select_lex.db= ident;
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
       my_error(ER_BAD_DB_ERROR, identifier);
@@ -240,7 +240,7 @@ bool buildTableStatus(Session *session, const char *ident)
   {
     session->lex().select_lex.db= const_cast<char *>(ident);
 
-    identifier::Schema identifier(ident);
+    identifier::Schema identifier= str_ref(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
       my_error(ER_BAD_DB_ERROR, identifier);

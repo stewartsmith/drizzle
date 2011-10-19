@@ -99,7 +99,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 
 
 void
-Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
+Item_func_set_user_var::update_hash(data_ref data,
                                     Item_result res_type,
                                     const charset_info_st * const cs, Derivation dv,
                                     bool unsigned_arg)
@@ -110,7 +110,7 @@ Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
   */
   if ((null_value= args[0]->null_value) && null_item)
     res_type= entry->type;                      // Don't change type of item
-  entry->update_hash((null_value= args[0]->null_value), ptr, length, res_type, cs, dv, unsigned_arg);
+  entry->update_hash((null_value= args[0]->null_value), data, res_type, cs, dv, unsigned_arg);
 }
 
 /**
@@ -193,47 +193,37 @@ Item_func_set_user_var::update()
   switch (cached_result_type) {
   case REAL_RESULT:
     {
-      update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
-                       REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
+      update_hash(data_ref(&save_result.vreal, sizeof(save_result.vreal)), REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case INT_RESULT:
     {
-      update_hash((void*) &save_result.vint, sizeof(save_result.vint),
-                       INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT,
-                       unsigned_flag);
+      update_hash(data_ref(&save_result.vint, sizeof(save_result.vint)), INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, unsigned_flag);
       break;
     }
 
   case STRING_RESULT:
     {
       if (!save_result.vstr)                                      // Null value
-        update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(), STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       else
-        update_hash((void*) save_result.vstr->ptr(),
-                         save_result.vstr->length(), STRING_RESULT,
-                         save_result.vstr->charset(),
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(*save_result.vstr, STRING_RESULT, save_result.vstr->charset(), DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case DECIMAL_RESULT:
     {
       if (!save_result.vdec)                                      // Null value
-        update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(), DECIMAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       else
-        update_hash((void*) save_result.vdec,
-                         sizeof(type::Decimal), DECIMAL_RESULT,
-                         &my_charset_bin, DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(save_result.vdec, sizeof(type::Decimal)), DECIMAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case ROW_RESULT:
     // This case should never be chosen
-    assert(0);
+    assert(false);
     break;
   }
 }

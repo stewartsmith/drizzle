@@ -43,7 +43,7 @@ class DRIZZLED_API Schema : public Identifier
   std::string db_path;
 
 public:
-  Schema(const std::string &db_arg);
+  Schema(str_ref);
 
   virtual std::string getSQLPath() const
 	{
@@ -74,14 +74,13 @@ public:
     return boost::ilexicographical_compare(left.getSchemaName(), right.getSchemaName());
   }
 
-  friend bool operator==(const Schema& left,
-                         const Schema& right)
+  friend bool operator==(const Schema& left, const Schema& right)
   {
     return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
 };
 
-std::ostream& operator<<(std::ostream& output, const Schema&identifier);
+std::ostream& operator<<(std::ostream&, const Schema&);
 
 
 } /* namespace identifier */

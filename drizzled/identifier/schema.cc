@@ -41,8 +41,8 @@ using namespace std;
 namespace drizzled {
 namespace identifier {
 
-Schema::Schema(const std::string &db_arg) :
-  db(db_arg)
+Schema::Schema(str_ref db_arg) :
+  db(db_arg.data(), db_arg.size())
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -78,56 +78,19 @@ bool Schema::compare(const Schema& arg) const
 
 bool Schema::isValid() const
 {
-  bool error= false;
-
-  do
+  const charset_info_st& cs= my_charset_utf8mb4_general_ci;
+  int well_formed_error;
+  if (not db.empty()
+    && db.size() <= NAME_LEN
+    && db.at(0) != '.'
+    && db.at(db.size() - 1) != ' '
+    && db.size() == cs.cset->well_formed_len(&cs, db.c_str(), db.c_str() + db.length(), NAME_CHAR_LEN, &well_formed_error))
   {
-    if (db.empty())
-    {
-      error= true;
-      break;
-    }
-
-    if (db.size() > NAME_LEN)
-    {
-      error= true;
-      break;
-    }
-
-    if (db.at(db.length() -1) == ' ')
-    {
-      error= true;
-      break;
-    }
-
-    if (db.at(0) == '.')
-    {
-      error= true;
-      break;
-    }
-
-    {
-      const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
-
-      int well_formed_error;
-      uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
-                                              NAME_CHAR_LEN, &well_formed_error);
-      if (well_formed_error or db.length() != res)
-      {
-        error= true;
-        break;
-      }
-    }
-  } while (0);
-
-  if (error)
-  {
-    my_error(ER_WRONG_DB_NAME, *this);
-
-    return false;
+    if (not well_formed_error)
+      return true;
   }
-
-  return true;
+  my_error(ER_WRONG_DB_NAME, *this);
+  return false;
 }
 
 const std::string &Schema::getCatalogName() const

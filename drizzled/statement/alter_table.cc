@@ -466,12 +466,12 @@ static bool prepare_alter_table(Session *session,
   KeyInfo *key_info= table->key_info;
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
-    char *key_name= key_info->name;
+    const char *key_name= key_info->name;
 
     vector<string>::iterator it= drop_keys.begin();
     while (it != drop_keys.end())
     {
-      if (not my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, key_name, it->c_str()))
         break;
       it++;
     }
@@ -542,15 +542,9 @@ static bool prepare_alter_table(Session *session,
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
-      Key::Keytype key_type;
-      if (key_info->flags & HA_NOSAME)
-      {
-        key_type= is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE;
-      }
-      else
-      {
-        key_type= Key::MULTIPLE;
-      }
+      Key::Keytype key_type= key_info->flags & HA_NOSAME
+        ? (is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE)
+        : Key::MULTIPLE;
       new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }

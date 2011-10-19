@@ -161,16 +161,15 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
-                                                const char *end_ptr)
+void Lex_input_stream::body_utf8_append_literal(str_ref txt, const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
     return;
 
   /* NOTE: utf_txt.length is in bytes, not in symbols. */
 
-  memcpy(m_body_utf8_ptr, txt->data(), txt->size());
-  m_body_utf8_ptr += txt->size();
+  memcpy(m_body_utf8_ptr, txt.data(), txt.size());
+  m_body_utf8_ptr += txt.size();
   *m_body_utf8_ptr= 0;
 
   m_cpp_utf8_processed_ptr= end_ptr;
@@ -756,7 +755,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);			// IDENT or IDENT_QUOTED
 
@@ -853,7 +852,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
 
@@ -879,16 +878,15 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
           break;				// Error
         lip->skip_binary(var_length-1);
       }
-      if (double_quotes)
-	      yylval->lex_str=get_quoted_token(lip, 1, lip->yyLength() - double_quotes -1, quote_char);
-      else
-        yylval->lex_str=get_token(lip, 1, lip->yyLength() -1);
+      yylval->lex_str= double_quotes
+        ? get_quoted_token(lip, 1, lip->yyLength() - double_quotes - 1, quote_char)
+        : get_token(lip, 1, lip->yyLength() - 1);
       if (c == quote_char)
         lip->yySkip();                  // Skip end `
       lip->next_state= MY_LEX_START;
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-      return(IDENT_QUOTED);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
+      return IDENT_QUOTED;
     }
     case MY_LEX_INT_OR_REAL:		// Complete int or incomplete real
       if (c != '.')
@@ -998,7 +996,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str.assign(yylval->lex_str.data(), lip->yytoklen);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
       return(TEXT_STRING);
@@ -1233,10 +1231,9 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str=get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-
-      return(result_state);
+      return result_state;
     }
   }
 }

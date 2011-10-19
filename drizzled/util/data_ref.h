@@ -107,8 +107,7 @@ typedef data_ref_basic<const char*> str_ref;
 
 inline std::ostream& operator<<(std::ostream& os, str_ref v)
 {
-  os.write(v.data(), v.size());
-  return os;
+  return os.write(v.data(), v.size());
 }
 
 inline std::string to_string(str_ref v)

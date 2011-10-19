@@ -1238,7 +1238,7 @@ field_spec:
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value, statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   statement->change, &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
 
@@ -1943,7 +1943,7 @@ alter_list_item:
                                   statement->column_format,
                                   statement->default_value,
                                   statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   $3.data(), &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
           }
@@ -3241,7 +3241,7 @@ variable_aux:
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
-            if ($3.data() && $4.data() && parser::check_reserved_words(&$3))
+            if ($3.data() && $4.data() && parser::check_reserved_words($3))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
