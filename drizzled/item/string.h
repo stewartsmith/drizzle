@@ -99,10 +99,8 @@ class Item_static_string_func : public Item_string
 {
   const char *func_name;
 public:
-  Item_static_string_func(const char *name_par, const char *str, uint32_t length,
-                          const charset_info_st* cs,
-                          Derivation dv= DERIVATION_COERCIBLE)
-    :Item_string(NULL, str, length, cs, dv), func_name(name_par)
+  Item_static_string_func(const char *name_par, str_ref str, const charset_info_st* cs, Derivation dv= DERIVATION_COERCIBLE) :
+    Item_string(NULL, str.data(), str.size(), cs, dv), func_name(name_par)
   {}
   Item *safe_charset_converter(const charset_info_st*);
 

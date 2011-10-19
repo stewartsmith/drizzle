@@ -43,7 +43,7 @@ Item *Item_static_string_func::safe_charset_converter(const charset_info_st * co
 {
   String tmp, cstr, *ostr= val_str(&tmp);
   cstr.copy(ostr->ptr(), ostr->length(), tocs);
-  Item_string* conv= new Item_static_string_func(func_name, cstr.ptr(), cstr.length(), cstr.charset(), collation.derivation);
+  Item_string* conv= new Item_static_string_func(func_name, cstr, cstr.charset(), collation.derivation);
   conv->str_value.copy();
   /* Ensure that no one is going to change the result string */
   conv->str_value.mark_as_const();
