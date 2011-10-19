@@ -125,36 +125,23 @@ void get_date_from_daynr(long daynr,
 }
 
 
-type::timestamp_t str_to_datetime_with_warn(Session *session,
-                                            const char *str, 
-                                            uint32_t length, 
-                                            type::Time *l_time,
-                                            uint32_t flags)
+type::timestamp_t str_to_datetime_with_warn(Session *session, const char *str,  uint32_t length,  type::Time *l_time, uint32_t flags)
 {
   type::cut_t was_cut= type::VALID;
-  type::timestamp_t ts_type;
-
-  ts_type= l_time->store(str, length,
-                         (flags | (session->variables.sql_mode &
-                                   (MODE_INVALID_DATES |
-                                    MODE_NO_ZERO_DATE))),
-                         was_cut);
+  type::timestamp_t ts_type= l_time->store(str, length, (flags | (session->variables.sql_mode & (MODE_INVALID_DATES | MODE_NO_ZERO_DATE))), was_cut);
   if (was_cut || ts_type <= type::DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, ts_type,  NULL);
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, str, length, ts_type,  NULL);
 
   return ts_type;
 }
 
 
-bool
-str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time)
+bool str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time)
 {
   int warning;
   bool ret_val= l_time->store(str, length, warning, type::DRIZZLE_TIMESTAMP_TIME);
   if (ret_val || warning)
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
 

@@ -168,13 +168,18 @@ public:
   {
   }
 
-  void set_name(const std::string &arg)
+  void set_name(str_ref arg)
   {
-    set_name(arg.c_str(), arg.length());
+    set_name(arg.data(), arg.size());
+  }
+
+  void set_name(const char* arg)
+  {
+    set_name(str_ref(arg));
   }
 
   void set_name(const char *str, uint32_t length, const charset_info_st* cs= system_charset_info);
-  void init_make_field(SendField *tmp_field,enum enum_field_types type);
+  void init_make_field(SendField *tmp_field, enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);
   /**

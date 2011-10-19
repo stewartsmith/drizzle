@@ -23,9 +23,7 @@
 
 namespace drizzled {
 
-extern uint32_t lower_case_table_names;
-
-class Item_ident :public Item
+class Item_ident : public Item
 {
 protected:
   /*
@@ -74,7 +72,7 @@ public:
 };
 
 
-class Item_ident_for_show :public Item
+class Item_ident_for_show : public Item
 {
 public:
   Field *field;

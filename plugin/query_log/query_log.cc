@@ -38,10 +38,6 @@ QueryLog::QueryLog(bool enabled, QueryLoggerFile *logger_file) :
 {
 }
 
-QueryLog::~QueryLog()
-{
-}
-
 void QueryLog::registerSessionEventsDo(Session &, EventObserverList &observers)
 {
   registerEvent(observers, AFTER_STATEMENT);
