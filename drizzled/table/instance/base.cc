@@ -146,10 +146,8 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
   abort();
 }
 
-static Item *default_value_item(enum_field_types field_type,
-                                const charset_info_st *charset,
-                                bool default_null, const string *default_value,
-                                const string *default_bin_value)
+static Item* default_value_item(enum_field_types field_type, const charset_info_st& charset, bool default_null, 
+  const string& default_value, const string& default_bin_value)
 {
   if (default_null)
     return new Item_null();
@@ -160,7 +158,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_LONGLONG:
     {
       int error= 0;
-      Item* default_item= new Item_int(default_value->c_str(), (int64_t) internal::my_strtoll10(default_value->c_str(), NULL, &error), default_value->length());
+      Item* default_item= new Item_int(default_value.c_str(), (int64_t) internal::my_strtoll10(default_value.c_str(), NULL, &error), default_value.length());
 
       if (error && error != -1) /* was an error and wasn't a negative number */
       {
@@ -170,7 +168,7 @@ static Item *default_value_item(enum_field_types field_type,
       return default_item;
     }
   case DRIZZLE_TYPE_DOUBLE:
-    return new Item_float(default_value->c_str(), default_value->length());
+    return new Item_float(default_value.c_str(), default_value.length());
   case DRIZZLE_TYPE_NULL:
     assert(false);
     abort();
@@ -183,14 +181,15 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
-    return new Item_string(default_value->data(), default_value->size(), system_charset_info);
+    // return new Item_string(*default_value, system_charset_info); // crash
+    return new Item_string(default_value.data(), default_value.size(), system_charset_info);
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
-    return charset== &my_charset_bin
-      ? new Item_string(*default_bin_value, &my_charset_bin)
-      : new Item_string(*default_value, system_charset_info);
+    return &charset== &my_charset_bin
+      ? new Item_string(default_bin_value, &my_charset_bin)
+      : new Item_string(default_value, system_charset_info);
   case DRIZZLE_TYPE_DECIMAL:
-    return new Item_decimal(default_value->c_str(), default_value->length(), system_charset_info);
+    return new Item_decimal(default_value.c_str(), default_value.length(), system_charset_info);
   }
   return NULL;
 }
@@ -1020,11 +1019,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
         pfield.options().default_null()  ||
         pfield.options().has_default_bin_value())
     {
-      default_value= default_value_item(field_type,
-                                        charset,
-                                        pfield.options().default_null(),
-                                        &pfield.options().default_value(),
-                                        &pfield.options().default_bin_value());
+      default_value= default_value_item(field_type, *charset, pfield.options().default_null(), pfield.options().default_value(), pfield.options().default_bin_value());
       if (default_value == NULL)
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), pfield.name().c_str());
