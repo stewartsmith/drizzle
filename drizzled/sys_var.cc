@@ -973,24 +973,17 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t *ba
   }
   case SHOW_CHAR:
   {
-    Item *tmp;
     boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    char *str= (char*) value_ptr(session, var_type, base);
-    if (str)
-      tmp= new Item_string(str, strlen(str),
-                           system_charset_info, DERIVATION_SYSCONST);
-    else
-    {
-      tmp= new Item_null();
-      tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
-    }
-
+    if (const char* str= (char*) value_ptr(session, var_type, base))
+      return new Item_string(str_ref(str), system_charset_info, DERIVATION_SYSCONST);
+    Item* tmp= new Item_null();
+    tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     return tmp;
   }
   default:
     my_error(ER_VAR_CANT_BE_READ, MYF(0), name.c_str());
   }
-  return 0;
+  return NULL;
 }
 
 

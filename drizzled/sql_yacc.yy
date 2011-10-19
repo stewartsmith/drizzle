@@ -5153,7 +5153,7 @@ IDENT_sys:
           {
             const charset_info_st * const cs= system_charset_info;
             int dummy_error;
-            uint32_t wlen= cs->cset->well_formed_len(cs, $1.begin(), $1.end(), $1.size(), &dummy_error);
+            uint32_t wlen= cs->cset->well_formed_len(*cs, $1, $1.size(), &dummy_error);
             if (wlen < $1.size())
             {
               my_error(ER_INVALID_CHARACTER_STRING, MYF(0), cs->csname, $1.data() + wlen);

@@ -39,7 +39,7 @@ public:
       number of chars for a string of this type because we in CreateField::
       divide the max_length with mbmaxlen).
     */
-    max_length= str_value.numchars()*cs->mbmaxlen;
+    max_length= str_value.numchars() * cs->mbmaxlen;
     set_name(str.data(), str.size(), cs);
     decimals=NOT_FIXED_DEC;
     // it is constant => can be used without fix_fields (and frequently used)
