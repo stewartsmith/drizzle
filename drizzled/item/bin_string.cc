@@ -28,14 +28,14 @@ namespace drizzled {
   In number context this is a int64_t value.
 */
 
-Item_bin_string::Item_bin_string(str_ref str_arg)
+Item_bin_string::Item_bin_string(str_ref arg)
 {
-  const char *str= str_arg.data();
-  const char *end= str + str_arg.size() - 1;
+  const char *str= arg.data();
+  const char *end= str + arg.size() - 1;
   unsigned char bits= 0;
   uint32_t power= 1;
 
-  max_length= (str_arg.size() + 7) >> 3;
+  max_length= (arg.size() + 7) >> 3;
   char *ptr= (char*) memory::sql_alloc(max_length + 1);
   str_value.set(ptr, max_length, &my_charset_bin);
   ptr+= max_length - 1;
@@ -56,6 +56,5 @@ Item_bin_string::Item_bin_string(str_ref str_arg)
   collation.set(&my_charset_bin, DERIVATION_COERCIBLE);
   fixed= 1;
 }
-
 
 } /* namespace drizzled */

@@ -84,7 +84,7 @@ bool Schema::isValid() const
     && db.size() <= NAME_LEN
     && db.at(0) != '.'
     && db.at(db.size() - 1) != ' '
-    && db.size() == cs.cset->well_formed_len(&cs, db.c_str(), db.c_str() + db.length(), NAME_CHAR_LEN, &well_formed_error))
+    && db.size() == cs.cset->well_formed_len(cs, db, NAME_CHAR_LEN, &well_formed_error))
   {
     if (not well_formed_error)
       return true;

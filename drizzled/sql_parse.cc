@@ -1554,7 +1554,7 @@ bool check_string_char_length(str_ref str, const char *err_msg,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
   if (!well_formed_error &&  str.size() == res)
     return false;
@@ -1576,7 +1576,7 @@ bool check_identifier_name(str_ref str, error_t err_code)
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str.begin(), str.end(), max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {

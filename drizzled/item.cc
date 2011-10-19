@@ -1058,9 +1058,7 @@ String *Item::check_well_formed_result(String *str, bool send_error)
   /* Check whether we got a well-formed string */
   const charset_info_st * const cs= str->charset();
   int well_formed_error;
-  uint32_t wlen= cs->cset->well_formed_len(cs,
-                                       str->ptr(), str->ptr() + str->length(),
-                                       str->length(), &well_formed_error);
+  uint32_t wlen= cs->cset->well_formed_len(*cs, *str, str->length(), &well_formed_error);
   if (wlen < str->length())
   {
     char hexbuf[7];

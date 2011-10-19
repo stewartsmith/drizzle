@@ -27,8 +27,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 void my_hash_sort_bin(const charset_info_st * const,
                       const unsigned char *key, size_t len,

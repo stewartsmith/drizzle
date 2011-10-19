@@ -22,6 +22,7 @@
 #include <boost/thread/mutex.hpp>
 #include <cstring>
 #include <drizzled/visibility.h>
+#include <drizzled/util/data_ref.h>
 #include <string>
 #include <vector>
 

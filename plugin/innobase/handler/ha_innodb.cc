@@ -4112,12 +4112,7 @@ ha_innobase::store_key_val_for_row(
       the true length of the key */
 
       if (len > 0 && cs->mbmaxlen > 1) {
-        true_len = (ulint) cs->cset->well_formed_len(cs,
-            (const char *) data,
-            (const char *) data + len,
-                                                (uint) (key_len /
-                                                        cs->mbmaxlen),
-            &error);
+        true_len = (ulint) cs->cset->well_formed_len(*cs, str_ref(data, len), (uint) (key_len / cs->mbmaxlen), &error);
       }
 
       /* In a column prefix index, we may need to truncate
@@ -4178,13 +4173,7 @@ ha_innobase::store_key_val_for_row(
       the true length of the key */
 
       if (blob_len > 0 && cs->mbmaxlen > 1) {
-        true_len = (ulint) cs->cset->well_formed_len(cs,
-                                                     (const char *) blob_data,
-                                                     (const char *) blob_data
-                                                     + blob_len,
-                                                     (uint) (key_len /
-                                                             cs->mbmaxlen),
-                                                     &error);
+        true_len = (ulint) cs->cset->well_formed_len(*cs, str_ref(blob_data, blob_len), (uint) (key_len / cs->mbmaxlen), &error);
       }
 
       /* All indexes on BLOB and TEXT are column prefix
