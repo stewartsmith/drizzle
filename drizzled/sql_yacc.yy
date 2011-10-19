@@ -2691,7 +2691,7 @@ simple_expr:
         | function_call_conflict
         | simple_expr COLLATE_SYM ident_or_text %prec UMINUS
           {
-            Item *i1= new (YYSession->mem_root) Item_string($3.data(), $3.size(), YYSession->charset());
+            Item *i1= new (YYSession->mem_root) Item_string($3, YYSession->charset());
             $$= new (YYSession->mem_root) Item_func_set_collation($1, i1);
           }
         | literal
