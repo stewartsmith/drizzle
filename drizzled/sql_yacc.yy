@@ -3942,7 +3942,7 @@ opt_escape:
         | /* empty */
           {
             Lex.escape_used= false;
-            $$= new Item_string("\\", 1, &my_charset_utf8_general_ci);
+            $$= new Item_string(str_ref("\\"), &my_charset_utf8_general_ci);
           }
         ;
 
