@@ -5482,7 +5482,7 @@ internal_variable_name:
             {
               /* Not an SP local variable */
               sys_var *tmp= find_sys_var(to_string($1));
-              if (!tmp)
+              if (not tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
               $$.base_name= null_lex_string();
@@ -5500,9 +5500,9 @@ isolation_types:
 set_expr_or_default:
           expr { $$=$1; }
         | DEFAULT { $$=0; }
-        | ON     { $$=new Item_string("ON",  2, system_charset_info); }
-        | ALL    { $$=new Item_string("ALL", 3, system_charset_info); }
-        | BINARY { $$=new Item_string("binary", 6, system_charset_info); }
+        | ON     { $$=new Item_string(str_ref("ON"), system_charset_info); }
+        | ALL    { $$=new Item_string(str_ref("ALL"), system_charset_info); }
+        | BINARY { $$=new Item_string(str_ref("binary"), system_charset_info); }
         ;
 
 table_or_tables:
