@@ -188,7 +188,7 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
     return charset== &my_charset_bin
       ? new Item_string(*default_bin_value, &my_charset_bin)
-      : new Item_string(default_value->data(), default_value->size(), system_charset_info);
+      : new Item_string(*default_value, system_charset_info);
   case DRIZZLE_TYPE_DECIMAL:
     return new Item_decimal(default_value->c_str(), default_value->length(), system_charset_info);
   }
