@@ -72,7 +72,7 @@ void get_date_from_daynr(long daynr,
   NOTE
     See description of str_to_datetime() for more information.
 */
-type::timestamp_t str_to_datetime_with_warn(Session*, const char*, uint32_t length, type::Time *l_time,  uint32_t flags);
+type::timestamp_t str_to_datetime_with_warn(Session&, str_ref, type::Time&, uint32_t flags);
 
 /*
   Convert a time string to a type::Time struct and produce a warning
@@ -81,14 +81,9 @@ type::timestamp_t str_to_datetime_with_warn(Session*, const char*, uint32_t leng
   NOTE
     See str_to_time() for more info.
 */
-bool str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time);
+bool str_to_time_with_warn(Session&, str_ref, type::Time&);
 
-void make_truncated_value_warning(Session *session, 
-                                  DRIZZLE_ERROR::enum_warning_level level,
-                                  const char *str_val,
-                                  uint32_t str_length, 
-                                  type::timestamp_t time_type,
-                                  const char *field_name);
+void make_truncated_value_warning(Session&, DRIZZLE_ERROR::enum_warning_level level, str_ref, type::timestamp_t, const char* field);
 
 /*
   Calculate difference between two datetime values as seconds + microseconds.

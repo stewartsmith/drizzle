@@ -462,7 +462,7 @@ bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
       char buff[type::Time::MAX_STRING_LENGTH];
       String tmp(buff,sizeof(buff), &my_charset_bin);
       String *res= val_str(&tmp);
-      if (not res || str_to_datetime_with_warn(&getSession(), res->ptr(), res->length(), &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
+      if (not res || str_to_datetime_with_warn(getSession(), *res, ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR)
       {
         break;
       }
@@ -478,7 +478,7 @@ bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
       {
         char buff[DECIMAL_LONGLONG_DIGITS];
         char* end= internal::int64_t10_to_str(value, buff, -10);
-        make_truncated_value_warning(&getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN, buff, (int) (end-buff), type::DRIZZLE_TIMESTAMP_NONE, NULL);
+        make_truncated_value_warning(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN, str_ref(buff, (int) (end-buff)), type::DRIZZLE_TIMESTAMP_NONE, NULL);
         break;
       }
     }
@@ -494,12 +494,11 @@ bool Item::get_date(type::Time &ltime,uint32_t fuzzydate)
 bool Item::get_time(type::Time &ltime)
 {
   char buff[type::Time::MAX_STRING_LENGTH];
-  String tmp(buff,sizeof(buff),&my_charset_bin),*res;
-  if (!(res=val_str(&tmp)) or
-      str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &ltime))
+  String tmp(buff,sizeof(buff),&my_charset_bin);
+  String *res= val_str(&tmp);
+  if (not res || str_to_time_with_warn(getSession(), *res, ltime))
   {
     ltime.reset();
-
     return true;
   }
 
