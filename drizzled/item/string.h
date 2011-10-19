@@ -27,6 +27,25 @@ namespace drizzled {
 class Item_string : public Item_basic_constant
 {
 public:
+  Item_string(str_ref str, const charset_info_st* cs, Derivation dv= DERIVATION_COERCIBLE)
+  {
+    assert(not (str.size() % cs->mbminlen));
+    str_value.set(str.data(), str.size(), cs);
+    collation.set(cs, dv);
+    /*
+      We have to have a different max_length than 'length' here to
+      ensure that we get the right length if we do use the item
+      to create a new table. In this case max_length must be the maximum
+      number of chars for a string of this type because we in CreateField::
+      divide the max_length with mbmaxlen).
+    */
+    max_length= str_value.numchars()*cs->mbmaxlen;
+    set_name(str.data(), str.size(), cs);
+    decimals=NOT_FIXED_DEC;
+    // it is constant => can be used without fix_fields (and frequently used)
+    fixed= 1;
+  }
+
   Item_string(const char *str,uint32_t length,
               const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
   {
