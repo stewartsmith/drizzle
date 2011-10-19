@@ -100,7 +100,7 @@ void optimizer::ExplainPlan::printPlan()
     if (join->session->lex().describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
 
-    item_list.push_back(new Item_string(message,strlen(message),cs));
+    item_list.push_back(new Item_string(str_ref(message), cs));
     if (result->send_data(item_list))
       join->error= 1;
   }
@@ -159,9 +159,9 @@ void optimizer::ExplainPlan::printPlan()
     item_list.push_back(item_null);
     /* extra */
     if (join->unit->global_parameters->order_list.first)
-      item_list.push_back(new Item_string("Using filesort", 14, cs));
+      item_list.push_back(new Item_string(str_ref("Using filesort"), cs));
     else
-      item_list.push_back(new Item_string("", 0, cs));
+      item_list.push_back(new Item_string(str_ref(""), cs));
 
     if (result->send_data(item_list))
       join->error= 1;
@@ -209,7 +209,7 @@ void optimizer::ExplainPlan::printPlan()
       else
       {
         TableList *real_table= table->pos_in_table_list;
-        item_list.push_back(new Item_string(real_table->alias, strlen(real_table->alias), cs));
+        item_list.push_back(new Item_string(str_ref(real_table->alias), cs));
       }
       /* "type" column */
       item_list.push_back(new Item_string(access_method_str[tab->type], cs));
@@ -236,7 +236,7 @@ void optimizer::ExplainPlan::printPlan()
       if (tab->ref.key_parts)
       {
         KeyInfo *key_info= table->key_info+ tab->ref.key;
-        item_list.push_back(new Item_string(key_info->name, strlen(key_info->name), system_charset_info));
+        item_list.push_back(new Item_string(str_ref(key_info->name), system_charset_info));
         uint32_t length= internal::int64_t2str(tab->ref.key_length, keylen_str_buf, 10) - keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, length, system_charset_info));
         for (StoredKey **ref= tab->ref.key_copy; *ref; ref++)
@@ -251,7 +251,7 @@ void optimizer::ExplainPlan::printPlan()
       else if (tab->type == AM_NEXT)
       {
         KeyInfo *key_info=table->key_info+ tab->index;
-        item_list.push_back(new Item_string(key_info->name, strlen(key_info->name),cs));
+        item_list.push_back(new Item_string(str_ref(key_info->name),cs));
         uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) - keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, length, system_charset_info));
         item_list.push_back(item_null);
@@ -311,7 +311,7 @@ void optimizer::ExplainPlan::printPlan()
         key_read= 1;
 
       if (tab->info)
-        item_list.push_back(new Item_string(tab->info,strlen(tab->info),cs));
+        item_list.push_back(new Item_string(str_ref(tab->info),cs));
       else if (tab->packed_info & TAB_INFO_HAVE_VALUE)
       {
         if (tab->packed_info & TAB_INFO_USING_INDEX)
