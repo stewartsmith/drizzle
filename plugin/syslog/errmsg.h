@@ -35,7 +35,7 @@ private:
 public:
   explicit Syslog(const std::string& facility);
 
-  virtual bool errmsg(drizzled::error::level_t, const char *format, va_list ap);
+  virtual bool errmsg(drizzled::error::priority_t, const char *format, va_list ap);
 };
 
 } /* namespace error_message */

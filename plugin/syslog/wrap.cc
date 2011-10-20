@@ -86,13 +86,13 @@ void WrapSyslog::openlog(const std::string &ident)
   }
 }
 
-void WrapSyslog::vlog(int facility, const drizzled::error::level_t priority, const char *format, va_list ap)
+void WrapSyslog::vlog(int facility, const drizzled::error::priority_t priority, const char *format, va_list ap)
 {
   assert(_check == true);
   vsyslog(facility | int(priority), format, ap);
 }
 
-void WrapSyslog::log (int facility, const drizzled::error::level_t priority, const char *format, ...)
+void WrapSyslog::log (int facility, const drizzled::error::priority_t priority, const char *format, ...)
 {
   assert(_check == true);
   va_list ap;

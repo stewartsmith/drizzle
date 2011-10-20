@@ -80,7 +80,7 @@ void access(const drizzled::identifier::User& user, const drizzled::identifier::
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), table.getSQLPath().c_str());
 } 
 
-static error::level_t _verbosity= error::ERROR;
+static error::priority_t _verbosity= error::ERROR;
 static std::string _verbosity_strint;
 
 const std::string &verbose_string()
@@ -125,7 +125,7 @@ const std::string &verbose_string()
   return _arg;
 }
 
-error::level_t &verbosity()
+error::priority_t &verbosity()
 {
   return _verbosity;
 }

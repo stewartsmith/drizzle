@@ -26,7 +26,7 @@ namespace drizzled
 namespace error
 {
 
-enum level_t {
+enum priority_t {
   EMERG, // syslog:LOG_EMERG
   ALERT, // syslog:LOG_ALERT
   CRITICAL, //  syslog:LOG_CRIT

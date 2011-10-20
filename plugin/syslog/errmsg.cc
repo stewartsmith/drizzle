@@ -22,7 +22,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include <plugin/syslog/errmsg.h>
 #include <plugin/syslog/wrap.h>
@@ -41,11 +41,9 @@ error_message::Syslog::Syslog(const std::string& facility) :
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
   }
-
-  std::cerr << "Starting syslog with " << _facility << std::endl;
 }
 
-bool error_message::Syslog::errmsg(drizzled::error::level_t priority, const char *format, va_list ap)
+bool error_message::Syslog::errmsg(drizzled::error::priority_t priority, const char *format, va_list ap)
 {
   WrapSyslog::singleton().vlog(_facility, priority, format, ap);
   return false;
