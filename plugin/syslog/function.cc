@@ -22,8 +22,8 @@
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
-#include "function.h"
-#include "wrap.h"
+#include <plugin/syslog/function.h>
+#include <plugin/syslog/wrap.h>
 
 namespace drizzle_plugin
 {
@@ -57,7 +57,7 @@ drizzled::String *udf::Syslog::val_str(drizzled::String *s)
     return 0;
   }
 
-  WrapSyslog::singleton().log(syslog_facility, syslog_priority, "%s", syslog_string);
+  WrapSyslog::singleton().log(syslog_facility, drizzled::error::priority_t(syslog_priority), "%s", syslog_string);
 
   null_value= 0;
   return args[2]->val_str(s);

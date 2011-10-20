@@ -22,7 +22,7 @@
 #pragma once
 
 #include <drizzled/plugin/plugin.h>
-#include <drizzled/error/level_t.h>
+#include <drizzled/error/priority_t.h>
 
 #include <stdarg.h>
 
@@ -43,12 +43,12 @@ public:
    : Plugin(name_arg, "ErrorMessage")
   {}
 
-  virtual bool errmsg(error::level_t priority, const char *format, va_list ap)=0;
+  virtual bool errmsg(error::priority_t priority, const char *format, va_list ap)=0;
 
   static bool addPlugin(plugin::ErrorMessage *handler);
   static void removePlugin(plugin::ErrorMessage *handler);
 
-  static bool vprintf(error::level_t priority, char const *format, va_list ap);
+  static bool vprintf(error::priority_t priority, char const *format, va_list ap);
 
   bool removeLast() const
   {

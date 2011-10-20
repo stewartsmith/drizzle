@@ -27,14 +27,14 @@
 #pragma once
 
 #include <drizzled/visibility.h>
-#include <drizzled/error/level_t.h>
+#include <drizzled/error/priority_t.h>
 
 #include <string>
 
 namespace drizzled
 {
 
-DRIZZLED_API bool errmsg_printf(error::level_t priority, char const *format, ...)
+DRIZZLED_API bool errmsg_printf(error::priority_t priority, char const *format, ...)
   __attribute__((format(printf, 2, 3)));
 
 DRIZZLED_API void sql_perror(const char *message);

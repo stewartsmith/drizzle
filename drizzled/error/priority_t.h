@@ -26,11 +26,14 @@ namespace drizzled
 namespace error
 {
 
-enum level_t {
-  INSPECT= 1, // note, this is what normally we would call "debug"
-  INFO= 2,
-  WARN= 3,
-  ERROR= 4
+enum priority_t {
+  EMERG, // syslog:LOG_EMERG
+  ALERT, // syslog:LOG_ALERT
+  CRITICAL, //  syslog:LOG_CRIT
+  ERROR, // syslog:LOG_ERR
+  WARN, // syslog:LOG_WARNING
+  INFO, // syslog:LOG_INFO
+  INSPECT // syslog:LOG_DEBUG
 };
 
 } /* namespace error */

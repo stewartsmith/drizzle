@@ -22,19 +22,17 @@
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 
-#include <stdarg.h>
+#include <cstdarg>
 
-#include "errmsg.h"
-#include "wrap.h"
+#include <plugin/syslog/errmsg.h>
+#include <plugin/syslog/wrap.h>
 
 namespace drizzle_plugin
 {
 
-error_message::Syslog::Syslog(const std::string& facility,
-                              const std::string& priority) :
+error_message::Syslog::Syslog(const std::string& facility) :
   drizzled::plugin::ErrorMessage("Syslog"),
-  _facility(WrapSyslog::getFacilityByName(facility.c_str())),
-  _priority(WrapSyslog::getPriorityByName(priority.c_str()))
+  _facility(WrapSyslog::getFacilityByName(facility.c_str()))
 {
   if (_facility == -1)
   {
@@ -43,19 +41,11 @@ error_message::Syslog::Syslog(const std::string& facility,
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
   }
-
-  if (_priority == -1)
-  {
-    drizzled::errmsg_printf(drizzled::error::WARN,
-                            _("syslog priority \"%s\" not known, using \"warn\""),
-                            priority.c_str());
-    _priority= WrapSyslog::getPriorityByName("warn");
-  }
 }
 
-bool error_message::Syslog::errmsg(drizzled::error::level_t, const char *format, va_list ap)
+bool error_message::Syslog::errmsg(drizzled::error::priority_t priority, const char *format, va_list ap)
 {
-  WrapSyslog::singleton().vlog(_facility, _priority, format, ap);
+  WrapSyslog::singleton().vlog(_facility, priority, format, ap);
   return false;
 }
 

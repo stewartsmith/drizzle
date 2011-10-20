@@ -80,13 +80,28 @@ void access(const drizzled::identifier::User& user, const drizzled::identifier::
   my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), user.getSQLPath().c_str(), table.getSQLPath().c_str());
 } 
 
-static error::level_t _verbosity= error::ERROR;
+static error::priority_t _verbosity= error::ERROR;
 static std::string _verbosity_strint;
 
 const std::string &verbose_string()
 {
   switch (_verbosity)
   {
+  case error::ALERT:
+    {
+      static std::string _arg= "ALERT";
+      return _arg;
+    }
+  case error::EMERG:
+    {
+      static std::string _arg= "EMERG";
+      return _arg;
+    }
+  case error::CRITICAL:
+    {
+      static std::string _arg= "CRITICAL";
+      return _arg;
+    }
   case error::INSPECT:
     {
       static std::string _arg= "INSPECT";
@@ -103,16 +118,14 @@ const std::string &verbose_string()
       return _arg;
     }
   case error::ERROR:
-    {
-      static std::string _arg= "ERROR";
-      return _arg;
-    }
+    break;
   }
 
-  abort();
+  static std::string _arg= "ERROR";
+  return _arg;
 }
 
-error::level_t &verbosity()
+error::priority_t &verbosity()
 {
   return _verbosity;
 }
@@ -131,10 +144,20 @@ void check_verbosity(const std::string &arg)
   {
     _verbosity= error::WARN;
   }
-  else if (not arg.compare("ERROR"))
+  else if (not arg.compare("EMERG"))
   {
-    _verbosity= error::ERROR;
+    _verbosity= error::EMERG;
   }
+  else if (not arg.compare("CRITICAL"))
+  {
+    _verbosity= error::CRITICAL;
+  }
+  else if (not arg.compare("ALERT"))
+  {
+    _verbosity= error::ALERT;
+  }
+
+  _verbosity= error::ERROR;
 }
 
 } // namespace error

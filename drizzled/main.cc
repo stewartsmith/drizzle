@@ -95,7 +95,9 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
   if (session)
   {
     if (MyFlags & ME_FATALERROR)
+    {
       session->is_fatal_error= 1;
+    }
 
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
@@ -399,6 +401,9 @@ int main(int argc, char **argv)
     daemon_is_ready();
   }
 
+
+  errmsg_printf(error::INFO, "Drizzle startup complete, listening for connections will now begin.");
+
   /*
     Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
@@ -432,6 +437,8 @@ int main(int argc, char **argv)
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
+  errmsg_printf(error::INFO, "Drizzle is now shutting down");
 
   return 0;
 }
