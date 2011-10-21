@@ -1292,12 +1292,12 @@ Create_func_space::create(Session *session, Item *arg1)
 
   if (cs->mbminlen > 1)
   {
-    sp= new (session->mem) Item_string("", 0, cs, DERIVATION_COERCIBLE);
+    sp= new (session->mem) Item_string(str_ref(""), cs, DERIVATION_COERCIBLE);
     sp->str_value.copy(" ", 1, cs);
   }
   else
   {
-    sp= new (session->mem) Item_string(" ", 1, cs, DERIVATION_COERCIBLE);
+    sp= new (session->mem) Item_string(str_ref(" "), cs, DERIVATION_COERCIBLE);
   }
 
   return new (session->mem) Item_func_repeat(*session, sp, arg1);

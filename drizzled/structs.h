@@ -69,7 +69,7 @@ public:
   unsigned int usable_key_parts;	/* Should normally be = key_parts */
   uint32_t  block_size;
   KeyPartInfo *key_part;
-  char	*name;				/* Name of key */
+  const char* name;				/* Name of key */
   /*
     Array of AVG(#records with the same field value) for 1st ... Nth key part.
     0 means 'not known'.

@@ -95,7 +95,7 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
   if (value_arg && value_arg->type() == Item::FIELD_ITEM)
   {
     Item_field *item= (Item_field*) value_arg;
-    value=new Item_string(item->field_name, (uint32_t) strlen(item->field_name), item->collation.collation);
+    value= new Item_string(str_ref(item->field_name), item->collation.collation);
   }
   else
   {

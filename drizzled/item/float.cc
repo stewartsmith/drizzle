@@ -158,7 +158,7 @@ Item *Item_static_float_func::safe_charset_converter(const charset_info_st*)
   char buf[64];
   String tmp(buf, sizeof(buf), &my_charset_bin);
   String* s= val_str(&tmp);
-  Item_string* conv= new Item_static_string_func(func_name, s->ptr(), s->length(), s->charset());
+  Item_string* conv= new Item_static_string_func(func_name, *s, s->charset());
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

@@ -46,11 +46,11 @@ private:
 
 } /* namespace constants */
 
+static drizzled::identifier::User g_su(str_ref("SYSTEM"));
+
 const identifier::User& system_user()
 {
-  static drizzled::identifier::User _tmp("SYSTEM");
-
-  return _tmp;
+  return g_su;
 }
 
 } /* namespace identifier */

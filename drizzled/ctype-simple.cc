@@ -27,8 +27,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Returns the number of bytes required for strnxfrm().
@@ -871,41 +870,34 @@ size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const cha
 }
 
 
-void my_fill_8bit(const charset_info_st * const,
-		  char *s, size_t l, int fill)
+void my_fill_8bit(const charset_info_st * const, char *s, size_t l, int fill)
 {
   memset(s, fill, l);
 }
 
 
-size_t my_numchars_8bit(const charset_info_st * const,
-		        const char *b, const char *e)
+size_t my_numchars_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_numcells_8bit(const charset_info_st * const,
-                        const char *b, const char *e)
+size_t my_numcells_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_charpos_8bit(const charset_info_st * const,
-                       const char *, const char *, size_t pos)
+size_t my_charpos_8bit(const charset_info_st * const, const char *, const char *, size_t pos)
 {
   return pos;
 }
 
 
-size_t my_well_formed_len_8bit(const charset_info_st * const,
-                               const char *start, const char *end,
-                               size_t nchars, int *error)
+size_t my_well_formed_len_8bit(const charset_info_st&, str_ref str, size_t nchars, int *error)
 {
-  size_t nbytes= (size_t) (end-start);
   *error= 0;
-  return min(nbytes, nchars);
+  return min(str.size(), nchars);
 }
 
 

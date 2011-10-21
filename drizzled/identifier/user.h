@@ -20,11 +20,8 @@
 
 #pragma once
 
-#include <string>
-#include <boost/shared_ptr.hpp>
 #include <drizzled/common_fwd.h>
 #include <drizzled/identifier.h>
-#include <drizzled/visibility.h>
 
 namespace drizzled {
 namespace identifier {
@@ -46,14 +43,13 @@ public:
     MYSQL_HASH
   };
 
-  User():
+  User() :
     password_type(NONE)
   { }
 
-  User(const std::string &username_arg):
+  User(str_ref user_arg) :
     password_type(NONE),
-    _user(username_arg),
-    _address("")
+    _user(to_string(user_arg))
   { }
 
   virtual std::string getSQLPath() const

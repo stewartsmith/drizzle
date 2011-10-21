@@ -317,28 +317,21 @@ void buildEngineOption(LEX *lex, const char *key, uint64_t value)
 
 void buildSchemaOption(LEX *lex, const char *key, str_ref value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(value.data(), value.size());
 }
 
-void buildSchemaDefiner(LEX *lex, const lex_string_t &value)
-{
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
-  identifier::User user(value.data());
-  message::set_definer(statement->schema_message, user);
-}
-
 void buildSchemaDefiner(LEX *lex, const identifier::User &user)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::set_definer(statement->schema_message, user);
 }
 
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(boost::lexical_cast<std::string>(value));
@@ -654,7 +647,7 @@ void buildPrimaryOnColumn(LEX *lex)
 
 void buildReplicationOption(LEX *lex, bool arg)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::set_is_replicated(statement->schema_message, arg);
 }
 

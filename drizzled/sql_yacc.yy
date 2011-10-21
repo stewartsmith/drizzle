@@ -1013,7 +1013,7 @@ custom_database_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-            parser::buildSchemaDefiner(&Lex, $2);
+            parser::buildSchemaDefiner(&Lex, identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
@@ -1080,8 +1080,7 @@ custom_engine_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-	    drizzled::identifier::User user($2.data());
-            message::set_definer(*Lex.table(), user);
+            message::set_definer(*Lex.table(), identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
@@ -2691,7 +2690,7 @@ simple_expr:
         | function_call_conflict
         | simple_expr COLLATE_SYM ident_or_text %prec UMINUS
           {
-            Item *i1= new (YYSession->mem_root) Item_string($3.data(), $3.size(), YYSession->charset());
+            Item *i1= new (YYSession->mem_root) Item_string($3, YYSession->charset());
             $$= new (YYSession->mem_root) Item_func_set_collation($1, i1);
           }
         | literal
@@ -3942,7 +3941,7 @@ opt_escape:
         | /* empty */
           {
             Lex.escape_used= false;
-            $$= new Item_string("\\", 1, &my_charset_utf8_general_ci);
+            $$= new Item_string(str_ref("\\"), &my_charset_utf8_general_ci);
           }
         ;
 
@@ -5153,7 +5152,7 @@ IDENT_sys:
           {
             const charset_info_st * const cs= system_charset_info;
             int dummy_error;
-            uint32_t wlen= cs->cset->well_formed_len(cs, $1.begin(), $1.end(), $1.size(), &dummy_error);
+            uint32_t wlen= cs->cset->well_formed_len(*cs, $1, $1.size(), &dummy_error);
             if (wlen < $1.size())
             {
               my_error(ER_INVALID_CHARACTER_STRING, MYF(0), cs->csname, $1.data() + wlen);
@@ -5482,7 +5481,7 @@ internal_variable_name:
             {
               /* Not an SP local variable */
               sys_var *tmp= find_sys_var(to_string($1));
-              if (!tmp)
+              if (not tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
               $$.base_name= null_lex_string();
@@ -5500,9 +5499,9 @@ isolation_types:
 set_expr_or_default:
           expr { $$=$1; }
         | DEFAULT { $$=0; }
-        | ON     { $$=new Item_string("ON",  2, system_charset_info); }
-        | ALL    { $$=new Item_string("ALL", 3, system_charset_info); }
-        | BINARY { $$=new Item_string("binary", 6, system_charset_info); }
+        | ON     { $$=new Item_string(str_ref("ON"), system_charset_info); }
+        | ALL    { $$=new Item_string(str_ref("ALL"), system_charset_info); }
+        | BINARY { $$=new Item_string(str_ref("binary"), system_charset_info); }
         ;
 
 table_or_tables:

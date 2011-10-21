@@ -2876,9 +2876,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->getUpdateRecord(), table->getShare()->getRecordLength(),
-             default_charset_info);
-  String tmp2;
+  String tmp((char *)table->getUpdateRecord(), table->getShare()->getRecordLength(), default_charset_info);
   String *result= &item->result;
   Item **arg= item->args, **arg_end= item->args + item->arg_count_field;
   uint32_t old_length= result->length();
@@ -2918,19 +2916,14 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
   if (result->length() > item->max_length)
   {
     int well_formed_error;
-    const charset_info_st * const cs= item->collation.collation;
+    const charset_info_st& cs= *item->collation.collation;
     const char *ptr= result->ptr();
-    uint32_t add_length;
     /*
       It's ok to use item->result.length() as the fourth argument
       as this is never used to limit the length of the data.
       Cut is done with the third argument.
     */
-    add_length= cs->cset->well_formed_len(cs,
-                                          ptr + old_length,
-                                          ptr + item->max_length,
-                                          result->length(),
-                                          &well_formed_error);
+    uint32_t add_length= cs.cset->well_formed_len(cs, str_ref(ptr + old_length, ptr + item->max_length), result->length(), &well_formed_error);
     result->length(old_length + add_length);
     item->count_cut_values++;
     item->warning_for_row= true;

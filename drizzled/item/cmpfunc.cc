@@ -743,9 +743,7 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type, co
 
   if (error != type::VALID)
   {
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str->ptr(), str->length(),
-                                 warn_type, warn_name);
+    make_truncated_value_warning(*session, DRIZZLE_ERROR::WARN_LEVEL_WARN, *str, warn_type, warn_name);
   }
 
   return value;

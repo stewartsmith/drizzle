@@ -146,42 +146,31 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
   abort();
 }
 
-static Item *default_value_item(enum_field_types field_type,
-                                const charset_info_st *charset,
-                                bool default_null, const string *default_value,
-                                const string *default_bin_value)
+static Item* default_value_item(enum_field_types field_type, const charset_info_st& charset, bool default_null, 
+  const string& default_value, const string& default_bin_value)
 {
-  Item *default_item= NULL;
-  int error= 0;
-
   if (default_null)
-  {
     return new Item_null();
-  }
 
-  switch(field_type)
+  switch (field_type)
   {
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
-    default_item= new Item_int(default_value->c_str(),
-                               (int64_t) internal::my_strtoll10(default_value->c_str(),
-                                                                NULL,
-                                                                &error),
-                               default_value->length());
-
-    if (error && error != -1) /* was an error and wasn't a negative number */
     {
-      delete default_item;
-      return NULL;
-    }
+      int error= 0;
+      Item* default_item= new Item_int(default_value.c_str(), (int64_t) internal::my_strtoll10(default_value.c_str(), NULL, &error), default_value.length());
 
-    break;
+      if (error && error != -1) /* was an error and wasn't a negative number */
+      {
+        delete default_item;
+        return NULL;
+      }
+      return default_item;
+    }
   case DRIZZLE_TYPE_DOUBLE:
-    default_item= new Item_float(default_value->c_str(),
-                                 default_value->length());
-    break;
+    return new Item_float(default_value.c_str(), default_value.length());
   case DRIZZLE_TYPE_NULL:
-    assert(0);
+    assert(false);
     abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
@@ -192,33 +181,17 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
-    default_item= new Item_string(default_value->c_str(),
-                                  default_value->length(),
-                                  system_charset_info);
-    break;
+    // return new Item_string(*default_value, system_charset_info); // crash
+    return new Item_string(default_value.data(), default_value.size(), system_charset_info);
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
-    if (charset==&my_charset_bin)
-    {
-      default_item= new Item_string(default_bin_value->c_str(),
-                                    default_bin_value->length(),
-                                    &my_charset_bin);
-    }
-    else
-    {
-      default_item= new Item_string(default_value->c_str(),
-                                    default_value->length(),
-                                    system_charset_info);
-    }
-    break;
+    return &charset== &my_charset_bin
+      ? new Item_string(default_bin_value, &my_charset_bin)
+      : new Item_string(default_value, system_charset_info);
   case DRIZZLE_TYPE_DECIMAL:
-    default_item= new Item_decimal(default_value->c_str(),
-                                   default_value->length(),
-                                   system_charset_info);
-    break;
+    return new Item_decimal(default_value.c_str(), default_value.length(), system_charset_info);
   }
-
-  return default_item;
+  return NULL;
 }
 
 
@@ -975,8 +948,12 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
 
-    str_ref comment;
-    if (pfield.has_comment())
+    lex_string_t comment;
+    if (!pfield.has_comment())
+    {
+      comment.assign("", 0);
+    }
+    else
     {
       comment.assign(mem().strdup(pfield.comment()), pfield.comment().size());
     }
@@ -1042,11 +1019,7 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
         pfield.options().default_null()  ||
         pfield.options().has_default_bin_value())
     {
-      default_value= default_value_item(field_type,
-                                        charset,
-                                        pfield.options().default_null(),
-                                        &pfield.options().default_value(),
-                                        &pfield.options().default_bin_value());
+      default_value= default_value_item(field_type, *charset, pfield.options().default_null(), pfield.options().default_value(), pfield.options().default_bin_value());
       if (default_value == NULL)
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), pfield.name().c_str());

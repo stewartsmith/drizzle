@@ -57,8 +57,7 @@ public:
 
   void clear()
   {
-    begin_ = NULL;
-    end_ = NULL;
+    begin_ = end_ = reinterpret_cast<T>("");
   }
 
   void assign(const void* b, const void* e)
