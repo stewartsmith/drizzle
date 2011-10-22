@@ -102,9 +102,9 @@ uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
-  return length == other.length &&
-         field_name.size() == other.field_name.size() &&
-    !my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
+  return length == other.length 
+    && field_name.size() == other.field_name.size()
+    && not my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :

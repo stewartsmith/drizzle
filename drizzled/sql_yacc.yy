@@ -2014,7 +2014,7 @@ alter_list_item:
               Lex.select_lex.db = db.data();
             }
 
-            if (check_table_name($3->table.data(), $3->table.size()))
+            if (check_table_name($3->table))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.data());
               DRIZZLE_YYABORT;
