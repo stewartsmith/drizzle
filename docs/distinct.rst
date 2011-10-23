@@ -1,4 +1,4 @@
-Distinct
+DISTINCT
 ========
 
 In a table, columns may contain more than one of the same value. 

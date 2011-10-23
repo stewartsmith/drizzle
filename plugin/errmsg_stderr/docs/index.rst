@@ -1,6 +1,6 @@
 .. _errmsg_stderr_plugin:
 
-Error Messages To STDERR
+Error Messages to STDERR
 ========================
 
 :program:`errmsg_stderr` is an error message plugin that prints all

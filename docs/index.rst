@@ -72,10 +72,12 @@ Administration
 --------------
 .. toctree::
    :maxdepth: 2
-
+   
+   administration/getting_started
    administration/drizzled
    administration/authentication
    administration/authorization
+   administration/logging
    administration/plugins
    administration/storage_engines
 

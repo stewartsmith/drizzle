@@ -1,4 +1,4 @@
-Group By
+GROUP BY
 ========
 
 The GROUP BY clause is used to extract only those records that fulfill a specified criterion.

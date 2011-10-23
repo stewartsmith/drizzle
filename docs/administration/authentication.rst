@@ -22,6 +22,14 @@ The following authentication plugins are included with Drizzle:
 * :doc:`/plugins/auth_ldap/index`
 * :doc:`/plugins/auth_pam/index`
 
+Protocols
+---------
+
+The :ref:`drizzle_command_line_client` supports three authentication
+protocols: ``mysql`` (default), ``mysql-plugin-auth``, and ``drizzle``.
+The default ``mysql`` protocol sends the client's password as an
+encrypted hash.
+
 -------------------------------------------------------------------------------
 
 .. rubric:: Footnotes
