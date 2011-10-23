@@ -2835,8 +2835,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
       max_str[0]= min_str[0]=0;
 
     field_length-= maybe_null;
-    int escape_code= make_escape_code(field->charset(),
-                                      ((Item_func_like*)(param->cond))->escape);
+    int escape_code= make_escape_code(field->charset(), ((Item_func_like*)(param->cond))->escape);
     like_error= my_like_range(field->charset(),
                               res->ptr(), res->length(),
                               escape_code,

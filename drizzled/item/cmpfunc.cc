@@ -4388,8 +4388,7 @@ int64_t Item_func_like::val_int()
   return my_wildcmp(cmp.cmp_collation.collation,
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
-		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    internal::wild_one,internal::wild_many) ? 0 : 1;
+		    make_escape_code(cmp.cmp_collation.collation, escape), internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 

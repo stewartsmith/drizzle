@@ -1868,26 +1868,22 @@ int my_wildcmp_unicode(const charset_info_st * const cs,
           return -1;
 
         str+= scan;
-        result= my_wildcmp_unicode(cs, str, str_end, wildstr, wildend,
-                                   escape, w_one, w_many,
-                                   weights);
+        result= my_wildcmp_unicode(cs, str, str_end, wildstr, wildend, escape, w_one, w_many, weights);
         if (result <= 0)
           return result;
       }
     }
   }
-  return (str != str_end ? 1 : 0);
+  return str != str_end;
 }
 
 
-int make_escape_code(const charset_info_st * const cs, const char *escape)
+int make_escape_code(const charset_info_st* cs, const char *escape)
 {
   my_charset_conv_mb_wc mb_wc= cs->cset->mb_wc;
   my_wc_t escape_wc;
-  int rc= mb_wc(cs, &escape_wc,
-                (const unsigned char*) escape,
-                (const unsigned char*) escape + strlen(escape));
-  return (int)(rc > 0 ? escape_wc : '\\');
+  int rc= mb_wc(cs, &escape_wc, (const unsigned char*) escape, (const unsigned char*) escape + strlen(escape));
+  return rc > 0 ? escape_wc : '\\';
 }
 
 /*
@@ -2111,9 +2107,10 @@ my_wc_mb_utf8mb4(const charset_info_st * const,
   else return MY_CS_ILUNI;
 
   if (r + count > e)
-    return my_cs_toosmalln(count);
+    return -100 - count;
 
-  switch (count) {
+  switch (count) 
+  {
     /* Fall through all cases!!! */
     case 4: r[3] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
     case 3: r[2] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
@@ -2686,7 +2683,6 @@ static MY_COLLATION_HANDLER my_collation_utf8mb4_bin_handler =
 
 MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
 {
-  NULL,               /* init */
   my_ismbchar_utf8mb4,
   my_mbcharlen_utf8mb4,
   my_numchars_mb,

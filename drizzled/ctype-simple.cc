@@ -1494,15 +1494,12 @@ ret_too_big:
 
 
 
-bool my_propagate_simple(const charset_info_st * const, const unsigned char *,
-                         size_t)
+bool my_propagate_simple()
 {
   return 1;
 }
 
-
-bool my_propagate_complex(const charset_info_st * const, const unsigned char *,
-                          size_t)
+bool my_propagate_complex()
 {
   return 0;
 }
