@@ -1,3 +1,5 @@
+.. _memcached_stats_plugin:
+
 Memcached Statistics
 ====================
 

@@ -1,3 +1,5 @@
+.. _errmsg_stderr_plugin:
+
 Error Messages To STDERR
 ========================
 

@@ -1,3 +1,5 @@
+.. _simple_user_policy_plugin:
+
 User-based Authorization
 ========================
 

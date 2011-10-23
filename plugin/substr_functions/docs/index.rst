@@ -1,3 +1,5 @@
+.. _substr_functions_plugin:
+
 Substring Functions
 ===================
 

@@ -1,3 +1,5 @@
+.. _sleep_plugin:
+
 SLEEP Function
 ==============
 

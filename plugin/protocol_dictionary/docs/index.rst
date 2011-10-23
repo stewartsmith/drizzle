@@ -1,3 +1,5 @@
+.. _protocol_dictionary_plugin:
+
 Protocol Dictionary
 ===================
 

@@ -1,3 +1,5 @@
+.. _utility_functions_plugin:
+
 Utility Functions
 =================
 

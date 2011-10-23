@@ -1,3 +1,5 @@
+.. _user_locks_plugin:
+
 User Locks
 ==========
 

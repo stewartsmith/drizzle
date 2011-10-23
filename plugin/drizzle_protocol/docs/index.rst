@@ -1,3 +1,5 @@
+.. _drizzle_protocol_plugin:
+
 Drizzle Protocol
 ================
 

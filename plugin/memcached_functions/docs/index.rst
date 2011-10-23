@@ -1,3 +1,5 @@
+.. _memcached_functions_plugin:
+
 Memcached Functions
 ===================
 

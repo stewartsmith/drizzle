@@ -1,3 +1,5 @@
+.. _uuid_function_plugin:
+
 UUID Function
 =============
 

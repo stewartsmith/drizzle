@@ -1,3 +1,5 @@
+.. _mysql_unix_socket_protocol_plugin:
+
 MySQL Unix Socket Protocol
 ==========================
 

@@ -1,3 +1,5 @@
+.. _length_plugin:
+
 Length Functions
 ================
 

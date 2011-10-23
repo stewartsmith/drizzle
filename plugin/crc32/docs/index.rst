@@ -1,3 +1,5 @@
+.. _crc32_plugin:
+
 CRC32 Function
 ==============
 

@@ -1,3 +1,5 @@
+.. _show_schema_proto_plugin:
+
 SHOW_SCHEMA_PROTO Function
 ==========================
 

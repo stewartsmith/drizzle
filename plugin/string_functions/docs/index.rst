@@ -1,3 +1,5 @@
+.. _string_functions_plugin:
+
 String Functions
 ================
 

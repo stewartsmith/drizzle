@@ -1,3 +1,5 @@
+.. _registry_dictionary_plugin:
+
 Registry Dictionary
 ===================
 

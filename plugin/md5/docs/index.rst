@@ -1,3 +1,5 @@
+.. _md5_plugin:
+
 MD5 Function
 ============
 

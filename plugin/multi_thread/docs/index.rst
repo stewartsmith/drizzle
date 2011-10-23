@@ -1,3 +1,5 @@
+.. _multi_thread_plugin:
+
 Multi-Thread Scheduler
 ======================
 

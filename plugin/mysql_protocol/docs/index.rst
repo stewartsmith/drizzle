@@ -1,3 +1,5 @@
+.. _mysql_protocol_plugin:
+
 MySQL Protocol
 ==============
 

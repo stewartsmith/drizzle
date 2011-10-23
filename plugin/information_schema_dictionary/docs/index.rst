@@ -1,3 +1,5 @@
+.. _information_schema_dictionary_plugin:
+
 Information Schema Dictionary
 =============================
 

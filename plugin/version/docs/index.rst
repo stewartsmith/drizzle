@@ -1,3 +1,5 @@
+.. _version_plugin:
+
 VERSION Function
 ================
 

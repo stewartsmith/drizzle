@@ -1,3 +1,5 @@
+.. _logging_stats_plugin:
+
 User Statistics
 ===============
 

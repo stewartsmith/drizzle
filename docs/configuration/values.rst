@@ -37,7 +37,7 @@ Boolean
 
 When :ref:`setting a variable <setting_variables>`, boolean values are
 one of the various true and false values listed for the
-:doc:`/boolean_data_type`.  When setting a :ref:`boolean_options`,
+:doc:`/boolean_data_type`.  When setting :ref:`boolean_options`,
 no value is need or allowed.
 
 Size

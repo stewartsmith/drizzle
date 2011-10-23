@@ -1,3 +1,5 @@
+.. _zeromq_plugin:
+
 ZeroMQ
 ======
 

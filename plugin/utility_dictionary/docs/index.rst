@@ -1,3 +1,5 @@
+.. _utility_dictionary_plugin:
+
 Utility Dictionary
 ==================
 

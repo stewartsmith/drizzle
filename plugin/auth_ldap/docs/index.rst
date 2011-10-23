@@ -1,3 +1,5 @@
+.. _auth_ldap_plugin:
+
 LDAP Authentication
 ===================
 

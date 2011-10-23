@@ -1,3 +1,5 @@
+.. _charlength_plugin:
+
 CHAR_LENGTH Function
 ====================
 

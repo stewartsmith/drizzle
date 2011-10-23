@@ -1,3 +1,5 @@
+.. _status_dictionary_plugin:
+
 Status Dictionary
 =================
 

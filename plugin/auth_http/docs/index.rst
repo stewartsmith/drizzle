@@ -1,3 +1,5 @@
+.. _auth_http_plugin:
+
 HTTP Authentication
 ===================
 

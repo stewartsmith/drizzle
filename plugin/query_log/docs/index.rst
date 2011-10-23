@@ -1,3 +1,5 @@
+.. _query_log_plugin:
+
 Query Log
 =========
 

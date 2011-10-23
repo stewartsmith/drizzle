@@ -1,3 +1,5 @@
+.. _compression_plugin:
+
 Compression Functions
 =====================
 

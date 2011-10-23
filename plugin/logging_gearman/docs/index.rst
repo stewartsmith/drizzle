@@ -1,3 +1,5 @@
+.. _logging_gearman_plugin:
+
 Gearman Logging
 ===============
 

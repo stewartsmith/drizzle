@@ -1,3 +1,5 @@
+.. _session_dictionary_plugin:
+
 Session Dictionary
 ==================
 

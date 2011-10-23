@@ -1,3 +1,5 @@
+.. _myisam_plugin:
+
 MyISAM Storage Engine
 =====================
 

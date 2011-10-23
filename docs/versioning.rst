@@ -1,8 +1,11 @@
 Releases and Versioning
-========================
+=======================
 
-A new version of Drizzle is released every two weeks. The release is labelled "YEAR-MONTH-REVISION#"
+New development versions of Drizzle are released every two weeks.
+Releases are labelled ``YEAR-MONTH-REVISION``  This should not be
+confused with ``YEAR-MONTH-DAY``.  For example, version
+``2011.02.10`` refers to February 2011 *revision* 10.
 
-This shouldn't be confused with "YEAR-MONTH-DAY". For example, in "2011-02-10" the "10" refers to the revision number and not the date.
+Development releases are available through Lanchpad at https://launchpad.net/drizzle/+download.
 
-You can always see the latest release on Launchpad. 
+Subscribe to http://planetdrizzle.org/ or the `Drizzle Discuss mailing list <https://launchpad.net/~drizzle-discuss/>`_ to be notified about all releases.

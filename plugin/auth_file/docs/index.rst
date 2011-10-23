@@ -1,3 +1,5 @@
+.. _auth_file_plugin:
+
 File-based Authentication
 =========================
 

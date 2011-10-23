@@ -1,3 +1,5 @@
+.. _debug_plugin:
+
 Debugging Functions
 ===================
 

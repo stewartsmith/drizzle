@@ -1,3 +1,5 @@
+.. _ascii_plugin:
+
 ASCII Function
 ==============
 

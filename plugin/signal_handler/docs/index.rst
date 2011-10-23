@@ -1,3 +1,5 @@
+.. _signal_handler_plugin:
+
 Signal Handler
 ==============
 

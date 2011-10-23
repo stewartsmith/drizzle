@@ -1,3 +1,5 @@
+.. _transaction_log_plugin:
+
 Transaction Log
 ===============
 
@@ -163,8 +165,7 @@ Transaction Log Messages
 ------------------------
 
 Replication events are recorded using messages in the `Google Protocol Buffer
-<http://code.google.com/p/protobuf/>`_ (GPB) format. See the :doc:`Replication
-documentation </replication>` for more information.
+<http://code.google.com/p/protobuf/>`_ (GPB) format. See :doc:`/replication/drizzle` for more information.
 
 Transaction Log Format
 ----------------------

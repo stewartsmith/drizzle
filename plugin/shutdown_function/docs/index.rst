@@ -1,3 +1,5 @@
+.. _shutdown_function_plugin:
+
 SHUTDOWN Function
 =================
 

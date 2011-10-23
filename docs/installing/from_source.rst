@@ -1,5 +1,5 @@
-Installing From Source
-======================
+Installing Drizzle from Source
+==============================
 
 * :ref:`dependencies`
 * :ref:`ubuntu-install`
@@ -61,7 +61,7 @@ these additional dependencies:
 .. _ubuntu-install:
 
 Ubuntu Install Commands
--------------------------
+-----------------------
 
 The following commands work on Ubuntu to install the tools and libraries needed to build Drizzle:
 
@@ -75,7 +75,7 @@ The following commands work on Ubuntu to install the tools and libraries needed 
 .. _debian-install:
 
 Debian Install Commands
--------------------------
+-----------------------
 
 Since apt-repository isn't in Debian, you can instead add the Maverick PPA to /etc/apt/sources.list as follows:
 
@@ -111,7 +111,7 @@ or (if you want to install and not build drizzle):
 
 .. _obtain-source:
 
-Obtaining The Source
+Obtaining the Source
 --------------------
 The latest source release can always be found on our `LaunchPad site
 <https://launchpad.net/drizzle>`_. Alternatively, the bzr source from our stable
@@ -123,7 +123,7 @@ trunk can be obtained by doing:
 
 .. _compile-source:
 
-Compiling The Source
+Compiling the Source
 --------------------
 Compiling is done by performing the standard automake commands from the top level directory inside the source:
 

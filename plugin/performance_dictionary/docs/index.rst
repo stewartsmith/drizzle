@@ -1,3 +1,5 @@
+.. _performance_dictionary_plugin:
+
 Performance Dictionary
 ======================
 

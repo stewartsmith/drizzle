@@ -1,5 +1,5 @@
-Installing in RedHat and Fedora
-================================
+Installing on RedHat and Fedora
+===============================
 
 Using RPMs
 ----------
@@ -73,7 +73,7 @@ You can then install Drizzle by running the following command:
 
    sudo yum install drizzle7-server drizzle7-client
 
-Compiling From Source
+Compiling from Source
 ---------------------
 To compile from source you will need to add the repositories described above, and then install the following packages:
 

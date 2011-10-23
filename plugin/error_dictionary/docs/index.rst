@@ -1,3 +1,5 @@
+.. _error_dictionary_plugin:
+
 Error Dictionary
 ================
 

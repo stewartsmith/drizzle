@@ -1,3 +1,5 @@
+.. _http_functions_plugin:
+
 HTTP Functions
 ==============
 

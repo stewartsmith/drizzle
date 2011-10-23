@@ -1,3 +1,5 @@
+.. _replication_dictionary_plugin:
+
 Replication Dictionary
 ======================
 

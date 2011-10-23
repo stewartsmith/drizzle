@@ -1,3 +1,5 @@
+.. _auth_pam_plugin:
+
 PAM Authenication
 =================
 

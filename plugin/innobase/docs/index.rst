@@ -1,3 +1,5 @@
+.. _innobase_plugin:
+
 InnoDB Storage Engine
 =====================
 

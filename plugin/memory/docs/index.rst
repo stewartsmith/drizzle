@@ -1,3 +1,5 @@
+.. _memory_plugin:
+
 Memory Storage Engine
 =====================
 

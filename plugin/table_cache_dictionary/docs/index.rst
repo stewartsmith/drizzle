@@ -1,3 +1,5 @@
+.. _table_cache_dictionary_plugin:
+
 Table Cache Dictionary
 ======================
 

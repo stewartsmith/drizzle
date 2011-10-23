@@ -1,3 +1,5 @@
+.. _connection_id_plugin:
+
 CONNECTION_ID Function
 ======================
 

@@ -1,3 +1,5 @@
+.. _hex_functions_plugin:
+
 Hex Functions
 =============
 

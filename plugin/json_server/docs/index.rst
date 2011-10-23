@@ -1,3 +1,5 @@
+.. _json_server_plugin:
+
 JSON Server
 ===========
 

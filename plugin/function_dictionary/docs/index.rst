@@ -1,3 +1,5 @@
+.. _function_dictionary_plugin:
+
 Function Dictionary
 ===================
 

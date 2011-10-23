@@ -1,3 +1,5 @@
+.. _collation_dictionary_plugin:
+
 Character and Collation Dictionary
 ==================================
 

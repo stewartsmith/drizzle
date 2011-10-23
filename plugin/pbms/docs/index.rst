@@ -1,3 +1,5 @@
+.. _pbms_plugin:
+
 PrimeBase Media Stream Daemon
 =============================
 

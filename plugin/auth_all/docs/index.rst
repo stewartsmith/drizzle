@@ -1,3 +1,5 @@
+.. _auth_all_plugin:
+
 Allow All Authentication
 ========================
 

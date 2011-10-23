@@ -14,17 +14,43 @@ starts, it reads option values from three sources in this order:
 
 Values from :ref:`command_line_options` have the highest precedence;
 they override values from :ref:`config_files` which override the defaul
-values.  However, the :ref:`drizzled_config_file_options` are special:
-they are read first and they can only be specified on the command line.
-
-The default values alone are sufficient to start :program:`drizzled`,
+values.  The default values alone are sufficient to start :program:`drizzled`,
 but since they provide only the most basic configuration, you will certainly
 want to specify other options.
+
+To see which options are available, run ``drizzled --help``.  You can also
+see which options a plugin provides by running
+``drizzled --plugin-add PLUGIN --help`` where ``PLUGIN`` is the name of any
+plugin.  For example:
+
+.. code-block:: bash
+
+   $ drizzled --plugin-add query_log --help
+   sbin/drizzled  Ver 2011.08.25.2411 for pc-linux-gnu on i686 (Source distribution (trunk))
+   Copyright (C) 2010-2011 Drizzle Developers, Copyright (C) 2008 Sun Microsystems
+   This software comes with ABSOLUTELY NO WARRANTY. This is free software,
+   and you are welcome to modify and redistribute it under the GPL license
+   
+   ...
+
+   Options used by query_log:
+     --query-log.file-enabled                      Enable query logging to file
+     --query-log.file arg (=drizzled-queries.log)  Query log file
+     --query-log.threshold-execution-time arg (=0) Threshold for logging slow 
+                                                   queries, in microseconds
+
+Options listed by ``--help`` can be used as :ref:`command_line_options`.
+To use them in :ref:`config_files`, strip the leading ``--``.
+
+.. note:: Since Drizzle uses many plugins, the available options vary depending on which plugins are loaded.  If you cannnot find a certain option, ensure that the plugin which provides the option is loaded.
 
 .. _setting_options:
 
 Setting Options
 ---------------
+
+Options are read from one or more of the following sources.  Each source
+is optional.
 
 .. _config_files:
 
@@ -108,9 +134,10 @@ plugin options.  For example::
 Multiple Config Files
 ---------------------
 
-:option:`--defaults-file` specifies one config file, but :option:`--config-dir`
-specifies a directory which can contain multiple config files.  If a file
-named :file:`drizzled.cnf` exists in the config dir, it is read first.
+The command line option :option:`--defaults-file` specifies one config file,
+but :option:`--config-dir` specifies a directory which can contain multiple
+config files.  If a file named :file:`drizzled.cnf` exists in the config dir,
+it is read first.
 If the config dir contains a directory called :file:`conf.d`, then *every*
 file in that directory is read as a config file.  (Even hidden files are read,
 including hidden temp files created by your editor while editing config files
@@ -159,33 +186,4 @@ For example, ``--transaction-log.enable`` enable the transaction log because
 it is disabled by default.  However, some options are *enabled* by default,
 so specifying them disables them.  For example, ``--innodb.disable-checksums``
 disables InnoDB checkum validation because it is enabled by default.
-
-.. _available_options:
-
-Available Options
------------------
-
-To see which options are available, run ``drizzled --help``.  You can also
-see which options a plugin provides by running
-``drizzled --plugin-add PLUGIN --help`` where ``PLUGIN`` is the name of any
-plugin.  For example:
-
-.. code-block:: bash
-
-   $ drizzled --plugin-add query_log --help
-   sbin/drizzled  Ver 2011.08.25.2411 for pc-linux-gnu on i686 (Source distribution (trunk))
-   Copyright (C) 2010-2011 Drizzle Developers, Copyright (C) 2008 Sun Microsystems
-   This software comes with ABSOLUTELY NO WARRANTY. This is free software,
-   and you are welcome to modify and redistribute it under the GPL license
-   
-   ...
-
-   Options used by query_log:
-     --query-log.file-enabled                      Enable query logging to file
-     --query-log.file arg (=drizzled-queries.log)  Query log file
-     --query-log.threshold-execution-time arg (=0) Threshold for logging slow 
-                                                   queries, in microseconds
-
-Options listed by ``--help`` can be used as :ref:`command_line_options`.
-To use them in :ref:`config_files`, strip the leading ``--``.
 

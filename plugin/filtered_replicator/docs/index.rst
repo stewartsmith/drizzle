@@ -1,3 +1,5 @@
+.. _filtered_replicator_plugin:
+
 Filtered Replicator
 ===================
 

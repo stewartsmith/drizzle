@@ -1,3 +1,5 @@
+.. _schema_dictionary_plugin:
+
 Schema Dictionary
 =================
 

@@ -1,3 +1,5 @@
+.. _regex_policy_plugin:
+
 Regex-based Authorization
 =========================
 

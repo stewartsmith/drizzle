@@ -1,3 +1,5 @@
+.. _syslog_plugin:
+
 Syslog
 ======
 

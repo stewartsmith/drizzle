@@ -1,3 +1,5 @@
+.. _reverse_function_plugin:
+
 REVERSE Function
 ================
 

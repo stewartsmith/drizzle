@@ -1,3 +1,5 @@
+.. _coercibility_function_plugin:
+
 COERCIBILITY Function
 =====================
 

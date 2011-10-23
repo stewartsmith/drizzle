@@ -1,3 +1,5 @@
+.. _trigger_dictionary_plugin:
+
 Trigger Dictionary
 ==================
 

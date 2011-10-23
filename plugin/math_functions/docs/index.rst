@@ -1,3 +1,5 @@
+.. _math_functions_plugin:
+
 Math Functions
 ==============
 

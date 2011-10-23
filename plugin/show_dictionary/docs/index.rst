@@ -1,3 +1,5 @@
+.. _show_dictionary_plugin:
+
 SHOW Commands
 =============
 

@@ -1,3 +1,5 @@
+.. _rand_function_plugin:
+
 RAND Function
 =============
 

@@ -1,3 +1,5 @@
+.. _function_engine_plugin:
+
 Function Engine
 ===============
 
