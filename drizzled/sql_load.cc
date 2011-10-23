@@ -639,8 +639,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
       else if (item->type() == Item::STRING_ITEM)
       {
-        ((Item_user_var_as_out_param *)item)->set_value((char*) pos, length,
-                                                        read_info.read_charset);
+        ((Item_user_var_as_out_param *)item)->set_value(str_ref((char*) pos, length), read_info.read_charset);
       }
       else
       {

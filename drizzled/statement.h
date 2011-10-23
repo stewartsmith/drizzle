@@ -24,7 +24,6 @@
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_base.h>
-#include <drizzled/show.h>
 
 namespace drizzled {
 namespace statement {

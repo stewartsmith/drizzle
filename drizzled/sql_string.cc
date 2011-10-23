@@ -580,8 +580,7 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
     }
 
     set_if_smaller(from_length, to_length);
-    res= to_cs->cset->well_formed_len(to_cs, from, from + from_length,
-                                      nchars, &well_formed_error);
+    res= to_cs->cset->well_formed_len(*to_cs, str_ref(from, from_length), nchars, &well_formed_error);
     memmove(to, from, res);
     *from_end_pos= from + res;
     *well_formed_error_pos= well_formed_error ? from + res : NULL;

@@ -162,9 +162,11 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enu
           int err= stat(buffered_fullpath.c_str(), &entrystat);
 
           if (err != 0)
+          {
             errmsg_printf(error::WARN, ER(ER_CANT_GET_STAT),
                           buffered_fullpath.c_str(),
                           errno);
+          }
 
           if (err == 0 && S_ISDIR(entrystat.st_mode))
           {

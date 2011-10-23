@@ -34,8 +34,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::CreateSchema::execute()
 {
@@ -48,11 +47,11 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(string(lex().name.str, lex().name.length));
+  identifier::Schema schema_identifier(to_string(lex().name));
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, lex().name.str);
+  drizzled::message::schema::init(schema_message, lex().name.data());
 
   message::set_definer(schema_message, *session().user());
 
@@ -117,4 +116,3 @@ bool statement::CreateSchema::validateSchemaOptions()
 }
 
 } /* namespace drizzled */
-

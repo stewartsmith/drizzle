@@ -69,15 +69,25 @@ static void kill_server(int sig)
 {
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
+  {
     return;
-  kill_in_progress=true;
-  abort_loop=1;					// This should be set
+  }
+
+  kill_in_progress= true;
+  abort_loop= true;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
+  {
     ignore_signal(sig);                    /* purify inspected */
+  }
+
   if (sig == SIGTERM || sig == 0)
+  {
     errmsg_printf(error::INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
+  }
   else
+  {
     errmsg_printf(error::ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+  }
 
   close_connections();
   clean_up(1);
@@ -107,7 +117,7 @@ static void create_pid_file()
   memset(buff, 0, sizeof(buff));
   snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pid_file.file_string().c_str());
   sql_perror(buff);
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 

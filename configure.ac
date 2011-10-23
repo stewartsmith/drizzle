@@ -155,7 +155,7 @@ AC_LANG_POP
 PANDORA_DRIZZLE_BUILD
 PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
-
+PANDORA_HAVE_LIBV8
 
 
 #########################################################################

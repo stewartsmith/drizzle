@@ -184,9 +184,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     true    failure
 */
 
-void user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
-                                 Item_result arg_type, const charset_info_st * const cs, Derivation dv,
-                                 bool unsigned_arg)
+void user_var_entry::update_hash(bool set_null, data_ref data, Item_result arg_type, const charset_info_st* cs, Derivation dv, bool unsigned_arg)
 {
   if (set_null)
   {
@@ -201,7 +199,7 @@ void user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
   }
   else
   {
-    size_t needed_size= arg_length + ((arg_type == STRING_RESULT) ? 1 : 0);
+    size_t needed_size= data.size() + ((arg_type == STRING_RESULT) ? 1 : 0);
 
     if (needed_size > size)
     {
@@ -210,12 +208,12 @@ void user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
     }
 
     if (arg_type == STRING_RESULT)
-      value[arg_length]= 0;			// Store end \0
+      value[data.size()]= 0;			// Store end \0
 
-    memcpy(value, ptr, arg_length);
+    memcpy(value, data.data(), data.size());
     if (arg_type == DECIMAL_RESULT)
       ((type::Decimal*)value)->fix_buffer_pointer();
-    length= arg_length;
+    length= data.size();
     collation.set(cs, dv);
     unsigned_flag= unsigned_arg;
   }

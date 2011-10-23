@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstring>
 #include <ostream>
+#include <string>
 
 template <class T>
 class data_ref_basic
@@ -27,6 +28,7 @@ class data_ref_basic
 public:
   data_ref_basic()
   {
+    clear();
   }
 
   template <class U>
@@ -53,11 +55,9 @@ public:
     assign(b, strlen(b));
   }
 
-  const data_ref_basic& clear()
+  void clear()
   {
-    begin_ = NULL;
-    end_ = NULL;
-    return *this;
+    begin_ = end_ = reinterpret_cast<T>("");
   }
 
   void assign(const void* b, const void* e)
@@ -96,12 +96,6 @@ public:
   {
     return begin() == end();
   }
-
-  friend std::ostream& operator<<(std::ostream& os, data_ref_basic<T> v)
-  {
-    os.write(v.data(), v.size());
-    return os;
-  }
 private:
   T begin_;
   T end_;
@@ -109,3 +103,13 @@ private:
 
 typedef data_ref_basic<const unsigned char*> data_ref;
 typedef data_ref_basic<const char*> str_ref;
+
+inline std::ostream& operator<<(std::ostream& os, str_ref v)
+{
+  return os.write(v.data(), v.size());
+}
+
+inline std::string to_string(str_ref v)
+{
+  return std::string(v.data(), v.size());
+}

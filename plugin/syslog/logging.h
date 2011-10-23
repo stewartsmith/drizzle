@@ -31,14 +31,12 @@ class Syslog: public drizzled::plugin::Logging
 {
 private:
   int _facility;
-  int _priority;
   uint64_t _threshold_slow;
   uint64_t _threshold_big_resultset;
   uint64_t _threshold_big_examined;
 
 public:
   Syslog(const std::string &facility,
-         const std::string &priority,
          uint64_t threshold_slow,
          uint64_t threshold_big_resultset,
          uint64_t threshold_big_examined);

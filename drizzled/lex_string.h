@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstddef>
+#include <drizzled/util/data_ref.h>
 
 namespace drizzled {
 
@@ -32,16 +33,37 @@ struct lex_string_t
 {
   const char* begin() const
   {
-    return str;
+    return data();
   }
 
   const char* end() const
   {
-    return str + length;
+    return data() + size();
   }
 
-  char* str;
-  size_t length;
+  const char* data() const
+  {
+    return str_;
+  }
+
+  size_t size() const
+  {
+    return length_;
+  }
+
+  void assign(const char* d, size_t s)
+  {
+    str_= const_cast<char*>(d);
+    length_ = s;
+  }
+
+  void operator=(str_ref v)
+  {
+    assign(v.data(), v.size());
+  }
+
+  char* str_;
+  size_t length_;
 };
 
 inline const lex_string_t &null_lex_string()
@@ -61,11 +83,10 @@ public:
     return is_variable;
   }
 
-  void set(const lex_string_t& ptr, bool is_variable_arg= false)
+  void set(const lex_string_t& s, bool is_variable_arg= false)
   {
     is_variable= is_variable_arg;
-    str= ptr.str;
-    length= ptr.length;
+    static_cast<lex_string_t&>(*this) = s;
   }
 
 };

@@ -231,27 +231,23 @@ bool fill_table_proto(const identifier::Table& identifier,
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
 
-    if (field_arg->comment.length)
+    if (not field_arg->comment.empty())
     {
-      uint32_t tmp_len;
-      tmp_len= system_charset_info->cset->charpos(system_charset_info,
-						  field_arg->comment.str,
-						  field_arg->comment.str +
-						  field_arg->comment.length,
+      uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
+						  field_arg->comment.begin(),
+						  field_arg->comment.end(),
 						  COLUMN_COMMENT_MAXLEN);
 
-      if (tmp_len < field_arg->comment.length)
+      if (tmp_len < field_arg->comment.size())
       {
-	my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-		 field_arg->comment.str,"COLUMN COMMENT",
-		 (uint32_t) COLUMN_COMMENT_MAXLEN);
-	return true;
+        my_error(ER_WRONG_STRING_LENGTH, MYF(0), field_arg->comment.data(), "COLUMN COMMENT", (uint32_t) COLUMN_COMMENT_MAXLEN);
+        return true;
       }
 
-      if (! use_existing_fields)
-        attribute->set_comment(field_arg->comment.str);
+      if (not use_existing_fields)
+        attribute->set_comment(field_arg->comment.data());
 
-      assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
+      assert(strcmp(attribute->comment().c_str(), field_arg->comment.data())==0);
     }
 
     if (field_arg->unireg_check == Field::NEXT_NUMBER)
@@ -408,7 +404,7 @@ bool fill_table_proto(const identifier::Table& identifier,
   {
     message::Table::Index *idx= table_proto.add_indexes();
 
-    assert(test(key_info[i].flags & HA_USES_COMMENT) == (key_info[i].comment.length > 0));
+    assert(test(key_info[i].flags & HA_USES_COMMENT) == (key_info[i].comment.size() > 0));
 
     idx->set_name(key_info[i].name);
     idx->set_key_length(key_info[i].key_length);
@@ -463,20 +459,19 @@ bool fill_table_proto(const identifier::Table& identifier,
     {
       uint32_t tmp_len;
       tmp_len= system_charset_info->cset->charpos(system_charset_info,
-						  key_info[i].comment.str,
-						  key_info[i].comment.str +
-						  key_info[i].comment.length,
+						  key_info[i].comment.begin(),
+						  key_info[i].comment.end(),
 						  TABLE_COMMENT_MAXLEN);
 
-      if (tmp_len < key_info[i].comment.length)
+      if (tmp_len < key_info[i].comment.size())
       {
 	my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-		 key_info[i].comment.str,"Index COMMENT",
+		 key_info[i].comment.data(), "Index COMMENT",
 		 (uint32_t) TABLE_COMMENT_MAXLEN);
 	return true;
       }
 
-      idx->set_comment(key_info[i].comment.str);
+      idx->set_comment(key_info[i].comment.data());
     }
     static const uint64_t unknown_index_flag= (HA_NOSAME | HA_PACK_KEY |
                                                HA_USES_BLOCK_SIZE | 

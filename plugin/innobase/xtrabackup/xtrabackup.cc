@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/configmake.h>
-#include <drizzled/error/level_t.h>
+#include <drizzled/error/priority_t.h>
 
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
@@ -109,9 +109,9 @@ using namespace drizzled;
 namespace po=boost::program_options;
 
 namespace drizzled {
-  bool errmsg_printf (error::level_t, char const *format, ...);
+  bool errmsg_printf (error::priority_t, char const *format, ...);
 
-  bool errmsg_printf (error::level_t, char const *format, ...)
+  bool errmsg_printf (error::priority_t, char const *format, ...)
   {
     bool rv;
     va_list args;

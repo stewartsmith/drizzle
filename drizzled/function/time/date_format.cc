@@ -388,9 +388,8 @@ String *Item_func_date_format::val_str(String *str)
   }
   else
   {
-    String *res;
-    if (!(res=args[0]->val_str(str)) ||
-        (str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &l_time)))
+    String *res=args[0]->val_str(str);
+    if (not res || str_to_time_with_warn(getSession(), *res, l_time))
       goto null_date;
 
     l_time.year=l_time.month=l_time.day=0;

@@ -1,0 +1,35 @@
+# Basic Hello world test plust testing arguments with and without name
+SELECT JS("var foo = 'Hello'; foo + ', World';");
+SELECT JS("var foo = 'Hello'; foo + ', ' + arguments[0];", "World");
+SELECT JS("var foo = 'Hello'; foo + ', ' + bar;", "World" AS 'bar');
+
+# Test all data types are passed correctly as arguments (string was handled above)
+
+CREATE TABLE jstest (id INT PRIMARY KEY auto_increment, i INT, d DOUBLE, t TIMESTAMP, dt DATETIME);
+
+INSERT INTO jstest VALUES (1, -5, 7.5, '2001-02-16 20:38:40', '2011-09-24 22:26:31');
+SELECT JS("arguments[0] + 1", i) FROM jstest WHERE id=1;
+SELECT JS("arguments[0] + 1.1", d) FROM jstest WHERE id=1;
+SELECT JS("var d = arguments[0]; d.getUTCFullYear() + ' - ' + d.getUTCHours() + ' - ' +  + d.getUTCSeconds();", t) FROM jstest WHERE id=1;
+SELECT JS("var d = arguments[0]; d.getUTCDate() + ' - ' + d.getUTCHours() + ' - ' + d.getUTCMinutes();", dt) FROM jstest WHERE id=1;
+
+# Test combinations
+SELECT JS("var num = arguments[0] + arguments[1]; arguments[2] + num;", i, d, "The sum is: ") FROM jstest WHERE id=1;
+
+# And the JSON test, why all this was created in the first place
+SELECT JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"]["firstname"]);', '{ "name" : {"firstname" : "Henrik", "lastname" : "Ingo"} }');
+
+DROP TABLE jstest;
+
+# Make deliberate error
+--error ER_SCRIPT
+SELECT JS("this is not javascript");
+
+# Why does this crash drizzletest?
+# SHOW ERRORS;
+
+# Make another connection and make sure we are handling multi-threaded mode correctly
+# (V8 is single threaded only by default.)
+connect (con2,localhost,test,jstest,mysql);
+SELECT JS("var foo = 'Another'; foo + ' thread';");
+disconnect con2;

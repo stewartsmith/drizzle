@@ -27,8 +27,7 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table_ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const charset_info_st *system_charset_info;
 
@@ -60,20 +59,18 @@ void add_foreign_key_to_table_message(
   pfkey->set_match(match_opt_arg);
   pfkey->set_update_option(update_opt_arg);
   pfkey->set_delete_option(delete_opt_arg);
+  pfkey->set_references_table_name(table->table.data());
 
-  pfkey->set_references_table_name(table->table.str);
-
-  Key_part_spec *keypart;
   List<Key_part_spec>::iterator col_it(cols.begin());
-  while ((keypart= col_it++))
+  while (Key_part_spec* keypart= col_it++)
   {
-    pfkey->add_column_names(keypart->field_name.str);
+    pfkey->add_column_names(keypart->field_name.data());
   }
 
   List<Key_part_spec>::iterator ref_it(ref_cols.begin());
-  while ((keypart= ref_it++))
+  while (Key_part_spec* keypart= ref_it++)
   {
-    pfkey->add_references_columns(keypart->field_name.str);
+    pfkey->add_references_columns(keypart->field_name.data());
   }
 
 }
@@ -188,20 +185,18 @@ bool foreign_key_prefix(Key *a, Key *b)
 */
 bool Foreign_key::validate(List<CreateField> &table_fields)
 {
-  CreateField  *sql_field;
-  Key_part_spec *column;
   List<Key_part_spec>::iterator cols(columns.begin());
-  List<CreateField>::iterator it(table_fields.begin());
-  while ((column= cols++))
+  while (Key_part_spec* column= cols++)
   {
-    it= table_fields.begin();
-    while ((sql_field= it++) &&
-           my_strcasecmp(system_charset_info,
-                         column->field_name.str,
-                         sql_field->field_name)) {}
+    List<CreateField>::iterator it= table_fields.begin();
+    CreateField* sql_field;
+    while ((sql_field= it++) 
+      && my_strcasecmp(system_charset_info, column->field_name.data(), sql_field->field_name))
+    {
+    }
     if (!sql_field)
     {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
+      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.data());
       return true;
     }
   }

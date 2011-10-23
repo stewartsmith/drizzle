@@ -29,7 +29,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
 
 /* A system variable */
 
-class Item_func_get_system_var :public Item_func
+class Item_func_get_system_var : public Item_func
 {
   sys_var *var;
   sql_var_t var_type;

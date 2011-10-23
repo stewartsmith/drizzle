@@ -73,7 +73,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (not create_info->default_table_charset)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(db));
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(str_ref(db)));
 }
 
 /*
@@ -806,7 +806,7 @@ static int prepare_create_table(Session *session,
       Foreign_key *fk_key= (Foreign_key*) key;
 
       add_foreign_key_to_table_message(&create_proto,
-                                       fk_key->name.str,
+                                       fk_key->name.data(),
                                        fk_key->columns,
                                        fk_key->ref_table,
                                        fk_key->ref_columns,
@@ -818,8 +818,7 @@ static int prepare_create_table(Session *session,
 	  fk_key->ref_columns.size() != fk_key->columns.size())
       {
         my_error(ER_WRONG_FK_DEF, MYF(0),
-                 (fk_key->name.str ? fk_key->name.str :
-                                     "foreign key without name"),
+                 (fk_key->name.data() ? fk_key->name.data() : "foreign key without name"),
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
 	return true;
       }
@@ -832,7 +831,7 @@ static int prepare_create_table(Session *session,
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
       return true;
     }
-    if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
+    if (check_identifier_name(key->name, ER_TOO_LONG_IDENT))
       return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
@@ -845,7 +844,7 @@ static int prepare_create_table(Session *session,
           Then we do not need the generated shorter key.
         */
         if ((key2->type != Key::FOREIGN_KEY &&
-             key2->name.str != ignore_key &&
+             key2->name.data() != ignore_key &&
              !foreign_key_prefix(key, key2)))
         {
           /* @todo issue warning message */
@@ -853,10 +852,10 @@ static int prepare_create_table(Session *session,
           if (!key2->generated ||
               (key->generated && key->columns.size() <
                key2->columns.size()))
-            key->name.str= ignore_key;
+            key->name.assign(ignore_key, 1);
           else
           {
-            key2->name.str= ignore_key;
+            key2->name.assign(ignore_key, 1);
             key_parts-= key2->columns.size();
             (*key_count)--;
           }
@@ -864,13 +863,13 @@ static int prepare_create_table(Session *session,
         }
       }
     }
-    if (key->name.str != ignore_key)
+    if (key->name.data() != ignore_key)
       key_parts+=key->columns.size();
     else
       (*key_count)--;
-    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.str))
+    if (key->name.data() && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.data()))
     {
-      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
+      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.data());
       return true;
     }
   }
@@ -891,12 +890,12 @@ static int prepare_create_table(Session *session,
     uint32_t key_length=0;
     Key_part_spec *column;
 
-    if (key->name.str == ignore_key)
+    if (key->name.data() == ignore_key)
     {
       /* ignore redundant keys */
       do
 	key=key_iterator++;
-      while (key && key->name.str == ignore_key);
+      while (key && key->name.data() == ignore_key);
       if (!key)
 	break;
     }
@@ -921,24 +920,21 @@ static int prepare_create_table(Session *session,
     key_info->algorithm= key->key_create_info.algorithm;
 
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
-                                           key->key_create_info.comment.str,
-                                           key->key_create_info.comment.str +
-                                           key->key_create_info.comment.length,
+                                           key->key_create_info.comment.begin(),
+                                           key->key_create_info.comment.end(),
                                            INDEX_COMMENT_MAXLEN);
 
-    if (tmp_len < key->key_create_info.comment.length)
+    if (tmp_len < key->key_create_info.comment.size())
     {
-      my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-               key->key_create_info.comment.str,"INDEX COMMENT",
-               (uint32_t) INDEX_COMMENT_MAXLEN);
+      my_error(ER_WRONG_STRING_LENGTH, MYF(0), key->key_create_info.comment.data(), "INDEX COMMENT", (uint32_t) INDEX_COMMENT_MAXLEN);
       return -1;
     }
 
-    key_info->comment.length= key->key_create_info.comment.length;
-    if (key_info->comment.length > 0)
+    key_info->comment.assign(key_info->comment.data(), key->key_create_info.comment.size());
+    if (key_info->comment.size() > 0)
     {
       key_info->flags|= HA_USES_COMMENT;
-      key_info->comment.str= key->key_create_info.comment.str;
+      key_info->comment.assign(key->key_create_info.comment.data(), key_info->comment.size()); // weird
     }
 
     message::Table::Field *protofield= NULL;
@@ -955,7 +951,7 @@ static int prepare_create_table(Session *session,
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
-			   column->field_name.str,
+			   column->field_name.data(),
 			   sql_field->field_name))
       {
 	field++;
@@ -963,18 +959,18 @@ static int prepare_create_table(Session *session,
 
       if (!sql_field)
       {
-	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
+	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.data());
 	return true;
       }
 
       while ((dup_column= cols2++) != column)
       {
         if (!my_strcasecmp(system_charset_info,
-                           column->field_name.str, dup_column->field_name.str))
+                           column->field_name.data(), dup_column->field_name.data()))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
-			  column->field_name.str);
+			  column->field_name.data());
 	  return true;
 	}
       }
@@ -990,12 +986,12 @@ static int prepare_create_table(Session *session,
         {
           if (! (engine->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
           {
-            my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
+            my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.data());
             return true;
           }
           if (! column->length)
           {
-            my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
+            my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.data());
             return true;
           }
         }
@@ -1021,7 +1017,7 @@ static int prepare_create_table(Session *session,
             key_info->flags|= HA_NULL_PART_KEY;
             if (! (engine->check_flag(HTON_BIT_NULL_IN_KEY)))
             {
-              my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
+              my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.data());
               return true;
             }
           }
@@ -1078,7 +1074,7 @@ static int prepare_create_table(Session *session,
       }
       else if (length == 0)
       {
-	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
+	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.data());
 	  return true;
       }
       if (length > engine->max_key_part_length())
@@ -1140,7 +1136,7 @@ static int prepare_create_table(Session *session,
 	  key_name=pkey_name;
 	  primary_key=1;
 	}
-	else if (!(key_name= key->name.str))
+	else if (!(key_name= key->name.data()))
 	  key_name=make_unique_key_name(sql_field->field_name,
 					*key_info_buffer, key_info);
 	if (check_if_keyname_exists(key_name, *key_info_buffer, key_info))
@@ -1809,7 +1805,7 @@ send_result:
       {
         session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
-        session->getClient()->store(warning_level_names[err->level].str, warning_level_names[err->level].length);
+        session->getClient()->store(warning_level_names[err->level].data(), warning_level_names[err->level].size());
         session->getClient()->store(err->msg);
         if (session->getClient()->flush())
           goto err;

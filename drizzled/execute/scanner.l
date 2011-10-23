@@ -124,8 +124,7 @@ ALNUM       {LETTERS}|{DIGITS}
 
 
 [[:punct:]]?{ALNUM}*["."{ALNUM}_-]*{ALNUM}*[[:punct:]]? {
-      yylval->string.str = yytext;
-      yylval->string.length = yyleng;
+      yylval->string.assign(yytext, yyleng);
       return STRING;
     }
 

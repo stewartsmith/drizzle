@@ -365,7 +365,23 @@ def expand_plugin_ini(plugin):
 
     if plugin.has_key('extra_dist'):
       plugin['extra_dist']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['extra_dist'].split()])
-
+    if plugin.has_key('bin_scripts'):
+      plugin['bin_scripts']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['bin_scripts'].split()])
+    if plugin.has_key('scripts'):
+      plugin['scripts']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['scripts'].split()])
+    if plugin.has_key('sbin_scripts'):
+      plugin['sbin_scripts']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['sbin_scripts'].split()])
+    if plugin.has_key('libexec_scripts'):
+      plugin['libexec_scripts']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['libexec_scripts'].split()])
+    if plugin.has_key('pkg_scripts'):
+      plugin['pkg_scripts']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['pkg_scripts'].split()])
+    if plugin.has_key('data'):
+      plugin['data']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['data'].split()])
+    if plugin.has_key('pkg_data'):
+      plugin['pkg_data']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['pkg_data'].split()])
+    if plugin.has_key('sysconf_data'):
+      plugin['sysconf_data']=" ".join([os.path.join(plugin['rel_path'],f) for f in plugin['sysconf_data'].split()])
+    
 
     if plugin['static']:
       plugin['static_yesno']="yes"
@@ -534,6 +550,22 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
 """ % plugin)
   if plugin.has_key('extra_dist') and plugin['extra_dist'] != "":
     plugin_am.write("EXTRA_DIST += %(extra_dist)s\n" % plugin)
+  if plugin.has_key('bin_scripts') and plugin['bin_scripts'] != "":
+    plugin_am.write("dist_bin_SCRIPTS += %(bin_scripts)s\n" % plugin)
+  if plugin.has_key('scripts') and plugin['scripts'] != "":
+    plugin_am.write("dist_bin_SCRIPTS += %(scripts)s\n" % plugin)
+  if plugin.has_key('sbin_scripts') and plugin['sbin_scripts'] != "":
+    plugin_am.write("dist_sbin_SCRIPTS += %(sbin_scripts)s\n" % plugin)
+  if plugin.has_key('libexec_scripts') and plugin['libexec_scripts'] != "":
+    plugin_am.write("dist_libexec_SCRIPTS += %(libexec_scripts)s\n" % plugin)
+  if plugin.has_key('pkg_scripts') and plugin['pkg_scripts'] != "":
+    plugin_am.write("dist_pkgdata_SCRIPTS += %(pkg_scripts)s\n" % plugin)
+  if plugin.has_key('data') and plugin['data'] != "":
+    plugin_am.write("dist_data_DATA += %(data)s\n" % plugin)
+  if plugin.has_key('pkg_data') and plugin['pkg_data'] != "":
+    plugin_am.write("dist_pkgdata_DATA += %(pkg_data)s\n" % plugin)
+  if plugin.has_key('sysconf_data') and plugin['sysconf_data'] != "":
+    plugin_am.write("dist_sysconf_DATA += %(sysconf_data)s\n" % plugin)
   if plugin['headers'] != "":
     plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
   if plugin['install_headers'] != "":

@@ -81,8 +81,7 @@ bool AnalysisTableTool::Generator::populate()
 
   memcached_return rc;
   memcached_st *serv= memcached_create(NULL);
-  memcached_server_st *tmp_serv=
-    memcached_servers_parse(servers_string.c_str());
+  memcached_server_st *tmp_serv= memcached_servers_parse(servers_string.c_str());
   memcached_server_push(serv, tmp_serv);
   memcached_server_list_free(tmp_serv);
   memcached_stat_st *stats= memcached_stat(serv, NULL, &rc);

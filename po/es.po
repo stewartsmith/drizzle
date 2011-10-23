@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
+"POT-Creation-Date: 2011-10-11 19:39+0000\n"
 "PO-Revision-Date: 2011-05-10 11:29+0000\n"
 "Last-Translator: nerjamartin <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
-"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2011-05-11 04:35+0000\n"
 "X-Generator: Launchpad (build 12959)\n"
@@ -557,7 +557,7 @@ msgstr "El LIMITADOR no puede contener el caracter barra invertida."
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5095
+#: ../client/drizzletest.cc:5153
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "Protocolo desconocido o equivocado"
@@ -912,8 +912,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1260,7 +1260,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "O %s [OPCIONES] --all-databases [OPCIONES]\n"
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5165
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "El valor dado para el puerto no es válido.\n"
@@ -1341,19 +1341,19 @@ msgstr "-- Obteniendo filas...\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4866
+#: ../client/drizzletest.cc:4924
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr ""
 
-#: ../client/drizzletest.cc:4876
+#: ../client/drizzletest.cc:4934
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "Error: Valor inválido para opt_tail_lines"
 
-#: ../client/drizzletest.cc:4886
+#: ../client/drizzletest.cc:4944
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "Error: Valor inválido para opt_sleep"
 
-#: ../client/drizzletest.cc:5065
+#: ../client/drizzletest.cc:5123
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "No se pudó abrir '%s' para lectura: errno = %d"
@@ -2413,8 +2413,8 @@ msgstr "Demasiadas partes de llave especificadas, max %d partes permitidas."
 #, c-format
 msgid "Specified key was too long; max key length is %d bytes"
 msgstr ""
-"La llave especificada es demasiado larga; la longitud máxima de la clave es "
-"%d bytes"
+"La llave especificada es demasiado larga; la longitud máxima de la clave es %"
+"d bytes"
 
 #: ../drizzled/error.cc:332
 #, c-format
@@ -3473,8 +3473,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 "La defensa de las restricciones de clave para la tabla '%.192s', entrada  "
 "%'-.192s', la clave %d daría lugar a una entrada duplicada"
@@ -3743,8 +3743,8 @@ msgstr "No puede leer el valor para el symlink '%s' (Codigo de error: %d)"
 #, c-format
 msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
 msgstr ""
-"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: "
-"%d)"
+"No puede crear un enlace simbolico '%s' apuntando a '%s' (Codigo de error: %"
+"d)"
 
 #: ../drizzled/error.cc:592
 #, c-format
@@ -4155,7 +4155,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
+#: ../drizzled/session.cc:1850 ../drizzled/session.cc:1859
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "no se pudo remover tabla temporal: '%s'. error %d"
@@ -4218,12 +4218,12 @@ msgstr ""
 "equación.\n"
 "\n"
 
-#: ../drizzled/sql_table.cc:1869
+#: ../drizzled/sql_table.cc:1866
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "desconocido - error interno %d durante la operación"
 
-#: ../drizzled/statement/alter_table.cc:1575
+#: ../drizzled/statement/alter_table.cc:1573
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -4507,7 +4507,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4885,7 +4885,7 @@ msgstr "Habilitar el registro a syslog"
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4932,21 +4932,21 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr "El número máximo de subprocesos disponibles para el usuario."
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr "La hebra thread_id=%<PRIu64>, %s:%d ha tenido un error"
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr "La hebra %s:%d ha tenido un error"
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr "Hebra desconocida accediendo a tabla"
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
@@ -4954,7 +4954,7 @@ msgstr ""
 "No utilice el método rápido índice de tipo de índice creado si el archivo "
 "temporal se hacen más grandes que esto."
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -5400,33 +5400,33 @@ msgstr "Habilitar el registro a syslog"
 msgid "Syslog Priority of error messages"
 msgstr "Prioridad SYslog"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 #, fuzzy
 msgid "Failed to open transaction log file"
 msgstr "Habilitar el histórico de transacciones"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr "No se pudo leer el mensaje de transacción\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr "Erorr GPB: %s.\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format
@@ -5927,13 +5927,13 @@ msgstr "Dirección para unir a."
 #~ "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 #~ "type %s\n"
 #~ msgstr ""
-#~ "--Advertencia: No se pudo utilizar inserciones retrasadas para la tabla "
-#~ "'%s' debido a su tipo %s\n"
+#~ "--Advertencia: No se pudo utilizar inserciones retrasadas para la tabla '%"
+#~ "s' debido a su tipo %s\n"
 
 #~ msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 #~ msgstr ""
-#~ "%s: Advertencia: No se pudo establecer la opción SQL_QUOTE_SHOW_CREATE "
-#~ "(%s)\n"
+#~ "%s: Advertencia: No se pudo establecer la opción SQL_QUOTE_SHOW_CREATE (%"
+#~ "s)\n"
 
 #~ msgid "%s: Can't get keys for table %s\n"
 #~ msgstr "%s: No se pudo obtener las claves para la tabla %s\n"
@@ -6041,8 +6041,8 @@ msgstr "Dirección para unir a."
 
 #~ msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
 #~ msgstr ""
-#~ "Error borrando la base de datos (no se puede eliminar '%-.192s', errno: "
-#~ "%d)"
+#~ "Error borrando la base de datos (no se puede eliminar '%-.192s', errno: %"
+#~ "d)"
 
 #~ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 #~ msgstr ""
@@ -6717,8 +6717,8 @@ msgstr "Dirección para unir a."
 
 #~ msgid "Binary logging and replication forbid changing the global server %s"
 #~ msgstr ""
-#~ "El registro binario y la replicación prohíbe cambiar el servidor mundial "
-#~ "%s"
+#~ "El registro binario y la replicación prohíbe cambiar el servidor mundial %"
+#~ "s"
 
 #~ msgid "Can't map file: %-.200s, errno: %d"
 #~ msgstr "No puede asignar el archivo: %-.200s, Error: %d"
@@ -7282,8 +7282,8 @@ msgstr "Dirección para unir a."
 #~ "Column count of drizzle.%s is wrong. Expected %d, found %d. The table is "
 #~ "probably corrupted"
 #~ msgstr ""
-#~ "contador de columnas de drizzle.%s  es invalida. Experado %d, encontrado "
-#~ "%d. la tabla esta probablemente corrupta"
+#~ "contador de columnas de drizzle.%s  es invalida. Experado %d, encontrado %"
+#~ "d. la tabla esta probablemente corrupta"
 
 #~ msgid "Cannot load from drizzle.%s. The table is probably corrupted"
 #~ msgstr ""
@@ -8420,15 +8420,15 @@ msgstr "Dirección para unir a."
 
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-#~ "%<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+#~ "<PRIu64> K\n"
 #~ "bytes of memory\n"
 #~ "Hope that's ok; if not, decrease some variables in the equation.\n"
 #~ "\n"
 #~ msgstr ""
 #~ "Es posible que drizzled pueda llegar a usar hasta \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-#~ "%<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+#~ "<PRIu64> K\n"
 #~ "bytes de memoria\n"
 #~ "Espero que esto esté bien; si no, reduzca algunas variables en la "
 #~ "ecuación.\n"
@@ -8809,8 +8809,8 @@ msgstr "Dirección para unir a."
 #~ "bytes.\n"
 
 #~ msgid ""
-#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of "
-#~ "%<PRIu64> bytes.\n"
+#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of %"
+#~ "<PRIu64> bytes.\n"
 #~ msgstr ""
 #~ "No se pudo leer la transacción completa. Leer %<PRIu64> bytes en lugar de "
 #~ "%<PRIu64> bytes.\n"
@@ -8831,16 +8831,16 @@ msgstr "Dirección para unir a."
 #~ "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 #~ msgstr ""
 #~ "Falló al escribir el  tamaño completo de la orden. Se intentaron escribir "
-#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
-#~ "%<PRId64> bytes. Error: %s\n"
+#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron %"
+#~ "<PRId64> bytes. Error: %s\n"
 
 #~ msgid ""
 #~ "Failed to write full serialized command.  Tried to write %<PRId64> bytes "
 #~ "at offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 #~ msgstr ""
-#~ "Falló al escribir la orden completa serializada. Se intentaron escribir "
-#~ "%<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron "
-#~ "%<PRId64> bytes. Error: %s\n"
+#~ "Falló al escribir la orden completa serializada. Se intentaron escribir %"
+#~ "<PRId64> bytes en la dirección  %<PRId64>, pero sólo se escribieron %"
+#~ "<PRId64> bytes. Error: %s\n"
 
 #~ msgid ""
 #~ "Failed to parse command message at offset %<PRId64>.  Got error: %s\n"

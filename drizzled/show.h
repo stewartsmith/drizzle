@@ -27,40 +27,37 @@
 #pragma once
 
 #include <drizzled/enum.h>
-#include <drizzled/lex_string.h>
-
+#include <drizzled/util/data_ref.h>
 #include <drizzled/visibility.h>
 
 namespace drizzled {
 
-int wild_case_compare(const charset_info_st * const cs, 
-                      const char *str,const char *wildstr);
+int wild_case_compare(const charset_info_st*, const char *str, const char *wildstr);
 
 DRIZZLED_API int get_quote_char_for_identifier();
 
 namespace show {
 
-bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident);
-bool buildCreateSchema(Session *session, lex_string_t &ident);
-bool buildCreateTable(Session *session, Table_ident *ident);
-bool buildDescribe(Session *session, Table_ident *ident);
-bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident);
-bool buildProcesslist(Session *session);
+bool buildColumns(Session*, const char *schema_ident, Table_ident *table_ident);
+bool buildCreateSchema(Session*, str_ref ident);
+bool buildCreateTable(Session*, Table_ident *ident);
+bool buildDescribe(Session*, Table_ident *ident);
+bool buildIndex(Session*, const char *schema_ident, Table_ident *table_ident);
+bool buildProcesslist(Session*);
 bool buildSchemas(Session*);
-bool buildStatus(Session *session, const drizzled::sql_var_t is_global);
-bool buildEngineStatus(Session *session, lex_string_t);
-bool buildTableStatus(Session *session, const char *ident);
-bool buildTables(Session *session, const char *ident);
-bool buildTemporaryTables(Session *session);
-bool buildVariables(Session *session, const drizzled::sql_var_t is_global);
+bool buildStatus(Session*, const drizzled::sql_var_t is_global);
+bool buildEngineStatus(Session*, str_ref);
+bool buildTableStatus(Session*, const char *ident);
+bool buildTables(Session*, const char *ident);
+bool buildTemporaryTables(Session*);
+bool buildVariables(Session*, const drizzled::sql_var_t is_global);
 
-void buildErrors(Session *session);
-void buildWarnings(Session *session);
+void buildErrors(Session*);
+void buildWarnings(Session*);
 
-void buildSelectWarning(Session *session);
-void buildSelectError(Session *session);
+void buildSelectWarning(Session*);
+void buildSelectError(Session*);
 
 } // namespace show
 
 } /* namespace drizzled */
-

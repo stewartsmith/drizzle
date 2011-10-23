@@ -1,0 +1,84 @@
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	ON
+auth_schema_table	`auth`.`users`
+SELECT MYSQL_PASSWORD('test_pass');
+MYSQL_PASSWORD('test_pass')
+34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
+CREATE SCHEMA auth;
+USE auth;
+CREATE TABLE users (
+user     VARCHAR(255) NOT NULL,
+password VARCHAR(40),
+UNIQUE INDEX user_idx (user)
+);
+INSERT INTO users VALUES ('test_user', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF');
+SELECT * FROM users ORDER BY user;
+user	password
+test_user	34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
+SELECT 'connection 1 works';
+connection 1 works
+connection 1 works
+client 1 works
+client 1 works
+connect(localhost,test_user,foo,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'test_user' (using password: YES)
+USE auth;
+CREATE TABLE users2 (
+user     VARCHAR(255) NOT NULL,
+password VARCHAR(40),
+UNIQUE INDEX user_idx (user)
+);
+INSERT INTO users2 VALUES ('test_user2', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF');
+SELECT * FROM users2 ORDER BY user;
+user	password
+test_user2	34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF
+SET GLOBAL auth_schema_table='`auth`.`users2`';
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	ON
+auth_schema_table	`auth`.`users2`
+SELECT 'connection 2 works';
+connection 2 works
+connection 2 works
+client 2 works
+client 2 works
+SET GLOBAL auth_schema_table='auth.users';
+INSERT INTO auth.users VALUES ('test_user3', MYSQL_PASSWORD('mypass'));
+SELECT * FROM auth.users WHERE user='test_user3';
+user	password
+test_user3	6C8989366EAF75BB670AD8EA7A7FC1176A95CEF4
+client 3 works
+client 3 works
+SET GLOBAL auth_schema_enabled=0;
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	OFF
+auth_schema_table	`auth`.`users`
+connect(localhost,test_user,test_pass,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'test_user' (using password: YES)
+SET GLOBAL auth_schema_enabled=1;
+SHOW VARIABLES LIKE 'auth_schema%';
+Variable_name	Value
+auth_schema_enabled	ON
+auth_schema_table	`auth`.`users`
+SELECT 'auth re-enabled';
+auth re-enabled
+auth re-enabled
+connect(localhost,"'; drop table auth.users; select '",test_pass,test,MASTER_PORT,);
+ERROR 28000: Access denied for user '"'; drop table auth.users; select '"' (using password: YES)
+SHOW TABLES FROM auth;
+Tables_in_auth
+users
+users2
+SET GLOBAL auth_schema_table=NULL;
+ERROR HY000: Incorrect arguments to SET
+SHOW VARIABLES LIKE 'auth_schema_table';
+Variable_name	Value
+auth_schema_table	`auth`.`users`
+SET GLOBAL auth_schema_table='';
+ERROR HY000: Incorrect arguments to SET
+SHOW VARIABLES LIKE 'auth_schema_table';
+Variable_name	Value
+auth_schema_table	`auth`.`users`
+DROP SCHEMA auth;

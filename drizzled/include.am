@@ -88,7 +88,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/enum_nested_loop_state.h \
 			      drizzled/errmsg_print.h \
 			      drizzled/error.h \
-			      drizzled/error/level_t.h \
+			      drizzled/error/priority_t.h \
 			      drizzled/error/sql_state.h \
 			      drizzled/error_t.h \
 			      drizzled/execute.h \

@@ -31,15 +31,15 @@ class Item_func_get_user_var :public Item_func
   Session &session;
 
 public:
-  lex_string_t name; // keep it public
-  Item_func_get_user_var(Session &session_arg, lex_string_t a):
+  str_ref name; // keep it public
+  Item_func_get_user_var(Session &session_arg, str_ref a) :
     Item_func(),
     m_cached_result_type(STRING_RESULT),
     session(session_arg),
     name(a)
   {}
   enum Functype functype() const { return GUSERVAR_FUNC; }
-  lex_string_t get_name() { return name; }
+  str_ref get_name() { return name; }
   double val_real();
   int64_t val_int();
   type::Decimal *val_decimal(type::Decimal*);

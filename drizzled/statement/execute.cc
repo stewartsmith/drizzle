@@ -59,8 +59,7 @@ bool statement::Execute::parseVariable()
     if (var && var->length && var->value && var->type == STRING_RESULT)
     {
       lex_string_t tmp_for_var;
-      tmp_for_var.str= var->value; 
-      tmp_for_var.length= var->length; 
+      tmp_for_var.assign(var->value, var->length); 
       to_execute.set(tmp_for_var);
 
       return true;
@@ -71,9 +70,9 @@ bool statement::Execute::parseVariable()
 }
 
 
-bool statement::Execute::runStatement(plugin::NullClient *client, const std::string &arg)
+bool statement::Execute::runStatement(plugin::NullClient& client, const std::string &arg)
 {
-  client->pushSQL(arg);
+  client.pushSQL(arg);
   if (not session().executeStatement())
     return true;
 
@@ -97,7 +96,7 @@ bool statement::Execute::execute()
 
 bool statement::Execute::execute_shell()
 {
-  if (to_execute.length == 0)
+  if (to_execute.size() == 0)
   {
     my_error(ER_WRONG_ARGUMENTS, MYF(0), "Invalid Variable");
     return false;
@@ -128,9 +127,9 @@ bool statement::Execute::execute_shell()
     if (is_quiet)
     {
       plugin::Client *temp= session().getClient();
-      plugin::NullClient *null_client= new plugin::NullClient;
+      boost::scoped_ptr<plugin::NullClient> null_client(new plugin::NullClient);
 
-      session().setClient(null_client);
+      session().setClient(null_client.get());
       
       bool error_occured= false;
       bool is_savepoint= false;
@@ -139,15 +138,15 @@ bool statement::Execute::execute_shell()
         if (session().inTransaction())
         {
           // @todo Figure out something a bit more solid then this.
-          start_sql.append("SAVEPOINT execute_internal_savepoint");
+          start_sql= "SAVEPOINT execute_internal_savepoint";
           is_savepoint= true;
         }
         else
         {
-          start_sql.append("START TRANSACTION");
+          start_sql= "START TRANSACTION";
         }
 
-        error_occured= runStatement(null_client, start_sql);
+        error_occured= runStatement(*null_client, start_sql);
       }
 
       // @note this is copied from code in NULL client, all of this belongs
@@ -155,14 +154,14 @@ bool statement::Execute::execute_shell()
       if (not error_occured)
       {
         typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
-        std::string full_string(to_execute.str, to_execute.length);
+        std::string full_string(to_execute.data(), to_execute.size());
         Tokenizer tok(full_string, boost::escaped_list_separator<char>("\\", ";", "\""));
 
-        for (Tokenizer::iterator iter= tok.begin();
-             iter != tok.end() and session().getKilled() != Session::KILL_CONNECTION;
-             ++iter)
+        for (Tokenizer::iterator iter= tok.begin(); iter != tok.end(); ++iter)
         {
-          if (runStatement(null_client, *iter))
+          if (session().getKilled() == Session::KILL_CONNECTION)
+            break;
+          if (runStatement(*null_client, *iter))
           {
             error_occured= true;
             break;
@@ -174,18 +173,18 @@ bool statement::Execute::execute_shell()
           std::string final_sql;
           if (is_savepoint)
           {
-            final_sql.append(error_occured ? 
+            final_sql= error_occured ? 
               "ROLLBACK TO SAVEPOINT execute_internal_savepoint" : 
-              "RELEASE SAVEPOINT execute_internal_savepoint");
+              "RELEASE SAVEPOINT execute_internal_savepoint";
           }
           else
           {
-            final_sql.append(error_occured ? "ROLLBACK" : "COMMIT");
+            final_sql= error_occured ? "ROLLBACK" : "COMMIT";
           }
 
           // Run the cleanup command, we currently ignore if an error occurs
           // here.
-          (void)runStatement(null_client, final_sql);
+          (void)runStatement(*null_client, final_sql);
         }
       }
 
@@ -202,11 +201,10 @@ bool statement::Execute::execute_shell()
       session().my_ok();
 
       null_client->close();
-      delete null_client;
     }
     else
     {
-      parse(session(), to_execute.str, to_execute.length);
+      parse(session(), to_execute.data(), to_execute.size());
     }
   }
 

@@ -76,7 +76,7 @@ namespace drizzled {
 /**
  * Base class for all temporal data classes.
  */
-class Temporal
+class DRIZZLED_API Temporal
 {
 protected:
   enum calendar _calendar;
@@ -188,7 +188,7 @@ public:
  * Class representing temporal components in a valid
  * SQL date range, with no time component
  */
-class Date: public Temporal
+class DRIZZLED_API Date: public Temporal
 {
 public:
   Date() :Temporal() {}
@@ -435,7 +435,7 @@ class DateTime;
  * Class representing temporal components having only
  * a time component, with no date structure
  */
-class Time: public Temporal
+class DRIZZLED_API Time: public Temporal
 {
 public:
   Time() :Temporal() {}
@@ -567,7 +567,7 @@ public:
  * Class representing temporal components in a valid
  * SQL datetime range, including a time component
  */
-class DateTime: public Date
+class DRIZZLED_API DateTime: public Date
 {
 public:
   DateTime() :Date() {}
@@ -680,7 +680,7 @@ public:
 /**
  * Class representing temporal components in the UNIX epoch
  */
-class Timestamp: public DateTime
+class DRIZZLED_API Timestamp: public DateTime
 {
 public:
   Timestamp() :DateTime() {}
@@ -746,7 +746,7 @@ std::ostream& operator<<(std::ostream& os, const Timestamp& subject);
  * Class representing temporal components in the UNIX epoch
  * with an additional microsecond component.
  */
-class MicroTimestamp: public Timestamp
+class DRIZZLED_API MicroTimestamp: public Timestamp
 {
 public:
   MicroTimestamp() :Timestamp() {}
@@ -789,7 +789,7 @@ public:
  * Class representing temporal components in the UNIX epoch
  * with an additional nanosecond component.
  */
-class NanoTimestamp: public Timestamp
+class DRIZZLED_API NanoTimestamp: public Timestamp
 {
 public:
   NanoTimestamp() :Timestamp() {}

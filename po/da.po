@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
+"POT-Creation-Date: 2011-10-11 19:39+0000\n"
 "PO-Revision-Date: 2010-03-20 12:06+0000\n"
 "Last-Translator: nanker <Unknown>\n"
 "Language-Team: Danish <da@li.org>\n"
-"Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: da\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-03-21 04:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -507,7 +507,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5095
+#: ../client/drizzletest.cc:5153
 msgid "Error: Unknown protocol"
 msgstr ""
 
@@ -849,8 +849,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1178,7 +1178,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr ""
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5165
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr ""
@@ -1248,19 +1248,19 @@ msgstr ""
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4866
+#: ../client/drizzletest.cc:4924
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr ""
 
-#: ../client/drizzletest.cc:4876
+#: ../client/drizzletest.cc:4934
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr ""
 
-#: ../client/drizzletest.cc:4886
+#: ../client/drizzletest.cc:4944
 msgid "Error: Invalid Value for opt_sleep"
 msgstr ""
 
-#: ../client/drizzletest.cc:5065
+#: ../client/drizzletest.cc:5123
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -3128,8 +3128,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #: ../drizzled/error.cc:524
@@ -3775,7 +3775,7 @@ msgid ""
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
 
-#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
+#: ../drizzled/session.cc:1850 ../drizzled/session.cc:1859
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
@@ -3827,12 +3827,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ../drizzled/sql_table.cc:1869
+#: ../drizzled/sql_table.cc:1866
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: ../drizzled/statement/alter_table.cc:1575
+#: ../drizzled/statement/alter_table.cc:1573
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -4104,7 +4104,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4471,7 +4471,7 @@ msgstr ""
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4518,27 +4518,27 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -4965,32 +4965,32 @@ msgstr ""
 msgid "Syslog Priority of error messages"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 msgid "Failed to open transaction log file"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format

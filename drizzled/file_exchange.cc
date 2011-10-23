@@ -24,7 +24,7 @@
 namespace drizzled
 {
 
-file_exchange::file_exchange(char *name, bool flag, enum_filetype filetype_arg)
+file_exchange::file_exchange(const char *name, bool flag, enum_filetype filetype_arg)
   : filetype(filetype_arg),
     file_name(name),
     field_term(&default_field_term),

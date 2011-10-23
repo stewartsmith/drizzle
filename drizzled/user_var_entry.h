@@ -38,13 +38,12 @@ class user_var_entry
     unsigned_flag(false),
     collation(NULL, DERIVATION_IMPLICIT)
   { 
-    name.str= strdup(arg);
-    name.length= strlen(arg);
+    name.assign(strdup(arg), strlen(arg));
   }
 
   ~user_var_entry()
   {
-    free(const_cast<char*>(name.str));
+    free(const_cast<char*>(name.data()));
     free(value);
   }
 
@@ -63,9 +62,7 @@ class user_var_entry
   type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
-  void update_hash(bool set_null, void *ptr, uint32_t length,
-                   Item_result type, const charset_info_st * const cs, Derivation dv,
-                   bool unsigned_arg);
+  void update_hash(bool set_null, data_ref, Item_result type, const charset_info_st* cs, Derivation dv, bool unsigned_arg);
 };
 
 } /* namespace drizzled */

@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-30 12:15-0400\n"
+"POT-Creation-Date: 2011-10-11 19:39+0000\n"
 "PO-Revision-Date: 2010-07-26 20:28+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
-"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2010-07-27 03:57+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
@@ -567,7 +567,7 @@ msgstr "DELIMITER mag geen backslash karakter bevatten"
 
 #: ../client/drizzle.cc:1709 ../client/drizzledump.cc:658
 #: ../client/drizzleimport.cc:471 ../client/drizzleslap.cc:619
-#: ../client/drizzletest.cc:5095
+#: ../client/drizzletest.cc:5153
 #, fuzzy
 msgid "Error: Unknown protocol"
 msgstr "Verkeerd of onbekend protocol"
@@ -922,8 +922,8 @@ msgid ""
 "(One can force an UPDATE/DELETE by adding LIMIT # at the end of the "
 "command.)\n"
 " SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n"
-"             Max number of examined row combination in a join is set to: "
-"%lu\n"
+"             Max number of examined row combination in a join is set to: %"
+"lu\n"
 "\n"
 msgstr ""
 
@@ -1270,7 +1270,7 @@ msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "OF     %s [OPTIES] --all-databases [OPTIES]\n"
 
 #: ../client/drizzledump.cc:671 ../client/drizzleimport.cc:484
-#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5107
+#: ../client/drizzleslap.cc:629 ../client/drizzletest.cc:5165
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "Waarde opgegeven voor poort is niet geldig.\n"
@@ -1351,19 +1351,19 @@ msgstr "-- Haalt rijen op...\n"
 msgid "Unable to fully write %<PRIu64> bytes. Could only write %<PRId64>."
 msgstr ""
 
-#: ../client/drizzletest.cc:4866
+#: ../client/drizzletest.cc:4924
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr "Fout: Ongeldige waarde voor opt_max_connect_retries"
 
-#: ../client/drizzletest.cc:4876
+#: ../client/drizzletest.cc:4934
 msgid "Error: Invalid Value for opt_tail_lines"
 msgstr "Fout: Ongeldige waarde voor opt_tail_lines"
 
-#: ../client/drizzletest.cc:4886
+#: ../client/drizzletest.cc:4944
 msgid "Error: Invalid Value for opt_sleep"
 msgstr "Fout: Ongeldige waarde voor opt_sleep"
 
-#: ../client/drizzletest.cc:5065
+#: ../client/drizzletest.cc:5123
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "Kon '%s' niet openen om te lezen: errno = %d"
@@ -3107,8 +3107,8 @@ msgstr "Data afgebroken voor kolom '%s' in rij %ld"
 #, c-format
 msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
 msgstr ""
-"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking "
-"'%s'"
+"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking '%"
+"s'"
 
 #: ../drizzled/error.cc:460
 #, c-format
@@ -3176,8 +3176,8 @@ msgid ""
 "The '%s' feature is disabled; you need Drizzle built with '%s' to have it "
 "working"
 msgstr ""
-"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met "
-"'%s' nodig om dit te laten werken"
+"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met '%"
+"s' nodig om dit te laten werken"
 
 #: ../drizzled/error.cc:471
 #, c-format
@@ -3480,8 +3480,8 @@ msgstr ""
 #: ../drizzled/error.cc:523
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 "Het behoud van foreign key constraints voor tabel '%.192s', waarde "
 "'%-.192s', sleutel %d zou leiden tot een dubbele vermelding"
@@ -4168,7 +4168,7 @@ msgstr ""
 "gevraagde replicator naam '%s'.\n"
 "De TransactionApplier '%s' werd gedesactiveerd.\n"
 
-#: ../drizzled/session.cc:1851 ../drizzled/session.cc:1860
+#: ../drizzled/session.cc:1850 ../drizzled/session.cc:1859
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Kon tijdelijke table '%s' niet verwijderen, fout: %d"
@@ -4226,19 +4226,19 @@ msgid ""
 "\n"
 msgstr ""
 "Het is mogelijk dat drizzled tot \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
-"%<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
+"<PRIu64> K\n"
 "bytes geheugen gebruikt\n"
 "Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen in "
 "deze vergelijking.\n"
 "\n"
 
-#: ../drizzled/sql_table.cc:1869
+#: ../drizzled/sql_table.cc:1866
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Onbekende interne fout %d tijdens de bewerking"
 
-#: ../drizzled/statement/alter_table.cc:1575
+#: ../drizzled/statement/alter_table.cc:1573
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -4523,7 +4523,7 @@ msgid ""
 msgstr ""
 
 #: ../plugin/innobase/handler/replication_dictionary.cc:125
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:168
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:167
 #: ../plugin/transaction_log/print_transaction_message.cc:173
 #: ../plugin/transaction_log/transaction_log_reader.cc:156
 #, c-format
@@ -4903,7 +4903,7 @@ msgstr "Schakel logging naar CSV bestand in"
 msgid "User Statistics as DATA_DICTIONARY tables"
 msgstr ""
 
-#: ../plugin/md5/md5.cc:100
+#: ../plugin/md5/md5.cc:94
 msgid "libgcrypt library version mismatch"
 msgstr ""
 
@@ -4950,21 +4950,21 @@ msgstr ""
 msgid "Maximum number of user threads available."
 msgstr ""
 
-#: ../plugin/myisam/ha_myisam.cc:537
+#: ../plugin/myisam/ha_myisam.cc:525
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
 msgstr "Kreeg een fout van thread_id=%<PRIu64>, %s:%d"
 
-#: ../plugin/myisam/ha_myisam.cc:543
+#: ../plugin/myisam/ha_myisam.cc:531
 #, c-format
 msgid "Got an error from unknown thread, %s:%d"
 msgstr "Kreeg een fout van onbekende thread, %s:%d"
 
-#: ../plugin/myisam/ha_myisam.cc:552
+#: ../plugin/myisam/ha_myisam.cc:540
 msgid "Unknown thread accessing table"
 msgstr "Onbekende thread benadert tabel"
 
-#: ../plugin/myisam/ha_myisam.cc:1516
+#: ../plugin/myisam/ha_myisam.cc:1504
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
@@ -4972,7 +4972,7 @@ msgstr ""
 "Gebruik de fast sort index methode voor het creëren van indexen niet indien "
 "het tijdelijke bestand groter zou worden dan deze waarde."
 
-#: ../plugin/myisam/ha_myisam.cc:1519
+#: ../plugin/myisam/ha_myisam.cc:1507
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
@@ -5420,33 +5420,33 @@ msgstr "Schakel logging naar een gearman server in"
 msgid "Syslog Priority of error messages"
 msgstr ""
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:107
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:106
 #: ../plugin/transaction_log/print_transaction_message.cc:106
 #: ../plugin/transaction_log/transaction_log_reader.cc:94
 #, fuzzy
 msgid "Failed to open transaction log file"
 msgstr "Openen van transaction log bestand mislukt "
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:147
 #: ../plugin/transaction_log/transaction_log_reader.cc:147
 #: ../plugin/transaction_log/utilities/transaction_file_reader.cc:153
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr "Kon transactie-bericht net lezen.\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:148
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "GPB ERROR: %s.\n"
 msgstr "GPB ERROR: %s.\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:150
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:149
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "Raw buffer read: %s.\n"
 msgstr "Raw buffer gelezen: %s.\n"
 
-#: ../plugin/transaction_log/hexdump_transaction_message.cc:170
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:169
 #: ../plugin/transaction_log/print_transaction_message.cc:175
 #: ../plugin/transaction_log/transaction_log_reader.cc:158
 #, c-format
@@ -5525,8 +5525,8 @@ msgid ""
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
 "Kon niet de volledige log entry schrijven. Probeerde %<PRId64> bytes tes "
-"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: "
-"%s\n"
+"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: %"
+"s\n"
 
 #: ../plugin/transaction_log/transaction_log.cc:233
 #, fuzzy
@@ -6377,8 +6377,8 @@ msgstr "Adres om mee te verbinden."
 
 #~ msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
 #~ msgstr ""
-#~ "Kan status van named pipe naar host: %-.64s niet instellen pipe: %-.32s "
-#~ "(%lu)"
+#~ "Kan status van named pipe naar host: %-.64s niet instellen pipe: %-.32s (%"
+#~ "lu)"
 
 #~ msgid "Can't initialize character set %-.32s (path: %-.100s)"
 #~ msgstr "Kan karakterset %-.32s niet initialiseren (path: %-.100s)"
@@ -6726,8 +6726,8 @@ msgstr "Adres om mee te verbinden."
 
 #~ msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 #~ msgstr ""
-#~ "Fout bij verwijderen van databank ( rmdir '%-.192s' lukt niet, foutcode: "
-#~ "%d)"
+#~ "Fout bij verwijderen van databank ( rmdir '%-.192s' lukt niet, foutcode: %"
+#~ "d)"
 
 #~ msgid "Can't read record in system table"
 #~ msgstr "Kan record in systeemtabel niet lezen"
@@ -8639,8 +8639,8 @@ msgstr "Adres om mee te verbinden."
 
 #~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 #~ msgstr ""
-#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand "
-#~ "'%s' (Foutcode: %d)"
+#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%"
+#~ "s' (Foutcode: %d)"
 
 #~ msgid "Can't read dir of '%s' (Errcode: %d)"
 #~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
@@ -8901,8 +8901,8 @@ msgstr "Adres om mee te verbinden."
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 #~ "found '%s'."
 #~ msgstr ""
-#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, "
-#~ "'%s' gevonden."
+#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, '%"
+#~ "s' gevonden."
 
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "

@@ -165,7 +165,7 @@ bool statement::AlterTable::execute()
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                   lex().name.str ? lex().name.str : first_table->getTableName());
+                                   lex().name.data() ? lex().name.data() : first_table->getTableName());
 
     res= alter_table(&session(),
                      identifier,
@@ -187,7 +187,7 @@ bool statement::AlterTable::execute()
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
-                                       lex().name.str ? lex().name.str : first_table->getTableName(),
+                                       lex().name.data() ? lex().name.data() : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
       res= alter_table(&session(),
@@ -466,12 +466,12 @@ static bool prepare_alter_table(Session *session,
   KeyInfo *key_info= table->key_info;
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
-    char *key_name= key_info->name;
+    const char *key_name= key_info->name;
 
     vector<string>::iterator it= drop_keys.begin();
     while (it != drop_keys.end())
     {
-      if (not my_strcasecmp(system_charset_info, key_name, (*it).c_str()))
+      if (not my_strcasecmp(system_charset_info, key_name, it->c_str()))
         break;
       it++;
     }
@@ -529,13 +529,11 @@ static bool prepare_alter_table(Session *session,
           key_part_length= 0; /* Use whole field */
       }
       key_part_length/= key_part->field->charset()->mbmaxlen;
-      key_parts.push_back(new Key_part_spec(cfield->field_name,
-                                            strlen(cfield->field_name),
-                                            key_part_length));
+      key_parts.push_back(new Key_part_spec(cfield->field_name, strlen(cfield->field_name), key_part_length));
     }
     if (key_parts.size())
     {
-      key_create_information_st key_create_info= default_key_create_info;
+      KEY_CREATE_INFO key_create_info= default_key_create_info;
       key_create_info.algorithm= key_info->algorithm;
 
       if (key_info->flags & HA_USES_BLOCK_SIZE)
@@ -544,15 +542,9 @@ static bool prepare_alter_table(Session *session,
       if (key_info->flags & HA_USES_COMMENT)
         key_create_info.comment= key_info->comment;
 
-      Key::Keytype key_type;
-      if (key_info->flags & HA_NOSAME)
-      {
-        key_type= is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE;
-      }
-      else
-      {
-        key_type= Key::MULTIPLE;
-      }
+      Key::Keytype key_type= key_info->flags & HA_NOSAME
+        ? (is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE)
+        : Key::MULTIPLE;
       new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }
@@ -594,7 +586,7 @@ static bool prepare_alter_table(Session *session,
 
         Foreign_key *fkey= (Foreign_key*)key;
         add_foreign_key_to_table_message(&table_message,
-                                         fkey->name.str,
+                                         fkey->name.data(),
                                          fkey->columns,
                                          fkey->ref_table,
                                          fkey->ref_columns,
@@ -606,9 +598,9 @@ static bool prepare_alter_table(Session *session,
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
 
-      if (key->name.str && is_primary_key(key->name.str))
+      if (key->name.data() && is_primary_key(key->name.data()))
       {
-        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.data());
         return true;
       }
     }

@@ -184,7 +184,7 @@ std::string Table::build_table_filename(const std::string &in_db, const std::str
 }
 
 Table::Table(const drizzled::Table &table) :
-  identifier::Schema(table.getShare()->getSchemaName()),
+  identifier::Schema(str_ref(table.getShare()->getSchemaName())),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
@@ -266,9 +266,9 @@ bool Table::isValid() const
   }
 	else
   {
+    const charset_info_st& cs= my_charset_utf8mb4_general_ci;
     int well_formed_error;
-    uint32_t res= my_charset_utf8mb4_general_ci.cset->well_formed_len(&my_charset_utf8mb4_general_ci, 
-			table_name.c_str(), table_name.c_str() + table_name.length(), NAME_CHAR_LEN, &well_formed_error);
+    uint32_t res= cs.cset->well_formed_len(cs, table_name, NAME_CHAR_LEN, &well_formed_error);
     if (well_formed_error or table_name.length() != res)
       error= true;
   }

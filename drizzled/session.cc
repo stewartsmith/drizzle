@@ -103,8 +103,8 @@ uint64_t g_refresh_version = 1;
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
-         field_name.length == other.field_name.length &&
-    !my_strcasecmp(system_charset_info, field_name.str, other.field_name.str);
+         field_name.size() == other.field_name.size() &&
+    !my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
@@ -419,10 +419,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
-                    internal::my_progname,
-                    thread_id,
-                    security_ctx->username().c_str());
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE), internal::my_progname, thread_id, security_ctx->username().c_str());
     }
 
     disconnect();
@@ -521,7 +518,7 @@ void Session::storeGlobals()
   setCurrentSession(this);
   setCurrentMemRoot(&mem);
 
-  mysys_var= internal::my_thread_var();
+  mysys_var= internal::my_thread_var2().get();
 
   /*
     Let mysqld define the thread id (not mysys)
@@ -862,8 +859,7 @@ lex_string_t* Session::make_lex_string(lex_string_t* lex_str, str_ref str)
 {
   if (not lex_str)
     lex_str= new (mem) lex_string_t;
-  lex_str->str= mem_root->strdup(str);
-  lex_str->length= str.size();
+  lex_str->assign(mem_root->strdup(str), str.size());
   return lex_str;
 }
 
@@ -1495,16 +1491,12 @@ void Session::end_statement()
   resetResultsetMessage();
 }
 
-bool Session::copy_db_to(char*& db, size_t& db_length)
+str_ref Session::copy_db_to() const
 {
-  if (impl_->schema->empty())
-  {
-    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-    return true;
-  }
-  db= mem.strdup(*impl_->schema);
-  db_length= impl_->schema->size();
-  return false;
+  if (not impl_->schema->empty())
+    return str_ref(mem.strdup(*impl_->schema), impl_->schema->size());
+  my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+  return str_ref();
 }
 
 /****************************************************************************
@@ -1691,16 +1683,12 @@ void Session::refresh_status()
   current_global_counters.connections= 0;
 }
 
-user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
-{
-  return getVariable(std::string(name.str, name.length), create_if_not_exists);
-}
-
-user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
+user_var_entry* Session::getVariable(str_ref name0, bool create_if_not_exists)
 {
   if (cleanup_done)
     return NULL;
 
+  string name(name0.data(), name0.size());
   if (UserVars::mapped_type* iter= find_ptr(user_vars, name))
     return *iter;
 
@@ -1721,14 +1709,9 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 
 void Session::setVariable(const std::string &name, const std::string &value)
 {
-  user_var_entry *updateable_var= getVariable(name.c_str(), true);
-  if (updateable_var)
+  if (user_var_entry* var= getVariable(name, true))
   {
-    updateable_var->update_hash(false,
-                                (void*)value.c_str(),
-                                static_cast<uint32_t>(value.length()), STRING_RESULT,
-                                &my_charset_bin,
-                                DERIVATION_IMPLICIT, false);
+    var->update_hash(false, value, STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, false);
   }
 }
 

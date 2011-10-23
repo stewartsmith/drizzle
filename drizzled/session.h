@@ -887,7 +887,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char*& p_db, size_t& p_db_length);
+  str_ref copy_db_to() const;
 
 public:
 
@@ -1021,18 +1021,16 @@ public:
   void add_group_to_list(Item *item, bool asc);
 
   void refresh_status();
-  user_var_entry *getVariable(lex_string_t &name, bool create_if_not_exists);
-  user_var_entry *getVariable(const std::string  &name, bool create_if_not_exists);
-  void setVariable(const std::string &name, const std::string &value);
+  user_var_entry* getVariable(str_ref name, bool create_if_not_exists);
+  void setVariable(const std::string& name, const std::string& value);
 
   /**
    * Closes all tables used by the current substatement, or all tables
    * used by this thread if we are on the upper level.
    */
   void close_thread_tables();
-  void close_old_data_files(bool morph_locks= false,
-                            bool send_refresh= false);
-  void close_data_files_and_morph_locks(const identifier::Table &identifier);
+  void close_old_data_files(bool morph_locks= false, bool send_refresh= false);
+  void close_data_files_and_morph_locks(const identifier::Table&);
 
   /**
    * Prepares statement for reopening of tables and recalculation of set of

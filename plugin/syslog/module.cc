@@ -24,10 +24,10 @@
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/plugin/function.h>
 
-#include "wrap.h"
-#include "logging.h"
-#include "errmsg.h"
-#include "function.h"
+#include <plugin/syslog/wrap.h>
+#include <plugin/syslog/logging.h>
+#include <plugin/syslog/errmsg.h>
+#include <plugin/syslog/function.h>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -39,8 +39,8 @@ using namespace drizzled;
 namespace drizzle_plugin
 {
 
-bool sysvar_logging_enable= false;
-bool sysvar_errmsg_enable= false;
+static bool sysvar_logging_enable= false;
+static bool sysvar_errmsg_enable= true;
 
 uint64_constraint sysvar_logging_threshold_slow;
 uint64_constraint sysvar_logging_threshold_big_resultset;
@@ -54,17 +54,17 @@ static int init(drizzled::module::Context &context)
   WrapSyslog::singleton().openlog(vm["ident"].as<string>());
   if (sysvar_errmsg_enable)
   {
-    context.add(new error_message::Syslog(vm["facility"].as<string>(),
-                                          vm["errmsg-priority"].as<string>()));
+    context.add(new error_message::Syslog(vm["facility"].as<string>()));
   }
+
   if (sysvar_logging_enable)
   {
     context.add(new logging::Syslog(vm["facility"].as<string>(),
-                                    vm["logging-priority"].as<string>(),
                                     sysvar_logging_threshold_slow.get(),
                                     sysvar_logging_threshold_big_resultset.get(),
                                     sysvar_logging_threshold_big_examined.get()));
   }
+
   context.add(new plugin::Create_function<udf::Syslog>("syslog"));
 
   context.registerVariable(new sys_var_const_string_val("facility",
@@ -112,7 +112,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint64_constraint>(&sysvar_logging_threshold_big_examined)->default_value(0),
           _("Threshold for logging big queries, for rows examined"));
   context("errmsg-enable",
-          po::value<bool>(&sysvar_errmsg_enable)->default_value(false)->zero_tokens(),
+          po::value<bool>(&sysvar_errmsg_enable)->default_value(true)->zero_tokens(),
           _("Enable logging to syslog of the error messages"));
   context("errmsg-priority",
           po::value<string>()->default_value("warning"),

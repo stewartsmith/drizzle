@@ -74,7 +74,7 @@ public:
   message::Table::ForeignKeyConstraint::ForeignKeyOption fk_delete_opt;
 
   /* The text in a CHANGE COLUMN clause in ALTER TABLE */
-  char *change;
+  const char *change;
 
   /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
   Item *default_value;
@@ -82,10 +82,10 @@ public:
   /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
   Item *on_update_value;
 
-  enum column_format_type column_format;
+  column_format_type column_format;
 
   /* Poly-use */
-  lex_string_t comment;
+  str_ref comment;
 
   bool is_engine_set;
   bool is_create_table_like;

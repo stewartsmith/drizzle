@@ -40,10 +40,20 @@ SQLITE_PROGS= examples/sqlite_server
 endif
 
 noinst_PROGRAMS+= \
-		  libdrizzle-2.0/libdrizzle/mysql_password_hash
+                  libdrizzle-2.0/libdrizzle/mysql_password_hash
 libdrizzle_2_0_libdrizzle_mysql_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 libdrizzle_2_0_libdrizzle_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
 libdrizzle_2_0_libdrizzle_mysql_password_hash_SOURCES= libdrizzle-2.0/libdrizzle/mysql_password_hash.cc
+
+# For some reason this has originally been called mysql_password_hash. I'd prefer
+# to call it drizzle_password_hash but to remain backward compatible I didn't
+# change any sources, rather just build it twice and provide both.
+# Only drizzle_password_hash is installed by make install though.
+bin_PROGRAMS+= \
+		  libdrizzle-2.0/libdrizzle/drizzle_password_hash
+libdrizzle_2_0_libdrizzle_drizzle_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
+libdrizzle_2_0_libdrizzle_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
+libdrizzle_2_0_libdrizzle_drizzle_password_hash_SOURCES= libdrizzle-2.0/libdrizzle/mysql_password_hash.cc
 
 noinst_PROGRAMS+= \
 	examples/client \

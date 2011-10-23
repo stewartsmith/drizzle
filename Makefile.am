@@ -16,14 +16,20 @@
 ACLOCAL_AMFLAGS = -I m4 --force
 
 # includes append to these:
+# Pandora build system takes input from plugin.ini files that are appended to these
+# Corresponding Pandora parameter names are mentioned in comments
+# A few directory targets (libexec/ and etc/) are unused as of this writing and
+# therefore commented out. pandora-build will support them if you uncomment.
 SUFFIXES =
 TESTS =
 check_PROGRAMS =
+# headers
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
 dist_include_HEADERS =
 nobase_nodist_pkginclude_HEADERS =
+# install_headers
 nobase_dist_pkginclude_HEADERS =
 dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
@@ -34,6 +40,21 @@ extra_LTLIBRARIES =
 noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
+
+# scripts or bin_scripts
+dist_bin_SCRIPTS=
+# sbin_scripts
+dist_sbin_SCRIPTS=
+# libexec_scripts
+#dist_libexec_SCRIPTS=
+# pkg_scripts
+dist_pkgdata_SCRIPTS=
+# data
+dist_data_DATA=
+# pkg_data
+dist_pkgdata_DATA=
+# sysconf_data
+#dist_sysconf_DATA=
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
@@ -142,6 +163,12 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 clean-local:
 	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
+	rm -Rf $(SPHINX_BUILDDIR)/html $(SPHINX_BUILDDIR)/dirhtml $(SPHINX_BUILDDIR)/singlehtml \
+	$(SPHINX_BUILDDIR)/pickle $(SPHINX_BUILDDIR)/json $(SPHINX_BUILDDIR)/htmlhelp \
+	$(SPHINX_BUILDDIR)/qthelp $(SPHINX_BUILDDIR)/devhelp $(SPHINX_BUILDDIR)/epub \
+	$(SPHINX_BUILDDIR)/latex $(SPHINX_BUILDDIR)/latexpdf $(SPHINX_BUILDDIR)/text \
+	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
+	$(SPHINX_BUILDDIR)/doctest
 
 include config/lcov.am
 

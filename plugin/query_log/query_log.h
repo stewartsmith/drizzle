@@ -23,10 +23,8 @@
 #include "file.h"
 #include "event.h"
 
-namespace drizzled
-{
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * @brief
@@ -46,7 +44,6 @@ class QueryLog : public drizzled::plugin::EventObserver
 {
 public:
   QueryLog(bool enabled, QueryLoggerFile *logger_file);
-  ~QueryLog();
 
   void registerSessionEventsDo(Session &session, EventObserverList &observers);
   bool observeEventDo(EventData &);

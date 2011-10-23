@@ -182,7 +182,7 @@ bool CreateField::init(Session *,
                         const char *fld_length,
                         const char *fld_decimals,
                         uint32_t fld_type_modifier,
-                        lex_string_t *fld_comment,
+                        str_ref fld_comment,
                         const char *fld_change,
                         List<String> *fld_interval_list,
                         const charset_info_st* fld_charset,
@@ -215,7 +215,7 @@ bool CreateField::init(Session *,
   charset= fld_charset;
   interval_list.clear();
 
-  comment= *fld_comment;
+  comment= fld_comment;
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
     fld_length= 0;
@@ -309,8 +309,7 @@ bool CreateField::init(Session *,
         pack_length= 4;
 
         List<String>::iterator it(fld_interval_list->begin());
-        String *tmp;
-        while ((tmp= it++))
+        while (String* tmp= it++)
           interval_list.push_back(tmp);
         length= 1;
         break;
@@ -365,8 +364,8 @@ bool CreateField::setDefaultValue(Item *default_value_item,
   if (sql_type == DRIZZLE_TYPE_BLOB && default_value_item)
   {
     /* Allow empty as default value. */
-    String str,*res;
-    res= default_value_item->val_str(&str);
+    String str;
+    String* res= default_value_item->val_str(&str);
     if (res->length())
     {
       my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), field_name);
@@ -397,8 +396,7 @@ bool CreateField::setDefaultValue(Item *default_value_item,
       }
       else
       {
-        unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD:
-                       Field::NONE);
+        unireg_check= on_update_now ? Field::TIMESTAMP_UN_FIELD : Field::NONE;
       }
     }
     else
@@ -416,9 +414,8 @@ bool CreateField::setDefaultValue(Item *default_value_item,
         If we have TIMESTAMP NULL column without explicit DEFAULT value
         we treat it as having DEFAULT NULL attribute.
       */
-      unireg_check= (on_update_now ? Field::TIMESTAMP_UN_FIELD :
-                     (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD :
-                      Field::NONE));
+      unireg_check= on_update_now ? Field::TIMESTAMP_UN_FIELD :
+                     (flags & NOT_NULL_FLAG ? Field::TIMESTAMP_OLD_FIELD : Field::NONE);
     }
   }
 

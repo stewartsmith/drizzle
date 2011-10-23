@@ -451,13 +451,8 @@ int prepare_new_schema_table(Session *session, LEX& lex0, const string& schema_t
 
 static int execute_command(Session *session)
 {
-  bool res= false;
-
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
   Select_Lex *select_lex= &session->lex().select_lex;
-
-  /* list of all tables in query */
-  TableList *all_tables;
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -476,8 +471,9 @@ static int execute_command(Session *session)
   */
   session->lex().first_lists_tables_same();
 
+  /* list of all tables in query */
   /* should be assigned after making first tables same */
-  all_tables= session->lex().query_tables;
+  TableList* all_tables= session->lex().query_tables;
 
   /* set context for commands which do not use setup_tables */
   select_lex->context.resolve_in_table_list_only((TableList*)select_lex->table_list.first);
@@ -496,8 +492,8 @@ static int execute_command(Session *session)
 
   assert(not session->transaction.stmt.hasModifiedNonTransData());
 
-  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
-      && ! session->inTransaction()
+  if (not (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && not session->inTransaction()
       && session->lex().statement->isTransactional())
   {
     if (not session->startTransaction())
@@ -508,7 +504,7 @@ static int execute_command(Session *session)
   }
 
   /* now we are ready to execute the statement */
-  res= session->lex().statement->execute();
+  bool res= session->lex().statement->execute();
   session->set_proc_info("query end");
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
@@ -516,13 +512,14 @@ static int execute_command(Session *session)
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (! (sql_command_flags[session->lex().sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (not sql_command_flags[session->lex().sql_command].test(CF_BIT_HAS_ROW_COUNT))
   {
     session->row_count_func= -1;
   }
 
-  return (res || session->is_error());
+  return res || session->is_error();
 }
+
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= &session->lex();
@@ -696,8 +693,7 @@ bool new_select(LEX *lex, bool move_down)
     if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return true;
 
-    select_lex->context.outer_context=
-                unit->first_select()->context.outer_context;
+    select_lex->context.outer_context= unit->first_select()->context.outer_context;
   }
 
   select_lex->master_unit()->global_parameters= select_lex;
@@ -728,15 +724,12 @@ void create_select_for_variable(Session *session, const char *var_name)
   init_select(&lex);
   lex.sql_command= SQLCOM_SELECT;
   lex_string_t tmp;
-  tmp.str= (char*) var_name;
-  tmp.length=strlen(var_name);
-  lex_string_t null_lex_string;
-  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
+  tmp.assign(var_name, strlen(var_name));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
   */
-  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string))
+  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string()))
   {
     char buff[MAX_SYS_VAR_LENGTH*2+4+8];
     char *end= buff;
@@ -764,14 +757,13 @@ void parse(Session& session, const char *inBuf, uint32_t length)
    * by setting the query_safe_cache param to TRUE
    */
   if (plugin::QueryCache::isCached(&session) && not plugin::QueryCache::sendCachedResultset(&session))
-      return;
+    return;
   Lex_input_stream lip(&session, inBuf, length);
   if (parse_sql(&session, &lip))
     assert(session.is_error());
   else if (not session.is_error())
   {
-    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id,
-                             const_cast<const char *>(session.schema()->c_str()));
+    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id, session.schema()->c_str());
     // Implement Views here --Brian
     /* Actually execute the query */
     try
@@ -803,38 +795,26 @@ void parse(Session& session, const char *inBuf, uint32_t length)
 
 bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
 		       const char *length, const char *decimals,
-		       uint32_t type_modifier,
-                       enum column_format_type column_format,
-		       Item *default_value, Item *on_update_value,
-                       lex_string_t *comment,
-		       const char *change,
-                       List<String> *interval_list, const charset_info_st * const cs)
+		       uint32_t type_modifier, column_format_type column_format,
+		       Item *default_value, Item *on_update_value, str_ref comment,
+		       const char *change, List<String> *interval_list, const charset_info_st* cs)
 {
-  register CreateField *new_field;
   LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
+  if (check_identifier_name(*field_name, ER_TOO_LONG_IDENT))
     return true;
 
   if (type_modifier & PRI_KEY_FLAG)
   {
-    Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::PRIMARY, null_lex_string(),
-                      &default_key_create_info,
-                      0, lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(new Key(Key::PRIMARY, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
-    Key *key;
     lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::UNIQUE, null_lex_string(),
-                 &default_key_create_info, 0,
-                 lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(new Key(Key::UNIQUE, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
 
@@ -851,7 +831,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
          (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
       return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
@@ -859,26 +839,25 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return true;
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
+        return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
       return true;
     }
   }
 
   if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
-    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
+    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->data());
     return true;
   }
 
-  new_field= new CreateField;
-  if (new_field->init(session, field_name->str, type, length, decimals,
-                         type_modifier, comment, change, interval_list, cs, 0, column_format)
+  CreateField* new_field= new CreateField;
+  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
@@ -921,22 +900,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   if (!table)
     return NULL;				// End of memory
-  const char* alias_str= alias ? alias->str : table->table.str;
-  if (! table_options.test(TL_OPTION_ALIAS) &&
-      check_table_name(table->table.str, table->table.length))
+  const char* alias_str= alias ? alias->data() : table->table.data();
+  if (not table_options.test(TL_OPTION_ALIAS) &&
+      check_table_name(table->table.data(), table->table.size()))
   {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.data());
     return NULL;
   }
 
-  if (not table->is_derived_table() && table->db.str)
+  if (not table->is_derived_table() && table->db.data())
   {
-    my_casedn_str(files_charset_info, table->db.str);
-
-    identifier::Schema schema_identifier(string(table->db.str));
-    if (not schema::check(*session, schema_identifier))
+    my_casedn_str(files_charset_info, table->db.str_);
+    if (not schema::check(*session, identifier::Schema(table->db)))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
       return NULL;
     }
   }
@@ -948,35 +925,34 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       my_message(ER_DERIVED_MUST_HAVE_ALIAS, ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    alias_str= (char*) session->mem.memdup(alias_str,table->table.length+1);
+    alias_str= (char*) session->mem.memdup(alias_str, table->table.size() + 1);
   }
   TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
-  char* name;
-  size_t name_size;
-  if (table->db.str)
+  if (table->db.data())
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str);
+    ptr->setSchemaName(table->db.data());
   }
-  else if (lex->session->copy_db_to(name, name_size))
-    return NULL;
-  else
+  else 
   {
+    str_ref schema = lex->session->copy_db_to();
+    if (schema.empty())
+      return NULL;
     ptr->setIsFqtn(false);
-    ptr->setSchemaName(name);
+    ptr->setSchemaName(schema.data());
   }
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str);
+  ptr->setTableName(table->table.data());
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
-  ptr->option= option ? option->str : 0;
+  ptr->option= option ? option->data() : NULL;
   /* check that used name is unique */
   if (lock_type != TL_IGNORE)
   {
@@ -1573,27 +1549,25 @@ Item *negate_expression(Session *session, Item *expr)
 */
 
 
-bool check_string_char_length(lex_string_t *str, const char *err_msg,
+bool check_string_char_length(str_ref str, const char *err_msg,
                               uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str->length == res)
+  if (!well_formed_error &&  str.size() == res)
     return false;
 
   if (!no_error)
-    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_char_length);
+    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }
 
 
-bool check_identifier_name(lex_string_t *str, error_t err_code,
-                           uint32_t max_char_length,
-                           const char *param_for_err_msg)
+bool check_identifier_name(str_ref str, error_t err_code)
 {
+  uint32_t max_char_length= NAME_CHAR_LEN;
   /*
     We don't support non-BMP characters in identifiers at the moment,
     so they should be prohibited until such support is done.
@@ -1602,16 +1576,15 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->str);
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str.data());
     return true;
   }
 
-  if (str->length == res)
+  if (str.size() == res)
     return false;
 
   switch (err_code)
@@ -1619,14 +1592,13 @@ bool check_identifier_name(lex_string_t *str, error_t err_code,
   case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str.data(), "", max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(err_code, MYF(0), str->str);
+    my_error(err_code, MYF(0), str.data());
     break;
   default:
-    assert(0);
-    break;
+    assert(false);
   }
 
   return true;

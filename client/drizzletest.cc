@@ -899,7 +899,9 @@ void die(const char *fmt, ...)
     been produced prior to the error
   */
   if (cur_con)
+  {
     show_warnings_before_error(*cur_con);
+  }
 
   cleanup_and_exit(1);
 }
@@ -1680,8 +1682,11 @@ static void dt_query(drizzle::connection_c& con, drizzle::result_c& res, const s
       die("Error running query '%s': %d %s", query.c_str(), ret, con.error());
     }
   }
+
   if (res.column_count() == 0)
+  {
     die("Query '%s' didn't return a result set", query.c_str());
+  }
 }
 
 static void var_query_set(VAR *var, const char *query, const char** query_end)
@@ -3308,7 +3313,6 @@ static st_connection* safe_connect(const char *name, const string host, const st
   drizzle_con_st* con= *con0;
   drizzle_con_set_tcp(con, host.c_str(), port);
   drizzle_con_set_auth(con, user.c_str(), pass);
-  drizzle_con_set_db(con, db.c_str());
   while (drizzle_return_t ret= drizzle_con_connect(con))
   {
     /*
@@ -3335,6 +3339,54 @@ static st_connection* safe_connect(const char *name, const string host, const st
     }
     failed_attempts++;
   }
+
+  {
+    std::string sql_string("CREATE SCHEMA IF NOT EXISTS mysql");
+    drizzle_return_t ret;
+    drizzle_result_st *result= drizzle_query(con, NULL, sql_string.c_str(), sql_string.size(), &ret);
+    if (ret != DRIZZLE_RETURN_OK)
+    {
+      die("Failed to create schema '%s': %d %s", db.c_str(), ret, drizzle_con_error(con));
+    }
+
+    if (result)
+    {
+      drizzle_result_free(result);
+    }
+  }
+
+  {
+    std::string sql_string("CREATE SCHEMA IF NOT EXISTS ");
+    sql_string+= db;
+    drizzle_return_t ret;
+    drizzle_result_st *result= drizzle_query(con, NULL, sql_string.c_str(), sql_string.size(), &ret);
+    if (ret != DRIZZLE_RETURN_OK)
+    {
+      die("Failed to create schema '%s': %d %s", db.c_str(), ret, drizzle_con_error(con));
+    }
+
+    if (result)
+    {
+      drizzle_result_free(result);
+    }
+  }
+
+  {
+    std::string sql_string("USE ");
+    sql_string+= db;
+    drizzle_return_t ret;
+    drizzle_result_st *result= drizzle_query(con, NULL, sql_string.c_str(), sql_string.size(), &ret);
+    if (ret != DRIZZLE_RETURN_OK)
+    {
+      die("Failed to use schema '%s': %d %s", db.c_str(), ret, drizzle_con_error(con));
+    }
+
+    if (result)
+    {
+      drizzle_result_free(result);
+    }
+  }
+
   return con0;
 }
 
@@ -3514,11 +3566,15 @@ static void do_connect(st_command* command)
 
   /* Use default db name */
   if (ds_database.empty())
+  {
     ds_database= opt_db;
+  }
 
   /* Special database to allow one to connect without a database name */
   if (ds_database == "*NO-ONE*")
+  {
     ds_database.clear();
+  }
 
   if (connect_n_handle_errors(command, *con_slot, ds_host.c_str(), ds_user.c_str(), 
     ds_password.c_str(), ds_database.c_str(), con_port, ds_sock.c_str()))
@@ -3655,7 +3711,9 @@ static void do_delimiter(st_command* command)
     p++;
 
   if (!(*p))
+  {
     die("Can't set empty delimiter");
+  }
 
   strncpy(delimiter, p, sizeof(delimiter) - 1);
   delimiter_length= strlen(delimiter);
@@ -5157,7 +5215,7 @@ try
     opt_pass= client_get_tty_password(NULL);          /* purify tested */
   }
 
-  server_initialized= 1;
+  server_initialized= true;
   if (cur_file == file_stack.data() && cur_file->file == 0)
   {
     cur_file->file= stdin;
