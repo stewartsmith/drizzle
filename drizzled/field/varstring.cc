@@ -262,9 +262,7 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
     length-= length_bytes;
   }
 
-  tot_length= my_strnxfrm(field_charset,
-                          to, length, ptr + length_bytes,
-                          tot_length);
+  tot_length= field_charset->strnxfrm(to, length, ptr + length_bytes, tot_length);
   assert(tot_length == length);
 }
 

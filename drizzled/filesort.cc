@@ -858,13 +858,12 @@ void SortParam::make_sortkey(unsigned char *to, unsigned char *ref_pos)
               memcpy(tmp_buffer,from,length);
               from= tmp_buffer;
             }
-            tmp_length= my_strnxfrm(cs,to,sort_field->length,
-                                    (unsigned char*) from, length);
+            tmp_length= cs->strnxfrm(to,sort_field->length, (unsigned char*) from, length);
             assert(tmp_length == sort_field->length);
           }
           else
           {
-            my_strnxfrm(cs,(unsigned char*)to,length,(const unsigned char*)res->ptr(),length);
+            cs->strnxfrm((unsigned char*)to,length,(const unsigned char*)res->ptr(),length);
             cs->cset->fill(cs, (char *)to+length,diff,fill_char);
           }
           break;
@@ -1450,8 +1449,8 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
     {
       cs= sortorder->field->sort_charset();
       sortorder->length= sortorder->field->sort_length();
-
-      if (use_strnxfrm((cs=sortorder->field->sort_charset())))
+      cs= sortorder->field->sort_charset();
+      if (cs->use_strnxfrm())
       {
         sortorder->need_strxnfrm= 1;
         *multi_byte_charset= 1;
@@ -1469,9 +1468,9 @@ uint32_t FileSort::sortlength(SortField *sortorder, uint32_t s_length, bool *mul
       switch (sortorder->result_type) {
       case STRING_RESULT:
         sortorder->length=sortorder->item->max_length;
-        set_if_smaller(sortorder->length,
-                       getSession().variables.max_sort_length);
-        if (use_strnxfrm((cs=sortorder->item->collation.collation)))
+        set_if_smaller(sortorder->length, getSession().variables.max_sort_length);
+        cs= sortorder->item->collation.collation;
+        if (cs->use_strnxfrm())
         {
           sortorder->length= cs->coll->strnxfrmlen(cs, sortorder->length);
           sortorder->need_strxnfrm= 1;

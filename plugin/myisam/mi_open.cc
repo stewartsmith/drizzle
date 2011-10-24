@@ -652,7 +652,7 @@ static void setup_key_functions(register MI_KEYDEF *keyinfo)
         cannot represent blank like ASCII does. In these cases we have
         to use _mi_seq_search() for the search.
       */
-      if (!keyinfo->seg->charset || use_strnxfrm(keyinfo->seg->charset) ||
+      if (not keyinfo->seg->charset || keyinfo->seg->charset->use_strnxfrm() ||
           (keyinfo->seg->flag & HA_NULL_PART) ||
           (keyinfo->seg->charset->mbminlen > 1))
         keyinfo->bin_search=_mi_seq_search;

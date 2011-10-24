@@ -318,6 +318,31 @@ struct charset_info_st
   {
     return isalnum(c) || (c) == '_';
   }
+
+  char toupper(unsigned char c) const
+  {
+    return to_upper[c];
+  }
+
+  char tolower(unsigned char c) const
+  {
+    return to_lower[c];
+  }
+
+  bool binary_compare() const
+  {
+    return state  & MY_CS_BINSORT;
+  }
+
+  bool use_strnxfrm() const
+  {
+    return state & MY_CS_STRNXFRM;
+  }
+
+  size_t strnxfrm(unsigned char *dst, const size_t dstlen, const unsigned char *src, const uint32_t srclen) const
+  {
+    return coll->strnxfrm(this, dst, dstlen, dstlen, src, srclen, MY_STRXFRM_PAD_WITH_SPACE);
+  }
 };
 
 extern DRIZZLED_API charset_info_st *all_charsets[256];
@@ -549,35 +574,6 @@ int my_strnncollsp_binary(const charset_info_st*,
                           const unsigned char *s, size_t slen,
                           const unsigned char *t, size_t tlen,
                           bool);
-
-inline static char my_toupper(const charset_info_st *s, unsigned char c)
-{
-  return s->to_upper[c];
-}
-
-inline static char my_tolower(const charset_info_st *s, unsigned char c)
-{
-  return s->to_lower[c];
-}
-
-inline static bool my_binary_compare(const charset_info_st *s)
-{
-  return s->state  & MY_CS_BINSORT;
-}
-
-inline static bool use_strnxfrm(const charset_info_st *s)
-{
-  return s->state & MY_CS_STRNXFRM;
-}
-
-inline static size_t my_strnxfrm(const charset_info_st *cs, 
-                                 unsigned char *dst, 
-                                 const size_t dstlen, 
-                                 const unsigned char *src, 
-                                 const uint32_t srclen)
-{
-  return (cs->coll->strnxfrm(cs, dst, dstlen, dstlen, src, srclen, MY_STRXFRM_PAD_WITH_SPACE));
-}
 
 inline static int my_strnncoll(const charset_info_st *cs, 
                                const unsigned char *s, 

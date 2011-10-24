@@ -274,7 +274,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   const char *tok= lip->get_tok_start();
   uint32_t tok_pos= 0;
   for (;tok_pos<len && tok_pos<63;tok_pos++)
-    tok_upper[tok_pos]=my_toupper(system_charset_info, tok[tok_pos]);
+    tok_upper[tok_pos]= system_charset_info->toupper(tok[tok_pos]);
   tok_upper[tok_pos]=0;
 
   const SYMBOL *symbol= lookup_symbol(tok_upper, len, function);

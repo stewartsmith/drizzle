@@ -63,7 +63,7 @@ int wild_case_compare(const charset_info_st * const cs, const char *str, const c
       if (*wildstr == internal::wild_prefix && wildstr[1])
         wildstr++;
 
-      if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
+      if (cs->toupper(*wildstr++) != cs->toupper(*str++))
         return (1);
     }
 
@@ -89,9 +89,9 @@ int wild_case_compare(const charset_info_st * const cs, const char *str, const c
           if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
             cmp= wildstr[1];
 
-          cmp= my_toupper(cs, cmp);
+          cmp= cs->toupper(cmp);
 
-          while (*str && my_toupper(cs, *str) != cmp)
+          while (*str && cs->toupper(*str) != cmp)
             str++;
 
           if (! *str)

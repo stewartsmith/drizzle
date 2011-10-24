@@ -681,7 +681,7 @@ cnv:
 inline static int likeconv(const charset_info_st *cs, const char c) 
 {
 #ifdef LIKE_CMP_TOUPPER
-  return (unsigned char) my_toupper(cs, c);
+  return (unsigned char) cs->toupper(c);
 #else
   return cs->sort_order[(unsigned char)c];
 #endif    
