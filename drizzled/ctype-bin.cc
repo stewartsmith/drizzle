@@ -537,7 +537,6 @@ DRIZZLED_API charset_info_st my_charset_bin =
     0,				/* min_sort_char */
     255,			/* max_sort_char */
     0,                          /* pad char      */
-    0,                          /* escape_with_backslash_is_dangerous */
     1,                          /* levels_for_compare */
     1,                          /* levels_for_order   */
     &my_charset_handler,

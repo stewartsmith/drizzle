@@ -2719,7 +2719,6 @@ DRIZZLED_API charset_info_st my_charset_utf8mb4_general_ci=
   0,                  /* min_sort_char */
   0xFFFF,             /* max_sort_char */
   ' ',                /* pad char      */
-  0,                  /* escape_with_backslash_is_dangerous */
   1,                  /* levels_for_compare */
   1,                  /* levels_for_order   */
   &my_charset_utf8mb4_handler,
@@ -2754,7 +2753,6 @@ DRIZZLED_API charset_info_st my_charset_utf8mb4_bin=
   0,                  /* min_sort_char */
   0xFFFF,             /* max_sort_char */
   ' ',                /* pad char      */
-  0,                  /* escape_with_backslash_is_dangerous */
   1,                  /* levels_for_compare */
   1,                  /* levels_for_order   */
   &my_charset_utf8mb4_handler,

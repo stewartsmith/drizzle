@@ -252,7 +252,6 @@ struct charset_info_st
   uint16_t    min_sort_char;
   uint16_t    max_sort_char; /* For LIKE optimization */
   unsigned char     pad_char;
-  bool   escape_with_backslash_is_dangerous;
   unsigned char     levels_for_compare;
   unsigned char     levels_for_order;
 
