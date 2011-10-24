@@ -126,13 +126,12 @@ void buildEngineOption(LEX*, const char *key, uint64_t value);
 void buildSchemaOption(LEX*, const char *key, str_ref value);
 void buildSchemaOption(LEX*, const char *key, uint64_t value);
 void buildSchemaDefiner(LEX*, const identifier::User&);
-bool checkFieldIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name);
+bool checkFieldIdent(LEX*, str_ref schema_name, str_ref table_name);
 
-Item *buildIdent(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name);
-Item *buildTableWild(LEX*, const lex_string_t &schema_name, const lex_string_t &table_name);
+Item *buildIdent(LEX*, str_ref schema_name, str_ref table_name, str_ref field_name);
+Item *buildTableWild(LEX*, str_ref schema_name, str_ref table_name);
 
 void buildCreateFieldIdent(LEX*);
-
 void storeAlterColumnPosition(LEX*, const char *position);
 
 bool buildCollation(LEX*, const charset_info_st *arg);
