@@ -42,22 +42,13 @@ public:
   str_ref name;
   bool generated;
 
-  Key(Keytype type_par, lex_string_t name_arg, KEY_CREATE_INFO *key_info_arg, bool generated_arg, List<Key_part_spec> &cols) :
+  Key(Keytype type_par, str_ref name_arg, KEY_CREATE_INFO *key_info_arg, bool generated_arg, List<Key_part_spec> &cols) :
     type(type_par),
     key_create_info(*key_info_arg),
     columns(cols),
     name(name_arg),
     generated(generated_arg)
   {}
-
-  Key(Keytype type_par, const char *name_arg, size_t name_len_arg, KEY_CREATE_INFO *key_info_arg, bool generated_arg, List<Key_part_spec> &cols) :
-    type(type_par),
-    key_create_info(*key_info_arg),
-    columns(cols),
-    generated(generated_arg)
-  {
-    name.assign(name_arg, name_len_arg);
-  }
 
   virtual ~Key() {}
   /* Equality comparison of keys (ignoring name) */
