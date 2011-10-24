@@ -217,8 +217,8 @@ struct MY_CHARSET_HANDLER
   int64_t (*strntoll)(const charset_info_st*, const char *s, size_t l, int base, char **e, int *err);
   uint64_t (*strntoull)(const charset_info_st*, const char *s, size_t l, int base, char **e, int *err);
   double (*strntod)(const charset_info_st*, char *s, size_t l, char **e, int *err);
-  int64_t (*strtoll10)(const charset_info_st *cs, const char *nptr, char **endptr, int *error);
-  uint64_t (*strntoull10rnd)(const charset_info_st *cs, const char *str, size_t length, int unsigned_fl, char **endptr, int *error);
+  int64_t (*strtoll10)(const charset_info_st*, const char *nptr, char **endptr, int *error);
+  uint64_t (*strntoull10rnd)(const charset_info_st*, const char *str, size_t length, int unsigned_fl, char **endptr, int *error);
   size_t (*scan)(const charset_info_st*, const char *b, const char *e, int sq);
 };
 
@@ -346,17 +346,13 @@ struct charset_info_st
 };
 
 extern DRIZZLED_API charset_info_st *all_charsets[256];
-extern charset_info_st compiled_charsets[];
-extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
-extern uint32_t get_collation_number(const char *name);
-extern const char *get_charset_name(uint32_t cs_number);
-extern bool resolve_charset(const char *cs_name, const charset_info_st *default_cs, const charset_info_st **cs);
-extern bool resolve_collation(const char *cl_name, const charset_info_st *default_cl, const charset_info_st **cl);
-extern void free_charsets();
-extern char *get_charsets_dir(char *buf);
-extern bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2);
-extern size_t escape_string_for_drizzle(const charset_info_st *charset_info, char *to, size_t to_length, const char *from, size_t length);
-extern size_t escape_quotes_for_drizzle(const charset_info_st *charset_info, char *to, size_t to_length, const char *from, size_t length);
+uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
+uint32_t get_collation_number(const char *name);
+const char *get_charset_name(uint32_t cs_number);
+void free_charsets();
+bool my_charset_same(const charset_info_st*, const charset_info_st*);
+size_t escape_string_for_drizzle(const charset_info_st *charset_info, char *to, size_t to_length, const char *from, size_t length);
+size_t escape_quotes_for_drizzle(const charset_info_st *charset_info, char *to, size_t to_length, const char *from, size_t length);
 extern DRIZZLED_API const charset_info_st *default_charset_info;
 extern DRIZZLED_API const charset_info_st *system_charset_info;
 extern const charset_info_st *files_charset_info;
@@ -369,20 +365,18 @@ extern DRIZZLED_API charset_info_st my_charset_utf8mb4_bin;
 extern DRIZZLED_API charset_info_st my_charset_utf8mb4_general_ci;
 extern DRIZZLED_API charset_info_st my_charset_utf8mb4_unicode_ci;
 size_t my_strnxfrmlen_simple(const charset_info_st*, size_t);
-extern int my_strnncollsp_simple(const charset_info_st*, const unsigned char*, size_t, const unsigned char*, size_t, bool diff_if_only_endspace_difference);
-extern size_t my_lengthsp_8bit(const charset_info_st*, const char *ptr, size_t length);
-extern uint32_t my_instr_simple(const charset_info_st*, const char *b, size_t b_length, const char *s, size_t s_length, my_match_t *match, uint32_t nmatch);
-extern MY_CHARSET_HANDLER my_charset_8bit_handler;
-extern int my_strcasecmp_mb(const charset_info_st*  cs, const char *s, const char *t);
-extern bool my_parse_charset_xml(const char *bug, size_t len, int (*add)(charset_info_st *cs));
+int my_strnncollsp_simple(const charset_info_st*, const unsigned char*, size_t, const unsigned char*, size_t, bool diff_if_only_endspace_difference);
+size_t my_lengthsp_8bit(const charset_info_st*, const char *ptr, size_t length);
+uint32_t my_instr_simple(const charset_info_st*, const char *b, size_t b_length, const char *s, size_t s_length, my_match_t *match, uint32_t nmatch);
+int my_strcasecmp_mb(const charset_info_st*, const char *s, const char *t);
 
 DRIZZLED_API const charset_info_st *get_charset(uint32_t cs_number);
 DRIZZLED_API const charset_info_st *get_charset_by_name(const char *cs_name);
 DRIZZLED_API const charset_info_st *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
 
 /* Functions for 8bit */
-int my_mb_ctype_8bit(const charset_info_st*,int *, const unsigned char*,const unsigned char *);
-int my_mb_ctype_mb(const charset_info_st*,int *, const unsigned char*,const unsigned char *);
+int my_mb_ctype_8bit(const charset_info_st*, int*, const unsigned char*, const unsigned char *);
+int my_mb_ctype_mb(const charset_info_st*, int*, const unsigned char*, const unsigned char *);
 
 size_t my_scan_8bit(const charset_info_st*, const char *b, const char *e, int sq);
 size_t my_snprintf_8bit(const charset_info_st*, char *to, size_t n, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
@@ -507,32 +501,7 @@ bool my_charset_is_ascii_compatible(const charset_info_st*);
     - 0 is the strings are equal
 */
 int my_wc_mb_filename(const charset_info_st*, my_wc_t wc, unsigned char *s, unsigned char *e);
-
 int my_mb_wc_filename(const charset_info_st*, my_wc_t *pwc, const unsigned char *s, const unsigned char *e);
-
-int my_strnncoll_any_uca(const charset_info_st*,
-                         const unsigned char *s, size_t slen,
-                         const unsigned char *t, size_t tlen,
-                         bool t_is_prefix);
-
-int my_strnncollsp_any_uca(const charset_info_st*,
-                           const unsigned char *s, size_t slen,
-                           const unsigned char *t, size_t tlen,
-                           bool diff_if_only_endspace_difference);
-
-void my_hash_sort_any_uca(const charset_info_st*,
-                          const unsigned char *s, size_t slen,
-                          uint32_t *n1, uint32_t *n2);
-
-size_t my_strnxfrm_any_uca(const charset_info_st*,
-                           unsigned char *dst, size_t dstlen, uint32_t nweights,
-                           const unsigned char *src, size_t srclen,
-                           uint32_t flags);
-
-int my_wildcmp_uca(const charset_info_st*,
-                   const char *str,const char *str_end,
-                   const char *wildstr,const char *wildend,
-                   int escape, int w_one, int w_many);
 
 int my_strnncoll_8bit_bin(const charset_info_st*,
                           const unsigned char *s, size_t slen,

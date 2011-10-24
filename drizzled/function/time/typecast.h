@@ -24,10 +24,9 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/temporal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_typecast :public Item_str_func
+class Item_typecast : public Item_str_func
 {
 public:
   using Item_func::tmp_table_field;

@@ -1164,8 +1164,7 @@ bool select_export::send_data(List<Item> &items)
         const charset_info_st * const character_set_client= default_charset_info;
 
         bool check_second_byte= (res_charset == &my_charset_bin) &&
-          character_set_client->
-          escape_with_backslash_is_dangerous;
+          character_set_client->escape_with_backslash_is_dangerous;
         assert(character_set_client->mbmaxlen == 2 ||
                !character_set_client->escape_with_backslash_is_dangerous);
         for (start=pos=(char*) res->ptr(),end=pos+used_length ;
