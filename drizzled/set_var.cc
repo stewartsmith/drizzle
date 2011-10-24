@@ -83,7 +83,6 @@ err:
 set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
                  const lex_string_t *base_name_arg, Item *value_arg) :
   uint64_t_value(0),
-  str_value(""),
   var(var_arg),
   type(type_arg),
   base(*base_name_arg)
