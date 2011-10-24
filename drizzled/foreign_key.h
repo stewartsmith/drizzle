@@ -50,7 +50,7 @@ public:
   message::Table::ForeignKeyConstraint::ForeignKeyOption update_opt;
   message::Table::ForeignKeyConstraint::ForeignKeyMatchOption match_opt;
 
-  Foreign_key(lex_string_t name_arg,
+  Foreign_key(str_ref name_arg,
               List<Key_part_spec> &cols,
               Table_ident *table,
               List<Key_part_spec> &ref_cols,

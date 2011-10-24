@@ -1233,7 +1233,7 @@ field_spec:
               Lex.field()->set_name($1.data());
             }
 
-            if (add_field_to_list(Lex.session, &$1, (enum enum_field_types) $3,
+            if (add_field_to_list(Lex.session, $1, (enum_field_types) $3,
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value, statement->on_update_value,
@@ -1936,7 +1936,7 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            if (add_field_to_list(Lex.session,&$3,
+            if (add_field_to_list(Lex.session, $3,
                                   (enum enum_field_types) $5,
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
@@ -5435,17 +5435,13 @@ sys_option_value:
               {
                 Lex.option_type= $1;
               }
-              Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, $2.var, &$2.base_name, $4)));
+              Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, $2.var, $2.base_name, $4)));
             }
           }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
           {
             Lex.option_type= $1;
-            Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type,
-                                              find_sys_var("tx_isolation"),
-                                              &(null_lex_string()),
-                                              new Item_int((int32_t)
-                                              $5))));
+            Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, find_sys_var("tx_isolation"), str_ref(), new Item_int((int32_t) $5))));
           }
         ;
 
@@ -5456,7 +5452,7 @@ option_value:
           }
         | '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
           {
-            Lex.var_list.push_back(SetVarPtr(new set_var($3, $4.var, &$4.base_name, $6)));
+            Lex.var_list.push_back(SetVarPtr(new set_var($3, $4.var, $4.base_name, $6)));
           }
         ;
 

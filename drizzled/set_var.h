@@ -59,7 +59,7 @@ public:
   sql_var_t type;
   str_ref base;	// for structs
 
-  set_var(sql_var_t type_arg, sys_var *var_arg, const lex_string_t *base_name_arg, Item *value_arg);
+  set_var(sql_var_t type_arg, sys_var *var_arg, str_ref base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
   void setValue(const std::string &new_value);

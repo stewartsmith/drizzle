@@ -135,8 +135,8 @@ void buildCreateFieldIdent(LEX*);
 void storeAlterColumnPosition(LEX*, const char *position);
 
 bool buildCollation(LEX*, const charset_info_st *arg);
-void buildKey(LEX*, Key::Keytype type_par, const lex_string_t &name_arg);
-void buildForeignKey(LEX*, const lex_string_t &name_arg, Table_ident *table);
+void buildKey(LEX*, Key::Keytype type_par, str_ref name_arg);
+void buildForeignKey(LEX*, str_ref name_arg, Table_ident *table);
 
 enum_field_types buildIntegerColumn(LEX*, enum_field_types final_type, const bool is_unsigned);
 enum_field_types buildSerialColumn(LEX*);
