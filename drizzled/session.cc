@@ -710,13 +710,13 @@ bool Session::executeStatement()
 void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
 {
   /* Remove garbage at start and end of query */
-  while (in_packet_length > 0 && my_isspace(charset(), in_packet[0]))
+  while (in_packet_length > 0 && charset()->isspace(in_packet[0]))
   {
     in_packet++;
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || charset()->isspace(pos[-1])))
   {
     pos--;
     in_packet_length--;

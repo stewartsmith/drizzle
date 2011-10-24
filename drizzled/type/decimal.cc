@@ -302,7 +302,7 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
     /* Give warning if there is something other than end space */
     for ( ; end < from_end; end++)
     {
-      if (!my_isspace(&my_charset_utf8_general_ci, *end))
+      if (not my_charset_utf8_general_ci.isspace(*end))
       {
         err= E_DEC_TRUNCATED;
         break;
@@ -1028,7 +1028,7 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   sanity(to);
 
   error= E_DEC_BAD_NUM;                         /* In case of bad number */
-  while (s < end_of_string && my_isspace(&my_charset_utf8_general_ci, *s))
+  while (s < end_of_string && my_charset_utf8_general_ci.isspace(*s))
     s++;
   if (s == end_of_string)
     goto fatal_error;
@@ -1039,13 +1039,13 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
     s++;
 
   s1=s;
-  while (s < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *s))
+  while (s < end_of_string && my_charset_utf8_general_ci.isdigit(*s))
     s++;
   intg= (int) (s-s1);
   if (s < end_of_string && *s=='.')
   {
     endp= s+1;
-    while (endp < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *endp))
+    while (endp < end_of_string && my_charset_utf8_general_ci.isdigit(*endp))
       endp++;
     frac= (int) (endp - s - 1);
   }

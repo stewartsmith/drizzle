@@ -81,7 +81,7 @@ long my_strntol_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for ( ; s<e && my_isspace(cs, *s) ; s++) {}
+  for ( ; s<e && cs->isspace(*s) ; s++) {}
 
   if (s == e)
   {
@@ -204,7 +204,7 @@ ulong my_strntoul_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for( ; s<e && my_isspace(cs, *s); s++) {}
+  for( ; s<e && cs->isspace(*s); s++) {}
 
   if (s==e)
   {
@@ -317,7 +317,7 @@ int64_t my_strntoll_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -440,7 +440,7 @@ uint64_t my_strntoull_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -860,7 +860,7 @@ size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const cha
   case MY_SEQ_SPACES:
     for ( ; str < end ; str++)
     {
-      if (!my_isspace(cs,*str))
+      if (!cs->isspace(*str))
         break;
     }
     return (size_t) (str - str0);

@@ -1341,10 +1341,10 @@ innobase_casedn_str(
 UNIV_INTERN
 bool
 innobase_isspace(
-  const void *cs,
+  const void* cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const charset_info_st *>(cs), char_to_test);
+  return static_cast<const charset_info_st*>(cs)->isspace(char_to_test);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)

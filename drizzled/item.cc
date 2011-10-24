@@ -413,7 +413,7 @@ void Item::set_name(const char *str, uint32_t length, const charset_info_st* cs)
   if (cs->ctype)
   {
     uint32_t orig_len= length;
-    while (length && not my_isgraph(cs, *str))
+    while (length && not cs->isgraph(*str))
     {
       /* Fix problem with yacc */
       length--;
