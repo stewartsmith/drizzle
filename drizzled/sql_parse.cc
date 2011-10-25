@@ -901,8 +901,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!table)
     return NULL;				// End of memory
   const char* alias_str= alias ? alias->data() : table->table.data();
-  if (not table_options.test(TL_OPTION_ALIAS) &&
-      check_table_name(table->table.data(), table->table.size()))
+  if (not table_options.test(TL_OPTION_ALIAS) && check_table_name(table->table))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.data());
     return NULL;

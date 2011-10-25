@@ -551,8 +551,10 @@ passwd *check_user(const char *user)
   if ((tmp_user_info= getpwnam(user)) == NULL)
   {
     // Allow a numeric uid to be used
-    const char *pos;
-    for (pos= user; my_isdigit(&my_charset_utf8_general_ci,*pos); pos++) ;
+    const char *pos= user;
+    for (; my_charset_utf8_general_ci.isdigit(*pos); pos++) 
+    {
+    }
     if (*pos)                                   // Not numeric id
       goto err;
 

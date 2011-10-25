@@ -82,7 +82,7 @@ int TYPELIB::find_type(const char *x, e_find_options full_name) const
   {
     const char *i= x;
     for (; *i && *i != field_separator &&
-      my_toupper(&my_charset_utf8_general_ci, *i) == my_toupper(&my_charset_utf8_general_ci, *j); i++, j++)
+      my_charset_utf8_general_ci.toupper(*i) == my_charset_utf8_general_ci.toupper(*j); i++, j++)
     {
     }
     if (not *j)

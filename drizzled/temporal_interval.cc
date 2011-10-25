@@ -64,7 +64,7 @@ bool TemporalInterval::initFromItem(Item *args,
     str= res->ptr();
     const char *end= str+res->length();
     // Skip the whitespace
-    while (str != end && my_isspace(cs,*str))
+    while (str != end && cs->isspace(*str))
       str++;
     if (str != end && *str == '-')
     {
@@ -302,14 +302,14 @@ bool TemporalInterval::getIntervalFromString(const char *str,
   const char *end= str+length;
   uint32_t x;
 
-  while (str != end && !my_isdigit(cs,*str))
+  while (str != end && !cs->isdigit(*str))
     str++;
 
   for (x= 0 ; x < count ; x++)
   {
     int64_t value;
     const char *start= str;
-    for (value= 0 ; str != end && my_isdigit(cs,*str) ; str++)
+    for (value= 0 ; str != end && cs->isdigit(*str) ; str++)
       value= value * 10L + (int64_t) (*str - '0');
     if (transform_msec && (x == count - 1 || str == end)) // microseconds always last
     {
@@ -318,7 +318,7 @@ bool TemporalInterval::getIntervalFromString(const char *str,
         value*= (long) log_10_int[msec_length];
     }
     values[x]= value;
-    while (str != end && !my_isdigit(cs,*str))
+    while (str != end && !cs->isdigit(*str))
       str++;
     if (str == end && x != count-1)
     {

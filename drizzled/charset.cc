@@ -98,13 +98,13 @@ static void init_state_maps(charset_info_st *cs)
   /* Fill state_map with states to get a faster parser */
   for (int i= 0; i < 256; i++)
   {
-    if (my_isalpha(cs,i))
+    if (cs->isalpha(i))
       state_map[i]= MY_LEX_IDENT;
-    else if (my_isdigit(cs,i))
+    else if (cs->isdigit(i))
       state_map[i]= MY_LEX_NUMBER_IDENT;
-    else if (my_mbcharlen(cs, i)>1)
+    else if (my_mbcharlen(cs, i) > 1)
       state_map[i]= MY_LEX_IDENT;
-    else if (my_isspace(cs,i))
+    else if (cs->isspace(i))
       state_map[i]= MY_LEX_SKIP;
     else
       state_map[i]= MY_LEX_CHAR;

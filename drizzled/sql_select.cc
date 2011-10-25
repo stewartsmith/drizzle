@@ -1661,7 +1661,7 @@ static bool check_simple_equality(Item *left_item,
           item= eq_item;
         }
 
-        if ((cs != ((Item_func *) item)->compare_collation()) || !cs->coll->propagate(cs, 0, 0))
+        if ((cs != ((Item_func *) item)->compare_collation()) || !cs->coll->propagate())
         {
           return false;
         }

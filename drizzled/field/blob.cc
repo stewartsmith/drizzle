@@ -437,8 +437,7 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
     }
     memcpy(&blob,ptr+sizeof(uint32_t),sizeof(char*));
 
-    blob_length=my_strnxfrm(field_charset,
-                            to, length, blob, blob_length);
+    blob_length= field_charset->strnxfrm(to, length, blob, blob_length);
     assert(blob_length == length);
   }
 }

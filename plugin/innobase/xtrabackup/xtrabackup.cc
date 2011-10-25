@@ -491,7 +491,7 @@ innobase_isspace(
   const void *cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+  return static_cast<const CHARSET_INFO*>(cs)->isspace(char_to_test);
 }
 
 UNIV_INTERN

@@ -34,7 +34,6 @@
 #include <drizzled/structs.h>
 #include <drizzled/charset.h>
 #include <drizzled/item_result.h>
-#include <drizzled/charset.h>
 
 #include <string>
 #include <vector>

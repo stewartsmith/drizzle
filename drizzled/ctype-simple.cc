@@ -81,7 +81,7 @@ long my_strntol_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for ( ; s<e && my_isspace(cs, *s) ; s++) {}
+  for ( ; s<e && cs->isspace(*s) ; s++) {}
 
   if (s == e)
   {
@@ -204,7 +204,7 @@ ulong my_strntoul_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for( ; s<e && my_isspace(cs, *s); s++) {}
+  for( ; s<e && cs->isspace(*s); s++) {}
 
   if (s==e)
   {
@@ -317,7 +317,7 @@ int64_t my_strntoll_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -440,7 +440,7 @@ uint64_t my_strntoull_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -681,7 +681,7 @@ cnv:
 inline static int likeconv(const charset_info_st *cs, const char c) 
 {
 #ifdef LIKE_CMP_TOUPPER
-  return (unsigned char) my_toupper(cs, c);
+  return (unsigned char) cs->toupper(c);
 #else
   return cs->sort_order[(unsigned char)c];
 #endif    
@@ -860,7 +860,7 @@ size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const cha
   case MY_SEQ_SPACES:
     for ( ; str < end ; str++)
     {
-      if (!my_isspace(cs,*str))
+      if (!cs->isspace(*str))
         break;
     }
     return (size_t) (str - str0);
@@ -1494,15 +1494,12 @@ ret_too_big:
 
 
 
-bool my_propagate_simple(const charset_info_st * const, const unsigned char *,
-                         size_t)
+bool my_propagate_simple()
 {
   return 1;
 }
 
-
-bool my_propagate_complex(const charset_info_st * const, const unsigned char *,
-                          size_t)
+bool my_propagate_complex()
 {
   return 0;
 }

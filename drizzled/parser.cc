@@ -67,8 +67,6 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
     expression the <subquery> is.
   */
 
-  Item *result;
-
   if (expr->type() == Item::SUBSELECT_ITEM)
   {
     Item_subselect *expr2 = (Item_subselect*) expr;
@@ -76,7 +74,6 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
     if (expr2->substype() == Item_subselect::SINGLEROW_SUBS)
     {
       Item_singlerow_subselect *expr3 = (Item_singlerow_subselect*) expr2;
-      Select_Lex *subselect;
 
       /*
         Implement the mandated change, by altering the semantic tree:
@@ -86,22 +83,14 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
         which is represented as
           Item_in_subselect(left, subselect)
       */
-      subselect= expr3->invalidate_and_restore_select_lex();
-      result= new (session->mem_root) Item_in_subselect(left, subselect);
-
-      if (! equal)
-        result = negate_expression(session, result);
-
-      return(result);
+      Select_Lex* subselect= expr3->invalidate_and_restore_select_lex();
+      Item* result= new (session->mem_root) Item_in_subselect(left, subselect);
+      return equal ? result : negate_expression(session, result);
     }
   }
-
-  if (equal)
-    result= new (session->mem_root) Item_func_eq(left, expr);
-  else
-    result= new (session->mem_root) Item_func_ne(left, expr);
-
-  return(result);
+  return equal
+    ? (Item*) new (session->mem_root) Item_func_eq(left, expr)
+    : (Item*) new (session->mem_root) Item_func_ne(left, expr);
 }
 
 /**

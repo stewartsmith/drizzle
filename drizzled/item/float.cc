@@ -46,7 +46,7 @@ static uint32_t nr_of_decimals(const char *str, const char *end)
       break;
   }
   decimal_point= str;
-  for (; my_isdigit(system_charset_info, *str) ; str++)
+  for (; system_charset_info->isdigit(*str) ; str++)
     ;
   if (*str == 'e' || *str == 'E')
     return NOT_FIXED_DEC;

@@ -1424,7 +1424,7 @@ static int strip_surrounding(char* str, char c1, char c2)
   char* ptr= str;
 
   /* Check if the first non space character is c1 */
-  while (*ptr && my_isspace(charset_info, *ptr))
+  while (*ptr && charset_info->isspace(*ptr))
     ptr++;
   if (*ptr == c1)
   {
@@ -1433,7 +1433,7 @@ static int strip_surrounding(char* str, char c1, char c2)
 
     /* Last non space charecter should be c2 */
     ptr= strchr(str, '\0')-1;
-    while (*ptr && my_isspace(charset_info, *ptr))
+    while (*ptr && charset_info->isspace(*ptr))
       ptr--;
     if (*ptr == c2)
     {
@@ -1510,7 +1510,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     const char *save_var_name = var_name, *end;
     uint32_t length;
     end = (var_name_end) ? *var_name_end : 0;
-    while (my_isvar(charset_info,*var_name) && var_name != end)
+    while (charset_info->isvar(*var_name) && var_name != end)
       var_name++;
     if (var_name == save_var_name)
     {
@@ -2044,7 +2044,7 @@ static void do_exec(st_command* command)
   string ds_cmd;
 
   /* Skip leading space */
-  while (*cmd && my_isspace(charset_info, *cmd))
+  while (*cmd && charset_info->isspace(*cmd))
     cmd++;
   if (!*cmd)
     die("Missing argument in exec");
@@ -2628,7 +2628,7 @@ static void do_send_quit(st_command* command)
   if (not *p)
     die("Missing connection name in send_quit");
   char* name= p;
-  while (*p && !my_isspace(charset_info, *p))
+  while (*p && !charset_info->isspace(*p))
     p++;
 
   if (*p)
@@ -2828,10 +2828,10 @@ static void do_sync_with_master(st_command* command)
   const char *offset_start= p;
   if (*offset_start)
   {
-    for (; my_isdigit(charset_info, *p); p++)
+    for (; charset_info->isdigit(*p); p++)
       offset = offset * 10 + *p - '0';
 
-    if(*p && !my_isspace(charset_info, *p))
+    if(*p && !charset_info->isspace(*p))
       die("Invalid integer argument \"%s\"", offset_start);
     command->last_argument= p;
   }
@@ -2886,19 +2886,19 @@ static void do_let(st_command* command)
   if (!*p)
     die("Missing arguments to let");
   var_name= p;
-  while (*p && (*p != '=') && !my_isspace(charset_info,*p))
+  while (*p && (*p != '=') && !charset_info->isspace(*p))
     p++;
   var_name_end= p;
   if (var_name == var_name_end ||
       (var_name+1 == var_name_end && *var_name == '$'))
     die("Missing variable name in let");
-  while (my_isspace(charset_info,*p))
+  while (charset_info->isspace(*p))
     p++;
   if (*p++ != '=')
     die("Missing assignment operator in let");
 
   /* Find start of <var_val> */
-  while (*p && my_isspace(charset_info,*p))
+  while (*p && charset_info->isspace(*p))
     p++;
 
   do_eval(&let_rhs_expr, p, command->end, false);
@@ -2939,13 +2939,13 @@ static void do_sleep(st_command* command, bool real_sleep)
   char *sleep_start, *sleep_end= command->end;
   double sleep_val= 0;
 
-  while (my_isspace(charset_info, *p))
+  while (charset_info->isspace(*p))
     p++;
   if (!*p)
     die("Missing argument to %.*s", command->first_word_len, command->query);
   sleep_start= p;
   /* Check that arg starts with a digit, not handled by internal::my_strtod */
-  if (!my_isdigit(charset_info, *sleep_start))
+  if (!charset_info->isdigit(*sleep_start))
     die("Invalid argument to %.*s \"%s\"", command->first_word_len,
         command->query,command->first_argument);
   string buff_str(sleep_start, sleep_end-sleep_start);
@@ -2970,7 +2970,7 @@ static void do_get_file_name(st_command* command, string &dest)
   if (!*p)
     die("Missing file name argument");
   char *name= p;
-  while (*p && !my_isspace(charset_info,*p))
+  while (*p && !charset_info->isspace(*p))
     p++;
   if (*p)
     *p++= 0;
@@ -2994,7 +2994,7 @@ static void do_set_charset(st_command* command)
     die("Missing charset name in 'character_set'");
   /* Remove end space */
   p= charset_name;
-  while (*p && !my_isspace(charset_info,*p))
+  while (*p && !charset_info->isspace(*p))
     p++;
   if(*p)
     *p++= 0;
@@ -3083,11 +3083,10 @@ static void do_get_errcodes(st_command* command)
       /* Check sqlstate string validity */
       while (*p && p < end)
       {
-        if (my_isdigit(charset_info, *p) || my_isupper(charset_info, *p))
+        if (charset_info->isdigit(*p) || charset_info->isupper(*p))
           *to_ptr++= *p++;
         else
-          die("The sqlstate may only consist of digits[0-9] "   \
-              "and _uppercase_ letters");
+          die("The sqlstate may only consist of digits[0-9] and _uppercase_ letters");
       }
 
       *to_ptr= 0;
@@ -3204,7 +3203,7 @@ static char *get_string(char **to_ptr, char **from_ptr,
   if (*from != ' ' && *from)
     die("Wrong string argument in %s", command->query);
 
-  while (my_isspace(charset_info,*from))  /* Point to next string */
+  while (charset_info->isspace(*from))  /* Point to next string */
     from++;
 
   *to =0;        /* End of string marker */
@@ -3251,7 +3250,7 @@ static void select_connection(st_command* command)
   if (!*p)
     die("Missing connection name in connect");
   char* name= p;
-  while (*p && !my_isspace(charset_info,*p))
+  while (*p && !charset_info->isspace(*p))
     p++;
   if (*p)
     *p++= 0;
@@ -3266,7 +3265,7 @@ static void do_close_connection(st_command* command)
   if (!*p)
     die("Missing connection name in disconnect");
   char* name= p;
-  while (*p && !my_isspace(charset_info,*p))
+  while (*p && !charset_info->isspace(*p))
     p++;
 
   if (*p)
@@ -3548,11 +3547,11 @@ static void do_connect(st_command* command)
   while (*con_options)
   {
     /* Step past any spaces in beginning of option*/
-    while (*con_options && my_isspace(charset_info, *con_options))
+    while (*con_options && charset_info->isspace(*con_options))
       con_options++;
     /* Find end of this option */
     const char* end= con_options;
-    while (*end && !my_isspace(charset_info, *end))
+    while (*end && !charset_info->isspace(*end))
       end++;
     die("Illegal option to connect: %.*s", (int) (end - con_options), con_options);
     /* Process next option */
@@ -3681,7 +3680,7 @@ static void do_block(enum block_cmd cmd, st_command* command)
     die("missing ')' in %s", cmd_name);
   p= (char*)expr_end+1;
 
-  while (*p && my_isspace(charset_info, *p))
+  while (*p && charset_info->isspace(*p))
     p++;
   if (*p && *p != '{')
     die("Missing '{' after %s. Found \"%s\"", cmd_name, p);
@@ -3707,7 +3706,7 @@ static void do_delimiter(st_command* command)
 {
   char* p= command->first_argument;
 
-  while (*p && my_isspace(charset_info, *p))
+  while (*p && charset_info->isspace(*p))
     p++;
 
   if (!(*p))
@@ -3887,7 +3886,7 @@ static int read_line(char *buf, int size)
         /* A # or - in the first position of the line - this is a comment */
         state = R_COMMENT;
       }
-      else if (my_isspace(charset_info, c))
+      else if (charset_info->isspace(c))
       {
         /* Skip all space at begining of line */
         if (c == '\n')
@@ -3995,7 +3994,7 @@ static void convert_to_format_v1(char* query)
       *to++ = *p++; /* Save the newline */
 
       /* Skip any spaces on next line */
-      while (*p && my_isspace(charset_info, *p))
+      while (*p && charset_info->isspace(*p))
         p++;
 
       last_c_was_quote= 0;
@@ -4047,11 +4046,11 @@ static void scan_command_for_warnings(st_command* command)
       char save;
       char *end, *start= (char*)ptr+3;
       /* Skip leading spaces */
-      while (*start && my_isspace(charset_info, *start))
+      while (*start && charset_info->isspace(*start))
         start++;
       end= start;
       /* Find end of command(next space) */
-      while (*end && !my_isspace(charset_info, *end))
+      while (*end && !charset_info->isspace(*end))
         end++;
       save= *end;
       *end= 0;
@@ -4093,7 +4092,7 @@ static void check_eol_junk(const char *eol)
   const char *p= eol;
 
   /* Skip past all spacing chars and comments */
-  while (*p && (my_isspace(charset_info, *p) || *p == '#' || *p == '\n'))
+  while (*p && (charset_info->isspace(*p) || *p == '#' || *p == '\n'))
   {
     /* Skip past comments started with # and ended with newline */
     if (*p && *p == '#')
@@ -4171,19 +4170,19 @@ static int read_command(st_command** command_ptr)
   }
 
   /* Skip leading spaces */
-  while (*p && my_isspace(charset_info, *p))
+  while (*p && charset_info->isspace(*p))
     p++;
 
   command->query_buf= command->query= strdup(p);
 
   /* Calculate first word length(the command), terminated by space or ( */
   p= command->query;
-  while (*p && !my_isspace(charset_info, *p) && *p != '(')
+  while (*p && !charset_info->isspace(*p) && *p != '(')
     p++;
   command->first_word_len= (uint32_t) (p - command->query);
 
   /* Skip spaces between command and first argument */
-  while (*p && my_isspace(charset_info, *p))
+  while (*p && charset_info->isspace(*p))
     p++;
   command->first_argument= p;
 
@@ -5777,7 +5776,7 @@ void do_get_replace(st_command* command)
   char* pos= word_end_chars;
   for (int i= 1; i < 256; i++)
   {
-    if (my_isspace(charset_info, i))
+    if (charset_info->isspace(i))
       *pos++= i;
   }
   *pos=0;          /* End pointer */

@@ -96,6 +96,11 @@ public:
   {
     return begin() == end();
   }
+
+  operator std::string() const
+  {
+    return to_string(*this);
+  }
 private:
   T begin_;
   T end_;

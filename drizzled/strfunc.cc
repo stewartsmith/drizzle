@@ -43,9 +43,9 @@ uint32_t TYPELIB::find_type(const char *find, uint32_t length, bool part_match) 
   const char* end= find + length;
   const char* i;
   const char* j;
-  for (uint32_t pos= 0 ; (j= type_names[pos++]) ; )
+  for (uint32_t pos= 0 ; (j= type_names[pos++]); )
   {
-    for (i= find ; i != end && my_toupper(system_charset_info, *i) == my_toupper(system_charset_info, *j); i++, j++) 
+    for (i= find ; i != end && system_charset_info->toupper(*i) == system_charset_info->toupper(*j); i++, j++) 
     {
     }
     if (i == end)

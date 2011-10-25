@@ -102,9 +102,9 @@ uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
-  return length == other.length &&
-         field_name.size() == other.field_name.size() &&
-    !my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
+  return length == other.length 
+    && field_name.size() == other.field_name.size()
+    && not my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
@@ -710,13 +710,13 @@ bool Session::executeStatement()
 void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
 {
   /* Remove garbage at start and end of query */
-  while (in_packet_length > 0 && my_isspace(charset(), in_packet[0]))
+  while (in_packet_length > 0 && charset()->isspace(in_packet[0]))
   {
     in_packet++;
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || charset()->isspace(pos[-1])))
   {
     pos--;
     in_packet_length--;
@@ -1163,11 +1163,8 @@ bool select_export::send_data(List<Item> &items)
         const charset_info_st * const res_charset= res->charset();
         const charset_info_st * const character_set_client= default_charset_info;
 
-        bool check_second_byte= (res_charset == &my_charset_bin) &&
-          character_set_client->
-          escape_with_backslash_is_dangerous;
-        assert(character_set_client->mbmaxlen == 2 ||
-               !character_set_client->escape_with_backslash_is_dangerous);
+        bool check_second_byte= false;
+        assert(character_set_client->mbmaxlen == 2 || not false);
         for (start=pos=(char*) res->ptr(),end=pos+used_length ;
              pos != end ;
              pos++)

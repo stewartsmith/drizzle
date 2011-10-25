@@ -413,7 +413,7 @@ void Item::set_name(const char *str, uint32_t length, const charset_info_st* cs)
   if (cs->ctype)
   {
     uint32_t orig_len= length;
-    while (length && not my_isgraph(cs, *str))
+    while (length && not cs->isgraph(*str))
     {
       /* Fix problem with yacc */
       length--;
@@ -1007,7 +1007,7 @@ void Item::init_make_field(SendField *tmp_field, enum_field_types field_type_arg
   tmp_field->table_name= "";
   tmp_field->col_name= name;
   tmp_field->charsetnr= collation.collation->number;
-  tmp_field->flags= (maybe_null ? 0 : NOT_NULL_FLAG) | (my_binary_compare(collation.collation) ? BINARY_FLAG : 0);
+  tmp_field->flags= (maybe_null ? 0 : NOT_NULL_FLAG) | (collation.collation->binary_compare() ? BINARY_FLAG : 0);
   tmp_field->type= field_type_arg;
   tmp_field->length= max_length;
   tmp_field->decimals= decimals;

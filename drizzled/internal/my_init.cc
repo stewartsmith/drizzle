@@ -31,7 +31,7 @@ static bool my_init_done= 0;
 static uint32_t atoi_octal(const char *str)
 {
   long int tmp;
-  while (*str && my_isspace(&my_charset_utf8_general_ci, *str))
+  while (*str && my_charset_utf8_general_ci.isspace(*str))
     str++;
   tmp= strtol(str, NULL, (*str == '0' ? 8 : 10));
   return (uint32_t) tmp;

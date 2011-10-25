@@ -32,7 +32,6 @@
 #include <drizzled/definitions.h>
 #include <drizzled/internal/my_pthread.h>
 
-#include <drizzled/charset.h>                    /* for charset_info_st */
 #include <stdarg.h>
 
 #ifndef errno				/* did we already get it? */
