@@ -1,23 +1,22 @@
-# Albanian translation for drizzle
-# Copyright (C) 2009 Rosetta Contributors and Canonical Ltd 2009
+# Filipino translation for drizzle
+# Copyright (c) 2011 Rosetta Contributors and Canonical Ltd 2011
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-25 12:41-0400\n"
-"PO-Revision-Date: 2009-06-01 19:34+0000\n"
-"Last-Translator: heroid <heroid@ayih.org>\n"
-"Language-Team: Albanian <sq@li.org>\n"
+"PO-Revision-Date: 2011-10-18 12:37+0000\n"
+"Last-Translator: Marlon Janssen Arao <Unknown>\n"
+"Language-Team: Filipino <fil@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: sq\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Launchpad-Export-Date: 2011-10-19 04:38+0000\n"
+"X-Generator: Launchpad (build 14157)\n"
 
 #: ../client/drizzle.cc:332
 msgid "Sun"
@@ -97,11 +96,11 @@ msgstr ""
 
 #: ../client/drizzle.cc:514
 msgid "Synonym for `help'."
-msgstr "Sinonim për 'ndihmë'."
+msgstr "Kasingkahulugan para sa 'tulong'."
 
 #: ../client/drizzle.cc:515
 msgid "Clear command."
-msgstr "Fshije komanden"
+msgstr ""
 
 #: ../client/drizzle.cc:517
 msgid "Reconnect to the server. Optional arguments are db and host."
@@ -118,7 +117,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:522
 msgid "Exit drizzle. Same as quit."
-msgstr "Largohu nga drizzle. E njejta si largim."
+msgstr "Lumabas sa drizzle. Kapareho ng huminto."
 
 #: ../client/drizzle.cc:523
 msgid "Send command to drizzle server."
@@ -126,7 +125,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:524
 msgid "Display this help."
-msgstr "Shfaqe këtë ndihmë"
+msgstr ""
 
 #: ../client/drizzle.cc:525
 msgid "Disable pager, print to stdout."
@@ -134,7 +133,7 @@ msgstr ""
 
 #: ../client/drizzle.cc:526
 msgid "Don't write into outfile."
-msgstr "Mos shkruaj në skedarin e jashtëm"
+msgstr ""
 
 #: ../client/drizzle.cc:528
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -142,19 +141,19 @@ msgstr ""
 
 #: ../client/drizzle.cc:529
 msgid "Print current command."
-msgstr "Shtype komandën e tanishme."
+msgstr ""
 
 #: ../client/drizzle.cc:530
 msgid "Change your drizzle prompt."
-msgstr "Ndrrysho kërkesat e drizzle."
+msgstr ""
 
 #: ../client/drizzle.cc:531
 msgid "Quit drizzle."
-msgstr "Largohu nga drizzle."
+msgstr ""
 
 #: ../client/drizzle.cc:532
 msgid "Rebuild completion hash."
-msgstr "Rikrijo hash-in e kompletuar"
+msgstr ""
 
 #: ../client/drizzle.cc:534
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -245,9 +244,8 @@ msgid "Options used only in command line"
 msgstr ""
 
 #: ../client/drizzle.cc:1381
-#, fuzzy
 msgid "Displays this help and exit."
-msgstr "Shfaqe këtë ndihmë"
+msgstr ""
 
 #: ../client/drizzle.cc:1382
 msgid ""
@@ -946,9 +944,8 @@ msgid "Continue even if we get an sql-error."
 msgstr ""
 
 #: ../client/drizzledump.cc:479
-#, fuzzy
 msgid "Display this help message and exit."
-msgstr "Shfaqe këtë ndihmë"
+msgstr ""
 
 #: ../client/drizzledump.cc:481
 msgid ""
@@ -1422,9 +1419,8 @@ msgid "gethostname failed, using '%s' as hostname"
 msgstr ""
 
 #: ../drizzled/drizzled.cc:1053
-#, fuzzy
 msgid "Display help and exit."
-msgstr "Shfaqe këtë ndihmë"
+msgstr ""
 
 #: ../drizzled/drizzled.cc:1055
 msgid "Run as a daemon."
@@ -5128,9 +5124,8 @@ msgid ""
 msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:645
-#, fuzzy
 msgid "Display help and exit"
-msgstr "Shfaqe këtë ndihmë"
+msgstr ""
 
 #: ../plugin/transaction_log/utilities/transaction_reader.cc:646
 msgid "Read from the innodb transaction log"
@@ -5292,7 +5287,3 @@ msgstr ""
 #: ../plugin/zeromq/zeromq_log.cc:146
 msgid "End point to bind to"
 msgstr ""
-
-#, fuzzy
-#~ msgid "--help           :  Display help and exit\n"
-#~ msgstr "Shfaqe këtë ndihmë"
