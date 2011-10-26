@@ -25,17 +25,14 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class DRIZZLED_API StatusHelper 
 {
 public:
 
-  static std::string fillHelper(drizzled::system_status_var *status_var, char *value, 
-                                SHOW_TYPE show_type);
-
-  static drizzled::drizzle_show_var status_vars_defs[];
+  static std::string fillHelper(system_status_var*, const char* value, SHOW_TYPE);
+  static drizzle_show_var status_vars_defs[];
 };
 
 } /* namespace drizzled */

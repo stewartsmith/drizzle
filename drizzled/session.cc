@@ -283,7 +283,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
-  thr_lock_owner_init(&main_lock_id, &lock_info);
+  main_lock_id.info= &lock_info;
 
   plugin::EventObserver::registerSessionEvents(*this);
 }

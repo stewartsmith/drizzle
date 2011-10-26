@@ -71,7 +71,7 @@ bool AnalysisTableTool::Generator::populate()
   drizzled::sys_var *servers_var= drizzled::find_sys_var("memcached_stats_servers");
   assert(servers_var != NULL);
 
-  const string servers_string(static_cast<char *>(servers_var.value_ptr(NULL, 0, NULL)));
+  const string servers_string(static_cast<char *>(servers_var.value_ptr(NULL, 0)));
 
   if (servers_string.empty()) 
   {       
