@@ -1091,7 +1091,7 @@ public:
 /* For sql_yacc */
 struct sys_var_with_base
 {
-  sys_var *var;
+  sys_var* var;
   lex_string_t base_name;
 };
 
