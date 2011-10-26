@@ -27,19 +27,16 @@
 
 namespace drizzled {
 
-Item_func_get_system_var::
-Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                       lex_string_t *component_arg, const char *name_arg,
-                       size_t name_len_arg)
-  :var(var_arg), var_type(var_type_arg), component(*component_arg)
+Item_func_get_system_var::Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
+                       lex_string_t *component_arg, const char *name_arg, size_t name_len_arg)
+  : var(var_arg), var_type(var_type_arg), component(*component_arg)
 {
   /* set_name() will allocate the name */
   set_name(name_arg, name_len_arg);
 }
 
 
-bool
-Item_func_get_system_var::fix_fields(Session *session, Item **ref)
+bool Item_func_get_system_var::fix_fields(Session *session, Item **ref)
 {
 
   /*
@@ -57,10 +54,8 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   return 0;
 }
 
-Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
-                     lex_string_t component)
+Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name, lex_string_t component)
 {
-  sys_var *var;
   lex_string_t *base_name, *component_name;
 
   if (component.data())
@@ -74,12 +69,13 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
     component_name= &component;                 // Empty string
   }
 
-  if (!(var= find_sys_var(base_name->data())))
-    return 0;
+  sys_var *var= find_sys_var(base_name->data());
+  if (not var)
+    return NULL;
   if (component.data())
   {
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->data());
-    return 0;
+    return NULL;
   }
   session->lex().setCacheable(false);
 

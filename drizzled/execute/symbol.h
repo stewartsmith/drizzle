@@ -42,7 +42,7 @@
 namespace drizzled {
 namespace execute {
 
-union YYSTYPE
+struct YYSTYPE
 {
   long long number;  
   lex_string_t string;
@@ -51,5 +51,5 @@ union YYSTYPE
 } // namespace execute
 } // namespace drizzled
 
-typedef union drizzled::execute::YYSTYPE YYSTYPE;
+typedef drizzled::execute::YYSTYPE YYSTYPE;
 

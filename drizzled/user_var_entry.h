@@ -27,7 +27,7 @@ namespace drizzled {
 
 class user_var_entry
 {
- public:
+public:
   user_var_entry(const char*, query_id_t id) :
     value(NULL),
     length(0),
