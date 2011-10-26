@@ -285,8 +285,7 @@ public:
     return (not have_default_value) && option_limits == 0;
   }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *, sql_var_t,
-                           const lex_string_t *)
+  unsigned char *value_ptr(Session *, sql_var_t, const lex_string_t *)
   { return (unsigned char*) value; }
 };
 
@@ -771,8 +770,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_INT; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 
@@ -792,8 +790,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_HA_ROWS; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 
@@ -825,8 +822,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -865,8 +861,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -893,8 +888,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
   bool check(Session *session, set_var *var);
   bool check_update_type(Item_result)
   { return 0; }
@@ -925,8 +919,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
   bool check_update_type(Item_result)
   { return 0; }
 };
@@ -948,8 +941,7 @@ public:
   }
   void set_default(Session *session, sql_var_t type);
   bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 class DRIZZLED_API sys_var_session_bit :public sys_var_session
@@ -971,8 +963,7 @@ public:
   { return 0; }
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 /* some variables that require special handling */
@@ -989,8 +980,7 @@ public:
   bool check_default(sql_var_t)
   { return 0; }
   SHOW_TYPE show_type(void) { return SHOW_LONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 
@@ -1003,8 +993,7 @@ public:
   bool update(Session *session, set_var *var);
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 
@@ -1038,8 +1027,7 @@ public:
   }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
 };
 
 /* Variable that you can only read from */
@@ -1063,8 +1051,7 @@ public:
   bool check_type(sql_var_t type) { return type != var_type; }
   bool check_update_type(Item_result)
   { return 1; }
-  unsigned char *value_ptr(Session *session, sql_var_t,
-                           const lex_string_t *)
+  unsigned char *value_ptr(Session *session, sql_var_t, const lex_string_t *)
   {
     return (*value_ptr_func)(session);
   }
@@ -1106,8 +1093,7 @@ public:
   bool check_default(sql_var_t)
   { return 0; }
   bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const lex_string_t *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type, const lex_string_t *base);
   virtual void set_default(Session *session, sql_var_t type);
 };
 
