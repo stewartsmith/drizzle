@@ -876,7 +876,7 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t*)
+Item *sys_var::item(Session *session, sql_var_t var_type)
 {
   if (check_type(var_type))
   {

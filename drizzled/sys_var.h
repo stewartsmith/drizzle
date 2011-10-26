@@ -166,7 +166,7 @@ public:
   {
     return option_limits == 0;
   }
-  Item *item(Session *session, sql_var_t type, const lex_string_t *base);
+  Item *item(Session*, sql_var_t);
   virtual bool is_readonly() const
   {
     return 0;
@@ -177,29 +177,26 @@ public:
  * A base class for all variables that require its access to
  * be guarded with a mutex.
  */
-class DRIZZLED_API sys_var_global: public sys_var
+class DRIZZLED_API sys_var_global : public sys_var
 {
 protected:
   pthread_mutex_t *guard;
 public:
-  sys_var_global(const char *name_arg,
-                 sys_after_update_func after_update_arg,
-                 pthread_mutex_t *guard_arg)
-    :
-      sys_var(name_arg, after_update_arg), 
-      guard(guard_arg) 
+  sys_var_global(const char *name_arg, sys_after_update_func after_update_arg, pthread_mutex_t *guard_arg) :
+    sys_var(name_arg, after_update_arg), 
+    guard(guard_arg) 
   {}
 };
 
-class DRIZZLED_API sys_var_uint32_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint32_t_ptr : public sys_var
 {
   uint32_t *value;
 public:
-  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg)
-    :sys_var(name_arg),value(value_ptr_arg)
+  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg) :
+    sys_var(name_arg), value(value_ptr_arg)
   {  }
-  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg, sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_ptr_arg)
+  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg, sys_after_update_func func) :
+    sys_var(name_arg,func), value(value_ptr_arg)
   {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
@@ -209,8 +206,7 @@ public:
   { return (unsigned char*) value; }
 };
 
-class DRIZZLED_API sys_var_uint32_t_ptr_readonly :
-  public sys_var_uint32_t_ptr
+class DRIZZLED_API sys_var_uint32_t_ptr_readonly : public sys_var_uint32_t_ptr
 {
 public:
   sys_var_uint32_t_ptr_readonly(const char *name_arg, uint32_t *value_ptr_arg) :
@@ -230,7 +226,7 @@ public:
 };
 
 
-class DRIZZLED_API sys_var_uint64_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint64_t_ptr : public sys_var
 {
   uint64_t *value;
   const uint64_t default_value;

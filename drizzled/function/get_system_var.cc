@@ -44,7 +44,7 @@ bool Item_func_get_system_var::fix_fields(Session *session, Item **ref)
     instead of this item. If the variable can not be evaluated,
     the error is reported in sys_var::item().
   */
-  Item *item= var->item(session, var_type, &component);
+  Item *item= var->item(session, var_type);
   if (not item)
     return 1;                             // Impossible
 
