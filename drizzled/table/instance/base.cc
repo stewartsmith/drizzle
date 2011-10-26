@@ -715,9 +715,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       key_part->key_type= 0;
     }
 
-    if (! indx.has_comment())
+    if (not indx.has_comment())
     {
-      keyinfo->comment.assign(NULL, 0);
+      keyinfo->comment.clear();
     }
     else
     {
