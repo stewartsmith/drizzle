@@ -1,3 +1,5 @@
+.. _error_dictionary_plugin:
+
 Error Dictionary
 ================
 
@@ -14,7 +16,7 @@ start :program:`drizzled` with::
 
    --plugin-remove=error_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _error_dictionary_configuration:
 

@@ -1,3 +1,5 @@
+.. _ascii_plugin:
+
 ASCII Function
 ==============
 
@@ -15,7 +17,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=ascii
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _ascii_authors:
 

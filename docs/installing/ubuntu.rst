@@ -1,5 +1,5 @@
-Installing In Ubuntu
-====================
+Installing on Ubuntu
+=====================
 
 Using DEBs
 ----------

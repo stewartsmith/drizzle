@@ -1,3 +1,5 @@
+.. _auth_all_plugin:
+
 Allow All Authentication
 ========================
 
@@ -23,7 +25,7 @@ with::
 
    --plugin-remove=auth_all
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_all_configuration:
 
@@ -31,7 +33,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

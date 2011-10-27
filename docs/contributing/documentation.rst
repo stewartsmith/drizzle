@@ -241,5 +241,5 @@ Committing Documentation
 ------------------------
 
 Documentation needs to be committed and merged in exactly the same way as
-regular development files.  For more information on this please see the
-:ref:`contributing code <code-label>` page.
+regular development files.  For more information see
+:ref:`contributing_code`.

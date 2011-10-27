@@ -1,6 +1,8 @@
 Requirements
 ============
 
+.. _supported_platforms:
+
 Supported Platforms
 -------------------
 When installing Drizzle we typically recommend either using the packages from
@@ -13,7 +15,7 @@ Every build of Drizzle is currently tested on:
  * RedHat (or CentOS) 5 and 6
  * Debian Squeeze (6.0)
  * Ubuntu 10.04 and 10.10
- * Apple OSX 10.6.4
+ * Apple OS X 10.6.4
 
 We recommend using these platforms with Drizzle. Older platforms may have various
 unforseen difficulties when compiling and/or installing.  Drizzle is tested on

@@ -1,3 +1,5 @@
+.. _string_functions_plugin:
+
 String Functions
 ================
 
@@ -21,7 +23,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=string_functions
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _string_functions_authors:
 

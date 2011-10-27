@@ -1,5 +1,4 @@
-==========================
-A Brief History Of Drizzle
+A Brief History of Drizzle
 ==========================
 
 Drizzle came into being for both social and technical reasons.

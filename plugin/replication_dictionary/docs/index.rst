@@ -1,3 +1,5 @@
+.. _replication_dictionary_plugin:
+
 Replication Dictionary
 ======================
 
@@ -14,7 +16,7 @@ with::
 
    --plugin-remove=replication_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Authors
 -------

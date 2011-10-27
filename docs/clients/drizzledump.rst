@@ -1,4 +1,4 @@
-Drizzledump Backup Tool
+drizzledump Backup Tool
 =======================
 
 Synopsis
@@ -26,7 +26,7 @@ does not corrupt the dump file.
 
 .. _drizzledump-options-label:
 
-Drizzledump options
+drizzledump Options
 -------------------
 
 The :program:`drizzledump` tool has several available options:
@@ -245,7 +245,7 @@ The :program:`drizzledump` tool has several available options:
    **drizzle**
    The Drizzle protocol.
 
-Backups using Drizzledump
+Backups Using drizzledump
 -------------------------
 
 Backups of a database can be made very simply by running the following:
@@ -262,7 +262,7 @@ This can then be re-imported into drizzle at a later date using:
 
 .. _drizzledump-migration-label:
 
-MySQL Migration using Drizzledump
+MySQL Migration Using drizzledump
 ---------------------------------
 
 As of version 2010-09-27 there is the capability to migrate databases from

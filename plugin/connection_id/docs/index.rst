@@ -1,3 +1,5 @@
+.. _connection_id_plugin:
+
 CONNECTION_ID Function
 ======================
 
@@ -15,7 +17,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=connection_id
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _connection_id_authors:
 

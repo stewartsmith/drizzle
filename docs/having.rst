@@ -1,4 +1,4 @@
-Having
+HAVING
 ======
 
 The WHERE keyword cannot be used with aggregate functions, but the HAVING clause can be; this is its primary use.

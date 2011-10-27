@@ -1,3 +1,5 @@
+.. _memory_plugin:
+
 Memory Storage Engine
 =====================
 
@@ -13,7 +15,7 @@ This plugin is loaded by default.  To stop the plugin from loading by default, s
 
    --plugin-remove=memory
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Authors
 -------

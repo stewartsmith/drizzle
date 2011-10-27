@@ -1,3 +1,5 @@
+.. _debug_plugin:
+
 Debugging Functions
 ===================
 
@@ -18,7 +20,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=debug
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _debug_authors:
 

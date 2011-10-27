@@ -1,3 +1,5 @@
+.. _schema_engine_plugin:
+
 Schema Engine
 =============
 

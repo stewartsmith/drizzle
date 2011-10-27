@@ -5,15 +5,21 @@ First, as experimental goes, this is pretty experimental.
 Next thing, I do not really know PAM. What I do know is how to read man
 pages :)
 
-Go place this:
+Most modern Linux distributions today have PAM pre-configured in a way
+that will just work with drizzle. The default configuration is typically
+found in /etc/pam.d/other. This file may include the files /etc/pam.d/common*.
+
+Anyway, if you want to specifically configure PAM for drizzle, then you would
+put something like this:
+
 auth       required     pam_unix.so
 account    required     pam_unix.so
 
 Into a file located here:
 /etc/pam.d/drizzle
 
-Please send email to the drizzle mailing list on Launchpad if you would like
-to contribute.
+Please send email to the drizzle-discuss mailing list on Launchpad if you would 
+like to contribute.
 
 Cheers,
     -Brian

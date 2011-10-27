@@ -1,3 +1,5 @@
+.. _hex_functions_plugin:
+
 Hex Functions
 =============
 
@@ -17,7 +19,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=hex_functions
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _hex_functions_authors:
 

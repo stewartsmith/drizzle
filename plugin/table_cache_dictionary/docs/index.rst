@@ -1,3 +1,5 @@
+.. _table_cache_dictionary_plugin:
+
 Table Cache Dictionary
 ======================
 
@@ -14,7 +16,7 @@ with::
 
    --plugin-remove=table_cache_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Authors
 -------

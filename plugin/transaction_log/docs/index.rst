@@ -1,3 +1,5 @@
+.. _transaction_log_plugin:
+
 Transaction Log
 ===============
 
@@ -17,7 +19,7 @@ with::
 
    --plugin-remove=transaction_log
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _transaction_log_configuration:
 
@@ -25,7 +27,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled
@@ -163,8 +165,7 @@ Transaction Log Messages
 ------------------------
 
 Replication events are recorded using messages in the `Google Protocol Buffer
-<http://code.google.com/p/protobuf/>`_ (GPB) format. See the :doc:`Replication
-documentation </replication>` for more information.
+<http://code.google.com/p/protobuf/>`_ (GPB) format. See :doc:`/replication/drizzle` for more information.
 
 Transaction Log Format
 ----------------------

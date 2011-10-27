@@ -1,10 +1,12 @@
+.. _default_replicator_plugin:
+
 Default Replicator
 ==================
 
 :program:`default_replicator` is a simple replicator which replicates all
 write events to all appliers.
 
-.. seealso:: :doc:`/replication`
+.. seealso:: :doc:`/replication/drizzle`
 
 .. _default_replicator_loading:
 
@@ -20,7 +22,7 @@ with::
 
    --plugin-remove=default_replicator
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _default_replicator_configuration:
 

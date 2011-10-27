@@ -1,3 +1,5 @@
+.. _simple_user_policy_plugin:
+
 User-based Authorization
 ========================
 
@@ -16,7 +18,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=simple_user_policy
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Examples
 --------

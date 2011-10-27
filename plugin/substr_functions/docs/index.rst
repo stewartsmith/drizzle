@@ -1,3 +1,5 @@
+.. _substr_functions_plugin:
+
 Substring Functions
 ===================
 
@@ -17,7 +19,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=substr_functions
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _substr_functions_authors:
 

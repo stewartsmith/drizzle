@@ -1,3 +1,5 @@
+.. _rand_function_plugin:
+
 RAND Function
 =============
 
@@ -15,7 +17,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=rand_function
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _rand_function_authors:
 

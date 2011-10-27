@@ -21,6 +21,37 @@ The following authentication plugins are included with Drizzle:
 * :doc:`/plugins/auth_http/index`
 * :doc:`/plugins/auth_ldap/index`
 * :doc:`/plugins/auth_pam/index`
+* :doc:`/plugins/auth_schema/index`
+
+Protocols
+---------
+
+Drizzle has three protocols which affect how clients send passwords to MySQL:
+
+================== =============
+Protocol           Password
+================== =============
+mysql              Encrypted
+mysql-plugin-auth  Plaintext
+drizzle            (Not used)
+================== =============
+
+These protocols correspond to the :ref:`drizzle_command_line_client`
+--protocol option.
+
+The mysql protocol is default, but some authentication plugins require
+the mysql-plugin-auth protocol:
+
+=========================  ==================
+Plugin                     Protocol
+=========================  ==================
+:ref:`auth_all_plugin`     Any
+:ref:`auth_file_plugin`    mysql
+:ref:`auth_http_plugin`    mysql-plugin-auth
+:ref:`auth_ldap_plugin`    mysql-plugin-auth
+:ref:`auth_pam_plugin`     mysql-plugin-auth
+:ref:`auth_schema_plugin`  mysql
+=========================  ==================
 
 -------------------------------------------------------------------------------
 
