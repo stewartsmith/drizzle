@@ -326,21 +326,17 @@ void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
+bool checkFieldIdent(LEX *lex, str_ref schema_name, str_ref table_name)
 {
   TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
-  if (schema_name.size())
+  if (schema_name.size() && my_strcasecmp(table_alias_charset, schema_name.data(), table->getSchemaName()))
   {
-    if (my_strcasecmp(table_alias_charset, schema_name.data(), table->getSchemaName()))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
-      return false;
-    }
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
+    return false;
   }
 
-  if (my_strcasecmp(table_alias_charset, table_name.data(),
-                    table->getTableName()))
+  if (my_strcasecmp(table_alias_charset, table_name.data(), table->getTableName()))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.data());
     return false;
@@ -349,7 +345,7 @@ bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string
   return true;
 }
 
-Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name)
+Item *buildIdent(LEX *lex, str_ref schema_name, str_ref table_name, str_ref field_name)
 {
   Select_Lex *sel= lex->current_select;
 
@@ -363,7 +359,7 @@ Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &
     : (Item*) new Item_ref(lex->current_context(), schema_name.data(), table_name.data(), field_name.data());
 }
 
-Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
+Item *buildTableWild(LEX *lex, str_ref schema_name, str_ref table_name)
 {
   Select_Lex *sel= lex->current_select;
   Item *item= new Item_field(lex->current_context(), schema_name.data(), table_name.data(), "*");
@@ -412,7 +408,7 @@ bool buildCollation(LEX *lex, const charset_info_st *arg)
   return true;
 }
 
-void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
+void buildKey(LEX *lex, Key::Keytype type_par, str_ref name_arg)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
   Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0, lex->col_list);
@@ -420,7 +416,7 @@ void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
 
-void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
+void buildForeignKey(LEX *lex, str_ref name_arg, drizzled::Table_ident *table)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
   statement->alter_info.key_list.push_back(new Foreign_key(name_arg, lex->col_list, table, lex->ref_list, 

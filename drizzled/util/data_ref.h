@@ -34,10 +34,7 @@ public:
   template <class U>
   data_ref_basic(const U& c)
   {
-    if (c.begin() == c.end())
-      clear();
-    else
-      assign(&*c.begin(), &*c.end());
+    assign(&*c.begin(), &*c.end());
   }
 
   data_ref_basic(const void* b, const void* e)

@@ -37,7 +37,7 @@ DRIZZLED_API void kill_drizzle();
 
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);
-bool add_field_to_list(Session *session, lex_string_t *field_name, enum enum_field_types type,
+bool add_field_to_list(Session *session, str_ref field_name, enum enum_field_types type,
                        const char *length, const char *decimal,
                        uint32_t type_modifier,
                        enum column_format_type column_format,
@@ -49,7 +49,7 @@ CreateField * new_create_field(Session *session, const char *field_name, enum_fi
                                const char *length, const char *decimals,
                                uint32_t type_modifier,
                                Item *default_value, Item *on_update_value,
-                               lex_string_t *comment, const char *change,
+                               str_ref comment, const char *change,
                                List<String> *interval_list, charset_info_st *cs);
 void push_new_name_resolution_context(Session&, TableList& left_op, TableList& right_op);
 void add_join_on(TableList *b,Item *expr);

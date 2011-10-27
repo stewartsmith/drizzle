@@ -1160,21 +1160,15 @@ bool select_export::send_data(List<Item> &items)
           escape_char != -1)
       {
         char *pos, *start, *end;
-        const charset_info_st * const res_charset= res->charset();
-        const charset_info_st * const character_set_client= default_charset_info;
+        const charset_info_st* const res_charset= res->charset();
 
-        bool check_second_byte= false;
-        assert(character_set_client->mbmaxlen == 2 || not false);
-        for (start=pos=(char*) res->ptr(),end=pos+used_length ;
-             pos != end ;
-             pos++)
+        for (start= pos= (char*) res->ptr(),end=pos+used_length; pos != end; pos++)
         {
           if (use_mb(res_charset))
           {
-            int l;
-            if ((l=my_ismbchar(res_charset, pos, end)))
+            if (int l= my_ismbchar(res_charset, pos, end))
             {
-              pos += l-1;
+              pos += l - 1;
               continue;
             }
           }
@@ -1211,11 +1205,7 @@ bool select_export::send_data(List<Item> &items)
             assert before the loop makes that sure.
           */
 
-          if ((needs_escaping(*pos, enclosed) ||
-               (check_second_byte &&
-                my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
-                pos + 1 < end &&
-                needs_escaping(pos[1], enclosed))) &&
+          if (needs_escaping(*pos, enclosed) &&
               /*
                 Don't escape field_term_char by doubling - doubling is only
                 valid for ENCLOSED BY characters:
@@ -1225,8 +1215,7 @@ bool select_export::send_data(List<Item> &items)
           {
             char tmp_buff[2];
             tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
-                          is_ambiguous_field_sep) ?
-              field_sep_char : escape_char;
+                          is_ambiguous_field_sep) ? field_sep_char : escape_char;
             tmp_buff[1]= *pos ? *pos : '0';
             if (cache->write(start, pos - start) || cache->write(tmp_buff, 2))
               return true;

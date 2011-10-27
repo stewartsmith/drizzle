@@ -793,7 +793,7 @@ void parse(Session& session, const char *inBuf, uint32_t length)
     Return 0 if ok
 */
 
-bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_types type,
+bool add_field_to_list(Session *session, str_ref field_name, enum_field_types type,
 		       const char *length, const char *decimals,
 		       uint32_t type_modifier, column_format_type column_format,
 		       Item *default_value, Item *on_update_value, str_ref comment,
@@ -802,18 +802,18 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
   LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
-  if (check_identifier_name(*field_name, ER_TOO_LONG_IDENT))
+  if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
     return true;
 
   if (type_modifier & PRI_KEY_FLAG)
   {
-    lex->col_list.push_back(new Key_part_spec(*field_name, 0));
+    lex->col_list.push_back(new Key_part_spec(field_name, 0));
     statement->alter_info.key_list.push_back(new Key(Key::PRIMARY, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
-    lex->col_list.push_back(new Key_part_spec(*field_name, 0));
+    lex->col_list.push_back(new Key_part_spec(field_name, 0));
     statement->alter_info.key_list.push_back(new Key(Key::UNIQUE, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
@@ -831,7 +831,7 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
          (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
       return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
@@ -839,25 +839,25 @@ bool add_field_to_list(Session *session, lex_string_t *field_name, enum_field_ty
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-        my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
         return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->data());
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
       return true;
     }
   }
 
   if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
-    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->data());
+    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name.data());
     return true;
   }
 
   CreateField* new_field= new CreateField;
-  if (new_field->init(session, field_name->data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
+  if (new_field->init(session, field_name.data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
       || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 

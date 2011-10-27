@@ -100,7 +100,7 @@ public:
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char *field_name; /**< Name of the field */
-  lex_string_t comment; /**< A comment about the field */
+  str_ref comment; /**< A comment about the field */
 
   /** The field is part of the following keys */
   key_map	key_start;

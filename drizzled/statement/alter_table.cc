@@ -529,7 +529,7 @@ static bool prepare_alter_table(Session *session,
           key_part_length= 0; /* Use whole field */
       }
       key_part_length/= key_part->field->charset()->mbmaxlen;
-      key_parts.push_back(new Key_part_spec(cfield->field_name, strlen(cfield->field_name), key_part_length));
+      key_parts.push_back(new Key_part_spec(str_ref(cfield->field_name), key_part_length));
     }
     if (key_parts.size())
     {
@@ -545,7 +545,7 @@ static bool prepare_alter_table(Session *session,
       Key::Keytype key_type= key_info->flags & HA_NOSAME
         ? (is_primary_key(key_name) ? Key::PRIMARY : Key::UNIQUE)
         : Key::MULTIPLE;
-      new_key_list.push_back(new Key(key_type, key_name, strlen(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
+      new_key_list.push_back(new Key(key_type, str_ref(key_name), &key_create_info, test(key_info->flags & HA_GENERATED_KEY), key_parts));
     }
   }
 
