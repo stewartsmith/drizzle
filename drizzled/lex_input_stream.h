@@ -267,7 +267,7 @@ public:
 
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(str_ref txt, const char *end_ptr);
+  void body_utf8_append_literal(str_ref, const char *end_ptr);
 
   /** Current thread. */
   Session *m_session;

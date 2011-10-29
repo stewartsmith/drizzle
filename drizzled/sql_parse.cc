@@ -1555,10 +1555,10 @@ bool check_string_char_length(str_ref str, const char *err_msg,
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str.size() == res)
+  if (!well_formed_error && str.size() == res)
     return false;
 
-  if (!no_error)
+  if (not no_error)
     my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }

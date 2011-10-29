@@ -117,8 +117,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append(const char *ptr,
-                                        const char *end_ptr)
+void Lex_input_stream::body_utf8_append(const char *ptr, const char *end_ptr)
 {
   assert(m_cpp_buf <= ptr && ptr <= m_cpp_buf + m_buf_length);
   assert(m_cpp_buf <= end_ptr && end_ptr <= m_cpp_buf + m_buf_length);
@@ -751,7 +750,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         }
         lip->yySkip();                  // next state does a unget
       }
-      yylval->lex_str=get_token(lip, 0, length);
+      yylval->lex_str= get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
@@ -777,7 +776,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
           if ((lip->yyLength() >= 3) && !ident_map[c])
           {
             /* skip '0x' */
-            yylval->lex_str=get_token(lip, 2, lip->yyLength()-2);
+            yylval->lex_str= get_token(lip, 2, lip->yyLength()-2);
             return (HEX_NUM);
           }
           lip->yyUnget();
@@ -816,7 +815,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
           {
             lip->yySkip();
             while (cs->isdigit(lip->yyGet())) ;
-            yylval->lex_str=get_token(lip, 0, lip->yyLength());
+            yylval->lex_str= get_token(lip, 0, lip->yyLength());
             return(FLOAT_NUM);
           }
         }
@@ -851,7 +850,6 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str= get_token(lip, 0, lip->yyLength());
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
       lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
