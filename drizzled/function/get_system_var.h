@@ -24,8 +24,7 @@
 
 namespace drizzled {
 
-Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
-                     lex_string_t component);
+Item* get_system_var(Session*, sql_var_t, str_ref name, str_ref component);
 
 /* A system variable */
 
@@ -33,12 +32,10 @@ class Item_func_get_system_var : public Item_func
 {
   sys_var *var;
   sql_var_t var_type;
-  lex_string_t component;
+  str_ref component;
 
 public:
-  Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                           lex_string_t *component_arg, const char *name_arg,
-                           size_t name_len_arg);
+  Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg, str_ref component_arg, const char *name_arg, size_t name_len_arg);
   bool fix_fields(Session *session, Item **ref);
   /*
     Stubs for pure virtual methods. Should never be called: this
@@ -51,7 +48,6 @@ public:
   /* TODO: fix to support views */
   const char *func_name() const { return "get_system_var"; }
 };
-
 
 } /* namespace drizzled */
 

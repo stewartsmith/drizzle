@@ -28,8 +28,8 @@
 namespace drizzled {
 
 Item_func_get_system_var::Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                       lex_string_t *component_arg, const char *name_arg, size_t name_len_arg)
-  : var(var_arg), var_type(var_type_arg), component(*component_arg)
+                       str_ref component_arg, const char *name_arg, size_t name_len_arg)
+  : var(var_arg), var_type(var_type_arg), component(component_arg)
 {
   /* set_name() will allocate the name */
   set_name(name_arg, name_len_arg);
@@ -54,9 +54,9 @@ bool Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   return 0;
 }
 
-Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name, lex_string_t component)
+Item *get_system_var(Session *session, sql_var_t var_type, str_ref name, str_ref component)
 {
-  lex_string_t *base_name, *component_name;
+  str_ref *base_name, *component_name;
 
   if (component.data())
   {
@@ -82,7 +82,7 @@ Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name, le
   if (component_name->size() > MAX_SYS_VAR_LENGTH)
     component_name->assign(component_name->data(), MAX_SYS_VAR_LENGTH);
 
-  return new Item_func_get_system_var(var, var_type, component_name, NULL, 0);
+  return new Item_func_get_system_var(var, var_type, *component_name, NULL, 0);
 }
 
 

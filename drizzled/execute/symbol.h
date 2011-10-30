@@ -42,7 +42,7 @@
 namespace drizzled {
 namespace execute {
 
-struct YYSTYPE
+union YYSTYPE
 {
   long long number;  
   lex_string_t string;
