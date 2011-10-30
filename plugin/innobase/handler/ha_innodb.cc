@@ -7846,8 +7846,8 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   mutex_enter(&(dict_sys->mutex));
   dict_foreign_t* foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
 
-  while (foreign != NULL) {
-
+  while (foreign != NULL) 
+  {
     uint ulen;
     char uname[NAME_LEN + 1];           /* Unencoded name */
     char db_name[NAME_LEN + 1];
@@ -7890,63 +7890,34 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
         break;
     }
 
-    ulong length;
     if (foreign->type & DICT_FOREIGN_ON_DELETE_CASCADE)
-    {
-      length=7;
       tmp_buff= "CASCADE";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_DELETE_SET_NULL)
-    {
-      length=8;
       tmp_buff= "SET NULL";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_DELETE_NO_ACTION)
-    {
-      length=9;
       tmp_buff= "NO ACTION";
-    }
     else
-    {
-      length=8;
       tmp_buff= "RESTRICT";
-    }
-    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
-
+    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, str_ref(tmp_buff));
 
     if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
-    {
-      length=7;
       tmp_buff= "CASCADE";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_UPDATE_SET_NULL)
-    {
-      length=8;
       tmp_buff= "SET NULL";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_UPDATE_NO_ACTION)
-    {
-      length=9;
       tmp_buff= "NO ACTION";
-    }
     else
-    {
-      length=8;
       tmp_buff= "RESTRICT";
-    }
-    lex_string_t *tmp_update_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
+    lex_string_t *tmp_update_method = session->make_lex_string(NULL, str_ref(tmp_buff));
 
-    lex_string_t *tmp_referenced_key_name = NULL;
-
-    if (foreign->referenced_index && foreign->referenced_index->name)
-    {
-      tmp_referenced_key_name = session->make_lex_string(NULL, str_ref(foreign->referenced_index->name));
-    }
+    lex_string_t *tmp_referenced_key_name = foreign->referenced_index && foreign->referenced_index->name
+      ? session->make_lex_string(NULL, str_ref(foreign->referenced_index->name))
+      : NULL;
 
     ForeignKeyInfo f_key_info(
-                              tmp_foreign_id, tmp_referenced_db, tmp_referenced_table,
-                              tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
-                              tmp_foreign_fields, tmp_referenced_fields);
+      tmp_foreign_id, tmp_referenced_db, tmp_referenced_table,
+      tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
+      tmp_foreign_fields, tmp_referenced_fields);
 
     f_key_list->push_back((ForeignKeyInfo*)session->mem.memdup(&f_key_info, sizeof(ForeignKeyInfo)));
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
@@ -7954,7 +7925,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   mutex_exit(&(dict_sys->mutex));
   prebuilt->trx->op_info = "";
 
-  return(0);
+  return 0;
 }
 
 /*****************************************************************//**
