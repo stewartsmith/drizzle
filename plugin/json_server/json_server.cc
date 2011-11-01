@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 Stewart Smith
+ *  Copyright (C) 2011 Stewart Smith, Henrik Ingo
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,6 +76,7 @@ extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
 extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
+extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
 
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -137,7 +138,6 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "xmlHttp.send(null);"
                 "}"
                 "</script>"
-                "<p>Drizzle Server at: <a id=\"baseurl\">http://localhost:8765</a></p>"
                 "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>"
                 "<p><textarea rows=\"3\" cols=\"40\" id=\"query\">"
                 "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;"
@@ -227,6 +227,88 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
+extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
+{
+  Json::Value json_out;
+
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  // Read from http to string "input".
+  std::string input;
+  char buffer[1024];
+  int l=0;
+  do {
+    l= evbuffer_remove(req->input_buffer, buffer, 1024);
+    input.append(buffer, l);
+  }while(l);
+
+  // Parse "input" into "json_in". Strict mode means comments are discarded.
+  Json::Value  json_in;
+  Json::Features json_conf;
+  json_conf.strictMode();
+  Json::Reader reader(json_conf);
+  bool retval = reader.parse(input, json_in);
+  if (retval != true) {
+    json_out["error_type"]="json error";
+    json_out["error_message"]= reader.getFormatedErrorMessages();
+  }
+  else {
+    // Now we "parse" the json_in object and build an SQL query
+    // TODO: implement get first, we need to have both put and get. (Use REPLACE INTO for put, so you get updates too.)
+    // TODO: learn how delete is done: a delete command or just "put" empty json object?
+    char sql[1024] = "SELECT v FROM jsonkv WHERE _id=%s;";
+    sprintf(sql, json_in["_id"].asCString());
+
+    // We have sql string. Use Execute API to run it and convert results back to JSON.
+    drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                            drizzled::catalog::local());
+    drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+    user_id->setUser("");
+    _session->setUser(user_id);
+    _session->set_schema("test");
+
+    drizzled::Execute execute(*(_session.get()), true);
+
+    drizzled::sql::ResultSet result_set(1);
+
+    /* Execute wraps the SQL to run within a transaction */
+    execute.run(input, result_set);
+    drizzled::sql::Exception exception= result_set.getException();
+
+    drizzled::error_t err= exception.getErrorCode();
+
+    json_out["sqlstate"]= exception.getSQLState();
+
+    if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
+    {
+        json_out["error_type"]="sql error";
+        json_out["error_message"]= exception.getErrorMessage();
+        json_out["error_code"]= exception.getErrorCode();
+    }
+
+    while (result_set.next())
+    {
+        Json::Value json_row;
+        for (size_t x= 0; x < result_set.getMetaData().getColumnCount(); x++)
+        {
+        if (not result_set.isNull(x))
+        {
+            json_row[x]= result_set.getString(x);
+        }
+        }
+        json_out["result_set"].append(json_row);
+    }
+
+    json_out["query"]= input;
+  }
+  // Return either the results or an error message, in json.
+  Json::StyledWriter writer;
+  std::string output= writer.write(json_out);
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
 static void shutdown_event(int fd, short, void *arg)
 {
   struct event_base *base= (struct event_base *)arg;
@@ -302,9 +384,25 @@ public:
       return false;
     }
 
+    // These URLs are available. Bind worker method to each of them. 
+    // Please group by api version. Also unchanged functions must be copied to next version!
     evhttp_set_cb(httpd, "/", process_root_request, NULL);
+    // API 0.1
     evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/0.1/sql", process_api01_sql_req, NULL);
+    // API 0.2
+    evhttp_set_cb(httpd, "/0.2/version", process_api01_version_req, NULL);
+    evhttp_set_cb(httpd, "/0.2/sql", process_api01_sql_req, NULL);
+          // TODO: research whether to call this MQL, Mongo or whatever...
+    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_req, NULL);
+    // API "latest" and also available in top level
+    evhttp_set_cb(httpd, "/latest/version", process_api01_version_req, NULL);
+    evhttp_set_cb(httpd, "/latest/sql", process_api01_sql_req, NULL);
+    evhttp_set_cb(httpd, "/latest/json", process_api02_json_req, NULL);
+    evhttp_set_cb(httpd, "/version", process_api01_version_req, NULL);
+    evhttp_set_cb(httpd, "/sql", process_api01_sql_req, NULL);
+    evhttp_set_cb(httpd, "/json", process_api02_json_req, NULL);    
+    // Catch all does nothing and returns generic message.
     evhttp_set_gencb(httpd, process_request, NULL);
 
     event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
@@ -367,7 +465,7 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "json-server",
   "0.1",
-  "Stewart Smith",
+  "Stewart Smith, Henrik Ingo",
   "JSON HTTP interface",
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::json_server::json_server_init,             /* Plugin Init */
