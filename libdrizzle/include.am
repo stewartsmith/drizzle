@@ -1,0 +1,3 @@
+# vim:ft=automake
+
+nobase_include_HEADERS= libdrizzle/drizzle.h

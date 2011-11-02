@@ -1,3 +1,4 @@
+# vim:ft=automake
 #
 # Drizzle Client Library
 #
@@ -75,10 +76,6 @@ libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_LDFLAGS= \
         $(GCOV_LIBS) \
 	-version-info \
 	$(LIBDRIZZLE_LIBRARY_VERSION)
-
-libdrizzlepkgconfigdir= $(libdir)/pkgconfig
-libdrizzlepkgconfig_DATA= \
-                          support-files/libdrizzle-2.0.pc
 
 libdrizzle_2_0_libdrizzle_libdrizzle_2_0_la_SOURCES= \
 	libdrizzle-2.0/libdrizzle/column.cc \
@@ -178,6 +175,6 @@ noinst_HEADERS+= \
 
 
 libdrizzle: libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la
-install-libdrizzle: libdrizzle install-dist_libdrizzleinstallHEADERS install-libdrizzlepkgconfigDATA
+install-libdrizzle: libdrizzle install-dist_libdrizzleinstallHEADERS
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
 	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-2.0/libdrizzle/libdrizzle-2.0.la "$(DESTDIR)$(libdir)"
