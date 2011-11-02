@@ -17,7 +17,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+/**
+ * @file Implements an HTTP server that will parse JSON and SQL queries
+ * 
+ * @todo Refactoring ideas:
+ *  - Anything HTML should really be a separate file, not strings embedded
+ *    in C++.
+ *  - The mapping of /0.1/ and /0.2/ URLs is now a lot of copy paste, probably
+ *    needs to evolve to something smarter at some point.
+ */
 
 #include <config.h>
 
@@ -110,7 +118,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "}"
                 "function run_query()\n"
                 "{"
-                "var url = document.getElementById(\"baseurl\").innerHTML;\n"
+                "var url = window.location;\n"
                 "var query= document.getElementById(\"query\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
@@ -119,12 +127,12 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "document.getElementById( \"resultset\").innerHTML= to_table(info.result_set);\n"
                 "}\n"
                 "};\n"
-                "xmlHttp.open(\"POST\", url + \"/0.1/sql\", true);"
+                "xmlHttp.open(\"POST\", url + \"sql\", true);"
                 "xmlHttp.send(query);"
                 "}"
                 "\n\n"
                 "function update_version()\n"
-                "{drizzle_version(document.getElementById(\"baseurl\").innerHTML);}\n\n"
+                "{drizzle_version(window.location);}\n\n"
                 "function drizzle_version($url)"
                 "{"
                 "var xmlHttp = new XMLHttpRequest();\n"
@@ -134,7 +142,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "document.getElementById( \"drizzleversion\").innerHTML= info.version;\n"
                 "}\n"
                 "};\n"
-                "xmlHttp.open(\"GET\", $url + \"/0.1/version\", true);"
+                "xmlHttp.open(\"GET\", $url + \"version\", true);"
                 "xmlHttp.send(null);"
                 "}"
                 "</script>"
@@ -403,7 +411,7 @@ public:
     evhttp_set_cb(httpd, "/sql", process_api01_sql_req, NULL);
     evhttp_set_cb(httpd, "/json", process_api02_json_req, NULL);    
     // Catch all does nothing and returns generic message.
-    evhttp_set_gencb(httpd, process_request, NULL);
+    //evhttp_set_gencb(httpd, process_request, NULL);
 
     event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
     event_base_set(base, &wakeup_event);
