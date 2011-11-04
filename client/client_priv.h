@@ -17,7 +17,7 @@
 #pragma once
 
 #include <config.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzle-2.0/libdrizzle.h>
 
 #include <client/get_password.h>
 

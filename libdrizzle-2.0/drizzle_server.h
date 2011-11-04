@@ -42,14 +42,14 @@
 #ifndef __DRIZZLE_SERVER_H
 #define __DRIZZLE_SERVER_H
 
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/conn_server.h>
-#include <libdrizzle/handshake_server.h>
-#include <libdrizzle/command_server.h>
-#include <libdrizzle/result_server.h>
-#include <libdrizzle/column_server.h>
-#include <libdrizzle/row_server.h>
-#include <libdrizzle/field_server.h>
+#include <libdrizzle-2.0/drizzle.h>
+#include <libdrizzle-2.0/conn_server.h>
+#include <libdrizzle-2.0/handshake_server.h>
+#include <libdrizzle-2.0/command_server.h>
+#include <libdrizzle-2.0/result_server.h>
+#include <libdrizzle-2.0/column_server.h>
+#include <libdrizzle-2.0/row_server.h>
+#include <libdrizzle-2.0/field_server.h>
 
 #ifdef __cplusplus
 extern "C" {

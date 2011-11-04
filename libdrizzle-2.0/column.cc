@@ -40,7 +40,7 @@
  * @brief Column definitions
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 /*
  * Private variables.
@@ -371,7 +371,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->size = 0;
     column->max_size = 0;
     column->type = static_cast<drizzle_column_type_t>(0);
-    column->flags = 0;
+    column->flags = drizzle_column_flags_t();
     column->decimals = 0;
     /* UNSET: column->default_value */
     column->default_value_size = 0;
@@ -382,7 +382,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result = result;
     /* SET BELOW: column->next */
     column->prev = NULL;
-    column->options= 0;
+    column->options= drizzle_column_options_t();
     column->catalog[0] = '\0';
     column->db[0] = '\0';
     column->table[0] = '\0';
@@ -393,7 +393,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->size = 0;
     column->max_size = 0;
     column->type = static_cast<drizzle_column_type_t>(0);
-    column->flags = 0;
+    column->flags = drizzle_column_flags_t();
     column->decimals = 0;
     /* UNSET: column->default_value */
     column->default_value_size = 0;

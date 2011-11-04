@@ -40,18 +40,17 @@
  * @brief Drizzle Declarations for Clients
  */
 
-#ifndef __DRIZZLE_CLIENT_H
-#define __DRIZZLE_CLIENT_H
+#pragma once
 
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/conn_client.h>
-#include <libdrizzle/handshake_client.h>
-#include <libdrizzle/command_client.h>
-#include <libdrizzle/query.h>
-#include <libdrizzle/result_client.h>
-#include <libdrizzle/column_client.h>
-#include <libdrizzle/row_client.h>
-#include <libdrizzle/field_client.h>
+#include <libdrizzle-1.0/drizzle.h>
+#include <libdrizzle-1.0/conn_client.h>
+#include <libdrizzle-1.0/handshake_client.h>
+#include <libdrizzle-1.0/command_client.h>
+#include <libdrizzle-1.0/query.h>
+#include <libdrizzle-1.0/result_client.h>
+#include <libdrizzle-1.0/column_client.h>
+#include <libdrizzle-1.0/row_client.h>
+#include <libdrizzle-1.0/field_client.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,5 +112,3 @@ drizzle_con_st *drizzle_con_add_uds(drizzle_st *drizzle, drizzle_con_st *con,
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CLIENT_H */

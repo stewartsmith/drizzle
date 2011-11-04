@@ -43,7 +43,7 @@
 #include <strings.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-2.0/drizzle_server.h>
 #include <sqlite3.h>
 
 #define SQLITE_SERVER_VERSION "SQLite Server using libdrizzle 0.1"

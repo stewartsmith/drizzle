@@ -38,7 +38,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cstring>
 #include <fstream>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzle-2.0/libdrizzle.h>
 #include <map>
 #include <sstream>
 #include <stdexcept>

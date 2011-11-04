@@ -21,7 +21,7 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

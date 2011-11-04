@@ -39,7 +39,7 @@
  * @brief Row definitions
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 /*
  * Client definitions

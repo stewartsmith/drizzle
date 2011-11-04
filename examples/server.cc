@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-1.0/drizzle_server.h>
 
 #define DRIZZLE_FIELD_MAX 32
 #define DRIZZLE_RESULT_ROWS 20

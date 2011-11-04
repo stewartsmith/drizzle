@@ -39,8 +39,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_client.h>
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-2.0/drizzle_client.h>
+#include <libdrizzle-2.0/drizzle_server.h>
 
 #define DRIZZLE_RETURN_CHECK(__ret, __function, __drizzle) \
 { \

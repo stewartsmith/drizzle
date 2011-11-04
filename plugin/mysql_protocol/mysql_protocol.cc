@@ -35,7 +35,7 @@
 #include <drizzled/plugin/function.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/system_variables.h>
-#include <libdrizzle/constants.h>
+#include <libdrizzle-2.0/constants.h>
 
 #define MIN_HANDSHAKE_SIZE 6
 #define PROTOCOL_VERSION 10

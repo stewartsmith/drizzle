@@ -1,7 +1,5 @@
-/*
- * Drizzle Client & Protocol Library
- *
- * Copyright (C) 2008 Eric Day (eday@oddments.org)
+/* Drizzle Client Library
+ * Copyright (C) 2011 Olaf van der Spek
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,40 +29,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/**
- * @file
- * @brief System Include Files
- */
+#pragma once
 
-#ifndef __DRIZZLE_COMMON_H
-#define __DRIZZLE_COMMON_H
-
-#include <config.h>
-
-#include "drizzle_client.h"
-#include "drizzle_server.h"
-
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#ifndef _WIN32
-# include <netinet/tcp.h>
-# include <sys/uio.h>
-# include <unistd.h>
-#endif
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-
-#include "drizzle_local.h"
-#include "conn_local.h"
-#include "pack.h"
-#include "state.h"
-#include "sha1.h"
-
-#endif /* __DRIZZLE_COMMON_H */
+#include <libdrizzle-2.0/drizzle_client.h>

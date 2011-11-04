@@ -40,7 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle-2.0/drizzle_client.h>
 
 #define BUFFER_CHUNK 8192
 

@@ -36,4 +36,4 @@
 
 #pragma once
 
-#include <libdrizzle-1.0/libdrizzle/drizzle.h>
+#include <libdrizzle-1.0/drizzle.h>

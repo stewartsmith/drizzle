@@ -44,9 +44,10 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "drizzledump_data.h"
-#include "drizzledump_mysql.h"
-#include "drizzledump_drizzle.h"
+
+#include "client/drizzledump_data.h"
+#include "client/drizzledump_mysql.h"
+#include "client/drizzledump_drizzle.h"
 
 #include "user_detect.h"
 

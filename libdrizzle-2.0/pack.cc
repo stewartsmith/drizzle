@@ -39,7 +39,7 @@
  * @brief Packing definitions
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 /*
  * Private declarations

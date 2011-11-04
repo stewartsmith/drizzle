@@ -39,17 +39,16 @@
  * @brief Drizzle Declarations for Servers
  */
 
-#ifndef __DRIZZLE_SERVER_H
-#define __DRIZZLE_SERVER_H
+#pragma once
 
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/conn_server.h>
-#include <libdrizzle/handshake_server.h>
-#include <libdrizzle/command_server.h>
-#include <libdrizzle/result_server.h>
-#include <libdrizzle/column_server.h>
-#include <libdrizzle/row_server.h>
-#include <libdrizzle/field_server.h>
+#include <libdrizzle-1.0/drizzle.h>
+#include <libdrizzle-1.0/conn_server.h>
+#include <libdrizzle-1.0/handshake_server.h>
+#include <libdrizzle-1.0/command_server.h>
+#include <libdrizzle-1.0/result_server.h>
+#include <libdrizzle-1.0/column_server.h>
+#include <libdrizzle-1.0/row_server.h>
+#include <libdrizzle-1.0/field_server.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -130,5 +129,3 @@ drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_SERVER_H */

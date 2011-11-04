@@ -32,31 +32,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * 
+ * Implementation drawn from visibility.texi in gnulib.
  */
 
+/**
+ * @file
+ * @brief Visibility Control Macros
+ */
 
-#include <config.h>
+#pragma once
 
-#include <cstring>
-#include <iostream>
+/**
+ *
+ * DRIZZLE_API is used for the public API symbols. It either DLL imports or
+ * DLL exports (or does nothing for static build).
+ *
+ * DRIZZLE_LOCAL is used for non-api symbols.
+ */
 
-#include <libdrizzle/drizzle_client.h>
-
-static const uint32_t BUFFER_CHUNK= 8192;
-
-int main(int argc, char *argv[])
-{
-  char hashed_password[DRIZZLE_MYSQL_PASSWORD_HASH];
-
-  if (argc != 2)
-  {
-    std::cerr << "Usage: " << argv[0] << " <password to hash>" << std::endl;
-    return 1;
-  }
-
-  drizzle_mysql_password_hash(hashed_password, argv[1], strlen(argv[1]));
-
-  std::cout << hashed_password << std::endl;
-
-  return 0;
-}
+#if defined(_WIN32)
+# define DRIZZLE_API
+# define DRIZZLE_LOCAL
+#else
+#if defined(BUILDING_LIBDRIZZLE)
+# if defined(HAVE_VISIBILITY)
+#  define DRIZZLE_API __attribute__ ((visibility("default")))
+#  define DRIZZLE_LOCAL  __attribute__ ((visibility("hidden")))
+# elif defined (__SUNPRO_C) && (__SUNPRO_C >= 0x550)
+#  define DRIZZLE_API __global
+#  define DRIZZLE_API __hidden
+# elif defined(_MSC_VER)
+#  define DRIZZLE_API extern __declspec(dllexport) 
+#  define DRIZZLE_LOCAL
+# endif /* defined(HAVE_VISIBILITY) */
+#else  /* defined(BUILDING_LIBDRIZZLE) */
+# if defined(_MSC_VER)
+#  define DRIZZLE_API extern __declspec(dllimport) 
+#  define DRIZZLE_LOCAL
+# else
+#  define DRIZZLE_API
+#  define DRIZZLE_LOCAL
+# endif /* defined(_MSC_VER) */
+#endif /* defined(BUILDING_LIBDRIZZLE) */
+#endif /* _WIN32 */

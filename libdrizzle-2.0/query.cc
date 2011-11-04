@@ -39,7 +39,7 @@
  * @brief Query definitions
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 drizzle_result_st *drizzle_query(drizzle_con_st *con, drizzle_result_st *result,
                                  const char *query, size_t size,

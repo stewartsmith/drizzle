@@ -182,8 +182,8 @@ include support-files/include.am
 include tests/include.am
 include unittests/include.am
 include libdrizzle/include.am
-include libdrizzle-1.0/libdrizzle/include.am
-include libdrizzle-2.0/libdrizzle/include.am
+include libdrizzle-1.0/include.am
+include libdrizzle-2.0/include.am
 include win32/include.am
 include docs/include.am
 

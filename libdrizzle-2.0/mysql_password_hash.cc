@@ -34,63 +34,29 @@
  *
  */
 
-/**
- * @file
- * @brief State machine definitions
- */
 
-#include "common.h"
+#include <config.h>
 
-drizzle_return_t drizzle_state_loop(drizzle_con_st *con)
+#include <cstring>
+#include <iostream>
+
+#include <libdrizzle-2.0/drizzle_client.h>
+
+static const uint32_t BUFFER_CHUNK= 8192;
+
+int main(int argc, char *argv[])
 {
-  drizzle_return_t ret;
+  char hashed_password[DRIZZLE_MYSQL_PASSWORD_HASH];
 
-  while (!drizzle_state_none(con))
+  if (argc != 2)
   {
-    ret= con->state_stack[con->state_current - 1](con);
-    if (ret != DRIZZLE_RETURN_OK)
-    {
-      if (ret != DRIZZLE_RETURN_IO_WAIT && ret != DRIZZLE_RETURN_PAUSE &&
-          ret != DRIZZLE_RETURN_ERROR_CODE)
-      {
-        drizzle_con_close(con);
-      }
-
-      return ret;
-    }
+    std::cerr << "Usage: " << argv[0] << " <password to hash>" << std::endl;
+    return 1;
   }
 
-  return DRIZZLE_RETURN_OK;
-}
+  drizzle_mysql_password_hash(hashed_password, argv[1], strlen(argv[1]));
 
-drizzle_return_t drizzle_state_packet_read(drizzle_con_st *con)
-{
-  drizzle_log_debug(con->drizzle, "drizzle_state_packet_read");
+  std::cout << hashed_password << std::endl;
 
-  if (con->buffer_size < 4)
-  {
-    drizzle_state_push(con, drizzle_state_read);
-    return DRIZZLE_RETURN_OK;
-  }
-
-  con->packet_size= drizzle_get_byte3(con->buffer_ptr);
-
-  if (con->packet_number != con->buffer_ptr[3])
-  {
-    drizzle_set_error(con->drizzle, "drizzle_state_packet_read",
-                      "bad packet number:%u:%u", con->packet_number,
-                      con->buffer_ptr[3]);
-    return DRIZZLE_RETURN_BAD_PACKET_NUMBER;
-  }
-
-  drizzle_log_debug(con->drizzle, "packet_size= %zu, packet_number= %u",
-                    con->packet_size, con->packet_number);
-
-  con->packet_number++;
-
-  con->buffer_ptr+= 4;
-  con->buffer_size-= 4;
-
-  drizzle_state_pop(con);
-  return DRIZZLE_RETURN_OK;
+  return 0;
 }

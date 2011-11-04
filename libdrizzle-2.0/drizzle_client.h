@@ -43,15 +43,15 @@
 #ifndef __DRIZZLE_CLIENT_H
 #define __DRIZZLE_CLIENT_H
 
-#include <libdrizzle/drizzle.h>
-#include <libdrizzle/conn_client.h>
-#include <libdrizzle/handshake_client.h>
-#include <libdrizzle/command_client.h>
-#include <libdrizzle/query.h>
-#include <libdrizzle/result_client.h>
-#include <libdrizzle/column_client.h>
-#include <libdrizzle/row_client.h>
-#include <libdrizzle/field_client.h>
+#include <libdrizzle-2.0/drizzle.h>
+#include <libdrizzle-2.0/conn_client.h>
+#include <libdrizzle-2.0/handshake_client.h>
+#include <libdrizzle-2.0/command_client.h>
+#include <libdrizzle-2.0/query.h>
+#include <libdrizzle-2.0/result_client.h>
+#include <libdrizzle-2.0/column_client.h>
+#include <libdrizzle-2.0/row_client.h>
+#include <libdrizzle-2.0/field_client.h>
 
 #ifdef __cplusplus
 extern "C" {

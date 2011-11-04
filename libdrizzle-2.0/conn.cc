@@ -40,7 +40,7 @@
  * @brief Connection Definitions
  */
 
-#include "common.h"
+#include <libdrizzle-2.0/common.h>
 
 /**
  * @addtogroup drizzle_con_static Static Connection Declarations
