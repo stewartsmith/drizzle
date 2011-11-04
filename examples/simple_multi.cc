@@ -38,7 +38,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle-2.0/drizzle_client.h>
 
 #define SIMPLE_MULTI_COUNT 10
 

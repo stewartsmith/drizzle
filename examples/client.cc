@@ -45,7 +45,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle-2.0/drizzle_client.h>
 
 typedef enum
 {

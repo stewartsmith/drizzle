@@ -35,7 +35,7 @@
  **/
 
 #include <config.h>
-#include <libdrizzle/libdrizzle.h>
+#include <libdrizzle-2.0/libdrizzle.h>
 
 #include "server_detect.h"
 #include "get_password.h"

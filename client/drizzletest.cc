@@ -41,7 +41,7 @@
 
 #include <config.h>
 #include <client/get_password.h>
-#include <libdrizzle/libdrizzle.hpp>
+#include <libdrizzle-2.0/libdrizzle.hpp>
 
 #include <queue>
 #include <map>

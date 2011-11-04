@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "drizzledump_data.h"
+#include "client/drizzledump_data.h"
 
 class DrizzleDumpDatabaseDrizzle;
 class DrizzleDumpDataDrizzle;

@@ -34,82 +34,61 @@
  *
  */
 
-#include <cstdlib>
-#include <cstring>
-#include <getopt.h>
-#include <iostream>
-#include <libdrizzle-2.0/libdrizzle.hpp>
-#include <netdb.h>
-#include <unistd.h>
+/**
+ * @file
+ * @brief State machine definitions
+ */
 
-using namespace std;
+#include <libdrizzle-2.0/common.h>
 
-int main(int argc, char *argv[])
+drizzle_return_t drizzle_state_loop(drizzle_con_st *con)
 {
-  const char* host= NULL;
-  const char* user= NULL;
-  const char* password= NULL;
-  in_port_t port= 0;
-
-  for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
+  while (!drizzle_state_none(con))
   {
-    switch (c)
+    drizzle_return_t ret= con->state_stack[con->state_current - 1](con);
+    if (ret != DRIZZLE_RETURN_OK)
     {
-    case 'h':
-      host= optarg;
-      break;
-
-    case 'p':
-      port= static_cast<in_port_t>(atoi(optarg));
-      break;
-
-    case 'u':
-      user= optarg;
-      break;
-
-    case 'P':
-      password = optarg;
-      break;
-
-    default:
-      cout << 
-        "usage:\n"
-        "\t-h <host>  - Host to connect to\n"
-        "\t-p <port>  - Port to connect to\n"
-        "\t-u <user>  - User\n"
-        "\t-P <pass>  - Password\n";
-      return 1;
-    }
-  }
-
-  drizzle::drizzle_c drizzle;
-  drizzle::connection_c* con= new drizzle::connection_c(drizzle);
-  if (host || port)
-    con->set_tcp(host, port);
-  if (user || password)
-    con->set_auth(user, password);
-  con->set_db("information_schema");
-  drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
-  q.p("%");
-  try
-  {
-    drizzle::result_c result= q.execute();
-    cout << q.read() << endl;
-    while (drizzle_row_t row= result.row_next())
-    {
-      for (int x= 0; x < result.column_count(); x++)
+      if (ret != DRIZZLE_RETURN_IO_WAIT && ret != DRIZZLE_RETURN_PAUSE &&
+          ret != DRIZZLE_RETURN_ERROR_CODE)
       {
-        if (x)
-          cout << ", ";
-        cout << (row[x] ? row[x] : "NULL");
+        drizzle_con_close(con);
       }
-      cout << endl;
+
+      return ret;
     }
   }
-  catch (const drizzle::bad_query& e)
+
+  return DRIZZLE_RETURN_OK;
+}
+
+drizzle_return_t drizzle_state_packet_read(drizzle_con_st *con)
+{
+  drizzle_log_debug(con->drizzle, "drizzle_state_packet_read");
+
+  if (con->buffer_size < 4)
   {
-    cerr << e.what() << endl;
-    return 1;
+    drizzle_state_push(con, drizzle_state_read);
+    return DRIZZLE_RETURN_OK;
   }
-  return 0;
+
+  con->packet_size= drizzle_get_byte3(con->buffer_ptr);
+
+  if (con->packet_number != con->buffer_ptr[3])
+  {
+    drizzle_set_error(con->drizzle, "drizzle_state_packet_read",
+                      "bad packet number:%u:%u", con->packet_number,
+                      con->buffer_ptr[3]);
+    return DRIZZLE_RETURN_BAD_PACKET_NUMBER;
+  }
+
+  drizzle_log_debug(con->drizzle, "packet_size= %zu, packet_number= %u",
+                    con->packet_size, con->packet_number);
+
+  con->packet_number++;
+
+  con->buffer_ptr+= 4;
+  con->buffer_size-= 4;
+
+  drizzle_state_pop(con);
+  return DRIZZLE_RETURN_OK;
 }

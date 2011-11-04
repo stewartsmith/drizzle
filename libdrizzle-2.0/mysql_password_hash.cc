@@ -34,82 +34,29 @@
  *
  */
 
-#include <cstdlib>
-#include <cstring>
-#include <getopt.h>
-#include <iostream>
-#include <libdrizzle-2.0/libdrizzle.hpp>
-#include <netdb.h>
-#include <unistd.h>
 
-using namespace std;
+#include <config.h>
+
+#include <cstring>
+#include <iostream>
+
+#include <libdrizzle-2.0/drizzle_client.h>
+
+static const uint32_t BUFFER_CHUNK= 8192;
 
 int main(int argc, char *argv[])
 {
-  const char* host= NULL;
-  const char* user= NULL;
-  const char* password= NULL;
-  in_port_t port= 0;
+  char hashed_password[DRIZZLE_MYSQL_PASSWORD_HASH];
 
-  for (int c; (c = getopt(argc, argv, "d:h:mp:u:P:q:v")) != -1; )
+  if (argc != 2)
   {
-    switch (c)
-    {
-    case 'h':
-      host= optarg;
-      break;
-
-    case 'p':
-      port= static_cast<in_port_t>(atoi(optarg));
-      break;
-
-    case 'u':
-      user= optarg;
-      break;
-
-    case 'P':
-      password = optarg;
-      break;
-
-    default:
-      cout << 
-        "usage:\n"
-        "\t-h <host>  - Host to connect to\n"
-        "\t-p <port>  - Port to connect to\n"
-        "\t-u <user>  - User\n"
-        "\t-P <pass>  - Password\n";
-      return 1;
-    }
-  }
-
-  drizzle::drizzle_c drizzle;
-  drizzle::connection_c* con= new drizzle::connection_c(drizzle);
-  if (host || port)
-    con->set_tcp(host, port);
-  if (user || password)
-    con->set_auth(user, password);
-  con->set_db("information_schema");
-  drizzle::query_c q(*con, "select table_schema, table_name from tables where table_name like ?");
-  q.p("%");
-  try
-  {
-    drizzle::result_c result= q.execute();
-    cout << q.read() << endl;
-    while (drizzle_row_t row= result.row_next())
-    {
-      for (int x= 0; x < result.column_count(); x++)
-      {
-        if (x)
-          cout << ", ";
-        cout << (row[x] ? row[x] : "NULL");
-      }
-      cout << endl;
-    }
-  }
-  catch (const drizzle::bad_query& e)
-  {
-    cerr << e.what() << endl;
+    std::cerr << "Usage: " << argv[0] << " <password to hash>" << std::endl;
     return 1;
   }
+
+  drizzle_mysql_password_hash(hashed_password, argv[1], strlen(argv[1]));
+
+  std::cout << hashed_password << std::endl;
+
   return 0;
 }

@@ -23,8 +23,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <libdrizzle/drizzle_client.h>
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-2.0/drizzle_client.h>
+#include <libdrizzle-2.0/drizzle_server.h>
 
 BOOST_AUTO_TEST_SUITE(LibDrizzle)
 BOOST_AUTO_TEST_CASE(drizzleEscapeString)
