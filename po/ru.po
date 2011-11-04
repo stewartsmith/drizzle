@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-10-17 14:42+0000\n"
+"PO-Revision-Date: 2011-11-03 06:56+0000\n"
 "Last-Translator: John Akulov <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,8 +16,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2011-10-18 04:51+0000\n"
-"X-Generator: Launchpad (build 14157)\n"
+"X-Launchpad-Export-Date: 2011-11-04 04:47+0000\n"
+"X-Generator: Launchpad (build 14231)\n"
 
 msgid "Synonym for `help'."
 msgstr "Синоним для `help'."
@@ -510,7 +510,7 @@ msgstr[2] "Запрос подтвержден, %ld строк изменено"
 
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
+msgstr "При записи получена ошибка с номером %d"
 
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
@@ -829,7 +829,7 @@ msgid "Set up signals usable for debugging"
 msgstr "Настроить использование сигналов для отладки"
 
 msgid "(IGNORED)"
-msgstr ""
+msgstr "(ИГНОРИРОВАНО)"
 
 msgid "Set the language used for the month names and the days of the week."
 msgstr "Установить язык для вывода названий месяцев и дней недели."
