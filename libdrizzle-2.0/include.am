@@ -135,33 +135,33 @@ examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle-2.0.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.cc
 endif
 
-dist_libdrizzleinstall_HEADERS= \
-				libdrizzle-2.0/column.h \
-				libdrizzle-2.0/column_client.h \
-				libdrizzle-2.0/column_server.h \
-				libdrizzle-2.0/command_client.h \
-				libdrizzle-2.0/command_server.h \
-				libdrizzle-2.0/conn.h \
-				libdrizzle-2.0/conn_client.h \
-				libdrizzle-2.0/conn_server.h \
-				libdrizzle-2.0/constants.h \
-				libdrizzle-2.0/drizzle.h \
-				libdrizzle-2.0/drizzle_client.h \
-				libdrizzle-2.0/drizzle_server.h \
-				libdrizzle-2.0/field_client.h \
-				libdrizzle-2.0/field_server.h \
-				libdrizzle-2.0/handshake_client.h \
-				libdrizzle-2.0/handshake_server.h \
-				libdrizzle-2.0/libdrizzle.h \
-				libdrizzle-2.0/libdrizzle.hpp \
-				libdrizzle-2.0/query.h \
-				libdrizzle-2.0/result.h \
-				libdrizzle-2.0/result_client.h \
-				libdrizzle-2.0/result_server.h \
-				libdrizzle-2.0/row_client.h \
-				libdrizzle-2.0/row_server.h \
-				libdrizzle-2.0/structs.h \
-				libdrizzle-2.0/visibility.h
+nobase_include_HEADERS+= \
+			 libdrizzle-2.0/column.h \
+			 libdrizzle-2.0/column_client.h \
+			 libdrizzle-2.0/column_server.h \
+			 libdrizzle-2.0/command_client.h \
+			 libdrizzle-2.0/command_server.h \
+			 libdrizzle-2.0/conn.h \
+			 libdrizzle-2.0/conn_client.h \
+			 libdrizzle-2.0/conn_server.h \
+			 libdrizzle-2.0/constants.h \
+			 libdrizzle-2.0/drizzle.h \
+			 libdrizzle-2.0/drizzle_client.h \
+			 libdrizzle-2.0/drizzle_server.h \
+			 libdrizzle-2.0/field_client.h \
+			 libdrizzle-2.0/field_server.h \
+			 libdrizzle-2.0/handshake_client.h \
+			 libdrizzle-2.0/handshake_server.h \
+			 libdrizzle-2.0/libdrizzle.h \
+			 libdrizzle-2.0/libdrizzle.hpp \
+			 libdrizzle-2.0/query.h \
+			 libdrizzle-2.0/result.h \
+			 libdrizzle-2.0/result_client.h \
+			 libdrizzle-2.0/result_server.h \
+			 libdrizzle-2.0/row_client.h \
+			 libdrizzle-2.0/row_server.h \
+			 libdrizzle-2.0/structs.h \
+			 libdrizzle-2.0/visibility.h
 
 noinst_HEADERS+= \
 		 libdrizzle-2.0/common.h \
@@ -170,9 +170,3 @@ noinst_HEADERS+= \
 		 libdrizzle-2.0/pack.h \
 		 libdrizzle-2.0/state.h \
 		 libdrizzle-2.0/sha1.h
-
-
-libdrizzle: libdrizzle-2.0/libdrizzle-2.0.la
-install-libdrizzle: libdrizzle install-dist_libdrizzleinstallHEADERS
-	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
-	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) libdrizzle-2.0/libdrizzle-2.0.la "$(DESTDIR)$(libdir)"

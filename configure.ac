@@ -183,6 +183,7 @@ AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/drizzle7.pc dnl
+ support-files/libdrizzle.pc dnl
  support-files/libdrizzle-1.0.pc dnl
  support-files/libdrizzle-2.0.pc dnl
  support-files/smf/install.sh dnl

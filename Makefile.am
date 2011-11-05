@@ -41,6 +41,8 @@ noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
 
+nobase_include_HEADERS=
+
 # scripts or bin_scripts
 dist_bin_SCRIPTS=
 # sbin_scripts
@@ -134,7 +136,6 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
 	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
 	  echo '#define INCLUDEDIR "$(includedir)"'; \
-	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
 	  echo '#define DOCDIR "$(docdir)"'; \
 	  echo '#define INFODIR "$(infodir)"'; \
 	  echo '#define HTMLDIR "$(htmldir)"'; \
