@@ -11,7 +11,10 @@ users can authenticate until the auth table is created, this circular
 dependency is resolved by temporarily using another authentication plugin.
 See the :ref:`auth_schema_examples`.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_schema_loading:

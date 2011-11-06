@@ -20,5 +20,4 @@ When using a statement to rename more than one table, the order of operations ar
 
 While RENAME is running, no other session can access any of the involved tables. 
 
-.. seealso::
-   :doc:`/alter_table`
+.. seealso:: :doc:`/alter_table`

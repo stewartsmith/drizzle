@@ -12,7 +12,10 @@ password files are typically stored in files ``/etc/passwd`` and
 LDAP directory, as a user database. All of these options are transparently 
 available to Drizzle via this module.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_pam_loading:
@@ -28,7 +31,9 @@ Or, to disable the ability to login without a password, use::
 
    --plugin-add=auth_pam --plugin-remove=auth_all
 
-.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
+.. seealso::
+
+   :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_pam_configuration:
 
@@ -111,7 +116,9 @@ Arguably, this is not a problem when you are connecting to Drizzle from
 localhost and sharing your system username and password for Drizzle can
 be quite convenient. 
 
-.. warning:: Using auth_pam when connecting over a public or insecure network is strongly discouraged!
+.. warning::
+
+   Using auth_pam when connecting over a public or insecure network is strongly discouraged!
 
 We recommend you disable auth_pam on networked Drizzle servers
 and instead use the :ref:`auth_schema_plugin` plugin or alternatively

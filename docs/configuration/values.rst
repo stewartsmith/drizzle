@@ -48,7 +48,10 @@ K, M, and G.  The size value ``1k`` is equivalent to the numeric value
 ``1024``.  Size values are shown as their equivalent numeric values
 when you :ref:`query the variables <querying_variables>`.
 
-.. note:: Only :ref:`configuration_options` can use size values.  :ref:`configuration_variables` must use numeric values.
+.. note::
+
+   Only :ref:`configuration_options` can use size values.
+   :ref:`configuration_variables` must use numeric values.
 
 Path
 ^^^^

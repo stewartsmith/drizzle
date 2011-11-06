@@ -298,6 +298,7 @@ into a Drizzle server as follows:
    issues from :program:`drizzledump` to your MySQL server.
 
 .. note::
+
    If you find your VARCHAR and TEXT data does not look correct in a drizzledump
    output, it is likely that you have UTF8 data stored in a non-UTF8 table.  In
    which case please check the :option:`--my-data-is-mangled` option.

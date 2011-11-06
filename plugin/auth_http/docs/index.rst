@@ -9,7 +9,10 @@ to provide authentication.  For example, see Apache's documentation
 for `Authentication, Authorization and Access Control <http://httpd.apache.org/docs/2.0/howto/auth.html>`_.
 Currently, SSL connections are not supported.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_http_loading:

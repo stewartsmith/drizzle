@@ -26,6 +26,4 @@ new_owner
     The new owner of the schema. 
 
 
-.. seealso::
-
-   :doc:`create_schema` and :doc:`drop_schema`
+.. seealso:: :doc:`create_schema` and :doc:`drop_schema`

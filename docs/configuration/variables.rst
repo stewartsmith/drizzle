@@ -82,7 +82,12 @@ connection do not change or affect the same variable in another connection.
 Changes to session variables are lost when the connection closes, but
 changes to global variables remain in affect until changed again.
 
-.. note:: Configuration variables and :ref:`user_defined_variables` are different.  :ref:`user_defined_variables` do not affect the configuration of Drizzle, and they are always dynamic, session variables.
+.. note::
+
+   Configuration variables and :ref:`user_defined_variables` are
+   different.  :ref:`user_defined_variables` do not affect the
+   configuration of Drizzle, and they are always dynamic, session
+   variables.
 
 .. _setting_variables:
 

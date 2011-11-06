@@ -3,8 +3,6 @@
 Allow All Authentication
 ========================
 
-.. warning:: :program:`auth_all` is a security risk!  Do not use this plugin with production servers!
-
 :program:`auth_all` is an authentication plugin that allows *all* connections
 regardless of username or password, so it does not actually authenticate and
 it does not provide any security.  This plugin is mostly used for testing.
