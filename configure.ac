@@ -23,8 +23,6 @@ dnl So don't update it here
 AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
-AC_CONFIG_MACRO_DIR([m4])
-LT_INIT
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
@@ -155,7 +153,6 @@ AC_LANG_POP
 PANDORA_DRIZZLE_BUILD
 PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
-PANDORA_HAVE_LIBV8
 
 
 #########################################################################
@@ -240,3 +237,7 @@ esac
 
 dnl libtoolize scans configure.ac  and needs to see some text
 m4_define([LIBTOOLIZE_AC_INIT], [])
+m4_define([UNUSED_MACRO], [
+  LT_INIT
+  AC_CONFIG_MACRO_DIR([m4])
+])
