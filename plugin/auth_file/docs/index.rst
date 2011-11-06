@@ -3,12 +3,17 @@
 File-based Authentication
 =========================
 
-.. warning:: :program:`auth_file` is a security risk!  Do not use this plugin with production servers!
+.. warning::
+
+   :program:`auth_file` is a security risk!  Do not use this plugin with production servers!
 
 :program:`auth_file` is an authentication plugin that authenticates connections
 using a list of ``username:password`` entries in a plain text file.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_file_loading:

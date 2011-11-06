@@ -7,7 +7,10 @@ LDAP Authentication
 using an :abbr:`LDAP (Lightweight Directory Access Protocol)` server.  An
 LDAP server is required to provide authentication.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_ldap_loading:

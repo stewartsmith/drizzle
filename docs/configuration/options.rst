@@ -42,7 +42,12 @@ plugin.  For example:
 Options listed by ``--help`` can be used as :ref:`command_line_options`.
 To use them in :ref:`config_files`, strip the leading ``--``.
 
-.. note:: Since Drizzle uses many plugins, the available options vary depending on which plugins are loaded.  If you cannnot find a certain option, ensure that the plugin which provides the option is loaded.
+.. note::
+
+   Since Drizzle uses many plugins, the available options vary
+   depending on which plugins are loaded.  If you cannnot find a
+   certain option, ensure that the plugin which provides the option is
+   loaded.
 
 .. _setting_options:
 
