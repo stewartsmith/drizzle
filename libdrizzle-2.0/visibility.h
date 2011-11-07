@@ -36,12 +36,12 @@
  * Implementation drawn from visibility.texi in gnulib.
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Visibility Control Macros
  */
-
-#pragma once
 
 /**
  *

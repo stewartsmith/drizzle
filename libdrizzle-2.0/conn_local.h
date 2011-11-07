@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Local Connection Declarations
  */
-
-#ifndef __DRIZZLE_CONN_LOCAL_H
-#define __DRIZZLE_CONN_LOCAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,5 +116,3 @@ static inline void drizzle_state_reset(drizzle_con_st *con)
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CONN_LOCAL_H */

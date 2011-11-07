@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Field Declarations for Servers
  */
-
-#ifndef __DRIZZLE_FIELD_SERVER_H
-#define __DRIZZLE_FIELD_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,5 +63,3 @@ drizzle_return_t drizzle_field_write(drizzle_result_st *result,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_FIELD_SERVER_H */

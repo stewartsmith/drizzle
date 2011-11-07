@@ -34,14 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Drizzle Declarations
  */
-
-#ifndef __DRIZZLE_H
-#define __DRIZZLE_H
-
 
 #include <inttypes.h>
 #include <sys/types.h>
@@ -435,5 +433,3 @@ drizzle_con_st *drizzle_con_ready(drizzle_st *drizzle);
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_H */

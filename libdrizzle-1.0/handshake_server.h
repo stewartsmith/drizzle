@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Handshake Declarations for Servers
  */
-
-#ifndef __DRIZZLE_HANDSHAKE_SERVER_H
-#define __DRIZZLE_HANDSHAKE_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,5 +78,3 @@ drizzle_return_t drizzle_handshake_client_read(drizzle_con_st *con);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_HANDSHAKE_SERVER_H */

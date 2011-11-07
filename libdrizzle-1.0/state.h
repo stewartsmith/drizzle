@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief State Machine Declarations
  */
-
-#ifndef __DRIZZLE_STATE_H
-#define __DRIZZLE_STATE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,5 +106,3 @@ drizzle_return_t drizzle_state_field_write(drizzle_con_st *con);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_STATE_H */

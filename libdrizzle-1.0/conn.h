@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Connection Declarations
  */
-
-#ifndef __DRIZZLE_CONN_H
-#define __DRIZZLE_CONN_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -429,5 +428,3 @@ uint32_t drizzle_con_max_packet_size(const drizzle_con_st *con);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CONN_H */

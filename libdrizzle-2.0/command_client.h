@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Command Declarations for Clients
  */
-
-#ifndef __DRIZZLE_COMMAND_CLIENT_H
-#define __DRIZZLE_COMMAND_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,5 +59,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_COMMAND_CLIENT_H */

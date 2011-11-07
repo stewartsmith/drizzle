@@ -39,13 +39,12 @@
  * @brief System Include Files
  */
 
-#ifndef __DRIZZLE_COMMON_H
-#define __DRIZZLE_COMMON_H
+#pragma once
 
 #include <config.h>
 
-#include "drizzle_client.h"
-#include "drizzle_server.h"
+#include "libdrizzle-1.0/drizzle_client.h"
+#include "libdrizzle-1.0/drizzle_server.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -61,10 +60,8 @@
 #include <string.h>
 #include <signal.h>
 
-#include "drizzle_local.h"
-#include "conn_local.h"
-#include "pack.h"
-#include "state.h"
-#include "sha1.h"
-
-#endif /* __DRIZZLE_COMMON_H */
+#include <libdrizzle-1.0/drizzle_local.h>
+#include <libdrizzle-1.0/conn_local.h>
+#include <libdrizzle-1.0/pack.h>
+#include <libdrizzle-1.0/state.h>
+#include <libdrizzle-1.0/sha1.h>

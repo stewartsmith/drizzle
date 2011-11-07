@@ -39,7 +39,7 @@
  * @brief Field definitions
  */
 
-#include "common.h"
+#include <libdrizzle-1.0/common.h>
 
 /*
  * Client definitions

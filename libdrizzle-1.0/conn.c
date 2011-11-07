@@ -40,7 +40,7 @@
  * @brief Connection Definitions
  */
 
-#include "common.h"
+#include <libdrizzle-1.0/common.h>
 
 /**
  * @addtogroup drizzle_con_static Static Connection Declarations
@@ -486,6 +486,12 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
                                              drizzle_return_t *ret_ptr)
 {
   drizzle_result_st *old_result;
+
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
 
   if (!(con->options & DRIZZLE_CON_READY))
   {

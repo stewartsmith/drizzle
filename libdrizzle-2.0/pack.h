@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Packing Declarations
  */
-
-#ifndef __DRIZZLE_PACK_H
-#define __DRIZZLE_PACK_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,5 +91,3 @@ uint8_t *drizzle_pack_auth(drizzle_con_st *con, uint8_t *ptr,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_PACK_H */

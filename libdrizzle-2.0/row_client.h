@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Row Declarations for Clients
  */
-
-#ifndef __DRIZZLE_ROW_CLIENT_H
-#define __DRIZZLE_ROW_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,5 +128,3 @@ uint64_t drizzle_row_current(drizzle_result_st *result);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_ROW_CLIENT_H */

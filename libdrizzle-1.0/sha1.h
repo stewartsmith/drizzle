@@ -1,10 +1,9 @@
+#pragma once
+
 /**
  * @file
  * @brief SHA1 Declarations
  */
-
-#ifndef _SHA1_H
-#define _SHA1_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -43,5 +42,3 @@ void SHA1Final(uint8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *);
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* _SHA1_H */

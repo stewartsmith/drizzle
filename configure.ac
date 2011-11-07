@@ -20,7 +20,7 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle],[drizzle7],[http://drizzle.org/])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -57,16 +57,6 @@ OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                      +- increment if interfaces have been added, removed or
 #                         changed
 AC_SUBST(OLDLIBDRIZZLE_LIBRARY_VERSION)
-
-libdrizzleincludedir='${includedir}/libdrizzle-2.0'
-libdrizzleinstalldir='${libdrizzleincludedir}/libdrizzle'
-AC_SUBST(libdrizzleinstalldir)
-AC_SUBST(libdrizzleincludedir)
-
-oldlibdrizzleincludedir='${includedir}/libdrizzle-1.0'
-oldlibdrizzleinstalldir='${oldlibdrizzleincludedir}/libdrizzle'
-AC_SUBST(oldlibdrizzleinstalldir)
-AC_SUBST(oldlibdrizzleincludedir)
 
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[

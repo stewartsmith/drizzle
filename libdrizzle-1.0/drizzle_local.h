@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Local Drizzle Declarations
  */
-
-#ifndef __DRIZZLE_LOCAL_H
-#define __DRIZZLE_LOCAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -162,5 +161,3 @@ static inline void drizzle_log_crazy(drizzle_st *drizzle, const char *format,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_LOCAL_H */

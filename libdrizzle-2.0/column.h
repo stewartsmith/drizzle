@@ -34,6 +34,7 @@
  *
  */
 
+#pragma once
 
 /**
  * @file

@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Field Declarations for Clients
  */
-
-#ifndef __DRIZZLE_FIELD_CLIENT_H
-#define __DRIZZLE_FIELD_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,5 +83,3 @@ void drizzle_field_free(drizzle_field_t field);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_FIELD_CLIENT_H */

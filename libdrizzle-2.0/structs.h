@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Struct Definitions
  */
-
-#ifndef __DRIZZLE_STRUCTS_H
-#define __DRIZZLE_STRUCTS_H
 
 #include <sys/types.h>
 
@@ -365,5 +364,3 @@ public:
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_STRUCTS_H */

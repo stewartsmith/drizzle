@@ -34,14 +34,12 @@
  *
  */
 
+#pragma once
 
 /**
  * @file
  * @brief Drizzle Declarations for Clients
  */
-
-#ifndef __DRIZZLE_CLIENT_H
-#define __DRIZZLE_CLIENT_H
 
 #include <libdrizzle-2.0/drizzle.h>
 #include <libdrizzle-2.0/conn_client.h>
@@ -113,5 +111,3 @@ drizzle_con_st *drizzle_con_add_uds(drizzle_st *drizzle, drizzle_con_st *con,
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CLIENT_H */

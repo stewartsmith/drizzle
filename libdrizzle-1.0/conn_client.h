@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Connection Declarations for Clients
  */
-
-#ifndef __DRIZZLE_CON_CLIENT_H
-#define __DRIZZLE_CON_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -191,5 +190,3 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CON_CLIENT_H */

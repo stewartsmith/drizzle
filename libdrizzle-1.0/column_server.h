@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Column Declarations for Servers
  */
-
-#ifndef __DRIZZLE_COLUMN_SERVER_H
-#define __DRIZZLE_COLUMN_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,5 +144,3 @@ void drizzle_column_set_default_value(drizzle_column_st *column,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_COLUMN_SERVER_H */
