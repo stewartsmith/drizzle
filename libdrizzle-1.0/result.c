@@ -438,6 +438,8 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
                                   const drizzle_field_t *field,
                                   const size_t *size)
 {
+  uint16_t x;
+
   if (result == NULL)
   {
     return;
@@ -445,7 +447,7 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
 
   result->con->packet_size= 0;
 
-  for (uint16_t x= 0; x < result->column_count; x++)
+  for (x= 0; x < result->column_count; x++)
   {
     if (field[x] == NULL)
       result->con->packet_size++;
