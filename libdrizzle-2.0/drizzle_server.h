@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Drizzle Declarations for Servers
  */
-
-#ifndef __DRIZZLE_SERVER_H
-#define __DRIZZLE_SERVER_H
 
 #include <libdrizzle-2.0/drizzle.h>
 #include <libdrizzle-2.0/conn_server.h>
@@ -130,5 +129,3 @@ drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
 #ifdef  __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_SERVER_H */

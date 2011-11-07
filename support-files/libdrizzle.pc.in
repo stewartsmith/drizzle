@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libdrizzle-2.0
+Name: libdrizzle
 Description: Drizzle Protocol Library
 Version: @PANDORA_RELEASE_VERSION@
-Libs: -L${libdir} -ldrizzle-2.0
+Libs: -L${libdir} -ldrizzle
 URL: http://drizzle.org/
-Cflags: -I$@includedir@/libdrizzle-2.0
+Cflags: -I$@includedir@

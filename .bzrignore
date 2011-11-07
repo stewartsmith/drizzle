@@ -306,6 +306,7 @@ support-files/drizzle-log-rotate
 support-files/drizzle7.pc
 support-files/drizzle.server
 support-files/drizzle.spec
+support-files/libdrizzle.pc
 support-files/libdrizzle-1.0.pc
 support-files/libdrizzle-2.0.pc
 support-files/libdrizzleclient.pc

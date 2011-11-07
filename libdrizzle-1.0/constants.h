@@ -1,6 +1,7 @@
 /*
  * Drizzle Client & Protocol Library
  *
+ * Copyright (C) 2011 Brian Aker (brian@tangent.org)
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
  * All rights reserved.
  *
@@ -34,13 +35,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Defines, typedefs, enums, and macros
  */
-
-#ifndef __DRIZZLE_CONSTANTS_H
-#define __DRIZZLE_CONSTANTS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,7 +93,7 @@ extern "C" {
 /**
  * Return codes.
  */
-typedef enum
+enum drizzle_return_t
 {
   DRIZZLE_RETURN_OK,
   DRIZZLE_RETURN_IO_WAIT,
@@ -120,13 +120,18 @@ typedef enum
   DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS,
   DRIZZLE_RETURN_HANDSHAKE_FAILED,
   DRIZZLE_RETURN_TIMEOUT,
+  DRIZZLE_RETURN_INVALID_ARGUMENT,
   DRIZZLE_RETURN_MAX /* Always add new codes to the end before this one. */
-} drizzle_return_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_return_t drizzle_return_t;
+#endif
 
 /**
  * Verbosity levels.
  */
-typedef enum
+enum drizzle_verbose_t
 {
   DRIZZLE_VERBOSE_NEVER,
   DRIZZLE_VERBOSE_FATAL,
@@ -135,7 +140,11 @@ typedef enum
   DRIZZLE_VERBOSE_DEBUG,
   DRIZZLE_VERBOSE_CRAZY,
   DRIZZLE_VERBOSE_MAX
-} drizzle_verbose_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_verbose_t drizzle_verbose_t;
+#endif
 
 /** @} */
 
@@ -143,20 +152,24 @@ typedef enum
  * @ingroup drizzle
  * Options for drizzle_st.
  */
-typedef enum
+enum drizzle_options_t
 {
   DRIZZLE_NONE=            0,
   DRIZZLE_ALLOCATED=       (1 << 0),
   DRIZZLE_NON_BLOCKING=    (1 << 1),
   DRIZZLE_FREE_OBJECTS=    (1 << 2),
   DRIZZLE_ASSERT_DANGLING= (1 << 3)
-} drizzle_options_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_options_t drizzle_options_t;
+#endif
 
 /**
  * @ingroup drizzle_con
  * Options for drizzle_con_st.
  */
-typedef enum
+enum drizzle_con_options_t
 {
   DRIZZLE_CON_NONE=             0,
   DRIZZLE_CON_ALLOCATED=        (1 << 0),
@@ -172,23 +185,31 @@ typedef enum
   DRIZZLE_CON_INTERACTIVE=      (1 << 11),
   DRIZZLE_CON_MULTI_STATEMENTS= (1 << 12),
   DRIZZLE_CON_AUTH_PLUGIN=      (1 << 13)
-} drizzle_con_options_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_con_options_t drizzle_con_options_t;
+#endif
 
 /**
  * @ingroup drizzle_con
  * Socket types for drizzle_con_st.
  */
-typedef enum
+enum drizzle_con_socket_t
 {
   DRIZZLE_CON_SOCKET_TCP= 0,
   DRIZZLE_CON_SOCKET_UDS= (1 << 0)
-} drizzle_con_socket_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_con_socket_t drizzle_con_socket_t;
+#endif
 
 /**
  * @ingroup drizzle_con
  * Status flags for drizle_con_st.
  */
-typedef enum
+enum drizzle_con_status_t
 {
   DRIZZLE_CON_STATUS_NONE=                     0,
   DRIZZLE_CON_STATUS_IN_TRANS=                 (1 << 0),
@@ -201,13 +222,17 @@ typedef enum
   DRIZZLE_CON_STATUS_DB_DROPPED=               (1 << 8),
   DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES=     (1 << 9),
   DRIZZLE_CON_STATUS_QUERY_WAS_SLOW=           (1 << 10)
-} drizzle_con_status_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_con_status_t drizzle_con_status_t;
+#endif
 
 /**
  * @ingroup drizzle_con
  * Capabilities for drizzle_con_st.
  */
-typedef enum
+enum drizzle_capabilities_t
 {
   DRIZZLE_CAPABILITIES_NONE=                   0,
   DRIZZLE_CAPABILITIES_LONG_PASSWORD=          (1 << 0),
@@ -240,13 +265,17 @@ typedef enum
                                 DRIZZLE_CAPABILITIES_TRANSACTIONS |
                                 DRIZZLE_CAPABILITIES_PROTOCOL_41 |
                                 DRIZZLE_CAPABILITIES_SECURE_CONNECTION)
-} drizzle_capabilities_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_capabilities_t drizzle_capabilities_t;
+#endif
 
 /**
  * @ingroup drizzle_command 
  * Commands for drizzle_command functions.
  */
-typedef enum
+enum drizzle_command_t
 {
   DRIZZLE_COMMAND_SLEEP,               /* Not used currently. */
   DRIZZLE_COMMAND_QUIT,
@@ -279,13 +308,17 @@ typedef enum
   DRIZZLE_COMMAND_STMT_FETCH,          /* Not used currently. */
   DRIZZLE_COMMAND_DAEMON,              /* Not used currently. */
   DRIZZLE_COMMAND_END                  /* Not used currently. */
-} drizzle_command_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_command_t drizzle_command_t;
+#endif
 
 /**
  * @ingroup drizzle_command 
  * Commands for the Drizzle protocol functions.
  */
-typedef enum
+enum drizzle_command_drizzle_t
 {
   DRIZZLE_COMMAND_DRIZZLE_SLEEP,
   DRIZZLE_COMMAND_DRIZZLE_QUIT,
@@ -296,35 +329,47 @@ typedef enum
   DRIZZLE_COMMAND_DRIZZLE_PING,
   DRIZZLE_COMMAND_DRIZZLE_KILL,
   DRIZZLE_COMMAND_DRIZZLE_END
-} drizzle_command_drizzle_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_command_drizzle_t drizzle_command_drizzle_t;
+#endif
 
 /**
  * @ingroup drizzle_query
  * Options for drizzle_query_st.
  */
-typedef enum
+enum drizzle_query_options_t
 {
   DRIZZLE_QUERY_NONE,
   DRIZZLE_QUERY_ALLOCATED= (1 << 0)
-} drizzle_query_options_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_query_options_t drizzle_query_options_t;
+#endif
 
 /**
  * @ingroup drizzle_query
  * States for drizle_query_st.
  */
-typedef enum
+enum drizzle_query_state_t
 {
   DRIZZLE_QUERY_STATE_INIT,
   DRIZZLE_QUERY_STATE_QUERY,
   DRIZZLE_QUERY_STATE_RESULT,
   DRIZZLE_QUERY_STATE_DONE
-} drizzle_query_state_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_query_state_t drizzle_query_state_t;
+#endif
 
 /**
  * @ingroup drizzle_result
  * Options for drizzle_result_st.
  */
-typedef enum
+enum drizzle_result_options_t
 {
   DRIZZLE_RESULT_NONE=          0,
   DRIZZLE_RESULT_ALLOCATED=     (1 << 0),
@@ -333,22 +378,30 @@ typedef enum
   DRIZZLE_RESULT_BUFFER_ROW=    (1 << 3),
   DRIZZLE_RESULT_EOF_PACKET=    (1 << 4),
   DRIZZLE_RESULT_ROW_BREAK=     (1 << 5)
-} drizzle_result_options_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_result_options_t drizzle_result_options_t;
+#endif
 
 /**
  * @ingroup drizzle_column
  * Options for drizzle_column_st.
  */
-typedef enum
+enum drizzle_column_options_t
 {
   DRIZZLE_COLUMN_ALLOCATED= (1 << 0)
-} drizzle_column_options_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_column_options_t drizzle_column_options_t;
+#endif
 
 /**
  * @ingroup drizzle_column
  * Types for drizzle_column_st.
  */
-typedef enum
+enum drizzle_column_type_t
 {
   DRIZZLE_COLUMN_TYPE_DECIMAL,
   DRIZZLE_COLUMN_TYPE_TINY,
@@ -377,13 +430,17 @@ typedef enum
   DRIZZLE_COLUMN_TYPE_VAR_STRING=  253,
   DRIZZLE_COLUMN_TYPE_STRING=      254,
   DRIZZLE_COLUMN_TYPE_GEOMETRY=    255
-} drizzle_column_type_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_column_type_t drizzle_column_type_t;
+#endif
 
 /**
  * @ingroup drizzle_column
  * Types for drizzle_column_st for Drizzle.
  */
-typedef enum
+enum drizzle_column_type_drizzle_t
 {
   DRIZZLE_COLUMN_TYPE_DRIZZLE_TINY,
   DRIZZLE_COLUMN_TYPE_DRIZZLE_LONG,
@@ -402,13 +459,17 @@ typedef enum
   DRIZZLE_COLUMN_TYPE_DRIZZLE_UUID,
   DRIZZLE_COLUMN_TYPE_DRIZZLE_MICROTIME,
   DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX=DRIZZLE_COLUMN_TYPE_DRIZZLE_MICROTIME
-} drizzle_column_type_drizzle_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_column_type_drizzle_t drizzle_column_type_drizzle_t;
+#endif
 
 /**
  * @ingroup drizzle_column
  * Flags for drizzle_column_st.
  */
-typedef enum
+enum drizzle_column_flags_t
 {
   DRIZZLE_COLUMN_FLAGS_NONE=             0,
   DRIZZLE_COLUMN_FLAGS_NOT_NULL=         (1 << 0),
@@ -434,7 +495,11 @@ typedef enum
   DRIZZLE_COLUMN_FLAGS_IN_PART_FUNC=     (1 << 19),
   DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX=     (1 << 20),
   DRIZZLE_COLUMN_FLAGS_RENAMED=          (1 << 21)
-} drizzle_column_flags_t;
+};
+
+#ifndef __cplusplus
+typedef enum drizzle_column_flags_t drizzle_column_flags_t;
+#endif
 
 /**
  * @addtogroup drizzle_types Types
@@ -550,5 +615,3 @@ typedef drizzle_return_t (drizzle_event_watch_fn)(drizzle_con_st *con,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CONSTANTS_H */

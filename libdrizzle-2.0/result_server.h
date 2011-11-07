@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Result Declarations for Servers
  */
-
-#ifndef __DRIZZLE_RESULT_SERVER_H
-#define __DRIZZLE_RESULT_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,5 +139,3 @@ void drizzle_result_set_column_count(drizzle_result_st *result,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_RESULT_SERVER_H */

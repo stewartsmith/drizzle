@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Row Declarations for Servers
  */
-
-#ifndef __DRIZZLE_ROW_SERVER_H
-#define __DRIZZLE_ROW_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,5 +64,3 @@ drizzle_return_t drizzle_row_write(drizzle_result_st *result);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_ROW_SERVER_H */

@@ -478,6 +478,12 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 {
   drizzle_result_st *old_result;
 
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
   if (!(con->options & DRIZZLE_CON_READY))
   {
     if (con->options & DRIZZLE_CON_RAW_PACKET)
@@ -490,13 +496,17 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 
     *ret_ptr= drizzle_con_connect(con);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return result;
+    }
   }
 
   if (drizzle_state_none(con))
   {
     if (con->options & (DRIZZLE_CON_RAW_PACKET | DRIZZLE_CON_NO_RESULT_READ))
+    {
       con->result= NULL;
+    }
     else
     {
       for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)

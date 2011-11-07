@@ -107,7 +107,9 @@ drizzle_result_st *drizzle_result_clone(drizzle_con_st *con,
 {
   result= drizzle_result_create(con, result);
   if (result == NULL)
+  {
     return NULL;
+  }
 
   result->options|= from->options & ~DRIZZLE_RESULT_ALLOCATED;
 
@@ -128,8 +130,15 @@ void drizzle_result_free(drizzle_result_st *result)
   drizzle_column_st *column;
   uint64_t x;
 
+  if (result == NULL)
+  {
+    return;
+  }
+
   for (column= result->column_list; column != NULL; column= result->column_list)
+  {
     drizzle_column_free(column);
+  }
 
   delete[] result->column_buffer;
 
@@ -160,61 +169,118 @@ void drizzle_result_free(drizzle_result_st *result)
 void drizzle_result_free_all(drizzle_con_st *con)
 {
   while (con->result_list != NULL)
+  {
     drizzle_result_free(con->result_list);
+  }
 }
 
 drizzle_con_st *drizzle_result_drizzle_con(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   return result->con;
 }
 
 bool drizzle_result_eof(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return false;
+  }
+
   return (result->options & DRIZZLE_RESULT_EOF_PACKET) ? true : false;
 }
 
 const char *drizzle_result_info(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   return result->info;
 }
 
 const char *drizzle_result_error(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   return result->info;
 }
 
 uint16_t drizzle_result_error_code(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->error_code;
 }
 
 const char *drizzle_result_sqlstate(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   return result->sqlstate;
 }
 
 uint16_t drizzle_result_warning_count(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->warning_count;
 }
 
 uint64_t drizzle_result_insert_id(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->insert_id;
 }
 
 uint64_t drizzle_result_affected_rows(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->affected_rows;
 }
 
 uint16_t drizzle_result_column_count(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->column_count;
 }
 
 uint64_t drizzle_result_row_count(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->row_count;
 }
 
@@ -226,6 +292,18 @@ drizzle_result_st *drizzle_result_read(drizzle_con_st *con,
                                        drizzle_result_st *result,
                                        drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
+
   if (drizzle_state_none(con))
   {
     con->result= drizzle_result_create(con, result);
@@ -245,6 +323,11 @@ drizzle_result_st *drizzle_result_read(drizzle_con_st *con,
 
 drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_return_t ret;
   drizzle_row_t row;
 
@@ -291,6 +374,11 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
 size_t drizzle_result_row_size(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->con->packet_size;
 }
 
@@ -301,6 +389,11 @@ size_t drizzle_result_row_size(drizzle_result_st *result)
 drizzle_return_t drizzle_result_write(drizzle_con_st *con,
                                       drizzle_result_st *result, bool flush)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   if (drizzle_state_none(con))
   {
     con->result= result;
@@ -316,6 +409,11 @@ drizzle_return_t drizzle_result_write(drizzle_con_st *con,
 
 void drizzle_result_set_row_size(drizzle_result_st *result, size_t size)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->con->packet_size= size;
 }
 
@@ -323,6 +421,11 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
                                   const drizzle_field_t *field,
                                   const size_t *size)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   uint16_t x;
 
   result->con->packet_size= 0;
@@ -344,6 +447,11 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
 
 void drizzle_result_set_eof(drizzle_result_st *result, bool is_eof)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   if (is_eof)
     result->options|= DRIZZLE_RESULT_EOF_PACKET;
   else
@@ -352,8 +460,15 @@ void drizzle_result_set_eof(drizzle_result_st *result, bool is_eof)
 
 void drizzle_result_set_info(drizzle_result_st *result, const char *info)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   if (info == NULL)
+  {
     result->info[0]= 0;
+  }
   else
   {
     strncpy(result->info, info, DRIZZLE_MAX_INFO_SIZE);
@@ -363,20 +478,37 @@ void drizzle_result_set_info(drizzle_result_st *result, const char *info)
 
 void drizzle_result_set_error(drizzle_result_st *result, const char *error)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   drizzle_result_set_info(result, error);
 }
 
 void drizzle_result_set_error_code(drizzle_result_st *result,
                                    uint16_t error_code)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->error_code= error_code;
 }
 
 void drizzle_result_set_sqlstate(drizzle_result_st *result,
                                  const char *sqlstate)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   if (sqlstate == NULL)
+  {
     result->sqlstate[0]= 0;
+  }
   else
   {
     strncpy(result->sqlstate, sqlstate, DRIZZLE_MAX_SQLSTATE_SIZE + 1);
@@ -387,24 +519,44 @@ void drizzle_result_set_sqlstate(drizzle_result_st *result,
 void drizzle_result_set_warning_count(drizzle_result_st *result,
                                       uint16_t warning_count)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->warning_count= warning_count;
 }
 
 void drizzle_result_set_insert_id(drizzle_result_st *result,
                                   uint64_t insert_id)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->insert_id= insert_id;
 }
 
 void drizzle_result_set_affected_rows(drizzle_result_st *result,
                                       uint64_t affected_rows)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->affected_rows= affected_rows;
 }
 
 void drizzle_result_set_column_count(drizzle_result_st *result,
                                      uint16_t column_count)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   result->column_count= column_count;
 }
 
@@ -415,6 +567,12 @@ void drizzle_result_set_column_count(drizzle_result_st *result,
 drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
 {
   drizzle_return_t ret;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
 
   drizzle_log_debug(con->drizzle, "drizzle_state_result_read");
 
@@ -496,6 +654,11 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_result_write(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   uint8_t *start= con->buffer_ptr + con->buffer_size;
   uint8_t *ptr;
   drizzle_result_st *result= con->result;

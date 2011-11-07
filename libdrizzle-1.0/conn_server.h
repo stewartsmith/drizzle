@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Connection Declarations for Servers
  */
-
-#ifndef __DRIZZLE_CON_SERVER_H
-#define __DRIZZLE_CON_SERVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -220,5 +219,3 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_CON_SERVER_H */

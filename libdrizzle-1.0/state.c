@@ -39,15 +39,13 @@
  * @brief State machine definitions
  */
 
-#include "common.h"
+#include <libdrizzle-1.0/common.h>
 
 drizzle_return_t drizzle_state_loop(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
-
-  while (!drizzle_state_none(con))
+  while (drizzle_state_none(con) == false)
   {
-    ret= con->state_stack[con->state_current - 1](con);
+    drizzle_return_t ret= con->state_stack[con->state_current - 1](con);
     if (ret != DRIZZLE_RETURN_OK)
     {
       if (ret != DRIZZLE_RETURN_IO_WAIT && ret != DRIZZLE_RETURN_PAUSE &&

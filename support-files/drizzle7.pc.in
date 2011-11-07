@@ -4,7 +4,8 @@ libdir=@libdir@
 pkgincludedir=@pkgincludedir@
 
 Name: drizzle7
-Description: Drizzle Development Headers
+Description: Drizzle CLI
 Version: @VERSION@
+URL: http://drizzle.org/
 Cflags: -I${pkgincludedir}
 

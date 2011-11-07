@@ -34,13 +34,12 @@
  *
  */
 
+#pragma once
+
 /**
  * @file
  * @brief Result Declarations for Clients
  */
-
-#ifndef __DRIZZLE_RESULT_CLIENT_H
-#define __DRIZZLE_RESULT_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,5 +78,3 @@ size_t drizzle_result_row_size(drizzle_result_st *result);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_RESULT_CLIENT_H */
