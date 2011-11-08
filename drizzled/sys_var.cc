@@ -404,8 +404,7 @@ static int check_tx_isolation(Session *session, set_var *var)
 static void fix_tx_isolation(Session *session, sql_var_t type)
 {
   if (type == OPT_SESSION)
-    session->session_tx_isolation= ((enum_tx_isolation)
-                                    session->variables.tx_isolation);
+    session->session_tx_isolation= (enum_tx_isolation) session->variables.tx_isolation;
 }
 
 static void fix_completion_type(Session *, sql_var_t) {}
@@ -628,13 +627,11 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
  }
 
 
-unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
-                                                sql_var_t type,
-                                                const lex_string_t *)
+unsigned char *sys_var_session_uint32_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 
@@ -680,13 +677,11 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
-                                                  sql_var_t type,
-                                                  const lex_string_t *)
+unsigned char *sys_var_session_ha_rows::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_uint64_t::check(Session *session, set_var *var)
@@ -738,13 +733,11 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
-                                                   sql_var_t type,
-                                                   const lex_string_t *)
+unsigned char *sys_var_session_uint64_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_size_t::check(Session *session, set_var *var)
@@ -793,13 +786,11 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_size_t::value_ptr(Session *session,
-                                                 sql_var_t type,
-                                                 const lex_string_t *)
+unsigned char *sys_var_session_size_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset) 
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_bool::check(Session *session, set_var *var)
@@ -827,18 +818,15 @@ void sys_var_session_bool::set_default(Session *session,  sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_bool::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_session_bool::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 
-bool sys_var::check_enum(Session *,
-                         set_var *var, const TYPELIB *enum_names)
+bool sys_var::check_enum(Session *, set_var *var, const TYPELIB *enum_names)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
@@ -888,93 +876,67 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t *base)
+Item *sys_var::item(Session *session, sql_var_t var_type)
 {
   if (check_type(var_type))
   {
     if (var_type != OPT_DEFAULT)
     {
-      my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
-               name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
+      my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0), name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
       return 0;
     }
     /* As there was no local variable, return the global value */
     var_type= OPT_GLOBAL;
   }
-  switch (show_type()) {
+  boost::mutex::scoped_lock lock(session->catalog().systemVariableLock());
+  switch (show_type()) 
+  {
   case SHOW_LONG:
   case SHOW_INT:
   {
-    uint32_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(uint*) value_ptr(session, var_type, base);
-
+    uint32_t value= *(uint*) value_ptr(session, var_type);
     return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
-    int64_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(int64_t*) value_ptr(session, var_type, base);
-
+    int64_t value= *(int64_t*) value_ptr(session, var_type);
     return new Item_int(value);
   }
   case SHOW_DOUBLE:
   {
-    double value;
-    {
-      boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-      value= *(double*) value_ptr(session, var_type, base);
-    }
-
+    double value= *(double*) value_ptr(session, var_type);
     /* 6, as this is for now only used with microseconds */
     return new Item_float(value, 6);
   }
   case SHOW_HA_ROWS:
   {
-    ha_rows value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(ha_rows*) value_ptr(session, var_type, base);
-
+    ha_rows value= *(ha_rows*) value_ptr(session, var_type);
     return new Item_int((uint64_t) value);
   }
   case SHOW_SIZE:
   {
-    size_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(size_t*) value_ptr(session, var_type, base);
-
+    size_t value= *(size_t*) value_ptr(session, var_type);
     return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
-    int32_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(bool*) value_ptr(session, var_type, base);
-    return new Item_int(value,1);
+    int32_t value= *(bool*) value_ptr(session, var_type);
+    return new Item_int(value, 1);
   }
   case SHOW_CHAR_PTR:
   {
-    Item *tmp;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    char *str= *(char**) value_ptr(session, var_type, base);
-    if (str)
+    if (const char *str= *(char**) value_ptr(session, var_type))
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
+      return new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
-    else
-    {
-      tmp= new Item_null();
-      tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
-    }
-
+    Item* tmp= new Item_null();
+    tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     return tmp;
   }
   case SHOW_CHAR:
   {
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    if (const char* str= (char*) value_ptr(session, var_type, base))
+    if (const char* str= (char*) value_ptr(session, var_type))
       return new Item_string(str_ref(str), system_charset_info, DERIVATION_SYSCONST);
     Item* tmp= new Item_null();
     tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
@@ -1006,38 +968,30 @@ void sys_var_session_enum::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_enum::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_session_enum::value_ptr(Session *session, sql_var_t type)
 {
-  uint32_t tmp= ((type == OPT_GLOBAL) ?
-	      global_system_variables.*offset :
-	      session->variables.*offset);
+  uint32_t tmp= type == OPT_GLOBAL ? global_system_variables.*offset : session->variables.*offset;
   return (unsigned char*) enum_names->type_names[tmp];
 }
 
 bool sys_var_session_bit::check(Session *session, set_var *var)
 {
-  return (check_enum(session, var, &bool_typelib) ||
-          (check_func && (*check_func)(session, var)));
+  return check_enum(session, var, &bool_typelib) || (check_func && (*check_func)(session, var));
 }
 
 bool sys_var_session_bit::update(Session *session, set_var *var)
 {
-  int res= (*update_func)(session, var);
-  return res;
+  return (*update_func)(session, var);
 }
 
 
-unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
-                                              const lex_string_t *)
+unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t)
 {
   /*
     If reverse is 0 (default) return 1 if bit is set.
     If reverse is 1, return 0 if bit is set
   */
-  session->sys_var_tmp.bool_value= ((session->options & bit_flag) ?
-				   !reverse : reverse);
+  session->sys_var_tmp.bool_value= (session->options & bit_flag) ? !reverse : reverse;
   return (unsigned char*) &session->sys_var_tmp.bool_value;
 }
 
@@ -1094,13 +1048,9 @@ void sys_var_collation_sv::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_collation_sv::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_collation_sv::value_ptr(Session *session, sql_var_t type)
 {
-  const charset_info_st *cs= ((type == OPT_GLOBAL) ?
-                           global_system_variables.*offset :
-                           session->variables.*offset);
+  const charset_info_st *cs= type == OPT_GLOBAL ? global_system_variables.*offset : session->variables.*offset;
   return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";
 }
 
@@ -1119,8 +1069,7 @@ void sys_var_timestamp::set_default(Session *session, sql_var_t)
 }
 
 
-unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
-                                            const lex_string_t *)
+unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t)
 {
   session->sys_var_tmp.int32_t_value= (int32_t) session->times.getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
@@ -1134,9 +1083,7 @@ bool sys_var_last_insert_id::update(Session *session, set_var *var)
 }
 
 
-unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
-                                                 sql_var_t,
-                                                 const lex_string_t *)
+unsigned char *sys_var_last_insert_id::value_ptr(Session *session, sql_var_t)
 {
   /*
     this tmp var makes it robust againt change of type of
@@ -1187,13 +1134,11 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 }
 
 
-unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
-                                                        sql_var_t type,
-                                                        const lex_string_t *)
+unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session, sql_var_t type)
 {
-  return type == OPT_GLOBAL ?
-                 (unsigned char *) global_system_variables.lc_time_names->name :
-                 (unsigned char *) session->variables.lc_time_names->name;
+  return type == OPT_GLOBAL 
+    ? (unsigned char *) global_system_variables.lc_time_names->name 
+    : (unsigned char *) session->variables.lc_time_names->name;
 }
 
 
@@ -1294,10 +1239,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
   else
     session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
 
-  if (not success)
-    return true;
-
-  return 0;
+  return not success;
 }
 
 static int check_pseudo_thread_id(Session *, set_var *var)
@@ -1560,15 +1502,12 @@ sys_var *find_sys_var(const std::string &name)
  Functions to handle table_type
 ****************************************************************************/
 
-unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
-                                                         sql_var_t type,
-                                                         const lex_string_t *)
+unsigned char *sys_var_session_storage_engine::value_ptr(Session *session, sql_var_t type)
 {
-  plugin::StorageEngine *engine= session->variables.*offset;
-  if (type == OPT_GLOBAL)
-    engine= global_system_variables.*offset;
-  string engine_name= engine->getName();
-  return (unsigned char *) session->mem.strdup(engine_name);
+  plugin::StorageEngine *engine= type == OPT_GLOBAL
+    ? global_system_variables.*offset
+    : session->variables.*offset;
+  return (unsigned char *) session->mem.strdup(engine->getName());
 }
 
 

@@ -486,7 +486,7 @@ static bool prepare_alter_table(Session *session,
     List<Key_part_spec> key_parts;
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
-      if (! key_part->field)
+      if (not key_part->field)
 	      continue;	/* Wrong field (from UNIREG) */
 
       const char *key_part_name= key_part->field->field_name;

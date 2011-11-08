@@ -31,10 +31,10 @@ class Table_ident : public memory::SqlAlloc
 {
 public:
   lex_string_t db;
-  lex_string_t table;
+  str_ref table;
   Select_Lex_Unit *sel;
 
-  Table_ident(lex_string_t db_arg, lex_string_t table_arg)
+  Table_ident(lex_string_t db_arg, str_ref table_arg)
     : db(db_arg), table(table_arg), sel(NULL)
   {
   }
@@ -51,11 +51,11 @@ public:
     Later, if there was an alias specified for the table, it will be set
     by add_table_to_list.
   */
-  explicit Table_ident(Select_Lex_Unit *s) : sel(s)
+  explicit Table_ident(Select_Lex_Unit *s) : 
+    table("*"), sel(s)
   {
     /* We must have a table name here as this is used with add_table_to_list */
     db.assign("", 0); // a subject to casedn_str
-    table.assign("*", 1);
   }
   bool is_derived_table() const { return test(sel); }
 };

@@ -35,12 +35,10 @@ public:
     drizzled::sql_var_t option_type;
     drizzled::drizzle_show_var *variables;
 
-    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
+    void fill(const std::string &name, const char *value, drizzled::SHOW_TYPE show_type);
 
   public:
-    Generator(drizzled::Field **arg, drizzled::sql_var_t option_arg,
-              drizzled::drizzle_show_var *show_arg);
-    ~Generator();
+    Generator(drizzled::Field **arg, drizzled::sql_var_t option_arg, drizzled::drizzle_show_var *show_arg);
 
     bool populate();
 

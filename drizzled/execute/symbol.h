@@ -51,5 +51,5 @@ union YYSTYPE
 } // namespace execute
 } // namespace drizzled
 
-typedef union drizzled::execute::YYSTYPE YYSTYPE;
+typedef drizzled::execute::YYSTYPE YYSTYPE;
 
