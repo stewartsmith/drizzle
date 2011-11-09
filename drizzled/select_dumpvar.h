@@ -28,26 +28,27 @@
 
 namespace drizzled {
 
-class select_dumpvar :public select_result_interceptor {
-  ha_rows row_count;
-
+class select_dumpvar : public select_result_interceptor 
+{
 public:
-  std::vector<var *> var_list;
-  select_dumpvar()  { var_list.clear(); row_count= 0;}
-  ~select_dumpvar() {}
+  int prepare(List<Item>&, Select_Lex_Unit*);
+  bool send_data(List<Item>&);
+  bool send_eof();
 
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
+  select_dumpvar()  
+  { 
+    row_count= 0;
+  }
 
   void cleanup()
   {
     row_count= 0;
   }
 
+  std::vector<var*> var_list;
 
-  bool send_data(List<Item> &items);
-
-  bool send_eof();
-
+private:
+  ha_rows row_count;
 };
 
 } /* namespace drizzled */
