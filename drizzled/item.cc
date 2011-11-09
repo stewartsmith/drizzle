@@ -440,7 +440,7 @@ bool Item::eq(const Item *item, bool) const
   return type() == item->type() && 
          name && 
          item->name &&
-         not my_strcasecmp(system_charset_info, name, item->name);
+         not system_charset_info->strcasecmp(name, item->name);
 }
 
 Item *Item::safe_charset_converter(const charset_info_st* tocs)
@@ -872,7 +872,7 @@ static Item** find_field_in_group_list(Session *session, Item *find_item, Order 
   {
     /* Convert database to lower case for comparison */
     strncpy(name_buff, db_name, sizeof(name_buff)-1);
-    my_casedn_str(files_charset_info, name_buff);
+    files_charset_info->casedn_str(name_buff);
     db_name= name_buff;
   }
 
@@ -887,15 +887,14 @@ static Item** find_field_in_group_list(Session *session, Item *find_item, Order 
 
       assert(cur_field->field_name != 0);
 
-      if (! my_strcasecmp(system_charset_info, cur_field->field_name, field_name))
-        ++cur_match_degree;
-      else
+      if (system_charset_info->strcasecmp(cur_field->field_name, field_name))
         continue;
+      ++cur_match_degree;
 
       if (cur_field->table_name && table_name)
       {
         /* If field_name is qualified by a table name. */
-        if (my_strcasecmp(table_alias_charset, cur_field->table_name, table_name))
+        if (table_alias_charset->strcasecmp(cur_field->table_name, table_name))
           /* Same field names, different tables. */
           return NULL;
 
@@ -903,7 +902,7 @@ static Item** find_field_in_group_list(Session *session, Item *find_item, Order 
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (my_strcasecmp(system_charset_info, cur_field->db_name, db_name))
+          if (system_charset_info->strcasecmp(cur_field->db_name, db_name))
           {
             /* Same field names, different databases. */
             return NULL;

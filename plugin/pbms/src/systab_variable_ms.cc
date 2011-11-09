@@ -631,7 +631,7 @@ void MSVariableTable::updateRow(char *old_data, char *new_data)
 	getFieldValue(new_data, 2, &n_var_value);
 	
 	// The command names must match.
-	if ((n_id != o_id) || my_strcasecmp(&UTF8_CHARSET, o_var_name.c_str(), n_var_name.c_str()))
+	if ((n_id != o_id) || UTF8_CHARSET.strcasecmp(o_var_name.c_str(), n_var_name.c_str()))
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only fields in the "VARIABLES_TABLE_NAME" table.");
 		
 	n_id--;

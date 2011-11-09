@@ -685,9 +685,7 @@ static int prepare_create_table(Session *session,
     /* Check if we have used the same field name before */
     for (dup_no=0; (dup_field=it2++) != sql_field; dup_no++)
     {
-      if (my_strcasecmp(system_charset_info,
-                        sql_field->field_name,
-                        dup_field->field_name) == 0)
+      if (system_charset_info->strcasecmp(sql_field->field_name, dup_field->field_name) == 0)
       {
 	/*
 	  If this was a CREATE ... SELECT statement, accept a field
@@ -950,11 +948,9 @@ static int prepare_create_table(Session *session,
       it= alter_info->create_list.begin();
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
-	     my_strcasecmp(system_charset_info,
-			   column->field_name.data(),
-			   sql_field->field_name))
+	     system_charset_info->strcasecmp(column->field_name.data(), sql_field->field_name))
       {
-	field++;
+        field++;
       }
 
       if (!sql_field)
@@ -965,8 +961,7 @@ static int prepare_create_table(Session *session,
 
       while ((dup_column= cols2++) != column)
       {
-        if (!my_strcasecmp(system_charset_info,
-                           column->field_name.data(), dup_column->field_name.data()))
+        if (!system_charset_info->strcasecmp(column->field_name.data(), dup_column->field_name.data()))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
@@ -1531,9 +1526,11 @@ bool create_table(Session *session,
 static bool
 check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KeyInfo *key=start ; key != end ; key++)
-    if (!my_strcasecmp(system_charset_info,name,key->name))
+  for (KeyInfo *key= start; key != end; key++)
+  {
+    if (!system_charset_info->strcasecmp(name, key->name))
       return 1;
+  }
   return 0;
 }
 

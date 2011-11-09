@@ -514,7 +514,7 @@ class OptionCmp
 public:
   bool operator() (const option &a, const option &b)
   {
-    return my_strcasecmp(&my_charset_utf8_general_ci, a.name, b.name);
+    return my_charset_utf8_general_ci.strcasecmp(a.name, b.name);
   }
 };
 
