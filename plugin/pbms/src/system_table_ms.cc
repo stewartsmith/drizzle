@@ -2032,7 +2032,7 @@ bool MSMetaDataTable::matchAlias(uint32_t repo_id, uint64_t offset, const char *
 		MetaData md(iMetData->getBuffer(0), iMetDataSize);
 		
 		blob_alias = md.findAlias();
-		matched = (blob_alias && !my_strcasecmp(&UTF8_CHARSET, blob_alias, alias));
+		matched = (blob_alias && !UTF8_CHARSET.strcasecmp(blob_alias, alias));
 	}
 	
 	return_(matched);
@@ -2101,7 +2101,7 @@ void MSMetaDataTable::insertRow(char *buf)
 	data_len = iMetDataSize;
 	
 #ifdef HAVE_ALIAS_SUPPORT
-	if ((!alias) && !my_strcasecmp(&UTF8_CHARSET, MS_ALIAS_TAG, tag)) {
+	if ((!alias) && !UTF8_CHARSET.strcasecmp(MS_ALIAS_TAG, tag)) {
 		reset_alias = true;
 		memcpy(data + data_len, MS_ALIAS_TAG, meta_name->length()); // Use my alias tag so we do not need to wory about case.
 		alias = data + data_len + meta_name->length() + 1; // Set the alias to the value location.
@@ -2300,7 +2300,7 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 	char *location;
 	const char *value, *alias = NULL, *n_tag = n_meta_name.c_str(), *o_tag = o_meta_name.c_str();
 	
-	if (!my_strcasecmp(&UTF8_CHARSET, o_tag, n_tag))
+	if (!UTF8_CHARSET.strcasecmp(o_tag, n_tag))
 		n_tag = NULL;
 		
 	MetaData md;
@@ -2345,7 +2345,7 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 	data = iMetData->getBuffer(0);
 		
 #ifdef HAVE_ALIAS_SUPPORT
-	if ((!alias) && !my_strcasecmp(&UTF8_CHARSET, MS_ALIAS_TAG, n_tag)) {
+	if ((!alias) && !UTF8_CHARSET.strcasecmp(MS_ALIAS_TAG, n_tag)) {
 		reset_alias = true;
 		memcpy(data + iMetDataSize, MS_ALIAS_TAG, n_meta_name.length()); // Use my alias tag so we do not need to wory about case.
 		alias = data + iMetDataSize + n_meta_name.length() + 1; // Set the alias to the value location.

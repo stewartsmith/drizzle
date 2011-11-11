@@ -260,57 +260,57 @@ struct charset_info_st
 
   bool isalpha(unsigned char c) const
   {
-    return (ctype + 1)[c] & (_MY_U | _MY_L);
+    return ctype[c + 1] & (_MY_U | _MY_L);
   }
 
   bool isupper(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_U;
+    return ctype[c + 1] & _MY_U;
   }
 
   bool islower(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_L;
+    return ctype[c + 1] & _MY_L;
   }
 
   bool isdigit(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_NMR;
+    return ctype[c + 1] & _MY_NMR;
   }
 
   bool isxdigit(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_X;
+    return ctype[c + 1] & _MY_X;
   }
 
   bool isalnum(unsigned char c) const
   {
-    return (ctype + 1)[c] & (_MY_U | _MY_L | _MY_NMR);
+    return ctype[c + 1] & (_MY_U | _MY_L | _MY_NMR);
   }
 
   bool isspace(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_SPC;
+    return ctype[c + 1] & _MY_SPC;
   }
 
   bool ispunct(unsigned char c) const  
   {
-    return (ctype + 1)[c] & _MY_PNT;
+    return ctype[c + 1] & _MY_PNT;
   }
 
   bool isprint(unsigned char c) const
   {
-    return (ctype + 1)[c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR | _MY_B);
+    return ctype[c + 1] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR | _MY_B);
   }
 
   bool isgraph(unsigned char c) const
   {
-    return (ctype + 1)[c] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR);
+    return ctype[c + 1] & (_MY_PNT | _MY_U | _MY_L | _MY_NMR);
   }
 
   bool iscntrl(unsigned char c) const
   {
-    return (ctype + 1)[c] & _MY_CTR;
+    return ctype[c + 1] & _MY_CTR;
   }
 
   bool isvar(char c) const
@@ -341,6 +341,21 @@ struct charset_info_st
   size_t strnxfrm(unsigned char *dst, const size_t dstlen, const unsigned char *src, const uint32_t srclen) const
   {
     return coll->strnxfrm(this, dst, dstlen, dstlen, src, srclen, MY_STRXFRM_PAD_WITH_SPACE);
+  }
+
+  int strcasecmp(const char *s, const char *t) const
+  {
+    return coll->strcasecmp(this, s, t);
+  }
+
+  size_t caseup_str(char* src) const
+  {
+    return cset->caseup_str(this, src);
+  }
+
+  size_t casedn_str(char* src) const
+  {
+    return cset->casedn_str(this, src);
   }
 };
 
@@ -574,11 +589,6 @@ inline static int my_wildcmp(const charset_info_st *cs,
   return (cs->coll->wildcmp(cs, str, strend, w_str, w_strend, escape, w_one, w_many));
 }
 
-inline static int my_strcasecmp(const charset_info_st *cs, const char *s, const char *t)
-{
-  return (cs->coll->strcasecmp(cs, s, t));
-}
-
 template <typename CHAR_T>
 inline static size_t my_charpos(const charset_info_st *cs, 
                                 const CHAR_T *b, const CHAR_T* e, size_t num)
@@ -601,16 +611,6 @@ inline static unsigned int my_mbcharlen(const charset_info_st *cs, uint32_t c)
   return cs->cset->mbcharlen(cs, c);
 }
 
-
-inline static size_t my_caseup_str(const charset_info_st *cs, char *src)
-{
-  return cs->cset->caseup_str(cs, src);
-}
-
-inline static size_t my_casedn_str(const charset_info_st *cs, char *src)
-{
-  return cs->cset->casedn_str(cs, src);
-}
 
 inline static long my_strntol(const charset_info_st *cs, 
                               const char* s, const size_t l, const int base, char **e, int *err)

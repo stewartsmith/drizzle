@@ -589,7 +589,6 @@ public:
   static Create_func_locate s_singleton;
 };
 
-
 class Create_func_lpad : public Create_func_arg3
 {
 public:
@@ -944,9 +943,8 @@ Item* Create_udf_func::create(Session *session, str_ref name, List<Item> *item_l
 Item* Create_udf_func::create(Session *session, const plugin::Function *udf, List<Item> *item_list)
 {
   assert(udf);
-  int arg_count= item_list ? item_list->size() : 0;
   Item_func* func= (*udf)(&session->mem);
-  if (!func->check_argument_count(arg_count))
+  if (!func->check_argument_count(item_list ? item_list->size() : 0))
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), func->func_name());
     return NULL;
@@ -1159,7 +1157,8 @@ Create_func_last_insert_id Create_func_last_insert_id::s_singleton;
 Item* Create_func_last_insert_id::create_native(Session *session, str_ref name, List<Item> *item_list)
 {
   int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) {
+  switch (arg_count) 
+  {
   case 0:
     {
       return new (session->mem) Item_func_last_insert_id();
@@ -1169,37 +1168,28 @@ Item* Create_func_last_insert_id::create_native(Session *session, str_ref name, 
       Item *param_1= item_list->pop();
       return new (session->mem) Item_func_last_insert_id(param_1);
     }
-  default:
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   }
+  my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   return NULL;
 }
-
 
 Create_func_lcase Create_func_lcase::s_singleton;
 Create_func_least Create_func_least::s_singleton;
 
 Item* Create_func_least::create_native(Session *session, str_ref name, List<Item> *item_list)
 {
-  int arg_count= item_list ? item_list->size() : 0;
-  if (arg_count < 2)
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
-    return NULL;
-  }
-
-  return new (session->mem) Item_func_min(*item_list);
+  if (item_list && item_list->size() >= 2)
+    return new (session->mem) Item_func_min(*item_list);
+  my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
+  return NULL;
 }
 
 Create_func_load_file Create_func_load_file::s_singleton;
 Create_func_locate Create_func_locate::s_singleton;
 
-Item*
-Create_func_locate::create_native(Session *session, str_ref name,
-                                  List<Item> *item_list)
+Item* Create_func_locate::create_native(Session *session, str_ref name, List<Item> *item_list)
 {
-  int arg_count= item_list ? item_list->size() : 0;
-  switch (arg_count) 
+  switch (item_list ? item_list->size() : 0) 
   {
   case 2:
     {
@@ -1216,20 +1206,16 @@ Create_func_locate::create_native(Session *session, str_ref name,
       /* Yes, parameters in that order : 2, 1, 3 */
       return new (session->mem) Item_func_locate(param_2, param_1, param_3);
     }
-  default:
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   }
+  my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   return NULL;
 }
 
 Create_func_make_set Create_func_make_set::s_singleton;
 
-Item*
-Create_func_make_set::create_native(Session *session_arg, str_ref name,
-                                    List<Item> *item_list)
+Item* Create_func_make_set::create_native(Session *session_arg, str_ref name, List<Item> *item_list)
 {
-  int arg_count= item_list ? item_list->size() : 0;
-  if (arg_count < 2)
+  if (not item_list || item_list->size() < 2)
   {
     my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
     return NULL;
@@ -1241,8 +1227,7 @@ Create_func_make_set::create_native(Session *session_arg, str_ref name,
 
 Create_func_oct Create_func_oct::s_singleton;
 
-Item*
-Create_func_oct::create(Session *session, Item *arg1)
+Item* Create_func_oct::create(Session *session, Item *arg1)
 {
   Item *i10= new (session->mem) Item_int((int32_t) 10,2);
   Item *i8= new (session->mem) Item_int((int32_t) 8,1);
@@ -1260,27 +1245,25 @@ Item* Create_func_round::create_native(Session *session, str_ref name, List<Item
   switch (item_list ? item_list->size() : 0) 
   {
   case 1:
-  {
-    Item *param_1= item_list->pop();
-    Item *i0 = new (session->mem) Item_int("0", 0, 1);
-    return new (session->mem) Item_func_round(param_1, i0, 0);
-  }
+    {
+      Item *param_1= item_list->pop();
+      Item *i0 = new (session->mem) Item_int("0", 0, 1);
+      return new (session->mem) Item_func_round(param_1, i0, 0);
+    }
   case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    return new (session->mem) Item_func_round(param_1, param_2, 0);
+    {
+      Item *param_1= item_list->pop();
+      Item *param_2= item_list->pop();
+      return new (session->mem) Item_func_round(param_1, param_2, 0);
+    }
   }
-  default:
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
-  }
+  my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   return NULL;
 }
 
 Create_func_space Create_func_space::s_singleton;
 
-Item*
-Create_func_space::create(Session *session, Item *arg1)
+Item* Create_func_space::create(Session *session, Item *arg1)
 {
   /**
     TODO: Fix Bug#23637
@@ -1313,9 +1296,8 @@ Item* Create_func_unix_timestamp::create_native(Session *session, str_ref name, 
     return new (session->mem) Item_func_unix_timestamp();
   case 1:
     return new (session->mem) Item_func_unix_timestamp(item_list->pop());
-  default:
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   }
+  my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.data());
   return NULL;
 }
 

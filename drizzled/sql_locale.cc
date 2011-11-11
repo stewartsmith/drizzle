@@ -2603,7 +2603,7 @@ MY_LOCALE *my_locale_by_name(const char *name)
   MY_LOCALE **locale;
   for (locale= my_locales; *locale != NULL; locale++)
   {
-    if (!my_strcasecmp(&my_charset_utf8_general_ci, (*locale)->name, name))
+    if (!my_charset_utf8_general_ci.strcasecmp((*locale)->name, name))
     {
       // Check that locale is on its correct position in the array
       assert((*locale) == my_locales[(*locale)->number]);

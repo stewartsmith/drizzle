@@ -603,7 +603,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
+    if (ext == NULL || system_charset_info->strcasecmp(ext, DEFAULT_FILE_EXTENSION) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
@@ -1324,7 +1324,7 @@ innobase_strcasecmp(
   const char* a,  /*!< in: first string to compare */
   const char* b)  /*!< in: second string to compare */
 {
-  return(my_strcasecmp(system_charset_info, a, b));
+  return(system_charset_info->strcasecmp(a, b));
 }
 
 /******************************************************************//**
@@ -1335,7 +1335,7 @@ innobase_casedn_str(
 /*================*/
   char* a)  /*!< in/out: string to put in lower case */
 {
-  my_casedn_str(system_charset_info, a);
+  system_charset_info->casedn_str(a);
 }
 
 UNIV_INTERN

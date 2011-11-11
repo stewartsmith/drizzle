@@ -30,7 +30,6 @@ class Boolean : public Item_basic_constant
 
 public:
   Boolean(const char *str_arg, bool arg) :
-    Item_basic_constant(),
     value(arg)
   {
     max_length= value ? 4 : 5;
@@ -84,9 +83,8 @@ public:
     return value_buffer;
   }
 
-  type::Decimal* val_decimal(type::Decimal *dec)
+  type::Decimal* val_decimal(type::Decimal*)
   {
-    (void)dec;
     return 0;
   }
 

@@ -278,7 +278,7 @@ void TableList::print(Session *session, String *str)
       str->append_identifier(str_ref(table_name));
       cmp_name= table_name;
     }
-    if (my_strcasecmp(table_alias_charset, cmp_name, alias) && alias && alias[0])
+    if (table_alias_charset->strcasecmp(cmp_name, alias) && alias && alias[0])
     {
       str->append(' ');
       str->append_identifier(boost::to_lower_copy(string(alias)));

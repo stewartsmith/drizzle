@@ -752,14 +752,14 @@ innobase_strcasecmp(
 	const char*	a,
 	const char*	b)
 {
-	return(my_strcasecmp(&my_charset_utf8_general_ci, a, b));
+	return my_charset_utf8_general_ci.strcasecmp(a, b);
 }
 
 void
 innobase_casedn_str(
 	char*	a)
 {
-	my_casedn_str(&my_charset_utf8_general_ci, a);
+	my_charset_utf8_general_ci.casedn_str(a);
 }
 
 UNIV_INTERN

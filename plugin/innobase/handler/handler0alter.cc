@@ -516,8 +516,7 @@ innobase_create_key_def(
 	/* If there is a primary key, it is always the first index
 	defined for the table. */
 
-	new_primary = !my_strcasecmp(system_charset_info,
-				     key_info->name, "PRIMARY");
+	new_primary = !system_charset_info->strcasecmp(key_info->name, "PRIMARY");
 
 	/* If there is a UNIQUE INDEX consisting entirely of NOT NULL
 	columns and if the index does not contain column prefix(es)
@@ -556,8 +555,8 @@ innobase_create_key_def(
 		UNIQUE INDEX, it must be converted to a secondary index. */
 
 		if (dict_index_get_nth_col(index, 0)->mtype == DATA_SYS
-		    || !my_strcasecmp(system_charset_info,
-				      index->name, "PRIMARY")) {
+		    || !system_charset_info->strcasecmp(index->name, "PRIMARY")) 
+    {
 			index = dict_table_get_next_index(index);
 		}
 
