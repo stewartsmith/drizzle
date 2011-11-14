@@ -18,4 +18,6 @@ Make a Donation
 
 Drizzle is an Associated Project at the
 `Software in the Public Interest (SPI) <http://spi-inc.org/>`_.  You
-can make a financial donation to Drizzle through the SPI.
+can `make a financial donation to Drizzle 
+<https://co.clickandpledge.com/advanced/default.aspx?wid=46722>`_ through the 
+SPI.

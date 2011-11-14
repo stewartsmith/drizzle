@@ -77,13 +77,21 @@ Or, execute ``shtudown``:
 
 The ``shutdown`` command is case-sensitive.
 
-Output
-------
+Output and Logging
+------------------
 
 :program:`drizzled` does *not* close or redirect output to ``STDOUT`` or
 ``STDERR`` to a log file or logging facility like :program:`syslog`.
-You should redirect ``STDOUT`` and ``STDERR`` to a log file as in the above
-script example for starting Drizzle manually.
+When starting Drizzle, you should redirect ``STDOUT`` and ``STDERR`` to a log 
+file or to /dev/null, as in the above script example when starting Drizzle.
+
+When running :program:`drizzled` manually from a console, just allowing the
+output to be printed for you can of course be useful.
+
+Note that beginning with the first ``Drizzle 7.1 Beta 2011.10.28`` drizzled
+will also log messages via syslog and this is *in addition* to using ``STDOUT``
+and ``STDERR``.
+
 
 Signaling
 ---------

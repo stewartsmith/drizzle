@@ -12,11 +12,11 @@ to ``STDERR``.  In many cases, this is sufficient if ``STDERR`` is
 redirected to a log file when
 :ref:`starting Drizzle <starting_and_stopping_drizzled>`.
 
-Since :program:`syslog` is the standard UNIX logging facility,
-the :ref:`syslog_plugin` plugin is also loaded by default which will log error
-messages to the system log (:file:`/var/log/syslog` on Ubuntu for example).
-However, you must start :program:`drizzled` with
-:option:`--syslog.errmsg-enable` to enable this feature.
+Note that beginning with the first ``Drizzle 7.1 Beta 2011.10.28`` drizzled
+will **also** log messages via syslog and this is *in addition* to using 
+``STDOUT`` and ``STDERR``. This functionality is provided by the 
+:ref:`syslog_plugin` plugin. (For example on Ubuntu these messages are written
+to :file:`/var/log/syslog`).
 
 Queries
 -------

@@ -73,23 +73,3 @@ You can then install Drizzle by running the following command:
 
    sudo yum install drizzle7-server drizzle7-client
 
-Compiling from Source
----------------------
-To compile from source you will need to add the repositories described above, and then install the following packages:
-
- * bzr
- * boost-devel
- * autoconf
- * automake
- * gcc
- * gcc-c++
- * libtool
- * gperf
- * libuuid-devel (part of e2fsprogs-devel on older RedHat based distributions)
- * zlib-devel
- * pcre-devel
- * readline-devel
- * flex
- * bison
-
-You will then be able to compile from source in the normal way.
