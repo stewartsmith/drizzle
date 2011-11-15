@@ -311,23 +311,22 @@ static size_t mm_check_and_free(MissingMemoryPtr mm_ptr, void *p, bool freeme)
 	unsigned char	*ptr = (unsigned char *) p - MEM_DEBUG_HDR_SIZE;
 	MemoryDebugPtr	debug_ptr = (MemoryDebugPtr) ptr;
 	size_t			size = debug_ptr->size;
-	long			a_value;  /* Added to simplfy debugging. */
 
 	if (!ASSERT(p)) 
 		return(0);
 	if (!ASSERT(((size_t) p & 1L) == 0)) 
 		return(0);
-	a_value = MEM_FREED;
+
 	if (debug_ptr->check == MEM_FREED) { 
 		mm_println("MM ERROR: Pointer already freed 'debug_ptr->check != MEM_FREED'");
 		return(0);
 	}
-	a_value = MEM_HEADER;
+
 	if (debug_ptr->check != MEM_HEADER) {
 		mm_println("MM ERROR: Header not valid 'debug_ptr->check != MEM_HEADER'");
 		return(0);
 	}
-	a_value = MEM_TRAILER_BYTE;
+
 	if (!(*((unsigned char *) ptr + size + MEM_DEBUG_HDR_SIZE) == MEM_TRAILER_BYTE &&
 			*((unsigned char *) ptr + size + MEM_DEBUG_HDR_SIZE + 1L) == MEM_TRAILER_BYTE)) { 
 		mm_throw_assertion(mm_ptr, p, "Trailer overwritten");
