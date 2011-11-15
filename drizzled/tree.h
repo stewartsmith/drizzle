@@ -35,13 +35,12 @@ typedef int (*tree_walk_action)(void *,uint32_t,void *);
 typedef enum { free_init, free_free, free_end } TREE_FREE;
 typedef void (*tree_element_free)(void*, TREE_FREE, void *);
 
+/*
 typedef struct st_tree_element {
   struct st_tree_element *left,*right;
   uint32_t count:31,
-	 colour:1;			/* black is marked as 1 */
+	 colour:1;			// black is marked as 1
 } TREE_ELEMENT;
-
-static const int TREE_ELEMENT_EXTRA_SIZE= (sizeof(TREE_ELEMENT) + sizeof(void*));
 
 
 typedef struct st_tree {
@@ -53,38 +52,80 @@ typedef struct st_tree {
   qsort_cmp2 compare;
   void *custom_arg;
   memory::Root mem_root;
-  bool with_delete;
-  tree_element_free free;
+  bool with_delete;  // directly free leaf memory?
+  tree_element_free free;  // leaf deletion callback
   uint32_t flag;
 } TREE;
 
-/* Functions on whole tree */
+// Functions on whole tree
 void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
                uint32_t size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);
 void reset_tree(TREE*);
 
-/* 
-  similar to delete tree, except we do not free() blocks in mem_root
-*/
+//
+//  similar to delete tree, except we do not free() blocks in mem_root
+//
 #define is_tree_inited(tree) ((tree)->root != 0)
 
-/* Functions on leafs */
+// Functions on leaves
+
 TREE_ELEMENT *tree_insert(TREE *tree,void *key, uint32_t key_size,
                           void *custom_arg);
 int tree_walk(TREE *tree,tree_walk_action action,
 	      void *argument, TREE_WALK visit);
-int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg);
-void *tree_search_key(TREE *tree, const void *key,
-                      TREE_ELEMENT **parents, TREE_ELEMENT ***last_pos,
-                      enum ha_rkey_function flag, void *custom_arg);
-void *tree_search_edge(TREE *tree, TREE_ELEMENT **parents,
-                        TREE_ELEMENT ***last_pos, int child_offs);
-void *tree_search_next(TREE *tree, TREE_ELEMENT ***last_pos, int l_offs,
-                       int r_offs);
-ha_rows tree_record_pos(TREE *tree, const void *key,
-                        enum ha_rkey_function search_flag, void *custom_arg);
+*/
+class Tree_Element
+{
+public:
+	Tree_Element *left,*right;
+	uint32_t count:31,
+		 	 colour:1;			/* black is marked as 1 */
+};
+
+static const int TREE_ELEMENT_EXTRA_SIZE= (sizeof(Tree_Element) + sizeof(void*));
+
+class Tree
+{
+public:
+	Tree_Element *root, null_element;
+	Tree_Element **parents[MAX_TREE_HEIGHT];
+	uint32_t offset_to_key, elements_in_tree, size_of_element;
+	size_t memory_limit;
+	size_t allocated;
+	qsort_cmp2 compare;
+	void *custom_arg;
+	memory::Root mem_root;
+	bool with_delete;
+	tree_element_free free;
+	uint32_t flag;
+
+	// tree methods
+	void init_tree(size_t default_alloc_size, uint32_t memory_limit,
+				   uint32_t size, qsort_cmp2 compare, bool with_delete,
+				   tree_element_free free_element, void *custom_arg);
+	bool is_inited()
+	{
+		return this->root != 0;
+	}
+	void delete_tree();
+	void reset_tree();
+
+	// leaf methods
+	Tree_Element *tree_insert(void *key, uint32_t key_size, void *custom_arg);
+	int tree_walk(tree_walk_action action, void *argument, TREE_WALK visit);
+	// TODO: rewrite static .cc functions into private methods
+private:
+	void delete_tree_element(Tree_Element *);
+	int tree_walk_left_root_right(Tree_Element *, tree_walk_action,void *);
+	int tree_walk_right_root_left(Tree_Element *, tree_walk_action,void *);
+	void left_rotate(Tree_Element **parent,Tree_Element *leaf);
+	void right_rotate(Tree_Element **parent, Tree_Element *leaf);
+	void rb_insert(Tree_Element ***parent, Tree_Element *leaf);
+	void free_tree(myf free_flags);
+
+};
 
 } /* namespace drizzled */
 

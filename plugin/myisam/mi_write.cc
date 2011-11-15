@@ -97,7 +97,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
     {
       bool local_lock_tree= (lock_tree &&
                                 !(info->bulk_insert &&
-                                  is_tree_inited(&info->bulk_insert[i])));
+                                  info->bulk_insert[i].is_inited()));
       if (local_lock_tree)
       {
 	share->keyinfo[i].version++;
@@ -188,7 +188,7 @@ err2:
 
 int _mi_ck_write(MI_INFO *info, uint32_t keynr, unsigned char *key, uint32_t key_length)
 {
-  if (info->bulk_insert && is_tree_inited(&info->bulk_insert[keynr]))
+  if (info->bulk_insert && info->bulk_insert[keynr].is_inited())
   {
     return(_mi_ck_write_tree(info, keynr, key, key_length));
   }
@@ -716,7 +716,7 @@ int _mi_ck_write_tree(register MI_INFO *info, uint32_t keynr, unsigned char *key
 {
   int error;
 
-  error= tree_insert(&info->bulk_insert[keynr], key,
+  error= info->bulk_insert[keynr].tree_insert(key,
          key_length + info->s->rec_reflength,
          info->bulk_insert[keynr].custom_arg) ? 0 : HA_ERR_OUT_OF_MEM ;
 
@@ -797,8 +797,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
   else
     cache_size/=total_keylength*16;
 
-  info->bulk_insert=(TREE *)
-    malloc((sizeof(TREE)*share->base.keys+
+  info->bulk_insert=(Tree *) malloc((sizeof(Tree)*share->base.keys+
            sizeof(bulk_insert_param)*num_keys));
 
   if (!info->bulk_insert)
@@ -812,8 +811,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
       params->info=info;
       params->keynr=i;
       /* Only allocate a 16'th of the buffer at a time */
-      init_tree(&info->bulk_insert[i],
-                cache_size * key[i].maxlength,
+      info->bulk_insert[i].init_tree(cache_size * key[i].maxlength,
                 cache_size * key[i].maxlength, 0,
 		(qsort_cmp2)keys_compare, false,
 		(tree_element_free) keys_free, (void *)params++);
@@ -829,8 +827,8 @@ void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx)
 {
   if (info->bulk_insert)
   {
-    if (is_tree_inited(&info->bulk_insert[inx]))
-      reset_tree(&info->bulk_insert[inx]);
+    if (info->bulk_insert[inx].is_inited())
+      info->bulk_insert[inx].reset_tree();
   }
 }
 
@@ -841,9 +839,9 @@ void mi_end_bulk_insert(MI_INFO *info)
     uint32_t i;
     for (i=0 ; i < info->s->base.keys ; i++)
     {
-      if (is_tree_inited(& info->bulk_insert[i]))
+      if (info->bulk_insert[i].is_inited())
       {
-        delete_tree(& info->bulk_insert[i]);
+        info->bulk_insert[i].delete_tree();
       }
     }
     free((void *)info->bulk_insert);

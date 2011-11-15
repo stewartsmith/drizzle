@@ -249,7 +249,7 @@ struct st_myisam_info {
   MI_BLOB     *blobs;			/* Pointer to blobs */
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
-  drizzled::TREE	        *bulk_insert;
+  drizzled::Tree	*bulk_insert;
   drizzled::Session *in_use;                      /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   unsigned char *buff,				/* Temp area for key                */

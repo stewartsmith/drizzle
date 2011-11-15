@@ -3048,7 +3048,7 @@ void Item_func_group_concat::cleanup()
       table= 0;
       if (tree)
       {
-        delete_tree(tree);
+        tree->delete_tree();
         tree= 0;
       }
 
@@ -3083,7 +3083,7 @@ void Item_func_group_concat::clear()
   warning_for_row= false;
   no_appended= true;
   if (tree)
-    reset_tree(tree);
+    tree->reset_tree();
   if (distinct)
     unique_filter->reset();
   /* No need to reset the table as we never call write_row */
@@ -3121,9 +3121,9 @@ bool Item_func_group_concat::add()
       row_eligible= false;
   }
 
-  TREE_ELEMENT *el= 0;                          // Only for safety
+  Tree_Element *el= 0;                          // Only for safety
   if (row_eligible && tree)
-    el= tree_insert(tree, table->record[0] + table->getShare()->null_bytes, 0,
+    el= tree->tree_insert(table->record[0] + table->getShare()->null_bytes, 0,
                     tree->custom_arg);
   /*
     If the row is not a duplicate (el->count == 1)
@@ -3273,7 +3273,7 @@ bool Item_func_group_concat::setup(Session *session)
       syntax of this function). If there is no ORDER BY clause, we don't
       create this tree.
     */
-    init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
+     tree->init_tree((uint32_t) min(session->variables.max_heap_table_size,
                                    (uint64_t)(session->variables.sortbuff_size/16)), 
               0,
               tree_key_length,
@@ -3325,8 +3325,7 @@ String* Item_func_group_concat::val_str(String* )
     return 0;
   if (no_appended && tree)
     /* Tree is used for sorting as in ORDER BY */
-    tree_walk(tree, (tree_walk_action)&dump_leaf_key, (void*)this,
-              left_root_right);
+    tree->tree_walk((tree_walk_action)&dump_leaf_key, (void*)this, left_root_right);
   if (count_cut_values && !warning)
   {
     /*
