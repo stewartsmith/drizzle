@@ -23,7 +23,7 @@ see which options a plugin provides by running
 ``drizzled --plugin-add PLUGIN --help`` where ``PLUGIN`` is the name of any
 plugin.  For example:
 
-.. code-block:: bash
+.. code-block:: none
 
    $ drizzled --plugin-add query_log --help
    sbin/drizzled  Ver 2011.08.25.2411 for pc-linux-gnu on i686 (Source distribution (trunk))
@@ -149,9 +149,9 @@ including hidden temp files created by your editor while editing config files
 in this directory.)
 
 A good strategy for configuring Drizzle with multiple config files is to
-put :ref:`drizzled_options` in :file:`/etc/drizzle/drizzled.cnf`
+put general :ref:`drizzled_options` in :file:`/etc/drizzle/drizzled.cnf`
 (:file:`/etc/drizzle` is the default :option:`--config-dir` value)
-and plugin options in spearate config files in
+and any options related to a plugin in a separate config file in
 :file:`/etc/drizzle/conf.d/`.  For example:
 
 .. code-block:: bash
@@ -168,8 +168,8 @@ and plugin options in spearate config files in
 
 .. code-block:: ini
 
-   plugin-remove=auth_all
-   plugin-add=auth_file
+   server-id=42
+   core-file
 
 .. code-block:: bash
 
@@ -177,6 +177,11 @@ and plugin options in spearate config files in
 
 .. code-block:: ini
 
+   # drizzled option to load the auth_file plugin
+   plugin-remove=auth_all
+   plugin-add=auth_file
+   
+   # Options for the plugin itself
    [auth-file]
    users=/etc/drizzle/users
 

@@ -81,7 +81,7 @@ by adding the following to :file:`/etc/drizzle/drizzled.cnf`:
 
 Then connect to Drizzle like:
 
-.. code-block:: bash
+.. code-block:: none
 
    $ bin/drizzle -P --protocol mysql-plugin-auth
    Enter password: [Enter your system password here]
@@ -99,9 +99,9 @@ You must use ``--protocol mysql-plugin-auth`` for auth_pam to work. This
 protocol sends the password in plaintext to Drizzle, which
 is required for PAM based authentication.
 
-Note that you don't need to specify the ``-u`` or ``--user`` argument, since
-Drizzle will default to using your system username, which is exactly what we
-want when using auth_pam.
+Note that you typically don't need to specify the ``-u`` or ``--user`` argument, 
+since Drizzle will default to using your system username, which is exactly what 
+we want when using auth_pam.
 
 .. _auth_pam_security:
 
