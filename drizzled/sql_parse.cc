@@ -909,7 +909,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   if (not table->is_derived_table() && table->db.data())
   {
-    my_casedn_str(files_charset_info, table->db.str_);
+    files_charset_info->casedn_str(table->db.str_);
     if (not schema::check(*session, identifier::Schema(table->db)))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
@@ -958,8 +958,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     TableList *first_table= (TableList*) table_list.first;
     for (TableList *tables= first_table; tables; tables= tables->next_local)
     {
-      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-        not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
+      if (not table_alias_charset->strcasecmp(alias_str, tables->alias) &&
+        not system_charset_info->strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
       {
         my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
         return NULL;
@@ -974,9 +974,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       element
       We don't use the offsetof() macro here to avoid warnings from gcc
     */
-    previous_table_ref= (TableList*) ((char*) table_list.next -
-                                       ((char*) &(ptr->next_local) -
-                                        (char*) ptr));
+    previous_table_ref= (TableList*) ((char*) table_list.next - ((char*) &(ptr->next_local) - (char*) ptr));
     /*
       Set next_name_resolution_table of the previous table reference to point
       to the current table reference. In effect the list
@@ -1049,16 +1047,13 @@ void Select_Lex::init_nested_join(Session& session)
     - 0, otherwise
 */
 
-TableList *Select_Lex::end_nested_join(Session *)
+TableList *Select_Lex::end_nested_join()
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
   assert(embedding);
-  ptr= embedding;
+  TableList* ptr= embedding;
   join_list= ptr->getJoinList();
   embedding= ptr->getEmbedding();
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.size() == 1)
   {
     TableList *embedded= &nested_join->join_list.front();
@@ -1066,12 +1061,12 @@ TableList *Select_Lex::end_nested_join(Session *)
     embedded->setJoinList(join_list);
     embedded->setEmbedding(embedding);
     join_list->push_front(embedded);
-    ptr= embedded;
+    return embedded;
   }
-  else if (nested_join->join_list.size() == 0)
+  else if (not nested_join->join_list.size())
   {
     join_list->pop();
-    ptr= NULL;                                     // return value
+    return NULL;
   }
   return ptr;
 }
@@ -1202,9 +1197,7 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  for (TableList *tables= (TableList*) table_list.first;
-       tables;
-       tables= tables->next_local)
+  for (TableList *tables= (TableList*) table_list.first; tables; tables= tables->next_local)
   {
     tables->lock_type= lock_type;
   }
@@ -1555,10 +1548,10 @@ bool check_string_char_length(str_ref str, const char *err_msg,
   int well_formed_error;
   uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str.size() == res)
+  if (!well_formed_error && str.size() == res)
     return false;
 
-  if (!no_error)
+  if (not no_error)
     my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }

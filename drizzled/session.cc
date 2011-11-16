@@ -104,7 +104,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length 
     && field_name.size() == other.field_name.size()
-    && not my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
+    && not system_charset_info->strcasecmp(field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
@@ -283,7 +283,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
-  thr_lock_owner_init(&main_lock_id, &lock_info);
+  main_lock_id.info= &lock_info;
 
   plugin::EventObserver::registerSessionEvents(*this);
 }

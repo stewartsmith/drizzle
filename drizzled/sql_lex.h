@@ -590,8 +590,8 @@ public:
                                lex_string_t *option= 0);
   TableList* get_table_list();
   void init_nested_join(Session&);
-  TableList *end_nested_join(Session *session);
-  TableList *nest_last_join(Session *session);
+  TableList *end_nested_join();
+  TableList *nest_last_join(Session*);
   void add_joined_table(TableList *table);
   TableList *convert_right_join();
   List<Item>* get_item_list();

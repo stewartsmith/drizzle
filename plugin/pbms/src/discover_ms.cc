@@ -122,7 +122,7 @@ static bool
 check_if_keyname_exists(const char *name, KEY *start, KEY *end)
 {
   for (KEY *key=start ; key != end ; key++)
-    if (!my_strcasecmp(system_charset_info,name,key->name))
+    if (!system_charset_info->strcasecmp(name,key->name))
       return 1;
   return 0;
 }
@@ -438,9 +438,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     /* Check if we have used the same field name before */
     for (dup_no=0; (dup_field=it2++) != sql_field; dup_no++)
     {
-      if (my_strcasecmp(system_charset_info,
-			sql_field->field_name,
-			dup_field->field_name) == 0)
+      if (system_charset_info->strcasecmp(sql_field->field_name, dup_field->field_name) == 0)
       {
 	/*
 	  If this was a CREATE ... SELECT statement, accept a field
@@ -617,7 +615,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     else
       (*key_count)--;
     if (key->DOT_STR(name) && !tmp_table && (key->type != Key::PRIMARY) &&
-	!my_strcasecmp(system_charset_info,key->DOT_STR(name),primary_key_name))
+	!system_charset_info->strcasecmp(key->DOT_STR(name),primary_key_name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->DOT_STR(name));
       DBUG_RETURN(TRUE);
@@ -759,11 +757,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
       it= alter_info->create_list;
       field=0;
-      while ((sql_field=it++) &&
-	     my_strcasecmp(system_charset_info,
-			   column->DOT_STR(field_name),
-			   sql_field->field_name))
-	field++;
+      while ((sql_field=it++) && system_charset_info->strcasecmp(column->DOT_STR(field_name), sql_field->field_name))
+       field++;
       if (!sql_field)
       {
 	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name);
@@ -771,8 +766,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       }
       while ((dup_column= cols2++) != column)
       {
-        if (!my_strcasecmp(system_charset_info,
-	     	           column->DOT_STR(field_name), dup_column->DOT_STR(field_name)))
+        if (!system_charset_info->strcasecmp(column->DOT_STR(field_name), dup_column->DOT_STR(field_name)))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),

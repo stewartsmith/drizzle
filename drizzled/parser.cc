@@ -212,12 +212,9 @@ void my_parse_error(const char *message)
 
 bool check_reserved_words(str_ref name)
 {
-  if (!my_strcasecmp(system_charset_info, name.data(), "GLOBAL") ||
-      !my_strcasecmp(system_charset_info, name.data(), "LOCAL") ||
-      !my_strcasecmp(system_charset_info, name.data(), "SESSION"))
-    return true;
-
-  return false;
+  return not system_charset_info->strcasecmp(name.data(), "GLOBAL") 
+    || not system_charset_info->strcasecmp(name.data(), "LOCAL")
+    || not system_charset_info->strcasecmp(name.data(), "SESSION");
 }
 
 
@@ -330,13 +327,13 @@ bool checkFieldIdent(LEX *lex, str_ref schema_name, str_ref table_name)
 {
   TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
-  if (schema_name.size() && my_strcasecmp(table_alias_charset, schema_name.data(), table->getSchemaName()))
+  if (schema_name.size() && table_alias_charset->strcasecmp(schema_name.data(), table->getSchemaName()))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
     return false;
   }
 
-  if (my_strcasecmp(table_alias_charset, table_name.data(), table->getTableName()))
+  if (table_alias_charset->strcasecmp(table_name.data(), table->getTableName()))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.data());
     return false;

@@ -29,12 +29,13 @@ namespace drizzled {
 
 /** Get the value of a variable as a double. */
 
-double user_var_entry::val_real(bool *null_value)
+double user_var_entry::val_real(bool *null_value) const
 {
-  if ((*null_value= (value == 0)))
+  if ((*null_value= not value))
     return 0.0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     return *(double*) value;
 
@@ -63,10 +64,11 @@ double user_var_entry::val_real(bool *null_value)
 
 int64_t user_var_entry::val_int(bool *null_value) const
 {
-  if ((*null_value= (value == 0)))
-    return 0L;
+  if ((*null_value= not value))
+    return 0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     return (int64_t) *(double*) value;
 
@@ -91,14 +93,14 @@ int64_t user_var_entry::val_int(bool *null_value) const
     break;
   }
 
-  return 0L;					// Impossible
+  assert(false);
+  return 0;					// Impossible
 }
 
 
 /** Get the value of a variable as a string. */
 
-String *user_var_entry::val_str(bool *null_value, String *str,
-                                uint32_t decimals)
+String *user_var_entry::val_str(bool *null_value, String *str, uint32_t decimals) const
 {
   if ((*null_value= not value))
     return NULL;
@@ -129,17 +131,18 @@ String *user_var_entry::val_str(bool *null_value, String *str,
     break;
   }
 
-  return(str);
+  return str;
 }
 
 /** Get the value of a variable as a decimal. */
 
-type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
+type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val) const
 {
-  if ((*null_value= (value == 0)))
+  if ((*null_value= not value))
     return 0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     double2_class_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
     break;
@@ -161,7 +164,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     break;
   }
 
-  return(val);
+  return val;
 }
 
 /**

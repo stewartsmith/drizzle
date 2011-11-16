@@ -77,7 +77,7 @@ public:
   */
   ulong *rec_per_key;
   Table *table;
-  lex_string_t comment;
+  str_ref comment;
 };
 
 

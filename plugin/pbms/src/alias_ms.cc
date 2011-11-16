@@ -544,7 +544,7 @@ bool MSAlias::hasBlobAlias(uint32_t repo_id, uint64_t repo_offset, const char *a
 		
 		blob_alias[BLOB_ALIAS_LENGTH] = 0;
 		if (repoFile->read(blob_alias, offset, alias_size, 0) == alias_size) {
-			found = !my_strcasecmp(&my_charset_utf8_general_ci, blob_alias, alias);
+			found = !my_charset_utf8_general_ci.strcasecmp(blob_alias, alias);
 			if (found)
 				*referenced = (status == MS_BLOB_REFERENCED);
 		}

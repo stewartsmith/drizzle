@@ -318,7 +318,7 @@ static bool prepare_alter_table(Session *session,
     vector<string>::iterator it= drop_columns.begin();
     while (it != drop_columns.end())
     {
-      if (not my_strcasecmp(system_charset_info, field->field_name, it->c_str()))
+      if (not system_charset_info->strcasecmp(field->field_name, it->c_str()))
       {
         /* Reset auto_increment value if it was dropped */
         if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
@@ -347,7 +347,7 @@ static bool prepare_alter_table(Session *session,
     while ((def= def_it++))
     {
       if (def->change &&
-          ! my_strcasecmp(system_charset_info, field->field_name, def->change))
+          ! system_charset_info->strcasecmp(field->field_name, def->change))
 	      break;
     }
 
@@ -373,7 +373,7 @@ static bool prepare_alter_table(Session *session,
 
       for (; alter != alter_info->alter_list.end(); alter++)
       {
-        if (not my_strcasecmp(system_charset_info,field->field_name, alter->name))
+        if (not system_charset_info->strcasecmp(field->field_name, alter->name))
           break;
       }
 
@@ -417,7 +417,7 @@ static bool prepare_alter_table(Session *session,
 
       while ((find= find_it++)) /* Add new columns */
       {
-        if (not my_strcasecmp(system_charset_info,def->after, find->field_name))
+        if (not system_charset_info->strcasecmp(def->after, find->field_name))
           break;
       }
 
@@ -471,7 +471,7 @@ static bool prepare_alter_table(Session *session,
     vector<string>::iterator it= drop_keys.begin();
     while (it != drop_keys.end())
     {
-      if (not my_strcasecmp(system_charset_info, key_name, it->c_str()))
+      if (not system_charset_info->strcasecmp(key_name, it->c_str()))
         break;
       it++;
     }
@@ -486,7 +486,7 @@ static bool prepare_alter_table(Session *session,
     List<Key_part_spec> key_parts;
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
-      if (! key_part->field)
+      if (not key_part->field)
 	      continue;	/* Wrong field (from UNIREG) */
 
       const char *key_part_name= key_part->field->field_name;
@@ -496,10 +496,10 @@ static bool prepare_alter_table(Session *session,
       {
         if (cfield->change)
         {
-          if (not my_strcasecmp(system_charset_info, key_part_name, cfield->change))
+          if (not system_charset_info->strcasecmp(key_part_name, cfield->change))
             break;
         }
-        else if (not my_strcasecmp(system_charset_info, key_part_name, cfield->field_name))
+        else if (not system_charset_info->strcasecmp(key_part_name, cfield->field_name))
           break;
       }
 
@@ -555,7 +555,7 @@ static bool prepare_alter_table(Session *session,
     vector<string>::iterator it= drop_fkeys.begin();
     while (it != drop_fkeys.end())
     {
-      if (! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), it->c_str()))
+      if (! system_charset_info->strcasecmp(original_proto.fk_constraint(j).name().c_str(), it->c_str()))
       {
         break;
       }
@@ -1231,7 +1231,7 @@ static bool internal_alter_table(Session *session,
 
       snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
 
-      my_casedn_str(files_charset_info, old_name);
+      files_charset_info->casedn_str(old_name);
 
       wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
       session->close_data_files_and_morph_locks(original_table_identifier);

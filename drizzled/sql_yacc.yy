@@ -3704,7 +3704,7 @@ select_derived:
             /* for normal joins, $3 != NULL and end_nested_join() != NULL,
                for derived tables, both must equal NULL */
 
-            if (!($$= $1->end_nested_join(Lex.session)) && $3)
+            if (!($$= $1->end_nested_join()) && $3)
               DRIZZLE_YYABORT;
 
             if (!$3 && $$)
@@ -3745,7 +3745,7 @@ select_derived_init:
           {
             Select_Lex *sel= Lex.current_select;
             TableList *embedding;
-            if (!sel->embedding || sel->end_nested_join(Lex.session))
+            if (!sel->embedding || sel->end_nested_join())
             {
               /* we are not in parentheses */
               parser::my_parse_error(YYSession->m_lip);

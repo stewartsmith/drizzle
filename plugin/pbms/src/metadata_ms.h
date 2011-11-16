@@ -83,7 +83,7 @@ public:
 	{
 		char  *metadata = data;
 		
-		while (metadata < eod && my_strcasecmp(&my_charset_utf8_general_ci, metadata, name)) {
+		while (metadata < eod && my_charset_utf8_general_ci.strcasecmp(metadata, name)) {
 			metadata += strlen(metadata) +1;
 			metadata += strlen(metadata) +1;
 		}
@@ -98,7 +98,7 @@ public:
 	{
 		char  *metadata = data;
 		
-		while (metadata < eod && my_strcasecmp(&my_charset_utf8_general_ci, metadata, name)) {
+		while (metadata < eod && my_charset_utf8_general_ci.strcasecmp(metadata, name)) {
 			metadata += strlen(metadata) +1;
 			metadata += strlen(metadata) +1;
 		}

@@ -230,10 +230,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
-  db(null_lex_string()),
-  table_name(null_lex_string()),
-  path(null_lex_string()),
-  normalized_path(null_lex_string()),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -293,10 +289,6 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(null_lex_string()),
-  table_name(null_lex_string()),
-  path(null_lex_string()),
-  normalized_path(null_lex_string()),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -363,10 +355,6 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(null_lex_string()),
-  table_name(null_lex_string()),
-  path(null_lex_string()),
-  normalized_path(null_lex_string()),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -436,10 +424,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(null_lex_string()),
-  table_name(null_lex_string()),
-  path(null_lex_string()),
-  normalized_path(null_lex_string()),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -715,9 +699,9 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       key_part->key_type= 0;
     }
 
-    if (! indx.has_comment())
+    if (not indx.has_comment())
     {
-      keyinfo->comment.assign(NULL, 0);
+      keyinfo->comment.clear();
     }
     else
     {
@@ -948,12 +932,8 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
 
-    lex_string_t comment;
-    if (!pfield.has_comment())
-    {
-      comment.assign("", 0);
-    }
-    else
+    str_ref comment;
+    if (pfield.has_comment())
     {
       comment.assign(mem().strdup(pfield.comment()), pfield.comment().size());
     }
@@ -964,15 +944,13 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
 
     const charset_info_st *charset= &my_charset_bin;
 
-    if (field_type == DRIZZLE_TYPE_BLOB ||
-        field_type == DRIZZLE_TYPE_VARCHAR)
+    if (field_type == DRIZZLE_TYPE_BLOB || field_type == DRIZZLE_TYPE_VARCHAR)
     {
       message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-      charset= get_charset(field_options.has_collation_id() ?
-                           field_options.collation_id() : 0);
+      charset= get_charset(field_options.has_collation_id() ? field_options.collation_id() : 0);
 
-      if (! charset)
+      if (not charset)
         charset= default_charset_info;
     }
 
@@ -980,20 +958,18 @@ bool TableShare::parse_table_proto(Session& session, const message::Table &table
     {
       message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
-      charset= get_charset(field_options.has_collation_id()?
-                           field_options.collation_id() : 0);
+      charset= get_charset(field_options.has_collation_id() ? field_options.collation_id() : 0);
 
-      if (! charset)
+      if (not charset)
         charset= default_charset_info;
     }
 
     uint8_t decimals= 0;
-    if (field_type == DRIZZLE_TYPE_DECIMAL
-        || field_type == DRIZZLE_TYPE_DOUBLE)
+    if (field_type == DRIZZLE_TYPE_DECIMAL || field_type == DRIZZLE_TYPE_DOUBLE)
     {
       message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-      if (! pfield.has_numeric_options() || ! fo.has_scale())
+      if (not pfield.has_numeric_options() || ! fo.has_scale())
       {
         /*
           We don't write the default to table proto so
