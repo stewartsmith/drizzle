@@ -181,7 +181,7 @@ public:
     drizzle_con_uds_st uds;
   } socket;
   uint8_t buffer[DRIZZLE_MAX_BUFFER_SIZE];
-  char db[DRIZZLE_MAX_DB_SIZE];
+  char schema[DRIZZLE_MAX_DB_SIZE];
   char password[DRIZZLE_MAX_PASSWORD_SIZE];
   uint8_t scramble_buffer[DRIZZLE_MAX_SCRAMBLE_SIZE];
   char server_version[DRIZZLE_MAX_SERVER_VERSION_SIZE];
@@ -333,7 +333,7 @@ public:
   drizzle_column_st *prev;
   int options;
   char catalog[DRIZZLE_MAX_CATALOG_SIZE];
-  char db[DRIZZLE_MAX_DB_SIZE];
+  char schema[DRIZZLE_MAX_DB_SIZE];
   char table[DRIZZLE_MAX_TABLE_SIZE];
   char orig_table[DRIZZLE_MAX_TABLE_SIZE];
   char name[DRIZZLE_MAX_COLUMN_NAME_SIZE];

@@ -247,7 +247,7 @@ public:
   query_c& p_name(const std::string& v)
   {
     std::vector<char> r(2 * v.size() + 2);
-    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.resize(drizzle_escape_string(&r.front() + 1, r.size(), v.data(), v.size()) + 2);    
     r.front() = '`';
     r.back() = '`';
     p_raw(&r.front(), r.size());
@@ -274,7 +274,7 @@ public:
   query_c& p(const std::string& v)
   {
     std::vector<char> r(2 * v.size() + 2);
-    r.resize(drizzle_escape_string(&r.front() + 1, v.data(), v.size()) + 2);    
+    r.resize(drizzle_escape_string(&r.front() + 1, r.size(), v.data(), v.size()) + 2);    
     r.front() = '\'';
     r.back() = '\'';
     p_raw(&r.front(), r.size());

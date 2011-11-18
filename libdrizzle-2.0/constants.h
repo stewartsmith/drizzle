@@ -69,7 +69,8 @@ extern "C" {
 #define DRIZZLE_MAX_ERROR_SIZE           2048
 #define DRIZZLE_MAX_USER_SIZE            64
 #define DRIZZLE_MAX_PASSWORD_SIZE        32
-#define DRIZZLE_MAX_DB_SIZE              64
+#define DRIZZLE_MAX_SCHEMA_SIZE          64
+#define DRIZZLE_MAX_DB_SIZE              DRIZZLE_MAX_SCHEMA_SIZE
 #define DRIZZLE_MAX_INFO_SIZE            2048
 #define DRIZZLE_MAX_SQLSTATE_SIZE        5
 #define DRIZZLE_MAX_CATALOG_SIZE         128

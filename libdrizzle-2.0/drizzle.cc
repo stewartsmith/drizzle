@@ -326,7 +326,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   con->socket.tcp.host= NULL;
   con->socket.tcp.port= 0;
   /* con->buffer doesn't need to be set */
-  con->db[0]= 0;
+  con->schema[0]= 0;
   con->password[0]= 0;
   /* con->scramble_buffer doesn't need to be set */
   con->server_version[0]= 0;
@@ -348,7 +348,7 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
                   DRIZZLE_CON_NO_RESULT_READ|DRIZZLE_CON_IO_READY|
                   DRIZZLE_CON_LISTEN));
   con->backlog= from->backlog;
-  strcpy(con->db, from->db);
+  strcpy(con->schema, from->schema);
   strcpy(con->password, from->password);
   strcpy(con->user, from->user);
 

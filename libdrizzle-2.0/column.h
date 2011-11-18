@@ -82,8 +82,11 @@ DRIZZLE_API
 const char *drizzle_column_catalog(drizzle_column_st *column);
 
 /**
- * Get database name for a column.
+ * Get schema name for a column.
  */
+DRIZZLE_API
+const char *drizzle_column_shema(drizzle_column_st *column);
+
 DRIZZLE_API
 const char *drizzle_column_db(drizzle_column_st *column);
 

@@ -71,6 +71,9 @@ void drizzle_column_set_catalog(drizzle_column_st *column, const char *catalog);
  */
 DRIZZLE_API
 void drizzle_column_set_db(drizzle_column_st *column, const char *db);
+
+DRIZZLE_API
+void drizzle_column_set_schema(drizzle_column_st *column, const char *schema);
  
 /**
  * Set table name for a column.

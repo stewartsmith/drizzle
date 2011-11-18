@@ -351,7 +351,7 @@ drizzle_return_t drizzle_query_run_all(drizzle_st *drizzle)
   return DRIZZLE_RETURN_OK;
 }
 
-ssize_t drizzle_safe_escape_string(char *to, size_t max_to_size, const char *from, size_t from_size)
+ssize_t drizzle_escape_string(char *to, size_t max_to_size, const char *from, size_t from_size)
 {
   ssize_t to_size= 0;
   char newchar;
@@ -393,7 +393,9 @@ ssize_t drizzle_safe_escape_string(char *to, size_t max_to_size, const char *fro
     if (newchar != '\0')
     {
       if ((size_t)to_size + 2 > max_to_size)
+      {
         return -1;
+      }
 
       *to++= '\\';
       *to++= newchar;
@@ -402,7 +404,9 @@ ssize_t drizzle_safe_escape_string(char *to, size_t max_to_size, const char *fro
     else
     {
       if ((size_t)to_size + 1 > max_to_size)
+      {
         return -1;
+      }
 
       *to++= *from;
     }
@@ -412,11 +416,6 @@ ssize_t drizzle_safe_escape_string(char *to, size_t max_to_size, const char *fro
   *to= 0;
 
   return to_size;
-}
-
-size_t drizzle_escape_string(char *to, const char *from, size_t from_size)
-{
-  return (size_t) drizzle_safe_escape_string(to, (from_size * 2), from, from_size);
 }
 
 size_t drizzle_hex_string(char *to, const char *from, size_t from_size)

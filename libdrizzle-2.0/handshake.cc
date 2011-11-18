@@ -401,7 +401,9 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
   con->buffer_ptr+= 1;
 
   if (scramble_size == 0)
+  {
     con->scramble= NULL;
+  }
   else
   {
     if (scramble_size != DRIZZLE_MAX_SCRAMBLE_SIZE)
@@ -418,9 +420,11 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
     con->buffer_ptr+= DRIZZLE_MAX_SCRAMBLE_SIZE;
   }
 
-  /* Look for null-terminated db string. */
-  if ((34 + strlen(con->user) + scramble_size) == con->packet_size)
-    con->db[0]= 0;
+  /* Look for null-terminated schema string. */
+  if ((34 + strlen(con->user) +scramble_size) == con->packet_size)
+  {
+    con->schema[0]= 0;
+  }
   else
   {
     ptr= (uint8_t *)memchr(con->buffer_ptr, 0, con->buffer_size -
@@ -428,7 +432,7 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
     if (ptr == NULL)
     {
       drizzle_set_error(con->drizzle, "drizzle_state_handshake_client_read",
-                        "db string not found");
+                        "schema string not found");
       return DRIZZLE_RETURN_BAD_HANDSHAKE_PACKET;
     }
 
@@ -442,13 +446,13 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
 
     if (con->buffer_ptr == ptr)
     {
-      con->db[0]= 0;
+      con->schema[0]= 0;
       con->buffer_ptr++;
     }
     else
     {
-      strncpy(con->db, (char *)con->buffer_ptr, DRIZZLE_MAX_DB_SIZE);
-      con->db[DRIZZLE_MAX_DB_SIZE - 1]= 0;
+      strncpy(con->schema, (char *)con->buffer_ptr, DRIZZLE_MAX_DB_SIZE);
+      con->schema[DRIZZLE_MAX_DB_SIZE - 1]= 0;
       con->buffer_ptr+= ((ptr - con->buffer_ptr) + 1);
     }
   }
@@ -471,7 +475,6 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 {
   uint8_t *ptr;
   int capabilities;
-  drizzle_return_t ret;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_write");
 
@@ -483,7 +486,7 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
                   + strlen(con->user) + 1
                   + 1   /* Scramble size */
                   + DRIZZLE_MAX_SCRAMBLE_SIZE
-                  + strlen(con->db) + 1;
+                  + strlen(con->schema) + 1;
 
   /* Assume the entire handshake packet will fit in the buffer. */
   if ((con->packet_size + 4) > DRIZZLE_MAX_BUFFER_SIZE)
@@ -501,7 +504,9 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   ptr+= 4;
 
   if (con->options & DRIZZLE_CON_MYSQL)
+  {
     con->capabilities|= DRIZZLE_CAPABILITIES_PROTOCOL_41;
+  }
 
   capabilities= con->capabilities & DRIZZLE_CAPABILITIES_CLIENT;
   if (!(con->options & DRIZZLE_CON_FOUND_ROWS))
@@ -523,8 +528,10 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   }
 
   capabilities&= ~(DRIZZLE_CAPABILITIES_COMPRESS | DRIZZLE_CAPABILITIES_SSL);
-  if (con->db[0] == 0)
+  if (con->schema[0] == 0)
+  {
     capabilities&= ~DRIZZLE_CAPABILITIES_CONNECT_WITH_DB;
+  }
 
   drizzle_set_byte4(ptr, capabilities);
   ptr+= 4;
@@ -538,9 +545,12 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   memset(ptr, 0, 23);
   ptr+= 23;
 
+  drizzle_return_t ret;
   ptr= drizzle_pack_auth(con, ptr, &ret);
   if (ret != DRIZZLE_RETURN_OK)
+  {
     return ret;
+  }
 
   con->buffer_size+= (4 + con->packet_size);
 
@@ -562,17 +572,18 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_handshake_result_read(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
   drizzle_result_st result;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_result_read");
 
   if (drizzle_result_create(con, &result) == NULL)
+  {
     return DRIZZLE_RETURN_MEMORY;
+  }
 
   con->result= &result;
 
-  ret= drizzle_state_result_read(con);
+  drizzle_return_t ret= drizzle_state_result_read(con);
   if (drizzle_state_none(con))
   {
     if (ret == DRIZZLE_RETURN_OK)
@@ -591,7 +602,9 @@ drizzle_return_t drizzle_state_handshake_result_read(drizzle_con_st *con)
   drizzle_result_free(&result);
 
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  {
     return DRIZZLE_RETURN_HANDSHAKE_FAILED;
+  }
 
   return ret;
 }
