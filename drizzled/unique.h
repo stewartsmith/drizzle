@@ -49,10 +49,10 @@ public:
   Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
 	 uint32_t size_arg, size_t max_in_memory_size_arg);
   ~Unique();
-  ulong elements_in_tree() { return tree.elements_in_tree; }
+  ulong elements_in_tree() { return tree.getElementsInTree(); }
   inline bool unique_add(void *ptr)
   {
-    return (not tree.tree_insert(ptr, 0, tree.custom_arg));
+    return (not tree.tree_insert(ptr, 0, tree.getCustomArg()));
   }
 
   bool get(Table *table);

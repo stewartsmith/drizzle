@@ -58,7 +58,6 @@
 #include <drizzled/tree.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/memory/root.h>
 
 #define BLACK		1
 #define RED		0

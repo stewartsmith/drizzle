@@ -21,7 +21,8 @@
 
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include <drizzled/tree.h>
+#include <drizzled/memory/root.h>
+
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
@@ -35,6 +36,10 @@
 #include <list>
 
 #include <boost/thread/mutex.hpp>
+
+namespace drizzled {
+class Tree;
+}
 
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */

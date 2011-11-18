@@ -3124,7 +3124,7 @@ bool Item_func_group_concat::add()
   Tree_Element *el= 0;                          // Only for safety
   if (row_eligible && tree)
     el= tree->tree_insert(table->record[0] + table->getShare()->null_bytes, 0,
-                    tree->custom_arg);
+                    tree->getCustomArg());
   /*
     If the row is not a duplicate (el->count == 1)
     we can dump the row here in case of GROUP_CONCAT(DISTINCT...)

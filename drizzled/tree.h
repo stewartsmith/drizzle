@@ -18,8 +18,8 @@
 #include <unistd.h>
 
 #include <drizzled/base.h>		// for 'enum ha_rkey_function'
-#include <drizzled/qsort_cmp.h>
 #include <drizzled/memory/root.h>
+#include <drizzled/qsort_cmp.h>
 
 namespace drizzled
 {
@@ -53,19 +53,32 @@ static const int TREE_ELEMENT_EXTRA_SIZE= (sizeof(Tree_Element) + sizeof(void*))
  */
 class Tree
 {
-public:
+private:
 	Tree_Element *root, null_element;
+	void *custom_arg;
 	Tree_Element **parents[MAX_TREE_HEIGHT];
 	uint32_t offset_to_key, elements_in_tree, size_of_element;
 	size_t memory_limit;
 	size_t allocated;
 	qsort_cmp2 compare;
-	void *custom_arg;
 	memory::Root mem_root;
 	bool with_delete;
 	tree_element_free free;
 	uint32_t flag;
 
+public:
+	void* getCustomArg() {
+		return custom_arg;
+	}
+	Tree_Element* getRoot() {
+		return root;
+	}
+	void setRoot(Tree_Element* root_arg) {
+		root = root_arg;
+	}
+	uint32_t getElementsInTree() {
+		return elements_in_tree;
+	}
 	// tree methods
 	void init_tree(size_t default_alloc_size, uint32_t memory_limit,
 				   uint32_t size, qsort_cmp2 compare, bool with_delete,

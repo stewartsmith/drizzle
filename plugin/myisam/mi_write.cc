@@ -19,6 +19,7 @@
 
 #include <drizzled/internal/m_string.h>
 #include <drizzled/util/test.h>
+#include <drizzled/tree.h>
 
 using namespace drizzled;
 
@@ -718,7 +719,7 @@ int _mi_ck_write_tree(register MI_INFO *info, uint32_t keynr, unsigned char *key
 
   error= info->bulk_insert[keynr].tree_insert(key,
          key_length + info->s->rec_reflength,
-         info->bulk_insert[keynr].custom_arg) ? 0 : HA_ERR_OUT_OF_MEM ;
+         info->bulk_insert[keynr].getCustomArg()) ? 0 : HA_ERR_OUT_OF_MEM ;
 
   return(error);
 } /* _mi_ck_write_tree */
@@ -817,7 +818,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
 		(tree_element_free) keys_free, (void *)params++);
     }
     else
-     info->bulk_insert[i].root=0;
+     info->bulk_insert[i].setRoot(0);
   }
 
   return(0);

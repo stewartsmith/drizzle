@@ -208,10 +208,10 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 
 bool Unique::get(Table *table)
 {
-  table->sort.found_records= elements+tree.elements_in_tree;
+  table->sort.found_records= elements+tree.getElementsInTree();
 
   if ((record_pointers=table->sort.record_pointers= (unsigned char*)
-       malloc(size * tree.elements_in_tree)))
+       malloc(size * tree.getElementsInTree())))
   {
     (void) tree.tree_walk((tree_walk_action) unique_write_to_ptrs,
                      this, left_root_right);
