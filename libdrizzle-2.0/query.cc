@@ -54,12 +54,9 @@ drizzle_result_st *drizzle_query_str(drizzle_con_st *con,
                                      const char *query, 
                                      drizzle_return_t *ret_ptr)
 {
-  size_t size;
+  size_t size= strlen(query);
 
-  size= strlen(query);
-
-  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_QUERY,
-                                   (uint8_t *)query, size, size, ret_ptr);
+  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_QUERY, (uint8_t *)query, size, size, ret_ptr);
 }
 
 drizzle_result_st *drizzle_query_inc(drizzle_con_st *con,
@@ -67,8 +64,7 @@ drizzle_result_st *drizzle_query_inc(drizzle_con_st *con,
                                      const char *query, size_t size,
                                      size_t total, drizzle_return_t *ret_ptr)
 {
-  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_QUERY,
-                                   (uint8_t *)query, size, total, ret_ptr);
+  return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_QUERY, (uint8_t *)query, size, total, ret_ptr);
 }
 
 drizzle_query_st *drizzle_query_add(drizzle_st *drizzle,
@@ -79,9 +75,12 @@ drizzle_query_st *drizzle_query_add(drizzle_st *drizzle,
                                     drizzle_query_options_t options,
                                     void *context)
 {
+  // @note drizzle_query_st handle the null drizzle case
   query= drizzle_query_create(drizzle, query);
   if (query == NULL)
+  {
     return NULL;
+  }
 
   drizzle_query_set_con(query, con);
   drizzle_query_set_result(query, result);
@@ -95,9 +94,19 @@ drizzle_query_st *drizzle_query_add(drizzle_st *drizzle,
 drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
                                        drizzle_query_st *query)
 {
+  if (drizzle == NULL)
+  {
+    return NULL;
+  }
+
   if (query == NULL)
   {
-    query= new drizzle_query_st;
+    query= new (std::nothrow) drizzle_query_st;
+
+    if (query == NULL)
+    {
+      return NULL;
+    }
     query->options|= DRIZZLE_CON_ALLOCATED;
   }
   else
@@ -116,7 +125,9 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
   query->drizzle= drizzle;
 
   if (drizzle->query_list)
+  {
     drizzle->query_list->prev= query;
+  }
   query->next= drizzle->query_list;
   drizzle->query_list= query;
   drizzle->query_count++;
@@ -127,15 +138,23 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
 
 void drizzle_query_free(drizzle_query_st *query)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   if (query->context != NULL && query->context_free_fn != NULL)
     query->context_free_fn(query, query->context);
 
   if (query->drizzle->query_list == query)
     query->drizzle->query_list= query->next;
+
   if (query->prev)
     query->prev->next= query->next;
+
   if (query->next)
     query->next->prev= query->prev;
+
   query->drizzle->query_count--;
 
   if (query->options & DRIZZLE_QUERY_ALLOCATED)
@@ -145,32 +164,59 @@ void drizzle_query_free(drizzle_query_st *query)
 void drizzle_query_free_all(drizzle_st *drizzle)
 {
   while (drizzle->query_list != NULL)
+  {
     drizzle_query_free(drizzle->query_list);
+  }
 }
 
 drizzle_con_st *drizzle_query_con(drizzle_query_st *query)
 {
+  if (query == NULL)
+  {
+    return NULL;
+  }
+
   return query->con;
 }
 
 void drizzle_query_set_con(drizzle_query_st *query, drizzle_con_st *con)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->con= con;
 }
 
 drizzle_result_st *drizzle_query_result(drizzle_query_st *query)
 {
+  if (query == NULL)
+  {
+    return NULL;
+  }
+
   return query->result;
 }
 
 void drizzle_query_set_result(drizzle_query_st *query,
                               drizzle_result_st *result)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->result= result;
 }
 
 char *drizzle_query_string(drizzle_query_st *query, size_t *size)
 {
+  if (query == NULL)
+  {
+    return NULL;
+  }
+
   *size= query->size;
   return (char *)(query->string);
 }
@@ -178,56 +224,102 @@ char *drizzle_query_string(drizzle_query_st *query, size_t *size)
 void drizzle_query_set_string(drizzle_query_st *query, const char *string,
                               size_t size)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->string= string;
   query->size= size;
 }
 
 int drizzle_query_options(drizzle_query_st *query)
 {
+  if (query == NULL)
+  {
+    return 0;
+  }
+
   return query->options;
 }
 
 void drizzle_query_set_options(drizzle_query_st *query,
                                int options)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->options= options;
 }
 
 void drizzle_query_add_options(drizzle_query_st *query,
                                int options)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->options|= options;
 }
 
 void drizzle_query_remove_options(drizzle_query_st *query,
                                   int options)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->options&= ~options;
 }
 
 void *drizzle_query_context(drizzle_query_st *query)
 {
+  if (query == NULL)
+  {
+    return NULL;
+  }
+
   return query->context;
 }
 
 void drizzle_query_set_context(drizzle_query_st *query, void *context)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->context= context;
 }
 
 void drizzle_query_set_context_free_fn(drizzle_query_st *query,
                                        drizzle_query_context_free_fn *function)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   query->context_free_fn= function;
 }
 
 static void drizzle_query_run_state(drizzle_query_st* query,
                                     drizzle_return_t* ret_ptr)
 {
+  if (query == NULL)
+  {
+    return;
+  }
+
   switch (query->state)
   {
   case DRIZZLE_QUERY_STATE_INIT:
     query->state= DRIZZLE_QUERY_STATE_QUERY;
+
   case DRIZZLE_QUERY_STATE_QUERY:
     query->result= drizzle_query(query->con, query->result, query->string,
                                  query->size, ret_ptr);
@@ -262,9 +354,17 @@ static void drizzle_query_run_state(drizzle_query_st* query,
 drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
                                     drizzle_return_t *ret_ptr)
 {
-  int options;
-  drizzle_query_st *query;
-  drizzle_con_st *con;
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
+  if (drizzle == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
 
   if (drizzle->query_new == 0 && drizzle->query_running == 0)
   {
@@ -272,16 +372,18 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
     return NULL;
   }
 
-  options= drizzle->options;
-  drizzle->options|= DRIZZLE_NON_BLOCKING;
+  drizzle_st::options_t options= drizzle->options;
+  drizzle->options.is_non_blocking= false;
 
   /* Check to see if any queries need to be started. */
   if (drizzle->query_new > 0)
   {
-    for (query= drizzle->query_list; query != NULL; query= query->next)
+    for (drizzle_query_st *query= drizzle->query_list; query != NULL; query= query->next)
     {
       if (query->state != DRIZZLE_QUERY_STATE_INIT)
+      {
         continue;
+      }
 
       drizzle->query_new--;
       drizzle->query_running++;
@@ -307,10 +409,12 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
 
   while (1)
   {
+    drizzle_con_st *con;
+
     /* Loop through each active connection. */
     while ((con= drizzle_con_ready(drizzle)) != NULL)
     {
-      query= con->query;
+      drizzle_query_st *query= con->query;
       drizzle_query_run_state(query, ret_ptr);
       if (query->state == DRIZZLE_QUERY_STATE_DONE)
       {
@@ -322,7 +426,7 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
       assert(*ret_ptr == DRIZZLE_RETURN_IO_WAIT);
     }
 
-    if (options & DRIZZLE_NON_BLOCKING)
+    if (options.is_non_blocking)
     {
       *ret_ptr= DRIZZLE_RETURN_IO_WAIT;
       return NULL;
@@ -339,13 +443,20 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
 
 drizzle_return_t drizzle_query_run_all(drizzle_st *drizzle)
 {
-  drizzle_return_t ret;
+  if (drizzle == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   while (drizzle->query_new > 0 || drizzle->query_running > 0)
   {
+    drizzle_return_t ret;
+
     (void)drizzle_query_run(drizzle, &ret);
     if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_ERROR_CODE)
+    {
       return ret;
+    }
   }
 
   return DRIZZLE_RETURN_OK;

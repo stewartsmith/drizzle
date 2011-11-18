@@ -197,8 +197,8 @@ typedef enum drizzle_con_options_t drizzle_con_options_t;
  */
 enum drizzle_con_socket_t
 {
-  DRIZZLE_CON_SOCKET_TCP= 0,
-  DRIZZLE_CON_SOCKET_UDS= (1 << 0)
+  DRIZZLE_CON_SOCKET_TCP,
+  DRIZZLE_CON_SOCKET_UDS
 };
 
 #ifndef __cplusplus
@@ -526,6 +526,7 @@ class drizzle_query_st;
 class drizzle_result_st;
 class drizzle_column_st;
 #endif
+
 typedef char drizzle_field_t_type;
 typedef drizzle_field_t_type *drizzle_field_t;
 typedef drizzle_field_t drizzle_row_t_type;
@@ -542,15 +543,11 @@ typedef void drizzle_field_sizes_list_t;
 #endif
 
 /* Function types. */
-typedef void (drizzle_context_free_fn)(drizzle_st *drizzle,
-                                       void *context);
-typedef void (drizzle_log_fn)(const char *line, drizzle_verbose_t verbose,
-                              void *context);
+typedef void (drizzle_context_free_fn)(drizzle_st *drizzle, void *context);
+typedef void (drizzle_log_fn)(const char *line, drizzle_verbose_t verbose, void *context);
 typedef drizzle_return_t (drizzle_state_fn)(drizzle_con_st *con);
-typedef void (drizzle_con_context_free_fn)(drizzle_con_st *con,
-                                           void *context);
-typedef void (drizzle_query_context_free_fn)(drizzle_query_st *query,
-                                             void *context);
+typedef void (drizzle_con_context_free_fn)(drizzle_con_st *con, void *context);
+typedef void (drizzle_query_context_free_fn)(drizzle_query_st *query, void *context);
 /**
  * Custom function to register or deregister interest in file descriptor
  * events. See drizzle_set_event_watch_fn().

@@ -361,7 +361,13 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
 
   if (column == NULL)
   {
-    column= new (std::nothrow)drizzle_column_st;
+    column= new (std::nothrow) drizzle_column_st;
+
+    if (column == NULL)
+    {
+      return NULL;
+    }
+
     column->result= result;
     /* SET BELOW: column->next */
     column->prev= NULL;
@@ -683,7 +689,12 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
       return DRIZZLE_RETURN_OK;
     }
 
-    result->column_buffer= new drizzle_column_st[result->column_count];
+    result->column_buffer= new (std::nothrow) drizzle_column_st[result->column_count];
+
+    if (result->column_buffer == NULL)
+    {
+      return DRIZZLE_RETURN_MEMORY;
+    }
   }
 
   /* No while body, just keep calling to buffer columns. */

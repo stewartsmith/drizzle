@@ -586,13 +586,13 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
     {
       drizzle_set_error(con->drizzle, "drizzle_command_write", "connection not ready");
       *ret_ptr= DRIZZLE_RETURN_NOT_READY;
-      return result;
+      return NULL;
     }
 
     *ret_ptr= drizzle_con_connect(con);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
     {
-      return result;
+      return NULL;
     }
   }
 
@@ -610,7 +610,7 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
         {
           drizzle_set_error(con->drizzle, "drizzle_command_write", "result struct already in use");
           *ret_ptr= DRIZZLE_RETURN_INTERNAL_ERROR;
-          return result;
+          return NULL;
         }
       }
 
@@ -697,8 +697,7 @@ void drizzle_con_set_backlog(drizzle_con_st *con, int backlog)
   con->backlog= backlog;
 }
 
-void drizzle_con_set_protocol_version(drizzle_con_st *con,
-                                      uint8_t protocol_version)
+void drizzle_con_set_protocol_version(drizzle_con_st *con, uint8_t protocol_version)
 {
   if (con == NULL)
   {
@@ -897,7 +896,14 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   if (con->command_buffer == NULL)
   {
-    con->command_buffer= new uint8_t[(*total) + 1];
+    con->command_buffer= new (std::nothrow) uint8_t[(*total) + 1];
+
+    if (con->command_buffer == NULL)
+    {
+      *total= 0;
+      *ret_ptr= DRIZZLE_RETURN_MEMORY;
+      return NULL;
+    }
   }
 
   memcpy(con->command_buffer + offset, command_data, size);
@@ -1168,12 +1174,16 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
     if (ret != DRIZZLE_RETURN_OK)
       return ret;
 
-    if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
+    if (con->drizzle->options.is_non_blocking)
+    {
       return DRIZZLE_RETURN_IO_WAIT;
+    }
 
     ret= drizzle_con_wait(con->drizzle);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
   }
 }
 
@@ -1192,7 +1202,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
   }
 
   if ((con->revents & POLLIN) == 0 &&
-      (con->drizzle->options & DRIZZLE_NON_BLOCKING))
+      (con->drizzle->options.is_non_blocking))
   {
     /* non-blocking mode: return IO_WAIT instead of attempting to read. This
      * avoids reading immediately after writing a command, which typically
@@ -1265,12 +1275,16 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
         if (ret != DRIZZLE_RETURN_OK)
           return ret;
 
-        if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
+        if (con->drizzle->options.is_non_blocking)
+        {
           return DRIZZLE_RETURN_IO_WAIT;
+        }
 
         ret= drizzle_con_wait(con->drizzle);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
         continue;
       }
@@ -1368,19 +1382,27 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
       {
         ret= drizzle_con_set_events(con, POLLOUT);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
-        if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
+        if (con->drizzle->options.is_non_blocking)
+        {
           return DRIZZLE_RETURN_IO_WAIT;
+        }
 
         ret= drizzle_con_wait(con->drizzle);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
         continue;
       }
       else if (errno == EINTR)
+      {
         continue;
+      }
       else if (errno == EPIPE || errno == ECONNRESET)
       {
         drizzle_set_error(con->drizzle, "drizzle_state_write",
