@@ -251,7 +251,7 @@ void drizzle_add_options(drizzle_st *drizzle, int options);
  * @param[in] options Available options for drizzle structure to remove.
  */
 DRIZZLE_API
-void drizzle_remove_options(drizzle_st *drizzle, drizzle_options_t options);
+void drizzle_remove_options(drizzle_st *, drizzle_options_t);
 
 /**
  * Get application context pointer.

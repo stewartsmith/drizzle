@@ -379,3 +379,4 @@ drizzled/execute/scanner.h
 plugin/innobase/xtrabackup/drizzlebackup.innobase
 libdrizzle-2.0/drizzle_password_hash
 libdrizzle-2.0/mysql_password_hash
+tags

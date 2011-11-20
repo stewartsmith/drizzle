@@ -120,9 +120,13 @@ drizzle_return_t drizzle_state_command_read(drizzle_con_st *con)
   con->buffer_size-= con->command_size;
 
   if (con->command_offset == con->command_total)
+  {
     drizzle_state_pop(con);
+  }
   else
+  {
     return DRIZZLE_RETURN_PAUSE;
+  }
 
   return DRIZZLE_RETURN_OK;
 }
@@ -159,7 +163,7 @@ drizzle_return_t drizzle_state_command_write(drizzle_con_st *con)
                     + strlen(con->user) + 1
                     + 1  /* Scramble size */
                     + DRIZZLE_MAX_SCRAMBLE_SIZE
-                    + strlen(con->db) + 1;
+                    + strlen(con->schema) +1;
 
     /* Flush buffer if there is not enough room. */
     free_size= (size_t)DRIZZLE_MAX_BUFFER_SIZE - (size_t)(start - con->buffer);
@@ -174,9 +178,13 @@ drizzle_return_t drizzle_state_command_write(drizzle_con_st *con)
     ptr= start;
     ptr[3]= 0;
     if (con->options & DRIZZLE_CON_MYSQL)
-      ptr[4]= (uint8_t)(con->command);
+    {
+      ptr[4]= uint8_t(con->command);
+    }
     else
-      ptr[4]= (uint8_t)(_command_drizzle_map[con->command]);
+    {
+      ptr[4]= uint8_t(_command_drizzle_map[con->command]);
+    }
     ptr+= 5;
 
     if (con->command == DRIZZLE_COMMAND_CHANGE_USER)

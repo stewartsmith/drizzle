@@ -69,7 +69,19 @@ class drizzle_st
 {
 public:
   uint16_t error_code;
-  int options;
+  struct options_t {
+    bool is_allocated;
+    bool is_non_blocking;
+    bool is_free_objects;
+    bool is_assert_dangling;
+
+    options_t() :
+      is_allocated(false),
+      is_non_blocking(false),
+      is_free_objects(false),
+      is_assert_dangling(false)
+    { }
+  } options;
   drizzle_verbose_t verbose;
   uint32_t con_count;
   uint32_t pfds_size;
@@ -92,7 +104,7 @@ public:
 
   drizzle_st() :
     error_code(0),
-    options(DRIZZLE_NONE),
+    options(),
     verbose(DRIZZLE_VERBOSE_ERROR),
     con_count(0),
     pfds_size(0),
@@ -181,7 +193,7 @@ public:
     drizzle_con_uds_st uds;
   } socket;
   uint8_t buffer[DRIZZLE_MAX_BUFFER_SIZE];
-  char db[DRIZZLE_MAX_DB_SIZE];
+  char schema[DRIZZLE_MAX_DB_SIZE];
   char password[DRIZZLE_MAX_PASSWORD_SIZE];
   uint8_t scramble_buffer[DRIZZLE_MAX_SCRAMBLE_SIZE];
   char server_version[DRIZZLE_MAX_SERVER_VERSION_SIZE];
@@ -228,6 +240,7 @@ public:
  */
 class drizzle_query_st
 {
+private:
 public:
   drizzle_st *drizzle;
   drizzle_query_st *next;
@@ -333,7 +346,7 @@ public:
   drizzle_column_st *prev;
   int options;
   char catalog[DRIZZLE_MAX_CATALOG_SIZE];
-  char db[DRIZZLE_MAX_DB_SIZE];
+  char schema[DRIZZLE_MAX_DB_SIZE];
   char table[DRIZZLE_MAX_TABLE_SIZE];
   char orig_table[DRIZZLE_MAX_TABLE_SIZE];
   char name[DRIZZLE_MAX_COLUMN_NAME_SIZE];

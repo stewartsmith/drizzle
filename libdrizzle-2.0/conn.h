@@ -290,6 +290,9 @@ void drizzle_con_set_auth(drizzle_con_st *con, const char *user,
  * @return Database associated with this connection.
  */
 DRIZZLE_API
+const char *drizzle_con_schema(const drizzle_con_st *con);
+
+DRIZZLE_API
 const char *drizzle_con_db(const drizzle_con_st *con);
 
 /**
@@ -297,10 +300,13 @@ const char *drizzle_con_db(const drizzle_con_st *con);
  *
  * @param[in] con Connection structure previously initialized with
  *  drizzle_con_create(), drizzle_con_clone(), or related functions.
- * @param[in] db Database to use with this connection.
+ * @param[in] schema Database to use with this connection.
  */
 DRIZZLE_API
-void drizzle_con_set_db(drizzle_con_st *con, const char *db);
+void drizzle_con_set_schema(drizzle_con_st *con, const char *schema);
+
+DRIZZLE_API
+void drizzle_con_set_db(drizzle_con_st *con, const char *schema);
 
 /**
  * Get application context pointer for a connection.

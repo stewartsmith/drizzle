@@ -82,8 +82,11 @@ DRIZZLE_API
 const char *drizzle_column_catalog(drizzle_column_st *column);
 
 /**
- * Get database name for a column.
+ * Get schema name for a column.
  */
+DRIZZLE_API
+const char *drizzle_column_shema(drizzle_column_st *column);
+
 DRIZZLE_API
 const char *drizzle_column_db(drizzle_column_st *column);
 
@@ -145,8 +148,7 @@ drizzle_column_type_t drizzle_column_type(drizzle_column_st *column);
  * Get the Drizzle type of a column.
  */
 DRIZZLE_API
-drizzle_column_type_drizzle_t
-drizzle_column_type_drizzle(drizzle_column_st *column);
+drizzle_column_type_drizzle_t drizzle_column_type_drizzle(drizzle_column_st *column);
 
 /**
  * Get flags for a column.

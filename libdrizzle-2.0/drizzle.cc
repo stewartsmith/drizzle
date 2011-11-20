@@ -79,7 +79,9 @@ const char *drizzle_bugreport()
 const char *drizzle_verbose_name(drizzle_verbose_t verbose)
 {
   if (verbose >= DRIZZLE_VERBOSE_MAX)
+  {
     return "UNKNOWN";
+  }
 
   return _verbose_name[verbose];
 }
@@ -101,15 +103,19 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
 
   if (drizzle == NULL)
   {
-    drizzle= new drizzle_st;
-    drizzle->options= DRIZZLE_ALLOCATED;
+    drizzle= new (std::nothrow) drizzle_st;
+
+    if (drizzle == NULL)
+    {
+      return NULL;
+    }
+    drizzle->options.is_allocated= true;
   }
-  else
-    drizzle->options= DRIZZLE_NONE;
 
   /* @todo remove this default free flag with new API. */
-  drizzle->options|= DRIZZLE_FREE_OBJECTS;
+  drizzle->options.is_free_objects= true;
   drizzle->error_code= 0;
+
   /* drizzle->options set above */
   drizzle->verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle->con_count= 0;
@@ -138,9 +144,13 @@ drizzle_st *drizzle_clone(drizzle_st *drizzle, const drizzle_st *from)
 {
   drizzle= drizzle_create(drizzle);
   if (drizzle == NULL)
+  {
     return NULL;
+  }
 
-  drizzle->options|= (from->options & ~DRIZZLE_ALLOCATED);
+  bool cache_state= drizzle->options.is_allocated;
+  drizzle->options= from->options;
+  drizzle->options.is_allocated= cache_state;
 
   for (drizzle_con_st* con= from->con_list; con != NULL; con= con->next)
   {
@@ -157,14 +167,16 @@ drizzle_st *drizzle_clone(drizzle_st *drizzle, const drizzle_st *from)
 void drizzle_free(drizzle_st *drizzle)
 {
   if (drizzle->context != NULL && drizzle->context_free_fn != NULL)
+  {
     drizzle->context_free_fn(drizzle, drizzle->context);
+  }
 
-  if (drizzle->options & DRIZZLE_FREE_OBJECTS)
+  if (drizzle->options.is_free_objects)
   {
     drizzle_con_free_all(drizzle);
     drizzle_query_free_all(drizzle);
   }
-  else if (drizzle->options & DRIZZLE_ASSERT_DANGLING)
+  else if (drizzle->options.is_assert_dangling)
   {
     assert(drizzle->con_list == NULL);
     assert(drizzle->query_list == NULL);
@@ -172,8 +184,10 @@ void drizzle_free(drizzle_st *drizzle)
 
   free(drizzle->pfds);
 
-  if (drizzle->options & DRIZZLE_ALLOCATED)
+  if (drizzle->options.is_allocated)
+  {
     delete drizzle;
+  }
 #if defined(_WIN32)
   /* if it is MS windows, invoke WSACleanup() at the end*/
   WSACleanup();
@@ -200,24 +214,17 @@ const char *drizzle_sqlstate(const drizzle_st *drizzle)
   return drizzle->sqlstate;
 }
 
-int drizzle_options(const drizzle_st *drizzle)
+int drizzle_options(const drizzle_st *)
 {
-  return drizzle->options;
+  return 0;
 }
 
-void drizzle_set_options(drizzle_st *drizzle, int options)
+void drizzle_set_options(drizzle_st *, int)
 {
-  drizzle->options= options;
 }
 
-void drizzle_add_options(drizzle_st *drizzle, int options)
+void drizzle_add_options(drizzle_st *, int)
 {
-  drizzle->options|= options;
-}
-
-void drizzle_remove_options(drizzle_st *drizzle, drizzle_options_t options)
-{
-  drizzle->options&= ~options;
 }
 
 void *drizzle_context(const drizzle_st *drizzle)
@@ -275,14 +282,17 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
 {
   if (con == NULL)
   {
-    con= new drizzle_con_st;
+    con= new (std::nothrow) drizzle_con_st;
     con->options= DRIZZLE_CON_ALLOCATED;
   }
   else
+  {
     con->options= 0;
+  }
 
   if (drizzle->con_list != NULL)
     drizzle->con_list->prev= con;
+
   con->next= drizzle->con_list;
   con->prev= NULL;
   drizzle->con_list= con;
@@ -326,7 +336,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   con->socket.tcp.host= NULL;
   con->socket.tcp.port= 0;
   /* con->buffer doesn't need to be set */
-  con->db[0]= 0;
+  con->schema[0]= 0;
   con->password[0]= 0;
   /* con->scramble_buffer doesn't need to be set */
   con->server_version[0]= 0;
@@ -341,14 +351,16 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
 {
   con= drizzle_con_create(drizzle, con);
   if (con == NULL)
+  {
     return NULL;
+  }
 
   /* Clear "operational" options such as IO status. */
   con->options|= (from->options & ~(DRIZZLE_CON_ALLOCATED|DRIZZLE_CON_READY|
                   DRIZZLE_CON_NO_RESULT_READ|DRIZZLE_CON_IO_READY|
                   DRIZZLE_CON_LISTEN));
   con->backlog= from->backlog;
-  strcpy(con->db, from->db);
+  strcpy(con->schema, from->schema);
   strcpy(con->password, from->password);
   strcpy(con->user, from->user);
 
@@ -369,34 +381,52 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
 void drizzle_con_free(drizzle_con_st *con)
 {
   if (con->context != NULL && con->context_free_fn != NULL)
+  {
     con->context_free_fn(con, con->context);
+  }
 
-  if (con->drizzle->options & DRIZZLE_FREE_OBJECTS)
+  if (con->drizzle->options.is_free_objects)
+  {
     drizzle_result_free_all(con);
-  else if (con->drizzle->options & DRIZZLE_ASSERT_DANGLING)
+  }
+  else if (con->drizzle->options.is_assert_dangling)
+  {
     assert(con->result_list == NULL);
+  }
 
   if (con->fd != -1)
+  {
     drizzle_con_close(con);
+  }
 
   drizzle_con_reset_addrinfo(con);
 
   if (con->drizzle->con_list == con)
+  {
     con->drizzle->con_list= con->next;
+  }
   if (con->prev != NULL)
+  {
     con->prev->next= con->next;
+  }
   if (con->next != NULL)
+  {
     con->next->prev= con->prev;
+  }
   con->drizzle->con_count--;
 
   if (con->options & DRIZZLE_CON_ALLOCATED)
+  {
     delete con;
+  }
 }
 
 void drizzle_con_free_all(drizzle_st *drizzle)
 {
   while (drizzle->con_list != NULL)
+  {
     drizzle_con_free(drizzle->con_list);
+  }
 }
 
 drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
@@ -418,7 +448,9 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
     drizzle->pfds_size= drizzle->con_count;
   }
   else
+  {
     pfds= drizzle->pfds;
+  }
 
   uint32_t x= 0;
   for (drizzle_con_st* con= drizzle->con_list; con != NULL; con= con->next)
@@ -528,7 +560,9 @@ drizzle_con_st *drizzle_con_add_tcp(drizzle_st *drizzle, drizzle_con_st *con,
 {
   con= drizzle_con_create(drizzle, con);
   if (con == NULL)
+  {
     return NULL;
+  }
 
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_auth(con, user, password);
@@ -545,7 +579,9 @@ drizzle_con_st *drizzle_con_add_uds(drizzle_st *drizzle, drizzle_con_st *con,
 {
   con= drizzle_con_create(drizzle, con);
   if (con == NULL)
+  {
     return NULL;
+  }
 
   drizzle_con_set_uds(con, uds);
   drizzle_con_set_auth(con, user, password);
@@ -567,7 +603,9 @@ drizzle_con_st *drizzle_con_add_tcp_listen(drizzle_st *drizzle,
 {
   con= drizzle_con_create(drizzle, con);
   if (con == NULL)
+  {
     return NULL;
+  }
 
   drizzle_con_set_tcp(con, host, port);
   drizzle_con_set_backlog(con, backlog);
@@ -583,7 +621,9 @@ drizzle_con_st *drizzle_con_add_uds_listen(drizzle_st *drizzle,
 {
   con= drizzle_con_create(drizzle, con);
   if (con == NULL)
+  {
     return NULL;
+  }
 
   drizzle_con_set_uds(con, uds);
   drizzle_con_set_backlog(con, backlog);
@@ -623,7 +663,7 @@ drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
       return con;
     }
 
-    if (drizzle->options & DRIZZLE_NON_BLOCKING)
+    if (drizzle->options.is_non_blocking)
     {
       *ret_ptr= DRIZZLE_RETURN_IO_WAIT;
       return NULL;
@@ -662,16 +702,29 @@ void drizzle_set_error(drizzle_st *drizzle, const char *function,
   int written= vsnprintf(ptr, DRIZZLE_MAX_ERROR_SIZE - size, format, args);
   va_end(args);
 
-  if (written < 0) size= DRIZZLE_MAX_ERROR_SIZE;
-  else size+= written;
+  if (written < 0) 
+  {
+    size= DRIZZLE_MAX_ERROR_SIZE;
+  }
+  else 
+  {
+    size+= written;
+  }
+
   if (size >= DRIZZLE_MAX_ERROR_SIZE)
+  {
     size= DRIZZLE_MAX_ERROR_SIZE - 1;
+  }
   log_buffer[size]= 0;
 
   if (drizzle->log_fn == NULL)
+  {
     memcpy(drizzle->last_error, log_buffer, size + 1);
+  }
   else
+  {
     drizzle->log_fn(log_buffer, DRIZZLE_VERBOSE_ERROR, drizzle->log_context);
+  }
 }
 
 void drizzle_log(drizzle_st *drizzle, drizzle_verbose_t verbose,

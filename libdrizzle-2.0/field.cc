@@ -77,13 +77,20 @@ drizzle_field_t drizzle_field_read(drizzle_result_st *result, size_t *offset,
 drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
                                      drizzle_return_t *ret_ptr)
 {
-  drizzle_field_t field;
   size_t offset= 0;
   size_t size= 0;
 
-  field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
+  drizzle_field_t field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
+  {
     return NULL;
+  }
 
   if (field == NULL)
   {
@@ -93,7 +100,14 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
 
   if (result->field_buffer == NULL)
   {
-    result->field_buffer= new drizzle_field_t_type[(*total) + 1];
+    result->field_buffer= new (std::nothrow) drizzle_field_t_type[(*total) + 1];
+
+    if (result->field_buffer == NULL)
+    {
+      *ret_ptr= DRIZZLE_RETURN_MEMORY;
+      *total= 0;
+      return NULL;
+    }
   }
 
   memcpy(result->field_buffer + offset, field, size);
@@ -102,7 +116,9 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
   {
     field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return NULL;
+    }
 
     memcpy(result->field_buffer + offset, field, size);
   }

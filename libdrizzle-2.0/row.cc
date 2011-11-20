@@ -69,23 +69,44 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
                                  drizzle_return_t *ret_ptr)
 {
   size_t total;
-  drizzle_field_t field;
   drizzle_row_t row;
+
+  if (result == NULL)
+  {
+    return drizzle_row_t();
+  }
+
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
 
   if (result->row == NULL)
   {
     if (drizzle_row_read(result, ret_ptr) == 0 || *ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return NULL;
+    }
 
-    result->row= new drizzle_row_t_type[result->column_count *2];
+    result->row= new (std::nothrow) drizzle_row_t_type[result->column_count *2];
+
+    if (result->row == NULL)
+    {
+      *ret_ptr= DRIZZLE_RETURN_MEMORY;
+      return drizzle_row_t();
+    }
     result->field_sizes= reinterpret_cast<size_t *>(result->row + result->column_count);
   }
 
   while (1)
   {
-    field= drizzle_field_buffer(result, &total, ret_ptr);
+    drizzle_field_t field= drizzle_field_buffer(result, &total, ret_ptr);
     if (*ret_ptr == DRIZZLE_RETURN_ROW_END)
+    {
       break;
+    }
+
     if (*ret_ptr != DRIZZLE_RETURN_OK)
     {
       if (*ret_ptr != DRIZZLE_RETURN_IO_WAIT)

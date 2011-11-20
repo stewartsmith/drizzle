@@ -51,7 +51,13 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
 {
   if (result == NULL)
   {
-    result= new drizzle_result_st;
+    result= new (std::nothrow) drizzle_result_st;
+
+    if (result == NULL)
+    {
+      return NULL;
+    }
+
     result->options|= DRIZZLE_RESULT_ALLOCATED;
   }
   else
@@ -328,14 +334,13 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
     return DRIZZLE_RETURN_INVALID_ARGUMENT;
   }
 
-  drizzle_return_t ret;
-  drizzle_row_t row;
-
   if (!(result->options & DRIZZLE_RESULT_BUFFER_COLUMN))
   {
-    ret= drizzle_column_buffer(result);
+    drizzle_return_t ret= drizzle_column_buffer(result);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
   }
 
   if (result->column_count == 0)
@@ -346,22 +351,36 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
 
   while (1)
   {
-    row= drizzle_row_buffer(result, &ret);
+    drizzle_return_t ret;
+    drizzle_row_t row= drizzle_row_buffer(result, &ret);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
 
     if (row == NULL)
+    {
       break;
+    }
 
     if (result->row_list == NULL)
     {
-      result->row_list= new drizzle_row_list_t;
+      result->row_list= new (std::nothrow) drizzle_row_list_t;
+
+      if (result->row_list == NULL)
+      {
+        return DRIZZLE_RETURN_MEMORY;
+      }
     }
 
 
     if (result->field_sizes_list == NULL)
     {
-      result->field_sizes_list= new drizzle_field_sizes_list_t;
+      result->field_sizes_list= new (std::nothrow) drizzle_field_sizes_list_t;
+
+      if (result->field_sizes_list == NULL)
+      {
+      }
     }
 
     result->row_list->push_back(row);
@@ -369,6 +388,7 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
   }
 
   result->options|= DRIZZLE_RESULT_BUFFER_ROW;
+
   return DRIZZLE_RETURN_OK;
 }
 
@@ -426,22 +446,30 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
     return;
   }
 
-  uint16_t x;
-
   result->con->packet_size= 0;
 
-  for (x= 0; x < result->column_count; x++)
+  for (uint16_t x= 0; x < result->column_count; x++)
   {
     if (field[x] == NULL)
+    {
       result->con->packet_size++;
+    }
     else if (size[x] < 251)
+    {
       result->con->packet_size+= (1 + size[x]);
+    }
     else if (size[x] < 65536)
+    {
       result->con->packet_size+= (3 + size[x]);
+    }
     else if (size[x] < 16777216)
+    {
       result->con->packet_size+= (4 + size[x]);
+    }
     else
+    {
       result->con->packet_size+= (9 + size[x]);
+    }
   }
 }
 
@@ -453,9 +481,13 @@ void drizzle_result_set_eof(drizzle_result_st *result, bool is_eof)
   }
 
   if (is_eof)
+  {
     result->options|= DRIZZLE_RESULT_EOF_PACKET;
+  }
   else
+  {
     result->options&= ~DRIZZLE_RESULT_EOF_PACKET;
+  }
 }
 
 void drizzle_result_set_info(drizzle_result_st *result, const char *info)
@@ -580,6 +612,7 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
   if (con->buffer_size < con->packet_size)
   {
     drizzle_state_push(con, drizzle_state_read);
+
     return DRIZZLE_RETURN_OK;
   }
 
@@ -649,6 +682,7 @@ drizzle_return_t drizzle_state_result_read(drizzle_con_st *con)
   }
 
   drizzle_state_pop(con);
+
   return ret;
 }
 
@@ -676,8 +710,8 @@ drizzle_return_t drizzle_state_result_write(drizzle_con_st *con)
   /* Assume the entire result packet will fit in the buffer. */
   if ((con->packet_size + 4) > DRIZZLE_MAX_BUFFER_SIZE)
   {
-    drizzle_set_error(con->drizzle, "drizzle_state_result_write",
-                      "buffer too small:%zu", con->packet_size + 4);
+    drizzle_set_error(con->drizzle, "drizzle_state_result_write", "buffer too small:%zu", con->packet_size + 4);
+
     return DRIZZLE_RETURN_INTERNAL_ERROR;
   }
 
@@ -686,6 +720,7 @@ drizzle_return_t drizzle_state_result_write(drizzle_con_st *con)
       con->packet_size)
   {
     drizzle_state_push(con, drizzle_state_write);
+
     return DRIZZLE_RETURN_OK;
   }
 
@@ -750,5 +785,6 @@ drizzle_return_t drizzle_state_result_write(drizzle_con_st *con)
   drizzle_set_byte3(start, con->packet_size);
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
