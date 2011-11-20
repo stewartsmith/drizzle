@@ -1170,9 +1170,13 @@ drizzle_return_t drizzle_state_column_write(drizzle_con_st *con)
   ptr+= 4;
 
   if (con->options & DRIZZLE_CON_MYSQL)
+  {
     ptr[0]= column->type;
+  }
   else
+  {
     ptr[0]= _column_type_drizzle_map_from[column->type];
+  }
   ptr++;
 
   drizzle_set_byte2(ptr, column->flags);
