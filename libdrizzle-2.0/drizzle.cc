@@ -283,7 +283,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   if (con == NULL)
   {
     con= new (std::nothrow) drizzle_con_st;
-    con->options= DRIZZLE_CON_ALLOCATED;
+    con->_options.is_allocated= true;
   }
   else
   {
@@ -415,7 +415,7 @@ void drizzle_con_free(drizzle_con_st *con)
   }
   con->drizzle->con_count--;
 
-  if (con->options & DRIZZLE_CON_ALLOCATED)
+  if (con->_options.is_allocated)
   {
     delete con;
   }

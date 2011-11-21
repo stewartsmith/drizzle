@@ -371,7 +371,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result= result;
     /* SET BELOW: column->next */
     column->prev= NULL;
-    column->options= DRIZZLE_COLUMN_ALLOCATED;
+    column->options.is_allocated= true;
     column->catalog[0]= '\0';
     column->schema[0]= '\0';
     column->table[0]= '\0';
@@ -392,7 +392,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result = result;
     /* SET BELOW: column->next */
     column->prev = NULL;
-    column->options= drizzle_column_options_t();
+    column->options.is_allocated= false;
     column->catalog[0] = '\0';
     column->schema[0] = '\0';
     column->table[0] = '\0';
@@ -441,7 +441,7 @@ void drizzle_column_free(drizzle_column_st *column)
     column->next->prev= column->prev;
   }
 
-  if (column->options & DRIZZLE_COLUMN_ALLOCATED)
+  if (column->options.is_allocated)
   {
     delete column;
   }
