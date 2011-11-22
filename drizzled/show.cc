@@ -238,7 +238,7 @@ bool buildTableStatus(Session *session, const char *ident)
   util::string::ptr schema(session->schema());
   if (ident)
   {
-    session->lex().select_lex.db= const_cast<char *>(ident);
+    session->lex().select_lex.db= ident;
 
     identifier::Schema identifier= str_ref(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))

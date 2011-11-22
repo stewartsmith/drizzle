@@ -217,7 +217,6 @@ static bool opt_debugging= false;
 static uint32_t wake_thread;
 static const char* drizzled_chroot;
 static const char* default_character_set_name= "utf8";
-static const char* character_set_filesystem_name= "binary";
 static const char* lc_time_names_name= "en_US";
 static const char* default_storage_engine_str= "innodb";
 static const char* const compiled_default_collation_name= "utf8_general_ci";
@@ -1420,8 +1419,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  if (not (character_set_filesystem=
-           get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+  if (not (character_set_filesystem= get_charset_by_csname("binary", MY_CS_PRIMARY)))
   {
     errmsg_printf(error::ERROR, _("Error setting collation"));
     return false;
@@ -1443,12 +1441,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
 bool was_help_requested()
 {
-  if (vm.count("help") == 0)
-  {
-    return false;
-  }
-
-  return true;
+  return vm.count("help");
 }
 
 void usage();

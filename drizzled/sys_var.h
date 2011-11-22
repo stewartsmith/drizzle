@@ -1086,8 +1086,6 @@ public:
   virtual void set_default(Session *session, sql_var_t type);
 };
 
-
-
 /* For sql_yacc */
 struct sys_var_with_base
 {
@@ -1099,14 +1097,11 @@ struct sys_var_with_base
   Prototypes for helper functions
 */
 
-drizzle_show_var* enumerate_sys_vars(Session *session);
-void add_sys_var_to_list(sys_var *var, struct option *long_options);
-void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(const std::string &name);
-extern sys_var_session_bit sys_autocommit;
-const charset_info_st *get_old_charset_by_name(const char *old_name);
+drizzle_show_var* enumerate_sys_vars(Session*);
+void add_sys_var_to_list(sys_var*, option*);
+void add_sys_var_to_list(sys_var*);
+sys_var* find_sys_var(const std::string&);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 
 } /* namespace drizzled */
-
