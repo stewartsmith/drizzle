@@ -25,7 +25,9 @@
 
 #include <sys/types.h>
 #include <cstddef>
+
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
 
 namespace drizzled {

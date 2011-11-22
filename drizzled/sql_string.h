@@ -30,6 +30,7 @@
 #include <string>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31

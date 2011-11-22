@@ -29,6 +29,7 @@
 #include <drizzled/enum.h>
 #include <drizzled/util/data_ref.h>
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 

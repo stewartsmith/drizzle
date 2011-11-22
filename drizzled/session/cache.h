@@ -22,6 +22,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 #include <list>
 
 namespace drizzled {

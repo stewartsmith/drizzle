@@ -22,6 +22,7 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 

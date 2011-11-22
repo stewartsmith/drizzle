@@ -32,6 +32,7 @@
 #include <utility>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 
