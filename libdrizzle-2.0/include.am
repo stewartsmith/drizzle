@@ -41,7 +41,6 @@ SQLITE_PROGS= examples/sqlite_server
 endif
 
 noinst_PROGRAMS+= libdrizzle-2.0/mysql_password_hash
-libdrizzle_2_0_mysql_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 libdrizzle_2_0_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 libdrizzle_2_0_mysql_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.cc
 
@@ -50,7 +49,6 @@ libdrizzle_2_0_mysql_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.c
 # change any sources, rather just build it twice and provide both.
 # Only drizzle_password_hash is installed by make install though.
 bin_PROGRAMS+= libdrizzle-2.0/drizzle_password_hash
-libdrizzle_2_0_drizzle_password_hash_CXXFLAGS= ${AM_CXXFLAGS} ${LIBDRIZZLE_CPPFLAGS}
 libdrizzle_2_0_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 libdrizzle_2_0_drizzle_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.cc
 
@@ -65,7 +63,6 @@ noinst_PROGRAMS+= \
 
 libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
 					   ${AM_CXXFLAGS} \
-					   ${LIBDRIZZLE_CPPFLAGS} \
 					   ${CFLAG_VISIBILITY} \
 					   -DBUILDING_LIBDRIZZLE
 
@@ -90,46 +87,25 @@ libdrizzle_2_0_libdrizzle_2_0_la_SOURCES= \
 					  libdrizzle-2.0/sha1.cc \
 					  libdrizzle-2.0/state.cc
 
-examples_server_CXXFLAGS= \
-			  $(AM_CXXFLAGS) \
-			  ${LIBDRIZZLE_CPPFLAGS}
 examples_server_SOURCES= examples/server.cc
 examples_server_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
-examples_proxy_CXXFLAGS= \
-			 $(AM_CXXFLAGS) \
-			 ${LIBDRIZZLE_CPPFLAGS}
 examples_proxy_SOURCES= examples/proxy.cc
 examples_proxy_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
-examples_client_CXXFLAGS= \
-			  $(AM_CXXFLAGS) \
-			  ${LIBDRIZZLE_CPPFLAGS}
 examples_client_SOURCES= examples/client.cc
 examples_client_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
-examples_simple_CXXFLAGS= \
-			  $(AM_CXXFLAGS) \
-			  ${LIBDRIZZLE_CPPFLAGS}
 examples_simple_SOURCES= examples/simple.cc
 examples_simple_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
-examples_simple_multi_CXXFLAGS= \
-				$(AM_CXXFLAGS) \
-				${LIBDRIZZLE_CPPFLAGS}
 examples_simple_multi_SOURCES= examples/simple_multi.cc
 examples_simple_multi_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
-examples_pipe_query_CXXFLAGS= \
-			      $(AM_CXXFLAGS) \
-			      ${LIBDRIZZLE_CPPFLAGS}
 examples_pipe_query_SOURCES= examples/pipe_query.cc
 examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 
 if HAVE_LIBSQLITE3
-examples_sqlite_server_CXXFLAGS= \
-				 $(AM_CXXFLAGS) \
-				 ${LIBDRIZZLE_CPPFLAGS}
 examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle-2.0.la $(LTLIBSQLITE3)
 examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle-2.0.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.cc

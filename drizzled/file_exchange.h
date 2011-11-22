@@ -23,6 +23,7 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/enum.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 

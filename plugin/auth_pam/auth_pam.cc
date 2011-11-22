@@ -24,13 +24,13 @@
 
 #include <config.h>
 
+#include <drizzled/identifier.h>
+#include <drizzled/plugin/authentication.h>
+
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
-
-#include <drizzled/identifier.h>
-#include <drizzled/plugin/authentication.h>
 
 using namespace drizzled;
 

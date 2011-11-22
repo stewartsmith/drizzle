@@ -48,6 +48,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/identifier/schema.h>
 
 namespace drizzled {
