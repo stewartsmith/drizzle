@@ -105,7 +105,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "<body>"
                 "<script lang=\"javascript\">"
                 "function to_table(obj) {"
-                " var str = '<table>';"
+                " var str = '<table border=\"1\">';"
                 "for (var r=0; r< obj.length; r++) {"
                 " str+='<tr>';"
                 "  for (var c=0; c < obj[r].length; c++) {"
@@ -116,10 +116,21 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "str+='</table>';"
                 "return str;"
                 "}"
-                "function run_query()\n"
+                "function to_table_from_json(obj) {"
+                " var str = '<table border=\"1\">';"
+                "for (var r=0; r< obj.length; r++) {"
+                " str+='<tr>';"
+                " str+='<td>' + obj[r]['_id'] + '</td>';"
+                " str+='<td>' + JSON.stringify(obj[r]['document']) + '</td>';"
+                " str+='</tr>';"
+                "}"
+                "str+='</table>';"
+                "return str;"
+                "}"
+                "function run_sql_query()\n"
                 "{"
                 "var url = window.location;\n"
-                "var query= document.getElementById(\"query\").value;\n"
+                "var query= document.getElementById(\"sql_query\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
                 "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
@@ -128,6 +139,21 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "}\n"
                 "};\n"
                 "xmlHttp.open(\"POST\", url + \"sql\", true);"
+                "xmlHttp.send(query);"
+                "}"
+                "\n\n"
+                "function run_json_query()\n"
+                "{"
+                "var url = window.location;\n"
+                "var query= document.getElementById(\"json_query\").value;\n"
+                "var xmlHttp = new XMLHttpRequest();\n"
+                "xmlHttp.onreadystatechange = function () {\n"
+                "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
+                "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
+                "document.getElementById( \"resultset\").innerHTML= to_table_from_json(info.result_set);\n"
+                "}\n"
+                "};\n"
+                "xmlHttp.open(\"POST\", url + \"json\", true);"
                 "xmlHttp.send(query);"
                 "}"
                 "\n\n"
@@ -147,12 +173,16 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "}"
                 "</script>"
                 "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>"
-                "<p><textarea rows=\"3\" cols=\"40\" id=\"query\">"
+                "<p><textarea rows=\"3\" cols=\"40\" id=\"sql_query\">"
                 "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;"
                 "</textarea>"
-                "<button type=\"button\" onclick=\"run_query();\">Execute Query</button>"
+                "<button type=\"button\" onclick=\"run_sql_query();\">Execute SQL Query</button>"
+                "<p><textarea rows=\"3\" cols=\"40\" id=\"json_query\">"
+                "{\"_id\" : 1}"
+                "</textarea>"
+                "<button type=\"button\" onclick=\"run_json_query();\">Execute JSON Query</button>"
                 "<div id=\"resultset\"/>"
-                "<script lang=\"javascript\">update_version(); run_query();</script>"
+                "<script lang=\"javascript\">update_version(); run_sql_query();</script>"
                 "</body></html>");
 
   evbuffer_add(buf, output.c_str(), output.length());
@@ -211,6 +241,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   {
     root["error_message"]= exception.getErrorMessage();
     root["error_code"]= exception.getErrorCode();
+    root["schema"]= "test";
   }
 
   while (result_set.next())
@@ -265,9 +296,12 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     // Now we "parse" the json_in object and build an SQL query
     // TODO: implement get first, we need to have both put and get. (Use REPLACE INTO for put, so you get updates too.)
     // TODO: learn how delete is done: a delete command or just "put" empty json object?
-    char sql[1024] = "SELECT v FROM jsonkv WHERE _id=%s;";
-    sprintf(sql, json_in["_id"].asCString());
-
+    char sqlformat[1024] = "SELECT _id, v FROM jsonkv WHERE _id=%i;";
+    // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
+    sprintf(buffer, sqlformat, json_in["_id"].asInt());
+    std::string sql = "";
+    sql.append(buffer, strlen(buffer));
+    
     // We have sql string. Use Execute API to run it and convert results back to JSON.
     drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
                                             drizzled::catalog::local());
@@ -281,7 +315,7 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     drizzled::sql::ResultSet result_set(1);
 
     /* Execute wraps the SQL to run within a transaction */
-    execute.run(input, result_set);
+    execute.run(sql, result_set);
     drizzled::sql::Exception exception= result_set.getException();
 
     drizzled::error_t err= exception.getErrorCode();
@@ -293,22 +327,39 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
         json_out["error_type"]="sql error";
         json_out["error_message"]= exception.getErrorMessage();
         json_out["error_code"]= exception.getErrorCode();
+        json_out["internal_sql_query"]= sql;
+        json_out["schema"]= "test";
     }
 
     while (result_set.next())
     {
         Json::Value json_row;
-        for (size_t x= 0; x < result_set.getMetaData().getColumnCount(); x++)
-        {
-        if (not result_set.isNull(x))
-        {
-            json_row[x]= result_set.getString(x);
+        json_row["_id"]= result_set.getString(0);
+        // In the below we just do the same for the non-id column(s).
+        // However, since the values are now serialized json, we must first
+        // parse them to make them part of this structure, only to immediately
+        // serialize them again in the next step. For large json documents
+        // stored into the blob this must be very, very inefficient.
+        // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
+        // This is what we really wanted to do, replaced with the many lines that follow:
+        //json_row["document"]= Json::StaticString(result_set.getString(1));
+        Json::Value  json_doc;
+        Json::Reader readrow(json_conf);
+        bool r = readrow.parse(result_set.getString(1), json_doc);
+        if (r != true) {
+            json_row["error_type"]="json parse error on row value";
+            json_row["error_message"]= reader.getFormatedErrorMessages();
+            // Just put the string there as it is, better than nothing.
+            json_row["document"]= result_set.getString(1);
         }
+        else {
+            json_row["document"]= json_doc;
         }
+        // When done, append this to result set tree
         json_out["result_set"].append(json_row);
     }
 
-    json_out["query"]= input;
+    json_out["query"]= json_in;
   }
   // Return either the results or an error message, in json.
   Json::StyledWriter writer;
