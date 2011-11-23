@@ -371,7 +371,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result= result;
     /* SET BELOW: column->next */
     column->prev= NULL;
-    column->options= DRIZZLE_COLUMN_ALLOCATED;
+    column->options.is_allocated= true;
     column->catalog[0]= '\0';
     column->schema[0]= '\0';
     column->table[0]= '\0';
@@ -392,7 +392,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result = result;
     /* SET BELOW: column->next */
     column->prev = NULL;
-    column->options= drizzle_column_options_t();
+    column->options.is_allocated= false;
     column->catalog[0] = '\0';
     column->schema[0] = '\0';
     column->table[0] = '\0';
@@ -441,7 +441,7 @@ void drizzle_column_free(drizzle_column_st *column)
     column->next->prev= column->prev;
   }
 
-  if (column->options & DRIZZLE_COLUMN_ALLOCATED)
+  if (column->options.is_allocated)
   {
     delete column;
   }
@@ -1170,9 +1170,13 @@ drizzle_return_t drizzle_state_column_write(drizzle_con_st *con)
   ptr+= 4;
 
   if (con->options & DRIZZLE_CON_MYSQL)
+  {
     ptr[0]= column->type;
+  }
   else
+  {
     ptr[0]= _column_type_drizzle_map_from[column->type];
+  }
   ptr++;
 
   drizzle_set_byte2(ptr, column->flags);

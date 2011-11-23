@@ -161,6 +161,13 @@ public:
   int capabilities;
   drizzle_charset_t charset;
   drizzle_command_t command;
+  struct option_t {
+    bool is_allocated;
+
+    option_t() :
+      is_allocated(false)
+    { }
+  } _options;
   int options;
   drizzle_con_socket_t socket_type;
   drizzle_con_status_t status;
@@ -245,7 +252,13 @@ public:
   drizzle_st *drizzle;
   drizzle_query_st *next;
   drizzle_query_st *prev;
-  int options;
+  struct option_t {
+    bool is_allocated;
+
+    option_t() :
+      is_allocated(false)
+    { }
+  } options;
   drizzle_query_state_t state;
   drizzle_con_st *con;
   drizzle_result_st *result;
@@ -258,7 +271,6 @@ public:
     drizzle(NULL),
     next(NULL),
     prev(NULL),
-    options(0),
     con(NULL),
     result(NULL),
     string(NULL),
@@ -277,6 +289,13 @@ public:
   drizzle_con_st *con;
   drizzle_result_st *next;
   drizzle_result_st *prev;
+  struct option_t {
+    bool is_allocated;
+
+    option_t() :
+      is_allocated(false)
+    { }
+  } _options;
   int options;
 
   char info[DRIZZLE_MAX_INFO_SIZE];
@@ -344,7 +363,13 @@ public:
   drizzle_result_st *result;
   drizzle_column_st *next;
   drizzle_column_st *prev;
-  int options;
+  struct options_t {
+    bool is_allocated;
+
+    options_t() :
+      is_allocated(false)
+    { }
+  } options;
   char catalog[DRIZZLE_MAX_CATALOG_SIZE];
   char schema[DRIZZLE_MAX_DB_SIZE];
   char table[DRIZZLE_MAX_TABLE_SIZE];
@@ -364,7 +389,6 @@ public:
     result(NULL),
     next(NULL),
     prev(NULL),
-    options(0),
     size(0),
     max_size(0),
     flags(DRIZZLE_COLUMN_FLAGS_NONE),

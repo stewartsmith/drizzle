@@ -42,8 +42,6 @@
  * @brief Defines, typedefs, enums, and macros
  */
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 
 #include <vector>
@@ -66,104 +64,21 @@ extern "C" {
 #define DRIZZLE_DEFAULT_UDS              "/tmp/drizzle.sock"
 #define DRIZZLE_DEFAULT_UDS_MYSQL        "/tmp/mysql.sock"
 #define DRIZZLE_DEFAULT_BACKLOG          64
-#define DRIZZLE_MAX_ERROR_SIZE           2048
-#define DRIZZLE_MAX_USER_SIZE            64
-#define DRIZZLE_MAX_PASSWORD_SIZE        32
-#define DRIZZLE_MAX_SCHEMA_SIZE          64
-#define DRIZZLE_MAX_DB_SIZE              DRIZZLE_MAX_SCHEMA_SIZE
-#define DRIZZLE_MAX_INFO_SIZE            2048
-#define DRIZZLE_MAX_SQLSTATE_SIZE        5
-#define DRIZZLE_MAX_CATALOG_SIZE         128
-#define DRIZZLE_MAX_TABLE_SIZE           128
-#define DRIZZLE_MAX_COLUMN_NAME_SIZE     2048
-#define DRIZZLE_MAX_DEFAULT_VALUE_SIZE   2048
-#define DRIZZLE_MAX_PACKET_SIZE          UINT32_MAX
-#define DRIZZLE_MAX_BUFFER_SIZE          32768
 #define DRIZZLE_BUFFER_COPY_THRESHOLD    8192
-#define DRIZZLE_MAX_SERVER_VERSION_SIZE  32
-#define DRIZZLE_MAX_SERVER_EXTRA_SIZE    32
-#define DRIZZLE_MAX_SCRAMBLE_SIZE        20
-#define DRIZZLE_STATE_STACK_SIZE         8
 #define DRIZZLE_ROW_GROW_SIZE            8192
+#define DRIZZLE_STATE_STACK_SIZE         8
 #define DRIZZLE_DEFAULT_SOCKET_TIMEOUT   10
 #define DRIZZLE_DEFAULT_SOCKET_SEND_SIZE 32768
 #define DRIZZLE_DEFAULT_SOCKET_RECV_SIZE 32768
 #define DRIZZLE_MYSQL_PASSWORD_HASH      41
 
-/**
- * Return codes.
- */
-enum drizzle_return_t
-{
-  DRIZZLE_RETURN_OK,
-  DRIZZLE_RETURN_IO_WAIT,
-  DRIZZLE_RETURN_PAUSE,
-  DRIZZLE_RETURN_ROW_BREAK,
-  DRIZZLE_RETURN_MEMORY,
-  DRIZZLE_RETURN_ERRNO,
-  DRIZZLE_RETURN_INTERNAL_ERROR,
-  DRIZZLE_RETURN_GETADDRINFO,
-  DRIZZLE_RETURN_NOT_READY,
-  DRIZZLE_RETURN_BAD_PACKET_NUMBER,
-  DRIZZLE_RETURN_BAD_HANDSHAKE_PACKET,
-  DRIZZLE_RETURN_BAD_PACKET,
-  DRIZZLE_RETURN_PROTOCOL_NOT_SUPPORTED,
-  DRIZZLE_RETURN_UNEXPECTED_DATA,
-  DRIZZLE_RETURN_NO_SCRAMBLE,
-  DRIZZLE_RETURN_AUTH_FAILED,
-  DRIZZLE_RETURN_NULL_SIZE,
-  DRIZZLE_RETURN_ERROR_CODE,
-  DRIZZLE_RETURN_TOO_MANY_COLUMNS,
-  DRIZZLE_RETURN_ROW_END,
-  DRIZZLE_RETURN_LOST_CONNECTION,
-  DRIZZLE_RETURN_COULD_NOT_CONNECT,
-  DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS,
-  DRIZZLE_RETURN_HANDSHAKE_FAILED,
-  DRIZZLE_RETURN_TIMEOUT,
-  DRIZZLE_RETURN_INVALID_ARGUMENT,
-  DRIZZLE_RETURN_MAX /* Always add new codes to the end before this one. */
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_return_t drizzle_return_t
-#endif
-
-/**
- * Verbosity levels.
- */
-enum drizzle_verbose_t
-{
-  DRIZZLE_VERBOSE_NEVER,
-  DRIZZLE_VERBOSE_FATAL,
-  DRIZZLE_VERBOSE_ERROR,
-  DRIZZLE_VERBOSE_INFO,
-  DRIZZLE_VERBOSE_DEBUG,
-  DRIZZLE_VERBOSE_CRAZY,
-  DRIZZLE_VERBOSE_MAX
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_verbose_t drizzle_verbose_t;
-#endif
+#include <libdrizzle-2.0/deprecated_enum.h>
+#include <libdrizzle-2.0/return.h>
+#include <libdrizzle-2.0/command.h>
+#include <libdrizzle-2.0/verbose.h>
+#include <libdrizzle-2.0/limits.h>
 
 /** @} */
-
-/**
- * @ingroup drizzle
- * Options for drizzle_st.
- */
-enum drizzle_options_t
-{
-  DRIZZLE_NONE=            0,
-  DRIZZLE_ALLOCATED=       (1 << 0),
-  DRIZZLE_NON_BLOCKING=    (1 << 1),
-  DRIZZLE_FREE_OBJECTS=    (1 << 2),
-  DRIZZLE_ASSERT_DANGLING= (1 << 3)
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_options_t drizzle_options_t;
-#endif
 
 /**
  * @ingroup drizzle_con
@@ -172,7 +87,7 @@ typedef enum drizzle_options_t drizzle_options_t;
 enum drizzle_con_options_t
 {
   DRIZZLE_CON_NONE=             0,
-  DRIZZLE_CON_ALLOCATED=        (1 << 0),
+  DRIZZLE_CON_ALLOCATED=        (1 << 0), // DEPRECATED
   DRIZZLE_CON_MYSQL=            (1 << 1),
   DRIZZLE_CON_RAW_PACKET=       (1 << 2),
   DRIZZLE_CON_RAW_SCRAMBLE=     (1 << 3),
@@ -272,84 +187,6 @@ typedef enum drizzle_capabilities_t drizzle_capabilities_t;
 #endif
 
 /**
- * @ingroup drizzle_command 
- * Commands for drizzle_command functions.
- */
-enum drizzle_command_t
-{
-  DRIZZLE_COMMAND_SLEEP,               /* Not used currently. */
-  DRIZZLE_COMMAND_QUIT,
-  DRIZZLE_COMMAND_INIT_DB,
-  DRIZZLE_COMMAND_QUERY,
-  DRIZZLE_COMMAND_FIELD_LIST,          /* Deprecated. */
-  DRIZZLE_COMMAND_CREATE_DB,           /* Deprecated. */
-  DRIZZLE_COMMAND_DROP_DB,             /* Deprecated. */
-  DRIZZLE_COMMAND_REFRESH,
-  DRIZZLE_COMMAND_SHUTDOWN,
-  DRIZZLE_COMMAND_STATISTICS,
-  DRIZZLE_COMMAND_PROCESS_INFO,        /* Deprecated. */
-  DRIZZLE_COMMAND_CONNECT,             /* Not used currently. */
-  DRIZZLE_COMMAND_PROCESS_KILL,        /* Deprecated. */
-  DRIZZLE_COMMAND_DEBUG,
-  DRIZZLE_COMMAND_PING,
-  DRIZZLE_COMMAND_TIME,                /* Not used currently. */
-  DRIZZLE_COMMAND_DELAYED_INSERT,      /* Not used currently. */
-  DRIZZLE_COMMAND_CHANGE_USER,
-  DRIZZLE_COMMAND_BINLOG_DUMP,         /* Not used currently. */
-  DRIZZLE_COMMAND_TABLE_DUMP,          /* Not used currently. */
-  DRIZZLE_COMMAND_CONNECT_OUT,         /* Not used currently. */
-  DRIZZLE_COMMAND_REGISTER_SLAVE,      /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_PREPARE,        /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_EXECUTE,        /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_SEND_LONG_DATA, /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_CLOSE,          /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_RESET,          /* Not used currently. */
-  DRIZZLE_COMMAND_SET_OPTION,          /* Not used currently. */
-  DRIZZLE_COMMAND_STMT_FETCH,          /* Not used currently. */
-  DRIZZLE_COMMAND_DAEMON,              /* Not used currently. */
-  DRIZZLE_COMMAND_END                  /* Not used currently. */
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_command_t drizzle_command_t;
-#endif
-
-/**
- * @ingroup drizzle_command 
- * Commands for the Drizzle protocol functions.
- */
-enum drizzle_command_drizzle_t
-{
-  DRIZZLE_COMMAND_DRIZZLE_SLEEP,
-  DRIZZLE_COMMAND_DRIZZLE_QUIT,
-  DRIZZLE_COMMAND_DRIZZLE_INIT_DB,
-  DRIZZLE_COMMAND_DRIZZLE_QUERY,
-  DRIZZLE_COMMAND_DRIZZLE_SHUTDOWN,
-  DRIZZLE_COMMAND_DRIZZLE_CONNECT,
-  DRIZZLE_COMMAND_DRIZZLE_PING,
-  DRIZZLE_COMMAND_DRIZZLE_KILL,
-  DRIZZLE_COMMAND_DRIZZLE_END
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_command_drizzle_t drizzle_command_drizzle_t;
-#endif
-
-/**
- * @ingroup drizzle_query
- * Options for drizzle_query_st.
- */
-enum drizzle_query_options_t
-{
-  DRIZZLE_QUERY_NONE,
-  DRIZZLE_QUERY_ALLOCATED= (1 << 0)
-};
-
-#ifndef __cplusplus
-typedef enum drizzle_query_options_t drizzle_query_options_t;
-#endif
-
-/**
  * @ingroup drizzle_query
  * States for drizle_query_st.
  */
@@ -372,7 +209,7 @@ enum drizzle_query_state_t drizzle_query_state_t;
 enum drizzle_result_options_t
 {
   DRIZZLE_RESULT_NONE=          0,
-  DRIZZLE_RESULT_ALLOCATED=     (1 << 0),
+  DRIZZLE_RESULT_ALLOCATED=     (1 << 0), // DEPRECATED
   DRIZZLE_RESULT_SKIP_COLUMN=   (1 << 1),
   DRIZZLE_RESULT_BUFFER_COLUMN= (1 << 2),
   DRIZZLE_RESULT_BUFFER_ROW=    (1 << 3),
@@ -390,7 +227,7 @@ typedef enum drizzle_result_options_t drizzle_result_options_t;
  */
 enum drizzle_column_options_t
 {
-  DRIZZLE_COLUMN_ALLOCATED= (1 << 0)
+  DRIZZLE_COLUMN_ALLOCATED= (1 << 0) // DEPRECATED
 };
 
 #ifndef __cplusplus
