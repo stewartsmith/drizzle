@@ -84,7 +84,7 @@ extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
 extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
-extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
+extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* );
 
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -101,34 +101,34 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
 
   std::string output;
 
-  output.append("<html><head><title>JSON DATABASE interface demo</title></head>"
-                "<body>"
-                "<script lang=\"javascript\">"
-                "function to_table(obj) {"
-                " var str = '<table border=\"1\">';"
-                "for (var r=0; r< obj.length; r++) {"
-                " str+='<tr>';"
-                "  for (var c=0; c < obj[r].length; c++) {"
-                "    str+= '<td>' + obj[r][c] + '</td>';"
-                "  }"
-                " str+='</tr>';"
-                "}"
-                "str+='</table>';"
-                "return str;"
-                "}"
-                "function to_table_from_json(obj) {"
-                " var str = '<table border=\"1\">';"
-                "for (var r=0; r< obj.length; r++) {"
-                " str+='<tr>';"
-                " str+='<td>' + obj[r]['_id'] + '</td>';"
-                " str+='<td>' + JSON.stringify(obj[r]['document']) + '</td>';"
-                " str+='</tr>';"
-                "}"
-                "str+='</table>';"
-                "return str;"
-                "}"
+  output.append("<html><head><title>JSON DATABASE interface demo</title></head>\n"
+                "<body>\n"
+                "<script lang=\"javascript\">\n"
+                "function to_table(obj) {\n"
+                " var str = '<table border=\"1\">';\n"
+                "for (var r=0; r< obj.length; r++) {\n"
+                " str+='<tr>';\n"
+                "  for (var c=0; c < obj[r].length; c++) {\n"
+                "    str+= '<td>' + obj[r][c] + '</td>';\n"
+                "  }\n"
+                " str+='</tr>';\n"
+                "}\n"
+                "str+='</table>';\n"
+                "return str;\n"
+                "}\n"
+                "function to_table_from_json(obj) {\n"
+                " var str = '<table border=\"1\">';\n"
+                "for (var r=0; r< obj.length; r++) {\n"
+                " str+='<tr>';\n"
+                " str+='<td>' + obj[r]['_id'] + '</td>';\n"
+                " str+='<td>' + JSON.stringify(obj[r]['document']) + '</td>';\n"
+                " str+='</tr>';\n"
+                "}\n"
+                "str+='</table>';\n"
+                "return str;\n"
+                "}\n"
                 "function run_sql_query()\n"
-                "{"
+                "{\n"
                 "var url = window.location;\n"
                 "var query= document.getElementById(\"sql_query\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
@@ -138,14 +138,16 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "document.getElementById( \"resultset\").innerHTML= to_table(info.result_set);\n"
                 "}\n"
                 "};\n"
-                "xmlHttp.open(\"POST\", url + \"sql\", true);"
-                "xmlHttp.send(query);"
-                "}"
+                "xmlHttp.open(\"POST\", url + \"sql\", true);\n"
+                "xmlHttp.send(query);\n"
+                "}\n"
                 "\n\n"
                 "function run_json_query()\n"
-                "{"
+                "{\n"
                 "var url = window.location;\n"
                 "var query= document.getElementById(\"json_query\").value;\n"
+                "var schema= document.getElementById(\"schema\").value;\n"
+                "var table= document.getElementById(\"table\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
                 "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
@@ -153,14 +155,14 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "document.getElementById( \"resultset\").innerHTML= to_table_from_json(info.result_set);\n"
                 "}\n"
                 "};\n"
-                "xmlHttp.open(\"POST\", url + \"json\", true);"
-                "xmlHttp.send(query);"
-                "}"
+                "xmlHttp.open(\"POST\", url + \"json/get?schema=\" + schema + \"&table=\" + table, true);\n"
+                "xmlHttp.send(query);\n"
+                "}\n"
                 "\n\n"
                 "function update_version()\n"
                 "{drizzle_version(window.location);}\n\n"
-                "function drizzle_version($url)"
-                "{"
+                "function drizzle_version($url)\n"
+                "{\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
                 "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
@@ -168,22 +170,27 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "document.getElementById( \"drizzleversion\").innerHTML= info.version;\n"
                 "}\n"
                 "};\n"
-                "xmlHttp.open(\"GET\", $url + \"version\", true);"
-                "xmlHttp.send(null);"
-                "}"
-                "</script>"
-                "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>"
-                "<p><textarea rows=\"3\" cols=\"40\" id=\"sql_query\">"
-                "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;"
-                "</textarea>"
-                "<button type=\"button\" onclick=\"run_sql_query();\">Execute SQL Query</button>"
-                "<p><textarea rows=\"3\" cols=\"40\" id=\"json_query\">"
-                "{\"_id\" : 1}"
-                "</textarea>"
-                "<button type=\"button\" onclick=\"run_json_query();\">Execute JSON Query</button>"
-                "<div id=\"resultset\"/>"
-                "<script lang=\"javascript\">update_version(); run_sql_query();</script>"
-                "</body></html>");
+                "xmlHttp.open(\"GET\", $url + \"version\", true);\n"
+                "xmlHttp.send(null);\n"
+                "}\n"
+                "</script>\n"
+                "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>\n"
+                "<p><textarea rows=\"3\" cols=\"40\" id=\"sql_query\">\n"
+                "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;\n"
+                "</textarea>\n"
+                "<button type=\"button\" onclick=\"run_sql_query();\">Execute SQL Query</button>\n"
+                "</p><p>\n"
+                "<textarea rows=\"3\" cols=\"40\" id=\"json_query\">\n"
+                "{\"_id\" : 1}\n"
+                "</textarea>\n"
+                "<button type=\"button\" onclick=\"run_json_query();\">Execute JSON Query</button>\n"
+                "<br />\n"
+                "<script lang=\"javascript\">document.write(window.location);</script>json/get?schema=\n"
+                "<input type=\"text\" id=\"schema\" value=\"test\"/>"
+                "&amp;table=<input type=\"text\" id=\"table\" value=\"jsonkv\"/>\n"
+                "</p><hr />\n<div id=\"resultset\"/>\n"
+                "<script lang=\"javascript\">update_version(); run_sql_query();</script>\n"
+                "</body></html>\n");
 
   evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
@@ -266,7 +273,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
+extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* )
 {
   Json::Value json_out;
 
@@ -282,6 +289,15 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     input.append(buffer, l);
   }while(l);
 
+  // Schema and table are given in request uri.
+  // TODO: If we want to be really NoSQL, we will some day allow to use synonyms like "collection" instead of "table".
+  char *schema;
+  char *table;
+  evhttp_parse_query(evhttp_request_uri(req), req->input_headers);
+  schema = (char *)evhttp_find_header(req->input_headers, "schema");
+  table = (char *)evhttp_find_header(req->input_headers, "table");
+
+  
   // Parse "input" into "json_in". Strict mode means comments are discarded.
   Json::Value  json_in;
   Json::Features json_conf;
@@ -296,9 +312,9 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     // Now we "parse" the json_in object and build an SQL query
     // TODO: implement get first, we need to have both put and get. (Use REPLACE INTO for put, so you get updates too.)
     // TODO: learn how delete is done: a delete command or just "put" empty json object?
-    char sqlformat[1024] = "SELECT _id, v FROM jsonkv WHERE _id=%i;";
+    char sqlformat[1024] = "SELECT _id, v FROM %s.%s WHERE _id=%i;";
     // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
-    sprintf(buffer, sqlformat, json_in["_id"].asInt());
+    sprintf(buffer, sqlformat, schema, table, json_in["_id"].asInt());
     std::string sql = "";
     sql.append(buffer, strlen(buffer));
     
@@ -308,7 +324,7 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
     user_id->setUser("");
     _session->setUser(user_id);
-    _session->set_schema("test");
+    //_session->set_schema("test");
 
     drizzled::Execute execute(*(_session.get()), true);
 
@@ -452,15 +468,20 @@ public:
     // API 0.2
     evhttp_set_cb(httpd, "/0.2/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/0.2/sql", process_api01_sql_req, NULL);
-          // TODO: research whether to call this MQL, Mongo or whatever...
-    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_req, NULL);
+    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_get_req, NULL);
+    evhttp_set_cb(httpd, "/0.2/json/get", process_api02_json_get_req, NULL);
+    //evhttp_set_cb(httpd, "/0.2/json/put", process_api02_json_put_req, NULL);
     // API "latest" and also available in top level
     evhttp_set_cb(httpd, "/latest/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/latest/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/latest/json", process_api02_json_req, NULL);
+    evhttp_set_cb(httpd, "/latest/json", process_api02_json_get_req, NULL);
+    evhttp_set_cb(httpd, "/latest/json/get", process_api02_json_get_req, NULL);
+    //evhttp_set_cb(httpd, "/latest/json/put", process_api02_json_put_req, NULL);
     evhttp_set_cb(httpd, "/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/json", process_api02_json_req, NULL);    
+    evhttp_set_cb(httpd, "/json", process_api02_json_get_req, NULL);    
+    evhttp_set_cb(httpd, "/json/get", process_api02_json_get_req, NULL);    
+    //evhttp_set_cb(httpd, "/json/put", process_api02_json_put_req, NULL);    
     // Catch all does nothing and returns generic message.
     //evhttp_set_gencb(httpd, process_request, NULL);
 
