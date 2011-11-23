@@ -32,24 +32,16 @@ namespace drizzle_plugin {
 namespace auth_schema {
 
 /**
- * Forward declarations.
- */
-bool update_table(Session *, set_var *var);
-
-/**
  * Singleton instance of the plugin.
  */
 static AuthSchema *auth_schema= NULL;
 
-bool update_table(Session *, set_var *var)
+static bool update_table(Session*, set_var* var)
 {
-  if (not var->value->str_value.data())
-  {
-    errmsg_printf(error::ERROR, _("auth_schema table cannot be NULL"));
-    return true; // error
-  }
-  const string table(var->value->str_value.data());
-  return auth_schema->setTable(table);
+  if (not var->value->str_value.empty())
+    return auth_schema->setTable(var->value->str_value.data());
+  errmsg_printf(error::ERROR, _("auth_schema table cannot be NULL"));
+  return true; // error
 }
 
 static void init_options(module::option_context &context)
@@ -69,12 +61,8 @@ static int init(module::Context &context)
     auth_schema->setTable(vm["table"].as<string>());
 
   context.add(auth_schema);
-
-  context.registerVariable(
-    new sys_var_bool_ptr("enabled", &auth_schema->sysvar_enabled));
-
-  context.registerVariable(
-    new sys_var_std_string("table", auth_schema->sysvar_table, NULL, &update_table));
+  context.registerVariable(new sys_var_bool_ptr("enabled", &auth_schema->sysvar_enabled));
+  context.registerVariable(new sys_var_std_string("table", auth_schema->sysvar_table, NULL, &update_table));
 
   return 0;
 }

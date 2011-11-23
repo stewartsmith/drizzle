@@ -58,21 +58,21 @@ Item *get_system_var(Session *session, sql_var_t var_type, str_ref name, str_ref
 {
   str_ref *base_name, *component_name;
 
-  if (component.data())
-  {
-    base_name= &component;
-    component_name= &name;
-  }
-  else
+  if (component.empty())
   {
     base_name= &name;
     component_name= &component;                 // Empty string
   }
+  else
+  {
+    base_name= &component;
+    component_name= &name;
+  }
 
-  sys_var *var= find_sys_var(base_name->data());
+  sys_var *var= find_sys_var(*base_name);
   if (not var)
     return NULL;
-  if (component.data())
+  if (not component.empty())
   {
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->data());
     return NULL;
