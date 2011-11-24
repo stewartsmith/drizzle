@@ -196,6 +196,27 @@ const char *drizzle_error(const drizzle_st *drizzle)
   return drizzle->last_error;
 }
 
+drizzle_return_t drizzle_set_option(drizzle_st *drizzle, drizzle_options_t arg, bool set)
+{
+  switch (arg)
+  {
+  case DRIZZLE_NON_BLOCKING:
+    drizzle->options.is_non_blocking= set;
+    return DRIZZLE_RETURN_OK;
+
+  case DRIZZLE_FREE_OBJECTS:
+    return DRIZZLE_RETURN_OK;
+
+  case DRIZZLE_ASSERT_DANGLING:
+    return DRIZZLE_RETURN_OK;
+
+  default:
+    break;
+  }
+
+  return DRIZZLE_RETURN_INVALID_ARGUMENT;
+}
+
 int drizzle_errno(const drizzle_st *drizzle)
 {
   return drizzle->last_errno;
@@ -209,19 +230,6 @@ uint16_t drizzle_error_code(const drizzle_st *drizzle)
 const char *drizzle_sqlstate(const drizzle_st *drizzle)
 {
   return drizzle->sqlstate;
-}
-
-int drizzle_options(const drizzle_st *)
-{
-  return 0;
-}
-
-void drizzle_set_options(drizzle_st *, int)
-{
-}
-
-void drizzle_add_options(drizzle_st *, int)
-{
 }
 
 void *drizzle_context(const drizzle_st *drizzle)

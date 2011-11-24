@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         client.level= BUFFER_ALL;
       else
       {
-        printf("Invalid buffer level: %s\n", optarg);
+        fprintf(stderr, "Invalid buffer level: %s\n", optarg);
         exit(0);
       }
       break;
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
                                                     sizeof(client_con_st));
     if (client.client_con_list == NULL)
     {
-      printf("calloc:%d\n", errno);
+      fprintf(stderr, "calloc:%d\n", errno);
       exit(1);
     }
   }
@@ -206,13 +206,13 @@ int main(int argc, char *argv[])
   /* This may fail if there is other initialization that fails. See docs. */
   if ((client.drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create failed\n");
+    fprintf(stderr, "drizzle_create failed\n");
     exit(1);
   }
 
   if (blocking == 0)
   {
-    drizzle_add_options(client.drizzle, DRIZZLE_NON_BLOCKING);
+    drizzle_set_option(client.drizzle, DRIZZLE_NON_BLOCKING, true);
   }
 
   /* Start all connections, and if in non-blocking mode, return as soon as the
@@ -333,9 +333,13 @@ char client_process(client_st *client, client_con_st *client_con)
         column= drizzle_column_read(&(client_con->result),
                                     &(client_con->column), &ret);
         if (ret == DRIZZLE_RETURN_IO_WAIT)
+        {
           return 1;
+        }
         else if (ret != DRIZZLE_RETURN_OK)
+        {
           CLIENT_ERROR("drizzle_column_read", ret, client);
+        }
 
         if (column == NULL)
           break;
@@ -355,17 +359,17 @@ char client_process(client_st *client, client_con_st *client_con)
       {
         field_sizes= drizzle_row_field_sizes(&(client_con->result));
 
-        printf("Row: %" PRId64 "\n",
-               drizzle_row_current(&(client_con->result)));
+        printf("Row: %" PRId64 "\n", drizzle_row_current(&(client_con->result)));
 
         for (x= 0; x < drizzle_result_column_count(&(client_con->result)); x++)
         {
           if (row[x] == NULL)
+          {
             printf("     (NULL)\n");
+          }
           else
           {
-            printf("     (%"PRIu64") %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x],
-                   row[x]);
+            printf("     (%"PRIu64") %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x], row[x]);
           }
         }
 
@@ -424,15 +428,22 @@ char client_process(client_st *client, client_con_st *client_con)
             CLIENT_ERROR("drizzle_field_read", ret, client);
 
           if (field == NULL)
+          {
             printf("     (NULL)");
+          }
           else if (offset > 0)
+          {
             printf("%.*s", (int32_t)length, field);
+          }
           else
-            printf("     (%" PRIu64 " %.*s", (uint64_t)total,
-			    (int32_t)length, field);
+          {
+            printf("     (%" PRIu64 " %.*s", (uint64_t)total, (int32_t)length, field);
+          }
 
           if (offset + length == total)
+          {
             printf("\n");
+          }
 
           /* If we buffered the entire field, be sure to free it. */
           if (client->level == BUFFER_FIELD)

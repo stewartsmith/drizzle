@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  drizzle_add_options(drizzle, DRIZZLE_FREE_OBJECTS);
+  drizzle_set_option(drizzle, DRIZZLE_FREE_OBJECTS, true);
   drizzle_set_verbose(drizzle, verbose);
 
   if (drizzle_con_create(drizzle, con_listen) == NULL)

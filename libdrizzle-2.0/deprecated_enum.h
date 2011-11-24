@@ -56,11 +56,9 @@ typedef enum drizzle_query_options_t drizzle_query_options_t;
  */
 enum drizzle_options_t
 {
-  DRIZZLE_NONE=            0,
-  DRIZZLE_ALLOCATED=       (1 << 0),
-  DRIZZLE_NON_BLOCKING=    (1 << 1),
-  DRIZZLE_FREE_OBJECTS=    (1 << 2),
-  DRIZZLE_ASSERT_DANGLING= (1 << 3)
+  DRIZZLE_NON_BLOCKING,
+  DRIZZLE_FREE_OBJECTS,
+  DRIZZLE_ASSERT_DANGLING
 };
 
 #ifndef __cplusplus

@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <libdrizzle-1.0/drizzle_server.h>
+#include <libdrizzle-2.0/drizzle_server.h>
 
 #define DRIZZLE_FIELD_MAX 32
 #define DRIZZLE_RESULT_ROWS 20
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   in_port_t port= 0;
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
-  drizzle_st drizzle;
+  drizzle_st *drizzle;
   drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_result_st result;
@@ -132,18 +132,18 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (drizzle_create(&drizzle) == NULL)
+  if ((drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create:NULL\n");
+    fprintf(stderr, "drizzle_create:NULL\n");
     return 1;
   }
 
-  drizzle_add_options(&drizzle, DRIZZLE_FREE_OBJECTS);
-  drizzle_set_verbose(&drizzle, verbose);
+  drizzle_set_option(drizzle, DRIZZLE_FREE_OBJECTS, true);
+  drizzle_set_verbose(drizzle, verbose);
 
-  if (drizzle_con_create(&drizzle, con_listen) == NULL)
+  if (drizzle_con_create(drizzle, con_listen) == NULL)
   {
-    printf("drizzle_con_create:NULL\n");
+    fprintf(stderr, "drizzle_con_create:NULL\n");
     return 1;
   }
 
@@ -151,24 +151,26 @@ int main(int argc, char *argv[])
   drizzle_con_set_tcp(con_listen, host, port);
 
   if (mysql)
+  {
     drizzle_con_add_options(con_listen, DRIZZLE_CON_MYSQL);
+  }
 
   if (drizzle_con_listen(con_listen) != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_con_listen:%s\n", drizzle_error(&drizzle));
+    fprintf(stderr, "drizzle_con_listen:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
   while (1)
   {
-    (void)drizzle_con_accept(&drizzle, con, &ret);
+    (void)drizzle_con_accept(drizzle, con, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      printf("drizzle_con_accept:%s\n", drizzle_error(&drizzle));
+      fprintf(stderr, "drizzle_con_accept:%s\n", drizzle_error(drizzle));
       return 1;
     }
 
-    server(&drizzle, con, &result, &column);
+    server(drizzle, con, &result, &column);
 
     drizzle_con_free(con);
 
@@ -182,7 +184,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_con_free(con_listen);
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
 
   free(con);
   free(con_listen);

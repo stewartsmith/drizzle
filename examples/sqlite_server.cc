@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  drizzle_add_options(server->drizzle, DRIZZLE_FREE_OBJECTS);
+  drizzle_set_option(server->drizzle, DRIZZLE_FREE_OBJECTS, true);
   drizzle_set_verbose(server->drizzle, server->verbose);
 
   if (drizzle_con_create(server->drizzle, con_listen) == NULL)

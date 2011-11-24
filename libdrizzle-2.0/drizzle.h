@@ -214,46 +214,6 @@ DRIZZLE_API
 const char *drizzle_sqlstate(const drizzle_st *drizzle);
 
 /**
- * Get options for a drizzle structure.
- *
- * @param[in] drizzle Drizzle structure previously initialized with
- *  drizzle_create() or drizzle_clone().
- * @return Options set for the drizzle structure.
- */
-DRIZZLE_API
-int drizzle_options(const drizzle_st *drizzle);
-
-/**
- * Set options for a drizzle structure.
- *
- * @param[in] drizzle Drizzle structure previously initialized with
- *  drizzle_create() or drizzle_clone().
- * @param[in] options Available options for drizzle structure to set.
- */
-DRIZZLE_API
-void drizzle_set_options(drizzle_st *drizzle, int options);
-
-/**
- * Add options for a drizzle structure.
- *
- * @param[in] drizzle Drizzle structure previously initialized with
- *  drizzle_create() or drizzle_clone().
- * @param[in] options Available options for drizzle structure to add.
- */
-DRIZZLE_API
-void drizzle_add_options(drizzle_st *drizzle, int options);
-
-/**
- * Remove options for a drizzle structure.
- *
- * @param[in] drizzle Drizzle structure previously initialized with
- *  drizzle_create() or drizzle_clone().
- * @param[in] options Available options for drizzle structure to remove.
- */
-DRIZZLE_API
-void drizzle_remove_options(drizzle_st *, drizzle_options_t);
-
-/**
  * Get application context pointer.
  *
  * @param[in] drizzle Drizzle structure previously initialized with
@@ -389,6 +349,9 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con);
 DRIZZLE_API
 drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
                                   const drizzle_con_st *from);
+
+DRIZZLE_API
+drizzle_return_t drizzle_set_option(drizzle_st *drizzle, drizzle_options_t arg, bool set);
 
 /**
  * Free a connection structure.
