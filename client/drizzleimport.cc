@@ -201,9 +201,15 @@ static drizzle_con_st *db_connect(const string host, const string database,
   drizzle_return_t ret;
 
   if (verbose)
+  {
     fprintf(stdout, "Connecting to %s, using protocol %s...\n", ! host.empty() ? host.c_str() : "localhost", opt_protocol.c_str());
-  if (!(drizzle= drizzle_create(NULL)))
+  }
+
+  if ((drizzle= drizzle_create()) == NULL)
+  {
     return 0;
+  }
+
   if (!(con= drizzle_con_add_tcp(drizzle,NULL,(char *)host.c_str(),opt_drizzle_port,(char *)user.c_str(),(char *)passwd.c_str(),
                                  (char *)database.c_str(), use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
   {

@@ -281,7 +281,7 @@ static string completion_string;
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
-static drizzle_st drizzle;      /* The library handle */
+static drizzle_st *drizzle= NULL;      /* The library handle */
 static drizzle_con_st con;      /* The connection */
 static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
@@ -1899,7 +1899,7 @@ try
 void drizzle_end(int sig)
 {
   drizzle_con_free(&con);
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
   if (!status.getBatch() && !quick && histfile)
   {
     /* write-history */
@@ -1948,7 +1948,7 @@ void handle_sigint(int sig)
     goto err;
   }
 
-  if (drizzle_con_add_tcp(&drizzle, kill_drizzle.get(), current_host.c_str(),
+  if (drizzle and drizzle_con_add_tcp(drizzle, kill_drizzle.get(), current_host.c_str(),
     opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
     use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
@@ -2627,7 +2627,9 @@ static void build_completion_hash(bool rehash, bool write_info)
     if (ret == DRIZZLE_RETURN_OK)
     {
       if (drizzle_result_buffer(&databases) != DRIZZLE_RETURN_OK)
-        put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
+      {
+        put_info(drizzle_error(drizzle),INFO_INFO,0,0);
+      }
       else
       {
         while ((database_row=drizzle_row_next(&databases)))
@@ -4178,11 +4180,16 @@ sql_connect(const string &host, const string &database, const string &user, cons
   {
     connected= 0;
     drizzle_con_free(&con);
-    drizzle_free(&drizzle);
+    drizzle_free(drizzle);
   }
-  drizzle_create(&drizzle);
 
-  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
+  drizzle= drizzle_create();
+  if (drizzle == NULL)
+  {
+    return 1;
+  }
+
+  if (drizzle_con_add_tcp(drizzle, &con, (char *)host.c_str(),
                           opt_drizzle_port, (char *)user.c_str(),
                           (char *)password.c_str(), (char *)database.c_str(),
                           global_con_options) == NULL)

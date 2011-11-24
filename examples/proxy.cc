@@ -50,7 +50,7 @@
 
 #define DRIZZLE_RETURN_ERROR(__function, __drizzle) \
 { \
-  printf(__function ":%s\n", drizzle_error(__drizzle)); \
+  fprintf(stderr, __function ":%s\n", drizzle_error(__drizzle)); \
   return; \
 }
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   in_port_t client_port= 0;
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
-  drizzle_st drizzle;
+  drizzle_st *drizzle;
   drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_con_st *server= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_con_st *client= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
@@ -135,32 +135,32 @@ int main(int argc, char *argv[])
       break;
 
     default:
-      printf("\nusage: %s [-c <count>] [-h <host>] [-H <host>] [-m] [-M] "
+      fprintf(stderr, "\nusage: %s [-c <count>] [-h <host>] [-H <host>] [-m] [-M] "
              "[-p <port>] [-p <port>] [-v]\n", argv[0]);
-      printf("\t-c <count> - Number of connections to accept before exiting\n");
-      printf("\t-h <host>  - Host to listen on\n");
-      printf("\t-H <host>  - Host to connect to\n");
-      printf("\t-m         - Use MySQL protocol for incoming connections\n");
-      printf("\t-M         - Use MySQL protocol for outgoing connectionsn\n");
-      printf("\t-p <port>  - Port to listen on\n");
-      printf("\t-P <port>  - Port to connect to\n");
-      printf("\t-v         - Increase verbosity level\n");
+      fprintf(stderr, "\t-c <count> - Number of connections to accept before exiting\n");
+      fprintf(stderr, "\t-h <host>  - Host to listen on\n");
+      fprintf(stderr, "\t-H <host>  - Host to connect to\n");
+      fprintf(stderr, "\t-m         - Use MySQL protocol for incoming connections\n");
+      fprintf(stderr, "\t-M         - Use MySQL protocol for outgoing connectionsn\n");
+      fprintf(stderr, "\t-p <port>  - Port to listen on\n");
+      fprintf(stderr, "\t-P <port>  - Port to connect to\n");
+      fprintf(stderr, "\t-v         - Increase verbosity level\n");
       return 1;
     }
   }
 
-  if (drizzle_create(&drizzle) == NULL)
+  if ((drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create:NULL\n");
+    fprintf(stderr, "drizzle_create:NULL\n");
     return 1;
   }
 
-  drizzle_add_options(&drizzle, DRIZZLE_FREE_OBJECTS);
-  drizzle_set_verbose(&drizzle, verbose);
+  drizzle_add_options(drizzle, DRIZZLE_FREE_OBJECTS);
+  drizzle_set_verbose(drizzle, verbose);
 
-  if (drizzle_con_create(&drizzle, con_listen) == NULL)
+  if (drizzle_con_create(drizzle, con_listen) == NULL)
   {
-    printf("drizzle_con_create:NULL\n");
+    fprintf(stderr, "drizzle_con_create:NULL\n");
     return 1;
   }
 
@@ -168,26 +168,28 @@ int main(int argc, char *argv[])
   drizzle_con_set_tcp(con_listen, server_host, server_port);
 
   if (server_mysql)
+  {
     drizzle_con_add_options(con_listen, DRIZZLE_CON_MYSQL);
+  }
 
   if (drizzle_con_listen(con_listen) != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_con_listen:%s\n", drizzle_error(&drizzle));
+    fprintf(stderr, "drizzle_con_listen:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
   while (1)
   {
-    (void)drizzle_con_accept(&drizzle, server, &ret);
+    (void)drizzle_con_accept(drizzle, server, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      printf("drizzle_con_accept:%s\n", drizzle_error(&drizzle));
+      fprintf(stderr, "drizzle_con_accept:%s\n", drizzle_error(drizzle));
       return 1;
     }
 
-    if (drizzle_con_create(&drizzle, client) == NULL)
+    if (drizzle_con_create(drizzle, client) == NULL)
     {
-      printf("drizzle_con_create:NULL\n");
+      fprintf(stderr, "drizzle_con_create:NULL\n");
       return 1;
     }
 
@@ -200,11 +202,11 @@ int main(int argc, char *argv[])
     ret= drizzle_con_connect(client);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      printf("drizzle_con_connect:%s\n", drizzle_error(&drizzle));
+      fprintf(stderr, "drizzle_con_connect:%s\n", drizzle_error(drizzle));
       return 1;
     }
 
-    proxy(&drizzle, server, client, &server_result, &client_result, &column);
+    proxy(drizzle, server, client, &server_result, &client_result, &column);
 
     drizzle_con_free(client);
     drizzle_con_free(server);
@@ -219,7 +221,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_con_free(con_listen);
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
 
   free(con_listen);
   free(server);

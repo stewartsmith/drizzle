@@ -45,7 +45,7 @@
 int main(int argc, char *argv[])
 {
   const char *query= "SELECT table_schema,table_name FROM tables";
-  drizzle_st drizzle;
+  drizzle_st *drizzle;
   drizzle_con_st *con;
   drizzle_result_st *result;
   drizzle_query_st *ql;
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   result= (drizzle_result_st*)malloc(sizeof(drizzle_result_st) * SIMPLE_MULTI_COUNT);
   ql= (drizzle_query_st*)malloc(sizeof(drizzle_query_st) * SIMPLE_MULTI_COUNT);
 
-  if (drizzle_create(&drizzle) == NULL)
+  if ((drizzle= drizzle_create()) == NULL)
   {
     printf("drizzle_create:NULL\n");
     return 1;
@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
   {
     if (x == 0)
     {
-      if (drizzle_con_create(&drizzle, &(con[0])) == NULL)
+      if (drizzle_con_create(drizzle, &(con[0])) == NULL)
       {
-        printf("drizzle_con_create:%s\n", drizzle_error(&drizzle));
+        printf("drizzle_con_create:%s\n", drizzle_error(drizzle));
         return 1;
       }
 
@@ -86,25 +86,25 @@ int main(int argc, char *argv[])
     }
     else
     {
-      if (drizzle_con_clone(&drizzle, &(con[x]), &(con[0])) == NULL)
+      if (drizzle_con_clone(drizzle, &(con[x]), &(con[0])) == NULL)
       {
-        printf("drizzle_con_clone:%s\n", drizzle_error(&drizzle));
+        printf("drizzle_con_clone:%s\n", drizzle_error(drizzle));
         return 1;
       }
     }
 
-    if (drizzle_query_add(&drizzle, &(ql[x]), &(con[x]), &(result[x]), query,
+    if (drizzle_query_add(drizzle, &(ql[x]), &(con[x]), &(result[x]), query,
                           strlen(query), DRIZZLE_QUERY_NONE, NULL) == NULL)
     {
-      printf("drizzle_query_add:%s\n", drizzle_error(&drizzle));
+      printf("drizzle_query_add:%s\n", drizzle_error(drizzle));
       return 1;
     }
   }
 
-  ret= drizzle_query_run_all(&drizzle);
+  ret= drizzle_query_run_all(drizzle);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_query_run_all:%s\n", drizzle_error(&drizzle));
+    printf("drizzle_query_run_all:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
       printf("%d %s:%s\n", x, row[0], row[1]);
   }
 
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
 
   free(con);
   free(result);

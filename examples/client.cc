@@ -73,7 +73,7 @@ typedef struct
 
 typedef struct
 {
-  drizzle_st drizzle;
+  drizzle_st *drizzle;
   bool mysql_protocol;
   client_con_st *client_con_list;
   uint32_t client_con_count;
@@ -88,8 +88,8 @@ void result_info(drizzle_result_st *result);
 void column_info(drizzle_column_st *column);
 
 #define CLIENT_ERROR(__function, __ret, __client) { \
-    printf(__function ":%d:%s\n", __ret, \
-           drizzle_error(&((__client)->drizzle))); \
+    fprintf(stderr, __function ":%d:%s\n", __ret, \
+           drizzle_error(((__client)->drizzle))); \
     exit(1); }
 
 int main(int argc, char *argv[])
@@ -204,14 +204,16 @@ int main(int argc, char *argv[])
   }
 
   /* This may fail if there is other initialization that fails. See docs. */
-  if (drizzle_create(&(client.drizzle)) == NULL)
+  if ((client.drizzle= drizzle_create()) == NULL)
   {
     printf("drizzle_create failed\n");
     exit(1);
   }
 
   if (blocking == 0)
-    drizzle_add_options(&(client.drizzle), DRIZZLE_NON_BLOCKING);
+  {
+    drizzle_add_options(client.drizzle, DRIZZLE_NON_BLOCKING);
+  }
 
   /* Start all connections, and if in non-blocking mode, return as soon as the
      connection would block. In blocking mode, this completes the entire
@@ -219,14 +221,16 @@ int main(int argc, char *argv[])
   for (x= 0; x < client.client_con_count; x++)
   {
     /* This may fail if there is other initialization that fails. See docs. */
-    con= drizzle_con_add_tcp(&(client.drizzle),
+    con= drizzle_con_add_tcp(client.drizzle,
                               &(client.client_con_list[x].con),
                               host, port, user, password, db,
                               client.mysql_protocol
                               ? DRIZZLE_CON_MYSQL
                               : DRIZZLE_CON_NONE);
     if (con == NULL)
+    {
       CLIENT_ERROR("drizzle_con_add_tcp", 0, &client);
+    }
     drizzle_con_set_context(&(client.client_con_list[x].con),
                             &(client.client_con_list[x]));
 
@@ -238,23 +242,29 @@ int main(int argc, char *argv[])
      ready. Loop exits when all connections have completed. */
   while (wait_for_connections != 0)
   {
-    ret= drizzle_con_wait(&(client.drizzle));
+    ret= drizzle_con_wait(client.drizzle);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       CLIENT_ERROR("drizzle_con_wait", ret, &client);
+    }
 
-    while ((con= drizzle_con_ready(&(client.drizzle))) != NULL)
+    while ((con= drizzle_con_ready(client.drizzle)) != NULL)
     {
       client_con= (client_con_st *)drizzle_con_context(con);
 
       if (client_process(&client, client_con) == 0)
+      {
         wait_for_connections--;
+      }
     }
   }
 
   for (x= 0; x < client.client_con_count; x++)
+  {
     drizzle_con_free(&(client.client_con_list[x].con));
+  }
 
-  drizzle_free(&(client.drizzle));
+  drizzle_free(client.drizzle);
 
   free(client.client_con_list);
 
@@ -283,14 +293,20 @@ char client_process(client_st *client, client_con_st *client_con)
     (void)drizzle_query(&(client_con->con), &(client_con->result),
                         client->query, client->query_len, &ret);
     if (ret == DRIZZLE_RETURN_IO_WAIT)
+    {
       return 1;
+    }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       CLIENT_ERROR("drizzle_query", ret, client);
+    }
 
     result_info(&(client_con->result));
 
     if (drizzle_result_column_count(&(client_con->result)) == 0)
+    {
       break;
+    }
 
     client_con->state= CLIENT_FIELDS;
 
@@ -299,9 +315,13 @@ char client_process(client_st *client, client_con_st *client_con)
     {
       ret= drizzle_result_buffer(&(client_con->result));
       if (ret == DRIZZLE_RETURN_IO_WAIT)
+      {
         return 1;
+      }
       else if (ret != DRIZZLE_RETURN_OK)
+      {
         CLIENT_ERROR("drizzle_result_buffer", ret, client);
+      }
 
       while ((column= drizzle_column_next(&(client_con->result))) != NULL)
         column_info(column);

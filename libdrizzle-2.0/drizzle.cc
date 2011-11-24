@@ -86,7 +86,7 @@ const char *drizzle_verbose_name(drizzle_verbose_t verbose)
   return _verbose_name[verbose];
 }
 
-drizzle_st *drizzle_create(drizzle_st *drizzle)
+drizzle_st *drizzle_create()
 {
 #if defined(_WIN32)
   /* if it is MS windows, invoke WSAStartup */
@@ -101,16 +101,13 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
   sigaction(SIGPIPE, &act, NULL);
 #endif
 
+  drizzle_st *drizzle= new (std::nothrow) drizzle_st;
+
   if (drizzle == NULL)
   {
-    drizzle= new (std::nothrow) drizzle_st;
-
-    if (drizzle == NULL)
-    {
-      return NULL;
-    }
-    drizzle->options.is_allocated= true;
+    return NULL;
   }
+  drizzle->options.is_allocated= true;
 
   /* @todo remove this default free flag with new API. */
   drizzle->options.is_free_objects= true;
@@ -140,19 +137,19 @@ drizzle_st *drizzle_create(drizzle_st *drizzle)
   return drizzle;
 }
 
-drizzle_st *drizzle_clone(drizzle_st *drizzle, const drizzle_st *from)
+drizzle_st *drizzle_clone(const drizzle_st *source)
 {
-  drizzle= drizzle_create(drizzle);
+  drizzle_st *drizzle= drizzle_create();
   if (drizzle == NULL)
   {
     return NULL;
   }
 
   bool cache_state= drizzle->options.is_allocated;
-  drizzle->options= from->options;
+  drizzle->options= source->options;
   drizzle->options.is_allocated= cache_state;
 
-  for (drizzle_con_st* con= from->con_list; con != NULL; con= con->next)
+  for (drizzle_con_st* con= source->con_list; con != NULL; con= con->next)
   {
     if (drizzle_con_clone(drizzle, NULL, con) == NULL)
     {

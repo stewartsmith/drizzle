@@ -2388,7 +2388,7 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
 
-  if ((drizzle= drizzle_create(NULL)) == NULL ||
+  if ((drizzle= drizzle_create()) == NULL or
       drizzle_con_add_tcp(drizzle, &con, host.c_str(), opt_drizzle_port,
         user.c_str(),
         opt_password.c_str(),
@@ -2402,7 +2402,9 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
 
   if (opt_only_print)
+  {
     return;
+  }
 
   for (uint32_t x= 0; x < 10; x++)
   {

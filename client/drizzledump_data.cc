@@ -17,8 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzledump_data.h"
-#include "client_priv.h"
+#include <config.h>
+
+#include "client/drizzledump_data.h"
+#include "client/client_priv.h"
 #include <drizzled/definitions.h>
 #include <drizzled/gettext.h>
 #include <string>
@@ -544,7 +546,9 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   drizzle_return_t ret;
 
   if (host.empty())
+  {
     host= "localhost";
+  }
 
   std::string protocol= (drizzle_protocol) ? "Drizzle" : "MySQL";
   if (verbose)
@@ -552,8 +556,15 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
     std::cerr << _("-- Connecting to ") << host  << _(" using protocol ")
       << protocol << "..." << std::endl;
   }
-  drizzle_create(&drizzle);
-  drizzle_con_create(&drizzle, &connection);
+
+  drizzle= drizzle_create();
+
+  if (drizzle == NULL)
+  {
+    std::cerr << "drizzle_create() failed" << std::endl;
+  }
+
+  drizzle_con_create(drizzle, &connection);
   drizzle_con_set_tcp(&connection, (char *)host.c_str(), port);
   drizzle_con_set_auth(&connection, (char *)username.c_str(),
     (char *)password.c_str());
@@ -675,7 +686,10 @@ void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
 DrizzleDumpConnection::~DrizzleDumpConnection()
 {
   if (verbose)
+  {
     std::cerr << _("-- Disconnecting from ") << hostName << "..." << std::endl;
+  }
+
   drizzle_con_free(&connection);
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
 }

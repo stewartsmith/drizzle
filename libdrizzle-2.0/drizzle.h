@@ -152,7 +152,7 @@ const char *drizzle_verbose_name(drizzle_verbose_t verbose);
  * failure this will be NULL.
  */
 DRIZZLE_API
-drizzle_st *drizzle_create(drizzle_st *drizzle);
+drizzle_st *drizzle_create();
 
 /**
  * Clone a drizzle structure.
@@ -162,7 +162,7 @@ drizzle_st *drizzle_create(drizzle_st *drizzle);
  * @return Same return as drizzle_create().
  */
 DRIZZLE_API
-drizzle_st *drizzle_clone(drizzle_st *drizzle, const drizzle_st *from);
+drizzle_st *drizzle_clone(const drizzle_st *from);
 
 /**
  * Free a drizzle structure.

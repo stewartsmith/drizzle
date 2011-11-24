@@ -38,6 +38,7 @@ public:
     _check_interval(5),
     _master_port(3306),
     _master_id(0),
+    _drizzle(NULL),
     _last_return(DRIZZLE_RETURN_OK),
     _is_connected(false),
     _saved_max_commit_id(0),
@@ -123,7 +124,7 @@ private:
 
   uint32_t _master_id;
 
-  drizzle_st _drizzle;
+  drizzle_st *_drizzle;
   drizzle_con_st _connection;
   drizzle_return_t _last_return;
 

@@ -133,20 +133,20 @@ bool QueueProducer::reconnect(bool initial_connection)
 
 bool QueueProducer::openConnection()
 {
-  if (drizzle_create(&_drizzle) == NULL)
+  if ((_drizzle= drizzle_create()) == NULL)
   {
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
-  if (drizzle_con_create(&_drizzle, &_connection) == NULL)
+  if (drizzle_con_create(_drizzle, &_connection) == NULL)
   {
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
@@ -160,7 +160,7 @@ bool QueueProducer::openConnection()
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
@@ -252,7 +252,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return false;
@@ -264,7 +264,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return false;
@@ -424,7 +424,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return ER_YES;
@@ -438,7 +438,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return ER_YES;

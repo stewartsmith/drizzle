@@ -140,7 +140,6 @@ nobase_include_HEADERS+= \
 			 libdrizzle-2.0/return.h \
 			 libdrizzle-2.0/row_client.h \
 			 libdrizzle-2.0/row_server.h \
-			 libdrizzle-2.0/structs.h \
 			 libdrizzle-2.0/verbose.h \
 			 libdrizzle-2.0/visibility.h
 
@@ -150,4 +149,5 @@ noinst_HEADERS+= \
 		 libdrizzle-2.0/conn_local.h \
 		 libdrizzle-2.0/pack.h \
 		 libdrizzle-2.0/state.h \
+		 libdrizzle-2.0/structs.h \
 		 libdrizzle-2.0/sha1.h

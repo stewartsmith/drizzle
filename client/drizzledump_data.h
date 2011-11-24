@@ -212,7 +212,7 @@ class DrizzleDumpData
 class DrizzleDumpConnection
 {
   private:
-    drizzle_st drizzle;
+    drizzle_st *drizzle;
     drizzle_con_st connection;
     std::string hostName;
     bool drizzleProtocol;

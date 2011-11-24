@@ -69,20 +69,20 @@ class drizzle_c : noncopyable
 public:
   drizzle_c()
   {
-    drizzle_create(*this);
+    b_= drizzle_create();
   }
 
   ~drizzle_c()
   {
-    drizzle_free(*this);
+    drizzle_free(b_);
   }
 
   operator drizzle_st*()
   {
-    return &b_;
+    return b_;
   }
 private:
-  drizzle_st b_;
+  drizzle_st *b_;
 };
 
 class result_c
