@@ -210,8 +210,11 @@ static drizzle_con_st *db_connect(const string host, const string database,
     return 0;
   }
 
-  if (!(con= drizzle_con_add_tcp(drizzle,NULL,(char *)host.c_str(),opt_drizzle_port,(char *)user.c_str(),(char *)passwd.c_str(),
-                                 (char *)database.c_str(), use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
+  if (!(con= drizzle_con_add_tcp(drizzle,
+                                 host.c_str(), opt_drizzle_port,
+                                 user.c_str(), passwd.c_str(),
+                                 database.c_str(),
+                                 use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
   {
     return 0;
   }

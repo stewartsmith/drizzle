@@ -148,46 +148,56 @@ class connection_c : noncopyable
 public:
   explicit connection_c(drizzle_c& drizzle)
   {
-    drizzle_con_create(drizzle, *this);
+    b_= drizzle_con_create(drizzle);
+
+    if (b_ == NULL)
+    {
+      throw "drizzle_con_create() failed";
+    }
     read_conf_files();
   }
 
   ~connection_c()
   {
-    drizzle_con_free(*this);
+    drizzle_con_free(b_);
   }
 
   operator drizzle_con_st*()
   {
-    return &b_;
+    return b_;
   }
 
   const char* error()
   {
-    return drizzle_con_error(*this);
+    return drizzle_con_error(b_);
   }
 
   void set_tcp(const char* host, in_port_t port)
   {
-    drizzle_con_set_tcp(*this, host, port);
+    drizzle_con_set_tcp(b_, host, port);
   }
 
   void set_auth(const char* user, const char* password)
   {
-    drizzle_con_set_auth(*this, user, password);
+    drizzle_con_set_auth(b_, user, password);
   }
 
   void set_db(const char* db)
   {
-    drizzle_con_set_db(*this, db);
+    drizzle_con_set_db(b_, db);
   }
 
   drizzle_return_t query(result_c& result, const char* str, size_t str_size)
   {
     drizzle_return_t ret;
+
     drizzle_query(*this, result, str, str_size, &ret);
+
     if (!ret)
+    {
       ret = drizzle_result_buffer(result);
+    }
+
     return ret;
   }
 
@@ -205,7 +215,10 @@ public:
   {
     result_c result;
     if (query(result, str, str_size))
+    {
       throw bad_query(error());
+    }
+
     return result;
   }
 
@@ -221,7 +234,7 @@ public:
 private:
   void read_conf_files();
 
-  drizzle_con_st b_;
+  drizzle_con_st *b_;
 };
 
 class query_c

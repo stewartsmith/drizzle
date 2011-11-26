@@ -125,7 +125,7 @@ private:
   uint32_t _master_id;
 
   drizzle_st *_drizzle;
-  drizzle_con_st _connection;
+  drizzle_con_st *_connection;
   drizzle_return_t _last_return;
 
   bool _is_connected;

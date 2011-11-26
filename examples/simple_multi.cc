@@ -34,9 +34,9 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 #include <libdrizzle-2.0/drizzle_client.h>
 
@@ -46,85 +46,90 @@ int main(int argc, char *argv[])
 {
   const char *query= "SELECT table_schema,table_name FROM tables";
   drizzle_st *drizzle;
-  drizzle_con_st *con;
-  drizzle_result_st *result;
-  drizzle_query_st *ql;
-  drizzle_return_t ret;
-  drizzle_row_t row;
-  int x;
 
-  con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st) * SIMPLE_MULTI_COUNT);
-  result= (drizzle_result_st*)malloc(sizeof(drizzle_result_st) * SIMPLE_MULTI_COUNT);
-  ql= (drizzle_query_st*)malloc(sizeof(drizzle_query_st) * SIMPLE_MULTI_COUNT);
+  std::vector<drizzle_con_st *> cons;
+  std::vector<drizzle_result_st *> result;
+  std::vector<drizzle_query_st *> ql;
 
   if ((drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create:NULL\n");
+    fprintf(stderr, "drizzle_create:NULL\n");
     return 1;
   }
 
   /* Create SIMPLE_MULTI_COUNT connections and initialize query list. */
-  for (x= 0; x < SIMPLE_MULTI_COUNT; x++)
+  for (int x= 0; x < SIMPLE_MULTI_COUNT; x++)
   {
+    drizzle_con_st *con;
     if (x == 0)
     {
-      if (drizzle_con_create(drizzle, &(con[0])) == NULL)
+      if ((con= drizzle_con_create(drizzle)) == NULL)
       {
         printf("drizzle_con_create:%s\n", drizzle_error(drizzle));
         return 1;
       }
 
       if (argc == 2 && !strcmp(argv[1], "-m"))
-        drizzle_con_add_options(&(con[0]), DRIZZLE_CON_MYSQL);
+      {
+        drizzle_con_add_options(con, DRIZZLE_CON_MYSQL);
+      }
       else if (argc != 1)
       {
         printf("usage: %s [-m]\n", argv[0]);
         return 1;
       }
 
-      drizzle_con_set_db(&(con[0]), "information_schema");
+      drizzle_con_set_db(con, "information_schema");
+      cons.push_back(con);
     }
     else
     {
-      if (drizzle_con_clone(drizzle, &(con[x]), &(con[0])) == NULL)
+      if ((con= drizzle_con_clone(drizzle, cons[0])) == NULL)
       {
-        printf("drizzle_con_clone:%s\n", drizzle_error(drizzle));
+        fprintf(stderr, "drizzle_con_clone:%s\n", drizzle_error(drizzle));
         return 1;
       }
     }
 
-    if (drizzle_query_add(drizzle, &(ql[x]), &(con[x]), &(result[x]), query,
-                          strlen(query), DRIZZLE_QUERY_NONE, NULL) == NULL)
+    cons.push_back(con);
+    drizzle_result_st *res= drizzle_result_create(con, NULL);
+    result.push_back(res);
+
+    drizzle_query_st *exec_query;
+    if ((exec_query= drizzle_query_add(drizzle, NULL, con, res, query, strlen(query), DRIZZLE_QUERY_NONE, NULL)) == NULL)
     {
-      printf("drizzle_query_add:%s\n", drizzle_error(drizzle));
+      fprintf(stderr, "drizzle_query_add:%s\n", drizzle_error(drizzle));
       return 1;
     }
+    ql.push_back(exec_query);
   }
 
-  ret= drizzle_query_run_all(drizzle);
+  drizzle_return_t ret= drizzle_query_run_all(drizzle);
   if (ret != DRIZZLE_RETURN_OK)
   {
     printf("drizzle_query_run_all:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
-  for (x= 0; x < SIMPLE_MULTI_COUNT; x++)
+  uint32_t x= 0;
+  for (std::vector<drizzle_result_st *>::iterator iter= result.begin(); iter != result.end(); iter++)
   {
-    if (drizzle_result_error_code(&(result[x])) != 0)
+    if (drizzle_result_error_code(*iter) != 0)
     {
-      printf("%d:%s\n", drizzle_result_error_code(&(result[x])),
-             drizzle_result_error(&(result[x])));
+      printf("%d:%s\n", drizzle_result_error_code(*iter),
+             drizzle_result_error(*iter));
       continue;
     }
 
-    while ((row= drizzle_row_next(&(result[x]))) != NULL)
-      printf("%d %s:%s\n", x, row[0], row[1]);
+    drizzle_row_t row;
+    while ((row= drizzle_row_next(*iter)) != NULL)
+    {
+      printf("%x %s:%s\n", x, row[0], row[1]);
+    }
+    x++;
   }
 
   drizzle_free(drizzle);
 
-  free(con);
-  free(result);
-  free(ql);
   return 0;
 }

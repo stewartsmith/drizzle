@@ -213,16 +213,21 @@ class DrizzleDumpConnection
 {
   private:
     drizzle_st *drizzle;
-    drizzle_con_st connection;
+    drizzle_con_st *connection;
     std::string hostName;
     bool drizzleProtocol;
     ServerDetect::server_type serverType;
     std::string serverVersion;
 
   public:
-    DrizzleDumpConnection(std::string &host, uint16_t port,
-      std::string &username, std::string &password, bool drizzle_protocol);
+    DrizzleDumpConnection(std::string &host,
+                          uint16_t port,
+                          std::string &username,
+                          std::string &password,
+                          bool drizzle_protocol);
+
     ~DrizzleDumpConnection();
+
     void errorHandler(drizzle_result_st *res,  drizzle_return_t ret, const char *when);
     drizzle_result_st* query(std::string &str_query);
     bool queryNoResult(std::string &str_query);
@@ -232,6 +237,7 @@ class DrizzleDumpConnection
       std::string str_query(ch_query);
       return query(str_query);
     }
+
     bool queryNoResult(const char* ch_query)
     {
       std::string str_query(ch_query);
@@ -263,7 +269,9 @@ class DrizzleStringBuf : public std::streambuf
     void writeString(std::string &str)
     {
       if (not connection->queryNoResult(str))
+      {
         throw std::exception();
+      }
     }
 
     void setConnection(DrizzleDumpConnection *conn) { connection= conn; }

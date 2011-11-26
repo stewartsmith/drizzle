@@ -130,8 +130,6 @@ nobase_include_HEADERS+= \
 			 libdrizzle-2.0/field_server.h \
 			 libdrizzle-2.0/handshake_client.h \
 			 libdrizzle-2.0/handshake_server.h \
-			 libdrizzle-2.0/libdrizzle.h \
-			 libdrizzle-2.0/libdrizzle.hpp \
 			 libdrizzle-2.0/limits.h \
 			 libdrizzle-2.0/query.h \
 			 libdrizzle-2.0/result.h \
@@ -145,9 +143,11 @@ nobase_include_HEADERS+= \
 
 noinst_HEADERS+= \
 		 libdrizzle-2.0/common.h \
-		 libdrizzle-2.0/drizzle_local.h \
 		 libdrizzle-2.0/conn_local.h \
+		 libdrizzle-2.0/drizzle_local.h \
+		 libdrizzle-2.0/libdrizzle.h \
+		 libdrizzle-2.0/libdrizzle.hpp \
 		 libdrizzle-2.0/pack.h \
+		 libdrizzle-2.0/sha1.h \
 		 libdrizzle-2.0/state.h \
-		 libdrizzle-2.0/structs.h \
-		 libdrizzle-2.0/sha1.h
+		 libdrizzle-2.0/structs.h

@@ -176,34 +176,40 @@ int drizzle_con_options(const drizzle_con_st *con)
   return con->options;
 }
 
-void drizzle_con_set_options(drizzle_con_st *con,
-                             int options)
+void drizzle_con_set_options(drizzle_con_st *con, int options)
 {
   con->options= options;
 }
 
-void drizzle_con_add_options(drizzle_con_st *con,
-                             int options)
+void drizzle_con_add_options(drizzle_con_st *con, int options)
 {
   con->options|= options;
 
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
   if (con->options & DRIZZLE_CON_EXPERIMENTAL)
+  {
     con->options&= ~DRIZZLE_CON_MYSQL;
+  }
 }
 
-void drizzle_con_remove_options(drizzle_con_st *con,
-                                int options)
+void drizzle_con_remove_options(drizzle_con_st *con, int options)
 {
   con->options&= ~options;
 }
 
 const char *drizzle_con_host(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   if (con->socket_type == DRIZZLE_CON_SOCKET_TCP)
   {
     if (con->socket.tcp.host == NULL && !(con->options & DRIZZLE_CON_LISTEN))
+    {
       return DRIZZLE_DEFAULT_TCP_HOST;
+    }
 
     return con->socket.tcp.host;
   }
@@ -234,7 +240,9 @@ void drizzle_con_set_tcp(drizzle_con_st *con, const char *host, in_port_t port)
   con->socket_type= DRIZZLE_CON_SOCKET_TCP;
 
   if (host == NULL)
+  {
     con->socket.tcp.host= NULL;
+  }
   else
   {
     con->socket.tcp.host= con->socket.tcp.host_buffer;
@@ -247,19 +255,35 @@ void drizzle_con_set_tcp(drizzle_con_st *con, const char *host, in_port_t port)
 
 const char *drizzle_con_user(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->user;
 }
 
 const char *drizzle_con_password(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->password;
 }
 
-void drizzle_con_set_auth(drizzle_con_st *con, const char *user,
-                          const char *password)
+void drizzle_con_set_auth(drizzle_con_st *con, const char *user, const char *password)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   if (user == NULL)
+  {
     con->user[0]= 0;
+  }
   else
   {
     strncpy(con->user, user, DRIZZLE_MAX_USER_SIZE);
@@ -368,7 +392,7 @@ const char *drizzle_con_server_version(const drizzle_con_st *con)
 
 uint32_t drizzle_con_server_version_number(const drizzle_con_st *con)
 {
-  if (con == NULL)
+  if (con == NULL or con->server_version)
   {
     return 0;
   }
@@ -1044,6 +1068,10 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_connect");
 
   if (con->fd != -1)
@@ -1152,6 +1180,10 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_connecting");
 
   while (1)
@@ -1189,7 +1221,10 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_read");
 
@@ -1207,9 +1242,11 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
     /* non-blocking mode: return IO_WAIT instead of attempting to read. This
      * avoids reading immediately after writing a command, which typically
      * returns EAGAIN. This improves performance. */
-    ret= drizzle_con_set_events(con, POLLIN);
+    drizzle_return_t ret= drizzle_con_set_events(con, POLLIN);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
     return DRIZZLE_RETURN_IO_WAIT;
   }
 
@@ -1271,9 +1308,11 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       {
         /* clear the read ready flag */
         con->revents&= ~POLLIN;
-        ret= drizzle_con_set_events(con, POLLIN);
+        drizzle_return_t ret= drizzle_con_set_events(con, POLLIN);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
         if (con->drizzle->options.is_non_blocking)
         {
@@ -1322,7 +1361,10 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_write(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_write");
 
@@ -1380,7 +1422,7 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
     {
       if (errno == EAGAIN)
       {
-        ret= drizzle_con_set_events(con, POLLOUT);
+        drizzle_return_t ret= drizzle_con_set_events(con, POLLOUT);
         if (ret != DRIZZLE_RETURN_OK)
         {
           return ret;
@@ -1435,6 +1477,12 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
   int fd;
   int opt;
   drizzle_con_st *new_con;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
 
   for (; con->addrinfo_next != NULL;
        con->addrinfo_next= con->addrinfo_next->ai_next)
@@ -1508,7 +1556,7 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
     }
     else
     {
-      new_con= drizzle_con_clone(con->drizzle, NULL, con);
+      new_con= drizzle_con_clone(con->drizzle, con);
       if (new_con == NULL)
       {
         closesocket(fd);
@@ -1531,7 +1579,9 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
 
   /* Report last socket() error if we couldn't find an address to bind. */
   if (con->fd == -1)
+  {
     return DRIZZLE_RETURN_ERRNO;
+  }
 
   drizzle_state_pop(con);
   return DRIZZLE_RETURN_OK;
@@ -1546,6 +1596,12 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con)
   int ret;
   struct linger linger;
   struct timeval waittime;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
 
   ret= 1;
 

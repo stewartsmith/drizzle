@@ -71,9 +71,6 @@ int main(int argc, char *argv[])
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
   drizzle_st *drizzle;
-  drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
-  drizzle_con_st *server= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
-  drizzle_con_st *client= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
   drizzle_result_st server_result;
   drizzle_result_st client_result;
   drizzle_column_st column;
@@ -158,7 +155,8 @@ int main(int argc, char *argv[])
   drizzle_set_option(drizzle, DRIZZLE_FREE_OBJECTS, true);
   drizzle_set_verbose(drizzle, verbose);
 
-  if (drizzle_con_create(drizzle, con_listen) == NULL)
+  drizzle_con_st *con_listen;
+  if ((con_listen= drizzle_con_create(drizzle)) == NULL)
   {
     fprintf(stderr, "drizzle_con_create:NULL\n");
     return 1;
@@ -180,14 +178,15 @@ int main(int argc, char *argv[])
 
   while (1)
   {
-    (void)drizzle_con_accept(drizzle, server, &ret);
+    drizzle_con_st *server= drizzle_con_accept(drizzle, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
       fprintf(stderr, "drizzle_con_accept:%s\n", drizzle_error(drizzle));
       return 1;
     }
 
-    if (drizzle_con_create(drizzle, client) == NULL)
+    drizzle_con_st *client;
+    if ((client= drizzle_con_create(drizzle)) == NULL)
     {
       fprintf(stderr, "drizzle_con_create:NULL\n");
       return 1;
@@ -196,7 +195,9 @@ int main(int argc, char *argv[])
     drizzle_con_add_options(client,
                             DRIZZLE_CON_RAW_PACKET | DRIZZLE_CON_RAW_SCRAMBLE);
     if (client_mysql)
+    {
       drizzle_con_add_options(client, DRIZZLE_CON_MYSQL);
+    }
     drizzle_con_set_tcp(client, client_host, client_port);
 
     ret= drizzle_con_connect(client);
@@ -222,10 +223,6 @@ int main(int argc, char *argv[])
 
   drizzle_con_free(con_listen);
   drizzle_free(drizzle);
-
-  free(con_listen);
-  free(server);
-  free(client);
 
   return 0;
 }

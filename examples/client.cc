@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
   drizzle_return_t ret;
   uint32_t x;
   int wait_for_connections= 0;
-  drizzle_con_st *con;
   client_con_st *client_con;
   char *host= NULL;
   in_port_t port= 0;
@@ -221,12 +220,11 @@ int main(int argc, char *argv[])
   for (x= 0; x < client.client_con_count; x++)
   {
     /* This may fail if there is other initialization that fails. See docs. */
-    con= drizzle_con_add_tcp(client.drizzle,
-                              &(client.client_con_list[x].con),
-                              host, port, user, password, db,
-                              client.mysql_protocol
-                              ? DRIZZLE_CON_MYSQL
-                              : DRIZZLE_CON_NONE);
+    drizzle_con_st *con= drizzle_con_add_tcp(client.drizzle,
+                                             host, port, user, password, db,
+                                             client.mysql_protocol
+                                             ? DRIZZLE_CON_MYSQL
+                                             : DRIZZLE_CON_NONE);
     if (con == NULL)
     {
       CLIENT_ERROR("drizzle_con_add_tcp", 0, &client);
@@ -248,6 +246,7 @@ int main(int argc, char *argv[])
       CLIENT_ERROR("drizzle_con_wait", ret, &client);
     }
 
+    drizzle_con_st* con;
     while ((con= drizzle_con_ready(client.drizzle)) != NULL)
     {
       client_con= (client_con_st *)drizzle_con_context(con);

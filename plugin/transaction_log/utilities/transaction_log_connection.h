@@ -39,7 +39,7 @@ public:
 
 private:
   drizzle_st *drizzle;
-  drizzle_con_st connection;
+  drizzle_con_st *connection;
   std::string hostName;
   bool drizzleProtocol;
 };
