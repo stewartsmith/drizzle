@@ -64,7 +64,7 @@ genldif() {
     tmpcount=0
     while [ $tmpcount -lt $numberofusers ]
     do
-        tmpusername=$username$tmpcount
+        tmpusername=$username
         tmpuidnumber=$(( 500 + $tmpcount ))
         tmpgidnumber=$(( 500 + $tmpcount ))
         echo "dn: uid=$tmpusername,$ldapbase"
