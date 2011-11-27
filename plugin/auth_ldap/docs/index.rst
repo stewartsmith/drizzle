@@ -45,7 +45,7 @@ command line options.
 
    DN to use when searching.
 
-.. option:: --auth-ldap.bind-db ARG
+.. option:: --auth-ldap.bind-dn ARG
 
    :Default: 
    :Variable: :ref:`auth_ldap_bind_dn <auth_ldap_bind_dn>`
@@ -111,7 +111,7 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option: :option:`--auth-ldap.bind-db`
+   :Option: :option:`--auth-ldap.bind-dn`
 
    DN to use when binding to the LDAP server.
 

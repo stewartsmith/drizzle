@@ -435,7 +435,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("uri", po::value<string>(&uri)->default_value(DEFAULT_URI),
           N_("URI of the LDAP server to contact"));
-  context("bind-db", po::value<string>(&bind_dn)->default_value(""),
+  context("bind-dn", po::value<string>(&bind_dn)->default_value(""),
           N_("DN to use when binding to the LDAP server"));
   context("bind-password", po::value<string>(&bind_password)->default_value(""),
           N_("Password to use when binding the DN"));
