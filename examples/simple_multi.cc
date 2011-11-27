@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     }
 
     cons.push_back(con);
-    drizzle_result_st *res= drizzle_result_create(con, NULL);
+    drizzle_result_st *res= drizzle_result_create(con);
     result.push_back(res);
 
     drizzle_query_st *exec_query;

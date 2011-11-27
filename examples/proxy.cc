@@ -54,9 +54,10 @@
   return; \
 }
 
-static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
-                  drizzle_con_st *client, drizzle_result_st *server_result,
-                  drizzle_result_st *client_result, drizzle_column_st *column);
+static void proxy(drizzle_st *drizzle,
+                  drizzle_con_st *server,
+                  drizzle_con_st *client,
+                  drizzle_column_st *column);
 
 int main(int argc, char *argv[])
 {
@@ -71,7 +72,6 @@ int main(int argc, char *argv[])
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
   drizzle_st *drizzle;
-  drizzle_result_st server_result;
   drizzle_result_st client_result;
   drizzle_column_st column;
 
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    proxy(drizzle, server, client, &server_result, &client_result, &column);
+    proxy(drizzle, server, client, &column);
 
     drizzle_con_free(client);
     drizzle_con_free(server);
@@ -228,8 +228,8 @@ int main(int argc, char *argv[])
 }
 
 static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
-                  drizzle_con_st *client, drizzle_result_st *server_result,
-                  drizzle_result_st *client_result, drizzle_column_st *column)
+                  drizzle_con_st *client,
+                  drizzle_column_st *column)
 {
   drizzle_return_t ret;
   drizzle_command_t command;
@@ -243,31 +243,34 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 
   /* Handshake packets. */
   ret= drizzle_handshake_server_read(client);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_server_read", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_server_read", drizzle);
 
   drizzle_con_copy_handshake(server, client);
 
   ret= drizzle_handshake_server_write(server);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_server_write", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_server_write", drizzle);
 
   ret= drizzle_handshake_client_read(server);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_read", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_read", drizzle);
 
   drizzle_con_copy_handshake(client, server);
 
   ret= drizzle_handshake_client_write(client);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_write", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_write", drizzle);
 
-  (void)drizzle_result_read(client, client_result, &ret);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_result_read", drizzle)
+  drizzle_result_st *client_result= drizzle_result_read(client, NULL, &ret);
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_result_read", drizzle);
 
   drizzle_con_set_status(server, drizzle_con_status(client));
 
-  if (drizzle_result_clone(server, server_result, client_result) == NULL)
-    DRIZZLE_RETURN_ERROR("drizzle_result_clone", drizzle)
+  drizzle_result_st *server_result;
+  if ((server_result= drizzle_result_clone(server, client_result)) == NULL)
+  {
+    DRIZZLE_RETURN_ERROR("drizzle_result_clone", drizzle);
+  }
 
   ret= drizzle_result_write(server, server_result, true);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
 
   if (drizzle_result_error_code(client_result) != 0 ||
       drizzle_result_eof(client_result))
@@ -286,51 +289,59 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
 
     while (1)
     {
-      data= (uint8_t *)drizzle_con_command_read(server, &command, &offset, &size, &total,
-                                     &ret);
+      data= (uint8_t *)drizzle_con_command_read(server, &command, &offset, &size, &total, &ret);
       if (ret == DRIZZLE_RETURN_LOST_CONNECTION)
+      {
         return;
+      }
 
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_read", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_read", drizzle);
 
-      (void)drizzle_con_command_write(client, NULL, command, data, size, total,
-                                      &ret);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_write", drizzle)
+      (void)drizzle_con_command_write(client, NULL, command, data, size, total, &ret);
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_write", drizzle);
 
       if ((offset + size) == total)
         break;
     }
 
     if (command == DRIZZLE_COMMAND_QUIT)
+    {
       return;
+    }
     else if (command == DRIZZLE_COMMAND_FIELD_LIST)
     {
-      if (drizzle_result_create(client, client_result) == NULL)
+      if ((client_result= drizzle_result_create(client)) == NULL)
+      {
         DRIZZLE_RETURN_ERROR("drizzle_result_create", drizzle)
+      }
 
-      if (drizzle_result_create(server, server_result) == NULL)
-        DRIZZLE_RETURN_ERROR("drizzle_result_create", drizzle)
+      if ((server_result= drizzle_result_create(server)) == NULL)
+      {
+        DRIZZLE_RETURN_ERROR("drizzle_result_create", drizzle);
+      }
     }
     else
     {
       (void)drizzle_result_read(client, client_result, &ret);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_read", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_read", drizzle);
 
       drizzle_con_set_status(server, drizzle_con_status(client));
-      if (drizzle_result_clone(server, server_result, client_result) == NULL)
-        DRIZZLE_RETURN_ERROR("drizzle_result_clone", drizzle)
+      if ((server_result= drizzle_result_clone(server, client_result)) == NULL)
+      {
+        DRIZZLE_RETURN_ERROR("drizzle_result_clone", drizzle);
+      }
 
       if (drizzle_result_column_count(client_result) == 0)
       {
         /* Simple result with no column, row, or field data. */
         ret= drizzle_result_write(server, server_result, true);
-        DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+        DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
 
         continue;
       }
 
       ret= drizzle_result_write(server, server_result, false);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
     }
 
     /* Columns. */
@@ -338,14 +349,14 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
     {
       if (drizzle_column_read(client_result, column, &ret) == NULL)
       {
-        DRIZZLE_RETURN_CHECK(ret, "drizzle_column_read", drizzle)
+        DRIZZLE_RETURN_CHECK(ret, "drizzle_column_read", drizzle);
         break;
       }
 
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_column_read", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_column_read", drizzle);
 
       ret= drizzle_column_write(server_result, column);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_column_write", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_column_write", drizzle);
 
       drizzle_column_free(column);
     }
@@ -356,20 +367,20 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
     if (command == DRIZZLE_COMMAND_FIELD_LIST)
     {
       ret= drizzle_result_write(server, server_result, true);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
       continue;
     }
     else
     {
       ret= drizzle_result_write(server, server_result, false);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
     }
 
     /* Rows. */
     while (1)
     {
       row= drizzle_row_read(client_result, &ret);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_row_read", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_row_read", drizzle);
 
       if (row == 0)
         break;
@@ -378,7 +389,7 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
                                   drizzle_result_row_size(client_result));
 
       ret= drizzle_row_write(server_result);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_row_write", drizzle)
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_row_write", drizzle);
 
       /* Fields. */
       row_break= false;
@@ -395,14 +406,16 @@ static void proxy(drizzle_st *drizzle, drizzle_con_st *server,
           row_break= true;
         }
         else
-          DRIZZLE_RETURN_CHECK(ret, "drizzle_field_read", drizzle)
+        {
+          DRIZZLE_RETURN_CHECK(ret, "drizzle_field_read", drizzle);
+        }
 
         ret= drizzle_field_write(server_result, field, size, total);
-        DRIZZLE_RETURN_CHECK(ret, "drizzle_field_write", drizzle)
+        DRIZZLE_RETURN_CHECK(ret, "drizzle_field_write", drizzle);
       }
     }
 
     ret= drizzle_result_write(server, server_result, true);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
+    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle);
   }
 }

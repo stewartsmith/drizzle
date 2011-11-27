@@ -73,7 +73,7 @@ typedef struct
 {
   drizzle_st *drizzle;
   drizzle_con_st *con;
-  drizzle_result_st result;
+  drizzle_result_st *result;
   drizzle_column_st column;
   sqlite3* db;
   bool send_columns;
@@ -247,16 +247,18 @@ static void server_run(sqlite_server *server)
   ret= drizzle_handshake_client_read(server->con);
   DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_read", server->drizzle)
 
-  if (drizzle_result_create(server->con, &(server->result)) == NULL)
-    DRIZZLE_RETURN_ERROR("drizzle_result_create", server->drizzle)
+  if ((server->result= drizzle_result_create(server->con)) == NULL)
+  {
+    DRIZZLE_RETURN_ERROR("drizzle_result_create", server->drizzle);
+  }
 
-  ret= drizzle_result_write(server->con, &(server->result), true);
+  ret= drizzle_result_write(server->con, server->result, true);
   DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
 
   /* Command loop. */
   while (1)
   {
-    drizzle_result_free(&(server->result));
+    drizzle_result_free(server->result);
     free(data);
 
     data= (uint8_t *)drizzle_con_command_buffer(server->con, &command, &total, &ret);
@@ -266,7 +268,7 @@ static void server_run(sqlite_server *server)
       free(data);
       return;
     }
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_buffer", server->drizzle)
+    DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_buffer", server->drizzle);
 
     if (server->verbose >= DRIZZLE_VERBOSE_INFO)
     {
@@ -274,20 +276,22 @@ static void server_run(sqlite_server *server)
              data == NULL ? "NULL" : (char *)data);
     }
 
-    if (drizzle_result_create(server->con, &(server->result)) == NULL)
-      DRIZZLE_RETURN_ERROR("drizzle_result_create", server->drizzle)
+    if ((server->result= drizzle_result_create(server->con)) == NULL)
+    {
+      DRIZZLE_RETURN_ERROR("drizzle_result_create", server->drizzle);
+    }
 
     if (command != DRIZZLE_COMMAND_QUERY ||
         !strcasecmp((char *)data, "SHOW DATABASES"))
     {
-      ret= drizzle_result_write(server->con, &(server->result), true);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
+      ret= drizzle_result_write(server->con, server->result, true);
+      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle);
 
       if (command == DRIZZLE_COMMAND_FIELD_LIST)
       {
-        drizzle_result_set_eof(&(server->result), true);
-        ret= drizzle_result_write(server->con, &(server->result), true);
-        DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
+        drizzle_result_set_eof(server->result, true);
+        ret= drizzle_result_write(server->con, server->result, true);
+        DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle);
       }
 
       continue;
@@ -325,9 +329,9 @@ static void server_run(sqlite_server *server)
       }
       else
       {
-        drizzle_result_set_error_code(&(server->result), (uint16_t)sqlite_ret);
-        drizzle_result_set_error(&(server->result), sqlite_err);
-        ret= drizzle_result_write(server->con, &(server->result), true);
+        drizzle_result_set_error_code(server->result, (uint16_t)sqlite_ret);
+        drizzle_result_set_error(server->result, sqlite_err);
+        ret= drizzle_result_write(server->con, server->result, true);
         DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
 
         fprintf(stderr, "sqlite3_exec:%s\n", sqlite_err);
@@ -339,14 +343,14 @@ static void server_run(sqlite_server *server)
 
     if (server->rows == 0)
     {
-      drizzle_result_set_column_count(&(server->result), 0);
-      ret= drizzle_result_write(server->con, &(server->result), true);
+      drizzle_result_set_column_count(server->result, 0);
+      ret= drizzle_result_write(server->con, server->result, true);
       DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
     }
     else
     {
-      drizzle_result_set_eof(&(server->result), true);
-      ret= drizzle_result_write(server->con, &(server->result), true);
+      drizzle_result_set_eof(server->result, true);
+      ret= drizzle_result_write(server->con, server->result, true);
       DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", server->drizzle)
     }
   }
@@ -362,12 +366,12 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   if (server->send_columns == true)
   {
     server->send_columns= false;
-    drizzle_result_set_column_count(&(server->result), (uint16_t)field_count);
+    drizzle_result_set_column_count(server->result, (uint16_t)field_count);
 
-    ret= drizzle_result_write(server->con, &(server->result), false);
+    ret= drizzle_result_write(server->con, server->result, false);
     DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_result_write", server->drizzle)
 
-    if (drizzle_column_create(&(server->result), &(server->column)) == NULL)
+    if (drizzle_column_create(server->result, &(server->column)) == NULL)
     {
       DRIZZLE_RETURN_CHECK_VAL(DRIZZLE_RETURN_MEMORY, "drizzle_column_create", server->drizzle)
     }
@@ -387,15 +391,15 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
       drizzle_column_set_name(&(server->column), columns[x]);
       drizzle_column_set_orig_name(&(server->column), columns[x]);
 
-      ret= drizzle_column_write(&(server->result), &(server->column));
+      ret= drizzle_column_write(server->result, &(server->column));
       DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_column_write", server->drizzle)
     }
 
     drizzle_column_free(&(server->column));
 
-    drizzle_result_set_eof(&(server->result), true);
+    drizzle_result_set_eof(server->result, true);
 
-    ret= drizzle_result_write(server->con, &(server->result), false);
+    ret= drizzle_result_write(server->con, server->result, false);
     DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_result_write", server->drizzle)
   }
 
@@ -408,15 +412,15 @@ static int row_cb(void *data, int field_count, char **fields, char **columns)
   }
 
   /* This is needed for MySQL and old Drizzle protocol. */
-  drizzle_result_calc_row_size(&(server->result), (drizzle_field_t *)fields,
+  drizzle_result_calc_row_size(server->result, (drizzle_field_t *)fields,
                                sizes);
 
-  ret= drizzle_row_write(&(server->result));
+  ret= drizzle_row_write(server->result);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_row_write", server->drizzle)
 
   for (x= 0; x < field_count; x++)
   {
-    ret= drizzle_field_write(&(server->result), (drizzle_field_t)fields[x],
+    ret= drizzle_field_write(server->result, (drizzle_field_t)fields[x],
                              sizes[x], sizes[x]);
     DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_field_write", server->drizzle)
   }
@@ -437,12 +441,12 @@ static drizzle_return_t send_version(sqlite_server *server)
   fields[0]= (drizzle_field_t)SQLITE_SERVER_VERSION;
   sizes[0]= strlen(SQLITE_SERVER_VERSION);
 
-  drizzle_result_set_column_count(&(server->result), 1);
+  drizzle_result_set_column_count(server->result, 1);
 
-  ret= drizzle_result_write(server->con, &(server->result), false);
+  ret= drizzle_result_write(server->con, server->result, false);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_result_write", server->drizzle)
 
-  if (drizzle_column_create(&(server->result), &(server->column)) == NULL)
+  if (drizzle_column_create(server->result, &(server->column)) == NULL)
   {
     DRIZZLE_RETURN_CHECK_VAL(DRIZZLE_RETURN_MEMORY, "drizzle_column_create", server->drizzle)
   }
@@ -457,26 +461,26 @@ static drizzle_return_t send_version(sqlite_server *server)
   drizzle_column_set_name(&(server->column), "version");
   drizzle_column_set_orig_name(&(server->column), "version");
 
-  ret= drizzle_column_write(&(server->result), &(server->column));
+  ret= drizzle_column_write(server->result, &(server->column));
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_column_write", server->drizzle)
 
   drizzle_column_free(&(server->column));
 
-  drizzle_result_set_eof(&(server->result), true);
+  drizzle_result_set_eof(server->result, true);
 
-  ret= drizzle_result_write(server->con, &(server->result), false);
+  ret= drizzle_result_write(server->con, server->result, false);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_result_write", server->drizzle)
 
   /* This is needed for MySQL and old Drizzle protocol. */
-  drizzle_result_calc_row_size(&(server->result), fields, sizes);
+  drizzle_result_calc_row_size(server->result, fields, sizes);
 
-  ret= drizzle_row_write(&(server->result));
+  ret= drizzle_row_write(server->result);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_row_write", server->drizzle)
 
-  ret= drizzle_field_write(&(server->result), fields[0], sizes[0], sizes[0]);
+  ret= drizzle_field_write(server->result, fields[0], sizes[0], sizes[0]);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_field_write", server->drizzle)
 
-  ret= drizzle_result_write(server->con, &(server->result), true);
+  ret= drizzle_result_write(server->con, server->result, true);
   DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_result_write", server->drizzle)
 
   return DRIZZLE_RETURN_OK;
