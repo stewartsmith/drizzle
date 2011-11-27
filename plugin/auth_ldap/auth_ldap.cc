@@ -51,7 +51,7 @@ std::string base_dn;
 std::string password_attribute;
 std::string DEFAULT_PASSWORD_ATTRIBUTE= "userPassword";
 std::string mysql_password_attribute;
-const std::string DEFAULT_MYSQL_PASSWORD_ATTRIBUTE= "mysqlUserPassword";
+const std::string DEFAULT_MYSQL_PASSWORD_ATTRIBUTE= "drizzleMysqlUserPassword";
 static const int DEFAULT_CACHE_TIMEOUT= 600;
 typedef constrained_check<int, DEFAULT_CACHE_TIMEOUT, 0, 2147483647> cachetimeout_constraint;
 static cachetimeout_constraint cache_timeout= 0;

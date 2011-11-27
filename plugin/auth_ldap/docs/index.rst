@@ -68,10 +68,16 @@ command line options.
 
 .. option:: --auth-ldap.mysql-password-attribute ARG
 
-   :Default: ``mysqlUserPassword``
+   :Default: ``drizzleMysqlUserPassword``
    :Variable: :ref:`auth_ldap_mysql_password_attribute <auth_ldap_mysql_password_attribute>`
 
    Attribute in LDAP with MySQL hashed password.
+
+.. note::
+   Until Drizzle 2011.11.29 (a Drizzle 7.1 beta release) the default value of this
+   parameter was ``mysqlUserPassword``. Beginning with release 2011.12.30
+   it was changed to ``drizzleMysqlUserPassword`` to match the provided
+   openldap ldif schema.
 
 .. option:: --auth-ldap.password-attribute ARG
 
