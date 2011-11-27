@@ -272,7 +272,7 @@ bool AuthLDAP::authenticate(const identifier::User &sctx, const string &password
 
 void AuthLDAP::lookupUser(const string& user)
 {
-  string filter("(cn=" + user + ")");
+  string filter("(uid=" + user + ")");
   const char *attributes[3]=
   {
     (char *)password_attribute.c_str(),
