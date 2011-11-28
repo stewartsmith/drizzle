@@ -52,6 +52,13 @@ command line options.
 
    DN to use when binding to the LDAP server.
 
+.. note::
+   Until Drizzle 2011.11.29 (a Drizzle 7.1 beta release) this option was mistakenly
+   called ``bind-db``. Starting with release 2011.12.30 that option will no longer
+   work, the correct option is ``bind-dn``. (The corresponding variable was
+   always ref:`auth_ldap_bind_dn <auth_ldap_bind_dn>` and is unchanged.)
+   
+
 .. option:: --auth-ldap.bind-password ARG
 
    :Default: 
@@ -75,7 +82,7 @@ command line options.
 
 .. note::
    Until Drizzle 2011.11.29 (a Drizzle 7.1 beta release) the default value of this
-   parameter was ``mysqlUserPassword``. Beginning with release 2011.12.30
+   option was ``mysqlUserPassword``. Beginning with release 2011.12.30
    it was changed to ``drizzleMysqlUserPassword`` to match the provided
    openldap ldif schema.
 
