@@ -421,7 +421,7 @@ static int init(module::Context &context)
 
   context.registerVariable(new sys_var_const_string_val("uri", uri));
   context.registerVariable(new sys_var_const_string_val("bind-dn", bind_dn));
-  context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
+  //context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
   context.registerVariable(new sys_var_const_string_val("base-dn", base_dn));
   context.registerVariable(new sys_var_const_string_val("password-attribute",password_attribute));
   context.registerVariable(new sys_var_const_string_val("mysql-password-attribute", mysql_password_attribute));
