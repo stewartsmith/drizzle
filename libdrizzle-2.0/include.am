@@ -34,7 +34,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-lib_LTLIBRARIES+= libdrizzle-2.0/libdrizzle-2.0.la
+noinst_LTLIBRARIES+= libdrizzle-2.0/libdrizzle-2.0.la
 
 if HAVE_LIBSQLITE3
 SQLITE_PROGS= examples/sqlite_server
@@ -48,18 +48,19 @@ libdrizzle_2_0_mysql_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.c
 # to call it drizzle_password_hash but to remain backward compatible I didn't
 # change any sources, rather just build it twice and provide both.
 # Only drizzle_password_hash is installed by make install though.
-bin_PROGRAMS+= libdrizzle-2.0/drizzle_password_hash
+noinst_PROGRAMS+= libdrizzle-2.0/drizzle_password_hash
 libdrizzle_2_0_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
 libdrizzle_2_0_drizzle_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.cc
 
 noinst_PROGRAMS+= \
+		  $(SQLITE_PROGS) \
 		  examples/client \
+		  examples/pipe_query \
+		  examples/proxy \
+		  examples/server \
 		  examples/simple \
 		  examples/simple_multi \
-		  examples/pipe_query \
-		  examples/server \
-		  examples/proxy \
-		  $(SQLITE_PROGS)
+		  libdrizzle-2.0/mysql_password_hash
 
 libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
 					   ${AM_CXXFLAGS} \
@@ -111,43 +112,41 @@ examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle-2.0.la
 examples_sqlite_server_SOURCES= examples/sqlite_server.cc
 endif
 
-nobase_include_HEADERS+= \
-			 libdrizzle-2.0/column.h \
-			 libdrizzle-2.0/column_client.h \
-			 libdrizzle-2.0/column_server.h \
-			 libdrizzle-2.0/command.h \
-			 libdrizzle-2.0/command_client.h \
-			 libdrizzle-2.0/command_server.h \
-			 libdrizzle-2.0/conn.h \
-			 libdrizzle-2.0/conn_client.h \
-			 libdrizzle-2.0/conn_server.h \
-			 libdrizzle-2.0/constants.h \
-			 libdrizzle-2.0/deprecated_enum.h \
-			 libdrizzle-2.0/drizzle.h \
-			 libdrizzle-2.0/drizzle_client.h \
-			 libdrizzle-2.0/drizzle_server.h \
-			 libdrizzle-2.0/field_client.h \
-			 libdrizzle-2.0/field_server.h \
-			 libdrizzle-2.0/handshake_client.h \
-			 libdrizzle-2.0/handshake_server.h \
-			 libdrizzle-2.0/limits.h \
-			 libdrizzle-2.0/query.h \
-			 libdrizzle-2.0/result.h \
-			 libdrizzle-2.0/result_client.h \
-			 libdrizzle-2.0/result_server.h \
-			 libdrizzle-2.0/return.h \
-			 libdrizzle-2.0/row_client.h \
-			 libdrizzle-2.0/row_server.h \
-			 libdrizzle-2.0/verbose.h \
-			 libdrizzle-2.0/visibility.h
-
 noinst_HEADERS+= \
+		 libdrizzle-2.0/column.h \
+		 libdrizzle-2.0/column_client.h \
+		 libdrizzle-2.0/column_server.h \
+		 libdrizzle-2.0/command.h \
+		 libdrizzle-2.0/command_client.h \
+		 libdrizzle-2.0/command_server.h \
 		 libdrizzle-2.0/common.h \
+		 libdrizzle-2.0/conn.h \
+		 libdrizzle-2.0/conn_client.h \
 		 libdrizzle-2.0/conn_local.h \
+		 libdrizzle-2.0/conn_server.h \
+		 libdrizzle-2.0/constants.h \
+		 libdrizzle-2.0/deprecated_enum.h \
+		 libdrizzle-2.0/drizzle.h \
+		 libdrizzle-2.0/drizzle_client.h \
 		 libdrizzle-2.0/drizzle_local.h \
+		 libdrizzle-2.0/drizzle_server.h \
+		 libdrizzle-2.0/field_client.h \
+		 libdrizzle-2.0/field_server.h \
+		 libdrizzle-2.0/handshake_client.h \
+		 libdrizzle-2.0/handshake_server.h \
 		 libdrizzle-2.0/libdrizzle.h \
 		 libdrizzle-2.0/libdrizzle.hpp \
+		 libdrizzle-2.0/limits.h \
 		 libdrizzle-2.0/pack.h \
+		 libdrizzle-2.0/query.h \
+		 libdrizzle-2.0/result.h \
+		 libdrizzle-2.0/result_client.h \
+		 libdrizzle-2.0/result_server.h \
+		 libdrizzle-2.0/return.h \
+		 libdrizzle-2.0/row_client.h \
+		 libdrizzle-2.0/row_server.h \
 		 libdrizzle-2.0/sha1.h \
 		 libdrizzle-2.0/state.h \
-		 libdrizzle-2.0/structs.h
+		 libdrizzle-2.0/structs.h \
+		 libdrizzle-2.0/verbose.h \
+		 libdrizzle-2.0/visibility.h
