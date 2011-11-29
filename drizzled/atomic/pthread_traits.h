@@ -21,7 +21,6 @@
 #pragma once
 
 namespace drizzled {
-
 namespace internal {
 
 class mutex_wrapper
@@ -61,10 +60,7 @@ private:
   mutex_wrapper my_lock;
 
 public:
-
   typedef T value_type;
-
-  pthread_traits() {}
 
   inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
@@ -147,5 +143,3 @@ public:
 
 } /* namespace internal */
 } /* namespace drizzled */
-
-

@@ -1441,7 +1441,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
 bool was_help_requested()
 {
-  return vm.count("help");
+  return vm.count("help") != 0;
 }
 
 void usage();

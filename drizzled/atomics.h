@@ -38,21 +38,16 @@
 namespace drizzled {
 namespace internal {
 
-template<typename I>            // Primary template
-struct atomic_base {
-  volatile I my_value;
-  atomic_base() : my_value(0) {}
-  virtual ~atomic_base() {}
-};
-
 template<typename I, typename D, typename T >
-class atomic_impl: private atomic_base<I>
+class atomic_impl
 {
+private:
   T traits;
+  volatile I my_value;
 public:
   typedef I value_type;
 
-  atomic_impl() : atomic_base<I>(), traits() {}
+  atomic_impl() : my_value(0) {}
 
   value_type add_and_fetch( D addend )
   {

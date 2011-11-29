@@ -25,11 +25,8 @@ namespace internal {
 template<typename T, typename D>
 class gcc_traits
 {
-
 public:
   typedef T value_type;
-
-  gcc_traits() {}
 
   inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
@@ -91,4 +88,3 @@ public:
 
 } /* namespace internal */
 } /* namespace drizzled */
-
