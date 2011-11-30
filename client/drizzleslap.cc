@@ -72,13 +72,13 @@
 */
 
 #include <config.h>
-#include "client_priv.h"
+#include "client/client_priv.h"
 
-#include "option_string.h"
-#include "stats.h"
-#include "thread_context.h"
-#include "conclusions.h"
-#include "wakeup.h"
+#include "client/option_string.h"
+#include "client/stats.h"
+#include "client/thread_context.h"
+#include "client/conclusions.h"
+#include "client/wakeup.h"
 
 #include <signal.h>
 #include <stdarg.h>

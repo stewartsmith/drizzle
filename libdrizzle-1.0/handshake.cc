@@ -142,7 +142,7 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
   }
 
   /* Look for null-terminated server version string. */
-  ptr= memchr(con->buffer_ptr, 0, con->buffer_size - 1);
+  ptr= (uint8_t*)memchr(con->buffer_ptr, 0, con->buffer_size - 1);
   if (ptr == NULL)
   {
     drizzle_set_error(con->drizzle, "drizzle_state_handshake_server_read",
@@ -188,7 +188,7 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
   con->charset= con->buffer_ptr[0];
   con->buffer_ptr+= 1;
 
-  con->status= drizzle_get_byte2(con->buffer_ptr);
+  con->status= drizzle_con_status_t(drizzle_get_byte2(con->buffer_ptr));
   /* Skip status and filler. */
   con->buffer_ptr+= 15;
 
@@ -325,7 +325,6 @@ drizzle_return_t drizzle_state_handshake_server_write(drizzle_con_st *con)
 drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
 {
   size_t real_size;
-  uint8_t *ptr;
   uint8_t scramble_size;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_read");
@@ -368,7 +367,7 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
   con->buffer_ptr+= 23;
 
   /* Look for null-terminated user string. */
-  ptr= memchr(con->buffer_ptr, 0, con->buffer_size - 32);
+  uint8_t *ptr= (uint8_t*)memchr(con->buffer_ptr, 0, con->buffer_size - 32);
   if (ptr == NULL)
   {
     drizzle_set_error(con->drizzle, "drizzle_state_handshake_client_read",
@@ -401,7 +400,9 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
   con->buffer_ptr+= 1;
 
   if (scramble_size == 0)
+  {
     con->scramble= NULL;
+  }
   else
   {
     if (scramble_size != DRIZZLE_MAX_SCRAMBLE_SIZE)
@@ -420,10 +421,12 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
 
   /* Look for null-terminated db string. */
   if ((34 + strlen(con->user) + scramble_size) == con->packet_size)
+  {
     con->db[0]= 0;
+  }
   else
   {
-    ptr= memchr(con->buffer_ptr, 0, con->buffer_size -
+    ptr= (uint8_t*)memchr(con->buffer_ptr, 0, con->buffer_size -
                                     (34 + strlen(con->user) + scramble_size));
     if (ptr == NULL)
     {
@@ -470,7 +473,7 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
 drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 {
   uint8_t *ptr;
-  drizzle_capabilities_t capabilities;
+  int capabilities;
   drizzle_return_t ret;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_write");
@@ -503,28 +506,28 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   if (con->options & DRIZZLE_CON_MYSQL)
     con->capabilities|= DRIZZLE_CAPABILITIES_PROTOCOL_41;
 
-  capabilities= con->capabilities & DRIZZLE_CAPABILITIES_CLIENT;
+  capabilities= con->capabilities & int(DRIZZLE_CAPABILITIES_CLIENT);
   if (!(con->options & DRIZZLE_CON_FOUND_ROWS))
-    capabilities&= ~DRIZZLE_CAPABILITIES_FOUND_ROWS;
+    capabilities&= ~int(DRIZZLE_CAPABILITIES_FOUND_ROWS);
 
   if (con->options & DRIZZLE_CON_INTERACTIVE)
   {
-    capabilities|= DRIZZLE_CAPABILITIES_INTERACTIVE;
+    capabilities|= int(DRIZZLE_CAPABILITIES_INTERACTIVE);
   }
 
   if (con->options & DRIZZLE_CON_MULTI_STATEMENTS)
   {
-    capabilities|= DRIZZLE_CAPABILITIES_MULTI_STATEMENTS;
+    capabilities|= int(DRIZZLE_CAPABILITIES_MULTI_STATEMENTS);
   }
 
   if (con->options & DRIZZLE_CON_AUTH_PLUGIN)
   {
-    capabilities|= DRIZZLE_CAPABILITIES_PLUGIN_AUTH;
+    capabilities|= int(DRIZZLE_CAPABILITIES_PLUGIN_AUTH);
   }
 
-  capabilities&= ~(DRIZZLE_CAPABILITIES_COMPRESS | DRIZZLE_CAPABILITIES_SSL);
+  capabilities&= ~(int(DRIZZLE_CAPABILITIES_COMPRESS) | int(DRIZZLE_CAPABILITIES_SSL));
   if (con->db[0] == 0)
-    capabilities&= ~DRIZZLE_CAPABILITIES_CONNECT_WITH_DB;
+    capabilities&= ~int(DRIZZLE_CAPABILITIES_CONNECT_WITH_DB);
 
   drizzle_set_byte4(ptr, capabilities);
   ptr+= 4;

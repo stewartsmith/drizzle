@@ -39,8 +39,7 @@
  * @brief Result Declarations
  */
 
-#ifndef __DRIZZLE_RESULT_H
-#define __DRIZZLE_RESULT_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,5 +152,3 @@ uint64_t drizzle_result_row_count(drizzle_result_st *result);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_RESULT_H */

@@ -39,8 +39,7 @@
  * @brief Query Declarations
  */
 
-#ifndef __DRIZZLE_QUERY_H
-#define __DRIZZLE_QUERY_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -241,5 +240,3 @@ void drizzle_mysql_password_hash(char *to, const char *from, size_t from_size);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_QUERY_H */
