@@ -226,7 +226,9 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
     return DRIZZLE_RETURN_OK;
   }
   else if (con->result->options & DRIZZLE_RESULT_ROW_BREAK)
+  {
     con->result->options&= ~DRIZZLE_RESULT_ROW_BREAK;
+  }
   else
   {
     con->result->row_count++;
@@ -235,6 +237,7 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
   }
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
 
@@ -258,5 +261,6 @@ drizzle_return_t drizzle_state_row_write(drizzle_con_st *con)
   con->buffer_size+= 4;
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }

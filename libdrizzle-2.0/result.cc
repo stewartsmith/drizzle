@@ -46,8 +46,13 @@
  * Common definitions
  */
 
-drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
-                                         drizzle_result_st *result)
+drizzle_result_st *drizzle_result_create(drizzle_con_st *con)
+{
+  return drizzle_result_create_with(con, NULL);
+}
+
+drizzle_result_st *drizzle_result_create_with(drizzle_con_st *con,
+                                              drizzle_result_st *result)
 {
   if (result == NULL)
   {
@@ -58,7 +63,7 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
       return NULL;
     }
 
-    result->options|= DRIZZLE_RESULT_ALLOCATED;
+    result->_options.is_allocated= true;
   }
   else
   {
@@ -93,6 +98,8 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
     result->row_list= NULL;
     result->field_sizes= NULL;
     result->field_sizes_list= NULL;
+
+    result->_options.is_allocated= false;
   }
 
   result->con= con;
@@ -108,25 +115,24 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
 }
 
 drizzle_result_st *drizzle_result_clone(drizzle_con_st *con,
-                                        drizzle_result_st *result,
-                                        drizzle_result_st *from)
+                                        drizzle_result_st *source)
 {
-  result= drizzle_result_create(con, result);
+  drizzle_result_st *result= drizzle_result_create(con);
   if (result == NULL)
   {
     return NULL;
   }
 
-  result->options|= from->options & ~DRIZZLE_RESULT_ALLOCATED;
+  result->options= source->options;
 
-  drizzle_result_set_info(result, from->info);
-  result->error_code= from->error_code;
-  drizzle_result_set_sqlstate(result, from->sqlstate);
-  result->warning_count= from->warning_count;
-  result->insert_id= from->insert_id;
-  result->affected_rows= from->affected_rows;
-  result->column_count= from->column_count;
-  result->row_count= from->row_count;
+  drizzle_result_set_info(result, source->info);
+  result->error_code= source->error_code;
+  drizzle_result_set_sqlstate(result, source->sqlstate);
+  result->warning_count= source->warning_count;
+  result->insert_id= source->insert_id;
+  result->affected_rows= source->affected_rows;
+  result->column_count= source->column_count;
+  result->row_count= source->row_count;
 
   return result;
 }
@@ -134,7 +140,6 @@ drizzle_result_st *drizzle_result_clone(drizzle_con_st *con,
 void drizzle_result_free(drizzle_result_st *result)
 {
   drizzle_column_st *column;
-  uint64_t x;
 
   if (result == NULL)
   {
@@ -150,8 +155,10 @@ void drizzle_result_free(drizzle_result_st *result)
 
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {
-    for (x= 0; x < result->row_count; x++)
-      drizzle_row_free(result, result->row_list->at(static_cast<size_t>(x)));
+    for (size_t x= 0; x < result->row_count; x++)
+    {
+      drizzle_row_free(result, result->row_list->at(x));
+    }
 
     delete result->row_list;
     delete result->field_sizes_list;
@@ -163,13 +170,17 @@ void drizzle_result_free(drizzle_result_st *result)
     if (result->con->result_list == result)
       result->con->result_list= result->next;
   }
+
   if (result->prev)
     result->prev->next= result->next;
+
   if (result->next)
     result->next->prev= result->prev;
 
-  if (result->options & DRIZZLE_RESULT_ALLOCATED)
+  if (result->_options.is_allocated)
+  {
     delete result;
+  }
 }
 
 void drizzle_result_free_all(drizzle_con_st *con)
@@ -312,7 +323,7 @@ drizzle_result_st *drizzle_result_read(drizzle_con_st *con,
 
   if (drizzle_state_none(con))
   {
-    con->result= drizzle_result_create(con, result);
+    con->result= drizzle_result_create_with(con, result);
     if (con->result == NULL)
     {
       *ret_ptr= DRIZZLE_RETURN_MEMORY;

@@ -18,31 +18,44 @@
  */
 
 #include <config.h>
-#include "transaction_log_connection.h"
+#include <plugin/transaction_log/utilities/transaction_log_connection.h>
 #include <iostream>
 
 using namespace std;
 
 TransactionLogConnection::TransactionLogConnection(string &host, uint16_t port,
                                                    string &username, string &password,
-                                                   bool drizzle_protocol)
-  :
-    hostName(host),
-    drizzleProtocol(drizzle_protocol)
+                                                   bool drizzle_protocol) :
+  hostName(host),
+  drizzleProtocol(drizzle_protocol)
 {
-  drizzle_return_t ret;
-
   if (host.empty())
+  {
     host= "localhost";
+  }
 
-  drizzle_create(&drizzle);
-  drizzle_con_create(&drizzle, &connection);
-  drizzle_con_set_tcp(&connection, (char *)host.c_str(), port);
-  drizzle_con_set_auth(&connection, (char *)username.c_str(),
-    (char *)password.c_str());
-  drizzle_con_add_options(&connection,
-    drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
-  ret= drizzle_con_connect(&connection);
+  drizzle= drizzle_create();
+
+  if (drizzle == NULL)
+  {
+    errorHandler(NULL, DRIZZLE_RETURN_MEMORY, "drizzle_create() failed");
+    throw "drizzle_create() failed";
+  }
+
+  connection= drizzle_con_create(drizzle);
+  if (connection == NULL)
+  {
+    errorHandler(NULL, DRIZZLE_RETURN_MEMORY, "drizzle_create() failed");
+    throw "drizzle_con_create() failed";
+  }
+  drizzle_con_set_tcp(connection, (char *)host.c_str(), port);
+  drizzle_con_set_auth(connection, (char *)username.c_str(), (char *)password.c_str());
+
+  drizzle_con_add_options(connection,
+                          drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+
+  drizzle_return_t ret= drizzle_con_connect(connection);
+
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
@@ -54,7 +67,8 @@ void TransactionLogConnection::query(const std::string &str_query,
                                      drizzle_result_st *result)
 {
   drizzle_return_t ret;
-  if (drizzle_query_str(&connection, result, str_query.c_str(), &ret) == NULL ||
+
+  if (drizzle_query_str(connection, result, str_query.c_str(), &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
@@ -66,7 +80,7 @@ void TransactionLogConnection::query(const std::string &str_query,
     else
     {
       cerr << "Error executing query: " <<
-        drizzle_con_error(&connection) << endl;
+        drizzle_con_error(connection) << endl;
       drizzle_result_free(result);
     }
     return;
@@ -75,31 +89,26 @@ void TransactionLogConnection::query(const std::string &str_query,
   if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
     cerr << "Could not buffer result: " <<
-        drizzle_con_error(&connection) << endl;
+        drizzle_con_error(connection) << endl;
     drizzle_result_free(result);
     return;
   }
-  return;
 }
 
 void TransactionLogConnection::errorHandler(drizzle_result_st *res,
-  drizzle_return_t ret, const char *when)
+                                            drizzle_return_t ret, const char *when)
 {
   if (res == NULL)
   {
-    cerr << "Got error: " << drizzle_con_error(&connection) << " "
-      << when << endl;
+    cerr << "Got error: " << drizzle_con_error(connection) << " " << when << endl;
   }
   else if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
-    cerr << "Got error: " << drizzle_result_error(res)
-      << " (" << drizzle_result_error_code(res) << ") " << when << endl;
+    cerr << "Got error: " << drizzle_result_error(res) << " (" << drizzle_result_error_code(res) << ") " << when << endl;
     drizzle_result_free(res);
   }
   else
   {
     cerr << "Got error: " << ret << " " << when << endl;
   }
-
-  return;
 }

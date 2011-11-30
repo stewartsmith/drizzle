@@ -58,16 +58,17 @@ extern "C" {
  * Initialize a result structure.
  */
 DRIZZLE_API
-drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
-                                         drizzle_result_st *result);
+drizzle_result_st *drizzle_result_create(drizzle_con_st *con);
+
+drizzle_result_st *drizzle_result_create_with(drizzle_con_st *con,
+                                              drizzle_result_st *result);
 
 /**
  * Clone a connection structure.
  */
 DRIZZLE_API
-drizzle_result_st *drizzle_result_clone(drizzle_con_st *con,
-                                        drizzle_result_st *result,
-                                        drizzle_result_st *from);
+  drizzle_result_st *drizzle_result_clone(drizzle_con_st *con,
+                                          drizzle_result_st *source);
 
 /**
  * Free a result structure.

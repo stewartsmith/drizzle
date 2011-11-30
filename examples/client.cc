@@ -73,7 +73,7 @@ typedef struct
 
 typedef struct
 {
-  drizzle_st drizzle;
+  drizzle_st *drizzle;
   bool mysql_protocol;
   client_con_st *client_con_list;
   uint32_t client_con_count;
@@ -88,8 +88,8 @@ void result_info(drizzle_result_st *result);
 void column_info(drizzle_column_st *column);
 
 #define CLIENT_ERROR(__function, __ret, __client) { \
-    printf(__function ":%d:%s\n", __ret, \
-           drizzle_error(&((__client)->drizzle))); \
+    fprintf(stderr, __function ":%d:%s\n", __ret, \
+           drizzle_error(((__client)->drizzle))); \
     exit(1); }
 
 int main(int argc, char *argv[])
@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
   drizzle_return_t ret;
   uint32_t x;
   int wait_for_connections= 0;
-  drizzle_con_st *con;
   client_con_st *client_con;
   char *host= NULL;
   in_port_t port= 0;
@@ -132,7 +131,7 @@ int main(int argc, char *argv[])
         client.level= BUFFER_ALL;
       else
       {
-        printf("Invalid buffer level: %s\n", optarg);
+        fprintf(stderr, "Invalid buffer level: %s\n", optarg);
         exit(0);
       }
       break;
@@ -198,20 +197,22 @@ int main(int argc, char *argv[])
                                                     sizeof(client_con_st));
     if (client.client_con_list == NULL)
     {
-      printf("calloc:%d\n", errno);
+      fprintf(stderr, "calloc:%d\n", errno);
       exit(1);
     }
   }
 
   /* This may fail if there is other initialization that fails. See docs. */
-  if (drizzle_create(&(client.drizzle)) == NULL)
+  if ((client.drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create failed\n");
+    fprintf(stderr, "drizzle_create failed\n");
     exit(1);
   }
 
   if (blocking == 0)
-    drizzle_add_options(&(client.drizzle), DRIZZLE_NON_BLOCKING);
+  {
+    drizzle_set_option(client.drizzle, DRIZZLE_NON_BLOCKING, true);
+  }
 
   /* Start all connections, and if in non-blocking mode, return as soon as the
      connection would block. In blocking mode, this completes the entire
@@ -219,14 +220,15 @@ int main(int argc, char *argv[])
   for (x= 0; x < client.client_con_count; x++)
   {
     /* This may fail if there is other initialization that fails. See docs. */
-    con= drizzle_con_add_tcp(&(client.drizzle),
-                              &(client.client_con_list[x].con),
-                              host, port, user, password, db,
-                              client.mysql_protocol
-                              ? DRIZZLE_CON_MYSQL
-                              : DRIZZLE_CON_NONE);
+    drizzle_con_st *con= drizzle_con_add_tcp(client.drizzle,
+                                             host, port, user, password, db,
+                                             client.mysql_protocol
+                                             ? DRIZZLE_CON_MYSQL
+                                             : DRIZZLE_CON_NONE);
     if (con == NULL)
+    {
       CLIENT_ERROR("drizzle_con_add_tcp", 0, &client);
+    }
     drizzle_con_set_context(&(client.client_con_list[x].con),
                             &(client.client_con_list[x]));
 
@@ -238,23 +240,30 @@ int main(int argc, char *argv[])
      ready. Loop exits when all connections have completed. */
   while (wait_for_connections != 0)
   {
-    ret= drizzle_con_wait(&(client.drizzle));
+    ret= drizzle_con_wait(client.drizzle);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       CLIENT_ERROR("drizzle_con_wait", ret, &client);
+    }
 
-    while ((con= drizzle_con_ready(&(client.drizzle))) != NULL)
+    drizzle_con_st* con;
+    while ((con= drizzle_con_ready(client.drizzle)) != NULL)
     {
       client_con= (client_con_st *)drizzle_con_context(con);
 
       if (client_process(&client, client_con) == 0)
+      {
         wait_for_connections--;
+      }
     }
   }
 
   for (x= 0; x < client.client_con_count; x++)
+  {
     drizzle_con_free(&(client.client_con_list[x].con));
+  }
 
-  drizzle_free(&(client.drizzle));
+  drizzle_free(client.drizzle);
 
   free(client.client_con_list);
 
@@ -283,14 +292,20 @@ char client_process(client_st *client, client_con_st *client_con)
     (void)drizzle_query(&(client_con->con), &(client_con->result),
                         client->query, client->query_len, &ret);
     if (ret == DRIZZLE_RETURN_IO_WAIT)
+    {
       return 1;
+    }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       CLIENT_ERROR("drizzle_query", ret, client);
+    }
 
     result_info(&(client_con->result));
 
     if (drizzle_result_column_count(&(client_con->result)) == 0)
+    {
       break;
+    }
 
     client_con->state= CLIENT_FIELDS;
 
@@ -299,9 +314,13 @@ char client_process(client_st *client, client_con_st *client_con)
     {
       ret= drizzle_result_buffer(&(client_con->result));
       if (ret == DRIZZLE_RETURN_IO_WAIT)
+      {
         return 1;
+      }
       else if (ret != DRIZZLE_RETURN_OK)
+      {
         CLIENT_ERROR("drizzle_result_buffer", ret, client);
+      }
 
       while ((column= drizzle_column_next(&(client_con->result))) != NULL)
         column_info(column);
@@ -313,9 +332,13 @@ char client_process(client_st *client, client_con_st *client_con)
         column= drizzle_column_read(&(client_con->result),
                                     &(client_con->column), &ret);
         if (ret == DRIZZLE_RETURN_IO_WAIT)
+        {
           return 1;
+        }
         else if (ret != DRIZZLE_RETURN_OK)
+        {
           CLIENT_ERROR("drizzle_column_read", ret, client);
+        }
 
         if (column == NULL)
           break;
@@ -335,17 +358,17 @@ char client_process(client_st *client, client_con_st *client_con)
       {
         field_sizes= drizzle_row_field_sizes(&(client_con->result));
 
-        printf("Row: %" PRId64 "\n",
-               drizzle_row_current(&(client_con->result)));
+        printf("Row: %" PRId64 "\n", drizzle_row_current(&(client_con->result)));
 
         for (x= 0; x < drizzle_result_column_count(&(client_con->result)); x++)
         {
           if (row[x] == NULL)
+          {
             printf("     (NULL)\n");
+          }
           else
           {
-            printf("     (%"PRIu64") %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x],
-                   row[x]);
+            printf("     (%"PRIu64") %.*s\n", static_cast<uint64_t>(field_sizes[x]), (int32_t)field_sizes[x], row[x]);
           }
         }
 
@@ -404,15 +427,22 @@ char client_process(client_st *client, client_con_st *client_con)
             CLIENT_ERROR("drizzle_field_read", ret, client);
 
           if (field == NULL)
+          {
             printf("     (NULL)");
+          }
           else if (offset > 0)
+          {
             printf("%.*s", (int32_t)length, field);
+          }
           else
-            printf("     (%" PRIu64 " %.*s", (uint64_t)total,
-			    (int32_t)length, field);
+          {
+            printf("     (%" PRIu64 " %.*s", (uint64_t)total, (int32_t)length, field);
+          }
 
           if (offset + length == total)
+          {
             printf("\n");
+          }
 
           /* If we buffered the entire field, be sure to free it. */
           if (client->level == BUFFER_FIELD)

@@ -19,12 +19,12 @@
 #pragma once
 
 #include <strings.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include <cstring>
+#include <cstdlib>
+#include <cstddef>
 #include <cassert>
-#include <limits.h>
-#include <ctype.h>
+#include <climits>
+#include <cctype>
 
 #include <drizzled/visibility.h>
 

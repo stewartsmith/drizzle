@@ -81,7 +81,7 @@ extern "C" {
  * @return Same return as drizzle_con_create().
  */
 DRIZZLE_API
-drizzle_con_st *drizzle_con_add_tcp(drizzle_st *drizzle, drizzle_con_st *con,
+drizzle_con_st *drizzle_con_add_tcp(drizzle_st *drizzle,
                                     const char *host, in_port_t port,
                                     const char *user, const char *password,
                                     const char *db,
@@ -101,7 +101,7 @@ drizzle_con_st *drizzle_con_add_tcp(drizzle_st *drizzle, drizzle_con_st *con,
  * @return Same return as drizzle_con_create().
  */
 DRIZZLE_API
-drizzle_con_st *drizzle_con_add_uds(drizzle_st *drizzle, drizzle_con_st *con,
+drizzle_con_st *drizzle_con_add_uds(drizzle_st *drizzle,
                                     const char *uds, const char *user,
                                     const char *password, const char *db,
                                     drizzle_con_options_t options);
