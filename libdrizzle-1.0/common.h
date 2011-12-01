@@ -65,3 +65,5 @@
 #include <libdrizzle-1.0/pack.h>
 #include <libdrizzle-1.0/state.h>
 #include <libdrizzle-1.0/sha1.h>
+
+#include <memory>

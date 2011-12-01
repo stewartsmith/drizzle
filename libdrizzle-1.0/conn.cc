@@ -89,7 +89,7 @@ void drizzle_con_close(drizzle_con_st *con)
   (void)closesocket(con->fd);
   con->fd= -1;
 
-  con->options&= (drizzle_con_options_t)~DRIZZLE_CON_READY;
+  con->options&= int(~DRIZZLE_CON_READY);
   con->packet_number= 0;
   con->buffer_ptr= con->buffer;
   con->buffer_size= 0;
@@ -179,7 +179,7 @@ const char *drizzle_con_sqlstate(const drizzle_con_st *con)
 
 drizzle_con_options_t drizzle_con_options(const drizzle_con_st *con)
 {
-  return con->options;
+  return drizzle_con_options_t(con->options);
 }
 
 void drizzle_con_set_options(drizzle_con_st *con,
@@ -196,7 +196,7 @@ void drizzle_con_add_options(drizzle_con_st *con,
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
   if (con->options & DRIZZLE_CON_EXPERIMENTAL)
   {
-    con->options&= (drizzle_con_options_t)~DRIZZLE_CON_MYSQL;
+    con->options&= int(~DRIZZLE_CON_MYSQL);
   }
 }
 
@@ -356,7 +356,7 @@ const uint8_t *drizzle_con_scramble(const drizzle_con_st *con)
 
 drizzle_capabilities_t drizzle_con_capabilities(const drizzle_con_st *con)
 {
-  return con->capabilities;
+  return drizzle_capabilities_t(con->capabilities);
 }
 
 drizzle_charset_t drizzle_con_charset(const drizzle_con_st *con)
@@ -654,7 +654,7 @@ void drizzle_con_copy_handshake(drizzle_con_st *con, drizzle_con_st *from)
   drizzle_con_set_server_version(con, from->server_version);
   drizzle_con_set_thread_id(con, from->thread_id);
   drizzle_con_set_scramble(con, from->scramble);
-  drizzle_con_set_capabilities(con, from->capabilities);
+  drizzle_con_set_capabilities(con, drizzle_capabilities_t(from->capabilities));
   drizzle_con_set_charset(con, from->charset);
   drizzle_con_set_status(con, from->status);
   drizzle_con_set_max_packet_size(con, from->max_packet_size);
@@ -692,11 +692,10 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
                                  drizzle_command_t *command, size_t *total,
                                  drizzle_return_t *ret_ptr)
 {
-  uint8_t *command_data;
   size_t offset= 0;
   size_t size= 0;
 
-  command_data= drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
+  char *command_data= (char *)drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
     return NULL;
 
@@ -708,7 +707,7 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   if (con->command_buffer == NULL)
   {
-    con->command_buffer= malloc((*total) + 1);
+    con->command_buffer= (uint8_t*)malloc((*total) + 1);
     if (con->command_buffer == NULL)
     {
       drizzle_set_error(con->drizzle, "drizzle_command_buffer", "malloc");
@@ -721,15 +720,14 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   while ((offset + size) != (*total))
   {
-    command_data= drizzle_con_command_read(con, command, &offset, &size, total,
-                                           ret_ptr);
+    command_data= (char *)drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
       return NULL;
 
     memcpy(con->command_buffer + offset, command_data, size);
   }
 
-  command_data= con->command_buffer;
+  command_data= (char *)con->command_buffer;
   con->command_buffer= NULL;
   command_data[*total]= 0;
 
@@ -1219,7 +1217,6 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
 {
   char host[NI_MAXHOST];
   char port[NI_MAXSERV];
-  int ret;
   int fd;
   int opt;
   drizzle_con_st *new_con;
@@ -1227,13 +1224,12 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
   for (; con->addrinfo_next != NULL;
        con->addrinfo_next= con->addrinfo_next->ai_next)
   {
-    ret= getnameinfo(con->addrinfo_next->ai_addr,
-                     con->addrinfo_next->ai_addrlen, host, NI_MAXHOST, port,
-                     NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+    int ret= getnameinfo(con->addrinfo_next->ai_addr,
+                         con->addrinfo_next->ai_addrlen, host, NI_MAXHOST, port,
+                         NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     if (ret != 0)
     {
-      drizzle_set_error(con->drizzle, "drizzle_state_listen", "getnameinfo:%s",
-                        gai_strerror(ret));
+      drizzle_set_error(con->drizzle, "drizzle_state_listen", "getnameinfo:%s", gai_strerror(ret));
       return DRIZZLE_RETURN_GETADDRINFO;
     }
 
@@ -1307,11 +1303,11 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
     }
 
     /* Wait for read events on the listening socket. */
-    ret= drizzle_con_set_events(new_con, POLLIN);
-    if (ret != DRIZZLE_RETURN_OK)
+    drizzle_return_t local_ret= drizzle_con_set_events(new_con, POLLIN);
+    if (local_ret != DRIZZLE_RETURN_OK)
     {
       drizzle_con_free(new_con);
-      return ret;
+      return local_ret;
     }
 
     drizzle_log_info(con->drizzle, "listening on %s:%s", host, port);

@@ -40,8 +40,7 @@
  * @brief Command Declarations for Servers
  */
 
-#ifndef __DRIZZLE_COMMAND_SERVER_H
-#define __DRIZZLE_COMMAND_SERVER_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,5 +59,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_COMMAND_SERVER_H */

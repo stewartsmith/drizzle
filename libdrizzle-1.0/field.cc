@@ -93,7 +93,7 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
 
   if (result->field_buffer == NULL)
   {
-    result->field_buffer= malloc((*total) + 1);
+    result->field_buffer= (drizzle_field_t)malloc((*total) + 1);
     if (result->field_buffer == NULL)
     {
       drizzle_set_error(result->con->drizzle, "drizzle_field_buffer", "malloc");
@@ -139,7 +139,7 @@ drizzle_return_t drizzle_field_write(drizzle_result_st *result,
   {
     if (result->options & DRIZZLE_RESULT_ROW_BREAK)
     {
-      result->options&= (drizzle_result_options_t)~DRIZZLE_RESULT_ROW_BREAK;
+      result->options&= int(~DRIZZLE_RESULT_ROW_BREAK);
       result->field= field;
       result->field_size= size;
     }

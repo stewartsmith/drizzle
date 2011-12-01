@@ -17,12 +17,12 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-CLIENT_LDADD= \
-	      drizzled/internal/libinternal.la \
-	      libdrizzle-2.0/libdrizzle-2.0.la \
-	      $(LIBINTL) \
-	      $(LIBZ) \
-	      client/libgetpassword.la
+CLIENT2_LDADD= \
+	       drizzled/internal/libinternal.la \
+	       libdrizzle-2.0/libdrizzle-2.0.la \
+	       $(LIBINTL) \
+	       $(LIBZ) \
+	       client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
 		     client/libgetpassword.la
@@ -77,14 +77,14 @@ client_drizzledump_SOURCES= \
 			    client/drizzledump_mysql.cc \
 			    client/server_detect.cc
 
-client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
+client_drizzledump_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
-client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
+client_drizzleimport_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
-client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
+client_drizzleslap_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
 client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc
-client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
+client_drizzletest_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS} ${LIBPCRE} 

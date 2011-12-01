@@ -41,8 +41,7 @@
  * @brief Visibility Control Macros
  */
 
-#ifndef __DRIZZLE_VISIBILITY_H
-#define __DRIZZLE_VISIBILITY_H
+#pragma once
 
 /**
  *
@@ -77,5 +76,3 @@
 # endif /* defined(_MSC_VER) */
 #endif /* defined(BUILDING_LIBDRIZZLE) */
 #endif /* _WIN32 */
-
-#endif /* __DRIZZLE_VISIBILITY_H */
