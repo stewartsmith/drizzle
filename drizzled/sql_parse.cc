@@ -21,7 +21,6 @@
 #include <drizzled/abort_exception.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
-#include <drizzled/query_id.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
@@ -87,6 +86,8 @@ void parse(Session&, const char *inBuf, uint32_t length);
 
 extern size_t my_thread_stack_size;
 extern const charset_info_st *character_set_filesystem;
+
+static atomic<uint64_t> g_query_id;
 
 namespace
 {
@@ -192,20 +193,18 @@ bool dispatch_command(enum_server_command command, Session *session,
                       const char* packet, uint32_t packet_length)
 {
   bool error= false;
-  Query_id& query_id= Query_id::get_query_id();
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
   session->lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->times.set_time();
-  session->setQueryId(query_id.value());
+  session->setQueryId(g_query_id.increment());
 
   if (command != COM_PING)
   {
     // Increase id and count all other statements
     session->status_var.questions++;
-    query_id.next();
   }
 
   /* @todo set session->lex().sql_command to SQLCOM_END here */

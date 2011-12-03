@@ -385,7 +385,6 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/program_options/config_file.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/qsort_cmp.h \
-			      drizzled/query_id.h \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
@@ -807,7 +806,6 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/plugin/transactional_storage_engine.cc \
 			   drizzled/plugin/xa_resource_manager.cc \
 			   drizzled/plugin/xa_storage_engine.cc \
-			   drizzled/query_id.cc \
 			   drizzled/records.cc \
 			   drizzled/replication_services.cc \
 			   drizzled/resource_context.cc \
