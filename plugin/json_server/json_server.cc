@@ -23,8 +23,6 @@
  * @todo Refactoring ideas:
  *  - Anything HTML should really be a separate file, not strings embedded
  *    in C++.
- *  - The mapping of /0.1/ and /0.2/ URLs is now a lot of copy paste, probably
- *    needs to evolve to something smarter at some point.
  */
 
 #include <config.h>
@@ -84,7 +82,10 @@ extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
 extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
+extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
 extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* );
+extern "C" void process_api02_json_post_req(struct evhttp_request *req, void* );
+extern "C" void process_api02_json_put_req(struct evhttp_request *req, void* );
 
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -133,6 +134,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "var query= document.getElementById(\"sql_query\").value;\n"
                 "var xmlHttp = new XMLHttpRequest();\n"
                 "xmlHttp.onreadystatechange = function () {\n"
+                "document.getElementById(\"responseText\").value = xmlHttp.responseText;\n"
                 "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
                 "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
                 "document.getElementById( \"resultset\").innerHTML= to_table(info.result_set);\n"
@@ -144,19 +146,28 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "\n\n"
                 "function run_json_query()\n"
                 "{\n"
-                "var url = window.location;\n"
-                "var query= document.getElementById(\"json_query\").value;\n"
-                "var schema= document.getElementById(\"schema\").value;\n"
-                "var table= document.getElementById(\"table\").value;\n"
-                "var xmlHttp = new XMLHttpRequest();\n"
-                "xmlHttp.onreadystatechange = function () {\n"
-                "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
-                "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
-                "document.getElementById( \"resultset\").innerHTML= to_table_from_json(info.result_set);\n"
-                "}\n"
-                "};\n"
-                "xmlHttp.open(\"POST\", url + \"json/get?schema=\" + schema + \"&table=\" + table, true);\n"
-                "xmlHttp.send(query);\n"
+//"alert('run_json_query');"
+                    "var url = window.location;\n"
+                    "var method= document.getElementById(\"json_method\").value;\n"
+                    "var query= document.getElementById(\"json_query\").value;\n"
+                    "var schema= document.getElementById(\"schema\").value;\n"
+                    "var table= document.getElementById(\"table\").value;\n"
+                    "var xmlHttp = new XMLHttpRequest();\n"
+                    "xmlHttp.onreadystatechange = function () {\n"
+//"alert(xmlHttp.responseText);"
+                    "document.getElementById(\"responseText\").value = xmlHttp.responseText;\n"
+                    "if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {\n"
+                    "var info = eval ( \"(\" + xmlHttp.responseText + \")\" );\n"
+                    "document.getElementById( \"resultset\").innerHTML= to_table_from_json(info.result_set);\n"
+                    "}\n"
+                    "};\n"
+                    "if( method == \"POST\" || method == \"DELETE\" ) {\n"
+                        "xmlHttp.open(method, url + \"json?schema=\" + schema + \"&table=\" + table, true);\n"
+                        "xmlHttp.send(query);\n"
+                    "} else {\n"
+                        "xmlHttp.open(method, url + \"json?schema=\" + schema + \"&table=\" + table + \"&query=\" + encodeURIComponent(query), true);\n"
+                        "xmlHttp.send();\n"
+                    "}\n"
                 "}\n"
                 "\n\n"
                 "function update_version()\n"
@@ -175,20 +186,25 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "}\n"
                 "</script>\n"
                 "<p>Drizzle server version: <a id=\"drizzleversion\"></a></p>\n"
-                "<p><textarea rows=\"3\" cols=\"40\" id=\"sql_query\">\n"
+                "<p><textarea rows=\"3\" cols=\"80\" id=\"sql_query\">\n"
                 "SELECT * from DATA_DICTIONARY.GLOBAL_STATUS;\n"
                 "</textarea>\n"
                 "<button type=\"button\" onclick=\"run_sql_query();\">Execute SQL Query</button>\n"
                 "</p><p>\n"
-                "<textarea rows=\"3\" cols=\"40\" id=\"json_query\">\n"
+                "<textarea rows=\"8\" cols=\"80\" id=\"json_query\">\n"
                 "{\"_id\" : 1}\n"
                 "</textarea>\n"
                 "<button type=\"button\" onclick=\"run_json_query();\">Execute JSON Query</button>\n"
                 "<br />\n"
-                "<script lang=\"javascript\">document.write(window.location);</script>json/get?schema=\n"
+                "<select id=\"json_method\"><option value\"GET\">GET</option>"
+                "<option value\"POST\">POST</option>"
+                "<option value\"PUT\">PUT</option>"
+                "<option value\"DELETE\">DELETE</option></select>"
+                "<script lang=\"javascript\">document.write(window.location);</script>json?schema=\n"
                 "<input type=\"text\" id=\"schema\" value=\"test\"/>"
                 "&amp;table=<input type=\"text\" id=\"table\" value=\"jsonkv\"/>\n"
-                "</p><hr />\n<div id=\"resultset\"/>\n"
+                "</p><hr />\n<div id=\"resultset\"></div>\n"
+                "<hr /><p><textarea rows=\"12\" cols=\"80\" id=\"responseText\" ></textarea></p>"
                 "<script lang=\"javascript\">update_version(); run_sql_query();</script>\n"
                 "</body></html>\n");
 
@@ -273,7 +289,313 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* )
+extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
+{
+    if( req->type == EVHTTP_REQ_GET )
+    {
+        process_api02_json_get_req( req, NULL);
+//    } elseif ( req->type == EVHTTP_REQ_PUT ) {
+        //process_api02_json_put_req( req, NULL);
+    } else if ( req->type == EVHTTP_REQ_POST ) {
+        process_api02_json_post_req( req, NULL);
+//    } elseif ( req->type == EVHTTP_REQ_DELETE ) {
+        //process_api02_json_delete_req( req, NULL);
+    }
+}
+
+/**
+ * Transform a HTTP GET to SELECT and return results based on input json document
+ * 
+ * @param req should contain a "table" and "query" parameter in request uri. "schema" is optional.
+ * @return a json document is returned to client with evhttp_send_reply()
+ */
+void process_api02_json_get_req(struct evhttp_request *req, void* )
+{
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  Json::Value json_out;
+
+  std::string input;
+  // Schema and table are given in request uri.
+  // TODO: If we want to be really NoSQL, we will some day allow to use synonyms like "collection" instead of "table".
+  // For GET, also the query is in the uri
+  const char *schema;
+  const char *table;
+  const char *inputp;
+  evhttp_parse_query(evhttp_request_uri(req), req->input_headers);
+  schema = (char *)evhttp_find_header(req->input_headers, "schema");
+  table = (char *)evhttp_find_header(req->input_headers, "table");
+  inputp = (char *)evhttp_find_header(req->input_headers, "query");
+  input.append(inputp, strlen(inputp));
+
+  // Set test as default schema
+  if ( strcmp( schema, "") || schema == NULL)
+  {
+      schema = "test";
+  }
+  
+  // Parse "input" into "json_in".
+  Json::Value  json_in;
+  Json::Features json_conf;
+  Json::Reader reader(json_conf);
+  bool retval = reader.parse(input, json_in);
+  if (retval != true) {
+    json_out["error_type"]="json error";
+    json_out["error_message"]= reader.getFormatedErrorMessages();
+  }
+  else {
+    // Now we "parse" the json_in object and build an SQL query
+    char buffer[1024];
+    char sqlformat[1024] = "SELECT * FROM `%s`.`%s` WHERE _id=%i;";
+    // TODO: Don't SELECT * but only fields given in json query document
+    // TODO: In a later stage we'll allow the situation where _id isn't given but some other column for where.
+    // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
+    sprintf(buffer, sqlformat, schema, table, json_in["_id"].asInt());
+    std::string sql = "";
+    sql.append(buffer, strlen(buffer));
+    
+    // We have sql string. Use Execute API to run it and convert results back to JSON.
+    drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                            drizzled::catalog::local());
+    drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+    user_id->setUser("");
+    _session->setUser(user_id);
+    //_session->set_schema("test");
+
+    drizzled::Execute execute(*(_session.get()), true);
+
+    drizzled::sql::ResultSet result_set(1);
+
+    /* Execute wraps the SQL to run within a transaction */
+    execute.run(sql, result_set);
+    drizzled::sql::Exception exception= result_set.getException();
+
+    drizzled::error_t err= exception.getErrorCode();
+
+    json_out["sqlstate"]= exception.getSQLState();
+
+    if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
+    {
+        json_out["error_type"]="sql error";
+        json_out["error_message"]= exception.getErrorMessage();
+        json_out["error_code"]= exception.getErrorCode();
+        json_out["internal_sql_query"]= sql;
+        json_out["schema"]= "test";
+    }
+
+    while (result_set.next())
+    {
+/*
+        Json::Value json_row;
+        json_row["_id"]= result_set.getString(0);
+        // In the below we just do the same for the non-id column(s).
+        // However, since the values are now serialized json, we must first
+        // parse them to make them part of this structure, only to immediately
+        // serialize them again in the next step. For large json documents
+        // stored into the blob this must be very, very inefficient.
+        // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
+        // This is what we really wanted to do, replaced with the many lines that follow:
+        //json_row["document"]= Json::StaticString(result_set.getString(1));
+        // TODO: Massimo knows of a library to create JSON in streaming mode
+        Json::Value  json_doc;
+        Json::Reader readrow(json_conf);
+        bool r = readrow.parse(result_set.getString(1), json_doc);
+        if (r != true) {
+            json_out["error_type"]="json parse error on row value";
+            json_out["error_message"]= reader.getFormatedErrorMessages();
+            // Just put the string there as it is, better than nothing.
+            json_row["document"]= result_set.getString(1);
+        }
+        else {
+            json_row["document"]= json_doc;
+        }
+        json_out["result_set"].append(json_row);
+
+*/
+        Json::Value json_row;
+        bool got_error = false; 
+        for (size_t x= 0; x < result_set.getMetaData().getColumnCount() && got_error == false; x++)
+        {
+            if (not result_set.isNull(x))
+            {
+                // The values are now serialized json. We must first
+                // parse them to make them part of this structure, only to immediately
+                // serialize them again in the next step. For large json documents
+                // stored into the blob this must be very, very inefficient.
+                // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
+                // TODO: Massimo knows of a library to create JSON in streaming mode.
+                Json::Value  json_doc;
+                Json::Reader readrow(json_conf);
+                std::string col_name = result_set.getColumnInfo(x).col_name;
+                bool r = readrow.parse(result_set.getString(x), json_doc);
+                if (r != true) {
+                    json_out["error_type"]="json parse error on row value";
+                    json_out["error_internal_sql_column"]=col_name;
+                    json_out["error_message"]= reader.getFormatedErrorMessages();
+                    // Just put the string there as it is, better than nothing.
+                    json_row[col_name]= result_set.getString(x);
+                    got_error=true;
+                    break;
+                }
+                else {
+                    json_row[col_name]= json_doc;
+                }
+            }
+        }
+        // When done, append this to result set tree
+        json_out["result_set"].append(json_row);
+    }
+
+    json_out["query"]= json_in;
+  }
+  // Return either the results or an error message, in json.
+  Json::StyledWriter writer;
+  std::string output= writer.write(json_out);
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+/**
+ * Input json document or update existing one from HTTP POST (and PUT?).
+ * 
+ * If json document specifies _id field, then record is updated. If it doesn't
+ * exist, then a new record is created with that _id.
+ * 
+ * If _id field is not specified, then a new record is created using 
+ * auto_increment value. The _id of the created value is returned in the http
+ * response.
+ * 
+ * @todo If there are multiple errors, last one overwrites the previous in json_out. Make them lists.
+ * 
+ * @param req should contain a "table" parameter in request uri. "schema" is optional.
+ * @return a json document is returned to client with evhttp_send_reply()
+ */
+void process_api02_json_post_req(struct evhttp_request *req, void* )
+{
+  Json::Value json_out;
+
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  // Read from http to string "input".
+  std::string input;
+  char buffer[1024];
+  int l=0;
+  do {
+    l= evbuffer_remove(req->input_buffer, buffer, 1024);
+    input.append(buffer, l);
+  }while(l);
+
+  // Schema and table are given in request uri.
+  // TODO: If we want to be really NoSQL, we will some day allow to use synonyms like "collection" instead of "table".
+  char *schema;
+  char *table;
+  evhttp_parse_query(evhttp_request_uri(req), req->input_headers);
+  schema = (char *)evhttp_find_header(req->input_headers, "schema");
+  table = (char *)evhttp_find_header(req->input_headers, "table");
+  
+  // Parse "input" into "json_in".
+  Json::Value  json_in;
+  Json::Features json_conf;
+  Json::Reader reader(json_conf);
+  bool retval = reader.parse(input, json_in);
+  if (retval != true) {
+    json_out["error_type"]="json error";
+    json_out["error_message"]= reader.getFormatedErrorMessages();
+  } 
+  else {
+    // Now we "parse" the json_in object and build an SQL query
+    std::string sql = "REPLACE INTO `";
+    sql.append(schema);
+    sql.append("`.`");
+    sql.append(table);
+    sql.append("` SET ");    
+    // Iterate over json_in keys
+    Json::Value::Members keys( json_in.getMemberNames() );
+    for ( Json::Value::Members::iterator it = keys.begin(); it != keys.end(); ++it )
+    {
+        if ( it != keys.begin() )
+        {
+            sql.append(", ");
+        }
+        // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
+        const std::string &key = *it;
+        sql.append(key); sql.append("=");
+        Json::StyledWriter writeobject;
+        switch ( json_in[key].type() )
+        {
+            case Json::nullValue:
+                sql.append("NULL");
+                break;
+            case Json::intValue:
+            case Json::uintValue:
+            case Json::realValue:
+            case Json::booleanValue:
+                sql.append(json_in[key].asString());
+                break;
+            case Json::stringValue:
+                sql.append("'\"");
+                // TODO: MUST be sql quoted!
+                sql.append(json_in[key].asString());
+                sql.append("\"'");
+                break;
+            case Json::arrayValue:
+            case Json::objectValue:
+                sql.append("'");
+                sql.append(writeobject.write(json_in[key]));
+                sql.append("'");
+                break;
+            default:
+                sql.append("'Error in json_server.cc. This should never happen.'");
+                json_out["error_type"]="json error";
+                json_out["error_message"]= "json_in object had a value that wasn't of any of the types that we recognize.";
+                break;
+        }
+        sql.append(" ");
+     }
+     sql.append(";");
+    
+    // We have sql string. Use Execute API to run it.
+    drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                            drizzled::catalog::local());
+    drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+    user_id->setUser("");
+    _session->setUser(user_id);
+    //_session->set_schema("test");
+
+    drizzled::Execute execute(*(_session.get()), true);
+
+    drizzled::sql::ResultSet result_set(1);
+
+    /* Execute wraps the SQL to run within a transaction */
+    execute.run(sql, result_set);
+    drizzled::sql::Exception exception= result_set.getException();
+
+    drizzled::error_t err= exception.getErrorCode();
+
+    json_out["sqlstate"]= exception.getSQLState();
+
+    // TODO: I should be able to return number of rows inserted/updated.
+    // TODO: Return last_insert_id();
+    if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
+    {
+        json_out["error_type"]="sql error";
+        json_out["error_message"]= exception.getErrorMessage();
+        json_out["error_code"]= exception.getErrorCode();
+        json_out["internal_sql_query"]= sql;
+        json_out["schema"]= "test";
+    }
+    json_out["query"]= json_in;
+  }
+  // Return either the results or an error message, in json.
+  Json::StyledWriter writer;
+  std::string output= writer.write(json_out);
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+void process_api02_json_put_req(struct evhttp_request *req, void* )
 {
   Json::Value json_out;
 
@@ -359,6 +681,7 @@ extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* )
         // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
         // This is what we really wanted to do, replaced with the many lines that follow:
         //json_row["document"]= Json::StaticString(result_set.getString(1));
+        // TODO: Massimo knows of a library to create JSON in streaming mode
         Json::Value  json_doc;
         Json::Reader readrow(json_conf);
         bool r = readrow.parse(result_set.getString(1), json_doc);
@@ -468,20 +791,14 @@ public:
     // API 0.2
     evhttp_set_cb(httpd, "/0.2/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/0.2/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_get_req, NULL);
-    evhttp_set_cb(httpd, "/0.2/json/get", process_api02_json_get_req, NULL);
-    //evhttp_set_cb(httpd, "/0.2/json/put", process_api02_json_put_req, NULL);
+    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_req, NULL);
     // API "latest" and also available in top level
     evhttp_set_cb(httpd, "/latest/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/latest/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/latest/json", process_api02_json_get_req, NULL);
-    evhttp_set_cb(httpd, "/latest/json/get", process_api02_json_get_req, NULL);
-    //evhttp_set_cb(httpd, "/latest/json/put", process_api02_json_put_req, NULL);
+    evhttp_set_cb(httpd, "/latest/json", process_api02_json_req, NULL);
     evhttp_set_cb(httpd, "/version", process_api01_version_req, NULL);
     evhttp_set_cb(httpd, "/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/json", process_api02_json_get_req, NULL);    
-    evhttp_set_cb(httpd, "/json/get", process_api02_json_get_req, NULL);    
-    //evhttp_set_cb(httpd, "/json/put", process_api02_json_put_req, NULL);    
+    evhttp_set_cb(httpd, "/json", process_api02_json_req, NULL);    
     // Catch all does nothing and returns generic message.
     //evhttp_set_gencb(httpd, process_request, NULL);
 
