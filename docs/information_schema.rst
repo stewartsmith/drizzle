@@ -28,6 +28,9 @@ Drizzle currently provides the following INFORMATION_SCHEMA tables:
  * VIEW_COLUMN_USAGE
  * VIEW_TABLE_USAGE
 
+The INFORMATION_SCHEMA is implemented as a standard set of plugins that use the FunctionEngine. The FunctionEngine is a Drizzle Storage Engine plugin that allows table function plugins to iterate over internal data structures and present them to the user as normal SQL data. For all normal queries that either scan or do lookups on INFORMATION_SCHEMA, no tempory table is created; the data structures internal to Drizzle are iterated through and returned row by row to the user. The only exception is when the rnd_pos access method is used, then a copy of the table is made in memory so that we will not have to continually perform full table scans.
+
+All of the INFORMATION_SCHEMA tables are read-only.
 
 CHECK_CONSTRAINTS
 -----------------
@@ -40,6 +43,8 @@ CHECK_CONSTRAINTS
    `CONSTRAINT_NAME` VARCHAR(256) NOT NULL,
    `CHECK_CLAUSE` VARCHAR(256) NOT NULL
  ) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE DEFINER 'SYSTEM'
+
+Since Drizzle does not currentl support CHECK constraints, this table is (currently) always empty and is provided for standards compatibility
 
 
 COLUMNS
@@ -376,6 +381,10 @@ TABLES
     `TABLE_TYPE` VARCHAR(256) NOT NULL
   ) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE DEFINER 'SYSTEM'
 
+This table contains a row for every table and view in this catalog that the current user has permission to see.
+
+The tuple of TABLE_CATALOG, TABLE_SCHEMA and TABLE_NAME uniquely identify a table.
+
 TABLE_CONSTRAINTS
 -----------------
 
@@ -394,6 +403,10 @@ TABLE_CONSTRAINTS
     `INITIALLY_DEFERRED` BOOLEAN NOT NULL
   ) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE DEFINER 'SYSTEM'
 
+
+The tuple of TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME uniquely identifies the table that this constraint applies to.
+
+CONSTRAINT_TYPE is one of UNIQUE, PRIMARY KEY, FOREIGN KEY or CHECK.
 
 TABLE_PRIVILEGES
 ----------------
