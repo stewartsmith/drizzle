@@ -306,11 +306,18 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
 /**
  * Transform a HTTP GET to SELECT and return results based on input json document
  * 
- * @param req should contain a "table" and "query" parameter in request uri. "schema" is optional.
+ * @todo allow DBA to set default schema (also in post,del methods)
+ * @todo allow DBA to set whether to use strict mode for parsing json (should get rid of white space), especially for POST of course.
+ * 
+ * @param req should contain a "table" parameter in request uri. "query", "_id" and "schema" are optional.
  * @return a json document is returned to client with evhttp_send_reply()
  */
 void process_api02_json_get_req(struct evhttp_request *req, void* )
 {
+  int http_response_code = HTTP_OK;
+  const char *http_response_text;
+  http_response_text = "OK";
+  
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
 
@@ -322,15 +329,24 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
   // For GET, also the query is in the uri
   const char *schema;
   const char *table;
-  const char *inputp;
+  const char *query;
+  const char *id;
   evhttp_parse_query(evhttp_request_uri(req), req->input_headers);
   schema = (char *)evhttp_find_header(req->input_headers, "schema");
   table = (char *)evhttp_find_header(req->input_headers, "table");
-  inputp = (char *)evhttp_find_header(req->input_headers, "query");
-  input.append(inputp, strlen(inputp));
+  query = (char *)evhttp_find_header(req->input_headers, "query");
+  id = (char *)evhttp_find_header(req->input_headers, "_id");
+  
+  // query can be null if _id was given
+  if ( query == NULL || strcmp(query, "") == 0 )
+  {
+      // Empty JSON object
+      query = "{}";
+  }
+  input.append(query, strlen(query));
 
   // Set test as default schema
-  if ( strcmp( schema, "") || schema == NULL)
+  if (strcmp( schema, "") || schema == NULL)
   {
       schema = "test";
   }
@@ -344,14 +360,40 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
   }
-  else {
-    // Now we "parse" the json_in object and build an SQL query
-    char buffer[1024];
-    char sqlformat[1024] = "SELECT * FROM `%s`.`%s` WHERE _id=%i;";
-    // TODO: Don't SELECT * but only fields given in json query document
+  else if (strcmp( table, "") == 0 || table == NULL) {
+    json_out["error_type"]="http error";
+    json_out["error_message"]= "You must specify \"table\" in the request uri query string.";
+    http_response_code = HTTP_NOTFOUND;
+    http_response_text = "You must specify \"table\" in the request uri query string.";
+  }
+  else {    
+    // It is allowed to specify _id in the uri and leave it out from the json query.
+    // In that case we put the value from uri into json_in here.
+    // If both are specified, the one existing in json_in wins. (This is still valid, no error.)
+    if ( ! json_in["_id"].asBool() )
+    {
+      if( id ) {
+        json_in["_id"] = (Json::Value::UInt) atol(id);
+      }
+    }
+    
     // TODO: In a later stage we'll allow the situation where _id isn't given but some other column for where.
     // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
-    sprintf(buffer, sqlformat, schema, table, json_in["_id"].asInt());
+    // TODO: Don't SELECT * but only fields given in json query document
+    char sqlformat[1024];;
+    char buffer[1024];
+    if ( json_in["_id"].asBool() )
+    {
+      // Now we build an SQL query, using _id from json_in
+      sprintf(sqlformat, "%s", "SELECT * FROM `%s`.`%s` WHERE _id=%i;");
+      sprintf(buffer, sqlformat, schema, table, json_in["_id"].asInt());
+    }
+    else {
+      // If neither _id nor query are given, we return the full table. (No error, maybe this is what you really want? Blame yourself.)
+      sprintf(sqlformat, "%s", "SELECT * FROM `%s`.`%s`;");
+      sprintf(buffer, sqlformat, schema, table);
+    }
+
     std::string sql = "";
     sql.append(buffer, strlen(buffer));
     
@@ -386,33 +428,6 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
 
     while (result_set.next())
     {
-/*
-        Json::Value json_row;
-        json_row["_id"]= result_set.getString(0);
-        // In the below we just do the same for the non-id column(s).
-        // However, since the values are now serialized json, we must first
-        // parse them to make them part of this structure, only to immediately
-        // serialize them again in the next step. For large json documents
-        // stored into the blob this must be very, very inefficient.
-        // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
-        // This is what we really wanted to do, replaced with the many lines that follow:
-        //json_row["document"]= Json::StaticString(result_set.getString(1));
-        // TODO: Massimo knows of a library to create JSON in streaming mode
-        Json::Value  json_doc;
-        Json::Reader readrow(json_conf);
-        bool r = readrow.parse(result_set.getString(1), json_doc);
-        if (r != true) {
-            json_out["error_type"]="json parse error on row value";
-            json_out["error_message"]= reader.getFormatedErrorMessages();
-            // Just put the string there as it is, better than nothing.
-            json_row["document"]= result_set.getString(1);
-        }
-        else {
-            json_row["document"]= json_doc;
-        }
-        json_out["result_set"].append(json_row);
-
-*/
         Json::Value json_row;
         bool got_error = false; 
         for (size_t x= 0; x < result_set.getMetaData().getColumnCount() && got_error == false; x++)
@@ -453,7 +468,7 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
   Json::StyledWriter writer;
   std::string output= writer.write(json_out);
   evbuffer_add(buf, output.c_str(), output.length());
-  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+  evhttp_send_reply(req, http_response_code, http_response_text, buf);
 }
 
 /**
