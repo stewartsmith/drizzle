@@ -47,19 +47,19 @@ libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      $(OLDLIBDRIZZLE_LIBRARY_VERSION)
 
 libdrizzle_1_0_libdrizzle_la_SOURCES= \
-				      libdrizzle-1.0/column.cc \
-				      libdrizzle-1.0/command.cc \
-				      libdrizzle-1.0/conn.cc \
-				      libdrizzle-1.0/conn_uds.cc \
-				      libdrizzle-1.0/drizzle.cc \
-				      libdrizzle-1.0/field.cc \
-				      libdrizzle-1.0/handshake.cc \
-				      libdrizzle-1.0/pack.cc \
-				      libdrizzle-1.0/query.cc \
-				      libdrizzle-1.0/result.cc \
-				      libdrizzle-1.0/row.cc \
-				      libdrizzle-1.0/sha1.cc \
-				      libdrizzle-1.0/state.cc
+				      libdrizzle/column.cc \
+				      libdrizzle/command.cc \
+				      libdrizzle/conn.cc \
+				      libdrizzle/conn_uds.cc \
+				      libdrizzle/drizzle.cc \
+				      libdrizzle/field.cc \
+				      libdrizzle/handshake.cc \
+				      libdrizzle/pack.cc \
+				      libdrizzle/query.cc \
+				      libdrizzle/result.cc \
+				      libdrizzle/row.cc \
+				      libdrizzle/sha1.cc \
+				      libdrizzle/state.cc
 
 nobase_include_HEADERS+= \
 			 libdrizzle-1.0/column.h \
@@ -87,11 +87,3 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/row_server.h \
 			 libdrizzle-1.0/structs.h \
 			 libdrizzle-1.0/visibility.h
-
-noinst_HEADERS+= \
-		 libdrizzle-1.0/common.h \
-		 libdrizzle-1.0/drizzle_local.h \
-		 libdrizzle-1.0/conn_local.h \
-		 libdrizzle-1.0/pack.h \
-		 libdrizzle-1.0/state.h \
-		 libdrizzle-1.0/sha1.h
