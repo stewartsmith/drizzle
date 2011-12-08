@@ -451,4 +451,17 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace auth_ldap */
 
-DRIZZLE_PLUGIN(auth_ldap::init, NULL, auth_ldap::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_ldap",
+  "0.2",
+  "Eric Day, Henrik Ingo, Edward Konetzko",
+  "LDAP based authenication.",
+  PLUGIN_LICENSE_GPL,
+  auth_ldap::init, /* Plugin Init */
+  NULL,   /* depends */
+  auth_ldap::init_options    /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
+
