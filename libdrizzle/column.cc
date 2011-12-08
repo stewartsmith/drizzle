@@ -356,7 +356,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
 {
   if (column == NULL)
   {
-    column= malloc(sizeof(drizzle_column_st));
+    column= new (std::nothrow) (drizzle_column_st);
     if (column == NULL)
     {
       drizzle_set_error(result->con->drizzle, "drizzle_column_create",
@@ -377,8 +377,8 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->charset = 0;
     column->size = 0;
     column->max_size = 0;
-    column->type = 0;
-    column->flags = 0;
+    column->type = drizzle_column_type_t();
+    column->flags = drizzle_column_flags_t();
     column->decimals = 0;
     /* UNSET: column->default_value */
     column->default_value_size = 0;
@@ -389,7 +389,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->result = result;
     /* SET BELOW: column->next */
     column->prev = NULL;
-    column->options= 0;
+    column->options= drizzle_column_options_t();
     column->catalog[0] = '\0';
     column->db[0] = '\0';
     column->table[0] = '\0';
@@ -399,8 +399,8 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column->charset = 0;
     column->size = 0;
     column->max_size = 0;
-    column->type = 0;
-    column->flags = 0;
+    column->type = drizzle_column_type_t();
+    column->flags = drizzle_column_flags_t();
     column->decimals = 0;
     /* UNSET: column->default_value */
     column->default_value_size = 0;
@@ -426,7 +426,9 @@ void drizzle_column_free(drizzle_column_st *column)
     column->next->prev= column->prev;
 
   if (column->options & DRIZZLE_COLUMN_ALLOCATED)
-    free(column);
+  {
+    delete [] column;
+  }
 }
 
 drizzle_result_st *drizzle_column_drizzle_result(drizzle_column_st *column)
@@ -497,7 +499,7 @@ drizzle_column_type_drizzle(drizzle_column_st *column)
 
 drizzle_column_flags_t drizzle_column_flags(drizzle_column_st *column)
 {
-  return column->flags;
+  return drizzle_column_flags_t(column->flags);
 }
 
 uint8_t drizzle_column_decimals(drizzle_column_st *column)
@@ -521,13 +523,13 @@ drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
   drizzle_return_t ret;
   if (drizzle_state_none(result->con))
   {
-    result->options|= DRIZZLE_RESULT_SKIP_COLUMN;
+    result->options|= int(DRIZZLE_RESULT_SKIP_COLUMN);
 
     drizzle_state_push(result->con, drizzle_state_column_read);
     drizzle_state_push(result->con, drizzle_state_packet_read);
   }
   ret= drizzle_state_loop(result->con);
-  result->options&= ~DRIZZLE_RESULT_SKIP_COLUMN;
+  result->options&= ~int(DRIZZLE_RESULT_SKIP_COLUMN);
   return ret;
 }
 
@@ -570,16 +572,15 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
   {
     if (result->column_count == 0)
     {
-      result->options|= DRIZZLE_RESULT_BUFFER_COLUMN;
+      result->options|= int(DRIZZLE_RESULT_BUFFER_COLUMN);
       return DRIZZLE_RETURN_OK;
     }
 
-    result->column_buffer= malloc(sizeof(drizzle_column_st) *
-                                  result->column_count);
+    result->column_buffer= new (std::nothrow) drizzle_column_st[result->column_count];
     if (result->column_buffer == NULL)
     {
-      drizzle_set_error(result->con->drizzle, "drizzle_column_buffer",
-                        "malloc");
+      drizzle_set_error(result->con->drizzle, __func__, "malloc");
+
       return DRIZZLE_RETURN_MEMORY;
     }
   }
@@ -795,7 +796,7 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
     /* EOF packet marking end of columns. */
     con->result->column= NULL;
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 1);
-    con->status= drizzle_get_byte2(con->buffer_ptr + 3);
+    con->status= drizzle_con_status_t(drizzle_get_byte2(con->buffer_ptr + 3));
     con->buffer_ptr+= 5;
     con->buffer_size-= 5;
 
@@ -835,20 +836,22 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
     column->size= drizzle_get_byte4(con->buffer_ptr + 3);
 
     if (con->options & DRIZZLE_CON_MYSQL)
-      column->type= con->buffer_ptr[7];
+    {
+      column->type= drizzle_column_type_t(con->buffer_ptr[7]);
+    }
     else
     {
-      drizzle_type= con->buffer_ptr[7];
+      drizzle_type= drizzle_column_type_drizzle_t(con->buffer_ptr[7]);
       if (drizzle_type >= DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX)
         drizzle_type= DRIZZLE_COLUMN_TYPE_DRIZZLE_MAX;
       column->type= _column_type_drizzle_map_to[drizzle_type];
     }
 
-    column->flags= drizzle_get_byte2(con->buffer_ptr + 8);
+    column->flags= drizzle_column_flags_t(drizzle_get_byte2(con->buffer_ptr + 8));
     if (column->type <= DRIZZLE_COLUMN_TYPE_INT24 &&
         column->type != DRIZZLE_COLUMN_TYPE_TIMESTAMP)
     {
-      column->flags|= DRIZZLE_COLUMN_FLAGS_NUM;
+      column->flags|= int(DRIZZLE_COLUMN_FLAGS_NUM);
     }
 
     column->decimals= con->buffer_ptr[10];

@@ -77,8 +77,7 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
     if (drizzle_row_read(result, ret_ptr) == 0 || *ret_ptr != DRIZZLE_RETURN_OK)
       return NULL;
 
-    result->row= malloc((sizeof(drizzle_field_t) + sizeof(size_t)) *
-                        result->column_count);
+    result->row= (drizzle_row_t)malloc((sizeof(drizzle_field_t) + sizeof(size_t)) * result->column_count);
     if (result->row == NULL)
     {
       drizzle_set_error(result->con->drizzle, "drizzle_row_buffer", "malloc");
@@ -203,7 +202,7 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
     /* Got EOF packet, no more rows. */
     con->result->row_current= 0;
     con->result->warning_count= drizzle_get_byte2(con->buffer_ptr + 1);
-    con->status= drizzle_get_byte2(con->buffer_ptr + 3);
+    con->status= drizzle_con_status_t(drizzle_get_byte2(con->buffer_ptr + 3));
     con->buffer_ptr+= 5;
     con->buffer_size-= 5;
   }
@@ -214,7 +213,9 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
     return DRIZZLE_RETURN_OK;
   }
   else if (con->result->options & DRIZZLE_RESULT_ROW_BREAK)
-    con->result->options&= (drizzle_result_options_t)~DRIZZLE_RESULT_ROW_BREAK;
+  {
+    con->result->options&= ~int(DRIZZLE_RESULT_ROW_BREAK);
+  }
   else
   {
     con->result->row_count++;

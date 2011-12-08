@@ -97,7 +97,7 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
 {
   if (query == NULL)
   {
-    query= malloc(sizeof(drizzle_query_st));
+    query= new (std::nothrow) drizzle_query_st;
     if (query == NULL)
     {
       drizzle_set_error(drizzle, "drizzle_query_create", "malloc");
@@ -181,7 +181,7 @@ void drizzle_query_set_string(drizzle_query_st *query, const char *string,
 
 drizzle_query_options_t drizzle_query_options(drizzle_query_st *query)
 {
-  return query->options;
+  return drizzle_query_options_t(query->options);
 }
 
 void drizzle_query_set_options(drizzle_query_st *query,
@@ -259,7 +259,7 @@ static void drizzle_query_run_state(drizzle_query_st* query,
 drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
                                     drizzle_return_t *ret_ptr)
 {
-  drizzle_options_t options;
+  int options;
   drizzle_query_st *query;
   drizzle_con_st *con;
 
@@ -269,8 +269,8 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
     return NULL;
   }
 
-  options= drizzle->options;
-  drizzle->options|= DRIZZLE_NON_BLOCKING;
+  options= int(drizzle->options);
+  drizzle->options|= int(DRIZZLE_NON_BLOCKING);
 
   /* Check to see if any queries need to be started. */
   if (drizzle->query_new > 0)
@@ -290,7 +290,7 @@ drizzle_query_st *drizzle_query_run(drizzle_st *drizzle,
       {
         assert(query->state == DRIZZLE_QUERY_STATE_DONE);
         drizzle->query_running--;
-        drizzle->options= options;
+        drizzle->options= int(options);
         query->con->query= NULL;
         if (*ret_ptr == DRIZZLE_RETURN_ERROR_CODE || *ret_ptr == DRIZZLE_RETURN_OK)
         {

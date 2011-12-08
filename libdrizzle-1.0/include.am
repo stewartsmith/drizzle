@@ -36,10 +36,9 @@
 
 lib_LTLIBRARIES+= libdrizzle-1.0/libdrizzle.la
 
-libdrizzle_1_0_libdrizzle_la_CFLAGS= \
-				     ${AM_CFLAGS} \
-				     ${CFLAG_VISIBILITY} \
-				     -DBUILDING_LIBDRIZZLE
+libdrizzle_1_0_libdrizzle_la_CXXFLAGS= \
+				       ${CFLAG_VISIBILITY} \
+				       -DBUILDING_LIBDRIZZLE
 
 libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      $(AM_LDFLAGS) \
@@ -48,19 +47,19 @@ libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      $(OLDLIBDRIZZLE_LIBRARY_VERSION)
 
 libdrizzle_1_0_libdrizzle_la_SOURCES= \
-				      libdrizzle-1.0/column.c \
-				      libdrizzle-1.0/command.c \
-				      libdrizzle-1.0/conn.c \
-				      libdrizzle-1.0/conn_uds.c \
-				      libdrizzle-1.0/drizzle.c \
-				      libdrizzle-1.0/field.c \
-				      libdrizzle-1.0/handshake.c \
-				      libdrizzle-1.0/pack.c \
-				      libdrizzle-1.0/query.c \
-				      libdrizzle-1.0/result.c \
-				      libdrizzle-1.0/row.c \
-				      libdrizzle-1.0/sha1.c \
-				      libdrizzle-1.0/state.c
+				      libdrizzle/column.cc \
+				      libdrizzle/command.cc \
+				      libdrizzle/conn.cc \
+				      libdrizzle/conn_uds.cc \
+				      libdrizzle/drizzle.cc \
+				      libdrizzle/field.cc \
+				      libdrizzle/handshake.cc \
+				      libdrizzle/pack.cc \
+				      libdrizzle/query.cc \
+				      libdrizzle/result.cc \
+				      libdrizzle/row.cc \
+				      libdrizzle/sha1.cc \
+				      libdrizzle/state.cc
 
 nobase_include_HEADERS+= \
 			 libdrizzle-1.0/column.h \
@@ -88,11 +87,3 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/row_server.h \
 			 libdrizzle-1.0/structs.h \
 			 libdrizzle-1.0/visibility.h
-
-noinst_HEADERS+= \
-		 libdrizzle-1.0/common.h \
-		 libdrizzle-1.0/drizzle_local.h \
-		 libdrizzle-1.0/conn_local.h \
-		 libdrizzle-1.0/pack.h \
-		 libdrizzle-1.0/state.h \
-		 libdrizzle-1.0/sha1.h
