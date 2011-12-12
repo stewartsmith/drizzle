@@ -1,0 +1,9 @@
+# vim:ft=automake
+
+# Test linking with C application
+libdrizzle_1_0_t_c_test_SOURCES= libdrizzle-1.0/t/c_test.c
+libdrizzle_1_0_t_c_test_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_c_test_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/c_test
+noinst_PROGRAMS+= libdrizzle-1.0/t/c_test
+
