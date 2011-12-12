@@ -31,7 +31,7 @@ use GenTest::App::GenTest;
 my $DEFAULT_THREADS = 10;
 my $DEFAULT_QUERIES = 1000;
 my $DEFAULT_DURATION = 3600;
-my $DEFAULT_DSN = 'dbi:mysql:host=127.0.0.1:port=9306:user=root:database=test';
+my $DEFAULT_DSN = 'dbi:mysql:host=localhost:port=9306:user=root:database=test';
 
 my @ARGV_saved = @ARGV;
 

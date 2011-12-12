@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#define DRIZZLE_TEST_HOST "127.0.0.1"
+#define DRIZZLE_TEST_HOST "localhost"
 #define DRIZZLE_TEST_PORT 12399
 
 typedef enum

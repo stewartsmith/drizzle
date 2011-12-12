@@ -33,7 +33,7 @@ drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
 --disable_query_log
 eval CHANGE MASTER TO MASTER_USER='root',
                       MASTER_CONNECT_RETRY=1,
-                      MASTER_HOST='127.0.0.1',
+                      MASTER_HOST='localhost',
                       MASTER_PORT=$MASTER_MYPORT;
 --enable_query_log
 

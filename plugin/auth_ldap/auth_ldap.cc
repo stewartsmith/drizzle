@@ -44,7 +44,7 @@ namespace auth_ldap
 {
 
 std::string uri;
-const std::string DEFAULT_URI= "ldap://127.0.0.1/";
+const std::string DEFAULT_URI= "ldap://localhost/";
 std::string bind_dn;
 std::string bind_password;
 std::string base_dn;

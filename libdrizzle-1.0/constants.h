@@ -61,7 +61,7 @@ extern "C" {
 #define DRIZZLE_COLUMN_TYPE_VIRTUAL 17
 
 /* Defines. */
-#define DRIZZLE_DEFAULT_TCP_HOST         "127.0.0.1"
+#define DRIZZLE_DEFAULT_TCP_HOST         "localhost"
 #define DRIZZLE_DEFAULT_TCP_PORT         4427
 #define DRIZZLE_DEFAULT_TCP_PORT_MYSQL   4427
 #define DRIZZLE_DEFAULT_UDS              "/tmp/drizzle.sock"

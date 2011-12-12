@@ -1,6 +1,6 @@
 # Connect to both master and slave
-connect (master,127.0.0.1,root,,test,$MASTER_MYPORT,);
-connect (slave,127.0.0.1,root,,test,$SLAVE_MYPORT,);
+connect (master,localhost,root,,test,$MASTER_MYPORT,);
+connect (slave,localhost,root,,test,$SLAVE_MYPORT,);
 
 vertical_results;
 

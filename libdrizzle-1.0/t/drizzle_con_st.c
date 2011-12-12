@@ -68,10 +68,10 @@ int main(void)
     drizzle_test_error("drizzle_con_options");
 
   drizzle_test("drizzle_con_set_tcp");
-  drizzle_con_set_tcp(con, "127.0.0.1", 1);
+  drizzle_con_set_tcp(con, "localhost", 1);
 
   drizzle_test("drizzle_con_host");
-  if (strcmp(drizzle_con_host(con), "127.0.0.1"))
+  if (strcmp(drizzle_con_host(con), "localhost"))
     drizzle_test_error("expected host not set");
 
   drizzle_test("drizzle_con_port");
@@ -91,7 +91,7 @@ int main(void)
     drizzle_test_error("drizzle_con_fd != -1 for unconnected connection");
 
   drizzle_test("drizzle_con_listen");
-  drizzle_con_set_tcp(con, "127.0.0.1", DRIZZLE_TEST_PORT);
+  drizzle_con_set_tcp(con, "localhost", DRIZZLE_TEST_PORT);
   ret = drizzle_con_listen(con);
   if (ret != DRIZZLE_RETURN_OK) 
     drizzle_test_error("drizzle_con_listen: %s", drizzle_error(drizzle));

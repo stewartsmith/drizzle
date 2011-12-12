@@ -158,7 +158,7 @@ int main(void)
   /* Create a listening connection to verify that event_watch_fn gets called. */
   listen_con= drizzle_con_create(drizzle, NULL);
   assert(listen_con != NULL);
-  drizzle_con_set_tcp(listen_con, "127.0.0.1", DRIZZLE_TEST_PORT);
+  drizzle_con_set_tcp(listen_con, "localhost", DRIZZLE_TEST_PORT);
   ret= drizzle_con_listen(listen_con);
   assert(ret == DRIZZLE_RETURN_OK);  
   if (_event_watch_read_bits == 0)
@@ -167,7 +167,7 @@ int main(void)
 
   /* Attempt a non-blocking connection. */
   drizzle_add_options(drizzle, DRIZZLE_NON_BLOCKING);
-  con= drizzle_con_add_tcp(drizzle, NULL, "127.0.0.1", DRIZZLE_TEST_PORT, "user", "pw", "db",
+  con= drizzle_con_add_tcp(drizzle, NULL, "localhost", DRIZZLE_TEST_PORT, "user", "pw", "db",
                            DRIZZLE_CON_NONE);
   assert(con != NULL);
   ret= drizzle_con_connect(con);

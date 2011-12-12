@@ -9,7 +9,7 @@ Constants
 
 :py:const:`#define DRIZZLE_COLUMN_TYPE_VIRTUAL 17`
 
-:py:const:`#define DRIZZLE_DEFAULT_TCP_HOST "127.0.0.1"`
+:py:const:`#define DRIZZLE_DEFAULT_TCP_HOST "localhost"`
 
 :py:const:`#define DRIZZLE_DEFAULT_TCP_PORT 4427`
 
