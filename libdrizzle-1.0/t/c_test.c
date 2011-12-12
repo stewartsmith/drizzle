@@ -40,11 +40,13 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <libdrizzle-1.0/drizzle_client.h>
 
 int main(void)
 {
+  close(STDOUT_FILENO);
   drizzle_st *driz= drizzle_create(NULL);
   
   if (driz == NULL)
