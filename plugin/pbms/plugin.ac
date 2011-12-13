@@ -1,6 +1,0 @@
-PANDORA_HAVE_LIBCURL
-AS_IF([test "x$ac_cv_libcurl" = "xno"],
-      AC_MSG_WARN([libcurl development lib not found: not building PrimeBase Media Stream Daemon (pbms) plugin.]))
-
-PANDORA_ADD_PLUGIN_DEP_LIB([${LIBCURL}])
-
