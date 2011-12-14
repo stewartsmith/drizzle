@@ -36,6 +36,8 @@
 
 lib_LTLIBRARIES+= libdrizzle-1.0/libdrizzle.la
 
+include libdrizzle-1.0/t/include.am
+
 libdrizzle_1_0_libdrizzle_la_CXXFLAGS= \
 				       ${CFLAG_VISIBILITY} \
 				       -DBUILDING_LIBDRIZZLE
