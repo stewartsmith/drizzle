@@ -1,5 +1,6 @@
-/*
- * Drizzle Client & Protocol Library
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab: 
+ *
+ *  Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
  * All rights reserved.
@@ -75,7 +76,9 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
   if (result->row == NULL)
   {
     if (drizzle_row_read(result, ret_ptr) == 0 || *ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return NULL;
+    }
 
     result->row= (drizzle_row_t)malloc((sizeof(drizzle_field_t) + sizeof(size_t)) * result->column_count);
     if (result->row == NULL)
@@ -93,6 +96,7 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
     field= drizzle_field_buffer(result, &total, ret_ptr);
     if (*ret_ptr == DRIZZLE_RETURN_ROW_END)
       break;
+
     if (*ret_ptr != DRIZZLE_RETURN_OK)
     {
       if (*ret_ptr != DRIZZLE_RETURN_IO_WAIT)
@@ -118,10 +122,10 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
 
 void drizzle_row_free(drizzle_result_st *result, drizzle_row_t row)
 {
-  uint16_t x;
-
-  for (x= 0; x < result->column_count; x++)
-      drizzle_field_free(row[x]);
+  for (uint16_t x= 0; x < result->column_count; x++)
+  {
+    drizzle_field_free(row[x]);
+  }
 
   free(row);
 }

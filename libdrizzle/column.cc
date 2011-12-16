@@ -1,5 +1,6 @@
-/*
- * Drizzle Client & Protocol Library
+/*  vim:expandtab:shiftwidth=2:tabstop=2:smarttab: 
+ *
+ *  Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
  * All rights reserved.
@@ -410,6 +411,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
 
   if (result->column_list)
     result->column_list->prev= column;
+
   column->next= result->column_list;
   result->column_list= column;
 
@@ -420,14 +422,16 @@ void drizzle_column_free(drizzle_column_st *column)
 {
   if (column->result->column_list == column)
     column->result->column_list= column->next;
+
   if (column->prev)
     column->prev->next= column->next;
+
   if (column->next)
     column->next->prev= column->prev;
 
   if (column->options & DRIZZLE_COLUMN_ALLOCATED)
   {
-    delete [] column;
+    delete column;
   }
 }
 
@@ -535,14 +539,14 @@ drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
 
 drizzle_return_t drizzle_column_skip_all(drizzle_result_st *result)
 {
-  drizzle_return_t ret;
-  uint16_t it;
-
-  for (it= 1; it <= result->column_count; it++)
+  for (uint16_t it= 1; it <= result->column_count; it++)
   {
-    ret= drizzle_column_skip(result);
+    drizzle_return_t ret= drizzle_column_skip(result);
+
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
   }
 
   return DRIZZLE_RETURN_OK;
@@ -561,6 +565,7 @@ drizzle_column_st *drizzle_column_read(drizzle_result_st *result,
   }
 
   *ret_ptr= drizzle_state_loop(result->con);
+
   return result->column;
 }
 
@@ -601,7 +606,9 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
 drizzle_column_st *drizzle_column_next(drizzle_result_st *result)
 {
   if (result->column_current == result->column_count)
+  {
     return NULL;
+  }
 
   result->column_current++;
   return &(result->column_buffer[result->column_current - 1]);
@@ -610,7 +617,9 @@ drizzle_column_st *drizzle_column_next(drizzle_result_st *result)
 drizzle_column_st *drizzle_column_prev(drizzle_result_st *result)
 {
   if (result->column_current == 0)
+  {
     return NULL;
+  }
 
   result->column_current--;
   return &(result->column_buffer[result->column_current]);
@@ -619,14 +628,18 @@ drizzle_column_st *drizzle_column_prev(drizzle_result_st *result)
 void drizzle_column_seek(drizzle_result_st *result, uint16_t column)
 {
   if (column <= result->column_count)
+  {
     result->column_current= column;
+  }
 }
 
 drizzle_column_st *drizzle_column_index(drizzle_result_st *result,
                                         uint16_t column)
 {
   if (column >= result->column_count)
+  {
     return NULL;
+  }
 
   return &(result->column_buffer[column]);
 }
@@ -656,7 +669,9 @@ drizzle_return_t drizzle_column_write(drizzle_result_st *result,
 void drizzle_column_set_catalog(drizzle_column_st *column, const char *catalog)
 {
   if (catalog == NULL)
+  {
     column->catalog[0]= 0;
+  }
   else
   {
     strncpy(column->catalog, catalog, DRIZZLE_MAX_CATALOG_SIZE);
@@ -667,7 +682,9 @@ void drizzle_column_set_catalog(drizzle_column_st *column, const char *catalog)
 void drizzle_column_set_db(drizzle_column_st *column, const char *db)
 {
   if (db == NULL)
+  {
     column->db[0]= 0;
+  }
   else
   {
     strncpy(column->db, db, DRIZZLE_MAX_DB_SIZE);
@@ -678,7 +695,9 @@ void drizzle_column_set_db(drizzle_column_st *column, const char *db)
 void drizzle_column_set_table(drizzle_column_st *column, const char *table)
 {
   if (table == NULL)
+  {
     column->table[0]= 0;
+  }
   else
   {
     strncpy(column->table, table, DRIZZLE_MAX_TABLE_SIZE);
@@ -690,7 +709,9 @@ void drizzle_column_set_orig_table(drizzle_column_st *column,
                                    const char *orig_table)
 {
   if (orig_table == NULL)
+  {
     column->orig_table[0]= 0;
+  }
   else
   {
     strncpy(column->orig_table, orig_table, DRIZZLE_MAX_TABLE_SIZE);
@@ -701,7 +722,9 @@ void drizzle_column_set_orig_table(drizzle_column_st *column,
 void drizzle_column_set_name(drizzle_column_st *column, const char *name)
 {
   if (name == NULL)
+  {
     column->name[0]= 0;
+  }
   else
   {
     strncpy(column->name, name, DRIZZLE_MAX_COLUMN_NAME_SIZE);

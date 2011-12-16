@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -114,20 +115,19 @@ void drizzle_result_free(drizzle_result_st *result)
     return;
   }
 
-  drizzle_column_st *column;
-  uint64_t x;
-
-  for (column= result->column_list; column != NULL; column= result->column_list)
+  for (drizzle_column_st* column= result->column_list; column != NULL; column= result->column_list)
   {
     drizzle_column_free(column);
   }
 
-  free(result->column_buffer);
+  delete [] result->column_buffer;
 
   if (result->options & DRIZZLE_RESULT_BUFFER_ROW)
   {
-    for (x= 0; x < result->row_count; x++)
+    for (uint64_t x= 0; x < result->row_count; x++)
+    {
       drizzle_row_free(result, result->row_list[x]);
+    }
 
     free(result->row_list);
     free(result->field_sizes_list);
@@ -151,7 +151,7 @@ void drizzle_result_free(drizzle_result_st *result)
 
   if (result->options & DRIZZLE_RESULT_ALLOCATED)
   {
-    free(result);
+    delete result;
   }
 }
 
@@ -433,8 +433,6 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
                                   const drizzle_field_t *field,
                                   const size_t *size)
 {
-  uint16_t x;
-
   if (result == NULL)
   {
     return;
@@ -442,18 +440,28 @@ void drizzle_result_calc_row_size(drizzle_result_st *result,
 
   result->con->packet_size= 0;
 
-  for (x= 0; x < result->column_count; x++)
+  for (uint16_t x= 0; x < result->column_count; x++)
   {
     if (field[x] == NULL)
+    {
       result->con->packet_size++;
+    }
     else if (size[x] < 251)
+    {
       result->con->packet_size+= (1 + size[x]);
+    }
     else if (size[x] < 65536)
+    {
       result->con->packet_size+= (3 + size[x]);
+    }
     else if (size[x] < 16777216)
+    {
       result->con->packet_size+= (4 + size[x]);
+    }
     else
+    {
       result->con->packet_size+= (9 + size[x]);
+    }
   }
 }
 

@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -178,7 +179,9 @@ void drizzle_free(drizzle_st *drizzle)
   free(drizzle->pfds);
 
   if (drizzle->options & DRIZZLE_ALLOCATED)
-    free(drizzle);
+  {
+    delete drizzle;
+  }
 #if defined(_WIN32)
   /* if it is MS windows, invoke WSACleanup() at the end*/
   WSACleanup();
@@ -406,7 +409,9 @@ void drizzle_con_free(drizzle_con_st *con)
   con->drizzle->con_count--;
 
   if (con->options & DRIZZLE_CON_ALLOCATED)
-    free(con);
+  {
+    delete con;
+  }
 }
 
 void drizzle_con_free_all(drizzle_st *drizzle)

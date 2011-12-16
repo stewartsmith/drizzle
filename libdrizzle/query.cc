@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -136,13 +137,17 @@ void drizzle_query_free(drizzle_query_st *query)
   query->drizzle->query_count--;
 
   if (query->options & DRIZZLE_QUERY_ALLOCATED)
-    free(query);
+  {
+    delete query;
+  }
 }
 
 void drizzle_query_free_all(drizzle_st *drizzle)
 {
   while (drizzle->query_list != NULL)
+  {
     drizzle_query_free(drizzle->query_list);
+  }
 }
 
 drizzle_con_st *drizzle_query_con(drizzle_query_st *query)

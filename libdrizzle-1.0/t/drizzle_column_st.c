@@ -57,31 +57,43 @@ int main(void)
 
   drizzle_test("drizzle_create");
   if ((drizzle= drizzle_create(NULL)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_con_create");
   if ((con= drizzle_con_create(drizzle, NULL)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_result_create");
   if ((result= drizzle_result_create(con, NULL)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_column_create buffer");
   if ((column= drizzle_column_create(result, &column_buffer)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
   drizzle_column_free(column);
 
   drizzle_test("drizzle_column_create");
   if ((column= drizzle_column_create(result, NULL)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_column_set_catalog");
   drizzle_column_set_catalog(column, "simple test");
 
   drizzle_test("drizzle_column_catalog");
   if (strcmp(drizzle_column_catalog(column), "simple test"))
+  {
     drizzle_test_error("does not match what was set");
+  }
 
   drizzle_test("drizzle_column_free");
   drizzle_column_free(column);
