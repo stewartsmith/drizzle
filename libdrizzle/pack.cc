@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)

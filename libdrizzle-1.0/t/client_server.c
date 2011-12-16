@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -105,7 +106,9 @@ int main(void)
 
   drizzle_test("drizzle_create");
   if (drizzle_create(&drizzle) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_con_add_tcp_listen");
   if (drizzle_con_add_tcp_listen(&drizzle, &listen_con, DRIZZLE_TEST_HOST,
@@ -160,7 +163,9 @@ int main(void)
     drizzle_test("drizzle_con_wait");
     ret= drizzle_con_wait(&drizzle);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       drizzle_test_error("returned %s (%d)", drizzle_error(&drizzle), ret);
+    }
   }
 
   if (server_accepted)
@@ -212,7 +217,9 @@ static void _server(drizzle_con_st *con, server_state_st *state)
       return;
     }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       drizzle_test_error("returned %s (%d)", drizzle_con_error(con), ret);
+    }
 
   case SERVER_STATE_HANDSHAKE_READ:
     drizzle_test("drizzle_handshake_client_read");
@@ -223,7 +230,9 @@ static void _server(drizzle_con_st *con, server_state_st *state)
       return;
     }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       drizzle_test_error("returned %s (%d)", drizzle_con_error(con), ret);
+    }
 
     drizzle_test("drizzle_result_create");
     if (drizzle_result_create(con, &state->result) == NULL)

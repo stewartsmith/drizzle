@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -61,7 +62,7 @@ drizzle_field_t drizzle_field_read(drizzle_result_st *result, size_t *offset,
   }
 
   *ret_ptr= drizzle_state_loop(result->con);
-  if (*ret_ptr == DRIZZLE_RETURN_OK &&
+  if (*ret_ptr == DRIZZLE_RETURN_OK and
       result->options & DRIZZLE_RESULT_ROW_BREAK)
   {
     *ret_ptr= DRIZZLE_RETURN_ROW_BREAK;
@@ -77,13 +78,15 @@ drizzle_field_t drizzle_field_read(drizzle_result_st *result, size_t *offset,
 drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
                                      drizzle_return_t *ret_ptr)
 {
-  drizzle_field_t field;
   size_t offset= 0;
   size_t size= 0;
 
-  field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
+  drizzle_field_t field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
+
   if (*ret_ptr != DRIZZLE_RETURN_OK)
+  {
     return NULL;
+  }
 
   if (field == NULL)
   {
@@ -108,7 +111,9 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
   {
     field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return NULL;
+    }
 
     memcpy(result->field_buffer + offset, field, size);
   }
@@ -122,7 +127,10 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
 
 void drizzle_field_free(drizzle_field_t field)
 {
-  free(field);
+  if (field)
+  {
+    free(field);
+  }
 }
 
 /*
@@ -287,7 +295,9 @@ drizzle_return_t drizzle_state_field_write(drizzle_con_st *con)
   drizzle_log_debug(con->drizzle, "drizzle_state_field_write");
 
   if (result->field == NULL && result->field_total != 0)
+  {
     return DRIZZLE_RETURN_PAUSE;
+  }
 
   free_size= (size_t)DRIZZLE_MAX_BUFFER_SIZE - (size_t)(start - con->buffer);
   ptr= start;
@@ -335,7 +345,9 @@ drizzle_return_t drizzle_state_field_write(drizzle_con_st *con)
     result->field= NULL;
 
     if (result->field_offset == result->field_total)
+    {
       drizzle_state_pop(con);
+    }
     else if (con->packet_size == 0)
     {
       con->result->options|= DRIZZLE_RESULT_ROW_BREAK;
@@ -343,11 +355,14 @@ drizzle_return_t drizzle_state_field_write(drizzle_con_st *con)
     }
 
     drizzle_state_push(con, drizzle_state_write);
+
     return DRIZZLE_RETURN_OK;
   }
 
   if (result->field_size == 0)
+  {
     drizzle_state_pop(con);
+  }
   else
   {
     if (result->field_size < free_size)
