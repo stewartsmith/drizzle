@@ -88,6 +88,11 @@ static drizzle_command_drizzle_t _command_drizzle_map[]=
 
 drizzle_return_t drizzle_state_command_read(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_log_debug(con->drizzle, "drizzle_state_command_read");
 
   if (con->buffer_size == 0)
@@ -135,6 +140,11 @@ drizzle_return_t drizzle_state_command_write(drizzle_con_st *con)
   size_t free_size;
   drizzle_return_t ret;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_log_debug(con->drizzle, "drizzle_state_command_write");
 
   if (con->command_data == NULL && con->command_total != 0 &&
@@ -149,7 +159,9 @@ drizzle_return_t drizzle_state_command_write(drizzle_con_st *con)
     start= con->buffer;
   }
   else
+  {
     start= con->buffer_ptr + con->buffer_size;
+  }
 
   if (con->command_offset == 0)
   {
@@ -175,9 +187,13 @@ drizzle_return_t drizzle_state_command_write(drizzle_con_st *con)
     ptr= start;
     ptr[3]= 0;
     if (con->options & DRIZZLE_CON_MYSQL)
+    {
       ptr[4]= (uint8_t)(con->command);
+    }
     else
+    {
       ptr[4]= (uint8_t)(_command_drizzle_map[con->command]);
+    }
     ptr+= 5;
 
     if (con->command == DRIZZLE_COMMAND_CHANGE_USER)

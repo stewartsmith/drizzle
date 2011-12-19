@@ -66,12 +66,21 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con);
 
 int drizzle_con_fd(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return -1;
+  }
+
   return con->fd;
 }
 
 drizzle_return_t drizzle_con_set_fd(drizzle_con_st *con, int fd)
 {
   drizzle_return_t ret;
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   con->fd= fd;
 
@@ -84,8 +93,15 @@ drizzle_return_t drizzle_con_set_fd(drizzle_con_st *con, int fd)
 
 void drizzle_con_close(drizzle_con_st *con)
 {
-  if (con->fd == -1)
+  if (con == NULL)
+  {
     return;
+  }
+
+  if (con->fd == -1)
+  {
+    return;
+  }
 
   (void)closesocket(con->fd);
   con->fd= -1;
@@ -105,7 +121,9 @@ drizzle_return_t drizzle_con_set_events(drizzle_con_st *con, short events)
   drizzle_return_t ret;
 
   if ((con->events | events) == con->events)
+  {
     return DRIZZLE_RETURN_OK;
+  }
 
   con->events|= events;
 
@@ -126,6 +144,10 @@ drizzle_return_t drizzle_con_set_events(drizzle_con_st *con, short events)
 drizzle_return_t drizzle_con_set_revents(drizzle_con_st *con, short revents)
 {
   drizzle_return_t ret;
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   if (revents != 0)
     con->options|= DRIZZLE_CON_IO_READY;
@@ -155,43 +177,82 @@ drizzle_return_t drizzle_con_set_revents(drizzle_con_st *con, short revents)
 
 drizzle_st *drizzle_con_drizzle(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
   return con->drizzle;
 }
 
 const char *drizzle_con_error(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return drizzle_error(con->drizzle);
 }
 
 int drizzle_con_errno(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return drizzle_errno(con->drizzle);
 }
 
 uint16_t drizzle_con_error_code(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return drizzle_error_code(con->drizzle);
 }
 
 const char *drizzle_con_sqlstate(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return drizzle_sqlstate(con->drizzle);
 }
 
 drizzle_con_options_t drizzle_con_options(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return drizzle_con_options_t();
+  }
+
   return drizzle_con_options_t(con->options);
 }
 
 void drizzle_con_set_options(drizzle_con_st *con,
                              drizzle_con_options_t options)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->options= options;
 }
 
 void drizzle_con_add_options(drizzle_con_st *con,
                              drizzle_con_options_t options)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->options|= options;
 
   /* If asking for the experimental Drizzle protocol, clean the MySQL flag. */
@@ -204,11 +265,21 @@ void drizzle_con_add_options(drizzle_con_st *con,
 void drizzle_con_remove_options(drizzle_con_st *con,
                                 drizzle_con_options_t options)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->options&= ~options;
 }
 
 const char *drizzle_con_host(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   if (con->socket_type == DRIZZLE_CON_SOCKET_TCP)
   {
     if (con->socket.tcp.host == NULL && !(con->options & DRIZZLE_CON_LISTEN))
@@ -222,28 +293,39 @@ const char *drizzle_con_host(const drizzle_con_st *con)
 
 in_port_t drizzle_con_port(const drizzle_con_st *con)
 {
-  if (con->socket_type == DRIZZLE_CON_SOCKET_TCP)
+  if (con and con->socket_type == DRIZZLE_CON_SOCKET_TCP)
   {
     if (con->socket.tcp.port != 0)
+    {
       return con->socket.tcp.port;
+    }
 
     if (con->options & DRIZZLE_CON_MYSQL)
+    {
       return DRIZZLE_DEFAULT_TCP_PORT_MYSQL;
+    }
 
     return DRIZZLE_DEFAULT_TCP_PORT;
   }
 
-  return 0;
+  return in_port_t(0);
 }
 
 void drizzle_con_set_tcp(drizzle_con_st *con, const char *host, in_port_t port)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   drizzle_con_reset_addrinfo(con);
 
   con->socket_type= DRIZZLE_CON_SOCKET_TCP;
 
   if (host == NULL)
+  {
     con->socket.tcp.host= NULL;
+  }
   else
   {
     con->socket.tcp.host= con->socket.tcp.host_buffer;
@@ -256,19 +338,36 @@ void drizzle_con_set_tcp(drizzle_con_st *con, const char *host, in_port_t port)
 
 const char *drizzle_con_user(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->user;
 }
 
 const char *drizzle_con_password(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->password;
 }
 
 void drizzle_con_set_auth(drizzle_con_st *con, const char *user,
                           const char *password)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   if (user == NULL)
+  {
     con->user[0]= 0;
+  }
   else
   {
     strncpy(con->user, user, DRIZZLE_MAX_USER_SIZE);
@@ -276,7 +375,9 @@ void drizzle_con_set_auth(drizzle_con_st *con, const char *user,
   }
 
   if (password == NULL)
+  {
     con->password[0]= 0;
+  }
   else
   {
     strncpy(con->password, password, DRIZZLE_MAX_PASSWORD_SIZE);
@@ -286,13 +387,25 @@ void drizzle_con_set_auth(drizzle_con_st *con, const char *user,
 
 const char *drizzle_con_db(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->db;
 }
 
 void drizzle_con_set_db(drizzle_con_st *con, const char *db)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   if (db == NULL)
+  {
     con->db[0]= 0;
+  }
   else
   {
     strncpy(con->db, db, DRIZZLE_MAX_DB_SIZE);
@@ -302,76 +415,131 @@ void drizzle_con_set_db(drizzle_con_st *con, const char *db)
 
 void *drizzle_con_context(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->context;
 }
 
 void drizzle_con_set_context(drizzle_con_st *con, void *context)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->context= context;
 }
 
 void drizzle_con_set_context_free_fn(drizzle_con_st *con,
                                      drizzle_con_context_free_fn *function)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->context_free_fn= function;
 }
 
 uint8_t drizzle_con_protocol_version(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return con->protocol_version;
 }
 
 const char *drizzle_con_server_version(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->server_version;
 }
 
 uint32_t drizzle_con_server_version_number(const drizzle_con_st *con)
 {
-  uint32_t major;
-  uint32_t minor;
-  uint32_t version;
-  const char *current;
-  char *end;
+  if (con)
+  {
+    const char *current= con->server_version;
+    char *end;
 
-  current= con->server_version;
+    uint32_t major= (uint32_t)strtoul(current, &end, 10);
+    current= end +1;
+    uint32_t minor= (uint32_t)strtoul(current, &end, 10);
+    current= end +1;
+    uint32_t version= (uint32_t)strtoul(current, &end, 10);
 
-  major= (uint32_t)strtoul(current, &end, 10);
-  current= end + 1;
-  minor= (uint32_t)strtoul(current, &end, 10);
-  current= end + 1;
-  version= (uint32_t)strtoul(current, &end, 10);
+    return (major * 10000) +(minor * 100) +version;
+  }
 
-  return (major * 10000) + (minor * 100) + version;
+  return 0;
 }
 
 uint32_t drizzle_con_thread_id(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return con->thread_id;
 }
 
 const uint8_t *drizzle_con_scramble(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return NULL;
+  }
+
   return con->scramble;
 }
 
 drizzle_capabilities_t drizzle_con_capabilities(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return drizzle_capabilities_t();
+  }
+
   return drizzle_capabilities_t(con->capabilities);
 }
 
 drizzle_charset_t drizzle_con_charset(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return drizzle_charset_t();
+  }
+
   return con->charset;
 }
 
 drizzle_con_status_t drizzle_con_status(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return drizzle_con_status_t();
+  }
+
   return con->status;
 }
 
 uint32_t drizzle_con_max_packet_size(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return con->max_packet_size;
 }
 
@@ -381,8 +549,15 @@ uint32_t drizzle_con_max_packet_size(const drizzle_con_st *con)
 
 drizzle_return_t drizzle_con_connect(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   if (con->options & DRIZZLE_CON_READY)
+  {
     return DRIZZLE_RETURN_OK;
+  }
 
   if (drizzle_state_none(con))
   {
@@ -436,7 +611,13 @@ drizzle_result_st *drizzle_con_shutdown(drizzle_con_st *con,
                                         drizzle_result_st *result,
                                         drizzle_return_t *ret_ptr)
 {
-  if (con->options & DRIZZLE_CON_MYSQL)
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
+  if (con and con->options & DRIZZLE_CON_MYSQL)
   {
     return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_SHUTDOWN,
                                      "0", 1, 1, ret_ptr);
@@ -447,10 +628,9 @@ drizzle_result_st *drizzle_con_shutdown(drizzle_con_st *con,
 }
 
 drizzle_result_st *drizzle_shutdown(drizzle_con_st *con,
-                                    drizzle_result_st *result, uint32_t level,
+                                    drizzle_result_st *result, uint32_t, // level is unused
                                     drizzle_return_t *ret_ptr)
 {
-  (void) level;
   return drizzle_con_shutdown(con, result, ret_ptr);
 }
 
@@ -459,6 +639,12 @@ drizzle_result_st *drizzle_kill(drizzle_con_st *con,
                                 uint32_t query_id,
                                 drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused;
+  }
+
   uint32_t sent= htonl(query_id);
   return drizzle_con_command_write(con, result, DRIZZLE_COMMAND_PROCESS_KILL,
                                    &sent, sizeof(uint32_t), sizeof(uint32_t), ret_ptr);
@@ -486,13 +672,19 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
                                              size_t total,
                                              drizzle_return_t *ret_ptr)
 {
-  drizzle_result_st *old_result;
-
   drizzle_return_t unused;
   if (ret_ptr == NULL)
   {
     ret_ptr= &unused;
   }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
+
+  drizzle_result_st *old_result;
 
   if (!(con->options & DRIZZLE_CON_READY))
   {
@@ -567,8 +759,15 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 
 drizzle_return_t drizzle_con_listen(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   if (con->options & DRIZZLE_CON_READY)
+  {
     return DRIZZLE_RETURN_OK;
+  }
 
   if (drizzle_state_none(con))
   {
@@ -581,25 +780,47 @@ drizzle_return_t drizzle_con_listen(drizzle_con_st *con)
 
 int drizzle_con_backlog(const drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return 0;
+  }
+
   return con->backlog;
 }
 
 void drizzle_con_set_backlog(drizzle_con_st *con, int backlog)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->backlog= backlog;
 }
 
 void drizzle_con_set_protocol_version(drizzle_con_st *con,
                                       uint8_t protocol_version)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->protocol_version= protocol_version;
 }
 
 void drizzle_con_set_server_version(drizzle_con_st *con,
                                     const char *server_version)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   if (server_version == NULL)
+  {
     con->server_version[0]= 0;
+  }
   else
   {
     strncpy(con->server_version, server_version,
@@ -610,13 +831,25 @@ void drizzle_con_set_server_version(drizzle_con_st *con,
 
 void drizzle_con_set_thread_id(drizzle_con_st *con, uint32_t thread_id)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->thread_id= thread_id;
 }
 
 void drizzle_con_set_scramble(drizzle_con_st *con, const uint8_t *scramble)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   if (scramble == NULL)
+  {
     con->scramble= NULL;
+  }
   else
   {
     con->scramble= con->scramble_buffer;
@@ -627,22 +860,42 @@ void drizzle_con_set_scramble(drizzle_con_st *con, const uint8_t *scramble)
 void drizzle_con_set_capabilities(drizzle_con_st *con,
                                   drizzle_capabilities_t capabilities)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->capabilities= capabilities;
 }
 
 void drizzle_con_set_charset(drizzle_con_st *con, drizzle_charset_t charset)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->charset= charset;
 }
 
 void drizzle_con_set_status(drizzle_con_st *con, drizzle_con_status_t status)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->status= status;
 }
 
 void drizzle_con_set_max_packet_size(drizzle_con_st *con,
                                      uint32_t max_packet_size)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   con->max_packet_size= max_packet_size;
 }
 
@@ -666,6 +919,18 @@ void *drizzle_con_command_read(drizzle_con_st *con,
                                size_t *size, size_t *total,
                                drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
+
   if (drizzle_state_none(con))
   {
     con->packet_number= 0;
@@ -676,15 +941,31 @@ void *drizzle_con_command_read(drizzle_con_st *con,
     drizzle_state_push(con, drizzle_state_packet_read);
   }
 
-  *offset= con->command_offset;
+  if (offset)
+  {
+    *offset= con->command_offset;
+  }
 
   *ret_ptr= drizzle_state_loop(con);
   if (*ret_ptr == DRIZZLE_RETURN_PAUSE)
+  {
     *ret_ptr= DRIZZLE_RETURN_OK;
+  }
 
-  *command= con->command;
-  *size= con->command_size;
-  *total= con->command_total;
+  if (command)
+  {
+    *command= con->command;
+  }
+
+  if (size)
+  {
+    *size= con->command_size;
+  }
+
+  if (total)
+  {
+    *total= con->command_total;
+  }
 
   return con->command_data;
 }
@@ -696,9 +977,29 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   size_t offset= 0;
   size_t size= 0;
 
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  size_t unused_total;
+  if (total == NULL)
+  {
+    total= &unused_total;
+  }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
+
   char *command_data= (char *)drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
   if (*ret_ptr != DRIZZLE_RETURN_OK)
+  {
     return NULL;
+  }
 
   if (command_data == NULL)
   {
@@ -723,7 +1024,9 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
   {
     command_data= (char *)drizzle_con_command_read(con, command, &offset, &size, total, ret_ptr);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return NULL;
+    }
 
     memcpy(con->command_buffer + offset, command_data, size);
   }
@@ -741,6 +1044,11 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
 void drizzle_con_reset_addrinfo(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return;
+  }
+
   switch (con->socket_type)
   {
   case DRIZZLE_CON_SOCKET_TCP:
@@ -774,6 +1082,11 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
   struct addrinfo ai;
   int ret;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_log_debug(con->drizzle, "drizzle_state_addrinfo");
 
   switch (con->socket_type)
@@ -788,11 +1101,17 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     }
 
     if (tcp->port != 0)
+    {
       snprintf(port, NI_MAXSERV, "%u", tcp->port);
+    }
     else if (con->options & DRIZZLE_CON_MYSQL)
+    {
       snprintf(port, NI_MAXSERV, "%u", DRIZZLE_DEFAULT_TCP_PORT_MYSQL);
+    }
     else
+    {
       snprintf(port, NI_MAXSERV, "%u", DRIZZLE_DEFAULT_TCP_PORT);
+    }
     port[NI_MAXSERV-1]= 0;
 
     memset(&ai, 0, sizeof(struct addrinfo));
@@ -841,6 +1160,11 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 {
   int ret;
   drizzle_return_t dret;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_connect");
 
@@ -946,12 +1270,18 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
   }
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
 
 drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 {
   drizzle_return_t ret;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_connecting");
 
@@ -980,7 +1310,9 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 
     ret= drizzle_con_wait(con->drizzle);
     if (ret != DRIZZLE_RETURN_OK)
+    {
       return ret;
+    }
   }
 }
 
@@ -988,6 +1320,11 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 {
   drizzle_return_t ret;
   ssize_t read_size;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_read");
 
@@ -1110,6 +1447,7 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
   }
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
 
@@ -1117,6 +1455,11 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
 {
   drizzle_return_t ret;
   ssize_t write_size;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   drizzle_log_debug(con->drizzle, "drizzle_state_write");
 
@@ -1211,6 +1554,7 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
   con->buffer_ptr= con->buffer;
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
 
@@ -1221,6 +1565,11 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
   int fd;
   int opt;
   drizzle_con_st *new_con;
+
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
 
   for (; con->addrinfo_next != NULL;
        con->addrinfo_next= con->addrinfo_next->ai_next)
@@ -1316,9 +1665,12 @@ drizzle_return_t drizzle_state_listen(drizzle_con_st *con)
 
   /* Report last socket() error if we couldn't find an address to bind. */
   if (con->fd == -1)
+  {
     return DRIZZLE_RETURN_ERRNO;
+  }
 
   drizzle_state_pop(con);
+
   return DRIZZLE_RETURN_OK;
 }
 
@@ -1331,6 +1683,8 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con)
   int ret;
   struct linger linger;
   struct timeval waittime;
+
+  assert(con);
 
   ret= 1;
 

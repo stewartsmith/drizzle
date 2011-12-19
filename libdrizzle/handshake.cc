@@ -104,6 +104,10 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
   int extra_length;
   unsigned char* packet_end;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_server_read");
 
   /* Assume the entire handshake packet will fit in the buffer. */
@@ -231,6 +235,10 @@ drizzle_return_t drizzle_state_handshake_server_write(drizzle_con_st *con)
 {
   uint8_t *ptr;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_server_write");
 
   /* Calculate max packet size. */
@@ -328,6 +336,10 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
   size_t real_size;
   uint8_t scramble_size;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_read");
 
   /* Assume the entire handshake packet will fit in the buffer. */
@@ -477,6 +489,10 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   int capabilities;
   drizzle_return_t ret;
 
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_write");
 
   /* Calculate max packet size. */
@@ -566,17 +582,21 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_handshake_result_read(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
-  drizzle_result_st result;
-
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_result_read");
 
+  drizzle_result_st result;
   if (drizzle_result_create(con, &result) == NULL)
+  {
     return DRIZZLE_RETURN_MEMORY;
+  }
 
   con->result= &result;
 
-  ret= drizzle_state_result_read(con);
+  drizzle_return_t ret= drizzle_state_result_read(con);
   if (drizzle_state_none(con))
   {
     if (ret == DRIZZLE_RETURN_OK)
@@ -588,14 +608,18 @@ drizzle_return_t drizzle_state_handshake_result_read(drizzle_con_st *con)
         ret= DRIZZLE_RETURN_AUTH_FAILED;
       }
       else
+      {
         con->options|= DRIZZLE_CON_READY;
+      }
     }
   }
 
   drizzle_result_free(&result);
 
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
+  {
     return DRIZZLE_RETURN_HANDSHAKE_FAILED;
+  }
 
   return ret;
 }

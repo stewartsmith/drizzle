@@ -48,6 +48,18 @@
 
 uint64_t drizzle_row_read(drizzle_result_st *result, drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (result == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return 0;
+  }
+
   if ((result->column_current != result->column_count) && (!(result->options & DRIZZLE_RESULT_BUFFER_COLUMN)))
   {
     drizzle_set_error(result->con->drizzle, "drizzle_row_read", "cannot retrieve rows until all columns are retrieved");
@@ -69,6 +81,18 @@ uint64_t drizzle_row_read(drizzle_result_st *result, drizzle_return_t *ret_ptr)
 drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
                                  drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (result == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return 0;
+  }
+
   size_t total;
   drizzle_field_t field;
   drizzle_row_t row;
@@ -122,6 +146,11 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
 
 void drizzle_row_free(drizzle_result_st *result, drizzle_row_t row)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   for (uint16_t x= 0; x < result->column_count; x++)
   {
     drizzle_field_free(row[x]);
@@ -132,13 +161,25 @@ void drizzle_row_free(drizzle_result_st *result, drizzle_row_t row)
 
 size_t *drizzle_row_field_sizes(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   return result->field_sizes;
 }
 
 drizzle_row_t drizzle_row_next(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return drizzle_row_t();
+  }
+
   if (result->row_current == result->row_count)
+  {
     return NULL;
+  }
 
   result->field_sizes= result->field_sizes_list[result->row_current];
   result->row_current++;
@@ -147,6 +188,11 @@ drizzle_row_t drizzle_row_next(drizzle_result_st *result)
 
 drizzle_row_t drizzle_row_prev(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return drizzle_row_t();
+  }
+
   if (result->row_current == 0)
     return NULL;
 
@@ -157,12 +203,22 @@ drizzle_row_t drizzle_row_prev(drizzle_result_st *result)
 
 void drizzle_row_seek(drizzle_result_st *result, uint64_t row)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   if (row <= result->row_count)
     result->row_current= row;
 }
 
 drizzle_row_t drizzle_row_index(drizzle_result_st *result, uint64_t row)
 {
+  if (result == NULL)
+  {
+    return drizzle_row_t();
+  }
+
   if (row >= result->row_count)
     return NULL;
 
@@ -171,6 +227,11 @@ drizzle_row_t drizzle_row_index(drizzle_result_st *result, uint64_t row)
 
 uint64_t drizzle_row_current(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->row_current;
 }
 
@@ -180,8 +241,15 @@ uint64_t drizzle_row_current(drizzle_result_st *result)
 
 drizzle_return_t drizzle_row_write(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   if (drizzle_state_none(result->con))
+  {
     drizzle_state_push(result->con, drizzle_state_row_write);
+  }
 
   return drizzle_state_loop(result->con);
 }
@@ -192,6 +260,11 @@ drizzle_return_t drizzle_row_write(drizzle_result_st *result)
 
 drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_log_debug(con->drizzle, "drizzle_state_row_read");
 
   if (con->packet_size != 0 && con->buffer_size < con->packet_size && 
@@ -233,6 +306,11 @@ drizzle_return_t drizzle_state_row_read(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_row_write(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   uint8_t *start= con->buffer_ptr + con->buffer_size;
 
   drizzle_log_debug(con->drizzle, "drizzle_state_row_write");
