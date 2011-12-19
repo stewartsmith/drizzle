@@ -104,10 +104,10 @@ drizzle_row_t drizzle_row_buffer(drizzle_result_st *result,
       return NULL;
     }
 
-    result->row= (drizzle_row_t)malloc((sizeof(drizzle_field_t) + sizeof(size_t)) * result->column_count);
+    result->row= (drizzle_row_t)realloc(NULL, (sizeof(drizzle_field_t) + sizeof(size_t)) * result->column_count);
     if (result->row == NULL)
     {
-      drizzle_set_error(result->con->drizzle, "drizzle_row_buffer", "malloc");
+      drizzle_set_error(result->con->drizzle, __func__, "Failed to allocate.");
       *ret_ptr= DRIZZLE_RETURN_MEMORY;
       return NULL;
     }

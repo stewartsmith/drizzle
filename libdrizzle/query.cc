@@ -116,7 +116,7 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
     query= new (std::nothrow) drizzle_query_st;
     if (query == NULL)
     {
-      drizzle_set_error(drizzle, "drizzle_query_create", "malloc");
+      drizzle_set_error(drizzle, __func__, "Failed to allocate.");
       return NULL;
     }
 

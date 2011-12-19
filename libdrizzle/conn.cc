@@ -1009,10 +1009,10 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   if (con->command_buffer == NULL)
   {
-    con->command_buffer= (uint8_t*)malloc((*total) + 1);
+    con->command_buffer= (uint8_t*)realloc(NULL, (*total) +1);
     if (con->command_buffer == NULL)
     {
-      drizzle_set_error(con->drizzle, "drizzle_command_buffer", "malloc");
+      drizzle_set_error(con->drizzle, __func__, "Failed to allocate.");
       *ret_ptr= DRIZZLE_RETURN_MEMORY;
       return NULL;
     }
