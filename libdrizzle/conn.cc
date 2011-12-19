@@ -1127,16 +1127,19 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     else
     {
       if (tcp->host == NULL)
+      {
         host= DRIZZLE_DEFAULT_TCP_HOST;
+      }
       else
+      {
         host= tcp->host;
+      }
     }
 
     ret= getaddrinfo(host, port, &ai, &(tcp->addrinfo));
     if (ret != 0)
     {
-      drizzle_set_error(con->drizzle, "drizzle_state_addrinfo",
-                        "getaddrinfo:%s", gai_strerror(ret));
+      drizzle_set_error(con->drizzle, "drizzle_state_addrinfo", "getaddrinfo:%s", gai_strerror(ret));
       return DRIZZLE_RETURN_GETADDRINFO;
     }
 

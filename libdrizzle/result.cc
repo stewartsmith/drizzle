@@ -63,7 +63,6 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
       return NULL;
     }
 
-    memset(result, 0, sizeof(drizzle_result_st));
     result->options|= DRIZZLE_RESULT_ALLOCATED;
   }
   else
