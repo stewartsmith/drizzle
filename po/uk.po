@@ -4062,7 +4062,6 @@ msgid "Before write row event observer call position"
 msgstr ""
 
 #: ../plugin/hello_events/hello_events.cc:414
-#: ../plugin/pbms/src/parameters_ms.cc:462
 msgid "Before update row event observer call position"
 msgstr ""
 
@@ -4826,58 +4825,6 @@ msgstr "Використовувати MySQL протокол."
 
 #: ../plugin/mysql_unix_socket_protocol/protocol.cc:159
 msgid "Clobber socket file if one is there already."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:427
-msgid "Port number to use for connection or 0 for default PBMS port "
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:430
-msgid "The maximum size of a BLOB repository file."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:433
-msgid "The maximum size of a temorary BLOB log file."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:436
-msgid ""
-"A ':' delimited list of metadata header names to be used to initialize the "
-"pbms_metadata_header table when a database is created."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:440
-msgid "The percentage of garbage in a repository file before it is compacted."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:443
-msgid ""
-"The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed "
-"after this time, unless committed to the database."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:446
-msgid ""
-"The timeout, in milli-seconds, before the HTTP server will close an inactive "
-"HTTP connection."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:449
-msgid "The next backup ID to use when backing up a PBMS database."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:452
-msgid ""
-"A comma delimited list of tables to watch of the format: <database>."
-"<table>, ..."
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:454
-msgid "Enable PBMS daemon Insert/Update/Delete event scanning"
-msgstr ""
-
-#: ../plugin/pbms/src/parameters_ms.cc:458
-msgid "Before insert row event observer call position"
 msgstr ""
 
 #: ../plugin/rabbitmq/rabbitmq_handler.cc:115
