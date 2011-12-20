@@ -120,7 +120,6 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
       return NULL;
     }
 
-    memset(query, 0, sizeof(drizzle_query_st));
     query->options|= DRIZZLE_CON_ALLOCATED;
   }
   else

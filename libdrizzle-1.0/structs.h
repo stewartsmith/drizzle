@@ -170,6 +170,25 @@ struct drizzle_query_st
   size_t size;
   void *context;
   drizzle_query_context_free_fn *context_free_fn;
+
+#ifdef __cplusplus
+
+  drizzle_query_st() :
+    drizzle(NULL),
+    next(NULL),
+    prev(NULL),
+    options(0),
+    state(DRIZZLE_QUERY_STATE_INIT),
+    con(NULL),
+    result(NULL),
+    string(NULL),
+    size(0),
+    context(NULL),
+    context_free_fn(NULL)
+  { 
+  }
+
+#endif
 };
 
 /**
@@ -212,14 +231,13 @@ struct drizzle_result_st
   size_t **field_sizes_list;
 
 #ifdef __cplusplus
+
   drizzle_result_st() :
     con(NULL),
     next(NULL),
     prev(NULL),
     options(0),
-    info({0}),
     error_code(0),
-    sqlstate({0}),
     insert_id(0),
     warning_count(0),
     affected_rows(0),
@@ -242,7 +260,10 @@ struct drizzle_result_st
     field_sizes(NULL),
     field_sizes_list(NULL)
   {
+    info[0]= 0;
+    sqlstate[0]= 0;
   }
+
 #endif
 };
 
