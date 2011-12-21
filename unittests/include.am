@@ -26,39 +26,34 @@ noinst_HEADERS += \
 #		      unittests/temporal_interval_test.cc
 #		     
 
-unittests_unittests_SOURCES = \
-                              unittests/main.cc \
-			      unittests/calendar_test.cc \
-			      unittests/date_test.cc \
-			      unittests/date_time_test.cc \
-			      unittests/global_buffer_test.cc \
-			      unittests/micro_timestamp_test.cc \
-			      unittests/nano_timestamp_test.cc \
-			      unittests/option_context.cc \
-			      unittests/temporal_format_test.cc \
-			      unittests/temporal_generator.cc  \
-			      unittests/timestamp_test.cc \
-			      unittests/time_test.cc
-
-unittests_unittests_LDADD= \
-			   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-			   ${drizzled_drizzled_LDADD} \
-			   ${BOOST_LIBS} \
-			   libdrizzle-2.0/libdrizzle-2.0.la \
-			   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
-check_PROGRAMS += unittests/unittests
-noinst_PROGRAMS += unittests/unittests
+unittests_temporal_SOURCES = \
+			     unittests/main.cc \
+			     unittests/calendar_test.cc \
+			     unittests/date_test.cc \
+			     unittests/date_time_test.cc \
+			     unittests/micro_timestamp_test.cc \
+			     unittests/nano_timestamp_test.cc \
+			     unittests/temporal_format_test.cc \
+			     unittests/temporal_generator.cc  \
+			     unittests/timestamp_test.cc \
+			     unittests/time_test.cc
+unittests_temporal_LDADD= \
+			  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
+			  ${drizzled_drizzled_LDADD} \
+			  ${BOOST_LIBS} \
+			  ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS += unittests/temporal
+noinst_PROGRAMS += unittests/temporal
 
 unittests_table_identifier_SOURCES =  \
-                              unittests/main.cc \
-			      unittests/table_identifier.cc
+				      unittests/main.cc \
+				      unittests/table_identifier.cc
 
 unittests_table_identifier_LDADD= \
-			   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-			   ${drizzled_drizzled_LDADD} \
-			   ${BOOST_LIBS} \
-			   libdrizzle-2.0/libdrizzle-2.0.la \
-			   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+				  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
+				  ${drizzled_drizzled_LDADD} \
+				  ${BOOST_LIBS} \
+				  ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
 check_PROGRAMS+= unittests/table_identifier
 noinst_PROGRAMS+= unittests/table_identifier
 
@@ -94,8 +89,8 @@ check_PROGRAMS+= unittests/libdrizzle
 noinst_PROGRAMS+= unittests/libdrizzle
 
 unittests_utf8_SOURCES= \
-			      unittests/utf8_test.cc \
-			      unittests/simple_main.cc
+			unittests/utf8_test.cc \
+			unittests/simple_main.cc
 
 unittests_utf8_LDADD= \
 		      ${BOOST_LIBS} \

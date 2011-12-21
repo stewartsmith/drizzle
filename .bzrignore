@@ -395,3 +395,4 @@ unittests/global_buffer
 unittests/libdrizzle
 unittests/option_context
 unittests/utf8
+unittests/temporal
