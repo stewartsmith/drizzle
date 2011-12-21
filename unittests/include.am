@@ -17,16 +17,9 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-if HAVE_BOOST_TEST
-check_PROGRAMS += unittests/unittests
-endif
-
 noinst_HEADERS += \
 		  unittests/plugin/plugin_stubs.h \
 		  unittests/temporal_generator.h
-
-unit: unittests/unittests
-	unittests/unittests
 
 # Removed temporal_interval_test, it is not cleaning up after itself. -Brian
 #
@@ -35,23 +28,17 @@ unit: unittests/unittests
 
 unittests_unittests_SOURCES = \
                               unittests/main.cc \
-			      unittests/atomics_test.cc \
 			      unittests/calendar_test.cc \
-			      unittests/constrained_value.cc \
 			      unittests/date_test.cc \
 			      unittests/date_time_test.cc \
 			      unittests/global_buffer_test.cc \
-			      unittests/libdrizzle_test.cc \
 			      unittests/micro_timestamp_test.cc \
 			      unittests/nano_timestamp_test.cc \
 			      unittests/option_context.cc \
-			      unittests/pthread_atomics_test.cc \
-			      unittests/table_identifier.cc \
 			      unittests/temporal_format_test.cc \
 			      unittests/temporal_generator.cc  \
 			      unittests/timestamp_test.cc \
-			      unittests/time_test.cc \
-			      unittests/utf8_test.cc
+			      unittests/time_test.cc
 
 unittests_unittests_LDADD= \
 			   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
@@ -59,3 +46,88 @@ unittests_unittests_LDADD= \
 			   ${BOOST_LIBS} \
 			   libdrizzle-2.0/libdrizzle-2.0.la \
 			   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS += unittests/unittests
+noinst_PROGRAMS += unittests/unittests
+
+unittests_table_identifier_SOURCES =  \
+                              unittests/main.cc \
+			      unittests/table_identifier.cc
+
+unittests_table_identifier_LDADD= \
+			   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
+			   ${drizzled_drizzled_LDADD} \
+			   ${BOOST_LIBS} \
+			   libdrizzle-2.0/libdrizzle-2.0.la \
+			   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/table_identifier
+noinst_PROGRAMS+= unittests/table_identifier
+
+unittests_atomics_SOURCES= \
+			   unittests/atomics_test.cc \
+			   unittests/simple_main.cc
+
+unittests_atomics_LDADD= \
+			 ${BOOST_LIBS} \
+			 ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/atomics
+noinst_PROGRAMS+= unittests/atomics
+
+unittests_pthread_atomics_SOURCES= \
+				   unittests/pthread_atomics_test.cc \
+				   unittests/simple_main.cc
+
+unittests_pthread_atomics_LDADD= \
+				 ${BOOST_LIBS} \
+				 ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/pthread_atomics
+noinst_PROGRAMS+= unittests/pthread_atomics
+
+unittests_libdrizzle_SOURCES= \
+			      unittests/libdrizzle_test.cc \
+			      unittests/simple_main.cc
+
+unittests_libdrizzle_LDADD= \
+			    ${BOOST_LIBS} \
+			    ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT} \
+			    libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= unittests/libdrizzle
+noinst_PROGRAMS+= unittests/libdrizzle
+
+unittests_utf8_SOURCES= \
+			      unittests/utf8_test.cc \
+			      unittests/simple_main.cc
+
+unittests_utf8_LDADD= \
+		      ${BOOST_LIBS} \
+		      ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT} \
+		      libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= unittests/utf8
+noinst_PROGRAMS+= unittests/utf8
+
+unittests_constrained_value_SOURCES= \
+				     unittests/constrained_value.cc \
+				     unittests/simple_main.cc
+unittests_constrained_value_LDADD= \
+				   ${BOOST_LIBS} \
+				   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/constrained_value
+noinst_PROGRAMS+= unittests/constrained_value
+
+unittests_option_context_SOURCES= \
+				  drizzled/module/option_context.cc \
+				  unittests/option_context.cc \
+				  unittests/simple_main.cc
+unittests_option_context_LDADD= \
+				${BOOST_LIBS} \
+				${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/option_context
+noinst_PROGRAMS+= unittests/option_context
+
+unittests_global_buffer_SOURCES= \
+				 unittests/global_buffer_test.cc \
+				 unittests/simple_main.cc
+unittests_global_buffer_LDADD= \
+			       ${BOOST_LIBS} \
+			       ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
+check_PROGRAMS+= unittests/global_buffer
+noinst_PROGRAMS+= unittests/global_buffer

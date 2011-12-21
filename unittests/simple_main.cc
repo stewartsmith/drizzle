@@ -22,7 +22,6 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 #include <iostream>
-#include <google/protobuf/stubs/common.h>
 
 struct MyConfig
 {
@@ -33,9 +32,6 @@ struct MyConfig
 
     ~MyConfig()
     {
-#if GOOGLE_PROTOBUF_VERSION >= 2001000
-      google::protobuf::ShutdownProtobufLibrary();
-#endif
     }
 };
 

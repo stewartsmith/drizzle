@@ -387,3 +387,11 @@ libdrizzle-1.0/t/drizzle_con_st
 libdrizzle-1.0/t/drizzle_query_st
 libdrizzle-1.0/t/drizzle_result_st
 libdrizzle-1.0/t/drizzle_st
+unittests/atomics
+unittests/table_identifier
+unittests/pthread_atomics
+unittests/constrained_value
+unittests/global_buffer
+unittests/libdrizzle
+unittests/option_context
+unittests/utf8
