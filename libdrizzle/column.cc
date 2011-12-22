@@ -355,6 +355,11 @@ static drizzle_column_type_drizzle_t _column_type_drizzle_map_from[]=
 drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
                                          drizzle_column_st *column)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   if (column == NULL)
   {
     column= new (std::nothrow) (drizzle_column_st);
@@ -420,6 +425,11 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
 
 void drizzle_column_free(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (column->result->column_list == column)
     column->result->column_list= column->next;
 
@@ -437,83 +447,163 @@ void drizzle_column_free(drizzle_column_st *column)
 
 drizzle_result_st *drizzle_column_drizzle_result(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->result;
 }
 
 const char *drizzle_column_catalog(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->catalog;
 }
 
 const char *drizzle_column_db(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->db;
 }
 
 const char *drizzle_column_table(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->table;
 }
 
 const char *drizzle_column_orig_table(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->orig_table;
 }
 
 const char *drizzle_column_name(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->name;
 }
 
 const char *drizzle_column_orig_name(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   return column->orig_name;
 }
 
 drizzle_charset_t drizzle_column_charset(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return drizzle_charset_t();
+  }
+
   return column->charset;
 }
 
 uint32_t drizzle_column_size(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return 0;
+  }
+
   return column->size;
 }
 
 size_t drizzle_column_max_size(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return 0;
+  }
+
   return column->max_size;
 }
 
 void drizzle_column_set_max_size(drizzle_column_st *column, size_t size)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->max_size= size;
 }
 
 drizzle_column_type_t drizzle_column_type(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return drizzle_column_type_t();
+  }
+
   return column->type;
 }
 
 drizzle_column_type_drizzle_t
 drizzle_column_type_drizzle(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return drizzle_column_type_drizzle_t();
+  }
+
   return _column_type_drizzle_map_from[column->type];
 }
 
 drizzle_column_flags_t drizzle_column_flags(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return drizzle_column_flags_t();
+  }
+
   return drizzle_column_flags_t(column->flags);
 }
 
 uint8_t drizzle_column_decimals(drizzle_column_st *column)
 {
+  if (column == NULL)
+  {
+    return 0;
+  }
+
   return column->decimals;
 }
 
 const uint8_t *drizzle_column_default_value(drizzle_column_st *column,
                                             size_t *size)
 {
+  if (column == NULL)
+  {
+    return NULL;
+  }
+
   *size= column->default_value_size;
   return column->default_value;
 }
@@ -524,6 +614,11 @@ const uint8_t *drizzle_column_default_value(drizzle_column_st *column,
 
 drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_return_t ret;
   if (drizzle_state_none(result->con))
   {
@@ -539,6 +634,11 @@ drizzle_return_t drizzle_column_skip(drizzle_result_st *result)
 
 drizzle_return_t drizzle_column_skip_all(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   for (uint16_t it= 1; it <= result->column_count; it++)
   {
     drizzle_return_t ret= drizzle_column_skip(result);
@@ -556,6 +656,17 @@ drizzle_column_st *drizzle_column_read(drizzle_result_st *result,
                                        drizzle_column_st *column,
                                        drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   if (drizzle_state_none(result->con))
   {
     result->column= column;
@@ -571,6 +682,11 @@ drizzle_column_st *drizzle_column_read(drizzle_result_st *result,
 
 drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_return_t ret;
 
   if (result->column_buffer == NULL)
@@ -605,6 +721,11 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
 
 drizzle_column_st *drizzle_column_next(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   if (result->column_current == result->column_count)
   {
     return NULL;
@@ -616,6 +737,11 @@ drizzle_column_st *drizzle_column_next(drizzle_result_st *result)
 
 drizzle_column_st *drizzle_column_prev(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   if (result->column_current == 0)
   {
     return NULL;
@@ -627,6 +753,11 @@ drizzle_column_st *drizzle_column_prev(drizzle_result_st *result)
 
 void drizzle_column_seek(drizzle_result_st *result, uint16_t column)
 {
+  if (result == NULL)
+  {
+    return;
+  }
+
   if (column <= result->column_count)
   {
     result->column_current= column;
@@ -636,6 +767,11 @@ void drizzle_column_seek(drizzle_result_st *result, uint16_t column)
 drizzle_column_st *drizzle_column_index(drizzle_result_st *result,
                                         uint16_t column)
 {
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
   if (column >= result->column_count)
   {
     return NULL;
@@ -646,6 +782,11 @@ drizzle_column_st *drizzle_column_index(drizzle_result_st *result,
 
 uint16_t drizzle_column_current(drizzle_result_st *result)
 {
+  if (result == NULL)
+  {
+    return 0;
+  }
+
   return result->column_current;
 }
 
@@ -656,6 +797,11 @@ uint16_t drizzle_column_current(drizzle_result_st *result)
 drizzle_return_t drizzle_column_write(drizzle_result_st *result,
                                       drizzle_column_st *column)
 {
+  if (result == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   if (drizzle_state_none(result->con))
   {
     result->column= column;
@@ -668,6 +814,11 @@ drizzle_return_t drizzle_column_write(drizzle_result_st *result,
 
 void drizzle_column_set_catalog(drizzle_column_st *column, const char *catalog)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (catalog == NULL)
   {
     column->catalog[0]= 0;
@@ -681,6 +832,11 @@ void drizzle_column_set_catalog(drizzle_column_st *column, const char *catalog)
 
 void drizzle_column_set_db(drizzle_column_st *column, const char *db)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (db == NULL)
   {
     column->db[0]= 0;
@@ -694,6 +850,11 @@ void drizzle_column_set_db(drizzle_column_st *column, const char *db)
 
 void drizzle_column_set_table(drizzle_column_st *column, const char *table)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (table == NULL)
   {
     column->table[0]= 0;
@@ -708,6 +869,11 @@ void drizzle_column_set_table(drizzle_column_st *column, const char *table)
 void drizzle_column_set_orig_table(drizzle_column_st *column,
                                    const char *orig_table)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (orig_table == NULL)
   {
     column->orig_table[0]= 0;
@@ -721,6 +887,11 @@ void drizzle_column_set_orig_table(drizzle_column_st *column,
 
 void drizzle_column_set_name(drizzle_column_st *column, const char *name)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (name == NULL)
   {
     column->name[0]= 0;
@@ -747,28 +918,53 @@ void drizzle_column_set_orig_name(drizzle_column_st *column,
 void drizzle_column_set_charset(drizzle_column_st *column,
                                 drizzle_charset_t charset)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->charset= charset;
 }
 
 void drizzle_column_set_size(drizzle_column_st *column, uint32_t size)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->size= size;
 }
 
 void drizzle_column_set_type(drizzle_column_st *column,
                              drizzle_column_type_t type)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->type= type;
 }
 
 void drizzle_column_set_flags(drizzle_column_st *column,
                               drizzle_column_flags_t flags)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->flags= flags;
 }
 
 void drizzle_column_set_decimals(drizzle_column_st *column, uint8_t decimals)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   column->decimals= decimals;
 }
 
@@ -776,8 +972,15 @@ void drizzle_column_set_default_value(drizzle_column_st *column,
                                       const uint8_t *default_value,
                                       size_t size)
 {
+  if (column == NULL)
+  {
+    return;
+  }
+
   if (default_value == NULL)
+  {
     column->default_value[0]= 0;
+  }
   else
   {
     if (size < DRIZZLE_MAX_DEFAULT_VALUE_SIZE)
@@ -802,6 +1005,11 @@ void drizzle_column_set_default_value(drizzle_column_st *column,
 
 drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_column_st *column;
   drizzle_column_type_drizzle_t drizzle_type;
 
@@ -905,6 +1113,11 @@ drizzle_return_t drizzle_state_column_read(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_column_write(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   uint8_t *start= con->buffer_ptr + con->buffer_size;
   uint8_t *ptr;
   drizzle_column_st *column= con->result->column;
@@ -967,9 +1180,13 @@ drizzle_return_t drizzle_state_column_write(drizzle_con_st *con)
   ptr+= 4;
 
   if (con->options & DRIZZLE_CON_MYSQL)
+  {
     ptr[0]= column->type;
+  }
   else
+  {
     ptr[0]= _column_type_drizzle_map_from[column->type];
+  }
   ptr++;
 
   drizzle_set_byte2(ptr, column->flags);

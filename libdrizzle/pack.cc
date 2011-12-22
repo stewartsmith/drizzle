@@ -101,6 +101,18 @@ uint64_t drizzle_unpack_length(drizzle_con_st *con, drizzle_return_t *ret_ptr)
   uint64_t length;
   uint8_t bytes;
 
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return 0;
+  }
+
   if (con->buffer_ptr[0] < 251)
   {
     length= (uint64_t)(con->buffer_ptr[0]);
@@ -146,6 +158,11 @@ uint64_t drizzle_unpack_length(drizzle_con_st *con, drizzle_return_t *ret_ptr)
 
 uint8_t *drizzle_pack_string(char *string, uint8_t *ptr)
 {
+  if (string == NULL)
+  {
+    return NULL;
+  }
+
   uint64_t size= strlen(string);
 
   ptr= drizzle_pack_length(size, ptr);
@@ -162,9 +179,13 @@ drizzle_return_t drizzle_unpack_string(drizzle_con_st *con, char *buffer,
                                        uint64_t max_length)
 {
   drizzle_return_t ret= DRIZZLE_RETURN_OK;
-  uint64_t length;
 
-  length= drizzle_unpack_length(con, &ret);
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
+  uint64_t length= drizzle_unpack_length(con, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_NULL_SIZE)
@@ -199,6 +220,18 @@ drizzle_return_t drizzle_unpack_string(drizzle_con_st *con, char *buffer,
 uint8_t *drizzle_pack_auth(drizzle_con_st *con, uint8_t *ptr,
                            drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (con == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return NULL;
+  }
+
   if (con->user[0] != 0)
   {
     memcpy(ptr, con->user, strlen(con->user));
@@ -267,7 +300,6 @@ uint8_t *drizzle_pack_auth(drizzle_con_st *con, uint8_t *ptr,
 static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
                                             uint8_t *buffer)
 {
-  uint32_t x;
   SHA1_CTX ctx;
   uint8_t hash_tmp1[SHA1_DIGEST_LENGTH];
   uint8_t hash_tmp2[SHA1_DIGEST_LENGTH];
@@ -304,9 +336,11 @@ static drizzle_return_t _pack_scramble_hash(drizzle_con_st *con,
   SHA1Final(buffer, &ctx);
 
   /* Fourth, xor the last hash against the first password hash. */
-  x= 0;
-  for (; x < SHA1_DIGEST_LENGTH; x++)
+  uint32_t x;
+  for (uint32_t x= 0; x < SHA1_DIGEST_LENGTH; x++)
+  {
     buffer[x]= buffer[x] ^ hash_tmp1[x];
+  }
 
   return DRIZZLE_RETURN_OK;
 }

@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -69,6 +70,11 @@ void drizzle_con_reset_addrinfo(drizzle_con_st *con);
  */
 static inline bool drizzle_state_none(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return false;
+  }
+
   return con->state_current == 0;
 }
 

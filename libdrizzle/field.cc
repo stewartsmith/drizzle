@@ -50,6 +50,18 @@ drizzle_field_t drizzle_field_read(drizzle_result_st *result, size_t *offset,
                                    size_t *size, size_t *total,
                                    drizzle_return_t *ret_ptr)
 {
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (result == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return drizzle_field_t();
+  }
+
   if (drizzle_state_none(result->con))
   {
     if (result->field_current == result->column_count)
@@ -68,9 +80,20 @@ drizzle_field_t drizzle_field_read(drizzle_result_st *result, size_t *offset,
     *ret_ptr= DRIZZLE_RETURN_ROW_BREAK;
   }
 
-  *offset= result->field_offset;
-  *size= result->field_size;
-  *total= result->field_total;
+  if (offset)
+  {
+    *offset= result->field_offset;
+  }
+
+  if (size)
+  {
+    *size= result->field_size;
+  }
+
+  if (total)
+  {
+    *total= result->field_total;
+  }
 
   return result->field;
 }
@@ -80,6 +103,18 @@ drizzle_field_t drizzle_field_buffer(drizzle_result_st *result, size_t *total,
 {
   size_t offset= 0;
   size_t size= 0;
+
+  drizzle_return_t unused_ret;
+  if (ret_ptr == NULL)
+  {
+    ret_ptr= &unused_ret;
+  }
+
+  if (result == NULL)
+  {
+    *ret_ptr= DRIZZLE_RETURN_INVALID_ARGUMENT;
+    return drizzle_field_t();
+  }
 
   drizzle_field_t field= drizzle_field_read(result, &offset, &size, total, ret_ptr);
 
@@ -141,6 +176,11 @@ drizzle_return_t drizzle_field_write(drizzle_result_st *result,
                                      const drizzle_field_t field, size_t size,
                                      size_t total)
 {
+  if (result == NULL)
+  {
+    return  DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_return_t ret;
 
   if (drizzle_state_none(result->con))
@@ -180,8 +220,10 @@ drizzle_return_t drizzle_field_write(drizzle_result_st *result,
 
 drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
 {
-  drizzle_return_t ret;
-
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
   drizzle_log_debug(con->drizzle, "drizzle_state_field_read");
 
   if (con->buffer_size == 0)
@@ -196,6 +238,7 @@ drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
     con->result->field_offset= 0;
     con->result->field_size= 0;
 
+    drizzle_return_t ret;
     con->result->field_total= (size_t)drizzle_unpack_length(con, &ret);
     if (ret == DRIZZLE_RETURN_NULL_SIZE)
     {
@@ -221,9 +264,13 @@ drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
                       con->result->field_total);
 
     if ((size_t)(con->buffer_size) >= con->result->field_total)
+    {
       con->result->field_size= con->result->field_total;
+    }
     else
+    {
       con->result->field_size= con->buffer_size;
+    }
   }
   else
   {
@@ -234,7 +281,9 @@ drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
                                 con->result->field_offset);
     }
     else
+    {
       con->result->field_size= con->buffer_size;
+    }
   }
 
   /* This is a special case when a row is larger than the packet size. */
@@ -243,7 +292,9 @@ drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
     con->result->field_size= con->packet_size;
 
     if (con->options & DRIZZLE_CON_RAW_PACKET)
+    {
       con->result->options|= DRIZZLE_RESULT_ROW_BREAK;
+    }
     else
     {
       drizzle_state_pop(con);
@@ -287,6 +338,11 @@ drizzle_return_t drizzle_state_field_read(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_field_write(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   uint8_t *start= con->buffer_ptr + con->buffer_size;
   uint8_t *ptr;
   size_t free_size;
@@ -387,7 +443,9 @@ drizzle_return_t drizzle_state_field_write(drizzle_con_st *con)
       }
 
       if (result->field_size == free_size)
+      {
         result->field= NULL;
+      }
       else
       {
         result->field+= free_size;

@@ -44,6 +44,11 @@
 
 drizzle_return_t drizzle_state_loop(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   while (drizzle_state_none(con) == false)
   {
     drizzle_return_t ret= con->state_stack[con->state_current - 1](con);
@@ -64,6 +69,11 @@ drizzle_return_t drizzle_state_loop(drizzle_con_st *con)
 
 drizzle_return_t drizzle_state_packet_read(drizzle_con_st *con)
 {
+  if (con == NULL)
+  {
+    return DRIZZLE_RETURN_INVALID_ARGUMENT;
+  }
+
   drizzle_log_debug(con->drizzle, "drizzle_state_packet_read");
 
   if (con->buffer_size < 4)
