@@ -189,10 +189,10 @@ int main(void)
 static void _server(drizzle_con_st *con, server_state_st *state)
 {
   drizzle_return_t ret;
-  const drizzle_field_t const fields[2]=
+  const drizzle_field_t fields[2]=
   {
-    (const drizzle_field_t)"test_field_1",
-    (const drizzle_field_t)"test_field_2"
+    (drizzle_field_t)"test_field_1",
+    (drizzle_field_t)"test_field_2"
   };
   const size_t field_sizes[2]= { 12, 12 };
 
