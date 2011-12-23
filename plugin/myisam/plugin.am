@@ -14,51 +14,49 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-if BUILD_MYISAM_PLUGIN
-noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la
-endif
-noinst_HEADERS+=	\
-			plugin/myisam/ha_myisam.h \
-			plugin/myisam/my_handler.h \
-			plugin/myisam/myisam.h \
-			plugin/myisam/myisam_priv.h \
-			plugin/myisam/myisampack.h
+noinst_LTLIBRARIES+= plugin/myisam/libmyisam.la
+noinst_HEADERS+= \
+		 plugin/myisam/ha_myisam.h \
+		 plugin/myisam/my_handler.h \
+		 plugin/myisam/myisam.h \
+		 plugin/myisam/myisam_priv.h \
+		 plugin/myisam/myisampack.h
 
 plugin_myisam_libmyisam_la_SOURCES= \
-			plugin/myisam/mi_cache.cc \
-			plugin/myisam/mi_check.cc \
-			plugin/myisam/mi_checksum.cc \
-			plugin/myisam/mi_close.cc \
-			plugin/myisam/mi_create.cc\
-			plugin/myisam/mi_delete.cc \
-			plugin/myisam/mi_delete_all.cc \
-			plugin/myisam/mi_delete_table.cc \
-			plugin/myisam/mi_dynrec.cc \
-			plugin/myisam/mi_extra.cc \
-			plugin/myisam/mi_info.cc \
-			plugin/myisam/mi_key.cc \
-			plugin/myisam/mi_locking.cc \
-			plugin/myisam/mi_open.cc \
-			plugin/myisam/mi_page.cc \
-			plugin/myisam/mi_panic.cc \
-			plugin/myisam/mi_range.cc \
-			plugin/myisam/mi_rename.cc \
-			plugin/myisam/mi_rfirst.cc \
-			plugin/myisam/mi_rkey.cc \
-			plugin/myisam/mi_rlast.cc \
-			plugin/myisam/mi_rnext.cc \
-			plugin/myisam/mi_rnext_same.cc \
-			plugin/myisam/mi_rprev.cc \
-			plugin/myisam/mi_rrnd.cc \
-			plugin/myisam/mi_rsame.cc \
-			plugin/myisam/mi_scan.cc \
-			plugin/myisam/mi_search.cc \
-			plugin/myisam/mi_static.cc \
-			plugin/myisam/mi_statrec.cc \
-			plugin/myisam/mi_unique.cc \
-			plugin/myisam/mi_update.cc \
-			plugin/myisam/mi_write.cc \
-			plugin/myisam/my_handler.cc \
-			plugin/myisam/my_handler_errors.cc \
-			plugin/myisam/my_pread.cc \
-			plugin/myisam/sort.cc
+				    plugin/myisam/mi_cache.cc \
+				    plugin/myisam/mi_check.cc \
+				    plugin/myisam/mi_checksum.cc \
+				    plugin/myisam/mi_close.cc \
+				    plugin/myisam/mi_create.cc\
+				    plugin/myisam/mi_delete.cc \
+				    plugin/myisam/mi_delete_all.cc \
+				    plugin/myisam/mi_delete_table.cc \
+				    plugin/myisam/mi_dynrec.cc \
+				    plugin/myisam/mi_extra.cc \
+				    plugin/myisam/mi_info.cc \
+				    plugin/myisam/mi_key.cc \
+				    plugin/myisam/mi_locking.cc \
+				    plugin/myisam/mi_open.cc \
+				    plugin/myisam/mi_page.cc \
+				    plugin/myisam/mi_panic.cc \
+				    plugin/myisam/mi_range.cc \
+				    plugin/myisam/mi_rename.cc \
+				    plugin/myisam/mi_rfirst.cc \
+				    plugin/myisam/mi_rkey.cc \
+				    plugin/myisam/mi_rlast.cc \
+				    plugin/myisam/mi_rnext.cc \
+				    plugin/myisam/mi_rnext_same.cc \
+				    plugin/myisam/mi_rprev.cc \
+				    plugin/myisam/mi_rrnd.cc \
+				    plugin/myisam/mi_rsame.cc \
+				    plugin/myisam/mi_scan.cc \
+				    plugin/myisam/mi_search.cc \
+				    plugin/myisam/mi_static.cc \
+				    plugin/myisam/mi_statrec.cc \
+				    plugin/myisam/mi_unique.cc \
+				    plugin/myisam/mi_update.cc \
+				    plugin/myisam/mi_write.cc \
+				    plugin/myisam/my_handler.cc \
+				    plugin/myisam/my_handler_errors.cc \
+				    plugin/myisam/my_pread.cc \
+				    plugin/myisam/sort.cc

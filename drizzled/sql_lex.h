@@ -49,7 +49,7 @@
 #   include <drizzled/foreign_key.h>
 #   include <drizzled/lex_symbol.h>
 #   include <drizzled/comp_creator.h>
-#   include <drizzled/sql_yacc.h>
+#   include <drizzled/sql_yacc.hh>
 #   define LEX_YYSTYPE YYSTYPE *
 #  else
 #   define LEX_YYSTYPE void *
