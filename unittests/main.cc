@@ -22,21 +22,18 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 #include <iostream>
-#include <google/protobuf/stubs/common.h>
 
 struct MyConfig
 {
-    MyConfig()
-    {
-       boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_messages);
-    }
+  MyConfig()
+  {
+    boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_nothing);
+    boost::unit_test::unit_test_log.set_format(boost::unit_test::CLF);
+  }
 
-    ~MyConfig()
-    {
-#if GOOGLE_PROTOBUF_VERSION >= 2001000
-      google::protobuf::ShutdownProtobufLibrary();
-#endif
-    }
+  ~MyConfig()
+  {
+  }
 };
 
 BOOST_GLOBAL_FIXTURE( MyConfig )

@@ -45,10 +45,9 @@ unittests_temporal_LDADD= \
 check_PROGRAMS += unittests/temporal
 noinst_PROGRAMS += unittests/temporal
 
-unittests_table_identifier_SOURCES =  \
-				      unittests/main.cc \
-				      unittests/table_identifier.cc
-
+unittests_table_identifier_SOURCES= \
+				    unittests/main.cc \
+				    unittests/table_identifier.cc
 unittests_table_identifier_LDADD= \
 				  $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
 				  ${drizzled_drizzled_LDADD} \
@@ -59,7 +58,7 @@ noinst_PROGRAMS+= unittests/table_identifier
 
 unittests_atomics_SOURCES= \
 			   unittests/atomics_test.cc \
-			   unittests/simple_main.cc
+			   unittests/main.cc
 
 unittests_atomics_LDADD= \
 			 ${BOOST_LIBS} \
@@ -69,7 +68,7 @@ noinst_PROGRAMS+= unittests/atomics
 
 unittests_pthread_atomics_SOURCES= \
 				   unittests/pthread_atomics_test.cc \
-				   unittests/simple_main.cc
+				   unittests/main.cc
 
 unittests_pthread_atomics_LDADD= \
 				 ${BOOST_LIBS} \
@@ -79,7 +78,7 @@ noinst_PROGRAMS+= unittests/pthread_atomics
 
 unittests_libdrizzle_SOURCES= \
 			      unittests/libdrizzle_test.cc \
-			      unittests/simple_main.cc
+			      unittests/main.cc
 
 unittests_libdrizzle_LDADD= \
 			    ${BOOST_LIBS} \
@@ -90,7 +89,7 @@ noinst_PROGRAMS+= unittests/libdrizzle
 
 unittests_utf8_SOURCES= \
 			unittests/utf8_test.cc \
-			unittests/simple_main.cc
+			unittests/main.cc
 
 unittests_utf8_LDADD= \
 		      ${BOOST_LIBS} \
@@ -101,7 +100,7 @@ noinst_PROGRAMS+= unittests/utf8
 
 unittests_constrained_value_SOURCES= \
 				     unittests/constrained_value.cc \
-				     unittests/simple_main.cc
+				     unittests/main.cc
 unittests_constrained_value_LDADD= \
 				   ${BOOST_LIBS} \
 				   ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
@@ -111,7 +110,7 @@ noinst_PROGRAMS+= unittests/constrained_value
 unittests_option_context_SOURCES= \
 				  drizzled/module/option_context.cc \
 				  unittests/option_context.cc \
-				  unittests/simple_main.cc
+				  unittests/main.cc
 unittests_option_context_LDADD= \
 				${BOOST_LIBS} \
 				${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
@@ -120,7 +119,7 @@ noinst_PROGRAMS+= unittests/option_context
 
 unittests_global_buffer_SOURCES= \
 				 unittests/global_buffer_test.cc \
-				 unittests/simple_main.cc
+				 unittests/main.cc
 unittests_global_buffer_LDADD= \
 			       ${BOOST_LIBS} \
 			       ${LTLIBBOOST_UNIT_TEST_FRAMEWORK} ${LTLIBBOOST_UNIT_TEST_FRAMEWORK_MT}
