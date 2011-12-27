@@ -336,11 +336,6 @@ int main(int argc, char **argv)
       }
     }
 
-    if (chdir("local") == -1)
-    {
-      unireg_abort << "Local catalog does not exist, was unable to chdir() to " << getDataHome().file_string();
-    }
-
     setFullDataHome(boost::filesystem::system_complete(getDataHome()));
     errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native_file_string().c_str());
   }

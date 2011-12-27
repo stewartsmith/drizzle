@@ -56,6 +56,8 @@ Schema::Schema(str_ref db_arg) :
 
   if (not db_arg.empty())
   {
+    db_path += drizzled::catalog::local_identifier().getPath();
+    db_path += FN_LIBCHAR;
     db_path += util::tablename_to_filename(db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
