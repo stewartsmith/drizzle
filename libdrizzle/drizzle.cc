@@ -391,7 +391,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
     {
       if (drizzle != NULL)
       {
-        drizzle_set_error(drizzle, "drizzle_con_create", "malloc");
+        drizzle_set_error(drizzle, __func__, "Failed to allocate.");
       }
 
       return NULL;
@@ -566,7 +566,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
     pfds= (struct pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
     if (pfds == NULL)
     {
-      drizzle_set_error(drizzle, "drizzle_con_wait", "realloc");
+      drizzle_set_error(drizzle, __func__, "Failed to realloc file descriptors.");
       return DRIZZLE_RETURN_MEMORY;
     }
 

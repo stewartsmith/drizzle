@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -169,6 +170,25 @@ struct drizzle_query_st
   size_t size;
   void *context;
   drizzle_query_context_free_fn *context_free_fn;
+
+#ifdef __cplusplus
+
+  drizzle_query_st() :
+    drizzle(NULL),
+    next(NULL),
+    prev(NULL),
+    options(0),
+    state(DRIZZLE_QUERY_STATE_INIT),
+    con(NULL),
+    result(NULL),
+    string(NULL),
+    size(0),
+    context(NULL),
+    context_free_fn(NULL)
+  { 
+  }
+
+#endif
 };
 
 /**
@@ -209,6 +229,42 @@ struct drizzle_result_st
   drizzle_row_t *row_list;
   size_t *field_sizes;
   size_t **field_sizes_list;
+
+#ifdef __cplusplus
+
+  drizzle_result_st() :
+    con(NULL),
+    next(NULL),
+    prev(NULL),
+    options(0),
+    error_code(0),
+    insert_id(0),
+    warning_count(0),
+    affected_rows(0),
+    column_count(0),
+    column_current(0),
+    column_list(NULL),
+    column(NULL),
+    column_buffer(NULL),
+    row_count(0),
+    row_current(0),
+    field_current(0),
+    field_total(0),
+    field_offset(0),
+    field_size(0),
+    field(),
+    field_buffer(),
+    row_list_size(0),
+    row(),
+    row_list(NULL),
+    field_sizes(NULL),
+    field_sizes_list(NULL)
+  {
+    info[0]= 0;
+    sqlstate[0]= 0;
+  }
+
+#endif
 };
 
 /**

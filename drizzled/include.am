@@ -25,9 +25,8 @@ include drizzled/execute/include.am
 
 drizzled/sql_yacc.cc: drizzled/sql_yacc.yy
 	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
-	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
 
-
+drizzled/sql_yacc.hh: drizzled/sql_yacc.cc
 
 DTRACEFILES= \
 	     drizzled/cursor.o \
@@ -835,7 +834,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/sql_table.cc \
 			   drizzled/sql_union.cc \
 			   drizzled/sql_update.cc \
-			   drizzled/sql_yacc.yy \
+			   drizzled/sql_yacc.cc \
 			   drizzled/statement/alter_schema.cc \
 			   drizzled/statement/alter_table.cc \
 			   drizzled/statement/analyze.cc \
@@ -953,8 +952,8 @@ PCHHEADERS =
 endif
 
 BUILT_MAINT_SRC+= \
-		 drizzled/sql_yacc.cc \
-		 drizzled/sql_yacc.h
+		  drizzled/sql_yacc.cc \
+		  drizzled/sql_yacc.hh
 
 BUILT_SOURCES+= \
 		$(BUILT_MAINT_SRC) \
@@ -970,6 +969,7 @@ EXTRA_DIST+= \
 	     drizzled/probes.d \
 	     drizzled/sql_non_reserved_words.gperf \
 	     drizzled/sql_reserved_words.gperf \
+	     drizzled/sql_yacc.yy \
 	     drizzled/symbol_hash.gperf
 
 CLEANFILES+= \

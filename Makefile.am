@@ -210,3 +210,17 @@ install-data-hook:
 uninstall-hook:
 	rm $(DESTDIR)$(man8dir)/drizzled7.8
 	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)
+
+rpm-build: support-files/drizzle.spec
+	@rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
+	@rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
+	@cp drizzle7-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
+	@cp support-files/drizzled.init ~/rpmbuild/SOURCES/
+	@rpmbuild -ba support-files/drizzle.spec
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-devel-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-debuginfo-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-server-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm .
+
+rpm: man distcheck rpm-build
