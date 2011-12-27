@@ -26,7 +26,7 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/charset.h>
 #include <drizzled/cursor.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 
 #include <drizzled/pthread_globals.h>
 
@@ -71,7 +71,9 @@ Schema::Schema() :
 
 void Schema::prime()
 {
-  CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
+  CachedDirectory directory(catalog::local_identifier().getPath(),
+                            CachedDirectory::DIRECTORY, true);
+
   CachedDirectory::Entries files= directory.getEntries();
   boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
 
@@ -80,7 +82,12 @@ void Schema::prime()
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
     message::Schema schema_message;
-    if (readSchemaFile(entry->filename, schema_message))
+
+    std::string filename= catalog::local_identifier().getPath();
+    filename+= FN_LIBCHAR;
+    filename+= entry->filename;
+
+    if (readSchemaFile(filename, schema_message))
     {
       identifier::Schema schema_identifier(schema_message.name());
 

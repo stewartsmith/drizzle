@@ -3,6 +3,7 @@
 Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
 Copyright (C) 2008, 2009 Google Inc.
 Copyright (C) 2009, Percona Inc.
+Copyright (C) 2011, Stewart Smith
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -50,6 +51,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/plugin.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/error.h>
 #include <drizzled/field.h>
 #include <drizzled/charset.h>
@@ -7287,7 +7289,7 @@ ha_innobase::info(
 
     prebuilt->trx->op_info = "returning various info to MySQL";
 
-    fs::path get_status_path(getDataHomeCatalog());
+    fs::path get_status_path(catalog::local_identifier().getPath());
     get_status_path /= ib_table->name;
     fs::change_extension(get_status_path, "dfe");
 
