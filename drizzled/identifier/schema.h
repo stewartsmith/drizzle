@@ -37,10 +37,13 @@
 namespace drizzled {
 namespace identifier {
 
+class Catalog;
+
 class DRIZZLED_API Schema : public Identifier
 {
   std::string db;
   std::string db_path;
+  drizzled::identifier::Catalog _catalog;
 
 public:
   Schema(str_ref);
