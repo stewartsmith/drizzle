@@ -40,7 +40,7 @@
  * @brief Query definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 drizzle_result_st *drizzle_query(drizzle_con_st *con, drizzle_result_st *result,
                                  const char *query, size_t size,

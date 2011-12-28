@@ -41,7 +41,7 @@
  * @brief Column definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /*
  * Private variables.

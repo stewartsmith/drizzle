@@ -1027,7 +1027,7 @@ drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
 drizzled/sql_reserved_words.h: drizzled/sql_reserved_words.stamp-h
 
-.gperf.stamp-h:
+.gperf.stamp-h: drizzled/sql_yacc.hh
 	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$(*F) $<  > $@

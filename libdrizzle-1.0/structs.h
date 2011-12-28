@@ -44,8 +44,10 @@
 
 #include <sys/types.h>
 
-#ifndef NI_MAXHOST
-# define NI_MAXHOST 1025
+#ifdef NI_MAXHOST
+# define LIBDRIZZLE_NI_MAXHOST NI_MAXHOST
+#else
+# define LIBDRIZZLE_NI_MAXHOST 1025
 #endif
 
 #ifdef __cplusplus

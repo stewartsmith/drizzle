@@ -40,7 +40,7 @@
  * @brief Handshake Definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /*
  * Client Definitions
