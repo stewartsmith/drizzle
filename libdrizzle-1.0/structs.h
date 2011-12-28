@@ -51,6 +51,10 @@
 #endif
 
 #ifdef __cplusplus
+#include <cstddef>
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
