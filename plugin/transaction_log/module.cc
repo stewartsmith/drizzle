@@ -56,7 +56,7 @@ using namespace drizzled;
  * The name of the main transaction log file on disk.  With no prefix,
  * this goes into Drizzle's $datadir.
  */
-static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... */
+static const char DEFAULT_LOG_FILE_PATH[]= "local/transaction.log"; /* In datadir... */
 /** 
  * Transaction Log plugin system variable - Is the log enabled? Only used on init().  
  */
