@@ -41,7 +41,7 @@
  * @brief Connection Definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /**
  * @addtogroup drizzle_con_static Static Connection Declarations
@@ -1009,10 +1009,10 @@ void *drizzle_con_command_buffer(drizzle_con_st *con,
 
   if (con->command_buffer == NULL)
   {
-    con->command_buffer= (uint8_t*)malloc((*total) + 1);
+    con->command_buffer= (uint8_t*)realloc(NULL, (*total) +1);
     if (con->command_buffer == NULL)
     {
-      drizzle_set_error(con->drizzle, "drizzle_command_buffer", "malloc");
+      drizzle_set_error(con->drizzle, __func__, "Failed to allocate.");
       *ret_ptr= DRIZZLE_RETURN_MEMORY;
       return NULL;
     }
@@ -1127,16 +1127,19 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     else
     {
       if (tcp->host == NULL)
+      {
         host= DRIZZLE_DEFAULT_TCP_HOST;
+      }
       else
+      {
         host= tcp->host;
+      }
     }
 
     ret= getaddrinfo(host, port, &ai, &(tcp->addrinfo));
     if (ret != 0)
     {
-      drizzle_set_error(con->drizzle, "drizzle_state_addrinfo",
-                        "getaddrinfo:%s", gai_strerror(ret));
+      drizzle_set_error(con->drizzle, "drizzle_state_addrinfo", "getaddrinfo:%s", gai_strerror(ret));
       return DRIZZLE_RETURN_GETADDRINFO;
     }
 

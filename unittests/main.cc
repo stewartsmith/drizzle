@@ -25,14 +25,15 @@
 
 struct MyConfig
 {
-    MyConfig()
-    {
-       boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_messages);
-    }
+  MyConfig()
+  {
+    boost::unit_test::unit_test_log.set_threshold_level(boost::unit_test::log_nothing);
+    boost::unit_test::unit_test_log.set_format(boost::unit_test::CLF);
+  }
 
-    ~MyConfig()
-    {
-    }
+  ~MyConfig()
+  {
+  }
 };
 
 BOOST_GLOBAL_FIXTURE( MyConfig )

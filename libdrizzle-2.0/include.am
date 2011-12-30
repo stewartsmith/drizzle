@@ -69,10 +69,7 @@ libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
 
 libdrizzle_2_0_libdrizzle_2_0_la_LDFLAGS= \
 					  $(AM_LDFLAGS) \
-					  $(GCOV_LIBS) \
-					  -version-info \
-					  $(LIBDRIZZLE_LIBRARY_VERSION)
-
+					  $(GCOV_LIBS)
 libdrizzle_2_0_libdrizzle_2_0_la_SOURCES= \
 					  libdrizzle-2.0/column.cc \
 					  libdrizzle-2.0/command.cc \
