@@ -5161,13 +5161,13 @@ bool test_if_skip_sort_order(JoinTable *tab, Order *order, ha_rows select_limit,
                                     join->unit->select_limit_cnt,
                                     true, false) > 0;
       }
-      if (!no_changes)
+      if (no_changes == false)
       {
         if (!quick_created)
         {
           tab->index= best_key;
           tab->read_first_record= best_key_direction > 0 ?
-                                  join_read_first:join_read_last;
+                                  join_read_first : join_read_last;
           tab->type= AM_NEXT;           // Read with index_first(), index_next()
           if (select && select->quick)
           {
