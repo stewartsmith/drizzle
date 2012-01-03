@@ -242,5 +242,7 @@ public:
   int joinReadSystem();
 };
 
+int join_read_system(JoinTable *tab);
+
 } /* namespace drizzled */
 

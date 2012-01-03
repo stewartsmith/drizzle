@@ -25,7 +25,7 @@ namespace drizzled {
 template <class T>
 bool test(const T a)
 {
-  return a;
+  return bool(a);
 }
 
 template <class T, class U>
