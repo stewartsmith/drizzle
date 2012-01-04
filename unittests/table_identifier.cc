@@ -63,14 +63,21 @@ BOOST_AUTO_TEST_CASE(Key)
 
   const identifier::Table::Key key= identifier.getKey();
 
-  BOOST_REQUIRE_EQUAL(key.size(), 7);
-  BOOST_REQUIRE_EQUAL(key.vector()[0], 't');
-  BOOST_REQUIRE_EQUAL(key.vector()[1], 'e');
-  BOOST_REQUIRE_EQUAL(key.vector()[2], 's');
-  BOOST_REQUIRE_EQUAL(key.vector()[3], 't');
-  BOOST_REQUIRE_EQUAL(key.vector()[4], 0);
-  BOOST_REQUIRE_EQUAL(key.vector()[5], 'a');
-  BOOST_REQUIRE_EQUAL(key.vector()[6], 0);
+  BOOST_REQUIRE_EQUAL(key.size(), 13);
+  int i=0;
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'l');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'o');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'c');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'a');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'l');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'e');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 's');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'a');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
 }
 
 BOOST_AUTO_TEST_CASE(KeyCompare)
