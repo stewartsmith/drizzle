@@ -65,11 +65,11 @@ BOOST_AUTO_TEST_CASE(Key)
 
   BOOST_REQUIRE_EQUAL(key.size(), 13);
   int i=0;
-  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'l');
-  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'o');
-  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'c');
-  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'a');
-  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'l');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'L');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'O');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'C');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'A');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'L');
   BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
   BOOST_REQUIRE_EQUAL(key.vector()[i++], 't');
   BOOST_REQUIRE_EQUAL(key.vector()[i++], 'e');
