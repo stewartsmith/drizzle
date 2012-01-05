@@ -53,7 +53,6 @@
 namespace drizzled
 {
 
-pid_t parent_pid;
 int parent_pipe_fds[2];
 
 extern "C"
@@ -123,8 +122,6 @@ void daemon_is_ready()
 bool daemonize()
 {
   pid_t child= -1;
-
-  parent_pid= getpid();
 
   if (pipe(parent_pipe_fds))
   {
