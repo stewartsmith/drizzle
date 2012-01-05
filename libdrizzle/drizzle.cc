@@ -594,8 +594,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (x == 0)
   {
-    drizzle_set_error(drizzle, "drizzle_con_wait",
-                      "no active file descriptors");
+    drizzle_set_error(drizzle, __func__, "no active file descriptors");
     return DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS;
   }
 
