@@ -45,7 +45,7 @@ dist-hook:
 
 # For convenience we support make rpm directly from bzr repo
 rpm: dist
-	cp ${PACKAGE_NAME}*.tar.gz pkg/rpm/SOURCES/
+	cp ${PACKAGE_NAME}*.tar.gz support-files/rpm/SOURCES/
 	rpmbuild --define="_topdir `pwd`/support-files/rpm/" -ba  support-files/rpm/SPECS/${PACKAGE_NAME}.spec
 	mv support-files/rpm/SRPMS/* .
 	mv support-files/rpm/RPMS/*/* .
