@@ -1,0 +1,9 @@
+# Drizzle Client Configuration
+#
+# Parsed in the following order:
+#
+#   /etc/drizzle.cnf 
+#   /etc/drizzle/drizzle.cnf 
+#   ~/.drizzle.cnf 
+#
+

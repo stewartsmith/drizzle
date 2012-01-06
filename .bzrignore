@@ -314,6 +314,14 @@ support-files/smf/Makefile.in
 support-files/smf/drizzle
 support-files/smf/drizzle.xml
 support-files/smf/install.sh
+support-files/rpm/BUILD/*
+support-files/rpm/BUILDROOT/*
+support-files/rpm/SRPMS/*
+support-files/rpm/RPMS/*
+support-files/rpm/RPMS/*/*
+support-files/rpm/SOURCES/*.tar.gz
+*.tar.gz
+*.rpm
 table.gcno
 table_map_iterator.gcno
 temporal.gcno
