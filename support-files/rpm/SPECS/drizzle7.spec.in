@@ -22,27 +22,31 @@
 %bcond_without filtered_replicator
 %bcond_without logging_query
 %bcond_without mysql_protocol
-%bcond_without pbms
 %bcond_without simple_user_policy
 %bcond_without slave 
 %bcond_without regex_policy
-%bcond_without libdrizzle1
 %bcond_without http_functions
+%bcond_without js
 %bcond_without json_server
 %bcond_without auth_schema 
 %bcond_without query_log
 
 # plugins disabled by default, either missing deps
 # or need to be 'figured out' why they're not building 
-%bcond_with haildb
-%bcond_with rabbitmq
+# Note: this list is mostly informational of which
+# plugins are not yet handled, some of these we are
+# not even trying to build with this spec.
 %bcond_with gearman_udf
 %bcond_with logging_gearman
+%bcond_with memcached_functions
+%bcond_with memcached_stats
+%bcond_with rabbitmq
+%bcond_with zeromq
 
 
-Name:       drizzle7
+Name:       @PACKAGE@
 Summary:    A Lightweight SQL Database for Cloud and Web 
-Version:    2011.11.29
+Version:    @PANDORA_RELEASE_VERSION@
 Release:    1%{?dist}
 
 # All sources under drizzled/ are GPLv2.  
@@ -52,8 +56,7 @@ Group:      Applications/Databases
 URL:        http://launchpad.net/drizzle
 BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-# This is going to change every time
-Source0:    http://launchpad.net/drizzle/fremont/2011-11-13/+download/drizzle7-2011.11.29.tar.gz 
+Source0:    http://launchpad.net/drizzle/fremont/2011-11-13/+download/%{name}-%{version}.tar.gz 
 Source1:    drizzled.cnf
 Source2:    drizzle.cnf
 Source3:    drizzled.init
@@ -64,12 +67,7 @@ Source3:    drizzled.init
 # Source4:    gen_plugin_configs_patch.sh
 
 # Patches
-#Patch2:    boost_iostreams.patch
 Patch3:     drizzle7-2011.01.07-tests.patch 
-#Patch4:    drizzle7-2011.01.08-test_order.patch
-#Patch5:    drizzle7-2011.01.08-bug707083.patch
-#Patch6:    drizzle7-2011.02.09-disable_console.patch
-
 # temporary fix for: https://bugs.launchpad.net/drizzle/+bug/712194
 Patch7:     plugin-configs.patch
 
@@ -78,6 +76,9 @@ BuildRequires:  protobuf-devel, zlib-devel, readline-devel
 BuildRequires:  pam-devel, libevent-devel, gnutls-devel
 BuildRequires:  bison-devel, chrpath, doxygen, gettext-devel, perl
 BuildRequires:  boost-devel >= 1.39, boost-iostreams
+%if %{with js}
+BuildRequires:  v8-devel
+%endif
 
 # FIX ME: Remove after LP#735850 is resolved
 BuildRequires:  chrpath
@@ -94,6 +95,9 @@ BuildRequires:  libuuid-devel, libcurl-devel
 Requires(pre):  shadow-utils
 Requires:       %{name}-lib = %{version}-%{release}
 Requires:       boost-iostreams
+%if %{with js}
+Requires:       v8
+%endif
 
 Provides:       drizzle = %{version}-%{release}
 Obsoletes:      drizzle < 2010.09.1802
@@ -148,6 +152,11 @@ client utilities and any new projects that require low-level protocol
 communication (like proxies). Other language interfaces (PHP extensions, SWIG,
 ...) should be built off of this interface.
 
+Note that we have reverted this package back to the more stable 1.0 version.
+Previously 1.0 was made available as libdrizzle1 - that is now this
+package. libdrizzle 2.0 is available in the source tree but currently
+not packaged at all.
+
 %package -n libdrizzle-devel
 Summary:    Drizzle Client & Protocol Library - Header Files
 Group:      Development/Libraries
@@ -155,34 +164,6 @@ Requires:   libdrizzle = %{version}-%{release}
 
 %description -n libdrizzle-devel
 Development files for the Drizzle Client & Protocol Library.
-
-%if %{with libdrizzle1} 
-%package -n libdrizzle1
-Summary:    Drizzle Client & Protocol Library Version 1
-Group:      System Environment/Libraries
-
-# All code is BSD, except libdrizzle/sha1.{c,h} which are Public Domain
-License:        BSD and Public Domain
-BuildRequires:  doxygen
-
-%description -n libdrizzle1
-libdrizzle is the the client and protocol library for the Drizzle project. The
-server, drizzled, will use this as for the protocol library, as well as the
-client utilities and any new projects that require low-level protocol
-communication (like proxies). Other language interfaces (PHP extensions, SWIG,
-...) should be built off of this interface.
-
-This package provides version 1 of the libdrizzle library for backward 
-compatibility.
-
-%package -n libdrizzle1-devel
-Summary:    Drizzle Client & Protocol Library Version 2 - Header Files
-Group:      Development/Libraries
-Requires:   libdrizzle1 = %{version}-%{release}
-
-%description -n libdrizzle1-devel
-Development files for the Drizzle Client & Protocol Library Version 1.
-%endif
 
 %package server
 Summary:    Server Daemon and Utilities for %{name}
@@ -283,22 +264,6 @@ originally derived from MySQL.
 This package provides the Filtered Replicator plugin.
 %endif
 
-%if %{with haildb}
-%package plugin-haildb
-Summary: HailDB Storage Engine Plugin for %{name}
-Group: Applications/Databases
-BuildRequires: haildb-devel
-Requires: %{name}-server = %{version}-%{release}
-Requires: haildb
-
-%description plugin-haildb
-Drizzle is a database optimized for Cloud and Net applications. It is designed
-for massive concurrency on modern multi-cpu/core architecture. The code is
-originally derived from MySQL.
-
-This package provides the HailDB Storage Engine plugin.
-%endif
-
 %if %{with gearman_udf}
 %package plugin-gearman-udf
 Summary: Gearman User Defined Functions Plugin for %{name}
@@ -359,20 +324,6 @@ originally derived from MySQL.
 
 This package provides the MySQL Protocol plugin.
 %endif
-
-%if %{with pbms}
-%package plugin-pbms
-Summary: PrimeBase Blob Streaming Plugin for %{name}
-Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
-
-%description plugin-pbms
-Drizzle is a database optimized for Cloud and Net applications. It is designed
-for massive concurrency on modern multi-cpu/core architecture. The code is
-originally derived from MySQL.
-
-This package provides the PrimeBase Blob Streaming plugin.
-%endif 
 
 %if %{with rabbitmq}
 %package plugin-rabbitmq
@@ -506,12 +457,12 @@ export CFLAGS="%{optflags} -Wp,-U_FORTIFY_SOURCE"
 export CXXFLAGS="${CXXFLAGS} -Wno-error"
 
 # Need to handle optional plugins properly
-OPTS="--enable-profiling 
-      --disable-rpath 
+OPTS="--disable-rpath 
       --disable-static
       --localstatedir=/var/lib/drizzle
       --without-auth-test-plugin 
       --without-hello-world-plugin
+      --without-hello-events-plugin
       --without-tableprototester-plugin"
 
 # Use for tmp location
@@ -539,10 +490,8 @@ optionally_include auth_ldap %{with auth_ldap}
 optionally_include auth_pam %{with auth_pam}
 optionally_include debug %{with debug}
 optionally_include filtered_replicator %{with filtered_replicator}
-optionally_include haildb %{with haildb}
 optionally_include logging_query %{with logging_query}
 optionally_include mysql_protocol %{with mysql_protocol}
-optionally_include pbms %{with pbms}
 optionally_include rabbitmq %{with rabbitmq}
 optionally_include simple_user_policy %{with simple_user_policy}
 optionally_include gearman_udf %{with gearman_udf}
@@ -593,19 +542,16 @@ for i in $(echo *); do
 done
 popd
 
+# Find translations in /usr/share/locale/*/LC_MESSAGES/drizzle7.mo
+# And mark them with %lang(locale) and %doc, save all of that in drizzle7.lang
+# They are then included in %files below with -f option
+%find_lang %{name}
+
 # Cleanup
 %{__rm} -f %{buildroot}%{_datadir}/drizzle7/drizzle.server
 %{__rm} -f %{buildroot}%{_libdir}/drizzle7/*.la
 %{__rm} -f %{buildroot}%{_libdir}/libdrizzledmessage.la
 %{__rm} -f %{buildroot}%{_datadir}/drizzle7/README.auth_ldap
-
-# remove if not building with libdrizzle1
-%if ! %{with libdrizzle1}
-rm -rf %{buildroot}%{_libdir}/libdrizzle.so*
-rm -rf %{buildroot}%{_includedir}/libdrizzle-1.0/
-rm -rf %{buildroot}%{_libdir}/pkgconfig/libdrizzle-1.0.pc
-rm -rf %{buildroot}%{_libdir}/libdrizzle.la
-%endif
 
 # Remove RPATH:  Should no longer do this after the following is 
 # resolved:
@@ -649,7 +595,7 @@ if [ $1 = 0 ]; then
 fi
 
 
-%files
+%files -f %{name}.lang
 %defattr (-,root,root,-) 
 %doc AUTHORS COPYING NEWS README
 %dir %{_sysconfdir}/drizzle
@@ -701,7 +647,6 @@ fi
 %{_libdir}/drizzle7/libshow_schema_proto_plugin.so
 %{_libdir}/drizzle7/libsubstr_functions_plugin.so
 %{_libdir}/drizzle7/libshutdown_function_plugin.so
-%{_libdir}/drizzle7/libhello_events_plugin.so
 %{_libdir}/drizzle7/libfunction_dictionary_plugin.so
 %{_libdir}/drizzle7/libutility_dictionary_plugin.so
 %{_libdir}/drizzle7/libtrigger_dictionary_plugin.so
@@ -709,7 +654,7 @@ fi
 %{_libdir}/drizzle7/liblogging_stats_plugin.so
 %{_libdir}/drizzle7/libversion_plugin.so
 %{_libdir}/drizzle7/libuuid_function_plugin.so
-
+%{_libdir}/drizzle7/libjs_plugin.so
 
 %files devel
 %defattr (-,root,root,-) 
@@ -718,29 +663,17 @@ fi
 
 %files -n libdrizzle
 %defattr (-,root,root,-)
-%exclude %{_libdir}/libdrizzle-2.0.la
-%{_libdir}/libdrizzle-2.0.so*
+%exclude %{_libdir}/libdrizzle.la
+%{_libdir}/libdrizzle.so*
+%{_libdir}/libdrizzle.la
 
 %files -n libdrizzle-devel
 %defattr (-,root,root,-)
-%{_includedir}/libdrizzle-2.0/
-%{_libdir}/pkgconfig/libdrizzle-2.0.pc
-%{_includedir}/libdrizzle/drizzle.h
-%{_includedir}/libdrizzle/drizzle_client.h
-
-%if %{with libdrizzle1}
-%files -n libdrizzle1
-%defattr (-,root,root,-)
-%exclude %{_libdir}/libdrizzle.la
-%{_libdir}/libdrizzle.so.*
-%{_libdir}/libdrizzle.la
-
-%files -n libdrizzle1-devel
-%defattr (-,root,root,-)
-%{_libdir}/libdrizzle.so
 %{_includedir}/libdrizzle-1.0/
 %{_libdir}/pkgconfig/libdrizzle-1.0.pc
-%endif
+%{_libdir}/pkgconfig/libdrizzle.pc
+%{_includedir}/libdrizzle/drizzle.h
+%{_includedir}/libdrizzle/drizzle_client.h
 
 # OPTIONAL PLUGINS
 
@@ -797,13 +730,6 @@ fi
 %{_libdir}/drizzle7/libgearman_udf_plugin.so
 %endif
 
-%if %{with haildb}
-%files plugin-haildb
-%defattr (-,root,root,-)
-%config(noreplace) %{_sysconfdir}/drizzle/conf.d/haildb.cnf
-%{_libdir}/drizzle7/libhaildb_plugin.so
-%endif
-
 %if %{with logging_gearman}
 %files plugin-logging-gearman
 %defattr (-,root,root,-)
@@ -824,13 +750,6 @@ fi
 # mysql_protocol is static
 # %%{_libdir}/drizzle7/libmysql_protocol_plugin.so
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/mysql-protocol.cnf
-%endif
-
-%if %{with pbms}
-%files plugin-pbms
-%defattr (-,root,root,-)
-%config(noreplace) %{_sysconfdir}/drizzle/conf.d/pbms.cnf
-%{_libdir}/drizzle7/libpbms_plugin.so
 %endif
 
 %if %{with rabbitmq}
@@ -890,7 +809,46 @@ fi
 %endif
 
 
+# Note: Since we are generating RPMs completely automatically, we have
+# a generic changelog entry for that. If you actually change the spec
+# file or something rpm related, you should add an actual hand written
+# entry for that version. You will need to comment out the generic
+# entry for that release, and it needs to be uncommented again for 
+# the next release.
+
 %changelog
+* %(date "+%a %b %d %Y") (Automated Drizzle RPM build) <drizzle-discuss@launchpad.net> - %{version}-%{release}
+- New RPMs against newest upstream sources. Please see Drizzle release
+  notes for details: https://launchpad.net/drizzle/+milestones
+
+* Fri Jan 06 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 2011.11.29.2484-1
+- Moved this spec file into drizzle repository so we can build rpms
+  directly with make rpm. (was lp:~drizzle-developers/pkg-drizzle/drizzle7-dev.rpm 
+  revno 94).
+
+* Sun Jan 01 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 2011.11.29.2481-2
+- Hrmpf... server doesn't actually start:
+-  --user can only be given in cmd line (ie init script), not in 
+   drizzled.cnf.
+- Turns out --user and --daemon don't work well together, so have to use
+  sudo -u drizzle /usr/sbin/drizzled --daemon instead.
+  https://bugs.launchpad.net/drizzle/+bug/890910
+- Remove 2>&1 so that errors are shown to user. Currently all auth and
+  policy plugins will break drizzled due to installing broken stuff into
+  /etc/drizzle/conf.d/ so let's at least not silently fail.
+  When all rpms are fixed to work by default, then this can be reverted.
+- Other:
+- Don't package hello_events plugin, it's just an example.
+- Don't build with --enable-profiling. (LP#770420)
+- Realize I must package js with server, not in a separate rpm.
+
+* Fri Dec 30 2011 Henrik Ingo <henrik.ingo@avoinelama.fi> - 2011.11.29.2481-1
+- Upstream: haildb and pbms were removed. 
+- Upstream: js added.
+- Upstream: libdrizzle-2.0 is no longer there. Package libdrizzle* now
+  contains libdrizzle-1.0.
+- Added %find_lang macro to include all the translation files.
+
 * Tue Nov 15 2011 BJ Dierkes <wdierkes@rackspace.com> - 2011.11.29-1
 - Latest sources from upstream.  Release notes available at:
   https://launchpad.net/drizzle/fremont/2011-11-13

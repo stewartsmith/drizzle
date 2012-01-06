@@ -19,8 +19,7 @@
 # MA 02110-1301, USA
 
 EXTRA_DIST+= \
-	     support-files/drizzle.spec \
-	     support-files/drizzled.init \
+	     support-files/rpm
 	     support-files/smf/drizzle \
 	     support-files/smf/drizzle.xml \
 	     support-files/smf/install.sh 
@@ -30,3 +29,29 @@ pkgconfig_DATA= \
 		support-files/drizzle7.pc \
 		support-files/libdrizzle.pc \
 		support-files/libdrizzle-1.0.pc
+
+# Above we just threw everything from support-files/rpm into
+# EXTRA_DIST, because currently there is all kinds of stuff there
+# and content may fluctuate (but will eventually be cleaned away.)
+# Now, the following should not actually be in a source dist:
+#  - In case there are some output files there for some reason,
+#    we don't want to put these in the source package.
+#  - Also don't put the source package itself into a source package.
+dist-hook:
+        rm -rf ${distdir}/pkg/rpm/BUILD/* \
+               ${distdir}/pkg/rpm/BUILDROOT/* \
+               ${distdir}/pkg/rpm/SRPMS/* \
+               ${distdir}/pkg/rpm/SOURCES/${PACKAGE_NAME}*.tar.gz
+
+# For convenience we support make rpm directly from bzr repo
+rpm: dist
+        cp ${PACKAGE_NAME}*.tar.gz pkg/rpm/SOURCES/
+        rpmbuild --define="_topdir `pwd`/support-files/rpm/" -ba  support-files/rpm/SPECS/${PACKAGE_NAME}.spec
+        mv support-files/rpm/SRPMS/* .
+        mv support-files/rpm/RPMS/*/* .
+
+# TODO:
+# Ultimately the goal is to also support the simple way:
+# rpmbuild -ta drizzle7-*.tar.gz
+# To get there we must work away all extra Patch Source files from the spec file.
+
