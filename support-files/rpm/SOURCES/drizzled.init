@@ -34,7 +34,12 @@ start() {
     [ -x $exec ] || exit 5
     [ -f $config ] || exit 6
     echo -n $"Starting $prog: "
-    daemon "$exec --daemon >/dev/null 2>&1 &"
+    #daemon "$exec --daemon --user=$drizzled_user >/dev/null 2>&1"
+    # Allow errors to propagate to the caller, $god knows we have many of them...
+    # FIX ME When all packages work out of the box, this can be reverted.
+    # FIX ME --user breaks --daemon, using sudo is a workaround. 
+    # https://bugs.launchpad.net/drizzle/+bug/890910
+    daemon "sudo -u $drizzled_user $exec --daemon  >/dev/null"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile
