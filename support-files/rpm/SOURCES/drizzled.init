@@ -25,6 +25,7 @@ exec="/usr/sbin/drizzled7"
 prog="Drizzle"
 config="/etc/drizzle/drizzled.cnf"
 pid_file="/var/run/drizzle/drizzled.pid"
+drizzled_user=drizzle
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
