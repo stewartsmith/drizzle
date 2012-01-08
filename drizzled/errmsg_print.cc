@@ -74,7 +74,7 @@ void sql_perror(std::string message, const std::string &extra)
 
   if (not extra.empty())
   {
-    if (message.at(message.size()) != ' ')
+    if (message.at(message.size()-1) != ' ')
       message+= " ";
 
     message+= "'";
