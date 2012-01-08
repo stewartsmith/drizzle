@@ -1,6 +1,7 @@
 /*
  * Drizzle Client & Protocol Library
  *
+ * Copyright (C) 2012 Brian Aker (brian@tangent.org)
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
  * All rights reserved.
  *
@@ -87,93 +88,123 @@ int main(void)
 
   drizzle_test("drizzle_create buffer");
   if ((drizzle= drizzle_create(&drizzle_buffer)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_free buffer");
   drizzle_free(drizzle);
 
   drizzle_test("drizzle_create");
   if ((drizzle= drizzle_create(NULL)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_clone");
   if ((clone= drizzle_clone(NULL, drizzle)) == NULL)
+  {
     drizzle_test_error("drizzle_clone");
+  }
 
   drizzle_test("drizzle_free");
   drizzle_free(clone);
 
   drizzle_test("drizzle_clone buffer");
   if ((clone= drizzle_clone(&clone_buffer, drizzle)) == NULL)
+  {
     drizzle_test_error("returned NULL");
+  }
 
   drizzle_test("drizzle_free buffer");
   drizzle_free(clone);
 
   drizzle_test("drizzle_error");
   if (strcmp(drizzle_error(drizzle), ""))
+  {
     drizzle_test_error("error not empty");
+  }
 
   drizzle_test("drizzle_errno");
   if (drizzle_errno(drizzle) != 0)
+  {
     drizzle_test_error("errno not 0");
+  }
 
   drizzle_test("drizzle_error_code");
   if (drizzle_error_code(drizzle) != 0)
+  {
     drizzle_test_error("error_code not 0");
+  }
 
   drizzle_test("drizzle_sqlstate");
   if (strcmp(drizzle_sqlstate(drizzle), ""))
+  {
     drizzle_test_error("sqlstate not empty");
+  }
 
   /* @todo remove this option with new API. */
   drizzle_remove_options(drizzle, DRIZZLE_FREE_OBJECTS);
 
   drizzle_test("drizzle_options");
   if (drizzle_options(drizzle) != DRIZZLE_ALLOCATED)
+  {
     drizzle_test_error("expected options not set");
+  }
 
   drizzle_test("drizzle_add_options");
   drizzle_add_options(drizzle, DRIZZLE_NON_BLOCKING);
 
   drizzle_test("drizzle_options");
   if (drizzle_options(drizzle) != (DRIZZLE_ALLOCATED | DRIZZLE_NON_BLOCKING))
+  {
     drizzle_test_error("expected options not set");
+  }
 
   drizzle_test("drizzle_remove_options");
   drizzle_remove_options(drizzle, DRIZZLE_NON_BLOCKING);
 
   drizzle_test("drizzle_options");
   if (drizzle_options(drizzle) != DRIZZLE_ALLOCATED)
+  {
     drizzle_test_error("expected options not set");
+  }
 
   drizzle_test("drizzle_set_options");
   drizzle_set_options(drizzle, DRIZZLE_ALLOCATED | DRIZZLE_NON_BLOCKING);
 
   drizzle_test("drizzle_options");
   if (drizzle_options(drizzle) != (DRIZZLE_ALLOCATED | DRIZZLE_NON_BLOCKING))
+  {
     drizzle_test_error("expected options not set");
+  }
 
   drizzle_test("drizzle_set_options");
   drizzle_set_options(drizzle, DRIZZLE_ALLOCATED);
 
   drizzle_test("drizzle_options");
   if (drizzle_options(drizzle) != DRIZZLE_ALLOCATED)
+  {
     drizzle_test_error("expected options not set");
+  }
 
   drizzle_test("drizzle_set_timeout");
   drizzle_set_timeout(drizzle, 1234);
 
   drizzle_test("drizzle_timeout");
   if (drizzle_timeout(drizzle) != 1234)
+  {
     drizzle_test_error("expected timeout not set");
+  }
 
   drizzle_test("drizzle_set_verbose");
   drizzle_set_verbose(drizzle, DRIZZLE_VERBOSE_CRAZY);
 
   drizzle_test("drizzle_verbose");
   if (drizzle_verbose(drizzle) != DRIZZLE_VERBOSE_CRAZY)
+  {
     drizzle_test_error("expected verbose not set");
+  }
 
   drizzle_test("drizzle_set_log_fn");
   drizzle_set_log_fn(drizzle, _log, NULL);
@@ -188,7 +219,9 @@ int main(void)
   ret= drizzle_con_listen(listen_con);
   assert(ret == DRIZZLE_RETURN_OK);  
   if (_event_watch_read_bits == 0)
+  {
     drizzle_test_error("event_watch_fn not called to wait for connections");
+  }
   _event_watch_read_bits= 0;
 
   /* Attempt a non-blocking connection. */
@@ -197,9 +230,11 @@ int main(void)
                            DRIZZLE_CON_NONE);
   assert(con != NULL);
   ret= drizzle_con_connect(con);
-  assert(ret == DRIZZLE_RETURN_IO_WAIT);
-  if (_event_watch_read_bits == 0 && _event_watch_write_bits == 0)
+  assert(ret == DRIZZLE_RETURN_IO_WAIT || ret == DRIZZLE_RETURN_COULD_NOT_CONNECT);
+  if (ret == DRIZZLE_RETURN_IO_WAIT && _event_watch_read_bits == 0 && _event_watch_write_bits == 0)
+  {
     drizzle_test_error("event_watch_fn not called to wait for I/O");
+  }
   drizzle_con_free(con);
   _event_watch_read_bits= 0;
   _event_watch_write_bits= 0;
