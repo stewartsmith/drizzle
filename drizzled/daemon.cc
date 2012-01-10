@@ -45,6 +45,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/select.h>
 
 #include <drizzled/daemon.h>
@@ -52,15 +53,19 @@
 namespace drizzled
 {
 
-pid_t parent_pid;
+int parent_pipe_fds[2];
 
 extern "C"
 {
 
-static void sigusr1_handler(int sig)
+static void sigchld_handler(int sig)
 {
-  if (sig == SIGUSR1)
-    _exit(EXIT_SUCCESS);
+  int status= -1;
+  if (sig == SIGCHLD)
+  {
+    (void)wait(&status);
+  }
+  _exit(status);
 }
 
 }
@@ -68,7 +73,20 @@ static void sigusr1_handler(int sig)
 void daemon_is_ready()
 {
   int fd;
-  kill(parent_pid, SIGUSR1);
+  ssize_t wbytes;
+  while ((wbytes= write(parent_pipe_fds[1], "\0", sizeof("\0"))) == 0);
+  {
+    if (wbytes < 0)
+    {
+      perror("write");
+      _exit(errno);
+    }
+  }
+  if (close(parent_pipe_fds[1]))
+  {
+    perror("close");
+    _exit(errno);
+  }
 
   if ((fd = open("/dev/null", O_RDWR, 0)) != -1) 
   {
@@ -105,8 +123,11 @@ bool daemonize()
 {
   pid_t child= -1;
 
-  parent_pid= getpid();
-  signal(SIGUSR1, sigusr1_handler);
+  if (pipe(parent_pipe_fds))
+  {
+      perror("pipe");
+      _exit(errno);
+  }
 
   child= fork();
 
@@ -121,24 +142,44 @@ bool daemonize()
   default:
     {
       /* parent */
-      int exit_code= -1;
-      int status;
-      while (waitpid(child, &status, 0) != child)
-      { }
+      char ready_byte[1];
+      size_t rbytes;
+      /* Register SIGCHLD handler for case where child exits before
+         writing to the pipe */
+      signal(SIGCHLD, sigchld_handler);
 
-      if (WIFEXITED(status))
+      if (close(parent_pipe_fds[1]))
       {
-        exit_code= WEXITSTATUS(status);
+          perror("close");
+          _exit(errno);
       }
-      if (WIFSIGNALED(status))
+      /* If the pipe is closed before a write, we exit -1, otherwise errno is used */
+      if ((rbytes= read(parent_pipe_fds[0],ready_byte,sizeof(ready_byte))) < 1)
       {
-        exit_code= -1;
+          int estatus= -1;
+          if (rbytes != 0)
+          {
+              estatus= errno;
+              perror("read");
+          }
+          _exit(estatus);
       }
-      _exit(exit_code);
+      if (close(parent_pipe_fds[0]))
+      {
+          perror("close");
+          _exit(errno);
+      }
+
+      _exit(EXIT_SUCCESS);
     }
   }
 
   /* child */
+  if (close(parent_pipe_fds[0]))
+  {
+      perror("close");
+      _exit(errno);
+  }
   if (setsid() == -1)
   {
     return true;
