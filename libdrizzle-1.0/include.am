@@ -87,7 +87,9 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/result.h \
 			 libdrizzle-1.0/result_client.h \
 			 libdrizzle-1.0/result_server.h \
+			 libdrizzle-1.0/return.h \
 			 libdrizzle-1.0/row_client.h \
 			 libdrizzle-1.0/row_server.h \
 			 libdrizzle-1.0/structs.h \
+			 libdrizzle-1.0/verbose.h \
 			 libdrizzle-1.0/visibility.h
