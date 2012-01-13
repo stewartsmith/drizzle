@@ -43,6 +43,7 @@ client/drizzleimport
 client/drizzleslap
 client/drizzletest
 client/mysqlslap
+client/drizzle_password_hash
 comp_creator.gcno
 compile
 config.guess
@@ -166,8 +167,6 @@ install-sh
 item.gcno
 key.gcno
 key_map.gcno
-libdrizzle-2.0/libdrizzle/mysql_password_hash
-libdrizzle-2.0/libdrizzle/drizzle_password_hash
 libmysql/Makefile.in
 libserialutil_la-db.gcno
 libserialutil_la-unireg.gcno
