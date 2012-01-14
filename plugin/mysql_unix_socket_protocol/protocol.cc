@@ -165,4 +165,16 @@ static void init_options(drizzled::module::option_context &context)
 } /* namespace mysql_unix_socket_protocol */
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::mysql_unix_socket_protocol::init, NULL, drizzle_plugin::mysql_unix_socket_protocol::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "mysql_unix_socket_protocol",
+  "0.3",
+  "Brian Aker",
+  "MySQL Unix socket protocol",
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::mysql_unix_socket_protocol::init,
+  NULL,
+  drizzle_plugin::mysql_unix_socket_protocol::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

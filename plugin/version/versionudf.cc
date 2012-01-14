@@ -60,4 +60,16 @@ static int initialize(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(initialize, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "version",
+  "1.0",
+  "Devananda van der Veen",
+  "VERSION function",
+  PLUGIN_LICENSE_GPL,
+  initialize,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

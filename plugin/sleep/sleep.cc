@@ -124,4 +124,16 @@ static int sleep_plugin_init(drizzled::module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(sleep_plugin_init, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "sleep",
+  "1.0",
+  "Patrick Galbraith",
+  "SLEEP function",
+  PLUGIN_LICENSE_GPL,
+  sleep_plugin_init,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

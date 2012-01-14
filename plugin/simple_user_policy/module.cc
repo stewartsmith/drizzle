@@ -36,4 +36,16 @@ static int init(module::Context &context)
 
 } /* namespace simple_user_policy */
 
-DRIZZLE_PLUGIN(simple_user_policy::init, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "simple_user_policy",
+  "1.0",
+  "Monty Taylor",
+  "Authorization matching username to schema object name",
+  PLUGIN_LICENSE_GPL,
+  simple_user_policy::init,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

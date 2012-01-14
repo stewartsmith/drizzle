@@ -152,4 +152,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "zeromq",
+  "0.1",
+  "Marcus Eriksson",
+  "Publishes transactions to ZeroMQ",
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -245,4 +245,16 @@ static void init_options(drizzled::module::option_context &context)
           _("Number of slots for in-memory write buffers (default=8)."));
 }
 
-DRIZZLE_PLUGIN(init, NULL, init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "transaction_log",
+  "0.1.1",
+  "Jay Pipes",
+  "Logs transactions to a binary file",
+  PLUGIN_LICENSE_GPL,
+  init,
+  NULL,
+  init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

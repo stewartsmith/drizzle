@@ -273,4 +273,16 @@ void CheckItem::setCachedResult(bool result)
 
 } /* namespace regex_policy */
 
-DRIZZLE_PLUGIN(regex_policy::init, NULL, regex_policy::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "regex_policy",
+  "1.0",
+  "Clint Byrum",
+  "Authorization using a regex-matched policy file",
+  PLUGIN_LICENSE_GPL,
+  regex_policy::init,
+  NULL,
+  regex_policy::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -70,8 +70,16 @@ static int init(module::Context &context)
 } /* end namespace drizzle_plugin::auth_schema */
 } /* end namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_schema",
+  "1.0",
+  "Daniel Nichter",
+  "Authentication against a table with encrypted passwords",
+  PLUGIN_LICENSE_GPL,
   drizzle_plugin::auth_schema::init,
   NULL,
-  drizzle_plugin::auth_schema::init_options
-);
+  drizzle_plugin::auth_schema::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

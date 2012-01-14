@@ -66,4 +66,16 @@ static int init(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(init,  NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "default_replicator",
+  "1.0",
+  "Jay Pipes",
+  "Replicates all write events to all appliers",
+  PLUGIN_LICENSE_GPL,
+  init,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;
