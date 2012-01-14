@@ -74,7 +74,7 @@ void daemon_is_ready()
 {
   int fd;
   ssize_t wbytes;
-  while ((wbytes= write(parent_pipe_fds[1], "\0", sizeof("\0"))) == 0);
+  while ((wbytes= write(parent_pipe_fds[1], "\0", sizeof("\0"))) == 0)
   {
     if (wbytes < 0)
     {
