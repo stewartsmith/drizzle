@@ -376,10 +376,10 @@ DRIZZLE_DECLARE_PLUGIN
   "console",
   "0.2",
   "Eric Day",
-  "Console Client",
+  "Console client",
   PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init */
-  NULL,   /* depends */
-  init_options    /* config options */
+  init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -83,10 +83,10 @@ DRIZZLE_DECLARE_PLUGIN
   "charlength",
   "1.0",
   "Devananda van der Veen",
-  "Return the number of characters in a string",
+  "CHAR_LENGTH and CHARACTER_LENGTH functions",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

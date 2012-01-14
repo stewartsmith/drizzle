@@ -44,7 +44,7 @@ DRIZZLE_DECLARE_PLUGIN
   "status_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionary for status, statement, and variable information.",
+  "Dictionaries of global and session variables",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

@@ -83,10 +83,10 @@ DRIZZLE_DECLARE_PLUGIN
   "ascii",
   "1.0",
   "Devananda van der Veen",
-  "Return the ASCII value of a character",
+  "ASCII function",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

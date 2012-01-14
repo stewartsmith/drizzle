@@ -82,10 +82,10 @@ DRIZZLE_DECLARE_PLUGIN
   "uuid",
   "1.1",
   "Stewart Smith, Brian Aker",
-  "UUID() function using libuuid",
+  "UUID function using libuuid",
   drizzled::PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

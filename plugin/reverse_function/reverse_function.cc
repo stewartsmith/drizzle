@@ -103,10 +103,10 @@ DRIZZLE_DECLARE_PLUGIN
   "reverse_function",
   "1.0",
   "Stewart Smith",
-  "reverses a string",
+  "REVERSE function",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

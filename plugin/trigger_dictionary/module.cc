@@ -36,7 +36,7 @@ DRIZZLE_DECLARE_PLUGIN
   "trigger_dictionary",
   "1.0",
   "Brian Aker",
-  "Table for describing what triggers have been loaded.",
+  "Dictionary of triggers",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

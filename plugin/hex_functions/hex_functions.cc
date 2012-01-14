@@ -182,10 +182,10 @@ DRIZZLE_DECLARE_PLUGIN
   "hex_functions",
   "1.0",
   "Stewart Smith",
-  "Convert a string to HEX() or from UNHEX()",
+  "HEX and UNHEX functions",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

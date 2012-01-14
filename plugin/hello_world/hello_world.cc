@@ -56,14 +56,14 @@ static int hello_world_plugin_init(drizzled::module::Context &context)
 
 DRIZZLE_DECLARE_PLUGIN
 {
-  DRIZZLE_VERSION_ID,
-  "hello_world",
-  "1.0",
-  "Mark Atwood",
-  "Hello, world!",
-  PLUGIN_LICENSE_GPL,
-  hello_world_plugin_init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  DRIZZLE_VERSION_ID,            /* DRIZZLE_VERSION_ID */
+  "hello_world",                 /* module name */
+  "1.0",                         /* module version */
+  "Mark Atwood",                 /* author(s) */
+  N_("Example Function plugin"), /* description */
+  PLUGIN_LICENSE_BSD,            /* license */
+  hello_world_plugin_init,       /* init module function */
+  NULL,                          /* module dependencies */
+  NULL                           /* init options function */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

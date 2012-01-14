@@ -151,10 +151,10 @@ DRIZZLE_DECLARE_PLUGIN
   "debug",
   "1.1",
   "Brian Aker",
-  "Useful functions for programmers to debug the server.",
+  "Debug functions",
   PLUGIN_LICENSE_BSD,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

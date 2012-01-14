@@ -90,10 +90,10 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Allow-All-Authentication",
+  "auth_all",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for utility tables",
+  "Allows all users to authenticate regardless of username or password",
   PLUGIN_LICENSE_GPL,
   auth_all::init,
   NULL,

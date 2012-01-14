@@ -39,7 +39,7 @@ DRIZZLE_DECLARE_PLUGIN
   "session_dictionary",
   "1.1",
   "Brian Aker",
-  "Dictionary for session information, aka proccesslist, user defined variables, etc.",
+  "Dictionaries of session variables and statements",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

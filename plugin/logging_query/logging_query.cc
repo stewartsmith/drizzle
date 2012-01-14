@@ -341,10 +341,10 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "logging-query",
+  "logging_query",
   "0.2",
-  "Mark Atwood <mark@fallenpegasus.com>",
-  N_("Log queries to a CSV file"),
+  "Mark Atwood",
+  N_("Logs queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::logging_query_plugin_init,
   NULL,

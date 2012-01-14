@@ -39,13 +39,13 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "SchemaEngine",
+  "schema_engine",
   "1.0",
   "Brian Aker",
-  "This implements the default file based Schema engine.",
+  "Schema engine",
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  "signal_handler",               /* depends */
-  NULL                /* config options   */
+  init,
+  "signal_handler",
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

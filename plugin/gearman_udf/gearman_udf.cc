@@ -57,10 +57,10 @@ DRIZZLE_DECLARE_PLUGIN
   "gearman_udf",
   "0.1",
   "Eric Day",
-  "Gearman Client UDFs",
+  "Gearman client",
   PLUGIN_LICENSE_BSD,
-  gearman_udf_plugin_init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  gearman_udf_plugin_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -36,10 +36,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Utility Dictionary",
+  "utility_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for utility tables",
+  "Utility dictionaries",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

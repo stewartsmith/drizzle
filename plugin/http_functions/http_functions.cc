@@ -189,10 +189,10 @@ DRIZZLE_DECLARE_PLUGIN
   "http_functions",
   "1.0",
   "Stewart Smith",
-  "HTTP functions",
+  "HTTP_GET and HTTP_POST functions",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

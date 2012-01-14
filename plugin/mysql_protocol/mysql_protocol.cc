@@ -957,13 +957,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "mysql-protocol",
+  "mysql_protocol",
   "0.1",
   "Eric Day",
-  "MySQL Protocol Module",
+  "MySQL network protocol",
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::init,             /* Plugin Init */
-  NULL, /* depends */
-  drizzle_plugin::init_options    /* config options */
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

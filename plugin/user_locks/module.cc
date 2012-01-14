@@ -52,10 +52,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "User Level Locking Functions",
+  "user_locks",
   "1.1",
   "Brian Aker",
-  "User level locking and barrier functions",
+  "User-level locking and barrier functions",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

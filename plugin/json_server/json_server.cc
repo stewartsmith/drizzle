@@ -365,13 +365,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "json-server",
+  "json_server",
   "0.1",
   "Stewart Smith",
   "JSON HTTP interface",
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::json_server::json_server_init,             /* Plugin Init */
-  NULL, /* depends */
-  drizzle_plugin::json_server::init_options    /* config options */
+  drizzle_plugin::json_server::json_server_init,
+  NULL,
+  drizzle_plugin::json_server::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

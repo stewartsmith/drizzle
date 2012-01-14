@@ -40,10 +40,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Table Cache Dictionary",
+  "table_cache_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for table and table definition cache.",
+  "Dictionaries of table cache and table definition cache",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

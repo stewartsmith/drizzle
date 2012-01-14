@@ -110,10 +110,10 @@ DRIZZLE_DECLARE_PLUGIN
   "md5",
   "1.0",
   "Stewart Smith",
-  "UDF for computing md5sum",
+  "MD5 function",
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

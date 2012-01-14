@@ -843,13 +843,13 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "MEMORY",
+  "memory",
   "1.0",
   "MySQL AB",
-  "Hash based, stored in memory, useful for temporary tables",
+  "MEMORY storage engine",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,                       /* depends */
-  NULL                        /* config options                  */
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

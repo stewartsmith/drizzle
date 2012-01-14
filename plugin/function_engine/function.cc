@@ -138,13 +138,13 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "FunctionEngine",
+  "function_engine",
   "1.0",
   "Brian Aker",
-  "Function Engine provides the infrastructure for Table Functions,etc.",
+  "Function engine",
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

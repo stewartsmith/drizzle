@@ -288,10 +288,10 @@ DRIZZLE_DECLARE_PLUGIN
   "signal_handler",
   "0.1",
   "Brian Aker",
-  "Default Signal Handler",
+  "Signal handler",
   PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

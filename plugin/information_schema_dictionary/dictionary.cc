@@ -97,7 +97,7 @@ DRIZZLE_DECLARE_PLUGIN
   "information_schema_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for ANSI information schema, etc",
+  "The INFORMATION_SCHEMA",
   PLUGIN_LICENSE_GPL,
   init,
   NULL,
