@@ -55,7 +55,7 @@ DRIZZLE_DECLARE_PLUGIN
   "user_locks",
   "1.1",
   "Brian Aker",
-  "User-level locking and barrier functions",
+  N_("User-level locking and barrier functions"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

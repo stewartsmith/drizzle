@@ -86,7 +86,7 @@ DRIZZLE_DECLARE_PLUGIN
   "protocol_dictionary",
   "1.0",
   "Andrew Hutchings",
-  "Dictionary of protocol counters",
+  N_("Dictionary of protocol counters"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

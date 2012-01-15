@@ -83,7 +83,7 @@ DRIZZLE_DECLARE_PLUGIN
   "charlength",
   "1.0",
   "Devananda van der Veen",
-  "CHAR_LENGTH and CHARACTER_LENGTH functions",
+  N_("CHAR_LENGTH and CHARACTER_LENGTH functions"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

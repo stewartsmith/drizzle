@@ -288,7 +288,7 @@ DRIZZLE_DECLARE_PLUGIN
   "signal_handler",
   "0.1",
   "Brian Aker",
-  "Signal handler",
+  N_("Signal handler"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

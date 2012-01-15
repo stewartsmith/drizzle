@@ -42,7 +42,7 @@ DRIZZLE_DECLARE_PLUGIN
   "schema_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionaries of schemas, tables, indexes, etc.",
+  N_("Dictionaries of schemas, tables, indexes, etc."),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

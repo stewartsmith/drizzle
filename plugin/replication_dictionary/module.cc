@@ -50,7 +50,7 @@ DRIZZLE_DECLARE_PLUGIN
   "replication_dictionary",
   "1.0",
   "Jay Pipes",
-  "Dictionary of replication streams",
+  N_("Dictionary of replication streams"),
   PLUGIN_LICENSE_BSD,
   init,
   NULL,

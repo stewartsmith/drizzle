@@ -42,7 +42,7 @@ DRIZZLE_DECLARE_PLUGIN
   "string_functions",
   "1.0",
   "Brian Aker, Stewart Smith",
-  "String functions",
+  N_("String functions"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

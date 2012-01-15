@@ -43,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
   "registry_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionaries of modules and plugins",
+  N_("Dictionaries of modules and plugins"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

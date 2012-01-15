@@ -47,7 +47,7 @@ DRIZZLE_DECLARE_PLUGIN
   "compression",
   "1.1",
   "Stewart Smith",
-  "COMPRESS and UNCOMPRESS functions",
+  N_("COMPRESS and UNCOMPRESS functions"),
   PLUGIN_LICENSE_GPL,
   compressionudf_plugin_init,
   NULL,

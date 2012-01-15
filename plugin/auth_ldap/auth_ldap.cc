@@ -457,7 +457,7 @@ DRIZZLE_DECLARE_PLUGIN
   "auth_ldap",
   "0.2",
   "Eric Day, Henrik Ingo, Edward Konetzko",
-  "Authentication against an LDAP server",
+  N_("Authentication against an LDAP server"),
   PLUGIN_LICENSE_GPL,
   auth_ldap::init,
   NULL,

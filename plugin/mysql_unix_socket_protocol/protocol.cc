@@ -171,7 +171,7 @@ DRIZZLE_DECLARE_PLUGIN
   "mysql_unix_socket_protocol",
   "0.3",
   "Brian Aker",
-  "MySQL Unix socket protocol",
+  N_("MySQL Unix socket protocol"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::mysql_unix_socket_protocol::init,
   NULL,

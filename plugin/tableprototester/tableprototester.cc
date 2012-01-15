@@ -362,7 +362,7 @@ DRIZZLE_DECLARE_PLUGIN
   "TABLEPROTOTESTER",
   "1.0",
   "Stewart Smith",
-  "StorageEngine module for testing table proto messages",
+  N_("StorageEngine module for testing table proto messages"),
   PLUGIN_LICENSE_GPL,
   tableprototester_init,
   NULL,

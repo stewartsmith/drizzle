@@ -562,7 +562,7 @@ DRIZZLE_DECLARE_PLUGIN
   "filtered_replicator",
   "0.2",
   "Padraig O Sullivan",
-  "Replicates events filtered by schema or table name",
+  N_("Replicates events filtered by schema or table name"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

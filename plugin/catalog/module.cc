@@ -41,7 +41,7 @@ DRIZZLE_DECLARE_PLUGIN
   "catalog",
   "0.1",
   "Brian Aker",
-  "Catalog system and functions",
+  N_("Catalog system and functions"),
   drizzled::PLUGIN_LICENSE_GPL,
   init,
   NULL,

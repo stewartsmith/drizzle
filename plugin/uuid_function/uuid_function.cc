@@ -82,7 +82,7 @@ DRIZZLE_DECLARE_PLUGIN
   "uuid",
   "1.1",
   "Stewart Smith, Brian Aker",
-  "UUID function using libuuid",
+  N_("UUID function using libuuid"),
   drizzled::PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

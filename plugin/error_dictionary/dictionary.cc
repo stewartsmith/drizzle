@@ -38,7 +38,7 @@ DRIZZLE_DECLARE_PLUGIN
   "error_dictionary",
   "1.0",
   "Monty Taylor",
-  "Dictionary of Drizzle errors codes and messages",
+  N_("Dictionary of Drizzle errors codes and messages"),
   drizzled::PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

@@ -309,13 +309,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-    "logging_gearman",
-    "0.1",
-    "Mark Atwood",
-    N_("Logs queries to a Gearman server"),
-    drizzled::PLUGIN_LICENSE_GPL,
-    drizzle_plugin::logging_gearman_plugin_init,
-    NULL,
-    drizzle_plugin::init_options
+  "logging_gearman",
+  "0.1",
+  "Mark Atwood",
+  N_("Logs queries to a Gearman server"),
+  drizzled::PLUGIN_LICENSE_GPL,
+  drizzle_plugin::logging_gearman_plugin_init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -151,7 +151,7 @@ DRIZZLE_DECLARE_PLUGIN
   "debug",
   "1.1",
   "Brian Aker",
-  "Debug functions",
+  N_("Debug functions"),
   PLUGIN_LICENSE_BSD,
   initialize,
   NULL,

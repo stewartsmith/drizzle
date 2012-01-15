@@ -78,7 +78,7 @@ DRIZZLE_DECLARE_PLUGIN
   "coercibility",
   "1.0",
   "Andrew Hutchings",
-  "COERCIBILITY function",
+  N_("COERCIBILITY function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

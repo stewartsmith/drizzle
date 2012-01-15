@@ -715,7 +715,7 @@ DRIZZLE_DECLARE_PLUGIN
   "SEAPITESTER",
   "1.0",
   "Stewart Smith",
-  "StorageEngine module for testing call order",
+  N_("StorageEngine module for testing call order"),
   PLUGIN_LICENSE_GPL,
   seapi_tester_init,
   NULL,

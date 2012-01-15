@@ -72,7 +72,7 @@ DRIZZLE_DECLARE_PLUGIN
   "default_replicator",
   "1.0",
   "Jay Pipes",
-  "Replicates all write events to all appliers",
+  N_("Replicates all write events to all appliers"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

@@ -130,7 +130,7 @@ DRIZZLE_DECLARE_PLUGIN
   "sleep",
   "1.0",
   "Patrick Galbraith",
-  "SLEEP function",
+  N_("SLEEP function"),
   PLUGIN_LICENSE_GPL,
   sleep_plugin_init,
   NULL,

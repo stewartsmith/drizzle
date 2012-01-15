@@ -83,7 +83,7 @@ DRIZZLE_DECLARE_PLUGIN
   "connection_id",
   "1.0",
   "Devananda van der Veen",
-  "CONNECTION_ID function",
+  N_("CONNECTION_ID function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

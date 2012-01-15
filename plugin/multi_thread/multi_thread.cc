@@ -209,7 +209,7 @@ DRIZZLE_DECLARE_PLUGIN
   "multi_thread",
   "0.1",
   "Brian Aker",
-  "Multi-thread scheduler",
+  N_("Multi-thread scheduler"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

@@ -112,7 +112,7 @@ DRIZZLE_DECLARE_PLUGIN
   "auth_test",
   "0.1",
   "Eric Day",
-  "Authentication module for testing",
+  N_("Authentication module for testing"),
   PLUGIN_LICENSE_GPL,
   auth_test::init,
   NULL,

@@ -43,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
   "table_cache_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionaries of table cache and table definition cache",
+  N_("Dictionaries of table cache and table definition cache"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

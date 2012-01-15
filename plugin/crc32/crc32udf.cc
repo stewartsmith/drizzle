@@ -83,7 +83,7 @@ DRIZZLE_DECLARE_PLUGIN
   "crc32",
   "1.0",
   "Stewart Smith",
-  "CRC32 function",
+  N_("CRC32 function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

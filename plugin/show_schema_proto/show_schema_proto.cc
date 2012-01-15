@@ -108,7 +108,7 @@ DRIZZLE_DECLARE_PLUGIN
   "show_schema_proto",
   "1.0",
   "Stewart Smith",
-  "Shows text representation of schema definition proto",
+  N_("Shows text representation of schema definition proto"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

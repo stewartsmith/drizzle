@@ -127,7 +127,7 @@ DRIZZLE_DECLARE_PLUGIN
   "syslog",
   "0.3",
   "Mark Atwood",
-  "Logs error messages and queries to syslog",
+  N_("Logs error messages and queries to syslog"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

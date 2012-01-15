@@ -376,7 +376,7 @@ DRIZZLE_DECLARE_PLUGIN
   "console",
   "0.2",
   "Eric Day",
-  "Console client",
+  N_("Console client"),
   PLUGIN_LICENSE_BSD,
   init,
   NULL,

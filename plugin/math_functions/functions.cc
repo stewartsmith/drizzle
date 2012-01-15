@@ -70,7 +70,7 @@ DRIZZLE_DECLARE_PLUGIN
   "math_functions",
   "1.0",
   "Brian Aker, Stewart Smith",
-  "Math functions (ABS, LOG, POW, LN, SQRT, CEIL, FLOOR, ORD, etc.)",
+  N_("Math functions (ABS, LOG, POW, LN, SQRT, CEIL, FLOOR, ORD, etc.)"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

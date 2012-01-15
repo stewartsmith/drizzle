@@ -960,7 +960,7 @@ DRIZZLE_DECLARE_PLUGIN
   "mysql_protocol",
   "0.1",
   "Eric Day",
-  "MySQL network protocol",
+  N_("MySQL network protocol"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

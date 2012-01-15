@@ -141,7 +141,7 @@ DRIZZLE_DECLARE_PLUGIN
   "function_engine",
   "1.0",
   "Brian Aker",
-  "Function engine",
+  N_("Function engine"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

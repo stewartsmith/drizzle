@@ -251,7 +251,7 @@ DRIZZLE_DECLARE_PLUGIN
   "transaction_log",
   "0.1.1",
   "Jay Pipes",
-  "Logs transactions to a binary file",
+  N_("Logs transactions to a binary file"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

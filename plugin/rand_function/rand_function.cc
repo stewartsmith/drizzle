@@ -132,7 +132,7 @@ DRIZZLE_DECLARE_PLUGIN
   "rand",
   "1.0",
   "Stewart Smith",
-  "RAND function",
+  N_("RAND function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

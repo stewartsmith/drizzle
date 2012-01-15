@@ -103,7 +103,7 @@ DRIZZLE_DECLARE_PLUGIN
   "reverse_function",
   "1.0",
   "Stewart Smith",
-  "REVERSE function",
+  N_("REVERSE function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

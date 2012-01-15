@@ -37,7 +37,7 @@ DRIZZLE_DECLARE_PLUGIN
   "function_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionary of functions",
+  N_("Dictionary of functions"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

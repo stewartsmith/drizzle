@@ -290,7 +290,7 @@ DRIZZLE_DECLARE_PLUGIN
   "query_log",
   "1.0",
   "Daniel Nichter",
-  "Logs queries to a file",
+  N_("Logs queries to a file"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

@@ -82,7 +82,7 @@ DRIZZLE_DECLARE_PLUGIN
   "shutdown",
   "1.0",
   "Brian Aker",
-  "SHUTDOWN function",
+  N_("SHUTDOWN function"),
   PLUGIN_LICENSE_BSD,
   initialize,
   NULL,

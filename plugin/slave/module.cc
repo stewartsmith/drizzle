@@ -64,7 +64,7 @@ DRIZZLE_DECLARE_PLUGIN
   "slave",
   "1.0",
   "David Shrewsbury",
-  "Drizzle replication slave",
+  N_("Drizzle replication slave"),
   PLUGIN_LICENSE_GPL,
   slave::init,
   NULL,

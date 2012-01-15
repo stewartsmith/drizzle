@@ -846,7 +846,7 @@ DRIZZLE_DECLARE_PLUGIN
   "memory",
   "1.0",
   "MySQL AB",
-  "MEMORY storage engine",
+  N_("MEMORY storage engine"),
   PLUGIN_LICENSE_GPL,
   heap_init,
   NULL,

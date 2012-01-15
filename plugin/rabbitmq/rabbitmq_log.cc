@@ -194,7 +194,7 @@ DRIZZLE_DECLARE_PLUGIN
   "rabbitmq",
   "0.1",
   "Marcus Eriksson",
-  "Publishes transactions to RabbitMQ",
+  N_("Publishes transactions to RabbitMQ"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

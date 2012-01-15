@@ -80,7 +80,7 @@ DRIZZLE_DECLARE_PLUGIN
   "length",
   "1.0",
   "Devananda van der Veen",
-  "LENGTH and OCTET_LENGTH functions",
+  N_("LENGTH and OCTET_LENGTH functions"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

@@ -131,7 +131,7 @@ DRIZZLE_DECLARE_PLUGIN
   "benchmark",
   "1.0",
   "Devananda van der Veen",
-  "BENCHMARK function",
+  N_("BENCHMARK function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

@@ -158,7 +158,7 @@ DRIZZLE_DECLARE_PLUGIN
   "zeromq",
   "0.1",
   "Marcus Eriksson",
-  "Publishes transactions to ZeroMQ",
+  N_("Publishes transactions to ZeroMQ"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

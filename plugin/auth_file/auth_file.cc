@@ -229,7 +229,7 @@ DRIZZLE_DECLARE_PLUGIN
   "auth_file",
   "0.1",
   "Eric Day",
-  "Authentication against a plain text file",
+  N_("Authentication against a plain text file"),
   PLUGIN_LICENSE_GPL,
   auth_file::init,
   NULL,

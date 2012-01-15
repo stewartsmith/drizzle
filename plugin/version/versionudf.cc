@@ -66,7 +66,7 @@ DRIZZLE_DECLARE_PLUGIN
   "version",
   "1.0",
   "Devananda van der Veen",
-  "VERSION function",
+  N_("VERSION function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

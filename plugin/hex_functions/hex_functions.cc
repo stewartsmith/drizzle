@@ -182,7 +182,7 @@ DRIZZLE_DECLARE_PLUGIN
   "hex_functions",
   "1.0",
   "Stewart Smith",
-  "HEX and UNHEX functions",
+  N_("HEX and UNHEX functions"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

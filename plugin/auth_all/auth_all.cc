@@ -93,7 +93,7 @@ DRIZZLE_DECLARE_PLUGIN
   "auth_all",
   "1.0",
   "Brian Aker",
-  "Allows all users to authenticate regardless of username or password",
+  N_("Allows all users to authenticate regardless of username or password"),
   PLUGIN_LICENSE_GPL,
   auth_all::init,
   NULL,

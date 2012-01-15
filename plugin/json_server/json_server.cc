@@ -368,7 +368,7 @@ DRIZZLE_DECLARE_PLUGIN
   "json_server",
   "0.1",
   "Stewart Smith",
-  "JSON HTTP interface",
+  N_("JSON HTTP interface"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::json_server::json_server_init,
   NULL,

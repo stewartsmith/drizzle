@@ -118,7 +118,7 @@ DRIZZLE_DECLARE_PLUGIN
   "drizzle_protocol",
   "0.3",
   "Brian Aker",
-  "Drizzle network protocol",
+  N_("Drizzle network protocol"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::drizzle_protocol::init,
   NULL,

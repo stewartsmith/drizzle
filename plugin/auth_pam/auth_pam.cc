@@ -143,7 +143,7 @@ DRIZZLE_DECLARE_PLUGIN
   "pam",
   "0.1",
   "Brian Aker",
-  "Authenication against system user accounts using PAM",
+  N_("Authenication against system user accounts using PAM"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

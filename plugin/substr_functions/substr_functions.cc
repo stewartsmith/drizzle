@@ -276,7 +276,7 @@ DRIZZLE_DECLARE_PLUGIN
   "substr_functions",
   "1.0",
   "Stewart Smith",
-  "SUBSTR and SUBSTR functions",
+  N_("SUBSTR and SUBSTR functions"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

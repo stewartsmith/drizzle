@@ -48,7 +48,7 @@ DRIZZLE_DECLARE_PLUGIN
   "utility_functions",
   "1.4",
   "Brian Aker, Stewart Smith",
-  "Utility functions",
+  N_("Utility functions"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

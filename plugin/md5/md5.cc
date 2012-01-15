@@ -110,7 +110,7 @@ DRIZZLE_DECLARE_PLUGIN
   "md5",
   "1.0",
   "Stewart Smith",
-  "MD5 function",
+  N_("MD5 function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

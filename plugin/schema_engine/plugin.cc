@@ -42,7 +42,7 @@ DRIZZLE_DECLARE_PLUGIN
   "schema_engine",
   "1.0",
   "Brian Aker",
-  "Schema engine",
+  N_("Schema engine"),
   PLUGIN_LICENSE_GPL,
   init,
   "signal_handler",

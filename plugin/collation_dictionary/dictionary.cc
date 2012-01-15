@@ -43,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
   "collation_dictionary",
   "1.0",
   "Brian Aker",
-  "Character set and collation dictionaries",
+  N_("Character set and collation dictionaries"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

@@ -96,7 +96,7 @@ DRIZZLE_DECLARE_PLUGIN
   "ipv6",
   "1.0",
   "Muhammad Umair",
-  "IPV6 function",
+  N_("IPV6 function"),
   drizzled::PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

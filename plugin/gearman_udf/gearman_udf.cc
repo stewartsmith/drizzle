@@ -57,7 +57,7 @@ DRIZZLE_DECLARE_PLUGIN
   "gearman_udf",
   "0.1",
   "Eric Day",
-  "Gearman client",
+  N_("Gearman client"),
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init,
   NULL,

@@ -361,7 +361,7 @@ DRIZZLE_DECLARE_PLUGIN
   "js",
   "0.9",
   "Henrik Ingo",
-  "Executes JavaScript code with supplied arguments",
+  N_("Executes JavaScript code with supplied arguments"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::js::initialize,
   NULL,

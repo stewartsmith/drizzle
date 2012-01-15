@@ -83,7 +83,7 @@ DRIZZLE_DECLARE_PLUGIN
   "ascii",
   "1.0",
   "Devananda van der Veen",
-  "ASCII function",
+  N_("ASCII function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

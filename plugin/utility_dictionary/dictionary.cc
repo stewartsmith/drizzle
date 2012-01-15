@@ -39,7 +39,7 @@ DRIZZLE_DECLARE_PLUGIN
   "utility_dictionary",
   "1.0",
   "Brian Aker",
-  "Utility dictionaries",
+  N_("Utility dictionaries"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

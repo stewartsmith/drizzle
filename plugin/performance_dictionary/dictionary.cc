@@ -37,7 +37,7 @@ DRIZZLE_DECLARE_PLUGIN
   "Performance Dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionary of session usage and performance",
+  N_("Dictionary of session usage and performance"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

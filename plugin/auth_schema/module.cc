@@ -76,7 +76,7 @@ DRIZZLE_DECLARE_PLUGIN
   "auth_schema",
   "1.0",
   "Daniel Nichter",
-  "Authentication against a table with encrypted passwords",
+  N_("Authentication against a table with encrypted passwords"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::auth_schema::init,
   NULL,
