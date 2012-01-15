@@ -79,7 +79,7 @@ static int init(module::Context &context)
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("allow_anonymous", 
+  context("allow-anonymous", 
           po::value<bool>(&opt_allow_anonymous)->default_value(false),
           N_("Allow anonymous access"));
 }

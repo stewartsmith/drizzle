@@ -1,1 +1,1 @@
---transaction-log.enable --allow-all-authentication.allow_anonymous=true
+--transaction-log.enable --auth-all.allow-anonymous=true

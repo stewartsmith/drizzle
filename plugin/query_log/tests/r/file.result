@@ -9,7 +9,7 @@ MODULE_VERSION	1.0
 MODULE_AUTHOR	Daniel Nichter
 IS_BUILTIN	NO
 MODULE_LIBRARY	query_log
-MODULE_DESCRIPTION	Query Log
+MODULE_DESCRIPTION	Logs queries to a file
 MODULE_LICENSE	GPL
 SELECT @@query_log_enabled, @@query_log_file_enabled;
 @@query_log_enabled	@@query_log_file_enabled
