@@ -228,7 +228,7 @@ class SignalHandler :
 
 public:
   SignalHandler() :
-    drizzled::plugin::Daemon("Signal Handler")
+    drizzled::plugin::Daemon("signal_handler")
   {
     // @todo fix spurious wakeup issue
     boost::mutex::scoped_lock scopedLock(session::Cache::mutex());

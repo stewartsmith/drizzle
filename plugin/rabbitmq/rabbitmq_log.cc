@@ -133,8 +133,7 @@ static int init(drizzled::module::Context &context)
   }
   try 
   {
-    rabbitmqLogger= new RabbitMQLog("rabbit_log_applier",
-                                    rabbitmqHandler);
+    rabbitmqLogger= new RabbitMQLog("rabbitmq_applier", rabbitmqHandler);
   } 
   catch (exception& e) 
   {

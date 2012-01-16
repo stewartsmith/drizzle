@@ -32,7 +32,7 @@ class Policy :
 {
 public:
   Policy() :
-    drizzled::plugin::Authorization("Simple User Policy")
+    drizzled::plugin::Authorization("simple_user_policy")
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,

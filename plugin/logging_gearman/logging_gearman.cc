@@ -172,7 +172,7 @@ public:
 
   LoggingGearman(const std::string &host,
                  const std::string &function) :
-    drizzled::plugin::Logging("LoggingGearman"),
+    drizzled::plugin::Logging("gearman_query_log"),
     _host(host),
     _function(function),
     _gearman_client_ok(0),

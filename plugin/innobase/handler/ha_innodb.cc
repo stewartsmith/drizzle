@@ -9466,7 +9466,7 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  innobase_engine_name,
+  "innodb",
   INNODB_VERSION_STR,
   "Innobase Oy",
   "Supports transactions, row-level locking, and foreign keys",

@@ -159,7 +159,7 @@ public:
 
   Logging_query(const std::string &filename,
                 const std::string &query_pcre) :
-    drizzled::plugin::Logging("Logging_query"),
+    drizzled::plugin::Logging("csv_query_log"),
     _filename(filename),
     _query_pcre(query_pcre),
     fd(-1), re(NULL), pe(NULL),

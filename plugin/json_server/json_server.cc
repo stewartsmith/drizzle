@@ -255,7 +255,7 @@ private:
 
 public:
   JsonServer(in_port_t port_arg) :
-    drizzled::plugin::Daemon("JSON Server"),
+    drizzled::plugin::Daemon("json_server"),
     _port(port_arg),
     httpd(NULL),
     base(NULL)

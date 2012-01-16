@@ -131,7 +131,7 @@ static ZeroMQLog *zeromqLogger; ///< the actual plugin
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  zeromqLogger= new ZeroMQLog("zeromq_log_applier", vm["endpoint"].as<string>());
+  zeromqLogger= new ZeroMQLog("zeromq_applier", vm["endpoint"].as<string>());
   context.add(zeromqLogger);
   ReplicationServices::attachApplier(zeromqLogger, vm["use-replicator"].as<string>());
   context.registerVariable(new sys_var_const_string_val("endpoint", vm["endpoint"].as<string>()));

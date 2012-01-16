@@ -35,7 +35,7 @@ class Error_message_stderr : public plugin::ErrorMessage
 {
 public:
   Error_message_stderr()
-   : plugin::ErrorMessage("Error_message_stderr") {}
+   : plugin::ErrorMessage("stderr_error_message") {}
   virtual bool errmsg(error::priority_t , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
