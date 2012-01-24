@@ -1,0 +1,2 @@
+etc/drizzle/conf.d/json-server.cnf
+usr/lib/drizzle7/libjson_server_plugin.so

@@ -1,0 +1,2 @@
+usr/lib/drizzle7/libauth_pam_plugin.so
+etc/drizzle/conf.d/auth-pam.cnf

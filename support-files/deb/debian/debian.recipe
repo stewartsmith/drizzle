@@ -1,0 +1,7 @@
+# bzr-builder format 0.2 deb-version 7-1
+lp:drizzle
+nest packaging . packaging
+run mv packaging/debian debian
+run rm -rf packaging
+run ./config/autorun.sh
+

@@ -1,0 +1,2 @@
+usr/lib/drizzle7/libsimple_user_policy_plugin.so
+etc/drizzle/conf.d/simple-user-policy.cnf

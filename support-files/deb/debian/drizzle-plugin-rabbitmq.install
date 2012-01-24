@@ -1,0 +1,2 @@
+usr/lib/drizzle7/librabbitmq_plugin.so
+etc/drizzle/conf.d/rabbitmq.cnf
