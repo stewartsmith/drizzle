@@ -76,6 +76,3 @@ deb: dist
 	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
 	rm -rf deb-work-dir
 
-
-lksjdlsakjdlakj:
-	export n=`basename ${distdir} .tar.gz | awk -F '-' {print $1}` && export v=`basename ${distdir} .tar.gz | awk -F '-' {print $1}`  && cp ${distdir}.tar.gz deb-work-dir/${n}_${v}.orig.tar.gz
