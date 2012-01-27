@@ -68,11 +68,10 @@ deb: dist
 	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/`.orig.tar.gz
 	cd deb-work-dir && tar xf ${distdir}.tar.gz
 	cp -ar deb-work-dir/${distdir}/support-files/deb/debian deb-work-dir/${distdir}/debian 
-	test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net"
-	test "x${DEBFULLNAME}" = "x" && export DEBFULLNAME="Automatic Drizzle Build"
+	(test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net") || true
+	(test "x${DEBFULLNAME}" = "x" && export DEBFULLNAME="Automatic Drizzle Build") || true
 	cd deb-work-dir/${distdir}/ && dpkg-buildpackage -us -uc
 	mv deb-work-dir/*.deb .
 	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
 	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
 	rm -rf deb-work-dir
-

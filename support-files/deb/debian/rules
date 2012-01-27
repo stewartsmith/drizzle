@@ -41,7 +41,7 @@ override_dh_auto_clean:
 	dh_testdir                                                                                                                         
 	dh_auto_clean                                                                                                                      
 	dh_clean                                                                                                                           
-	-${RM} -rf docs/drizzled docs/html docs/pyext/*.pyc  Makefile.in aclocal.m4 config/config.guess config/config.sub config/ltmain.sh config/pandora-plugin.am config/pandora-plugin.list doxerr.log  configure m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/lt~obsolete.m4 tests/Makefile.in
+	-${RM} -rf docs/drizzled docs/html docs/pyext/*.pyc  Makefile.in aclocal.m4 config/config.guess config/config.sub config/ltmain.sh doxerr.log  configure m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/lt~obsolete.m4 tests/Makefile.in
 
 override_dh_installdocs:
 	dh_installdocs -A
