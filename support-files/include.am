@@ -64,7 +64,6 @@ rpm: dist
 deb: dist
 	rm -rf deb-work-dir
 	mkdir deb-work-dir
-	echo working on source release ${distname}
 	cp ${distdir}.tar.gz deb-work-dir/
 	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/`.orig.tar.gz
 	cd deb-work-dir && tar xf ${distdir}.tar.gz
