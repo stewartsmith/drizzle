@@ -81,6 +81,12 @@ public:
   {
     return boost::iequals(left.getName(), right.getName());
   }
+
+  void resetPath()
+  {
+    init();
+  }
+
 private:
   void init();
 

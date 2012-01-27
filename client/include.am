@@ -34,7 +34,8 @@ bin_PROGRAMS+= \
 	       client/drizzle \
 	       client/drizzledump \
 	       client/drizzleimport \
-	       client/drizzleslap
+	       client/drizzleslap \
+	       client/drizzle_password_hash
 
 man_MANS+= \
 	   client/drizzle.1 \
@@ -88,3 +89,7 @@ client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
+
+
+client_drizzle_password_hash_SOURCES= client/drizzle_password_hash.cc
+client_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
