@@ -41,10 +41,10 @@ pkgconfig_DATA= \
 # Note: For support-files/deb/ the problem doesn't arise, as we never
 # build anything there.
 dist-hook:
-	rm -rf ${distdir}/pkg/rpm/BUILD/* \
-               ${distdir}/pkg/rpm/BUILDROOT/* \
-               ${distdir}/pkg/rpm/SRPMS/* \
-               ${distdir}/pkg/rpm/SOURCES/${PACKAGE_NAME}*.tar.gz
+	rm -rf ${distdir}/support-files/rpm/BUILD/* \
+               ${distdir}/support-files/rpm/BUILDROOT/* \
+               ${distdir}/support-files/rpm/SRPMS/* \
+               ${distdir}/support-files/rpm/SOURCES/${PACKAGE_NAME}*.tar.gz
 
 # For convenience we support make rpm directly from bzr repo
 rpm: dist

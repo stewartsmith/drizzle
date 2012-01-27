@@ -99,7 +99,7 @@ String *PrintTransactionMessageFunction::val_str(String *str)
    * a pool of TransactionLogReader objects that can be 
    * re-used.
    */
-  const string &filename= transaction_log->getLogFilename();
+  const string &filename= transaction_log->getLogFilepath();
   int log_file= open(filename.c_str(), O_RDONLY);
   if (log_file == -1)
   {

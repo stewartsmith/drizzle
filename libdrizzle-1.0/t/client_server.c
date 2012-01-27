@@ -121,7 +121,9 @@ int main(void)
   drizzle_test("drizzle_con_listen");
   ret= drizzle_con_listen(&listen_con);
   if (ret != DRIZZLE_RETURN_OK)
+  {
     drizzle_test_error("returned %s (%d)", drizzle_error(&drizzle), ret);
+  }
 
   drizzle_test("drizzle_con_add_tcp");
   if (drizzle_con_add_tcp(&drizzle, &client, DRIZZLE_TEST_HOST,
@@ -139,18 +141,28 @@ int main(void)
 
   while (true)
   {
-    if (!server_accepted)
+    if (server_accepted == false)
     {
       drizzle_test("drizzle_con_accept");
       (void)drizzle_con_accept(&drizzle, &server, &ret);
       if (ret == DRIZZLE_RETURN_OK)
+      {
         server_accepted = true;
+      }
+      else if (ret == DRIZZLE_RETURN_COULD_NOT_CONNECT || ret == DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS)
+      {
+        break;
+      }
       else if (ret != DRIZZLE_RETURN_IO_WAIT)
-        drizzle_test_error("returned %s (%d)", drizzle_error(&drizzle), ret);
+      {
+        drizzle_test_error("returned %s (%s)", drizzle_error(&drizzle), drizzle_strerror(ret));
+      }
     }
 
     if (server_accepted)
+    {
       _server(&server, &server_state);
+    }
 
     _client(&client, &client_state);
 
@@ -162,7 +174,11 @@ int main(void)
 
     drizzle_test("drizzle_con_wait");
     ret= drizzle_con_wait(&drizzle);
-    if (ret != DRIZZLE_RETURN_OK)
+    if (ret == DRIZZLE_RETURN_COULD_NOT_CONNECT || ret == DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS)
+    {
+      break;
+    }
+    else if (ret != DRIZZLE_RETURN_OK)
     {
       drizzle_test_error("returned %s (%d)", drizzle_error(&drizzle), ret);
     }
@@ -229,9 +245,17 @@ static void _server(drizzle_con_st *con, server_state_st *state)
       state->state = SERVER_STATE_HANDSHAKE_READ;
       return;
     }
+    else if (ret == DRIZZLE_RETURN_LOST_CONNECTION)
+    {
+      return;
+    }
+    else if (ret == DRIZZLE_RETURN_COULD_NOT_CONNECT)
+    {
+      return;
+    }
     else if (ret != DRIZZLE_RETURN_OK)
     {
-      drizzle_test_error("returned %s (%d)", drizzle_con_error(con), ret);
+      drizzle_test_error("returned %s (%s)", drizzle_con_error(con), drizzle_strerror(ret));
     }
 
     drizzle_test("drizzle_result_create");
@@ -401,8 +425,15 @@ static void _client(drizzle_con_st *con, client_state_st *state)
       state->state = CLIENT_STATE_START;
       return;
     }
+    else if (ret == DRIZZLE_RETURN_COULD_NOT_CONNECT)
+    {
+      state->state= CLIENT_STATE_DONE;
+      return;
+    }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       drizzle_test_error("returned %s (%d)", drizzle_con_error(con), ret);
+    }
 
   case CLIENT_STATE_RESULT:
     drizzle_test("drizzle_result_buffer");
@@ -413,11 +444,15 @@ static void _client(drizzle_con_st *con, client_state_st *state)
       return;
     }
     else if (ret != DRIZZLE_RETURN_OK)
+    {
       drizzle_test_error("returned %s (%d)", drizzle_con_error(con), ret);
+    }
 
     drizzle_test("drizzle_con_protocol_version");
     if (drizzle_con_protocol_version(con) != 10)
+    {
       drizzle_test_error("no match");
+    }
 
     drizzle_test("drizzle_con_server_version");
     if (strcmp(drizzle_con_server_version(con), "test_version"))

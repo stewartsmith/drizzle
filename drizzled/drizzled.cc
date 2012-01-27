@@ -1977,7 +1977,7 @@ static void drizzle_init_variables()
 */
 static void get_options()
 {
-  setDataHomeCatalog(getDataHome() / "local");
+  catalog::resetPath_for_local_identifier();
 
   if (vm.count("user"))
   {

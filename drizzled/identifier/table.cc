@@ -221,7 +221,7 @@ void Table::init()
   }
 
   hash_value= util::insensitive_hash()(path);
-  key.set(getKeySize(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
+  key.set(getKeySize(), getCatalogName(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 
@@ -284,12 +284,14 @@ void Table::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
-void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+  void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b, const std::string &c)
 {
   key_buffer.resize(resize_arg);
 
   std::copy(a.begin(), a.end(), key_buffer.begin());
   std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+  std::copy(c.begin(), c.end(),
+            key_buffer.begin() + a.length() + 1 + b.length() + 1);
 
   util::sensitive_hash hasher;
   hash_value= hasher(key_buffer);
