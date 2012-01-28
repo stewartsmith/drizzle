@@ -45,12 +45,14 @@ static std::string CATALOG_OPT_EXT(".cat");
 
 bool Engine::create(const drizzled::identifier::Catalog &identifier, drizzled::message::catalog::shared_ptr &message)
 {
-  if (mkdir(identifier.getPath().c_str(), 0777) == -1)
+  if (::mkdir(identifier.getPath().c_str(), 0777) == -1)
+  {
     return false;
+  }
 
   if (not writeFile(identifier, message))
   {
-    rmdir(identifier.getPath().c_str());
+    ::rmdir(identifier.getPath().c_str());
 
     return false;
   }
@@ -65,23 +67,23 @@ bool Engine::drop(const drizzled::identifier::Catalog &identifier)
   file.append(CATALOG_OPT_EXT);
 
   // No catalog file, no love from us.
-  if (access(file.c_str(), F_OK))
+  if (::access(file.c_str(), F_OK))
   {
-    perror(file.c_str());
+    drizzled::sql_perror("access()", file);
     return false;
   }
 
-  if (unlink(file.c_str()))
+  if (::unlink(file.c_str()))
   {
-    perror(file.c_str());
+    drizzled::sql_perror("unlink()", file);
     return false;
   }
 
-  if (rmdir(identifier.getPath().c_str()))
+  if (::rmdir(identifier.getPath().c_str()))
   {
-    perror(identifier.getPath().c_str());
-    //@todo If this happens, we want a report of it. For the moment I dump
-    //to stderr so I can catch it in Hudson.
+    drizzled::sql_perror("rmdir()", identifier.getPath());
+    //@todo If this happens, we want a report of it. For the moment I dump to
+    //stderr so I can catch it in Hudson.
     drizzled::CachedDirectory dir(identifier.getPath());
   }
 
@@ -122,7 +124,9 @@ void Engine::prime(drizzled::message::catalog::vector &messages)
     drizzled::message::catalog::shared_ptr message;
 
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+    {
       continue;
+    }
 
     drizzled::identifier::Catalog identifier(entry->filename);
 
@@ -131,11 +135,13 @@ void Engine::prime(drizzled::message::catalog::vector &messages)
       messages.push_back(message);
 
       if (drizzled::catalog::local_identifier() == identifier)
+      {
         found_local= true;
+      }
     }
   }
 
-  if (not found_local)
+  if (found_local == false)
   {
     messages.push_back(drizzled::catalog::local()->message());
   }
@@ -146,7 +152,6 @@ bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled
   char file_tmp[FN_REFLEN];
   std::string file(identifier.getPath());
 
-
   file.append(1, FN_LIBCHAR);
   file.append(CATALOG_OPT_EXT);
 
@@ -156,7 +161,7 @@ bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled
 
   if (fd == -1)
   {
-    perror(file_tmp);
+    drizzled::sql_perror("mkstemp()", file_tmp);
 
     return false;
   }
@@ -171,34 +176,43 @@ bool Engine::writeFile(const drizzled::identifier::Catalog &identifier, drizzled
     success= false;
   }
 
-  if (not success)
+  if (success == false)
   {
     drizzled::my_error(drizzled::ER_CORRUPT_CATALOG_DEFINITION, MYF(0), file.c_str(),
                        message->InitializationErrorString().empty() ? "unknown" :  message->InitializationErrorString().c_str());
 
-    if (close(fd) == -1)
-      perror(file_tmp);
+    if (::close(fd) == -1)
+    {
+      drizzled::sql_perror("close()", file_tmp);
+    }
 
-    if (unlink(file_tmp))
-      perror(file_tmp);
-
-    return false;
-  }
-
-  if (close(fd) == -1)
-  {
-    perror(file_tmp);
-
-    if (unlink(file_tmp))
-      perror(file_tmp);
+    if (::unlink(file_tmp))
+    {
+      drizzled::sql_perror("unlink()", file_tmp);
+    }
 
     return false;
   }
 
-  if (rename(file_tmp, file.c_str()) == -1)
+  if (::close(fd) == -1)
   {
-    if (unlink(file_tmp))
-      perror(file_tmp);
+    drizzled::sql_perror("close()", file_tmp);
+
+    if (::unlink(file_tmp))
+    {
+      drizzled::sql_perror("unlink()", file_tmp);
+    }
+
+    return false;
+  }
+
+  if (::rename(file_tmp, file.c_str()) == -1)
+  {
+    drizzled::sql_perror("rename()", file_tmp);
+    if (::unlink(file_tmp))
+    {
+      drizzled::sql_perror("unlink()", file_tmp);
+    }
 
     return false;
   }
@@ -238,7 +252,7 @@ drizzled::message::catalog::shared_ptr Engine::readFile(const drizzled::identifi
   }
   else
   {
-    perror(path.c_str());
+    drizzled::sql_perror("std::fstream::good()", path);
   }
 
   return drizzled::message::catalog::shared_ptr();

@@ -1,7 +1,7 @@
 /*
  * Drizzle Client & Protocol Library
  *
- * Copyright (C) 2008 Eric Day (eday@oddments.org)
+ * Copyright (C) 2012 Brian Aker (brian@tangent.org)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,29 +34,22 @@
  *
  */
 
+#pragma once
 
-#include <config.h>
-
-#include <cstring>
-#include <iostream>
-
-#include <libdrizzle-2.0/drizzle_client.h>
-
-static const uint32_t BUFFER_CHUNK= 8192;
-
-int main(int argc, char *argv[])
+/**
+ * Verbosity levels.
+ */
+enum drizzle_verbose_t
 {
-  char hashed_password[DRIZZLE_MYSQL_PASSWORD_HASH];
+  DRIZZLE_VERBOSE_NEVER,
+  DRIZZLE_VERBOSE_FATAL,
+  DRIZZLE_VERBOSE_ERROR,
+  DRIZZLE_VERBOSE_INFO,
+  DRIZZLE_VERBOSE_DEBUG,
+  DRIZZLE_VERBOSE_CRAZY,
+  DRIZZLE_VERBOSE_MAX
+};
 
-  if (argc != 2)
-  {
-    std::cerr << "Usage: " << argv[0] << " <password to hash>" << std::endl;
-    return 1;
-  }
-
-  drizzle_mysql_password_hash(hashed_password, argv[1], strlen(argv[1]));
-
-  std::cout << hashed_password << std::endl;
-
-  return 0;
-}
+#ifndef __cplusplus
+typedef enum drizzle_verbose_t drizzle_verbose_t;
+#endif
