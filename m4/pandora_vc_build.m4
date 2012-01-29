@@ -60,7 +60,15 @@ AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
         PANDORA_VC_REVNO="${PANDORA_BZR_REVNO}"
         PANDORA_VC_REVID=`bzr log -r-1 --show-ids | grep revision-id | cut -f2 -d' ' | head -1`
         PANDORA_VC_BRANCH=`bzr nick`
+        # Check if this branch has just been tagged (not yet committed)
         PANDORA_VC_TAG=`bzr tags -r-1 | cut -f1 -d' ' | head -1`
+        # If not, then check if we have checked out a branch where most recent commit
+        # was tagged, and there are no further (uncommitted) changes in the branch.
+        if test "x${PANDORA_VC_TAG}" = "x"; then
+            if test `bzr diff | wc -l` = 0; then
+                PANDORA_VC_TAG=`bzr tags -r-2 | cut -f1 -d' ' | head -1`
+            fi
+        fi
         PANDORA_VC_LATEST_TAG=`bzr tags --sort=time | grep -v '\?'| cut -f1 -d' '  | tail -1`
         if test "x${vc_changelog}" = "xyes"; then
           bzr log --gnu > ChangeLog
