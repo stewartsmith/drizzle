@@ -33,6 +33,7 @@
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/time/curdate.h>
+#include <drizzled/function/time/curtime.h>
 #include <drizzled/function/time/date_add_interval.h>
 #include <drizzled/function/time/dayofmonth.h>
 #include <drizzled/function/time/extract.h>

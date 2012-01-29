@@ -176,6 +176,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/function/str/strfunc.h \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/time/curdate.h \
+            drizzled/function/time/curtime.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
 			      drizzled/function/time/date_format.h \
@@ -197,6 +198,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/function/time/quarter.h \
 			      drizzled/function/time/second.h \
 			      drizzled/function/time/sysdate_local.h \
+            drizzled/function/time/time.h \
 			      drizzled/function/time/timestamp_diff.h \
 			      drizzled/function/time/to_days.h \
 			      drizzled/function/time/typecast.h \
@@ -649,6 +651,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/function/str/strfunc.cc \
 			   drizzled/function/str/trim.cc \
 			   drizzled/function/time/curdate.cc \
+         drizzled/function/time/curtime.cc \
 			   drizzled/function/time/date.cc \
 			   drizzled/function/time/date_add_interval.cc \
 			   drizzled/function/time/date_format.cc \
@@ -670,6 +673,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/function/time/quarter.cc \
 			   drizzled/function/time/second.cc \
 			   drizzled/function/time/sysdate_local.cc \
+         drizzled/function/time/time.cc \
 			   drizzled/function/time/timestamp_diff.cc \
 			   drizzled/function/time/to_days.cc \
 			   drizzled/function/time/typecast.cc \
