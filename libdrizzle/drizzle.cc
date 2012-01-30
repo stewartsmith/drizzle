@@ -492,7 +492,7 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
     break;
 
   case DRIZZLE_CON_SOCKET_UDS:
-    drizzle_con_set_uds(con, from->socket.uds.sockaddr.sun_path);
+    drizzle_con_set_uds(con, from->socket.uds.path_buffer);
     break;
 
   default:
