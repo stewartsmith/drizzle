@@ -136,14 +136,26 @@ AC_DEFUN([PANDORA_VC_VERSION],[
     
   AS_IF([test "x${PANDORA_VC_TAG}" != "x"],[
     PANDORA_RELEASE_VERSION="${PANDORA_VC_TAG}"
+    # We now support release tags to append a descriptive tag -stable, -rc, -beta, -alpha, -milestone.
+    # But for the release id we want to remove that.
+    PANDORA_VC_TAG_JUST_NUMBERS=`echo ${PANDORA_VC_TAG} | sed -e 's/-stable//' -e 's/-rc//' -e 's/-beta//' -e 's/-alpha//' -e 's/-milestone//'`
+    # For release id we make sure each part is at least 2 digits, prepended with 0 when necessary. 
+    # Example: 1.2.3 should end up as 10203.
+    # The sed's from left to right:
+    #  1) Make sure minor version has at least 2 digits (2 -> 02)
+    #  2) Make sure build version has at least 2 digits (3 -> 03)
+    #  3) Remove dots (1.02.03 -> 10203)
     changequote(<<, >>)dnl
-    PANDORA_RELEASE_ID=`echo ${PANDORA_RELEASE_VERSION} | sed 's/[^0-9]//g'`
+    PANDORA_RELEASE_ID=`echo ${PANDORA_VC_TAG_JUST_NUMBERS} | sed -e 's/\.\([0-9]\)\./.0\1./' | sed -e 's/\.\([0-9]\)$/.0\1/' | sed 's/[^0-9]//g'`
     changequote([, ])dnl
   ],[
     AS_IF([test "x${PANDORA_VC_LATEST_TAG}" != "x"],[
-      PANDORA_RELEASE_VERSION="${PANDORA_VC_LATEST_TAG}.${PANDORA_VC_REVNO}"
+      # We now support release tags to append a descriptive tag -stable, -rc, -beta, -alpha, -milestone.
+      # Since this is just a snapshot build, we need to remove that.
+      PANDORA_VC_LATEST_TAG_JUST_NUMBERS=`echo ${PANDORA_VC_LATEST_TAG} | sed -e 's/-stable//' -e 's/-rc//' -e 's/-beta//' -e 's/-alpha//' -e 's/-milestone//'`
+      PANDORA_RELEASE_VERSION="${PANDORA_VC_LATEST_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}-snapshot"
       changequote(<<, >>)dnl
-      PANDORA_RELEASE_ID=`echo ${PANDORA_VC_LATEST_TAG} | sed 's/[^0-9]//g'`
+      PANDORA_RELEASE_ID=`echo ${PANDORA_VC_LATEST_TAG_JUST_NUMBERS} | sed -e 's/\.\([0-9]\)\./.0\1./' | sed -e 's/\.\([0-9]\)$/.0\1/' | sed 's/[^0-9]//g'`
       changequote([, ])dnl
     ],[
       PANDORA_RELEASE_VERSION="${PANDORA_RELEASE_DATE}.${PANDORA_VC_REVNO}"
