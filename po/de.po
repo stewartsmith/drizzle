@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-12-18 19:15+0000\n"
-"Last-Translator: Peter Volk <Unknown>\n"
+"PO-Revision-Date: 2012-01-30 15:35+0000\n"
+"Last-Translator: Dennis Baudys <Unknown>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2011-12-19 04:48+0000\n"
-"X-Generator: Launchpad (build 14525)\n"
+"X-Launchpad-Export-Date: 2012-01-31 05:00+0000\n"
+"X-Generator: Launchpad (build 14734)\n"
 
 msgid "Synonym for `help'."
 msgstr "Hilfe"
@@ -77,8 +77,8 @@ msgstr "Statusinformationen vom Server abrufen."
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
-"Setzte Ausgangsdatei [to_outfile]. Alles zur vorgegebenen Ausgangsdatei "
-"hinzufügen."
+"Ausgabedatei auf [to_outfile] festlegen. Alles wird in der Ausgabedatei "
+"angehängt."
 
 msgid "Use another database. Takes database name as argument."
 msgstr ""
@@ -1796,7 +1796,7 @@ msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
 msgstr ""
 
 msgid "Too many delayed threads in use"
-msgstr ""
+msgstr "Es werden zu viele verzögerte Threads benutzt"
 
 #, c-format
 msgid "Aborted connection %ld to db: '%-.192s' user: '%-.48s' (%-.64s)"
@@ -1832,7 +1832,7 @@ msgid "Got timeout writing communication packets"
 msgstr "Zeitüberschreitung beim Schreiben eines Kommunikationspackets"
 
 msgid "Result string is longer than 'max_allowed_packet' bytes"
-msgstr ""
+msgstr "Ergebnis-Zeichenkette ist länger als »max_allowed_packet« Bytes"
 
 msgid "The used table type doesn't support BLOB/TEXT columns"
 msgstr "Der gewählte Tabellentyp unterstützt keine BLOB- oder TEXT-Spalten"
@@ -1859,6 +1859,8 @@ msgid ""
 "Unable to open underlying table which is differently defined or of non-"
 "MyISAM type or doesn't exist"
 msgstr ""
+"Öffnen der zugrunde liegenden Tabelle nicht möglich, da sie anders definiert "
+"wurde, nicht vom Typ MyISAM ist oder nicht existiert."
 
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
@@ -1931,6 +1933,7 @@ msgstr "Das Einlagern von Tabellen unterstützt keinen binären Tabellen Dump"
 
 msgid "Binlog closed, cannot RESET MASTER"
 msgstr ""
+"Binäres Protokoll ist geschlossen – RESET MASTER kann nicht ausgeführt werden"
 
 #, c-format
 msgid "Failed rebuilding the index of  dumped table '%-.192s'"
@@ -1953,6 +1956,8 @@ msgid ""
 "Can't execute the given command because you have active locked tables or an "
 "active transaction"
 msgstr ""
+"Der angegebene Befehl kann nicht ausgeführt werden, weil Tabellen aktiv "
+"gesperrt sind oder eine Transaktion aktiv ist"
 
 #, c-format
 msgid "Unknown system variable '%-.64s'"
@@ -1969,6 +1974,8 @@ msgstr ""
 
 msgid "Some non-transactional changed tables couldn't be rolled back"
 msgstr ""
+"Einige Tabellen, die Änderungen ohne Transaktionsvorgang erfuhren, können "
+"nicht wiederhergestellt (Rollback) werden"
 
 msgid ""
 "Multi-statement transaction required more than 'max_binlog_cache_size' bytes "
@@ -1984,6 +1991,8 @@ msgstr ""
 msgid ""
 "This operation requires a running slave; configure slave and do START SLAVE"
 msgstr ""
+"Dieser Vorgang erfordert einen laufenden »Slave«; konfigurieren sie den "
+"»Slave« und führen START SLAVE aus"
 
 msgid "The server is not configured as slave; fix with CHANGE MASTER TO"
 msgstr ""
@@ -2014,6 +2023,7 @@ msgstr ""
 
 msgid "The total number of locks exceeds the lock table size"
 msgstr ""
+"Die Anzahl der Sperren überschreitet die in »lock table« angegebene Menge"
 
 msgid "Update locks cannot be acquired during a READ UNCOMMITTED transaction"
 msgstr ""
@@ -2076,9 +2086,13 @@ msgstr ""
 
 msgid "Can't execute the query because you have a conflicting read lock"
 msgstr ""
+"Die Abfrage kann nicht ausgeführt werden, da sie mit einer Lese-Sperre in "
+"Konflikt steht"
 
 msgid "Mixing of transactional and non-transactional tables is disabled"
 msgstr ""
+"Das Vermischen von transaktionsbasierten und nicht-transaktionsbasierten "
+"Tabellen ist ausgeschaltet"
 
 #, c-format
 msgid "Option '%s' used twice in statement"
@@ -2200,7 +2214,7 @@ msgstr "Alle Teile eines SPATIAL Index müssen als NOT NULL definiert sein"
 
 #, c-format
 msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
-msgstr ""
+msgstr "COLLATION '%s' ist nicht gültig für CHARACTER SET '%s'"
 
 msgid "Slave is already running"
 msgstr "Slave wurde bereits gestartet"
@@ -2221,22 +2235,26 @@ msgid ""
 "ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
 "data was corrupted)"
 msgstr ""
+"ZLIB: Nicht genug Platz im Ausgabepuffer (wahrscheinlich war die Angabe über "
+"die Größe der entpackten Daten fehlerhaft)"
 
 msgid "ZLIB: Input data corrupted"
-msgstr ""
+msgstr "ZLIB: Eingabedaten fehlerhaft"
 
 #, c-format
 msgid "%d line(s) were cut by GROUP_CONCAT()"
-msgstr ""
+msgstr "%d Zeile(n) wurden von GROUP_CONCAT() entfernt"
 
 #, c-format
 msgid "Row %ld doesn't contain data for all columns"
-msgstr ""
+msgstr "Zeile %ld enthält keine Daten in allen Spalten"
 
 #, c-format
 msgid ""
 "Row %ld was truncated; it contained more data than there were input columns"
 msgstr ""
+"Zeile %ld wurde gekürzt; sie enthielt mehr Daten als es Spalten für die "
+"Eingabe gab"
 
 #, c-format
 msgid ""
@@ -2249,7 +2267,7 @@ msgstr "Wert außerhalb des Wertebereichs für Spalte '%s' in Zeile %ld"
 
 #, c-format
 msgid "Data truncated for column '%s' at row %ld"
-msgstr ""
+msgstr "Daten für die Spalte »%s« wurden in der Zeile %ld gekürzt"
 
 #, c-format
 msgid "Using storage engine %s for table '%s'"
@@ -2258,12 +2276,17 @@ msgstr "Benutze Storage Engine %s für Tabelle '%s'"
 #, c-format
 msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
 msgstr ""
+"Nicht erlaubtes Vermischen der Kollationen (%s,%s) und (%s,%s) beim Vorgang "
+"»%s«"
 
 msgid "Cannot drop one or more of the requested users"
 msgstr ""
+"Einer oder mehrere der angegebenen Benutzer konnte(n) nicht gelöscht werden"
 
 msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
+"Bei einem oder mehreren der angegebenen Benutzer konnte(n) nicht alle Rechte "
+"entzogen werden"
 
 #, c-format
 msgid ""
@@ -2282,7 +2305,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown collation: '%-.64s'"
-msgstr ""
+msgstr "Unbekannte Kollation: »%-.64s«"
 
 msgid ""
 "SSL parameters in CHANGE MASTER are ignored because this Drizzle slave was "
@@ -2346,7 +2369,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown table engine '%s'"
-msgstr ""
+msgstr "Unbekannter Tabellentyp »%s«"
 
 #, c-format
 msgid "'%s' is deprecated; use '%s' instead"
@@ -2432,11 +2455,11 @@ msgstr "%s %s existiert nicht"
 
 #, c-format
 msgid "Failed to DROP %s %s"
-msgstr ""
+msgstr "DROP %s %s gescheitert"
 
 #, c-format
 msgid "Failed to CREATE %s %s"
-msgstr ""
+msgstr "CREATE %s %s gescheitert"
 
 #, c-format
 msgid "%s with no matching label: %s"
@@ -2453,6 +2476,8 @@ msgstr ""
 #, c-format
 msgid "Referring to uninitialized variable %s"
 msgstr ""
+"Es wird auf die Variable %s Bezug genommen, die jedoch nicht initialisiert "
+"wurde"
 
 #, c-format
 msgid "PROCEDURE %s can't return a result set in the given context"
@@ -2469,11 +2494,16 @@ msgid ""
 "The update log is deprecated and replaced by the binary log; SET "
 "SQL_LOG_UPDATE has been ignored"
 msgstr ""
+"Das herkömmliche Protokoll (update log) ist veraltet und wurde durch das "
+"binäre Protokoll (binary log) ersetzt; SET SQL_LOG_UPDATE wurde ignoriert"
 
 msgid ""
 "The update log is deprecated and replaced by the binary log; SET "
 "SQL_LOG_UPDATE has been translated to SET SQL_LOG_BIN"
 msgstr ""
+"Das herkömmliche Protokoll (update log) ist veraltet und wurde durch das "
+"binäre Protokoll (binary log) ersetzt; SET SQL_LOG_UPDATE wurde in SET "
+"SQL_LOG_BIN geändert"
 
 msgid "Query execution was interrupted"
 msgstr "Ausführung der Abfrage wurde unterbrochen"
@@ -2518,7 +2548,7 @@ msgid "Incorrect number of FETCH variables"
 msgstr ""
 
 msgid "No data - zero rows fetched, selected, or processed"
-msgstr ""
+msgstr "Keine Daten – Null Zeilen wurden abgerufen, gewählt oder verarbeitet"
 
 #, c-format
 msgid "Duplicate parameter: %s"
@@ -2538,7 +2568,7 @@ msgstr "Doppelter Cursor: %s"
 
 #, c-format
 msgid "Failed to ALTER %s %s"
-msgstr ""
+msgstr "ALTER %s %s gescheitert"
 
 msgid "Subquery value not supported"
 msgstr ""
@@ -2683,29 +2713,29 @@ msgid "Target log not found in binlog index"
 msgstr ""
 
 msgid "I/O error reading log index file"
-msgstr ""
+msgstr "E/A-Fehler beim Lesen der Protokoll-Indexdatei"
 
 msgid "Server configuration does not permit binlog purge"
-msgstr ""
+msgstr "Die Server-Konfiguration erlaubt kein Leeren des binären Protokolls"
 
 msgid "Failed on fseek()"
-msgstr ""
+msgstr "fseek() gescheitert"
 
 msgid "Fatal error during log purge"
-msgstr ""
+msgstr "Schwerer Fehler beim Leeren des Protokolls"
 
 msgid "A purgeable log is in use, will not purge"
 msgstr ""
 
 msgid "Unknown error during log purge"
-msgstr ""
+msgstr "Unbekannter Fehler beim Leeren des Protokolls"
 
 #, c-format
 msgid "Failed initializing relay log position: %s"
 msgstr ""
 
 msgid "You are not using binary logging"
-msgstr ""
+msgstr "Sie verwenden keine binäre Protokollierung"
 
 #, c-format
 msgid ""
@@ -2813,6 +2843,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s' %s\n"
 msgstr ""
+"%s: Bereit für Verbindungen.\n"
+"Version: »%s« %s\n"
 
 msgid "Can't load value from file with fixed size rows to variable"
 msgstr ""
@@ -3092,6 +3124,7 @@ msgstr "Führende Leerzeichen im Namen '%s' werden entfernt"
 
 msgid "Failed to read auto-increment value from storage engine"
 msgstr ""
+"Das Lesen des »auto-increment«-Wertes von der Speicher-Engine ist gescheitert"
 
 msgid "user name"
 msgstr "Benutzername"
@@ -3128,6 +3161,7 @@ msgstr ""
 #, c-format
 msgid "The foreign server, %s, you are trying to create already exists."
 msgstr ""
+"Der entfernte Server %s, den sie zu erzeugen versuchen, existiert bereits."
 
 #, c-format
 msgid ""
@@ -3222,7 +3256,7 @@ msgid ""
 msgstr ""
 
 msgid "Failed to create specific handler file"
-msgstr ""
+msgstr "Erzeugen der speziellen Handler-Datei gescheitert"
 
 msgid "A BLOB field is not allowed in partition function"
 msgstr "Ein BLOB Feld ist in einer Partitionierungsfunktion nicht gestattet"
@@ -3285,6 +3319,7 @@ msgstr "Doppelter Partitionsname %-.192s"
 
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
+"Für diesen Befehl ist das Ausschalten des binären Protokolls nicht erlaubt"
 
 msgid ""
 "When reorganizing a set of partitions they must be in consecutive order"
@@ -3340,6 +3375,8 @@ msgid ""
 "The size number was correct but we don't allow the digit part to be more "
 "than 2 billion"
 msgstr ""
+"Die angegebene Größe war formell korrekt, jedoch ist für den numerischen "
+"Teil keine Zahl erlaubt, die größer als 2 Milliarden ist"
 
 #, c-format
 msgid "Failed to alter: %s"
@@ -3385,7 +3422,7 @@ msgstr ""
 "wurde deaktiviert"
 
 msgid "Failed to open drizzle.event"
-msgstr ""
+msgstr "Öffnen von drizzle.event gescheitert"
 
 msgid "No datetime expression provided"
 msgstr "Es wurde kein DATETIME Ausdruck übergeben"
@@ -3399,9 +3436,11 @@ msgstr ""
 #, c-format
 msgid "Cannot load from drizzle.%s. The table is probably corrupted"
 msgstr ""
+"Von drizzle.%s kann nicht gelesen werden – die Tabelle ist wahrscheinlich "
+"defekt"
 
 msgid "Failed to delete the event from drizzle.event"
-msgstr ""
+msgstr "Löschen des Ereignisses aus drizzle.event gescheitert"
 
 msgid "Error during compilation of event's body"
 msgstr ""
@@ -3465,7 +3504,7 @@ msgid "This partition function is not allowed"
 msgstr "Diese Partitionsfunktion ist nicht gestattet"
 
 msgid "Error in DDL log"
-msgstr ""
+msgstr "Fehler im DDL-Protokoll"
 
 msgid "Not allowed to use NULL value in VALUES LESS THAN"
 msgstr ""
@@ -3500,7 +3539,7 @@ msgstr ""
 
 #, c-format
 msgid "Cannot activate '%-.64s' log"
-msgstr ""
+msgstr "Protokoll »%-.64s« kann nicht aktiviert werden"
 
 msgid "The server was not built with row-based replication"
 msgstr ""
@@ -3592,7 +3631,7 @@ msgstr "Masterkommando %s fehlgeschlagen: %s"
 
 #, c-format
 msgid "Binary logging not possible. Message: %s"
-msgstr ""
+msgstr "Binäres Protokollieren nicht möglich. Meldung: %s"
 
 #, c-format
 msgid "View `%-.64s`.`%-.64s` has no creation context"
@@ -3684,7 +3723,7 @@ msgid "Restore completed"
 msgstr "Restore abgeschlossen"
 
 msgid "Nothing to backup"
-msgstr ""
+msgstr "Nichts vorhanden für die Datensicherung"
 
 #, c-format
 msgid "Database '%-.64s' cannot be included in a backup"
@@ -3701,6 +3740,8 @@ msgid ""
 "Error during restore operation - server's error log contains more "
 "information about the error"
 msgstr ""
+"Fehler beim Wiederherstellen – im Fehlerprotokoll des Servers sind weitere "
+"Informationen zu diesem Fehler enthalten"
 
 msgid ""
 "Can't execute this command because another BACKUP/RESTORE operation is in "
@@ -3715,15 +3756,18 @@ msgstr "Fehler bei der Vorbereitung auf eine Restore-Operation"
 
 #, c-format
 msgid "Invalid backup location '%-.64s'"
-msgstr ""
+msgstr "Ungültiger Speicherort »%-.64s« für die Datensicherung"
 
 #, c-format
 msgid "Can't read backup location '%-.64s'"
 msgstr ""
+"Vom Speicherort »%-.64s« der Datensicherung kann nicht gelesen werden"
 
 #, c-format
 msgid "Can't write to backup location '%-.64s' (file already exists?)"
 msgstr ""
+"An den Speicherort »%-.64s« für die Datensicherung kann nicht geschrieben "
+"werden (existiert die Datei bereits?)"
 
 msgid "Can't enumerate server databases"
 msgstr ""
@@ -3788,13 +3832,14 @@ msgstr "Kann %-.64s nicht anlegen"
 
 msgid "Can't allocate buffer for image data transfer"
 msgstr ""
+"Für die Übertragung des Abbilds kann kein Zwischenspeicher reserviert werden"
 
 #, c-format
 msgid "Error when writing %-.64s backup image data (for table #%d)"
 msgstr ""
 
 msgid "Error when reading data from backup stream"
-msgstr ""
+msgstr "Fehler beim Lesen von Daten aus dem Datensicherung-Stream"
 
 msgid "Can't go to the next chunk in backup stream"
 msgstr ""
@@ -3906,6 +3951,7 @@ msgstr ""
 
 msgid "Primary key cannot be defined upon a virtual column."
 msgstr ""
+"Ein Primärschlüssel kann nicht für eine virtuelle Spalte vergeben werden."
 
 msgid "Key/Index cannot be defined on a non-stored virtual column."
 msgstr ""
@@ -3920,7 +3966,7 @@ msgstr ""
 
 #, c-format
 msgid "'%s' is not yet supported for virtual columns."
-msgstr ""
+msgstr "»%s« wird noch nicht für virtuelle Spalten unterstützt."
 
 msgid "Constant expression in virtual column function is not allowed."
 msgstr ""
@@ -3965,11 +4011,11 @@ msgid "Received an invalid enum value '%s'."
 msgstr ""
 
 msgid "Tables which are replicated require a primary key."
-msgstr ""
+msgstr "Tabellen, die repliziert sind, erfordern einen Primärschlüssel."
 
 #, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr ""
+msgstr "Fehlerhafte oder ungültige Definition der Tabelle: %s"
 
 #, c-format
 msgid "Corrupt or invalid schema definition for %s : %s"
@@ -4070,7 +4116,7 @@ msgstr "Datei '%s' (Dateinummner: %d) wurde nicht geschlossen"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
-msgstr ""
+msgstr "Fehler: Verzeichnis konnte nicht geöffnet werden: %s\n"
 
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
@@ -4109,7 +4155,7 @@ msgstr ""
 
 #, c-format
 msgid "GPB ERROR: %s.\n"
-msgstr ""
+msgstr "GPB-FEHLER: %s.\n"
 
 #, c-format
 msgid ""
@@ -4117,10 +4163,13 @@ msgid ""
 "\n"
 "%s\n"
 msgstr ""
+"HEXDUMP:\n"
+"\n"
+"%s\n"
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
-msgstr ""
+msgstr "Befehl kann nicht verarbeitet werden. Fehler erhalten: %s.\n"
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
@@ -4149,7 +4198,7 @@ msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
 msgid "Out of memory."
-msgstr ""
+msgstr "Nicht genügend Speicher."
 
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
@@ -4318,7 +4367,7 @@ msgid "bind() failed with errno: %d\n"
 msgstr ""
 
 msgid "Do you already have another drizzled running?\n"
-msgstr ""
+msgstr "Läuft bereits ein anderer »drizzled«?\n"
 
 #, c-format
 msgid "listen() failed with errno %d\n"
@@ -4448,7 +4497,7 @@ msgstr "Fehler %d beim Lesen der Tabelle '%s'"
 
 #, c-format
 msgid "Table %s has invalid/unknown collation: %d,%s"
-msgstr ""
+msgstr "Die Tabelle %s hat eine ungültige/unbekannte Kollation: %d,%s"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
