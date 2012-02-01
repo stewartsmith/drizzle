@@ -418,12 +418,12 @@ Adding a Drizzle user to LDAP
 
 You could just setup Drizzle to authenticate against standard LDAP accounts like
 John Doe above. But the recommended way is to add a specific Drizzle schema.
-You will find this in ``$DRIZZLE_ROOT/share/drizzle7/drizzle_openldap.ldif``.
+You will find this in ``$DRIZZLE_ROOT/share/drizzle/drizzle_openldap.ldif``.
 You can add it to your LDAP schema like this:
 
 .. code-block:: none
     
-    $ sudo ldapadd -Y EXTERNAL -H ldapi:/// -f share/drizzle7/drizzle_openldap.ldif 
+    $ sudo ldapadd -Y EXTERNAL -H ldapi:/// -f share/drizzle/drizzle_openldap.ldif 
     SASL/EXTERNAL authentication started
     SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
     SASL SSF: 0
@@ -464,7 +464,7 @@ Let's create the user hingo:
 
 .. code-block:: none
     
-    $ share/drizzle7/drizzle_create_ldap_user -p secret -b bin/drizzle_password_hash -u hingo -n 1 -l "ou=people,dc=example,dc=com" > hingo.example.com.ldif
+    $ share/drizzle/drizzle_create_ldap_user -p secret -b bin/drizzle_password_hash -u hingo -n 1 -l "ou=people,dc=example,dc=com" > hingo.example.com.ldif
     $ cat hingo.example.com.ldif 
     dn: uid=hingo,ou=people,dc=example,dc=com                                                                                                                                           
     objectclass: top                                                                                                                                                                    

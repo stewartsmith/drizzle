@@ -20,7 +20,7 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle],[drizzle7],[http://drizzle.org/])
+AC_INIT([drizzle],[7.1],[http://bugs.launchpad.net/drizzle],[drizzle],[http://drizzle.org/])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
@@ -171,7 +171,7 @@ AC_CONFIG_FILES(Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/rpm/SPECS/drizzle7.spec dnl
  support-files/deb/debian/changelog dnl
- support-files/drizzle7.pc dnl
+ support-files/drizzle.pc dnl
  support-files/libdrizzle.pc dnl
  support-files/libdrizzle-1.0.pc dnl
  support-files/smf/install.sh dnl
