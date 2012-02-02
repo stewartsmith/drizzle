@@ -94,7 +94,7 @@ struct drizzle_con_tcp_st
   in_port_t port;
   struct addrinfo *addrinfo;
   char *host;
-  char host_buffer[NI_MAXHOST];
+  char host_buffer[LIBDRIZZLE_NI_MAXHOST];
 };
 
 /**
@@ -102,8 +102,7 @@ struct drizzle_con_tcp_st
  */
 struct drizzle_con_uds_st
 {
-  struct addrinfo addrinfo;
-  struct sockaddr_un sockaddr;
+  char path_buffer[LIBDRIZZLE_NI_MAXHOST];
 };
 
 /**

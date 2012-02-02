@@ -1366,7 +1366,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::unknown_option &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort << "Use --help to get a list of available options.  " << err.what();
   }
 
   try
