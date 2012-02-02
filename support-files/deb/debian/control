@@ -1,5 +1,5 @@
 Source: drizzle
-Section: misc
+Section: database
 Priority: optional
 Maintainer: Drizzle Development Team <drizzle-developers@launchpad.net>
 Uploaders: Clint Byrum <clint@fewbar.com>, Henrik Ingo <henrik.ingo@avoinelama.fi>
@@ -369,7 +369,8 @@ Description: API Documentation for Drizzle internals
 
 
 Package: drizzle-dev
-Architecture: all
+Architecture: any
+Section: devel
 Depends: drizzle-plugin-dev (= ${source:Version}),
  bzr,
  bzrtools,
@@ -385,12 +386,24 @@ Depends: drizzle-plugin-dev (= ${source:Version}),
  systemtap-sdt-dev,
  libjs-jquery,
  ${misc:Depends} 
+Recommends: drizzle-dev-doc
 Description: Development files for Drizzle development
  The Drizzle project is building a database optimized for Cloud and Net 
  applications. It is being designed for massive concurrency on modern 
  multi-cpu/core architecture. The code is originally derived from MySQL. 
  .
  This is an empty package depends on everything needed to hack on Drizzle.
+
+Package: drizzle-dev-doc
+Section: doc
+Architecture: all
+Depends: libjs-jquery, ${misc:Depends}
+Description: API Documentation for drizzle
+ The Drizzle project is building a database optimized for Cloud and Net
+ applications. It is being designed for massive concurrency on modern
+ multi-cpu/core architecture. The code is originally derived from MySQL.
+ .
+ This package includes the doxygen documentation for drizzle's API.
 
 Package: drizzle-dbg
 Section: debug
@@ -430,6 +443,7 @@ Description: library for the Drizzle and MySQL protocols, debug symbols
  This package provides debugging symbols.
 
 Package: libdrizzle1
+Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: library for the Drizzle and MySQL protocols

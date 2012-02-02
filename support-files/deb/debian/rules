@@ -12,13 +12,14 @@ TMP=$(CURDIR)/debian/tmp/
 	dh $@
 
 override_dh_auto_configure:
+	export deb_linuxdistro=`lsb_release --id | sed 's/Distributor ID:\t//'`
 	bash config/autorun.sh
 	dh_auto_configure -- \
 	  --disable-rpath \
 	  --localstatedir=/var/lib/drizzle \
 	  --disable-mysql-protocol-plugin \
 	  --disable-mysql-unix-socket-protocol-plugin \
-	  --with-comment="Ubuntu"
+	  --with-comment="${deb_linuxdistro}"
 
 override_dh_auto_build:
 	${MAKE} ${MAKE_J}
