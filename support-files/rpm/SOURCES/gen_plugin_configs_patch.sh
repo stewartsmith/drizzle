@@ -16,18 +16,18 @@ fi
 
 version=$1
 
-spectool -g ../SPECS/drizzle7.spec 
+spectool -g ../SPECS/drizzle.spec 
 
 rm -f plugin-configs.patch
-rm -rf drizzle7-${version}/
-tar -zxf drizzle7-${version}.tar.gz
+rm -rf drizzle-${version}/
+tar -zxf drizzle-${version}.tar.gz
 
 for i in $(ls conf.d | sed 's/.cnf//g'); do
     _name=$(echo $i | sed 's/-/_/g')
-    touch drizzle7-${version}/plugin/${_name}/plugin.cnf.orig
-    cp -a conf.d/${i}.cnf drizzle7-${version}/plugin/${_name}/plugin.cnf  
-    diff -Naur drizzle7-${version}/plugin/${_name}/plugin.cnf.orig \
-        drizzle7-${version}/plugin/${_name}/plugin.cnf >> plugin-configs.patch 
+    touch drizzle-${version}/plugin/${_name}/plugin.cnf.orig
+    cp -a conf.d/${i}.cnf drizzle-${version}/plugin/${_name}/plugin.cnf  
+    diff -Naur drizzle-${version}/plugin/${_name}/plugin.cnf.orig \
+        drizzle-${version}/plugin/${_name}/plugin.cnf >> plugin-configs.patch 
 done
 
 echo "wrote ./plugin-configs.patch"

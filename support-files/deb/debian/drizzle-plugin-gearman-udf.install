@@ -1,2 +1,2 @@
-usr/lib/drizzle7/libgearman_udf_plugin.so
+usr/lib/drizzle/libgearman_udf_plugin.so
 etc/drizzle/conf.d/gearman-udf.cnf

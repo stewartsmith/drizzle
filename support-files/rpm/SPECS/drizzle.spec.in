@@ -46,6 +46,7 @@
 
 Name:       @PACKAGE@
 Summary:    A Lightweight SQL Database for Cloud and Web 
+Epoch:      1
 Version:    @PANDORA_RELEASE_VERSION@
 Release:    1%{?dist}
 
@@ -99,8 +100,8 @@ Requires:       boost-iostreams
 Requires:       v8
 %endif
 
-Provides:       drizzle = %{version}-%{release}
-Obsoletes:      drizzle < 2010.09.1802
+Provides:       drizzle = %{epoch}:%{version}-%{release}
+Obsoletes:      drizzle7
 
 %description
 Drizzle is a transactional SQL92 compliant relational database, geared
@@ -109,9 +110,9 @@ towards a plugin based architecture.
 %package devel
 Summary:    Header Files and Development Libraries for %{name}
 Group:      Applications/Databases 
-Requires:   %{name} = %{version}-%{release}
-Provides:   drizzle-devel = %{version}-%{release}
-Obsoletes:  drizzle-devel < 2010.09.1802
+Requires:   %{name} = %{epoch}:%{version}-%{release}
+Provides:   drizzle-devel = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-devel
 
 %description devel
 This package contains the header files and development libraries
@@ -121,9 +122,9 @@ you will need to install %{name}-devel.
 %package lib 
 Summary:    Common Libraries Shared by %{name} Client and Server
 Group:      Applications/Databases 
-Requires:   %{name} = %{version}-%{release}
+Requires:   %{name} = %{epoch}:%{version}-%{release}
 Provides:   drizzle-lib = %{version}-%{release}
-Obsoletes:  drizzle-lib < 2010.09.1802
+Obsoletes:  drizzle7-lib
 
 %description lib 
 Common Libraries Shared by %{name} Client and Server
@@ -131,22 +132,27 @@ Common Libraries Shared by %{name} Client and Server
 %package client
 Summary:    Client Utilities for %{name}
 Group:      Applications/Databases 
-Requires:   %{name} = %{version}-%{release}
+Requires:   %{name} = %{epoch}:%{version}-%{release}
 Requires:   libdrizzle
+Obsoletes:  drizzle7-client
 
 %description client
 Client utilities for %{name}.
 
+# FIX ME: Brian wants to release lp:libdrizzle separately, with different
+# version numbers (starting from 1.0.x) It just occurred to me we have to
+# do a different specfile for libdrizzle in that case.
 %package -n libdrizzle
 Summary:    Drizzle Client & Protocol Library
 Group:      System Environment/Libraries
+Obsoletes:  libdrizzle1
 
 # All code is BSD, except libdrizzle/sha1.{c,h} which are Public Domain
 License:        BSD and Public Domain
 BuildRequires:  doxygen
 
 %description -n libdrizzle
-libdrizzle is the the client and protocol library for the Drizzle project. The
+libdrizzle is the client and protocol library for the Drizzle project. The
 server, drizzled, will use this as for the protocol library, as well as the
 client utilities and any new projects that require low-level protocol
 communication (like proxies). Other language interfaces (PHP extensions, SWIG,
@@ -154,13 +160,13 @@ communication (like proxies). Other language interfaces (PHP extensions, SWIG,
 
 Note that we have reverted this package back to the more stable 1.0 version.
 Previously 1.0 was made available as libdrizzle1 - that is now this
-package. libdrizzle 2.0 is available in the source tree but currently
+package. libdrizzle 2.0 is still in the source tree but currently
 not packaged at all.
 
 %package -n libdrizzle-devel
 Summary:    Drizzle Client & Protocol Library - Header Files
 Group:      Development/Libraries
-Requires:   libdrizzle = %{version}-%{release}
+Requires:   libdrizzle = %{epoch}:%{version}-%{release}
 
 %description -n libdrizzle-devel
 Development files for the Drizzle Client & Protocol Library.
@@ -168,10 +174,10 @@ Development files for the Drizzle Client & Protocol Library.
 %package server
 Summary:    Server Daemon and Utilities for %{name}
 Group:      Applications/Databases 
-Requires:   %{name} = %{version}-%{release}
-Provides:   drizzle-server = %{version}-%{release}
-Obsoletes:  drizzle-server < 2010.09.1802
-Obsoletes:  drizzle7-plugin-sleep < 2011.03.11
+Requires:   %{name} = %{epoch}:%{version}-%{release}
+Provides:   drizzle-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-server 
+Obsoletes:  drizzle7-plugin-sleep
 
 %description server
 Server daemon and utilities for %{name}.
@@ -182,7 +188,8 @@ Server daemon and utilities for %{name}.
 %package plugin-auth-file
 Summary: File Based Authentication Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-auth-file
 
 %description plugin-auth-file
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -196,7 +203,8 @@ This package provides the File Based Authentication plugin.
 %package plugin-auth-http
 Summary: HTTP Authentication Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-auth-http
 
 %description plugin-auth-http
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -210,9 +218,10 @@ This package provides the HTTP Authentication plugin.
 %package plugin-auth-ldap
 Summary: LDAP Authentication Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
 BuildRequires: openldap-devel
 Requires: openldap
+Obsoletes:  drizzle7-plugin-auth-ldap
 
 %description plugin-auth-ldap
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -226,7 +235,8 @@ This package provides the LDAP Authentication plugin.
 %package plugin-auth-pam
 Summary: PAM Authentication Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-auth-pam
 
 %description plugin-auth-pam
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -240,7 +250,8 @@ This package provides the PAM Authentication plugin.
 %package plugin-debug
 Summary: Debug Console Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-debug
 
 %description plugin-debug
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -254,7 +265,8 @@ This package provides the Debug Console plugin.
 %package plugin-filtered-replicator
 Summary: Filtered Replicator Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-filtered-replicator
 
 %description plugin-filtered-replicator
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -268,9 +280,10 @@ This package provides the Filtered Replicator plugin.
 %package plugin-gearman-udf
 Summary: Gearman User Defined Functions Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
 Requires: libgearman
 BuildRequires: libgearman-devel
+Obsoletes:  drizzle7-plugin-gearman-udf
 
 %description plugin-gearman-udf
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -285,8 +298,9 @@ This package provides the Gearman User Defined Functions plugin.
 Summary: Gearman Logging Plugin for %{name}
 Group: Applications/Databases
 BuildRequires: libgearman-devel
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
 Requires: libgearman
+Obsoletes:  drizzle7-plugin-logging-gearman
 
 %description plugin-logging-gearman
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -300,7 +314,8 @@ This package provides the Gearman Logging plugin.
 %package plugin-logging-query
 Summary: Query Logging Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-logging-query
 
 %description plugin-logging-query
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -314,8 +329,8 @@ This package provides the Query Logging plugin.
 %package plugin-mysql-protocol
 Summary: MySQL Protocol Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
-Obsoletes: drizzle-mysql-protocol <= 2010.01.08-1
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes: drizzle7-plugin-mysql-protocol
 
 %description plugin-mysql-protocol
 Drizzle is a database optimized for Cloud and Net applications. It is designed 
@@ -329,7 +344,8 @@ This package provides the MySQL Protocol plugin.
 %package plugin-rabbitmq
 Summary: RabbitMQ Transaction Log Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-rabbitmq
 
 %description plugin-rabbitmq
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -343,7 +359,8 @@ This package provides the RabbitMQ Transaction Log plugin.
 %package plugin-simple-user-policy
 Summary: Simple User Policy Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-simple-user-policy
 
 %description plugin-simple-user-policy
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -357,7 +374,8 @@ This package provides the Simple User Policy plugin.
 %package plugin-slave
 Summary: Slave Replication Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-slave
 
 %description plugin-slave
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -371,7 +389,8 @@ This package provides the Slave Replication plugin.
 %package plugin-regex-policy
 Summary: Regex Policy Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-regex-policy
 
 %description plugin-regex-policy
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -385,7 +404,8 @@ This package provides the Regex Policy plugin.
 %package plugin-http-functions
 Summary: HTTP Functions Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-http-functions
 
 %description plugin-http-functions
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -399,7 +419,8 @@ This package provides the HTTP Functions plugin.
 %package plugin-json-server
 Summary: JSON Server Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-json-server
 
 %description plugin-json-server
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -413,7 +434,8 @@ This package provides the JSON Server plugin.
 %package plugin-auth-schema
 Summary: Auth Schema Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-auth-schema
 
 %description plugin-auth-schema
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -427,7 +449,8 @@ This package provides the Auth Schema plugin.
 %package plugin-query-log
 Summary: Query Log Plugin for %{name}
 Group: Applications/Databases
-Requires: %{name}-server = %{version}-%{release}
+Requires: %{name}-server = %{epoch}:%{version}-%{release}
+Obsoletes:  drizzle7-plugin-query-log
 
 %description plugin-query-log
 Drizzle is a database optimized for Cloud and Net applications. It is designed
@@ -524,12 +547,6 @@ optionally_include query_log %{with query_log}
 
 %{__make} install DESTDIR="%{buildroot}" AM_INSTALL_PROGRAM_FLAGS=""
 
-# Fix broken symlink
-rm -f %{buildroot}%{_sbindir}/drizzled %{buildroot}%{_sbindir}/drizzled
-pushd %{buildroot}%{_sbindir}
-ln -s ./drizzled7 ./drizzled
-popd
-
 # Supporting files
 %{__install} -m 0644 %SOURCE1 %{buildroot}%{_sysconfdir}/drizzle/drizzled.cnf
 %{__install} -m 0644 %SOURCE2 %{buildroot}%{_sysconfdir}/drizzle/drizzle.cnf
@@ -542,16 +559,16 @@ for i in $(echo *); do
 done
 popd
 
-# Find translations in /usr/share/locale/*/LC_MESSAGES/drizzle7.mo
-# And mark them with %lang(locale) and %doc, save all of that in drizzle7.lang
+# Find translations in /usr/share/locale/*/LC_MESSAGES/drizzle.mo
+# And mark them with %lang(locale) and %doc, save all of that in drizzle.lang
 # They are then included in %files below with -f option
 %find_lang %{name}
 
 # Cleanup
-%{__rm} -f %{buildroot}%{_datadir}/drizzle7/drizzle.server
-%{__rm} -f %{buildroot}%{_libdir}/drizzle7/*.la
+%{__rm} -f %{buildroot}%{_datadir}/drizzle/drizzle.server
+%{__rm} -f %{buildroot}%{_libdir}/drizzle/*.la
 %{__rm} -f %{buildroot}%{_libdir}/libdrizzledmessage.la
-%{__rm} -f %{buildroot}%{_datadir}/drizzle7/README.auth_ldap
+%{__rm} -f %{buildroot}%{_datadir}/drizzle/README.auth_ldap
 
 # Remove RPATH:  Should no longer do this after the following is 
 # resolved:
@@ -564,7 +581,7 @@ chrpath --delete %{buildroot}%{_bindir}/drizzledump
 chrpath --delete %{buildroot}%{_bindir}/drizzleimport
 chrpath --delete %{buildroot}%{_bindir}/drizzle
 chrpath --delete %{buildroot}%{_bindir}/drizzletrx
-chrpath --delete %{buildroot}%{_sbindir}/drizzled7
+chrpath --delete %{buildroot}%{_sbindir}/drizzled
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -623,43 +640,42 @@ fi
 %attr(0755,drizzle,drizzle) %dir %{_localstatedir}/lib/drizzle
 %attr(0755,drizzle,drizzle) %dir %{_localstatedir}/run/drizzle
 %config(noreplace) %{_sysconfdir}/drizzle/drizzled.cnf
-%{_mandir}/man8/drizzled7.8.gz
+%{_mandir}/man8/drizzled.8.gz
 %{_sysconfdir}/init.d/drizzled
-%{_sbindir}/drizzled7
 %{_sbindir}/drizzled
 
 # These are core plugins bundled with -server 
-%{_libdir}/drizzle7/libascii_plugin.so
-%{_libdir}/drizzle7/libbenchmark_plugin.so
-%{_libdir}/drizzle7/libcharlength_plugin.so
-%{_libdir}/drizzle7/libcompression_plugin.so
-%{_libdir}/drizzle7/libconnection_id_plugin.so
-%{_libdir}/drizzle7/libcrc32_plugin.so
-%{_libdir}/drizzle7/libdefault_replicator_plugin.so
-%{_libdir}/drizzle7/libhex_functions_plugin.so
-%{_libdir}/drizzle7/liblength_plugin.so
-%{_libdir}/drizzle7/liblogging_query_plugin.so
-%{_libdir}/drizzle7/libmd5_plugin.so
-%{_libdir}/drizzle7/libmulti_thread_plugin.so
-%{_libdir}/drizzle7/libperformance_dictionary_plugin.so
-%{_libdir}/drizzle7/librand_function_plugin.so
-%{_libdir}/drizzle7/libreverse_function_plugin.so
-%{_libdir}/drizzle7/libshow_schema_proto_plugin.so
-%{_libdir}/drizzle7/libsubstr_functions_plugin.so
-%{_libdir}/drizzle7/libshutdown_function_plugin.so
-%{_libdir}/drizzle7/libfunction_dictionary_plugin.so
-%{_libdir}/drizzle7/libutility_dictionary_plugin.so
-%{_libdir}/drizzle7/libtrigger_dictionary_plugin.so
-%{_libdir}/drizzle7/libstorage_engine_api_tester_plugin.so
-%{_libdir}/drizzle7/liblogging_stats_plugin.so
-%{_libdir}/drizzle7/libversion_plugin.so
-%{_libdir}/drizzle7/libuuid_function_plugin.so
-%{_libdir}/drizzle7/libjs_plugin.so
+%{_libdir}/drizzle/libascii_plugin.so
+%{_libdir}/drizzle/libbenchmark_plugin.so
+%{_libdir}/drizzle/libcharlength_plugin.so
+%{_libdir}/drizzle/libcompression_plugin.so
+%{_libdir}/drizzle/libconnection_id_plugin.so
+%{_libdir}/drizzle/libcrc32_plugin.so
+%{_libdir}/drizzle/libdefault_replicator_plugin.so
+%{_libdir}/drizzle/libhex_functions_plugin.so
+%{_libdir}/drizzle/liblength_plugin.so
+%{_libdir}/drizzle/liblogging_query_plugin.so
+%{_libdir}/drizzle/libmd5_plugin.so
+%{_libdir}/drizzle/libmulti_thread_plugin.so
+%{_libdir}/drizzle/libperformance_dictionary_plugin.so
+%{_libdir}/drizzle/librand_function_plugin.so
+%{_libdir}/drizzle/libreverse_function_plugin.so
+%{_libdir}/drizzle/libshow_schema_proto_plugin.so
+%{_libdir}/drizzle/libsubstr_functions_plugin.so
+%{_libdir}/drizzle/libshutdown_function_plugin.so
+%{_libdir}/drizzle/libfunction_dictionary_plugin.so
+%{_libdir}/drizzle/libutility_dictionary_plugin.so
+%{_libdir}/drizzle/libtrigger_dictionary_plugin.so
+%{_libdir}/drizzle/libstorage_engine_api_tester_plugin.so
+%{_libdir}/drizzle/liblogging_stats_plugin.so
+%{_libdir}/drizzle/libversion_plugin.so
+%{_libdir}/drizzle/libuuid_function_plugin.so
+%{_libdir}/drizzle/libjs_plugin.so
 
 %files devel
 %defattr (-,root,root,-) 
-%{_includedir}/drizzle7
-%{_libdir}/pkgconfig/drizzle7.pc
+%{_includedir}/drizzle
+%{_libdir}/pkgconfig/drizzle.pc
 
 %files -n libdrizzle
 %defattr (-,root,root,-)
@@ -681,14 +697,14 @@ fi
 %files plugin-auth-file
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/auth-file.cnf
-%{_libdir}/drizzle7/libauth_file_plugin.so
+%{_libdir}/drizzle/libauth_file_plugin.so
 %endif
 
 %if %{with auth_http}
 %files plugin-auth-http
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/auth-http.cnf
-%{_libdir}/drizzle7/libauth_http_plugin.so
+%{_libdir}/drizzle/libauth_http_plugin.so
 %endif
 
 %if %{with auth_ldap}
@@ -699,56 +715,56 @@ fi
 %{_datadir}/%{name}/drizzle_openldap.ldif
 %{_datadir}/%{name}/drizzle_openldap.schema
 %{_datadir}/%{name}/drizzle_create_ldap_user
-%{_libdir}/drizzle7/libauth_ldap_plugin.so
+%{_libdir}/drizzle/libauth_ldap_plugin.so
 %endif
 
 %if %{with auth_pam}
 %files plugin-auth-pam
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/auth-pam.cnf
-%{_libdir}/drizzle7/libauth_pam_plugin.so
+%{_libdir}/drizzle/libauth_pam_plugin.so
 %endif
 
 %if %{with debug}
 %files plugin-debug
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/debug.cnf
-%{_libdir}/drizzle7/libdebug_plugin.so
+%{_libdir}/drizzle/libdebug_plugin.so
 %endif
 
 %if %{with filtered_replicator}
 %files plugin-filtered-replicator
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/filtered-replicator.cnf
-%{_libdir}/drizzle7/libfiltered_replicator_plugin.so
+%{_libdir}/drizzle/libfiltered_replicator_plugin.so
 %endif
 
 %if %{with gearman_udf}
 %files plugin-gearman-udf
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/gearman-udf.cnf
-%{_libdir}/drizzle7/libgearman_udf_plugin.so
+%{_libdir}/drizzle/libgearman_udf_plugin.so
 %endif
 
 %if %{with logging_gearman}
 %files plugin-logging-gearman
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/logging-gearman.cnf
-%{_libdir}/drizzle7/liblogging_gearman_plugin.so
+%{_libdir}/drizzle/liblogging_gearman_plugin.so
 %endif
 
 %if %{with logging_query}
 %files plugin-logging-query
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/logging-query.cnf
-%{_libdir}/drizzle7/liblogging_query_plugin.so
+%{_libdir}/drizzle/liblogging_query_plugin.so
 %endif
 
 %if %{with mysql_protocol}
 %files plugin-mysql-protocol
 %defattr (-,root,root,-)
 # mysql_protocol is static
-# %%{_libdir}/drizzle7/libmysql_protocol_plugin.so
+# %%{_libdir}/drizzle/libmysql_protocol_plugin.so
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/mysql-protocol.cnf
 %endif
 
@@ -756,56 +772,56 @@ fi
 %files plugin-rabbitmq
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/rabbitmq.cnf
-%{_libdir}/drizzle7/librabbitmq_plugin.so
+%{_libdir}/drizzle/librabbitmq_plugin.so
 %endif
 
 %if %{with simple_user_policy}
 %files plugin-simple-user-policy
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/simple-user-policy.cnf
-%{_libdir}/drizzle7/libsimple_user_policy_plugin.so
+%{_libdir}/drizzle/libsimple_user_policy_plugin.so
 %endif
 
 %if %{with slave}
 %files plugin-slave
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/slave.cnf
-%{_libdir}/drizzle7/libslave_plugin.so
+%{_libdir}/drizzle/libslave_plugin.so
 %endif
 
 %if %{with regex_policy}
 %files plugin-regex-policy
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/regex-policy.cnf
-%{_libdir}/drizzle7/libregex_policy_plugin.so
+%{_libdir}/drizzle/libregex_policy_plugin.so
 %endif
 
 %if %{with http_functions}
 %files plugin-http-functions
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/http-functions.cnf
-%{_libdir}/drizzle7/libhttp_functions_plugin.so
+%{_libdir}/drizzle/libhttp_functions_plugin.so
 %endif
 
 %if %{with json_server}
 %files plugin-json-server
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/json-server.cnf
-%{_libdir}/drizzle7/libjson_server_plugin.so
+%{_libdir}/drizzle/libjson_server_plugin.so
 %endif
 
 %if %{with auth_schema}
 %files plugin-auth-schema
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/auth-schema.cnf
-%{_libdir}/drizzle7/libauth_schema_plugin.so
+%{_libdir}/drizzle/libauth_schema_plugin.so
 %endif
 
 %if %{with query_log}
 %files plugin-query-log
 %defattr (-,root,root,-)
 %config(noreplace) %{_sysconfdir}/drizzle/conf.d/query-log.cnf
-%{_libdir}/drizzle7/libquery_log_plugin.so
+%{_libdir}/drizzle/libquery_log_plugin.so
 %endif
 
 
@@ -820,6 +836,11 @@ fi
 * %(date "+%a %b %d %Y") (Automated Drizzle RPM build) <drizzle-discuss@launchpad.net> - %{version}-%{release}
 - New RPMs against newest upstream sources. Please see Drizzle release
   notes for details: https://launchpad.net/drizzle/+milestones
+
+* Thu Feb 02 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 7.1.31-1
+- Drizzle name and versioning is changing from drizzle7-2012.01.30 to
+  drizzle-7.1.31. Changing package name, versions accordingly, also need
+  to add a new epoch since 7 < 2012.
 
 * Fri Jan 06 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 2011.11.29.2484-1
 - Moved this spec file into drizzle repository so we can build rpms

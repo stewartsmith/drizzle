@@ -1,2 +1,2 @@
-usr/lib/drizzle7/libfiltered_replicator_plugin.so
+usr/lib/drizzle/libfiltered_replicator_plugin.so
 etc/drizzle/conf.d/filtered-replicator.cnf

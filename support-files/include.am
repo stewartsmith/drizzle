@@ -55,7 +55,7 @@ rpm: dist
 
 # TODO:
 # Ultimately the goal is to also support the simple way:
-# rpmbuild -ta drizzle7-*.tar.gz
+# rpmbuild -ta drizzle-*.tar.gz
 # To get there we must work away all extra Patch Source files from the spec file.
 
 

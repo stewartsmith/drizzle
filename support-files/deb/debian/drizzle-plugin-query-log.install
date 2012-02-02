@@ -1,2 +1,2 @@
 etc/drizzle/conf.d/query-log.cnf
-usr/lib/drizzle7/libquery_log_plugin.so
+usr/lib/drizzle/libquery_log_plugin.so
