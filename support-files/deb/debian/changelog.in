@@ -1,4 +1,4 @@
-@PACKAGE@ (@PANDORA_RELEASE_VERSION@-1) unstable; urgency=low
+@PACKAGE@ (1:@PANDORA_RELEASE_VERSION@-1) unstable; urgency=low
 
   * New DEBs against newest upstream sources. Please see Drizzle release
     notes for details: https://launchpad.net/drizzle/+milestones
