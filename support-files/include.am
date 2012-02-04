@@ -61,15 +61,11 @@ rpm: dist
 
 # For convenience we support make deb directly from bzr repo ...kind of. 
 # In fact, everything is done inside a temp dir that is deleted at the end.
-# Workaround:
-# dpkg-source isn't able to hande drizzle_7.1.31.1234-snapshot.orig.tar.gz 
-# but if we instead call it just drizzle_7.1.31.1234.orig.tar.gz it works fine.
 deb: dist
 	rm -rf deb-work-dir
 	mkdir deb-work-dir
 	cp ${distdir}.tar.gz deb-work-dir/
 	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/ `.orig.tar.gz
-	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/ | sed -e 's/-[a-z]*//'`.orig.tar.gz
 	cd deb-work-dir && tar xf ${distdir}.tar.gz
 	cp -ar deb-work-dir/${distdir}/support-files/deb/debian deb-work-dir/${distdir}/debian 
 	(test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net") || true
