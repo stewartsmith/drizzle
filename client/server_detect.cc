@@ -30,8 +30,13 @@ ServerDetect::ServerDetect(drizzle_con_st *connection) :
 {
   boost::match_flag_type flags = boost::match_default;
 
-  boost::regex mysql_regex("^([3-9]\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex("^(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
+  // FIXME: Detecting capabilities from a version number is a recipe for
+  // disaster, like we've seen with 15 years of JavaScript :-)
+  // Anyway, as there is no MySQL 7.x yet, this will do for tonight.
+  // I will get back to detect something tangible after the release (like
+  // presence of some table or its record in DATA_DICTIONARY.
+  boost::regex mysql_regex("^([3-6]\\.[0-9]+\\.[0-9]+)");
+  boost::regex drizzle_regex("^([7-9]\\.[0-9]+\\.[0-9]+)");
 
   version= drizzle_con_server_version(connection);
 
