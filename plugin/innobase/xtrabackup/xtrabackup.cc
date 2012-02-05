@@ -634,7 +634,7 @@ typedef struct {
 static void print_version(void)
 {
   printf("%s  Ver %s Rev %s for %s %s (%s)\n" ,my_progname,
-	  XTRABACKUP_VERSION, XTRABACKUP_REVISION, "Drizzle",
+	  XTRABACKUP_VERSION, XTRABACKUP_REVISION, "Drizzle7",
          TARGET_OS, TARGET_CPU);
 }
 

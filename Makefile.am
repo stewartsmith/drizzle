@@ -197,10 +197,24 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
+	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
+
+install-data-hook:
+	cd $(DESTDIR)$(man8dir) && \
+	mv -f drizzled.8 drizzled7.8 && \
+	$(LN_S) drizzled7.8 drizzled.8
+
+uninstall-hook:
+	rm $(DESTDIR)$(man8dir)/drizzled7.8
+	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)
+
 rpm-build: support-files/drizzle.spec
 	@rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
 	@rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
-	@cp drizzle-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
+	@cp drizzle7-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
 	@cp support-files/drizzled.init ~/rpmbuild/SOURCES/
 	@rpmbuild -ba support-files/drizzle.spec
 	@cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .

@@ -465,8 +465,8 @@ try
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
+  bindtextdomain("drizzle7", LOCALEDIR);
+  textdomain("drizzle7");
 #endif
 
   po::options_description commandline_options(_("Options used only in command line"));

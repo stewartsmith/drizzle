@@ -71,7 +71,5 @@ You can then install Drizzle by running the following command:
 
 .. code-block:: bash
 
-   sudo yum install drizzle-server drizzle-client
-
-Note: On older versions of Fedora and RHEL, the packages are named drizzle7-server and drizzle7-client.
+   sudo yum install drizzle7-server drizzle7-client
 
