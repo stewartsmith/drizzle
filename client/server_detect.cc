@@ -36,11 +36,16 @@ ServerDetect::ServerDetect(drizzle_con_st *connection) :
   // I will get back to detect something tangible after the release (like
   // presence of some table or its record in DATA_DICTIONARY.
   boost::regex mysql_regex("^([3-6]\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex("^([7-9]\\.[0-9]+\\.[0-9]+)");
+  boost::regex drizzle_regex7("^(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
+  boost::regex drizzle_regex71("^([7-9]\\.[0-9]+\\.[0-9]+)");
 
   version= drizzle_con_server_version(connection);
 
-  if (regex_search(version, drizzle_regex, flags))
+  if (regex_search(version, drizzle_regex7, flags))
+  {
+    type= SERVER_DRIZZLE_FOUND;
+  }
+  else if (regex_search(version, drizzle_regex71, flags))
   {
     type= SERVER_DRIZZLE_FOUND;
   }
