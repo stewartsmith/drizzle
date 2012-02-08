@@ -73,6 +73,7 @@ class testCase:
         else:
             self.server_requirements = self.server_options
             self.server_options= self.server_options[0][0]
+        self.server_requests=None
         self.comment = comment
         self.master_sh = master_sh
         self.cnf_path = cnf_path
