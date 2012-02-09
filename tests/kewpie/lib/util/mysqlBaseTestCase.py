@@ -239,12 +239,21 @@ class mysqlBaseTestCase(unittest.TestCase):
     def execute_query( self
                      , query
                      , server
+                     , password=None
                      , schema='test'):
         try:
-            conn = MySQLdb.connect( host = '127.0.0.1' 
+            if password:
+                conn = MySQLdb.connect( host = '127.0.0.1' 
+                                  , port = server.master_port
+                                  , user = 'root'
+                                  , passwd=password 
+                                  , db = schema)
+            else:
+                conn = MySQLdb.connect( host = '127.0.0.1'
                                   , port = server.master_port
                                   , user = 'root'
                                   , db = schema)
+
             cursor = conn.cursor()
             cursor.execute(query)
             result_set =  cursor.fetchall()
@@ -342,3 +351,27 @@ class mysqlBaseTestCase(unittest.TestCase):
                                           )
 
         return randgen_subproc
+
+    def find_backup_path(self, output):
+        """ Determine xtrabackup directory from output """
+        backup_path = None
+        output = output.split('\n')
+        flag_string = "Backup created in directory"
+        for line in output:
+            if flag_string in line:
+               backup_path = line.split(flag_string)[1].strip().replace("'",'')
+        return backup_path 
+
+       
+    def wait_slaves_ready(self, master_server, slave_servers, cycles = 30):
+        """ Utility func to pause until the slaves are 'ready'
+            The definition of 'ready' will vary upon server
+            implementation
+
+        """
+    
+        while slave_servers and cycles:
+            for idx, slave_server in enumerate(slave_servers):
+                if slave_server.slave_ready():
+                    slave_servers.pop(idx)  
+            cycles -= 1

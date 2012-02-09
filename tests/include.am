@@ -221,14 +221,14 @@ test-plugins: tests/var/drizzle
 test-dbqp: tests/var/drizzle
 	$(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
 
-test-randgen: tests/var/drizzle
-	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main
+#test-randgen: tests/var/drizzle
+#	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main
 
 test-qp: tests/var/drizzle
 	$(TEST_RUN_QP) $(TEST_RUN_EXTRA_OPTIONS) --mode=dtr --fast --force --suite=$(NORMAL_TESTS)
 
-#test-randgen: tests/var/drizzle
-#	$(TEST_RUN_QP_MODE) --suite=randgen_basic --force
+test-randgen: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic --force
 
 test-randgen-slave: tests/var/drizzle
 	$(TEST_RUN_QP_MODE) --suite=randgen_slavePlugin --force

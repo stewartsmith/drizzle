@@ -30,6 +30,7 @@ import os
 import sys
 import time
 import subprocess
+import platform
 
 from ConfigParser import RawConfigParser
 
@@ -135,7 +136,6 @@ class mysqlServer(Server):
             self.secure_file_string = ''
         else:
             self.secure_file_string = "--secure-file-priv='%s'" %(self.vardir)
-        self.user_string = '--user=root'
 
         self.initialize_databases()
         self.take_db_snapshot()
@@ -209,7 +209,12 @@ class mysqlServer(Server):
  
         """
 
-        server_args = [ self.process_server_options()
+        # We make ourselves bug-compatible with MTR / xtrabackup
+        # test runners
+        if platform.system() != 'Windows' and os.geteuid() == 0:
+            self.server_options.append("--user=root")
+        server_args = [ "--no-defaults" 
+                      , self.process_server_options()
                       , "--open-files-limit=1024"
                       , "--local-infile"
                       , "--character-set-server=latin1"
@@ -228,6 +233,7 @@ class mysqlServer(Server):
                       , "--loose-innodb_log_files_in_group=2"
                       , "--slave-net-timeout=120"
                       , "--log-bin=%s" %(os.path.join(self.logdir,"mysqld-bin"))
+                      , "--binlog-format=ROW"
                       , "--loose-enable-performance-schema"
                       , "--loose-performance-schema-max-mutex-instances=10000"
                       , "--loose-performance-schema-max-rwlock-instances=10000"
@@ -250,7 +256,6 @@ class mysqlServer(Server):
                       # the server-id=0 and no replication thing...
                       , "--server-id=%d" %(self.get_numeric_server_id()+1)
                       , self.secure_file_string
-                      , self.user_string
                       ]
 
         if not self.version.startswith('5.0'):
@@ -353,17 +358,7 @@ class mysqlServer(Server):
                       )
                 return 1, msg
             # start the slave
-            query = "START SLAVE"
-            retcode, result_set = execute_query(query, self)
-            if retcode:
-                 msg = ("Could not set slave: %s.%s\n" 
-                        "With query: %s\n."
-                        "Returned result: %s" %( self.owner
-                                               , self.name
-                                               , query
-                                               , result_set)
-                       )
-                 return 1,msg
+            self.slave_start()
             self.need_to_set_master = False
         else:
             self.need_to_set_master = True 
@@ -413,11 +408,10 @@ class mysqlServer(Server):
                          , 'last_io_error':result_set[35]
                          , 'last_sql_errno':result_set[36]
                          , 'last_sql_error':result_set[37]
-                         , 'replicate_ignore_server_ids':result_set[38]
+                         #, 'replicate_ignore_server_ids':result_set[38]
                          }
             return slave_data
         else:
-            print result_set
             return None
      
          
@@ -445,9 +439,11 @@ class mysqlServer(Server):
     def slave_start(self):
         """ We issue START SLAVE and wait for IO and SQL threads to start """
         query = "START SLAVE"
+        decrement = .5
         retcode, result = execute_query(query, self)
         slave_status = self.get_slave_status()
         while slave_status['slave_io_running'] == 'No' or slave_status['slave_sql_running'] == 'No':
+            time.sleep(decrement)
             slave_status = self.get_slave_status()
 
 
@@ -481,6 +477,30 @@ class mysqlServer(Server):
                     # mid-iteration, but this is a chance to break that rule
                     # >: )
                     slave_list.pop(idx)
+
+    def slave_ready(self, master_server):
+       return True 
                             
 
- 
+    def get_innodb_version(self):
+        """ SHOW VARIABLES LIKE innodb_version 
+            mostly used as a check to ensure if a 
+            test should/shouldn't be executed
+
+        """ 
+
+        query = "SHOW VARIABLES LIKE 'innodb_version'"
+        retcode, result = execute_query(query, self)
+        return retcode, result 
+
+    def get_xtradb_version(self):
+        """ Return the xtradb version or None """
+
+        retcode, result = self.get_innodb_version()
+        # result format = (('innodb_version', '1.1.6-20.1'),)
+        if result:
+            innodb_version = result[0][1]
+            split_data = innodb_version.split('-')
+            if len(split_data) > 1:
+                return split_data[-1]
+        return None

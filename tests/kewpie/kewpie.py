@@ -22,7 +22,7 @@
 """ kewpie.py
 
 (DataBase) Quality Platform - system for executing various
-testing systems and the helper code
+testing systems and the helper code 
 
 Designed to be a modular test-runner.  Different testing tools
 and databases may be plugged into the system via hacking the
@@ -34,36 +34,46 @@ Runs: Drizzle, MySQL, Percona Server, Galera dbms's
 
 # imports
 import os
+import imp
 import sys
 
 import lib.opts.test_run_options as test_run_options
+from lib.opts.defaults import get_defaults
 from lib.modes.test_mode import handle_mode
 from lib.server_mgmt.server_management import serverManager
 from lib.sys_mgmt.system_management import systemManager
 from lib.test_mgmt.execution_management import executionManager
 
 # functions
+def handle_sys_config(input_args, defaults):
+    """ Look for / update defaults based on sys_config file
+        if specified
+
+    """
+    key_string = '--sys-config'
+    module_file = None
+    for input_arg in input_args:
+        if input_arg.startswith(key_string):
+            module_file = input_arg.split(key_string)[1].replace('=','').strip()
+            module_file = os.path.abspath(module_file)
+            break
+    if module_file:
+        module_parent = os.path.dirname(module_file)
+        sys.path.append(module_parent) 
+        module_name = os.path.basename(module_file).replace('.py','')
+        project = imp.load_source(module_name, module_file)
+        defaults = project.get_project_defaults(module_file, defaults)
+    return defaults
 
 # main
 # We base / look for a lot of things based on the location of
 # the kewpie.py file
 qp_rootdir = os.path.dirname(os.path.abspath(sys.argv[0]))
-# kewpie lives in drizzle/tests/kewpie, so we try that
-basedir_default = os.path.dirname(os.path.dirname(qp_rootdir))
-testdir_default = qp_rootdir
-defaults = { 'qp_root':qp_rootdir
-           , 'testdir': qp_rootdir
-           , 'workdir': os.path.join(qp_rootdir,'workdir')
-           , 'clientbindir': os.path.join(os.path.dirname(qp_rootdir),'client')
-           , 'basedir': basedir_default
-           , 'server_type':'drizzle'
-           , 'valgrind_suppression':os.path.join(qp_rootdir,'valgrind.supp')
-           , 'suitepaths': [ os.path.join(basedir_default,'plugin')
-                           , os.path.join(testdir_default,'suite')
-                           ]
-           , 'randgen_path': os.path.join(qp_rootdir,'randgen')
-           , 'subunit_file': os.path.join(qp_rootdir,'workdir/test_results.subunit')
-           }
+#project_name = 'percona-xtradb-cluster'
+#project_name = 'xtrabackup'
+project_name = None
+defaults = get_defaults(qp_rootdir,project_name)
+defaults = handle_sys_config(sys.argv, defaults)
 variables = test_run_options.parse_qp_options(defaults)
 variables['qp_root'] = qp_rootdir
 system_manager = None

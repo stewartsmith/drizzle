@@ -61,6 +61,9 @@ class drizzleTree(codeTree):
         self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
+        self.version_checked = False
+        self.innodb_version = None
+        self.xtradb_version = None
         self.basedir = self.system_manager.find_path([os.path.abspath(basedir)])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'drizzled'))
         self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
@@ -179,6 +182,9 @@ class mysqlTree(codeTree):
         self.skip_keys = ['ld_lib_paths']
         self.debug = variables['debug']
         self.verbose = variables['verbose']
+        self.version_checked = False
+        self.innodb_version = None
+        self.xtradb_version = None
         self.basedir = self.system_manager.find_path([os.path.abspath(basedir)])
         self.source_dist = os.path.isdir(os.path.join(self.basedir, 'mysqld'))
         self.builddir = self.system_manager.find_path([os.path.abspath(self.basedir)])
@@ -190,7 +196,9 @@ class mysqlTree(codeTree):
                                                          , os.path.join(self.basedir, 'bin')])
         self.charsetdir = self.system_manager.find_path([os.path.join(self.basedir, 'mysql/charsets')
                                                        , os.path.join(self.basedir, 'sql/share/charsets')
-                                                       , os.path.join(self.basedir, 'share/charsets')])
+                                                       , os.path.join(self.basedir, 'share/charsets')
+                                                       , os.path.join(self.basedir, 'share/mysql/charsets')
+                                                        ])
         self.langdir = self.system_manager.find_path([os.path.join(self.basedir, 'share/mysql')
                                                     , os.path.join(self.basedir, 'sql/share')
                                                     , os.path.join(self.basedir, 'share')])
@@ -204,6 +212,10 @@ class mysqlTree(codeTree):
 
         self.mysqldump = self.system_manager.find_path([os.path.join( self.clientbindir
                                                                     , 'mysqldump')])
+
+        self.mysqlcheck = self.system_manager.find_path([os.path.join( self.clientbindir
+                                                                    , 'mysqlcheck')])
+
 
         self.mysqlimport = self.system_manager.find_path([os.path.join( self.clientbindir
                                                                       , 'mysqlimport')])
@@ -382,11 +394,12 @@ class galeraTree(mysqlTree):
                                                           , os.path.join(self.basedir, 'sbin/wsrep_sst_mysqldump')
                                                           , os.path.join(self.basedir, 'bin/wsrep_sst_mysqldump')
                                                           ])
-        self.wsrep_sst_script_path = os.path.dirname(self.wsrep_sst_mysqldump)
-        # add wsrep_sst_* scripts to PATH
+        # add wsrep_sst_* scripts and mysqldump / mysql clients to PATH
         env_manager = self.system_manager.env_manager
-        env_manager.set_env_var( 'PATH', env_manager.append_env_var( 'PATH'
-                                                           , self.wsrep_sst_script_path, suffix=0
+        for file_name in (self.wsrep_sst_mysqldump, self.mysqldump, self.mysql_client):
+            file_path = os.path.dirname(file_name)
+            env_manager.set_env_var( 'PATH', env_manager.append_env_var( 'PATH'
+                                                           , file_path, suffix=0
                                                            ))
  
 

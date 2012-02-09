@@ -325,8 +325,8 @@ tests/dbqp
 tests/dbqp_data/uuid
 tests/dbqp_work
 tests/install_test_db
-kewpie/qp_data/uuid
-kewpie/workdir
+tests/kewpie/qp_data/uuid
+tests/kewpie/workdir
 tests/mtr
 tests/mtr@
 tests/resolve_stack_dump

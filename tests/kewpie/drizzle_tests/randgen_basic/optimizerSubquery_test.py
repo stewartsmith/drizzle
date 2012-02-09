@@ -30,9 +30,11 @@ class basicTest(mysqlBaseTestCase):
 
     def test_optimizerSubquery1(self):
         self.servers = servers
-        test_cmd = "./gentest.pl --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=1000 --threads=3"
+        test_cmd = "./gentest.pl --sqltrace --gendata=conf/drizzle/drizzle.zz --grammar=conf/drizzle/optimizer_subquery_drizzle.yy --queries=1000 --threads=3"
         retcode, output = self.execute_randgen(test_cmd, test_executor, servers[0])
         self.assertEqual(retcode, 0, msg = output)
+        self.assertTrue(servers[0].ping(quiet=True), msg=servers[0].dump_errlog())
+        print output
 
-    def tearDown(self):
-            server_manager.reset_servers(test_executor.name)
+    #def tearDown(self):
+    #        server_manager.reset_servers(test_executor.name)
