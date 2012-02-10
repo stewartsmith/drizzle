@@ -268,6 +268,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  CROSS                         /* SQL-2003-R */
 %token  CUBE_SYM                      /* SQL-2003-R */
 %token  CURDATE                       /* MYSQL-FUNC */
+%token  CURTIME                       /* MYSQL-FUNC */
 %token  CURRENT_USER                  /* SQL-2003-R */
 %token  CURSOR_SYM                    /* SQL-2003-R */
 %token  DATABASE
@@ -544,6 +545,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  USE_SYM
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
+%token  UTC_TIME_SYM
 %token  UTC_TIMESTAMP_SYM
 %token  UTF8_SYM
 %token  UUID_SYM
@@ -2867,6 +2869,11 @@ function_call_nonkeyword:
           }
         | ADDDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 0); }
+        | CURTIME optional_braces
+          {
+            $$= new (YYSession->mem_root) Item_func_curtime_local();
+            Lex.setCacheable(false);
+          }
         | CURDATE optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
@@ -2953,6 +2960,11 @@ function_call_nonkeyword:
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_timestamp_diff($5,$7,$3); }
+        | UTC_TIME_SYM optional_braces
+          {
+            $$= new (YYSession->mem_root) Item_func_curtime_utc();
+            Lex.setCacheable(false);
+          }
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();

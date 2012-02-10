@@ -14,6 +14,18 @@ Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, dependin
 	SELECT CURDATE() + 0;
         	-> 20110213
 
+current_time
+--------------
+
+Returns the current time as a value in 'HH:MM:SS' or HHMMSS format, depending on whether the function is used in a string or numeric context.
+
+.. code-block:: mysql
+
+    SELECT CURTIME();
+            -> '10:30:09'
+    SELECT CURTIME() + 0;
+            -> 103009
+
 .. _now:
 
 now()	                            

@@ -105,7 +105,9 @@ bool Catalog::drop(const identifier::Catalog& identifier)
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->drop(identifier))
+    {
       drop_count++;
+    }
   }
   assert(drop_count < 2);
 
@@ -155,12 +157,16 @@ bool plugin::Catalog::addPlugin(plugin::Catalog *arg)
 bool plugin::Catalog::exist(const identifier::Catalog& identifier)
 {
   if (catalog::Cache::exist(identifier))
+  {
     return true;
+  }
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if (ref->exist(identifier))
+    {
       return true;
+    }
   }
 
   return false;
@@ -196,7 +202,9 @@ message::catalog::shared_ptr plugin::Catalog::getMessage(const identifier::Catal
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
     if ((message= ref->getMessage(identifier)))
+    {
       return message;
+    }
   }
 
   return message;
@@ -208,7 +216,9 @@ catalog::Instance::shared_ptr plugin::Catalog::getInstance(const identifier::Cat
   catalog::Instance::shared_ptr instance= catalog::Cache::find(identifier, error);
 
   if (instance)
+  {
     return instance;
+  }
 
   BOOST_FOREACH(catalog::Engine::vector::const_reference ref, Engines::singleton().catalogs())
   {
