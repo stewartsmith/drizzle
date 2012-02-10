@@ -227,7 +227,13 @@ test-dbqp: tests/var/drizzle
 test-qp: tests/var/drizzle
 	$(TEST_RUN_QP) $(TEST_RUN_EXTRA_OPTIONS) --mode=dtr --fast --force --suite=$(NORMAL_TESTS)
 
+test-randgen-all: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_trxLog,randgen_innoTrxLog,randgen_slavePlugin --force	
+
 test-randgen: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_trxLog --force
+
+test-randgen-basic: tests/var/drizzle
 	$(TEST_RUN_QP_MODE) --suite=randgen_basic --force
 
 test-randgen-slave: tests/var/drizzle
