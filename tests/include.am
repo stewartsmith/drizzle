@@ -100,7 +100,6 @@ EXTRA_DIST += \
 	${srcdir}/tests/kewpie/lib/*.py \
 	${srcdir}/tests/kewpie/randgen \
 	${srcdir}/tests/kewpie/sql-bench \
-	${srcdir}/tests/kewpie/std_data \
 	${srcdir}/tests/kewpie/sysbench_tests \
 	${srcdir}/tests/crashme_tests \
 	${srcdir}/tests/dbqp.py \
