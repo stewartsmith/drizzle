@@ -81,7 +81,7 @@ public:
       return key_buffer;
     }
 
-    void set(size_t resize_arg, const std::string &a, const std::string &b);
+    void set(size_t resize_arg, const std::string &a, const std::string &b, const std::string &c);
 
     friend bool operator==(const Key &left, const Key &right)
     {
@@ -123,7 +123,7 @@ private:
 
   size_t getKeySize() const
   {
-    return getSchemaName().size() + getTableName().size() + 2;
+    return getCatalogName().size() + getSchemaName().size() + getTableName().size() + 3;
   }
 
 public:

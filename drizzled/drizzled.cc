@@ -1366,7 +1366,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::unknown_option &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort << "Use --help to get a list of available options.  " << err.what();
   }
 
   try
@@ -1977,7 +1977,7 @@ static void drizzle_init_variables()
 */
 static void get_options()
 {
-  setDataHomeCatalog(getDataHome() / "local");
+  catalog::resetPath_for_local_identifier();
 
   if (vm.count("user"))
   {

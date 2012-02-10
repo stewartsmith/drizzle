@@ -492,7 +492,7 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
     break;
 
   case DRIZZLE_CON_SOCKET_UDS:
-    drizzle_con_set_uds(con, from->socket.uds.sockaddr.sun_path);
+    drizzle_con_set_uds(con, from->socket.uds.path_buffer);
     break;
 
   default:
@@ -594,8 +594,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (x == 0)
   {
-    drizzle_set_error(drizzle, "drizzle_con_wait",
-                      "no active file descriptors");
+    drizzle_set_error(drizzle, __func__, "no active file descriptors");
     return DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS;
   }
 

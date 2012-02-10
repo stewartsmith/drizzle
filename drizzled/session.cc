@@ -27,7 +27,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/ptr_container/ptr_container.hpp>
 #include <drizzled/copy_field.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/display.h>
 #include <drizzled/drizzled.h>
@@ -996,7 +996,7 @@ static int create_file(Session& session,
 
   if (not to_file.has_root_directory())
   {
-    target_path= fs::system_complete(getDataHomeCatalog());
+    target_path= fs::system_complete(catalog::local_identifier().getPath());
     util::string::ptr schema(session.schema());
     if (not schema->empty())
     {

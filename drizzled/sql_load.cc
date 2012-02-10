@@ -1,4 +1,5 @@
 /* Copyright (C) 2000-2006 MySQL AB
+   Copyright (C) 2011 Stewart Smith
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
 
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/epoch.h>
@@ -263,7 +264,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   }
 
   fs::path to_file(ex->file_name);
-  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path target_path(fs::system_complete(catalog::local_identifier().getPath()));
   if (not to_file.has_root_directory())
   {
     int count_elements= 0;
