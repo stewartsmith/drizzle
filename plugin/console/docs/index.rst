@@ -23,6 +23,38 @@ To load this plugin, start :program:`drizzled` with::
 Configuration
 -------------
 
+.. option:: --console.enable
+
+   :Default: ``false``
+
+   Enables the console.
+
+.. option:: --consoe.debug
+
+   :Default: ``false``
+
+   Turns on extra debugging output
+
+.. option:: --console.username ARG
+
+   :Default: ``current logged in user``
+
+   The username to authenticate to Drizle as. This option works the same way as connecting as a username over other protocols.
+
+.. option:: --console.password ARG
+
+   The password to use to authenticate with.
+
+.. option:: --console.catalog ARG
+
+   :Default: ``LOCAL``
+
+   Which catalog to connect to. In current released versions of Drizzle, only the LOCAL catalog is supported, althoug in the future other catalogs will be usable.
+
+.. option:: --console.schema ARG
+
+   Which schema to connect to.
+
 .. _console_variables:
 
 Variables
