@@ -1743,15 +1743,6 @@ void Session::close_thread_tables()
 
   if (open_tables.lock)
   {
-    /*
-      For RBR we flush the pending event just before we unlock all the
-      tables.  This means that we are at the end of a topmost
-      statement, so we ensure that the STMT_END_F flag is set on the
-      pending event.  For statements that are *inside* stored
-      functions, the pending event will not be flushed: that will be
-      handled either before writing a query log event (inside
-      binlog_query()) or when preparing a pending event.
-     */
     unlockTables(open_tables.lock);
     open_tables.lock= 0;
   }
