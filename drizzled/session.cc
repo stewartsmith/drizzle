@@ -390,15 +390,11 @@ void Session::cleanup()
   assert(not cleanup_done);
 
   setKilled(KILL_CONNECTION);
-#ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
-  if (transaction.xid_state.xa_state == XA_PREPARED)
-  {
-#error xid_state in the cache should be replaced by the allocated value
-  }
-#endif
-  {
-    TransactionServices::rollbackTransaction(*this, true);
-  }
+
+  /* In the future, you may want to do something about XA_PREPARED here.
+     In the dim distant past there was some #ifdefed out #error here about it.
+  */
+  TransactionServices::rollbackTransaction(*this, true);
 
   BOOST_FOREACH(UserVars::reference iter, user_vars)
     boost::checked_delete(iter.second);
