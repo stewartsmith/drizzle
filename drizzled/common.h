@@ -51,7 +51,7 @@
 #define OPTION_BIG_SELECTS      (UINT64_C(1) << 9)     // THD, user
 #define TMP_TABLE_ALL_COLUMNS   (UINT64_C(1) << 12)    // SELECT, intern
 #define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
-#define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog
+#define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user
 #define OPTION_FOUND_COMMENT    (UINT64_C(1) << 15)    // SELECT, intern, parser
 #define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
@@ -62,10 +62,10 @@
 
 /** The following can be set when importing tables in a 'wrong order'
    to suppress foreign key checks */
-#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user, binlog
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user
 /** The following speeds up inserts to InnoDB tables by suppressing unique
    key checks in some cases */
-#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user, binlog
+#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user
 #define SELECT_NO_UNLOCK                (UINT64_C(1) << 28) // SELECT, intern
 /** Flag set if setup_tables already done */
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
