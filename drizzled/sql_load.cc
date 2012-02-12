@@ -395,11 +395,8 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  /*
-     simulated killing in the middle of per-row loop
-     must be effective for binlogging
-  */
-  if (error) 
+
+  if (error)
   {
     error= -1;				// Error on read
     goto err;
