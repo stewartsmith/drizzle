@@ -74,8 +74,6 @@ void Item_func_get_user_var::fix_length_and_dec()
 
   /*
     If the variable didn't exist it has been created as a STRING-type.
-    'var_entry' is NULL only if there occured an error during the call to
-    get_var_with_binlog.
   */
   if (var_entry)
   {
