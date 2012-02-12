@@ -658,42 +658,6 @@ public:
     return server_uuid;
   }
 
-  /**
-    There is BUG#19630 where statement-based replication of stored
-    functions/triggers with two auto_increment columns breaks.
-    We however ensure that it works when there is 0 or 1 auto_increment
-    column; our rules are
-    a) on master, while executing a top statement involving substatements,
-    first top- or sub- statement to generate auto_increment values wins the
-    exclusive right to see its values be written to binlog (the write
-    will be done by the statement or its caller), and the losers won't see
-    their values be written to binlog.
-    b) on slave, while replicating a top statement involving substatements,
-    first top- or sub- statement to need to read auto_increment values from
-    the master's binlog wins the exclusive right to read them (so the losers
-    won't read their values from binlog but instead generate on their own).
-    a) implies that we mustn't backup/restore
-    auto_inc_intervals_in_cur_stmt_for_binlog.
-    b) implies that we mustn't backup/restore auto_inc_intervals_forced.
-
-    If there are more than 1 auto_increment columns, then intervals for
-    different columns may mix into the
-    auto_inc_intervals_in_cur_stmt_for_binlog list, which is logically wrong,
-    but there is no point in preventing this mixing by preventing intervals
-    from the secondly inserted column to come into the list, as such
-    prevention would be wrong too.
-    What will happen in the case of
-    INSERT INTO t1 (auto_inc) VALUES(NULL);
-    where t1 has a trigger which inserts into an auto_inc column of t2, is
-    that in binlog we'll store the interval of t1 and the interval of t2 (when
-    we store intervals, soon), then in slave, t1 will use both intervals, t2
-    will use none; if t1 inserts the same number of rows as on master,
-    normally the 2nd interval will not be used by t1, which is fine. t2's
-    values will be wrong if t2's internal auto_increment counter is different
-    from what it was on master (which is likely). In 5.1, in mixed binlogging
-    mode, row-based binlogging is used for such cases where two
-    auto_increment columns are inserted.
-  */
   inline void record_first_successful_insert_id_in_cur_stmt(uint64_t id_arg)
   {
     if (first_successful_insert_id_in_cur_stmt == 0)
