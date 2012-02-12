@@ -267,9 +267,7 @@ enum enum_commands
   Q_LET,        Q_ECHO,
   Q_WHILE,      Q_END_BLOCK,
   Q_SYSTEM,      Q_RESULT,
-  Q_REQUIRE,      Q_SAVE_MASTER_POS,
-  Q_SYNC_WITH_MASTER,
-  Q_SYNC_SLAVE_WITH_MASTER,
+  Q_REQUIRE,
   Q_ERROR,
   Q_SEND,        Q_REAP,
   Q_DIRTY_CLOSE,      Q_REPLACE, Q_REPLACE_COLUMN,
@@ -319,9 +317,6 @@ const char *command_names[]=
   "system",
   "result",
   "require",
-  "save_master_pos",
-  "sync_with_master",
-  "sync_slave_with_master",
   "error",
   "send",
   "reap",
@@ -626,35 +621,6 @@ static int dt_query_log(drizzle::connection_c& con, drizzle::result_c& res, cons
   }
   return res.column_count() == 0;
 }
-
-static void show_query(drizzle::connection_c& con, const char* query)
-{
-  drizzle::result_c res;
-  if (dt_query_log(con, res, query))
-    return;
-
-  unsigned int row_num= 0;
-  unsigned int num_fields= res.column_count();
-
-  fprintf(stderr, "=== %s ===\n", query);
-  while (drizzle_row_t row= res.row_next())
-  {
-    size_t *lengths= res.row_field_sizes();
-    row_num++;
-
-    fprintf(stderr, "---- %d. ----\n", row_num);
-    res.column_seek(0);
-    for (unsigned int i= 0; i < num_fields; i++)
-    {
-      drizzle_column_st* column= res.column_next();
-      fprintf(stderr, "%s\t%.*s\n", drizzle_column_name(column), (int)lengths[i], row[i] ? row[i] : "NULL");
-    }
-  }
-  for (size_t i= 0; i < strlen(query)+8; i++)
-    fprintf(stderr, "=");
-  fprintf(stderr, "\n\n");
-}
-
 
 /*
   Show any warnings just before the error. Since the last error
@@ -2790,71 +2756,6 @@ static void do_wait_for_slave_to_stop()
     usleep(SLAVE_POLL_INTERVAL);
   }
 }
-
-static void do_sync_with_master2(long offset)
-{
-  drizzle::connection_c& con= *cur_con;
-
-  if (!master_pos.file[0])
-    die("Calling 'sync_with_master' without calling 'save_master_pos'");
-
-  char query_buf[FN_REFLEN+128];
-  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file, master_pos.pos + offset);
-  for (int tries= 0; tries < 30; tries++)
-  {
-    drizzle::result_c res;
-    dt_query(con, res, query_buf);
-
-    drizzle_row_t row= res.row_next();
-    if (not row)
-      die("empty result in %s", query_buf);
-    if (row[0])
-      return;
-    /*
-    It may be that the slave SQL thread has not started yet, though START
-    SLAVE has been issued ?
-    */
-    sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
-  }
-  show_query(con, "SHOW MASTER STATUS");
-  show_query(con, "SHOW SLAVE STATUS");
-  die("could not sync with master ('%s' returned NULL)", query_buf);
-}
-
-static void do_sync_with_master(st_command* command)
-{
-  long offset= 0;
-  char *p= command->first_argument;
-  const char *offset_start= p;
-  if (*offset_start)
-  {
-    for (; charset_info->isdigit(*p); p++)
-      offset = offset * 10 + *p - '0';
-
-    if(*p && !charset_info->isspace(*p))
-      die("Invalid integer argument \"%s\"", offset_start);
-    command->last_argument= p;
-  }
-  do_sync_with_master2(offset);
-  return;
-}
-
-
-/*
-  when ndb binlog is on, this call will wait until last updated epoch
-  (locally in the drizzled) has been received into the binlog
-*/
-static void do_save_master_pos()
-{
-  drizzle::result_c res;
-  dt_query(*cur_con, res, "show master status");
-  drizzle_row_t row= res.row_next();
-  if (!row)
-    die("empty result in show master status");
-  strncpy(master_pos.file, row[0], sizeof(master_pos.file)-1);
-  master_pos.pos = strtoul(row[1], (char**) 0, 10);
-}
-
 
 /*
   Assign the variable <var_name> with <var_val>
@@ -5410,18 +5311,6 @@ try
       case Q_REPLACE_COLUMN:
         do_get_replace_column(command);
         break;
-      case Q_SAVE_MASTER_POS: do_save_master_pos(); break;
-      case Q_SYNC_WITH_MASTER: do_sync_with_master(command); break;
-      case Q_SYNC_SLAVE_WITH_MASTER:
-      {
-        do_save_master_pos();
-        if (*command->first_argument)
-          select_connection(command);
-        else
-          select_connection_name("slave");
-        do_sync_with_master2(0);
-        break;
-      }
       case Q_COMMENT:        /* Ignore row */
         command->last_argument= command->end;
         break;
