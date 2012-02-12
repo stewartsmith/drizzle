@@ -94,7 +94,7 @@ enum error_t {
   HA_ERR_NULL_IN_SPATIAL= 158,       /* NULLs are not supported in spatial index */
   HA_ERR_TABLE_DEF_CHANGED= 159,     /* The table changed in storage engine */
   HA_ERR_NO_PARTITION_FOUND= 160,    /* There's no partition in table for given value */
-  HA_ERR_RBR_LOGGING_FAILED= 161,    /* Row-based binlogging of row failed */
+  HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED= 161,    /* Logging of row change for replication failed */
   HA_ERR_DROP_INDEX_FK= 162,         /* Index needed in foreign key constr */
   HA_ERR_FOREIGN_DUPLICATE_KEY= 163, // Upholding foreign key constraints would lead to a duplicate key error
   HA_ERR_TABLE_NEEDS_UPGRADE= 164,   /* The table changed in storage engine */

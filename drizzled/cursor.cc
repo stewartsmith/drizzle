@@ -1444,7 +1444,7 @@ int Cursor::insertRecord(unsigned char *buf)
   }
 
   if (unlikely(log_row_for_replication(getTable(), NULL, buf)))
-    return HA_ERR_RBR_LOGGING_FAILED;
+    return HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED;
 
   return 0;
 }
@@ -1490,7 +1490,7 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
   }
 
   if (unlikely(log_row_for_replication(getTable(), old_data, new_data)))
-    return HA_ERR_RBR_LOGGING_FAILED;
+    return HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED;
 
   return 0;
 }
@@ -1526,7 +1526,7 @@ int Cursor::deleteRecord(const unsigned char *buf)
     return error;
 
   if (unlikely(log_row_for_replication(getTable(), buf, NULL)))
-    return HA_ERR_RBR_LOGGING_FAILED;
+    return HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED;
 
   return 0;
 }

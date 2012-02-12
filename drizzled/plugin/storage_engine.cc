@@ -737,8 +737,8 @@ void StorageEngine::print_error(int error, myf errflag, const Table &table) cons
       my_error(ER_TABLE_UNKNOWN, identifier);
       return;
     }
-  case HA_ERR_RBR_LOGGING_FAILED:
-    textno= ER_BINLOG_ROW_LOGGING_FAILED;
+  case HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED:
+    textno= ER_LOG_ROW_FOR_REPLICATION_FAILED;
     break;
   case HA_ERR_DROP_INDEX_FK:
   {
