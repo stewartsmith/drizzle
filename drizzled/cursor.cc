@@ -1214,13 +1214,6 @@ int Cursor::index_read_idx_map(unsigned char * buf, uint32_t index,
   return error ?  error : error1;
 }
 
-/**
-  Check if the conditions for row-based binlogging is correct for the table.
-
-  A row in the given table should be replicated if:
-  - It is not a temporary table
-*/
-
 static bool log_row_for_replication(Table* table,
                                     const unsigned char *before_record,
                                     const unsigned char *after_record)
