@@ -1342,10 +1342,6 @@ bool select_insert::send_eof()
 
   if ((changed= (info.copied || info.deleted || info.updated)))
   {
-    /*
-      We must invalidate the table in the query cache before binlog writing
-      and autocommitOrRollback.
-    */
     if (session->transaction.stmt.hasModifiedNonTransData())
       session->transaction.all.markModifiedNonTransData();
   }
@@ -1396,20 +1392,6 @@ void select_insert::abort() {
 
     table->cursor->ha_end_bulk_insert();
 
-    /*
-      If at least one row has been inserted/modified and will stay in
-      the table (the table doesn't have transactions) we must write to
-      the binlog (and the error code will make the slave stop).
-
-      For many errors (example: we got a duplicate key error while
-      inserting into a MyISAM table), no row will be added to the table,
-      so passing the error to the slave will not help since there will
-      be an error code mismatch (the inserts will succeed on the slave
-      with no error).
-
-      If table creation failed, the number of rows modified will also be
-      zero, so no check for that is made.
-    */
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->cursor->has_transactions();
     assert(transactional_table || !changed ||
