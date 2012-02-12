@@ -31,11 +31,6 @@
    This is included in the server and in the client.
    Options for select set by the yacc parser (stored in lex->options).
 
-   XXX:
-   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
-   options list are written into binlog. These options can NOT change their
-   values, or it will break replication between version.
-
    context is encoded as following:
    SELECT - Select_Lex_Node::options
    THD    - THD::options
