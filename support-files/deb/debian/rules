@@ -32,8 +32,7 @@ override_dh_auto_install:
 	cp -a debian/conf.d $(TMP)/etc/drizzle
 
 override_dh_strip:
-	dh_strip -Xdrizzled -Xplugin -Xbin --dbg-package=libdrizzle-dbg
-	dh_strip -Xlibdrizzle.so --dbg-package=drizzle-dbg
+	dh_strip -Xdrizzled -Xplugin -Xbin --dbg-package=drizzle-dbg
 
 override_dh_auto_test:
 	echo "skipping tests"
