@@ -12,14 +12,17 @@ TMP=$(CURDIR)/debian/tmp/
 	dh $@
 
 override_dh_auto_configure:
-	export deb_linuxdistro=`lsb_release --id | sed 's/Distributor ID:\t//'`
 	bash config/autorun.sh
 	dh_auto_configure -- \
 	  --disable-rpath \
 	  --localstatedir=/var/lib/drizzle \
 	  --disable-mysql-protocol-plugin \
-	  --disable-mysql-unix-socket-protocol-plugin \
-	  --with-comment="${deb_linuxdistro}"
+	  --disable-mysql-unix-socket-protocol-plugin 
+
+# FIX ME: Would be nice to add this back to the above configure, but I need
+# to discover dynamically whether running on Ubuntu or Debian. (This didn't produce anything.)
+#	export deb_linuxdistro=`lsb_release --id | sed 's/Distributor ID:\t//'`
+#	  --with-comment="${deb_linuxdistro}"
 
 override_dh_auto_build:
 	${MAKE} ${MAKE_J}
@@ -32,7 +35,7 @@ override_dh_auto_install:
 	cp -a debian/conf.d $(TMP)/etc/drizzle
 
 override_dh_strip:
-	dh_strip -Xdrizzled -Xplugin -Xbin --dbg-package=drizzle-dbg
+	dh_strip -Xlibdrizzle.so --dbg-package=drizzle-dbg
 
 override_dh_auto_test:
 	echo "skipping tests"
