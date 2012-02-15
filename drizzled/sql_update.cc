@@ -523,14 +523,12 @@ int update_query(Session *session, TableList *table_list,
   dup_key_found= 0;
   /*
     Caching the killed status to pass as the arg to query event constuctor;
-    The cached value can not change whereas the killed status can
-    (externally) since this point and change of the latter won't affect
-    binlogging.
+
     It's assumed that if an error was set in combination with an effective
     killed status then the error is due to killing.
   */
   killed_status= session->getKilled(); // get the status of the volatile
-  // simulated killing after the loop must be ineffective for binlogging
+
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
   updated-= dup_key_found;
@@ -550,8 +548,6 @@ int update_query(Session *session, TableList *table_list,
     violation and no IGNORE or REPLACE). error == 0 is also an error (if
     preparing the record or invoking before triggers fails). See
     autocommitOrRollback(error>=0) and return(error>=0) below.
-    Sometimes we want to binlog even if we updated no rows, in case user used
-    it to be sure master and slave are in same state.
   */
   if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {

@@ -52,7 +52,6 @@ extern const char *in_having_cond;
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
 extern boost::filesystem::path secure_file_priv;
-extern const char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;

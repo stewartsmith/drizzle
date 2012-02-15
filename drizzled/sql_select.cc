@@ -4495,6 +4495,12 @@ static Item *part_of_refkey(Table *table,Field *field)
 /**
   Test if one can use the key to resolve order_st BY.
 
+  used_key_parts is set to correct key parts used if return value != 0
+  (On other cases, used_key_part may be changed).
+  Note that the value may actually be greater than the number of index
+  key parts. This can happen for storage engines that have the primary
+  key parts as a suffix for every secondary key.
+
   @param order                 Sort order
   @param table                 Table to sort
   @param idx                   Index to check
@@ -4587,13 +4593,26 @@ static int test_if_order_by_key(Order *order, Table *table, uint32_t idx, uint32
     reverse=flag;				// Remember if reverse
     key_part++;
   }
-  *used_key_parts= on_primary_key ? table->key_info[idx].key_parts :
-    (uint32_t) (key_part - table->key_info[idx].key_part);
-  if (reverse == -1 && !(table->index_flags(idx) & HA_READ_PREV))
+  if (on_primary_key)
   {
-    reverse= 0;                                 // Index can't be used
-  }
+    uint32_t used_key_parts_secondary= table->key_info[idx].key_parts;
+    uint32_t used_key_parts_pk= (uint32_t) (key_part - table->key_info[table->getShare()->getPrimaryKey()].key_part);
+    *used_key_parts= used_key_parts_pk + used_key_parts_secondary;
 
+    if (reverse == -1 &&
+        (!(table->index_flags(idx) &
+           HA_READ_PREV) ||
+         !(table->index_flags(table->getShare()->getPrimaryKey()) &
+           HA_READ_PREV)))
+      reverse= 0;                               // Index can't be used
+  }
+  else
+  {
+    *used_key_parts= (uint32_t) (key_part - table->key_info[idx].key_part);
+    if (reverse == -1 &&
+        !(table->index_flags(idx) & HA_READ_PREV))
+      reverse= 0;                               // Index can't be used
+  }
   return(reverse);
 }
 

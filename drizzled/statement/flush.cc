@@ -33,10 +33,6 @@ namespace drizzled {
 
 bool statement::Flush::execute()
 {
-  /*
-   * reloadCache() will tell us if we are allowed to write to the
-   * binlog or not.
-   */
   if (not reloadCache())
   {
     session().my_ok();

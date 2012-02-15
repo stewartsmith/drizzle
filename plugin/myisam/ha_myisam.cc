@@ -1514,7 +1514,7 @@ DRIZZLE_DECLARE_PLUGIN
   "MyISAM",
   "2.0",
   "MySQL AB",
-  "Default engine as of MySQL 3.23 with great performance",
+  "Legacy non-transactional MySQL tables. For temporary tables only. Deprecated.",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   NULL,           /* depends */

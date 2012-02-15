@@ -27,6 +27,8 @@
 namespace simple_user_policy
 {
 
+extern std::string remap_dot_to;
+
 class Policy :
   public drizzled::plugin::Authorization
 {
@@ -52,7 +54,17 @@ inline bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
     return false;
   }
 
-  return not schema.compare(user_ctx.username());
+  std::string username(user_ctx.username());
+  size_t found;
+
+  found=username.find_first_of('.');
+  while (found!=std::string::npos)
+  {
+    username.replace(found, 1, remap_dot_to);
+    found=username.find_first_of('.',found+1);
+  }
+
+  return not schema.compare(username);
 }
 
 inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,

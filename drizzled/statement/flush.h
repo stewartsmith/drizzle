@@ -64,12 +64,6 @@ private:
   /**
    * Reload/resets privileges and the different caches.
    *
-   * @note Depending on 'options', it may be very bad to write the
-   * query to the binlog (e.g. FLUSH SLAVE); this is a
-   * pointer where reloadCache() will put 0 if
-   * it thinks we really should not write to the binlog.
-   * Otherwise it will put 1.
-   * 
    * @return Error status code
    * @retval 0 Ok
    * @retval !=0  Error; session->killed is set or session->is_error() is true

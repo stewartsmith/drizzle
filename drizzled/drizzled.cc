@@ -297,7 +297,6 @@ fs::path secure_file_priv;
 fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
-const char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -1906,7 +1905,6 @@ void usage()
 static void drizzle_init_variables()
 {
   /* Things reset to zero */
-  opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
   getDebug().reset();

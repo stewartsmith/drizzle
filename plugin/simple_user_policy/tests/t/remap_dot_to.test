@@ -1,0 +1,13 @@
+# Check for error if no parameter provided
+create schema first_last;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (should_succeed,localhost,first.last,,first_last,,);
+connection should_succeed;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SELECT CURRENT_USER();
+
+# Clean up after ourselves
+connection default;
+drop schema first_last;
+disconnect should_succeed;

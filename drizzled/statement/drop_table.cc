@@ -101,8 +101,6 @@ bool statement::DropTable::execute()
     }
   }
 
-  /* DDL and binlog write order protected by table::Cache::mutex() */
-
   return rm_table(&session(), first_table, drop_if_exists, drop_temporary);
 }
 
