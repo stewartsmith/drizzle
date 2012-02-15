@@ -41,7 +41,7 @@ LIBDRIZZLE_LIBRARY_VERSION=3:0:0
 #                      changed
 AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
 
-OLDLIBDRIZZLE_LIBRARY_VERSION=4:0:0
+OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                             | | |
 #                      +------+ | +---+
 #                      |        |     |
