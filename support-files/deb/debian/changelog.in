@@ -7,6 +7,12 @@
 
  -- Automated Drizzle DEB build <drizzle-discuss@launchpad.net>  Thu, 26 Jan 2012 00:00:00 +0000
 
+drizzle (1:7.1.31-rc-0) oneiric; urgency=low
+
+   * Support the new 7.1.31-rc style versioning. (Bump epoch number.)
+   * Remove building libdrizzle.so. This is now released from lp:libdrizzle.
+
+ -- Henrik Ingo <henrik.ingo@avoinelama.fi>  Mon, 16 Jan 2012 00:06:00 +0200
 drizzle7 (2012.01.30) oneiric; urgency=low
 
   * Start packaging Drizzle Fremont series, based on Ubuntu oneiric src deb.
