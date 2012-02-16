@@ -613,7 +613,7 @@ log_group_calc_lsn_offset(
 	offset = (gr_lsn_size_offset + difference) % group_size;
 
 	/* Offset must be < 4 GB on 32 bit systems */
-	ut_a((sizeof(ulint) == 4) || (offset < (((ib_int64_t) 1) << 32)));
+	ut_a((sizeof(ulint) != 4) || (offset < (((ib_int64_t) 1) << 32)));
 
 	/* fprintf(stderr,
 	"Offset is %lu gr_lsn_offset is %lu difference is %lu\n",
