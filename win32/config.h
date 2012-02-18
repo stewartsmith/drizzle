@@ -34,6 +34,6 @@
 
 #pragma once
 
-#define PACKAGE_VERSION "drizzle7"
+#define PACKAGE_VERSION "drizzle"
 #define PACKAGE_BUGREPORT "http://bugs.launchpad.net/drizzle"
 

@@ -237,8 +237,8 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   module::Registry &modules= module::Registry::singleton();

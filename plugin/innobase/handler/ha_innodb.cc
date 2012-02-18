@@ -9469,7 +9469,7 @@ DRIZZLE_DECLARE_PLUGIN
   "innodb",
   INNODB_VERSION_STR,
   "Innobase Oy",
-  "Supports transactions, row-level locking, and foreign keys",
+  "InnoDB storage engine: transactional, row-level locking, foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   NULL, /* depends */

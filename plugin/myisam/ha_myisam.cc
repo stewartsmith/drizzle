@@ -1514,7 +1514,7 @@ DRIZZLE_DECLARE_PLUGIN
   "myisam",
   "2.0",
   "MySQL AB",
-  N_("MyISAM storage engine"),
+  N_("MyISAM storage engine: non-transactional, legacy, deprecated"),
   PLUGIN_LICENSE_GPL,
   myisam_init,
   NULL,

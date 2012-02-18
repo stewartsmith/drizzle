@@ -324,6 +324,8 @@ std::string current_db,
   opt_password,
   opt_protocol;
 
+static std::string socket_file;
+
 static const char* get_day_name(int day_of_week)
 {
   switch(day_of_week)
@@ -1372,8 +1374,8 @@ try
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   po::options_description commandline_options(_("Options used only in command line"));
@@ -1476,6 +1478,8 @@ try
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   _("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
+  _("Socket file to use when connecting to server."))
+  ("socket", po::value<string>(&socket_file),
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
@@ -4199,10 +4203,22 @@ sql_connect(const string &host, const string &database, const string &user, cons
     return 1;
   }
 
-  if ((con= drizzle_con_add_tcp(drizzle, host.c_str(),
-                                opt_drizzle_port, user.c_str(),
-                                password.c_str(), database.c_str(),
-                                global_con_options)) == NULL)
+  if (socket_file.size())
+  {
+    if ((con= drizzle_con_add_uds(drizzle, socket_file.c_str(),
+                                  user.c_str(), password.c_str(),
+                                  database.c_str(),
+                                  global_con_options)) == NULL)
+    {
+      (void) put_error(con, NULL);
+      (void) fflush(stdout);
+      return 1;
+    }
+  }
+  else if ((con= drizzle_con_add_tcp(drizzle, host.c_str(),
+                                     opt_drizzle_port, user.c_str(),
+                                     password.c_str(), database.c_str(),
+                                     global_con_options)) == NULL)
   {
     (void) put_error(con, NULL);
     (void) fflush(stdout);

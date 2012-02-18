@@ -1062,7 +1062,7 @@ void drizzle_con_reset_addrinfo(drizzle_con_st *con)
     break;
 
   case DRIZZLE_CON_SOCKET_UDS:
-    con->socket.uds.addrinfo.ai_addr= NULL;
+    con->socket.uds.path_buffer[0]= 0;
     break;
 
   default:
@@ -1150,7 +1150,6 @@ drizzle_return_t drizzle_state_addrinfo(drizzle_con_st *con)
     break;
 
   case DRIZZLE_CON_SOCKET_UDS:
-    con->addrinfo_next= &(con->socket.uds.addrinfo);
     break;
 
   default:
@@ -1179,101 +1178,146 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
     con->fd= -1;
   }
 
-  if (con->addrinfo_next == NULL)
+  if (con->socket_type == DRIZZLE_CON_SOCKET_UDS)
   {
-    drizzle_set_error(con->drizzle, __func__, "could not connect");
-    drizzle_state_reset(con);
-    return DRIZZLE_RETURN_COULD_NOT_CONNECT;
-  }
+#ifndef WIN32
+    if ((con->fd= socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+    {
+      con->drizzle->last_errno= errno;
+      return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+    }
 
-  con->fd= socket(con->addrinfo_next->ai_family,
-                  con->addrinfo_next->ai_socktype,
-                  con->addrinfo_next->ai_protocol);
-  if (con->fd == -1)
-  {
-    drizzle_set_error(con->drizzle, __func__, "socket:%s", strerror(errno));
-    con->drizzle->last_errno= errno;
-    return DRIZZLE_RETURN_COULD_NOT_CONNECT;
-  }
+    struct sockaddr_un servAddr;
 
-  dret= _con_setsockopt(con);
-  if (dret != DRIZZLE_RETURN_OK)
-  {
-    con->drizzle->last_errno= errno;
-    return DRIZZLE_RETURN_COULD_NOT_CONNECT;
-  }
+    memset(&servAddr, 0, sizeof (struct sockaddr_un));
+    servAddr.sun_family= AF_UNIX;
+    strncpy(servAddr.sun_path, con->socket.uds.path_buffer, sizeof(servAddr.sun_path)); /* Copy filename */
 
-  while (1)
+    do {
+      if (connect(con->fd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
+      {
+        switch (errno)
+        {
+        case EINPROGRESS:
+        case EALREADY:
+        case EINTR:
+          continue;
+
+        case EISCONN: /* We were spinning waiting on connect */
+          {
+            break;
+          }
+
+        default:
+          con->drizzle->last_errno= errno;
+          return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+        }
+      }
+    } while (0);
+
+    return DRIZZLE_RETURN_OK;
+#else
+    return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+#endif
+  }
+  else
   {
-    ret= connect(con->fd, con->addrinfo_next->ai_addr,
-                 con->addrinfo_next->ai_addrlen);
+    if (con->addrinfo_next == NULL)
+    {
+      drizzle_set_error(con->drizzle, __func__, "could not connect");
+      drizzle_state_reset(con);
+      return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+    }
+
+    con->fd= socket(con->addrinfo_next->ai_family,
+                    con->addrinfo_next->ai_socktype,
+                    con->addrinfo_next->ai_protocol);
+    if (con->fd == -1)
+    {
+      drizzle_set_error(con->drizzle, __func__, "socket:%s", strerror(errno));
+      con->drizzle->last_errno= errno;
+      return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+    }
+
+    dret= _con_setsockopt(con);
+    if (dret != DRIZZLE_RETURN_OK)
+    {
+      con->drizzle->last_errno= errno;
+      return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+    }
+
+    while (1)
+    {
+      ret= connect(con->fd, con->addrinfo_next->ai_addr,
+                   con->addrinfo_next->ai_addrlen);
 
 #ifdef _WIN32
-    errno = WSAGetLastError();
-    switch(errno) {
-    case WSAEINVAL:
-    case WSAEALREADY:
-    case WSAEWOULDBLOCK:
-      errno= EINPROGRESS;
-      break;
-    case WSAECONNREFUSED:
-      errno= ECONNREFUSED;
-      break;
-    case WSAENETUNREACH:
-      errno= ENETUNREACH;
-      break;
-    case WSAETIMEDOUT:
-      errno= ETIMEDOUT;
-      break;
-    case WSAECONNRESET:
-      errno= ECONNRESET;
-      break;
-    case WSAEADDRINUSE:
-      errno= EADDRINUSE;
-      break;
-    case WSAEOPNOTSUPP:
-      errno= EOPNOTSUPP;
-      break;
-    case WSAENOPROTOOPT:
-      errno= ENOPROTOOPT;
-      break;
-    default:
-      break;
-    }
+      errno = WSAGetLastError();
+      switch(errno) {
+      case WSAEINVAL:
+      case WSAEALREADY:
+      case WSAEWOULDBLOCK:
+        errno= EINPROGRESS;
+        break;
+      case WSAECONNREFUSED:
+        errno= ECONNREFUSED;
+        break;
+      case WSAENETUNREACH:
+        errno= ENETUNREACH;
+        break;
+      case WSAETIMEDOUT:
+        errno= ETIMEDOUT;
+        break;
+      case WSAECONNRESET:
+        errno= ECONNRESET;
+        break;
+      case WSAEADDRINUSE:
+        errno= EADDRINUSE;
+        break;
+      case WSAEOPNOTSUPP:
+        errno= EOPNOTSUPP;
+        break;
+      case WSAENOPROTOOPT:
+        errno= ENOPROTOOPT;
+        break;
+      default:
+        break;
+      }
 #endif /* _WIN32 */
-	
-    drizzle_log_crazy(con->drizzle, "connect return=%d errno=%s", ret, strerror(errno));
 
-    if (ret == 0)
-    {
-      con->addrinfo_next= NULL;
-      break;
+      drizzle_log_crazy(con->drizzle, "connect return=%d errno=%s", ret, strerror(errno));
+
+      if (ret == 0)
+      {
+        con->addrinfo_next= NULL;
+        break;
+      }
+
+      if (errno == EAGAIN || errno == EINTR)
+      {
+        continue;
+      }
+
+      if (errno == EINPROGRESS)
+      {
+        drizzle_state_pop(con);
+        drizzle_state_push(con, drizzle_state_connecting);
+        return DRIZZLE_RETURN_OK;
+      }
+
+      if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
+      {
+        con->addrinfo_next= con->addrinfo_next->ai_next;
+        return DRIZZLE_RETURN_OK;
+      }
+
+      drizzle_set_error(con->drizzle, __func__, "connect:%s", strerror(errno));
+      con->drizzle->last_errno= errno;
+      return DRIZZLE_RETURN_COULD_NOT_CONNECT;
     }
 
-    if (errno == EAGAIN || errno == EINTR)
-    {
-      continue;
-    }
-
-    if (errno == EINPROGRESS)
-    {
-      drizzle_state_pop(con);
-      drizzle_state_push(con, drizzle_state_connecting);
-      return DRIZZLE_RETURN_OK;
-    }
-
-    if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
-    {
-      con->addrinfo_next= con->addrinfo_next->ai_next;
-      return DRIZZLE_RETURN_OK;
-    }
-
-    drizzle_set_error(con->drizzle, __func__, "connect:%s", strerror(errno));
-    con->drizzle->last_errno= errno;
-    return DRIZZLE_RETURN_COULD_NOT_CONNECT;
+    drizzle_state_pop(con);
   }
-
-  drizzle_state_pop(con);
 
   return DRIZZLE_RETURN_OK;
 }
