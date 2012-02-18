@@ -86,7 +86,12 @@ Replication
 .. toctree::
    :maxdepth: 2
 
-   replication/drizzle
+   replication/index
+   replication/configuration
+   replication/replicators/index
+   replication/appliers/index
+   replication/messages/index
+   replication/glossary
 
 SQL Language
 ------------
