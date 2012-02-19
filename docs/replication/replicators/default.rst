@@ -3,8 +3,10 @@
 Default Replicator
 ==================
 
-:program:`default_replicator` is a simple replicator which replicates all
-write events to all appliers.
+The default replicator plugin, cleverly named ``default_replicator``,
+does not modify or filter any replication events; it simply sends every
+replication event it receives from the Drizzle kernel to every applier
+to which it is paired.
 
 .. _default_replicator_loading:
 

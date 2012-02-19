@@ -1,5 +1,6 @@
+.. _slave_plugin:
+
 Replication Slave
 ==================
 
-See :doc:`/replication/appliers/slave` for information about Drizzle
-replication.
+See :ref:`slave_applier`.

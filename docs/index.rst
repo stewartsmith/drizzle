@@ -85,12 +85,14 @@ Replication
 -----------
 .. toctree::
    :maxdepth: 2
+   :glob:
 
    replication/index
-   replication/configuration
    replication/replicators/index
    replication/appliers/index
+   replication/configuration
    replication/messages/index
+   replication/examples/index
    replication/glossary
 
 SQL Language

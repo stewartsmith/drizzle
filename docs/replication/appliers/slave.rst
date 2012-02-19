@@ -1,4 +1,4 @@
-.. _drizzle_slave:
+.. _slave_applier:
 
 Slave
 =====
