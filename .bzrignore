@@ -324,7 +324,7 @@ support-files/rpm/SRPMS/*
 support-files/rpm/RPMS/*
 support-files/rpm/RPMS/*/*
 support-files/rpm/SOURCES/*.tar.gz
-support-files/rpm/SPECS/drizzle7.spec
+support-files/rpm/SPECS/drizzle.spec
 *.tar.gz
 *.rpm
 table.gcno
