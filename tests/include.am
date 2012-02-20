@@ -87,7 +87,6 @@ EXTRA_DIST += \
 	${srcdir}/tests/kewpie/drizzle_tests/randgen_basic/*.py \
 	${srcdir}/tests/kewpie/drizzle_tests/randgen_innoTrxLog/*.py \
 	${srcdir}/tests/kewpie/drizzle_tests/randgen_slavePlugin/*.py \
-	${srcdir}/tests/kewpie/drizzle_tests/randgen_trxLog/*.py \
 	${srcdir}/tests/kewpie/drizzle_tests/sqlbench/*.py \
 	${srcdir}/tests/kewpie/lib/modes/dtr/*py \
 	${srcdir}/tests/kewpie/lib/modes/native/*py \
