@@ -1,3 +1,5 @@
+.. _replication_examples:
+
 Examples
 ========
 

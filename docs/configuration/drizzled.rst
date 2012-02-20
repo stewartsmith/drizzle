@@ -93,6 +93,25 @@ Plugin Options
 
      --plugin_remove=syslog,md5
 
+.. _drizzled_replication_options:
+
+Replication Options
+^^^^^^^^^^^^^^^^^^^
+
+.. option:: --replicate-query
+
+   :Default:
+   :Variable: ``replicate_query``
+   
+   Include the SQL query in replicated protobuf messages.
+
+.. option:: --transaction-message-threshold
+
+   :Default: 1048576
+   :Variable: ``transaction_message_threshold``
+
+   Max message size written to transaction log, valid values 131072 - 1048576 bytes.
+
 .. _drizzled_kernel_options:
 
 Kernel Options
@@ -421,13 +440,6 @@ Kernel Options
    A global constraint for read-rnd-buffer-size for all clients, cannot be set
    lower than --read-rnd-buffer-size.  Setting to 0 means unlimited.
 
-.. option:: --replicate-query
-
-   :Default:
-   :Variable: ``replicate_query``
-   
-   Include the SQL query in replicated protobuf messages.
-
 .. option:: --scheduler ARG
 
    :Default: multi-thread
@@ -538,13 +550,6 @@ Kernel Options
    :Variable: ``tx_isolation``
 
    Default transaction isolation level.
-
-.. option:: --transaction-message-threshold
-
-   :Default: 1048576
-   :Variable: ``transaction_message_threshold``
-
-   Max message size written to transaction log, valid values 131072 - 1048576 bytes.
 
 .. option:: --user, -u ARG
 
