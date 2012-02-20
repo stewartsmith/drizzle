@@ -1,5 +1,4 @@
 Filtered Replicator
 ===================
 
-See :doc:`/replication/appliers/slave` for information about Drizzle
-replication.
+See :ref:`filtered_replicator`.

@@ -1,4 +1,4 @@
-.. _default_replicator_plugin:
+.. _default_replicator:
 
 Default Replicator
 ==================
@@ -6,19 +6,18 @@ Default Replicator
 The default replicator plugin, cleverly named ``default_replicator``,
 does not modify or filter any replication events; it simply sends every
 replication event it receives from the Drizzle kernel to every applier
-to which it is paired.
+with which it is paired.
+
+The :ref:`slave_applier` is hard-coded to use the default replicator,
+and most appliers default to this replicator.
 
 .. _default_replicator_loading:
 
 Loading
 -------
 
-This plugin is loaded by default, but it may need to be configured.  See
-the plugin's :ref:`default_replicator_configuration` and
-:ref:`default_replicator_variables`.
-
-To stop the plugin from loading by default, start :program:`drizzled`
-with::
+This plugin is loaded by default.   To stop the plugin from loading by
+default, start :program:`drizzled` with::
 
    --plugin-remove=default_replicator
 

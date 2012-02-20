@@ -1,9 +1,9 @@
 .. _rabbitmq_applier:
 
-RabbitMQ Integration
-====================
+RabbitMQ Applier
+================
 
-It is possible to replicate transactions directly to a `RabbitMQ <http://www.rabbitmq.org>`_ server from drizzle, this could be used to create advanced replication solutions, to visualize data, or to build triggers. For example, `RabbitReplication <http://www.rabbitreplication.org>`_ has been built to consume the messages from rabbitmq, transform them, and persist the data in drizzle, mysql, many nosql stores and even replicating directly to websockets for data visualization.
+The RabbitMQ applier plugin, named ``rabbitmq``, applies replication events to a `RabbitMQ <http://www.rabbitmq.com>`_ server.  This can be used to create advanced replication solutions, to visualize data, or to build triggers.
 
 Loading
 -------
@@ -23,8 +23,8 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :ref:`command_line_options` for more information about specifying
-command line options.
+is started.  See :ref:`command_line_options` for more information about
+specifying command line options.
 
 .. program:: drizzled
 

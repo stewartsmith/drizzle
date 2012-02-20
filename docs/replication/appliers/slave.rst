@@ -1,7 +1,7 @@
 .. _slave_applier:
 
-Slave
-=====
+Slave Applier
+=============
 
 This page contains the configuration and implementation details for Drizzle replication.
 

@@ -1,13 +1,11 @@
-.. _filtered_replicator_plugin:
+.. _filtered_replicator:
 
 Filtered Replicator
 ===================
 
-The Filtered Replicator plugin registers itself in the Drizzle kernel
-replication stream process as a new replicator (see :ref:`replication_streams`
-for more information). It provides a way to filter replication messages by
-schema name or table name.  Regular expressions can be used for the schema and
-table names.
+The filtered replicator plugin, named ``filtered_replicator``, filters
+replication events based on schema name or table name.  Regular expressions
+can be used for the schema and table names.
 
 .. _filtered_replicator_loading:
 
@@ -29,8 +27,8 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :ref:`command_line_options` for more information about specifying
-command line options.
+is started.  See :ref:`command_line_options` for more information about
+specifying command line options.
 
 .. program:: drizzled
 

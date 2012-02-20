@@ -1,5 +1,4 @@
 Default Replicator
 ==================
 
-See :doc:`/replication/appliers/slave` for information about Drizzle
-replication.
+See :ref:`default_replicator`.
