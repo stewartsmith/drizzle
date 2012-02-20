@@ -139,14 +139,13 @@ There is no Drizzle admin command.
 Storage Engines
 ---------------
 
- * MERGE storage engine has been removed
- * FEDERATED storage engine has been removed (all current development is
-   focused on FederatedX, so having FEDERATED made no sense).
- * CSV engine is now for temporary tables only. See the filesystem_engine for
-   the future of reading files as database tables.
- * MyISAM is for temporary tables only.
- * ARCHIVE is fully supported
- * PBXT is merged
+The default Storage Engine is InnoDB and the MyISAM storage engine only exists for temporary tables only. In a future release, it will not be user accessible at all.
+
+A number of storage engines have been removed:
+ * MERGE - this was always a interim solution to the absence of SQL VIEWs
+ * FEDERATED - it is effectively unmaintanied, with any recent development occuring in FederatedX
+ * CSV
+ * ARCHIVE
 
 FRM Files
 ---------

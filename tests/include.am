@@ -176,7 +176,7 @@ tests/dbqp: tests/var/drizzle
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: tests/var/drizzle check
+test: html tests/var/drizzle check
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification

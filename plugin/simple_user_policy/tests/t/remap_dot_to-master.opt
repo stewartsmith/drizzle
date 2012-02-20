@@ -1,0 +1,1 @@
+--plugin-add=simple_user_policy --simple-user-policy.remap-dot-to="_"
