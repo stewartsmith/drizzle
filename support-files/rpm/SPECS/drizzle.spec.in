@@ -1,4 +1,3 @@
-
 # Info about conditional builds:
 #
 # The logic is opposite.  A parameter listed below as 'bcond_with' will
@@ -44,10 +43,14 @@
 %bcond_with zeromq
 
 
+%define tarversion @PANDORA_RELEASE_VERSION@
+%define rpmversion @PANDORA_RELEASE_VERSION_JUST_NUMBERS@
+
+
 Name:       @PACKAGE@
 Summary:    A Lightweight SQL Database for Cloud and Web 
 Epoch:      1
-Version:    @PANDORA_RELEASE_VERSION@
+Version:    %{rpmversion}
 Release:    1%{?dist}
 
 # All sources under drizzled/ are GPLv2.  
@@ -57,7 +60,7 @@ Group:      Applications/Databases
 URL:        http://launchpad.net/drizzle
 BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-Source0:    http://launchpad.net/drizzle/fremont/2011-11-13/+download/%{name}-%{version}.tar.gz 
+Source0:    http://launchpad.net/drizzle/fremont/2011-11-13/+download/%{name}-%{tarversion}.tar.gz 
 Source1:    drizzled.cnf
 Source2:    drizzle.cnf
 Source3:    drizzled.init
@@ -133,43 +136,10 @@ Common Libraries Shared by %{name} Client and Server
 Summary:    Client Utilities for %{name}
 Group:      Applications/Databases 
 Requires:   %{name} = %{epoch}:%{version}-%{release}
-Requires:   libdrizzle
 Obsoletes:  drizzle7-client
 
 %description client
 Client utilities for %{name}.
-
-# FIX ME: Brian wants to release lp:libdrizzle separately, with different
-# version numbers (starting from 1.0.x) It just occurred to me we have to
-# do a different specfile for libdrizzle in that case.
-%package -n libdrizzle
-Summary:    Drizzle Client & Protocol Library
-Group:      System Environment/Libraries
-Obsoletes:  libdrizzle1
-
-# All code is BSD, except libdrizzle/sha1.{c,h} which are Public Domain
-License:        BSD and Public Domain
-BuildRequires:  doxygen
-
-%description -n libdrizzle
-libdrizzle is the client and protocol library for the Drizzle project. The
-server, drizzled, will use this as for the protocol library, as well as the
-client utilities and any new projects that require low-level protocol
-communication (like proxies). Other language interfaces (PHP extensions, SWIG,
-...) should be built off of this interface.
-
-Note that we have reverted this package back to the more stable 1.0 version.
-Previously 1.0 was made available as libdrizzle1 - that is now this
-package. libdrizzle 2.0 is still in the source tree but currently
-not packaged at all.
-
-%package -n libdrizzle-devel
-Summary:    Drizzle Client & Protocol Library - Header Files
-Group:      Development/Libraries
-Requires:   libdrizzle = %{epoch}:%{version}-%{release}
-
-%description -n libdrizzle-devel
-Development files for the Drizzle Client & Protocol Library.
 
 %package server
 Summary:    Server Daemon and Utilities for %{name}
@@ -461,7 +431,7 @@ This package provides the Query Log plugin.
 %endif
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{tarversion}
 
 # for %%doc
 cp -a plugin/auth_ldap/schema/README.auth_ldap .
@@ -570,6 +540,21 @@ popd
 %{__rm} -f %{buildroot}%{_libdir}/libdrizzledmessage.la
 %{__rm} -f %{buildroot}%{_datadir}/drizzle/README.auth_ldap
 
+
+# libdrizzle is packaged in lp:libdrizzle. Since we are not
+# putting these in a package now, we must delete them to avoid error.
+%{__rm} -rf %{buildroot}%{_libdir}/libdrizzle.so*
+%{__rm} -rf %{buildroot}%{_libdir}/libdrizzle.la
+%{__rm} -rf %{buildroot}%{_includedir}/libdrizzle-1.0/
+%{__rm} -rf %{buildroot}%{_libdir}/pkgconfig/libdrizzle-1.0.pc
+%{__rm} -rf %{buildroot}%{_libdir}/pkgconfig/libdrizzle.pc
+%{__rm} -rf %{buildroot}%{_includedir}/libdrizzle/drizzle.h
+%{__rm} -rf %{buildroot}%{_includedir}/libdrizzle/drizzle_client.h
+
+
+
+
+
 # Remove RPATH:  Should no longer do this after the following is 
 # resolved:
 # 
@@ -676,20 +661,6 @@ fi
 %defattr (-,root,root,-) 
 %{_includedir}/drizzle
 %{_libdir}/pkgconfig/drizzle.pc
-
-%files -n libdrizzle
-%defattr (-,root,root,-)
-%exclude %{_libdir}/libdrizzle.la
-%{_libdir}/libdrizzle.so*
-%{_libdir}/libdrizzle.la
-
-%files -n libdrizzle-devel
-%defattr (-,root,root,-)
-%{_includedir}/libdrizzle-1.0/
-%{_libdir}/pkgconfig/libdrizzle-1.0.pc
-%{_libdir}/pkgconfig/libdrizzle.pc
-%{_includedir}/libdrizzle/drizzle.h
-%{_includedir}/libdrizzle/drizzle_client.h
 
 # OPTIONAL PLUGINS
 
