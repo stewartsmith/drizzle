@@ -113,12 +113,14 @@ def handle_user_opts(variables, defaults):
         tmp = variables['suitepaths']
         tmp[tmp.index(search_path)] = new_path
         variables['suitepaths'] = tmp
+    """
     if variables['testdir'] != defaults['testdir']:
         new_path = os.path.join(variables['testdir'],'suite')
         search_path = os.path.join(defaults['testdir'],'suite')
         tmp = variables['suitepaths']
         tmp[tmp.index(search_path)] = new_path
         variables['suitepaths'] = tmp
+    """
     return variables
 
 def parse_qp_options(defaults):

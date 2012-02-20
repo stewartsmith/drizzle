@@ -71,6 +71,11 @@ class testManager(object):
         self.mode = variables['mode']
         
         self.suitepaths = variables['suitepaths']
+        self.basedir = variables['basedir'][0]
+        self.dtr_suitepaths = [os.path.join(self.basedir,'tests')
+                              ,os.path.join(self.basedir,'plugin')
+                              ,os.path.join(self.basedir,'tests/suite')
+                              ]
         self.testdir = variables['testdir']
         self.desired_tests = variables['test_cases']
         
@@ -85,9 +90,33 @@ class testManager(object):
         self.logging.info("Processing test suites...")
         # BEGIN terrible hack to accomodate the fact that
         # our 'main' suite is also our testdir : /
-        if self.suitelist is None and self.mode=='dtr':
-            self.suitepaths = [self.testdir]
-            self.suitelist = ['main']
+        if not self.suitelist and self.mode=='dtr':
+            self.suitepaths = self.dtr_suitepaths 
+            self.suitelist = [ 'main', 'bool_type', 'cast'
+                             , 'ddl_transactions', 'execute'
+                             , 'flush_tables', 'identifiers'
+                             , 'jp', 'mysql_compatibility'
+                             , 'regression', 'tamil', 'time_type'
+                             , 'unsigned_integer_type', 'uuid_type'
+                             , 'microtime_type', 'utility_functions'
+                             , 'utility_dictionary', 'user_locks'
+                             , 'trigger_dictionary', 'transaction_log'
+                             , 'tableprototester', 'table_cache_dictionary'
+                             , 'string_functions', 'storage_engine_api_tester'
+                             , 'status_dictionary', 'sleep', 'slave'
+                             , 'simple_user_policy', 'show_schema_proto'
+                             , 'show_dictionary', 'session_dictionary'
+                             , 'schema_engine', 'schema_dictionary'
+                             , 'replication_dictionary', 'registry_dictionary'
+                             , 'regex_policy', 'rand_function'
+                             , 'rabbitmq', 'query_log'
+                             , 'performance_dictionary', 'mysql_protocol'
+                             , 'myisam', 'memory', 'md5', 'logging_stats'
+                             , 'json_server', 'innobase', 'information_schema_dictionary'
+                             , 'hello_world', 'hello_events', 'function_dictionary'
+                             , 'filtered_replicator', 'error_dictionary', 'errmsg_stderr'
+                             , 'debug', 'crc32', 'collation_dictionary', 'catalog'
+                             , 'auth_test', 'auth_schema', 'auth_file'] 
         # END horrible hack
         for suite in self.suitelist:
             suite_path = self.find_suite_path(suite)

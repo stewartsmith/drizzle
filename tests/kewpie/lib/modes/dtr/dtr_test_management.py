@@ -117,8 +117,10 @@ class testManager(test_management.testManager):
         testdir = os.path.join(suite_dir, 't')
         resultdir = os.path.join(suite_dir, 'r')
 
-        # Do basic checks to make sure this is worth further work
-        self.check_suite(suite_dir, testdir, resultdir)      
+        # Ensure suite exists
+        if not os.path.exists(suite_dir):
+            self.system_manager.logging.error("Suite: %s does not exist" %(suite_dir))
+            sys.exit(1)
 
         # Get suite-level options
         suite_options = []
@@ -229,27 +231,6 @@ class testManager(test_management.testManager):
         need_debug = 0
         return (test_path, result_file_name, result_path, comment, master_sh, 
                 config_file_path, test_server_options, disable, innodb_test, need_debug)
-
-    def check_suite(self, suite_dir, testdir, resultdir):
-        """Handle basic checks of the suite:
-           does the suite exist?
-           is there a /t dir?
-           is there a /r dir?
-           Error and die if not
-
-        """
-        # We expect suite to be a path name, no fuzzy searching
-        if not os.path.exists(suite_dir):
-            self.system_manager.logging.error("Suite: %s does not exist" %(suite_dir))
-            sys.exit(1)
-                
-        # Ensure our test and result directories are present
-        if not os.path.exists(testdir):
-            self.system_manager.logging.error("Suite: %s does not have a 't' directory (expected location for test files)" %(suite_dir))
-            sys.exit(1)
-        if not os.path.exists(resultdir):
-            self.system_manager.logging.error("Suite: %s does not have an 'r' directory (expected location for result files)" %(suite_dir))
-            sys.exit(1)
 
     def get_suite_name(self, suite_dir):
         """ Get the 'name' of the suite

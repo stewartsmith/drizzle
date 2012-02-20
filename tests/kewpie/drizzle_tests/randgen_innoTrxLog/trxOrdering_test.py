@@ -30,7 +30,7 @@ class basicTest(mysqlBaseTestCase):
 
     def test_trxOrdering(self):
         test_cmd = "./gentest.pl --gendata=conf/drizzle/translog_ordering.zz --grammar=conf/drizzle/translog_ordering.yy --Reporter=DrizzleInnoTrxLog --threads=5  --queries=500"
-        retcode, output = self.execute_randgen(test_cmd, test_executor, servers)
+        retcode, output = self.execute_randgen(test_cmd, test_executor, servers[0])
         self.assertEqual(retcode, 0, msg = output)
 
     def tearDown(self):

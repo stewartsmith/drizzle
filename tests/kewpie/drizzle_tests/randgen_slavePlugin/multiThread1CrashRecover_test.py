@@ -29,8 +29,8 @@ test_executor = None
 class basicTest(mysqlBaseTestCase):
 
     def test_multiThread1CrashRecover(self):
-        test_cmd = "./gentest.pl --gendata=conf/drizzle/translog_drizzle.zz --grammar=conf/drizzle/translog_concurrent1.yy --Reporter=DrizzleSlavePluginCrashRecover  --queries=1000 --threads=3"
-        retcode, output = self.execute_randgen(test_cmd, test_executor, servers)
+        test_cmd = "./gentest.pl --gendata=conf/drizzle/translog_drizzle.zz --grammar=conf/drizzle/translog_concurrent1.yy --Reporter=DrizzleSlavePluginCrashRecover  --queries=500 --threads=3"
+        retcode, output = self.execute_randgen(test_cmd, test_executor, servers[0])
         self.assertEqual(retcode, 0, msg =output)
 
     def tearDown(self):
