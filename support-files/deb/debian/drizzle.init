@@ -45,11 +45,12 @@ ERR_LOGGER="logger -p daemon.err -t /etc/init.d/drizzle -i"
 #
 # Usage: void drizzled_get_param option
 drizzled_get_param() {
-	$DAEMON --help --user=${DRIZZLE_USER} \
+       $DAEMON --help --user=${DRIZZLE_USER} \
     | grep "^$1" \
     | awk '{print $2}'
 }
-# datadir and pidfile are broken at the moment, use the debian defaults here:
+# datadir and pidfile values are not printed by drizzled --help
+# at the moment, use the debian default for pidfile:
 #PIDFILE=`drizzled_get_param pid-file`
 #DATADIR=`drizzled_get_param datadir`
 #[ -z $DATADIR ] && DATADIR=/var/lib/drizzle
@@ -72,12 +73,12 @@ drizzled_status () {
 
     if [ "$1" = "check_alive"  -a  $ping_alive = 1 ] ||
        [ "$1" = "check_dead"   -a  $ping_alive = 0  -a  $ps_alive = 0 ]; then
-	return 0 # EXIT_SUCCESS
+        return 0 # EXIT_SUCCESS
     else
-  	if [ "$2" = "warn" ]; then
-  	    echo -e "$ps_alive processes alive and '$DRIZZLE --ping' resulted in\n$ping_output\n" | $ERR_LOGGER -p daemon.debug
-	fi
-  	return 1 # EXIT_FAILURE
+        if [ "$2" = "warn" ]; then
+            echo -e "$ps_alive processes alive and '$DRIZZLE --ping' resulted in\n$ping_output\n" | $ERR_LOGGER -p daemon.debug
+        fi
+        return 1 # EXIT_FAILURE
     fi
 }
 
@@ -107,11 +108,16 @@ case "${1:-''}" in
   'start')
     [ -e "${DATADIR}" ] || \
       install -d -o${DRIZZLE_USER} -g${DRIZZLE_USER} -m750 "${DATADIR}"
+    # Work around the fact that start_daemon -p [pidfile] wanted to create
+    # a pid-file as root, which then makes it inaccessible for Drizzle.
+    # FIX ME: I don't know why start_daemon does that and what is the correct way to use it.
+    [ -f "${PIDFILE}" ] || \
+      sudo -u ${DRIZZLE_USER} touch ${PIDFILE}
     # Start daemon
     log_daemon_msg "Starting Drizzle database server" "drizzled"
     check_protocol_port mysql-protocol-port || log_end_msg 0
     check_protocol_port drizzle-protocol-port || log_end_msg 0
-    start_daemon -p "$PIDFILE" "$DAEMON --chuid $DRIZZLE_USER -m" "--datadir=$DATADIR" >> $LOG 2>&1 &
+    start_daemon -p "$PIDFILE" "$DAEMON --chuid $DRIZZLE_USER -m" "--pid-file=${PIDFILE}" >> $LOG 2>&1 &
     log_progress_msg "drizzled"
     log_end_msg 0
   ;;
@@ -145,4 +151,3 @@ case "${1:-''}" in
   ;;
 
 esac
-
