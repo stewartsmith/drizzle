@@ -21,7 +21,7 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-exec="/usr/sbin/drizzled7"
+exec="/usr/sbin/drizzled"
 prog="Drizzle"
 config="/etc/drizzle/drizzled.cnf"
 pid_file="/var/run/drizzle/drizzled.pid"
