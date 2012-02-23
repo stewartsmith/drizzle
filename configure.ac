@@ -155,7 +155,6 @@ AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/rpm/SPECS/drizzle.spec dnl
- support-files/deb/debian/changelog dnl
  support-files/drizzle.pc dnl
  support-files/libdrizzle.pc dnl
  support-files/libdrizzle-1.0.pc dnl

@@ -1,18 +1,12 @@
-@PACKAGE@ (1:@PANDORA_RELEASE_VERSION@-1) unstable; urgency=low
+drizzle (1:7.1.31~rc-0) oneiric; urgency=low
 
-  * New DEBs against newest upstream sources. Please see Drizzle release
-    notes for details: https://launchpad.net/drizzle/+milestones
-  * Note that the date of this changelog entry does not reflect the actual 
-    build date.
-
- -- Automated Drizzle DEB build <drizzle-discuss@launchpad.net>  Thu, 26 Jan 2012 00:00:00 +0000
-
-drizzle (1:7.1.31-rc-0) oneiric; urgency=low
-
-   * Support the new 7.1.31-rc style versioning. (Bump epoch number.)
+   * Support the new 7.1.31~rc style versioning. (Bump epoch number.)
    * Remove building libdrizzle.so. This is now released from lp:libdrizzle.
+   * Note that source tar was released as 7.1.31-rc but using a dash is
+     considered as mistake. It is here changed to ~rc.
 
  -- Henrik Ingo <henrik.ingo@avoinelama.fi>  Mon, 16 Jan 2012 00:06:00 +0200
+
 drizzle7 (2012.01.30) oneiric; urgency=low
 
   * Start packaging Drizzle Fremont series, based on Ubuntu oneiric src deb.

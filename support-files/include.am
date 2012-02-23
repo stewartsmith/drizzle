@@ -61,17 +61,43 @@ rpm: dist
 
 # For convenience we support make deb directly from bzr repo ...kind of. 
 # In fact, everything is done inside a temp dir that is deleted at the end.
-deb: dist
+deb: deb-work-dir
+	(test "${DEBEMAIL}" && test "${DEBFULLNAME}" && \
+	                 test `gpg --list-secret-keys | grep "${DEBEMAIL}" | grep "${DEBFULLNAME}" | wc -l` -gt 0 && \
+	                 echo "Found gpg key for ${DEBFULLNAME} <${DEBEMAIL}> and will use it for signing packages." && \
+	                 echo "" > deb-work-dir/DPKGPARAM ) \
+	                 || \
+	                 ( echo "-us -uc" > deb-work-dir/DPKGPARAM && \
+	                 echo "Warning: no gpg key found for signing. Building unsigned packages." )
+	(test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net") || true
+	(test "x${DEBFULLNAME}" = "x" && export DEBFULLNAME="Automatic Drizzle Build") || true
+	cd deb-work-dir/${distdir}/ && dch -b -D `lsb_release -sc` -v "1:${PANDORA_RELEASE_VERSION}-1~`lsb_release -sc`1" \
+	                                   "Automated Drizzle Build directly within upstream source."
+	cd deb-work-dir/${distdir}/ && dpkg-buildpackage `cat ../DPKGPARAM`
+	mv deb-work-dir/*.deb .
+	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
+	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
+	rm -rf deb-work-dir
+
+
+# Just the .changes .dsc and .debian.tar.gz files. 
+# (This is what we would upload to a launchpad ppa to be built.)
+# Note: $DEBEMAIL and $DEBFULLNAME are required here.
+deb-source: deb-work-dir
+	cd deb-work-dir/${distdir}/ && dch -b -D `lsb_release -sc` -v "1:${PANDORA_RELEASE_VERSION}-1~`lsb_release -sc`1" \
+	                                   "Automated Drizzle Build directly within upstream source."
+	cd deb-work-dir/${distdir}/ && debuild -S -sa
+	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
+	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
+	rm -rf deb-work-dir
+
+
+deb-work-dir: dist
 	rm -rf deb-work-dir
 	mkdir deb-work-dir
 	cp ${distdir}.tar.gz deb-work-dir/
 	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/ `.orig.tar.gz
 	cd deb-work-dir && tar xf ${distdir}.tar.gz
 	cp -ar deb-work-dir/${distdir}/support-files/deb/debian deb-work-dir/${distdir}/debian 
-	(test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net") || true
-	(test "x${DEBFULLNAME}" = "x" && export DEBFULLNAME="Automatic Drizzle Build") || true
-	cd deb-work-dir/${distdir}/ && dpkg-buildpackage -us -uc
-	mv deb-work-dir/*.deb .
-	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
-	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
-	rm -rf deb-work-dir
+
+
