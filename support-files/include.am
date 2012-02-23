@@ -53,6 +53,11 @@ rpm: dist
 	mv support-files/rpm/SRPMS/* .
 	mv support-files/rpm/RPMS/*/* .
 
+srpm: dist
+	cp ${PACKAGE_NAME}*.tar.gz support-files/rpm/SOURCES/
+	rpmbuild --define="_topdir `pwd`/support-files/rpm/" -bs  support-files/rpm/SPECS/${PACKAGE_NAME}.spec
+	mv support-files/rpm/SRPMS/* .
+
 # TODO:
 # Ultimately the goal is to also support the simple way:
 # rpmbuild -ta drizzle-*.tar.gz

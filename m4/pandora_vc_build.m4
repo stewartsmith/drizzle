@@ -155,7 +155,7 @@ AC_DEFUN([PANDORA_VC_VERSION],[
       # Since this is just a snapshot build, we need to remove that.
       PANDORA_VC_LATEST_TAG_JUST_NUMBERS=`echo ${PANDORA_VC_LATEST_TAG} | sed -e 's/~stable//' -e 's/~rc//' -e 's/~beta//' -e 's/~alpha//' -e 's/~milestone//'`
       PANDORA_RELEASE_VERSION="${PANDORA_VC_LATEST_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}~snapshot"
-      PANDORA_RELEASE_VERSION_JUST_NUMBERS="${PANDORA_VC_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}"
+      PANDORA_RELEASE_VERSION_JUST_NUMBERS="${PANDORA_VC_LATEST_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}"
       changequote(<<, >>)dnl
       PANDORA_RELEASE_ID=`echo ${PANDORA_VC_LATEST_TAG_JUST_NUMBERS} | sed -e 's/\.\([0-9]\)\./.0\1./' | sed -e 's/\.\([0-9]\)$/.0\1/' | sed 's/[^0-9]//g'`
       changequote([, ])dnl
