@@ -1,3 +1,5 @@
+.. _replicators:
+
 .. _replication_replicators:
 
 Replicators

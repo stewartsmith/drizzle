@@ -1,3 +1,5 @@
+.. _appliers:
+
 .. _replication_appliers:
 
 Appliers
@@ -18,6 +20,11 @@ Appliers are implemented by plugins and specify the unique name of a
 replicator with which Drizzle should pair it to create a replicaiton stream.
 Most appliers can be configured to use a specific replicator, but some are
 hard-coded to use a specific replicator.
+
+Most applier plugins are loaded and ran on the :ref:`originating_server`,
+but this is not a requirement.  For example, the :ref:`slave_applier` is
+loaded on one server (the slave) and connects to and pairs with the
+:ref:`default_replicator` on another originating server (the master).
 
 Drizzle includes the following applier plugins:
 

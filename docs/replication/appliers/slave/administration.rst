@@ -1,22 +1,43 @@
-********************************
-Replication Slave Administration
-********************************
+Slave Administration
+********************
 
 This page walks you through some common administration tasks when using
 the replication slave plugin.
 
-Monitoring the Master
-#####################
+Schemas and Tables
+==================
+
+The slave plugin creates its own schema and set of tables to store its
+metadata. It stores everything in the **sys_replication** schema. The
+following are the tables that it will create:
+
+.. dbtable:: sys_replication.io_state
+
+   Stores metadata about the IO/producer thread.
+
+.. dbtable:: sys_replication.applier_state
+
+   Stores metadata about the applier/consumer thread.
+
+.. dbtable:: sys_replication.queue
+
+   The replication event queue.
+
+Monitoring
+==========
+
+Master
+------
 
 Slave Connections
-*****************
+^^^^^^^^^^^^^^^^^
 
 If you want to determine which slave machines are connected to your
 master, use the *SHOW PROCESSLIST* command. Slave connections will show
 up in the output of this command.
 
 InnoDB Transaction Log
-**********************
+^^^^^^^^^^^^^^^^^^^^^^
 
 The slave plugin uses the InnoDB transaction log (see
 :ref:`innodb_transaction_log`) on the master to retrieve replication
@@ -63,8 +84,8 @@ implemented. The SYS_REPLICATION_LOG table, on the other hand, allows you
 to modify the contents of the transaction log. You would use this table
 to trim the transaction log.
 
-Monitoring the Slave
-####################
+Slave
+-----
 
 The slave plugin has two types of threads doing all of the work:
 
@@ -100,7 +121,7 @@ of the data_dictionary.sys_replication_log table above) of the most
 recently executed transaction.
 
 Transaction Log Maintenance
-###########################
+===========================
 
 Currently, the InnoDB transaction log grows without bounds and is never
 trimmed of unneeded entries. This can present a problem for long running

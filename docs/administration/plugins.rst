@@ -24,7 +24,7 @@ Drizzle loads these plugins by default (see :option:`--plugin-load`):
  * :ref:`connection_id_plugin` - Return the current connection_id (connection_id)
  * console_plugin - Console Client (console) (TODO: documentation missing)
  * :ref:`crc32_plugin` - CRC32 Function (crc32)
- * :ref:`default_replicator_plugin` - Default Replicator (default_replicator)
+ * :ref:`default_replicator` - Default Replicator (default_replicator)
  * :ref:`drizzle_protocol_plugin` - Drizzle Protocol (drizzle_protocol)
  * :ref:`errmsg_stderr_plugin` - Error Messages to stderr (errmsg_stderr)
  * :ref:`error_dictionary_plugin` - Data Dictionary for Errors. (error_dictionary)

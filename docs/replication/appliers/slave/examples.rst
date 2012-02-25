@@ -1,5 +1,16 @@
-How to use replication: An example
-====================================
+.. _slave_examples:
+
+.. _slave_applier_examples:
+
+Slave Applier Examples
+======================
+
+.. _simplest_master-slave_example:
+
+Simplest Master-Slave
+=====================
+
+Foo.
 
 A simple replication setup (using a single master and a single slave) between two Drizzle servers is done with the replication slave plugin. With Drizzle replication, you can also provision a new slave into an existing setup.
 

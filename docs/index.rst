@@ -92,8 +92,7 @@ Replication
    replication/appliers/index
    replication/configuration
    replication/messages/index
-   replication/examples/index
-   replication/glossary
+   replication/examples
 
 SQL Language
 ------------

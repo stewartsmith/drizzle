@@ -1,7 +1,7 @@
 .. _zeromq_applier:
 
-ZeroMQ
-======
+ZeroMQ Applier
+==============
 
 ZeroMQ is a messaging library that allows you to easily build complex
 communication systems. The ZeroMQ plugin allows drizzle to publish

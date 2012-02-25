@@ -5,6 +5,5 @@ Examples
 
 .. toctree::
    :maxdepth: 1
-   :glob:
 
-   *
+   appliers/slave/examples

@@ -1,3 +1,5 @@
+.. program:: drizzled
+
 Getting Started
 ===============
 
@@ -113,3 +115,28 @@ special steps to create a replication stream.
 Replication stream cannot be dynamically recreated; the user must stop
 Drizzle, reconfigure the replicator or applier, and then restart Drizzle to
 let it automatically recreate the new replication stream.
+
+.. _originating_server:
+
+Originating Server
+------------------
+
+The originating server of a replication event is the server on which the
+SQL statement that caused the replication was first executed.  Since one
+replicaiton event may be applied to several services (by passing through
+multiple replication streams), the originating server uniquely identifies
+the true origin of a replication event versus its most immediate upstream
+origin which may have received the replication event from any number of
+additional upstream sources.
+
+Drizzle automatically generates a UUID for every server, saved in the
+:file:`server.uuid` file in the :option:`--datadir` directory.  This UUID
+is included with every replication event that originates from the server.
+
+An originating server may or may not contain both end points of a replication
+stream.  Replicators are always local to (loaded and ran from) the originating
+server from which they receive replication events, but appliers may be local
+or remote (loaded and ran on a different server).  The external service to
+which the applier applies replication events is usually another server,
+not the originating server, but an applier could, in theory, apply events
+from and to the same originating server.
