@@ -1,3 +1,5 @@
+.. _zeromq:
+
 .. _zeromq_applier:
 
 ZeroMQ Applier

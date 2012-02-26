@@ -140,3 +140,31 @@ or remote (loaded and ran on a different server).  The external service to
 which the applier applies replication events is usually another server,
 not the originating server, but an applier could, in theory, apply events
 from and to the same originating server.
+
+Configuration
+-------------
+
+Drizzle replication is primarily configured by options specific to
+each :ref:`replicator <replicators>` and :ref:`applier <appliers>`.
+
+The Drizzle kernel has very few :ref:`drizzled_replication_options` which
+typically do not need to be changed:
+
+:option:`--transaction-message-threshold`
+    Controls the size, in bytes, of the transaction messages.
+    When a transaction message exceeds this size, a new transaction message
+    with the same transaction ID will be created to continue the replication
+    events.  See :ref:`bulk-operations`.
+
+:option:`--replicate-query`
+    Controls whether the originating SQL query will be included within each
+    statement message contained in the enclosing transaction message. The
+    default global value is FALSE which will not include the query in the
+    messages. It can be controlled per session, as well. For example:
+
+    .. code-block:: mysql
+
+       drizzle> SET @@replicate_query = 1;
+
+    The stored query should be used as a guide only, and never executed
+    on a slave to perform replication as this will lead to incorrect results.

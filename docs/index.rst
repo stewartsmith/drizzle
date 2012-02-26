@@ -90,7 +90,6 @@ Replication
    replication/index
    replication/replicators/index
    replication/appliers/index
-   replication/configuration
    replication/messages/index
    replication/examples
 
