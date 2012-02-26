@@ -2,17 +2,19 @@
 
 .. _slave_configuration:
 
+.. _slave_config:
+
 Slave Configuration
 *******************
 
 The minimal steps for configuring a Drizzle
-:ref:`replication stream <replication_streams>` using the slave
-applier are:
+:ref:`replication stream <replication_streams>` using the
+:ref:`slave` are:
 
-#. Verify that the :ref:`default_replicator` plugin is loaded on the masters
-#. Enable :option:`--innodb.replication-log` on the masters
-#. Write a slave config file for :option:`--slave.config-file`
-#. Load and configure the ``slave`` plugin on the slave
+#. Verifying that the :ref:`default_replicator` plugin is loaded on the masters
+#. Enabling :option:`--innodb.replication-log` on the masters
+#. Writing a :ref:`slave_config_file` for :option:`--slave.config-file`
+#. Loading and configure the ``slave`` plugin on the slave
 
 Masters
 =======
@@ -59,24 +61,10 @@ InnoDB replication log is active, execute:
  | innodb_replication_log | ON    | 
  +------------------------+-------+
 
-Slave
-=====
+.. _slave_config_file:
 
-A slave must load the ``slave`` plugin which is not loaded by default.
-This plugin has only one option:
-
-.. option:: --slave.config-file FILE
-
-   :Default: :file:`BASEDIR/etc/slave.cfg`
-   :Variable:
-
-   Full path to the replication slave configuration file.
-   By default, the plugin looks for a file named :file:`slave.cfg`
-   in :file:`BASEDIR/etc/` where :file:`BASEDIR` is determined by
-   :option:`--basedir`.
-
-Config File
------------
+Slave Config File
+=================
 
 A slave config file is a plain text file that contains connection and
 configuration options for each master.  At least one master must be
@@ -140,3 +128,37 @@ The following options are permitted:
 
    The number of seconds the applier (consumer) thread sleeps between applying
    replication events from the local queue. Default is 5.
+
+See :ref:`slave_examples` for complete, working examples.
+
+slave Plugin
+============
+
+A slave must load the ``slave`` plugin which is not loaded by default.
+This plugin has only one option:
+
+.. option:: --slave.config-file FILE
+
+   :Default: :file:`BASEDIR/etc/slave.cfg`
+   :Variable:
+
+   Full path to a :ref:`slave_config_file`.
+   By default, the plugin looks for a file named :file:`slave.cfg`
+   in :file:`BASEDIR/etc/` where :file:`BASEDIR` is determined by
+   :option:`--basedir`.
+
+Since a slave can connect to multiple masters, all other options are set
+per-master in a :ref:`slave_config_file`.
+Once a slave config file has been written, start Drizzle with the ``slave``
+plugin like:
+
+.. code-block:: bash
+
+  $ drizzled --plugin-add slave --slave.config-file /etc/drizzled/slave.conf
+
+See :ref:`slave_examples` for complete, working examples.
+
+If the masters are configured properly and the slave config file is correct,
+Drizzle should start without errors and it should be
+possible to :ref:`administer the slave <slave_admin>` as described
+in the next section.

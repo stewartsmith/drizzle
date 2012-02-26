@@ -1,3 +1,7 @@
+.. _slave_administration:
+
+.. _slave_admin:
+
 Slave Administration
 ********************
 

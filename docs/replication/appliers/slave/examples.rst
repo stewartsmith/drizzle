@@ -1,16 +1,12 @@
 .. _slave_examples:
 
-.. _slave_applier_examples:
-
-Slave Applier Examples
-======================
+Slave Examples
+**************
 
 .. _simplest_master-slave_example:
 
 Simplest Master-Slave
 =====================
-
-Foo.
 
 A simple replication setup (using a single master and a single slave) between two Drizzle servers is done with the replication slave plugin. With Drizzle replication, you can also provision a new slave into an existing setup.
 
@@ -66,8 +62,6 @@ To run Drizzle in the background, thereby keeping the database running if the us
 
 --daemon
 
-
-
 With the master running, you can optionally now create a backup of any databases to be imported on the new slave by using :doc:`/clients/drizzledump`. This example, however, assumes that we are starting with a fresh database with no data.
 
 Slave Setup
@@ -105,8 +99,8 @@ Some options that can be set other than default, but are otherwise not necessary
 
 The slave will immediately connect to the master host specified in the configuration file and begin pulling events from the InnoDB-based transaction log. By default, a freshly provisioned slave will begin pulling from the beginning of this transaction log. Once all replication messages have been pulled from the master and stored locally on the slave host, the IO thread will sleep and periodically awaken to check for more messages. This is straightforward for an initial replication setup. See below to learn about inserting another slave host into an already existing replication architecture.
 
-Provisioning a New Slave Host
--------------------------------
+Provision New Slave
+===================
 
 The basic formula for creating a new slave host for an existing replication setup is:
 
