@@ -39,10 +39,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "String Functions",
+  "string_functions",
   "1.0",
   "Brian Aker, Stewart Smith",
-  "String Functions.",
+  N_("String functions"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

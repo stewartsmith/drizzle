@@ -82,10 +82,10 @@ DRIZZLE_DECLARE_PLUGIN
   "shutdown",
   "1.0",
   "Brian Aker",
-  "Cause the database to shutdown.",
+  N_("SHUTDOWN function"),
   PLUGIN_LICENSE_BSD,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;
