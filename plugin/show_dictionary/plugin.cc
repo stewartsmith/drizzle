@@ -43,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
   "show_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionary for show commands.",
+  N_("Dictionary of SHOW commands"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

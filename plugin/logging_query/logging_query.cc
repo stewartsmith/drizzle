@@ -159,7 +159,7 @@ public:
 
   Logging_query(const std::string &filename,
                 const std::string &query_pcre) :
-    drizzled::plugin::Logging("Logging_query"),
+    drizzled::plugin::Logging("csv_query_log"),
     _filename(filename),
     _query_pcre(query_pcre),
     fd(-1), re(NULL), pe(NULL),
@@ -341,10 +341,10 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "logging-query",
+  "logging_query",
   "0.2",
-  "Mark Atwood <mark@fallenpegasus.com>",
-  N_("Log queries to a CSV file"),
+  "Mark Atwood",
+  N_("Logs queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   drizzle_plugin::logging_query_plugin_init,
   NULL,

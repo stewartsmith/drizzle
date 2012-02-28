@@ -15,7 +15,7 @@
 # Is it actually plugged in?  It should be.
 # Can we still exec queries without crashing Drizzle?  Let's hope so.
 --vertical_results
-select * from data_dictionary.plugins join data_dictionary.modules on plugins.plugin_name=modules.module_name where plugin_name='query_log';
+select * from data_dictionary.plugins join data_dictionary.modules using (module_name) where plugin_name="file_query_log";
 --horizontal_results
 
 # When the query_log plugin is added, it's enabled by default, but all its

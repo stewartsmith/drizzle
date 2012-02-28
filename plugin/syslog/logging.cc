@@ -44,7 +44,7 @@ logging::Syslog::Syslog(const std::string &facility,
                         uint64_t threshold_slow,
                         uint64_t threshold_big_resultset,
                         uint64_t threshold_big_examined) :
-  drizzled::plugin::Logging("Syslog Logging"),
+  drizzled::plugin::Logging("syslog_query_log"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str())),
   _threshold_slow(threshold_slow),
   _threshold_big_resultset(threshold_big_resultset),

@@ -284,4 +284,16 @@ static int init(drizzled::module::Context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "query_log",
+  "1.0",
+  "Daniel Nichter",
+  N_("Logs queries to a file"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -1,15 +1,14 @@
 Log file does not exist
-select * from data_dictionary.plugins join data_dictionary.modules on plugins.plugin_name=modules.module_name where plugin_name='query_log';
-PLUGIN_NAME	query_log
+select * from data_dictionary.plugins join data_dictionary.modules using (module_name) where plugin_name="file_query_log";
+MODULE_NAME	query_log
+PLUGIN_NAME	file_query_log
 PLUGIN_TYPE	EventObserver
 IS_ACTIVE	YES
-MODULE_NAME	query_log
-MODULE_NAME	query_log
 MODULE_VERSION	1.0
 MODULE_AUTHOR	Daniel Nichter
 IS_BUILTIN	NO
 MODULE_LIBRARY	query_log
-MODULE_DESCRIPTION	Query Log
+MODULE_DESCRIPTION	Logs queries to a file
 MODULE_LICENSE	GPL
 SELECT @@query_log_enabled, @@query_log_file_enabled;
 @@query_log_enabled	@@query_log_file_enabled
