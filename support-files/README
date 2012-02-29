@@ -25,14 +25,14 @@ are moved to the actual drizzle sources. (But this will not yet be reality for
 
 Status:
 
-It looks like we will miss having this included in the sources for the 7.1 -rc.
+We missed the boat on having this included in the sources for the 7.1 -rc.
 The plan now is to maintain a parallel repository 
 lp:~drizzle-developers/drizzle/drizzle-7.1-packaging which will merge from trunk.
+
 Once we start working on 7.2, we hope to merge this into trunk asap.
 
-The major actions remaining at this point is to separate building of libdrizzle,
-and put the init script back for Debian (Ubuntu uses upstart). Also for Fedora 16
-we don't have any systemd support yet.
+First packages are now released based on 7.1.31-rc. For Fedora 16
+we don't have any systemd support yet so Fedora packages were not released.
 
 See https://blueprints.launchpad.net/drizzle/+spec/7.1-packaging for more 
 details and most current status.
