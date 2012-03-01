@@ -40,7 +40,7 @@ class ReplicationSlave : public drizzled::plugin::Daemon
 public:
 
   ReplicationSlave(const std::string &config)
-    : drizzled::plugin::Daemon("Replication Slave"),
+    : drizzled::plugin::Daemon("replication_slave"),
       _config_file(config)
   {}
   

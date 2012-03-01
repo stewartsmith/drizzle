@@ -353,7 +353,7 @@ DRIZZLE_DECLARE_PLUGIN
   "memcached_functions",
   "0.1",
   "Patrick Galbraith, Ronald Bradford, Padraig O'Sullivan",
-  "Memcached UDF Plugin",
+  N_("Memcached functions"),
   PLUGIN_LICENSE_GPL,
   memcachedInit,
   memcachedDone,

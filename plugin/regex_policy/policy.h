@@ -148,7 +148,7 @@ class Policy :
 {
 public:
   Policy(const fs::path &f_path) :
-    drizzled::plugin::Authorization("Regex Policy"), policy_file(f_path), error(),
+    drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
     table_check_cache(NULL), schema_check_cache(NULL), process_check_cache(NULL)
   { }
 

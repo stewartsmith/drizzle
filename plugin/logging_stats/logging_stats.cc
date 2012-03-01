@@ -330,10 +330,10 @@ DRIZZLE_DECLARE_PLUGIN
   "logging_stats",
   "0.1",
   "Joseph Daly",
-  N_("User Statistics as DATA_DICTIONARY tables"),
+  N_("Dictionaries for user statistics"),
   PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init      */
-  NULL, /* depends */
-  init_options    /* config options   */
+  init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

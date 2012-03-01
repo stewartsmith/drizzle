@@ -44,4 +44,16 @@ static int init(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(init, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "replication_dictionary",
+  "1.0",
+  "Jay Pipes",
+  N_("Dictionary of replication streams"),
+  PLUGIN_LICENSE_BSD,
+  init,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

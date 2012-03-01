@@ -1,1 +1,1 @@
---transaction-log.enable --scheduler=multi_thread  --transaction-message-threshold=131072 --allow-all-authentication.allow_anonymous=true --transaction-log.file=../local/transaction.log
+--transaction-log.enable --scheduler=multi_thread  --transaction-message-threshold=131072 --auth-all.allow-anonymous=true --transaction-log.file=../local/transaction.log

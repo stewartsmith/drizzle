@@ -75,10 +75,10 @@ static int initialize(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "coercibility_function",
+  "coercibility",
   "1.0",
   "Andrew Hutchings",
-  "COERCIBILITY()",
+  N_("COERCIBILITY function"),
   PLUGIN_LICENSE_GPL,
   initialize,
   NULL,

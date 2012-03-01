@@ -77,4 +77,16 @@ static int initialize(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(initialize, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "crc32",
+  "1.0",
+  "Stewart Smith",
+  N_("CRC32 function"),
+  PLUGIN_LICENSE_GPL,
+  initialize,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;
