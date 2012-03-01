@@ -131,7 +131,7 @@ static ZeroMQLog *zeromqLogger; ///< the actual plugin
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  zeromqLogger= new ZeroMQLog("zeromq_log_applier", vm["endpoint"].as<string>());
+  zeromqLogger= new ZeroMQLog("zeromq_applier", vm["endpoint"].as<string>());
   context.add(zeromqLogger);
   ReplicationServices::attachApplier(zeromqLogger, vm["use-replicator"].as<string>());
   context.registerVariable(new sys_var_const_string_val("endpoint", vm["endpoint"].as<string>()));
@@ -152,4 +152,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "zeromq",
+  "0.1",
+  "Marcus Eriksson",
+  N_("Publishes transactions to ZeroMQ"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

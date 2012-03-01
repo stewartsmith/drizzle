@@ -106,4 +106,16 @@ static int init(module::Context &context)
 
 } /* namespace auth_test */
 
-DRIZZLE_PLUGIN(auth_test::init, NULL, NULL);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_test",
+  "0.1",
+  "Eric Day",
+  N_("Authentication module for testing"),
+  PLUGIN_LICENSE_GPL,
+  auth_test::init,
+  NULL,
+  NULL,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -59,7 +59,7 @@ static const char* g_schema_exts[] =
 };
 
 Schema::Schema() :
-  drizzled::plugin::StorageEngine("schema",
+  drizzled::plugin::StorageEngine("SchemaEngine",
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |

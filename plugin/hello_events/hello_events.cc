@@ -421,14 +421,14 @@ static void init_options(drizzled::module::option_context &context)
 
 DRIZZLE_DECLARE_PLUGIN
 {
-  DRIZZLE_VERSION_ID,
-  PLUGIN_NAME,
-  "0.1",
-  "Barry Leslie",
-  N_("An example events Plugin"),
-  PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init      */
-  NULL, /* depends */
-  init_options    /* config options   */
+  DRIZZLE_VERSION_ID,                 /* DRIZZLE_VERSION_ID */
+  PLUGIN_NAME,                        /* module name */
+  "0.1",                              /* module version */
+  "Barry Leslie",                     /* author(s) */
+  N_("Example EventObserver plugin"), /* description */
+  PLUGIN_LICENSE_BSD,                 /* license */
+  init,                               /* init module function */
+  NULL,                               /* module dependencies */
+  init_options                        /* init options function */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
