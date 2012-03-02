@@ -28,7 +28,7 @@ Make sure sysbench is then in your path
 
 
 sysbench / kewpie tests
-=====================
+=======================
 
 A sysbench test defines a run for a particular concurrency.  There are suites for readonly and readwrite.
 They are currently broken down this way as an experiment - we are open to other ways of organizing these tests::
@@ -43,7 +43,7 @@ They are currently broken down this way as an experiment - we are open to other 
     servers = [[innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048]]
 
 Running tests
-=========================
+=============
 
 There are several different ways to run tests using :doc:`kewpie` 's sysbench mode.
 
