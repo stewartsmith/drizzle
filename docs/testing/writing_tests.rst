@@ -10,7 +10,7 @@ that allow for more complex testing scenarios.  Additional documentation for oth
 tools will come later.
 
 Writing native mode tests
-==========================
+=========================
 Native mode is a way of saying Python unittest mode.  The goal is that all tests will use this paradigm as it is clean, flexible, and easily expanded.  Some references:
 
     * http://docs.python.org/library/unittest.html
@@ -36,7 +36,7 @@ Writing native modes tests can be quite simple.  Here is an example::
 Every test case should have a basicTest class.  This is not ideal, but it is the current implementation and testing does not suffer for the lack of creative naming ; ).  The test runner pulls from this class and all test_* methods for the class are executed.
 
 Requesting / specifying server requirements
---------------------------------------------
+-------------------------------------------
 
 The 'server_requirements' block in the example above is how a test case requests servers for use in a test case.
 The content is a list of Python lists, with each sublist containing a string of server options.
@@ -56,7 +56,7 @@ A more complex example::
 The server_manager is passed these requirements and attempts to start up a server with them.  In the event of a startup failure, informative error information will be provided.
 
 More complex server setup tasks
---------------------------------
+-------------------------------
 
 Sometimes we need to do things that aren't easily described as just a startup option.  Sometimes, we need to specify that a server should replicate from another, or pre-populate the server prior to startup, and so on.  Here is some information on the tools kewpie provides to help with such tasks
 
@@ -71,7 +71,7 @@ The common thread to all of these tasks is the use of the server_requests variab
     test_executor = None
 
 Setting a server as a slave to another
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the example above, we see that we have a list with two items tied to the key 'join_cluster'.
 The server_manager has a method called join_cluster with basically says::
