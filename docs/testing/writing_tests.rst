@@ -75,6 +75,7 @@ Setting a server as a slave to another
 
 In the example above, we see that we have a list with two items tied to the key 'join_cluster'.
 The server_manager has a method called join_cluster with basically says::
+
     def join_cluster(master_server, slave_server):
         slave_server.set_master(master_server)
 
