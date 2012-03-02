@@ -63,9 +63,43 @@ TEST_RUN_DBQP_MODE= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
 		--testdir=${top_srcdir}/tests \
 		--workdir=${top_srcdir}/tests/workdir
 
+TEST_RUN_QP= $(PYTHON) $(top_srcdir)/tests/kewpie/qp.py \
+                --top-srcdir=${top_srcdir} \
+                --top-builddir=${top_builddir} \
+                --reorder \
+                --basedir=${top_srcdir} \
+                --testdir=${top_srcdir}/tests \
+                --workdir=${top_srcdir}/tests/kewpie/workdir
+
+TEST_RUN_QP_MODE= $(PYTHON) $(top_srcdir)/tests/kewpie/kewpie.py \
+                --top-srcdir=${top_srcdir} \
+                --top-builddir=${top_builddir} \
+                --basedir=${top_srcdir} \
+                --testdir=${top_srcdir}/tests/kewpie \
+                --workdir=${top_srcdir}/tests/kewpie/workdir
+
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/kewpie/kewpie.py \
+	${srcdir}/tests/kewpie/qp_data \
+	${srcdir}/tests/kewpie/drizzle_tests/crashme/*.py \
+	${srcdir}/tests/kewpie/drizzle_tests/randgen_basic/*.py \
+	${srcdir}/tests/kewpie/drizzle_tests/randgen_innoTrxLog/*.py \
+	${srcdir}/tests/kewpie/drizzle_tests/randgen_slavePlugin/*.py \
+	${srcdir}/tests/kewpie/drizzle_tests/sqlbench/*.py \
+	${srcdir}/tests/kewpie/lib/modes/dtr/*py \
+	${srcdir}/tests/kewpie/lib/modes/native/*py \
+	${srcdir}/tests/kewpie/lib/modes/sysbench/*py \
+	${srcdir}/tests/kewpie/lib/opts/*.py \
+	${srcdir}/tests/kewpie/lib/server_mgmt/*py \
+	${srcdir}/tests/kewpie/lib/sys_mgmt/*py \
+	${srcdir}/tests/kewpie/lib/test_mgmt/*py \
+	${srcdir}/tests/kewpie/lib/util/*py \
+	${srcdir}/tests/kewpie/lib/*.py \
+	${srcdir}/tests/kewpie/randgen \
+	${srcdir}/tests/kewpie/sql-bench \
+	${srcdir}/tests/kewpie/sysbench_tests \
 	${srcdir}/tests/crashme_tests \
 	${srcdir}/tests/dbqp.py \
 	${srcdir}/tests/dbqp_data \
@@ -185,15 +219,40 @@ test-plugins: tests/var/drizzle
 test-dbqp: tests/var/drizzle
 	$(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
 
+test-randgen-dbqp: tests/var/drizzle
+	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main,randgen_trxLog
+
+test-qp: tests/var/drizzle
+	$(TEST_RUN_QP) $(TEST_RUN_EXTRA_OPTIONS) --mode=dtr --fast --force --suite=$(NORMAL_TESTS)
+
+test-randgen-all: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_trxLog,randgen_innoTrxLog,randgen_slavePlugin --force	
+
 test-randgen: tests/var/drizzle
-	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_innoTrxLog --force
+
+test-randgen-basic: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic --force
+
+test-randgen-slave: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_slavePlugin --force
+
+test-randgen-innodb-log: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=randgen_innoTrxLog --force
+
+test-crashme: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=crashme
+
+test-sqlbench: tests/var/drizzle
+	$(TEST_RUN_QP_MODE) --suite=sqlbench
+
 
 distclean-local: nukevar
 
 nukevar:
 	rm -rf tests/var \
         rm -rf tests/workdir \
-        rm tests/dbqp_data/*
+        rm tests/dbqp_data/* \
+	rm tests/kewpie/qp_data/*
  
-
 .PHONY: nukevar
