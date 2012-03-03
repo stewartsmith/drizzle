@@ -1,1 +1,0 @@
---transaction-log.enable --scheduler=multi_thread --transaction-message-threshold=131072 --allow-all-authentication.allow_anonymous=true

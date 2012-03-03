@@ -243,6 +243,8 @@ static ibuf_accel_rate_constraint ibuf_accel_rate;
 static uint32_constraint checkpoint_age_target;
 static binary_constraint flush_neighbor_pages;
 
+static string sysvar_transaction_log_use_replicator;
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -2516,7 +2518,7 @@ innobase_change_buffering_inited_ok:
   {
     ReplicationLog *replication_logger= new ReplicationLog();
     context.add(replication_logger);
-    ReplicationLog::setup(replication_logger);
+    ReplicationLog::setup(replication_logger, sysvar_transaction_log_use_replicator);
   }
 
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
@@ -2628,6 +2630,9 @@ innobase_change_buffering_inited_ok:
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
+
+  context.registerVariable(new sys_var_const_string("use-replicator",
+                                                    sysvar_transaction_log_use_replicator));
 
   return(FALSE);
 
@@ -9448,6 +9453,9 @@ static void init_options(drizzled::module::option_context &context)
   context("replication-log",
           po::value<bool>(&innobase_use_replication_log)->default_value(false)->zero_tokens(),
           _("Enable internal replication log."));
+  context("use-replicator",
+          po::value<string>(&sysvar_transaction_log_use_replicator)->default_value(DEFAULT_USE_REPLICATOR),
+          _("Name of the replicator plugin to use (default='default_replicator')")); 
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
           _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));

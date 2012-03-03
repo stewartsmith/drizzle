@@ -68,7 +68,7 @@ ReplicationLog::ReplicationLog() :
 {
 }
 
-void ReplicationLog::setup(ReplicationLog *logger)
+void ReplicationLog::setup(ReplicationLog *logger, const std::string& arg)
 {
-  ReplicationServices::attachApplier(logger, "default");
+  ReplicationServices::attachApplier(logger, arg);
 }
