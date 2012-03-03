@@ -1,1 +1,0 @@
---transaction-log.enable --transaction-message-threshold=128k --auth-all.allow-anonymous=true
