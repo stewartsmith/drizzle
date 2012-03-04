@@ -1,3 +1,4 @@
+#!/bin/sh
 # 
 # Copyright (C) 2009 Monty Taylor
 # All rights reserved.

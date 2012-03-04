@@ -1,1 +1,0 @@
---plugin-add=filtered_replicator --transaction-log.enable --transaction-log.use-replicator=filtered

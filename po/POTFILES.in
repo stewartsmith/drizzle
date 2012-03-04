@@ -120,7 +120,6 @@ plugin/rabbitmq/rabbitmq_log.cc
 plugin/rand_function/rand_function.cc
 plugin/regex_policy/module.cc
 plugin/registry_dictionary/dictionary.cc
-plugin/replication_dictionary/module.cc
 plugin/reverse_function/reverse_function.cc
 plugin/schema_dictionary/dictionary.cc
 plugin/schema_engine/plugin.cc
@@ -147,14 +146,6 @@ plugin/syslog/logging.cc
 plugin/syslog/module.cc
 plugin/table_cache_dictionary/dictionary.cc
 plugin/tableprototester/tableprototester.cc
-plugin/transaction_log/hexdump_transaction_message.cc
-plugin/transaction_log/module.cc
-plugin/transaction_log/print_transaction_message.cc
-plugin/transaction_log/transaction_log.cc
-plugin/transaction_log/transaction_log_reader.cc
-plugin/transaction_log/utilities/transaction_file_reader.cc
-plugin/transaction_log/utilities/transaction_reader.cc
-plugin/transaction_log/write_buffer.cc
 plugin/trigger_dictionary/module.cc
 plugin/user_locks/module.cc
 plugin/utility_dictionary/dictionary.cc
