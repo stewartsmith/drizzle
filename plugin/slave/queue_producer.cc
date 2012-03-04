@@ -244,6 +244,10 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
              " WHERE `commit_id` > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
+  sql.append(" AND `originating_server_uuid` != ");
+  sql.append("'", 1);
+  sql.append(_session.get()->getServerUUID());
+  sql.append("'", 1);
   sql.append(" ORDER BY `commit_id` LIMIT 25");
 
   drizzle_return_t ret;
