@@ -34,6 +34,8 @@
 #include <drizzled/visibility.h>
 #include <drizzled/common_fwd.h>
 
+static const char DEFAULT_USE_REPLICATOR[]= "default";
+
 namespace drizzled {
 
 /**
