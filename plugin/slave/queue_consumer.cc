@@ -414,6 +414,7 @@ void QueueConsumer::setApplierState(const string &err_msg, bool status)
   sql.append("'", 1);
 
   statements.push_back(sql);
+  clearErrorState();
   executeSQL(statements);
 }
 
