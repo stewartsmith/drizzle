@@ -104,10 +104,6 @@ class drizzleTree(codeTree):
         self.drizzletest = self.system_manager.find_path([os.path.join(self.clientbindir,
                                                    'drizzletest')])
 
-        self.trx_reader = self.system_manager.find_path([os.path.join(self.basedir,
-                                                                 'plugin/transaction_log/utilities/drizzletrx')],
-                                                         required=0)
-
         self.server_version_string = None
         self.server_executable = None
         self.server_version = None
