@@ -132,7 +132,7 @@ null_date:
 
 void Item_func_timestamp_diff::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
 
   switch (int_type) {
