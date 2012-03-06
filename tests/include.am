@@ -164,9 +164,12 @@ tests/dbqp: tests/var/drizzle
 .PHONY: test
 .PHONY: test-all
 .PHONY: test-big
+.PHONY: test-crashme
 .PHONY: test-drizzle
 .PHONY: test-dbqp
+.PHONY: test-qp
 .PHONY: test-plugins
+.PHONY: test-randgen
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -220,13 +223,13 @@ test-dbqp: tests/var/drizzle
 	$(TEST_RUN_DBQP) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(NORMAL_TESTS)
 
 test-randgen-dbqp: tests/var/drizzle
-	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main,randgen_trxLog
+	$(TEST_RUN_DBQP_MODE) --mode=randgen --suite=main
 
 test-qp: tests/var/drizzle
 	$(TEST_RUN_QP) $(TEST_RUN_EXTRA_OPTIONS) --mode=dtr --fast --force --suite=$(NORMAL_TESTS)
 
 test-randgen-all: tests/var/drizzle
-	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_trxLog,randgen_innoTrxLog,randgen_slavePlugin --force	
+	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_innoTrxLog,randgen_slavePlugin --force	
 
 test-randgen: tests/var/drizzle
 	$(TEST_RUN_QP_MODE) --suite=randgen_basic,randgen_innoTrxLog --force
