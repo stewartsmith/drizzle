@@ -18,19 +18,18 @@ For examples of the following, see :doc:`current_time_functions`.
 +===================================+=====================================+=================================================================+
 |current_date                       |date                                 |Current date                                                     |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
-|current_time                       |time with time zone                  |Current time of day	                                            |
-+-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
-|current_timestamp                  |timestamp with time zone	          |Current date and time (start of current transaction)             |
+|current_timestamp                  |timestamp with time zone*	          |Current date and time (start of current transaction)             |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
 |localtime	                    |time	                          |Current time of day	 	                                    |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
 |localtimestamp	                    |timestamp	                          |Current date and time (start of current transaction)             |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
-|now()	                            |timestamp with time zone	          |Current date and time (start of current transaction)             |
+|now()	                            |timestamp with time zone*	          |Current date and time (start of current transaction)             |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
-|statement_timestamp()	            |timestamp with time zone	          |Current date and time (start of current statement)               |
+|statement_timestamp()	            |timestamp with time zone*	          |Current date and time (start of current statement)               |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
 
+*Drizzle timezone is always UTC.
 
 Extract
 -------

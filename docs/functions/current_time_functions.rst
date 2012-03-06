@@ -14,24 +14,12 @@ Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, dependin
 	SELECT CURDATE() + 0;
         	-> 20110213
 
-current_time
---------------
-
-Returns the current time as a value in 'HH:MM:SS' or HHMMSS format, depending on whether the function is used in a string or numeric context.
-
-.. code-block:: mysql
-
-    SELECT CURTIME();
-            -> '10:30:09'
-    SELECT CURTIME() + 0;
-            -> 103009
-
 .. _now:
 
 now()	                            
 ------
 
-NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS:mmmmmm' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS:mmmmmm' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone (Drizzle timezone is always UTC).
 
 .. code-block:: mysql
 
