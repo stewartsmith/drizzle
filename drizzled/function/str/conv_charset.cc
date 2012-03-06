@@ -50,7 +50,7 @@ void Item_func_conv_charset::print(String *str)
   str->append(STRING_WITH_LEN("convert("));
   args[0]->print(str);
   str->append(STRING_WITH_LEN(" using "));
-  str->append(conv_charset->csname);
+  str->append(conv_charset->csname, strlen(conv_charset->csname));
   str->append(')');
 }
 

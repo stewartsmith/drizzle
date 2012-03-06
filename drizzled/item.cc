@@ -361,7 +361,7 @@ int Item::decimal_int_part() const
 
 void Item::print(String *str)
 {
-  str->append(full_name());
+  str->append(full_name(), strlen(full_name()));
 }
 
 void Item::print_item_w_name(String *str)

@@ -6878,7 +6878,14 @@ void Select_Lex::print(Session *session, String *str)
     }
     else
     {
-      str->append(cond_value != Item::COND_FALSE ? "1" : "0");
+      if (cond_value != Item::COND_FALSE)
+      {
+        str->append(STRING_WITH_LEN("1"));
+      }
+      else
+      {
+        str->append(STRING_WITH_LEN("0"));
+      }
     }
   }
 
@@ -6914,7 +6921,14 @@ void Select_Lex::print(Session *session, String *str)
     }
     else
     {
-      str->append(having_value != Item::COND_FALSE ? "1" : "0");
+      if (having_value != Item::COND_FALSE)
+      {
+        str->append(STRING_WITH_LEN("1"));
+      }
+      else
+      {
+        str->append(STRING_WITH_LEN("0"));
+      }
     }
   }
 
