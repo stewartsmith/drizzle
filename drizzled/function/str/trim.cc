@@ -227,9 +227,9 @@ void Item_func_trim::print(String *str)
     Item_func::print(str);
     return;
   }
-  str->append(Item_func_trim::func_name());
+  str->append(Item_func_trim::func_name(), strlen(Item_func_trim::func_name()));
   str->append('(');
-  str->append(mode_name());
+  str->append(mode_name(), strlen(mode_name()));
   str->append(' ');
   args[1]->print(str);
   str->append(STRING_WITH_LEN(" from "));

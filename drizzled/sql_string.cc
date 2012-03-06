@@ -275,7 +275,9 @@ void String::set_ascii(const char *str, size_t arg_length)
 void String::append(const char *s,size_t arg_length)
 {
   if (arg_length == 0)
+  {
     return;
+  }
 
   /*
     For an ASCII compatinble string we can just append.
@@ -283,15 +285,6 @@ void String::append(const char *s,size_t arg_length)
   realloc(str_length + arg_length);
   memcpy(Ptr + str_length, s, arg_length);
   str_length+= arg_length;
-}
-
-/*
-  Append a 0-terminated ASCII string
-*/
-
-void String::append(const char *s)
-{
-  append(s, strlen(s));
 }
 
 void String::append(str_ref s)

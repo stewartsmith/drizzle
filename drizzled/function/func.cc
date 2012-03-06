@@ -441,7 +441,7 @@ table_map Item_func::not_null_tables() const
 
 void Item_func::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   print_args(str, 0);
   str->append(')');
@@ -466,7 +466,7 @@ void Item_func::print_op(String *str)
   {
     args[i]->print(str);
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
   }
   args[arg_count-1]->print(str);

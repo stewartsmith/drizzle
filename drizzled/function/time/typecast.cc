@@ -52,7 +52,7 @@ void Item_typecast::print(String *str)
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str);
   str->append(STRING_WITH_LEN(" as "));
-  str->append(cast_type());
+  str->append(cast_type(), strlen(cast_type()));
   str->append(')');
 }
 
@@ -72,10 +72,11 @@ void Item_char_typecast::print(String *str)
     str->append(st);
     str->append(')');
   }
+
   if (cast_cs)
   {
     str->append(STRING_WITH_LEN(" charset "));
-    str->append(cast_cs->csname);
+    str->append(cast_cs->csname, strlen(cast_cs->csname));
   }
   str->append(')');
 }
