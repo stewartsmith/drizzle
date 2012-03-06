@@ -63,7 +63,7 @@ TEST_RUN_DBQP_MODE= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
 		--testdir=${top_srcdir}/tests \
 		--workdir=${top_srcdir}/tests/workdir
 
-TEST_RUN_QP= $(PYTHON) $(top_srcdir)/tests/kewpie/qp.py \
+TEST_RUN_QP= $(PYTHON) $(top_srcdir)/tests/kewpie/kewpie.py \
                 --top-srcdir=${top_srcdir} \
                 --top-builddir=${top_builddir} \
                 --reorder \
