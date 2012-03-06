@@ -60,7 +60,6 @@ class drizzleServer(Server):
         self.server_path = self.code_tree.drizzle_server
         self.drizzle_client_path = self.code_tree.drizzle_client
         self.schemawriter = self.code_tree.schemawriter
-        self.trx_reader = self.code_tree.trx_reader
 
         # Get our ports
         self.port_block = self.system_manager.port_manager.get_port_block( self.name
