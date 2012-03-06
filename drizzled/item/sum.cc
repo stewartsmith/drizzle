@@ -449,11 +449,13 @@ void Item_sum::make_field(SendField *tmp_field)
 
 void Item_sum::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   for (uint32_t i=0 ; i < arg_count ; i++)
   {
     if (i)
+    {
       str->append(',');
+    }
     args[i]->print(str);
   }
   str->append(')');
@@ -461,10 +463,12 @@ void Item_sum::print(String *str)
 
 void Item_sum::fix_num_length_and_dec()
 {
-  decimals=0;
+  decimals= 0;
   for (uint32_t i=0 ; i < arg_count ; i++)
+  {
     set_if_bigger(decimals,args[i]->decimals);
-  max_length=float_length(decimals);
+  }
+  max_length= float_length(decimals);
 }
 
 Item *Item_sum::get_tmp_table_item(Session *session)

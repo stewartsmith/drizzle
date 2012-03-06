@@ -1236,7 +1236,7 @@ void Item_field::print(String *str)
     String tmp(buff,sizeof(buff),str->charset());
     field->val_str_internal(&tmp);
     if (field->is_null())  {
-      str->append("NULL");
+      str->append(STRING_WITH_LEN("NULL"));
     }
     else {
       str->append('\'');
