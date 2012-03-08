@@ -51,7 +51,7 @@ For examples of the following, see :doc:`extract_date_functions`.
 
 
 DATE TRUNC
------------
+----------
 
 For an example of the following, see :doc:`date_trunc`.
 
