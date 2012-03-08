@@ -57,8 +57,8 @@ events in an InnoDB table. When enabled, this transaction log can be accessed
 through the SYS_REPLICATION_LOG and INNODB_REPLICATION_LOG tables in the
 DATA_DICTIONARY schema.
 
-To enable this transaction log, start the server with the
-:option:`--innodb.replication-log`.
+To enable this transaction log, start the server with the 
+:option:`drizzled --innodb.replication-log`.
 
 Loading
 -------
@@ -1096,7 +1096,7 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option: :option:`--innodb.diable-native-aio`
+   :Option: :option:`--innodb.disable-native-aio`
 
    If :ref:`innodb_native_aio_support` enabled or not.
 
@@ -1106,7 +1106,7 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option: :option:`--innodb.use-interal-malloc`
+   :Option: :option:`--innodb.use-internal-malloc`
 
    If system or internal malloc() is being used.
 

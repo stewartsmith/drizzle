@@ -66,10 +66,10 @@ Running tests
 
 There are several different ways to run tests using :program:`kewpie.py`.
 
-It should be noted that unless :option:`--force` is used, the program will
-stop execution upon encountering the first failing test. 
-:option:`--force` is recommended if you are running several tests - it will
-allow you to view all successes and failures in one run.
+It should be noted that unless :option:`kewpie.py --force` is used, the program
+will stop execution upon encountering the first failing test.
+:option:`kewpie.py --force` is recommended if you are running several tests
+- it will allow you to view all successes and failures in one run.
 
 Running individual tests
 ------------------------
@@ -96,8 +96,8 @@ To run a specific set of tests within a suite::
 
     ./kewpie.py [OPTIONS] --suite=SUITENAME TEST1 [TEST2..TESTN]
 
-Calling tests using <suitename>.<testname> currently does not work.
-One must specify the test suite via the :option:`--suite` option.
+Calling tests using <suitename>.<testname> currently does not work.  One must
+specify the test suite via the :option:`kewpie.py --suite` option.
 
 
 Running all available tests
@@ -173,9 +173,9 @@ This will start a Drizzle server that you can connect to and query
 Starting a server against a pre-populated DATADIR
 --------------------------------------------------
 
-Using :option:`--start-dirty` prevents :program:`kewpie.py` from attempting
-to initialize (clean) the datadir.  This can be useful if you want to use
-an already-populated datadir for testing.
+Using :option:`kewpie.py --start-dirty` prevents :program:`kewpie.py` from
+attempting to initialize (clean) the datadir.  This can be useful if you want
+to use an already-populated datadir for testing.
 
 NOTE: This feature is still being tested, use caution with your data!!!
 
@@ -183,7 +183,7 @@ Cleanup mode
 -------------
 A cleanup mode is provided for user convenience.  This simply shuts down
 any servers whose pid files are detected in the kewpie workdir.  It is mainly
-intended as a quick cleanup for post-testing with :option:`--start-and-exit`::
+intended as a quick cleanup for post-testing with :option:`kewpie.py --start-and-exit`::
 
 	./kewpie.py --mode=cleanup
 

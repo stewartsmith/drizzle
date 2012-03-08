@@ -124,7 +124,7 @@ void Item_float::print(String *str)
 {
   if (presentation)
   {
-    str->append(presentation);
+    str->append(presentation, strlen(presentation));
     return;
   }
   char buffer[20];
