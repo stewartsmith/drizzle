@@ -68,10 +68,10 @@ NOTE:  all_sqlbench_tests can take a significant amount of time to execute (45 m
 
 There are several different ways to run tests using :doc:`kewpie` 's sql-bench mode.
 
-It should be noted that unless :option:`--force` is used, the program will
-stop execution upon encountering the first failing test. 
-:option:`--force` is recommended if you are running several tests - it will
-allow you to view all successes and failures in one run.
+It should be noted that unless :option:`kewpie.py --force` is used, the program
+will stop execution upon encountering the first failing test.
+:option:`kewpie.py --force` is recommended if you are running several tests
+- it will allow you to view all successes and failures in one run.
 
 At present, sql-bench output in a work in progress.  It does report a simple pass/fail, but we are working on alternate ways of viewing / storing the results (and for other testing modes as well)
 
