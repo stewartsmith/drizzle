@@ -503,7 +503,7 @@ try
   _("Add a 'DROP DATABASE' before each create."))
   ("skip-drop-table", _("Do not add a 'drop table' before each create."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
-  _("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys"))
+  _("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables option --skip-disable-keys"))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
   _("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
   ("skip-disable-keys,K",

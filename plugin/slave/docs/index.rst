@@ -32,7 +32,7 @@ Configuration
 
 Most of the options that can be used to control the replication slave plugin
 can only be given in a configuration file. The only exceptions are the
-:option:`--slave.config-file` and :option:`--slave.max-commit-id` options.
+:option:`drizzled --slave.config-file` and :option:`drizzled --slave.max-commit-id` options.
 
 .. program:: drizzled
 
