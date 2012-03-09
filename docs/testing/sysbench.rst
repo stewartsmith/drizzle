@@ -47,10 +47,10 @@ Running tests
 
 There are several different ways to run tests using :doc:`kewpie` 's sysbench mode.
 
-It should be noted that unless :option:`--force` is used, the program will
-stop execution upon encountering the first failing test. 
-:option:`--force` is recommended if you are running several tests - it will
-allow you to view all successes and failures in one run.
+It should be noted that unless :option:`kewpie.py --force` is used, the program
+will stop execution upon encountering the first failing test.
+:option:`kewpie.py --force` is recommended if you are running several tests
+- it will allow you to view all successes and failures in one run.
 
 Running individual tests
 ------------------------
@@ -75,8 +75,8 @@ To run a specific set of tests within a suite::
 
     ./kewpie --mode=sysbench [OPTIONS] --suite=SUITENAME TEST1 [TEST2..TESTN]
 
-Calling tests using <suitename>.<testname> currently does not work.
-One must specify the test suite via the :option:`--suite` option.
+Calling tests using <suitename>.<testname> currently does not work.  One must
+specify the test suite via the :option:`kewpie.py --suite` option.
 
 
 Running all available tests

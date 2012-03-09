@@ -1074,8 +1074,8 @@ Variables
 * ``tx_isolation``
 
    :Scope: Global
-   :Dynamic: No
-   :Option: :option:`--transactions-isolation`
+   :Dynamic: No 
+   :Option: :option:`--transaction-isolation`
 
 .. _drizzled_unique_checks:
 
