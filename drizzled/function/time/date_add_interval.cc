@@ -158,10 +158,17 @@ void Item_date_add_interval::print(String *str)
 {
   str->append('(');
   args[0]->print(str);
-  str->append(date_sub_interval?" - interval ":" + interval ");
+  if (date_sub_interval)
+  {
+    str->append(STRING_WITH_LEN(" - interval "));
+  }
+  else
+  {
+    str->append(STRING_WITH_LEN(" + interval "));
+  }
   args[1]->print(str);
   str->append(' ');
-  str->append(interval_names[int_type]);
+  str->append(interval_names[int_type], strlen(interval_names[int_type]));
   str->append(')');
 }
 

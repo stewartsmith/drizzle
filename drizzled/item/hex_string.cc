@@ -116,7 +116,7 @@ void Item_hex_string::print(String *str)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
        *ptr= end - min(str_value.length(), sizeof(int64_t));
-  str->append("0x");
+  str->append(STRING_WITH_LEN("0x"));
   for (; ptr != end ; ptr++)
   {
     str->append(_dig_vec_lower[((unsigned char) *ptr) >> 4]);

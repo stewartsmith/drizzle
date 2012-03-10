@@ -4183,7 +4183,7 @@ void Item_cond::print(String *str)
   while ((item=li++))
   {
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
     item->print(str);
   }
@@ -5174,7 +5174,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
 
 void Item_equal::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   List<Item_field>::iterator it(fields.begin());
   Item *item;

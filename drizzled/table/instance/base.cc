@@ -335,9 +335,8 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
-
-  table_name= str_ref(db.data() + strlen(db.data()) + 1);
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
   path= str_ref("");
   normalized_path= str_ref("");
 
@@ -469,8 +468,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
-  table_name= str_ref(db.data() + db.size() + 1);
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
 
   std::string _path;
   if (path_arg)
@@ -514,8 +513,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db= str_ref(private_key_for_cache.vector() + strlen(private_key_for_cache.vector()) + 1);
-  table_name= str_ref(db.data() + db.size() + 1);
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());

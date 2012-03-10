@@ -158,10 +158,10 @@ DRIZZLE_DECLARE_PLUGIN
   "auth-http",
   "0.1",
   "Mark Atwood",
-  "HTTP based authenication.",
+  N_("Authenication against a web server using HTTP"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
+  initialize,
   NULL,
-  init_options    /* config options */
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

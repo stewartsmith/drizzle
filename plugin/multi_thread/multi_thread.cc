@@ -209,10 +209,10 @@ DRIZZLE_DECLARE_PLUGIN
   "multi_thread",
   "0.1",
   "Brian Aker",
-  "One Thread Per Session Scheduler",
+  N_("Multi-thread scheduler"),
   PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  NULL,   /* depends */
-  init_options    /* config options */
+  init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

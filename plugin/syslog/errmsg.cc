@@ -31,7 +31,7 @@ namespace drizzle_plugin
 {
 
 error_message::Syslog::Syslog(const std::string& facility) :
-  drizzled::plugin::ErrorMessage("Syslog"),
+  drizzled::plugin::ErrorMessage("syslog_error_message"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str()))
 {
   if (_facility == -1)
