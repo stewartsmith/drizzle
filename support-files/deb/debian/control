@@ -145,18 +145,6 @@ Description: A plugin that facilitates debugging Drizzle
  .
  This package includes the Debug plugin.
 
-Package: drizzle-plugin-filtered-replicator
-Architecture: any
-Depends: drizzle (= ${binary:Version}),
- ${shlibs:Depends},
- ${misc:Depends}
-Description: Filtered Replicator for Drizzle
- The Drizzle project is building a database optimized for Cloud and Net 
- applications. It is being designed for massive concurrency on modern 
- multi-cpu/core architecture. The code is originally derived from MySQL. 
- .
- This package includes the Filtered Replicator plugin.
-
 Package: drizzle-plugin-gearman-udf
 Architecture: any
 Depends: drizzle (= ${binary:Version}),

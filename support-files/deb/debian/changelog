@@ -1,3 +1,11 @@
+drizzle (1:7.1.31.2521-snapshot-0) oneiric; urgency=low
+
+   * Revert back to 7.1.31-rc style versioning. For RPM ~ didn't work either
+     so no need to change away from dash.
+   * Filtered replicator is disabled upstream. Removing corresponding deb package.
+
+ -- Henrik Ingo <henrik.ingo@avoinelama.fi>  Mon, 11 Mar 2012 17:20:00 +0200
+
 drizzle (1:7.1.31~rc-0) oneiric; urgency=low
 
    * Support the new 7.1.31~rc style versioning. (Bump epoch number.)
