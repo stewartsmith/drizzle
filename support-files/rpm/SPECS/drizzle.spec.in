@@ -18,7 +18,6 @@
 %bcond_without auth_ldap
 %bcond_without auth_pam
 %bcond_without debug
-%bcond_without filtered_replicator
 %bcond_without logging_query
 %bcond_without mysql_protocol
 %bcond_without simple_user_policy
@@ -229,21 +228,6 @@ for massive concurrency on modern multi-cpu/core architecture. The code is
 originally derived from MySQL.
 
 This package provides the Debug Console plugin.
-%endif
-
-%if %{with filtered_replicator}
-%package plugin-filtered-replicator
-Summary: Filtered Replicator Plugin for %{name}
-Group: Applications/Databases
-Requires: %{name}-server = %{epoch}:%{version}-%{release}
-Obsoletes:  drizzle7-plugin-filtered-replicator
-
-%description plugin-filtered-replicator
-Drizzle is a database optimized for Cloud and Net applications. It is designed
-for massive concurrency on modern multi-cpu/core architecture. The code is
-originally derived from MySQL.
-
-This package provides the Filtered Replicator plugin.
 %endif
 
 %if %{with gearman_udf}
@@ -482,7 +466,6 @@ optionally_include auth_file %{with auth_file}
 optionally_include auth_ldap %{with auth_ldap}
 optionally_include auth_pam %{with auth_pam}
 optionally_include debug %{with debug}
-optionally_include filtered_replicator %{with filtered_replicator}
 optionally_include logging_query %{with logging_query}
 optionally_include mysql_protocol %{with mysql_protocol}
 optionally_include rabbitmq %{with rabbitmq}
@@ -703,13 +686,6 @@ fi
 %{_libdir}/drizzle/libdebug_plugin.so
 %endif
 
-%if %{with filtered_replicator}
-%files plugin-filtered-replicator
-%defattr (-,root,root,-)
-%config(noreplace) %{_sysconfdir}/drizzle/conf.d/filtered-replicator.cnf
-%{_libdir}/drizzle/libfiltered_replicator_plugin.so
-%endif
-
 %if %{with gearman_udf}
 %files plugin-gearman-udf
 %defattr (-,root,root,-)
@@ -807,6 +783,11 @@ fi
 * %(date "+%a %b %d %Y") (Automated Drizzle RPM build) <drizzle-discuss@launchpad.net> - %{version}-%{release}
 - New RPMs against newest upstream sources. Please see Drizzle release
   notes for details: https://launchpad.net/drizzle/+milestones
+
+* Sun Mar 11 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 7.1.31.2520-1
+- Removed Filtered replicator plugin as it is disabled in upstream.
+- Transaction Log and some other plugins were deleted, but those were part of
+  main rpm so no actions necessary.
 
 * Thu Feb 02 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 7.1.31-1
 - Drizzle name and versioning is changing from drizzle7-2012.01.30 to
