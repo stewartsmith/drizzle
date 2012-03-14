@@ -64,6 +64,13 @@ InnoDB replication log is active, execute:
    drizzle> SELECT * FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG LIMIT 1;
    -- The query should return one row showing a replication event.
 
+.. _slave_user_account:
+
+Slave User Account
+------------------
+
+The :ref:`slave` will use a standard user account (username and password) to connect to the master.
+
 .. _slave_config_file:
 
 Slave Config File
@@ -92,19 +99,23 @@ The following options are permitted:
 
 .. confval:: master-port
 
-   Drizzle port used by the master server. Default is 3306.
+   :Default: 3306
+
+   Drizzle port used by the master server.
 
 .. confval:: master-user
 
    Username to use for connecting to the master server.
+   See :ref:`slave_user_account`.
 
 .. confval:: master-pass
 
    Password associated with the username given by :confval:`master-user`.
+   See :ref:`slave_user_account`.
 
 .. program:: drizzledump
 
-.. confval:: max-commit-id ID
+.. confval:: max-commit-id
 
    Maximum commit ID the slave is assumed to have applied from the master.
    This value will be used by the slave to determine where to begin retrieving
@@ -114,23 +125,31 @@ The following options are permitted:
 
 .. confval:: max-reconnects
 
+   :Default: 10
+
    The number of reconnection attempts the slave plugin will try if the
-   master server becomes unreachable. Default is 10.
+   master server becomes unreachable.
 
 .. confval:: seconds-between-reconnects
 
+   :Default: 30
+
    The number of seconds to wait between reconnect attempts when the master
-   server becomes unreachable. Default is 30.
+   server becomes unreachable.
 
 .. confval:: io-thread-sleep
 
+   :Default: 5
+
    The number of seconds the IO (producer) thread sleeps between queries to the
-   master for more replication events. Default is 5.
+   master for more replication events.
 
 .. confval:: applier-thread-sleep
 
+   :Default: 5
+
    The number of seconds the applier (consumer) thread sleeps between applying
-   replication events from the local queue. Default is 5.
+   replication events from the local queue.
 
 The simplest possible slave config file is:
 
@@ -147,6 +166,8 @@ slave Plugin
 
 A slave must load the ``slave`` plugin which is not loaded by default.
 This plugin has only one option:
+
+.. program:: drizzled
 
 .. option:: --slave.config-file FILE
 

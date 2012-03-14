@@ -8,40 +8,126 @@ Slave Administration
 This page walks you through some common administration tasks when using
 the replication slave plugin.
 
-Schemas and Tables
-==================
+Monitoring the Slave
+====================
 
-The slave plugin creates its own schema and set of tables to store its
-metadata. It stores everything in the **sys_replication** schema. The
-following are the tables that it will create:
+On the slave server, the :ref:`slave` plugin uses two threads per master to read and apply replication events:
 
-.. dbtable:: sys_replication.io_state
+* An IO (or producer) thread
+* An applier (or consumer) thread
 
-   Stores metadata about the IO/producer thread.
+An IO thread connects to a master and reads replication events from the :ref:`innodb_transaction_log` on the master.  An applier thread applies the replication events to the slave.  The status of these threads is stored in :ref:`sys_replication_tables`.
 
-.. dbtable:: sys_replication.applier_state
+.. _sys_replication_tables:
 
-   Stores metadata about the applier/consumer thread.
+sys_replication Tables
+----------------------
 
-.. dbtable:: sys_replication.queue
+The ``sys_replication`` schema on the slave has tables with information about the slave's threads:
 
-   The replication event queue.
+.. code-block:: mysql
 
-Monitoring
-==========
+   drizzle> SHOW TABLES FROM sys_replication;
+   +---------------------------+
+   | Tables_in_sys_replication |
+   +---------------------------+
+   | applier_state             | 
+   | io_state                  | 
+   | queue                     | 
+   +---------------------------+
 
-Master
-------
+If the ``sys_replication`` table is not available, then the :ref:`slave` plugin failed to load.
 
-Slave Connections
-^^^^^^^^^^^^^^^^^
+io_state
+^^^^^^^^
 
-If you want to determine which slave machines are connected to your
-master, use the *SHOW PROCESSLIST* command. Slave connections will show
-up in the output of this command.
+``sys_replication.io_state`` contains the status of IO threads:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM sys_replication.io_state;
+   *************************** 1. row ***************************
+   master_id: 1
+      status: RUNNING
+   error_msg: 
+
+master_id
+   ID (number) of the master to which the thread is connected.  The number corresponds to the the master number in the :ref:`slave_config_file`.
+
+status
+   Status of the IO thread: **RUNNING** or **STOPPED**.  If **STOPPED**, ``error_msg`` should contain an error message.
+
+error_msg
+   Error message explaining why the thread has **STOPPED**.
+
+applier_state
+^^^^^^^^^^^^^
+
+``sys_replication.applier_stat`` contains the status of applier threads:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM sys_replication.applier_state\G
+   *************************** 1. row ***************************
+                 master_id: 1
+    last_applied_commit_id: 18
+   originating_server_uuid: 9908C6AA-A982-4763-B9BA-4EF5F933D219
+     originating_commit_id: 18
+                    status: RUNNING
+                 error_msg: 
+
+master_id
+   ID (number) of the master from which the thread is applying replication events.  The number corresponds to the the master number in the :ref:`slave_config_file`.
+
+last_applied_commit_id
+   Value of the ``COMMIT_ID`` from the master's replication log of the most recently executed transaction.  See definition of the data_dictionary.sys_replication_log table.
+
+originating_server_uuid
+   UUID of the :ref:`originating_server`.
+
+originating_commit_id
+   ``COMMIT_ID`` from the :ref:`originating_server`.
+
+status
+   Status of the applier thread: **RUNNING** or **STOPPED**.  If **STOPPED**, ``error_msg`` should contain an error message.
+
+error_msg
+   Error message explaining why the thread has **STOPPED**.
+
+queue
+^^^^^
+
+``sys_replication.io_state`` contains replication events that have not yet been applied by the applier thread:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM sys_replication.queue\G
+   *************************** 1. row ***************************
+                    trx_id: 925
+                    seg_id: 1
+              commit_order: 12
+   originating_server_uuid: 9908C6AA-A982-4763-B9BA-4EF5F933D219
+     originating_commit_id: 12
+                       msg: transaction_context {
+      server_id: 1
+      transaction_id: 925
+      start_timestamp: 1330211976689868
+      end_timestamp: 1330211976689874
+   }
+   statement {
+      type: DROP_SCHEMA
+      start_timestamp: 1330211976689872
+      end_timestamp: 1330211976689873
+      drop_schema_statement {
+         schema_name: "foo"
+      }
+   }
+   segment_id: 1
+   end_segment: true
+                 master_id: 1
 
 InnoDB Transaction Log
-^^^^^^^^^^^^^^^^^^^^^^
+======================
 
 The slave plugin uses the InnoDB transaction log (see
 :ref:`innodb_transaction_log`) on the master to retrieve replication
@@ -88,44 +174,8 @@ implemented. The SYS_REPLICATION_LOG table, on the other hand, allows you
 to modify the contents of the transaction log. You would use this table
 to trim the transaction log.
 
-Slave
------
-
-The slave plugin has two types of threads doing all of the work:
-
-* An IO (or producer) thread
-* An applier (or consumer) thread
-
-The status of each thread is stored in tables in the *sys_replication*
-schema. The IO thread status is contained in the *io_state* table, and
-the applier thread status is in the *applier_state* table. You may query
-these tables just like any other table. For example::
-
-  drizzle> SELECT * FROM sys_replication.io_state\G
-  *************************** 1. row ***************************
-     status: RUNNING
-  error_msg: 
-
-The above shows that the IO thread is **RUNNING**. If there had been
-an error on the IO thread, the status value would be **STOPPED** and
-the error_msg column would contain information about the error.
-
-We can check the state of the applier thread in a similar manner::
-
-  drizzle> SELECT * FROM sys_replication.applier_state\G
-  *************************** 1. row ***************************
-  last_applied_commit_id: 4
-                  status: RUNNING
-               error_msg: 
-
-The status and error_msg columns are similar to the ones in the *io_state*
-table. Also available is the last_applied_commit_id, which contains the
-value of the COMMIT_ID from the master's replication log (see definition
-of the data_dictionary.sys_replication_log table above) of the most
-recently executed transaction.
-
 Transaction Log Maintenance
-===========================
+---------------------------
 
 Currently, the InnoDB transaction log grows without bounds and is never
 trimmed of unneeded entries. This can present a problem for long running
@@ -159,3 +209,23 @@ master::
   master> DELETE FROM data_dictionary.sys_replication_log WHERE commit_id < 2877;
 
 This will remove all old, unneeded entries from the InnoDB transaction log. Note that the SYS_REPLICATION_LOG table is used for this maintenance task.
+
+Monitoring on a Master
+======================
+
+Slaves connected to a master are visible in the master's processlist, but they are not specially indicated.  If the :ref:`slave_user_account` uses special slave usernames, then slave connections can be selected like:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.PROCESSLIST  WHERE USERNAME LIKE 'slave%'\G
+   *************************** 1. row ***************************
+                ID: 2
+          USERNAME: slave
+              HOST: 127.0.0.1
+                DB: NULL
+           COMMAND: Sleep
+              TIME: 0
+             STATE: NULL
+              INFO: NULL
+   HAS_GLOBAL_LOCK: 0
+
