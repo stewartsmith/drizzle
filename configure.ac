@@ -26,22 +26,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
-LIBDRIZZLE_LIBRARY_VERSION=3:0:0
-#                          | | |
-#                   +------+ | +---+
-#                   |        |     |
-#                current:revision:age
-#                   |        |     |
-#                   |        |     +- increment if interfaces have been added
-#                   |        |        set to zero if interfaces have been
-#                   |        |        removed or changed
-#                   |        +- increment if source code has changed
-#                   |           set to zero if current is incremented
-#                   +- increment if interfaces have been added, removed or
-#                      changed
-AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
-
-OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
+LIBDRIZZLE_LIBRARY_VERSION=4:0:0
 #                             | | |
 #                      +------+ | +---+
 #                      |        |     |
@@ -54,7 +39,7 @@ OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                      |           set to zero if current is incremented
 #                      +- increment if interfaces have been added, removed or
 #                         changed
-AC_SUBST(OLDLIBDRIZZLE_LIBRARY_VERSION)
+AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
 
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[

@@ -112,4 +112,16 @@ static void init_options(drizzled::module::option_context &context)
 } /* namespace drizzle_protocol */
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::drizzle_protocol::init, NULL, drizzle_plugin::drizzle_protocol::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "drizzle_protocol",
+  "0.3",
+  "Brian Aker",
+  N_("Drizzle network protocol"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::drizzle_protocol::init,
+  NULL,
+  drizzle_plugin::drizzle_protocol::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

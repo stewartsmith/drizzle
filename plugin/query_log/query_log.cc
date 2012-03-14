@@ -32,7 +32,7 @@ using namespace drizzled;
 using namespace plugin;
 
 QueryLog::QueryLog(bool enabled, QueryLoggerFile *logger_file) :
-  drizzled::plugin::EventObserver("query_log"),
+  drizzled::plugin::EventObserver("file_query_log"),
   sysvar_enabled(enabled),
   _logger_file(logger_file)
 {

@@ -172,7 +172,7 @@ public:
 
   LoggingGearman(const std::string &host,
                  const std::string &function) :
-    drizzled::plugin::Logging("LoggingGearman"),
+    drizzled::plugin::Logging("gearman_query_log"),
     _host(host),
     _function(function),
     _gearman_client_ok(0),
@@ -309,13 +309,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-    "logging-gearman",
-    "0.1",
-    "Mark Atwood <mark@fallenpegasus.com>",
-    N_("Log queries to a Gearman server"),
-    drizzled::PLUGIN_LICENSE_GPL,
-    drizzle_plugin::logging_gearman_plugin_init,
-    NULL,
-    drizzle_plugin::init_options
+  "logging_gearman",
+  "0.1",
+  "Mark Atwood",
+  N_("Logs queries to a Gearman server"),
+  drizzled::PLUGIN_LICENSE_GPL,
+  drizzle_plugin::logging_gearman_plugin_init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

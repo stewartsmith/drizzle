@@ -38,7 +38,7 @@ extern const char *interval_names[];
 void Item_extract::print(String *str)
 {
   str->append(STRING_WITH_LEN("extract("));
-  str->append(interval_names[int_type]);
+  str->append(interval_names[int_type], strlen(interval_names[int_type]));
   str->append(STRING_WITH_LEN(" from "));
   args[0]->print(str);
   str->append(')');

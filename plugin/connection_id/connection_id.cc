@@ -83,10 +83,10 @@ DRIZZLE_DECLARE_PLUGIN
   "connection_id",
   "1.0",
   "Devananda van der Veen",
-  "Return the current connection_id",
+  N_("CONNECTION_ID function"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

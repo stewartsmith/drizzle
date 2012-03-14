@@ -35,10 +35,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Error Dictionary",
+  "error_dictionary",
   "1.0",
   "Monty Taylor",
-  "Data Dictionary for Errors.",
+  N_("Dictionary of Drizzle errors codes and messages"),
   drizzled::PLUGIN_LICENSE_GPL,
   drizzle_plugin::init,
   NULL,

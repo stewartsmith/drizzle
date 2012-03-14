@@ -48,6 +48,10 @@ To see which version of the plugin a Drizzle server is running, execute:
 Changelog
 ---------
 
+v1.1
+^^^^
+* Added ``remap-dot-to`` option.
+
 v1.0
 ^^^^
 * First release.

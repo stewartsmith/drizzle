@@ -1541,7 +1541,9 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
   char buff[MAX_FIELD_NAME],*buff_end;
 
   if (not check_if_keyname_exists(field_name,start,end) && not is_primary_key(field_name))
+  {
     return field_name;			// Use fieldname
+  }
 
   buff_end= strncpy(buff, field_name, sizeof(buff)-4);
   buff_end+= strlen(buff);

@@ -151,11 +151,12 @@ Testing
    :maxdepth: 2
  
    testing/test-run.rst
-   testing/dbqp.rst
+   testing/kewpie.rst
    testing/randgen.rst
    testing/sql-bench.rst
    testing/sysbench.rst
    testing/writing_tests.rst
+   testing/dbqp.rst
 
 Indices and tables
 ==================

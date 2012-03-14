@@ -90,7 +90,7 @@ public:
     Exception tmp= _next_exception.front();
     _next_exception.pop();
 
-    return Exception();
+    return tmp;
   }
 
   const std::string &getSQLState() const

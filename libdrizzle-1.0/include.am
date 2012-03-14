@@ -46,7 +46,7 @@ libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      $(AM_LDFLAGS) \
 				      $(GCOV_LIBS) \
 				      -version-info \
-				      $(OLDLIBDRIZZLE_LIBRARY_VERSION)
+				      $(LIBDRIZZLE_LIBRARY_VERSION)
 
 libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/column.cc \
