@@ -29,7 +29,7 @@ For examples of the following, see :doc:`current_time_functions`.
 |statement_timestamp()	            |timestamp with time zone*	          |Current date and time (start of current statement)               |
 +-----------------------------------+-------------------------------------+-----------------------------------------------------------------+
 
-*Drizzle timezone is always UTC.
+Drizzle timezone is always UTC.
 
 Extract
 -------
