@@ -39,27 +39,30 @@ loaded on a master, execute:
  | default_replicator | TransactionReplicator |         1 | default_replicator |
  +--------------------+-----------------------+-----------+--------------------+
 
-If the plugin is not loaded, verify that the server was not started with
+If the plugin is not loaded, verify that the server was *not* started with
 ``--plugin-remove default_replicator``.  If it was, remove that option and
 restart the server.
 
 A master can be started with other :ref:`replicators`, but only the
-:ref:`default_replicator` is required.
+:ref:`default_replicator` is required for the ``slave`` plugin.
 
 Each master must also be started with :option:`--innodb.replication-log`
-to enable the InnoDB replication log which is not enabled by default.
+to enable the :ref:`innodb_transaction_log` which is not enabled by default.
 Therefore, Drizzle must be configured with this option at startup.
 See :ref:`configuring_drizzle` for more information.  To verify that the
 InnoDB replication log is active, execute:
 
 .. code-block:: mysql
 
- drizzle> SHOW VARIABLES LIKE 'innodb_replication_log';
- +------------------------+-------+
- | Variable_name          | Value |
- +------------------------+-------+
- | innodb_replication_log | ON    | 
- +------------------------+-------+
+   drizzle> SELECT * FROM DATA_DICTIONARY.GLOBAL_VARIABLES WHERE VARIABLE_NAME = 'innodb_replication_log';
+   +------------------------+----------------+
+   | VARIABLE_NAME          | VARIABLE_VALUE |
+   +------------------------+----------------+
+   | innodb_replication_log | ON             | 
+   +------------------------+----------------+
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.INNODB_REPLICATION_LOG LIMIT 1;
+   -- The query should return one row showing a replication event.
 
 .. _slave_config_file:
 
@@ -128,6 +131,14 @@ The following options are permitted:
 
    The number of seconds the applier (consumer) thread sleeps between applying
    replication events from the local queue. Default is 5.
+
+The simplest possible slave config file is:
+
+.. code-block:: ini
+
+   [master1]
+   master-host=<master hostname>
+   master-user=slave1
 
 See :ref:`slave_examples` for complete, working examples.
 

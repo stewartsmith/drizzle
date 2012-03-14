@@ -49,10 +49,10 @@ To confirm that Linux native AIO is enabled, execute:
 
 .. _innodb_transaction_log:
 
-InnoDB Transaction Log
+InnoDB Replicaiton Log
 ----------------------
 
-The :program:`innodb` plugin provides a mechanism to store replication
+The ``innodb`` plugin provides a mechanism to store replication
 events in an InnoDB table. When enabled, this transaction log can be accessed
 through the SYS_REPLICATION_LOG and INNODB_REPLICATION_LOG tables in the
 DATA_DICTIONARY schema.

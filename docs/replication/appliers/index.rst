@@ -30,6 +30,7 @@ Drizzle includes the following applier plugins:
 
 .. toctree::
    :maxdepth: 1
-   :glob:
 
-   *
+   slave
+   rabbitmq
+   zeromq
