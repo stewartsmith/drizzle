@@ -1,5 +1,5 @@
 Slave Changelog
-===============
+***************
 
 .. _slave_1.1_drizzle_7.1:
 

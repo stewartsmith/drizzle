@@ -1,7 +1,7 @@
 .. _slave_details:
 
 Slave Details
-=============
+*************
 
 The replication slave plugin creates two worker threads, each accessing a
 work queue (implemented as an InnoDB table) that contains the replication

@@ -5,7 +5,7 @@
 .. _slave_config:
 
 Slave Configuration
-===================
+*******************
 
 Configuring a Drizzle :ref:`replication stream <replication_streams>` using the :ref:`slave` requires:
 

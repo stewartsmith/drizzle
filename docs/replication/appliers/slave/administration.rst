@@ -3,7 +3,7 @@
 .. _slave_admin:
 
 Slave Administration
-====================
+********************
 
 .. _slave_threads:
 
