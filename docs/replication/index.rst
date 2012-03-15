@@ -37,9 +37,9 @@ Replicators and appliers are implemented by plugins, so Drizzle replication
 is extensible and varies depending on which plugins are used.  Drizzle
 includes plugins to implement several replication systems:
 
-  * :ref:`Master-slave replication, including multi-master <slave_applier>`
-  * :ref:`Replication to a RabbitMQ server <rabbitmq_applier>`
-  * :ref:`Replication to a ZeroMQ socket <zeromq_applier>`
+* :ref:`Master-slave replication, including multi-master <slave_applier>`
+* :ref:`Replication to a RabbitMQ server <rabbitmq_applier>`
+* :ref:`Replication to a ZeroMQ socket <zeromq_applier>`
 
 Master-slave is the most common replication system; it resembles other
 database servers like MySQL. 
@@ -53,12 +53,12 @@ plugin options.
 
 In summary, Drizzle replication:
 
-  * is asynchronous
-  * encodes replication events as Google Buffer Protocol messages
-  * sends replication events through replication streams (unique replicator-applier pairs)
-  * only uses the kernel to encode and send replication events to avaiable replicators
-  * is primarily implemented and configured by replicator and applier plugins
-  * is extensible
+* is asynchronous
+* encodes replication events as Google Buffer Protocol messages
+* sends replication events through replication streams (unique replicator-applier pairs)
+* only uses the kernel to encode and send replication events to avaiable replicators
+* is primarily implemented and configured by replicator and applier plugins
+* is extensible
 
 Learned enough?  Ready to start using Drizzle replication?  Then jump to the
 :ref:`replication examples <replication_examples>`.  Otherwise, continue

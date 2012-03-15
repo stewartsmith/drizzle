@@ -1,5 +1,3 @@
-.. _slave_plugin:
-
 Replication Slave
 ==================
 

@@ -7,23 +7,27 @@
 Slave Configuration
 *******************
 
-The minimal steps for configuring a Drizzle
-:ref:`replication stream <replication_streams>` using the
-:ref:`slave` are:
+Configuring a Drizzle :ref:`replication stream <replication_streams>` using the :ref:`slave` requires:
 
 #. Verifying that the :ref:`default_replicator` plugin is loaded on the masters
 #. Enabling :option:`--innodb.replication-log` on the masters
-#. Writing a :ref:`slave_config_file` for :option:`--slave.config-file`
+#. Creating user accounts for the slaves on the masters
+#. Writing a :ref:`slave_config_file` for :option:`--slave.config-file` on the slave
 #. Loading and configure the ``slave`` plugin on the slave
 
-Masters
-=======
+The first three steps are performed on a master, and the last two steps are performed on a slave.
+
+.. _configuring_a_master:
+
+Configuring a Master
+====================
 
 A single slave can apply replication events from up to ten masters at once.
-There are two requirements for each master:
+There are three requirements for each master:
 
 #. :ref:`default_replicator`
 #. :option:`--innodb.replication-log`
+#. :ref:`slave_user_account`
 
 Each master must have the :ref:`default_replicator` plugin loaded because
 the slave applier is hard-coded to pair only with this replicator.  The
@@ -69,29 +73,82 @@ InnoDB replication log is active, execute:
 Slave User Account
 ------------------
 
-The :ref:`slave` will use a standard user account (username and password) to connect to the master.
+A user account is required on the master for slave connections, unless no :ref:`authentication` is used (which is highly inadvisable).  One user account can be used for all slaves, or individual user accounts can be used for each slave.  In either case, the user account credentials (username and password) for a master are specified in the :ref:`slave_config_file`.
+
+:ref:`authorization` has no effect on slaves.  Since the :ref:`slave` plugin is hard-coded to pair only with the :ref:`default_replicator`, it replicates events for every schema and every table.  At present, there is no way to filter replication for the :ref:`slave`.
+
+.. _configuring_a_slave:
+
+Configuring a Slave
+===================
+
+After :ref:`configuring_a_master`, configuring a slave requires only:
+
+#. :ref:`slave_config_file`
+#. :ref:`slave_plugin`
 
 .. _slave_config_file:
 
 Slave Config File
-=================
+-----------------
 
-A slave config file is a plain text file that contains connection and
-configuration options for each master.  At least one master must be
-specifed, and masters must be numbered sequentially from 1 to 10.
-The general syntax of a slave config file is:
+A slave config file is a plain text file that contains connection and configuration options for each master.  At least one master must be specifed, and masters must be numbered sequentially from 1 to 10. The general syntax of a slave config file is:
 
 .. code-block:: ini
 
  # comment
+ common-option=value
  [masterN]
- option=value
+ master-specific-option=value
 
-Options for each master begin with a ``[masterN]`` header where ``N``
-is the sequentially numbered master, starting with 1.  Whitespace
+There are two types of options: common options which apply to all masters, and master-specific options which only apply to the preceding ``[masterN]`` header where ``N`` is the sequentially numbered master, starting with 1.  Whitespace
 before and after lines and around ``=`` (equal signs) is ignored.
 
-The following options are permitted:
+The simplest possible slave config file is:
+
+.. code-block:: ini
+
+   [master1]
+   master-host=<master hostname>
+   master-user=slave1
+
+See :ref:`slave_examples` for complete, working examples.
+
+Common Options
+--------------
+
+These options must be specified first, before any ``[masterN]`` headers.
+
+.. confval:: applier-thread-sleep
+
+   :Default: 5
+
+   The number of seconds the applier (consumer) thread sleeps between applying
+   replication events from the local queue.
+
+.. confval:: ignore-errors
+
+   Ignore errors and continue applying replication events.  It is generally
+   a bad idea to use this option!
+
+.. confval:: io-thread-sleep
+
+   :Default: 5
+
+   The number of seconds the IO (producer) thread sleeps between queries to the
+   master for more replication events.
+
+.. confval:: seconds-between-reconnects
+
+   :Default: 30
+
+   The number of seconds to wait between reconnect attempts when the master
+   server becomes unreachable.
+
+Master-specific Options
+-----------------------
+
+These options must be specified after a ``[masterN]`` header.
 
 .. confval:: master-host
 
@@ -130,36 +187,7 @@ The following options are permitted:
    The number of reconnection attempts the slave plugin will try if the
    master server becomes unreachable.
 
-.. confval:: seconds-between-reconnects
-
-   :Default: 30
-
-   The number of seconds to wait between reconnect attempts when the master
-   server becomes unreachable.
-
-.. confval:: io-thread-sleep
-
-   :Default: 5
-
-   The number of seconds the IO (producer) thread sleeps between queries to the
-   master for more replication events.
-
-.. confval:: applier-thread-sleep
-
-   :Default: 5
-
-   The number of seconds the applier (consumer) thread sleeps between applying
-   replication events from the local queue.
-
-The simplest possible slave config file is:
-
-.. code-block:: ini
-
-   [master1]
-   master-host=<master hostname>
-   master-user=slave1
-
-See :ref:`slave_examples` for complete, working examples.
+.. _slave_plugin:
 
 slave Plugin
 ============
