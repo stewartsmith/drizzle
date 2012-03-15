@@ -1,0 +1,56 @@
+# mysql_migrate.destination-database
+# test of drizzledump's destination-database option
+# We test with a different destination name than the 
+# source database and do positive and negative checks
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_basic.dat;
+let $orig_database = drizzledump_migrate_test_orig;
+let $dest_database = drizzledump_migrate_test_dest;
+
+# test if we should run this test, will skip if we don't have
+# the environment variable set
+--disable_query_log
+--require r/true.require
+SELECT VARIABLE_VALUE AS `TRUE` FROM DATA_DICTIONARY.ENVIRONMENTAL WHERE VARIABLE_NAME="DRIZZLE_MYSQL_MIGRATE_TEST";
+--enable_query_log
+
+--disable_warnings
+eval DROP SCHEMA IF EXISTS $orig_database;
+eval DROP SCHEMA IF EXISTS $dest_database;
+--enable_warnings
+
+# clean up our MySQL server
+--echo Dropping test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $orig_database";
+
+--echo Create test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "CREATE SCHEMA $orig_database";
+
+--echo populating MySQL with test data...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT $orig_database < $datafile;
+
+--echo calling drizzledump to populate Drizzle...
+
+exec $DRIZZLE_DUMP_CLIENT --compact --host=127.0.0.1 --port=$DRIZZLE_MYSQL_MIGRATE_PORT --destination-type=database --destination-host=localhost --destination-port=$MASTER_MYPORT --destination-user=root --user=root --destination-database=$dest_database $orig_database ;
+
+--echo see our schemas
+SHOW SCHEMAS;
+
+--echo test our table:
+--echo Make sure our tables don't exist under the orig. name
+eval SHOW CREATE TABLE $orig_database.t1;
+
+--error 1146
+eval SELECT * FROM $orig_database.t1;
+
+--echo Check if they are in our new location
+eval SHOW CREATE TABLE $dest_database.t1;
+
+eval SELECT * FROM $dest_database.t1;
+
+# clean up our MySQL server
+--echo Dropping test database on MySQL...
+exec $DRIZZLE_CLIENT -uroot --port=$DRIZZLE_MYSQL_MIGRATE_PORT test -e "DROP SCHEMA IF EXISTS $orig_database";
+
+eval DROP SCHEMA $dest_database;
+

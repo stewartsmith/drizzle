@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DYNAMIC_ARRAY_H
-#define DRIZZLED_DYNAMIC_ARRAY_H
+#pragma once
 
 #include <cstddef>
 
@@ -33,6 +32,9 @@ public:
   uint32_t alloc_increment;
   uint32_t size_of_element;
 
+  unsigned char* alloc();
+  void free();
+  void init(uint32_t element_size, uint32_t init_alloc, uint32_t alloc_increment);
   void push_back(void*);
 
   size_t size() const
@@ -48,16 +50,4 @@ private:
   size_t elements;
 };
 
-#define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-#define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-
-bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                   void *init_buffer, uint32_t init_alloc,
-                                   uint32_t alloc_increment);
-unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
-unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-void delete_dynamic(DYNAMIC_ARRAY *array);
-
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_DYNAMIC_ARRAY_H */

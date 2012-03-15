@@ -80,19 +80,18 @@
 #include <drizzled/field/microtime.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/uuid.h>
+#include <drizzled/field/ipv6.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/definition/cache.h>
 #include <drizzled/typelib.h>
-#include <drizzled/refresh_version.h>
 #include <drizzled/key.h>
+#include <drizzled/open_tables_state.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern size_t table_def_size;
-
 
 static enum_field_types proto_field_type_to_drizzle_type(const message::Table::Field &field)
 {
@@ -134,6 +133,9 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
   case message::Table::Field::UUID:
     return  DRIZZLE_TYPE_UUID;
 
+  case message::Table::Field::IPV6:
+    return  DRIZZLE_TYPE_IPV6;
+
   case message::Table::Field::BOOLEAN:
     return DRIZZLE_TYPE_BOOLEAN;
 
@@ -144,35 +146,31 @@ static enum_field_types proto_field_type_to_drizzle_type(const message::Table::F
   abort();
 }
 
-static Item *default_value_item(enum_field_types field_type,
-                                const CHARSET_INFO *charset,
-                                bool default_null, const string *default_value,
-                                const string *default_bin_value)
+static Item* default_value_item(enum_field_types field_type, const charset_info_st& charset, bool default_null, 
+  const string& default_value, const string& default_bin_value)
 {
-  Item *default_item= NULL;
-  int error= 0;
-
   if (default_null)
-  {
     return new Item_null();
-  }
 
-  switch(field_type)
+  switch (field_type)
   {
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
-    default_item= new Item_int(default_value->c_str(),
-                               (int64_t) internal::my_strtoll10(default_value->c_str(),
-                                                                NULL,
-                                                                &error),
-                               default_value->length());
-    break;
+    {
+      int error= 0;
+      Item* default_item= new Item_int(default_value.c_str(), (int64_t) internal::my_strtoll10(default_value.c_str(), NULL, &error), default_value.length());
+
+      if (error && error != -1) /* was an error and wasn't a negative number */
+      {
+        delete default_item;
+        return NULL;
+      }
+      return default_item;
+    }
   case DRIZZLE_TYPE_DOUBLE:
-    default_item= new Item_float(default_value->c_str(),
-                                 default_value->length());
-    break;
+    return new Item_float(default_value.c_str(), default_value.length());
   case DRIZZLE_TYPE_NULL:
-    assert(0);
+    assert(false);
     abort();
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
@@ -180,35 +178,20 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_MICROTIME:
   case DRIZZLE_TYPE_BOOLEAN:
-    default_item= new Item_string(default_value->c_str(),
-                                  default_value->length(),
-                                  system_charset_info);
-    break;
+    // return new Item_string(*default_value, system_charset_info); // crash
+    return new Item_string(default_value.data(), default_value.size(), system_charset_info);
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
-    if (charset==&my_charset_bin)
-    {
-      default_item= new Item_string(default_bin_value->c_str(),
-                                    default_bin_value->length(),
-                                    &my_charset_bin);
-    }
-    else
-    {
-      default_item= new Item_string(default_value->c_str(),
-                                    default_value->length(),
-                                    system_charset_info);
-    }
-    break;
+    return &charset== &my_charset_bin
+      ? new Item_string(default_bin_value, &my_charset_bin)
+      : new Item_string(default_value, system_charset_info);
   case DRIZZLE_TYPE_DECIMAL:
-    default_item= new Item_decimal(default_value->c_str(),
-                                   default_value->length(),
-                                   system_charset_info);
-    break;
+    return new Item_decimal(default_value.c_str(), default_value.length(), system_charset_info);
   }
-
-  return default_item;
+  return NULL;
 }
 
 
@@ -247,10 +230,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
-  db(NULL_LEX_STRING),
-  table_name(NULL_LEX_STRING),
-  path(NULL_LEX_STRING),
-  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -292,7 +271,8 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
 {
   if (type_arg == message::Table::INTERNAL)
   {
-    identifier::Table::build_tmptable_filename(private_key_for_cache.vectorPtr());
+    string s= identifier::Table::build_tmptable_filename();
+    private_key_for_cache.vectorPtr().assign(s.c_str(), s.c_str() + s.size() + 1);
     init(private_key_for_cache.vector(), private_key_for_cache.vector());
   }
   else
@@ -309,10 +289,6 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(NULL_LEX_STRING),
-  table_name(NULL_LEX_STRING),
-  path(NULL_LEX_STRING),
-  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -359,22 +335,16 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length= strlen(private_key_for_cache.vector());
-
-  table_name.str= const_cast<char *>(private_key_for_cache.vector()) + strlen(private_key_for_cache.vector()) + 1;
-  table_name.length= strlen(table_name.str);
-  path.str= (char *)"";
-  normalized_path.str= path.str;
-  path.length= normalized_path.length= 0;
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
+  path= str_ref("");
+  normalized_path= str_ref("");
 
   std::string tb_name(identifier.getTableName());
-  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
-  assert(strcmp(tb_name.c_str(), table_name.str) == 0);
-
-  assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
+  boost::to_lower(tb_name);
+  assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
+  assert(strcmp(identifier.getSchemaName().c_str(), db.data()) == 0);
 }
-
 
 TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
@@ -384,10 +354,6 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(NULL_LEX_STRING),
-  table_name(NULL_LEX_STRING),
-  path(NULL_LEX_STRING),
-  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -433,15 +399,12 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   memcpy(&private_normalized_path[0], identifier.getPath().c_str(), identifier.getPath().size());
 
   {
-    table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              message::Table::INTERNAL;
-    db.str= const_cast<char *>(private_key_for_cache.vector());
-    db.length= strlen(private_key_for_cache.vector());
-    table_name.str= db.str + 1;
-    table_name.length= strlen(table_name.str);
-    path.str= &private_normalized_path[0];
-    normalized_path.str= path.str;
-    path.length= normalized_path.length= private_normalized_path.size();
+    table_category= TABLE_CATEGORY_TEMPORARY;
+    tmp_table= message::Table::INTERNAL;
+    db= str_ref(private_key_for_cache.vector());
+    table_name= str_ref(db.data() + 1);
+    path= private_normalized_path;
+    normalized_path= path;
   }
 }
 
@@ -451,7 +414,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
 */
 TableShare::TableShare(const identifier::Table::Type type_arg,
                        const identifier::Table &identifier,
-                       char *path_arg,
+                       const char *path_arg,
                        uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   found_next_number_field(NULL),
@@ -460,10 +423,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
-  db(NULL_LEX_STRING),
-  table_name(NULL_LEX_STRING),
-  path(NULL_LEX_STRING),
-  normalized_path(NULL_LEX_STRING),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -503,56 +462,40 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_in_use(0),
   keys_for_keyread(0)
 {
-  char *path_buff;
-  std::string _path;
 
   private_key_for_cache= identifier.getKey();
   /*
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
 
+  std::string _path;
   if (path_arg)
   {
-    _path.append(path_arg, path_length_arg);
+    _path.assign(path_arg, path_length_arg);
   }
   else
   {
-    identifier::Table::build_table_filename(_path, db.str, table_name.str, false);
+    _path= identifier::Table::build_table_filename(db.data(), table_name.data(), false);
   }
 
-  if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
-  {
-    setPath(path_buff, _path.length());
-    strcpy(path_buff, _path.c_str());
-    setNormalizedPath(path_buff, _path.length());
+  char* path_buff= mem_root.strdup(_path);
+  path= str_ref(path_buff, _path.length());
+  normalized_path= str_ref(path_buff, _path.length());
 
-    version= refresh_version;
-  }
-  else
-  {
-    assert(0); // We should throw here.
-    abort();
-  }
+  version= g_refresh_version;
 }
 
-void TableShare::init(const char *new_table_name,
-                      const char *new_path)
+void TableShare::init(const char *new_table_name, const char *new_path)
 {
-
-  table_category=         TABLE_CATEGORY_TEMPORARY;
-  tmp_table=              message::Table::INTERNAL;
-  db.str= (char *)"";
-  db.length= 0;
-  table_name.str=         (char*) new_table_name;
-  table_name.length=      strlen(new_table_name);
-  path.str=               (char*) new_path;
-  normalized_path.str=    (char*) new_path;
-  path.length= normalized_path.length= strlen(new_path);
+  table_category= TABLE_CATEGORY_TEMPORARY;
+  tmp_table= message::Table::INTERNAL;
+  db= str_ref("");
+  table_name= str_ref(new_table_name);
+  path= str_ref(new_path);
+  normalized_path= str_ref(new_path);
 }
 
 TableShare::~TableShare() 
@@ -570,16 +513,14 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
     Let us use the fact that the key is "db/0/table_name/0" + optional
     part for temporary tables.
   */
-  db.str= const_cast<char *>(private_key_for_cache.vector());
-  db.length=         strlen(db.str);
-  table_name.str=    db.str + db.length + 1;
-  table_name.length= strlen(table_name.str);
+  db= str_ref(private_key_for_cache.schema_name());
+  table_name= str_ref(private_key_for_cache.table_name());
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
 }
 
-bool TableShare::parse_table_proto(Session& session, message::Table &table)
+bool TableShare::parse_table_proto(Session& session, const message::Table &table)
 {
   drizzled::error_t local_error= EE_OK;
 
@@ -613,8 +554,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
   db_create_options= (local_db_create_options & 0x0000FFFF);
   db_options_in_use= db_create_options;
 
-  block_size= table_options.has_block_size() ?
-    table_options.block_size() : 0;
+  block_size= table_options.has_block_size() ? table_options.block_size() : 0;
 
   table_charset= get_charset(table_options.collation_id());
 
@@ -635,7 +575,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
   for (int indx= 0; indx < table.indexes_size(); indx++)
     key_parts+= table.indexes(indx).index_part_size();
 
-  key_info= (KeyInfo*) alloc_root( table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
+  key_info= (KeyInfo*) mem().alloc(table.indexes_size() * sizeof(KeyInfo) +key_parts*sizeof(KeyPartInfo));
 
   KeyPartInfo *key_part;
 
@@ -643,7 +583,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
     (key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc_root(sizeof(ulong*)*key_parts);
+  ulong *rec_per_key= (ulong*) mem().alloc(sizeof(ulong*)*key_parts);
 
   KeyInfo* keyinfo= key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
@@ -746,7 +686,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
         else
           collation_id= table.options().collation_id();
 
-        const CHARSET_INFO *cs= get_charset(collation_id);
+        const charset_info_st *cs= get_charset(collation_id);
 
         mbmaxlen= cs->mbmaxlen;
       }
@@ -758,19 +698,17 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
       key_part->key_type= 0;
     }
 
-    if (! indx.has_comment())
+    if (not indx.has_comment())
     {
-      keyinfo->comment.length= 0;
-      keyinfo->comment.str= NULL;
+      keyinfo->comment.clear();
     }
     else
     {
       keyinfo->flags|= HA_USES_COMMENT;
-      keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strmake_root(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.assign(mem().strdup(indx.comment()), indx.comment().length());
     }
 
-    keyinfo->name= strmake_root(indx.name().c_str(), indx.name().length());
+    keyinfo->name= mem().strdup(indx.name());
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -824,7 +762,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
       {
         message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id() ?
+        const charset_info_st *cs= get_charset(field_options.has_collation_id() ?
                                             field_options.collation_id() : 0);
 
         if (! cs)
@@ -916,7 +854,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
     }
 
 
-    const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
+    const charset_info_st *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
 
     if (! charset)
@@ -924,9 +862,8 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
 
     TYPELIB *t= (&intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
-
-    t->type_lengths= (unsigned int*) alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_names= (const char**)mem().alloc((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_lengths= (unsigned int*)mem().alloc((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -936,17 +873,13 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strmake_root(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= mem().strdup(field_options.field_value(n));
 
       /* 
        * Go ask the charset what the length is as for "" length=1
        * and there's stripping spaces or some other crack going on.
      */
-      uint32_t lengthsp;
-      lengthsp= charset->cset->lengthsp(charset,
-                                        t->type_names[n],
-                                        field_options.field_value(n).length());
-      t->type_lengths[n]= lengthsp;
+      t->type_lengths[n]= charset->cset->lengthsp(charset, t->type_names[n], field_options.field_value(n).length());
     }
     interval_nr++;
   }
@@ -998,36 +931,25 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
 
-    LEX_STRING comment;
-    if (!pfield.has_comment())
+    str_ref comment;
+    if (pfield.has_comment())
     {
-      comment.str= (char*)"";
-      comment.length= 0;
-    }
-    else
-    {
-      size_t len= pfield.comment().length();
-      const char* str= pfield.comment().c_str();
-
-      comment.str= strmake_root(str, len);
-      comment.length= len;
+      comment.assign(mem().strdup(pfield.comment()), pfield.comment().size());
     }
 
     enum_field_types field_type;
 
     field_type= proto_field_type_to_drizzle_type(pfield);
 
-    const CHARSET_INFO *charset= &my_charset_bin;
+    const charset_info_st *charset= &my_charset_bin;
 
-    if (field_type == DRIZZLE_TYPE_BLOB ||
-        field_type == DRIZZLE_TYPE_VARCHAR)
+    if (field_type == DRIZZLE_TYPE_BLOB || field_type == DRIZZLE_TYPE_VARCHAR)
     {
       message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-      charset= get_charset(field_options.has_collation_id() ?
-                           field_options.collation_id() : 0);
+      charset= get_charset(field_options.has_collation_id() ? field_options.collation_id() : 0);
 
-      if (! charset)
+      if (not charset)
         charset= default_charset_info;
     }
 
@@ -1035,20 +957,18 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
     {
       message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
-      charset= get_charset(field_options.has_collation_id()?
-                           field_options.collation_id() : 0);
+      charset= get_charset(field_options.has_collation_id() ? field_options.collation_id() : 0);
 
-      if (! charset)
+      if (not charset)
         charset= default_charset_info;
     }
 
     uint8_t decimals= 0;
-    if (field_type == DRIZZLE_TYPE_DECIMAL
-        || field_type == DRIZZLE_TYPE_DOUBLE)
+    if (field_type == DRIZZLE_TYPE_DECIMAL || field_type == DRIZZLE_TYPE_DOUBLE)
     {
       message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-      if (! pfield.has_numeric_options() || ! fo.has_scale())
+      if (not pfield.has_numeric_options() || ! fo.has_scale())
       {
         /*
           We don't write the default to table proto so
@@ -1074,11 +994,12 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
         pfield.options().default_null()  ||
         pfield.options().has_default_bin_value())
     {
-      default_value= default_value_item(field_type,
-                                        charset,
-                                        pfield.options().default_null(),
-                                        &pfield.options().default_value(),
-                                        &pfield.options().default_bin_value());
+      default_value= default_value_item(field_type, *charset, pfield.options().default_null(), pfield.options().default_value(), pfield.options().default_bin_value());
+      if (default_value == NULL)
+      {
+        my_error(ER_INVALID_DEFAULT, MYF(0), pfield.name().c_str());
+        return true;
+      }
     }
 
 
@@ -1169,6 +1090,9 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_UUID:
       field_length= field::Uuid::max_string_length();
       break;
+    case DRIZZLE_TYPE_IPV6:
+      field_length= field::IPv6::max_string_length();
+      break;
     case DRIZZLE_TYPE_BOOLEAN:
       field_length= field::Boolean::max_string_length();
       break;
@@ -1228,6 +1152,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
     case DRIZZLE_TYPE_LONGLONG:
     case DRIZZLE_TYPE_NULL:
     case DRIZZLE_TYPE_UUID:
+    case DRIZZLE_TYPE_IPV6:
     case DRIZZLE_TYPE_BOOLEAN:
       break;
     }
@@ -1327,9 +1252,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
   /* Fix key stuff */
   if (key_parts)
   {
-    uint32_t local_primary_key= 0;
-    doesKeyNameExist("PRIMARY", local_primary_key);
-
+    uint32_t local_primary_key= doesKeyNameExist("PRIMARY");
     keyinfo= key_info;
     key_part= keyinfo->key_part;
 
@@ -1510,7 +1433,7 @@ bool TableShare::parse_table_proto(Session& session, message::Table &table)
 
   NOTES
   This function is called when the table definition is not cached in
-  definition::Cache::singleton().getCache()
+  definition::Cache::getCache()
   The data is returned in 'share', which is alloced by
   alloc_table_share().. The code assumes that share is initialized.
 
@@ -1602,23 +1525,15 @@ int TableShare::open_table_from_share(Session *session,
   boost::checked_delete(outparam.cursor);
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.mem().free_root(MYF(0));       // Safe to call on zeroed root
   outparam.clearAlias();
 
   return ret;
 }
 
-int TableShare::open_table_from_share_inner(Session *session,
-                                            const char *alias,
-                                            uint32_t db_stat,
-                                            Table &outparam)
+int TableShare::open_table_from_share_inner(Session *session, const char *alias, uint32_t db_stat, Table &outparam)
 {
-  int local_error;
-  uint32_t records;
-  unsigned char *record= NULL;
-  Field **field_ptr;
-
-  local_error= 1;
+  int local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
   outparam.setAlias(alias);
@@ -1628,14 +1543,13 @@ int TableShare::open_table_from_share_inner(Session *session,
     return local_error;
 
   local_error= 4;
-  records= 0;
-  if ((db_stat & HA_OPEN_KEYFILE))
+  uint32_t records= 0;
+  if (db_stat & HA_OPEN_KEYFILE)
     records=1;
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
-    return local_error;
+  unsigned char* record= outparam.alloc(rec_buff_length * records);
 
   if (records == 0)
   {
@@ -1669,24 +1583,21 @@ int TableShare::open_table_from_share_inner(Session *session,
     memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((_field_size+1)* sizeof(Field*)))))
-  {
-    return local_error;
-  }
+  Field** field_ptr = new (outparam.mem()) Field*[_field_size + 1];
 
   outparam.setFields(field_ptr);
 
-  record= (unsigned char*) outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
+  record= outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
 
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < _field_size; i++, field_ptr++)
   {
-    if (!((*field_ptr)= _fields[i]->clone(outparam.getMemRoot(), &outparam)))
+    if (!((*field_ptr)= _fields[i]->clone(&outparam.mem(), &outparam)))
       return local_error;
   }
-  (*field_ptr)= 0;                              // End marker
+  *field_ptr= 0;                              // End marker
 
   if (found_next_number_field)
     outparam.found_next_number_field=
@@ -1697,42 +1608,30 @@ int TableShare::open_table_from_share_inner(Session *session,
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    KeyInfo	*local_key_info, *key_info_end;
-    KeyPartInfo *key_part;
-    uint32_t n_length;
-    n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
-      return local_error;
+    uint32_t n_length= keys * sizeof(KeyInfo) + key_parts * sizeof(KeyPartInfo);
+    KeyInfo* local_key_info= (KeyInfo*) outparam.alloc(n_length);
     outparam.key_info= local_key_info;
-    key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
+    KeyPartInfo* key_part= reinterpret_cast<KeyPartInfo*>(local_key_info+keys);
 
     memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
-    memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
-                                            key_parts));
+    memcpy(key_part, key_info[0].key_part, sizeof(*key_part) * key_parts);
 
-    for (key_info_end= local_key_info + keys ;
-         local_key_info < key_info_end ;
-         local_key_info++)
+    for (KeyInfo* key_info_end= local_key_info + keys; local_key_info < key_info_end; local_key_info++)
     {
-      KeyPartInfo *key_part_end;
-
       local_key_info->table= &outparam;
       local_key_info->key_part= key_part;
 
-      for (key_part_end= key_part+ local_key_info->key_parts ;
-           key_part < key_part_end ;
-           key_part++)
+      for (KeyPartInfo* key_part_end= key_part+ local_key_info->key_parts; key_part < key_part_end; key_part++)
       {
         Field *local_field= key_part->field= outparam.getField(key_part->fieldnr-1);
 
-        if (local_field->key_length() != key_part->length &&
-            !(local_field->flags & BLOB_FLAG))
+        if (local_field->key_length() != key_part->length && not (local_field->flags & BLOB_FLAG))
         {
           /*
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(outparam.getMemRoot(), &outparam, 0);
+          local_field= key_part->field= local_field->new_field(&outparam.mem(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }
@@ -1808,24 +1707,19 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      identifier::Table identifier(db.str, table_name.str);
+      identifier::Table identifier(db.data(), table_name.data());
       my_error(ER_TABLE_UNKNOWN, identifier);
     }
     else
     {
-      snprintf(buff, sizeof(buff), "%s",normalized_path.str);
-      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
-               errortype, buff, db_errno);
+      snprintf(buff, sizeof(buff), "%s",normalized_path.data());
+      my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND, errortype, buff, db_errno);
     }
     break;
   case 2:
     {
-      drizzled::error_t err_no;
-
-      err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
-        ER_FILE_USED : ER_CANT_OPEN_FILE;
-
-      my_error(err_no, errortype, normalized_path.str, db_errno);
+      drizzled::error_t err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ? ER_FILE_USED : ER_CANT_OPEN_FILE;
+      my_error(err_no, errortype, normalized_path.data(), db_errno);
       break;
     }
   case 5:
@@ -1837,23 +1731,18 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
         snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
         csname= tmp;
       }
-      my_printf_error(ER_UNKNOWN_COLLATION,
-                      _("Unknown collation '%s' in table '%-.64s' definition"),
-                      MYF(0), csname, table_name.str);
+      my_printf_error(ER_UNKNOWN_COLLATION, _("Unknown collation '%s' in table '%-.64s' definition"), MYF(0), csname, table_name.data());
       break;
     }
   case 6:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
-    my_printf_error(ER_NOT_FORM_FILE,
-                    _("Table '%-.64s' was created with a different version "
-                      "of Drizzle and cannot be read"),
-                    MYF(0), buff);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
+    my_printf_error(ER_NOT_FORM_FILE, _("Table '%-.64s' was created with a different version of Drizzle and cannot be read"), MYF(0), buff);
     break;
   case 8:
     break;
   default:				/* Better wrong error than none */
   case 4:
-    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.data());
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -1868,7 +1757,7 @@ Field *TableShare::make_field(const message::Table::Field &pfield,
                               unsigned char null_bit,
                               uint8_t decimals,
                               enum_field_types field_type,
-                              const CHARSET_INFO * field_charset,
+                              const charset_info_st * field_charset,
                               Field::utype unireg_check,
                               TYPELIB *interval,
                               const char *field_name)
@@ -1896,7 +1785,7 @@ Field *TableShare::make_field(const message::Table::Field &,
                               unsigned char null_bit,
                               uint8_t decimals,
                               enum_field_types field_type,
-                              const CHARSET_INFO * field_charset,
+                              const charset_info_st * field_charset,
                               Field::utype unireg_check,
                               TYPELIB *interval,
                               const char *field_name, 
@@ -1960,6 +1849,12 @@ Field *TableShare::make_field(const message::Table::Field &,
                                        null_pos,
                                        null_bit,
                                        field_name);
+  case DRIZZLE_TYPE_IPV6:
+    return new (&mem_root) field::IPv6(ptr,
+                                       field_length,
+                                       null_pos,
+                                       null_bit,
+                                       field_name);
   case DRIZZLE_TYPE_BOOLEAN:
     return new (&mem_root) field::Boolean(ptr,
                                           field_length,
@@ -2008,33 +1903,21 @@ Field *TableShare::make_field(const message::Table::Field &,
                                         field_name,
                                         this);
   case DRIZZLE_TYPE_TIME:
-    return new (&mem_root) field::Time(ptr,
-                                       field_length,
-                                       null_pos,
-                                       null_bit,
-                                       field_name);
+    return new (&mem_root) field::Time(ptr, field_length, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_DATE:
-    return new (&mem_root) Field_date(ptr,
-                                 null_pos,
-                                 null_bit,
-                                 field_name);
+    return new (&mem_root) Field_date(ptr, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_DATETIME:
-    return new (&mem_root) Field_datetime(ptr,
-                                     null_pos,
-                                     null_bit,
-                                     field_name);
+    return new (&mem_root) Field_datetime(ptr, null_pos, null_bit, field_name);
   case DRIZZLE_TYPE_NULL:
-    return new (&mem_root) Field_null(ptr,
-                                      field_length,
-                                      field_name);
+    return new (&mem_root) Field_null(ptr, field_length, field_name);
   }
-  assert(0);
+  assert(false);
   abort();
 }
 
 void TableShare::refreshVersion()
 {
-  version= refresh_version;
+  version= g_refresh_version;
 }
 
 

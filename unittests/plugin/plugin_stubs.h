@@ -53,8 +53,6 @@ public:
     last_call_char_ptr= ptr;
   }
 
-  virtual ~ClientStub() {}
-
   /**
   * Get attached session from the client object.
   * @retval Session object that is attached, NULL if none.
@@ -84,18 +82,6 @@ public:
   * @retval Boolean value representing connected state.
   */
   virtual bool isConnected(void) { return false; };
-
-  /**
-  * Check to see if the client is actively reading.
-  * @retval Boolean value representing reading state.
-  */
-  virtual bool isReading(void) { return false; };
-
-  /**
-  * Check to see if the client is actively writing.
-  * @retval Boolean value representing writing state.
-  */
-  virtual bool isWriting(void)  { return false; };
 
   /**
   * Flush all data that has been buffered with store() methods.
@@ -194,7 +180,6 @@ public:
   }
 
   /* Try to remove these. */
-  virtual bool haveMoreData(void) { return false; };
   virtual bool haveError(void) { return false; };
   virtual bool wasAborted(void) { return false;};
 };

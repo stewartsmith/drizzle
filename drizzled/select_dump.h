@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_DUMP_H
-#define DRIZZLED_SELECT_DUMP_H
+#pragma once
 
 #include <drizzled/select_to_file.h>
 
@@ -35,4 +34,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_DUMP_H */

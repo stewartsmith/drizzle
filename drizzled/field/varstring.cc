@@ -56,7 +56,7 @@ Field_varstring::Field_varstring(unsigned char *ptr_arg,
                                  unsigned char *null_ptr_arg,
                                  unsigned char null_bit_arg,
                                  const char *field_name_arg,
-                                 const CHARSET_INFO * const cs) :
+                                 const charset_info_st * const cs) :
   Field_str(ptr_arg,
             len_arg,
             null_ptr_arg,
@@ -69,7 +69,7 @@ length_bytes(length_bytes_arg)
 Field_varstring::Field_varstring(uint32_t len_arg,
                                  bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 const CHARSET_INFO * const cs) :
+                                 const charset_info_st * const cs) :
   Field_str((unsigned char*) 0,
             len_arg,
             maybe_null_arg ? (unsigned char*) "": 0,
@@ -80,7 +80,7 @@ Field_varstring::Field_varstring(uint32_t len_arg,
 {
 }
 
-int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
+int Field_varstring::store(const char *from,uint32_t length, const charset_info_st * const cs)
 {
   uint32_t copy_length;
   const char *well_formed_error_pos;
@@ -262,9 +262,7 @@ void Field_varstring::sort_string(unsigned char *to,uint32_t length)
     length-= length_bytes;
   }
 
-  tot_length= my_strnxfrm(field_charset,
-                          to, length, ptr + length_bytes,
-                          tot_length);
+  tot_length= field_charset->strnxfrm(to, length, ptr + length_bytes, tot_length);
   assert(tot_length == length);
 }
 
@@ -278,19 +276,6 @@ enum ha_base_keytype Field_varstring::key_type() const
   else
     res= length_bytes == 1 ? HA_KEYTYPE_VARTEXT1 : HA_KEYTYPE_VARTEXT2;
   return res;
-}
-
-
-void Field_varstring::sql_type(String &res) const
-{
-  const CHARSET_INFO * const cs=res.charset();
-  uint32_t length;
-
-  length= cs->cset->snprintf(cs,(char*) res.ptr(),
-                             res.alloced_length(), "%s(%d)",
-                              (has_charset() ? "varchar" : "varbinary"),
-                             (int) field_length / charset()->mbmaxlen);
-  res.length(length);
 }
 
 

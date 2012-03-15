@@ -18,15 +18,12 @@
   a shared library
 */
 
-#ifndef DRIZZLED_INTERNAL_MY_STATIC_H
-#define DRIZZLED_INTERNAL_MY_STATIC_H
+#pragma once
 
 #include <signal.h>
 
-#define MAX_SIGNALS	10		/* Max signals under a dont-allow */
 #define MIN_KEYBLOCK	(min(IO_SIZE,1024))
 #define MAX_KEYBLOCK	8192		/* Max keyblocklength == 8*IO_SIZE */
-#define MAX_BLOCK_TYPES MAX_KEYBLOCK/MIN_KEYBLOCK
 
 namespace drizzled
 {
@@ -66,10 +63,6 @@ extern char curr_dir[FN_REFLEN], home_dir_buff[FN_REFLEN];
 
 extern volatile int _my_signals;
 
-extern unsigned char	*sf_min_adress,*sf_max_adress;
-extern uint	sf_malloc_count;
-extern class irem *sf_malloc_root;
-
 extern uint64_t query_performance_frequency, query_performance_offset;
 
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
@@ -77,4 +70,3 @@ extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_STATIC_H */

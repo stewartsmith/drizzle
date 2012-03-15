@@ -22,24 +22,17 @@
  * This is just the header file, the actual code is under a BSD license.
  */
 
-#ifndef DRIZZLED_UTIL_GMTIME_H
-#define DRIZZLED_UTIL_GMTIME_H
+#pragma once
 
-#include <time.h>
+#include <ctime>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace util {
 
-namespace util
-{
-
-struct tm *gmtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
-void gmtime(const type::Time::epoch_t &timer, type::Time &tmbuf);
-struct tm *localtime(const type::Time::epoch_t &timer, struct tm *tmbuf);
-void localtime(const type::Time::epoch_t &timer,  type::Time &tmbuf);
+tm* gmtime(const type::epoch_t&, tm*);
+void gmtime(const type::epoch_t&, type::Time&);
 
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_GMTIME_H */
 

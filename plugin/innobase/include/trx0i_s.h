@@ -25,6 +25,7 @@ functions.
 Created July 17, 2007 Vasil Dimov
 *******************************************************/
 
+#pragma once
 #ifndef trx0i_s_h
 #define trx0i_s_h
 

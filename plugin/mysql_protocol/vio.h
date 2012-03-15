@@ -14,14 +14,12 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_VIO_H
-#define PLUGIN_MYSQL_PROTOCOL_VIO_H
+#pragma once
 
 #include <sys/socket.h>
 #include <cerrno>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 /**
  *@brief Virtual I/O layer, only used with TCP/IP sockets at the moment.
@@ -97,7 +95,7 @@ public:
    @param[in] buflen Size of buf.
    @returns True on success, false otherwise.
    */
-  bool peer_addr(char *buf, uint16_t *port, size_t buflen) const;
+  bool peer_addr(char *buf, size_t buflen, uint16_t& port) const;
 
   /**
    * Sets either the send, or recieve timeouts for the socket.
@@ -118,27 +116,10 @@ public:
    */
   int get_fd() const;
 
-  /**
-   * Returns the current read position.
-   */
-  char *get_read_pos() const;
-
-  /**
-   * Returns the current write position.
-   */
-  char *get_read_end() const;
-
 private:
-  bool closed;
   int sd;
   int fcntl_mode; /* Buffered fcntl(sd,F_GETFL) */
-  struct sockaddr_storage local; /* Local internet address */
-  struct sockaddr_storage remote; /* Remote internet address */
-  char *read_pos; /* start of unfetched data in the read buffer */
-  char *read_end; /* end of unfetched data */
-
 };
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_VIO_H */

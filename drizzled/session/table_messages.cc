@@ -30,7 +30,7 @@
 namespace drizzled {
 namespace session {
 
-bool TableMessages::storeTableMessage(const identifier::Table &identifier, message::Table &table_message)
+bool TableMessages::storeTableMessage(const identifier::Table &identifier, const message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
   return true;

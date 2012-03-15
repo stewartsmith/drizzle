@@ -17,23 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_NUM_H
-#define DRIZZLED_ITEM_NUM_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/type/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_num: public Item_basic_constant
+class Item_num : public Item_basic_constant
 {
 public:
-  Item_num() {}                               /* Remove gcc warning */
   virtual Item_num *neg()= 0;
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st*);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_NUM_H */

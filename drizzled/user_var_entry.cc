@@ -22,18 +22,20 @@
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/user_var_entry.h>
+#include <drizzled/type/decimal.h>
+#include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /** Get the value of a variable as a double. */
 
-double user_var_entry::val_real(bool *null_value)
+double user_var_entry::val_real(bool *null_value) const
 {
-  if ((*null_value= (value == 0)))
+  if ((*null_value= not value))
     return 0.0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     return *(double*) value;
 
@@ -51,7 +53,7 @@ double user_var_entry::val_real(bool *null_value)
     return internal::my_atof(value);                      // This is null terminated
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
   return 0.0;					// Impossible
@@ -62,10 +64,11 @@ double user_var_entry::val_real(bool *null_value)
 
 int64_t user_var_entry::val_int(bool *null_value) const
 {
-  if ((*null_value= (value == 0)))
-    return 0L;
+  if ((*null_value= not value))
+    return 0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     return (int64_t) *(double*) value;
 
@@ -86,23 +89,24 @@ int64_t user_var_entry::val_int(bool *null_value) const
     }
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 
-  return 0L;					// Impossible
+  assert(false);
+  return 0;					// Impossible
 }
 
 
 /** Get the value of a variable as a string. */
 
-String *user_var_entry::val_str(bool *null_value, String *str,
-                                uint32_t decimals)
+String *user_var_entry::val_str(bool *null_value, String *str, uint32_t decimals) const
 {
-  if ((*null_value= (value == 0)))
-    return (String*) 0;
+  if ((*null_value= not value))
+    return NULL;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     str->set_real(*(double*) value, decimals, &my_charset_bin);
     break;
@@ -119,25 +123,26 @@ String *user_var_entry::val_str(bool *null_value, String *str,
     break;
 
   case STRING_RESULT:
-    if (str->copy(value, length, collation.collation))
-      str= 0;					// EOM error
+    str->copy(value, length, collation.collation);
+    break;
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 
-  return(str);
+  return str;
 }
 
 /** Get the value of a variable as a decimal. */
 
-type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
+type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val) const
 {
-  if ((*null_value= (value == 0)))
+  if ((*null_value= not value))
     return 0;
 
-  switch (type) {
+  switch (type) 
+  {
   case REAL_RESULT:
     double2_class_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
     break;
@@ -155,11 +160,11 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     break;
 
   case ROW_RESULT:
-    assert(1);				// Impossible
+    assert(false);				// Impossible
     break;
   }
 
-  return(val);
+  return val;
 }
 
 /**
@@ -182,9 +187,7 @@ type::Decimal *user_var_entry::val_decimal(bool *null_value, type::Decimal *val)
     true    failure
 */
 
-bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
-                                 Item_result arg_type, const CHARSET_INFO * const cs, Derivation dv,
-                                 bool unsigned_arg)
+void user_var_entry::update_hash(bool set_null, data_ref data, Item_result arg_type, const charset_info_st* cs, Derivation dv, bool unsigned_arg)
 {
   if (set_null)
   {
@@ -199,34 +202,25 @@ bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
   }
   else
   {
-    size_t needed_size= arg_length + ((arg_type == STRING_RESULT) ? 1 : 0);
+    size_t needed_size= data.size() + ((arg_type == STRING_RESULT) ? 1 : 0);
 
     if (needed_size > size)
     {
-      char *new_ptr;
-
-      new_ptr= (char *)realloc(value, needed_size);
-
-      if (new_ptr == NULL)
-        return true;
-
-      value= new_ptr;
+			value= (char *)realloc(value, needed_size);
       size= needed_size;
     }
 
     if (arg_type == STRING_RESULT)
-      value[arg_length]= 0;			// Store end \0
+      value[data.size()]= 0;			// Store end \0
 
-    memcpy(value, ptr, arg_length);
+    memcpy(value, data.data(), data.size());
     if (arg_type == DECIMAL_RESULT)
       ((type::Decimal*)value)->fix_buffer_pointer();
-    length= arg_length;
+    length= data.size();
     collation.set(cs, dv);
     unsigned_flag= unsigned_arg;
   }
   type= arg_type;
-
-  return false;
 }
 
 } /* namespace drizzled */

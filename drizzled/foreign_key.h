@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_FOREIGN_KEY_H
-#define DRIZZLED_FOREIGN_KEY_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/key.h>
@@ -28,13 +27,7 @@
 #include <drizzled/cursor.h> /* for default_key_create_info */
 #include <drizzled/message/table.pb.h>
 
-namespace drizzled
-{
-
-class Item;
-class Table_ident;
-
-namespace memory { class Root; }
+namespace drizzled {
 
 void add_foreign_key_to_table_message(
     message::Table *table_message,
@@ -47,7 +40,7 @@ void add_foreign_key_to_table_message(
     message::Table::ForeignKeyConstraint::ForeignKeyMatchOption match_opt_arg);
 
 
-class Foreign_key: public Key 
+class Foreign_key : public Key 
 {
 public:
   Table_ident *ref_table;
@@ -57,7 +50,7 @@ public:
   message::Table::ForeignKeyConstraint::ForeignKeyOption update_opt;
   message::Table::ForeignKeyConstraint::ForeignKeyMatchOption match_opt;
 
-  Foreign_key(const LEX_STRING &name_arg,
+  Foreign_key(str_ref name_arg,
               List<Key_part_spec> &cols,
               Table_ident *table,
               List<Key_part_spec> &ref_cols,
@@ -80,22 +73,8 @@ public:
    */
   Foreign_key(const Foreign_key &rhs, memory::Root *mem_root);
 
-
-  /**
-   * Used to make a clone of this object for ALTER/CREATE TABLE
-   * 
-   * @see comment for Key_part_spec::clone
-   */
-  virtual Key *clone(memory::Root *mem_root) const
-  {
-    return new (mem_root) Foreign_key(*this, mem_root);
-  }
-
-
   /* Used to validate foreign key options */
   bool validate(List<CreateField> &table_fields);
 };
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FOREIGN_KEY_H */

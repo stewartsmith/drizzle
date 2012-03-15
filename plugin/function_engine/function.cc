@@ -19,10 +19,9 @@
  */
 
 #include <config.h>
-
+#include <boost/foreach.hpp>
 #include <plugin/function_engine/function.h>
 #include <plugin/function_engine/cursor.h>
-
 #include <string>
 
 using namespace std;
@@ -34,8 +33,8 @@ Function::Function(const std::string &name_arg) :
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED),
-  information_message(new(message::Schema)),
-  data_dictionary_message(new(message::Schema))
+  information_message(new message::Schema),
+  data_dictionary_message(new message::Schema)
 
 {
   information_message->set_name(INFORMATION_SCHEMA_IDENTIFIER.getSchemaName());
@@ -69,7 +68,7 @@ int Function::doGetTableDefinition(Session &,
   return EEXIST;
 }
 
-void Function::doGetSchemaIdentifiers(identifier::Schema::vector& schemas)
+void Function::doGetSchemaIdentifiers(identifier::schema::vector& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
@@ -112,25 +111,20 @@ bool Function::doCanCreateTable(const drizzled::identifier::Table &table_identif
 
 bool Function::doDoesTableExist(Session&, const identifier::Table &identifier)
 {
-  drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
-
-  if (function)
-    return true;
-
-  return false;
+  return getFunction(identifier.getPath());
 }
 
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     drizzled::identifier::Table::vector &set_of_identifiers)
+                                     drizzled::identifier::table::vector &set_of_identifiers)
 {
   set<std::string> set_of_names;
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 
-  for (set<std::string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+  BOOST_FOREACH(const std::string& iter, set_of_names)
   {
-    set_of_identifiers.push_back(identifier::Table(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
+    set_of_identifiers.push_back(identifier::Table(schema_identifier, iter, drizzled::message::Table::FUNCTION));
   }
 }
 
@@ -144,13 +138,13 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "FunctionEngine",
+  "function_engine",
   "1.0",
   "Brian Aker",
-  "Function Engine provides the infrastructure for Table Functions,etc.",
+  N_("Function engine"),
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

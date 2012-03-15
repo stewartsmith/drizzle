@@ -21,8 +21,7 @@
 
 #include <drizzled/item/direct_ref.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 double Item_direct_ref::val_real()
 {

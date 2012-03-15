@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_FUNCTION_CONTAINER_H
-#define DRIZZLED_TABLE_FUNCTION_CONTAINER_H
+#pragma once
 
 #include <set>
 #include <boost/unordered_map.hpp>
@@ -35,13 +34,12 @@ class TableFunctionContainer {
 public:
   plugin::TableFunction *getFunction(const std::string &path);
 
-  void getNames(const std::string &predicate,
-                std::set<std::string> &set_of_names);
+  void getNames(const std::string &predicate, std::set<std::string> &set_of_names);
 
 
   void addFunction(plugin::TableFunction *tool);
 
-  const ToolMap& getTableContainer()
+  const ToolMap& getTableContainer() const
   {
     return table_map;
   }
@@ -49,4 +47,3 @@ public:
 
 } /* namepsace drizzled */
 
-#endif /* DRIZZLED_TABLE_FUNCTION_CONTAINER_H */

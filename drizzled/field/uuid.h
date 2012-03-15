@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_UUID_H
-#define DRIZZLED_FIELD_UUID_H
+#pragma once
 
 #include <drizzled/field.h>
 #include <string>
@@ -32,7 +31,7 @@ namespace field
 {
 
 class Uuid :public Field {
-  const CHARSET_INFO *field_charset;
+  const charset_info_st *field_charset;
   bool is_set;
 
 public:
@@ -49,12 +48,11 @@ public:
   uint32_t pack_length() const { return type::Uuid::LENGTH; }
   uint32_t key_length() const { return type::Uuid::LENGTH; }
 
-  int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to, uint32_t length, const charset_info_st * const charset);
   int store(int64_t nr, bool unsigned_val);
   double val_real() const;
   int64_t val_int() const;
   String *val_str(String*,String *) const;
-  void sql_type(drizzled::String&) const;
   int store_decimal(const drizzled::type::Decimal*);
 
   Item_result result_type () const { return STRING_RESULT; }
@@ -83,5 +81,4 @@ public:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_UUID_H */
 

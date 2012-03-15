@@ -14,17 +14,20 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <config.h>
+#include <drizzled/field.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/session.h>
 #include <drizzled/module/option_map.h>
-
 #include <drizzled/plugin/catalog.h>
+#include <drizzled/plugin.h>
 
 #include <iostream>
 
 #include <boost/program_options.hpp>
+
+#include <client/user_detect.h>
 
 using namespace std;
 using namespace drizzled;
@@ -88,18 +91,6 @@ public:
     return true;
   }
 
-  virtual bool isReading(void)
-  {
-    printDebug("isReading");
-    return false;
-  }
-
-  virtual bool isWriting(void)
-  {
-    printDebug("isWriting");
-    return false;
-  }
-
   virtual bool flush(void)
   {
     printDebug("flush");
@@ -115,14 +106,14 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    identifier::User::shared_ptr user= identifier::User::make_shared();
+    identifier::user::mptr user= identifier::User::make_shared();
     user->setUser(username);
     session->setUser(user);
 
     return session->checkUser(password, schema);
   }
 
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
+  virtual bool readCommand(char **packet, uint32_t& packet_length)
   {
     uint32_t length;
 
@@ -135,7 +126,7 @@ public:
     *packet= NULL;
 
     /* Start with 1 byte offset so we can set command. */
-    *packet_length= 1;
+    packet_length= 1;
 
     do
     {
@@ -144,19 +135,19 @@ public:
         return false;
 
       cin.clear();
-      cin.getline(*packet + *packet_length, length - *packet_length, ';');
-      *packet_length+= cin.gcount();
+      cin.getline(*packet + packet_length, length - packet_length, ';');
+      packet_length+= cin.gcount();
       length*= 2;
     }
     while (cin.eof() == false && cin.fail() == true);
 
-    if ((*packet_length == 1 && cin.eof() == true) or
+    if ((packet_length == 1 && cin.eof() == true) or
         not strncasecmp(*packet + 1, "quit", 4) or
         not strncasecmp(*packet + 1, "exit", 4) or
         not strncasecmp(*packet + 1, "shutdown", sizeof("shutdown") -1))
     {
       is_dead= true;
-      *packet_length= 1;
+      packet_length= 1;
       (*packet)[0]= COM_SHUTDOWN;
 
       return true;
@@ -185,25 +176,21 @@ public:
     cout << "Error: " << static_cast<long>(sql_errno) << " " << err << endl;
   }
 
-  virtual bool sendFields(List<Item> *list)
+  virtual void sendFields(List<Item>& list)
   {
-    List<Item>::iterator it(list->begin());
-    Item *item;
+    List<Item>::iterator it(list.begin());
 
     column= 0;
     max_column= 0;
 
-    while ((item=it++))
+    while (Item* item=it++)
     {
       SendField field;
       item->make_field(&field);
       cout << field.col_name << "\t";
       max_column++;
     }
-
     cout << endl;
-
-    return false;
   }
 
   virtual void checkRowEnd(void)
@@ -214,7 +201,7 @@ public:
 
   using Client::store;
 
-  virtual bool store(Field *from)
+  virtual void store(Field *from)
   {
     if (from->is_null())
       return store();
@@ -225,68 +212,56 @@ public:
     return store(str.ptr(), str.length());
   }
 
-  virtual bool store(void)
+  virtual void store(void)
   {
     cout << "NULL" << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(int32_t from)
+  virtual void store(int32_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(uint32_t from)
+  virtual void store(uint32_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(int64_t from)
+  virtual void store(int64_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(uint64_t from)
+  virtual void store(uint64_t from)
   {
     cout << from << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool store(double from, uint32_t decimals, String *buffer)
+  virtual void store(double from, uint32_t decimals, String *buffer)
   {
     buffer->set_real(from, decimals, &my_charset_bin);
-    return store(buffer->ptr(), buffer->length());
+    store(buffer->ptr(), buffer->length());
   }
 
-  virtual bool store(const char *from, size_t length)
+  virtual void store(const char *from, size_t length)
   {
     cout.write(from, length);
     cout << "\t";
     checkRowEnd();
-    return false;
   }
 
-  virtual bool haveMoreData(void)
-  {
-    printDebug("haveMoreData");
-    return false;
-  }
-
-  virtual bool haveError(void)
+  virtual bool haveError()
   {
     printDebug("haveError");
     return false;
   }
 
-  virtual bool wasAborted(void)
+  virtual bool wasAborted()
   {
     printDebug("wasAborted");
     return false;
@@ -366,14 +341,8 @@ public:
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  const string username(vm.count("username") ? vm["username"].as<string>() : "");
-  const string password(vm.count("password") ? vm["password"].as<string>() : "");
-  const string schema(vm.count("schema") ? vm["schema"].as<string>() : "");
-
-  const std::string catalog(vm.count("catalog") ? vm["catalog"].as<string>() : "LOCAL");
-
-  context.add(new ListenConsole("console", username, password, schema, catalog));
-
+  context.add(new ListenConsole("console", vm["username"].as<string>(), 
+    vm["password"].as<string>(), vm["schema"].as<string>(), vm["catalog"].as<string>()));
   return 0;
 }
 
@@ -385,17 +354,19 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
+  UserDetect detected_user;
+  const char* shell_user= detected_user.getUser();
   context("username",
-          po::value<string>(),
+          po::value<string>()->default_value(shell_user ? shell_user : ""),
           N_("User to use for auth."));
   context("password",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("Password to use for auth."));
   context("catalog",
-          po::value<string>(),
+          po::value<string>()->default_value("LOCAL"),
           N_("Default catalog to use."));
   context("schema",
-          po::value<string>(),
+          po::value<string>()->default_value(""),
           N_("Default schema to use."));
 }
 
@@ -405,10 +376,10 @@ DRIZZLE_DECLARE_PLUGIN
   "console",
   "0.2",
   "Eric Day",
-  "Console Client",
+  N_("Console client"),
   PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init */
-  NULL,   /* depends */
-  init_options    /* config options */
+  init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

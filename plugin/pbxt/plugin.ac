@@ -1,5 +1,0 @@
-[test "$GCC" = "yes"]
-AS_IF([test "$GCC" = "yes" -a "$INTELCC" = "no"],[
-  PBXT_EXTRA_CXXFLAGS="-Wno-overloaded-virtual -Wno-sign-compare -Wno-unused-function"
-  AC_SUBST(PBXT_EXTRA_CXXFLAGS)
-])

@@ -18,11 +18,10 @@
  */
 
 /*
-** Common definition between mysql server & client
+** Common definition between Drizzle server & client
 */
 
-#ifndef DRIZZLED_COMMON_H
-#define DRIZZLED_COMMON_H
+#pragma once
 
 #include <unistd.h>
 #include <stdint.h>
@@ -31,11 +30,6 @@
 /*
    This is included in the server and in the client.
    Options for select set by the yacc parser (stored in lex->options).
-
-   XXX:
-   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
-   options list are written into binlog. These options can NOT change their
-   values, or it will break replication between version.
 
    context is encoded as following:
    SELECT - Select_Lex_Node::options
@@ -57,7 +51,7 @@
 #define OPTION_BIG_SELECTS      (UINT64_C(1) << 9)     // THD, user
 #define TMP_TABLE_ALL_COLUMNS   (UINT64_C(1) << 12)    // SELECT, intern
 #define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
-#define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog
+#define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user
 #define OPTION_FOUND_COMMENT    (UINT64_C(1) << 15)    // SELECT, intern, parser
 #define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
@@ -68,21 +62,15 @@
 
 /** The following can be set when importing tables in a 'wrong order'
    to suppress foreign key checks */
-#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user, binlog
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (UINT64_C(1) << 26) // THD, user
 /** The following speeds up inserts to InnoDB tables by suppressing unique
    key checks in some cases */
-#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user, binlog
+#define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user
 #define SELECT_NO_UNLOCK                (UINT64_C(1) << 28) // SELECT, intern
 /** Flag set if setup_tables already done */
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-
-/**
-  Maximum length of time zone name that we support
-  (Time zone name is char(64) in db). mysqlbinlog needs it.
-*/
-#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
 
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
@@ -167,7 +155,7 @@ enum enum_server_command
 {
   COM_SLEEP,
   COM_QUIT,
-  COM_INIT_DB,
+  COM_USE_SCHEMA,
   COM_QUERY,
   COM_SHUTDOWN,
   COM_CONNECT,
@@ -194,12 +182,12 @@ enum enum_field_types {
                         DRIZZLE_TYPE_TIME,
                         DRIZZLE_TYPE_BOOLEAN,
                         DRIZZLE_TYPE_UUID,
-                        DRIZZLE_TYPE_MICROTIME
+                        DRIZZLE_TYPE_MICROTIME,
+                        DRIZZLE_TYPE_IPV6
 };
-const int enum_field_types_size= DRIZZLE_TYPE_MICROTIME + 1;
+const int enum_field_types_size= DRIZZLE_TYPE_IPV6 + 1;
 
 } /* namespace drizzled */
 
 #endif /* defined(__cplusplus) */
 
-#endif /* DRIZZLED_COMMON_H */

@@ -22,8 +22,7 @@
 #include <drizzled/error.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static const char *binary_keyword= "BINARY";
 
@@ -39,7 +38,7 @@ String *Item_func_set_collation::val_str(String *str)
 
 void Item_func_set_collation::fix_length_and_dec()
 {
-  const CHARSET_INFO *set_collation;
+  const charset_info_st *set_collation;
   const char *colname;
   String tmp, *str= args[1]->val_str(&tmp);
   colname= str->c_ptr();
@@ -90,9 +89,8 @@ void Item_func_set_collation::print(String *str)
   str->append('(');
   args[0]->print(str);
   str->append(STRING_WITH_LEN(" collate "));
-  assert(args[1]->basic_const_item() &&
-              args[1]->type() == Item::STRING_ITEM);
-  args[1]->str_value.print(str);
+  assert(args[1]->basic_const_item() && args[1]->type() == Item::STRING_ITEM);
+  args[1]->str_value.print(*str);
   str->append(')');
 }
 

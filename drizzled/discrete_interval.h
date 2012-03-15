@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_DISCRETE_INTERVAL_H
-#define DRIZZLED_DISCRETE_INTERVAL_H
+#pragma once
 
 #include <cstdlib>
 
@@ -164,24 +163,23 @@ public:
       Discrete_interval *new_interval= new Discrete_interval(start, val, incr);
       return(append(new_interval));
     }
-    return(0);
+    return 0;
   }
 
   bool append(Discrete_interval *new_interval)
   {
     if (unlikely(new_interval == NULL))
-      return(1);
+      return 1;
     if (head == NULL)
       head= current= new_interval;
     else
       tail->next= new_interval;
     tail= new_interval;
     elements++;
-    return(0);
+    return 0;
   }
 
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DISCRETE_INTERVAL_H */

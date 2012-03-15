@@ -25,13 +25,15 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/current_session.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
+#include <drizzled/util/test.h>
+#include <drizzled/system_variables.h>
 
 #include <fcntl.h>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 
 optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
@@ -60,7 +62,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   index= key_nr;
   head= table;
   key_part_info= head->key_info[index].key_part;
-  my_init_dynamic_array(&ranges, sizeof(optimizer::QuickRange*), 16, 16);
+  ranges.init(sizeof(optimizer::QuickRange*), 16, 16);
 
   /* 'session' is not accessible in QuickRangeSelect::reset(). */
   mrr_buf_size= session->variables.read_rnd_buff_size;
@@ -68,7 +70,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   if (! no_alloc && ! parent_alloc)
   {
     // Allocates everything through the internal memroot
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
     session->mem_root= &alloc;
   }
   else
@@ -119,7 +121,7 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
         delete cursor;
       }
     }
-    delete_dynamic(&ranges); /* ranges are allocated in alloc */
+    ranges.free(); /* ranges are allocated in alloc */
     delete column_bitmap;
     alloc.free_root(MYF(0));
   }
@@ -129,8 +131,9 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
 
 int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
 {
-  Cursor *save_file= cursor, *org_file;
-  Session *session;
+  Cursor* org_file;
+  Cursor* save_file= cursor;
+  Session* session;
 
   in_ror_merged_scan= 1;
   if (reuse_handler)
@@ -151,7 +154,7 @@ int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
   }
 
   session= head->in_use;
-  if (! (cursor= head->cursor->clone(session->mem_root)))
+  if (not (cursor= head->cursor->clone(session->mem_root)))
   {
     /*
       Manually set the error flag. Note: there seems to be quite a few
@@ -189,7 +192,7 @@ end:
   org_file= head->cursor;
   head->cursor= cursor;
   /* We don't have to set 'head->keyread' here as the 'cursor' is unique */
-  if (! head->no_keyread)
+  if (not head->no_keyread)
   {
     head->key_read= 1;
     head->mark_columns_used_by_index(index);
@@ -448,9 +451,10 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
   which handle the ranges and implement the get_next() function.  But
   for now, this seems to work right at least.
  */
-optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t, bool *)
+optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t used_key_parts_arg, bool *)
   :
-    optimizer::QuickRangeSelect(*q)
+  optimizer::QuickRangeSelect(*q),
+  used_key_parts(used_key_parts_arg)
 {
   optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.size();
@@ -461,15 +465,11 @@ optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSel
   rev_it= rev_ranges.begin();
 
   /* Remove EQ_RANGE flag for keys that are not using the full key */
-  for (vector<optimizer::QuickRange *>::iterator it= rev_ranges.begin();
-       it != rev_ranges.end();
-       ++it)
+  BOOST_FOREACH(QuickRange* it, rev_ranges)
   {
-    optimizer::QuickRange *r= *it;
-    if ((r->flag & EQ_RANGE) &&
-        head->key_info[index].key_length != r->max_length)
+    if ((it->flag & EQ_RANGE) && head->key_info[index].key_length != it->max_length)
     {
-      r->flag&= ~EQ_RANGE;
+      it->flag&= ~EQ_RANGE;
     }
   }
   q->dont_free= 1; // Don't free shared mem
@@ -494,7 +494,8 @@ int optimizer::QuickSelectDescending::get_next()
     int result;
     if (last_range)
     {						// Already read through key
-      result= ((last_range->flag & EQ_RANGE) ?
+      result= ((last_range->flag & EQ_RANGE &&
+               used_key_parts <= head->key_info[index].key_parts) ?
 		           cursor->index_next_same(record, last_range->min_key,
 					                             last_range->min_length) :
 		           cursor->index_prev(record));
@@ -525,7 +526,8 @@ int optimizer::QuickSelectDescending::get_next()
       continue;
     }
 
-    if (last_range->flag & EQ_RANGE)
+    if (last_range->flag & EQ_RANGE
+        && used_key_parts <= head->key_info[index].key_parts)
     {
       result = cursor->index_read_map(record,
                                       last_range->max_key,
@@ -535,6 +537,8 @@ int optimizer::QuickSelectDescending::get_next()
     else
     {
       assert(last_range->flag & NEAR_MAX ||
+             (last_range->flag & EQ_RANGE &&
+              used_key_parts > head->key_info[index].key_parts) ||
              range_reads_after_key(last_range));
       result= cursor->index_read_map(record,
                                      last_range->max_key,

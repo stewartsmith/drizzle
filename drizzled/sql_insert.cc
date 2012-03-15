@@ -35,9 +35,15 @@
 #include <drizzled/select_create.h>
 #include <drizzled/table/shell.h>
 #include <drizzled/alter_info.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -87,7 +93,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
   }
   else
   {						// Part field list
-    Select_Lex *select_lex= &session->getLex()->select_lex;
+    Select_Lex *select_lex= &session->lex().select_lex;
     Name_resolution_context *context= &select_lex->context;
     Name_resolution_context_state ctx_state;
     int res;
@@ -249,7 +255,6 @@ bool insert_query(Session *session,TableList *table_list,
   List_item *values;
   Name_resolution_context *context;
   Name_resolution_context_state ctx_state;
-  thr_lock_type lock_type;
   Item *unused_conds= 0;
 
 
@@ -266,8 +271,6 @@ bool insert_query(Session *session,TableList *table_list,
     return true;
   }
 
-  lock_type= table_list->lock_type;
-
   session->set_proc_info("init");
   session->used_tables=0;
   values= its++;
@@ -282,7 +285,7 @@ bool insert_query(Session *session,TableList *table_list,
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->getLex()->select_lex);
+      free_underlaid_joins(session, &session->lex().select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
@@ -291,7 +294,7 @@ bool insert_query(Session *session,TableList *table_list,
   /* mysql_prepare_insert set table_list->table if it was not set */
   table= table_list->table;
 
-  context= &session->getLex()->select_lex.context;
+  context= &session->lex().select_lex.context;
   /*
     These three asserts test the hypothesis that the resetting of the name
     resolution context below is not necessary at all since the list of local
@@ -321,7 +324,7 @@ bool insert_query(Session *session,TableList *table_list,
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->getLex()->select_lex);
+        free_underlaid_joins(session, &session->lex().select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
 
@@ -332,7 +335,7 @@ bool insert_query(Session *session,TableList *table_list,
       if (table != NULL)
         table->cursor->ha_release_auto_increment();
       if (!joins_freed)
-        free_underlaid_joins(session, &session->getLex()->select_lex);
+        free_underlaid_joins(session, &session->lex().select_lex);
       session->setAbortOnWarning(false);
       DRIZZLE_INSERT_DONE(1, 0);
       return true;
@@ -424,7 +427,7 @@ bool insert_query(Session *session,TableList *table_list,
     session->row_count++;
   }
 
-  free_underlaid_joins(session, &session->getLex()->select_lex);
+  free_underlaid_joins(session, &session->lex().select_lex);
   joins_freed= true;
 
   /*
@@ -484,7 +487,7 @@ bool insert_query(Session *session,TableList *table_list,
     if (table != NULL)
       table->cursor->ha_release_auto_increment();
     if (!joins_freed)
-      free_underlaid_joins(session, &session->getLex()->select_lex);
+      free_underlaid_joins(session, &session->lex().select_lex);
     session->setAbortOnWarning(false);
     DRIZZLE_INSERT_DONE(1, 0);
     return true;
@@ -547,14 +550,8 @@ static bool prepare_insert_check_table(Session *session, TableList *table_list,
      than INSERT.
   */
 
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
-                                    table_list,
-                                    &session->getLex()->select_lex.leaf_tables,
-                                    select_insert))
-    return(true);
-
-  return(false);
+  return setup_tables_and_check_access(session, &session->lex().select_lex.context,
+    &session->lex().select_lex.top_join_list, table_list, &session->lex().select_lex.leaf_tables, select_insert);
 }
 
 
@@ -597,7 +594,7 @@ bool prepare_insert(Session *session, TableList *table_list,
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {
-  Select_Lex *select_lex= &session->getLex()->select_lex;
+  Select_Lex *select_lex= &session->lex().select_lex;
   Name_resolution_context *context= &select_lex->context;
   Name_resolution_context_state ctx_state;
   bool insert_into_view= (0 != 0);
@@ -630,12 +627,11 @@ bool prepare_insert(Session *session, TableList *table_list,
   if (duplic == DUP_UPDATE)
   {
     /* it should be allocated before Item::fix_fields() */
-    if (table_list->set_insert_values(session->mem_root))
-      return(true);
+    table_list->set_insert_values();
   }
 
   if (prepare_insert_check_table(session, table_list, fields, select_insert))
-    return(true);
+    return true;
 
 
   /* Prepare the fields in the statement. */
@@ -683,20 +679,15 @@ bool prepare_insert(Session *session, TableList *table_list,
   }
 
   if (res)
-    return(res);
+    return res;
 
   if (not table)
     table= table_list->table;
 
-  if (not select_insert)
+  if (not select_insert && unique_table(table_list, table_list->next_global, true))
   {
-    TableList *duplicate;
-    if ((duplicate= unique_table(table_list, table_list->next_global, true)))
-    {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
-
-      return true;
-    }
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
+    return true;
   }
 
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
@@ -959,13 +950,13 @@ after_n_copied_inc:
 gok_or_after_err:
   if (!table->cursor->has_transactions())
     session->transaction.stmt.markModifiedNonTransData();
-  return(0);
+  return 0;
 
 err:
   info->last_errno= error;
   /* current_select is NULL if this is a delayed insert */
-  if (session->getLex()->current_select)
-    session->getLex()->current_select->no_error= 0;        // Give error
+  if (session->lex().current_select)
+    session->lex().current_select->no_error= 0;        // Give error
   table->print_error(error,MYF(0));
 
 before_err:
@@ -986,7 +977,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
   for (Field **field=entry->getFields() ; *field ; field++)
   {
-    if (((*field)->isWriteSet()) == false)
+    if (not (*field)->isWriteSet())
     {
       /*
        * If the field doesn't have any default value
@@ -1004,7 +995,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
     {
       /*
        * However, if an actual NULL value was specified
-       * for the field and the field is a NOT NULL field, 
+       * for the field and the field is a NOT NULL field,
        * throw ER_BAD_NULL_ERROR.
        *
        * Per the SQL standard, inserting NULL into a NOT NULL
@@ -1040,7 +1031,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 
 bool insert_select_prepare(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
   Select_Lex *select_lex= &lex->select_lex;
 
   /*
@@ -1053,7 +1044,7 @@ bool insert_select_prepare(Session *session)
                            lex->update_list, lex->value_list,
                            lex->duplicates,
                            &select_lex->where, true, false, false))
-    return(true);
+    return true;
 
   /*
     exclude first table from leaf tables list, because it belong to
@@ -1063,7 +1054,7 @@ bool insert_select_prepare(Session *session)
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
   select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
-  return(false);
+  return false;
 }
 
 
@@ -1089,7 +1080,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
   int res;
   table_map map= 0;
-  Select_Lex *lex_current_select_save= session->getLex()->current_select;
+  Select_Lex *lex_current_select_save= session->lex().current_select;
 
 
   unit= u;
@@ -1099,7 +1090,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     select, LEX::current_select should point to the first select while
     we are fixing fields from insert list.
   */
-  session->getLex()->current_select= &session->getLex()->select_lex;
+  session->lex().current_select= &session->lex().select_lex;
   res= check_insert_fields(session, table_list, *fields, values,
                            !insert_into_view, &map) ||
        setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0);
@@ -1115,7 +1106,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   if (info.handle_duplicates == DUP_UPDATE && !res)
   {
-    Name_resolution_context *context= &session->getLex()->select_lex.context;
+    Name_resolution_context *context= &session->lex().select_lex.context;
     Name_resolution_context_state ctx_state;
 
     /* Save the state of the current name resolution context. */
@@ -1133,8 +1124,8 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       We use next_name_resolution_table descructively, so check it first (views?)
     */
     assert (!table_list->next_name_resolution_table);
-    if (session->getLex()->select_lex.group_list.elements == 0 and
-        not session->getLex()->select_lex.with_sum_func)
+    if (session->lex().select_lex.group_list.elements == 0 and
+        not session->lex().select_lex.with_sum_func)
       /*
         We must make a single context out of the two separate name resolution contexts :
         the INSERT table and the tables in the SELECT part of INSERT ... SELECT.
@@ -1159,7 +1150,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       while ((item= li++))
       {
         item->transform(&Item::update_value_transformer,
-                        (unsigned char*)session->getLex()->current_select);
+                        (unsigned char*)session->lex().current_select);
       }
     }
 
@@ -1167,9 +1158,9 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     ctx_state.restore_state(context, table_list);
   }
 
-  session->getLex()->current_select= lex_current_select_save;
+  session->lex().current_select= lex_current_select_save;
   if (res)
-    return(1);
+    return 1;
   /*
     if it is INSERT into join view then check_insert_fields already found
     real table for insert
@@ -1183,10 +1174,10 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
-    session->getLex()->current_select->options|= OPTION_BUFFER_RESULT;
-    session->getLex()->current_select->join->select_options|= OPTION_BUFFER_RESULT;
+    session->lex().current_select->options|= OPTION_BUFFER_RESULT;
+    session->lex().current_select->join->select_options|= OPTION_BUFFER_RESULT;
   }
-  else if (not (session->getLex()->current_select->options & OPTION_BUFFER_RESULT))
+  else if (not (session->lex().current_select->options & OPTION_BUFFER_RESULT))
   {
     /*
       We must not yet prepare the result table if it is the same as one of the
@@ -1217,7 +1208,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->mark_columns_needed_for_insert();
 
 
-  return(res);
+  return res;
 }
 
 
@@ -1239,10 +1230,10 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
 
 int select_insert::prepare2(void)
 {
-  if (session->getLex()->current_select->options & OPTION_BUFFER_RESULT)
+  if (session->lex().current_select->options & OPTION_BUFFER_RESULT)
     table->cursor->ha_start_bulk_insert((ha_rows) 0);
 
-  return(0);
+  return 0;
 }
 
 
@@ -1351,10 +1342,6 @@ bool select_insert::send_eof()
 
   if ((changed= (info.copied || info.deleted || info.updated)))
   {
-    /*
-      We must invalidate the table in the query cache before binlog writing
-      and autocommitOrRollback.
-    */
     if (session->transaction.stmt.hasModifiedNonTransData())
       session->transaction.all.markModifiedNonTransData();
   }
@@ -1385,7 +1372,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->rowCount(),
                  info.copied + info.deleted + info.touched, id, buff);
-  session->status_var.inserted_row_count+= session->rowCount(); 
+  session->status_var.inserted_row_count+= session->rowCount();
   DRIZZLE_INSERT_SELECT_DONE(0, session->rowCount());
   return 0;
 }
@@ -1405,20 +1392,6 @@ void select_insert::abort() {
 
     table->cursor->ha_end_bulk_insert();
 
-    /*
-      If at least one row has been inserted/modified and will stay in
-      the table (the table doesn't have transactions) we must write to
-      the binlog (and the error code will make the slave stop).
-
-      For many errors (example: we got a duplicate key error while
-      inserting into a MyISAM table), no row will be added to the table,
-      so passing the error to the slave will not help since there will
-      be an error code mismatch (the inserts will succeed on the slave
-      with no error).
-
-      If table creation failed, the number of rows modified will also be
-      zero, so no check for that is made.
-    */
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->cursor->has_transactions();
     assert(transactional_table || !changed ||
@@ -1488,7 +1461,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       bool is_if_not_exists,
                                       DrizzleLock **lock,
-				      identifier::Table::const_reference identifier)
+				      const identifier::Table& identifier)
 {
   TableShare share(message::Table::INTERNAL);
   uint32_t select_field_count= items->size();
@@ -1594,7 +1567,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       if (not identifier.isTmp())
       {
         /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
-        boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+        boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
         if (create_table->table)
         {
@@ -1625,7 +1598,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          session->drop_temporary_table(identifier);
+          session->open_tables.drop_temporary_table(identifier);
         }
       }
     }
@@ -1658,10 +1631,10 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   DrizzleLock *extra_lock= NULL;
   /*
     For replication, the CREATE-SELECT statement is written
-    in two pieces: the first transaction messsage contains 
+    in two pieces: the first transaction messsage contains
     the CREATE TABLE statement as a CreateTableStatement message
     necessary to create the table.
-    
+
     The second transaction message contains all the InsertStatement
     and associated InsertRecords that should go into the table.
    */
@@ -1684,7 +1657,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     if (identifier.isTmp())
       m_plock= &m_lock;
     else
-      m_plock= &session->extra_lock;
+      m_plock= &session->open_tables.extra_lock;
 
     *m_plock= extra_lock;
   }
@@ -1722,11 +1695,11 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->cursor->ha_start_bulk_insert((ha_rows) 0);
   session->setAbortOnWarning(not info.ignore);
   if (check_that_all_fields_are_given_values(session, table, table_list))
-    return(1);
+    return 1;
 
   table->mark_columns_needed_for_insert();
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
-  return(0);
+  return 0;
 }
 
 void select_create::store_values(List<Item> &values)
@@ -1766,8 +1739,7 @@ bool select_create::send_eof()
     */
     if (!table->getShare()->getType())
     {
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.autocommitOrRollback(*session, 0);
+      TransactionServices::autocommitOrRollback(*session, 0);
       (void) session->endActiveTransaction();
     }
 

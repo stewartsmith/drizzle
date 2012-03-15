@@ -50,17 +50,16 @@ static port_constraint sysvar_rabbitmq_port;
 
 
 RabbitMQLog::RabbitMQLog(const string &name, 
-                         const std::string &exchange,
-                         const std::string &routingkey,
                          RabbitMQHandler* mqHandler) :
   plugin::TransactionApplier(name),
-  _rabbitMQHandler(mqHandler),
-  _exchange(exchange),
-  _routingkey(routingkey)
+  _rabbitMQHandler(mqHandler)
 { }
 
 RabbitMQLog::~RabbitMQLog() 
-{ }
+{ 
+  _rabbitMQHandler->disconnect();
+  delete _rabbitMQHandler;
+}
 
 plugin::ReplicationReturnCode
 RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
@@ -75,25 +74,37 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
   }
 
   to_apply.SerializeWithCachedSizesToArray(buffer);
-  try
-  {
-    _rabbitMQHandler->publish(buffer, 
-                             int(message_byte_length), 
-                             _exchange,
-                             _routingkey);
+  short tries = 3;
+  bool sent = false;
+  while (!sent && tries > 0) {
+    tries--;
+    try
+    {
+      _rabbitMQHandler->publish(buffer, int(message_byte_length));
+      sent = true;
+    } 
+    catch(exception& e)
+    {
+      errmsg_printf(error::ERROR, _(e.what()));
+      try {
+  	_rabbitMQHandler->reconnect();
+      } catch(exception &e) {
+  	errmsg_printf(error::ERROR, _("Could not reconnect, trying again.. - waiting 10 seconds for server to come back"));
+  	sleep(10);
+      } // 
+    }
   }
-  catch(exception& e)
-  {
-    errmsg_printf(error::ERROR, _(e.what()));
-    deactivate();
-    return plugin::UNKNOWN_ERROR;
-  }
+
   delete[] buffer;
-  return plugin::SUCCESS;
+  if(sent) return plugin::SUCCESS;
+  errmsg_printf(error::ERROR, _("RabbitMQ server has disappeared, failing transaction."));
+  deactivate();
+  return plugin::UNKNOWN_ERROR;
 }
 
 static RabbitMQLog *rabbitmqLogger; ///< the actual plugin
 static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
+
 
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
@@ -110,7 +121,9 @@ static int init(drizzled::module::Context &context)
                                          sysvar_rabbitmq_port, 
                                          vm["username"].as<string>(), 
                                          vm["password"].as<string>(), 
-                                         vm["virtualhost"].as<string>());
+                                         vm["virtualhost"].as<string>(),
+					 vm["exchange"].as<string>(),
+					 vm["routingkey"].as<string>());
   } 
   catch (exception& e) 
   {
@@ -120,10 +133,7 @@ static int init(drizzled::module::Context &context)
   }
   try 
   {
-    rabbitmqLogger= new RabbitMQLog("rabbit_log_applier",
-                                    vm["exchange"].as<string>(),
-                                    vm["routingkey"].as<string>(),
-                                    rabbitmqHandler);
+    rabbitmqLogger= new RabbitMQLog("rabbitmq_applier", rabbitmqHandler);
   } 
   catch (exception& e) 
   {
@@ -133,8 +143,7 @@ static int init(drizzled::module::Context &context)
   }
 
   context.add(rabbitmqLogger);
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.attachApplier(rabbitmqLogger, vm["use-replicator"].as<string>());
+  ReplicationServices::attachApplier(rabbitmqLogger, vm["use-replicator"].as<string>());
 
   context.registerVariable(new sys_var_const_string_val("host", vm["host"].as<string>()));
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", sysvar_rabbitmq_port));
@@ -178,5 +187,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
-
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "rabbitmq",
+  "0.1",
+  "Marcus Eriksson",
+  N_("Publishes transactions to RabbitMQ"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

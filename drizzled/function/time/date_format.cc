@@ -23,14 +23,14 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/typelib.h>
+#include <drizzled/system_variables.h>
 
 #include <cstdio>
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Create a formated date/time value in a string.
@@ -63,34 +63,25 @@ static bool make_date_time(Session &session,
       case 'M':
         if (!l_time->month)
           return 1;
-        str->append(locale->month_names->type_names[l_time->month-1],
-                    strlen(locale->month_names->type_names[l_time->month-1]),
-                    system_charset_info);
+        str->append(locale->month_names->type_names[l_time->month-1], strlen(locale->month_names->type_names[l_time->month-1]));
         break;
       case 'b':
         if (!l_time->month)
           return 1;
-        str->append(locale->ab_month_names->type_names[l_time->month-1],
-                    strlen(locale->ab_month_names->type_names[l_time->month-1]),
-                    system_charset_info);
+        str->append(locale->ab_month_names->type_names[l_time->month-1], strlen(locale->ab_month_names->type_names[l_time->month-1]));
         break;
       case 'W':
         if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday= calc_weekday(calc_daynr(l_time->year,l_time->month,
                               l_time->day),0);
-        str->append(locale->day_names->type_names[weekday],
-                    strlen(locale->day_names->type_names[weekday]),
-                    system_charset_info);
+        str->append(locale->day_names->type_names[weekday], strlen(locale->day_names->type_names[weekday]));
         break;
       case 'a':
         if (type == type::DRIZZLE_TIMESTAMP_TIME)
           return 1;
-        weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
-                             l_time->day),0);
-        str->append(locale->ab_day_names->type_names[weekday],
-                    strlen(locale->ab_day_names->type_names[weekday]),
-                    system_charset_info);
+        weekday=calc_weekday(calc_daynr(l_time->year,l_time->month, l_time->day),0);
+        str->append(locale->ab_day_names->type_names[weekday], strlen(locale->ab_day_names->type_names[weekday]));
         break;
       case 'D':
 	if (type == type::DRIZZLE_TIMESTAMP_TIME)
@@ -269,7 +260,7 @@ void Item_func_date_format::fix_length_and_dec()
   Item *arg1= args[1];
 
   decimals=0;
-  const CHARSET_INFO * const cs= getSession().variables.getCollation();
+  const charset_info_st * const cs= getSession().variables.getCollation();
   collation.set(cs, arg1->collation.derivation);
   if (arg1->type() == STRING_ITEM)
   {                                             // Optimize the normal case
@@ -397,9 +388,8 @@ String *Item_func_date_format::val_str(String *str)
   }
   else
   {
-    String *res;
-    if (!(res=args[0]->val_str(str)) ||
-        (str_to_time_with_warn(&getSession(), res->ptr(), res->length(), &l_time)))
+    String *res=args[0]->val_str(str);
+    if (not res || str_to_time_with_warn(getSession(), *res, l_time))
       goto null_date;
 
     l_time.year=l_time.month=l_time.day=0;
@@ -420,8 +410,7 @@ String *Item_func_date_format::val_str(String *str)
   if (format == str)
     str= &value;				// Save result here
 
-  if (str->alloc(size))
-    goto null_date;
+  str->alloc(size);
 
   /* Create the result string */
   str->set_charset(collation.collation);

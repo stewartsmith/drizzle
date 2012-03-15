@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COLLATION_DICTIONARY_COLLATIONS_H
-#define PLUGIN_COLLATION_DICTIONARY_COLLATIONS_H
+#pragma once
 
 class CollationsTool : public CharacterSetsTool
 {
@@ -29,7 +28,7 @@ public:
 
   class Generator : public CharacterSetsTool::Generator 
   {
-    drizzled::CHARSET_INFO **collation_iter;
+    drizzled::charset_info_st **collation_iter;
     bool is_collation_primed;
 
     bool nextCollationCore();
@@ -48,7 +47,7 @@ public:
     bool check();
     virtual void fill();
 
-    drizzled::CHARSET_INFO const * collation()
+    drizzled::charset_info_st const * collation()
     {
       return collation_iter[0];
     }
@@ -67,4 +66,3 @@ public:
 
 };
 
-#endif /* PLUGIN_COLLATION_DICTIONARY_COLLATIONS_H */

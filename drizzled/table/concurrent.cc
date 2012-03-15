@@ -26,17 +26,14 @@
 
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
-
 #include <drizzled/table/instance.h>
-
 #include <drizzled/table.h>
+#include <drizzled/table_list.h>
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 /*
   Open table which is already name-locked by this thread.
@@ -54,7 +51,7 @@ namespace table
   pointer.
 
   NOTE
-  This function assumes that its caller already acquired table::Cache::singleton().mutex() mutex.
+  This function assumes that its caller already acquired table::Cache::mutex() mutex.
 
   RETURN VALUE
   false - Success
@@ -63,7 +60,7 @@ namespace table
 
 bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *session)
 {
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   if (session->getKilled())
     return true;
@@ -86,7 +83,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
   getMutableShare()->resetVersion();
   in_use = session;
 
-  tablenr= session->current_tablenr++;
+  tablenr= session->open_tables.current_tablenr++;
   used_fields= 0;
   const_table= 0;
   null_row= false;
@@ -112,7 +109,7 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
 
   NOTES
   Extra argument for open is taken from session->open_options
-  One must have a lock on table::Cache::singleton().mutex() when calling this function
+  One must have a lock on table::Cache::mutex() when calling this function
 
   RETURN
   0	ok
@@ -127,7 +124,7 @@ int table::Concurrent::open_unireg_entry(Session *session,
   TableShare::shared_ptr share;
   uint32_t discover_retry_count= 0;
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 retry:
   if (not (share= table::instance::Shared::make_shared(session, identifier, error)))
   {
@@ -182,7 +179,7 @@ retry:
 
       if (not session->getKilled())
       {
-        drizzle_reset_errors(session, 1);         // Clear warnings
+        drizzle_reset_errors(*session, true);         // Clear warnings
         session->clear_error();                 // Clear error message
         goto retry;
       }

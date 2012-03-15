@@ -35,10 +35,10 @@ bool statement::UnlockTables::execute()
      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
      false, mysqldump will not work.
    */
-  if (getSession()->isGlobalReadLock())
+  if (session().isGlobalReadLock())
   {
-    getSession()->unlockGlobalReadLock();
-    getSession()->my_ok();
+    session().unlockGlobalReadLock();
+    session().my_ok();
   }
   else
   {

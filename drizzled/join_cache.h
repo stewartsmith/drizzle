@@ -17,14 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_JOIN_CACHE_H
-#define DRIZZLED_JOIN_CACHE_H
+#pragma once
 
-namespace drizzled
-{
-
-class Field_blob;
-typedef JoinTable JoinTable;
+namespace drizzled {
 
 /**
   CacheField and JoinCache is used on full join to cache records in outer
@@ -101,4 +96,3 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_JOIN_CACHE_H */

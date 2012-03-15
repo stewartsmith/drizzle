@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H
-#define PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H
+#pragma once
 
 class ForeignKeysTool : public drizzled::plugin::TableFunction
 {
@@ -81,4 +80,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_FOREIGN_KEYS_H */

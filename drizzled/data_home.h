@@ -17,22 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-
-#ifndef DRIZZLED_DATA_HOME_H
-#define DRIZZLED_DATA_HOME_H
+#pragma once
 
 #include <boost/filesystem.hpp>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-DRIZZLED_API boost::filesystem::path& getFullDataHome();
-DRIZZLED_API boost::filesystem::path& getDataHome();
-DRIZZLED_API boost::filesystem::path& getDataHomeCatalog();
+DRIZZLED_API const boost::filesystem::path& getFullDataHome();
+DRIZZLED_API const boost::filesystem::path& getDataHome();
+DRIZZLED_API boost::filesystem::path& getMutableDataHome();
+DRIZZLED_API void setFullDataHome(const boost::filesystem::path&);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DATA_HOME_H */

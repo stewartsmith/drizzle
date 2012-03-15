@@ -17,16 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_INT_H
-#define DRIZZLED_ITEM_INT_H
+#pragma once
 
 #include <drizzled/item/num.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_int :public Item_num
+class Item_int : public Item_num
 {
 public:
   int64_t value;
@@ -81,4 +79,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_INT_H */

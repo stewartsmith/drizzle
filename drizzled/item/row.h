@@ -17,15 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_ROW_H
-#define DRIZZLED_ITEM_ROW_H
+#pragma once
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_row: public Item
+class Item_row : public Item
 {
   Item **items;
   table_map used_tables_cache;
@@ -47,30 +45,30 @@ public:
   {}
 
   enum Type type() const { return ROW_ITEM; };
-  void illegal_method_call(const char *);
+  void illegal_method_call(const char*);
   bool is_null() { return null_value; }
   void make_field(SendField *)
   {
-    illegal_method_call((const char*)"make_field");
+    illegal_method_call("make_field");
   };
   double val_real()
   {
-    illegal_method_call((const char*)"val");
+    illegal_method_call("val");
     return 0;
   };
   int64_t val_int()
   {
-    illegal_method_call((const char*)"val_int");
+    illegal_method_call("val_int");
     return 0;
   };
   String *val_str(String *)
   {
-    illegal_method_call((const char*)"val_str");
+    illegal_method_call("val_str");
     return 0;
   };
   type::Decimal *val_decimal(type::Decimal *)
   {
-    illegal_method_call((const char*)"val_decimal");
+    illegal_method_call("val_decimal");
     return 0;
   };
   bool fix_fields(Session *session, Item **ref);
@@ -96,4 +94,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_ROW_H */

@@ -29,22 +29,12 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_FILESORT_H
-#define DRIZZLED_FILESORT_H
+#pragma once
 
 namespace drizzled {
 
-class Session;
-class Table;
-class SortField;
-
-namespace optimizer {
-class SqlSelect;
-}
-
-class SortParam;
-
-class FileSort {
+class FileSort 
+{
   Session &_session;
 
   uint32_t sortlength(SortField *sortorder, uint32_t s_length, bool *multi_byte_charset);
@@ -52,11 +42,11 @@ class FileSort {
   ha_rows find_all_keys(SortParam *param, 
                         optimizer::SqlSelect *select,
                         unsigned char **sort_keys,
-                        internal::IO_CACHE *buffpek_pointers,
-                        internal::IO_CACHE *tempfile, internal::IO_CACHE *indexfile);
+                        internal::io_cache_st *buffpek_pointers,
+                        internal::io_cache_st *tempfile, internal::io_cache_st *indexfile);
 
-  int merge_buffers(SortParam *param,internal::IO_CACHE *from_file,
-                    internal::IO_CACHE *to_file, unsigned char *sort_buffer,
+  int merge_buffers(SortParam *param,internal::io_cache_st *from_file,
+                    internal::io_cache_st *to_file, unsigned char *sort_buffer,
                     buffpek *lastbuff,
                     buffpek *Fb,
                     buffpek *Tb,int flag);
@@ -65,14 +55,14 @@ class FileSort {
                   unsigned char *sort_buffer,
                   buffpek *buffpek,
                   uint32_t maxbuffer,
-                  internal::IO_CACHE *tempfile,
-                  internal::IO_CACHE *outfile);
+                  internal::io_cache_st *tempfile,
+                  internal::io_cache_st *outfile);
 
   int merge_many_buff(SortParam *param, unsigned char *sort_buffer,
                       buffpek *buffpek,
-                      uint32_t *maxbuffer, internal::IO_CACHE *t_file);
+                      uint32_t *maxbuffer, internal::io_cache_st *t_file);
 
-  uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek *buffpek,
+  uint32_t read_to_buffer(internal::io_cache_st *fromfile, buffpek *buffpek,
                           uint32_t sort_length);
 
 
@@ -94,4 +84,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FILESORT_H */

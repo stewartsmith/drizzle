@@ -17,16 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_GET_USER_VAR_H
-#define DRIZZLED_FUNCTION_GET_USER_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-class user_var_entry;
+namespace drizzled {
 
 class Item_func_get_user_var :public Item_func
 {
@@ -35,15 +31,15 @@ class Item_func_get_user_var :public Item_func
   Session &session;
 
 public:
-  LEX_STRING name; // keep it public
-  Item_func_get_user_var(Session &session_arg, LEX_STRING a):
+  str_ref name; // keep it public
+  Item_func_get_user_var(Session &session_arg, str_ref a) :
     Item_func(),
     m_cached_result_type(STRING_RESULT),
     session(session_arg),
     name(a)
   {}
   enum Functype functype() const { return GUSERVAR_FUNC; }
-  LEX_STRING get_name() { return name; }
+  str_ref get_name() { return name; }
   double val_real();
   int64_t val_int();
   type::Decimal *val_decimal(type::Decimal*);
@@ -64,4 +60,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_GET_USER_VAR_H */

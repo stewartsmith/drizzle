@@ -20,7 +20,6 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
-#include <drizzled/algorithm/crc32.h>
 
 #include "engine_state_history.h"
 
@@ -118,17 +117,20 @@ public:
   }
 };
 
+extern uint64_t next_cursor_id;
+
 int64_t ClearEngineStateHistoryFunction::val_int()
 {
   engine_state_history.clear();
   null_value= false;
+  next_cursor_id= 0;
   return 0;
 }
 
 
 int engine_state_history_table_initialize(drizzled::module::Context &context)
 {
-  context.add(new(std::nothrow)EngineStateHistory());
+  context.add(new EngineStateHistory);
   context.add(new plugin::Create_function<ClearEngineStateHistoryFunction>("SEAPITESTER_CLEAR_ENGINE_STATE_HISTORY"));
 
   return 0;

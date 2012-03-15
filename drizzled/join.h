@@ -24,8 +24,7 @@
  * Defines the Join class
  */
 
-#ifndef DRIZZLED_JOIN_H
-#define DRIZZLED_JOIN_H
+#pragma once
 
 #include <drizzled/dynamic_array.h>
 #include <drizzled/optimizer/position.h>
@@ -33,18 +32,10 @@
 #include <drizzled/tmp_table_param.h>
 #include <bitset>
 
-namespace drizzled
+namespace drizzled {
+
+class Join : public memory::SqlAlloc, boost::noncopyable
 {
-
-class DrizzleLock;
-class Session;
-class SortField;
-
-class Join :public memory::SqlAlloc
-{
-  Join(const Join &rhs);                        /**< not implemented */
-  Join& operator=(const Join &rhs);             /**< not implemented */
-
   /**
    * Contains a partial query execution plan which is extended during
    * cost-based optimization.
@@ -299,8 +290,8 @@ public:
   /** Cleanup this Join, possibly for reuse */
   void cleanup(bool full);
   void clear();
-  bool save_join_tab();
-  bool init_save_join_tab();
+  void save_join_tab();
+  void init_save_join_tab();
   bool send_row_on_empty_set()
   {
     return (do_send_rows && tmp_table_param.sum_func_count != 0 &&
@@ -381,4 +372,3 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *join_tab, bool e
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_JOIN_H */

@@ -17,32 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
-#define DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class sys_var;
-
-Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
-                     LEX_STRING component);
+Item* get_system_var(Session*, sql_var_t, str_ref name, str_ref component);
 
 /* A system variable */
 
-class Item_func_get_system_var :public Item_func
+class Item_func_get_system_var : public Item_func
 {
   sys_var *var;
   sql_var_t var_type;
-  LEX_STRING component;
+  str_ref component;
 
 public:
-  Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                           LEX_STRING *component_arg, const char *name_arg,
-                           size_t name_len_arg);
+  Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg, str_ref component_arg, const char *name_arg, size_t name_len_arg);
   bool fix_fields(Session *session, Item **ref);
   /*
     Stubs for pure virtual methods. Should never be called: this
@@ -56,7 +49,5 @@ public:
   const char *func_name() const { return "get_system_var"; }
 };
 
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H */

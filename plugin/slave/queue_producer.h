@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SLAVE_QUEUE_PRODUCER_H
-#define PLUGIN_SLAVE_QUEUE_PRODUCER_H
+#pragma once
 
 #include <client/client_priv.h>
 #include <drizzled/error_t.h>
@@ -38,6 +37,8 @@ public:
     SQLExecutor("slave", "replication"),
     _check_interval(5),
     _master_port(3306),
+    _master_id(0),
+    _drizzle(NULL),
     _last_return(DRIZZLE_RETURN_OK),
     _is_connected(false),
     _saved_max_commit_id(0),
@@ -91,6 +92,26 @@ public:
     _seconds_between_reconnects= seconds;
   }
 
+  void setCachedMaxCommitId(uint64_t value)
+  {
+    _saved_max_commit_id= value;
+  }
+
+  uint64_t cachedMaxCommitId()
+  {
+    return _saved_max_commit_id;
+  }
+
+  void setMasterId(uint32_t value)
+  {
+    _master_id= value;
+  }
+
+  uint32_t masterId()
+  {
+    return _master_id;
+  }
+
 private:
   /** Number of seconds to sleep between checking queue for messages */
   uint32_t _check_interval;
@@ -101,8 +122,10 @@ private:
   std::string _master_user;
   std::string _master_pass;
 
-  drizzle_st _drizzle;
-  drizzle_con_st _connection;
+  uint32_t _master_id;
+
+  drizzle_st *_drizzle;
+  drizzle_con_st *_connection;
   drizzle_return_t _last_return;
 
   bool _is_connected;
@@ -162,6 +185,8 @@ private:
   bool queueInsert(const char *trx_id,
                    const char *seg_id,
                    const char *commit_id,
+                   const char *originating_server_uuid,
+                   const char *originating_commit_id,
                    const char *msg,
                    const char *msg_length);
 
@@ -177,4 +202,3 @@ private:
 
 } /* namespace slave */
 
-#endif /* PLUGIN_SLAVE_QUEUE_PRODUCER_H */

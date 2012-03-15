@@ -1,13 +1,15 @@
 CREATE TABLE
 ============
 
-A CREATE statement in SQL creates an object inside of Drizzle. One of the most common CREATE commands is the CREATE TABLE command.
+A CREATE statement in SQL creates an object inside of Drizzle. One of
+the most common CREATE commands is the CREATE TABLE command.
 
 .. code-block:: mysql
 
     CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
       (create_definition, ...)
       [engine_options]
+      REPLICATE=[TRUE|FALSE] 
 
 or:
 
@@ -17,6 +19,7 @@ or:
       [(create_definition, ...)]
       [engine_options]
       select_statement
+      REPLICATE=[TRUE|FALSE] 
 
 or:
 
@@ -25,6 +28,7 @@ or:
     CREATE [TEMPORARY] TABLE [IF NOT EXISTS] table_name
       LIKE different_table_name
       [engine_options]
+      REPLICATE=[TRUE|FALSE] 
 
 create_definition
 -----------------
@@ -83,3 +87,10 @@ engine_option
 
   ENGINE = engine_name
   { engine_specific }
+
+REPLICATE
+---------
+
+Specify whether or not a TABLE should be replicated.
+
+  REPLICATE=[TRUE|FALSE] 

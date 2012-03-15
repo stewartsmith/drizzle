@@ -23,6 +23,7 @@ Purge old versions
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0purge_h
 #define trx0purge_h
 

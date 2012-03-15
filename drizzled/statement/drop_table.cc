@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/sql_table.h>
+#include <drizzled/sql_lex.h>
 
 namespace drizzled
 {
@@ -55,7 +56,7 @@ namespace drizzled
 
 static bool rm_table(Session *session, TableList *tables, bool if_exists, bool drop_temporary)
 {
-  bool error, need_start_waiting= false;
+  bool need_start_waiting= false;
 
   /* mark for close and remove all cached entries */
 
@@ -66,11 +67,11 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
   }
 
   /*
-    Acquire table::Cache::singleton().mutex() after wait_if_global_read_lock(). If we would hold
-    table::Cache::singleton().mutex() during wait_if_global_read_lock(), other threads could not
+    Acquire table::Cache::mutex() after wait_if_global_read_lock(). If we would hold
+    table::Cache::mutex() during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
-  error= rm_table_part2(session, tables, if_exists, drop_temporary);
+  bool error= rm_table_part2(session, tables, if_exists, drop_temporary);
 
   if (need_start_waiting)
   {
@@ -87,22 +88,20 @@ static bool rm_table(Session *session, TableList *tables, bool if_exists, bool d
 
 bool statement::DropTable::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
 
   if (not drop_temporary)
   {
-    if (getSession()->inTransaction())
+    if (session().inTransaction())
     {
       my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
       return true;
     }
   }
 
-  /* DDL and binlog write order protected by table::Cache::singleton().mutex() */
-
-  return rm_table(getSession(), first_table, drop_if_exists, drop_temporary);
+  return rm_table(&session(), first_table, drop_if_exists, drop_temporary);
 }
 
 } /* namespace drizzled */

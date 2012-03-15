@@ -17,15 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_RETURN_INT_H
-#define DRIZZLED_ITEM_RETURN_INT_H
+#pragma once
 
 #include <drizzled/item/int.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_return_int :public Item_int
+class Item_return_int : public Item_int
 {
   enum_field_types int_field_type;
 public:
@@ -38,4 +36,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_RETURN_INT_H */

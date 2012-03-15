@@ -18,21 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_NULL_H
-#define DRIZZLED_FIELD_NULL_H
+#pragma once
 
 #include <drizzled/field/str.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
  * Everything saved in this will disappear. It will always return NULL
  */
 
-class Field_null :public Field_str
+class Field_null : public Field_str
 {
-  static unsigned char null[1];
+  static unsigned char null;
 public:
 
   using Field::store;
@@ -40,50 +38,39 @@ public:
   using Field::cmp;
   using Field::val_int;
 
-  Field_null(unsigned char *ptr_arg,
-             uint32_t len_arg,
-             const char *field_name_arg) :
-    Field_str(ptr_arg,
-              len_arg,
-              null,
-              1,
-              field_name_arg,
-              &my_charset_bin)
+  Field_null(unsigned char *ptr_arg, uint32_t len_arg, const char *field_name_arg) :
+    Field_str(ptr_arg, len_arg, &null, 1, field_name_arg, &my_charset_bin)
   {}
 
   enum_field_types type() const
   {
     return DRIZZLE_TYPE_NULL;
   }
-  int  store(const char *, uint32_t, const CHARSET_INFO * const)
+  int store(const char *, uint32_t, const charset_info_st * const)
   {
-    null[0]= 1;
     return 0;
   }
   int store(double)
   {
-    null[0]= 1;
     return 0;
   }
   int store(int64_t, bool)
   {
-    null[0]= 1;
     return 0;
   }
   int store_decimal(const type::Decimal *)
   {
-    null[0]= 1;
     return 0;
   }
-  int reset(void)
+  int reset()
   {
     return 0;
   }
-  double val_real(void) const
+  double val_real() const
   {
     return 0.0;
   }
-  int64_t val_int(void) const
+  int64_t val_int() const
   {
     return 0;
   }
@@ -106,7 +93,6 @@ public:
   {
     return 0;
   }
-  void sql_type(String &str) const;
   uint32_t size_of() const
   {
     return sizeof(*this);
@@ -118,5 +104,3 @@ public:
 };
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FIELD_NULL_H */

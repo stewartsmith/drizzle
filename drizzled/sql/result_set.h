@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_SQL_RESULT_SET_H
-#define DRIZZLED_SQL_RESULT_SET_H
+#pragma once
 
 #include <drizzled/visibility.h>
 #include <drizzled/sql/exception.h>
@@ -39,9 +38,6 @@
 #include <queue>
 
 namespace drizzled {
-
-namespace plugin { class Client; }
-
 namespace sql {
 
 class DRIZZLED_API ResultSet
@@ -88,13 +84,6 @@ public:
     return new ResultSet(field_count);
   }
 
-  // Special case for us (throw is just too damn slow for internal usage, or
-  // almost any).
-  bool isNoThrow() const
-  {
-    return true;
-  }
-
   bool next() const;
 
   const std::string getString(size_t column_number) const ;
@@ -105,15 +94,16 @@ public:
   bool error() const;
   sql::Exception getException() const;
 
-#if 0
-protected:
-  friend class Client;
-#endif
   ResultSet(size_t fields) :
     _has_next_been_called(false),
     _current_row(_results.end()),
     _meta_data(fields)
   {
+  }
+
+  void setColumnCount(size_t fields)
+  {
+    _meta_data.setColumnCount(fields);
   }
 
   ~ResultSet();
@@ -143,4 +133,3 @@ std::ostream& operator<<(std::ostream& output, const ResultSet &result_set);
 } // namespace sql 
 } // namespace drizzled
 
-#endif /* DRIZZLED_SQL_RESULT_SET_H */

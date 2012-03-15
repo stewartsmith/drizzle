@@ -22,11 +22,9 @@
  */
 
 
-#ifndef PLUGIN_REGEX_POLICY_POLICY_H
-#define PLUGIN_REGEX_POLICY_POLICY_H
+#pragma once
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 #include <boost/regex.hpp>
 #include <boost/unordered_map.hpp>
@@ -39,8 +37,7 @@
 
 namespace fs= boost::filesystem;
 
-namespace regex_policy
-{
+namespace regex_policy {
 
 static const fs::path DEFAULT_POLICY_FILE= SYSCONFDIR "/drizzle.policy";
 
@@ -93,7 +90,7 @@ public:
   }
   bool userMatches(std::string &str);
   bool objectMatches(std::string &object_id);
-  bool isRestricted();
+  bool isRestricted() const;
   const std::string&getUser() const
   {
     return user;
@@ -159,9 +156,9 @@ inline bool PolicyItem::objectMatches(std::string &object_id)
   return boost::regex_match(object_id, object_re);
 }
 
-inline bool PolicyItem::isRestricted()
+inline bool PolicyItem::isRestricted() const
 {
-  return action == POLICY_DENY ? true : false;
+  return action == POLICY_DENY;
 }
 
 void clearPolicyItemList(PolicyItemList policies);
@@ -171,17 +168,18 @@ class Policy :
 {
 public:
   Policy(const fs::path &f_path) :
-    drizzled::plugin::Authorization("Regex Policy"), policy_file(f_path), error()
+    drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
+    table_check_cache(NULL), schema_check_cache(NULL), process_check_cache(NULL)
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              drizzled::identifier::Schema::const_reference schema);
+                              const drizzled::identifier::Schema& schema);
 
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);
 
-  virtual bool restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table);
+  virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
+                             const drizzled::identifier::Table& table);
 
   bool loadFile();
   std::stringstream &getError() { return error; }
@@ -203,4 +201,3 @@ private:
 
 } /* namespace regex_policy */
 
-#endif /* PLUGIN_REGEX_POLICY_POLICY_H */

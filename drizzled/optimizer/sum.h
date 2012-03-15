@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SUM_H
-#define DRIZZLED_OPTIMIZER_SUM_H
+#pragma once
 
 namespace drizzled
 {
@@ -68,4 +67,3 @@ int sum_query(TableList *tables, List<Item> &all_fields, COND *conds);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SUM_H */

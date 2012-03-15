@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,9 +22,11 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/sys_var.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/filesystem.hpp>
 
@@ -47,10 +50,10 @@ String *Item_load_file::val_str(String *str)
   if (!(file_name= args[0]->val_str(str)))
   {
     null_value = 1;
-    return(0);
+    return 0;
   }
 
-  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path target_path(fs::system_complete(catalog::local_identifier().getPath()));
   fs::path to_file(file_name->c_ptr());
   if (not to_file.has_root_directory())
   {
@@ -100,8 +103,7 @@ String *Item_load_file::val_str(String *str)
     goto err;
   }
 
-  if (tmp_value.alloc((size_t)stat_info.st_size))
-    goto err;
+  tmp_value.alloc((size_t)stat_info.st_size);
   if ((file = internal::my_open(target_path.file_string().c_str(), O_RDONLY, MYF(0))) < 0)
     goto err;
   if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
@@ -120,7 +122,7 @@ String *Item_load_file::val_str(String *str)
 
 err:
   null_value = 1;
-  return(0);
+  return 0;
 }
 
 

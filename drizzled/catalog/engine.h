@@ -18,19 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CATALOG_ENGINE_H
-#define DRIZZLED_CATALOG_ENGINE_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 #include <drizzled/identifier/catalog.h>
 #include <drizzled/message/catalog.h>
 
 namespace drizzled {
-namespace plugin {
-
-class Catalog;
-
-} // namespace plugin
 namespace catalog {
 
 class Engine
@@ -49,17 +43,16 @@ protected:
   { };
 
   // DDL
-  virtual bool create(identifier::Catalog::const_reference , message::catalog::shared_ptr &)= 0;
-  virtual bool drop(identifier::Catalog::const_reference)= 0;
+  virtual bool create(const identifier::Catalog& , message::catalog::shared_ptr &)= 0;
+  virtual bool drop(const identifier::Catalog&)= 0;
 
   // Get Meta information
-  virtual bool exist(identifier::Catalog::const_reference identifier)= 0;
-  virtual void getIdentifiers(identifier::Catalog::vector &identifiers)= 0;
-  virtual message::catalog::shared_ptr getMessage(identifier::Catalog::const_reference)= 0;
+  virtual bool exist(const identifier::Catalog& identifier)= 0;
+  virtual void getIdentifiers(identifier::catalog::vector &identifiers)= 0;
+  virtual message::catalog::shared_ptr getMessage(const identifier::Catalog&)= 0;
   virtual void getMessages(message::catalog::vector &messages)= 0;
 };
 
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_ENGINE_H */

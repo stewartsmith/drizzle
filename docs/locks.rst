@@ -20,11 +20,11 @@ session of the user can see the lock.
 
    SELECT is_used_lock();
 
-If a session should exit, whatever locks it was holding will be deleted.
+If a session should exit, whatever locks it was holding will be released.
 
 .. todo::
 
-   deleted or released? are locks recursive?
+	are locks recursive?
 
 Please note, get_lock() was designed to be compatible with MySQL. If you
 hold any locks when calling get_lock() they will be released. For this

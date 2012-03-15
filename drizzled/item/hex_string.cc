@@ -29,11 +29,9 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-static char _dig_vec_lower[] =
-  "0123456789abcdefghijklmnopqrstuvwxyz";
+static char _dig_vec_lower[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 inline uint32_t char_val(char X)
 {
@@ -42,15 +40,16 @@ inline uint32_t char_val(char X)
                  X-'a'+10);
 }
 
-Item_hex_string::Item_hex_string(const char *str, uint32_t str_length)
+Item_hex_string::Item_hex_string(str_ref arg)
 {
-  max_length=(str_length+1)/2;
+  max_length= (arg.size() + 1) / 2;
   char *ptr=(char*) memory::sql_alloc(max_length+1);
   if (!ptr)
     return;
   str_value.set(ptr,max_length,&my_charset_bin);
+  const char *str= arg.data();
   char *end=ptr+max_length;
-  if (max_length*2 != str_length)
+  if (max_length * 2 != arg.size())
     *ptr++=char_val(*str++);                    // Not even, assume 0 prefix
   while (ptr != end)
   {
@@ -90,8 +89,7 @@ int Item_hex_string::save_in_field(Field *field, bool)
 {
   field->set_notnull();
   if (field->result_type() == STRING_RESULT)
-    return field->store(str_value.ptr(), str_value.length(),
-                        collation.collation);
+    return field->store(str_value.ptr(), str_value.length(), collation.collation);
 
   uint64_t nr;
   uint32_t length= str_value.length();
@@ -110,8 +108,7 @@ int Item_hex_string::save_in_field(Field *field, bool)
 
 warn:
   if (!field->store((int64_t) nr, true))
-    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE,
-                       1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   return 1;
 }
 
@@ -119,7 +116,7 @@ void Item_hex_string::print(String *str)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
        *ptr= end - min(str_value.length(), sizeof(int64_t));
-  str->append("0x");
+  str->append(STRING_WITH_LEN("0x"));
   for (; ptr != end ; ptr++)
   {
     str->append(_dig_vec_lower[((unsigned char) *ptr) >> 4]);
@@ -139,13 +136,10 @@ bool Item_hex_string::eq(const Item *arg, bool binary_cmp) const
   return false;
 }
 
-Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
+Item *Item_hex_string::safe_charset_converter(const charset_info_st* tocs)
 {
-  Item_string *conv;
   String tmp, *str= val_str(&tmp);
-
-  if (!(conv= new Item_string(str->ptr(), str->length(), tocs)))
-    return NULL;
+  Item_string* conv= new Item_string(str->ptr(), str->length(), tocs);
   conv->str_value.copy();
   conv->str_value.mark_as_const();
   return conv;

@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DIAGNOSTICS_AREA_H
-#define DRIZZLED_DIAGNOSTICS_AREA_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/base.h>
+#include <drizzled/error_t.h>
+#include <drizzled/sql_error.h>
+#include <drizzled/sql_list.h>
+
+namespace drizzled {
 
 /**
   Stores status of the currently executed statement.
@@ -75,6 +78,8 @@ public:
   uint64_t last_insert_id() const;
   uint32_t total_warn_count() const;
 
+  std::list<DRIZZLE_ERROR*> m_warn_list;
+
   Diagnostics_area() { reset_diagnostics_area(); }
 
 private:
@@ -124,10 +129,9 @@ private:
   enum_diagnostics_status m_status;
   /**
     @todo: the following Session members belong here:
-    - warn_list, warn_count,
+    - warn_count,
   */
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DIAGNOSTICS_AREA_H */

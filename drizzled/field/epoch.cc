@@ -19,26 +19,19 @@
  */
 
 #include <config.h>
-
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/epoch.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/current_session.h>
-
-#include <math.h>
-
+#include <drizzled/temporal.h>
+#include <cmath>
 #include <sstream>
 
-#include <drizzled/temporal.h>
-
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
@@ -156,7 +149,7 @@ timestamp_auto_set_type Epoch::get_auto_set_type() const
 
 int Epoch::store(const char *from,
                  uint32_t len,
-                 const CHARSET_INFO * const )
+                 const charset_info_st * const )
 {
   Timestamp temporal;
 
@@ -285,7 +278,7 @@ String *Epoch::val_str(String *val_buffer, String *) const
 bool Epoch::get_date(type::Time &ltime, uint32_t) const
 {
   uint64_t temp;
-  type::Time::epoch_t time_temp;
+  type::epoch_t time_temp;
 
   unpack_num(temp);
   time_temp= temp;
@@ -341,15 +334,10 @@ void Epoch::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Epoch::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
-}
-
 void Epoch::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
-  time_t tmp= session->getCurrentTimestampEpoch();
+  time_t tmp= session->times.getCurrentTimestampEpoch();
 
   set_notnull();
   pack_num(static_cast<uint32_t>(tmp));

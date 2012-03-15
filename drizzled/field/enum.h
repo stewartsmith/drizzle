@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_ENUM_H
-#define DRIZZLED_FIELD_ENUM_H
+#pragma once
 
 #include <drizzled/field/str.h>
 
@@ -45,7 +44,7 @@ public:
              unsigned char null_bit_arg,
              const char *field_name_arg,
              TYPELIB *typelib_arg,
-             const CHARSET_INFO * const charset_arg)
+             const charset_info_st * const charset_arg)
     :Field_str(ptr_arg,
                len_arg,
                null_ptr_arg,
@@ -58,7 +57,7 @@ public:
   }
   Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
-  int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
+  int  store(const char *to, uint32_t length, const charset_info_st * const);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void) const;
@@ -67,7 +66,6 @@ public:
   int cmp(const unsigned char *, const unsigned char *);
   void sort_string(unsigned char *buff, uint32_t length);
   void store_type(uint64_t value);
-  void sql_type(String &str) const;
   bool eq_def(Field *field);
   enum_field_types type() const
   {
@@ -103,9 +101,8 @@ public:
     return true;
   }
   /* enum and set are sorted as integers */
-  const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
+  const charset_info_st *sort_charset(void) const { return &my_charset_bin; }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_ENUM_H */

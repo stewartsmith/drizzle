@@ -16,7 +16,7 @@
 #include <config.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -27,14 +27,13 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Returns the number of bytes required for strnxfrm().
 */
 
-size_t my_strnxfrmlen_simple(const CHARSET_INFO * const cs, size_t len)
+size_t my_strnxfrmlen_simple(const charset_info_st * const cs, size_t len)
 {
   return len * (cs->strxfrm_multiply ? cs->strxfrm_multiply : 1);
 }
@@ -47,7 +46,7 @@ size_t my_strnxfrmlen_simple(const CHARSET_INFO * const cs, size_t len)
    end buffer must be checked.
 */
 
-size_t my_snprintf_8bit(const CHARSET_INFO * const,
+size_t my_snprintf_8bit(const charset_info_st * const,
                         char* to, size_t n,
 		     const char* fmt, ...)
 {
@@ -60,7 +59,7 @@ size_t my_snprintf_8bit(const CHARSET_INFO * const,
 }
 
 
-long my_strntol_8bit(const CHARSET_INFO * const cs,
+long my_strntol_8bit(const charset_info_st * const cs,
 		     const char *nptr, size_t l, int base,
 		     char **endptr, int *err)
 {
@@ -82,7 +81,7 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
 
-  for ( ; s<e && my_isspace(cs, *s) ; s++) {}
+  for ( ; s<e && cs->isspace(*s) ; s++) {}
 
   if (s == e)
   {
@@ -183,7 +182,7 @@ noconv:
 }
 
 
-ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
+ulong my_strntoul_8bit(const charset_info_st * const cs,
 		       const char *nptr, size_t l, int base,
 		       char **endptr, int *err)
 {
@@ -205,7 +204,7 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
 
-  for( ; s<e && my_isspace(cs, *s); s++) {}
+  for( ; s<e && cs->isspace(*s); s++) {}
 
   if (s==e)
   {
@@ -297,7 +296,7 @@ noconv:
 }
 
 
-int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
+int64_t my_strntoll_8bit(const charset_info_st * const cs,
 			  const char *nptr, size_t l, int base,
 			  char **endptr,int *err)
 {
@@ -318,7 +317,7 @@ int64_t my_strntoll_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -420,7 +419,7 @@ noconv:
 }
 
 
-uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
+uint64_t my_strntoull_8bit(const charset_info_st * const cs,
 			   const char *nptr, size_t l, int base,
 			   char **endptr, int *err)
 {
@@ -441,7 +440,7 @@ uint64_t my_strntoull_8bit(const CHARSET_INFO * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -559,7 +558,7 @@ noconv:
 */
 
 
-double my_strntod_8bit(const CHARSET_INFO * const,
+double my_strntod_8bit(const charset_info_st * const,
 		       char *str, size_t length,
 		       char **end, int *err)
 {
@@ -576,7 +575,7 @@ double my_strntod_8bit(const CHARSET_INFO * const,
   Assume len >= 1
 */
 
-size_t my_long10_to_str_8bit(const CHARSET_INFO * const,
+size_t my_long10_to_str_8bit(const charset_info_st * const,
                              char *dst, size_t len, int radix, long int val)
 {
   char buffer[66];
@@ -617,7 +616,7 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const,
 }
 
 
-size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const,
+size_t my_int64_t10_to_str_8bit(const charset_info_st * const,
                                 char *dst, size_t len, int radix,
                                 int64_t val)
 {
@@ -682,7 +681,7 @@ cnv:
 inline static int likeconv(const charset_info_st *cs, const char c) 
 {
 #ifdef LIKE_CMP_TOUPPER
-  return (unsigned char) my_toupper(cs, c);
+  return (unsigned char) cs->toupper(c);
 #else
   return cs->sort_order[(unsigned char)c];
 #endif    
@@ -698,7 +697,7 @@ inline static const char* inc_ptr(const charset_info_st *cs, const char *str, co
   return str++; 
 }
 
-int my_wildcmp_8bit(const CHARSET_INFO * const cs,
+int my_wildcmp_8bit(const charset_info_st * const cs,
 		    const char *str,const char *str_end,
 		    const char *wildstr,const char *wildend,
 		    int escape, int w_one, int w_many)
@@ -713,7 +712,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 	wildstr++;
 
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return(str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char     */
@@ -749,7 +748,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return(-1);
 
@@ -795,7 +794,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 ** optimized !
 */
 
-bool my_like_range_simple(const CHARSET_INFO * const cs,
+bool my_like_range_simple(const charset_info_st * const cs,
                              const char *ptr, size_t ptr_length,
                              char escape, char w_one, char w_many,
                              size_t res_length,
@@ -845,7 +844,7 @@ bool my_like_range_simple(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_scan_8bit(const CHARSET_INFO * const cs, const char *str, const char *end, int sq)
+size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const char *end, int sq)
 {
   const char *str0= str;
   switch (sq)
@@ -861,7 +860,7 @@ size_t my_scan_8bit(const CHARSET_INFO * const cs, const char *str, const char *
   case MY_SEQ_SPACES:
     for ( ; str < end ; str++)
     {
-      if (!my_isspace(cs,*str))
+      if (!cs->isspace(*str))
         break;
     }
     return (size_t) (str - str0);
@@ -871,45 +870,38 @@ size_t my_scan_8bit(const CHARSET_INFO * const cs, const char *str, const char *
 }
 
 
-void my_fill_8bit(const CHARSET_INFO * const,
-		  char *s, size_t l, int fill)
+void my_fill_8bit(const charset_info_st * const, char *s, size_t l, int fill)
 {
   memset(s, fill, l);
 }
 
 
-size_t my_numchars_8bit(const CHARSET_INFO * const,
-		        const char *b, const char *e)
+size_t my_numchars_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_numcells_8bit(const CHARSET_INFO * const,
-                        const char *b, const char *e)
+size_t my_numcells_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_charpos_8bit(const CHARSET_INFO * const,
-                       const char *, const char *, size_t pos)
+size_t my_charpos_8bit(const charset_info_st * const, const char *, const char *, size_t pos)
 {
   return pos;
 }
 
 
-size_t my_well_formed_len_8bit(const CHARSET_INFO * const,
-                               const char *start, const char *end,
-                               size_t nchars, int *error)
+size_t my_well_formed_len_8bit(const charset_info_st&, str_ref str, size_t nchars, int *error)
 {
-  size_t nbytes= (size_t) (end-start);
   *error= 0;
-  return min(nbytes, nchars);
+  return min(str.size(), nchars);
 }
 
 
-size_t my_lengthsp_8bit(const CHARSET_INFO * const,
+size_t my_lengthsp_8bit(const charset_info_st * const,
                         const char *ptr, size_t length)
 {
   const char *end;
@@ -918,7 +910,7 @@ size_t my_lengthsp_8bit(const CHARSET_INFO * const,
 }
 
 
-uint32_t my_instr_simple(const CHARSET_INFO * const cs,
+uint32_t my_instr_simple(const charset_info_st * const cs,
                      const char *b, size_t b_length,
                      const char *s, size_t s_length,
                      my_match_t *match, uint32_t nmatch)
@@ -1002,7 +994,7 @@ static int pcmp(const void * f, const void * s)
   return res;
 }
 
-static bool create_fromuni(CHARSET_INFO *cs, cs_alloc_func alloc)
+static bool create_fromuni(charset_info_st *cs, cs_alloc_func alloc)
 {
   uni_idx	idx[PLANE_NUM];
   int		i,n;
@@ -1081,7 +1073,7 @@ static bool create_fromuni(CHARSET_INFO *cs, cs_alloc_func alloc)
   return false;
 }
 
-bool my_cset_init_8bit(CHARSET_INFO *cs, cs_alloc_func alloc)
+bool my_cset_init_8bit(charset_info_st *cs, cs_alloc_func alloc)
 {
   cs->caseup_multiply= 1;
   cs->casedn_multiply= 1;
@@ -1089,7 +1081,7 @@ bool my_cset_init_8bit(CHARSET_INFO *cs, cs_alloc_func alloc)
   return create_fromuni(cs, alloc);
 }
 
-static void set_max_sort_char(CHARSET_INFO *cs)
+static void set_max_sort_char(charset_info_st *cs)
 {
   unsigned char max_char;
   uint32_t  i;
@@ -1108,21 +1100,21 @@ static void set_max_sort_char(CHARSET_INFO *cs)
   }
 }
 
-bool my_coll_init_simple(CHARSET_INFO *cs, cs_alloc_func)
+bool my_coll_init_simple(charset_info_st *cs, cs_alloc_func)
 {
   set_max_sort_char(cs);
   return false;
 }
 
 
-int64_t my_strtoll10_8bit(const CHARSET_INFO * const,
+int64_t my_strtoll10_8bit(const charset_info_st * const,
                           const char *nptr, char **endptr, int *error)
 {
   return internal::my_strtoll10(nptr, endptr, error);
 }
 
 
-int my_mb_ctype_8bit(const CHARSET_INFO * const cs, int *ctype,
+int my_mb_ctype_8bit(const charset_info_st * const cs, int *ctype,
                    const unsigned char *s, const unsigned char *e)
 {
   if (s >= e)
@@ -1224,7 +1216,7 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
 */
 
 uint64_t
-my_strntoull10rnd_8bit(const CHARSET_INFO * const,
+my_strntoull10rnd_8bit(const charset_info_st * const,
                        const char *str, size_t length, int unsigned_flag,
                        char **endptr, int *error)
 {
@@ -1502,81 +1494,14 @@ ret_too_big:
 
 
 
-bool my_propagate_simple(const CHARSET_INFO * const, const unsigned char *,
-                         size_t)
+bool my_propagate_simple()
 {
   return 1;
 }
 
-
-bool my_propagate_complex(const CHARSET_INFO * const, const unsigned char *,
-                          size_t)
+bool my_propagate_complex()
 {
   return 0;
-}
-
-
-
-/*
-  Normalize strxfrm flags
-
-  SYNOPSIS:
-    my_strxfrm_flag_normalize()
-    flags    - non-normalized flags
-    nlevels  - number of levels
-
-  NOTES:
-    If levels are omitted, then 1-maximum is assumed.
-    If any level number is greater than the maximum,
-    it is treated as the maximum.
-
-  RETURN
-    normalized flags
-*/
-
-uint32_t my_strxfrm_flag_normalize(uint32_t flags, uint32_t maximum)
-{
-  assert(maximum >= 1 && maximum <= MY_STRXFRM_NLEVELS);
-
-  /* If levels are omitted, then 1-maximum is assumed*/
-  if (!(flags & MY_STRXFRM_LEVEL_ALL))
-  {
-    static uint32_t def_level_flags[]= {0, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F };
-    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
-    flags= def_level_flags[maximum] | flag_pad;
-  }
-  else
-  {
-    uint32_t i;
-    uint32_t flag_lev= flags & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_dsc= (flags >> MY_STRXFRM_DESC_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_rev= (flags >> MY_STRXFRM_REVERSE_SHIFT) & MY_STRXFRM_LEVEL_ALL;
-    uint32_t flag_pad= flags & MY_STRXFRM_PAD_WITH_SPACE;
-
-    /*
-      If any level number is greater than the maximum,
-      it is treated as the maximum.
-    */
-    for (maximum--, flags= 0, i= 0; i < MY_STRXFRM_NLEVELS; i++)
-    {
-      uint32_t src_bit= 1 << i;
-      uint32_t dst_bit= 1 << min(i, maximum);
-      if (flag_lev & src_bit)
-      {
-        flags|= dst_bit;
-        flags|= (flag_dsc & dst_bit) << MY_STRXFRM_DESC_SHIFT;
-        flags|= (flag_rev & dst_bit) << MY_STRXFRM_REVERSE_SHIFT;
-      }
-      else
-      {
-        /* Check that there are no DESC or REVERSE flag for skipped level */
-        assert(!(flag_dsc & src_bit) && !(flag_rev & src_bit));
-      }
-    }
-    flags|= flag_pad;
-  }
-
-  return flags;
 }
 
 /*
@@ -1636,7 +1561,7 @@ void my_strxfrm_desc_and_reverse(unsigned char *str, unsigned char *strend,
 
 
 size_t
-my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
+my_strxfrm_pad_desc_and_reverse(const charset_info_st * const cs,
                                 unsigned char *str, unsigned char *frmend, unsigned char *strend,
                                 uint32_t nweights, uint32_t flags, uint32_t level)
 {

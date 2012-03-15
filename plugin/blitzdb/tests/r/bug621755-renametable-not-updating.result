@@ -1,8 +1,0 @@
-create table t5 (a int);
-alter table t5 engine=blitzdb;
-show create table t5;
-Table	Create Table
-t5	CREATE TABLE `t5` (
-  `a` INT DEFAULT NULL
-) ENGINE=BLITZDB COLLATE = utf8_general_ci
-drop table t5;

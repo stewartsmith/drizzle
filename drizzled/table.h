@@ -18,12 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
-
-
-#ifndef DRIZZLED_TABLE_H
-#define DRIZZLED_TABLE_H
+#pragma once
 
 #include <string>
 #include <boost/dynamic_bitset.hpp>
@@ -36,26 +31,10 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/table/instance.h>
 #include <drizzled/atomics.h>
-#include <drizzled/query_id.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class COND_EQUAL;
-class Field_blob;
-class Item;
-class Item_subselect;
-class SecurityContext;
-class Select_Lex;
-class Select_Lex_Unit;
-class TableList;
-namespace field { class Epoch; }
-namespace plugin { class StorageEngine; }
-
-typedef enum enum_table_category TABLE_CATEGORY;
-typedef struct st_columndef MI_COLUMNDEF;
+namespace drizzled {
 
 /**
  * Class representing a set of records, either in a temporary, 
@@ -336,37 +315,26 @@ private:
 
   void init_mem_root()
   {
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    if (not mem_root.alloc_root_inited())
+      mem_root.init(TABLE_ALLOC_BLOCK_SIZE);
   }
 public:
-  memory::Root *getMemRoot()
+  memory::Root& mem()
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return &mem_root;
+    init_mem_root();
+    return mem_root;
   }
 
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return mem_root.alloc_root(arg);
+    init_mem_root();
+    return mem_root.alloc(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  char* strdup(const char* str_arg, size_t len_arg)
   {
-    if (not mem_root.alloc_root_inited())
-    {
-      init_mem_root();
-    }
-
-    return mem_root.strmake_root(str_arg, len_arg);
+    init_mem_root();
+    return mem_root.strdup(str_arg, len_arg);
   }
 
   filesort_info sort;
@@ -452,8 +420,8 @@ public:
 
 
   /* See if this can be blown away */
-  inline uint32_t getDBStat () { return db_stat; }
-  inline uint32_t setDBStat () { return db_stat; }
+  inline uint32_t getDBStat () const { return db_stat; }
+
   /**
    * Create Item_field for each column in the table.
    *
@@ -470,7 +438,7 @@ public:
    * @retval
    *  true when out of memory
    */
-  bool fill_item_list(List<Item> *item_list) const;
+  void fill_item_list(List<Item>&) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, boost::dynamic_bitset<>& bitmap);
@@ -550,7 +518,7 @@ public:
   }
 
   /* Is table open or should be treated as such by name-locking? */
-  inline bool is_name_opened()
+  bool is_name_opened() const
   {
     return db_stat || open_placeholder;
   }
@@ -659,14 +627,14 @@ public:
      * @param[in] in_foreign_fields The foreign fields
      * @param[in] in_referenced_fields The referenced fields
      */
-    ForeignKeyInfo(LEX_STRING *in_foreign_id,
-                   LEX_STRING *in_referenced_db,
-                   LEX_STRING *in_referenced_table,
-                   LEX_STRING *in_update_method,
-                   LEX_STRING *in_delete_method,
-                   LEX_STRING *in_referenced_key_name,
-                   List<LEX_STRING> in_foreign_fields,
-                   List<LEX_STRING> in_referenced_fields)
+    ForeignKeyInfo(lex_string_t *in_foreign_id,
+                   lex_string_t *in_referenced_db,
+                   lex_string_t *in_referenced_table,
+                   lex_string_t *in_update_method,
+                   lex_string_t *in_delete_method,
+                   lex_string_t *in_referenced_key_name,
+                   List<lex_string_t> in_foreign_fields,
+                   List<lex_string_t> in_referenced_fields)
     :
       foreign_id(in_foreign_id),
       referenced_db(in_referenced_db),
@@ -693,7 +661,7 @@ public:
      *
      * @ retval  the foreign id
      */
-    const LEX_STRING *getForeignId() const
+    const lex_string_t *getForeignId() const
     {
         return foreign_id;
     }
@@ -704,7 +672,7 @@ public:
      *
      * @ retval  the name of the referenced database
      */
-    const LEX_STRING *getReferencedDb() const
+    const lex_string_t *getReferencedDb() const
     {
         return referenced_db;
     }
@@ -715,7 +683,7 @@ public:
      *
      * @ retval  the name of the referenced table
      */
-    const LEX_STRING *getReferencedTable() const
+    const lex_string_t *getReferencedTable() const
     {
         return referenced_table;
     }
@@ -726,7 +694,7 @@ public:
      *
      * @ retval  the update method
      */
-    const LEX_STRING *getUpdateMethod() const
+    const lex_string_t *getUpdateMethod() const
     {
         return update_method;
     }
@@ -737,7 +705,7 @@ public:
      *
      * @ retval  the delete method
      */
-    const LEX_STRING *getDeleteMethod() const
+    const lex_string_t *getDeleteMethod() const
     {
         return delete_method;
     }
@@ -748,7 +716,7 @@ public:
      *
      * @ retval  the name of the referenced key
      */
-    const LEX_STRING *getReferencedKeyName() const
+    const lex_string_t *getReferencedKeyName() const
     {
         return referenced_key_name;
     }
@@ -759,7 +727,7 @@ public:
      *
      * @ retval  the foreign fields
      */
-    const List<LEX_STRING> &getForeignFields() const
+    const List<lex_string_t> &getForeignFields() const
     {
         return foreign_fields;
     }
@@ -770,7 +738,7 @@ public:
      *
      * @ retval  the referenced fields
      */
-    const List<LEX_STRING> &getReferencedFields() const
+    const List<lex_string_t> &getReferencedFields() const
     {
         return referenced_fields;
     }
@@ -778,45 +746,39 @@ private:
     /**
      * The foreign id.
      */
-    LEX_STRING *foreign_id;
+    lex_string_t *foreign_id;
     /**
      * The name of the reference database.
      */
-    LEX_STRING *referenced_db;
+    lex_string_t *referenced_db;
     /**
      * The name of the reference table.
      */
-    LEX_STRING *referenced_table;
+    lex_string_t *referenced_table;
     /**
      * The update method.
      */
-    LEX_STRING *update_method;
+    lex_string_t *update_method;
     /**
      * The delete method.
      */
-    LEX_STRING *delete_method;
+    lex_string_t *delete_method;
     /**
      * The name of the referenced key.
      */
-    LEX_STRING *referenced_key_name;
+    lex_string_t *referenced_key_name;
     /**
      * The foreign fields.
      */
-    List<LEX_STRING> foreign_fields;
+    List<lex_string_t> foreign_fields;
     /**
      * The referenced fields.
      */
-    List<LEX_STRING> referenced_fields;
+    List<lex_string_t> referenced_fields;
 };
-
-class TableList;
 
 #define JOIN_TYPE_LEFT  1
 #define JOIN_TYPE_RIGHT 2
-
-struct st_lex;
-class select_union;
-class Tmp_Table_Param;
 
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
@@ -825,25 +787,20 @@ uint32_t convert_month_to_period(uint32_t month);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-
-namespace optimizer { class SqlSelect; }
-
 void change_double_for_sort(double nr,unsigned char *to);
 int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
-TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
+TYPELIB* convert_strings_to_array_type(char** typelibs, char** end);
+TYPELIB* typelib(memory::Root&, List<String>&);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
-DRIZZLED_API int rename_file_ext(const char * from,const char * to,const char * ext);
-bool check_column_name(const char *name);
-bool check_table_name(const char *name, uint32_t length);
+bool check_column_name(const char*);
+bool check_table_name(str_ref);
 
 } /* namespace drizzled */
 
 #include <drizzled/table/singular.h>
 #include <drizzled/table/concurrent.h>
 
-#endif /* DRIZZLED_TABLE_H */

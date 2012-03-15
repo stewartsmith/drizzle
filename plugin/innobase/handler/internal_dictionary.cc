@@ -62,7 +62,7 @@ using namespace drizzled;
 InnodbInternalTables::InnodbInternalTables() :
   plugin::TableFunction("DATA_DICTIONARY", "INNODB_INTERNAL_TABLES")
 {
-  add_field("TABLE_NAME");
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 static void my_dict_print_callback(void *ptr, const char *table_name)

@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
 
@@ -276,10 +276,10 @@ DRIZZLE_DECLARE_PLUGIN
   "substr_functions",
   "1.0",
   "Stewart Smith",
-  "SUBSTR and SUBSTR",
+  N_("SUBSTR and SUBSTR functions"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

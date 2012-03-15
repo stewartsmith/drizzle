@@ -18,15 +18,11 @@
  */
 
 
-#ifndef DRIZZLED_TMP_TABLE_PARAM_H
-#define DRIZZLED_TMP_TABLE_PARAM_H
+#pragma once
 
 #include <plugin/myisam/myisam.h>
 
-namespace drizzled
-{
-
-class CopyField;
+namespace drizzled {
 
 /*
   Param to create temporary tables when doing SELECT:s
@@ -34,13 +30,8 @@ class CopyField;
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public memory::SqlAlloc
+class Tmp_Table_Param : public memory::SqlAlloc, boost::noncopyable
 {
-private:
-  /* Prevent use of these (not safe because of lists and copy_field) */
-  Tmp_Table_Param(const Tmp_Table_Param &);
-  void operator=(Tmp_Table_Param &);
-
 public:
   KeyInfo *keyinfo;
   List<Item> copy_funcs;
@@ -73,7 +64,7 @@ public:
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
   uint32_t  convert_blob_length;
 
-  const CHARSET_INFO *table_charset;
+  const charset_info_st *table_charset;
 
   Tmp_Table_Param() :
     keyinfo(0),
@@ -114,4 +105,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TMP_TABLE_PARAM_H */

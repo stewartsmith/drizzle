@@ -14,7 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "heap_priv.h"
-
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/common.h>
 #include <drizzled/error.h>
 
@@ -241,12 +241,11 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   return(0);
 
 err:
-  if (share && share->keydef && share->keydef->seg)
-    delete [] share->keydef->seg;
   if (share && share->keydef)
-    delete [] share->keydef;
+    delete[] share->keydef->seg;
   if (share)
-    delete share;
+    delete[] share->keydef;
+  delete share;
   if (not create_info->internal_table)
     THR_LOCK_heap.unlock();
   return(1);
@@ -318,7 +317,7 @@ void hp_free(HP_SHARE *share)
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   if (share->keydef)
-    delete [] share->keydef->seg;
-  delete [] share->keydef;
+    delete[] share->keydef->seg;
+  delete[] share->keydef;
   delete share;
 }

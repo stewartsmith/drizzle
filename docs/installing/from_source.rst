@@ -1,13 +1,48 @@
-Installing From Source
-======================
+Installing Drizzle from Source
+==============================
+
+* :ref:`obtain-source`
+* :ref:`compile-source`
+* :ref:`dependencies`
+* :ref:`ubuntu-install`
+* :ref:`debian-install`
+* :ref:`redhat-install`
+
+.. _obtain-source:
+
+Obtaining the Source
+--------------------
+The latest source release can always be found on our `LaunchPad site
+<https://launchpad.net/drizzle>`_. Alternatively, the bzr source from our stable
+trunk can be obtained by doing:
+
+.. code-block:: bash
+
+   bzr branch lp:drizzle
+
+.. _compile-source:
+
+Compiling the Source
+--------------------
+Compiling is done by performing the standard automake commands from the top level directory inside the source:
+
+.. code-block:: bash
+
+   ./config/autorun.sh
+   ./configure
+   make
+   make install
+
+
+.. _dependencies:
 
 Dependencies
 ------------
 
 Minimal Requirements
 ^^^^^^^^^^^^^^^^^^^^
-To compile Drizzle with the most basic set of pluginsyou will need to following
-dependencies installed:
+To compile Drizzle with the most basic set of plugins, you will need to have the following
+dependencies installed. Scroll down for the apt-get install commands for Ubuntu and Debian.
 
  * autoconf
  * automake
@@ -35,7 +70,7 @@ dependencies installed:
 Full Dependencies
 ^^^^^^^^^^^^^^^^^
 Additionally, if you wish to build all of the plugins, you will need to install
-these too:
+these additional dependencies:
 
  * libcurl4-gnutls-dev
  * libgcrypt11-dev
@@ -45,29 +80,94 @@ these too:
  * libpam0g-dev
  * libprotobuf-dev (>= 2.1.0)
  * libtokyocabinet-dev (>= 1.4.23)
+ * libv8-dev
  * systemtap-sdt-dev
  * libnotifymm-dev
  * doxygen
  * pandora-build
 
-Obtaining The Source
---------------------
-The latest source release can always be found on our `LaunchPad site
-<https://launchpad.net/drizzle>`_, alternatively the bzr source from our stable
-trunk can be obtained by doing:
+.. _ubuntu-install:
+
+Installing Build Dependencies on Ubuntu
+---------------------------------------
+
+The following commands work on Ubuntu to install the tools and libraries needed to build Drizzle:
 
 .. code-block:: bash
 
-   bzr branch lp:drizzle
+  sudo apt-get install python-software-properties
+  sudo add-apt-repository ppa:drizzle-developers/ppa
+  sudo apt-get update
+  sudo apt-get install drizzle-dev
 
-Compiling The Source
---------------------
-Compiling is as simple as doing the following inside the source:
+.. _debian-install:
+
+Installing Build Dependencies on Debian
+---------------------------------------
+
+Since apt-repository isn't in Debian, you can instead add the Maverick PPA to /etc/apt/sources.list as follows:
+
+Add the following lines to /etc/apt/sources.list (make sure it's two
+lines): ::
+
+	deb http://ppa.launchpad.net/drizzle-developers/ppa/ubuntu maverick main
+	deb-src http://ppa.launchpad.net/drizzle-developers/ppa/ubuntu maverick main
+
+Add the signing key to your keyring: ::
+
+	sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 06899068
+
+Then run:
 
 .. code-block:: bash
 
-   ./config/autorun.sh
-   ./configure
-   make
-   make install
+  apt-get update; apt-get install drizzle-dev
+
+Note that these instructions are only for Debian Squeeze. For current
+unstable/testing (aka Wheezy), the recommended source for Drizzle is the
+main repository. In other words:
+
+.. code-block:: bash
+
+  apt-get install drizzle-dev
+
+or (if you want to install and not build drizzle):
+
+.. code-block:: bash
+
+  apt-get install drizzle 
+
+.. _redhat-install:
+
+Installing Build Dependencies on Red Hat or Fedora
+--------------------------------------------------
+
+Depending on whether you use Red Hat (RHEL) or Fedora, you should add the
+repositories as explained in :doc:`redhat`.
+
+After that, install the following packages:
+
+ * bzr
+ * boost-devel
+ * autoconf
+ * automake
+ * gcc
+ * gcc-c++
+ * libtool
+ * gperf
+ * libuuid-devel (part of e2fsprogs-devel on older RedHat based distributions)
+ * zlib-devel
+ * pcre-devel
+ * readline-devel
+ * flex
+ * bison
+
+Note that you should be able to install all of the above simply with
+
+.. code-block:: bash
+
+  yum-builddep drizzle
+
+
+
 

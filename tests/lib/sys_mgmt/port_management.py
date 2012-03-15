@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -43,8 +43,7 @@ class portManager:
         self.debug = debug
         self.logging = system_manager.logging
         self.system_manager = system_manager
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
         
 
     def get_port_block(self, requester, base_port, block_size):
@@ -78,7 +77,7 @@ class portManager:
 
         """
         searching_for_port = 1
-        attempt_count = 100
+        attempt_count = 5000
         attempts_remain = attempt_count
         max_port_value = 32767
         min_port_value = 5001
@@ -180,8 +179,7 @@ class portManager:
 
        """
       
-       if self.debug:
-           self.logging.debug("Freeing port %d" %(port))
+       self.logging.debug("Freeing port %d" %(port))
        os.remove(self.get_file_name(port))
 
     def get_file_name(self, port):

@@ -45,6 +45,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/util/tokenize.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/foreach.hpp>
 
@@ -106,36 +107,14 @@ struct st_item_value_holder : public drizzle_value
   Item *item;
 };
 
-class Bookmark
-{
-public:
-  Bookmark() :
-    type_code(0),
-    offset(0),
-    version(0),
-    key("")
-  {}
-  uint8_t type_code;
-  int offset;
-  uint32_t version;
-  string key;
-};
-
-typedef boost::unordered_map<string, Bookmark> bookmark_unordered_map;
-static bookmark_unordered_map bookmark_hash;
-
-
-
 /* prototypes */
-static void plugin_prune_list(vector<string> &plugin_list,
-                              const vector<string> &plugins_to_remove);
+static void plugin_prune_list(vector<string> &plugin_list, const vector<string> &plugins_to_remove);
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root,
                              const set<string> &plugin_list,
                              po::options_description &long_options,
                              bool builtin= false);
-static int test_plugin_options(memory::Root *, module::Module *,
-                               po::options_description &long_options);
+static int test_plugin_options(memory::Root*, module::Module*, po::options_description&long_options);
 static void unlock_variables(Session *session, drizzle_system_variables *vars);
 static void cleanup_variables(drizzle_system_variables *vars);
 
@@ -178,9 +157,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
     return true;
   }
 
-  module::Module* tmp= new (std::nothrow) module::Module(manifest, library);
-  if (tmp == NULL)
-    return true;
+  module::Module* tmp= new module::Module(manifest, library);
 
   if (!test_plugin_options(tmp_root, tmp, long_options))
   {
@@ -229,17 +206,17 @@ static void compose_plugin_options(vector<string> &target,
     std::replace(it.begin(), it.end(), '-', '_');
 }
 
-void compose_plugin_add(vector<string> options)
+void compose_plugin_add(const vector<string>& options)
 {
   compose_plugin_options(opt_plugin_add, options);
 }
 
-void compose_plugin_remove(vector<string> options)
+void compose_plugin_remove(const vector<string>& options)
 {
   compose_plugin_options(opt_plugin_remove, options);
 }
 
-void notify_plugin_load(string in_plugin_load)
+void notify_plugin_load(const string& in_plugin_load)
 {
   tokenize(in_plugin_load, opt_plugin_load, ",", true);
 }
@@ -359,8 +336,6 @@ class PrunePlugin :
   public unary_function<string, bool>
 {
   const string to_match;
-  PrunePlugin();
-  PrunePlugin& operator=(const PrunePlugin&);
 public:
   explicit PrunePlugin(const string &match_in) :
     to_match(match_in)
@@ -419,10 +394,8 @@ static bool plugin_load_list(module::Registry &registry,
   return false;
 }
 
-
 void module_shutdown(module::Registry &registry)
 {
-
   if (initialized)
   {
     reap_needed= true;
@@ -541,7 +514,7 @@ class OptionCmp
 public:
   bool operator() (const option &a, const option &b)
   {
-    return my_strcasecmp(&my_charset_utf8_general_ci, a.name, b.name);
+    return my_charset_utf8_general_ci.strcasecmp(a.name, b.name);
   }
 };
 

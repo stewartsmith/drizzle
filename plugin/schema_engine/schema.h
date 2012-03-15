@@ -18,19 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_ENGINE_SCHEMA_H
-#define PLUGIN_SCHEMA_ENGINE_SCHEMA_H
+#pragma once
 
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <boost/unordered_map.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
-extern const drizzled::CHARSET_INFO *default_charset_info;
-
-static const char *schema_exts[] = {
-  NULL
-};
+extern const drizzled::charset_info_st *default_charset_info;
 
 class Schema : public drizzled::plugin::StorageEngine
 {
@@ -39,7 +34,6 @@ class Schema : public drizzled::plugin::StorageEngine
   bool readSchemaFile(std::string filename, drizzled::message::Schema &schema);
 
   void prime();
-  void startup(drizzled::Session &session);
 
   typedef boost::unordered_map<std::string, drizzled::message::schema::shared_ptr> SchemaCache;
   SchemaCache schema_cache;
@@ -50,20 +44,17 @@ class Schema : public drizzled::plugin::StorageEngine
 public:
   Schema();
 
-  ~Schema();
-
-
-  drizzled::Cursor *create(drizzled::Table &)
+  drizzled::Cursor* create(drizzled::Table&)
   {
     return NULL;
   }
 
-  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector &set_of_names);
+  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector&);
   drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&);
 
-  bool doCreateSchema(const drizzled::message::Schema &schema_message);
+  bool doCreateSchema(const drizzled::message::Schema&);
 
-  bool doAlterSchema(const drizzled::message::Schema &schema_message);
+  bool doAlterSchema(const drizzled::message::Schema&);
 
   bool doDropSchema(const drizzled::identifier::Schema&);
 
@@ -89,7 +80,7 @@ public:
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
                     const drizzled::identifier::Table&,
-                    drizzled::message::Table&)
+                    const drizzled::message::Table&)
   {
     return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
@@ -99,10 +90,7 @@ public:
     return drizzled::HA_ERR_NO_SUCH_TABLE;
   }
 
-  const char **bas_ext() const 
-  {
-    return schema_exts;
-  }
+  const char** bas_ext() const;
 
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,
@@ -112,7 +100,6 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 
-#endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */

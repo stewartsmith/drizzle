@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ENUM_NESTED_LOOP_STATE_H
-#define DRIZZLED_ENUM_NESTED_LOOP_STATE_H
+#pragma once
 
-namespace drizzled
-{
+#include <drizzled/common_fwd.h>
+
+namespace drizzled {
 
 /** The states in which a nested loop join can be in */
 enum enum_nested_loop_state
@@ -34,13 +34,9 @@ enum enum_nested_loop_state
   NESTED_LOOP_CURSOR_LIMIT= 4
 };
 
-class Join;
-class JoinTable;
-
 typedef enum_nested_loop_state (*Next_select_func)(Join *, JoinTable *, bool);
 typedef int (*Read_record_func)(JoinTable *tab);
 Next_select_func setup_end_select_func(Join *join);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ENUM_NESTED_LOOP_STATE_H */

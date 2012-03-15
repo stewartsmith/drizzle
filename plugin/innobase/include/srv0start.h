@@ -23,6 +23,7 @@ Starts the Innobase database server
 Created 10/10/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef srv0start_h
 #define srv0start_h
 

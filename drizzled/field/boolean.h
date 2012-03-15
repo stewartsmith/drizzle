@@ -18,18 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_BOOLEAN_H
-#define DRIZZLED_FIELD_BOOLEAN_H
+#pragma once
 
 #include <drizzled/field.h>
 #include <string>
 
-namespace drizzled
-{
-namespace field
-{
+namespace drizzled {
+namespace field {
 
-class Boolean :public Field {
+class Boolean : public Field 
+{
   bool ansi_display;
 
 public:
@@ -47,7 +45,7 @@ public:
   uint32_t pack_length() const { return sizeof(unsigned char); }
   uint32_t key_length() const { return sizeof(unsigned char); }
 
-  int store(const char *to, uint32_t length, const CHARSET_INFO * const charset);
+  int store(const char *to, uint32_t length, const charset_info_st * const charset);
   int store(double );
   int store(int64_t nr, bool unsigned_val);
   int store_decimal(const drizzled::type::Decimal*);
@@ -56,8 +54,6 @@ public:
   double val_real() const;
   int64_t val_int() const;
   type::Decimal *val_decimal(type::Decimal *) const;
-
-  void sql_type(drizzled::String&) const;
 
   Item_result result_type () const { return STRING_RESULT; }
   int cmp(const unsigned char*, const unsigned char*);
@@ -78,21 +74,18 @@ public:
   }
 
 private:
-  void setTrue();
-
-  void setFalse()
+  void set(bool v)
   {
-    ptr[0]= 0;
+    ptr[0]= v;
   }
 
   bool isTrue() const
   {
-    return ptr[0] ? true : false;
+    return ptr[0];
   }
 };
 
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_BOOLEAN_H */
 

@@ -23,70 +23,66 @@
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
 #include <drizzled/sys_var.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-Item_func_get_system_var::
-Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                       LEX_STRING *component_arg, const char *name_arg,
-                       size_t name_len_arg)
-  :var(var_arg), var_type(var_type_arg), component(*component_arg)
+Item_func_get_system_var::Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
+                       str_ref component_arg, const char *name_arg, size_t name_len_arg)
+  : var(var_arg), var_type(var_type_arg), component(component_arg)
 {
   /* set_name() will allocate the name */
-  set_name(name_arg, name_len_arg, system_charset_info);
+  set_name(name_arg, name_len_arg);
 }
 
 
-bool
-Item_func_get_system_var::fix_fields(Session *session, Item **ref)
+bool Item_func_get_system_var::fix_fields(Session *session, Item **ref)
 {
-  Item *item;
 
   /*
     Evaluate the system variable and substitute the result (a basic constant)
     instead of this item. If the variable can not be evaluated,
     the error is reported in sys_var::item().
   */
-  if (!(item= var->item(session, var_type, &component)))
-    return(1);                             // Impossible
+  Item *item= var->item(session, var_type);
+  if (not item)
+    return 1;                             // Impossible
 
-  item->set_name(name, 0, system_charset_info); // don't allocate a new name
+  item->set_name(name, 0); // don't allocate a new name
   *ref= item;
 
-  return(0);
+  return 0;
 }
 
-Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
-                     LEX_STRING component)
+Item *get_system_var(Session *session, sql_var_t var_type, str_ref name, str_ref component)
 {
-  sys_var *var;
-  LEX_STRING *base_name, *component_name;
+  str_ref *base_name, *component_name;
 
-  if (component.str)
-  {
-    base_name= &component;
-    component_name= &name;
-  }
-  else
+  if (component.empty())
   {
     base_name= &name;
     component_name= &component;                 // Empty string
   }
-
-  if (!(var= find_sys_var(base_name->str)))
-    return 0;
-  if (component.str)
+  else
   {
-    my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
-    return 0;
+    base_name= &component;
+    component_name= &name;
   }
-  session->getLex()->setCacheable(false);
 
-  set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
+  sys_var *var= find_sys_var(*base_name);
+  if (not var)
+    return NULL;
+  if (not component.empty())
+  {
+    my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->data());
+    return NULL;
+  }
+  session->lex().setCacheable(false);
 
-  return new Item_func_get_system_var(var, var_type, component_name,
-                                      NULL, 0);
+  if (component_name->size() > MAX_SYS_VAR_LENGTH)
+    component_name->assign(component_name->data(), MAX_SYS_VAR_LENGTH);
+
+  return new Item_func_get_system_var(var, var_type, *component_name, NULL, 0);
 }
 
 

@@ -17,24 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_FUNCTION_H
-#define PLUGIN_SYSLOG_FUNCTION_H
+#pragma once
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzle_plugin
-{
-namespace udf
-{
+namespace drizzle_plugin {
+namespace udf {
 
 class Syslog : public drizzled::Item_str_func
 {
 private:
-  Syslog(const Syslog&);
-  Syslog& operator=(const Syslog&);
-
 public:
   Syslog();
 
@@ -49,4 +43,3 @@ public:
 } /* namepsace drizzle_plugin */
 
 
-#endif /* PLUGIN_SYSLOG_FUNCTION_H */

@@ -28,8 +28,8 @@ static PluginsTool *plugins;
 
 static int init(drizzled::module::Context &context)
 {
-  modules= new(std::nothrow)ModulesTool;
-  plugins= new(std::nothrow)PluginsTool;
+  modules= new ModulesTool;
+  plugins= new PluginsTool;
 
   context.add(modules);
   context.add(plugins);
@@ -43,10 +43,10 @@ DRIZZLE_DECLARE_PLUGIN
   "registry_dictionary",
   "1.0",
   "Brian Aker",
-  "Provides dictionary for plugin registry system.",
+  N_("Dictionaries of modules and plugins"),
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

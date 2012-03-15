@@ -19,8 +19,7 @@
  */
 
 
-#ifndef PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H
-#define PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H 
+#pragma once
 
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
@@ -51,4 +50,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_INNOBASE_HANDLER_REPLICATION_DICTIONARY_H */

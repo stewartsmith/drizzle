@@ -36,3 +36,43 @@ Types
 
 .. c:type:: drizzle_event_watch_fn
 
+.. c:type:: drizzle_verbose_t
+
+.. c:type:: drizzle_options_t
+
+.. c:type:: drizzle_query_options_t
+
+.. c:type:: drizzle_column_type_drizzle_t
+
+.. c:type:: drizzle_column_flags_t
+
+.. c:type:: drizzle_column_type_t
+
+.. c:type:: drizzle_return_t
+
+.. c:type:: drizzle_con_options_t
+
+.. c:type:: in_port_t
+
+.. c:type:: drizzle_capabilities_t
+
+.. c:type:: drizzle_con_status_t
+
+.. c:type:: drizzle_command_t
+
+Common C Types Used 
+-------------------
+
+.. c:type:: bool
+
+.. c:type:: short
+
+.. c:type:: size_t
+
+.. c:type:: uint8_t
+
+.. c:type:: uint16_t
+
+.. c:type:: uint32_t
+
+.. c:type:: uint64_t

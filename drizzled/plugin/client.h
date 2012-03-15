@@ -17,24 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_CLIENT_H
-#define DRIZZLED_PLUGIN_CLIENT_H
+#pragma once
 
 #include <drizzled/catalog/instance.h>
 #include <drizzled/catalog/local.h>
 #include <drizzled/error_t.h>
 #include <drizzled/item.h>
-#include <drizzled/sql_list.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-class String;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class allows new client sources to be written. This could be through
@@ -55,7 +47,7 @@ public:
    * Get attached session from the client object.
    * @retval Session object that is attached, NULL if none.
    */
-  virtual Session *getSession(void)
+  virtual Session *getSession()
   {
     return session;
   }
@@ -73,41 +65,29 @@ public:
    * Get file descriptor associated with client object.
    * @retval File descriptor that is attached, -1 if none.
    */
-  virtual int getFileDescriptor(void)= 0;
+  virtual int getFileDescriptor()= 0;
 
   /**
    * Check to see if the client is currently connected.
    * @retval Boolean value representing connected state.
    */
-  virtual bool isConnected(void)= 0;
-
-  /**
-   * Check to see if the client is actively reading.
-   * @retval Boolean value representing reading state.
-   */
-  virtual bool isReading(void)= 0;
-
-  /**
-   * Check to see if the client is actively writing.
-   * @retval Boolean value representing writing state.
-   */
-  virtual bool isWriting(void)= 0;
+  virtual bool isConnected()= 0;
 
   /**
    * Flush all data that has been buffered with store() methods.
    * @retval Boolean indicating success or failure.
    */
-  virtual bool flush(void)= 0;
+  virtual bool flush()= 0;
 
   /**
    * Close the client object.
    */
-  virtual void close(void)= 0;
+  virtual void close()= 0;
 
   /**
    * Perform handshake and authorize client if needed.
    */
-  virtual bool authenticate(void)= 0;
+  virtual bool authenticate()= 0;
 
   virtual bool isConsole() const
   {
@@ -115,11 +95,6 @@ public:
   }
 
   virtual bool isInteractive() const
-  {
-    return false;
-  }
-
-  virtual bool isAdmin() const
   {
     return false;
   }
@@ -132,42 +107,39 @@ public:
   /**
    * Read command from client.
    */
-  virtual bool readCommand(char **packet, uint32_t *packet_length)= 0;
+  virtual bool readCommand(char **packet, uint32_t& packet_length)= 0;
 
   /* Send responses. */
-  virtual void sendOK(void)= 0;
-  virtual void sendEOF(void)= 0;
+  virtual void sendOK()= 0;
+  virtual void sendEOF()= 0;
   virtual void sendError(const drizzled::error_t sql_errno, const char *err)= 0;
 
   /**
    * Send field list for result set.
    */
-  virtual bool sendFields(List<Item> *list)= 0;
+  virtual void sendFields(List<Item>&)= 0;
 
   /* Send result fields in various forms. */
-  virtual bool store(Field *from)= 0;
-  virtual bool store(void)= 0;
-  virtual bool store(int32_t from)= 0;
-  virtual bool store(uint32_t from)= 0;
-  virtual bool store(int64_t from)= 0;
-  virtual bool store(uint64_t from)= 0;
-  virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
-  virtual bool store(const type::Time *from);
-  virtual bool store(const char *from);
-  virtual bool store(const char *from, size_t length)= 0;
-  virtual bool store(const std::string &from)
+  virtual void store(Field *from)= 0;
+  virtual void store()= 0;
+  virtual void store(int32_t from)= 0;
+  virtual void store(uint32_t from)= 0;
+  virtual void store(int64_t from)= 0;
+  virtual void store(uint64_t from)= 0;
+  virtual void store(double from, uint32_t decimals, String *buffer)= 0;
+  virtual void store(const type::Time *from);
+  virtual void store(const char *from);
+  virtual void store(const char *from, size_t length)= 0;
+  virtual void store(str_ref from)
   {
-    return store(from.c_str(), from.size());
+    store(from.data(), from.size());
   }
 
   /* Try to remove these. */
-  virtual bool haveMoreData(void)= 0;
-  virtual bool haveError(void)= 0;
-  virtual bool wasAborted(void)= 0;
+  virtual bool haveError()= 0;
+  virtual bool wasAborted()= 0;
 
 };
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_PLUGIN_CLIENT_H */

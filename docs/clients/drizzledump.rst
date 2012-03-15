@@ -1,4 +1,4 @@
-Drizzledump Backup Tool
+drizzledump Backup Tool
 =======================
 
 Synopsis
@@ -15,18 +15,18 @@ Description
 
 :program:`drizzledump` is used for backing up and
 restoring logical backups of a Drizzle database, as well as for migrating
-from *MySQL*. 
+from a more traditional *MySQL* server. 
 
-When connecting to a Drizzle server it will do a plain dump of the server.  It
-will, however, automatically detect when it is connected to a *MySQL* server and
-will convert the tables and data into a Drizzle compatible format.
+When connecting to a Drizzle server it will do a plain dump of the server.
+When connecting to a MySQL server, it will automatically detect this, and
+will convert the dump of the tables and data into a Drizzle compatible format.
 
 Any binary data in tables will be converted into hexadecimal output so that it
 does not corrupt the dump file.
 
 .. _drizzledump-options-label:
 
-Drizzledump options
+drizzledump Options
 -------------------
 
 The :program:`drizzledump` tool has several available options:
@@ -41,7 +41,7 @@ The :program:`drizzledump` tool has several available options:
 
 .. option:: --force, -f
 
-   Continue even if we get an sql-error.
+   Continue even if a sql-error is received.
 
 .. option:: --help, -?
 
@@ -51,7 +51,7 @@ The :program:`drizzledump` tool has several available options:
 
    Locks all the tables for all databases with a global read lock.  The lock is
    released automatically when :program:`drizzledump` ends.
-   Turns on :option:`--single-transaction` and :option:`--lock-tables`.
+   Also turns on :option:`--single-transaction`.
 
 .. option:: --single-transaction
 
@@ -78,6 +78,10 @@ The :program:`drizzledump` tool has several available options:
 
    Dump a list of tables.
 
+.. option:: --skip-drop-table
+
+   Do not add a 'drop table' before each create.
+
 .. option:: --show-progress-size rows (=10000)
 
    Show progress of the dump every *rows* of the dump.  Requires
@@ -96,6 +100,8 @@ The :program:`drizzledump` tool has several available options:
 	INSERT INTO `t1` VALUES (1,'hello');
 	INSERT INTO `t1` VALUES (2,'world');
 
+   This is useful for calculating and storing diffs of dump files.
+
 .. option:: --skip-dump-date
 
    Do not display the date/time at the end of the dump.
@@ -111,8 +117,7 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --compact
 
    Gives a more compact output by disabling header/footer comments and enabling
-   :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
-   and :option:`--skip-add-locks`.
+   :option:`--skip-disable-keys`.
 
 .. option:: --databases, -B
 
@@ -149,7 +154,7 @@ The :program:`drizzledump` tool has several available options:
 
 .. option:: --no-data, -d
 
-   Do not dump the data itself, used to dump the schemas only.
+   Do not dump the data itself. Used to dump the schemas only.
 
 .. option:: --replace
 
@@ -243,7 +248,7 @@ The :program:`drizzledump` tool has several available options:
    **drizzle**
    The Drizzle protocol.
 
-Backups using Drizzledump
+Backups Using drizzledump
 -------------------------
 
 Backups of a database can be made very simply by running the following:
@@ -260,7 +265,7 @@ This can then be re-imported into drizzle at a later date using:
 
 .. _drizzledump-migration-label:
 
-MySQL Migration using Drizzledump
+MySQL Migration Using drizzledump
 ---------------------------------
 
 As of version 2010-09-27 there is the capability to migrate databases from
@@ -296,6 +301,7 @@ into a Drizzle server as follows:
    issues from :program:`drizzledump` to your MySQL server.
 
 .. note::
+
    If you find your VARCHAR and TEXT data does not look correct in a drizzledump
    output, it is likely that you have UTF8 data stored in a non-UTF8 table.  In
    which case please check the :option:`--my-data-is-mangled` option.

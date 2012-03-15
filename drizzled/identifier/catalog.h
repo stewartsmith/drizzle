@@ -22,43 +22,30 @@
 
 #include <drizzled/enum.h>
 #include <drizzled/definitions.h>
-#include <string.h>
-
-#include <assert.h>
-
+#include <drizzled/util/data_ref.h>
+#include <cstring>
+#include <cassert>
 #include <ostream>
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <iostream>
-
+#include <iosfwd>
 #include <boost/algorithm/string.hpp>
 
 namespace drizzled {
-
-class lex_string_t;
-
 namespace identifier {
 
 class Catalog : public Identifier
 {
-  std::string _name;
-  std::string path;
-
-  void init();
-
 public:
-  typedef std::vector<Catalog> vector;
-  typedef const Catalog& const_reference;
-  typedef Catalog& reference;
+  Catalog(str_ref);
+  bool isValid() const;
+  bool compare(const std::string &arg) const;
 
-  Catalog(const std::string &name_arg);
-  Catalog(const drizzled::lex_string_t &name_arg);
-
-  virtual ~Catalog()
-  { }
-
-  const std::string &getPath() const;
+  const std::string &getPath() const
+  {
+    return path;
+  }
 
   const std::string &getName() const
   {
@@ -70,10 +57,10 @@ public:
     return _name;
   }
 
-  virtual void getSQLPath(std::string &sql_path) const;
-
-  bool isValid() const;
-  bool compare(const std::string &arg) const;
+  virtual std::string getSQLPath() const
+  {
+    return _name;
+  }
 
   size_t getHashValue() const
   {
@@ -82,32 +69,36 @@ public:
 
   friend bool operator<(const Catalog &left, const Catalog &right)
   {
-    return  boost::algorithm::to_upper_copy(left.getName()) < boost::algorithm::to_upper_copy(right.getName());
+    return boost::ilexicographical_compare(left.getName(), right.getName());
   }
 
   friend std::ostream& operator<<(std::ostream& output, const Catalog &identifier)
   {
-    output << "Catalog:(";
-    output <<  identifier.getName();
-    output << ", ";
-    output << identifier.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "Catalog:(" <<  identifier.getName() << ", " << identifier.getPath() << ")";
   }
 
-  friend bool operator==(const Catalog &left,
-                         const Catalog &right)
+  friend bool operator==(const Catalog &left, const Catalog &right)
   {
     return boost::iequals(left.getName(), right.getName());
   }
 
-private:
-  size_t hash_value;
+  void resetPath()
+  {
+    init();
+  }
 
+private:
+  void init();
+
+  std::string _name;
+  std::string path;
+  size_t hash_value;
 };
 
-std::size_t hash_value(Catalog const& b);
+inline std::size_t hash_value(Catalog const& b)
+{
+  return b.getHashValue();
+}
 
 } /* namespace identifier */
 } /* namespace drizzled */

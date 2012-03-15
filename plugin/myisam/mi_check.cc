@@ -144,14 +144,12 @@ int chk_status(MI_CHECK *param, register MI_INFO *info)
 
 int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
 {
-  register ha_rows i;
   uint32_t delete_link_length;
   my_off_t empty, next_link, old_link= 0;
   char buff[22],buff2[22];
 
   param->record_checksum=0;
-  delete_link_length=((info->s->options & HA_OPTION_PACK_RECORD) ? 20 :
-		      info->s->rec_reflength+1);
+  delete_link_length=((info->s->options & HA_OPTION_PACK_RECORD) ? 20 : info->s->rec_reflength+1);
 
   if (!(test_flag & T_SILENT))
     puts("- check record delete-chain");
@@ -169,47 +167,47 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
     if (test_flag & T_VERBOSE)
       printf("Recordlinks:    ");
     empty=0;
-    for (i= info->state->del ; i > 0L && next_link != HA_OFFSET_ERROR ; i--)
+    ha_rows i= info->state->del;
+    for (; i > 0 && next_link != HA_OFFSET_ERROR; i--)
     {
       if (*killed_ptr(param))
         return(1);
       if (test_flag & T_VERBOSE)
-	printf(" %9s",llstr(next_link,buff));
+        printf(" %9s",llstr(next_link,buff));
       if (next_link >= info->state->data_file_length)
-	goto wrong;
-      if (my_pread(info->dfile, (unsigned char*) buff,delete_link_length,
-		   next_link,MYF(MY_NABP)))
+        goto wrong;
+      if (my_pread(info->dfile, (unsigned char*) buff,delete_link_length, next_link,MYF(MY_NABP)))
       {
-	if (test_flag & T_VERBOSE) puts("");
-	mi_check_print_error(param,"Can't read delete-link at filepos: %s",
-		    llstr(next_link,buff));
-	return(1);
+        if (test_flag & T_VERBOSE) puts("");
+        mi_check_print_error(param,"Can't read delete-link at filepos: %s",
+          llstr(next_link,buff));
+        return(1);
       }
       if (*buff != '\0')
       {
-	if (test_flag & T_VERBOSE) puts("");
-	mi_check_print_error(param,"Record at pos: %s is not remove-marked",
-		    llstr(next_link,buff));
-	goto wrong;
+        if (test_flag & T_VERBOSE) puts("");
+        mi_check_print_error(param,"Record at pos: %s is not remove-marked",
+          llstr(next_link,buff));
+        goto wrong;
       }
       if (info->s->options & HA_OPTION_PACK_RECORD)
       {
-	my_off_t prev_link=mi_sizekorr(buff+12);
-	if (empty && prev_link != old_link)
-	{
-	  if (test_flag & T_VERBOSE) puts("");
-	  mi_check_print_error(param,"Deleted block at %s doesn't point back at previous delete link",llstr(next_link,buff2));
-	  goto wrong;
-	}
-	old_link=next_link;
-	next_link=mi_sizekorr(buff+4);
-	empty+=mi_uint3korr(buff+1);
+        my_off_t prev_link=mi_sizekorr(buff+12);
+        if (empty && prev_link != old_link)
+        {
+          if (test_flag & T_VERBOSE) puts("");
+          mi_check_print_error(param,"Deleted block at %s doesn't point back at previous delete link",llstr(next_link,buff2));
+          goto wrong;
+        }
+        old_link=next_link;
+        next_link=mi_sizekorr(buff+4);
+        empty+=mi_uint3korr(buff+1);
       }
       else
       {
-	param->record_checksum+=(ha_checksum) next_link;
-	next_link=_mi_rec_pos(info->s,(unsigned char*) buff+1);
-	empty+=info->s->base.pack_reclength;
+        param->record_checksum+=(ha_checksum) next_link;
+        next_link=_mi_rec_pos(info->s,(unsigned char*) buff+1);
+        empty+=info->s->base.pack_reclength;
       }
     }
     if (test_flag & T_VERBOSE)
@@ -217,33 +215,30 @@ int chk_del(MI_CHECK *param, register MI_INFO *info, uint32_t test_flag)
     if (empty != info->state->empty)
     {
       mi_check_print_warning(param,
-			     "Found %s deleted space in delete link chain. Should be %s",
-			     llstr(empty,buff2),
-			     llstr(info->state->empty,buff));
+        "Found %s deleted space in delete link chain. Should be %s",
+        llstr(empty,buff2),
+        llstr(info->state->empty,buff));
     }
     if (next_link != HA_OFFSET_ERROR)
     {
       mi_check_print_error(param,
-			   "Found more than the expected %s deleted rows in delete link chain",
-			   llstr(info->state->del, buff));
+        "Found more than the expected %s deleted rows in delete link chain",
+        llstr(info->state->del, buff));
       goto wrong;
     }
     if (i != 0)
     {
-      mi_check_print_error(param,
-			   "Found %s deleted rows in delete link chain. Should be %s",
-			   llstr(info->state->del - i, buff2),
-			   llstr(info->state->del, buff));
+      mi_check_print_error(param, "Found %s deleted rows in delete link chain. Should be %s", llstr(info->state->del - i, buff2), llstr(info->state->del, buff));
       goto wrong;
     }
   }
-  return(0);
+  return 0;
 
 wrong:
   param->testflag|=T_RETRY_WITHOUT_QUICK;
   if (test_flag & T_VERBOSE) puts("");
   mi_check_print_error(param,"record delete-link-chain corrupted");
-  return(1);
+  return 1;
 } /* chk_del */
 
 
@@ -293,15 +288,13 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
       If the key cache block size is smaller than block_size, we can so
       avoid unecessary eviction of cache block.
     */
-    if (!(buff=key_cache_read(info->s->getKeyCache(),
-                              info->s->kfile, next_link, DFLT_INIT_HITS,
-                              (unsigned char*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
-                              MI_MIN_KEY_BLOCK_LENGTH, 1)))
+
+    if (not pread(info->s->kfile, info->buff, MI_MIN_KEY_BLOCK_LENGTH, next_link))
     {
-      mi_check_print_error(param, "key cache read error for block: %s",
-			   llstr(next_link,llbuff));
+      mi_check_print_error(param, "key cache read error for block: %s", llstr(next_link,llbuff));
       return(1);
     }
+    buff= info->buff;
     next_link=mi_sizekorr(buff);
     records--;
     param->key_file_blocks+=block_size;
@@ -326,10 +319,6 @@ int chk_size(MI_CHECK *param, register MI_INFO *info)
   char buff[22],buff2[22];
 
   if (!(param->testflag & T_SILENT)) puts("- check file-size");
-
-  /* The following is needed if called externally (not from myisamchk) */
-  flush_key_blocks(info->s->getKeyCache(),
-		   info->s->kfile, FLUSH_FORCE_WRITE);
 
   size= lseek(info->s->kfile, 0, SEEK_END);
   if ((skr=(my_off_t) info->state->key_file_length) != size)
@@ -721,7 +710,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 {
   int flag;
   uint32_t used_length,comp_flag,nod_flag,key_length=0;
-  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*old_keypos,*endpos;
+  unsigned char key[HA_MAX_POSSIBLE_KEY_BUFF],*temp_buff,*keypos,*endpos;
   my_off_t next_page,record;
   char llbuff[22];
   uint32_t diff_pos[2];
@@ -765,7 +754,6 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
                          temp_buff,keys,key_checksum,level+1))
 	goto err;
     }
-    old_keypos=keypos;
     if (keypos >= endpos ||
 	(key_length=(*keyinfo->get_key)(keyinfo,nod_flag,&keypos,key)) == 0)
       break;
@@ -874,7 +862,7 @@ static uint32_t isam_key_length(MI_INFO *info, register MI_KEYDEF *keyinfo)
 int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 {
   int	error,got_error,flag;
-  uint	key, left_length= 0, b_type,field;
+  uint	key, left_length= 0, b_type;
   ha_rows records, del_blocks;
   my_off_t used, empty, pos, splits, start_recpos= 0,
            del_length, link_used, start_block;
@@ -882,7 +870,6 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   char llbuff[22],llbuff2[22],llbuff3[22];
   ha_checksum intern_record_checksum;
   ha_checksum key_checksum[HA_MAX_POSSIBLE_KEY];
-  bool static_row_size;
   MI_KEYDEF *keyinfo;
   MI_BLOCK_INFO block_info;
 
@@ -905,22 +892,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   got_error=error=0;
   empty=info->s->pack.header_length;
 
-  /* Check how to calculate checksum of rows */
-  static_row_size=1;
-  if (info->s->data_file_type == COMPRESSED_RECORD)
-  {
-    for (field=0 ; field < info->s->base.fields ; field++)
-    {
-      if (info->s->rec[field].base_type == FIELD_BLOB ||
-	  info->s->rec[field].base_type == FIELD_VARCHAR)
-      {
-	static_row_size=0;
-	break;
-      }
-    }
-  }
-
-  pos=my_b_tell(&param->read_cache);
+  pos= param->read_cache.tell();
   memset(key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));
   while (pos < info->state->data_file_length)
   {
@@ -928,9 +900,8 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       goto err2;
     switch (info->s->data_file_type) {
     case STATIC_RECORD:
-      if (my_b_read(&param->read_cache,(unsigned char*) record,
-		    info->s->base.pack_reclength))
-	goto err;
+      if (param->read_cache.read(record, info->s->base.pack_reclength))
+        goto err;
       start_recpos=pos;
       pos+=info->s->base.pack_reclength;
       splits++;
@@ -1326,12 +1297,11 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
     then recrate all indexes.
 */
 
-static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
+static void mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
 {
   MYISAM_SHARE *share= info->s;
   MI_STATE_INFO *state= &share->state;
   uint32_t i;
-  int error;
 
   /*
     If any of the disabled indexes has a key block assigned, we must
@@ -1362,9 +1332,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
         Flush dirty blocks of this index file from key cache and remove
         all blocks of this index file from key cache.
       */
-      error= flush_key_blocks(share->getKeyCache(), share->kfile,
-                              FLUSH_FORCE_WRITE);
-      goto end;
+      return;
     }
     /*
       We do now drop all indexes and declare them disabled. With the
@@ -1373,11 +1341,6 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
     */
     mi_clear_all_keys_active(state->key_map);
   }
-
-  /* Remove all key blocks of this index file from key cache. */
-  if ((error= flush_key_blocks(share->getKeyCache(), share->kfile,
-                               FLUSH_IGNORE_CHANGED)))
-    goto end;
 
   /* Clear index root block pointers. */
   for (i= 0; i < share->base.keys; i++)
@@ -1389,11 +1352,6 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
 
   /* Reset index file length to end of index file header. */
   info->state->key_file_length= share->base.keystart;
-
-  /* error= 0; set by last (error= flush_key_bocks()). */
-
- end:
-  return(error);
 }
 
 
@@ -1537,7 +1495,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
       goto err;
   }
   if (error > 0 || write_data_suffix(&sort_info, (bool)!rep_quick) ||
-      flush_io_cache(&info->rec_cache) || param->read_cache.error < 0)
+      info->rec_cache.flush() || param->read_cache.error < 0)
     goto err;
 
   if (param->testflag & T_WRITE_LOOP)
@@ -1611,8 +1569,7 @@ err:
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
-			    (param->testflag & T_BACKUP_DATA ?
-			     MYF(MY_REDEL_MAKE_BACKUP): MYF(0))) ||
+			    MYF(0)) ||
 	  mi_open_datafile(info,share,-1))
 	got_error=1;
     }
@@ -1633,18 +1590,15 @@ err:
 
   void * rec_buff_ptr= NULL;
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.rec_buff);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= NULL;
 
   free(sort_info.buff);
   param->read_cache.end_io_cache();
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   info->rec_cache.end_io_cache();
-  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   if (not got_error && param->testflag & T_UNPACK)
   {
     share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
@@ -1756,22 +1710,7 @@ void lock_memory(MI_CHECK *)
 } /* lock_memory */
 
 
-	/* Flush all changed blocks to disk */
-
-int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file)
-{
-  if (flush_key_blocks(key_cache, file, FLUSH_RELEASE))
-  {
-    mi_check_print_error(param,"%d when trying to write bufferts",errno);
-    return(1);
-  }
-  if (!param->using_global_keycache)
-    end_key_cache(key_cache,1);
-  return 0;
-} /* flush_blocks */
-
-
-	/* Sort index for more efficent reads */
+/* Sort index for more efficent reads */
 
 int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
 {
@@ -1823,10 +1762,7 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
       index_pos[key]= HA_OFFSET_ERROR;		/* No blocks */
   }
 
-  /* Flush key cache for this file if we are calling this outside myisamchk */
-  flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_IGNORE_CHANGED);
-
-  share->state.version=(ulong) time((time_t*) 0);
+  share->state.version=(ulong) time(NULL);
   old_state= share->state;			/* save state if not stored */
   r_locks=   share->r_locks;
   w_locks=   share->w_locks;
@@ -2285,7 +2221,6 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     memcpy( &share->state.state, info->state, sizeof(*info->state));
 
 err:
-  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   info->rec_cache.end_io_cache();
   if (!got_error)
   {
@@ -2296,8 +2231,7 @@ err:
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
-			    (param->testflag & T_BACKUP_DATA ?
-			     MYF(MY_REDEL_MAKE_BACKUP): MYF(0))) ||
+			    MYF(0)) ||
 	  mi_open_datafile(info,share,-1))
 	got_error=1;
     }
@@ -2321,11 +2255,9 @@ err:
 
   void * rec_buff_ptr= NULL;
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.rec_buff);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= mi_get_rec_buff_ptr(info, sort_param.record);
-  if (rec_buff_ptr != NULL)
-    free(rec_buff_ptr);
+  free(rec_buff_ptr);
   rec_buff_ptr= NULL;
 
   free((unsigned char*) sort_info.key_block);
@@ -2421,8 +2353,7 @@ int sort_get_next_record(MI_SORT_PARAM *sort_param)
   case STATIC_RECORD:
     for (;;)
     {
-      if (my_b_read(&sort_param->read_cache,sort_param->record,
-		    share->base.pack_reclength))
+      if (sort_param->read_cache.read(sort_param->record, share->base.pack_reclength))
       {
 	if (sort_param->read_cache.error)
 	  param->out_flag |= O_DATA_LOST;
@@ -2780,8 +2711,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
   {
     switch (sort_info->new_data_file_type) {
     case STATIC_RECORD:
-      if (my_b_write(&info->rec_cache,sort_param->record,
-		     share->base.pack_reclength))
+      if (info->rec_cache.write(sort_param->record, share->base.pack_reclength))
       {
 	mi_check_print_error(param,"%d when writing to datafile",errno);
 	return(1);
@@ -3070,7 +3000,7 @@ int sort_delete_record(MI_SORT_PARAM *sort_param)
     if (sort_param->calc_checksum)
       param->glob_crc-=(*info->s->calc_checksum)(info, sort_param->record);
   }
-  error=flush_io_cache(&info->rec_cache) || (*info->s->delete_record)(info);
+  error= info->rec_cache.flush() || (*info->s->delete_record)(info);
   info->dfile=old_file;				/* restore actual value */
   info->state->records--;
   return(error);
@@ -3163,7 +3093,7 @@ int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile)
   {
     unsigned char buff[MEMMAP_EXTRA_MARGIN];
     memset(buff, 0, sizeof(buff));
-    if (my_b_write(&info->rec_cache,buff,sizeof(buff)))
+    if (info->rec_cache.write(buff, sizeof(buff)))
     {
       mi_check_print_error(sort_info->param,
 			   "%d when writing to datafile",errno);

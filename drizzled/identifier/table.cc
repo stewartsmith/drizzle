@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <assert.h>
+#include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/my_sys.h>
@@ -42,16 +42,12 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-class Table;
+namespace drizzled {
 
 extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 namespace identifier {
-class Schema;
 
 static const char hexchars[]= "0123456789abcdef";
 
@@ -137,46 +133,17 @@ static uint32_t counter= 1;
 static uint32_t get_counter()
 {
   boost::mutex::scoped_lock lock(counter_mutex);
-  uint32_t x;
-  x= ++counter;
-
-  return x;
+  return ++counter;
 }
 
 #endif
 
-size_t Table::build_tmptable_filename(std::string &buffer)
+std::string Table::build_tmptable_filename()
 {
-  size_t tmpdir_length;
-  ostringstream post_tmpdir_str;
-
-  buffer.append(drizzle_tmpdir);
-  tmpdir_length= buffer.length();
-
-  post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << pthread_self() << "-" << get_counter();
-
-  buffer.append(post_tmpdir_str.str());
-
-  transform(buffer.begin() + tmpdir_length, buffer.end(), buffer.begin() + tmpdir_length, ::tolower);
-
-  return buffer.length();
+  ostringstream os;
+  os << "/" << TMP_FILE_PREFIX << current_pid << pthread_self() << "-" << get_counter();
+  return drizzle_tmpdir + boost::to_lower_copy(os.str());
 }
-
-size_t Table::build_tmptable_filename(std::vector<char> &buffer)
-{
-  ostringstream post_tmpdir_str;
-
-  post_tmpdir_str << drizzle_tmpdir << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << pthread_self() << "-" << get_counter();
-
-  buffer.resize(post_tmpdir_str.str().length() + 1);
-  memcpy(&buffer[0], post_tmpdir_str.str().c_str(), post_tmpdir_str.str().size());
-  buffer[post_tmpdir_str.str().size()]= 0;
-
-  return buffer.size();
-}
-
 
 /*
   Creates path to a cursor: drizzle_data_dir/db/table.ext
@@ -210,96 +177,59 @@ size_t Table::build_tmptable_filename(std::vector<char> &buffer)
     path length on success, 0 on failure
 */
 
-size_t Table::build_table_filename(std::string &in_path, const std::string &in_db, const std::string &in_table_name, bool is_tmp)
+std::string Table::build_table_filename(const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  bool conversion_error= false;
-
-  conversion_error= util::tablename_to_filename(in_db, in_path);
-  if (conversion_error)
-  {
-    errmsg_printf(error::ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
-    return 0;
-  }
-
-  in_path.append(FN_ROOTDIR);
-
-  if (is_tmp) // It a conversion tmp
-  {
-    in_path.append(in_table_name);
-  }
-  else
-  {
-    conversion_error= util::tablename_to_filename(in_table_name, in_path);
-    if (conversion_error)
-    {
-      errmsg_printf(error::ERROR,
-                    _("Table name cannot be encoded and fit within filesystem "
-                      "name length restrictions."));
-      return 0;
-    }
-  }
-   
-  return in_path.length();
+  string in_path= util::tablename_to_filename(in_db) + FN_LIBCHAR;
+  return in_path + (is_tmp ? in_table_name : util::tablename_to_filename(in_table_name));
 }
 
 Table::Table(const drizzled::Table &table) :
-  identifier::Schema(table.getShare()->getSchemaName()),
+  identifier::Schema(str_ref(table.getShare()->getSchemaName())),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
   if (type == message::Table::TEMPORARY)
+  {
     path= table.getShare()->getPath();
+  }
 
   init();
 }
 
 void Table::init()
 {
-  switch (type) {
+  switch (type) 
+  {
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
-    assert(path.size() == 0);
-    build_table_filename(path, getSchemaName(), table_name, false);
+    assert(path.empty());
+    path= build_table_filename(getSchemaName(), table_name, false);
     break;
+
   case message::Table::INTERNAL:
-    assert(path.size() == 0);
-    build_table_filename(path, getSchemaName(), table_name, true);
+    assert(path.empty());
+    path= build_table_filename(getSchemaName(), table_name, true);
     break;
+
   case message::Table::TEMPORARY:
     if (path.empty())
     {
-      build_tmptable_filename(path);
+      path= build_tmptable_filename();
     }
     break;
   }
 
-  switch (type) {
-  case message::Table::FUNCTION:
-  case message::Table::STANDARD:
-  case message::Table::INTERNAL:
-    break;
-  case message::Table::TEMPORARY:
+  if (type == message::Table::TEMPORARY)
+  {
+    size_t pos= path.find("tmp/#sql");
+    if (pos != std::string::npos) 
     {
-      size_t pos;
-
-      pos= path.find("tmp/#sql");
-      if (pos != std::string::npos) 
-      {
-        key_path= path.substr(pos);
-      }
+      key_path= path.substr(pos);
     }
-    break;
   }
 
-  util::insensitive_hash hasher;
-  hash_value= hasher(path);
-
-  std::string tb_name(getTableName());
-  std::transform(tb_name.begin(), tb_name.end(), tb_name.begin(), ::tolower);
-
-  key.set(getKeySize(), getSchemaName(), tb_name);
+  hash_value= util::insensitive_hash()(path);
+  key.set(getKeySize(), getCatalogName(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 
@@ -310,92 +240,61 @@ const std::string &Table::getPath() const
 
 const std::string &Table::getKeyPath() const
 {
-  if (key_path.empty())
-    return path;
-
-  return key_path;
+  return key_path.empty() ? path : key_path;
 }
 
-void Table::getSQLPath(std::string &sql_path) const  // @todo this is just used for errors, we should find a way to optimize it
+std::string Table::getSQLPath() const  // @todo this is just used for errors, we should find a way to optimize it
 {
-  switch (type) {
+  switch (type) 
+	{
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
-    sql_path.append(getSchemaName());
-    sql_path.append(".");
-    sql_path.append(table_name);
-    break;
+		return getSchemaName() + "." + table_name;
+
   case message::Table::INTERNAL:
-    sql_path.append("temporary.");
-    sql_path.append(table_name);
-    break;
+		return "temporary." + table_name;
+
   case message::Table::TEMPORARY:
-    sql_path.append(getSchemaName());
-    sql_path.append(".#");
-    sql_path.append(table_name);
-    break;
+    return getSchemaName() + ".#" + table_name;
   }
+	assert(false);
+	return "<no table>";
 }
 
 bool Table::isValid() const
 {
-  if (not identifier::Schema::isValid())
-    return false;
-
-  bool error= false;
-  do
+  if (identifier::Schema::isValid() == false)
   {
-    if (table_name.empty())
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.size() > NAME_LEN)
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(table_name.length() -1) == ' ')
-    {
-      error= true;
-      break;
-    }
-
-    if (table_name.at(0) == '.')
-    {
-      error= true;
-      break;
-    }
-
-    {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-      int well_formed_error;
-      uint32_t res= cs->cset->well_formed_len(cs, table_name.c_str(), table_name.c_str() + table_name.length(),
-                                              NAME_CHAR_LEN, &well_formed_error);
-      if (well_formed_error or table_name.length() != res)
-      {
-        error= true;
-        break;
-      }
-    }
-  } while (0);
-
-  if (error)
-  {
-    std::string name;
-
-    getSQLPath(name);
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), name.c_str());
-
     return false;
   }
 
-  return true;
-}
+  bool error= false;
+  if (table_name.empty()
+		|| table_name.size() > NAME_LEN
+		|| table_name[table_name.length() - 1] == ' '
+		|| table_name[0] == '.')
+  {
+    error= true;
+  }
+	else
+  {
+    const charset_info_st& cs= my_charset_utf8mb4_general_ci;
+    int well_formed_error;
+    uint32_t res= cs.cset->well_formed_len(cs, table_name, NAME_CHAR_LEN, &well_formed_error);
+    if (well_formed_error or table_name.length() != res)
+    {
+      error= true;
+    }
+  }
 
+  if (error == false)
+  {
+		return true;
+  }
+  my_error(ER_WRONG_TABLE_NAME, MYF(0), getSQLPath().c_str());
+
+  return false;
+}
 
 void Table::copyToTableMessage(message::Table &message) const
 {
@@ -403,12 +302,16 @@ void Table::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
-void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+void Table::Key::set(size_t resize_arg, const std::string &catalog_arg, const std::string &schema_arg, const std::string &table_arg)
 {
   key_buffer.resize(resize_arg);
 
-  std::copy(a.begin(), a.end(), key_buffer.begin());
-  std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+  schema_offset= catalog_arg.length() +1;
+  table_offset= schema_offset +schema_arg.length() +1;
+
+  std::copy(catalog_arg.begin(), catalog_arg.end(), key_buffer.begin());
+  std::copy(schema_arg.begin(), schema_arg.end(), key_buffer.begin() +schema_offset);
+  std::copy(table_arg.begin(), table_arg.end(), key_buffer.begin() +table_offset);
 
   util::sensitive_hash hasher;
   hash_value= hasher(key_buffer);
@@ -424,22 +327,9 @@ std::size_t hash_value(Table::Key const& b)
   return b.getHashValue();
 }
 
-
-std::ostream& operator<<(std::ostream& output, Table::const_reference identifier)
+std::ostream& operator<<(std::ostream& output, const Table& identifier)
 {
-  output << "Table:(";
-  output <<  identifier.getSchemaName();
-  output << ", ";
-  output << identifier.getTableName();
-  output << ", ";
-  output << message::type(identifier.getType());
-  output << ", ";
-  output << identifier.getPath();
-  output << ", ";
-  output << identifier.getHashValue();
-  output << ")";
-
-  return output;  // for multiple << operators.
+  return output << "Table:(" <<  identifier.getSchemaName() << ", " << identifier.getTableName() << ", " << message::type(identifier.getType()) << ", " << identifier.getPath() << ", " << identifier.getHashValue() << ")";
 }
 
 } /* namespace identifier */

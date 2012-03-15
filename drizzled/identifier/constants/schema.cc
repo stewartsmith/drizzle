@@ -19,7 +19,6 @@
  */
 
 #include <config.h>
-
 #include <drizzled/identifier.h>
 
 namespace drizzled {
@@ -30,40 +29,39 @@ namespace constants {
 class Schema : public identifier::Schema
 {
 public:
-  Schema(const std::string &name) :
-    identifier::Schema(name)
+  Schema(const char* name) :
+    identifier::Schema(str_ref(name)),
+    path_(boost::to_lower_copy(getSchemaName()))
   {
-    std::transform(name.begin(), name.end(), _path.begin(), ::tolower);
   }
 
-  const std::string &getPath() const
+  const std::string& getPath() const
   {
-    return _path;
+    return path_;
   }
 
-  inline bool isSystem() const
+  bool isSystem() const
   {
     return true;
   }
 
 private:
-  std::string _path;
+  std::string path_;
 };
 
 } /* namespace constants */
 
-identifier::Schema::const_reference data_dictionary()
-{
-  static drizzled::identifier::Schema _tmp("DATA_DICTIONARY");
+static constants::Schema g_dd= "DATA_DICTIONARY";
+static constants::Schema g_is= "INFORMATION_SCHEMA";
 
-  return _tmp;
+const Schema& data_dictionary()
+{
+  return g_dd;
 }
 
-identifier::Schema::const_reference information_schema()
+const Schema& information_schema()
 {
-  static drizzled::identifier::Schema _tmp("INFORMATION_SCHEMA");
-
-  return _tmp;
+  return g_is;
 }
 
 } /* namespace identifier */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_REF_NULL_HELPER_H
-#define DRIZZLED_ITEM_REF_NULL_HELPER_H
+#pragma once
 
 /*
   An object of this class:
@@ -29,10 +28,9 @@
      with NULL value.
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_ref_null_helper: public Item_ref
+class Item_ref_null_helper : public Item_ref
 {
 protected:
   Item_in_subselect* owner;
@@ -62,4 +60,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_REF_NULL_HELPER_H */

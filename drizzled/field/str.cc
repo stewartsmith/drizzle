@@ -26,12 +26,11 @@
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 namespace internal
 {
-extern char _dig_vec_upper[];
+  extern char _dig_vec_upper[];
 }
 
 Field_str::Field_str(unsigned char *ptr_arg,
@@ -39,7 +38,7 @@ Field_str::Field_str(unsigned char *ptr_arg,
                      unsigned char *null_ptr_arg,
                      unsigned char null_bit_arg,
                      const char *field_name_arg,
-                     const CHARSET_INFO * const charset_arg)
+                     const charset_info_st * const charset_arg)
   :Field(ptr_arg, len_arg,
          null_ptr_arg,
          null_bit_arg,
@@ -70,13 +69,11 @@ Field_str::Field_str(unsigned char *ptr_arg,
     send a truncation note, otherwise send a truncation error.
 */
 
-int
-Field_str::report_if_important_data(const char *field_ptr, const char *end)
+int Field_str::report_if_important_data(const char *field_ptr, const char *end)
 {
-  if ((field_ptr < end) && getTable()->in_use->count_cuted_fields)
+  if (field_ptr < end && getTable()->in_use->count_cuted_fields)
   {
     set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-
     return 2;
   }
   return 0;
@@ -112,8 +109,7 @@ int Field_str::store_decimal(const type::Decimal *d)
 
 type::Decimal *Field_str::val_decimal(type::Decimal *decimal_value) const
 {
-  int64_t nr= val_int();
-  int2_class_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
+  int2_class_decimal(E_DEC_FATAL_ERROR, val_int(), 0, decimal_value);
   return decimal_value;
 }
 
@@ -129,12 +125,11 @@ int Field_str::store(double nr)
 {
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
   uint32_t local_char_length= field_length / charset()->mbmaxlen;
-  size_t length;
   bool error;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
+  size_t length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
     if (getTable()->getSession()->abortOnWarning())
@@ -154,19 +149,18 @@ bool check_string_copy_error(Field_str *field,
                              const char *well_formed_error_pos,
                              const char *cannot_convert_error_pos,
                              const char *end,
-                             const CHARSET_INFO * const cs)
+                             const charset_info_st * const cs)
 {
-  const char *pos, *end_orig;
-  char tmp[64], *t;
-
-  if (!(pos= well_formed_error_pos) &&
-      !(pos= cannot_convert_error_pos))
+  const char* pos= well_formed_error_pos;
+  if (not pos && not (pos= cannot_convert_error_pos))
     return false;
 
-  end_orig= end;
+  const char* end_orig= end;
   set_if_smaller(end, pos + 6);
 
-  for (t= tmp; pos < end; pos++)
+  char tmp[64];
+  char* t= tmp;
+  for (; pos < end; pos++)
   {
     /*
       If the source string is ASCII compatible (mbminlen==1)
@@ -177,9 +171,7 @@ bool check_string_copy_error(Field_str *field,
       or the source character is not in the printable range,
       then print the character using HEX notation.
     */
-    if (((unsigned char) *pos) >= 0x20 &&
-        ((unsigned char) *pos) <= 0x7F &&
-        cs->mbminlen == 1)
+    if (((unsigned char) *pos) >= 0x20 && ((unsigned char) *pos) <= 0x7F && cs->mbminlen == 1)
     {
       *t++= *pos;
     }
@@ -199,9 +191,7 @@ bool check_string_copy_error(Field_str *field,
   }
   *t= '\0';
   push_warning_printf(field->getTable()->in_use,
-                      field->getTable()->in_use->abortOnWarning() ?
-                      DRIZZLE_ERROR::WARN_LEVEL_ERROR :
-                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                      field->getTable()->in_use->abortOnWarning() ? DRIZZLE_ERROR::WARN_LEVEL_ERROR : DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,

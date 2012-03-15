@@ -18,11 +18,9 @@
  */
 
 #include <config.h>
-
 #include <drizzled/item/cache_int.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 void Item_cache_int::store(Item *item)
 {
@@ -31,14 +29,12 @@ void Item_cache_int::store(Item *item)
   unsigned_flag= item->unsigned_flag;
 }
 
-
 void Item_cache_int::store(Item *item, int64_t val_arg)
 {
   value= val_arg;
   null_value= item->null_value;
   unsigned_flag= item->unsigned_flag;
 }
-
 
 String *Item_cache_int::val_str(String *str)
 {
@@ -53,6 +49,5 @@ type::Decimal *Item_cache_int::val_decimal(type::Decimal *decimal_val)
   int2_class_decimal(E_DEC_FATAL_ERROR, value, unsigned_flag, decimal_val);
   return decimal_val;
 }
-
 
 } /* namespace drizzled */

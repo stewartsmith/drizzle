@@ -44,44 +44,28 @@ int64_t GetLocks::val_int()
       return 0;
     }
   }
-
-  bool result;
   {
     boost::this_thread::restore_interruption dl(getSession().getThreadInterupt());
-
-    try {
-      result= user_locks::Locks::getInstance().lock(getSession().getSessionId(), list_of_locks);
+    try 
+    {
+      if (not user_locks::Locks::getInstance().lock(getSession().getSessionId(), list_of_locks))
+        return 0;
     }
-    catch(boost::thread_interrupted const& error)
+    catch (boost::thread_interrupted const&)
     {
       my_error(drizzled::ER_QUERY_INTERRUPTED, MYF(0));
       null_value= true;
-
       return 0;
     }
   }
 
-  if (result)
-  {
-    user_locks::Storable *list= static_cast<user_locks::Storable *>(getSession().getProperty("user_locks"));
-    if (not list)
-    {
-      list= new user_locks::Storable(getSession().getSessionId());
-      getSession().setProperty("user_locks", list);
-    }
-
-    for (Keys::iterator iter= list_of_locks.begin();
-         iter != list_of_locks.end(); iter++)
-    {
-      list->insert(*iter);
-    }
-
-    null_value= false;
-
-    return 1;
-  }
-
-  return 0;
+  user_locks::Storable *list= getSession().getProperty<user_locks::Storable>("user_locks");
+  if (not list)
+    list= getSession().setProperty("user_locks", new user_locks::Storable(getSession().getSessionId()));
+  BOOST_FOREACH(Keys::const_reference iter, list_of_locks)
+    list->insert(iter);
+  null_value= false;
+  return 1;
 }
 
 } /* namespace user_locks */

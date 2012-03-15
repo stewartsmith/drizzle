@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_LEX_COLUMN_H
-#define DRIZZLED_LEX_COLUMN_H
+#pragma once
 
 namespace drizzled
 {
@@ -34,4 +33,3 @@ public:
 
 }
 
-#endif /* DRIZZLED_LEX_COLUMN_H */

@@ -17,23 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HYBRID_TYPE_TRAITS_INTEGER_H
-#define DRIZZLED_HYBRID_TYPE_TRAITS_INTEGER_H
+#pragma once
 
 #include <drizzled/hybrid_type_traits.h>
 
-namespace drizzled
-{
-
-class Item;
-class Field;
-class Hybrid_type;
-
-namespace type {
-class Decimal;
-}
-
-class String;
+namespace drizzled {
 
 class Hybrid_type_traits_integer: public Hybrid_type_traits
 {
@@ -60,4 +48,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HYBRID_TYPE_TRAITS_INTEGER_H */

@@ -83,11 +83,11 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   }
 
   void *dl_handle= NULL;
-  string dlpath("");
+  string dlpath;
 
   if (builtin)
   {
-    dlpath.assign("<builtin>");
+    dlpath= "<builtin>";
     dl_handle= dlopen(NULL, RTLD_NOW|RTLD_LOCAL);
     if (dl_handle == NULL)
     {
@@ -102,7 +102,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   else
   {
   /* Open new dll handle */
-    dlpath.assign(Library::getLibraryPath(plugin_name).file_string());
+    dlpath= Library::getLibraryPath(plugin_name).file_string();
     dl_handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
     if (dl_handle == NULL)
     {
@@ -134,7 +134,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   if (sym == NULL)
   {
     const char* errmsg= dlerror();
-    errmsg_printf(error::ERROR, errmsg);
+    errmsg_printf(error::ERROR, "%s", errmsg);
     errmsg_printf(error::ERROR, ER(ER_CANT_FIND_DL_ENTRY),
                   plugin_decl_sym.c_str(), dlpath.c_str());
     (void)dlerror();
@@ -154,7 +154,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
     return NULL;
   }
 
-  return new (nothrow) module::Library(plugin_name, dl_handle, module_manifest);
+  return new module::Library(plugin_name, dl_handle, module_manifest);
 }
 
 } /* namespace drizzled */

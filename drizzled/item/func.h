@@ -17,9 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_FUNC_H
-#define DRIZZLED_ITEM_FUNC_H
-
+#pragma once
 
 /* If you fix the parser to no longer create functions these can be moved to create.cc */
 #include <drizzled/function/math/divide.h>
@@ -37,8 +35,7 @@
 
 /* For type casts */
 
-namespace drizzled
-{
+namespace drizzled {
 
 enum Cast_target
 {
@@ -55,4 +52,3 @@ enum Cast_target
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_FUNC_H */

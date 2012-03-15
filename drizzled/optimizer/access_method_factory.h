@@ -18,26 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H
-#define DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H
+#pragma once
 
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
 #include <drizzled/join_table.h>
 #include <drizzled/optimizer/access_method.h>
 
-#include <boost/shared_ptr.hpp>
-
-/* Forward declarations */
-class Table;
-class JoinTable;
-
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class AccessMethodFactory
@@ -46,26 +33,9 @@ namespace optimizer
 class AccessMethodFactory
 {
 public:
-
-  static AccessMethodFactory &singleton()
-  {
-    static AccessMethodFactory fact;
-    return fact;
-  }
-
-  boost::shared_ptr<AccessMethod> createAccessMethod(enum access_method type);
-
-private:
-  
-  AccessMethodFactory() {}
-
-  ~AccessMethodFactory() {}
-
-  AccessMethodFactory(const AccessMethodFactory&);
+  static AccessMethod::ptr create(access_method);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_ACCESS_METHOD_FACTORY_H */

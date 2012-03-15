@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_VARSTRING_H
-#define DRIZZLED_FIELD_VARSTRING_H
+#pragma once
 
 #include <drizzled/field/str.h>
 #include <string>
@@ -51,11 +50,11 @@ public:
                   unsigned char *null_ptr_arg,
                   unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const charset_info_st * const cs);
   Field_varstring(uint32_t len_arg,
                   bool maybe_null_arg,
                   const char *field_name_arg,
-                  const CHARSET_INFO * const cs);
+                  const charset_info_st * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
@@ -69,7 +68,7 @@ public:
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
                                       length_bytes : 0);
   }
-  int  store(const char *to,uint32_t length, const CHARSET_INFO * const charset);
+  int  store(const char *to,uint32_t length, const charset_info_st * const charset);
 
 
   int  store(int64_t nr, bool unsigned_val);
@@ -89,7 +88,6 @@ public:
   uint32_t get_key_image(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(std::basic_string <unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
-  void sql_type(String &str) const;
   virtual unsigned char *pack(unsigned char *to,
                               const unsigned char *from,
                               uint32_t max_length,
@@ -117,5 +115,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_VARSTRING_H */
 

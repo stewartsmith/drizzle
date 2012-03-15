@@ -19,32 +19,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
-
-#include <string>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 class DRIZZLED_API Logging : public Plugin
 {
-  Logging();
-  Logging(const Logging &);
-  Logging& operator=(const Logging &);
 public:
   explicit Logging(std::string name_arg)
     : Plugin(name_arg, "Logging")
   {}
-  virtual ~Logging() {}
 
   /**
    * Make these no-op rather than pure-virtual so that it's easy for a plugin
@@ -66,4 +54,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */

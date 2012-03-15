@@ -17,16 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_COST_VECTOR_H
-#define DRIZZLED_OPTIMIZER_COST_VECTOR_H
+#pragma once
 
-namespace drizzled
-{
-namespace optimizer
-{
-class CostVector
-{
+namespace drizzled {
+namespace optimizer {
 
+class CostVector 
+{
 public:
   CostVector() :
     io_count(0.0),
@@ -36,7 +33,7 @@ public:
     import_cost(0.0)
   {}
 
-  double total_cost()
+  double total_cost() const
   {
     return IO_COEFF*io_count*avg_io_cost + CPU_COEFF * cpu_cost +
       MEM_COEFF*mem_cost + IMPORT_COEFF*import_cost;
@@ -130,4 +127,3 @@ private:
 } /* namespace optimizer */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_COST_VECTOR_H */

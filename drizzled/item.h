@@ -19,11 +19,10 @@
 
 
 
-#ifndef DRIZZLED_ITEM_H
-#define DRIZZLED_ITEM_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/sql_list.h>
@@ -31,31 +30,7 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Field;
-class Item_equal;
-class Item_field;
-class Item_ident;
-class Item_in_subselect;
-class Item_sum;
-class Select_Lex;
-class SendField;
-class Table;
-class user_var_entry;
-
-namespace plugin { class Client; }
-namespace type { class Time; }
-namespace type { class Decimal; }
-
-/**
-  Dummy error processor used by default by Name_resolution_context.
-
-  @note
-    do nothing
-*/
-void dummy_error_processor(Session *session, void *data);
+namespace drizzled {
 
 /*
   Analyzer function
@@ -78,12 +53,8 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class DRIZZLED_API Item : public memory::SqlAlloc
+class DRIZZLED_API Item : public memory::SqlAlloc, boost::noncopyable
 {
-  /* Prevent use of these */
-  Item(const Item &);
-  void operator=(Item &);
-
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
   virtual bool is_expensive_processor(unsigned char *arg);
@@ -136,13 +107,11 @@ public:
   String str_value;
 
   /** Name from select */
-  char *name;
+  const char *name;
 
   /** Length of name */
   uint32_t name_length;
 
-  /** Original item name (if it was renamed) */
-  char *orig_name;
   Item *next;
   uint32_t max_length;
 
@@ -197,24 +166,20 @@ public:
 
   virtual ~Item()
   {
-#ifdef EXTRA_DEBUG
-    name= NULL;
-#endif
   }
 
-  void set_name(const std::string &arg)
+  void set_name(str_ref arg)
   {
-    set_name(arg.c_str(), arg.length(), system_charset_info);
+    set_name(arg.data(), arg.size());
   }
 
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs= system_charset_info);
-  /**
-   * Renames item (used for views, cleanup() return original name).
-   *
-   * @param new_name	new name of item;
-   */
-  void rename(char *new_name);
-  void init_make_field(SendField *tmp_field,enum enum_field_types type);
+  void set_name(const char* arg)
+  {
+    set_name(str_ref(arg));
+  }
+
+  void set_name(const char *str, uint32_t length, const charset_info_st* cs= system_charset_info);
+  void init_make_field(SendField *tmp_field, enum_field_types type);
   virtual void cleanup();
   virtual void make_field(SendField *field);
   /**
@@ -256,7 +221,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(plugin::Client *client, String *str);
+  virtual void send(plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's
     are functionally equal.
@@ -640,8 +605,8 @@ public:
   virtual const Item *real_item(void) const;
   virtual Item *get_tmp_table_item(Session *session);
 
-  static const CHARSET_INFO *default_charset();
-  virtual const CHARSET_INFO *compare_collation();
+  static const charset_info_st *default_charset();
+  virtual const charset_info_st *compare_collation();
 
   virtual bool walk(Item_processor processor,
                     bool walk_subquery,
@@ -691,7 +656,6 @@ public:
                              traverse_order order);
 
   virtual bool remove_dependence_processor(unsigned char * arg);
-  virtual bool remove_fixed(unsigned char * arg);
   virtual bool collect_item_field_processor(unsigned char * arg);
   virtual bool find_item_in_field_list_processor(unsigned char *arg);
   virtual bool change_context_processor(unsigned char *context);
@@ -730,7 +694,7 @@ public:
 
   virtual Item *neg_transformer(Session *session);
   virtual Item *update_value_transformer(unsigned char *select_arg);
-  virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  virtual Item *safe_charset_converter(const charset_info_st * const tocs);
   void delete_self();
 
   /**
@@ -783,7 +747,7 @@ public:
    * @retval
    *  false otherwise
    */
-  bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
+  bool eq_by_collation(Item *item, bool binary_cmp, const charset_info_st * const cs);
 
   inline uint32_t char_to_byte_length_safe(uint32_t char_length_arg, uint32_t mbmaxlen_arg)
   { 
@@ -793,10 +757,7 @@ public:
 
   uint32_t max_char_length() const;
 
-  void fix_length_and_charset(uint32_t max_char_length_arg, CHARSET_INFO *cs);
   void fix_char_length(uint32_t max_char_length_arg);
-  void fix_char_length_uint64_t(uint64_t max_char_length_arg);
-  void fix_length_and_charset_datetime(uint32_t max_char_length_arg);
 
 protected:
   Session &getSession()
@@ -958,4 +919,3 @@ Field *create_tmp_field(Session *session,
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_H */

@@ -18,19 +18,14 @@
  * @brief Memory root declarations
  */
 
+#pragma once
 
-
-#ifndef DRIZZLED_MEMORY_ROOT_H
-#define DRIZZLED_MEMORY_ROOT_H
-
-#include <cstddef>
-
+#include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
-
+#include <drizzled/util/data_ref.h>
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * @namespace drizzled::memory
@@ -40,34 +35,28 @@ namespace drizzled
  * comment on the namespace Doxygen won't extract any documentation for
  * namespace members.
  */
-namespace memory
-{
+namespace memory {
 
 static const int KEEP_PREALLOC= 1;
 /* move used to free list and reuse them */
 static const int MARK_BLOCKS_FREE= 2;
 
-namespace internal
+namespace internal 
 {
-
-class UsedMemory
-{			   /* struct for once_alloc (block) */
-public:
-  UsedMemory *next;	   /* Next block in use */
-  size_t left;		   /* memory left in block  */            
-  size_t size;		   /* size of block */
-};
-
+  class UsedMemory
+  {			   /* struct for once_alloc (block) */
+  public:
+    UsedMemory *next;	   /* Next block in use */
+    size_t left;		   /* memory left in block  */            
+    size_t size;		   /* size of block */
+  };
 }
 
 static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
 
-
-
 class DRIZZLED_API Root
 {
 public:
-
   Root() :
     free(0),
     used(0),
@@ -75,8 +64,7 @@ public:
     min_malloc(0),
     block_size(0),
     block_num(0),
-    first_block_usage(0),
-    error_handler(0)
+    first_block_usage(0)
   { }
 
   Root(size_t block_size_arg)
@@ -86,10 +74,7 @@ public:
     block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
     block_num= 4;			/* We shift this with >>2 */
     first_block_usage= 0;
-    error_handler= 0;
   }
-
-  ~Root();
 
   /**
    * blocks with free memory in it 
@@ -120,34 +105,48 @@ public:
    */
   unsigned int first_block_usage;
 
-  void (*error_handler)(void);
-  void reset_root_defaults(size_t block_size, size_t prealloc_size);
-  void *alloc_root(size_t Size);
-  inline void *allocate(size_t Size)
-  {
-    return alloc_root(Size);
-  }
+  void reset_defaults(size_t block_size, size_t prealloc_size);
+  unsigned char* alloc(size_t Size);
   void mark_blocks_free();
-  void *memdup_root(const void *str, size_t len);
-  char *strdup_root(const char *str);
+  void* memdup(const void*, size_t);
+  char* strdup(const char*);
 
-  char *strmake_root(const char *str,size_t len);
-  void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
+  char* strdup(const char*, size_t);
+  char* strdup(str_ref);
+  void init(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
-  inline void *duplicate(const void *str, size_t len)
-  {
-    return memdup_root(str, len);
-  }
-
-  inline bool alloc_root_inited()
+  bool alloc_root_inited() const
   {
     return min_malloc != 0;
   }
   void free_root(myf MyFLAGS);
-  void *multi_alloc_root(int unused, ...);
+  void* multi_alloc(int unused, ...);
+
+  void* calloc(size_t size)
+  {
+    void* ptr= alloc(size);
+    memset(ptr, 0, size);
+    return ptr;
+  }
 };
 
 } /* namespace memory */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MEMORY_ROOT_H */
+inline void* operator new(size_t size, drizzled::memory::Root& root)
+{
+  return root.alloc(size);
+}
+
+inline void* operator new[](size_t size, drizzled::memory::Root& root)
+{
+  return root.alloc(size);
+}
+
+inline void operator delete(void*, drizzled::memory::Root&)
+{
+}
+
+inline void operator delete[](void*, drizzled::memory::Root&)
+{
+}

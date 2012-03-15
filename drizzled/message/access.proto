@@ -1,0 +1,13 @@
+/*
+  Represents access objects.
+*/
+package drizzled.message;
+option optimize_for = SPEED;
+
+option java_package = "org.drizzle.messages";
+option java_outer_classname = "Access";
+
+message Access {
+    optional string definer= 1;
+    optional string invoker= 2;
+}

@@ -30,6 +30,7 @@ Mutex, the basic synchronization primitive
 Created 9/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef sync0sync_h
 #define sync0sync_h
 

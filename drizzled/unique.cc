@@ -37,6 +37,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/unique.h>
+#include <drizzled/table.h>
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;
@@ -44,8 +45,7 @@ using namespace CMATH_NAMESPACE;
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 int unique_write_to_ptrs(unsigned char* key,
                          uint32_t, Unique *unique)
@@ -62,7 +62,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
     elements(0)
 {
   // Second element is max size for memory use in unique sort
-  init_tree(&tree, 0, 0, size, comp_func, false,
+  tree.init_tree(0, 0, size, comp_func, false,
             NULL, comp_func_fixed_arg);
 }
 
@@ -146,7 +146,7 @@ double Unique::get_use_cost(uint32_t *, uint32_t nkeys, uint32_t key_size,
   double result;
 
   max_elements_in_tree= ((ulong) max_in_memory_size_arg /
-                         ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
+                         ALIGN_SIZE(sizeof(Tree_Element)+key_size));
 
   last_tree_elems= nkeys % max_elements_in_tree;
 
@@ -159,7 +159,7 @@ double Unique::get_use_cost(uint32_t *, uint32_t nkeys, uint32_t key_size,
 
 Unique::~Unique()
 {
-  delete_tree(&tree);
+   tree.delete_tree();
 }
 
 
@@ -171,7 +171,7 @@ Unique::~Unique()
 void
 Unique::reset()
 {
-  reset_tree(&tree);
+  tree.reset_tree();
   assert(elements == 0);
 }
 
@@ -198,7 +198,7 @@ Unique::reset()
 
 bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 {
-  return tree_walk(&tree, action, walk_action_arg, left_root_right);
+  return tree.tree_walk(action, walk_action_arg, left_root_right);
 }
 
 /*
@@ -208,12 +208,12 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 
 bool Unique::get(Table *table)
 {
-  table->sort.found_records= elements+tree.elements_in_tree;
+  table->sort.found_records= elements+tree.getElementsInTree();
 
   if ((record_pointers=table->sort.record_pointers= (unsigned char*)
-       malloc(size * tree.elements_in_tree)))
+       malloc(size * tree.getElementsInTree())))
   {
-    (void) tree_walk(&tree, (tree_walk_action) unique_write_to_ptrs,
+    (void) tree.tree_walk((tree_walk_action) unique_write_to_ptrs,
                      this, left_root_right);
     return 0;
   }

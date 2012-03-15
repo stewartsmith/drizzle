@@ -24,9 +24,9 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/user_var_entry.h>
+#include <drizzled/table.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   When a user variable is updated (in a SET command or a query like
@@ -98,10 +98,10 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
 }
 
 
-bool
-Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
+void
+Item_func_set_user_var::update_hash(data_ref data,
                                     Item_result res_type,
-                                    const CHARSET_INFO * const cs, Derivation dv,
+                                    const charset_info_st * const cs, Derivation dv,
                                     bool unsigned_arg)
 {
   /*
@@ -110,13 +110,7 @@ Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
   */
   if ((null_value= args[0]->null_value) && null_item)
     res_type= entry->type;                      // Don't change type of item
-  if (entry->update_hash((null_value= args[0]->null_value),
-                         ptr, length, res_type, cs, dv, unsigned_arg))
-  {
-    null_value= 1;
-    return 1;
-  }
-  return 0;
+  entry->update_hash((null_value= args[0]->null_value), data, res_type, cs, dv, unsigned_arg);
 }
 
 /**
@@ -150,8 +144,10 @@ Item_func_set_user_var::check(bool use_result_field)
     {
       save_result.vint= use_result_field ? result_field->val_int() :
         args[0]->val_int();
+
       unsigned_flag= use_result_field ? ((Field_num*)result_field)->unsigned_flag:
         args[0]->unsigned_flag;
+
       break;
     }
   case STRING_RESULT:
@@ -191,59 +187,45 @@ Item_func_set_user_var::check(bool use_result_field)
 
 */
 
-bool
+void
 Item_func_set_user_var::update()
 {
-  bool res= false;
-
   switch (cached_result_type) {
   case REAL_RESULT:
     {
-      res= update_hash((void*) &save_result.vreal,sizeof(save_result.vreal),
-                       REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
+      update_hash(data_ref(&save_result.vreal, sizeof(save_result.vreal)), REAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case INT_RESULT:
     {
-      res= update_hash((void*) &save_result.vint, sizeof(save_result.vint),
-                       INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT,
-                       unsigned_flag);
+      update_hash(data_ref(&save_result.vint, sizeof(save_result.vint)), INT_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, unsigned_flag);
       break;
     }
 
   case STRING_RESULT:
     {
       if (!save_result.vstr)                                      // Null value
-        res= update_hash((void*) 0, 0, STRING_RESULT, &my_charset_bin,
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(), STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       else
-        res= update_hash((void*) save_result.vstr->ptr(),
-                         save_result.vstr->length(), STRING_RESULT,
-                         save_result.vstr->charset(),
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(*save_result.vstr, STRING_RESULT, save_result.vstr->charset(), DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case DECIMAL_RESULT:
     {
       if (!save_result.vdec)                                      // Null value
-        res= update_hash((void*) 0, 0, DECIMAL_RESULT, &my_charset_bin,
-                         DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(), DECIMAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       else
-        res= update_hash((void*) save_result.vdec,
-                         sizeof(type::Decimal), DECIMAL_RESULT,
-                         &my_charset_bin, DERIVATION_IMPLICIT, 0);
+        update_hash(data_ref(save_result.vdec, sizeof(type::Decimal)), DECIMAL_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, 0);
       break;
     }
 
   case ROW_RESULT:
     // This case should never be chosen
-    assert(0);
+    assert(false);
     break;
   }
-
-  return(res);
 }
 
 double Item_func_set_user_var::val_real()
@@ -315,21 +297,22 @@ type::Decimal *Item_func_set_user_var::val_decimal_result(type::Decimal *val)
 void Item_func_set_user_var::print(String *str)
 {
   str->append(STRING_WITH_LEN("(@"));
-  str->append(name.str, name.length);
+  str->append(name);
   str->append(STRING_WITH_LEN(":="));
   args[0]->print(str);
   str->append(')');
 }
 
-bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
+void Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)
   {
     check(1);
     update();
-    return client->store(result_field);
+    client->store(result_field);
+    return;
   }
-  return Item::send(client, str_arg);
+  Item::send(client, str_arg);
 }
 
 void Item_func_set_user_var::make_field(SendField *tmp_field)
@@ -400,7 +383,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
       (result_type() == REAL_RESULT && field->result_type() == STRING_RESULT))
   {
     String *result;
-    const CHARSET_INFO * const cs= collation.collation;
+    const charset_info_st * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];         // Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result= entry->val_str(&null_value, &str_value, decimals);

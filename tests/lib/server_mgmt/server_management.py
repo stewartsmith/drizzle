@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2010 Patrick Crews
+# Copyright (C) 2010, 2011 Patrick Crews
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import thread
 import time
 import os
 import subprocess
+from ConfigParser import RawConfigParser
 
 class serverManager:
     """ code that handles the server objects
@@ -37,35 +38,38 @@ class serverManager:
     """
 
     def __init__(self, system_manager, variables):
-        self.skip_keys = [ 'ld_lib_paths'
-                         , 'system_manager'
+        self.skip_keys = [ 'system_manager'
+                         , 'env_manager'
+                         , 'code_manager'
                          , 'logging'
                          , 'gdb'
-                         , 'code_tree'
                          ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
         self.initial_run = 1
-        self.server_base_name = 'server'
+        # we try this to shorten things - will see how this works
+        self.server_base_name = 's'
         self.no_secure_file_priv = variables['nosecurefilepriv']
         self.system_manager = system_manager
+        self.code_manager = system_manager.code_manager
+        self.env_manager = system_manager.env_manager
         self.logging = system_manager.logging
         self.gdb  = self.system_manager.gdb
-        self.code_tree = system_manager.code_tree
         self.default_storage_engine = variables['defaultengine']
+        self.default_server_type = variables['defaultservertype']
         self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
-        # We track this
-        self.ld_lib_paths = system_manager.ld_lib_paths
+
         self.mutex = thread.allocate_lock()
         self.timer_increment = .5
+        self.libeatmydata = variables['libeatmydata']
+        self.libeatmydata_path = variables['libeatmydatapath']
 
         self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
 
-        if self.debug:
-            self.logging.debug_class(self)
+        self.logging.debug_class(self)
 
-    def request_servers( self, requester, workdir, server_requirements
+    def request_servers( self, requester, workdir, cnf_path, server_requirements
                        , working_environ, expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
@@ -87,7 +91,7 @@ class serverManager:
                                  , workdir, server_requirements)
 
         # Make sure we are running with the correct options 
-        self.evaluate_existing_servers(requester, server_requirements)
+        self.evaluate_existing_servers(requester, cnf_path, server_requirements)
 
         # Fire our servers up
         bad_start = self.start_servers( requester, working_environ
@@ -98,20 +102,32 @@ class serverManager:
 
 
     
-    def allocate_server(self, requester, server_options, workdir):
+    def allocate_server( self, requester, server_options
+                       , workdir, server_type=None, server_version=None):
         """ Intialize an appropriate server object.
             Start up occurs elsewhere
 
         """
+        # use default server type unless specifically requested to do otherwise
+        if not server_type:
+            server_type = self.default_server_type
 
         # Get a name for our server
         server_name = self.get_server_name(requester)
 
         # initialize our new server_object
-        if self.code_tree.type == 'Drizzle':
-          from lib.server_mgmt.drizzled import drizzleServer as server_type
+        # get the right codeTree type from the code manager
+        code_tree = self.code_manager.get_tree(server_type, server_version)
+
+        # import the correct server type object
+        if server_type == 'drizzle':
+            from lib.server_mgmt.drizzled import drizzleServer as server_type
+        elif server_type == 'mysql':
+            from lib.server_mgmt.mysqld import mysqlServer as server_type
+
         new_server = server_type( server_name
                                 , self
+                                , code_tree
                                 , self.default_storage_engine
                                 , server_options
                                 , requester
@@ -121,6 +137,7 @@ class serverManager:
     def start_servers(self, requester, working_environ, expect_fail):
         """ Start all servers for the requester """
         bad_start = 0
+
         for server in self.get_server_list(requester):
             if server.status == 0:
                 bad_start = bad_start + self.start_server( server
@@ -128,6 +145,8 @@ class serverManager:
                                                          , working_environ
                                                          , expect_fail
                                                          )
+            else:
+                self.logging.debug("Server %s already running" %(server.name))
         return bad_start
 
     def start_server(self, server, requester, working_environ, expect_fail):
@@ -141,13 +160,13 @@ class serverManager:
             start up
 
         """
+        # take care of any environment updates we need to do
+        self.handle_environment_reqs(server, working_environ)
 
-        if self.verbose:
-            self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
+        self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
         start_cmd = server.get_start_cmd()
-        if self.debug:
-            self.logging.debug("Starting server with:")
-            self.logging.debug("%s" %(start_cmd))
+        self.logging.debug("Starting server with:")
+        self.logging.debug("%s" %(start_cmd))
         # we signal we tried to start as an attempt
         # to catch the case where a server is just 
         # starting up and the user ctrl-c's
@@ -184,6 +203,7 @@ class serverManager:
         else:
             # manual-gdb issue
             server_retcode = 0
+        
         timer = float(0)
         timeout = float(server.server_start_timeout)
 
@@ -205,9 +225,14 @@ class serverManager:
      
         if server_retcode == 0:
             server.status = 1 # we are running
+            if os.path.exists(server.pid_file):
+                pid_file = open(server.pid_file,'r')
+                pid = pid_file.readline().strip()
+                pid_file.close()
+                server.pid = pid
 
-        if server_retcode != 0 and not expect_fail and self.debug:
-            self.logging.debug("Server startup command: %s failed with error code %d" %( start_cmd
+        if server_retcode != 0 and not expect_fail:
+            self.logging.error("Server startup command: %s failed with error code %d" %( start_cmd
                                                                                   , server_retcode))
         elif server_retcode == 0 and expect_fail:
         # catch a startup that should have failed and report
@@ -240,13 +265,28 @@ class serverManager:
                 attempts_remain = attempts_remain - 1
         # Now we try to shut the server down
         if self.ping_server(server, quiet=True):
-            if self.verbose:
-                self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
+            self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
             stop_cmd = server.get_stop_cmd()
-            retcode, output = self.system_manager.execute_cmd(stop_cmd)
-            if retcode:
+            #retcode, output = self.system_manager.execute_cmd(stop_cmd)
+            shutdown_subproc = subprocess.Popen( stop_cmd
+                                               , shell=True
+                                               )
+            shutdown_subproc.wait()
+            shutdown_retcode = shutdown_subproc.returncode
+            # We do some monitoring for the server PID and kill it
+            # if need be.  This is a bit of a band-aid for the 
+            # zombie-server bug on Natty : (  Need to find the cause.
+            attempts_remain = 3
+            while self.system_manager.find_pid(server.pid) and attempts_remain:
+                time.sleep(1)
+                attempts_remain = attempts_remain - 1
+                if not attempts_remain: # we kill the pid
+                    if self.verbose:
+                        self.logging.warning("Forcing kill of server pid: %s" %(server.pid))
+                    self.system_manager.kill_pid(server.pid)
+            if shutdown_retcode:
                 self.logging.error("Problem shutting down server:")
-                self.logging.error("%s : %s" %(retcode, output))
+                self.logging.error("%s : %s" %(shutdown_retcode))
             else:
                 server.status = 0 # indicate we are shutdown
         else:
@@ -258,10 +298,12 @@ class serverManager:
         for server in self.get_server_list(requester):
             self.stop_server(server)
 
-    def stop_server_list(self, server_list):
+    def stop_server_list(self, server_list, free_ports=False):
         """ Stop the servers in an arbitrary list of them """
         for server in server_list:
             self.stop_server(server)
+        if free_ports:
+            server.cleanup()
 
     def stop_all_servers(self):
         """ Stop all running servers """
@@ -307,31 +349,85 @@ class serverManager:
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
 
-    def evaluate_existing_servers( self, requester, server_requirements):
+    def evaluate_existing_servers( self, requester, cnf_path, server_requirements):
         """ See if the requester has any servers and if they
             are suitable for the current test
 
             We should have the proper number of servers at this point
 
         """
+
+        # A dictionary that holds various tricks
+        # we can do with our test servers
+        special_processing_reqs = {}
+
         current_servers = self.servers[requester]
 
         for index,server in enumerate(current_servers):
-            server_options = server_requirements[index]
-            # We add in any user-supplied options here
-            server_options = server_options + self.user_server_opts
+            # We handle a reset in case we need it:
+            if server.need_reset:
+                self.reset_server(server)
+                server.need_reset = False
+
+            desired_server_options = server_requirements[index]
+            
+            # do any special config processing - this can alter
+            # how we view our servers
+            if cnf_path:
+                self.handle_server_config_file( cnf_path
+                                              , server
+                                              , special_processing_reqs
+                                              , desired_server_options
+                                              )
+
             if self.compare_options( server.server_options
-                                   , server_options):
-                return 1
+                                   , desired_server_options):
+                return
             else:
                 # We need to reset what is running and change the server
                 # options
-                server_options = self.filter_server_options(server_options)
+                desired_server_options = self.filter_server_options(desired_server_options)
                 self.reset_server(server)
-                self.update_server_options(server, server_options)
+                self.update_server_options(server, desired_server_options)
+            
+            self.handle_special_server_requests(special_processing_reqs)
 
+    def handle_server_config_file( self
+                                 , cnf_path
+                                 , server
+                                 , special_processing_reqs
+                                 , desired_server_options
+                                 ):
+        # We have a config reader so we can do
+        # special per-server magic for setting up more
+        # complex scenario-based testing (eg we use a certain datadir)
+        config_reader = RawConfigParser()
+        config_reader.read(cnf_path)
 
-       
+        # Do our checking for config-specific madness we need to do
+        if config_reader and config_reader.has_section(server.name):
+            # mark server for restart in case it hasn't yet
+            # this method is a bit hackish - need better method later
+            if '--restart' not in desired_server_options:
+                desired_server_options.append('--restart')
+            # We handle various scenarios
+            server_config_data = config_reader.items(server.name)
+            for cnf_option, data in server_config_data:
+                if cnf_option == 'load-datadir':
+                    datadir_path = data
+                    request_key = 'datadir_requests'
+                if request_key not in special_processing_reqs:
+                    special_processing_reqs[request_key] = []
+                special_processing_reqs[request_key].append((datadir_path,server))
+
+    def handle_special_server_requests(self, request_dictionary):
+        """ We run through our set of special requests and do 
+            the appropriate voodoo
+
+        """
+        for key, item in request_dictionary.items():
+            if key == 'datadir_requests':
+                self.load_datadirs(item)
 
     def filter_server_options(self, server_options):
         """ Remove a list of options we don't want passed to the server
@@ -366,6 +462,16 @@ class serverManager:
         for server in self.servers[requester]:
             self.reset_server(server)
 
+    def load_datadirs(self, datadir_requests):
+        """ We load source_dir to the server's datadir """
+        for source_dir, server in datadir_requests:
+            source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
+            self.system_manager.remove_dir(server.datadir)
+            self.system_manager.copy_dir(source_dir_path, server.datadir)
+            # We need to signal that the server will need to be reset as we're
+            # using a non-standard datadir
+            server.need_reset = True
+
 
     def process_server_count(self, requester, desired_count, workdir, server_reqs):
         """ We see how many servers we have.  We shrink / grow
@@ -386,7 +492,7 @@ class serverManager:
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]
-            self.stop_server_list(retired_servers)
+            self.stop_server_list(retired_servers, free_ports=True)
             self.set_server_list(requester, good_servers)
             
          
@@ -411,10 +517,9 @@ class serverManager:
 
     def update_server_options(self, server, server_options):
         """ Change the option_list a server has to use on startup """
-        if self.debug:
-            self.logging.debug("Updating server: %s options" %(server.name))
-            self.logging.debug("FROM: %s" %(server.server_options))
-            self.logging.debug("TO: %s" %(server_options))
+        self.logging.debug("Updating server: %s options" %(server.name))
+        self.logging.debug("FROM: %s" %(server.server_options))
+        self.logging.debug("TO: %s" %(server_options))
         server.set_server_options(server_options)
 
     def get_server_count(self):
@@ -434,7 +539,37 @@ class serverManager:
             if server.failed_test:
                 self.reset_server(server)
 
+    def handle_environment_reqs(self, server, working_environ):
+        """ We update the working_environ as we need to
+            before starting the server.
 
+            This includes things like libeatmydata, ld_preloads, etc
+
+        """
+        environment_reqs = {}
+
+        if self.libeatmydata:
+            # We want to use libeatmydata to disable fsyncs
+            # this speeds up test execution, but we only want
+            # it to happen for the servers' environments
+
+            environment_reqs.update({'LD_PRELOAD':self.libeatmydata_path})
+
+        # handle ld_preloads
+        ld_lib_paths = self.env_manager.join_env_var_values(server.code_tree.ld_lib_paths)
+        environment_reqs.update({'LD_LIBRARY_PATH' : self.env_manager.append_env_var( 'LD_LIBRARY_PATH'
+                                                                                    , ld_lib_paths
+                                                                                    , suffix = 0
+                                                                                    , quiet = 1
+                                                                                    )
+                                , 'DYLD_LIBRARY_PATH' : self.env_manager.append_env_var( 'DYLD_LIBRARY_PATH'
+                                                                                       , ld_lib_paths
+                                                                                       , suffix = 0
+                                                                                       , quiet = 1
+                                                                                       )
+
+                                 })
+        self.env_manager.update_environment_vars(environment_reqs)
 
 
 

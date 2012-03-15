@@ -18,39 +18,12 @@
  */
 
 #include <config.h>
-#include <string.h>
+#include <cstring>
 
-#include <drizzled/my_hash.h>
 #include <drizzled/xid.h>
 #include <drizzled/charset.h>
-#include <drizzled/global_charset_info.h>
-#include <drizzled/charset_info.h>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
 
 namespace drizzled {
-
-bool XID::eq(XID *xid)
-{
-  return eq(xid->gtrid_length, xid->bqual_length, xid->data);
-}
-
-bool XID::eq(long g, long b, const char *d)
-{
-  return g == gtrid_length && b == bqual_length && !memcmp(d, data, g+b);
-}
-
-void XID::set(XID *xid)
-{
-  memcpy(this, xid, xid->length());
-}
-
-void XID::set(long f, const char *g, long gl, const char *b, long bl)
-{
-  formatID= f;
-  memcpy(data, g, gtrid_length= gl);
-  memcpy(data+gl, b, bqual_length= bl);
-}
 
 void XID::set(uint64_t xid)
 {
@@ -70,12 +43,12 @@ void XID::set(long g, long b, const char *d)
   memcpy(data, d, g+b);
 }
 
-bool XID::is_null()
+bool XID::is_null() const
 {
   return formatID == -1;
 }
 
-void XID::null()
+void XID::set_null()
 {
   formatID= -1;
 }
@@ -99,33 +72,6 @@ uint32_t XID::length() const
 {
   return sizeof(formatID)+sizeof(gtrid_length)+sizeof(bqual_length)+
     gtrid_length+bqual_length;
-}
-
-const unsigned char *XID::key() const
-{
-  return (unsigned char *)&gtrid_length;
-}
-
-uint32_t XID::key_length() const
-{
-  return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
-}
-
-bool xid_cache_init()
-{
-  return false;
-}
-
-void xid_cache_free()
-{
-}
-
-void xid_cache_insert(XID*, xa_states)
-{
-}
-
-void xid_cache_delete(XID_STATE*)
-{
 }
 
 } /* namespace drizzled */

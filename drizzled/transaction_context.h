@@ -17,14 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TRANSACTION_CONTEXT_H
-#define DRIZZLED_TRANSACTION_CONTEXT_H
+#pragma once
 
 #include <vector>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
-class ResourceContext;
+namespace drizzled {
 
 class TransactionContext
 {
@@ -41,7 +39,7 @@ public:
 
   void setResourceContexts(ResourceContexts &new_contexts)
   {
-    resource_contexts.assign(new_contexts.begin(), new_contexts.end());
+    resource_contexts= new_contexts;
   }
 
   ResourceContexts &getResourceContexts()
@@ -83,4 +81,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TRANSACTION_CONTEXT_H */

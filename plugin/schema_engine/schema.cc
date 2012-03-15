@@ -20,25 +20,26 @@
 
 #include <config.h>
 
+#include <drizzled/error.h>
 #include <plugin/schema_engine/schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_table.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/cursor.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 
 #include <drizzled/pthread_globals.h>
 
 #include <drizzled/execute.h>
 
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/cached_directory.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <boost/foreach.hpp>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
@@ -49,12 +50,16 @@
 using namespace std;
 using namespace drizzled;
 
+const char* MY_DB_OPT_FILE= "db.opt";
+const char* DEFAULT_FILE_EXTENSION= ".dfe"; // Deep Fried Elephant
 
-#define MY_DB_OPT_FILE "db.opt"
-#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
+static const char* g_schema_exts[] = 
+{
+  NULL
+};
 
-Schema::Schema():
-  drizzled::plugin::StorageEngine("schema",
+Schema::Schema() :
+  drizzled::plugin::StorageEngine("SchemaEngine",
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
@@ -64,55 +69,41 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
 }
 
-Schema::~Schema()
-{
-}
-
 void Schema::prime()
 {
-  CachedDirectory directory(getDataHomeCatalog().file_string(), CachedDirectory::DIRECTORY);
+  CachedDirectory directory(catalog::local_identifier().getPath(),
+                            CachedDirectory::DIRECTORY, true);
+
   CachedDirectory::Entries files= directory.getEntries();
   boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+  BOOST_FOREACH(CachedDirectory::Entries::reference entry, files)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    message::Schema schema_message;
-
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
       continue;
+    message::Schema schema_message;
 
-    if (readSchemaFile(entry->filename, schema_message))
+    std::string filename= catalog::local_identifier().getPath();
+    filename+= FN_LIBCHAR;
+    filename+= entry->filename;
+
+    if (readSchemaFile(filename, schema_message))
     {
       identifier::Schema schema_identifier(schema_message.name());
 
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-      if (ret.second == false)
-      {
-        abort(); // If this has happened, something really bad is going down.
-      }
+      assert(ret.second); // If this has happened, something really bad is going down.
     }
   }
 }
 
-void Schema::startup(drizzled::Session &)
-{
-}
-
-void Schema::doGetSchemaIdentifiers(identifier::Schema::vector &set_of_names)
+void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
-  {
-    for (SchemaCache::iterator iter= schema_cache.begin();
-         iter != schema_cache.end();
-         iter++)
-    {
-      set_of_names.push_back(identifier::Schema(iter->second->name()));
-    }
-  }
+  BOOST_FOREACH(SchemaCache::reference iter, schema_cache)
+    set_of_names.push_back(identifier::Schema(iter.second->name()));
   mutex.unlock_shared();
 }
 
@@ -120,17 +111,13 @@ drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identi
 {
   mutex.lock_shared();
   SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
-
   if (iter != schema_cache.end())
   {
-    drizzled::message::schema::shared_ptr schema_message;
-    schema_message= iter->second;
+    drizzled::message::schema::shared_ptr schema_message= iter->second;
     mutex.unlock_shared();
-
     return schema_message;
   }
   mutex.unlock_shared();
-
   return drizzled::message::schema::shared_ptr();
 }
 
@@ -152,18 +139,11 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     return false;
   }
 
-  {
-    boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
-    pair<SchemaCache::iterator, bool> ret=
-      schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
+  boost::unique_lock<boost::shared_mutex> scopedLock(mutex);
+  pair<SchemaCache::iterator, bool> ret= 
+    schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-
-    if (ret.second == false)
-    {
-      abort(); // If this has happened, something really bad is going down.
-    }
-  }
-
+  assert(ret.second); // If this has happened, something really bad is going down.
   return true;
 }
 
@@ -219,10 +199,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
     pair<SchemaCache::iterator, bool> ret=
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
-    if (ret.second == false)
-    {
-      abort(); // If this has happened, something really bad is going down.
-    }
+    assert(ret.second); // If this has happened, something really bad is going down.
   }
 
   return true;
@@ -340,6 +317,11 @@ bool Schema::readSchemaFile(std::string db_opt_path, drizzled::message::Schema &
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                    const drizzled::identifier::Schema&,
-                                   drizzled::identifier::Table::vector&)
+                                   drizzled::identifier::table::vector&)
 {
+}
+
+const char** Schema::bas_ext() const
+{
+  return g_schema_exts;
 }

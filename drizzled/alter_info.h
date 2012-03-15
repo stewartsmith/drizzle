@@ -22,11 +22,9 @@
  * @file Declaration of the AlterInfo class
  */
 
-#ifndef DRIZZLED_ALTER_INFO_H
-#define DRIZZLED_ALTER_INFO_H
+#pragma once
 
 #include <drizzled/alter_column.h>
-#include <drizzled/alter_drop.h>
 #include <drizzled/base.h>
 #include <drizzled/enum.h>
 #include <drizzled/key.h>
@@ -36,8 +34,6 @@
 #include <list>
 
 namespace drizzled {
-
-class CreateField;
 
 enum enum_alter_info_flags
 {
@@ -63,44 +59,28 @@ enum enum_alter_info_flags
   ALTER_FOREIGN_KEY
 };
 
-enum tablespace_op_type
-{
-  NO_TABLESPACE_OP,
-  DISCARD_TABLESPACE,
-  IMPORT_TABLESPACE
-};
-
 /**
  * Contains information about the parsed CREATE or ALTER TABLE statement.
  *
  * This structure contains a list of columns or indexes to be created,
  * altered or dropped.
  */
-class AlterInfo
+class AlterInfo : boost::noncopyable
 {
 public:
-  typedef std::list<AlterDrop> drop_list_t;
   typedef std::list<AlterColumn> alter_list_t;
-  
-  drop_list_t drop_list;
+
   alter_list_t alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
-  message::AlterTable alter_proto;
+  message::AddedFields added_fields_proto;
   std::bitset<32> flags;
-  enum enum_enable_or_disable keys_onoff;
-  enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
-  enum ha_build_method build_method;
   bool error_if_not_empty;
 
   AlterInfo();
-  AlterInfo(const AlterInfo &rhs, memory::Root *mem_root);
-private:
-  AlterInfo &operator=(const AlterInfo &rhs); // not implemented
-  AlterInfo(const AlterInfo &rhs);            // not implemented
+  AlterInfo(const AlterInfo&, memory::Root*);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ALTER_INFO_H */

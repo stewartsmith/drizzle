@@ -17,29 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SET_VAR_H
-#define DRIZZLED_SET_VAR_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 
-#include <drizzled/memory/sql_alloc.h>
-#include <drizzled/sql_list.h>
+#include <drizzled/common_fwd.h>
+#include <drizzled/enum.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
-class StorageEngine;
-}
-
-class sys_var;
-class Item;
-class Item_func_set_user_var;
-class Time_zone;
-typedef struct my_locale_st MY_LOCALE;
-typedef struct charset_info_st CHARSET_INFO;
+namespace drizzled {
 
 /* Classes to support the SET command */
 
@@ -56,16 +42,14 @@ typedef struct charset_info_st CHARSET_INFO;
 class set_var_base
 {
 public:
-  set_var_base() {}
   virtual ~set_var_base() {}
-  virtual int check(Session *session)=0;	/* To check privileges etc. */
-  virtual int update(Session *session)=0;	/* To set the value */
+  virtual int check(Session*)= 0;	/* To check privileges etc. */
+  virtual int update(Session*)= 0;	/* To set the value */
   /* light check for PS */
 };
 
 /* MySQL internal variables */
-class set_var :
-  public set_var_base
+class set_var : public set_var_base
 {
   uint64_t uint64_t_value;
   std::string str_value;
@@ -73,10 +57,9 @@ public:
   sys_var *var;
   Item *value;
   sql_var_t type;
-  LEX_STRING base;			/* for structs */
+  str_ref base;	// for structs
 
-  set_var(sql_var_t type_arg, sys_var *var_arg,
-          const LEX_STRING *base_name_arg, Item *value_arg);
+  set_var(sql_var_t type_arg, sys_var *var_arg, str_ref base_name_arg, Item *value_arg);
   int check(Session *session);
   int update(Session *session);
   void setValue(const std::string &new_value);
@@ -109,4 +92,3 @@ int sql_set_variables(Session *session, const SetVarVector &var_list);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SET_VAR_H */

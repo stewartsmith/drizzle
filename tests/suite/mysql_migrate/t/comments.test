@@ -1,0 +1,18 @@
+# mysql_migrate.basic
+# simple test to ensure that we can get data from a MySQL
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_comments.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+eval SHOW CREATE TABLE $database.t1;
+eval SHOW CREATE TABLE $database.t2;
+eval SHOW CREATE TABLE $database.t3;
+eval SHOW CREATE TABLE $database.t4;
+eval SHOW CREATE TABLE $database.t5;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database ;

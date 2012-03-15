@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_KEY_USE_H
-#define DRIZZLED_OPTIMIZER_KEY_USE_H
+#pragma once
 
 namespace drizzled
 {
@@ -76,7 +75,7 @@ public:
     return val;
   }
 
-  table_map getUsedTables()
+  table_map getUsedTables() const
   {
     return used_tables;
   }
@@ -96,7 +95,7 @@ public:
     return optimize;
   }
 
-  key_part_map getKeypartMap()
+  key_part_map getKeypartMap() const
   {
     return keypart_map;
   }
@@ -162,4 +161,3 @@ private:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_KEY_USE_H */

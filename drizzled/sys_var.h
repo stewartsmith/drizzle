@@ -17,29 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SYS_VAR_H
-#define DRIZZLED_SYS_VAR_H
+#pragma once
 
 #include <string>
 #include <boost/filesystem.hpp>
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/set_var.h>
 #include <drizzled/show_type.h>
 #include <drizzled/item_result.h>
 #include <drizzled/base.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/lex_string.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class sys_var;
-class Time_zone;
-typedef struct my_locale_st MY_LOCALE;
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -59,13 +52,12 @@ extern const char *in_having_cond;
 extern boost::filesystem::path basedir;
 extern boost::filesystem::path pid_file;
 extern boost::filesystem::path secure_file_priv;
-extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern back_log_constraints back_log;
 extern uint32_t ha_open_options;
-extern char *drizzled_bind_host;
+extern const char *drizzled_bind_host;
 extern uint32_t dropping_tables;
 extern bool opt_endinfo;
 extern uint32_t volatile thread_running;
@@ -74,7 +66,7 @@ extern bool opt_readonly;
 extern const char *opt_scheduler;
 extern size_t transaction_message_threshold;
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
+uint64_t fix_unsigned(Session*, uint64_t, const option&);
 
 DRIZZLED_API const std::string &getServerHostname();
 int sys_var_init();
@@ -160,10 +152,7 @@ public:
   {
     return SHOW_UNDEF;
   }
-  virtual unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
-  {
-    return 0;
-  }
+  virtual unsigned char *value_ptr(Session*, sql_var_t) = 0;
   virtual bool check_type(sql_var_t type)
   {
     return type != OPT_GLOBAL;
@@ -176,7 +165,7 @@ public:
   {
     return option_limits == 0;
   }
-  Item *item(Session *session, sql_var_t type, const LEX_STRING *base);
+  Item *item(Session*, sql_var_t);
   virtual bool is_readonly() const
   {
     return 0;
@@ -187,47 +176,39 @@ public:
  * A base class for all variables that require its access to
  * be guarded with a mutex.
  */
-class DRIZZLED_API sys_var_global: public sys_var
+class DRIZZLED_API sys_var_global : public sys_var
 {
 protected:
   pthread_mutex_t *guard;
 public:
-  sys_var_global(const char *name_arg,
-                 sys_after_update_func after_update_arg,
-                 pthread_mutex_t *guard_arg)
-    :
-      sys_var(name_arg, after_update_arg), 
-      guard(guard_arg) 
+  sys_var_global(const char *name_arg, sys_after_update_func after_update_arg, pthread_mutex_t *guard_arg) :
+    sys_var(name_arg, after_update_arg), 
+    guard(guard_arg) 
   {}
 };
 
-class DRIZZLED_API sys_var_uint32_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint32_t_ptr : public sys_var
 {
   uint32_t *value;
 public:
-  sys_var_uint32_t_ptr(const char *name_arg,
-                       uint32_t *value_ptr_arg)
-    :sys_var(name_arg),value(value_ptr_arg)
+  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg) :
+    sys_var(name_arg), value(value_ptr_arg)
   {  }
-  sys_var_uint32_t_ptr(const char *name_arg,
-                       uint32_t *value_ptr_arg,
-                       sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_ptr_arg)
+  sys_var_uint32_t_ptr(const char *name_arg, uint32_t *value_ptr_arg, sys_after_update_func func) :
+    sys_var(name_arg,func), value(value_ptr_arg)
   {  }
   bool check(Session *session, set_var *var);
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_INT; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   { return (unsigned char*) value; }
 };
 
-class DRIZZLED_API sys_var_uint32_t_ptr_readonly :
-  public sys_var_uint32_t_ptr
+class DRIZZLED_API sys_var_uint32_t_ptr_readonly : public sys_var_uint32_t_ptr
 {
 public:
-  sys_var_uint32_t_ptr_readonly(const char *name_arg,
-                                uint32_t *value_ptr_arg) :
+  sys_var_uint32_t_ptr_readonly(const char *name_arg, uint32_t *value_ptr_arg) :
     sys_var_uint32_t_ptr(name_arg, value_ptr_arg)
   {}
 
@@ -244,7 +225,7 @@ public:
 };
 
 
-class DRIZZLED_API sys_var_uint64_t_ptr :public sys_var
+class DRIZZLED_API sys_var_uint64_t_ptr : public sys_var
 {
   uint64_t *value;
   const uint64_t default_value;
@@ -292,8 +273,7 @@ public:
     return (not have_default_value) && option_limits == 0;
   }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *, sql_var_t,
-                           const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   { return (unsigned char*) value; }
 };
 
@@ -311,7 +291,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   { return (unsigned char*) value; }
 };
 
@@ -342,7 +322,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   { return (unsigned char*) value; }
   bool check_update_type(Item_result)
   { return 0; }
@@ -386,7 +366,7 @@ public:
     (*set_default_func)(session, type);
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   { return (unsigned char*) value; }
   bool check_update_type(Item_result type)
   {
@@ -420,7 +400,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*)(value.file_string().c_str());
   }
@@ -487,7 +467,7 @@ public:
     value= default_value;
   }
 
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     basic_value= value.get();
     return (unsigned char*)&basic_value;
@@ -599,7 +579,7 @@ public:
     return false;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -635,7 +615,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -670,7 +650,7 @@ public:
     return true;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*)(value.c_str());
   }
@@ -703,7 +683,7 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*) value;
   }
@@ -733,7 +713,7 @@ public:
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *, sql_var_t, const LEX_STRING *)
+  unsigned char *value_ptr(Session *, sql_var_t)
   {
     return (unsigned char*) *value;
   }
@@ -778,8 +758,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_INT; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 
@@ -799,8 +778,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_HA_ROWS; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 
@@ -832,8 +810,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -872,8 +849,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_SIZE; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
   bool check(Session *session, set_var *var);
   bool check_default(sql_var_t type)
   {
@@ -900,8 +876,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
   bool check(Session *session, set_var *var);
   bool check_update_type(Item_result)
   { return 0; }
@@ -932,8 +907,7 @@ public:
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
   bool check_update_type(Item_result)
   { return 0; }
 };
@@ -955,8 +929,7 @@ public:
   }
   void set_default(Session *session, sql_var_t type);
   bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 class DRIZZLED_API sys_var_session_bit :public sys_var_session
@@ -978,8 +951,7 @@ public:
   { return 0; }
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 /* some variables that require special handling */
@@ -996,8 +968,7 @@ public:
   bool check_default(sql_var_t)
   { return 0; }
   SHOW_TYPE show_type(void) { return SHOW_LONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 
@@ -1010,8 +981,7 @@ public:
   bool update(Session *session, set_var *var);
   bool check_type(sql_var_t type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 
@@ -1032,12 +1002,12 @@ public:
 
 class DRIZZLED_API sys_var_collation_sv :public sys_var_collation
 {
-  const CHARSET_INFO *drizzle_system_variables::*offset;
-  const CHARSET_INFO **global_default;
+  const charset_info_st *drizzle_system_variables::*offset;
+  const charset_info_st **global_default;
 public:
   sys_var_collation_sv(const char *name_arg,
-                       const CHARSET_INFO *drizzle_system_variables::*offset_arg,
-                       const CHARSET_INFO **global_default_arg)
+                       const charset_info_st *drizzle_system_variables::*offset_arg,
+                       const charset_info_st **global_default_arg)
     :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
   {
@@ -1045,8 +1015,7 @@ public:
   }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, sql_var_t type);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
 };
 
 /* Variable that you can only read from */
@@ -1070,8 +1039,7 @@ public:
   bool check_type(sql_var_t type) { return type != var_type; }
   bool check_update_type(Item_result)
   { return 1; }
-  unsigned char *value_ptr(Session *session, sql_var_t,
-                           const LEX_STRING *)
+  unsigned char *value_ptr(Session *session, sql_var_t)
   {
     return (*value_ptr_func)(session);
   }
@@ -1113,33 +1081,26 @@ public:
   bool check_default(sql_var_t)
   { return 0; }
   bool update(Session *session, set_var *var);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
+  unsigned char *value_ptr(Session *session, sql_var_t type);
   virtual void set_default(Session *session, sql_var_t type);
 };
-
-
 
 /* For sql_yacc */
 struct sys_var_with_base
 {
-  sys_var *var;
-  LEX_STRING base_name;
+  sys_var* var;
+  lex_string_t base_name;
 };
 
 /*
   Prototypes for helper functions
 */
 
-drizzle_show_var* enumerate_sys_vars(Session *session);
-void add_sys_var_to_list(sys_var *var, struct option *long_options);
-void add_sys_var_to_list(sys_var *var);
-sys_var *find_sys_var(const std::string &name);
-extern sys_var_session_bit sys_autocommit;
-const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
+drizzle_show_var* enumerate_sys_vars(Session*);
+void add_sys_var_to_list(sys_var*, option*);
+void add_sys_var_to_list(sys_var*);
+sys_var* find_sys_var(const std::string&);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_SYS_VAR_H */

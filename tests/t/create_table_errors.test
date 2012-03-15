@@ -1,0 +1,12 @@
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(40000));
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(40000) default 'hello world');
+
+--error ER_TOO_BIG_FIELDLENGTH
+CREATE TABLE t1 (a varchar(99999));
+
+--error ER_WRONG_FIELD_SPEC
+create table t1 (a decimal auto_increment);

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LEX_INPUT_STREAM_H
-#define DRIZZLED_LEX_INPUT_STREAM_H
+#pragma once
 
 /**
   @brief This class represents the character input stream consumed during
@@ -34,14 +33,12 @@
   should be seen once out-of-bound data is removed.
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Lex_input_stream
 {
 public:
   Lex_input_stream(Session *session, const char* buff, unsigned int length);
-  ~Lex_input_stream();
 
   /**
     Set the echo mode.
@@ -85,7 +82,7 @@ public:
     Get the last character accepted.
     @return the last character accepted.
   */
-  char yyGetLast()
+  char yyGetLast() const
   {
     return m_ptr[-1];
   }
@@ -93,7 +90,7 @@ public:
   /**
     Look at the next character to parse, but do not accept it.
   */
-  char yyPeek()
+  char yyPeek() const
   {
     return m_ptr[0];
   }
@@ -102,7 +99,7 @@ public:
     Look ahead at some character to parse.
     @param n offset of the character to look up
   */
-  char yyPeekn(int n)
+  char yyPeekn(int n) const
   {
     return m_ptr[n];
   }
@@ -148,9 +145,9 @@ public:
     End of file indicator for the query text to parse.
     @return true if there are no more characters to parse
   */
-  bool eof()
+  bool eof() const
   {
-    return (m_ptr >= m_end_of_query);
+    return m_ptr >= m_end_of_query;
   }
 
   /**
@@ -158,25 +155,25 @@ public:
     @param n number of characters expected
     @return true if there are less than n characters to parse
   */
-  bool eof(int n)
+  bool eof(int n) const
   {
-    return ((m_ptr + n) >= m_end_of_query);
+    return m_ptr + n >= m_end_of_query;
   }
 
   /** Get the raw query buffer. */
-  const char *get_buf()
+  const char *get_buf() const
   {
     return m_buf;
   }
 
   /** Get the pre-processed query buffer. */
-  const char *get_cpp_buf()
+  const char *get_cpp_buf() const
   {
     return m_cpp_buf;
   }
 
   /** Get the end of the raw query buffer. */
-  const char *get_end_of_query()
+  const char *get_end_of_query() const
   {
     return m_end_of_query;
   }
@@ -204,49 +201,49 @@ public:
   }
 
   /** Get the token start position, in the raw buffer. */
-  const char *get_tok_start()
+  const char *get_tok_start() const
   {
     return m_tok_start;
   }
 
   /** Get the token start position, in the pre-processed buffer. */
-  const char *get_cpp_tok_start()
+  const char *get_cpp_tok_start() const
   {
     return m_cpp_tok_start;
   }
 
   /** Get the token end position, in the raw buffer. */
-  const char *get_tok_end()
+  const char *get_tok_end() const
   {
     return m_tok_end;
   }
 
   /** Get the token end position, in the pre-processed buffer. */
-  const char *get_cpp_tok_end()
+  const char *get_cpp_tok_end() const
   {
     return m_cpp_tok_end;
   }
 
   /** Get the previous token start position, in the raw buffer. */
-  const char *get_tok_start_prev()
+  const char *get_tok_start_prev() const
   {
     return m_tok_start_prev;
   }
 
   /** Get the current stream pointer, in the raw buffer. */
-  const char *get_ptr()
+  const char *get_ptr() const
   {
     return m_ptr;
   }
 
   /** Get the current stream pointer, in the pre-processed buffer. */
-  const char *get_cpp_ptr()
+  const char *get_cpp_ptr() const
   {
     return m_cpp_ptr;
   }
 
   /** Get the length of the current token, in the raw buffer. */
-  uint32_t yyLength()
+  uint32_t yyLength() const
   {
     /*
       The assumption is that the lexical analyser is always 1 character ahead,
@@ -257,22 +254,20 @@ public:
   }
 
   /** Get the utf8-body string. */
-  const char *get_body_utf8_str()
+  const char *get_body_utf8_str() const
   {
     return m_body_utf8;
   }
 
   /** Get the utf8-body length. */
-  uint32_t get_body_utf8_length()
+  uint32_t get_body_utf8_length() const
   {
     return m_body_utf8_ptr - m_body_utf8;
   }
 
-  void body_utf8_start(Session *session, const char *begin_ptr);
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(const LEX_STRING *txt,
-                                const char *end_ptr);
+  void body_utf8_append_literal(str_ref, const char *end_ptr);
 
   /** Current thread. */
   Session *m_session;
@@ -387,4 +382,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LEX_INPUT_STREAM_H */

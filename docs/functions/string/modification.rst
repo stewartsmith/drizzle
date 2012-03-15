@@ -1,6 +1,8 @@
 String Modification Functions
 =============================
 
+.. _concat-function:
+
 CONCAT
 ------
 
@@ -35,13 +37,15 @@ Returns: NULL
 
 Returns: '14.8'
 
+.. _concat-ws-function:
+
 CONCAT_WS
 ---------
 CONCAT WS (With Separator) [1]_ allows you to specify that the first argument is treated as a separator for the rest of the arguments. This argument is added between the strings to be concatenated.
 
 Syntax:
 
-CONCAT_WS(separator str1, str2,....)
+CONCAT_WS(separator, str1, str2,....)
 
 For example:
 
@@ -57,9 +61,10 @@ Returns: 'Occupation, First name, Last Name'
 
 Returns: 'First name, Last Name'
 
+.. _trim-function:
 
-TRIM()
-------
+TRIM
+----
 
 The TRIM function remove specified prefixes or suffixes from a string (typically leading and trailing spaces), and returns the resulting string. If none of the specifiers BOTH, LEADING, or TRAILING is given, BOTH is assumed.
 
@@ -69,16 +74,43 @@ TRIM([{BOTH | LEADING | TRAILING} [remstr] FROM] str), TRIM([remstr FROM] str)
 
 [remstr] is optional (if it's not specified, spaces are removed).
 
-LTRIM()
--------
+For example:
+
+.. code-block:: mysql
+
+	SELECT TRIM(BOTH 'hello,' FROM 'hello,Drizzlehello,');
+
+Returns: 'Drizzle'
+
+.. _ltrim-function:
+
+LTRIM 
+-----
 
 This version of the TRIM function removes leading spaces from the beginning of a string.
 
+For example:
 
-RTRIM()
--------
+.. code-block:: mysql
+
+	SELECT LTRIM('   Drizzle');
+
+Returns: 'Drizzle'
+
+.. _rtrim-function:
+
+RTRIM
+-----
 
 This version of the TRIM function removes trailing spaces from the end of a function. 
+
+For example:
+
+.. code-block:: mysql
+
+	SELECT RTRIM('Drizzle   ');
+
+Returns: 'Drizzle'
 
 .. rubric:: Footnotes
 

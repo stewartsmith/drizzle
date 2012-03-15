@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_TIME_DAYNAME_H
-#define DRIZZLED_FUNCTION_TIME_DAYNAME_H
+#pragma once
 
 #include <drizzled/function/time/weekday.h>
 
@@ -43,4 +42,3 @@ class Item_func_dayname :public Item_func_weekday
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_TIME_DAYNAME_H */

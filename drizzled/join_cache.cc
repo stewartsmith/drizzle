@@ -35,15 +35,13 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
-
-static uint32_t used_blob_length(CacheField **ptr);
+namespace drizzled {
 
 static uint32_t used_blob_length(CacheField **ptr)
 {
@@ -52,7 +50,7 @@ static uint32_t used_blob_length(CacheField **ptr)
   {
     (*ptr)->blob_length=blob_length=(*ptr)->blob_field->get_length();
     length+=blob_length;
-    (*ptr)->blob_field->get_ptr(&(*ptr)->str);
+    (*ptr)->str= (*ptr)->blob_field->get_ptr();
   }
   return length;
 }
@@ -96,7 +94,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     global_join_buffer.sub(size);
     free((unsigned char*) cache->buff);
     cache->buff=0;
-    return(1);
+    return 1;
   }
   copy=cache->field;
   blob_ptr=cache->blob_ptr=(CacheField**)
@@ -174,8 +172,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     my_error(ER_OUT_OF_GLOBAL_JOINMEMORY, MYF(ME_ERROR+ME_WAITTANG));
     return 1;
   }
-  if (!(cache->buff= (unsigned char*) malloc(size)))
-    return 1;
+  cache->buff= (unsigned char*) malloc(size);
   cache->end= cache->buff+size;
   cache->reset_cache_write();
 

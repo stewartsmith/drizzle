@@ -56,7 +56,7 @@ int Uuid::cmp(const unsigned char *a, const unsigned char *b)
   return memcmp(a, b, sizeof(uuid_t));
 }
 
-int Uuid::store(const char *from, uint32_t length, const CHARSET_INFO * const )
+int Uuid::store(const char *from, uint32_t length, const charset_info_st * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   type::Uuid uu;
@@ -98,11 +98,6 @@ int Uuid::store_decimal(const drizzled::type::Decimal*)
   return 1;
 }
 
-void Uuid::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("uuid"));
-}
-
 double Uuid::val_real() const
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
@@ -135,7 +130,7 @@ void Uuid::set(const unsigned char *arg)
 
 String *Uuid::val_str(String *val_buffer, String *) const
 {
-  const CHARSET_INFO * const cs= &my_charset_bin;
+  const charset_info_st * const cs= &my_charset_bin;
   uint32_t mlength= (type::Uuid::DISPLAY_BUFFER_LENGTH) * cs->mbmaxlen;
   type::Uuid uu;
 

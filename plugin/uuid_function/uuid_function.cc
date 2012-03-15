@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
@@ -82,10 +82,10 @@ DRIZZLE_DECLARE_PLUGIN
   "uuid",
   "1.1",
   "Stewart Smith, Brian Aker",
-  "UUID() function using libuuid",
+  N_("UUID function using libuuid"),
   drizzled::PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

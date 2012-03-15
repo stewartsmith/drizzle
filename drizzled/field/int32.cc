@@ -31,28 +31,20 @@
 
 using namespace std;
 
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /****************************************************************************
  ** Int32
  ****************************************************************************/
 
-  int Int32::store(const char *from,uint32_t len, const CHARSET_INFO * const cs)
+  int Int32::store(const char *from,uint32_t len, const charset_info_st * const cs)
   {
-    long store_tmp;
-    int error;
-    int64_t rnd;
-
     ASSERT_COLUMN_MARKED_FOR_WRITE;
-
-    error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
-    store_tmp= (long) rnd;
+    int64_t rnd;
+    int error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
+    long store_tmp= (long) rnd;
     longstore(ptr, store_tmp);
-
     return error;
   }
 
@@ -145,7 +137,7 @@ namespace field
 
   String *Int32::val_str(String *val_buffer, String *) const
   {
-    const CHARSET_INFO * const cs= &my_charset_bin;
+    const charset_info_st * const cs= &my_charset_bin;
     uint32_t length;
     uint32_t mlength= max(field_length+1,12*cs->mbmaxlen);
     val_buffer->alloc(mlength);
@@ -191,12 +183,6 @@ namespace field
 #endif
   }
 
-
-  void Int32::sql_type(String &res) const
-  {
-    const CHARSET_INFO * const cs=res.charset();
-    res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
-  }
 
   unsigned char *Int32::pack(unsigned char* to, const unsigned char *from, uint32_t, bool)
   {

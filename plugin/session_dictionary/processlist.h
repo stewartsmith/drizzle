@@ -21,8 +21,7 @@
 #include <drizzled/session.h>
 #include <drizzled/generator/session.h>
 
-#ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
-#define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
+#pragma once
 
 class ProcesslistTool : public drizzled::plugin::TableFunction
 {
@@ -30,13 +29,12 @@ public:
 
   ProcesslistTool();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
     drizzled::generator::Session session_generator;
 
   public:
     Generator(drizzled::Field **arg);
-    ~Generator();
 
     bool populate();
   };
@@ -47,4 +45,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H */

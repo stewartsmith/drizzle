@@ -23,8 +23,7 @@
   instance of table share per one table in the database.
 */
 
-#ifndef DRIZZLED_TABLE_INSTANCE_BASE_H
-#define DRIZZLED_TABLE_INSTANCE_BASE_H
+#pragma once
 
 #include <string>
 
@@ -37,31 +36,13 @@
 #include <drizzled/memory/root.h>
 #include <drizzled/message.h>
 #include <drizzled/util/string.h>
-
-#include <drizzled/lex_string.h>
 #include <drizzled/key_map.h>
- 
-#include <drizzled/table/cache.h>
- 
 #include <drizzled/field.h>
+#include <drizzled/util/find_ptr.h>
 
-
-namespace drizzled
-{
+namespace drizzled {
 
 const static std::string NO_PROTOBUFFER_AVAILABLE("NO PROTOBUFFER AVAILABLE");
-
-namespace plugin
-{
-class EventObserverList;
-class StorageEngine;
-}
-
-namespace table {
-class Singular;
-}
-
-class Field_blob;
 
 class TableShare
 {
@@ -79,7 +60,7 @@ public:
 
   TableShare(const identifier::Table::Type type_arg,
              const identifier::Table &identifier,
-             char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
+             const char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
   virtual ~TableShare();
 
@@ -166,8 +147,7 @@ public:
 
 private:
   /* hash of field names (contains pointers to elements of field array) */
-  typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
-  typedef std::pair< std::string, Field ** > FieldMapPair;
+  typedef boost::unordered_map<std::string, Field**, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
   FieldMap name_hash; /* hash of field names */
 
 public:
@@ -178,63 +158,36 @@ public:
 
   Field **getNamedField(const std::string &arg)
   {
-    FieldMap::iterator iter= name_hash.find(arg);
-
-    if (iter == name_hash.end())
-        return 0;
-
-    return iter->second;
+    return find_ptr2(name_hash, arg);
   }
 
 private:
   memory::Root mem_root;
 
-  void *alloc_root(size_t arg)
+  unsigned char* alloc(size_t arg)
   {
-    return mem_root.alloc_root(arg);
+    return mem_root.alloc(arg);
   }
 
-  char *strmake_root(const char *str_arg, size_t len_arg)
+  memory::Root& mem()
   {
-    return mem_root.strmake_root(str_arg, len_arg);
+    return mem_root;
   }
 
-  memory::Root *getMemRoot()
-  {
-    return &mem_root;
-  }
+  typedef std::vector<std::string> keynames_t;
 
-  std::vector<std::string> _keynames;
+  keynames_t _keynames;
 
-  void addKeyName(std::string arg)
+  void addKeyName(const std::string& arg)
   {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-    _keynames.push_back(arg);
+    _keynames.push_back(boost::to_upper_copy(arg));
   }
 
 public:
-  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
+  uint32_t doesKeyNameExist(const std::string& arg) const
   {
-    return doesKeyNameExist(std::string(name_arg, name_length), position);
-  }
-
-  bool doesKeyNameExist(std::string arg, uint32_t &position) const
-  {
-    std::transform(arg.begin(), arg.end(),
-                   arg.begin(), ::toupper);
-
-    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
-
-    if (iter == _keynames.end())
-    {
-      position= UINT32_MAX; //historical, required for finding primary key from unique
-      return false;
-    }
-
-    position= iter -  _keynames.begin();
-
-    return true;
+    keynames_t::const_iterator it= find(_keynames.begin(), _keynames.end(), boost::to_upper_copy(arg));
+    return it == _keynames.end() ? UINT32_MAX : it - _keynames.begin(); // historical, required for finding primary key from unique
   }
 
 private:
@@ -278,21 +231,21 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  LEX_STRING db;                        /* Pointer to db */
-  LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to table (from datadir) */
-  LEX_STRING normalized_path;		/* unpack_filename(path) */
+  str_ref db;                        /* Pointer to db */
+  str_ref table_name;                /* Table name (for open) */
+  str_ref path;	/* Path to table (from datadir) */
+  str_ref normalized_path;		/* unpack_filename(path) */
 
 public:
 
   const char *getNormalizedPath() const
   {
-    return normalized_path.str;
+    return normalized_path.data();
   }
 
   const char *getPath() const
   {
-    return path.str;
+    return path.data();
   }
 
   const identifier::Table::Key& getCacheKey() const // This should never be called when we aren't looking at a cache.
@@ -306,50 +259,24 @@ public:
     return private_key_for_cache.size();
   }
 
-private:
-  void setPath(char *str_arg, uint32_t size_arg)
+  str_ref getTableNameRef() const
   {
-    path.str= str_arg;
-    path.length= size_arg;
+    return table_name;
   }
-
-  void setNormalizedPath(char *str_arg, uint32_t size_arg)
-  {
-    normalized_path.str= str_arg;
-    normalized_path.length= size_arg;
-  }
-
-public:
 
   const char *getTableName() const
   {
-    return table_name.str;
+    return table_name.data();
   }
 
-  uint32_t getTableNameSize() const
+  str_ref getSchemaNameRef() const
   {
-    return table_name.length;
-  }
-
-  const std::string &getTableName(std::string &name_arg) const
-  {
-    name_arg.clear();
-    name_arg.append(table_name.str, table_name.length);
-
-    return name_arg;
+    return db;
   }
 
   const char *getSchemaName() const
   {
-    return db.str;
-  }
-
-  const std::string &getSchemaName(std::string &schema_name_arg) const
-  {
-    schema_name_arg.clear();
-    schema_name_arg.append(db.str, db.length);
-
-    return schema_name_arg;
+    return db.data();
   }
 
   uint32_t   block_size;                   /* create information */
@@ -433,7 +360,7 @@ public:
   void setTableMessage(const message::Table &arg)
   {
     assert(not getTableMessage());
-    _table_message.reset(new(std::nothrow) message::Table(arg));
+    _table_message.reset(new message::Table(arg));
   }
 
   const message::Table::Field &field(int32_t field_position) const
@@ -444,7 +371,7 @@ public:
 
   inline bool hasComment() const
   {
-    return (getTableMessage()) ?  getTableMessage()->options().has_comment() : false; 
+    return getTableMessage() ?  getTableMessage()->options().has_comment() : false; 
   }
 
   inline const char *getComment()
@@ -652,23 +579,11 @@ protected:
 
 public:
 
-  static TableShare::shared_ptr getShareCreate(Session *session, 
-                                               const identifier::Table &identifier,
-                                               int &error);
+  static TableShare::shared_ptr getShareCreate(Session*, const identifier::Table&, int &error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {
-    output << "TableShare:(";
-    output <<  share.getSchemaName();
-    output << ", ";
-    output << share.getTableName();
-    output << ", ";
-    output << share.getTableTypeAsString();
-    output << ", ";
-    output << share.getPath();
-    output << ")";
-
-    return output;  // for multiple << operators.
+    return output << "TableShare:(" <<  share.getSchemaNameRef() << ", " << share.getTableName() << ", " << share.getTableTypeAsString() << ", " << share.getPath() << ")";
   }
 
 protected:
@@ -719,7 +634,7 @@ private:
                               Table &outparam,
                               bool &error_reported);
 public:
-  bool parse_table_proto(Session& session, message::Table &table);
+  bool parse_table_proto(Session& session, const message::Table &table);
 
   virtual bool is_replicated() const
   {
@@ -729,4 +644,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_BASE_H */

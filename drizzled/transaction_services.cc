@@ -54,6 +54,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/transaction_services.h>
@@ -71,6 +72,9 @@
 #include <drizzled/plugin/xa_resource_manager.h>
 #include <drizzled/plugin/xa_storage_engine.h>
 #include <drizzled/internal/my_sys.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/transactions.h>
 
 #include <vector>
 #include <algorithm>
@@ -80,8 +84,7 @@
 using namespace std;
 using namespace google;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * @defgroup Transactions
@@ -300,20 +303,14 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
-TransactionServices::TransactionServices()
+
+static plugin::XaStorageEngine& xa_storage_engine()
 {
-  plugin::StorageEngine *engine= plugin::StorageEngine::findByName("InnoDB");
-  if (engine)
-  {
-    xa_storage_engine= (plugin::XaStorageEngine*)engine; 
-  }
-  else 
-  {
-    xa_storage_engine= NULL;
-  }
+  static plugin::XaStorageEngine& engine= static_cast<plugin::XaStorageEngine&>(*plugin::StorageEngine::findByName("InnoDB"));
+  return engine;
 }
 
-void TransactionServices::registerResourceForStatement(Session::reference session,
+void TransactionServices::registerResourceForStatement(Session& session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
 {
@@ -329,23 +326,22 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
     registerResourceForTransaction(session, monitored, engine);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
+  TransactionContext& trans= session.transaction.stmt;
+  ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   assert(monitored->participatesInSqlTransaction());
   assert(not monitored->participatesInXaTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setTransactionalStorageEngine(engine);
-  trans->registerResource(resource_context);
-
-  trans->no_2pc|= true;
+  resource_context.setMonitored(monitored);
+  resource_context.setTransactionalStorageEngine(engine);
+  trans.registerResource(&resource_context);
+  trans.no_2pc= true;
 }
 
-void TransactionServices::registerResourceForStatement(Session::reference session,
+void TransactionServices::registerResourceForStatement(Session& session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine,
                                                        plugin::XaResourceManager *resource_manager)
@@ -362,73 +358,71 @@ void TransactionServices::registerResourceForStatement(Session::reference sessio
     registerResourceForTransaction(session, monitored, engine, resource_manager);
   }
 
-  TransactionContext *trans= &session.transaction.stmt;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 0);
+  TransactionContext& trans= session.transaction.stmt;
+  ResourceContext& resource_context= session.getResourceContext(*monitored, 0);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   assert(monitored->participatesInXaTransaction());
   assert(monitored->participatesInSqlTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setTransactionalStorageEngine(engine);
-  resource_context->setXaResourceManager(resource_manager);
-  trans->registerResource(resource_context);
-
-  trans->no_2pc|= false;
+  resource_context.setMonitored(monitored);
+  resource_context.setTransactionalStorageEngine(engine);
+  resource_context.setXaResourceManager(resource_manager);
+  trans.registerResource(&resource_context);
 }
 
-void TransactionServices::registerResourceForTransaction(Session::reference session,
+void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans= &session.transaction.all;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 1);
+  TransactionContext& trans= session.transaction.all;
+  ResourceContext& resource_context= session.getResourceContext(*monitored, 1);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   session.server_status|= SERVER_STATUS_IN_TRANS;
 
-  trans->registerResource(resource_context);
+  trans.registerResource(&resource_context);
 
   assert(monitored->participatesInSqlTransaction());
   assert(not monitored->participatesInXaTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  resource_context.setMonitored(monitored);
+  resource_context.setTransactionalStorageEngine(engine);
+  trans.no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
-  if (! session.getResourceContext(monitored, 0)->isStarted())
+  if (not session.getResourceContext(*monitored, 0).isStarted())
     registerResourceForStatement(session, monitored, engine);
 }
 
-void TransactionServices::registerResourceForTransaction(Session::reference session,
+void TransactionServices::registerResourceForTransaction(Session& session,
                                                          plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine,
                                                          plugin::XaResourceManager *resource_manager)
 {
   TransactionContext *trans= &session.transaction.all;
-  ResourceContext *resource_context= session.getResourceContext(monitored, 1);
+  ResourceContext& resource_context= session.getResourceContext(*monitored, 1);
 
-  if (resource_context->isStarted())
+  if (resource_context.isStarted())
     return; /* already registered, return */
 
   session.server_status|= SERVER_STATUS_IN_TRANS;
 
-  trans->registerResource(resource_context);
+  trans->registerResource(&resource_context);
 
   assert(monitored->participatesInSqlTransaction());
 
-  resource_context->setMonitored(monitored);
-  resource_context->setXaResourceManager(resource_manager);
-  resource_context->setTransactionalStorageEngine(engine);
-  trans->no_2pc|= true;
+  resource_context.setMonitored(monitored);
+  resource_context.setXaResourceManager(resource_manager);
+  resource_context.setTransactionalStorageEngine(engine);
+  trans->no_2pc= true;
 
   if (session.transaction.xid_state.xid.is_null())
     session.transaction.xid_state.xid.set(session.getQueryId());
@@ -436,34 +430,33 @@ void TransactionServices::registerResourceForTransaction(Session::reference sess
   engine->startTransaction(&session, START_TRANS_NO_OPTIONS);
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
-  if (! session.getResourceContext(monitored, 0)->isStarted())
+  if (! session.getResourceContext(*monitored, 0).isStarted())
     registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
 void TransactionServices::allocateNewTransactionId()
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
   {
     return;
   }
 
   Session *my_session= current_session;
-  uint64_t xa_id= xa_storage_engine->getNewTransactionId(my_session);
+  uint64_t xa_id= xa_storage_engine().getNewTransactionId(my_session);
   my_session->setXaId(xa_id);
 }
 
-uint64_t TransactionServices::getCurrentTransactionId(Session::reference session)
+uint64_t TransactionServices::getCurrentTransactionId(Session& session)
 {
   if (session.getXaId() == 0)
   {
-    session.setXaId(xa_storage_engine->getNewTransactionId(&session)); 
+    session.setXaId(xa_storage_engine().getNewTransactionId(&session)); 
   }
 
   return session.getXaId();
 }
 
-int TransactionServices::commitTransaction(Session::reference session,
+int TransactionServices::commitTransaction(Session& session,
                                            bool normal_transaction)
 {
   int error= 0, cookie= 0;
@@ -500,12 +493,10 @@ int TransactionServices::commitTransaction(Session::reference session,
      */
     if (shouldConstructMessages())
     {
-      for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-           it != resource_contexts.end() && ! error;
-           ++it)
+      BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
       {
-        ResourceContext *resource_context= *it;
-        int err;
+        if (error)
+          break;
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -518,7 +509,7 @@ int TransactionServices::commitTransaction(Session::reference session,
 
         if (resource->participatesInXaTransaction())
         {
-          if ((err= resource_context->getXaResourceManager()->xaPrepare(&session, normal_transaction)))
+          if (int err= resource_context->getXaResourceManager()->xaPrepare(&session, normal_transaction))
           {
             my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
             error= 1;
@@ -556,7 +547,7 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::commitPhaseOne(Session::reference session,
+int TransactionServices::commitPhaseOne(Session& session,
                                         bool normal_transaction)
 {
   int error=0;
@@ -574,18 +565,13 @@ int TransactionServices::commitPhaseOne(Session::reference session,
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      int err;
-      ResourceContext *resource_context= *it;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaCommit(&session, all)))
+        if (int err= resource_context->getXaResourceManager()->xaCommit(&session, all))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -597,7 +583,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->commit(&session, all)))
+        if (int err= resource_context->getTransactionalStorageEngine()->commit(&session, all))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -611,7 +597,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
     }
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
 
     if (normal_transaction)
     {
@@ -623,7 +609,7 @@ int TransactionServices::commitPhaseOne(Session::reference session,
   return error;
 }
 
-int TransactionServices::rollbackTransaction(Session::reference session,
+int TransactionServices::rollbackTransaction(Session& session,
                                              bool normal_transaction)
 {
   int error= 0;
@@ -637,23 +623,17 @@ int TransactionServices::rollbackTransaction(Session::reference session,
     We must not rollback the normal transaction if a statement
     transaction is pending.
   */
-  assert(session.transaction.stmt.getResourceContexts().empty() ||
-              trans == &session.transaction.stmt);
+  assert(session.transaction.stmt.getResourceContexts().empty() || trans == &session.transaction.stmt);
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      int err;
-      ResourceContext *resource_context= *it;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInXaTransaction())
       {
-        if ((err= resource_context->getXaResourceManager()->xaRollback(&session, all)))
+        if (int err= resource_context->getXaResourceManager()->xaRollback(&session, all))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -665,7 +645,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
       }
       else if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, all)))
+        if (int err= resource_context->getTransactionalStorageEngine()->rollback(&session, all))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -691,7 +671,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
       rollbackStatementMessage(session);
 
     if (is_real_trans)
-      session.transaction.xid_state.xid.null();
+      session.transaction.xid_state.xid.set_null();
     if (normal_transaction)
     {
       session.variables.tx_isolation=session.session_tx_isolation;
@@ -716,7 +696,7 @@ int TransactionServices::rollbackTransaction(Session::reference session,
   return error;
 }
 
-int TransactionServices::autocommitOrRollback(Session::reference session,
+int TransactionServices::autocommitOrRollback(Session& session,
                                               int error)
 {
   /* One GPB Statement message per SQL statement */
@@ -728,12 +708,8 @@ int TransactionServices::autocommitOrRollback(Session::reference session,
   {
     TransactionContext *trans = &session.transaction.stmt;
     TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      ResourceContext *resource_context= *it;
-
       resource_context->getTransactionalStorageEngine()->endStatement(&session);
     }
 
@@ -768,7 +744,7 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
   }
 };
 
-int TransactionServices::rollbackToSavepoint(Session::reference session,
+int TransactionServices::rollbackToSavepoint(Session& session,
                                              NamedSavepoint &sv)
 {
   int error= 0;
@@ -781,18 +757,13 @@ int TransactionServices::rollbackToSavepoint(Session::reference session,
     rolling back to savepoint in all storage engines that were part of the
     transaction when the savepoint was set
   */
-  for (TransactionContext::ResourceContexts::iterator it= sv_resource_contexts.begin();
-       it != sv_resource_contexts.end();
-       ++it)
+  BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, sv_resource_contexts)
   {
-    int err;
-    ResourceContext *resource_context= *it;
-
     plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(&session, sv)))
+      if (int err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(&session, sv))
       {
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error= 1;
@@ -838,18 +809,13 @@ int TransactionServices::rollbackToSavepoint(Session::reference session,
      * savepoint's resource contexts.
      */
         
-    for (TransactionContext::ResourceContexts::iterator it= set_difference_contexts.begin();
-         it != set_difference_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, set_difference_contexts)
     {
-      ResourceContext *resource_context= *it;
-      int err;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->rollback(&session, !(0))))
+        if (int err= resource_context->getTransactionalStorageEngine()->rollback(&session, true))
         {
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
@@ -898,7 +864,7 @@ int TransactionServices::rollbackToSavepoint(Session::reference session,
   section "4.33.4 SQL-statements and transaction states",
   NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::setSavepoint(Session::reference session,
+int TransactionServices::setSavepoint(Session& session,
                                       NamedSavepoint &sv)
 {
   int error= 0;
@@ -907,18 +873,13 @@ int TransactionServices::setSavepoint(Session::reference session,
 
   if (resource_contexts.empty() == false)
   {
-    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-         it != resource_contexts.end();
-         ++it)
+    BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
     {
-      ResourceContext *resource_context= *it;
-      int err;
-
       plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
       if (resource->participatesInSqlTransaction())
       {
-        if ((err= resource_context->getTransactionalStorageEngine()->setSavepoint(&session, sv)))
+        if (int err= resource_context->getTransactionalStorageEngine()->setSavepoint(&session, sv))
         {
           my_error(ER_GET_ERRNO, MYF(0), err);
           error= 1;
@@ -950,25 +911,20 @@ int TransactionServices::setSavepoint(Session::reference session,
   return error;
 }
 
-int TransactionServices::releaseSavepoint(Session::reference session,
+int TransactionServices::releaseSavepoint(Session& session,
                                           NamedSavepoint &sv)
 {
   int error= 0;
 
   TransactionContext::ResourceContexts &resource_contexts= sv.getResourceContexts();
 
-  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-       it != resource_contexts.end();
-       ++it)
+  BOOST_FOREACH(TransactionContext::ResourceContexts::reference resource_context, resource_contexts)
   {
-    int err;
-    ResourceContext *resource_context= *it;
-
     plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
 
     if (resource->participatesInSqlTransaction())
     {
-      if ((err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(&session, sv)))
+      if (int err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(&session, sv))
       {
         my_error(ER_GET_ERRNO, MYF(0), err);
         error= 1;
@@ -981,11 +937,10 @@ int TransactionServices::releaseSavepoint(Session::reference session,
 
 bool TransactionServices::shouldConstructMessages()
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  return replication_services.isActive();
+  return ReplicationServices::isActive();
 }
 
-message::Transaction *TransactionServices::getActiveTransactionMessage(Session::reference session,
+message::Transaction *TransactionServices::getActiveTransactionMessage(Session& session,
                                                                        bool should_inc_trx_id)
 {
   message::Transaction *transaction= session.getTransactionMessage();
@@ -997,17 +952,15 @@ message::Transaction *TransactionServices::getActiveTransactionMessage(Session::
      * for this Session object.  Session is responsible for
      * deleting transaction message when done with it.
      */
-    transaction= new (nothrow) message::Transaction();
+    transaction= new message::Transaction();
     initTransactionMessage(*transaction, session, should_inc_trx_id);
     session.setTransactionMessage(transaction);
-    return transaction;
   }
-  else
-    return transaction;
+  return transaction;
 }
 
 void TransactionServices::initTransactionMessage(message::Transaction &transaction,
-                                                 Session::reference session,
+                                                 Session& session,
                                                  bool should_inc_trx_id)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
@@ -1024,7 +977,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &transacti
     trx->set_transaction_id(0);
   }
 
-  trx->set_start_timestamp(session.getCurrentTimestamp());
+  trx->set_start_timestamp(session.times.getCurrentTimestamp());
   
   /* segment info may get set elsewhere as needed */
   transaction.set_segment_id(1);
@@ -1032,14 +985,14 @@ void TransactionServices::initTransactionMessage(message::Transaction &transacti
 }
 
 void TransactionServices::finalizeTransactionMessage(message::Transaction &transaction,
-                                                     Session::const_reference session)
+                                                     const Session& session)
 {
   message::TransactionContext *trx= transaction.mutable_transaction_context();
-  trx->set_end_timestamp(session.getCurrentTimestamp());
+  trx->set_end_timestamp(session.times.getCurrentTimestamp());
 }
 
 void TransactionServices::cleanupTransactionMessage(message::Transaction *transaction,
-                                                    Session::reference session)
+                                                    Session& session)
 {
   delete transaction;
   session.setStatementMessage(NULL);
@@ -1047,10 +1000,9 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *transa
   session.setXaId(0);
 }
 
-int TransactionServices::commitTransactionMessage(Session::reference session)
+int TransactionServices::commitTransactionMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return 0;
 
   /*
@@ -1084,7 +1036,7 @@ int TransactionServices::commitTransactionMessage(Session::reference session)
   
   finalizeTransactionMessage(*transaction, session);
   
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
+  plugin::ReplicationReturnCode result= ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
@@ -1093,26 +1045,25 @@ int TransactionServices::commitTransactionMessage(Session::reference session)
 
 void TransactionServices::initStatementMessage(message::Statement &statement,
                                                message::Statement::Type type,
-                                               Session::const_reference session)
+                                               const Session& session)
 {
   statement.set_type(type);
-  statement.set_start_timestamp(session.getCurrentTimestamp());
+  statement.set_start_timestamp(session.times.getCurrentTimestamp());
 
   if (session.variables.replicate_query)
     statement.set_sql(session.getQueryString()->c_str());
 }
 
 void TransactionServices::finalizeStatementMessage(message::Statement &statement,
-                                                   Session::reference session)
+                                                   Session& session)
 {
-  statement.set_end_timestamp(session.getCurrentTimestamp());
+  statement.set_end_timestamp(session.times.getCurrentTimestamp());
   session.setStatementMessage(NULL);
 }
 
-void TransactionServices::rollbackTransactionMessage(Session::reference session)
+void TransactionServices::rollbackTransactionMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
   
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -1159,16 +1110,15 @@ void TransactionServices::rollbackTransactionMessage(Session::reference session)
 
     finalizeTransactionMessage(*transaction, session);
     
-    (void) replication_services.pushTransactionMessage(session, *transaction);
+    (void) ReplicationServices::pushTransactionMessage(session, *transaction);
   }
 
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rollbackStatementMessage(Session::reference session)
+void TransactionServices::rollbackStatementMessage(Session& session)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   message::Statement *current_statement= session.getStatementMessage();
@@ -1231,7 +1181,7 @@ void TransactionServices::rollbackStatementMessage(Session::reference session)
   }
 }
 
-message::Transaction *TransactionServices::segmentTransactionMessage(Session::reference session,
+message::Transaction *TransactionServices::segmentTransactionMessage(Session& session,
                                                                      message::Transaction *transaction)
 {
   uint64_t trx_id= transaction->transaction_context().transaction_id();
@@ -1249,7 +1199,7 @@ message::Transaction *TransactionServices::segmentTransactionMessage(Session::re
   return transaction;
 }
 
-message::Statement &TransactionServices::getInsertStatement(Session::reference session,
+message::Statement &TransactionServices::getInsertStatement(Session& session,
                                                             Table &table,
                                                             uint32_t *next_segment_id)
 {
@@ -1340,7 +1290,7 @@ message::Statement &TransactionServices::getInsertStatement(Session::reference s
 }
 
 void TransactionServices::setInsertHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table)
 {
   initStatementMessage(statement, message::Statement::INSERT, session);
@@ -1353,15 +1303,9 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   message::InsertHeader *header= statement.mutable_insert_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
-
-  Field *current_field;
   Field **table_fields= table.getFields();
 
   message::FieldMetadata *field_metadata;
@@ -1369,7 +1313,7 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   /* We will read all the table's fields... */
   table.setReadSet();
 
-  while ((current_field= *table_fields++) != NULL) 
+  while (Field* current_field= *table_fields++) 
   {
     field_metadata= header->add_field_metadata();
     field_metadata->set_name(current_field->field_name);
@@ -1377,11 +1321,10 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   }
 }
 
-bool TransactionServices::insertRecord(Session::reference session,
+bool TransactionServices::insertRecord(Session& session,
                                        Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return false;
 
   if (not table.getShare()->is_replicated())
@@ -1436,7 +1379,7 @@ bool TransactionServices::insertRecord(Session::reference session,
   return false;
 }
 
-message::Statement &TransactionServices::getUpdateStatement(Session::reference session,
+message::Statement &TransactionServices::getUpdateStatement(Session& session,
                                                             Table &table,
                                                             const unsigned char *old_record, 
                                                             const unsigned char *new_record,
@@ -1529,7 +1472,7 @@ message::Statement &TransactionServices::getUpdateStatement(Session::reference s
 }
 
 void TransactionServices::setUpdateHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table,
                                           const unsigned char *old_record, 
                                           const unsigned char *new_record)
@@ -1544,13 +1487,8 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   message::UpdateHeader *header= statement.mutable_update_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   Field *current_field;
   Field **table_fields= table.getFields();
@@ -1583,13 +1521,12 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::updateRecord(Session::reference session,
+void TransactionServices::updateRecord(Session& session,
                                        Table &table, 
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -1714,7 +1651,7 @@ bool TransactionServices::isFieldUpdated(Field *current_field,
   return isUpdated;
 }  
 
-message::Statement &TransactionServices::getDeleteStatement(Session::reference session,
+message::Statement &TransactionServices::getDeleteStatement(Session& session,
                                                             Table &table,
                                                             uint32_t *next_segment_id)
 {
@@ -1805,7 +1742,7 @@ message::Statement &TransactionServices::getDeleteStatement(Session::reference s
 }
 
 void TransactionServices::setDeleteHeader(message::Statement &statement,
-                                          Session::const_reference session,
+                                          const Session& session,
                                           Table &table)
 {
   initStatementMessage(statement, message::Statement::DELETE, session);
@@ -1817,13 +1754,8 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   message::DeleteHeader *header= statement.mutable_delete_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   Field *current_field;
   Field **table_fields= table.getFields();
@@ -1846,12 +1778,11 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::deleteRecord(Session::reference session,
+void TransactionServices::deleteRecord(Session& session,
                                        Table &table,
                                        bool use_update_record)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -1906,11 +1837,10 @@ void TransactionServices::deleteRecord(Session::reference session,
   }
 }
 
-void TransactionServices::createTable(Session::reference session,
+void TransactionServices::createTable(Session& session,
                                       const message::Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (not replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(table))
@@ -1933,17 +1863,16 @@ void TransactionServices::createTable(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
 }
 
-void TransactionServices::createSchema(Session::reference session,
+void TransactionServices::createSchema(Session& session,
                                        const message::Schema &schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(schema))
@@ -1966,18 +1895,17 @@ void TransactionServices::createSchema(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 
 }
 
-void TransactionServices::dropSchema(Session::reference session,
-                                     identifier::Schema::const_reference identifier,
+void TransactionServices::dropSchema(Session& session,
+                                     const identifier::Schema& identifier,
                                      message::schema::const_reference schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (not replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(schema))
@@ -2000,17 +1928,16 @@ void TransactionServices::dropSchema(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::alterSchema(Session::reference session,
+void TransactionServices::alterSchema(Session& session,
                                       const message::Schema &old_schema,
                                       const message::Schema &new_schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(old_schema))
@@ -2037,18 +1964,17 @@ void TransactionServices::alterSchema(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::dropTable(Session::reference session,
-                                    identifier::Table::const_reference identifier,
+void TransactionServices::dropTable(Session& session,
+                                    const identifier::Table& identifier,
                                     message::table::const_reference table,
                                     bool if_exists)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not message::is_replicated(table))
@@ -2076,16 +2002,14 @@ void TransactionServices::dropTable(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::truncateTable(Session::reference session,
-                                        Table &table)
+void TransactionServices::truncateTable(Session& session, Table &table)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
 
   if (not table.getShare()->is_replicated())
@@ -2103,30 +2027,23 @@ void TransactionServices::truncateTable(Session::reference session,
   message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
-  string schema_name;
-  (void) table.getShare()->getSchemaName(schema_name);
-
-  string table_name;
-  (void) table.getShare()->getTableName(table_name);
-
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+  table_metadata->set_schema_name(table.getShare()->getSchemaName());
+  table_metadata->set_table_name(table.getShare()->getTableName());
 
   finalizeStatementMessage(*statement, session);
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
-void TransactionServices::rawStatement(Session::reference session,
+void TransactionServices::rawStatement(Session& session,
                                        const string &query,
                                        const string &schema)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (! ReplicationServices::isActive())
     return;
  
   message::Transaction *transaction= getActiveTransactionMessage(session);
@@ -2140,53 +2057,41 @@ void TransactionServices::rawStatement(Session::reference session,
 
   finalizeTransactionMessage(*transaction, session);
   
-  (void) replication_services.pushTransactionMessage(session, *transaction);
+  (void) ReplicationServices::pushTransactionMessage(session, *transaction);
 
   cleanupTransactionMessage(transaction, session);
 }
 
-int TransactionServices::sendEvent(Session::reference session,
-                                   const message::Event &event)
+int TransactionServices::sendEvent(Session& session, const message::Event &event)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (! replication_services.isActive())
+  if (not ReplicationServices::isActive())
     return 0;
-
-  message::Transaction *transaction= new (nothrow) message::Transaction();
+  message::Transaction transaction;
 
   // set server id, start timestamp
-  initTransactionMessage(*transaction, session, true);
+  initTransactionMessage(transaction, session, true);
 
   // set end timestamp
-  finalizeTransactionMessage(*transaction, session);
+  finalizeTransactionMessage(transaction, session);
 
-  message::Event *trx_event= transaction->mutable_event();
-
+  message::Event *trx_event= transaction.mutable_event();
   trx_event->CopyFrom(event);
-
-  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(session, *transaction);
-
-  delete transaction;
-
-  return static_cast<int>(result);
+  plugin::ReplicationReturnCode result= ReplicationServices::pushTransactionMessage(session, transaction);
+  return result;
 }
 
-bool TransactionServices::sendStartupEvent(Session::reference session)
+bool TransactionServices::sendStartupEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::STARTUP);
-  if (sendEvent(session, event) != 0)
-    return false;
-  return true;
+  return not sendEvent(session, event);
 }
 
-bool TransactionServices::sendShutdownEvent(Session::reference session)
+bool TransactionServices::sendShutdownEvent(Session& session)
 {
   message::Event event;
   event.set_type(message::Event::SHUTDOWN);
-  if (sendEvent(session, event) != 0)
-    return false;
-  return true;
+  return not sendEvent(session, event);
 }
 
 } /* namespace drizzled */

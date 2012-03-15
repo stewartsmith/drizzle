@@ -18,36 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DRIZZLED_H
-#define DRIZZLED_DRIZZLED_H
+#pragma once
 
 #include <bitset>
 #include <boost/program_options.hpp>
-
 #include <boost/detail/atomic_count.hpp>
-
+#include <drizzled/common_fwd.h>
 #include <drizzled/global_buffer.h>
 #include <drizzled/definitions.h>
 
 struct passwd;
 
-namespace drizzled
-{
-
-namespace module
-{
-class Registry;
-}
+namespace drizzled {
 
 extern boost::detail::atomic_count connection_count;
 extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;
 extern bool volatile abort_loop;
 extern bool volatile ready_to_exit;
-extern bool opt_help;
-extern bool opt_help_extended;
 extern passwd *user_info;
-extern char *drizzled_user;
 
 extern global_buffer_constraint<uint64_t> global_sort_buffer;
 extern global_buffer_constraint<uint64_t> global_join_buffer;
@@ -61,14 +50,14 @@ extern const char * const DRIZZLE_CONFIG_NAME;
 boost::program_options::variables_map &getVariablesMap();
 
 int init_thread_environment();
-int init_server_components(module::Registry &modules);
-int init_basic_variables(int argc, char **argv);
-int init_remaining_variables(module::Registry &modules);
+void init_server_components(module::Registry&);
+bool init_variables_before_daemonizing(int argc, char **argv);
+bool init_variables_after_daemonizing(module::Registry&);
 
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);
 void clean_up(bool print_message);
+bool was_help_requested();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DRIZZLED_H */

@@ -23,6 +23,7 @@ Sort utility
 Created 11/9/1995 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0sort_h
 #define ut0sort_h
 

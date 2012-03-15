@@ -18,21 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INTERNAL_IOCACHE_H
-#define DRIZZLED_INTERNAL_IOCACHE_H
+#pragma once
 
 #include <drizzled/internal/my_sys.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
-struct st_io_cache;
-typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
+#define my_b_EOF INT_MIN
 
-struct st_io_cache    /* Used when cacheing files */
+class io_cache_st    /* Used when cacheing files */
 {
+public:
+  typedef int (*IO_CACHE_CALLBACK)(io_cache_st*);
+
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
   /*
@@ -78,24 +77,24 @@ struct st_io_cache    /* Used when cacheing files */
     my_b_read() will call read_function to fetch the data. read_function
     must never be invoked directly.
   */
-  int (*read_function)(struct st_io_cache *,unsigned char *,size_t);
+  int (*read_function)(io_cache_st* ,unsigned char *,size_t);
   /*
     Same idea as in the case of read_function, except my_b_write() needs to
     be replaced with my_b_append() for a SEQ_READ_APPEND cache
   */
-  int (*write_function)(struct st_io_cache *,const unsigned char *,size_t);
+  int (*write_function)(io_cache_st* ,const unsigned char *,size_t);
   /*
     Specifies the type of the cache. Depending on the type of the cache
     certain operations might not be available and yield unpredicatable
     results. Details to be documented later
   */
-  enum cache_type type;
+  cache_type type;
   int error;
   /*
     Callbacks when the actual read I/O happens. These were added and
     are currently used for binary logging of LOAD DATA INFILE - when a
     block is read from the file, we create a block create/append event, and
-    when IO_CACHE is closed, we create an end event. These functions could,
+    when io_cache_st is closed, we create an end event. These functions could,
     of course be used for other things
   */
   IO_CACHE_CALLBACK pre_read;
@@ -125,17 +124,8 @@ struct st_io_cache    /* Used when cacheing files */
     somewhere else
   */
   bool alloced_buffer;
-#ifdef HAVE_AIOWAIT
-  /*
-    As inidicated by ifdef, this is for async I/O, which is not currently
-    used (because it's not reliable on all systems)
-  */
-  uint32_t inited;
-  my_off_t aio_read_pos;
-  my_aio_result aio_result;
-#endif
 
-  st_io_cache() :
+  io_cache_st() :
     pos_in_file(0),
     end_of_file(0),
     read_pos(0),
@@ -165,48 +155,56 @@ struct st_io_cache    /* Used when cacheing files */
     read_length(0),
     myflags(0),
     alloced_buffer(0)
-#ifdef HAVE_AIOWAIT
-    ,
-    inited(0),
-    aio_read_pos(0),
-    aio_result(0)
-#endif
   { }
 
-  ~st_io_cache()
-  { }
-
+  int get();
+  int block_write(const void*, size_t, my_off_t);
   void close_cached_file();
   bool real_open_cached_file();
   int end_io_cache();
-  int init_io_cache(int file, size_t cachesize,
-                    enum cache_type type, my_off_t seek_offset,
-                    bool use_async_io, myf cache_myflags);
+  int init_io_cache(int file, size_t cachesize, cache_type type, my_off_t seek_offset, bool use_async_io, myf cache_myflags);
   void init_functions();
 
-  bool reinit_io_cache(enum cache_type type_arg,
-                       my_off_t seek_offset,
-                       bool use_async_io,
-                       bool clear_cache);
+  bool reinit_io_cache(cache_type type_arg, my_off_t seek_offset, bool use_async_io, bool clear_cache);
   void setup_io_cache();
-  bool open_cached_file(const char *dir,
-                        const char *prefix, size_t cache_size,
-                        myf cache_myflags);
+  bool open_cached_file(const char *dir, const char *prefix, size_t cache_size, myf cache_myflags);
+  int flush(int need_append_buffer_lock= 1);
 
+  void clear()
+  {
+    buffer= NULL;
+  }
+
+  bool inited() const
+  {
+    return buffer;
+  }
+
+  my_off_t tell() const
+  {
+    return pos_in_file + *current_pos - request_pos;
+  }
+
+  int read(void* Buffer0, size_t Count)
+  {
+    unsigned char* Buffer= reinterpret_cast<unsigned char*>(Buffer0);
+    if (read_pos + Count > read_end)
+      return read_function(this, Buffer, Count);
+    memcpy(Buffer, read_pos, Count);
+    read_pos += Count;
+    return 0;
+  }
+
+  int write(const void* Buffer0, size_t Count)
+  {
+    const unsigned char* Buffer= reinterpret_cast<const unsigned char*>(Buffer0);
+    if (write_pos + Count > write_end)
+      return write_function(this, Buffer, Count);
+    memcpy(write_pos, Buffer, Count);
+    write_pos += Count;
+    return 0;
+  }
 };
-
-typedef struct st_io_cache IO_CACHE;    /* Used when cacheing files */
-
-extern int _my_b_get(st_io_cache *info);
-extern int _my_b_async_read(st_io_cache *info,unsigned char *Buffer,size_t Count);
-
-extern int my_block_write(st_io_cache *info, const unsigned char *Buffer,
-                          size_t Count, my_off_t pos);
-extern int my_b_flush_io_cache(st_io_cache *info, int need_append_buffer_lock);
-
-#define flush_io_cache(info) my_b_flush_io_cache((info),1)
 
 } /* namespace internal */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_INTERNAL_IOCACHE_H */

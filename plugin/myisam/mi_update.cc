@@ -22,14 +22,14 @@ using namespace drizzled;
 
 int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {
-  int flag,key_changed,save_errno;
+  int key_changed,save_errno;
   register internal::my_off_t pos;
   uint32_t i;
   unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
   uint64_t changed;
   MYISAM_SHARE *share= info->s;
-  internal::ha_checksum old_checksum= 0;
+  ha_checksum old_checksum= 0;
 
   if (!(info->update & HA_STATE_AKTIV))
   {
@@ -167,7 +167,7 @@ err:
       errno == HA_ERR_RECORD_FILE_FULL)
   {
     info->errkey= (int) i;
-    flag=0;
+    int flag=0;
     do
     {
       if (((uint64_t) 1 << i) & changed)

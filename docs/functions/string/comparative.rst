@@ -1,6 +1,8 @@
 Comparative Functions
 =====================
 
+.. _like-function:
+
 LIKE 	        
 ----
 
@@ -24,6 +26,14 @@ For example:
 	WHERE title LIKE 'DIRECTOR%'
 	ORDER BY field, title;
 
+.. _regex-function:
+
+REGEX
+-----
+
+Undocumented.
+
+.. _regexp-function:
 
 REGEXP
 ------
@@ -54,8 +64,9 @@ The search pattern may describe only a part of string. To match entire string, u
 
 	SELECT 'abcabc' REGEXP 'ABC', 'abcabc' REGEXP BINARY 'ABC';
 
+.. _strcmp-function:
 
-STRCMP()
---------
+STRCMP
+------
 
 The purpose of STRCMP is also to compare two strings. This function returns 0 if two strings are the same, -1 if the first argument is smaller than the second according to the current sort order, and 1 otherwise.

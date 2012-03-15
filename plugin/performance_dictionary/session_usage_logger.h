@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H
-#define PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H
+#pragma once
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -45,4 +44,3 @@ public:
 
 } /* namespace performance_dictionary */
 
-#endif /* PLUGIN_PERFORMANCE_DICTIONARY_SESSION_USAGE_LOGGER_H */

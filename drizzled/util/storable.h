@@ -18,22 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_STORABLE_H
-#define DRIZZLED_UTIL_STORABLE_H
+#pragma once
 
-namespace drizzled
+namespace drizzled {
+namespace util {
+
+class Storable 
 {
-
-namespace util
-{
-
-class Storable {
 public:
-  virtual ~Storable()
-  { }
+  virtual ~Storable() { }
 };
 
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_STORABLE_H */

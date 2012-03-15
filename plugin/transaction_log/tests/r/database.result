@@ -1,9 +1,0 @@
-CREATE DATABASE test1;
-DROP DATABASE test1;
-START TRANSACTION;
-CREATE SCHEMA `test1` COLLATE utf8_general_ci;
-COMMIT;
-START TRANSACTION;
-DROP DATABASE test1;
-COMMIT;
-SET GLOBAL transaction_log_truncate_debug= true;

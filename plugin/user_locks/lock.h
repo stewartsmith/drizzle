@@ -32,8 +32,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/shared_ptr.hpp>
 
-#ifndef PLUGIN_USER_LOCKS_LOCK_H
-#define PLUGIN_USER_LOCKS_LOCK_H
+#pragma once
 
 namespace user_locks {
 
@@ -50,4 +49,3 @@ public:
 
 } // namespace user_locks
 
-#endif /* PLUGIN_USER_LOCKS_LOCK_H */

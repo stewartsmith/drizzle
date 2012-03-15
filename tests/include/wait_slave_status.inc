@@ -28,7 +28,7 @@
 #    outputs
 #       show slave status;
 #       Slave_IO_State  #
-#       Master_Host     127.0.0.1
+#       Master_Host     localhost
 #       Master_User     root
 #       Master_Port     MASTER_MYPORT
 #       Connect_Retry   1
@@ -71,7 +71,7 @@
 #
 # The expected result follows the LIKE pattern:
 #
-#   let $result_pattern= '%127.0.0.1%root%1%master-bin.000001%776%slave-relay-bin.000004%master-bin.000001%Yes%No%0%0%319%Master%master-bin.000001%319%No%';
+#   let $result_pattern= '%localhost%root%1%master-bin.000001%776%slave-relay-bin.000004%master-bin.000001%Yes%No%0%0%319%Master%master-bin.000001%319%No%';
 #
 # The Slave_IO_Running value is the "Yes" just after the "master-bin.000001".
 #

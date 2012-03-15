@@ -29,7 +29,7 @@ TableConstraintsTool::TableConstraintsTool() :
 {
   add_field("CONSTRAINT_SCHEMA");
   add_field("CONSTRAINT_NAME");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("CONSTRAINT_TYPE");
 }

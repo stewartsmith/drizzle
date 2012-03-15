@@ -31,15 +31,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DRIZZLED_DAEMON_H
-#define DRIZZLED_DAEMON_H
+#pragma once
 
 namespace drizzled
 {
 
-bool daemonize(bool nochdir= true, bool noclose= true, bool wait_sigusr1= true);
+bool daemonize();
 void daemon_is_ready();
 
 }
 
-#endif /* DRIZZLED_DAEMON_H */

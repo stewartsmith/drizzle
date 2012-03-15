@@ -19,14 +19,16 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <string>
 
 #include <drizzled/session.h>
 #include <drizzled/item/string.h>
-#include <drizzled/sql_list.h>
 #include <drizzled/function/set_user_var.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/util/test.h>
 
 using namespace std;
 
@@ -56,41 +58,33 @@ namespace drizzled
 int sql_set_variables(Session *session, const SetVarVector &var_list)
 {
   int error;
-
-  SetVarVector::const_iterator it(var_list.begin());
-
-  while (it != var_list.end())
+  BOOST_FOREACH(SetVarVector::const_reference it, var_list)
   {
-    if ((error= (*it)->check(session)))
+    if ((error= it->check(session)))
       goto err;
-    ++it;
   }
   if (!(error= test(session->is_error())))
   {
-    it= var_list.begin();
-    while (it != var_list.end())
+    BOOST_FOREACH(SetVarVector::const_reference it, var_list)
     {
-      error|= (*it)->update(session);         // Returns 0, -1 or 1
-      ++it;
+      error|= it->update(session);         // Returns 0, -1 or 1
     }
   }
 
 err:
-  free_underlaid_joins(session, &session->getLex()->select_lex);
-  return(error);
+  free_underlaid_joins(session, &session->lex().select_lex);
+  return error;
 }
 
 
 /*****************************************************************************
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/
-set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
-                 const LEX_STRING *base_name_arg, Item *value_arg) :
+set_var::set_var(sql_var_t type_arg, sys_var *var_arg, str_ref base_name_arg, Item *value_arg) :
   uint64_t_value(0),
-  str_value(""),
   var(var_arg),
   type(type_arg),
-  base(*base_name_arg)
+  base(base_name_arg)
 {
   /*
     If the set value is a field, change it to a string to allow things like
@@ -99,10 +93,7 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
   if (value_arg && value_arg->type() == Item::FIELD_ITEM)
   {
     Item_field *item= (Item_field*) value_arg;
-    if (!(value=new Item_string(item->field_name,
-                                (uint32_t) strlen(item->field_name),
-                                item->collation.collation)))
-      value=value_arg;			/* Give error message later */
+    value= new Item_string(str_ref(item->field_name), item->collation.collation);
   }
   else
   {
@@ -124,7 +115,7 @@ int set_var::check(Session *session)
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
-  if (!value)
+  if (not value)
   {
     if (var->check_default(type))
     {
@@ -161,7 +152,7 @@ int set_var::update(Session *session)
 {
   try
   {
-    if (! value)
+    if (not value)
       var->set_default(session, type);
     else if (var->update(session, this))
       return -1;				// should never happen
@@ -241,13 +232,8 @@ int set_var_user::check(Session *session)
 
 int set_var_user::update(Session *)
 {
-  if (user_var_item->update())
-  {
-    /* Give an error if it's not given already */
-    my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY), MYF(0));
-    return -1;
-  }
-  return 0;
+  user_var_item->update();
+	return 0;
 }
 
 void set_var::setValue(const std::string &new_value)

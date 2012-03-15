@@ -1,0 +1,95 @@
+# vim:ft=automake
+#
+# Drizzle Client Library
+#
+# Copyright (C) 2008 Eric Day (eday@oddments.org)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#
+#     * The names of its contributors may not be used to endorse or
+# promote products derived from this software without specific prior
+# written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+lib_LTLIBRARIES+= libdrizzle-1.0/libdrizzle.la
+
+include libdrizzle-1.0/t/include.am
+
+libdrizzle_1_0_libdrizzle_la_CXXFLAGS= \
+				       ${CFLAG_VISIBILITY} \
+				       -DBUILDING_LIBDRIZZLE
+
+libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
+				      $(AM_LDFLAGS) \
+				      $(GCOV_LIBS) \
+				      -version-info \
+				      $(LIBDRIZZLE_LIBRARY_VERSION)
+
+libdrizzle_1_0_libdrizzle_la_SOURCES= \
+				      libdrizzle/column.cc \
+				      libdrizzle/command.cc \
+				      libdrizzle/conn.cc \
+				      libdrizzle/conn_uds.cc \
+				      libdrizzle/drizzle.cc \
+				      libdrizzle/error.cc \
+				      libdrizzle/field.cc \
+				      libdrizzle/handshake.cc \
+				      libdrizzle/pack.cc \
+				      libdrizzle/query.cc \
+				      libdrizzle/result.cc \
+				      libdrizzle/row.cc \
+				      libdrizzle/sha1.cc \
+				      libdrizzle/state.cc
+
+nobase_include_HEADERS+= \
+			 libdrizzle-1.0/column.h \
+			 libdrizzle-1.0/column_client.h \
+			 libdrizzle-1.0/column_server.h \
+			 libdrizzle-1.0/command_client.h \
+			 libdrizzle-1.0/command_server.h \
+			 libdrizzle-1.0/conn.h \
+			 libdrizzle-1.0/conn_client.h \
+			 libdrizzle-1.0/conn_server.h \
+			 libdrizzle-1.0/constants.h \
+			 libdrizzle-1.0/drizzle.h \
+			 libdrizzle-1.0/drizzle_client.h \
+			 libdrizzle-1.0/drizzle_server.h \
+			 libdrizzle-1.0/error.h \
+			 libdrizzle-1.0/field_client.h \
+			 libdrizzle-1.0/field_server.h \
+			 libdrizzle-1.0/handshake_client.h \
+			 libdrizzle-1.0/handshake_server.h \
+			 libdrizzle-1.0/libdrizzle.h \
+			 libdrizzle-1.0/query.h \
+			 libdrizzle-1.0/result.h \
+			 libdrizzle-1.0/result_client.h \
+			 libdrizzle-1.0/result_server.h \
+			 libdrizzle-1.0/return.h \
+			 libdrizzle-1.0/row_client.h \
+			 libdrizzle-1.0/row_server.h \
+			 libdrizzle-1.0/structs.h \
+			 libdrizzle-1.0/verbose.h \
+			 libdrizzle-1.0/visibility.h

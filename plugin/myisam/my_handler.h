@@ -15,10 +15,9 @@
    Software Foundation, Inc., 51 Franklin Place - Suite 330, Boston,
    MA 02110-1301, USA */
 
-#ifndef PLUGIN_MYISAM_MY_HANDLER_H
-#define PLUGIN_MYISAM_MY_HANDLER_H
+#pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <plugin/myisam/myisampack.h>
 
 /*
@@ -45,7 +44,7 @@
 
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
-  const drizzled::CHARSET_INFO *charset;
+  const drizzled::charset_info_st *charset;
   uint32_t start;				/* Start of key in record */
   uint32_t null_pos;			/* position to NULL indicator */
   uint16_t bit_pos;                       /* Position to bit part */
@@ -104,7 +103,7 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(const drizzled::CHARSET_INFO * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
+extern int ha_compare_text(const drizzled::charset_info_st * const, unsigned char *, uint, unsigned char *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a);
 void my_handler_error_register(void);
@@ -118,4 +117,3 @@ extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
 */
 #define portable_sizeof_char_ptr 8
 
-#endif /* PLUGIN_MYISAM_MY_HANDLER_H */

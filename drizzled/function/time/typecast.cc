@@ -27,8 +27,7 @@
 #include <drizzled/time_functions.h>
 #include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {
@@ -53,7 +52,7 @@ void Item_typecast::print(String *str)
   str->append(STRING_WITH_LEN("cast("));
   args[0]->print(str);
   str->append(STRING_WITH_LEN(" as "));
-  str->append(cast_type());
+  str->append(cast_type(), strlen(cast_type()));
   str->append(')');
 }
 
@@ -73,10 +72,11 @@ void Item_char_typecast::print(String *str)
     str->append(st);
     str->append(')');
   }
+
   if (cast_cs)
   {
     str->append(STRING_WITH_LEN(" charset "));
-    str->append(cast_cs->csname);
+    str->append(cast_cs->csname, strlen(cast_cs->csname));
   }
   str->append(')');
 }
@@ -98,14 +98,12 @@ String *Item_char_typecast::val_str(String *str)
   else
   {
     // Convert character set if differ
-    size_t dummy_errors;
-    if (!(res= args[0]->val_str(&tmp_value)) ||
-        str->copy(res->ptr(), res->length(), from_cs,
-        cast_cs, &dummy_errors))
+    if (!(res= args[0]->val_str(&tmp_value)))
     {
       null_value= 1;
       return 0;
     }
+		str->copy(res->ptr(), res->length(), cast_cs);
     res= str;
   }
 
@@ -133,7 +131,7 @@ String *Item_char_typecast::val_str(String *str)
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE,
                           ER(ER_TRUNCATED_WRONG_VALUE), char_type,
-                          res->c_ptr_safe());
+                          res->c_str());
       res->length((uint) length);
     }
     else if (cast_cs == &my_charset_bin && res->length() < (uint) cast_length)
@@ -258,9 +256,9 @@ String *Item_date_typecast::val_str(String *str)
   assert(fixed == 1);
   type::Time ltime;
 
-  if (!get_arg0_date(ltime, TIME_FUZZY_DATE) &&
-      !str->alloc(type::Time::MAX_STRING_LENGTH))
+  if (!get_arg0_date(ltime, TIME_FUZZY_DATE))
   {
+    str->alloc(type::Time::MAX_STRING_LENGTH);
     ltime.convert(*str, type::DRIZZLE_TIMESTAMP_DATE);
 
     return str;

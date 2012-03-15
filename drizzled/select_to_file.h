@@ -18,21 +18,13 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_TO_FILE_H
-#define DRIZZLED_SELECT_TO_FILE_H
+#pragma once
 
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/file_exchange.h>
-
 #include <boost/filesystem.hpp>
 
-namespace drizzled
-{
-
-namespace internal
-{
-typedef struct st_io_cache IO_CACHE;
-}
+namespace drizzled {
 
 class select_to_file :
   public select_result_interceptor
@@ -40,7 +32,7 @@ class select_to_file :
 protected:
   file_exchange *exchange;
   int file;
-  internal::IO_CACHE *cache;
+  internal::io_cache_st *cache;
   ha_rows row_count;
   boost::filesystem::path path;
 
@@ -54,4 +46,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_TO_FILE_H */

@@ -17,16 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MEMORY_MULTI_MALLOC_H
-#define DRIZZLED_MEMORY_MULTI_MALLOC_H
+#pragma once
 
-namespace drizzled
-{
-namespace memory
-{
+namespace drizzled {
+namespace memory {
+
 void* multi_malloc(bool zerofill, ...) __attribute__((malloc));
+
 } /* namespace memory */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MEMORY_MULTI_MALLOC_H */
 

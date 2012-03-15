@@ -16,115 +16,19 @@
 #include <config.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
-
-
-size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
-{
-  uint32_t l;
-  unsigned char *map= cs->to_upper;
-  char *str_orig= str;
-
-  while (*str)
-  {
-    /* Pointing after the '\0' is safe here. */
-    if ((l= my_ismbchar(cs, str, str + cs->mbmaxlen)))
-      str+= l;
-    else
-    {
-      *str= (char) map[(unsigned char)*str];
-      str++;
-    }
-  }
-  return (size_t) (str - str_orig);
-}
-
-
-size_t my_casedn_str_mb(const CHARSET_INFO * const  cs, char *str)
-{
-  uint32_t l;
-  unsigned char *map= cs->to_lower;
-  char *str_orig= str;
-
-  while (*str)
-  {
-    /* Pointing after the '\0' is safe here. */
-    if ((l= my_ismbchar(cs, str, str + cs->mbmaxlen)))
-      str+= l;
-    else
-    {
-      *str= (char) map[(unsigned char)*str];
-      str++;
-    }
-  }
-  return (size_t) (str - str_orig);
-}
-
-
-size_t my_caseup_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                    char *dst, size_t dstlen)
-{
-#ifdef NDEBUG
-  (void)dst;
-  (void)dstlen;
-#endif
-  uint32_t l;
-  char *srcend= src + srclen;
-  unsigned char *map= cs->to_upper;
-
-  assert(src == dst && srclen == dstlen);
-  while (src < srcend)
-  {
-    if ((l=my_ismbchar(cs, src, srcend)))
-      src+= l;
-    else
-    {
-      *src=(char) map[(unsigned char) *src];
-      src++;
-    }
-  }
-  return srclen;
-}
-
-
-size_t my_casedn_mb(const CHARSET_INFO * const  cs, char *src, size_t srclen,
-                    char *dst, size_t dstlen)
-{
-#ifdef NDEBUG
-  (void)dst;
-  (void)dstlen;
-#endif
-  uint32_t l;
-  char *srcend= src + srclen;
-  unsigned char *map=cs->to_lower;
-
-  assert(src == dst && srclen == dstlen);
-  while (src < srcend)
-  {
-    if ((l= my_ismbchar(cs, src, srcend)))
-      src+= l;
-    else
-    {
-      *src= (char) map[(unsigned char)*src];
-      src++;
-    }
-  }
-  return srclen;
-}
-
+namespace drizzled {
 
 /*
   my_strcasecmp_mb() returns 0 if strings are equal, non-zero otherwise.
  */
 
-int my_strcasecmp_mb(const CHARSET_INFO * const  cs,const char *s, const char *t)
+int my_strcasecmp_mb(const charset_info_st * const  cs,const char *s, const char *t)
 {
   uint32_t l;
   unsigned char *map=cs->to_upper;
@@ -164,7 +68,7 @@ inline static int likeconv(const charset_info_st *cs, const char c)
   return (unsigned char) cs->sort_order[(unsigned char) c];
 }
     
-int my_wildcmp_mb(const CHARSET_INFO * const cs,
+int my_wildcmp_mb(const charset_info_st * const cs,
 		  const char *str,const char *str_end,
 		  const char *wildstr,const char *wildend,
 		  int escape, int w_one, int w_many)
@@ -187,7 +91,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
       }
       else
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return (str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char */
@@ -225,7 +129,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 
@@ -272,7 +176,7 @@ int my_wildcmp_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_numchars_mb(const CHARSET_INFO * const cs,
+size_t my_numchars_mb(const charset_info_st * const cs,
 		      const char *pos, const char *end)
 {
   size_t count= 0;
@@ -286,8 +190,7 @@ size_t my_numchars_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_charpos_mb(const CHARSET_INFO * const cs,
-		     const char *pos, const char *end, size_t length)
+size_t my_charpos_mb(const charset_info_st * const cs, const char *pos, const char *end, size_t length)
 {
   const char *start= pos;
 
@@ -301,17 +204,17 @@ size_t my_charpos_mb(const CHARSET_INFO * const cs,
 }
 
 
-size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const char *e,
-                             size_t pos, int *error)
+size_t my_well_formed_len_mb(const charset_info_st& cs, str_ref str, size_t pos, int *error)
 {
+  const char *b= str.begin();
+  const char *e= str.end();
   const char *b_start= b;
   *error= 0;
   while (pos)
   {
     my_wc_t wc;
-    int mb_len;
-
-    if ((mb_len= cs->cset->mb_wc(cs, &wc, (const unsigned char*) b, (const unsigned char*) e)) <= 0)
+    int mb_len= cs.cset->mb_wc(&cs, &wc, (const unsigned char*) b, (const unsigned char*) e);
+    if (mb_len <= 0)
     {
       *error= b < e ? 1 : 0;
       break;
@@ -323,7 +226,7 @@ size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const
 }
 
 
-uint32_t my_instr_mb(const CHARSET_INFO * const cs,
+uint32_t my_instr_mb(const charset_info_st * const cs,
                  const char *b, size_t b_length,
                  const char *s, size_t s_length,
                  my_match_t *match, uint32_t nmatch)
@@ -380,7 +283,7 @@ uint32_t my_instr_mb(const CHARSET_INFO * const cs,
 
 /* BINARY collations handlers for MB charsets */
 
-int my_strnncoll_mb_bin(const CHARSET_INFO * const,
+int my_strnncoll_mb_bin(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
@@ -416,7 +319,7 @@ int my_strnncoll_mb_bin(const CHARSET_INFO * const,
     0 if strings are equal
 */
 
-int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
+int my_strnncollsp_mb_bin(const charset_info_st * const,
                           const unsigned char *a, size_t a_length,
                           const unsigned char *b, size_t b_length,
                           bool diff_if_only_endspace_difference)
@@ -495,7 +398,7 @@ int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
   cp932, euckr, gb2312, sjis, eucjpms, ujis.
 */
 size_t
-my_strnxfrm_mb(const CHARSET_INFO * const cs,
+my_strnxfrm_mb(const charset_info_st * const cs,
                unsigned char *dst, size_t dstlen, uint32_t nweights,
                const unsigned char *src, size_t srclen, uint32_t flags)
 {
@@ -570,14 +473,14 @@ pad:
 }
 
 
-int my_strcasecmp_mb_bin(const CHARSET_INFO * const,
+int my_strcasecmp_mb_bin(const charset_info_st * const,
                          const char *s, const char *t)
 {
   return strcmp(s,t);
 }
 
 
-void my_hash_sort_mb_bin(const CHARSET_INFO * const,
+void my_hash_sort_mb_bin(const charset_info_st * const,
                          const unsigned char *key, size_t len,
                          uint32_t *nr1, uint32_t *nr2)
 {
@@ -614,7 +517,7 @@ void my_hash_sort_mb_bin(const CHARSET_INFO * const,
         create a buffer with multibyte representation of the max_sort_char
         character, and copy it into max_str in a loop.
 */
-static void pad_max_char(const CHARSET_INFO * const cs, char *str, char *end)
+static void pad_max_char(const charset_info_st * const cs, char *str, char *end)
 {
   char buf[10];
   char buflen;
@@ -668,7 +571,7 @@ static void pad_max_char(const CHARSET_INFO * const cs, char *str, char *end)
 ** optimized !
 */
 
-bool my_like_range_mb(const CHARSET_INFO * const cs,
+bool my_like_range_mb(const charset_info_st * const cs,
                          const char *ptr,size_t ptr_length,
                          char escape, char w_one, char w_many,
                          size_t res_length,
@@ -800,7 +703,7 @@ fill_max_and_min:
 }
 
 
-int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
+int my_wildcmp_mb_bin(const charset_info_st * const cs,
                       const char *str,const char *str_end,
                       const char *wildstr,const char *wildend,
                       int escape, int w_one, int w_many)
@@ -823,7 +726,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
       }
       else
       if (str == str_end || *wildstr++ != *str++)
-	return(1);				/* No match */
+	return 1;				/* No match */
       if (wildstr == wildend)
 	return (str != str_end);		/* Match if both are at end */
       result=1;					/* Found an anchor char */
@@ -861,7 +764,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
 	break;					/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);				/* Ok if w_many is last */
+	return 0;				/* Ok if w_many is last */
       if (str == str_end)
 	return -1;
 
@@ -1119,7 +1022,7 @@ public:
 };
 
 
-size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *e)
+size_t my_numcells_mb(const charset_info_st * const cs, const char *b, const char *e)
 {
   my_wc_t wc;
   size_t clen= 0;
@@ -1149,7 +1052,7 @@ size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *
 
 
 
-int my_mb_ctype_mb(const CHARSET_INFO * const cs, int *ctype,
+int my_mb_ctype_mb(const charset_info_st * const cs, int *ctype,
                    const unsigned char *s, const unsigned char *e)
 {
   my_wc_t wc;
@@ -1157,26 +1060,8 @@ int my_mb_ctype_mb(const CHARSET_INFO * const cs, int *ctype,
   if (res <= 0 || wc > 0xFFFF)
     *ctype= 0;
   else
-    *ctype= my_uni_ctype[wc>>8].ctype ?
-            my_uni_ctype[wc>>8].ctype[wc&0xFF] :
-            my_uni_ctype[wc>>8].pctype;
+    *ctype= my_uni_ctype[wc>>8].ctype ? my_uni_ctype[wc>>8].ctype[wc&0xFF] : my_uni_ctype[wc>>8].pctype;
   return res;
 }
-
-
-MY_COLLATION_HANDLER my_collation_mb_bin_handler =
-{
-    NULL,              /* init */
-    my_strnncoll_mb_bin,
-    my_strnncollsp_mb_bin,
-    my_strnxfrm_mb,
-    my_strnxfrmlen_simple,
-    my_like_range_mb,
-    my_wildcmp_mb_bin,
-    my_strcasecmp_mb_bin,
-    my_instr_mb,
-    my_hash_sort_mb_bin,
-    my_propagate_simple
-};
 
 } /* namespace drizzled */

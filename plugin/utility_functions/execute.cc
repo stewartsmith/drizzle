@@ -24,26 +24,19 @@
 #include <drizzled/session/cache.h>
 #include <plugin/utility_functions/functions.h>
 
-namespace drizzled
-{
-
-namespace utility_functions
-{
+namespace drizzled {
+namespace utility_functions {
 
 bool Execute::val_bool()
 {
   drizzled::String *res= args[0]->val_str(&_res);
-
   if (not res or not res->length())
   {
     null_value= true;
     return false;
   }
-
-  execute.run(res->c_str(), res->length());
-
+  execute.run(*res);
   null_value= false;
-
   return true;
 }
 

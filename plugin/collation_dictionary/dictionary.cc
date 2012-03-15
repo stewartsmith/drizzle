@@ -28,8 +28,8 @@ static CollationsTool *collations;
 
 static int init(drizzled::module::Context &context)
 {
-  character_sets= new(std::nothrow)CharacterSetsTool;
-  collations= new(std::nothrow)CollationsTool;
+  character_sets= new CharacterSetsTool;
+  collations= new CollationsTool;
 
   context.add(character_sets);
   context.add(collations);
@@ -43,7 +43,7 @@ DRIZZLE_DECLARE_PLUGIN
   "collation_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for schema, table, column, indexes, etc",
+  N_("Character set and collation dictionaries"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

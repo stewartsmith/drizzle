@@ -34,31 +34,19 @@ using namespace drizzled;
 static optimizer::SEL_ARG *key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
 static bool eq_tree(optimizer::SEL_ARG* a, optimizer::SEL_ARG *b);
 
-bool optimizer::sel_trees_can_be_ored(optimizer::SEL_TREE *tree1, 
-                                      optimizer::SEL_TREE *tree2,
-                                      optimizer::RangeParameter* param)
+bool optimizer::sel_trees_can_be_ored(const SEL_TREE& tree1, const SEL_TREE& tree2, const RangeParameter& param)
 {
-  key_map common_keys= tree1->keys_map;
-  common_keys&= tree2->keys_map;
+  key_map common_keys= tree1.keys_map;
+  common_keys&= tree2.keys_map;
 
   if (common_keys.none())
-  {
     return false;
-  }
 
   /* trees have a common key, check if they refer to same key part */
-  optimizer::SEL_ARG **key1,**key2;
-  for (uint32_t key_no=0; key_no < param->keys; key_no++)
+  for (uint32_t key_no= 0; key_no < param.keys; key_no++)
   {
-    if (common_keys.test(key_no))
-    {
-      key1= tree1->keys + key_no;
-      key2= tree2->keys + key_no;
-      if ((*key1)->part == (*key2)->part)
-      {
-        return true;
-      }
-    }
+    if (common_keys.test(key_no) && tree1.keys[key_no]->part == tree2.keys[key_no]->part)
+      return true;
   }
   return false;
 }
@@ -87,15 +75,13 @@ bool optimizer::sel_trees_can_be_ored(optimizer::SEL_TREE *tree1,
     other Error, both passed lists are unusable
 */
 
-static int imerge_list_or_list(optimizer::RangeParameter *param,
-                               List<optimizer::SEL_IMERGE> *im1,
-                               List<optimizer::SEL_IMERGE> *im2)
+static int imerge_list_or_list(optimizer::RangeParameter *param, List<optimizer::SEL_IMERGE> *im1, List<optimizer::SEL_IMERGE> *im2)
 {
   optimizer::SEL_IMERGE *imerge= &im1->front();
   im1->clear();
   im1->push_back(imerge);
 
-  return imerge->or_sel_imerge_with_checks(param, &im2->front());
+  return imerge->or_sel_imerge_with_checks(*param, im2->front());
 }
 
 
@@ -107,63 +93,45 @@ static int imerge_list_or_list(optimizer::RangeParameter *param,
      other Error
  */
 
-static int imerge_list_or_tree(optimizer::RangeParameter *param,
-                               List<optimizer::SEL_IMERGE> *im1,
-                               optimizer::SEL_TREE *tree)
+static int imerge_list_or_tree(optimizer::RangeParameter& param, List<optimizer::SEL_IMERGE>& im1, optimizer::SEL_TREE& tree)
 {
-  optimizer::SEL_IMERGE *imerge= NULL;
-  List_iterator<optimizer::SEL_IMERGE> it(im1->begin());
-  while ((imerge= it++))
+  List_iterator<optimizer::SEL_IMERGE> it(im1.begin());
+  while (optimizer::SEL_IMERGE* imerge= it++)
   {
     if (imerge->or_sel_tree_with_checks(param, tree))
       it.remove();
   }
-  return im1->is_empty();
+  return im1.is_empty();
 }
 
 
-optimizer::SEL_TREE *
-optimizer::tree_or(optimizer::RangeParameter *param,
-                   optimizer::SEL_TREE *tree1,
-                   optimizer::SEL_TREE *tree2)
+optimizer::SEL_TREE* optimizer::tree_or(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer::SEL_TREE *tree2)
 {
   if (! tree1 || ! tree2)
-  {
     return 0;
-  }
 
-  if (tree1->type == optimizer::SEL_TREE::IMPOSSIBLE || tree2->type == optimizer::SEL_TREE::ALWAYS)
-  {
+  if (tree1->type == SEL_TREE::IMPOSSIBLE || tree2->type == SEL_TREE::ALWAYS)
     return tree2;
-  }
 
-  if (tree2->type == optimizer::SEL_TREE::IMPOSSIBLE || tree1->type == optimizer::SEL_TREE::ALWAYS)
-  {
+  if (tree2->type == SEL_TREE::IMPOSSIBLE || tree1->type == SEL_TREE::ALWAYS)
     return tree1;
-  }
 
-  if (tree1->type == optimizer::SEL_TREE::MAYBE)
-  {
+  if (tree1->type == SEL_TREE::MAYBE)
     return tree1; // Can't use this
-  }
 
-  if (tree2->type == optimizer::SEL_TREE::MAYBE)
-  {
+  if (tree2->type == SEL_TREE::MAYBE)
     return tree2;
-  }
 
-  optimizer::SEL_TREE *result= NULL;
+  SEL_TREE *result= NULL;
   key_map  result_keys;
   result_keys.reset();
-  if (sel_trees_can_be_ored(tree1, tree2, param))
+  if (sel_trees_can_be_ored(*tree1, *tree2, *param))
   {
     /* Join the trees key per key */
-    optimizer::SEL_ARG **key1= NULL;
-    optimizer::SEL_ARG **key2= NULL;
-    optimizer::SEL_ARG **end= NULL;
-    for (key1= tree1->keys,key2= tree2->keys,end= key1+param->keys;
-         key1 != end; 
-         key1++, key2++)
+    SEL_ARG** key1= tree1->keys;
+    SEL_ARG** key2= tree2->keys;
+    SEL_ARG** end= key1+param->keys;
+    for (; key1 != end;  key1++, key2++)
     {
       *key1= key_or(param, *key1, *key2);
       if (*key1)
@@ -180,36 +148,21 @@ optimizer::tree_or(optimizer::RangeParameter *param,
     /* ok, two trees have KEY type but cannot be used without index merge */
     if (tree1->merges.is_empty() && tree2->merges.is_empty())
     {
-      if (param->remove_jump_scans)
-      {
-        bool no_trees= optimizer::remove_nonrange_trees(param, tree1);
-        no_trees= no_trees || optimizer::remove_nonrange_trees(param, tree2);
-        if (no_trees)
-        {
-          return (new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS));
-        }
-      }
-      optimizer::SEL_IMERGE *merge= NULL;
+      if (param->remove_jump_scans && (remove_nonrange_trees(param, tree1) || remove_nonrange_trees(param, tree2)))
+        return new SEL_TREE(SEL_TREE::ALWAYS);
       /* both trees are "range" trees, produce new index merge structure */
-      if (! (result= new optimizer::SEL_TREE()) || 
-          ! (merge= new optimizer::SEL_IMERGE()) ||
-          (result->merges.push_back(merge)) ||
-          (merge->or_sel_tree(param, tree1)) ||
-          (merge->or_sel_tree(param, tree2)))
-      {
-        result= NULL;
-      }
-      else
-      {
-        result->type= tree1->type;
-      }
+			result= new SEL_TREE();
+			SEL_IMERGE* merge= new SEL_IMERGE();
+			result->merges.push_back(merge);
+      merge->or_sel_tree(param, tree1);
+      merge->or_sel_tree(param, tree2);
+      result->type= tree1->type;
     }
     else if (!tree1->merges.is_empty() && !tree2->merges.is_empty())
     {
-      if (imerge_list_or_list(param, &tree1->merges, &tree2->merges))
-        result= new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS);
-      else
-        result= tree1;
+      result= imerge_list_or_list(param, &tree1->merges, &tree2->merges)
+        ? new SEL_TREE(SEL_TREE::ALWAYS)
+        : tree1;
     }
     else
     {
@@ -217,13 +170,12 @@ optimizer::tree_or(optimizer::RangeParameter *param,
       if (tree1->merges.is_empty())
         std::swap(tree1, tree2);
 
-      if (param->remove_jump_scans && optimizer::remove_nonrange_trees(param, tree2))
-         return(new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS));
+      if (param->remove_jump_scans && remove_nonrange_trees(param, tree2))
+         return new SEL_TREE(SEL_TREE::ALWAYS);
       /* add tree2 to tree1->merges, checking if it collapses to ALWAYS */
-      if (imerge_list_or_tree(param, &tree1->merges, tree2))
-        result= new optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS);
-      else
-        result= tree1;
+      result= imerge_list_or_tree(*param, tree1->merges, *tree2)
+        ? new SEL_TREE(SEL_TREE::ALWAYS)
+        : tree1;
     }
   }
   return result;
@@ -305,8 +257,7 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
         optimizer::SEL_ARG *key2_next=key2->next;
         if (key2_shared)
         {
-          if (! (key2=new optimizer::SEL_ARG(*key2)))
-            return 0;		// out of memory
+          key2=new optimizer::SEL_ARG(*key2);
           key2->increment_use_count(key1->use_count+1);
           key2->next= key2_next; // New copy of key2
         }
@@ -397,8 +348,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
     if (cmp >= 0 && tmp->cmp_min_to_min(key2) < 0)
     {						// tmp.min <= x < key2.min
       optimizer::SEL_ARG *new_arg= tmp->clone_first(key2);
-      if (! new_arg)
-        return 0;				// OOM
       if ((new_arg->next_key_part= key1->next_key_part))
         new_arg->increment_use_count(key1->use_count+1);
       tmp->copy_min_to_min(key2);
@@ -412,8 +361,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
       if (tmp->cmp_min_to_min(&key) > 0)
       {						// key.min <= x < tmp.min
         optimizer::SEL_ARG *new_arg= key.clone_first(tmp);
-        if (! new_arg)
-          return 0;				// OOM
         if ((new_arg->next_key_part=key.next_key_part))
           new_arg->increment_use_count(key1->use_count+1);
         key1= key1->insert(new_arg);
@@ -447,8 +394,6 @@ key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SE
       else
       {
         optimizer::SEL_ARG *new_arg= tmp->clone_last(&key); // tmp.min <= x <= key.max
-        if (! new_arg)
-          return 0;				// OOM
         tmp->copy_max_to_min(&key);
         tmp->increment_use_count(key1->use_count+1);
         /* Increment key count as it may be used for next loop */
@@ -538,7 +483,7 @@ end:
 */
 bool optimizer::remove_nonrange_trees(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree)
 {
-  bool res= false;
+  bool res= true;
   for (uint32_t i= 0; i < param->keys; i++)
   {
     if (tree->keys[i])
@@ -549,10 +494,10 @@ bool optimizer::remove_nonrange_trees(optimizer::RangeParameter *param, optimize
         tree->keys_map.reset(i);
       }
       else
-        res= true;
+        res= false;
     }
   }
-  return ! res;
+  return res;
 }
 
 
@@ -560,9 +505,7 @@ bool optimizer::remove_nonrange_trees(optimizer::RangeParameter *param, optimize
 static bool eq_tree(optimizer::SEL_ARG *a, optimizer::SEL_ARG *b)
 {
   if (a == b)
-  {
     return true;
-  }
 
   if (! a || ! b || ! a->is_same(b))
   {

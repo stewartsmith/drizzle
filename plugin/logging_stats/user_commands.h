@@ -27,8 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_USER_COMMANDS_H
-#define PLUGIN_LOGGING_STATS_USER_COMMANDS_H
+#pragma once
 
 #include <drizzled/common.h>
 #include <drizzled/enum.h>
@@ -91,4 +90,3 @@ private:
   std::vector<uint64_t> vector_of_command_counts;
 };
 
-#endif /* PLUGIN_LOGGING_STATS_USER_COMMANDS_H */

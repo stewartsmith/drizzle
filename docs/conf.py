@@ -212,8 +212,6 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('clients/drizzledump', 'drizzledump', u'a database backup program',
-     [u'Andrew Hutchings'], 1),
-    ('clients/drizzleadmin', 'drizzleadmin', u'a database backup program',
      [u'Andrew Hutchings'], 1)
 ]
 
@@ -256,7 +254,7 @@ epub_copyright = u'2010, The Drizzle Developers'
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'python': ('http://docs.python.org/3.2', 'python-inv.txt')}
 
 [extensions]
 todo_include_todos=True

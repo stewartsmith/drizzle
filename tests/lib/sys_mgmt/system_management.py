@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2010 Patrick Crews
+# Copyright (C) 2010, 2011 Patrick Crews
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,14 +33,16 @@
 # imports
 import os
 import sys
-import copy
 import shutil
 import getpass
 import commands
 
-from lib.uuid import uuid4
-from lib.sys_mgmt.port_management import portManager
+from uuid import uuid4
+
+from lib.sys_mgmt.code_management import codeManager
+from lib.sys_mgmt.environment_management import environmentManager
 from lib.sys_mgmt.logging_management import loggingManager
+from lib.sys_mgmt.port_management import portManager
 from lib.sys_mgmt.time_management import timeManager
 
 class systemManager:
@@ -55,15 +57,14 @@ class systemManager:
         if variables['verbose']:
             self.logging.verbose("Initializing system manager...")
 
-        self.skip_keys = [ 'code_tree'
-                         , 'ld_lib_paths'
-                         , 'port_manager'
+        self.skip_keys = [ 'port_manager'
                          , 'logging_manager'
+                         , 'code_manager'
+                         , 'env_manager'
                          , 'environment_reqs'
-                         , 'env_var_delimiter']
+                         ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
-        self.env_var_delimiter = ':'
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
@@ -75,6 +76,7 @@ class systemManager:
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
+        self.valgrind_suppress_file = variables['valgrindsuppressions']
         self.gdb = variables['gdb']
         self.manual_gdb = variables['manualgdb']
         self.randgen_path = variables['randgenpath']
@@ -84,11 +86,13 @@ class systemManager:
         
         self.port_manager = portManager(self,variables['debug'])
         self.time_manager = timeManager(self)
-                   
-        # Make sure the tree we are testing looks good
-        self.code_tree = self.get_code_tree(variables, tree_type)
 
-        self.ld_lib_paths = self.join_env_var_values(self.code_tree.ld_lib_paths)
+        # use our code_manager to handle the various basedirs 
+        # we have been passed
+        self.code_manager = codeManager(self, variables)
+
+        # environment manager handles updates / whatever to testing environments
+        self.env_manager = environmentManager(self, variables)
 
         # Some ENV vars are system-standard
         # We describe and set them here and now
@@ -101,22 +105,12 @@ class systemManager:
                                 , 'USE_RUNNING_SERVER' : "0"
                                 , 'TOP_SRCDIR' : self.top_srcdir
                                 , 'TOP_BUILDDIR' : self.top_builddir
-                                , 'DRIZZLE_TEST_DIR' : self.code_tree.testdir
+                                , 'DRIZZLE_TEST_DIR' : self.testdir
                                 , 'DTR_BUILD_THREAD' : "-69.5"
-                                , 'LD_LIBRARY_PATH' : self.append_env_var( 'LD_LIBRARY_PATH'
-                                                                         , self.ld_lib_paths
-                                                                         , suffix = 0
-                                                                         , quiet = 1
-                                                                         )
-                                , 'DYLD_LIBRARY_PATH' : self.append_env_var( 'DYLD_LIBRARY_PATH'
-                                                                         , self.ld_lib_paths
-                                                                         , suffix = 0
-                                                                         , quiet = 1
-                                                                         )
                                 }
         # set the env vars we need
         # self.process_environment_reqs(self.environment_reqs)
-        self.update_environment_vars(self.environment_reqs)
+        self.env_manager.update_environment_vars(self.environment_reqs)
 
         # We find or generate our id file
         # We use a uuid to identify the symlinked
@@ -137,43 +131,9 @@ class systemManager:
         # options like valgrind and gdb
         self.handle_additional_reqs(variables)
      
-        if self.debug:
-            self.logging.debug_class(self)
-        
-    def get_code_tree(self, variables, tree_type):
-        """Find out the important files, directories, and env. vars
-           for a particular type of tree.  We import a definition module
-           depending on the tree_type.  The module lets us know
-           what to look for, etc
+        self.logging.debug_class(self)
 
-        """
-        
-        # Import the appropriate module that defines
-        # where we find what we need depending on 
-        # tree type
-        test_tree = self.process_tree_type(tree_type, variables)
-        return test_tree
 
-    def process_tree_type(self, tree_type, variables):
-        """Import the appropriate module depending on the type of tree
-           we are testing. 
-
-           Drizzle is the only supported type currently
-
-        """
-
-        if self.verbose:
-            self.logging.verbose("Processing source tree under test...")
-        if tree_type == 'drizzle':
-            # base_case
-            from lib.sys_mgmt.codeTree import drizzleTree
-            test_tree = drizzleTree(variables,self)
-            return test_tree
-        else:
-            self.logging.error("Tree_type: %s not supported yet" %(tree_type))
-            sys.exit(1)        
-
-    
     def create_dirset(self, rootdir, dirset):
         """ We produce the set of directories defined in dirset
             dirset is a set of dictionaries like
@@ -270,8 +230,7 @@ class systemManager:
                 return full_path
             else:
                 shutil.rmtree(full_path)
-            if self.debug:
-                 self.logging.debug("Creating directory: %s" %(dirname))   
+            self.logging.debug("Creating directory: %s" %(dirname))   
         os.makedirs(full_path)
         return full_path
 
@@ -282,8 +241,7 @@ class systemManager:
             the dir must be empty to remove it
 
         """
-        if self.debug:
-            self.logging.debug("Removing directory: %s" %(dirname))
+        self.logging.debug("Removing directory: %s" %(dirname))
         if os.path.islink(dirname):
             os.remove(dirname)
         elif require_empty:
@@ -297,8 +255,8 @@ class systemManager:
             if overwrite == 1
 
         """
-        if self.debug:
-            self.logging.debug("Copying directory: %s to %s" %(srcdir, tgtdir))
+
+        self.logging.debug("Copying directory: %s to %s" %(srcdir, tgtdir))
         if os.path.exists(tgtdir):
             if overwrite:
                 self.remove_dir(tgtdir)
@@ -309,8 +267,8 @@ class systemManager:
 
     def create_symlink(self, source, link_name):
         """ We create a symlink to source named link_name """
-        if self.debug:
-            self.logging.debug("Creating symlink from %s to %s" %(source, link_name))
+
+        self.logging.debug("Creating symlink from %s to %s" %(source, link_name))
         if os.path.exists(link_name) or os.path.islink(link_name):
             os.remove(link_name)
         return os.symlink(source, link_name)
@@ -325,67 +283,7 @@ class systemManager:
             source, link_name = needed_symlink
             self.create_symlink(source, link_name)
 
-    def join_env_var_values(self, value_list):
-        """ Utility to join multiple values into a nice string
-            for setting an env var to
- 
-        """
 
-        return self.env_var_delimiter.join(value_list)
-
-    def set_env_var(self, var_name, var_value, quiet=0):
-        """Set an environment variable.  We really just abstract
-           voodoo on os.environ
-
-        """
-        if self.debug and not quiet:
-            self.logging.debug("Setting env var: %s" %(var_name))
-        try:
-            os.environ[var_name]=var_value
-        except Exception, e:
-            self.logging.error("Issue setting environment variable %s to value %s" %(var_name, var_value))
-            self.logging.error("%s" %(e))
-            sys.exit(1)
-
-    def update_environment_vars(self, desired_vars, working_environment=None):
-        """ We update the environment vars with desired_vars
-            The expectation is that you know what you are asking for ; )
-            If working_environment is provided, we will update that with
-            desired_vars.  We operate directly on os.environ by default
-            We return our updated environ dictionary
-
-        """
-
-        if not working_environment:
-            working_environment = os.environ
-        working_environment.update(desired_vars)
-        return working_environment
-
-    def create_working_environment(self, desired_vars):
-        """ We return a copy of os.environ updated with desired_vars """
-
-        working_copy = copy.deepcopy(os.environ)
-        return self.update_environment_vars( desired_vars
-                                    , working_environment = working_copy )
-
-    def append_env_var(self, var_name, append_string, suffix=1, quiet=0):
-        """ We add the values in var_values to the environment variable 
-            var_name.  Depending on suffix value, we either append or prepend
-            we return a string suitable for os.putenv
-
-        """
-        new_var_value = ""
-        if var_name in os.environ:
-            cur_var_value = os.environ[var_name]
-            if suffix: # We add new values to end of existing value
-                new_var_values = [ cur_var_value, append_string ]
-            else:
-                new_var_values = [ append_string, cur_var_value ]
-            new_var_value = self.env_var_delimiter.join(new_var_values)
-        else:
-            # No existing variable value
-            new_var_value = append_string
-        return new_var_value
 
     def find_path(self, paths, required=1):
         """We search for the files we need / want to be aware of
@@ -402,8 +300,7 @@ class systemManager:
         """
 
         for test_path in paths:
-            if self.debug:
-                self.logging.debug("Searching for path: %s" %(test_path))
+            self.logging.debug("Searching for path: %s" %(test_path))
             if os.path.exists(test_path):
                 return test_path
         if required:
@@ -418,8 +315,7 @@ class systemManager:
 
         """
 
-        if self.debug:
-            self.logging.debug("Executing command: %s" %(cmd))
+        self.logging.debug("Executing command: %s" %(cmd))
         (retcode, output)= commands.getstatusoutput(cmd)
         if not retcode == 0 and must_pass:
             self.logging.error("Command %s failed with retcode %d" %(cmd, retcode))
@@ -500,8 +396,8 @@ class systemManager:
 
         if self.manual_gdb:
             self.logging.info("To start gdb, open another terminal and enter:")
-            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( self.code_tree.testdir
-                                                                                  , self.code_tree.testdir
+            self.logging.info("%s/../libtool --mode=execute gdb -cd %s -x %s %s" %( server.code_tree.testdir
+                                                                                  , server.code_tree.testdir
                                                                                   , gdb_file_path
                                                                                   , server.server_path
                                                                                   ) )
@@ -527,7 +423,7 @@ class systemManager:
         self.logging.info("Running valgrind with options: %s" %(" ".join(valgrind_args)))
 
         # set our environment variable
-        self.set_env_var('VALGRIND_RUN', '1', quiet=0)
+        self.env_manager.set_env_var('VALGRIND_RUN', '1', quiet=0)
 
         # generate command prefix to call valgrind
         cmd_prefix = ''
@@ -541,8 +437,7 @@ class systemManager:
                    , "--num-callers=16" 
                    ]
             # look for our suppressions file and add it to the mix if found
-            suppress_file = os.path.join(self.code_tree.testdir,'valgrind.supp')
-            if os.path.exists(suppress_file):
+            if os.path.exists(self.valgrind_suppress_file):
                 args = args + [ "--suppressions=%s" %(suppress_file) ]
 
             cmd_prefix = cmd_prefix + " ".join(args + valgrind_args)
@@ -551,8 +446,8 @@ class systemManager:
         # add debug libraries to ld_library_path
         debug_path = '/usr/lib/debug'
         if os.path.exists(debug_path):
-            self.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
-            self.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
+            self.env_manager.append_env_var("LD_LIBRARY_PATH", debug_path, suffix=1)
+            self.env_manager.append_env_var("DYLD_LIBRARY_PATH", debug_path, suffix=1)
 
 
     def cleanup(self, exit=False):
@@ -580,9 +475,26 @@ class systemManager:
                     self.logging.info("Killing pid %s from %s" %( pid
                                                                 , file_path
                                                                 ))
-                    self.execute_cmd("kill -9 %s" %pid, must_pass=0)
+                    self.kill_pid(pid)
         if exit:
             sys.exit(0)
+
+    def find_pid(self, pid):
+        """ Execute ps and see if we find the pid """
+
+        cmd = "ps"
+        retcode, output = self.execute_cmd(cmd)
+        output = output.split('\n')
+        for line in output:
+            found_pid = line.strip().split(' ')
+            if str(pid) == pid:
+                return True
+        return False
+
+    def kill_pid(self, pid):
+        """ We kill the specified pid """
+        
+        self.execute_cmd("kill -9 %s" %pid, must_pass=0)
 
    
     

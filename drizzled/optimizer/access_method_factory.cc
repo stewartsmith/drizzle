@@ -19,9 +19,6 @@
  */
 
 #include <config.h>
-
-#include <drizzled/sql_select.h>
-#include <drizzled/join_table.h>
 #include <drizzled/optimizer/access_method.h>
 #include <drizzled/optimizer/access_method_factory.h>
 #include <drizzled/optimizer/access_method/system.h>
@@ -30,37 +27,28 @@
 #include <drizzled/optimizer/access_method/index.h>
 #include <drizzled/optimizer/access_method/scan.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
 using namespace drizzled;
 
-boost::shared_ptr<optimizer::AccessMethod>
-optimizer::AccessMethodFactory::createAccessMethod(enum access_method type)
+optimizer::AccessMethod::ptr optimizer::AccessMethodFactory::create(access_method type)
 {
-  boost::shared_ptr<optimizer::AccessMethod> am_ret;
-
   switch (type)
   {
   case AM_SYSTEM:
-    am_ret.reset(new optimizer::System());
-    break;
+    return boost::make_shared<optimizer::System>();
   case AM_CONST:
-    am_ret.reset(new optimizer::Const());
-    break;
+    return boost::make_shared<optimizer::Const>();
   case AM_EQ_REF:
-    am_ret.reset(new optimizer::UniqueIndex());
-    break;
+    return boost::make_shared<optimizer::UniqueIndex>();
   case AM_REF_OR_NULL:
   case AM_REF:
-    am_ret.reset(new optimizer::Index());
-    break;
+    return boost::make_shared<optimizer::Index>();
   case AM_ALL:
-    am_ret.reset(new optimizer::Scan());
-    break;
+    return boost::make_shared<optimizer::Scan>();
   default:
-    break;
+    assert(false);
   }
-  
-  return am_ret;
+  return optimizer::AccessMethod::ptr();
 }
-

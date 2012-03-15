@@ -17,25 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_FLOAT_H
-#define DRIZZLED_ITEM_FLOAT_H
+#pragma once
 
 #include <drizzled/item/num.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_float :public Item_num
+class Item_float : public Item_num
 {
-  char *presentation;
+  const char *presentation;
 public:
   double value;
-  // Item_real() :value(0) {}
   Item_float(const char *str_arg, uint32_t length);
   Item_float(const char *str,double val_arg,uint32_t decimal_par,uint32_t length)
     :value(val_arg)
   {
-    presentation= name=(char*) str;
+    presentation= name= str;
     decimals=(uint8_t) decimal_par;
     max_length=length;
     fixed= 1;
@@ -71,13 +68,12 @@ public:
 
   virtual inline void print(String *str)
   {
-    str->append(func_name);
+    str->append(func_name, strlen(func_name));
   }
 
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_FLOAT_H */
 

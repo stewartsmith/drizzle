@@ -19,8 +19,7 @@
 
 
 
-#ifndef DRIZZLED_SQL_BASE_H
-#define DRIZZLED_SQL_BASE_H
+#pragma once
 
 #include <drizzled/table.h>
 #include <drizzled/table_list.h>
@@ -28,39 +27,31 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-class TableShare;
-class Name_resolution_context;
+namespace drizzled {
 
-void table_cache_free(void);
-bool table_cache_init(void);
-uint32_t cached_open_tables(void);
-uint32_t cached_table_definitions(void);
+void table_cache_free();
 
 table::Cache &get_open_cache();
 
-DRIZZLED_API void kill_drizzle(void);
+DRIZZLED_API void kill_drizzle();
 
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);
-bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
-                       char *length, char *decimal,
+bool add_field_to_list(Session *session, str_ref field_name, enum enum_field_types type,
+                       const char *length, const char *decimal,
                        uint32_t type_modifier,
                        enum column_format_type column_format,
                        Item *default_value, Item *on_update_value,
-                       LEX_STRING *comment,
-                       char *change, List<String> *interval_list,
-                       const CHARSET_INFO * const cs);
-CreateField * new_create_field(Session *session, char *field_name, enum_field_types type,
-                               char *length, char *decimals,
+                       str_ref comment,
+                       const char *change, List<String> *interval_list,
+                       const charset_info_st * const cs);
+CreateField * new_create_field(Session *session, const char *field_name, enum_field_types type,
+                               const char *length, const char *decimals,
                                uint32_t type_modifier,
                                Item *default_value, Item *on_update_value,
-                               LEX_STRING *comment, char *change,
-                               List<String> *interval_list, CHARSET_INFO *cs);
-bool push_new_name_resolution_context(Session *session,
-                                      TableList *left_op,
-                                      TableList *right_op);
+                               str_ref comment, const char *change,
+                               List<String> *interval_list, charset_info_st *cs);
+void push_new_name_resolution_context(Session&, TableList& left_op, TableList& right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
@@ -137,7 +128,7 @@ TableList *find_table_in_list(TableList *table,
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
 
-/* bits for last argument to table::Cache::singleton().removeTable() */
+/* bits for last argument to table::Cache::removeTable() */
 #define RTFC_NO_FLAG                0x0000
 #define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
@@ -155,8 +146,7 @@ inline TableList *find_table_in_global_list(TableList *table,
                             db_name, table_name);
 }
 
-bool drizzle_rm_tmp_tables();
+void drizzle_rm_tmp_tables();
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_BASE_H */

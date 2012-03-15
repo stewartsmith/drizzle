@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_REPLICATION_SERVICES_H
-#define DRIZZLED_REPLICATION_SERVICES_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/replication.h>
@@ -33,23 +32,11 @@
 #include <utility>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
+static const char DEFAULT_USE_REPLICATOR[]= "default";
 
-/* some forward declarations needed */
-class Session;
-class Table;
-
-namespace plugin
-{
-  class TransactionReplicator;
-  class TransactionApplier;
-}
-namespace message
-{
-  class Transaction;
-}
+namespace drizzled {
 
 /**
  * This is a class which manages transforming internal 
@@ -85,7 +72,7 @@ public:
    * This is only necessary because we don't yet have plugin dependency
    * tracking...
    */
-  bool evaluateRegisteredPlugins();
+  static bool evaluateRegisteredPlugins();
   /** 
    * Helper method which pushes a constructed message out to the registered
    * replicator and applier plugins.
@@ -93,34 +80,19 @@ public:
    * @param Session descriptor
    * @param Message to push out
    */
-  plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session,
-                                                       message::Transaction &to_push);
-  /**
-   * Constructor
-   */
-  ReplicationServices();
-
-  /**
-   * Singleton method
-   * Returns the singleton instance of ReplicationServices
-   */
-  static inline ReplicationServices &singleton()
-  {
-    static ReplicationServices replication_services;
-    return replication_services;
-  }
+  static plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session, message::Transaction &to_push);
 
   /**
    * Returns whether the ReplicationServices object
    * is active.  In other words, does it have both
    * a replicator and an applier that are *active*?
    */
-  bool isActive() const;
+  static bool isActive();
 
   /**
    * Returns the list of replication streams
    */
-  ReplicationStreams &getReplicationStreams();
+  static ReplicationStreams &getReplicationStreams();
 
   /**
    * Attaches a replicator to our internal collection of
@@ -128,7 +100,7 @@ public:
    *
    * @param Pointer to a replicator to attach/register
    */
-  void attachReplicator(plugin::TransactionReplicator *in_replicator);
+  static void attachReplicator(plugin::TransactionReplicator *in_replicator);
   
   /**
    * Detaches/unregisters a replicator with our internal
@@ -136,7 +108,7 @@ public:
    *
    * @param Pointer to the replicator to detach
    */
-  void detachReplicator(plugin::TransactionReplicator *in_replicator);
+  static void detachReplicator(plugin::TransactionReplicator *in_replicator);
   
   /**
    * Attaches a applier to our internal collection of
@@ -145,7 +117,7 @@ public:
    * @param Pointer to a applier to attach/register
    * @param The name of the replicator to pair with
    */
-  void attachApplier(plugin::TransactionApplier *in_applier, const std::string &requested_replicator);
+  static void attachApplier(plugin::TransactionApplier *in_applier, const std::string &requested_replicator);
   
   /**
    * Detaches/unregisters a applier with our internal
@@ -153,39 +125,14 @@ public:
    *
    * @param Pointer to the applier to detach
    */
-  void detachApplier(plugin::TransactionApplier *in_applier);
+  static void detachApplier(plugin::TransactionApplier *in_applier);
 
   /** 
    * Returns the timestamp of the last Transaction which was sent to an
    * applier.
    */
-  uint64_t getLastAppliedTimestamp() const;
-private:
-  typedef std::vector<plugin::TransactionReplicator *> Replicators;
-  typedef std::vector<std::pair<std::string, plugin::TransactionApplier *> > Appliers;
-  /** 
-   * Atomic boolean set to true if any *active* replicators
-   * or appliers are actually registered.
-   */
-  bool is_active;
-  /**
-   * The timestamp of the last time a Transaction message was successfully
-   * applied (sent to an Applier)
-   */
-  atomic<uint64_t> last_applied_timestamp;
-  /** Our collection of registered replicator plugins */
-  Replicators replicators;
-  /** Our collection of registered applier plugins and their requested replicator plugin names */
-  Appliers appliers;
-  /** Our replication streams */
-  ReplicationStreams replication_streams;
-  /**
-   * Strips underscores and lowercases supplied replicator name
-   * or requested name, and appends the suffix "replicator" if missing...
-   */
-  void normalizeReplicatorName(std::string &name);
+  static uint64_t getLastAppliedTimestamp();
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_REPLICATION_SERVICES_H */

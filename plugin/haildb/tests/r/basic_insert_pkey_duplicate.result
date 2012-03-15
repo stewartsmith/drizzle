@@ -1,5 +1,0 @@
-create table t1 (a int primary key);
-insert into t1 values (1);
-insert into t1 values (1);
-ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
-drop table t1;

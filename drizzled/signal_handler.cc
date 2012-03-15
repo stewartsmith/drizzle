@@ -30,8 +30,9 @@
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/scheduler.h>
 #include <drizzled/current_session.h>
-
 #include <drizzled/util/backtrace.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 using namespace drizzled;
 
@@ -72,7 +73,7 @@ void drizzled_end_thread_signal(int )
   Session *session= current_session;
   if (session)
   {
-    Session::shared_ptr session_ptr(session::Cache::singleton().find(session->getSessionId()));
+    Session::shared_ptr session_ptr(session::Cache::find(session->getSessionId()));
     if (not session_ptr) // We need to make we have a lock on session before we do anything with it.
       return;
 
@@ -152,7 +153,7 @@ void drizzled_handle_segfault(int sig)
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"));
 
-  drizzled::util::custom_backtrace();
+  call_backtrace();
 
   write_core(sig);
 

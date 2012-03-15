@@ -1,0 +1,129 @@
+
+# ###########################################################################
+# First we check the log file itself: that it can be enabled and disabled,
+# that the plugin only writes to it when enabled, and that it can be changed
+# both when disabled (and then re-enabled) and changed when enabled (close
+# old log file, open and write to new log file).
+# ###########################################################################
+
+# The query_log plugin is enabled by default, but query_log_file_enabled is
+# disabled by default, so the plugin should not have opened/created the log
+# file yet.
+--exec if [ -f $DRIZZLETEST_VARDIR/query.log ]; then echo "Log file exists"; else echo "Log file does not exist"; fi
+
+# Does the plugin crash Drizzle on startup?  Hopefully not.
+# Is it actually plugged in?  It should be.
+# Can we still exec queries without crashing Drizzle?  Let's hope so.
+--vertical_results
+select * from data_dictionary.plugins join data_dictionary.modules using (module_name) where plugin_name="file_query_log";
+--horizontal_results
+
+# When the query_log plugin is added, it's enabled by default, but all its
+# destinations (currently it has just one: file) are disabled.  So this should
+# return 1, 0.
+SELECT @@query_log_enabled, @@query_log_file_enabled;
+
+# This query should not be logged because, although the plugin is enabled,
+# the query log file is disabled.
+SELECT 1;
+
+# Enable the query log file.  The first query logged is the SET.  The sed
+# command changes all numbers to zeros because most the value are variable:
+# timestamps, execution times, etc.
+SET GLOBAL query_log_file_enabled=TRUE;
+SELECT @@query_log_enabled, @@query_log_file_enabled;
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query.log
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# Disable the query_log plugin globally, i.e. the master switch.  Neither of
+# these three queries should show in the log; so the log will be identical to
+# before being disabled.
+SET GLOBAL query_log_enabled=FALSE;
+SELECT @@query_log_enabled, @@query_log_file_enabled;
+SELECT 2;
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query.log
+--cat_file $DRIZZLETEST_VARDIR/query.log
+
+# Disable and change the qury log file.  The plugin should not actually open
+# the new file until query_log_file_enabled is true again, so the second SELECT
+# should should the new log file for @@query_log_file but the exec should
+# show that the file doesn't exist yet.
+SET GLOBAL query_log_file_enabled=FALSE;
+SELECT @@query_log_enabled, @@query_log_file_enabled;
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL query_log_file="$DRIZZLETEST_VARDIR/query-2.log";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+SELECT @@query_log_enabled, @@query_log_file_enabled, @@query_log_file;
+--exec if [ -f $DRIZZLETEST_VARDIR/query-2.log ]; then echo "Log file exists"; else echo "Log file does not exist"; fi
+
+# Now enable the log file again and it should contain just the second SET and
+# the SELECT.
+SET GLOBAL query_log_enabled=TRUE;
+SET GLOBAL query_log_file_enabled=TRUE;
+SELECT 'this is the second log file';
+--exec if [ -f $DRIZZLETEST_VARDIR/query-2.log ]; then echo "Log file exists"; else echo "Log file does not exist"; fi
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query-2.log
+--cat_file $DRIZZLETEST_VARDIR/query-2.log
+
+# Finally, change the log file while it's enabled.
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL query_log_file="$DRIZZLETEST_VARDIR/query-3.log";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+SELECT @@query_log_enabled, @@query_log_file_enabled, @@query_log_file;
+--exec if [ -f $DRIZZLETEST_VARDIR/query-2.log ]; then echo "Log file exists"; else echo "Log file does not exist"; fi
+SELECT 'this is the third log file';
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query-3.log
+--system sed -e 's/".*"/"third-log-file"/' -i.bak $DRIZZLETEST_VARDIR/query-3.log
+--cat_file $DRIZZLETEST_VARDIR/query-3.log
+
+# And just to be sure, let's cat the previous logs to make sure they don't
+# have any queries that they shouldn't have.
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query.log
+--cat_file $DRIZZLETEST_VARDIR/query.log
+--exec $TOP_SRCDIR/plugin/query_log/tests/zero-query-log-values.sh $DRIZZLETEST_VARDIR/query-2.log
+--cat_file $DRIZZLETEST_VARDIR/query-2.log
+
+# Done.  Cleanup for other tests.
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL query_log_file="$DRIZZLETEST_VARDIR/query.log";
+--remove_file $DRIZZLETEST_VARDIR/query-2.log
+--remove_file $DRIZZLETEST_VARDIR/query-3.log
+
+# ###########################################################################
+# Now check that the logged values are correct.
+# ###########################################################################
+
+# Clear previous events from the log.
+--exec echo "" > $DRIZZLETEST_VARDIR/query.log
+
+# The first line of an event should be an ISO timestamp like
+# YYYY-MM-DDTHH:MM:SS.uuuuuu.  We just check that the start of the ts
+# matches today's date.
+let $today= `SELECT DATE(NOW())`;
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log start_ts matches "^$today"
+
+# The 3rd line of an event should be microsecond times like 1.123456
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log execution_time,lock_time,session_time matches '\d\.\d{6}','\d\.\d{6}','\d\.\d{6}'
+
+# The 2nd line (rows_examined, etc.) are ints, error on the 4th line is bool,
+# and schema on the 5th line is a double-quoted string.
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log rows_examined,tmp_tables,warnings,error,schema equals 0,0,0,false,test
+
+# Test that execution_time is accurate: if we sleep for 0.5s, execution time
+# should be at least 0.50 and probably a few microseconds longer.
+SELECT SLEEP(0.5);
+--exec $TOP_SRCDIR/plugin/query_log/tests/check-query-log-attribute.pl $DRIZZLETEST_VARDIR/query.log execution_time between 0.5 0.59
+
+# ############################################################################
+# Clean up.  Tests must be idempotent and not leave behind a trace, so
+# dtr --repeat-test 2 --suite query_log must pass.
+# ############################################################################
+SET GLOBAL query_log_enabled=TRUE;
+SET GLOBAL query_log_file_enabled=FALSE;
+
+--exec rm $DRIZZLETEST_VARDIR/query*.log
+--exec rm $DRIZZLETEST_VARDIR/*.bak
+
+# ###########################################################################
+# Done.
+# ###########################################################################

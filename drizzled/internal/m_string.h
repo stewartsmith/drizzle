@@ -16,65 +16,34 @@
 /* There may be prolems include all of theese. Try to test in
    configure with ones are needed? */
 
+#pragma once
 
-
-#ifndef DRIZZLED_INTERNAL_M_STRING_H
-#define DRIZZLED_INTERNAL_M_STRING_H
-
-#if defined(HAVE_STRINGS_H)
 #include <strings.h>
-#endif
-#if defined(HAVE_STRING_H)
-#include <string.h>
-#endif
-
-#include <stdlib.h>
-#include <stddef.h>
+#include <cstring>
+#include <cstdlib>
+#include <cstddef>
 #include <cassert>
-#include <limits.h>
-#include <ctype.h>
-
-/*  This is needed for the definitions of memcpy... on solaris */
-#if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
-#include <memory.h>
-#endif
-
+#include <climits>
+#include <cctype>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
-extern	void bchange(unsigned char *dst,size_t old_len,const unsigned char *src,
-		     size_t new_len,size_t tot_len);
-extern	char *strfield(char *src,int fields,int chars,int blanks,
-			   int tabch);
-extern	char *strfill(char * s,size_t len,char fill);
-extern	char *strkey(char *dst,char *head,char *tail,char *flags);
-extern	char *strmake(char *dst,const char *src,size_t length);
-
-extern	char *strsuff(const char *src,const char *suffix);
-extern	char *strxcat(char *dst,const char *src, ...);
-extern	char *strxmov(char *dst,const char *src, ...);
-extern	char *strxcpy(char *dst,const char *src, ...);
-extern	char *strxncat(char *dst,size_t len, const char *src, ...);
-extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
-
 /* Conversion routines */
-typedef enum {
+enum my_gcvt_arg_type
+{
   MY_GCVT_ARG_FLOAT,
   MY_GCVT_ARG_DOUBLE
-} my_gcvt_arg_type;
+};
 
 DRIZZLED_API double my_strtod(const char *str, char **end, int *error);
 DRIZZLED_API double my_atof(const char *nptr);
 DRIZZLED_API size_t my_fcvt(double x, int precision, char *to, bool *error);
-DRIZZLED_API size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
-                            bool *error);
+DRIZZLED_API size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to, bool *error);
 
 #define NOT_FIXED_DEC (uint8_t)31
 
@@ -94,14 +63,6 @@ DRIZZLED_API size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to
   We don't lose precision, but make cases like "1e200" or "0.00001" look nicer.
 */
 #define MAX_DECPT_FOR_F_FORMAT DBL_DIG
-
-/*
-  The maximum possible field width for my_gcvt() conversion.
-  (DBL_DIG + 2) significant digits + sign + "." + ("e-NNN" or
-  MAX_DECPT_FOR_F_FORMAT zeros for cases when |x|<1 and the 'f' format is used).
-*/
-#define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + cmax(5, MAX_DECPT_FOR_F_FORMAT))
-
 
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);
@@ -134,4 +95,3 @@ skip_trailing_space(const unsigned char *ptr, size_t len)
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_M_STRING_H */

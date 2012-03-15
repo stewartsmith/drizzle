@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/find_in_set.h>
 
 /* Search after a string in a string of strings separated by ',' */
@@ -61,11 +61,10 @@ int64_t Item_func_find_in_set::val_int()
   }
   null_value=0;
 
-  int diff;
-  if ((diff=buffer->length() - find->length()) >= 0)
+  if (buffer->length() >= find->length())  
   {
     my_wc_t wc;
-    const CHARSET_INFO * const cs= cmp_collation.collation;
+    const charset_info_st * const cs= cmp_collation.collation;
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
@@ -75,8 +74,7 @@ int64_t Item_func_find_in_set::val_int()
     while (1)
     {
       int symbol_len;
-      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end,
-                                       (unsigned char*) real_end)) > 0)
+      if ((symbol_len= cs->cset->mb_wc(cs, &wc, (unsigned char*) str_end, (unsigned char*) real_end)) > 0)
       {
         const char *substr_end= str_end + symbol_len;
         bool is_last_item= (substr_end == real_end);
@@ -100,7 +98,7 @@ int64_t Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (int64_t) ++position;
       else
-        return 0L;
+        return 0;
     }
   }
   return 0;

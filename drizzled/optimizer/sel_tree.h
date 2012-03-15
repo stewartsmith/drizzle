@@ -17,21 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_SEL_TREE_H
-#define DRIZZLED_OPTIMIZER_SEL_TREE_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class RangeParameter;
-class SEL_IMERGE;
-class SEL_ARG;
-class RorScanInfo;
+namespace drizzled {
+namespace optimizer {
 
 class SEL_TREE : public drizzled::memory::SqlAlloc
 {
@@ -86,9 +77,7 @@ public:
   read can be constructed for "cond_of_tree1 OR cond_of_tree2" ) without
   using index_merge.
 */
-bool sel_trees_can_be_ored(SEL_TREE *tree1, 
-                           SEL_TREE *tree2,
-                           RangeParameter* param);
+bool sel_trees_can_be_ored(const SEL_TREE&, const SEL_TREE&, const RangeParameter&);
 
 SEL_TREE *
 tree_or(RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
@@ -153,4 +142,3 @@ bool remove_nonrange_trees(RangeParameter *param, SEL_TREE *tree);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_SEL_TREE_H */

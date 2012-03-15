@@ -13,8 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef PLUGIN_MULTI_THREAD_MULTI_THREAD_H
-#define PLUGIN_MULTI_THREAD_MULTI_THREAD_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
@@ -23,10 +22,6 @@
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/sql_parse.h>
 #include <string>
-
-namespace drizzled {
-class Session;
-}
 
 namespace multi_thread {
 
@@ -44,8 +39,8 @@ public:
   }
 
   ~MultiThreadScheduler();
-  bool addSession(drizzled::Session::shared_ptr &session);
-  void killSessionNow(drizzled::Session::shared_ptr &session);
+  bool addSession(const drizzled::Session::shared_ptr&);
+  void killSessionNow(const drizzled::Session::shared_ptr&);
   void killSession(drizzled::Session*);
   
   void runSession(drizzled::session_id_t);
@@ -55,4 +50,3 @@ private:
 
 } // namespace multi_thread
 
-#endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

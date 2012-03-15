@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 Brian Aker
+ *  Copyright (C) 2011 Brian Aker, Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,31 +19,34 @@
  */
 
 #include <config.h>
-#include <drizzled/configmake.h>
-
 #include <boost/filesystem.hpp>
-
+#include <drizzled/configmake.h>
 #include <drizzled/data_home.h>
+#include <drizzled/catalog.h>
 
 namespace drizzled {
 
 static boost::filesystem::path data_home(LOCALSTATEDIR);
 static boost::filesystem::path full_data_home(LOCALSTATEDIR);
 
-boost::filesystem::path& getFullDataHome()
+const boost::filesystem::path& getFullDataHome()
 {
   return full_data_home;
 }
 
-boost::filesystem::path& getDataHome()
+const boost::filesystem::path& getDataHome()
 {
   return data_home;
 }
 
-boost::filesystem::path& getDataHomeCatalog()
+boost::filesystem::path& getMutableDataHome()
 {
-  static boost::filesystem::path data_home_catalog(getDataHome());
-  return data_home_catalog;
+  return data_home;
+}
+
+void setFullDataHome(const boost::filesystem::path& v)
+{
+  full_data_home= v;
 }
 
 } // namespace drizzled

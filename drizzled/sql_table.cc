@@ -26,7 +26,6 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
-#include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
@@ -35,16 +34,18 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/global_charset_info.h>
 #include <drizzled/charset.h>
-
 #include <drizzled/definition/cache.h>
-
+#include <drizzled/system_variables.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/sql_table.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/typelib.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
+#include <drizzled/create_field.h>
 
 #include <algorithm>
 #include <sstream>
@@ -53,27 +54,15 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-bool is_primary_key(KeyInfo *key_info)
+bool is_primary_key(const char* name)
 {
-  static const char * primary_key_name="PRIMARY";
-  return (strcmp(key_info->name, primary_key_name)==0);
-}
-
-const char* is_primary_key_name(const char* key_name)
-{
-  static const char * primary_key_name="PRIMARY";
-  if (strcmp(key_name, primary_key_name)==0)
-    return key_name;
-  else
-    return NULL;
+  return strcmp(name, "PRIMARY") == 0;
 }
 
 static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
-static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
-
+static const char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
@@ -83,9 +72,8 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
-  identifier::Schema identifier(db);
-  if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
+  if (not create_info->default_table_charset)
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(str_ref(db)));
 }
 
 /*
@@ -125,7 +113,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   do
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
     if (not drop_temporary && session->lock_table_names_exclusively(tables))
     {
@@ -139,7 +127,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
 
-      error= session->drop_temporary_table(tmp_identifier);
+      error= session->open_tables.drop_temporary_table(tmp_identifier);
 
       switch (error) {
       case  0:
@@ -155,16 +143,14 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if (drop_temporary == false)
       {
-        Table *locked_table;
         abort_locked_tables(session, tmp_identifier);
-        table::Cache::singleton().removeTable(session, tmp_identifier,
-                                              RTFC_WAIT_OTHER_THREAD_FLAG |
-                                              RTFC_CHECK_KILLED_FLAG);
+        table::Cache::removeTable(*session, tmp_identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
         /*
           If the table was used in lock tables, remember it so that
           unlock_table_names can free it
         */
-        if ((locked_table= drop_locked_tables(session, tmp_identifier)))
+        Table *locked_table= drop_locked_tables(session, tmp_identifier);
+        if (locked_table)
           table->table= locked_table;
 
         if (session->getKilled())
@@ -200,8 +186,7 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
         {
           if (message) // If we have no definition, we don't know if the table should have been replicated
           {
-            TransactionServices &transaction_services= TransactionServices::singleton();
-            transaction_services.dropTable(*session, identifier, *message, if_exists);
+            TransactionServices::dropTable(*session, identifier, *message, if_exists);
           }
         }
         else
@@ -237,11 +222,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       std::string table_error;
 
-      for (util::string::vector::iterator iter= wrong_tables.begin();
-           iter != wrong_tables.end();
-           iter++)
+      BOOST_FOREACH(util::string::vector::reference iter, wrong_tables)
       {
-        table_error+= *iter;
+        table_error+= iter;
         table_error+= ',';
       }
       table_error.resize(table_error.size() -1);
@@ -287,9 +270,9 @@ static int sort_keys(KeyInfo *a, KeyInfo *b)
       /* Sort NOT NULL keys before other keys */
       return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
-    if (is_primary_key(a))
+    if (is_primary_key(a->name))
       return -1;
-    if (is_primary_key(b))
+    if (is_primary_key(b->name))
       return 1;
     /* Sort keys don't containing partial segments before others */
     if ((a_flags ^ b_flags) & HA_KEY_HAS_PART_KEY_SEG)
@@ -330,10 +313,10 @@ class typelib_set_member
 {
 public:
   string s;
-  const CHARSET_INFO * const cs;
+  const charset_info_st * const cs;
 
   typelib_set_member(const char* value, unsigned int length,
-                     const CHARSET_INFO * const charset)
+                     const charset_info_st * const charset)
     : s(value, length),
       cs(charset)
   {}
@@ -362,7 +345,7 @@ public:
 
 static bool check_duplicates_in_interval(const char *set_or_name,
                                          const char *name, TYPELIB *typelib,
-                                         const CHARSET_INFO * const cs,
+                                         const charset_info_st * const cs,
                                          unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
@@ -408,7 +391,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-static void calculate_interval_lengths(const CHARSET_INFO * const cs,
+static void calculate_interval_lengths(const charset_info_st * const cs,
                                        TYPELIB *interval,
                                        uint32_t *max_length,
                                        uint32_t *tot_length)
@@ -508,6 +491,7 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     break;
   }
@@ -546,7 +530,7 @@ static int prepare_create_table(Session *session,
 
   for (int32_t field_no=0; (sql_field=it++) ; field_no++)
   {
-    const CHARSET_INFO *save_cs;
+    const charset_info_st *save_cs;
 
     /*
       Initialize length from its original value (number of characters),
@@ -577,7 +561,7 @@ static int prepare_create_table(Session *session,
       tmp_pos+= strlen(tmp);
       strncpy(tmp_pos, STRING_WITH_LEN("_bin"));
       my_error(ER_UNKNOWN_COLLATION, MYF(0), tmp);
-      return(true);
+      return true;
     }
 
     /*
@@ -604,14 +588,13 @@ static int prepare_create_table(Session *session,
       {
         /* Could not convert */
         my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-        return(true);
+        return true;
       }
     }
 
     if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
-      size_t dummy;
-      const CHARSET_INFO * const cs= sql_field->charset;
+      const charset_info_st * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
       /*
@@ -626,32 +609,26 @@ static int prepare_create_table(Session *session,
           occupied memory at the same time when we free this
           sql_field -- at the end of execution.
         */
-        interval= sql_field->interval= typelib(session->mem_root,
-                                               sql_field->interval_list);
+        interval= sql_field->interval= typelib(*session->mem_root, sql_field->interval_list);
 
         List<String>::iterator int_it(sql_field->interval_list.begin());
         String conv, *tmp;
         char comma_buf[4];
-        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
-                                          (unsigned char*) comma_buf +
-                                          sizeof(comma_buf));
+        int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf, (unsigned char*) comma_buf + sizeof(comma_buf));
         assert(comma_length > 0);
 
         for (uint32_t i= 0; (tmp= int_it++); i++)
         {
           uint32_t lengthsp;
-          if (String::needs_conversion(tmp->length(), tmp->charset(),
-                                       cs, &dummy))
+          if (String::needs_conversion(tmp->length(), tmp->charset(), cs))
           {
-            size_t cnv_errs;
-            conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
-            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
+            conv.copy(tmp->ptr(), tmp->length(), cs);
+            interval->type_names[i]= session->mem.strdup(conv);
             interval->type_lengths[i]= conv.length();
           }
 
           // Strip trailing spaces.
-          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                       interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i], interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
@@ -667,10 +644,10 @@ static int prepare_create_table(Session *session,
           String str, *def= sql_field->def->val_str(&str);
           if (def == NULL) /* SQL "NULL" maps to NULL */
           {
-            if ((sql_field->flags & NOT_NULL_FLAG) != 0)
+            if (sql_field->flags & NOT_NULL_FLAG)
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
 
             /* else, the defaults yield the correct length for NULLs. */
@@ -681,7 +658,7 @@ static int prepare_create_table(Session *session,
             if (interval->find_type2(def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
+              return true;
             }
           }
         }
@@ -694,7 +671,7 @@ static int prepare_create_table(Session *session,
 
     sql_field->create_length_to_internal_length();
     if (prepare_blob_field(session, sql_field))
-      return(true);
+      return true;
 
     if (!(sql_field->flags & NOT_NULL_FLAG))
       null_fields++;
@@ -702,15 +679,13 @@ static int prepare_create_table(Session *session,
     if (check_column_name(sql_field->field_name))
     {
       my_error(ER_WRONG_COLUMN_NAME, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
 
     /* Check if we have used the same field name before */
     for (dup_no=0; (dup_field=it2++) != sql_field; dup_no++)
     {
-      if (my_strcasecmp(system_charset_info,
-                        sql_field->field_name,
-                        dup_field->field_name) == 0)
+      if (system_charset_info->strcasecmp(sql_field->field_name, dup_field->field_name) == 0)
       {
 	/*
 	  If this was a CREATE ... SELECT statement, accept a field
@@ -719,7 +694,7 @@ static int prepare_create_table(Session *session,
 	if (field_no < select_field_pos || dup_no >= select_field_pos)
 	{
 	  my_error(ER_DUP_FIELDNAME, MYF(0), sql_field->field_name);
-	  return(true);
+	  return true;
 	}
 	else
 	{
@@ -773,7 +748,7 @@ static int prepare_create_table(Session *session,
 
     if (prepare_create_field(sql_field, &blob_columns,
 			     &timestamps, &timestamps_with_niladic))
-      return(true);
+      return true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -782,26 +757,26 @@ static int prepare_create_table(Session *session,
   {
     my_message(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS,
                ER(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment > 1)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   if (auto_increment &&
       (engine->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
-    return(true);
+    return true;
   }
 
   if (blob_columns && (engine->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
-    return(true);
+    return true;
   }
 
   /* Create keys */
@@ -829,7 +804,7 @@ static int prepare_create_table(Session *session,
       Foreign_key *fk_key= (Foreign_key*) key;
 
       add_foreign_key_to_table_message(&create_proto,
-                                       fk_key->name.str,
+                                       fk_key->name.data(),
                                        fk_key->columns,
                                        fk_key->ref_table,
                                        fk_key->ref_columns,
@@ -841,10 +816,9 @@ static int prepare_create_table(Session *session,
 	  fk_key->ref_columns.size() != fk_key->columns.size())
       {
         my_error(ER_WRONG_FK_DEF, MYF(0),
-                 (fk_key->name.str ? fk_key->name.str :
-                                     "foreign key without name"),
+                 (fk_key->name.data() ? fk_key->name.data() : "foreign key without name"),
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
-	return(true);
+	return true;
       }
       continue;
     }
@@ -853,10 +827,10 @@ static int prepare_create_table(Session *session,
     if (key->columns.size() > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
-      return(true);
+      return true;
     }
-    if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
-      return(true);
+    if (check_identifier_name(key->name, ER_TOO_LONG_IDENT))
+      return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
     {
@@ -868,7 +842,7 @@ static int prepare_create_table(Session *session,
           Then we do not need the generated shorter key.
         */
         if ((key2->type != Key::FOREIGN_KEY &&
-             key2->name.str != ignore_key &&
+             key2->name.data() != ignore_key &&
              !foreign_key_prefix(key, key2)))
         {
           /* @todo issue warning message */
@@ -876,10 +850,10 @@ static int prepare_create_table(Session *session,
           if (!key2->generated ||
               (key->generated && key->columns.size() <
                key2->columns.size()))
-            key->name.str= ignore_key;
+            key->name.assign(ignore_key, 1);
           else
           {
-            key2->name.str= ignore_key;
+            key2->name.assign(ignore_key, 1);
             key_parts-= key2->columns.size();
             (*key_count)--;
           }
@@ -887,28 +861,25 @@ static int prepare_create_table(Session *session,
         }
       }
     }
-    if (key->name.str != ignore_key)
+    if (key->name.data() != ignore_key)
       key_parts+=key->columns.size();
     else
       (*key_count)--;
-    if (key->name.str && !tmp_table && (key->type != Key::PRIMARY) &&
-        is_primary_key_name(key->name.str))
+    if (key->name.data() && !tmp_table && (key->type != Key::PRIMARY) && is_primary_key(key->name.data()))
     {
-      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
-      return(true);
+      my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.data());
+      return true;
     }
   }
   tmp= engine->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
-    return(true);
+    return true;
   }
 
   (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
   key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
-  if (!*key_info_buffer || ! key_part_info)
-    return(true);				// Out of memory
 
   key_iterator= alter_info->key_list.begin();
   key_number=0;
@@ -917,12 +888,12 @@ static int prepare_create_table(Session *session,
     uint32_t key_length=0;
     Key_part_spec *column;
 
-    if (key->name.str == ignore_key)
+    if (key->name.data() == ignore_key)
     {
       /* ignore redundant keys */
       do
 	key=key_iterator++;
-      while (key && key->name.str == ignore_key);
+      while (key && key->name.data() == ignore_key);
       if (!key)
 	break;
     }
@@ -947,24 +918,21 @@ static int prepare_create_table(Session *session,
     key_info->algorithm= key->key_create_info.algorithm;
 
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
-                                           key->key_create_info.comment.str,
-                                           key->key_create_info.comment.str +
-                                           key->key_create_info.comment.length,
+                                           key->key_create_info.comment.begin(),
+                                           key->key_create_info.comment.end(),
                                            INDEX_COMMENT_MAXLEN);
 
-    if (tmp_len < key->key_create_info.comment.length)
+    if (tmp_len < key->key_create_info.comment.size())
     {
-      my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-               key->key_create_info.comment.str,"INDEX COMMENT",
-               (uint32_t) INDEX_COMMENT_MAXLEN);
+      my_error(ER_WRONG_STRING_LENGTH, MYF(0), key->key_create_info.comment.data(), "INDEX COMMENT", (uint32_t) INDEX_COMMENT_MAXLEN);
       return -1;
     }
 
-    key_info->comment.length= key->key_create_info.comment.length;
-    if (key_info->comment.length > 0)
+    key_info->comment.assign(key_info->comment.data(), key->key_create_info.comment.size());
+    if (key_info->comment.size() > 0)
     {
       key_info->flags|= HA_USES_COMMENT;
-      key_info->comment.str= key->key_create_info.comment.str;
+      key_info->comment.assign(key->key_create_info.comment.data(), key_info->comment.size()); // weird
     }
 
     message::Table::Field *protofield= NULL;
@@ -980,28 +948,25 @@ static int prepare_create_table(Session *session,
       it= alter_info->create_list.begin();
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
-	     my_strcasecmp(system_charset_info,
-			   column->field_name.str,
-			   sql_field->field_name))
+	     system_charset_info->strcasecmp(column->field_name.data(), sql_field->field_name))
       {
-	field++;
+        field++;
       }
 
       if (!sql_field)
       {
-	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-	return(true);
+	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.data());
+	return true;
       }
 
       while ((dup_column= cols2++) != column)
       {
-        if (!my_strcasecmp(system_charset_info,
-                           column->field_name.str, dup_column->field_name.str))
+        if (!system_charset_info->strcasecmp(column->field_name.data(), dup_column->field_name.data()))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
-			  column->field_name.str);
-	  return(true);
+			  column->field_name.data());
+	  return true;
 	}
       }
       cols2= key->columns.begin();
@@ -1016,12 +981,12 @@ static int prepare_create_table(Session *session,
         {
           if (! (engine->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
           {
-            my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
+            my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.data());
             return true;
           }
           if (! column->length)
           {
-            my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
+            my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.data());
             return true;
           }
         }
@@ -1047,7 +1012,7 @@ static int prepare_create_table(Session *session,
             key_info->flags|= HA_NULL_PART_KEY;
             if (! (engine->check_flag(HTON_BIT_NULL_IN_KEY)))
             {
-              my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
+              my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.data());
               return true;
             }
           }
@@ -1087,7 +1052,7 @@ static int prepare_create_table(Session *session,
 	    else
 	    {
 	      my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	      return(true);
+	      return true;
 	    }
 	  }
 	}
@@ -1095,7 +1060,7 @@ static int prepare_create_table(Session *session,
             ! Field::type_can_have_key_part(sql_field->sql_type)))
 	{
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
-	  return(true);
+	  return true;
 	}
 	else if (! (engine->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
         {
@@ -1104,8 +1069,8 @@ static int prepare_create_table(Session *session,
       }
       else if (length == 0)
       {
-	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
-	  return(true);
+	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.data());
+	  return true;
       }
       if (length > engine->max_key_part_length())
       {
@@ -1124,7 +1089,7 @@ static int prepare_create_table(Session *session,
 	else
 	{
 	  my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	  return(true);
+	  return true;
 	}
       }
       key_part_info->length=(uint16_t) length;
@@ -1160,19 +1125,19 @@ static int prepare_create_table(Session *session,
 	  {
 	    my_message(ER_MULTIPLE_PRI_KEY, ER(ER_MULTIPLE_PRI_KEY),
                        MYF(0));
-	    return(true);
+	    return true;
 	  }
           static const char pkey_name[]= "PRIMARY";
 	  key_name=pkey_name;
 	  primary_key=1;
 	}
-	else if (!(key_name= key->name.str))
+	else if (!(key_name= key->name.data()))
 	  key_name=make_unique_key_name(sql_field->field_name,
 					*key_info_buffer, key_info);
 	if (check_if_keyname_exists(key_name, *key_info_buffer, key_info))
 	{
 	  my_error(ER_DUP_KEYNAME, MYF(0), key_name);
-	  return(true);
+	  return true;
 	}
 	key_info->name=(char*) key_name;
       }
@@ -1181,7 +1146,7 @@ static int prepare_create_table(Session *session,
     if (!key_info->name || check_column_name(key_info->name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key_info->name);
-      return(true);
+      return true;
     }
 
     if (!(key_info->flags & HA_NULL_PART_KEY))
@@ -1194,7 +1159,7 @@ static int prepare_create_table(Session *session,
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);
-      return(true);
+      return true;
     }
 
     key_info++;
@@ -1204,13 +1169,13 @@ static int prepare_create_table(Session *session,
       (engine->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
-    return(true);
+    return true;
   }
 
   if (auto_increment > 0)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    return(true);
+    return true;
   }
   /* Sort keys in optimized order */
   internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
@@ -1243,11 +1208,11 @@ static int prepare_create_table(Session *session,
       */
 
       my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-      return(true);
+      return true;
     }
   }
 
-  return(false);
+  return false;
 }
 
 /*
@@ -1341,7 +1306,7 @@ static bool locked_create_event(Session *session,
       /*
         @todo improve this error condition.
       */
-      if (definition::Cache::singleton().find(identifier.getKey()))
+      if (definition::Cache::find(identifier.getKey()))
       {
         my_error(ER_TABLE_EXISTS_ERROR, identifier);
 
@@ -1368,7 +1333,7 @@ static bool locked_create_event(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(identifier);
+      (void) session->open_tables.rm_temporary_table(identifier);
       return error;
     }
   }
@@ -1381,8 +1346,7 @@ static bool locked_create_event(Session *session,
 
   if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(*session, table_proto);
+    TransactionServices::createTable(*session, table_proto);
   }
 
   return false;
@@ -1451,7 +1415,7 @@ bool create_table_no_lock(Session *session,
                                &key_info_buffer, &key_count,
                                select_field_count))
   {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* CREATE TABLE (some confussion on naming, double check) */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1480,14 +1444,9 @@ static bool drizzle_create_table(Session *session,
                                  uint32_t select_field_count,
                                  bool is_if_not_exists)
 {
-  Table *name_lock= NULL;
+  Table *name_lock= session->lock_table_name_if_not_cached(identifier);
   bool result;
-
-  if (session->lock_table_name_if_not_cached(identifier, &name_lock))
-  {
-    result= true;
-  }
-  else if (name_lock == NULL)
+  if (name_lock == NULL)
   {
     if (is_if_not_exists)
     {
@@ -1517,7 +1476,7 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* Lock for removing name_lock during table create */
+    boost::mutex::scoped_lock lock(table::Cache::mutex()); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
   }
 
@@ -1567,21 +1526,24 @@ bool create_table(Session *session,
 static bool
 check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KeyInfo *key=start ; key != end ; key++)
-    if (!my_strcasecmp(system_charset_info,name,key->name))
+  for (KeyInfo *key= start; key != end; key++)
+  {
+    if (!system_charset_info->strcasecmp(name, key->name))
       return 1;
+  }
   return 0;
 }
 
 
-static char *
+static const char*
 make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
-  if (!check_if_keyname_exists(field_name,start,end) &&
-      !is_primary_key_name(field_name))
-    return (char*) field_name;			// Use fieldname
+  if (not check_if_keyname_exists(field_name,start,end) && not is_primary_key(field_name))
+  {
+    return field_name;			// Use fieldname
+  }
 
   buff_end= strncpy(buff, field_name, sizeof(buff)-4);
   buff_end+= strlen(buff);
@@ -1628,37 +1590,22 @@ rename_table(Session &session,
                    const identifier::Table &from,
                    const identifier::Table &to)
 {
-  int error= 0;
-
-  assert(base);
-
   if (not plugin::StorageEngine::doesSchemaExist(to))
   {
     my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
     return true;
   }
 
-  error= base->renameTable(session, from, to);
-
+  int error= base->renameTable(session, from, to);
   if (error == HA_ERR_WRONG_COMMAND)
-  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
-  }
   else if (error)
   {
-    std::string from_path;
-    std::string to_path;
-
-    from.getSQLPath(from_path);
-    to.getSQLPath(to_path);
-
-    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from_path.c_str();
-    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to_path.c_str();
-
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), 
+			from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str(), 
+			to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str(), error);
   }
-
-  return error ? true : false; 
+  return error; 
 }
 
 
@@ -1677,7 +1624,7 @@ rename_table(Session &session,
    the table is closed.
 
   PREREQUISITES
-    Lock on table::Cache::singleton().mutex()
+    Lock on table::Cache::mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1685,7 +1632,7 @@ void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function)
 {
 
-  safe_mutex_assert_owner(table::Cache::singleton().mutex().native_handle());
+  safe_mutex_assert_owner(table::Cache::mutex().native_handle());
 
   table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
@@ -1693,7 +1640,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   /* Wait until all there are no other threads that has this table open */
   identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
-  table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
+  table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1709,7 +1656,7 @@ void wait_while_table_is_used(Session *session, Table *table,
     reopen the table.
 
   PREREQUISITES
-    Lock on table::Cache::singleton().mutex()
+    Lock on table::Cache::mutex()
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
@@ -1718,15 +1665,15 @@ void Session::close_cached_table(Table *table)
 
   wait_while_table_is_used(this, table, HA_EXTRA_FORCE_REOPEN);
   /* Close lock if this is not got with LOCK TABLES */
-  if (lock)
+  if (open_tables.lock)
   {
-    unlockTables(lock);
-    lock= NULL;			// Start locked threads
+    unlockTables(open_tables.lock);
+    open_tables.lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(table);
 
-  /* When lock on table::Cache::singleton().mutex() is freed other threads can continue */
+  /* When lock on table::Cache::mutex() is freed other threads can continue */
   locking::broadcast_refresh();
 }
 
@@ -1737,27 +1684,22 @@ void Session::close_cached_table(Table *table)
           (admin operation or network communication failed)
 */
 static bool admin_table(Session* session, TableList* tables,
-                              HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
-                              int (Cursor::*operator_func)(Session *,
-                                                            HA_CHECK_OPT *))
+                              int (Cursor::*operator_func)(Session*))
 {
   TableList *table;
-  Select_Lex *select= &session->getLex()->select_lex;
+  Select_Lex *select= &session->lex().select_lex;
   List<Item> field_list;
   Item *item;
   int result_code= 0;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
     return 1;
 
-  field_list.push_back(item = new Item_empty_string("Table",
-                                                    NAME_CHAR_LEN * 2,
-                                                    cs));
+  field_list.push_back(item = new Item_empty_string("Table", NAME_CHAR_LEN * 2, cs));
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Op", 10, cs));
   item->maybe_null = 1;
@@ -1765,16 +1707,14 @@ static bool admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (session->getClient()->sendFields(&field_list))
-    return true;
+  session->getClient()->sendFields(field_list);
 
   for (table= tables; table; table= table->next_local)
   {
     identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
-    std::string table_name;
     bool fatal_error=0;
 
-    table_identifier.getSQLPath(table_name);
+    std::string table_name = table_identifier.getSQLPath();
 
     table->lock_type= lock_type;
     /* open only one table from local list of command */
@@ -1790,9 +1730,9 @@ static bool admin_table(Session* session, TableList* tables,
         so it have to be prepared.
         @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
-      session->getLex()->query_tables= table;
-      session->getLex()->query_tables_last= &table->next_global;
-      session->getLex()->query_tables_own_last= 0;
+      session->lex().query_tables= table;
+      session->lex().query_tables_last= &table->next_global;
+      session->lex().query_tables_own_last= 0;
       session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
@@ -1811,7 +1751,7 @@ static bool admin_table(Session* session, TableList* tables,
     */
     if (!table->table)
     {
-      if (!session->warn_list.size())
+      if (!session->main_da().m_warn_list.size())
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       result_code= HA_ADMIN_CORRUPT;
@@ -1828,10 +1768,10 @@ static bool admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name.c_str());
       session->getClient()->store(buff, length);
-      transaction_services.autocommitOrRollback(*session, false);
+      TransactionServices::autocommitOrRollback(*session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
-      session->getLex()->reset_query_tables_list(false);
+      session->lex().reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (session->getClient()->flush())
 	goto err;
@@ -1841,38 +1781,35 @@ static bool admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
-      table::Cache::singleton().mutex().lock(); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(COND_refresh, table::Cache::singleton().mutex(),
+      table::Cache::mutex().lock(); /* Lock type is TL_WRITE and we lock to repair the table */
+      const char *old_message=session->enter_cond(COND_refresh, table::Cache::mutex(),
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
       identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-      table::Cache::singleton().removeTable(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
+      table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->getKilled())
 	goto err;
       open_for_modify= 0;
     }
 
-    result_code = (table->table->cursor->*operator_func)(session, check_opt);
+    result_code = (table->table->cursor->*operator_func)(session);
 
 send_result:
 
-    session->getLex()->cleanup_after_one_table_open();
+    session->lex().cleanup_after_one_table_open();
     session->clear_error();  // these errors shouldn't get client
     {
-      List<DRIZZLE_ERROR>::iterator it(session->warn_list.begin());
-      DRIZZLE_ERROR *err;
-      while ((err= it++))
+      BOOST_FOREACH(DRIZZLE_ERROR* err, session->main_da().m_warn_list)
       {
         session->getClient()->store(table_name.c_str());
         session->getClient()->store(operator_name);
-        session->getClient()->store(warning_level_names[err->level].str,
-                               warning_level_names[err->level].length);
+        session->getClient()->store(warning_level_names[err->level].data(), warning_level_names[err->level].size());
         session->getClient()->store(err->msg);
         if (session->getClient()->flush())
           goto err;
       }
-      drizzle_reset_errors(session, true);
+      drizzle_reset_errors(*session, true);
     }
     session->getClient()->store(table_name.c_str());
     session->getClient()->store(operator_name);
@@ -1946,13 +1883,13 @@ send_result:
         }
         else
         {
-          boost::unique_lock<boost::mutex> lock(table::Cache::singleton().mutex());
-	  identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
-          table::Cache::singleton().removeTable(session, identifier, RTFC_NO_FLAG);
+          boost::unique_lock<boost::mutex> lock(table::Cache::mutex());
+          identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+          table::Cache::removeTable(*session, identifier, RTFC_NO_FLAG);
         }
       }
     }
-    transaction_services.autocommitOrRollback(*session, false);
+    TransactionServices::autocommitOrRollback(*session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1961,15 +1898,15 @@ send_result:
   }
 
   session->my_eof();
-  return(false);
+  return false;
 
 err:
-  transaction_services.autocommitOrRollback(*session, true);
+  TransactionServices::autocommitOrRollback(*session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
     table->table=0;
-  return(true);
+  return true;
 }
 
   /*
@@ -1978,19 +1915,19 @@ err:
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
     to plugin::StorageEngine::createTable() in critical section protected by
-    table::Cache::singleton().mutex() in order to provide minimal atomicity against operations which
+    table::Cache::mutex() in order to provide minimal atomicity against operations which
     disregard name-locks, like I_S implementation, for example. This is a
     temporary and should not be copied. Instead we should fix our code to
     always honor name-locks.
 
-    Also some engines (e.g. NDB cluster) require that table::Cache::singleton().mutex() should be held
+    Also some engines (e.g. NDB cluster) require that table::Cache::mutex() should be held
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
 static bool create_table_wrapper(Session &session,
                                  const message::Table& create_table_proto,
-                                 identifier::Table::const_reference destination_identifier,
-                                 identifier::Table::const_reference source_identifier,
+                                 const identifier::Table& destination_identifier,
+                                 const identifier::Table& source_identifier,
                                  bool is_engine_set)
 {
   // We require an additional table message because during parsing we used
@@ -2007,15 +1944,7 @@ static bool create_table_wrapper(Session &session,
   }
 
   new_table_message.CopyFrom(*source_table_message);
-
-  if (destination_identifier.isTmp())
-  {
-    new_table_message.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    new_table_message.set_type(message::Table::STANDARD);
-  }
+  new_table_message.set_type(destination_identifier.isTmp() ? message::Table::TEMPORARY : message::Table::STANDARD);
 
   if (is_engine_set)
   {
@@ -2049,14 +1978,11 @@ static bool create_table_wrapper(Session &session,
     As mysql_truncate don't work on a new table at this stage of
     creation, instead create the table directly (for both normal and temporary tables).
   */
-  bool success= plugin::StorageEngine::createTable(session,
-                                                   destination_identifier,
-                                                   new_table_message);
+  bool success= plugin::StorageEngine::createTable(session, destination_identifier, new_table_message);
 
   if (success && not destination_identifier.isTmp())
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, new_table_message);
+    TransactionServices::createTable(session, new_table_message);
   }
 
   return success;
@@ -2078,8 +2004,8 @@ static bool create_table_wrapper(Session &session,
 */
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set)
@@ -2095,7 +2021,7 @@ bool create_like_table(Session* session,
   */
   if (destination_identifier.isTmp())
   {
-    if (session->find_temporary_table(destination_identifier))
+    if (session->open_tables.find_temporary_table(destination_identifier))
     {
       table_exists= true;
     }
@@ -2108,12 +2034,12 @@ bool create_like_table(Session* session,
                                              is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier, true);
+        (void) session->open_tables.rm_temporary_table(destination_identifier, true);
       }
       else
       {
@@ -2123,19 +2049,7 @@ bool create_like_table(Session* session,
   }
   else // Standard table which will require locks.
   {
-    Table *name_lock= 0;
-
-    if (session->lock_table_name_if_not_cached(destination_identifier, &name_lock))
-    {
-      if (name_lock)
-      {
-        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
-        session->unlink_open_table(name_lock);
-      }
-
-      return res;
-    }
-
+    Table *name_lock= session->lock_table_name_if_not_cached(destination_identifier);
     if (not name_lock)
     {
       table_exists= true;
@@ -2148,7 +2062,7 @@ bool create_like_table(Session* session,
     {
       bool was_created;
       {
-        boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
+        boost::mutex::scoped_lock lock(table::Cache::mutex()); /* We lock for CREATE TABLE LIKE to copy table definition */
         was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                           source_identifier, is_engine_set);
       }
@@ -2167,7 +2081,7 @@ bool create_like_table(Session* session,
 
     if (name_lock)
     {
-      boost_unique_lock_t lock(table::Cache::singleton().mutex()); /* unlink open tables for create table like*/
+      boost::mutex::scoped_lock lock(table::Cache::mutex()); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
     }
   }
@@ -2193,24 +2107,15 @@ bool create_like_table(Session* session,
 }
 
 
-bool analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
+bool analyze_table(Session* session, TableList* tables)
 {
-  thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, check_opt,
-				"analyze", lock_type, true,
-				&Cursor::ha_analyze));
+  return admin_table(session, tables, "analyze", TL_READ_NO_INSERT, true, &Cursor::ha_analyze);
 }
 
 
-bool check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_opt)
+bool check_table(Session* session, TableList* tables)
 {
-  thr_lock_type lock_type = TL_READ_NO_INSERT;
-
-  return(admin_table(session, tables, check_opt,
-				"check", lock_type,
-				false,
-				&Cursor::ha_check));
+  return admin_table(session, tables, "check", TL_READ_NO_INSERT, false, &Cursor::ha_check);
 }
 
 } /* namespace drizzled */

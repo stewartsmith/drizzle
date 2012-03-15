@@ -23,7 +23,7 @@ results=[]
 summary={}
 total_warning_count=0
 
-for line in open('var/log/master.err','r').readlines():
+for line in open('tests/var/log/master.err','r').readlines():
   if line[:12] == "CURRENT_TEST":
     current_test= line.split()[1]
     in_leak_summary=False

@@ -31,28 +31,21 @@ static drizzled::plugin::StorageEngine *schema_plugin= NULL;
 
 static int init(drizzled::module::Context &context)
 {
-  schema_plugin= new(std::nothrow) Schema();
-
-  if (not schema_plugin)
-  {
-    return 1;
-  }
-
+  schema_plugin= new Schema;
   context.add(schema_plugin);
-
   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "SchemaEngine",
+  "schema_engine",
   "1.0",
   "Brian Aker",
-  "This implements the default file based Schema engine.",
+  N_("Schema engine"),
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  "signal_handler",               /* depends */
-  NULL                /* config options   */
+  init,
+  "signal_handler",
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -21,8 +21,7 @@
 
 #include <drizzled/function/str/alloc_buffer.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 String* alloc_buffer(String *res,String *str,String *tmp_value,
                             ulong length)
@@ -35,8 +34,7 @@ String* alloc_buffer(String *res,String *str,String *tmp_value,
       str->length(length);
       return str;
     }
-    if (tmp_value->alloc(length))
-      return 0;
+    tmp_value->alloc(length);
     (void) tmp_value->copy(*res);
     tmp_value->length(length);
     return tmp_value;

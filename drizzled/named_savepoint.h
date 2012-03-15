@@ -21,18 +21,12 @@
  * @file Simple named savepoint class.
  */
 
-#ifndef DRIZZLED_NAMED_SAVEPOINT_H
-#define DRIZZLED_NAMED_SAVEPOINT_H
+#pragma once
 
-#include <drizzled/transaction_context.h> /* for TransactionContext::ResourceContexts */
+#include <drizzled/transaction_context.h>
+#include <string>
 
-namespace drizzled
-{
-
-namespace message
-{
-class Transaction;
-}
+namespace drizzled {
 
 /**
  * This is a class which stores information about
@@ -56,7 +50,7 @@ public:
 
   void setResourceContexts(TransactionContext::ResourceContexts &new_contexts)
   {
-    resource_contexts.assign(new_contexts.begin(), new_contexts.end());
+    resource_contexts= new_contexts;
   }
   const TransactionContext::ResourceContexts &getResourceContexts() const
   {
@@ -67,10 +61,6 @@ public:
     return resource_contexts;
   }
   const std::string &getName() const
-  {
-    return name;
-  }
-  const std::string &getName()
   {
     return name;
   }
@@ -87,19 +77,15 @@ public:
     if (this == &other)
       return *this;
 
-    name.assign(other.getName());
-    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
-    resource_contexts.assign(other_resource_contexts.begin(),
-                             other_resource_contexts.end());
+    name= other.getName();
+    resource_contexts= other.getResourceContexts();
     return *this;
   }
 private:
   std::string name;
   TransactionContext::ResourceContexts resource_contexts;
   message::Transaction *transaction_message;
-  NamedSavepoint();
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_NAMED_SAVEPOINT_H */

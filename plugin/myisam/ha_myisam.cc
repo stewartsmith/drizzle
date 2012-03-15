@@ -33,9 +33,11 @@
 #include <drizzled/table.h>
 #include <drizzled/memory/multi_malloc.h>
 #include <drizzled/plugin/daemon.h>
-
+#include <drizzled/session/table_messages.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/key.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -58,21 +60,9 @@ static const string engine_name("MyISAM");
 boost::mutex THR_LOCK_myisam;
 
 static uint32_t myisam_key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
-static uint32_t myisam_key_cache_size;
-static uint32_t myisam_key_cache_division_limit;
-static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
 typedef constrained_check<size_t, SIZE_MAX, 1024, 1024> sort_buffer_constraint;
 static sort_buffer_constraint sort_buffer_size;
-
-void st_mi_isam_share::setKeyCache()
-{
-  (void)init_key_cache(&key_cache,
-                       myisam_key_cache_block_size,
-                       myisam_key_cache_size,
-                       myisam_key_cache_division_limit, 
-                       myisam_key_cache_age_threshold);
-}
 
 /*****************************************************************************
 ** MyISAM tables
@@ -86,9 +76,6 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public plugin::StorageEngine
 {
-  MyisamEngine();
-  MyisamEngine(const MyisamEngine&);
-  MyisamEngine& operator=(const MyisamEngine&);
 public:
   explicit MyisamEngine(string name_arg) :
     plugin::StorageEngine(name_arg,
@@ -120,7 +107,7 @@ public:
   int doCreateTable(Session&,
                     Table& table_arg,
                     const identifier::Table &identifier,
-                    message::Table&);
+                    const message::Table&);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
 
@@ -146,7 +133,7 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
     (void)state;
@@ -161,7 +148,7 @@ public:
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                          const drizzled::identifier::Schema&,
-                                         drizzled::identifier::Table::vector&)
+                                         drizzled::identifier::table::vector&)
 {
 }
 
@@ -1358,7 +1345,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
                                 const identifier::Table &identifier,
-                                message::Table& create_proto)
+                                const message::Table& create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1524,13 +1511,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "MyISAM",
+  "myisam",
   "2.0",
   "MySQL AB",
-  "Default engine as of MySQL 3.23 with great performance",
+  N_("MyISAM storage engine: non-transactional, legacy, deprecated"),
   PLUGIN_LICENSE_GPL,
-  myisam_init, /* Plugin Init */
-  NULL,           /* depends */
-  init_options                        /* config options                  */
+  myisam_init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_USER_VAR_AS_OUT_PARAM_H
-#define DRIZZLED_FUNCTION_USER_VAR_AS_OUT_PARAM_H
+#pragma once
 
 #include <drizzled/function/func.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   This item represents user variable used as out parameter (e.g in LOAD DATA),
@@ -34,25 +32,23 @@ namespace drizzled
   in List<Item> and desire to place this code somewhere near other functions
   working with user variables.
 */
-class Item_user_var_as_out_param :public Item
+class Item_user_var_as_out_param : public Item
 {
-  LEX_STRING name;
+  str_ref name;
   user_var_entry *entry;
 public:
-  Item_user_var_as_out_param(LEX_STRING a) : name(a) {}
+  Item_user_var_as_out_param(str_ref a) : name(a) {}
   /* We should return something different from FIELD_ITEM here */
-  enum Type type() const { return STRING_ITEM;}
+  Type type() const { return STRING_ITEM;}
   double val_real();
   int64_t val_int();
-  String *val_str(String *str);
+  String *val_str(String*);
   type::Decimal *val_decimal(type::Decimal *decimal_buffer);
   /* fix_fields() binds variable name with its entry structure */
-  bool fix_fields(Session *session, Item **ref);
-  virtual void print(String *str);
-  void set_null_value(const CHARSET_INFO * const cs);
-  void set_value(const char *str, uint32_t length, const CHARSET_INFO * const cs);
+  bool fix_fields(Session*, Item **ref);
+  virtual void print(String*);
+  void set_null_value(const charset_info_st*);
+  void set_value(str_ref, const charset_info_st*);
 };
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_USER_VAR_AS_OUT_PARAM_H */

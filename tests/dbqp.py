@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010 Patrick Crews
@@ -24,17 +24,19 @@
 DataBase Quality Platform - system for executing various
 testing systems and the helper code 
 
-Currently only executing drizzle-test-run tests
-But we can compose various combinations of servers, system,
-and test definitions to produce various results
+Designed to be a modular test-runner.  Different testing tools
+and databases may be plugged into the system via hacking the
+appropriate modules
 
+Currently geared towards Drizzle / will expand to MySQL
 """
 
 # imports
 import os
 import sys
-import lib.test_run_options as test_run_options
-from lib.test_mode import handle_mode
+
+import lib.dbqp_opts.test_run_options as test_run_options
+from lib.dbqp_modes.test_mode import handle_mode
 from lib.server_mgmt.server_management import serverManager
 from lib.sys_mgmt.system_management import systemManager
 from lib.test_mgmt.execution_management import executionManager

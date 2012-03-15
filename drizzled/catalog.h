@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CATALOG_H
-#define DRIZZLED_CATALOG_H
+#pragma once
 
 #include <drizzled/identifier.h>
 
@@ -29,4 +28,3 @@ namespace catalog {
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_H */

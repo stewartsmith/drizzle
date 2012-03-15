@@ -17,19 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_DIRECT_REF_H
-#define DRIZZLED_ITEM_DIRECT_REF_H
+#pragma once
 
 #include <drizzled/item/ref.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   The same as Item_ref, but get value from val_* family of method to get
   value of item on which it referred instead of result* family.
 */
-class Item_direct_ref :public Item_ref
+class Item_direct_ref : public Item_ref
 {
 public:
   Item_direct_ref(Name_resolution_context *context_arg, Item **item,
@@ -54,4 +52,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_DIRECT_REF_H */

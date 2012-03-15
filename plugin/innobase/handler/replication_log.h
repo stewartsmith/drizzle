@@ -17,8 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H
-#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H
+#pragma once
 
 #include <drizzled/replication_services.h>
 #include <drizzled/plugin/transaction_applier.h>
@@ -28,14 +27,10 @@
 class ReplicationLog :
   public drizzled::plugin::TransactionApplier 
 {
-  ReplicationLog(const ReplicationLog&);
-  ReplicationLog& operator=(const ReplicationLog&);
 public:
   ReplicationLog();
 
-  static void setup(ReplicationLog *logger);
-  drizzled::plugin::ReplicationReturnCode apply(drizzled::Session &session,
-                                                const drizzled::message::Transaction &to_apply);
+  static void setup(ReplicationLog*, const std::string&);
+  drizzled::plugin::ReplicationReturnCode apply(drizzled::Session&, const drizzled::message::Transaction &to_apply);
 };
 
-#endif /* PLUGIN_INNOBASE_HANDLER_REPLICATION_LOG_H */

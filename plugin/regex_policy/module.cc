@@ -31,6 +31,8 @@
 
 #include "policy.h"
 
+#include <fstream>
+
 namespace po= boost::program_options;
 
 using namespace std;
@@ -58,15 +60,12 @@ static int init(module::Context &context)
     errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
     return 1;
   }
-  Policy *policy= new (nothrow) Policy(fs::path(vm["policy"].as<string>()));
-  if (policy == NULL or not policy->loadFile())
+  Policy *policy= new Policy(fs::path(vm["policy"].as<string>()));
+  if (not policy->loadFile())
   {
     errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
                   (policy ? policy->getError().str().c_str() : _("Unknown")));
-    if (policy)
-    {
-      delete policy;
-    }
+    delete policy;
     return 1;
   }
 
@@ -218,7 +217,7 @@ bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
 }
 
 bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
-                                   drizzled::identifier::Schema::const_reference schema)
+                                   const drizzled::identifier::Schema& schema)
 {
   return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, schema_check_cache);
 }
@@ -229,8 +228,8 @@ bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
   return restrictObject(user_ctx, session_ctx.username(), process_policies, process_check_cache);
 }
 
-bool Policy::restrictTable(drizzled::identifier::User::const_reference user_ctx,
-                             drizzled::identifier::Table::const_reference table)
+bool Policy::restrictTable(const drizzled::identifier::User& user_ctx,
+                             const drizzled::identifier::Table& table)
 {
   return restrictObject(user_ctx, table.getTableName(), table_policies, table_check_cache);
 }
@@ -358,4 +357,16 @@ void CheckItem::setCachedResult(bool result)
 
 } /* namespace regex_policy */
 
-DRIZZLE_PLUGIN(regex_policy::init, NULL, regex_policy::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "regex_policy",
+  "1.0",
+  "Clint Byrum",
+  N_("Authorization using a regex-matched policy file"),
+  PLUGIN_LICENSE_GPL,
+  regex_policy::init,
+  NULL,
+  regex_policy::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

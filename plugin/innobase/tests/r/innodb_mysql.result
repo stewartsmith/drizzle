@@ -942,7 +942,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` TEXT COLLATE utf8_general_ci,
-  KEY `a` (`a`(255))
+  KEY `a` (`a`(255)) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
@@ -1154,8 +1154,8 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
   `b` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
-  UNIQUE KEY `bb` (`b`),
-  UNIQUE KEY `aa` (`a`(1))
+  UNIQUE KEY `bb` (`b`) USING BTREE,
+  UNIQUE KEY `aa` (`a`(1)) USING BTREE
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (id int, type char(6), d int, INDEX idx(id,d)) ENGINE=InnoDB;
@@ -1298,7 +1298,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `c` INT NOT NULL,
   `d` INT NOT NULL,
-  PRIMARY KEY (`c`,`d`),
+  PRIMARY KEY (`c`,`d`) USING BTREE,
   CONSTRAINT `c1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON DELETE NO ACTION,
   CONSTRAINT `c2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
   CONSTRAINT `f3` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
@@ -1366,7 +1366,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `fk` INT DEFAULT NULL,
-  KEY `x` (`fk`),
+  KEY `x` (`fk`) USING BTREE,
   CONSTRAINT `x` FOREIGN KEY (`FK`) REFERENCES `t1` (`PK`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t2, t1;

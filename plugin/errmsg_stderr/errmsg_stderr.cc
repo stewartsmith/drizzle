@@ -35,8 +35,8 @@ class Error_message_stderr : public plugin::ErrorMessage
 {
 public:
   Error_message_stderr()
-   : plugin::ErrorMessage("Error_message_stderr") {}
-  virtual bool errmsg(error::level_t , const char *format, va_list ap)
+   : plugin::ErrorMessage("stderr_error_message") {}
+  virtual bool errmsg(error::priority_t , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
     int prv, wrv;
@@ -70,11 +70,11 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "errmsg_stderr",
   "0.1",
-  "Mark Atwood <mark@fallenpegasus.com>",
-  N_("Error Messages to stderr"),
+  "Mark Atwood",
+  N_("Prints error messages to STDERR"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
-  NULL, /* depends */
+  NULL,
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

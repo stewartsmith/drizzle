@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
-#define PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
+#pragma once
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -27,22 +26,19 @@
 
 #include "net_serv.h"
 
-namespace drizzle_plugin
-{
-void compose_ip_addresses(std::vector<std::string> options);
+namespace drizzle_plugin {
 
 class ProtocolCounters
 {
-  public:
-    ProtocolCounters():
+public:
+  ProtocolCounters() :
       max_connections(1000)
-    { }
-    drizzled::atomic<uint64_t> connectionCount;
-    drizzled::atomic<uint64_t> adminConnectionCount;
-    drizzled::atomic<uint64_t> failedConnections;
-    drizzled::atomic<uint64_t> connected;
-    drizzled::atomic<uint64_t> adminConnected;
-    uint32_t max_connections;
+  { }
+
+  drizzled::atomic<uint64_t> connectionCount;
+  drizzled::atomic<uint64_t> failedConnections;
+  drizzled::atomic<uint64_t> connected;
+  uint32_t max_connections;
 };
 
 typedef drizzled::constrained_check<uint32_t, 300, 1> timeout_constraint;
@@ -51,25 +47,19 @@ typedef drizzled::constrained_check<uint32_t, 1048576, 1024, 1024> buffer_constr
 
 class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
+public:
+  ListenMySQLProtocol(std::string name, const std::string &hostname) :
+   drizzled::plugin::ListenTcp(name),
+   _hostname(hostname)
+  { }
+  virtual const std::string getHost() const;
+  virtual in_port_t getPort() const;
+  virtual drizzled::plugin::Client *getClient(int fd);
+  static ProtocolCounters mysql_counters;
+  virtual ProtocolCounters& getCounters() const { return mysql_counters; }
+  void addCountersToTable();
 protected:
   const std::string _hostname;
-  bool _using_mysql41_protocol;
-
-public:
-  ListenMySQLProtocol(std::string name,
-                      const std::string &hostname,
-                      bool using_mysql41_protocol):
-   drizzled::plugin::ListenTcp(name),
-   _hostname(hostname),
-   _using_mysql41_protocol(using_mysql41_protocol)
-  { }
-  virtual ~ListenMySQLProtocol();
-  virtual const std::string getHost(void) const;
-  virtual in_port_t getPort(void) const;
-  virtual drizzled::plugin::Client *getClient(int fd);
-  static ProtocolCounters *mysql_counters;
-  virtual ProtocolCounters *getCounters(void) const { return mysql_counters; }
-  void addCountersToTable(void);
 };
 
 class ClientMySQLProtocol: public drizzled::plugin::Client
@@ -78,18 +68,16 @@ protected:
   NET net;
   drizzled::String packet;
   uint32_t client_capabilities;
-  bool is_admin_connection;
-  bool _using_mysql41_protocol;
   bool _is_interactive;
 
-  bool checkConnection(void);
-  bool netStoreData(const unsigned char *from, size_t length);
+  bool checkConnection();
+  void netStoreData(const void*, size_t);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
   void makeScramble(char *scramble);
 
 public:
-  ClientMySQLProtocol(int fd, bool _using_mysql41_protocol, ProtocolCounters *set_counters);
+  ClientMySQLProtocol(int fd, ProtocolCounters&);
   virtual ~ClientMySQLProtocol();
 
   bool isInteractive() const
@@ -97,47 +85,35 @@ public:
     return _is_interactive;
   }
 
-  bool isAdmin() const
-  {
-    return is_admin_connection;
-  }
+  ProtocolCounters& counters;
 
-  ProtocolCounters *counters;
-
-  virtual int getFileDescriptor(void);
+  virtual int getFileDescriptor();
   virtual bool isConnected();
-  virtual bool isReading(void);
-  virtual bool isWriting(void);
-  virtual bool flush(void);
-  virtual void close(void);
+  virtual bool flush();
+  virtual void close();
 
-  virtual bool authenticate(void);
-  virtual bool readCommand(char **packet, uint32_t *packet_length);
+  virtual bool authenticate();
+  virtual bool readCommand(char **packet, uint32_t& packet_length);
 
-  virtual void sendOK(void);
-  virtual void sendEOF(void);
+  virtual void sendOK();
+  virtual void sendEOF();
   virtual void sendError(const drizzled::error_t sql_errno, const char *err);
 
-  virtual bool sendFields(drizzled::List<drizzled::Item> *list);
+  virtual void sendFields(drizzled::List<drizzled::Item>&);
 
   using Client::store;
-  virtual bool store(drizzled::Field *from);
-  virtual bool store(void);
-  virtual bool store(int32_t from);
-  virtual bool store(uint32_t from);
-  virtual bool store(int64_t from);
-  virtual bool store(uint64_t from);
-  virtual bool store(double from, uint32_t decimals, drizzled::String *buffer);
-  virtual bool store(const char *from, size_t length);
+  virtual void store(drizzled::Field*);
+  virtual void store();
+  virtual void store(int32_t from);
+  virtual void store(uint32_t from);
+  virtual void store(int64_t from);
+  virtual void store(uint64_t from);
+  virtual void store(double from, uint32_t decimals, drizzled::String *buffer);
+  virtual void store(const char*, size_t);
 
-  virtual bool haveError(void);
-  virtual bool haveMoreData(void);
-  virtual bool wasAborted(void);
-  virtual bool isAdminAllowed(void);
-  static std::vector<std::string> mysql_admin_ip_addresses;
-  static void mysql_compose_ip_addresses(std::vector<std::string> options);
+  virtual bool haveError();
+  virtual bool wasAborted();
 };
 
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H */

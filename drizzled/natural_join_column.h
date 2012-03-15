@@ -17,17 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_NATURAL_JOIN_COLUMN_H
-#define DRIZZLED_NATURAL_JOIN_COLUMN_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 
-namespace drizzled
-{
-
-class Field;
-class TableList;
-class Item;
+namespace drizzled {
 
 /*
   Column reference of a NATURAL/USING join. Since column references in
@@ -59,4 +53,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_NATURAL_JOIN_COLUMN_H */

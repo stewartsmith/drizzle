@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/base.h>
 #include <plugin/myisam/my_handler.h>
 #include <drizzled/internal/my_sys.h>
@@ -37,7 +37,7 @@ int CMP_NUM(const T& a, const T&b)
 }
 
 
-int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint32_t a_length,
+int ha_compare_text(const charset_info_st * const charset_info, unsigned char *a, uint32_t a_length,
 		    unsigned char *b, uint32_t b_length, bool part_key,
 		    bool skip_end_space)
 {

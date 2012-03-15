@@ -16,6 +16,7 @@
 #include "heap_priv.h"
 
 #include <string.h>
+#include <drizzled/error_t.h>
 
 using namespace drizzled;
 

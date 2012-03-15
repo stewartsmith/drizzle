@@ -31,19 +31,17 @@
  * src/usr.bin/cksum/crc32.c.
  */
 
-#ifndef DRIZZLED_ALGORITHM_CRC32_H
-#define DRIZZLED_ALGORITHM_CRC32_H
+#pragma once
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 
-namespace drizzled
-{
-namespace algorithm
-{
+namespace drizzled {
+namespace algorithm {
 
-static const uint32_t crc32tab[256] = {
+static const uint32_t crc32tab[256] = 
+{
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,
   0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
   0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -113,10 +111,9 @@ static const uint32_t crc32tab[256] = {
 template <class T>
 uint32_t crc32(T key, size_t key_length)
 {
-  uint64_t x;
   uint32_t crc= UINT32_MAX;
 
-  for (x= 0; x < key_length; x++)
+  for (size_t x= 0; x < key_length; x++)
     crc= (crc >> 8) ^ crc32tab[(crc ^ static_cast<uint8_t>(key[x])) & 0xff];
 
   return ~crc;
@@ -124,5 +121,3 @@ uint32_t crc32(T key, size_t key_length)
 
 } /* namespace algorithm */
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_ALGORITHM_CRC32_H */

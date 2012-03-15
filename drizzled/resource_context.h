@@ -18,20 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_RESOURCE_CONTEXT_H
-#define DRIZZLED_RESOURCE_CONTEXT_H
+#pragma once
 
-#include <cstddef>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
-class MonitoredInTransaction;
-class TransactionalStorageEngine;
-class XaResourceManager;
-}
+namespace drizzled {
 
 /**
  * Either statement transaction or normal transaction - related
@@ -157,4 +148,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_RESOURCE_CONTEXT_H */

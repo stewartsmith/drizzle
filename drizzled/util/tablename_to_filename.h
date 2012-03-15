@@ -18,19 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_TABLENAME_TO_FILENAME_H
-#define DRIZZLED_UTIL_TABLENAME_TO_FILENAME_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
+namespace util {
 
-namespace util
-{
-
-bool tablename_to_filename(const std::string &from, std::string &to);
+std::string tablename_to_filename(const std::string&);
 
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_TABLENAME_TO_FILENAME_H */
 

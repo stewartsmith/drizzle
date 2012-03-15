@@ -23,6 +23,7 @@ The lowest-level memory management
 Created 6/9/1994 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef mem0pool_h
 #define mem0pool_h
 

@@ -18,29 +18,22 @@
  */
 
 
-#ifndef DRIZZLED_KEY_PART_SPEC_H
-#define DRIZZLED_KEY_PART_SPEC_H
+#pragma once
 
 #include <drizzled/memory/sql_alloc.h>
 #include <drizzled/lex_string.h>
 
-namespace drizzled
+namespace drizzled {
+
+class Key_part_spec : public memory::SqlAlloc 
 {
-
-namespace memory { class Root; }
-
-class Item;
-
-class Key_part_spec :public memory::SqlAlloc {
 public:
-  LEX_STRING field_name;
+  str_ref field_name;
   uint32_t length;
-  Key_part_spec(const LEX_STRING &name, uint32_t len)
+  Key_part_spec(str_ref name, uint32_t len)
     : field_name(name), length(len)
   {}
-  Key_part_spec(const char *name, const size_t name_len, uint32_t len)
-    : length(len)
-  { field_name.str= const_cast<char *>(name); field_name.length= name_len; }
+
   bool operator==(const Key_part_spec& other) const;
   /**
     Construct a copy of this Key_part_spec. field_name is copied
@@ -53,10 +46,9 @@ public:
   */
   Key_part_spec *clone(memory::Root *mem_root) const
   {
-    return new (mem_root) Key_part_spec(*this);
+    return new (*mem_root) Key_part_spec(*this);
   }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_KEY_PART_SPEC_H */

@@ -21,9 +21,12 @@
 
 #include <boost/scoped_array.hpp>
 
+#include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
+#include <drizzled/sql_parse.h>
 #include <drizzled/errmsg_print.h>
 #include <boost/date_time.hpp>
 #include <boost/program_options.hpp>
@@ -37,9 +40,7 @@
 #include <cerrno>
 #include <memory>
 
-
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 namespace po= boost::program_options;
 
@@ -171,7 +172,7 @@ public:
 
   LoggingGearman(const std::string &host,
                  const std::string &function) :
-    drizzled::plugin::Logging("LoggingGearman"),
+    drizzled::plugin::Logging("gearman_query_log"),
     _host(host),
     _function(function),
     _gearman_client_ok(0),
@@ -228,14 +229,14 @@ public:
       inside itself, so be more accurate, and so this doesnt have to
       keep calling current_utime, which can be slow.
     */
-    uint64_t t_mark= session->getCurrentTimestamp(false);
+    uint64_t t_mark= session->times.getCurrentTimestamp(false);
   
 
     // buffer to quotify the query
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    drizzled::util::string::const_shared_ptr dbs(session->schema());
+    drizzled::util::string::ptr dbs(session->schema());
   
     msgbuf_len=
       snprintf(msgbuf.get(), MAX_MSG_LEN,
@@ -254,9 +255,9 @@ public:
                (int)drizzled::getCommandName(session->command).size(),
                drizzled::getCommandName(session->command).c_str(),
                // counters are at end, to make it easier to add more
-               (t_mark - session->getConnectMicroseconds()),
-               (session->getElapsedTime()),
-               (t_mark - session->utime_after_lock),
+               (t_mark - session->times.getConnectMicroseconds()),
+               (session->times.getElapsedTime()),
+               (t_mark - session->times.utime_after_lock),
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
@@ -308,13 +309,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-    "logging-gearman",
-    "0.1",
-    "Mark Atwood <mark@fallenpegasus.com>",
-    N_("Log queries to a Gearman server"),
-    drizzled::PLUGIN_LICENSE_GPL,
-    drizzle_plugin::logging_gearman_plugin_init,
-    NULL,
-    drizzle_plugin::init_options
+  "logging_gearman",
+  "0.1",
+  "Mark Atwood",
+  N_("Logs queries to a Gearman server"),
+  drizzled::PLUGIN_LICENSE_GPL,
+  drizzle_plugin::logging_gearman_plugin_init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

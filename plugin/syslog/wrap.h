@@ -17,27 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_WRAP_H
-#define PLUGIN_SYSLOG_WRAP_H
+#pragma once
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include <string>
 
-namespace drizzle_plugin
-{
+#include <drizzled/error/priority_t.h>
+
+namespace drizzle_plugin {
 
 class WrapSyslog
 {
 private:
   bool _check;
 
-  WrapSyslog(const WrapSyslog&);
-  WrapSyslog& operator=(const WrapSyslog&);
-
   WrapSyslog();
-
-
 public:
   ~WrapSyslog();
   static WrapSyslog& singleton();
@@ -46,8 +41,8 @@ public:
   static int getPriorityByName(const char *);
 
   void openlog(const std::string &ident);
-  void vlog(int facility, int priority, const char *format, va_list ap);
-  void log(int facility, int priority, const char *format, ...);
+  void vlog(int facility, const drizzled::error::priority_t priority, const char *format, va_list ap);
+  void log(int facility, const drizzled::error::priority_t priority, const char *format, ...);
 };
 
 inline WrapSyslog& WrapSyslog::singleton()
@@ -58,4 +53,3 @@ inline WrapSyslog& WrapSyslog::singleton()
 
 } /* namespsace drizzle_plugin */
 
-#endif /* PLUGIN_SYSLOG_WRAP_H */

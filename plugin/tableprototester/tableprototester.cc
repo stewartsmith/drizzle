@@ -27,7 +27,7 @@
 #include <fstream>
 
 #include <drizzled/error.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/message/table.h>
@@ -70,7 +70,7 @@ public:
   int doCreateTable(Session&,
                     Table&,
                     const drizzled::identifier::Table &identifier,
-                    drizzled::message::Table&);
+                    const drizzled::message::Table&);
 
   int doDropTable(Session&, const drizzled::identifier::Table &identifier);
 
@@ -101,12 +101,12 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 
 void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                                    const drizzled::identifier::Schema &schema_identifier,
-                                                   drizzled::identifier::Table::vector &set_of_identifiers)
+                                                   drizzled::identifier::table::vector &set_of_identifiers)
 {
   if (schema_identifier.compare("test"))
   {
@@ -146,7 +146,7 @@ int TableProtoTesterCursor::close(void)
 int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
                                           const drizzled::identifier::Table&,
-                                          drizzled::message::Table&)
+                                          const drizzled::message::Table&)
 {
   return EEXIST;
 }
@@ -362,10 +362,10 @@ DRIZZLE_DECLARE_PLUGIN
   "TABLEPROTOTESTER",
   "1.0",
   "Stewart Smith",
-  "Used to test rest of server with various table proto messages",
+  N_("StorageEngine module for testing table proto messages"),
   PLUGIN_LICENSE_GPL,
-  tableprototester_init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  tableprototester_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -9,7 +9,7 @@ create table B(id int not null auto_increment primary key, f1 int not null, fore
 
 create table C(id int not null auto_increment primary key, f1 int not null, foreign key(f1) references B(id) on delete cascade) engine=innodb;
 
-insert into A values(1), (2);
+insert into A values (1), (2);
 
 --disable_query_log
 begin;

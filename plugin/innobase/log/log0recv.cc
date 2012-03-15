@@ -42,6 +42,7 @@ Created 9/20/1997 Heikki Tuuri
 #include "trx0undo.h"
 #include "trx0rec.h"
 #include "fil0fil.h"
+#include "xtrabackup_api.h"
 #ifndef UNIV_HOTBACKUP
 # include "buf0rea.h"
 # include "srv0srv.h"
@@ -56,6 +57,8 @@ ibbackup --include regexp option: then we do not want to create tables in
 directories which were not included */
 UNIV_INTERN ibool	recv_replay_file_ops	= TRUE;
 #endif /* !UNIV_HOTBACKUP */
+
+#include <boost/scoped_array.hpp>
 
 #include <drizzled/errmsg_print.h>
 
@@ -623,7 +626,6 @@ recv_synchronize_groups(
 /***********************************************************************//**
 Checks the consistency of the checkpoint info
 @return	TRUE if ok */
-static
 ibool
 recv_check_cp_is_consistent(
 /*========================*/
@@ -653,7 +655,6 @@ recv_check_cp_is_consistent(
 /********************************************************//**
 Looks for the maximum consistent checkpoint from the log groups.
 @return	error code or DB_SUCCESS */
-static
 ulint
 recv_find_max_checkpoint(
 /*=====================*/
@@ -703,8 +704,22 @@ recv_find_max_checkpoint(
 
 			group->lsn = mach_read_from_8(
 				buf + LOG_CHECKPOINT_LSN);
-			group->lsn_offset = mach_read_from_4(
-				buf + LOG_CHECKPOINT_OFFSET);
+
+#ifdef UNIV_LOG_ARCHIVE
+#error "UNIV_LOG_ARCHIVE could not be enabled"
+#endif
+			{
+				ib_uint64_t tmp_lsn_offset = mach_read_from_8(
+					buf + LOG_CHECKPOINT_ARCHIVED_LSN);
+				if (sizeof(ulint) != 4
+				    && tmp_lsn_offset != IB_ULONGLONG_MAX) {
+					group->lsn_offset = (ulint) tmp_lsn_offset;
+			} else {
+					group->lsn_offset = mach_read_from_4(
+						buf + LOG_CHECKPOINT_OFFSET);
+				}
+			}
+
 			checkpoint_no = mach_read_from_8(
 				buf + LOG_CHECKPOINT_NO);
 
@@ -822,7 +837,6 @@ block.  We also accept a log block in the old format before
 InnoDB-3.23.52 where the checksum field contains the log block number.
 @return TRUE if ok, or if the log block may be in the format of InnoDB
 version predating 3.23.52 */
-static
 ibool
 log_block_checksum_is_ok_or_old_format(
 /*===================================*/
@@ -2887,6 +2901,7 @@ recv_recovery_from_checkpoint_start_func(
 	log_group_t*	max_cp_group;
 	log_group_t*	up_to_date_group;
 	ulint		max_cp_field;
+	ulint		log_hdr_log_block_size;
 	ib_uint64_t	checkpoint_lsn;
 	ib_uint64_t	checkpoint_no;
 	ib_uint64_t	old_scanned_lsn;
@@ -2896,7 +2911,10 @@ recv_recovery_from_checkpoint_start_func(
 	ib_uint64_t	archived_lsn;
 #endif /* UNIV_LOG_ARCHIVE */
 	byte*		buf;
-	byte		log_hdr_buf[LOG_FILE_HDR_SIZE];
+	boost::scoped_array<byte>	log_hdr_buf_base(
+		new byte[LOG_FILE_HDR_SIZE + OS_FILE_LOG_BLOCK_SIZE]);
+	byte*		log_hdr_buf
+		= (byte *)ut_align(log_hdr_buf_base.get(), OS_FILE_LOG_BLOCK_SIZE);
 	ulint		err;
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -2921,7 +2939,7 @@ recv_recovery_from_checkpoint_start_func(
           drizzled::errmsg_printf(drizzled::error::INFO,
                                   "InnoDB: The user has set SRV_FORCE_NO_LOG_REDO on Skipping log redo.");
 
-		return(DB_SUCCESS);
+	  return(DB_SUCCESS);
 	}
 
 	recv_recovery_on = TRUE;
@@ -2978,6 +2996,21 @@ recv_recovery_from_checkpoint_start_func(
                  max_cp_group->space_id, 0,
                  0, 0, OS_FILE_LOG_BLOCK_SIZE,
                  log_hdr_buf, max_cp_group);
+	}
+
+	log_hdr_log_block_size
+		= mach_read_from_4(log_hdr_buf + LOG_FILE_OS_FILE_LOG_BLOCK_SIZE);
+	if (log_hdr_log_block_size == 0) {
+		/* 0 means default value */
+		log_hdr_log_block_size = 512;
+	}
+	if (log_hdr_log_block_size != srv_log_block_size) {
+		drizzled::errmsg_printf(drizzled::error::ERROR,
+			   "InnoDB: Error: The block size of ib_logfile (%lu) "
+			   "is not equal to innodb_log_block_size.\n"
+			   "InnoDB: Error: Suggestion - Recreate log files.\n",
+			   log_hdr_log_block_size);
+		return(DB_ERROR);
 	}
 
 #ifdef UNIV_LOG_ARCHIVE
@@ -3260,6 +3293,7 @@ recv_recovery_from_checkpoint_finish(void)
 	that the data dictionary tables will be free of any locks.
 	The data dictionary latch should guarantee that there is at
 	most one data dictionary transaction active at a time. */
+        if (! srv_apply_log_only)
 	trx_rollback_or_clean_recovered(FALSE);
 }
 

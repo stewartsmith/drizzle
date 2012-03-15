@@ -17,19 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LOCK_H
-#define DRIZZLED_LOCK_H
+#pragma once
 
 #include <vector>
 #include <drizzled/thr_lock.h>
 #include <drizzled/locking/global.h>
 
-namespace drizzled
-{
-
-class Session;
-class Table;
-class TableList;
+namespace drizzled {
 
 class DrizzleLock
 {
@@ -95,4 +89,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LOCK_H */

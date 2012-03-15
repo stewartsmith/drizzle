@@ -19,15 +19,16 @@
  */
 
 #include <config.h>
-
-#include <assert.h>
-
+#include <cassert>
+#include <drizzled/errmsg_print.h>
+#include <drizzled/gettext.h>
 #include <drizzled/identifier.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
-
+#include <drizzled/catalog/local.h>
 #include <drizzled/util/tablename_to_filename.h>
 #include <drizzled/util/backtrace.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 #include <sstream>
@@ -37,34 +38,11 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
+namespace identifier {
 
-namespace identifier
-{
-
-extern string drizzle_tmpdir;
-
-static size_t build_schema_filename(string &path, const string &db)
-{
-  path.append("");
-  bool conversion_error= false;
-
-  conversion_error= util::tablename_to_filename(db, path);
-  if (conversion_error)
-  {
-    errmsg_printf(error::ERROR,
-                  _("Schema name cannot be encoded and fit within filesystem "
-                    "name length restrictions."));
-    return 0;
-  }
-
-  return path.length();
-}
-
-Schema::Schema(const std::string &db_arg) :
-  db(db_arg),
-  db_path("")
+Schema::Schema(str_ref db_arg) :
+  db(db_arg.data(), db_arg.size())
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -78,14 +56,9 @@ Schema::Schema(const std::string &db_arg) :
 
   if (not db_arg.empty())
   {
-    build_schema_filename(db_path, db);
+    db_path += util::tablename_to_filename(db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
-}
-
-void Schema::getSQLPath(std::string &arg) const
-{
-  arg= db;
 }
 
 const std::string &Schema::getPath() const
@@ -98,63 +71,26 @@ bool Schema::compare(const std::string &arg) const
   return boost::iequals(arg, db);
 }
 
-bool Schema::compare(Schema::const_reference arg) const
+bool Schema::compare(const Schema& arg) const
 {
   return boost::iequals(arg.getSchemaName(), db);
 }
 
 bool Schema::isValid() const
 {
-  bool error= false;
-
-  do
+  const charset_info_st& cs= my_charset_utf8mb4_general_ci;
+  int well_formed_error;
+  if (not db.empty()
+    && db.size() <= NAME_LEN
+    && db.at(0) != '.'
+    && db.at(db.size() - 1) != ' '
+    && db.size() == cs.cset->well_formed_len(cs, db, NAME_CHAR_LEN, &well_formed_error))
   {
-    if (db.empty())
-    {
-      error= true;
-      break;
-    }
-
-    if (db.size() > NAME_LEN)
-    {
-      error= true;
-      break;
-    }
-
-    if (db.at(db.length() -1) == ' ')
-    {
-      error= true;
-      break;
-    }
-
-    if (db.at(0) == '.')
-    {
-      error= true;
-      break;
-    }
-
-    {
-      const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
-
-      int well_formed_error;
-      uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
-                                              NAME_CHAR_LEN, &well_formed_error);
-      if (well_formed_error or db.length() != res)
-      {
-        error= true;
-        break;
-      }
-    }
-  } while (0);
-
-  if (error)
-  {
-    my_error(ER_WRONG_DB_NAME, *this);
-
-    return false;
+    if (not well_formed_error)
+      return true;
   }
-
-  return true;
+  my_error(ER_WRONG_DB_NAME, *this);
+  return false;
 }
 
 const std::string &Schema::getCatalogName() const
@@ -164,15 +100,7 @@ const std::string &Schema::getCatalogName() const
 
 std::ostream& operator<<(std::ostream& output, const Schema&identifier)
 {
-  output << "identifier::Schema:(";
-  output <<  catalog::local_identifier();
-  output << ", ";
-  output <<  identifier.getSchemaName().c_str();
-  output << ", ";
-  output << identifier.getPath().c_str();
-  output << ")";
-
-  return output;  // for multiple << operators.
+  return output << "identifier::Schema:(" <<  drizzled::catalog::local_identifier() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
 }
 
 } /* namespace identifier */

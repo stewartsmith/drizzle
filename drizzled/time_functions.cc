@@ -23,12 +23,13 @@
 #include <config.h>
 #include <drizzled/error.h>
 #include <drizzled/util/test.h>
-#include <drizzled/tztime.h>
 #include <drizzled/session.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/charset.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/sql_string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Some functions to calculate dates */
 
@@ -124,56 +125,38 @@ void get_date_from_daynr(long daynr,
 }
 
 
-type::timestamp_t str_to_datetime_with_warn(Session *session,
-                                            const char *str, 
-                                            uint32_t length, 
-                                            type::Time *l_time,
-                                            uint32_t flags)
+type::timestamp_t str_to_datetime_with_warn(Session& session, str_ref str, type::Time& l_time, uint32_t flags)
 {
   type::cut_t was_cut= type::VALID;
-  type::timestamp_t ts_type;
-
-  ts_type= l_time->store(str, length,
-                         (flags | (session->variables.sql_mode &
-                                   (MODE_INVALID_DATES |
-                                    MODE_NO_ZERO_DATE))),
-                         was_cut);
+  type::timestamp_t ts_type= l_time.store(str.data(), str.size(), (flags | (session.variables.sql_mode & (MODE_INVALID_DATES | MODE_NO_ZERO_DATE))), was_cut);
   if (was_cut || ts_type <= type::DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, ts_type,  NULL);
-
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, str, ts_type,  NULL);
   return ts_type;
 }
 
 
-bool
-str_to_time_with_warn(Session *session, const char *str, uint32_t length, type::Time *l_time)
+bool str_to_time_with_warn(Session& session, str_ref str, type::Time& l_time)
 {
   int warning;
-  bool ret_val= l_time->store(str, length, warning, type::DRIZZLE_TIMESTAMP_TIME);
+  bool ret_val= l_time.store(str.data(), str.size(), warning, type::DRIZZLE_TIMESTAMP_TIME);
   if (ret_val || warning)
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str, length, type::DRIZZLE_TIMESTAMP_TIME, NULL);
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, str, type::DRIZZLE_TIMESTAMP_TIME, NULL);
   return ret_val;
 }
 
 
-void make_truncated_value_warning(Session *session, 
-                                  DRIZZLE_ERROR::enum_warning_level level,
-                                  const char *str_val,
-				                          uint32_t str_length,
-                                  type::timestamp_t time_type,
-                                  const char *field_name)
+void make_truncated_value_warning(Session& session, DRIZZLE_ERROR::enum_warning_level level, str_ref str_arg, type::timestamp_t time_type, const char *field_name)
 {
   char warn_buff[DRIZZLE_ERRMSG_SIZE];
-  const char *type_str;
-  CHARSET_INFO *cs= &my_charset_utf8_general_ci;
+  charset_info_st *cs= &my_charset_utf8_general_ci;
   char buff[128];
   String str(buff,(uint32_t) sizeof(buff), system_charset_info);
-  str.copy(str_val, str_length, system_charset_info);
-  str[str_length]= 0;               // Ensure we have end 0 for snprintf
+  str.copy(str_arg.data(), str_arg.size(), system_charset_info);
+  assert(not str[str_arg.size()]);               // Ensure we have end 0 for snprintf
 
-  switch (time_type) {
+  const char *type_str;
+  switch (time_type) 
+  {
   case type::DRIZZLE_TIMESTAMP_DATE:
     type_str= "date";
     break;
@@ -185,7 +168,6 @@ void make_truncated_value_warning(Session *session,
   case type::DRIZZLE_TIMESTAMP_DATETIME:  // FALLTHROUGH
   default:
     type_str= "datetime";
-    break;
   }
 
   if (field_name)
@@ -193,24 +175,17 @@ void make_truncated_value_warning(Session *session,
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                        type_str, str.c_ptr(), field_name,
-                       (uint32_t) session->row_count);
+                       (uint32_t) session.row_count);
+  }
+  else if (time_type > type::DRIZZLE_TIMESTAMP_ERROR)
+  {
+    cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff), ER(ER_TRUNCATED_WRONG_VALUE), type_str, str.c_ptr());
   }
   else
   {
-    if (time_type > type::DRIZZLE_TIMESTAMP_ERROR)
-    {
-      cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
-                         ER(ER_TRUNCATED_WRONG_VALUE),
-                         type_str, str.c_ptr());
-    }
-    else
-    {
-      cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
-                         ER(ER_WRONG_VALUE), type_str, str.c_ptr());
-    }
+    cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff), ER(ER_WRONG_VALUE), type_str, str.c_ptr());
   }
-  push_warning(session, level,
-               ER_TRUNCATED_WRONG_VALUE, warn_buff);
+  push_warning(&session, level, ER_TRUNCATED_WRONG_VALUE, warn_buff);
 }
 
 

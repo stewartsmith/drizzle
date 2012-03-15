@@ -31,8 +31,10 @@
 #include <drizzled/util/find_ptr.h>
 
 namespace drizzled {
-
 namespace definition {
+
+Cache::Map Cache::cache;
+boost::mutex Cache::_mutex;
 
 table::instance::Shared::shared_ptr Cache::find(const identifier::Table::Key &key)
 {
@@ -52,8 +54,7 @@ void Cache::erase(const identifier::Table::Key &key)
 bool Cache::insert(const identifier::Table::Key &key, table::instance::Shared::shared_ptr share)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
-  std::pair<Map::iterator, bool> ret=
-    cache.insert(std::make_pair(key, share));
+  std::pair<Map::iterator, bool> ret= cache.insert(std::make_pair(key, share));
 
   return ret.second;
 }
@@ -62,12 +63,9 @@ void Cache::CopyFrom(drizzled::table::instance::Shared::vector &vector)
 {
   boost::mutex::scoped_lock scopedLock(_mutex);
 
-  vector.reserve(definition::Cache::singleton().size());
+  vector.reserve(definition::Cache::size());
 
-  std::transform(cache.begin(),
-                 cache.end(),
-                 std::back_inserter(vector),
-                 boost::bind(&Map::value_type::second, _1) );
+  std::transform(cache.begin(), cache.end(), std::back_inserter(vector), boost::bind(&Map::value_type::second, _1));
   assert(vector.size() == cache.size());
 }
 

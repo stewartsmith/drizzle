@@ -48,6 +48,7 @@ Created 12/9/1995 Heikki Tuuri
 #include "srv0start.h"
 #include "trx0sys.h"
 #include "trx0trx.h"
+#include "ha_prototypes.h"
 
 #include <drizzled/errmsg_print.h>
 
@@ -361,6 +362,39 @@ part_loop:
 }
 
 /************************************************************//**
+*/
+UNIV_INLINE
+ulint
+log_max_modified_age_async()
+/*========================*/
+{
+  if (srv_checkpoint_age_target) {
+    return(ut_min(log_sys->max_modified_age_async,
+		  srv_checkpoint_age_target
+		  - srv_checkpoint_age_target / 8));
+  } else {
+    return(log_sys->max_modified_age_async);
+  }
+}
+
+/************************************************************//**
+*/
+UNIV_INLINE
+ulint
+log_max_checkpoint_age_async()
+/*==========================*/
+{
+  if (srv_checkpoint_age_target) {
+    return(ut_min(log_sys->max_checkpoint_age_async,
+		  srv_checkpoint_age_target));
+  } else {
+    return(log_sys->max_checkpoint_age_async);
+  }
+}
+
+
+
+/************************************************************//**
 Closes the log.
 @return	lsn */
 UNIV_INTERN
@@ -429,7 +463,7 @@ log_close(void)
 		}
 	}
 
-	if (checkpoint_age <= log->max_modified_age_async) {
+	if (checkpoint_age <= log_max_modified_age_async()) {
 
 		goto function_exit;
 	}
@@ -437,8 +471,8 @@ log_close(void)
 	oldest_lsn = buf_pool_get_oldest_modification();
 
 	if (!oldest_lsn
-	    || lsn - oldest_lsn > log->max_modified_age_async
-	    || checkpoint_age > log->max_checkpoint_age_async) {
+	    || lsn - oldest_lsn > log_max_modified_age_async()
+	    || checkpoint_age > log_max_checkpoint_age_async()) {
 
 		log->check_flush_or_checkpoint = TRUE;
 	}
@@ -578,7 +612,8 @@ log_group_calc_lsn_offset(
 
 	offset = (gr_lsn_size_offset + difference) % group_size;
 
-	ut_a(offset < (((ib_int64_t) 1) << 32)); /* offset must be < 4 GB */
+	/* Offset must be < 4 GB on 32 bit systems */
+	ut_a((sizeof(ulint) != 4) || (offset < (((ib_int64_t) 1) << 32)));
 
 	/* fprintf(stderr,
 	"Offset is %lu gr_lsn_offset is %lu difference is %lu\n",
@@ -1102,6 +1137,7 @@ log_io_complete(
 		group = (log_group_t*)((ulint)group - 1);
 
 		if (srv_unix_file_flush_method != SRV_UNIX_O_DSYNC
+		    && srv_unix_file_flush_method != SRV_UNIX_ALL_O_DIRECT
 		    && srv_unix_file_flush_method != SRV_UNIX_NOSYNC) {
 
 			fil_flush(group->space_id);
@@ -1123,6 +1159,7 @@ log_io_complete(
 			logs and cannot end up here! */
 
 	if (srv_unix_file_flush_method != SRV_UNIX_O_DSYNC
+	    && srv_unix_file_flush_method != SRV_UNIX_ALL_O_DIRECT
 	    && srv_unix_file_flush_method != SRV_UNIX_NOSYNC
 	    && srv_flush_log_at_trx_commit != 2) {
 
@@ -1172,6 +1209,9 @@ log_group_file_header_flush(
 
 	/* Wipe over possible label of ibbackup --restore */
 	memcpy(buf + LOG_FILE_WAS_CREATED_BY_HOT_BACKUP, "    ", 4);
+
+	mach_write_to_4(buf + LOG_FILE_OS_FILE_LOG_BLOCK_SIZE,
+			srv_log_block_size);
 
 	dest_offset = nth_file * group->file_size;
 
@@ -1356,7 +1396,7 @@ log_write_up_to(
 #endif /* UNIV_DEBUG */
 	ulint		unlock;
 
-	if (recv_no_ibuf_operations) {
+	if (recv_no_ibuf_operations || srv_fake_write) {
 		/* Recovery is running and no operations on the log files are
 		allowed yet (the variable name .._no_ibuf_.. is misleading) */
 
@@ -1503,7 +1543,8 @@ loop:
 
 	mutex_exit(&(log_sys->mutex));
 
-	if (srv_unix_file_flush_method == SRV_UNIX_O_DSYNC) {
+	if (srv_unix_file_flush_method == SRV_UNIX_O_DSYNC
+	    || srv_unix_file_flush_method == SRV_UNIX_ALL_O_DIRECT) {
 		/* O_DSYNC means the OS did not buffer the log file at all:
 		so we have also flushed to disk what we have written */
 
@@ -1765,9 +1806,7 @@ log_group_checkpoint(
 	ulint		i;
 
 	ut_ad(mutex_own(&(log_sys->mutex)));
-#if LOG_CHECKPOINT_SIZE > OS_FILE_LOG_BLOCK_SIZE
-# error "LOG_CHECKPOINT_SIZE > OS_FILE_LOG_BLOCK_SIZE"
-#endif
+	ut_a(LOG_CHECKPOINT_SIZE <= OS_FILE_LOG_BLOCK_SIZE);
 
 	buf = group->checkpoint_buf;
 
@@ -1794,7 +1833,10 @@ log_group_checkpoint(
 
 	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN, archived_lsn);
 #else /* UNIV_LOG_ARCHIVE */
-	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN, IB_ULONGLONG_MAX);
+	mach_write_to_8(buf + LOG_CHECKPOINT_ARCHIVED_LSN,
+			(ib_uint64_t)log_group_calc_lsn_offset(
+				log_sys->next_checkpoint_lsn, group));
+
 #endif /* UNIV_LOG_ARCHIVE */
 
 	for (i = 0; i < LOG_MAX_N_GROUPS; i++) {
@@ -2122,10 +2164,10 @@ loop:
 
 		sync = TRUE;
 		advance = 2 * (age - log->max_modified_age_sync);
-	} else if (age > log->max_modified_age_async) {
+	} else if (age > log_max_modified_age_async()) {
 
 		/* A flush is not urgent: we do an asynchronous preflush */
-		advance = age - log->max_modified_age_async;
+		advance = age - log_max_modified_age_async();
 	} else {
 		advance = 0;
 	}
@@ -2139,7 +2181,7 @@ loop:
 
 		do_checkpoint = TRUE;
 
-	} else if (checkpoint_age > log->max_checkpoint_age_async) {
+	} else if (checkpoint_age > log_max_checkpoint_age_async()) {
 		/* A checkpoint is not urgent: do it asynchronously */
 
 		do_checkpoint = TRUE;
@@ -3116,6 +3158,7 @@ loop:
 	for the 'very fast' shutdown, because the InnoDB layer may have
 	committed or prepared transactions and we don't want to lose them. */
 
+        if (! srv_apply_log_only) {
 	if (trx_n_mysql_transactions > 0
 	    || UT_LIST_GET_LEN(trx_sys->trx_list) > 0) {
 
@@ -3123,6 +3166,7 @@ loop:
 
 		goto loop;
 	}
+        }
 
 	if (srv_fast_shutdown == 2) {
 		/* In this fastest shutdown we do not flush the buffer pool:
@@ -3348,6 +3392,16 @@ log_print(
 		log_sys->lsn,
 		log_sys->flushed_to_disk_lsn,
 		log_sys->last_checkpoint_lsn);
+
+	fprintf(file,
+		"Max checkpoint age    %lu\n"
+		"Checkpoint age target %lu\n"
+		"Modified age          %"PRIu64"\n"
+		"Checkpoint age        %"PRIu64"\n",
+		log_sys->max_checkpoint_age,
+		log_max_checkpoint_age_async(),
+		log_sys->lsn - log_buf_pool_get_oldest_modification(),
+		log_sys->lsn - log_sys->last_checkpoint_lsn);
 
 	current_time = time(NULL);
 

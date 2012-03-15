@@ -63,11 +63,14 @@
 #include <drizzled/session/cache.h>
 #include <drizzled/signal_handler.h>
 #include <drizzled/transaction_services.h>
-#include <drizzled/tztime.h>
 #include <drizzled/unireg.h>
 #include <drizzled/util/backtrace.h>
 #include <drizzled/current_session.h>
 #include <drizzled/daemon.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/system_variables.h>
 
 using namespace drizzled;
 using namespace std;
@@ -84,31 +87,34 @@ extern bool opt_daemon;
 */
 static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags)
 {
-  Session *session;
+  Session* session= current_session;
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
   */
-  if ((session= current_session))
+  if (session)
   {
     if (MyFlags & ME_FATALERROR)
+    {
       session->is_fatal_error= 1;
+    }
 
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
       this could be improved by having a common stack of handlers.
-    */
+
     if (session->handle_error(error, str, DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;
+    */
 
     /*
-      session->getLex()->current_select == 0 if lex structure is not inited
+      session->lex().current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (! (session->getLex()->current_select &&
-           session->getLex()->current_select->no_error && !session->is_fatal_error))
+    if (! (session->lex().current_select &&
+           session->lex().current_select->no_error && !session->is_fatal_error))
     {
-      if (! session->main_da.is_error())            // Return only first message
+      if (! session->main_da().is_error())            // Return only first message
       {
         if (error == EE_OK)
           error= ER_UNKNOWN_ERROR;
@@ -116,7 +122,7 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
         if (str == NULL)
           str= ER(error);
 
-        session->main_da.set_error_status(error, str);
+        session->main_da().set_error_status(error, str);
       }
     }
 
@@ -143,7 +149,7 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (not (getDebug().test(debug::NO_STACKTRACE) || 
+  if (not (getDebug().test(debug::NO_STACKTRACE) ||
         getDebug().test(debug::CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
@@ -231,13 +237,15 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   module::Registry &modules= module::Registry::singleton();
 
-  MY_INIT(argv[0]);		// init my_sys library & pthreads
+  drizzled::internal::my_progname= argv[0]; 
+  drizzled::internal::my_init();
+
   /* nothing should come before this line ^^^ */
 
   /* Set signal used to kill Drizzle */
@@ -248,12 +256,13 @@ int main(int argc, char **argv)
   /* Function generates error messages before abort */
   error_handler_hook= my_message_sql;
 
-  /* init_common_variables must get basic settings such as data_home_dir
-     and plugin_load_list. */
-  if (init_basic_variables(argc, argv))
-    unireg_abort(1);				// Will do exit
+  /* init_common_variables must get basic settings such as data_home_dir and plugin_load_list. */
+  if (not init_variables_before_daemonizing(argc, argv))
+  {
+    unireg_abort << "init_variables_before_daemonizing() failed";				// Will do exit
+  }
 
-  if (opt_daemon)
+  if (opt_daemon and was_help_requested() == false)
   {
     if (signal(SIGHUP, SIG_IGN) == SIG_ERR)
     {
@@ -261,13 +270,15 @@ int main(int argc, char **argv)
     }
     if (daemonize())
     {
-      fprintf(stderr, "failed to daemon() in order to daemonize\n");
-      exit(EXIT_FAILURE);
+      unireg_abort << "--daemon failed";
     }
   }
 
-  if (init_remaining_variables(modules))
-    unireg_abort(1);				// Will do exit
+  if (not init_variables_after_daemonizing(modules))
+  {
+    unireg_abort << "init_variables_after_daemonizing() failed";				// Will do exit
+  }
+
 
   /*
     init signals & alarm
@@ -276,36 +287,63 @@ int main(int argc, char **argv)
   init_signals();
 
 
-  select_thread=pthread_self();
+  select_thread= pthread_self();
   select_thread_in_use=1;
 
-  if (not opt_help)
+  if (was_help_requested() == false)
   {
     if (chdir(getDataHome().file_string().c_str()))
     {
-      errmsg_printf(error::ERROR,
-                    _("Data directory %s does not exist\n"),
-                    getDataHome().file_string().c_str());
-      unireg_abort(1);
-    }
-    if (mkdir("local", 0700))
-    {
-      /* We don't actually care */
-    }
-    if (chdir("local"))
-    {
-      errmsg_printf(error::ERROR,
-                    _("Local catalog %s/local does not exist\n"),
-                    getDataHome().file_string().c_str());
-      unireg_abort(1);
+      unireg_abort << "Data directory " << getDataHome().file_string() << " does not exist";
     }
 
-    boost::filesystem::path &full_data_home= getFullDataHome();
-    full_data_home= boost::filesystem::system_complete(getDataHome());
-    errmsg_printf(error::INFO, "Data Home directory is : %s", full_data_home.native_file_string().c_str());
+    ifstream old_uuid_file ("server.uuid");
+    if (old_uuid_file.is_open())
+    {
+      getline(old_uuid_file, server_uuid);
+      old_uuid_file.close();
+    } 
+    else 
+    {
+      uuid_t uu;
+      char uuid_string[37];
+      uuid_generate_random(uu);
+      uuid_unparse(uu, uuid_string);
+      ofstream new_uuid_file ("server.uuid");
+      new_uuid_file << uuid_string;
+      new_uuid_file.close();
+      server_uuid= string(uuid_string);
+    }
+
+    if (mkdir("local", 0700) == -1)
+    {
+      switch (errno)
+      {
+      case EEXIST:
+        break;
+
+      case EACCES:
+        {
+          char cwd[1024];
+          unireg_abort << "Could not create local catalog, permission denied in directory:" << getcwd(cwd, sizeof(cwd));
+        }
+
+      default:
+        {
+          char cwd[1024];
+          unireg_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
+        }
+      }
+    }
+
+    if (chdir("local") == -1)
+    {
+      unireg_abort << "Local catalog does not exist, was unable to chdir() to " << getDataHome().file_string();
+    }
+
+    setFullDataHome(boost::filesystem::system_complete(getDataHome()));
+    errmsg_printf(error::INFO, "Data Home directory is : %s", getFullDataHome().native_file_string().c_str());
   }
-
-
 
   if (server_id == 0)
   {
@@ -314,8 +352,7 @@ int main(int argc, char **argv)
 
   try
   {
-    if (init_server_components(modules))
-      DRIZZLE_ABORT;
+    init_server_components(modules);
   }
   catch (abort_exception& ex)
   {
@@ -325,7 +362,7 @@ int main(int argc, char **argv)
     cout << _("In File: ") << *::boost::get_error_info<boost::throw_file>(ex) << endl;
     cout << _("On Line: ") << *::boost::get_error_info<boost::throw_line>(ex) << endl;
 #endif
-    unireg_abort(1);
+    unireg_abort << "init_server_components() failed";
   }
 
 
@@ -340,65 +377,41 @@ int main(int argc, char **argv)
    *
    * not checking return since unireg_abort() hangs
    */
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-    (void) replication_services.evaluateRegisteredPlugins();
+  (void) ReplicationServices::evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
-    unireg_abort(1);
-
-  assert(plugin::num_trx_monitored_objects > 0);
-  if (drizzle_rm_tmp_tables())
   {
-    abort_loop= true;
-    select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, SIGTERM);
-
-    (void) unlink(pid_file.file_string().c_str());	// Not needed anymore
-
-    unireg_abort(1);
+    unireg_abort << "Failed plugin::Listen::setup()";
   }
 
-  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname,
-                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
-
-
-  TransactionServices &transaction_services= TransactionServices::singleton();
+  assert(plugin::num_trx_monitored_objects > 0);
+  drizzle_rm_tmp_tables();
+  errmsg_printf(error::INFO, _(ER(ER_STARTUP)), internal::my_progname, PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
   /* Send server startup event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-
-
-      transaction_services.sendStartupEvent(*session);
-
-      plugin_startup_window(modules, *(session.get()));
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    setCurrentSession(session.get());
+    TransactionServices::sendStartupEvent(*session);
+    plugin_startup_window(modules, *session.get());
   }
 
   if (opt_daemon)
+  {
     daemon_is_ready();
+  }
 
-  /* 
+
+  errmsg_printf(error::INFO, "Drizzle startup complete, listening for connections will now begin.");
+
+  /*
     Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown.
    */
-  plugin::Client *client;
-  while ((client= plugin::Listen::getClient()) != NULL)
+  while (plugin::Client* client= plugin::Listen::getClient())
   {
-    Session::shared_ptr session;
-    session= Session::make_shared(client, client->catalog());
-
-    if (not session)
-    {
-      delete client;
-      continue;
-    }
+    Session::shared_ptr session= Session::make_shared(client, client->catalog());
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
@@ -407,28 +420,25 @@ int main(int argc, char **argv)
 
   /* Send server shutdown event */
   {
-    Session::shared_ptr session;
-
-    if ((session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local())))
-    {
-      currentSession().release();
-      currentSession().reset(session.get());
-      transaction_services.sendShutdownEvent(*session.get());
-    }
+    Session::shared_ptr session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
+    setCurrentSession(session.get());
+    TransactionServices::sendShutdownEvent(*session.get());
   }
 
   {
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     select_thread_in_use= false;			// For close_connections
   }
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  session::Cache::singleton().shutdownSecond();
+  session::Cache::shutdownSecond();
 
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
+  errmsg_printf(error::INFO, "Drizzle is now shutting down");
 
   return 0;
 }

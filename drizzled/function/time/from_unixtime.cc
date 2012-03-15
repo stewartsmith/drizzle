@@ -24,6 +24,7 @@
 #include <drizzled/session.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
+#include <drizzled/field.h>
 
 #include <sstream>
 #include <string>
@@ -49,11 +50,7 @@ String *Item_func_from_unixtime::val_str(String *str)
   if (get_date(time_tmp, 0))
     return 0;
 
-  if (str->alloc(type::Time::MAX_STRING_LENGTH))
-  {
-    null_value= 1;
-    return 0;
-  }
+  str->alloc(type::Time::MAX_STRING_LENGTH);
 
   time_tmp.convert(*str);
 
@@ -78,7 +75,7 @@ int64_t Item_func_from_unixtime::val_int()
 bool Item_func_from_unixtime::get_date(type::Time &ltime, uint32_t)
 {
   uint64_t tmp= 0;
-  type::Time::usec_t fractional_tmp= 0;
+  type::usec_t fractional_tmp= 0;
 
   switch (args[0]->result_type()) {
   case REAL_RESULT:
@@ -89,7 +86,7 @@ bool Item_func_from_unixtime::get_date(type::Time &ltime, uint32_t)
       double double_tmp= args[0]->val_real();
 
       tmp= (uint64_t)(double_tmp);
-      fractional_tmp=  (type::Time::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
+      fractional_tmp=  (type::usec_t)((uint64_t)((double_tmp - tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS);
 
       break;
     }

@@ -150,7 +150,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_FLUSH_CACHE:
     if (info->opt_flag & WRITE_CACHE_USED)
     {
-      if ((error=flush_io_cache(&info->rec_cache)))
+      if ((error= info->rec_cache.flush()))
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
 	mi_mark_crashed(info);			/* Fatal error found */
@@ -246,15 +246,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     share->last_version= 0L;			/* Impossible version */
 #ifdef __WIN__REMOVE_OBSOLETE_WORKAROUND
     /* Close the isam and data files as Win32 can't drop an open table */
-    if (flush_key_blocks(share->key_cache, share->kfile,
-			 (function == HA_EXTRA_FORCE_REOPEN ?
-			  FLUSH_RELEASE : FLUSH_IGNORE_CHANGED)))
-    {
-      error=errno;
-      share->changed=1;
-      mi_print_error(info->s, HA_ERR_CRASHED);
-      mi_mark_crashed(info);			/* Fatal error found */
-    }
     if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
     {
       info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
@@ -290,8 +281,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     THR_LOCK_myisam.unlock();
     break;
   case HA_EXTRA_FLUSH:
-    if (!share->temporary)
-      flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_KEEP);
 #ifdef HAVE_PWRITE
     _mi_decrement_open_count(info);
 #endif

@@ -17,14 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_RETURN_DATE_TIME_H
-#define DRIZZLED_ITEM_RETURN_DATE_TIME_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* for show tables */
-class Item_return_date_time :public Item_string
+class Item_return_date_time : public Item_string
 {
   enum_field_types date_time_field_type;
 public:
@@ -37,4 +35,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_RETURN_DATE_TIME_H */

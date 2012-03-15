@@ -25,8 +25,7 @@
  */
 
 
-#ifndef DRIZZLED_VISIBILITY_H
-#define DRIZZLED_VISIBILITY_H
+#pragma once
 
 /**
  *
@@ -69,4 +68,3 @@
 
 
 
-#endif /* DRIZZLED_VISIBILITY_H */

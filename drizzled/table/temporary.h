@@ -18,14 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_TEMPORARY_H
-#define DRIZZLED_TABLE_TEMPORARY_H
+#pragma once
 
-namespace drizzled
-{
-
-namespace table
-{
+namespace drizzled {
+namespace table {
 
 class Temporary : public Table
 {
@@ -34,14 +30,9 @@ class Temporary : public Table
 public:
   Temporary(const identifier::Table::Type type_arg,
             const identifier::Table &identifier,
-             char *path_arg, uint32_t path_length_arg) :
-    Table()
+            const char *path_arg, uint32_t path_length_arg)
   {
     _share= new instance::Singular(type_arg, identifier, path_arg, path_length_arg);
-  }
-
-  ~Temporary()
-  {
   }
 
   virtual const TableShare *getShare() const { assert(_share); return _share; } /* Get rid of this long term */
@@ -52,7 +43,7 @@ public:
     _share= static_cast<instance::Singular *>(new_share);
   }
 
-  void release(void)
+  void release()
   {
     delete _share;
     _share= NULL;
@@ -63,4 +54,3 @@ public:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_TEMPORARY_H */

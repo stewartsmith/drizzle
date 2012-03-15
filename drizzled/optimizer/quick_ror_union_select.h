@@ -17,20 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H
-#define DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H
+#pragma once
 
 #include <drizzled/optimizer/range.h>
 
 #include <vector>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class compare_functor;
+namespace drizzled {
+namespace optimizer {
 
 /**
   Rowid-Ordered Retrieval index union select.
@@ -107,7 +101,7 @@ public:
   void add_info_string(std::string *str);
   bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
-  bool push_quick_back(QuickSelectInterface *quick_sel_range);
+  void push_quick_back(QuickSelectInterface *quick_sel_range);
 
   std::vector<QuickSelectInterface *> quick_selects; /**< Merged quick selects */
 
@@ -128,4 +122,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_QUICK_ROR_UNION_SELECT_H */

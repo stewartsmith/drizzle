@@ -1,0 +1,4 @@
+query:
+
+ SELECT  STRAIGHT_JOIN  table2 . `col_bigint_not_null_key` AS field1 , table2 . `pk` AS field2 , table1 . `col_enum_key` AS field3 , table1 . `pk` AS field4 FROM ( C AS table1 INNER JOIN ( ( DD AS table2 STRAIGHT_JOIN BB AS table3 ON (table3 . `col_char_1024_key` = table2 . `col_char_10_not_null_key`  ) ) ) ON (table3 . `col_char_1024_not_null` = table2 . `col_char_10_key`  ) ) WHERE (  ( table1 . `col_int_not_null` , table3 . `col_bigint_key` )  IN ( SELECT   SUBQUERY1_t1 . `col_int_not_null` AS SUBQUERY1_field1 , SUM(  SUBQUERY1_t1 . `col_int_not_null_key` ) AS SUBQUERY1_field2 FROM ( AA AS SUBQUERY1_t1 INNER JOIN AA AS SUBQUERY1_t2 ON (SUBQUERY1_t2 . `col_int_not_null_key` = SUBQUERY1_t1 . `col_int_not_null`  ) ) WHERE ( SUBQUERY1_t1 . `col_char_1024` >= SUBQUERY1_t1 . `col_char_1024_key` AND SUBQUERY1_t2 . `col_bigint` = 8 )   ) ) AND table3 . `col_char_1024_not_null_key` <= 'r'   ;
+

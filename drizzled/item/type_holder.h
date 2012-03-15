@@ -17,19 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_TYPE_HOLDER_H
-#define DRIZZLED_ITEM_TYPE_HOLDER_H
+#pragma once
 
-namespace drizzled
-{
-
-typedef struct st_typelib TYPELIB;
-class String;
-namespace type {
-class Decimal;
-}
-class Session;
-class Item;
+namespace drizzled {
 
 /*
   Item_type_holder used to store type. name, length of Item for UNIONS &
@@ -118,4 +108,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_TYPE_HOLDER_H */

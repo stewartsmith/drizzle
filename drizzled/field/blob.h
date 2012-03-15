@@ -18,19 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_BLOB_H
-#define DRIZZLED_FIELD_BLOB_H
+#pragma once
 
 #include <drizzled/field/str.h>
-
-#include <drizzled/global_charset_info.h>
-
+#include <drizzled/charset.h>
 #include <string>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
  * Class representing a BLOB data type column
@@ -54,11 +49,11 @@ public:
              unsigned char null_bit_arg,
              const char *field_name_arg,
              TableShare *share,
-             const CHARSET_INFO * const cs);
+             const charset_info_st * const cs);
   Field_blob(uint32_t len_arg,
              bool maybe_null_arg,
              const char *field_name_arg,
-             const CHARSET_INFO * const cs)
+             const charset_info_st * const cs)
     :Field_str((unsigned char*) NULL,
                len_arg,
                maybe_null_arg ? (unsigned char *) "": 0,
@@ -73,7 +68,7 @@ public:
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
   int  store(const char *to,uint32_t length,
-             const CHARSET_INFO * const charset);
+             const charset_info_st * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
 
@@ -136,13 +131,11 @@ public:
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr, bool low_byte_first) const;
   DRIZZLED_API uint32_t get_length(const unsigned char *ptr_arg) const;
   void put_length(unsigned char *pos, uint32_t length);
-  inline void get_ptr(unsigned char **str)
+  inline unsigned char* get_ptr() const
     {
-      memcpy(str,ptr+sizeof(uint32_t),sizeof(unsigned char*));
-    }
-  inline void get_ptr(unsigned char **str, uint32_t row_offset)
-    {
-      memcpy(str,ptr+sizeof(uint32_t)+row_offset,sizeof(char*));
+      unsigned char* str;
+      memcpy(&str, ptr + sizeof(uint32_t), sizeof(unsigned char*));
+      return str;
     }
   inline void set_ptr(unsigned char *length, unsigned char *data)
     {
@@ -162,36 +155,23 @@ public:
   uint32_t get_key_image(unsigned char *buff,uint32_t length);
   uint32_t get_key_image(std::basic_string<unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
-  void sql_type(String &str) const;
-  inline bool copy()
+  inline void copy()
   {
-    unsigned char *tmp;
-    get_ptr(&tmp);
-    if (value.copy((char*) tmp, get_length(), charset()))
-    {
-      Field_blob::reset();
-      return 1;
-    }
-    tmp=(unsigned char*) value.ptr();
-    memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
-    return 0;
+    value.copy((char*)get_ptr(), get_length(), charset());
+    char* tmp= value.ptr();
+    memcpy(ptr + sizeof(uint32_t), &tmp, sizeof(char*));
   }
-  virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
-                      uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key(unsigned char *to, const unsigned char *from,
-                  uint32_t max_length, bool low_byte_first);
-  virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from,
-                              uint32_t , bool low_byte_first);
+  virtual unsigned char *pack(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
+  unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
+  virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from, uint32_t , bool low_byte_first);
   void free() { value.free(); }
-  inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
   uint32_t size_of() const { return sizeof(*this); }
   bool has_charset(void) const
-  { return charset() == &my_charset_bin ? false : true; }
+  { return charset() != &my_charset_bin; }
   uint32_t max_display_length();
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_BLOB_H */
 

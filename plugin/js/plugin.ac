@@ -1,0 +1,4 @@
+PANDORA_HAVE_LIBV8
+
+AS_IF([test "x$ac_cv_libv8" = "xno"],
+      AC_MSG_WARN([libv8 not found: not building js() function. (You'll find v8 in the libv8-dev package on Debian systems, and libv8-devel on Red Hat systems.)]))

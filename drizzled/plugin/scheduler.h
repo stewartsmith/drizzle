@@ -19,24 +19,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_SCHEDULER_H
-#define DRIZZLED_PLUGIN_SCHEDULER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
-
-#include <string>
-#include <vector>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * This class should be used by scheduler plugins to implement custom session
@@ -44,39 +34,33 @@ namespace plugin
  */
 class DRIZZLED_API Scheduler : public Plugin
 {
-  /* Disable default constructors */
-  Scheduler();
-  Scheduler(const Scheduler &);
-  Scheduler& operator=(const Scheduler &);
 public:
   explicit Scheduler(std::string name_arg)
     : Plugin(name_arg, "Scheduler")
   {}
-  virtual ~Scheduler() {}
 
   /**
    * Add a session to the scheduler. When the scheduler is ready to run the
    * session, it should call session->run().
    */
-  virtual bool addSession(Session::shared_ptr &session)= 0;
+  virtual bool addSession(const Session::shared_ptr&)= 0;
 
   /**
    * Notify the scheduler that it should be killed gracefully.
    */
-  virtual void killSession(Session *) {}
+  virtual void killSession(Session*) {}
 
   /**
    * This is called when a scheduler should kill the session immedaitely.
    */
-  virtual void killSessionNow(Session::shared_ptr&) {}
+  virtual void killSessionNow(const Session::shared_ptr&) {}
 
-  static bool addPlugin(plugin::Scheduler *sced);
-  static void removePlugin(plugin::Scheduler *sced);
+  static bool addPlugin(plugin::Scheduler*);
+  static void removePlugin(plugin::Scheduler*);
   static bool setPlugin(const std::string& name);
-  static Scheduler *getScheduler();
+  static Scheduler* getScheduler();
 };
 
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

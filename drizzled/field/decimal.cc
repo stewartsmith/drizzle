@@ -24,9 +24,9 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/create_field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /****************************************************************************
  ** File_decimal
@@ -137,7 +137,7 @@ bool Field_decimal::store_value(const type::Decimal *decimal_value)
 
 
 int Field_decimal::store(const char *from, uint32_t length,
-                         const CHARSET_INFO * const charset_arg)
+                         const charset_info_st * const charset_arg)
 {
   int err;
   type::Decimal decimal_value;
@@ -314,20 +314,10 @@ int Field_decimal::cmp(const unsigned char *a,const unsigned char*b)
 }
 
 
-void Field_decimal::sort_string(unsigned char *buff,
-                                uint32_t )
+void Field_decimal::sort_string(unsigned char *buff, uint32_t)
 {
   memcpy(buff, ptr, bin_size);
 }
-
-
-void Field_decimal::sql_type(String &str) const
-{
-  const CHARSET_INFO * const cs= str.charset();
-  str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
-                                "decimal(%d,%d)", precision, (int)dec));
-}
-
 
 /**
   Returns the number of bytes field uses in row-based replication

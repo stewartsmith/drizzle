@@ -26,9 +26,9 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
@@ -114,13 +114,12 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
 {
   enum_parsing_place place= NO_MATTER;
   assert(fixed == 0);
-  Select_Lex *current_sel= session->getLex()->current_select;
+  Select_Lex *current_sel= session->lex().current_select;
 
   if (!ref || ref == not_found_item)
   {
-    if (!(ref= resolve_ref_in_select_and_group(session, this,
-                                               context->select_lex)))
-      goto error;             /* Some error occurred (e.g. ambiguous names). */
+    if (!(ref= resolve_ref_in_select_and_group(session, this, context->select_lex)))
+      return true;             /* Some error occurred (e.g. ambiguous names). */
 
     if (ref == not_found_item) /* This reference was not resolved. */
     {
@@ -132,9 +131,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (!outer_context)
       {
         /* The current reference cannot be resolved in this query. */
-        my_error(ER_BAD_FIELD_ERROR,MYF(0),
-                 full_name(), session->where());
-        goto error;
+        my_error(ER_BAD_FIELD_ERROR,MYF(0), full_name(), session->where());
+        return true;
       }
 
       /*
@@ -159,7 +157,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         if (outer_context->resolve_in_select_list)
         {
           if (!(ref= resolve_ref_in_select_and_group(session, this, select)))
-            goto error; /* Some error occurred (e.g. ambiguous names). */
+            return true; /* Some error occurred (e.g. ambiguous names). */
           if (ref != not_found_item)
           {
             assert(*ref && (*ref)->fixed);
@@ -205,7 +203,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                                            reference,
                                            IGNORE_EXCEPT_NON_UNIQUE, true);
           if (! from_field)
-            goto error;
+            return true;
           if (from_field == view_ref_found)
           {
             Item::Type refer_type= (*reference)->type();
@@ -265,29 +263,27 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
       if (from_field != not_found_field)
       {
         Item_field* fld;
-        if (!(fld= new Item_field(from_field)))
-          goto error;
+        fld= new Item_field(from_field);
         *reference= fld;
         mark_as_dependent(session, last_checked_context->select_lex,
-                          session->getLex()->current_select, this, fld);
+                          session->lex().current_select, this, fld);
         /*
           A reference is resolved to a nest level that's outer or the same as
           the nest level of the enclosing set function : adjust the value of
           max_arg_level for the function if it's needed.
         */
-        if (session->getLex()->in_sum_func &&
-            session->getLex()->in_sum_func->nest_level >=
+        if (session->lex().in_sum_func &&
+            session->lex().in_sum_func->nest_level >=
             last_checked_context->select_lex->nest_level)
-          set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+          set_if_bigger(session->lex().in_sum_func->max_arg_level,
                         last_checked_context->select_lex->nest_level);
         return false;
       }
       if (ref == 0)
       {
         /* The item was not a table field and not a reference */
-        my_error(ER_BAD_FIELD_ERROR, MYF(0),
-                 full_name(), session->where());
-        goto error;
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), full_name(), session->where());
+        return true;
       }
       /* Should be checked in resolve_ref_in_select_and_group(). */
       assert(*ref && (*ref)->fixed);
@@ -298,10 +294,10 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
         the nest level of the enclosing set function : adjust the value of
         max_arg_level for the function if it's needed.
       */
-      if (session->getLex()->in_sum_func &&
-          session->getLex()->in_sum_func->nest_level >=
+      if (session->lex().in_sum_func &&
+          session->lex().in_sum_func->nest_level >=
           last_checked_context->select_lex->nest_level)
-        set_if_bigger(session->getLex()->in_sum_func->max_arg_level,
+        set_if_bigger(session->lex().in_sum_func->max_arg_level,
                       last_checked_context->select_lex->nest_level);
     }
   }
@@ -320,22 +316,15 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           current_sel->having_fix_field)) ||
        !(*ref)->fixed))
   {
-    my_error(ER_ILLEGAL_REFERENCE, MYF(0),
-             name, ((*ref)->with_sum_func?
-                    "reference to group function":
-                    "forward reference in item list"));
-    goto error;
+    my_error(ER_ILLEGAL_REFERENCE, MYF(0), name, ((*ref)->with_sum_func ? "reference to group function" : "forward reference in item list"));
+    return true;
   }
 
   set_properties();
 
   if ((*ref)->check_cols(1))
-    goto error;
+    return true;
   return false;
-
-error:
-  context->process_error(session);
-  return true;
 }
 
 
@@ -376,7 +365,7 @@ void Item_ref::print(String *str)
     if ((*ref)->type() != Item::CACHE_ITEM &&
         !table_name && name && alias_name_used)
     {
-      str->append_identifier(name, (uint32_t) strlen(name));
+      str->append_identifier(str_ref(name));
     }
     else
       (*ref)->print(str);
@@ -386,10 +375,13 @@ void Item_ref::print(String *str)
 }
 
 
-bool Item_ref::send(plugin::Client *client, String *tmp)
+void Item_ref::send(plugin::Client *client, String *tmp)
 {
   if (result_field)
-    return client->store(result_field);
+  {
+    client->store(result_field);
+    return;
+  }
   return (*ref)->send(client, tmp);
 }
 

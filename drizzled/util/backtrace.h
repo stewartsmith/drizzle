@@ -18,10 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_BACKTRACE_H
-#define DRIZZLED_UTIL_BACKTRACE_H
+#pragma once
 
 #include <drizzled/visibility.h>
+
+#define call_backtrace() drizzled::util::custom_backtrace(__FILE__, __LINE__, __func__)
 
 namespace drizzled
 {
@@ -30,10 +31,9 @@ namespace util
 {
 
 DRIZZLED_API
-void custom_backtrace(void);
+void custom_backtrace(const char *file, int line, const char *func);
 
 } /* namespace util */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UTIL_BACKTRACE_H */
 

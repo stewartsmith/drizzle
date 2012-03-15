@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H
-#define DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H
+#pragma once
 
 /**
  * @file Defines the API for a TransactionApplier
@@ -38,30 +37,19 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace message { class Transaction; }
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * Base class for appliers of Transaction messages
  */
 class DRIZZLED_API TransactionApplier : public Plugin
 {
-  TransactionApplier();
-  TransactionApplier(const TransactionApplier &);
-  TransactionApplier& operator=(const TransactionApplier &);
 public:
   explicit TransactionApplier(std::string name_arg)
     : Plugin(name_arg, "TransactionApplier")
   {
   }
-  virtual ~TransactionApplier() {}
   /**
    * Apply something to a target.
    *
@@ -87,4 +75,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TRANSACTION_APPLIER_H */

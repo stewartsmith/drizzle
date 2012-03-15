@@ -19,24 +19,13 @@
  */
 
 
-#ifndef DRIZZLED_TABLE_INSTANCE_SHARED_H
-#define DRIZZLED_TABLE_INSTANCE_SHARED_H
+#pragma once
 
 #include <drizzled/table/instance/base.h>
 
-namespace drizzled
-{
-
-class TableShare;
-class Session;
-
-namespace identifier { class Table; }
-
-namespace table
-{
-
-namespace instance
-{
+namespace drizzled {
+namespace table {
+namespace instance {
 
 void release(TableShare *share);
 void release(TableShare::shared_ptr &share);
@@ -107,4 +96,3 @@ private:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_SHARED_H */

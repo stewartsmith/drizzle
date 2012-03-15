@@ -1,0 +1,94 @@
+# auth_file has to be used to provide access for user root, else the tests
+# won't work.  auth_schema can't provide this access because no one has
+# access until the auth table is created.
+
+# Check that the plugin is loaded and using the default auth.users table.
+SHOW VARIABLES LIKE 'auth_schema%';
+
+# mysql_protocol provides MYSQL_PASSWORD().
+SELECT MYSQL_PASSWORD('test_pass');
+
+CREATE SCHEMA auth;
+USE auth;
+CREATE TABLE users (
+  user     VARCHAR(255) NOT NULL,
+  password VARCHAR(40),
+  UNIQUE INDEX user_idx (user)
+);
+INSERT INTO users VALUES ('test_user', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF');
+
+SELECT * FROM users ORDER BY user;
+
+connect(conn1, localhost, test_user, test_pass,,);
+SELECT 'connection 1 works';
+
+--exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 1 works'" --user=test_user --password=test_pass 2>&1
+
+# Test that bad passwords aren't accepted.
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (bad_user,localhost,test_user,foo,,);
+
+# Test that the auth table can be changed dynamically.
+USE auth;
+CREATE TABLE users2 (
+  user     VARCHAR(255) NOT NULL,
+  password VARCHAR(40),
+  UNIQUE INDEX user_idx (user)
+);
+INSERT INTO users2 VALUES ('test_user2', '34F2496C75CF8F8D8EBE14067C9C8B1AA8E80DEF');
+SELECT * FROM users2 ORDER BY user;
+
+SET GLOBAL auth_schema_table='`auth`.`users2`';
+SHOW VARIABLES LIKE 'auth_schema%';
+
+connect(conn2, localhost, test_user2, test_pass,,);
+SELECT 'connection 2 works';
+
+--exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 2 works'" --user=test_user2 --password=test_pass 2>&1
+
+# Restore the original auth table for subsequent tests (or --repeat 2).
+SET GLOBAL auth_schema_table='auth.users';
+
+# Test that auth_schema works with hex strings created MYSQL_PASSWORD().
+INSERT INTO auth.users VALUES ('test_user3', MYSQL_PASSWORD('mypass'));
+SELECT * FROM auth.users WHERE user='test_user3';
+
+--exec $TOP_BUILDDIR/client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 'client 3 works'" --user=test_user3 --password=mypass 2>&1
+
+# Disable authentication.
+SET GLOBAL auth_schema_enabled=0;
+SHOW VARIABLES LIKE 'auth_schema%';
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect(conn3, localhost, test_user, test_pass,,);
+
+# Re-enable authentication.
+SET GLOBAL auth_schema_enabled=1;
+SHOW VARIABLES LIKE 'auth_schema%';
+
+connect(conn3, localhost, test_user, test_pass,,);
+SELECT 'auth re-enabled';
+
+# Escape user name; avoid SQL injection.
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect(conn4, localhost, "'; drop table auth.users; select '", test_pass,,);
+
+SHOW TABLES FROM auth;
+
+# Don't crash if we try to set the auth table to NULL.
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL auth_schema_table=NULL;
+SHOW VARIABLES LIKE 'auth_schema_table';
+
+# And don't permit a blank string for the auth table.
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL auth_schema_table='';
+SHOW VARIABLES LIKE 'auth_schema_table';
+
+DROP SCHEMA auth;

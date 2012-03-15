@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_CHAR_H
-#define DRIZZLED_FUNCTION_STR_CHAR_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 
@@ -30,7 +29,7 @@ class Item_func_char :public Item_str_func
 public:
   Item_func_char(List<Item> &list) :Item_str_func(list)
   { collation.set(&my_charset_bin); }
-  Item_func_char(List<Item> &list, const CHARSET_INFO * const cs) :Item_str_func(list)
+  Item_func_char(List<Item> &list, const charset_info_st * const cs) :Item_str_func(list)
   { collation.set(cs); }
   String *val_str(String *);
   void fix_length_and_dec()
@@ -42,4 +41,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_STR_CHAR_H */

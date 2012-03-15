@@ -17,29 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_BOOLEAN_H
-#define DRIZZLED_ITEM_BOOLEAN_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace item {
 
-namespace item
-{
-
-class Boolean: public Item_basic_constant
+class Boolean : public Item_basic_constant
 {
   bool value;
 
 public:
   Boolean(const char *str_arg, bool arg) :
-    Item_basic_constant(),
     value(arg)
   {
     max_length= value ? 4 : 5;
     fixed= true;
-    name= (const_cast<char *>(str_arg));
+    name= str_arg;
   }
 
   Boolean(bool arg) :
@@ -47,18 +42,15 @@ public:
   {
     max_length= value ? 4 : 5;
     fixed= true;
-
-    if (value)
-    {
-      name= const_cast<char *>("TRUE");
-    }
-    else
-    {
-      name= const_cast<char *>("FALSE");
-    }
+    name= value ? "TRUE" : "FALSE";
   }
 
   enum Type type() const { return BOOLEAN_ITEM; }
+
+  Item_result result_type() const
+  {
+    return INT_RESULT;
+  }
 
   virtual bool val_bool()
   {
@@ -81,19 +73,18 @@ public:
 
     if (value)
     {
-      value_buffer->append("TRUE");
+      value_buffer->copy("TRUE", 4, default_charset());
     }
     else
     {
-      value_buffer->append("FALSE");
+      value_buffer->copy("FALSE", 5, default_charset());
     }
 
     return value_buffer;
   }
 
-  type::Decimal* val_decimal(type::Decimal *dec)
+  type::Decimal* val_decimal(type::Decimal*)
   {
-    (void)dec;
     return 0;
   }
 
@@ -105,4 +96,3 @@ public:
 #include <drizzled/item/true.h>
 #include <drizzled/item/false.h>
 
-#endif /* DRIZZLED_ITEM_BOOLEAN_H */

@@ -17,40 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_VERTEX_HANDLE_H
-#define DRIZZLED_MODULE_VERTEX_HANDLE_H
+#pragma once
 
 #include <drizzled/module/vertex.h>
 
+namespace drizzled {
+namespace module {
 
-namespace drizzled
+class VertexHandle : boost::noncopyable
 {
-
-namespace module
-{
-
-class VertexHandle
-{
-
-private:
-  VertexDesc vertex_desc_;
-
-  VertexHandle();
-  VertexHandle(const VertexHandle&);
-  VertexHandle& operator=(const VertexHandle&);
-
 public:
   explicit VertexHandle(VertexDesc vertex_desc) :
     vertex_desc_(vertex_desc)
   { }
 
-  VertexDesc getVertexDesc()
+  VertexDesc getVertexDesc() const
   {
     return vertex_desc_;
   }
-
+private:
+  VertexDesc vertex_desc_;
 };
 
 } /* namespace module */
 } /* namespace drizzled */
-#endif /* DRIZZLED_MODULE_VERTEX_HANDLE_H */

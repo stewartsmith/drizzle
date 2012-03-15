@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+# -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2010,2011 Patrick Crews
@@ -40,6 +40,7 @@ class Server(object):
     def __init__(self
                 , name
                 , server_manager
+                , code_tree
                 , default_storage_engine
                 , server_options
                 , requester
@@ -63,6 +64,7 @@ class Server(object):
         self.server_manager.log_server(self, requester)
 
         self.system_manager = self.server_manager.system_manager
+        self.code_tree = code_tree
         self.valgrind = self.system_manager.valgrind
         self.gdb = self.system_manager.gdb
         if self.valgrind:
@@ -77,6 +79,8 @@ class Server(object):
         self.tried_start = 0
         self.failed_test = 0 # was the last test a failure?  our state is suspect
         self.server_start_timeout = 60 * self.valgrind_time_buffer
+        self.pid = None
+        self.need_reset = False
 
     def initialize_databases(self):
         """ Call schemawriter to make db.opt files """
@@ -109,8 +113,7 @@ class Server(object):
     def restore_snapshot(self):
         """ Restore from a stored snapshot """
         
-        if self.verbose:
-            self.logging.verbose("Restoring from db snapshot")
+        self.logging.verbose("Restoring from db snapshot")
         if not os.path.exists(self.snapshot_path):
             self.logging.error("Could not find snapshot: %s" %(self.snapshot_path))
         self.system_manager.remove_dir(self.datadir)
@@ -119,17 +122,17 @@ class Server(object):
     def is_started(self):
         """ Is the server running?  Particulars are server-dependent """
 
-        return
+        return "You need to implement is_started"
 
     def get_start_cmd(self):
         """ Return the command the server_manager can use to start me """
 
-        return "Allakazam!"
+        return "You need to implement get_start_cmd"
 
     def get_stop_cmd(self):
         """ Return the command the server_manager can use to stop me """
 
-        return "Whoa, Nelly!"
+        return "You need to implement get_stop_cmd"
 
     def get_ping_cmd(self):
         """ Return the command that can be used to 'ping' me 
@@ -141,7 +144,7 @@ class Server(object):
 
         """
    
-        return "Hello?"
+        return "You need to implement get_ping_cmd"
 
     def cleanup(self):
         """ Cleanup - just free ports for now..."""

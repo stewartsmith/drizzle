@@ -1,0 +1,103 @@
+DROP SCHEMA IF EXISTS drizzledump_migrate_test;
+Dropping test database on MySQL...
+Create test database on MySQL...
+populating MySQL with test data...
+calling drizzledump to populate Drizzle...
+test our table:
+tinyint
+SHOW CREATE TABLE drizzledump_migrate_test.tinyint_table;
+Table	Create Table
+tinyint_table	CREATE TABLE `tinyint_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_tinyint` INT DEFAULT NULL,
+  `col_tinyint_not_null` INT NOT NULL,
+  `col_tinyint_unsigned` INT DEFAULT NULL,
+  `col_tinyint_unsigned_not_null` INT NOT NULL,
+  `col_tinyint_default_null` INT DEFAULT NULL,
+  `col_tinyint_default_zero` INT DEFAULT '0'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.tinyint_table;
+description	col_tinyint	col_tinyint_not_null	col_tinyint_unsigned	col_tinyint_unsigned_not_null	col_tinyint_default_null	col_tinyint_default_zero
+MIN	-128	-128	0	0	NULL	0
+MAX	127	127	255	255	NULL	0
+NULL_ROW	NULL	42	NULL	42	NULL	NULL
+ZERO	0	0	0	0	0	0
+smallint
+SHOW CREATE TABLE drizzledump_migrate_test.smallint_table;
+Table	Create Table
+smallint_table	CREATE TABLE `smallint_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_smallint` INT DEFAULT NULL,
+  `col_smallint_not_null` INT NOT NULL,
+  `col_smallint_unsigned` INT DEFAULT NULL,
+  `col_smallint_unsigned_not_null` INT NOT NULL,
+  `col_smallint_default_null` INT DEFAULT NULL,
+  `col_smallint_default_zero` INT DEFAULT '0'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.smallint_table;
+description	col_smallint	col_smallint_not_null	col_smallint_unsigned	col_smallint_unsigned_not_null	col_smallint_default_null	col_smallint_default_zero
+MIN	-32768	-32768	0	0	NULL	0
+MAX	32767	32767	65535	65535	NULL	0
+NULL_ROW	NULL	42	NULL	42	NULL	NULL
+ZERO	0	0	0	0	0	0
+mediumint
+SHOW CREATE TABLE drizzledump_migrate_test.mediumint_table;
+Table	Create Table
+mediumint_table	CREATE TABLE `mediumint_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_mediumint` INT DEFAULT NULL,
+  `col_mediumint_not_null` INT NOT NULL,
+  `col_mediumint_unsigned` INT DEFAULT NULL,
+  `col_mediumint_unsigned_not_null` INT NOT NULL,
+  `col_mediumint_default_null` INT DEFAULT NULL,
+  `col_mediumint_default_zero` INT DEFAULT '0'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.mediumint_table;
+description	col_mediumint	col_mediumint_not_null	col_mediumint_unsigned	col_mediumint_unsigned_not_null	col_mediumint_default_null	col_mediumint_default_zero
+MIN	-8388608	-8388608	0	0	NULL	0
+MAX	8388607	8388607	16777215	16777215	NULL	0
+NULL_ROW	NULL	42	NULL	42	NULL	NULL
+ZERO	0	0	0	0	0	0
+test int(4) mysql extension
+SHOW CREATE TABLE drizzledump_migrate_test.int_ext;
+Table	Create Table
+int_ext	CREATE TABLE `int_ext` (
+  `colint` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+int
+SHOW CREATE TABLE drizzledump_migrate_test.int_table;
+Table	Create Table
+int_table	CREATE TABLE `int_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_int` INT DEFAULT NULL,
+  `col_int_not_null` INT NOT NULL,
+  `col_int_unsigned` BIGINT DEFAULT NULL,
+  `col_int_unsigned_not_null` BIGINT NOT NULL,
+  `col_int_default_null` INT DEFAULT NULL,
+  `col_int_default_zero` INT DEFAULT '0'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.int_table;
+description	col_int	col_int_not_null	col_int_unsigned	col_int_unsigned_not_null	col_int_default_null	col_int_default_zero
+MIN	-2147483648	-2147483648	0	0	NULL	0
+MAX	2147483647	2147483647	4294967295	4294967295	NULL	0
+NULL_ROW	NULL	42	NULL	42	NULL	NULL
+ZERO	0	0	0	0	0	0
+bigint
+SHOW CREATE TABLE drizzledump_migrate_test.bigint_table;
+Table	Create Table
+bigint_table	CREATE TABLE `bigint_table` (
+  `description` TEXT COLLATE utf8_general_ci,
+  `col_bigint` BIGINT DEFAULT NULL,
+  `col_bigint_not_null` BIGINT NOT NULL,
+  `col_bigint_unsigned` BIGINT DEFAULT NULL,
+  `col_bigint_unsigned_not_null` BIGINT NOT NULL,
+  `col_bigint_default_null` BIGINT DEFAULT NULL,
+  `col_bigint_default_zero` BIGINT DEFAULT '0'
+) ENGINE=InnoDB COLLATE = utf8_general_ci
+SELECT * FROM drizzledump_migrate_test.bigint_table;
+description	col_bigint	col_bigint_not_null	col_bigint_unsigned	col_bigint_unsigned_not_null	col_bigint_default_null	col_bigint_default_zero
+MIN	-9223372036854775807	-9223372036854775807	0	0	NULL	0
+NULL_ROW	NULL	42	NULL	42	NULL	NULL
+ZERO	0	0	0	0	0	0
+Dropping test database on MySQL...
+DROP SCHEMA drizzledump_migrate_test;

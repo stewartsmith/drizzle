@@ -18,11 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_FUNCTIONS_H
-#define DRIZZLED_GENERATOR_FUNCTIONS_H
+#pragma once
 
 #include <drizzled/plugin/function.h>
-
 #include <drizzled/visibility.h>
 
 namespace drizzled {
@@ -30,29 +28,24 @@ namespace generator {
 
 class DRIZZLED_API Functions
 {
-  Session &session;
-  typedef std::vector <std::string> vector;
-  std::string function_name;
-  vector function_list;
-  vector::iterator iter;
-
 public:
-
-  Functions(Session &arg);
+  Functions(Session&);
 
   operator std::string*()
   {
-    if (iter == function_list.end())
+    if (iter == functions.end())
       return NULL;
-
-    function_name= *iter;
-    iter++;
-
+    function_name= *iter++;
     return &function_name;
   }
+  typedef std::vector<std::string> functions_t;
+  functions_t functions;
+
+  std::string function_name;
+  functions_t::iterator iter;
+
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_FUNCTIONS_H */

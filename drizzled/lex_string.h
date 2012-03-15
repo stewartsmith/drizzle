@@ -17,32 +17,60 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LEX_STRING_H
-#define DRIZZLED_LEX_STRING_H
+#pragma once
 
-#include <stddef.h>
+#include <cstddef>
+#include <drizzled/util/data_ref.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
-  LEX_STRING -- a pair of a C-string and its length.
+  lex_string_t -- a pair of a C-string and its length.
 */
 
 /* This definition must match the one given in mysql/plugin.h */
-typedef struct lex_string_t
+struct lex_string_t
 {
-  char *str;
-  size_t length;
-} LEX_STRING;
+  const char* begin() const
+  {
+    return data();
+  }
 
-inline const LEX_STRING &null_lex_string()
+  const char* end() const
+  {
+    return data() + size();
+  }
+
+  const char* data() const
+  {
+    return str_;
+  }
+
+  size_t size() const
+  {
+    return length_;
+  }
+
+  void assign(const char* d, size_t s)
+  {
+    str_= const_cast<char*>(d);
+    length_ = s;
+  }
+
+  void operator=(str_ref v)
+  {
+    assign(v.data(), v.size());
+  }
+
+  char* str_;
+  size_t length_;
+};
+
+inline const lex_string_t &null_lex_string()
 {
-  static LEX_STRING tmp= { NULL, 0 };
+  static lex_string_t tmp= { NULL, 0 };
   return tmp;
 }
-
-#define NULL_LEX_STRING null_lex_string()
 
 struct execute_string_t : public lex_string_t
 {
@@ -55,19 +83,16 @@ public:
     return is_variable;
   }
 
-  void set(const lex_string_t& ptr, bool is_variable_arg= false)
+  void set(const lex_string_t& s, bool is_variable_arg= false)
   {
     is_variable= is_variable_arg;
-    str= ptr.str;
-    length= ptr.length;
+    static_cast<lex_string_t&>(*this) = s;
   }
 
 };
 
-
-#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
-#define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))
+#define STRING_WITH_LEN(X) (X), (sizeof(X) - 1)
+#define C_STRING_WITH_LEN(X) const_cast<char*>(X), (sizeof(X) - 1)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_LEX_STRING_H */

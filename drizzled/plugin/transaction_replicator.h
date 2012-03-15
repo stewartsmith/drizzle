@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
-#define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
+#pragma once
 
 #include <drizzled/plugin/replication.h>
 #include <drizzled/plugin/plugin.h>
@@ -39,35 +38,19 @@
  * An applier is responsible for applying events, not a replicator...
  */
 
-namespace drizzled
-{
-namespace message
-{ 
-  class Transaction;
-  class Statement;
-}
-
-class Session;
-
-namespace plugin
-{
-
-class TransactionApplier;
+namespace drizzled {
+namespace plugin {
 
 /**
  * Class which replicates Transaction messages
  */
 class DRIZZLED_API TransactionReplicator : public Plugin
 {
-  TransactionReplicator();
-  TransactionReplicator(const TransactionReplicator &);
-  TransactionReplicator& operator=(const TransactionReplicator &);
 public:
   explicit TransactionReplicator(std::string name_arg)
     : Plugin(name_arg, "TransactionReplicator")
   {
   }
-  virtual ~TransactionReplicator() {}
 
   /**
    * Replicate a Transaction message to a TransactionApplier.
@@ -95,4 +78,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H */

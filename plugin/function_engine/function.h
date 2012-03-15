@@ -18,16 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FUNCTION_ENGINE_FUNCTION_H
-#define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
+#pragma once
 
 #include <assert.h>
-#include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/identifier/schema.h>
 
-extern const drizzled::CHARSET_INFO *default_charset_info;
+extern const drizzled::charset_info_st *default_charset_info;
 
 static const char *function_exts[] = {
   NULL
@@ -49,7 +47,7 @@ public:
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
                     const drizzled::identifier::Table &,
-                    drizzled::message::Table&)
+                    const drizzled::message::Table&)
   {
     return drizzled::ER_TABLE_PERMISSION_DENIED;
   }
@@ -78,7 +76,7 @@ public:
                            const drizzled::identifier::Table &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::identifier::Schema::vector&);
+  void doGetSchemaIdentifiers(drizzled::identifier::schema::vector&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::identifier::Table &identifier);
 
@@ -91,7 +89,6 @@ public:
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              const drizzled::identifier::Schema &schema_identifier,
-                             drizzled::identifier::Table::vector &set_of_identifiers);
+                             drizzled::identifier::table::vector &set_of_identifiers);
 };
 
-#endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

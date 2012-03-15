@@ -18,30 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_SCHEMA_H
-#define DRIZZLED_STATEMENT_CREATE_SCHEMA_H
+#pragma once
 
+#include <drizzled/session.h>
 #include <drizzled/statement.h>
 #include <drizzled/message/schema.pb.h>
 #include <uuid/uuid.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class CreateSchema : public Statement
 {
-  bool check(const identifier::Schema &identifier);
-
 public:
   CreateSchema(Session *in_session) :
     Statement(in_session),
     is_if_not_exists(false)
   {
-    getSession()->getLex()->sql_command=SQLCOM_CREATE_DB;
+    set_command(SQLCOM_CREATE_DB);
   }
 
   bool execute();
@@ -49,10 +43,10 @@ public:
   message::Schema schema_message;
 
   bool validateSchemaOptions();
+private:
+  bool check(const identifier::Schema &identifier);
 };
 
 } /* end namespace statement */
-
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_SCHEMA_H */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_XID_H
-#define DRIZZLED_XID_H
+#pragma once
 
 #include <cstring>
 
@@ -42,7 +41,7 @@ typedef uint64_t my_xid;
 #define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
 #define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
 
-class XID 
+class XID
 {
 public:
   long formatID;
@@ -57,19 +56,13 @@ public:
   {
     memset(data, 0, DRIZZLE_XIDDATASIZE);
   }
-  bool eq(XID *xid);
-  bool eq(long g, long b, const char *d);
-  void set(XID *xid);
-  void set(long f, const char *g, long gl, const char *b, long bl);
   void set(uint64_t xid);
   void set(long g, long b, const char *d);
-  bool is_null();
-  void null();
+  bool is_null() const;
+  void set_null();
   my_xid quick_get_my_xid();
   my_xid get_my_xid();
   uint32_t length() const;
-  const unsigned char* key() const;
-  uint32_t key_length() const;
 };
 
 /**
@@ -80,7 +73,7 @@ public:
 
 */
 
-class DrizzleXid 
+class DrizzleXid
 {
 public:
   long formatID;
@@ -104,7 +97,7 @@ extern const char *xa_state_names[];
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-class XID_STATE 
+class XID_STATE
 {
 public:
   XID_STATE() :
@@ -117,12 +110,5 @@ public:
   bool in_session;
 };
 
-bool xid_cache_init();
-void xid_cache_free();
-void xid_cache_insert(XID *xid, xa_states xa_state);
-bool xid_cache_insert(XID_STATE *xid_state);
-void xid_cache_delete(XID_STATE *xid_state);
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_XID_H */

@@ -23,6 +23,7 @@ Recovery
 Created 9/20/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef log0recv_h
 #define log0recv_h
 

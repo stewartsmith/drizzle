@@ -82,8 +82,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 uint64_t table_lock_wait_timeout;
 static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
@@ -106,7 +105,6 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  lock->init();
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
@@ -116,8 +114,7 @@ void thr_lock_init(THR_LOCK *lock)
 
 void THR_LOCK_INFO::init()
 {
-  internal::st_my_thread_var *tmp= my_thread_var;
-  thread_id= tmp->id;
+  thread_id= internal::my_thread_var2()->id;
   n_cursors= 0;
 }
 
@@ -149,9 +146,7 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_list *wait, THR_LOCK_DATA *data)
 {
-  internal::st_my_thread_var *thread_var= session.getThreadVar();
-
-  boost::condition_variable_any *cond= &thread_var->suspend;
+  boost::condition_variable_any *cond= &session.getThreadVar()->suspend;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
   bool can_deadlock= test(data->owner->info->n_cursors);
 
@@ -164,13 +159,13 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
   current_global_counters.locks_waited++;
 
   /* Set up control struct to allow others to abort locks */
-  thread_var->current_mutex= data->lock->native_handle();
-  thread_var->current_cond=  &thread_var->suspend;
-  data->cond= &thread_var->suspend;;
+  session.getThreadVar()->current_mutex= data->lock->native_handle();
+  session.getThreadVar()->current_cond=  &session.getThreadVar()->suspend;
+  data->cond= &session.getThreadVar()->suspend;;
 
-  while (not thread_var->abort)
+  while (not session.getThreadVar()->abort)
   {
-    boost_unique_lock_t scoped(*data->lock->native_handle(), boost::adopt_lock_t());
+    boost::mutex::scoped_lock scoped(*data->lock->native_handle(), boost::adopt_lock_t());
 
     if (can_deadlock)
     {
@@ -190,7 +185,7 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
     }
     /*
       We must break the wait if one of the following occurs:
-      - the connection has been aborted (!thread_var->abort), but
+      - the connection has been aborted (!session.getThreadVar()->abort), but
         this is not a delayed insert thread (in_wait_list). For a delayed
         insert thread the proper action at shutdown is, apparently, to
         acquire the lock and complete the insert.
@@ -213,9 +208,13 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
     if (data->cond)                             /* aborted or timed out */
     {
       if (((*data->prev)=data->next))		/* remove from wait-list */
+      {
 	data->next->prev= data->prev;
+      }
       else
+      {
 	wait->last=data->prev;
+      }
       data->type= TL_UNLOCK;                    /* No lock */
       wake_up_waiters(data->lock);
     }
@@ -227,9 +226,10 @@ static enum enum_thr_lock_result wait_for_lock(Session &session, struct st_lock_
   data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
-  boost_unique_lock_t scopedLock(thread_var->mutex);
-  thread_var->current_mutex= NULL;
-  thread_var->current_cond= NULL;
+  boost::mutex::scoped_lock scopedLock(session.getThreadVar()->mutex);
+  session.getThreadVar()->current_mutex= NULL;
+  session.getThreadVar()->current_cond= NULL;
+
   return(result);
 }
 
@@ -346,12 +346,6 @@ static enum enum_thr_lock_result thr_lock(Session &session, THR_LOCK_DATA *data,
     {
       if (!lock->write_wait.data)
       {						/* no scheduled write locks */
-        bool concurrent_insert= 0;
-	if (lock_type == TL_WRITE_CONCURRENT_INSERT)
-        {
-          concurrent_insert= 1;
-        }
-
 	if (!lock->read.data ||
 	    (lock_type <= TL_WRITE_CONCURRENT_INSERT &&
 	     ((lock_type != TL_WRITE_CONCURRENT_INSERT &&
@@ -383,6 +377,7 @@ static enum enum_thr_lock_result thr_lock(Session &session, THR_LOCK_DATA *data,
 
   /* Can't get lock yet;  Wait for it */
   return(wait_for_lock(session, wait_queue, data));
+
 end:
   lock->unlock();
 
@@ -604,23 +599,6 @@ thr_multi_lock(Session &session, THR_LOCK_DATA **data, uint32_t count, THR_LOCK_
       return(result);
     }
   }
-  /*
-    Ensure that all get_locks() have the same status
-    If we lock the same table multiple times, we must use the same
-    status_param!
-  */
-#if !defined(DONT_USE_RW_LOCKS)
-  if (count > 1)
-  {
-    THR_LOCK_DATA *last_lock= end[-1];
-    pos=end-1;
-    do
-    {
-      pos--;
-      last_lock=(*pos);
-    } while (pos != data);
-  }
-#endif
   return(THR_LOCK_SUCCESS);
 }
 
@@ -635,7 +613,6 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
     if ((*pos)->type != TL_UNLOCK)
       thr_unlock(*pos);
   }
-  return;
 }
 
 void DrizzleLock::unlock(uint32_t count)
@@ -656,7 +633,7 @@ void DrizzleLock::unlock(uint32_t count)
 
 void THR_LOCK::abort_locks()
 {
-  boost_unique_lock_t scopedLock(mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
 
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
@@ -689,7 +666,7 @@ bool THR_LOCK::abort_locks_for_thread(uint64_t thread_id_arg)
 {
   bool found= false;
 
-  boost_unique_lock_t scopedLock(mutex);
+  boost::mutex::scoped_lock scopedLock(mutex);
   for (THR_LOCK_DATA *local_data= read_wait.data; local_data ; local_data= local_data->next)
   {
     if (local_data->owner->info->thread_id == thread_id_arg)

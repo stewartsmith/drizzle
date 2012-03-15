@@ -28,6 +28,7 @@
  */
 
 #include <config.h>
+#include <drizzled/statistics_variables.h>
 #include "cumulative_stats.h"
 
 using namespace std;
@@ -135,30 +136,19 @@ void CumulativeStats::logGlobalStatusVars(ScoreboardSlot* scoreboard_slot)
   global_status_vars->merge(scoreboard_slot->getStatusVars());
 }
 
-int32_t CumulativeStats::getCumulativeStatsLastValidIndex()
+int32_t CumulativeStats::getCumulativeStatsLastValidIndex() const
 {
-  if (last_valid_index < cumulative_stats_by_user_max)
-  {
-    return last_valid_index;
-  } 
-  else 
-  {
-    return cumulative_stats_by_user_max;
-  }
+  return last_valid_index < cumulative_stats_by_user_max ? last_valid_index : cumulative_stats_by_user_max;
 }
 
-void CumulativeStats::sumCurrentScoreboard(Scoreboard *scoreboard,
-                                           StatusVars *current_status_vars,
-                                           UserCommands *current_user_commands)
+void CumulativeStats::sumCurrentScoreboard(Scoreboard *scoreboard, StatusVars *current_status_vars, UserCommands *current_user_commands)
 {
   /* the vector of vectors */
-  vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors= 
-    scoreboard->getVectorOfScoreboardVectors();
+  vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors= scoreboard->getVectorOfScoreboardVectors();
 
   /* iterate through each vector from above and sum each ScoreboardSlot */
 
   vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin(); 
-
   vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end(); 
 
   for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)

@@ -366,7 +366,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT NOT NULL,
   `b` INT DEFAULT NULL,
-  UNIQUE KEY `b` (`b`)
+  UNIQUE KEY `b` (`b`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 ALTER TABLE t1 DROP PRIMARY KEY;
 ERROR 42000: Can't DROP 'PRIMARY'; check that column/key exists
@@ -537,7 +537,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` INT DEFAULT NULL,
-  KEY `i1` (`a`)
+  KEY `i1` (`a`) USING BTREE
 ) ENGINE=DEFAULT ROW_FORMAT='COMPACT' COLLATE = utf8_general_ci
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;

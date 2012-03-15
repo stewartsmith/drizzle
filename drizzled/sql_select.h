@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_SELECT_H
-#define DRIZZLED_SQL_SELECT_H
+#pragma once
 
 #include <drizzled/cached_item.h>
 #include <drizzled/field/varstring.h>
@@ -34,13 +33,7 @@
 
 #include <vector>
 
-namespace drizzled
-{
-
-class Item_func;
-class Select_Lex_Unit;
-class select_result;
-class st_dynamic_array;
+namespace drizzled {
 
 /**
  * @file API and Classes to use when handling where clause
@@ -52,8 +45,6 @@ class st_dynamic_array;
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
-
-class Join;
 
 enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_records);
@@ -249,7 +240,7 @@ int remove_dup_with_hash_index(Session *session,
                                Field **first_field,
                                uint32_t key_length,
                                Item *having);
-bool update_ref_and_keys(Session *session,
+void update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
                          JoinTable *join_tab,
                          uint32_t tables,
@@ -285,4 +276,3 @@ void print_join(Session *session, String *str, List<TableList> *tables);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_SELECT_H */

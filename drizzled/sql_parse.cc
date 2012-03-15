@@ -21,7 +21,6 @@
 #include <drizzled/abort_exception.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
-#include <drizzled/query_id.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
@@ -40,7 +39,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/probes.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/query_rewrite.h>
 #include <drizzled/plugin/query_cache.h>
@@ -53,6 +52,14 @@
 #include <drizzled/kill.h>
 #include <drizzled/schema.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/table_ident.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
+#include <drizzled/session/times.h>
+#include <drizzled/session/transactions.h>
+#include <drizzled/create_field.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <limits.h>
 
@@ -65,13 +72,12 @@ using namespace std;
 
 extern int base_sql_parse(drizzled::Session *session); // from sql_yacc.cc
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void parse(Session *session, const char *inBuf, uint32_t length);
+void parse(Session&, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -79,28 +85,31 @@ void parse(Session *session, const char *inBuf, uint32_t length);
 */
 
 extern size_t my_thread_stack_size;
-extern const CHARSET_INFO *character_set_filesystem;
+extern const charset_info_st *character_set_filesystem;
+
+static atomic<uint64_t> g_query_id;
 
 namespace
 {
-
-static const std::string command_name[COM_END+1]={
-  "Sleep",
-  "Quit",
-  "Init DB",
-  "Query",
-  "Shutdown",
-  "Connect",
-  "Ping",
-  "Kill",
-  "Error"  // Last command number
-};
-
+  static const std::string command_name[]=
+  {
+    "Sleep",
+    "Quit",
+    "Init DB",
+    "Query",
+    "Shutdown",
+    "Connect",
+    "Ping",
+    "Kill",
+    "Error"  // Last command number
+  };
 }
 
-const char *xa_state_names[]={
+const char *xa_state_names[]=
+{
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
 };
+
 
 /**
   Mark all commands that somehow changes a table.
@@ -123,10 +132,11 @@ const std::string &getCommandName(const enum_server_command& command)
 
 void init_update_queries(void)
 {
-  uint32_t x;
-
-  for (x= 0; x <= SQLCOM_END; x++)
+  for (uint32_t x= uint32_t(SQLCOM_SELECT); 
+       x <= uint32_t(SQLCOM_END); x++)
+  {
     sql_command_flags[x].reset();
+  }
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -169,7 +179,7 @@ void init_update_queries(void)
                          can be zero.
 
   @todo
-    set session->getLex()->sql_command to SQLCOM_END here.
+    set session->lex().sql_command to SQLCOM_END here.
   @todo
     The following has to be changed to an 8 byte integer
 
@@ -180,29 +190,24 @@ void init_update_queries(void)
         COM_QUIT/COM_SHUTDOWN
 */
 bool dispatch_command(enum_server_command command, Session *session,
-                      char* packet, uint32_t packet_length)
+                      const char* packet, uint32_t packet_length)
 {
-  bool error= 0;
-  Query_id &query_id= Query_id::get_query_id();
+  bool error= false;
 
   DRIZZLE_COMMAND_START(session->thread_id, command);
 
   session->command= command;
-  session->getLex()->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
-  session->set_time();
-  session->setQueryId(query_id.value());
+  session->lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
+  session->times.set_time();
+  session->setQueryId(g_query_id.increment());
 
-  switch( command ) {
-  /* Ignore these statements. */
-  case COM_PING:
-    break;
-  /* Increase id and count all other statements. */
-  default:
+  if (command != COM_PING)
+  {
+    // Increase id and count all other statements
     session->status_var.questions++;
-    query_id.next();
   }
 
-  /* @todo set session->getLex()->sql_command to SQLCOM_END here */
+  /* @todo set session->lex().sql_command to SQLCOM_END here */
 
   plugin::Logging::preDo(session);
   if (unlikely(plugin::EventObserver::beforeStatement(*session)))
@@ -210,45 +215,38 @@ bool dispatch_command(enum_server_command command, Session *session,
     // We should do something about an error...
   }
 
-  session->server_status&=
-           ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+  session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
-  switch (command) {
-  case COM_INIT_DB:
+  switch (command)
   {
-    if (packet_length == 0)
+  case COM_USE_SCHEMA:
     {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+      if (packet_length == 0)
+      {
+        my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+        break;
+      }
+      if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
+      {
+        session->my_ok();
+      }
       break;
     }
 
-    string tmp(packet, packet_length);
-
-    identifier::Schema identifier(tmp);
-
-    if (not schema::change(*session, identifier))
-    {
-      session->my_ok();
-    }
-    break;
-  }
   case COM_QUERY:
-  {
-    if (not session->readAndStoreQuery(packet, packet_length))
-      break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->getQueryString()->c_str(),
-                        session->thread_id,
-                        const_cast<const char *>(session->schema()->c_str()));
+    {
+      session->readAndStoreQuery(packet, packet_length);
+      DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
+      parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
+      break;
+    }
 
-    parse(session, session->getQueryString()->c_str(), session->getQueryString()->length());
-
-    break;
-  }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->main_da.disable_status();              // Don't send anything back
+    session->main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
+
   case COM_KILL:
     {
       if (packet_length != 4)
@@ -260,26 +258,29 @@ bool dispatch_command(enum_server_command command, Session *session,
       {
         uint32_t kill_id;
         memcpy(&kill_id, packet, sizeof(uint32_t));
-        
+
         kill_id= ntohl(kill_id);
         (void)drizzled::kill(*session->user(), kill_id, true);
       }
       session->my_ok();
       break;
     }
+
   case COM_SHUTDOWN:
-  {
-    session->status_var.com_other++;
-    session->my_eof();
-    session->close_thread_tables();			// Free before kill
-    kill_drizzle();
-    error= true;
-    break;
-  }
+    {
+      session->status_var.com_other++;
+      session->my_eof();
+      session->close_thread_tables();			// Free before kill
+      kill_drizzle();
+      error= true;
+      break;
+    }
+
   case COM_PING:
     session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
+
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
   case COM_END:
@@ -289,10 +290,9 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* If commit fails, we should be able to reset the OK status. */
-  session->main_da.can_overwrite_status= true;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.autocommitOrRollback(*session, session->is_error());
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= true;
+  TransactionServices::autocommitOrRollback(*session, session->is_error());
+  session->main_da().can_overwrite_status= false;
 
   session->transaction.stmt.reset();
 
@@ -300,7 +300,7 @@ bool dispatch_command(enum_server_command command, Session *session,
   /* report error issued during command execution */
   if (session->killed_errno())
   {
-    if (! session->main_da.is_set())
+    if (not session->main_da().is_set())
       session->send_kill_message();
   }
   if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
@@ -310,14 +310,14 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* Can not be true, but do not take chances in production. */
-  assert(! session->main_da.is_sent);
+  assert(! session->main_da().is_sent);
 
-  switch (session->main_da.status())
+  switch (session->main_da().status())
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->getClient()->sendError(session->main_da.sql_errno(),
-                               session->main_da.message());
+    session->getClient()->sendError(session->main_da().sql_errno(),
+                               session->main_da().message());
     break;
 
   case Diagnostics_area::DA_EOF:
@@ -337,7 +337,7 @@ bool dispatch_command(enum_server_command command, Session *session,
     break;
   }
 
-  session->main_da.is_sent= true;
+  session->main_da().is_sent= true;
 
   session->set_proc_info("closing tables");
   /* Free tables */
@@ -395,41 +395,26 @@ bool dispatch_command(enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
-static bool _schema_select(Session *session, Select_Lex *sel,
-                           const string& schema_table_name)
+static bool _schema_select(Session& session, Select_Lex& sel, const string& schema_table_name)
 {
-  LEX_STRING db, table;
+  lex_string_t db, table;
   bitset<NUM_OF_TABLE_OPTIONS> table_options;
   /*
      We have to make non const db_name & table_name
      because of lower_case_table_names
   */
-  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
-  session->make_lex_string(&table, schema_table_name, false);
-
-  if (! sel->add_table_to_list(session, new Table_ident(db, table),
-                               NULL, table_options, TL_READ))
-  {
-    return true;
-  }
-  return false;
+  session.make_lex_string(&db, str_ref("data_dictionary"));
+  session.make_lex_string(&table, schema_table_name);
+  return not sel.add_table_to_list(&session, new Table_ident(db, table), NULL, table_options, TL_READ);
 }
 
-int prepare_new_schema_table(Session *session, LEX *lex,
-                             const string& schema_table_name)
+int prepare_new_schema_table(Session *session, LEX& lex0, const string& schema_table_name)
 {
-  Select_Lex *schema_select_lex= NULL;
-
-  Select_Lex *select_lex= lex->current_select;
-  assert(select_lex);
-  if (_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
+  Select_Lex& lex= *lex0.current_select;
+  if (_schema_select(*session, lex, schema_table_name))
+    return 1;
+  TableList *table_list= (TableList*)lex.table_list.first;
+  table_list->schema_select_lex= NULL;
   return 0;
 }
 
@@ -465,13 +450,8 @@ int prepare_new_schema_table(Session *session, LEX *lex,
 
 static int execute_command(Session *session)
 {
-  bool res= false;
-
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
-  Select_Lex *select_lex= &session->getLex()->select_lex;
-
-  /* list of all tables in query */
-  TableList *all_tables;
+  Select_Lex *select_lex= &session->lex().select_lex;
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -488,10 +468,11 @@ static int execute_command(Session *session)
     assert(first_table == all_tables);
     assert(first_table == all_tables && first_table != 0);
   */
-  session->getLex()->first_lists_tables_same();
+  session->lex().first_lists_tables_same();
 
+  /* list of all tables in query */
   /* should be assigned after making first tables same */
-  all_tables= session->getLex()->query_tables;
+  TableList* all_tables= session->lex().query_tables;
 
   /* set context for commands which do not use setup_tables */
   select_lex->context.resolve_in_table_list_only((TableList*)select_lex->table_list.first);
@@ -503,18 +484,18 @@ static int execute_command(Session *session)
     variables, but for now this is probably good enough.
     Don't reset warnings when executing a stored routine.
   */
-  if (all_tables || ! session->getLex()->is_single_level_stmt())
+  if (all_tables || ! session->lex().is_single_level_stmt())
   {
-    drizzle_reset_errors(session, 0);
+    drizzle_reset_errors(*session, 0);
   }
 
-  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
+  assert(not session->transaction.stmt.hasModifiedNonTransData());
 
-  if (! (session->server_status & SERVER_STATUS_AUTOCOMMIT)
-      && ! session->inTransaction()
-      && session->getLex()->statement->isTransactional())
+  if (not (session->server_status & SERVER_STATUS_AUTOCOMMIT)
+      && not session->inTransaction()
+      && session->lex().statement->isTransactional())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -522,7 +503,7 @@ static int execute_command(Session *session)
   }
 
   /* now we are ready to execute the statement */
-  res= session->getLex()->statement->execute();
+  bool res= session->lex().statement->execute();
   session->set_proc_info("query end");
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
@@ -530,16 +511,17 @@ static int execute_command(Session *session)
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (! (sql_command_flags[session->getLex()->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (not sql_command_flags[session->lex().sql_command].test(CF_BIT_HAS_ROW_COUNT))
   {
     session->row_count_func= -1;
   }
 
-  return (res || session->is_error());
+  return res || session->is_error();
 }
+
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
-  LEX	*lex= session->getLex();
+  LEX	*lex= &session->lex();
   select_result *result=lex->result;
   bool res= false;
   /* assign global limit variable if limit is not given */
@@ -555,7 +537,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       && ! session->inTransaction()
       && ! lex->statement->isShow())
   {
-    if (session->startTransaction() == false)
+    if (not session->startTransaction())
     {
       my_error(drizzled::ER_UNKNOWN_ERROR, MYF(0));
       return true;
@@ -572,17 +554,16 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         to prepend EXPLAIN to any query and receive output for it,
         even if the query itself redirects the output.
       */
-      if (!(result= new select_send()))
-        return true;
+      result= new select_send();
       session->send_explain_fields(result);
       optimizer::ExplainPlan planner;
-      res= planner.explainUnion(session, &session->getLex()->unit, result);
+      res= planner.explainUnion(session, &session->lex().unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
         String str(buff,(uint32_t) sizeof(buff), system_charset_info);
         str.length(0);
-        session->getLex()->unit.print(&str);
+        session->lex().unit.print(&str);
         str.append('\0');
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
@@ -596,14 +577,14 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     }
     else
     {
-      if (!result && !(result= new select_send()))
-        return true;
+      if (not result)
+        result= new select_send();
 
       /* Init the Query Cache plugin */
-      plugin::QueryCache::prepareResultset(session); 
+      plugin::QueryCache::prepareResultset(session);
       res= handle_select(session, lex, result, 0);
       /* Send the Resultset to the cache */
-      plugin::QueryCache::setResultset(session); 
+      plugin::QueryCache::setResultset(session);
 
       if (result != lex->result)
         delete result;
@@ -618,7 +599,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
 
 bool my_yyoverflow(short **yyss, ParserType **yyvs, ulong *yystacksize)
 {
-  LEX	*lex= current_session->getLex();
+  LEX	*lex= &current_session->lex();
   ulong old_info=0;
   if ((uint32_t) *yystacksize >= MY_YACC_MAX)
     return 1;
@@ -660,14 +641,10 @@ init_select(LEX *lex)
 }
 
 
-bool
-new_select(LEX *lex, bool move_down)
+bool new_select(LEX *lex, bool move_down)
 {
-  Select_Lex *select_lex;
-  Session *session= lex->session;
-
-  if (!(select_lex= new (session->mem_root) Select_Lex()))
-    return true;
+  Session* session= lex->session;
+  Select_Lex* select_lex= new (session->mem_root) Select_Lex;
 
   select_lex->select_number= ++session->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
@@ -678,16 +655,14 @@ new_select(LEX *lex, bool move_down)
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
-    return(1);
+    return 1;
   }
 
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
-    Select_Lex_Unit *unit;
     /* first select_lex of subselect or derived table */
-    if (!(unit= new (session->mem_root) Select_Lex_Unit()))
-      return(1);
+    Select_Lex_Unit* unit= new (session->mem_root) Select_Lex_Unit();
 
     unit->init_query();
     unit->init_select();
@@ -717,8 +692,7 @@ new_select(LEX *lex, bool move_down)
     if (not unit->fake_select_lex && unit->add_fake_select_lex(lex->session))
       return true;
 
-    select_lex->context.outer_context=
-                unit->first_select()->context.outer_context;
+    select_lex->context.outer_context= unit->first_select()->context.outer_context;
   }
 
   select_lex->master_unit()->global_parameters= select_lex;
@@ -745,26 +719,21 @@ new_select(LEX *lex, bool move_down)
 
 void create_select_for_variable(Session *session, const char *var_name)
 {
-  LEX *lex;
-  LEX_STRING tmp, null_lex_string;
-  Item *var;
-  char buff[MAX_SYS_VAR_LENGTH*2+4+8];
-  char *end= buff;
-
-  lex= session->getLex();
-  init_select(lex);
-  lex->sql_command= SQLCOM_SELECT;
-  tmp.str= (char*) var_name;
-  tmp.length=strlen(var_name);
-  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
+  LEX& lex= session->lex();
+  init_select(&lex);
+  lex.sql_command= SQLCOM_SELECT;
+  lex_string_t tmp;
+  tmp.assign(var_name, strlen(var_name));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.
   */
-  if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
+  if (Item* var= get_system_var(session, OPT_SESSION, tmp, null_lex_string()))
   {
+    char buff[MAX_SYS_VAR_LENGTH*2+4+8];
+    char *end= buff;
     end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
-    var->set_name(buff, end-buff, system_charset_info);
+    var->set_name(buff, end-buff);
     session->add_item_to_list(var);
   }
 }
@@ -778,62 +747,42 @@ void create_select_for_variable(Session *session, const char *var_name)
   @param       length  Length of the query text
 */
 
-void parse(Session *session, const char *inBuf, uint32_t length)
+void parse(Session& session, const char *inBuf, uint32_t length)
 {
-  session->getLex()->start(session);
-
-  session->reset_for_next_command();
+  session.lex().start(&session);
+  session.reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
    * TODO the plugin has to make sure that the query is cacheble
    * by setting the query_safe_cache param to TRUE
    */
-  bool res= true;
-  if (plugin::QueryCache::isCached(session))
-  {
-    res= plugin::QueryCache::sendCachedResultset(session);
-  }
-  if (not res)
-  {
+  if (plugin::QueryCache::isCached(&session) && not plugin::QueryCache::sendCachedResultset(&session))
     return;
-  }
-  LEX *lex= session->getLex();
-  Lex_input_stream lip(session, inBuf, length);
-  bool err= parse_sql(session, &lip);
-  if (!err)
+  Lex_input_stream lip(&session, inBuf, length);
+  if (parse_sql(&session, &lip))
+    assert(session.is_error());
+  else if (not session.is_error())
   {
+    DRIZZLE_QUERY_EXEC_START(session.getQueryString()->c_str(), session.thread_id, session.schema()->c_str());
+    // Implement Views here --Brian
+    /* Actually execute the query */
+    try
     {
-      if (not session->is_error())
-      {
-        DRIZZLE_QUERY_EXEC_START(session->getQueryString()->c_str(),
-                                 session->thread_id,
-                                 const_cast<const char *>(session->schema()->c_str()));
-        // Implement Views here --Brian
-        /* Actually execute the query */
-        try 
-        {
-          execute_command(session);
-        }
-        catch (...)
-        {
-          // Just try to catch any random failures that could have come
-          // during execution.
-          DRIZZLE_ABORT;
-        }
-        DRIZZLE_QUERY_EXEC_DONE(0);
-      }
+      execute_command(&session);
     }
+    catch (...)
+    {
+      // Just try to catch any random failures that could have come
+      // during execution.
+      DRIZZLE_ABORT;
+    }
+    DRIZZLE_QUERY_EXEC_DONE(0);
   }
-  else
-  {
-    assert(session->is_error());
-  }
-  lex->unit.cleanup();
-  session->set_proc_info("freeing items");
-  session->end_statement();
-  session->cleanup_after_query();
-  session->set_end_timer();
+  session.lex().unit.cleanup();
+  session.set_proc_info("freeing items");
+  session.end_statement();
+  session.cleanup_after_query();
+  session.times.set_end_timer(session);
 }
-
 
 
 /**
@@ -843,17 +792,13 @@ void parse(Session *session, const char *inBuf, uint32_t length)
     Return 0 if ok
 */
 
-bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_types type,
-		       char *length, char *decimals,
-		       uint32_t type_modifier,
-                       enum column_format_type column_format,
-		       Item *default_value, Item *on_update_value,
-                       LEX_STRING *comment,
-		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs)
+bool add_field_to_list(Session *session, str_ref field_name, enum_field_types type,
+		       const char *length, const char *decimals,
+		       uint32_t type_modifier, column_format_type column_format,
+		       Item *default_value, Item *on_update_value, str_ref comment,
+		       const char *change, List<String> *interval_list, const charset_info_st* cs)
 {
-  register CreateField *new_field;
-  LEX  *lex= session->getLex();
+  LEX  *lex= &session->lex();
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
@@ -861,22 +806,14 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 
   if (type_modifier & PRI_KEY_FLAG)
   {
-    Key *key;
-    lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::PRIMARY, null_lex_str,
-                      &default_key_create_info,
-                      0, lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    lex->col_list.push_back(new Key_part_spec(field_name, 0));
+    statement->alter_info.key_list.push_back(new Key(Key::PRIMARY, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
   {
-    Key *key;
-    lex->col_list.push_back(new Key_part_spec(*field_name, 0));
-    key= new Key(Key::UNIQUE, null_lex_str,
-                 &default_key_create_info, 0,
-                 lex->col_list);
-    statement->alter_info.key_list.push_back(key);
+    lex->col_list.push_back(new Key_part_spec(field_name, 0));
+    statement->alter_info.key_list.push_back(new Key(Key::UNIQUE, null_lex_string(), &default_key_create_info, 0, lex->col_list));
     lex->col_list.clear();
   }
 
@@ -893,7 +830,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
          (type == DRIZZLE_TYPE_TIMESTAMP or type == DRIZZLE_TYPE_MICROTIME)))
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
       return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
@@ -901,27 +838,26 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
       default_value= 0;
       if ((type_modifier & (NOT_NULL_FLAG | AUTO_INCREMENT_FLAG)) == NOT_NULL_FLAG)
       {
-	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return true;
+        my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
+        return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
-      my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
+      my_error(ER_INVALID_DEFAULT, MYF(0), field_name.data());
       return true;
     }
   }
 
   if (on_update_value && (type != DRIZZLE_TYPE_TIMESTAMP and type != DRIZZLE_TYPE_MICROTIME))
   {
-    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
+    my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name.data());
     return true;
   }
 
-  if (!(new_field= new CreateField()) ||
-      new_field->init(session, field_name->str, type, length, decimals, type_modifier,
-                      default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format))
+  CreateField* new_field= new CreateField;
+  if (new_field->init(session, field_name.data(), type, length, decimals, type_modifier, comment, change, interval_list, cs, 0, column_format)
+      || new_field->setDefaultValue(default_value, on_update_value))
     return true;
 
   statement->alter_info.create_list.push_back(new_field);
@@ -952,36 +888,30 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 
 TableList *Select_Lex::add_table_to_list(Session *session,
                                          Table_ident *table,
-                                         LEX_STRING *alias,
+                                         lex_string_t *alias,
                                          const bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                          thr_lock_type lock_type,
                                          List<Index_hint> *index_hints_arg,
-                                         LEX_STRING *option)
+                                         lex_string_t *option)
 {
-  TableList *ptr;
   TableList *previous_table_ref; /* The table preceding the current one. */
-  char *alias_str;
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   if (!table)
     return NULL;				// End of memory
-  alias_str= alias ? alias->str : table->table.str;
-  if (! table_options.test(TL_OPTION_ALIAS) &&
-      check_table_name(table->table.str, table->table.length))
+  const char* alias_str= alias ? alias->data() : table->table.data();
+  if (not table_options.test(TL_OPTION_ALIAS) && check_table_name(table->table))
   {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
+    my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.data());
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (not table->is_derived_table() && table->db.data())
   {
-    my_casedn_str(files_charset_info, table->db.str);
-
-    identifier::Schema schema_identifier(string(table->db.str));
-    if (not schema::check(*session, schema_identifier))
+    files_charset_info->casedn_str(table->db.str_);
+    if (not schema::check(*session, identifier::Schema(table->db)))
     {
-
-      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
       return NULL;
     }
   }
@@ -990,51 +920,48 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     if (table->sel)
     {
-      my_message(ER_DERIVED_MUST_HAVE_ALIAS,
-                 ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
+      my_message(ER_DERIVED_MUST_HAVE_ALIAS, ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
       return NULL;
     }
-    if (!(alias_str= (char*) session->getMemRoot()->duplicate(alias_str,table->table.length+1)))
-      return NULL;
+    alias_str= (char*) session->mem.memdup(alias_str, table->table.size() + 1);
   }
-  if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;
+  TableList *ptr = (TableList *) session->mem.calloc(sizeof(TableList));
 
-  if (table->db.str)
+  if (table->db.data())
   {
     ptr->setIsFqtn(true);
-    ptr->setSchemaName(table->db.str);
-    ptr->db_length= table->db.length;
+    ptr->setSchemaName(table->db.data());
   }
-  else if (lex->copy_db_to(ptr->getSchemaNamePtr(), &ptr->db_length))
-    return NULL;
-  else
+  else 
+  {
+    str_ref schema = lex->session->copy_db_to();
+    if (schema.empty())
+      return NULL;
     ptr->setIsFqtn(false);
+    ptr->setSchemaName(schema.data());
+  }
 
   ptr->alias= alias_str;
   ptr->setIsAlias(alias ? true : false);
-  ptr->setTableName(table->table.str);
-  ptr->table_name_length=table->table.length;
+  ptr->setTableName(table->table.data());
   ptr->lock_type=   lock_type;
   ptr->force_index= table_options.test(TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= table_options.test(TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
-  ptr->option= option ? option->str : 0;
+  ptr->option= option ? option->data() : NULL;
   /* check that used name is unique */
   if (lock_type != TL_IGNORE)
   {
     TableList *first_table= (TableList*) table_list.first;
-    for (TableList *tables= first_table ;
-	 tables ;
-	 tables=tables->next_local)
+    for (TableList *tables= first_table; tables; tables= tables->next_local)
     {
-      if (not my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  not my_strcasecmp(system_charset_info, ptr->getSchemaName(), tables->getSchemaName()))
+      if (not table_alias_charset->strcasecmp(alias_str, tables->alias) &&
+        not system_charset_info->strcasecmp(ptr->getSchemaName(), tables->getSchemaName()))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
-	return NULL;
+        my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+        return NULL;
       }
     }
   }
@@ -1046,9 +973,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       element
       We don't use the offsetof() macro here to avoid warnings from gcc
     */
-    previous_table_ref= (TableList*) ((char*) table_list.next -
-                                       ((char*) &(ptr->next_local) -
-                                        (char*) ptr));
+    previous_table_ref= (TableList*) ((char*) table_list.next - ((char*) &(ptr->next_local) - (char*) ptr));
     /*
       Set next_name_resolution_table of the previous table reference to point
       to the current table reference. In effect the list
@@ -1092,16 +1017,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     1   otherwise
 */
 
-bool Select_Lex::init_nested_join(Session *session)
+void Select_Lex::init_nested_join(Session& session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(NestedJoin))))
-    return true;
+  TableList* ptr= (TableList*) session.mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
@@ -1109,7 +1029,6 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->clear();
-  return false;
 }
 
 
@@ -1127,16 +1046,13 @@ bool Select_Lex::init_nested_join(Session *session)
     - 0, otherwise
 */
 
-TableList *Select_Lex::end_nested_join(Session *)
+TableList *Select_Lex::end_nested_join()
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-
   assert(embedding);
-  ptr= embedding;
+  TableList* ptr= embedding;
   join_list= ptr->getJoinList();
   embedding= ptr->getEmbedding();
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.size() == 1)
   {
     TableList *embedded= &nested_join->join_list.front();
@@ -1144,12 +1060,12 @@ TableList *Select_Lex::end_nested_join(Session *)
     embedded->setJoinList(join_list);
     embedded->setEmbedding(embedding);
     join_list->push_front(embedded);
-    ptr= embedded;
+    return embedded;
   }
-  else if (nested_join->join_list.size() == 0)
+  else if (not nested_join->join_list.size())
   {
     join_list->pop();
-    ptr= NULL;                                     // return value
+    return NULL;
   }
   return ptr;
 }
@@ -1170,19 +1086,13 @@ TableList *Select_Lex::end_nested_join(Session *)
 
 TableList *Select_Lex::nest_last_join(Session *session)
 {
-  TableList *ptr;
-  NestedJoin *nested_join;
-  List<TableList> *embedded_list;
-
-  if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                          sizeof(NestedJoin))))
-    return NULL;
+  TableList* ptr= (TableList*) session->mem.calloc(ALIGN_SIZE(sizeof(TableList)) + sizeof(NestedJoin));
   ptr->setNestedJoin(((NestedJoin*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
-  nested_join= ptr->getNestedJoin();
+  NestedJoin* nested_join= ptr->getNestedJoin();
   ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
-  embedded_list= &nested_join->join_list;
+  List<TableList>* embedded_list= &nested_join->join_list;
   embedded_list->clear();
 
   for (uint32_t i=0; i < 2; i++)
@@ -1286,9 +1196,7 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  for (TableList *tables= (TableList*) table_list.first;
-       tables;
-       tables= tables->next_local)
+  for (TableList *tables= (TableList*) table_list.first; tables; tables= tables->next_local)
   {
     tables->lock_type= lock_type;
   }
@@ -1326,12 +1234,10 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   Select_Lex *first_sl= first_select();
   assert(!fake_select_lex);
 
-  if (!(fake_select_lex= new (session_arg->mem_root) Select_Lex()))
-      return(1);
-  fake_select_lex->include_standalone(this,
-                                      (Select_Lex_Node**)&fake_select_lex);
+  fake_select_lex= new (session_arg->mem_root) Select_Lex();
+  fake_select_lex->include_standalone(this, (Select_Lex_Node**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
-  fake_select_lex->parent_lex= session_arg->getLex(); /* Used in init_query. */
+  fake_select_lex->parent_lex= &session_arg->lex(); /* Used in init_query. */
   fake_select_lex->make_empty_select();
   fake_select_lex->linkage= GLOBAL_OPTIONS_TYPE;
   fake_select_lex->select_limit= 0;
@@ -1351,10 +1257,10 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     */
     global_parameters= fake_select_lex;
     fake_select_lex->no_table_names_allowed= 1;
-    session_arg->getLex()->current_select= fake_select_lex;
+    session_arg->lex().current_select= fake_select_lex;
   }
-  session_arg->getLex()->pop_context();
-  return(0);
+  session_arg->lex().pop_context();
+  return 0;
 }
 
 
@@ -1377,19 +1283,13 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
     true   if a memory allocation error occured
 */
 
-bool
-push_new_name_resolution_context(Session *session,
-                                 TableList *left_op, TableList *right_op)
+void push_new_name_resolution_context(Session& session, TableList& left_op, TableList& right_op)
 {
-  Name_resolution_context *on_context;
-  if (!(on_context= new (session->mem_root) Name_resolution_context))
-    return true;
+  Name_resolution_context *on_context= new (session.mem_root) Name_resolution_context;
   on_context->init();
-  on_context->first_name_resolution_table=
-    left_op->first_leaf_for_name_resolution();
-  on_context->last_name_resolution_table=
-    right_op->last_leaf_for_name_resolution();
-  return session->getLex()->push_context(on_context);
+  on_context->first_name_resolution_table= left_op.first_leaf_for_name_resolution();
+  on_context->last_name_resolution_table= right_op.last_leaf_for_name_resolution();
+  session.lex().push_context(on_context);
 }
 
 
@@ -1477,9 +1377,9 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     1	error	; In this case the error messege is sent to the client
 */
 
-bool check_simple_select(Session::pointer session)
+bool check_simple_select(Session* session)
 {
-  if (session->getLex()->current_select != &session->getLex()->select_lex)
+  if (session->lex().current_select != &session->lex().select_lex)
   {
     char command[80];
     Lex_input_stream *lip= session->m_lip;
@@ -1539,15 +1439,15 @@ Item * all_any_subquery_creator(Item *left_expr,
 bool update_precheck(Session *session, TableList *)
 {
   const char *msg= 0;
-  Select_Lex *select_lex= &session->getLex()->select_lex;
+  Select_Lex *select_lex= &session->lex().select_lex;
 
-  if (session->getLex()->select_lex.item_list.size() != session->getLex()->value_list.size())
+  if (session->lex().select_lex.item_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
 
-  if (session->getLex()->select_lex.table_list.size() > 1)
+  if (session->lex().select_lex.table_list.size() > 1)
   {
     if (select_lex->order_list.size())
       msg= "ORDER BY";
@@ -1556,10 +1456,10 @@ bool update_precheck(Session *session, TableList *)
     if (msg)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-      return(true);
+      return true;
     }
   }
-  return(false);
+  return false;
 }
 
 
@@ -1581,12 +1481,12 @@ bool insert_precheck(Session *session, TableList *)
     Check that we have modify privileges for the first table and
     select privileges for the rest
   */
-  if (session->getLex()->update_list.size() != session->getLex()->value_list.size())
+  if (session->lex().update_list.size() != session->lex().value_list.size())
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(true);
+    return true;
   }
-  return(false);
+  return false;
 }
 
 
@@ -1608,7 +1508,7 @@ Item *negate_expression(Session *session, Item *expr)
   {
     /* it is NOT(NOT( ... )) */
     Item *arg= ((Item_func *) expr)->arguments()[0];
-    enum_parsing_place place= session->getLex()->current_select->parsing_place;
+    enum_parsing_place place= session->lex().current_select->parsing_place;
     if (arg->is_bool_func() || place == IN_WHERE || place == IN_HAVING)
       return arg;
     /*
@@ -1640,45 +1540,42 @@ Item *negate_expression(Session *session, Item *expr)
 */
 
 
-bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint32_t max_char_length, const CHARSET_INFO * const cs,
+bool check_string_char_length(str_ref str, const char *err_msg,
+                              uint32_t max_char_length, const charset_info_st * const cs,
                               bool no_error)
 {
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
-  if (!well_formed_error &&  str->length == res)
+  if (!well_formed_error && str.size() == res)
     return false;
 
-  if (!no_error)
-    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_char_length);
+  if (not no_error)
+    my_error(ER_WRONG_STRING_LENGTH, MYF(0), str.data(), err_msg, max_char_length);
   return true;
 }
 
 
-bool check_identifier_name(LEX_STRING *str, error_t err_code,
-                           uint32_t max_char_length,
-                           const char *param_for_err_msg)
+bool check_identifier_name(str_ref str, error_t err_code)
 {
+  uint32_t max_char_length= NAME_CHAR_LEN;
   /*
     We don't support non-BMP characters in identifiers at the moment,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
+  const charset_info_st * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,
-                                      max_char_length, &well_formed_error);
+  uint32_t res= cs->cset->well_formed_len(*cs, str, max_char_length, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->str);
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str.data());
     return true;
   }
 
-  if (str->length == res)
+  if (str.size() == res)
     return false;
 
   switch (err_code)
@@ -1686,14 +1583,13 @@ bool check_identifier_name(LEX_STRING *str, error_t err_code,
   case EE_OK:
     break;
   case ER_WRONG_STRING_LENGTH:
-    my_error(err_code, MYF(0), str->str, param_for_err_msg, max_char_length);
+    my_error(err_code, MYF(0), str.data(), "", max_char_length);
     break;
   case ER_TOO_LONG_IDENT:
-    my_error(err_code, MYF(0), str->str);
+    my_error(err_code, MYF(0), str.data());
     break;
   default:
-    assert(0);
-    break;
+    assert(false);
   }
 
   return true;

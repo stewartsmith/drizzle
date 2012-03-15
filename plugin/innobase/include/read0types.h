@@ -23,6 +23,7 @@ Cursor read
 Created 2/16/1997 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef read0types_h
 #define read0types_h
 

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LIST_H
-#define DRIZZLED_SQL_LIST_H
+#pragma once
 
 #include <cstdlib>
 #include <cassert>
@@ -29,7 +28,7 @@
 
 namespace drizzled {
 
-typedef struct st_sql_list 
+struct SQL_LIST 
 {
   uint32_t elements;
   unsigned char *first;
@@ -54,18 +53,18 @@ typedef struct st_sql_list
     next= next_ptr;
     *next=0;
   }
-  void save_and_clear(struct st_sql_list *save)
+  void save_and_clear(SQL_LIST *save)
   {
     *save= *this;
     clear();
   }
-  void push_front(struct st_sql_list *save)
+  void push_front(SQL_LIST *save)
   {
     *save->next= first;				/* link current list last */
     first= save->first;
     elements+= save->elements;
   }
-  void push_back(struct st_sql_list *save)
+  void push_back(SQL_LIST *save)
   {
     if (save->first)
     {
@@ -74,7 +73,7 @@ typedef struct st_sql_list
       elements+= save->elements;
     }
   }
-} SQL_LIST;
+};
 
 /*
   Basic single linked list
@@ -133,38 +132,25 @@ public:
     last= elements ? tmp.last : &first;
   }
   base_list(bool) { }
-  bool push_back(void *info)
+  void push_back(void *info)
   {
-    if (((*last)=new list_node(info, &end_of_list)))
-    {
-      last= &(*last)->next;
-      elements++;
-      return 0;
-    }
-    return 1;
+    *last = new list_node(info, &end_of_list);
+    last= &(*last)->next;
+    elements++;
   }
-  bool push_back(void *info, memory::Root *mem_root)
+  void push_back(void *info, memory::Root& mem)
   {
-    if (((*last)=new (mem_root) list_node(info, &end_of_list)))
-    {
-      last= &(*last)->next;
-      elements++;
-      return 0;
-    }
-    return 1;
+    *last = new (mem) list_node(info, &end_of_list);
+    last= &(*last)->next;
+    elements++;
   }
-  bool push_front(void *info)
+  void push_front(void *info)
   {
     list_node *node=new list_node(info,first);
-    if (node)
-    {
-      if (last == &first)
-	last= &node->next;
+    if (last == &first)
+			last= &node->next;
       first=node;
       elements++;
-      return 0;
-    }
-    return 1;
   }
   void remove(list_node **prev)
   {
@@ -248,7 +234,6 @@ public:
 
   bool check_list(const char *name)
   {
-    base_list *list= this;
     list_node *node= first;
     uint32_t cnt= 0;
 
@@ -291,7 +276,7 @@ protected:
   base_list *list;
   list_node **el,**prev,*current;
 public:
-  void sublist(base_list &ls, uint32_t elm)
+  void sublist(base_list &ls, uint32_t elm) const
   {
     ls.first= *el;
     ls.last= list->last;
@@ -306,13 +291,6 @@ public:
   {
   }
 
-  void *next()
-  {
-    prev=el;
-    current= *el;
-    el= &current->next;
-    return current->info;
-  }
   void *replace(base_list &new_list)
   {
     void *ret_value=current->info;
@@ -353,9 +331,6 @@ public:
   List() {}
   List(const List<T> &tmp) : base_list(tmp) {}
   List(const List<T> &tmp, memory::Root *mem_root) : base_list(tmp, mem_root) {}
-  bool push_back(T *a) { return base_list::push_back(a); }
-  bool push_back(T *a, memory::Root *mem_root) { return base_list::push_back(a, mem_root); }
-  bool push_front(T *a) { return base_list::push_front(a); }
   T& front() {return *static_cast<T*>(first->info); }
   T* pop()  {return static_cast<T*>(base_list::pop()); }
   void concat(List<T> *list) { base_list::concat(list); }
@@ -393,7 +368,7 @@ template <class T> class List_iterator : public base_list_iterator
 public:
   List_iterator(List<T>& a, list_node** b) : base_list_iterator(a, b) {};
   List_iterator() {};
-  T *operator++(int) { return (T*) base_list_iterator::next(); }
+  T *operator++(int) { prev=el; current= *el; el= &current->next; return (T*)current->info; }
   T *replace(T *a)   { T* old = (T*) current->info; current->info= a; return old; }
   void replace(List<T> &a) { base_list_iterator::replace(a); }
   T** ref() { return (T**) &current->info; }
@@ -402,8 +377,12 @@ public:
   {
     return *(T*)current->info;
   }
+
+  T* operator->()
+  {
+    return (T*)current->info;
+  }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SQL_LIST_H */

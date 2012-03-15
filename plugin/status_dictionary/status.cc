@@ -26,6 +26,8 @@
 #include <drizzled/internal/m_string.h>
 #include <drizzled/definitions.h>
 #include <drizzled/status_helper.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/catalog/instance.h>
 
 #include <vector>
 #include <string>
@@ -42,16 +44,10 @@ StateTool::StateTool(const char *arg, bool global) :
   add_field("VARIABLE_VALUE", 1024);
 }
 
-StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
-                                drizzle_show_var *variables_args)
-                                :
+StateTool::Generator::Generator(Field **arg, sql_var_t option_arg, drizzle_show_var *variables_args) :
   plugin::TableFunction::Generator(arg),
   option_type(option_arg),
   variables(variables_args)
-{
-}
-
-StateTool::Generator::~Generator()
 {
 }
 
@@ -61,7 +57,7 @@ bool StateTool::Generator::populate()
   {
     drizzle_show_var *var;
     MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
-    char * const buff= (char *) &buff_data;
+    char* buff= (char *) &buff_data;
 
     /*
       if var->type is SHOW_FUNC, call the function.
@@ -90,27 +86,17 @@ bool StateTool::Generator::populate()
   return false;
 }
 
-void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE show_type)
+void StateTool::Generator::fill(const std::string &name, const char *value, SHOW_TYPE show_type)
 {
-  std::ostringstream oss;
-  std::string return_value;
+  boost::mutex::scoped_lock lock(getSession().catalog().systemVariableLock());
 
+  if (show_type == SHOW_SYS)
   {
-    boost::mutex::scoped_lock scopedLock(getSession().catalog().systemVariableLock());
-
-    if (show_type == SHOW_SYS)
-    {
-      show_type= ((sys_var*) value)->show_type();
-      value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type,
-                                                   &null_lex_str);
-    }
-
-    return_value= StatusHelper::fillHelper(NULL, value, show_type); 
+    show_type= ((sys_var*) value)->show_type();
+    value= (const char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type);
   }
-  push(name);
 
-  if (return_value.length())
-    push(return_value);
-  else 
-    push(" ");
+  std::string return_value= StatusHelper::fillHelper(NULL, value, show_type); 
+  push(name);
+  push(return_value.empty() ? " " : return_value);
 }

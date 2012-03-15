@@ -25,23 +25,18 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/catalog.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
+namespace catalog {
 
-namespace statement
-{
-
-namespace catalog
-{
-
-Create::Create(Session *in_session, drizzled::lex_string_t &arg) :
+Create::Create(Session *in_session, str_ref arg) :
   Catalog(in_session, arg)
 {
 }
 
 bool Create::authorized() const
 {
-  if (getSession()->getClient()->isConsole())
+  if (session().getClient()->isConsole())
   {
     return true;
   }

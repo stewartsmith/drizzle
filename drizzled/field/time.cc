@@ -22,21 +22,16 @@
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/time.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-
-#include <math.h>
-
-#include <sstream>
-
 #include <drizzled/temporal.h>
 
-namespace drizzled
-{
+#include <arpa/inet.h>
+#include <cmath>
+#include <sstream>
 
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 /**
   time_t type
@@ -72,7 +67,7 @@ Time::Time(bool maybe_null_arg,
 
 int Time::store(const char *from,
                 uint32_t len,
-                const CHARSET_INFO * const )
+                const charset_info_st * const )
 {
   drizzled::Time temporal;
 
@@ -268,11 +263,6 @@ void Time::sort_string(unsigned char *to,uint32_t )
     to[2] = ptr[1];
     to[3] = ptr[0];
   }
-}
-
-void Time::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("timestamp"));
 }
 
 long Time::get_timestamp(bool *null_value) const

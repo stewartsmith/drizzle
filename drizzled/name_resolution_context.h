@@ -17,18 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_H
-#define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
+#pragma once
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
-
-class TableList;
-class SecurityContext;
-class Session;
-class Select_Lex;
+namespace drizzled {
 
 /**
  * Instances of Name_resolution_context store the information necesary for
@@ -47,7 +40,7 @@ class Select_Lex;
  * structure before and after INSERT/CREATE and its SELECT to make correct
  * field name resolution.
  */
-class Name_resolution_context: public memory::SqlAlloc
+class Name_resolution_context : public memory::SqlAlloc
 {
 public:
   /**
@@ -87,14 +80,6 @@ public:
   Select_Lex *select_lex;
 
   /**
-   * Processor of errors caused during Item name resolving, now used only to
-   * hide underlying tables in errors about views (i.e. it substitute some
-   * errors for views)
-   */
-  void (*error_processor)(Session *, void *);
-  void *error_processor_data;
-
-  /**
    * When true items are resolved in this context both against the
    * SELECT list and this->table_list. If false, items are resolved
    * only against this->table_list.
@@ -112,14 +97,13 @@ public:
       outer_context(0), 
       table_list(0), 
       select_lex(0),
-      error_processor_data(0),
       security_ctx(0)
-    {}
+  {
+  }
 
   inline void init()
   {
     resolve_in_select_list= false;
-    error_processor= &dummy_error_processor;
     first_name_resolution_table= NULL;
     last_name_resolution_table= NULL;
   }
@@ -129,13 +113,7 @@ public:
     table_list= first_name_resolution_table= tables;
     resolve_in_select_list= false;
   }
-
-  inline void process_error(Session *session)
-  {
-    (*error_processor)(session, error_processor_data);
-  }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_NAME_RESOLUTION_CONTEXT_H */

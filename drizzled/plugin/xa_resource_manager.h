@@ -18,20 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_XA_RESOURCE_MANAGER_H
-#define DRIZZLED_PLUGIN_XA_RESOURCE_MANAGER_H
+#pragma once
 
 #include <boost/unordered_set.hpp>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class XID;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * An abstract interface class which exposes the participation
@@ -40,7 +33,6 @@ namespace plugin
 class DRIZZLED_API XaResourceManager
 {
 public:
-  XaResourceManager() {}
   virtual ~XaResourceManager() {}
 
   int xaPrepare(Session *session, bool normal_transaction)
@@ -138,4 +130,3 @@ private:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_XA_RESOURCE_MANAGER_H */

@@ -18,24 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_CONTAINER_H
-#define DRIZZLED_FUNCTION_CONTAINER_H
+#pragma once
 
-#include <set>
 #include <boost/unordered_map.hpp>
+#include <drizzled/plugin/table_function.h>
 #include <drizzled/util/string.h>
 
 namespace drizzled {
 
-class Create_func;
-
-class FunctionContainer {
+class FunctionContainer 
+{
 public:
-  typedef boost::unordered_map<std::string, Create_func *, util::insensitive_hash, util::insensitive_equal_to> Map;
+  typedef boost::unordered_map<std::string, Create_func*, util::insensitive_hash, util::insensitive_equal_to> Map;
 
-  static Map &getMap();
+  static const Map& getMap();
+  static Map& getMutableMap();
 };
 
 } /* namepsace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_CONTAINER_H */

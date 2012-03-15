@@ -39,7 +39,7 @@ int64_t Release::val_int()
   }
 
 
-  drizzled::identifier::User::const_shared_ptr user_identifier(getSession().user());
+  drizzled::identifier::user::ptr user_identifier(getSession().user());
 
   barriers::return_t result= Barriers::getInstance().release(Key(*user_identifier, res->c_str()), getSession().getSessionId());
 
@@ -48,7 +48,7 @@ int64_t Release::val_int()
   default:
   case barriers::SUCCESS:
     {
-      Storable *list= static_cast<Storable *>(getSession().getProperty(property_key));
+      Storable *list= getSession().getProperty<Storable>(property_key);
       assert(list);
       if (not list) // We should have been the owner if it was passed to us, this should never happen
       {

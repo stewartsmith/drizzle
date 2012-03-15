@@ -18,19 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
-#define DRIZZLED_STATEMENT_CREATE_TABLE_H
+#pragma once
 
 #include <drizzled/alter_info.h>
 #include <drizzled/statement.h>
 #include <drizzled/foreign_key.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class CreateTable : public Statement
 {
@@ -47,12 +43,12 @@ public:
 
   bool execute();
 
-  virtual bool executeInner(identifier::Table::const_reference);
+  virtual bool executeInner(const identifier::Table&);
 
 public:
   message::Table &createTableMessage()
   {
-    return *getSession()->getLex()->table();
+    return *lex().table();
   };
 
 private:
@@ -78,7 +74,7 @@ public:
   message::Table::ForeignKeyConstraint::ForeignKeyOption fk_delete_opt;
 
   /* The text in a CHANGE COLUMN clause in ALTER TABLE */
-  char *change;
+  const char *change;
 
   /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
   Item *default_value;
@@ -86,10 +82,10 @@ public:
   /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
   Item *on_update_value;
 
-  enum column_format_type column_format;
+  column_format_type column_format;
 
   /* Poly-use */
-  LEX_STRING comment;
+  str_ref comment;
 
   bool is_engine_set;
   bool is_create_table_like;
@@ -104,4 +100,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_TABLE_H */

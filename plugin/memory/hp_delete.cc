@@ -16,6 +16,8 @@
 /* remove current record in heap-database */
 
 #include "heap_priv.h"
+#include <drizzled/error_t.h>
+#include <drizzled/internal/my_sys.h>
 
 int heap_delete(HP_INFO *info, const unsigned char *record)
 {

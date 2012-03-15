@@ -46,26 +46,13 @@ namespace internal
 	  is renamed to org_name-'current_time'.BAK
 	*/
 
-#define REDEL_EXT ".BAK"
-
 int my_redel(const char *org_name, const char *tmp_name, myf MyFlags)
 {
   int error=1;
 
   if (my_copystat(org_name,tmp_name,MyFlags) < 0)
     goto end;
-  if (MyFlags & MY_REDEL_MAKE_BACKUP)
-  {
-    char name_buff[FN_REFLEN+20];
-    char ext[20];
-    ext[0]='-';
-    get_date(ext+1,2+4,(time_t) 0);
-    strcpy(strchr(ext, '\0'),REDEL_EXT);
-    if (my_rename(org_name, fn_format(name_buff, org_name, "", ext, 2),
-		  MyFlags))
-      goto end;
-  }
-  else if (my_delete(org_name, MyFlags))
+  if (my_delete(org_name, MyFlags))
       goto end;
   if (my_rename(tmp_name,org_name,MyFlags))
     goto end;

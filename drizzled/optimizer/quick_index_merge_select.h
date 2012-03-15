@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_QUICK_INDEX_MERGE_SELECT_H
-#define DRIZZLED_OPTIMIZER_QUICK_INDEX_MERGE_SELECT_H
+#pragma once
 
 #include <drizzled/optimizer/range.h>
 #include <drizzled/records.h>
@@ -130,7 +129,7 @@ public:
   void add_info_string(std::string *str);
   bool is_keys_used(const boost::dynamic_bitset<>& fields);
 
-  bool push_quick_back(QuickRangeSelect *quick_sel_range);
+  void push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /* range quick selects this index_merge read consists of */
   std::vector<QuickRangeSelect *> quick_selects;
@@ -170,4 +169,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_QUICK_INDEX_MERGE_SELECT_H */

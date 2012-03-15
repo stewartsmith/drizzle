@@ -21,7 +21,7 @@
 */
 
 #include "myisam_priv.h"
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/util/test.h>
 
 using namespace std;
@@ -34,7 +34,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   int error;
   uint32_t count;
   MYISAM_SHARE *share=info->s;
+#if defined(FULL_LOG) || defined(_lint)
   uint32_t flag;
+#endif
 
   if (!info->s->in_use)
     info->s->in_use= new list<Session *>;
@@ -47,8 +49,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     info->s->in_use->push_front(info->in_use);
     return(0);
   }
+#if defined(FULL_LOG) || defined(_lint)
+  flag=0;
+#endif
 
-  flag=error=0;
+  error=0;
   if (share->kfile >= 0)		/* May only be false on windows */
   {
     switch (lock_type) {
@@ -58,14 +63,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       else
 	count= --share->w_locks;
       --share->tot_locks;
-      if (info->lock_type == F_WRLCK && !share->w_locks &&
-	  !share->delay_key_write && flush_key_blocks(share->getKeyCache(),
-						      share->kfile,FLUSH_KEEP))
-      {
-	error=errno;
-        mi_print_error(info->s, HA_ERR_CRASHED);
-	mi_mark_crashed(info);		/* Mark that table must be checked */
-      }
       if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
       {
 	if (info->rec_cache.end_io_cache())
@@ -98,6 +95,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	    mi_mark_crashed(info);
           }
 	}
+#if defined(FULL_LOG) || defined(_lint)
 	if (info->lock_type != F_EXTRA_LCK)
 	{
 	  if (share->r_locks)
@@ -109,6 +107,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	    flag=1;
 	  }
 	}
+#endif
       }
       info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
       info->lock_type= F_UNLCK;
@@ -123,10 +122,12 @@ int mi_lock_database(MI_INFO *info, int lock_type)
           mysqld does not turn write locks to read locks,
           so we're never here in mysqld.
         */
+#if defined(FULL_LOG) || defined(_lint)
 	if (share->w_locks == 1)
 	{
 	  flag=1;
 	}
+#endif
 	share->w_locks--;
 	share->r_locks++;
 	info->lock_type=lock_type;
@@ -134,7 +135,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       if (!share->r_locks && !share->w_locks)
       {
+#if defined(FULL_LOG) || defined(_lint)
 	flag=1;
+#endif
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=errno;
@@ -158,7 +161,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {						/* Change READONLY to RW */
 	if (share->r_locks == 1)
 	{
+#if defined(FULL_LOG) || defined(_lint)
 	  flag=1;
+#endif
 	  share->r_locks--;
 	  share->w_locks++;
 	  info->lock_type=lock_type;
@@ -169,7 +174,9 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {
 	if (!share->w_locks)
 	{
+#if defined(FULL_LOG) || defined(_lint)
 	  flag=1;
+#endif
 	  if (!share->r_locks)
 	  {
 	    if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
@@ -286,8 +293,6 @@ int _mi_test_if_changed(register MI_INFO *info)
       share->state.unique  != info->last_unique ||
       share->state.update_count != info->last_loop)
   {						/* Keyfile has changed */
-    if (share->state.process != share->this_process)
-      flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_RELEASE);
     share->last_process=share->state.process;
     info->last_unique=	share->state.unique;
     info->last_loop=	share->state.update_count;

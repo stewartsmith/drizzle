@@ -23,6 +23,7 @@ List utilities
 Created 9/10/1995 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0lst_h
 #define ut0lst_h
 

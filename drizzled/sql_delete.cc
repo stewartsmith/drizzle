@@ -31,9 +31,12 @@
 #include <drizzled/internal/iocache.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/filesort.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   Implement DELETE SQL word.
@@ -52,11 +55,9 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
   optimizer::SqlSelect *select= NULL;
   ReadRecord	info;
   bool          using_limit=limit != HA_POS_ERROR;
-  bool		transactional_table, const_cond;
-  bool          const_cond_result;
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
-  Select_Lex   *select_lex= &session->getLex()->select_lex;
+  Select_Lex   *select_lex= &session->lex().select_lex;
   Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   if (session->openTablesLock(table_list))
@@ -87,27 +88,26 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     tables.table = table;
     tables.alias = table_list->alias;
 
-      if (select_lex->setup_ref_array(session, order->elements) ||
-	  setup_order(session, select_lex->ref_pointer_array, &tables,
-                    fields, all_fields, (Order*) order->first))
-      {
-        delete select;
-        free_underlaid_joins(session, &session->getLex()->select_lex);
-        DRIZZLE_DELETE_DONE(1, 0);
+    select_lex->setup_ref_array(session, order->elements);
+    if (setup_order(session, select_lex->ref_pointer_array, &tables, fields, all_fields, (Order*) order->first))
+    {
+      delete select;
+      free_underlaid_joins(session, &session->lex().select_lex);
+      DRIZZLE_DELETE_DONE(1, 0);
 
-        return true;
-      }
+      return true;
+    }
   }
 
-  const_cond= (!conds || conds->const_item());
+  bool const_cond= not conds || conds->const_item();
 
-  select_lex->no_error= session->getLex()->ignore;
+  select_lex->no_error= session->lex().ignore;
 
-  const_cond_result= const_cond && (!conds || conds->val_int());
+  bool const_cond_result= const_cond && (!conds || conds->val_int());
   if (session->is_error())
   {
     /* Error evaluating val_int(). */
-    return(true);
+    return true;
   }
 
   /*
@@ -124,10 +124,6 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     - There is no limit clause
     - The condition is constant
     - If there is a condition, then it it produces a non-zero value
-    - If the current command is DELETE FROM with no where clause
-      (i.e., not TRUNCATE) then:
-      - We should not be binlogging this statement row-based, and
-      - there should be no delete triggers associated with the table.
   */
   if (!using_limit && const_cond_result)
   {
@@ -180,7 +176,7 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ha_rows) session->rowCount());
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -198,26 +194,20 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
 
   if (order && order->elements)
   {
-    uint32_t         length= 0;
-    SortField  *sortorder;
-    ha_rows examined_rows;
-
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
       usable_index= optimizer::get_index_for_order(table, (Order*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
       FileSort filesort(*session);
-      table->sort.io_cache= new internal::IO_CACHE;
-
-
-      if (not (sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL)) ||
-	  (table->sort.found_records = filesort.run(table, sortorder, length,
-						    select, HA_POS_ERROR, 1,
-						    examined_rows)) == HA_POS_ERROR)
+      table->sort.io_cache= new internal::io_cache_st;
+      uint32_t length= 0;
+      SortField* sortorder= make_unireg_sortorder((Order*) order->first, &length, NULL);
+      ha_rows examined_rows;
+      if ((table->sort.found_records= filesort.run(table, sortorder, length, select, HA_POS_ERROR, 1, examined_rows)) == HA_POS_ERROR)
       {
         delete select;
-        free_underlaid_joins(session, &session->getLex()->select_lex);
+        free_underlaid_joins(session, &session->lex().select_lex);
 
         DRIZZLE_DELETE_DONE(1, 0);
         return true;
@@ -284,14 +274,6 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
       else
       {
 	table->print_error(error,MYF(0));
-	/*
-	  In < 4.0.14 we set the error number to 0 here, but that
-	  was not sensible, because then MySQL would not roll back the
-	  failed DELETE, and also wrote it to the binlog. For MyISAM
-	  tables a DELETE probably never should fail (?), but for
-	  InnoDB it can fail in a FOREIGN KEY error or an
-	  out-of-tablespace error.
-	*/
  	error= 1;
 	break;
       }
@@ -324,12 +306,11 @@ cleanup:
   }
 
   delete select;
-  transactional_table= table->cursor->has_transactions();
+  bool transactional_table= table->cursor->has_transactions();
 
   if (!transactional_table && deleted > 0)
     session->transaction.stmt.markModifiedNonTransData();
 
-  /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {
     if (session->transaction.stmt.hasModifiedNonTransData())
@@ -339,14 +320,14 @@ cleanup:
   free_underlaid_joins(session, select_lex);
 
   DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);
-  if (error < 0 || (session->getLex()->ignore && !session->is_fatal_error))
+  if (error < 0 || (session->lex().ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
     /**
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    session->main_da.reset_diagnostics_area();    
+    session->main_da().reset_diagnostics_area();
     session->my_ok((ha_rows) session->rowCount());
   }
   session->status_var.deleted_row_count+= deleted;
@@ -370,31 +351,22 @@ cleanup:
 */
 int prepare_delete(Session *session, TableList *table_list, Item **conds)
 {
-  Select_Lex *select_lex= &session->getLex()->select_lex;
-
-  List<Item> all_fields;
-
-  session->getLex()->allow_sum_func= 0;
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
-                                    table_list,
-                                    &select_lex->leaf_tables, false) ||
+  Select_Lex *select_lex= &session->lex().select_lex;
+  session->lex().allow_sum_func= 0;
+  if (setup_tables_and_check_access(session, &session->lex().select_lex.context, &select_lex->top_join_list, 
+    table_list, &select_lex->leaf_tables, false) ||
       session->setup_conds(table_list, conds))
-    return(true);
+    return true;
+
+  if (unique_table(table_list, table_list->next_global))
   {
-    TableList *duplicate;
-    if ((duplicate= unique_table(table_list, table_list->next_global)))
-    {
-      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
-      return(true);
-    }
+    my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
+    return true;
   }
-
-  if (select_lex->inner_refs_list.size() &&
-    fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
-    return(true);
-
-  return(false);
+  List<Item> all_fields;
+  if (select_lex->inner_refs_list.size() && fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
+    return true;
+  return false;
 }
 
 
@@ -409,22 +381,17 @@ int prepare_delete(Session *session, TableList *table_list, Item **conds)
 
 bool truncate(Session& session, TableList *table_list)
 {
-  bool error;
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  init_select(session.getLex());
-  error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
-                      HA_POS_ERROR, 0L, true);
+  init_select(&session.lex());
+  int error= delete_query(&session, table_list, (COND*) 0, (SQL_LIST*) 0, HA_POS_ERROR, 0L, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= transaction_services.autocommitOrRollback(session, error);
+  error= TransactionServices::autocommitOrRollback(session, error);
   session.options= save_options;
-
   return error;
 }
 

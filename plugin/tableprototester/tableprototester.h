@@ -16,8 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_TABLEPROTOTESTER_TABLEPROTOTESTER_H
-#define PLUGIN_TABLEPROTOTESTER_TABLEPROTOTESTER_H
+#pragma once
 
 #include <drizzled/cursor.h>
 
@@ -61,4 +60,3 @@ public:
   {}
 };
 
-#endif /* PLUGIN_TABLEPROTOTESTER_TABLEPROTOTESTER_H */

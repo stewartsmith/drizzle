@@ -16,22 +16,47 @@
 ACLOCAL_AMFLAGS = -I m4 --force
 
 # includes append to these:
+# Pandora build system takes input from plugin.ini files that are appended to these
+# Corresponding Pandora parameter names are mentioned in comments
+# A few directory targets (libexec/ and etc/) are unused as of this writing and
+# therefore commented out. pandora-build will support them if you uncomment.
 SUFFIXES =
-TESTS = 
+TESTS =
 check_PROGRAMS =
+# headers
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
 dist_include_HEADERS =
 nobase_nodist_pkginclude_HEADERS =
+# install_headers
 nobase_dist_pkginclude_HEADERS =
 dist_pkginclude_HEADERS =
 sbin_PROGRAMS =
-lib_LTLIBRARIES = 
+lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
+extradir=${libdir}
+extra_LTLIBRARIES =
 noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
+
+nobase_include_HEADERS=
+
+# scripts or bin_scripts
+dist_bin_SCRIPTS=
+# sbin_scripts
+dist_sbin_SCRIPTS=
+# libexec_scripts
+#dist_libexec_SCRIPTS=
+# pkg_scripts
+dist_pkgdata_SCRIPTS=
+# data
+dist_data_DATA=
+# pkg_data
+dist_pkgdata_DATA=
+# sysconf_data
+#dist_sysconf_DATA=
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
@@ -74,6 +99,9 @@ MAINTAINERCLEANFILES= \
 		      autom4te.cache \
 		      ChangeLog
 
+datahomedir = $(localstatedir)
+datahome_DATA=
+
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/pandora-plugin.am
@@ -108,7 +136,6 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
 	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
 	  echo '#define INCLUDEDIR "$(includedir)"'; \
-	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
 	  echo '#define DOCDIR "$(docdir)"'; \
 	  echo '#define INFODIR "$(infodir)"'; \
 	  echo '#define HTMLDIR "$(htmldir)"'; \
@@ -135,12 +162,17 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	fi
 
 clean-local:
-	find . -name '*.gcno' | xargs rm -f 
+	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
+	rm -Rf $(SPHINX_BUILDDIR)/html $(SPHINX_BUILDDIR)/dirhtml $(SPHINX_BUILDDIR)/singlehtml \
+	$(SPHINX_BUILDDIR)/pickle $(SPHINX_BUILDDIR)/json $(SPHINX_BUILDDIR)/htmlhelp \
+	$(SPHINX_BUILDDIR)/qthelp $(SPHINX_BUILDDIR)/devhelp $(SPHINX_BUILDDIR)/epub \
+	$(SPHINX_BUILDDIR)/latex $(SPHINX_BUILDDIR)/latexpdf $(SPHINX_BUILDDIR)/text \
+	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
+	$(SPHINX_BUILDDIR)/doctest
 
 include config/lcov.am
 
-include docs/include.am
 include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
@@ -151,7 +183,10 @@ include support-files/include.am
 include tests/include.am
 include unittests/include.am
 include libdrizzle/include.am
+include libdrizzle-1.0/include.am
+include libdrizzle-2.0/include.am
 include win32/include.am
+include docs/include.am
 
 TESTS += ${check_PROGRAMS}
 
@@ -162,16 +197,16 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
-install-exec-hook:
-	cd $(DESTDIR)$(sbindir) && \
-	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
-	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
+rpm-build: support-files/drizzle.spec
+	@rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
+	@rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
+	@cp drizzle-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
+	@cp support-files/drizzled.init ~/rpmbuild/SOURCES/
+	@rpmbuild -ba support-files/drizzle.spec
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-devel-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-debuginfo-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-server-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm .
 
-install-data-hook:
-	cd $(DESTDIR)$(man8dir) && \
-	mv -f drizzled.8 drizzled7.8 && \
-	$(LN_S) drizzled7.8 drizzled.8
-
-uninstall-hook:
-	rm $(DESTDIR)$(man8dir)/drizzled7.8
-	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)
+rpm: man distcheck rpm-build

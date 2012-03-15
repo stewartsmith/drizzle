@@ -17,13 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CONSTRAINED_VALUE_H
-#define DRIZZLED_CONSTRAINED_VALUE_H
+#pragma once
 
 #include <boost/exception/info.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
-#include <iostream>
+#include <iosfwd>
 #include <netinet/in.h> /* for in_port_t */
 
 namespace drizzled
@@ -223,4 +222,3 @@ void validate(boost::any& v,
 }
 
 
-#endif /* DRIZZLED_CONSTRAINED_VALUE_H */

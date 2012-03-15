@@ -25,6 +25,7 @@
 #include <drizzled/statement/create_index.h>
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/open_tables_state.h>
 
 namespace drizzled
 {
@@ -32,25 +33,24 @@ namespace drizzled
 namespace statement
 {
 
-CreateIndex::CreateIndex(Session *in_session, const drizzled::ha_build_method method_arg) :
+CreateIndex::CreateIndex(Session *in_session) :
   CreateTable(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_CREATE_INDEX;
+    set_command(SQLCOM_CREATE_INDEX);
     alter_info.flags.set(ALTER_ADD_INDEX);
-    alter_info.build_method= method_arg;
-    getSession()->getLex()->col_list.clear();
+    lex().col_list.clear();
   }
 
 bool statement::CreateIndex::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
 
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    if (not (original_table_message= plugin::StorageEngine::getTableMessage(*getSession(), identifier)))
+    if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
       return true;
@@ -67,7 +67,7 @@ bool statement::CreateIndex::execute()
   */
 
   assert(first_table == all_tables && first_table != 0);
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -79,7 +79,7 @@ bool statement::CreateIndex::execute()
     identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
     create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-    res= alter_table(getSession(), 
+    res= alter_table(&session(), 
                      identifier,
                      identifier,
                      &create_info(), 
@@ -92,13 +92,13 @@ bool statement::CreateIndex::execute()
   else
   {
     identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
-    Table *table= getSession()->find_temporary_table(catch22);
+    Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
       identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
       create_info().default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
-      res= alter_table(getSession(), 
+      res= alter_table(&session(), 
                        identifier,
                        identifier,
                        &create_info(), 

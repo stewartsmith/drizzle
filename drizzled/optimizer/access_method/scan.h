@@ -18,17 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H
-#define DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H
+#pragma once
 
 #include <drizzled/optimizer/access_method.h>
 
-class Session;
-
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * @class Scan
@@ -38,15 +33,8 @@ namespace optimizer
 class Scan : public AccessMethod
 {
 public:
-  Scan() {}
-
-  bool getStats(Table *table,
-                JoinTable *join_tab);
-
+  void getStats(Table&, JoinTable&);
 };
 
 } /* end namespace optimizer */
-
 } /* end namespace drizzled */
-
-#endif /* DRIZZLED_OPTIMIZER_ACCESS_METHOD_SCAN_H */

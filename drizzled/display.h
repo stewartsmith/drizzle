@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DISPLAY_H
-#define DRIZZLED_DISPLAY_H
+#pragma once
 
 #include <drizzled/common.h>
 #include <string>
@@ -40,4 +39,3 @@ std::string hexdump(const unsigned char *str, size_t length);
 } /* namespace display */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DISPLAY_H */

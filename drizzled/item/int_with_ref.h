@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_INT_WITH_REF_H
-#define DRIZZLED_ITEM_INT_WITH_REF_H
+#pragma once
 
 /*
   The following class is used to optimize comparing of date and bigint columns
@@ -29,8 +28,7 @@
 
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_int_with_ref :public Item_int
 {
@@ -52,4 +50,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_INT_WITH_REF_H */

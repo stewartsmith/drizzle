@@ -1,0 +1,54 @@
+SET GLOBAL query_log_file="DRIZZLETEST_VARDIR/query.log";
+SET GLOBAL query_log_file_enabled=TRUE;
+SHOW VARIABLES LIKE 'query_log_threshold%';
+Variable_name	Value
+query_log_threshold_execution_time	0
+query_log_threshold_lock_time	0
+query_log_threshold_rows_examined	0
+query_log_threshold_rows_sent	0
+query_log_threshold_session_time	0
+query_log_threshold_tmp_tables	0
+query_log_threshold_warnings	0
+SET GLOBAL query_log_threshold_execution_time=500000;
+SELECT @@query_log_threshold_execution_time;
+@@query_log_threshold_execution_time
+500000
+
+SELECT SLEEP(0.4);
+SLEEP(0.4)
+0
+
+SELECT SLEEP(0.5);
+SLEEP(0.5)
+0
+Checking attributes and values of query SELECT SLEEP(0.5);
+execution_time value between 0.5 and 0.59 OK
+Checking attributes and values of query SELECT SLEEP(0.5);
+arg value equals SELECT SLEEP(0.5); OK
+
+# start_ts=0-00-00T00:00:00.000000
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# execution_time=0.000000 lock_time=0.000000 session_time=0.000000
+# error=false
+# schema="test"
+SELECT SLEEP(0.0);
+#
+SET GLOBAL query_log_file_enabled=FALSE;
+SET GLOBAL query_log_file_enabled=TRUE;
+SET GLOBAL query_log_threshold_execution_time=0;
+SELECT @@query_log_threshold_execution_time;
+@@query_log_threshold_execution_time
+0
+SELECT 'one';
+one
+one
+Checking attributes and values of query SELECT 'one';
+arg value equals SELECT 'one'; OK
+
+# start_ts=0-00-00T00:00:00.000000
+# session_id=0 query_id=0 rows_examined=0 rows_sent=0 tmp_tables=0 warnings=0
+# execution_time=0.000000 lock_time=0.000000 session_time=0.000000
+# error=false
+# schema="test"
+SELECT 'one';
+#

@@ -27,30 +27,26 @@
 #include <drizzled/session.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
-
+#include <drizzled/statistics_variables.h>
 #include <drizzled/table.h>
+#include <drizzled/create_field.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace table {
 
-namespace table
-{
-
-Singular::Singular(Session *session, List<CreateField> &field_list) :
+Singular::Singular(Session *session, std::list<CreateField>& field_list) :
   _share(message::Table::INTERNAL),
   _has_variable_width(false)
 {
   uint32_t field_count= field_list.size();
   uint32_t blob_count= 0;
-  Field **field_arg;
-  CreateField *cdef;                           /* column definition */
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
 
   getMutableShare()->setFields(field_count + 1);
   setFields(getMutableShare()->getFields(true));
-  field_arg= getMutableShare()->getFields(true);
+  Field** field_arg= getMutableShare()->getFields(true);
   getMutableShare()->blob_field.resize(field_count+1);
   getMutableShare()->setFieldSize(field_count);
   getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
@@ -59,28 +55,22 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   in_use= session;           /* field_arg->reset() may access in_use */
 
   /* Create all fields and calculate the total length of record */
-  List<CreateField>::iterator it(field_list.begin());
   message::Table::Field null_field;
-  while ((cdef= it++))
+	BOOST_FOREACH(CreateField& it, field_list)
   {
     *field_arg= getMutableShare()->make_field(null_field,
                                               NULL,
-                                              cdef->length,
-                                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                                              cdef->decimals,
-                                              cdef->sql_type,
-                                              cdef->charset,
-                                              cdef->unireg_check,
-                                              cdef->interval,
-                                              cdef->field_name,
-                                              cdef->flags & UNSIGNED_FLAG ? true : false);
-    if (!*field_arg)
-    {
-      throw "Memory allocation failure";
-    }
-
+                                              it.length,
+                                              (it.flags & NOT_NULL_FLAG) ? false : true,
+                                              (unsigned char *) ((it.flags & NOT_NULL_FLAG) ? 0 : ""),
+                                              (it.flags & NOT_NULL_FLAG) ? 0 : 1,
+                                              it.decimals,
+                                              it.sql_type,
+                                              it.charset,
+                                              it.unireg_check,
+                                              it.interval,
+                                              it.field_name,
+                                              it.flags & UNSIGNED_FLAG ? true : false);
     (*field_arg)->init(this);
     record_length+= (*field_arg)->pack_length();
     if (! ((*field_arg)->flags & NOT_NULL_FLAG))
@@ -98,15 +88,11 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
   null_pack_length= (null_count + 7)/8;
   getMutableShare()->setRecordLength(record_length + null_pack_length);
   getMutableShare()->rec_buff_length= ALIGN_SIZE(getMutableShare()->getRecordLength() + 1);
-  record[0]= (unsigned char*)session->getMemRoot()->allocate(getMutableShare()->rec_buff_length);
-  if (not getInsertRecord())
-  {
-    throw "Memory allocation failure";
-  }
+  record[0]= session->mem.alloc(getMutableShare()->rec_buff_length);
 
   if (null_pack_length)
   {
-    null_flags= (unsigned char*) getInsertRecord();
+    null_flags= getInsertRecord();
     getMutableShare()->null_fields= null_count;
     getMutableShare()->null_bytes= null_pack_length;
   }
@@ -140,12 +126,8 @@ Singular::Singular(Session *session, List<CreateField> &field_list) :
 
 bool Singular::open_tmp_table()
 {
-  int error;
-  
   identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
-  if ((error=cursor->ha_open(identifier,
-                             O_RDWR,
-                             HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
+  if (int error= cursor->ha_open(identifier, O_RDWR, HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE))
   {
     print_error(error, MYF(0));
     db_stat= 0;
@@ -197,9 +179,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
   if (getShare()->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
-    HA_KEYSEG *seg= (HA_KEYSEG*) getMemRoot()->alloc_root(sizeof(*seg) * keyinfo->key_parts);
-    if (not seg)
-      return true;
+    HA_KEYSEG *seg= new (mem()) HA_KEYSEG[keyinfo->key_parts];
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
@@ -252,7 +232,7 @@ bool Singular::create_myisam_tmp_table(KeyInfo *keyinfo,
       if (!(key_field->flags & NOT_NULL_FLAG))
       {
         seg->null_bit= key_field->null_bit;
-        seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) getInsertRecord());
+        seg->null_pos= (uint32_t) (key_field->null_ptr - getInsertRecord());
         /*
           We are using a GROUP BY on something that contains NULL
           In this case we have to tell MyISAM that two NULL should
@@ -310,9 +290,7 @@ void Singular::setup_tmp_table_column_bitmaps()
 
 Singular::~Singular()
 {
-  const char *save_proc_info;
-
-  save_proc_info= in_use->get_proc_info();
+  const char* save_proc_info= in_use->get_proc_info();
   in_use->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
@@ -321,31 +299,24 @@ Singular::~Singular()
   if (cursor)
   {
     if (db_stat)
-    {
-      cursor->closeMarkForDelete(getShare()->getTableName());
-    }
+      cursor->closeMarkForDelete();
 
     identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
     drizzled::error_t ignored;
-    plugin::StorageEngine::dropTable(*in_use,
-                                     *getShare()->getEngine(),
-                                     identifier,
-                                     ignored);
-
+    plugin::StorageEngine::dropTable(*in_use, *getShare()->getEngine(), identifier, ignored);
     delete cursor;
   }
 
   /* free blobs */
-  for (Field **ptr= getFields() ; *ptr ; ptr++)
+  for (Field **ptr= getFields(); *ptr; ptr++)
   {
     (*ptr)->free();
   }
   free_io_cache();
 
-  getMemRoot()->free_root(MYF(0));
+  mem().free_root(MYF(0));
   in_use->set_proc_info(save_proc_info);
 }
-
 
 } /* namespace table */
 } /* namespace drizzled */

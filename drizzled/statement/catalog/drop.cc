@@ -26,23 +26,18 @@
 
 #include <drizzled/plugin/catalog.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
+namespace catalog {
 
-namespace statement
-{
-
-namespace catalog
-{
-
-Drop::Drop(Session *in_session, drizzled::lex_string_t &arg) :
+Drop::Drop(Session *in_session, str_ref arg) :
   Catalog(in_session, arg)
 {
 }
 
 bool Drop::authorized() const
 {
-  if (getSession()->getClient()->isConsole())
+  if (session().getClient()->isConsole())
   {
     return true;
   }

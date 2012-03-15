@@ -33,7 +33,9 @@
 #include <drizzled/item/int_with_ref.h>
 #include <drizzled/item/subselect.h>
 #include <drizzled/session.h>
+#include <drizzled/sql_lex.h>
 #include <drizzled/sql_select.h>
+#include <drizzled/system_variables.h>
 #include <drizzled/temporal.h>
 #include <drizzled/time_functions.h>
 
@@ -42,8 +44,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern const double log_10[309];
 
@@ -93,7 +94,9 @@ static void agg_result_type(Item_result *type, Item **items, uint32_t nitems)
   for (; item < item_end; item++)
   {
     if ((*item)->type() != Item::NULL_ITEM)
+    {
       *type= item_store_type(*type, *item, unsigned_flag);
+    }
   }
 }
 
@@ -602,8 +605,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
         comparators= 0;
         return 1;
       }
-      if (!(comparators= new Arg_comparator[n]))
-        return 1;
+      comparators= new Arg_comparator[n];
       for (uint32_t i=0; i < n; i++)
       {
         if ((*a)->element_index(i)->cols() != (*b)->element_index(i)->cols())
@@ -713,8 +715,7 @@ WHERE col= 'j'
 */
 
 static int64_t
-get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
-                  char *warn_name, bool *error_arg)
+get_date_from_str(Session *session, String *str, type::timestamp_t warn_type, const char *warn_name, bool *error_arg)
 {
   int64_t value= 0;
   type::cut_t error= type::VALID;
@@ -742,9 +743,7 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type,
 
   if (error != type::VALID)
   {
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str->ptr(), str->length(),
-                                 warn_type, warn_name);
+    make_truncated_value_warning(*session, DRIZZLE_ERROR::WARN_LEVEL_WARN, *str, warn_type, warn_name);
   }
 
   return value;
@@ -788,7 +787,7 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
                                      int64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
-  Item *str_arg= 0, *date_arg= 0;
+  Item *str_arg= 0;
 
   if (in_a->type() == Item::ROW_ITEM || in_b->type() == Item::ROW_ITEM)
     return CMP_DATE_DFLT;
@@ -802,14 +801,12 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
     else if (in_b->result_type() == STRING_RESULT)
     {
       cmp_type= CMP_DATE_WITH_STR;
-      date_arg= in_a;
       str_arg= in_b;
     }
   }
   else if (in_b->is_datetime() && in_a->result_type() == STRING_RESULT)
   {
     cmp_type= CMP_STR_WITH_DATE;
-    date_arg= in_b;
     str_arg= in_a;
   }
 
@@ -858,15 +855,28 @@ Arg_comparator::can_compare_as_dates(Item *in_a, Item *in_b,
          */
         return CMP_DATE_DFLT;
       }
-      if (! temporal.from_string(str_val->c_ptr(), str_val->length()))
+      if (temporal.from_string(str_val->c_ptr(), str_val->length()))
       {
-        /* Chuck an error. Bad datetime input. */
-        my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
-        return CMP_DATE_DFLT; /* :( What else can I return... */
+        /* String conversion was good.  Convert to an integer for comparison purposes. */
+        temporal.to_int64_t(&value);
       }
-
-      /* String conversion was good.  Convert to an integer for comparison purposes. */
-      temporal.to_int64_t(&value);
+      else
+      {
+        /* We aren't a DATETIME but still could be a TIME */
+        Time timevalue;
+        if (timevalue.from_string(str_val->c_ptr(), str_val->length()))
+        {
+          uint64_t timeint;
+          timevalue.to_uint64_t(timeint);
+          value= static_cast<int64_t>(timeint);
+        }
+        else
+        {
+          /* Chuck an error. Bad datetime input. */
+          my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), str_val->c_ptr());
+          return CMP_DATE_DFLT; /* :( What else can I return... */
+        }
+      }
 
       if (const_value)
         *const_value= value;
@@ -1990,7 +2000,7 @@ bool Item_func_between::fix_fields(Session *session, Item **ref)
   if (Item_func_opt_neg::fix_fields(session, ref))
     return 1;
 
-  session->getLex()->current_select->between_count++;
+  session->lex().current_select->between_count++;
 
   /* not_null_tables_cache == union(T1(e),T1(e1),T1(e2)) */
   if (pred_level && !negated)
@@ -2361,8 +2371,7 @@ Item_func_if::fix_fields(Session *session, Item **ref)
 }
 
 
-void
-Item_func_if::fix_length_and_dec()
+void Item_func_if::fix_length_and_dec()
 {
   maybe_null= args[1]->maybe_null || args[2]->maybe_null;
   decimals= max(args[1]->decimals, args[2]->decimals);
@@ -2387,32 +2396,38 @@ Item_func_if::fix_length_and_dec()
   }
   else
   {
-    agg_result_type(&cached_result_type, args+1, 2);
+    agg_result_type(&cached_result_type, args +1, 2);
     if (cached_result_type == STRING_RESULT)
     {
-      if (agg_arg_charsets(collation, args+1, 2, MY_COLL_ALLOW_CONV, 1))
+      if (agg_arg_charsets(collation, args +1, 2, MY_COLL_ALLOW_CONV, 1))
         return;
     }
     else
     {
       collation.set(&my_charset_bin);	// Number
     }
-    cached_field_type= agg_field_type(args + 1, 2);
+    cached_field_type= agg_field_type(args +1, 2);
   }
 
-  if ((cached_result_type == DECIMAL_RESULT )
-      || (cached_result_type == INT_RESULT))
+  switch (cached_result_type)
   {
-    int len1= args[1]->max_length - args[1]->decimals
-      - (args[1]->unsigned_flag ? 0 : 1);
-
-    int len2= args[2]->max_length - args[2]->decimals
-      - (args[2]->unsigned_flag ? 0 : 1);
-
-    max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
-  }
-  else
+  case DECIMAL_RESULT: 
+  case INT_RESULT:
+    {
+      int len1= args[1]->max_length -args[1]->decimals -(args[1]->unsigned_flag ? 0 : 1);
+      int len2= args[2]->max_length -args[2]->decimals -(args[2]->unsigned_flag ? 0 : 1);
+      max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
+    }
+    break;
+  case REAL_RESULT:
+  case STRING_RESULT:
     max_length= max(args[1]->max_length, args[2]->max_length);
+    break;
+
+  case ROW_RESULT:
+    assert(0);
+    break;
+  }
 }
 
 
@@ -2439,8 +2454,8 @@ Item_func_if::val_int()
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  int64_t value=arg->val_int();
-  null_value=arg->null_value;
+  int64_t value= arg->val_int();
+  null_value= arg->null_value;
   return value;
 }
 
@@ -2449,10 +2464,12 @@ Item_func_if::val_str(String *str)
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  String *res=arg->val_str(str);
+  String *res= arg->val_str(str);
   if (res)
+  {
     res->set_charset(collation.collation);
-  null_value=arg->null_value;
+  }
+  null_value= arg->null_value;
   return res;
 }
 
@@ -3113,7 +3130,7 @@ int in_vector::find(Item *item)
   return (int) ((*compare)(collation, base+start*size, result) == 0);
 }
 
-in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs)
+in_string::in_string(uint32_t elements,qsort2_cmp cmp_func, const charset_info_st * const cs)
   :in_vector(elements, sizeof(String), cmp_func, cs),
    tmp(buff, sizeof(buff), &my_charset_bin)
 {}
@@ -3143,7 +3160,7 @@ void in_string::set(uint32_t pos,Item *item)
   }
   if (!str->charset())
   {
-    const CHARSET_INFO *cs;
+    const charset_info_st *cs;
     if (!(cs= item->collation.collation))
       cs= &my_charset_bin;		// Should never happen for STR items
     str->set_charset(cs);
@@ -3171,8 +3188,7 @@ in_row::in_row(uint32_t elements, Item *)
 
 in_row::~in_row()
 {
-  if (base)
-    delete [] (cmp_item_row*) base;
+  delete[] (cmp_item_row*) base;
 }
 
 unsigned char *in_row::get_value(Item *item)
@@ -3284,7 +3300,7 @@ unsigned char *in_decimal::get_value(Item *item)
 
 
 cmp_item* cmp_item::get_comparator(Item_result type,
-                                   const CHARSET_INFO * const cs)
+                                   const charset_info_st * const cs)
 {
   switch (type) {
   case STRING_RESULT:
@@ -3345,7 +3361,7 @@ cmp_item_row::~cmp_item_row()
 void cmp_item_row::alloc_comparators()
 {
   if (!comparators)
-    comparators= (cmp_item **) current_session->calloc(sizeof(cmp_item *)*n);
+    comparators= (cmp_item **) current_session->mem.calloc(sizeof(cmp_item *)*n);
 }
 
 
@@ -3555,7 +3571,7 @@ Item_func_in::fix_fields(Session *session, Item **ref)
 }
 
 
-static int srtcmp_in(const CHARSET_INFO * const cs, const String *x,const String *y)
+static int srtcmp_in(const charset_info_st * const cs, const String *x,const String *y)
 {
   return cs->coll->strnncollsp(cs,
                                (unsigned char *) x->ptr(),x->length(),
@@ -3618,8 +3634,7 @@ void Item_func_in::fix_length_and_dec()
       }
       else
       {
-        if (!(cmp= new cmp_item_row))
-          return;
+        cmp= new cmp_item_row;
         cmp_items[ROW_RESULT]= cmp;
       }
       cmp->n= args[0]->cols();
@@ -3955,7 +3970,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if (item->maybe_null)
       maybe_null=1;
   }
-  session->getLex()->current_select->cond_count+= list.size();
+  session->lex().current_select->cond_count+= list.size();
   session->session_marker= orig_session_marker;
   fix_length_and_dec();
   fixed= 1;
@@ -4168,7 +4183,7 @@ void Item_cond::print(String *str)
   while ((item=li++))
   {
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
     item->print(str);
   }
@@ -4184,10 +4199,7 @@ void Item_cond::neg_arguments(Session *session)
   {
     Item *new_item= item->neg_transformer(session);
     if (!new_item)
-    {
-      if (!(new_item= new Item_func_not(item)))
-	return;					// Fatal OEM error
-    }
+      new_item= new Item_func_not(item);
     li.replace(new_item);
   }
 }
@@ -4277,15 +4289,12 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
   if (a == *org_item)
   {
     Item_cond *res;
-    if ((res= new Item_cond_and(a, (Item*) b)))
-    {
-      res->used_tables_cache= a->used_tables() | b->used_tables();
-      res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
-    }
+    res= new Item_cond_and(a, (Item*) b);
+    res->used_tables_cache= a->used_tables() | b->used_tables();
+    res->not_null_tables_cache= a->not_null_tables() | b->not_null_tables();
     return res;
   }
-  if (((Item_cond_and*) a)->add((Item*) b))
-    return 0;
+  ((Item_cond_and*) a)->add((Item*) b);
   ((Item_cond_and*) a)->used_tables_cache|= b->used_tables();
   ((Item_cond_and*) a)->not_null_tables_cache|= b->not_null_tables();
   return a;
@@ -4315,10 +4324,10 @@ int64_t Item_is_not_null_test::val_int()
   if (args[0]->is_null())
   {
     owner->was_null|= 1;
-    return(0);
+    return 0;
   }
   else
-    return(1);
+    return 1;
 }
 
 /**
@@ -4379,8 +4388,7 @@ int64_t Item_func_like::val_int()
   return my_wildcmp(cmp.cmp_collation.collation,
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
-		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    internal::wild_one,internal::wild_many) ? 0 : 1;
+		    make_escape_code(cmp.cmp_collation.collation, escape), internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 
@@ -4440,7 +4448,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation))
+    if (args[1]->const_item() && not collation.collation->use_strnxfrm())
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)
@@ -4471,9 +4479,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        int *suff = (int*) session->getMemRoot()->allocate((int) (sizeof(int)*
-                                                                  ((pattern_len + 1)*2+
-                                                                   alphabet_size)));
+        int *suff = (int*) session->mem.alloc(sizeof(int) * ((pattern_len + 1)*2+ alphabet_size));
         bmGs      = suff + pattern_len + 1;
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);
@@ -4490,7 +4496,7 @@ void Item_func_like::cleanup()
   Item_bool_func2::cleanup();
 }
 
-static unsigned char likeconv(const CHARSET_INFO *cs, unsigned char a)
+static unsigned char likeconv(const charset_info_st *cs, unsigned char a)
 {
 #ifdef LIKE_CMP_TOUPPER
   return cs->toupper(a);
@@ -4509,7 +4515,7 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
   int            f = 0;
   int            g = plm1;
   int *const splm1 = suff + plm1;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   *splm1 = pattern_len;
 
@@ -4607,7 +4613,7 @@ void Item_func_like::turboBM_compute_bad_character_shifts()
   int *end = bmBc + alphabet_size;
   int j;
   const int plm1 = pattern_len - 1;
-  const CHARSET_INFO *const cs= cmp.cmp_collation.collation;
+  const charset_info_st *const cs= cmp.cmp_collation.collation;
 
   for (i = bmBc; i < end; i++)
     *i = pattern_len;
@@ -4639,7 +4645,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
   int shift = pattern_len;
   int j     = 0;
   int u     = 0;
-  const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
+  const charset_info_st * const cs= cmp.cmp_collation.collation;
 
   const int plm1=  pattern_len - 1;
   const int tlmpl= text_len - pattern_len;
@@ -5168,7 +5174,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
 
 void Item_equal::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   List<Item_field>::iterator it(fields.begin());
   Item *item;

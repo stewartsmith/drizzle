@@ -156,7 +156,6 @@ our $opt_repeat_test= 1;
 
 our $exe_master_drizzled;
 our $exe_drizzle;
-our $exe_drizzleadmin;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
@@ -170,7 +169,6 @@ our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
 our $exe_libtool;
-our $exe_schemawriter;
 
 our $opt_bench= 0;
 our $opt_small_bench= 0;
@@ -230,6 +228,7 @@ our $opt_master_myport;
 our $opt_slave_myport;
 our $opt_memc_myport;
 our $opt_pbms_myport;
+our $opt_json_server_myport;
 our $opt_rabbitmq_myport;
 our $opt_record;
 my $opt_report_features;
@@ -263,7 +262,7 @@ my $opt_valgrind= 0;
 my $opt_valgrind_drizzled= 0;
 my $opt_valgrind_drizzletest= 0;
 my $opt_valgrind_drizzleslap= 0;
-my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
+my @default_valgrind_args= qw|--tool=memcheck --error-exitcode=1 --leak-check=yes --show-reachable=yes --track-fds=yes --malloc-fill=A5 --free-fill=DE|;
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -509,6 +508,7 @@ sub command_line_setup () {
              'slave_port=i'             => \$opt_slave_myport,
              'memc_port=i'              => \$opt_memc_myport,
 	     'pbms_port=i'              => \$opt_pbms_myport,
+	     'json_server_port=i'              => \$opt_json_server_myport,
 	     'rabbitmq_port=i'              => \$opt_rabbitmq_myport,
 	     'dtr-build-thread=i'       => \$opt_dtr_build_thread,
 
@@ -552,17 +552,6 @@ sub command_line_setup () {
              'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
              'valgrind-drizzleslap'       => \$opt_valgrind_drizzleslap,
              'valgrind-drizzled'          => \$opt_valgrind_drizzled,
-             'valgrind-options=s'       => sub {
-	       my ($opt, $value)= @_;
-	       # Deprecated option unless it's what we know pushbuild uses
-	       if ($value eq "--gen-suppressions=all --show-reachable=yes") {
-		 push(@valgrind_args, $_) for (split(' ', $value));
-		 return;
-	       }
-	       die("--valgrind-options=s is deprecated. Use ",
-		   "--valgrind-option=s, to be specified several",
-		   " times if necessary");
-	     },
              'valgrind-option=s'        => \@valgrind_args,
              'valgrind-path=s'          => \$opt_valgrind_path,
 	     'callgrind'                => \$opt_callgrind,
@@ -1171,6 +1160,7 @@ sub set_dtr_build_thread_ports($) {
   $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
   $opt_pbms_myport= gimme_a_good_port($opt_master_myport + 11);
   $opt_rabbitmq_myport= gimme_a_good_port($opt_master_myport + 12);
+  $opt_json_server_myport= gimme_a_good_port($opt_master_myport + 13);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1221,16 +1211,16 @@ sub collect_drizzled_features () {
     # First look for version
     if ( !$drizzle_version_id )
     {
-      # Look for version
-      my $exe_name= basename($exe_drizzled);
-      dtr_verbose("exe_name: $exe_name");
-      if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
-      {
-	#print "Major: $1 Minor: $2 Build: $3\n";
-	$drizzle_version_id= $1*10000 + $2*100 + $3;
-	#print "drizzle_version_id: $drizzle_version_id\n";
-	dtr_report("Drizzle Version $1.$2.$3");
-      }
+        # Look for version
+        my $exe_name= basename($exe_drizzled);
+        dtr_verbose("exe_name: $exe_name");
+        if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
+        {
+            #print "Major: $1 Minor: $2 Build: $3\n";
+            $drizzle_version_id= $1*10000 + $2*100 + $3;
+            #print "drizzle_version_id: $drizzle_version_id\n";
+            dtr_report("Drizzle Version $1.$2.$3");
+        }
     }
   }
   rmtree($tmpdir);
@@ -1289,6 +1279,14 @@ sub executable_setup () {
       dtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
     }
   }
+  elsif ( -x "./libtool")
+  {
+    $exe_libtool= "./libtool";
+    if ($opt_valgrind or $glob_debugger)
+    {
+      dtr_report("Using \"$exe_libtool\" when running valgrind or debugger");
+    }
+  }
 
 # Look for perror
   $exe_perror= "perror";
@@ -1297,7 +1295,6 @@ sub executable_setup () {
   $exe_drizzledump= dtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= dtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          dtr_exe_exists("$path_client_bindir/drizzle");
-  $exe_drizzleadmin= dtr_exe_exists("$path_client_bindir/drizzleadmin");
 
   if (!$opt_extern)
   {
@@ -1306,12 +1303,6 @@ sub executable_setup () {
      {
          $exe_drizzleslap= dtr_exe_exists("$path_client_bindir/drizzleslap");
      }
-  }
-
-# Look for schema_writer
-  {
-    $exe_schemawriter= dtr_exe_exists("$glob_basedir/drizzled/message/schema_writer",
-                                      "$glob_builddir/drizzled/message/schema_writer");
   }
 
 # Look for drizzletest executable
@@ -1352,13 +1343,6 @@ sub generate_cmdline_drizzle ($) {
     " -uroot --port=$drizzled->{'port'} ";
 }
 
-sub generate_cmdline_drizzleadmin ($) {
-  my($drizzled) = @_;
-  return
-    dtr_native_path($exe_drizzleadmin) .
-    " -uroot --port=$drizzled->{'port'} ";
-}
-
 ##############################################################################
 #
 #  Set environment to be used by childs of this process for
@@ -1372,9 +1356,12 @@ sub drizzle_client_test_arguments()
 
   my $args;
   dtr_init_args(\$args);
-  if ( $opt_valgrind_drizzletest )
+  if (0)
   {
-    valgrind_arguments($args, \$exe);
+      if ( $opt_valgrind_drizzletest )
+      {
+          valgrind_arguments($args, \$exe);
+      }
   }
 
   dtr_add_arg($args, "--no-defaults");
@@ -1501,8 +1488,10 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
   $ENV{'PBMS_PORT'}=          $opt_pbms_myport;
+  $ENV{'JSON_SERVER_PORT'}=          $opt_json_server_myport;
   $ENV{'RABBITMQ_NODE_PORT'}= $opt_rabbitmq_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=   $drizzled_variables{'drizzle-protocol.port'};
+  $ENV{'DRIZZLE_TRX_READER'} = $opt_top_builddir.'/plugin/transaction_log/utilities/drizzletrx';
 
   $ENV{'DTR_BUILD_THREAD'}=      $opt_dtr_build_thread;
 
@@ -1512,7 +1501,6 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
   # ----------------------------------------------------
-  my $cmdline_drizzleadmin= generate_cmdline_drizzleadmin($master->[0]);
   my $cmdline_drizzledump= generate_cmdline_drizzledump($master->[0]);
   my $cmdline_drizzledumpslave= generate_cmdline_drizzledump($slave->[0]);
   my $cmdline_drizzledump_secondary= dtr_native_path($exe_drizzledump) .
@@ -1528,7 +1516,6 @@ sub environment_setup () {
     $cmdline_drizzledump_secondary .=
       " --debug=d:t:A,$path_vardir_trace/log/drizzledump-drizzle.trace";
   }
-  $ENV{'DRIZZLE_ADMIN'}= $cmdline_drizzleadmin;
   $ENV{'DRIZZLE_DUMP'}= $cmdline_drizzledump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_drizzledumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_drizzledump_secondary;
@@ -1613,22 +1600,6 @@ sub environment_setup () {
   # ----------------------------------------------------
   $ENV{'DRIZZLE_CLIENT_TEST'}=  drizzle_client_test_arguments();
 
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute drizzle_fix_system_tables
-  # ----------------------------------------------------
-  #if ( !$opt_extern)
-  if ( 0 )
-  {
-    my $cmdline_drizzle_fix_system_tables=
-      "$exe_drizzle_fix_system_tables --no-defaults --host=localhost " .
-      "--user=root --password= " .
-      "--basedir=$glob_basedir --bindir=$path_client_bindir --verbose " .
-      "--port=$master->[0]->{'port'} ";
-    $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_drizzle_fix_system_tables;
-
-  }
-
   # ----------------------------------------------------
   # Setup env so childs can shutdown the server
   # ----------------------------------------------------
@@ -1661,6 +1632,7 @@ sub environment_setup () {
     print "Using MC_PORT               = $ENV{MC_PORT}\n";
     print "Using PBMS_PORT             = $ENV{PBMS_PORT}\n";
     print "Using RABBITMQ_NODE_PORT    = $ENV{RABBITMQ_NODE_PORT}\n";
+    print "Using JSON_SERVER_PORT      = $ENV{JSON_SERVER_PORT}\n";
   }
 
   # Create an environment variable to make it possible
@@ -1846,22 +1818,14 @@ sub setup_vardir() {
   mkpath("$opt_vardir/tmp");
   mkpath($opt_tmpdir) if $opt_tmpdir ne "$opt_vardir/tmp";
 
-  # Create new data dirs
   foreach my $data_dir (@data_dir_lst)
   {
-    mkpath("$data_dir/local/mysql");
-    system("$exe_schemawriter mysql $data_dir/local/mysql/db.opt");
-
-    mkpath("$data_dir/local/test");
-    system("$exe_schemawriter test $data_dir/local/test/db.opt");
+      mkpath("$data_dir");
   }
 
   # Make a link std_data_ln in var/ that points to std_data
   symlink(collapse_path("$glob_drizzle_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
-
-  symlink(collapse_path("$glob_suite_path/filesystem_engine/tests/t"),
-          "$opt_vardir/filesystem_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -1870,8 +1834,6 @@ sub setup_vardir() {
   }
   system("chmod -R ugo+r $opt_vardir");
   system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
-  system("chmod -R ugo+rw $opt_vardir/filesystem_ln/*");
-  system("chmod -R ugo+w $glob_suite_path/filesystem_engine/tests/t");
 }
 
 
@@ -3040,12 +3002,12 @@ sub run_testcase_start_servers($) {
 
     for ( my $idx= 0; $idx <  $tinfo->{'slave_num'}; $idx++ )
     {
-      if ( ! $slave->[$idx]->{'pid'} )
-      {
-	drizzled_start($slave->[$idx],$tinfo->{'slave_opt'},
-		     $tinfo->{'slave_mi'});
+        if ( ! $slave->[$idx]->{'pid'} )
+        {
+            drizzled_start($slave->[$idx],$tinfo->{'slave_opt'},
+                $tinfo->{'slave_mi'});
 
-      }
+        }
     }
 
     # Save this test case information, so next can examine it
@@ -3232,7 +3194,7 @@ sub run_drizzletest ($) {
   # Add arguments that should not go into the DRIZZLE_TEST env var
   # ----------------------------------------------------------------------
 
-  if ( $opt_valgrind_drizzletest )
+  if ( 0 )
   {
     # Prefix the Valgrind options to the argument list.
     # We do this here, since we do not want to Valgrind the nested invocations

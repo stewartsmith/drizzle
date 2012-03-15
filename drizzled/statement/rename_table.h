@@ -18,18 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_RENAME_TABLE_H
-#define DRIZZLED_STATEMENT_RENAME_TABLE_H
+#pragma once
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-class TableList;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class RenameTable : public Statement
 {
@@ -37,7 +31,7 @@ public:
   RenameTable(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_RENAME_TABLE;
+    set_command(SQLCOM_RENAME_TABLE);
   }
 
   bool execute();
@@ -59,4 +53,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_RENAME_TABLE_H */

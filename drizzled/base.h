@@ -27,8 +27,7 @@
 
 #include <drizzled/definitions.h>
 
-#ifndef DRIZZLED_BASE_H
-#define DRIZZLED_BASE_H
+#pragma once
 
 namespace drizzled
 {
@@ -85,14 +84,6 @@ enum ha_key_alg {
   HA_KEY_ALG_UNDEF=	0,		/* Not specified (old file) */
   HA_KEY_ALG_BTREE=	1,		/* B-tree, default one          */
   HA_KEY_ALG_HASH=	3		/* HASH keys (HEAP tables) */
-};
-
-	/* Index and table build methods */
-
-enum ha_build_method {
-  HA_BUILD_DEFAULT,
-  HA_BUILD_ONLINE,
-  HA_BUILD_OFFLINE
 };
 
 	/* The following is parameter to ha_extra() */
@@ -437,4 +428,3 @@ inline static uint32_t ha_varchar_packlength(uint32_t field_length)
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_BASE_H */

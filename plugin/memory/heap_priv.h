@@ -14,20 +14,19 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 /* This file is included in all heap-files */
-#ifndef PLUGIN_MEMORY_HEAP_PRIV_H
-#define PLUGIN_MEMORY_HEAP_PRIV_H
+#pragma once
 
 #include <config.h>
 #include <drizzled/base.h>
 
-#include <drizzled/internal/my_sys.h>
-#include <drizzled/charset_info.h>
-#include <drizzled/internal/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include <drizzled/tree.h>
+
 #include <list>
 
-#include <boost/thread/mutex.hpp>
+
+namespace boost {
+  class mutex;
+}
 
 /*
   When allocating keys /rows in the internal block structure, do it
@@ -104,4 +103,3 @@ extern bool hp_compare_record_data_to_chunkset(HP_SHARE *info, const unsigned ch
 
 extern boost::mutex THR_LOCK_heap;
 
-#endif /* PLUGIN_MEMORY_HEAP_PRIV_H */

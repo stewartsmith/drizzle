@@ -22,34 +22,34 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/start_transaction.h>
+#include <drizzled/session/transactions.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::StartTransaction::execute()
 {
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
-    push_warning_printf(getSession(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session(), DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRANSACTION_ALREADY_STARTED,
                         ER(ER_TRANSACTION_ALREADY_STARTED));
     return false;
   }
 
-  if (getSession()->transaction.xid_state.xa_state != XA_NOTR)
+  if (transaction().xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
-        xa_state_names[getSession()->transaction.xid_state.xa_state]);
+        xa_state_names[transaction().xid_state.xa_state]);
     return false;
   }
   /*
      Breakpoints for backup testing.
    */
-  if (! getSession()->startTransaction(start_transaction_opt))
+  if (! session().startTransaction(start_transaction_opt))
   {
     return true;
   }
-  getSession()->my_ok();
+  session().my_ok();
   return false;
 }
 

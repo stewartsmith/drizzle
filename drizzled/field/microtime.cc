@@ -22,24 +22,18 @@
 #include <boost/lexical_cast.hpp>
 #include <drizzled/field/microtime.h>
 #include <drizzled/error.h>
-#include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include <drizzled/session/times.h>
 #include <drizzled/current_session.h>
-
-#include <math.h>
-
+#include <drizzled/temporal.h>
+#include <cmath>
 #include <sstream>
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <drizzled/temporal.h>
 
-namespace drizzled
-{
-
-namespace field
-{
+namespace drizzled {
+namespace field {
 
 static boost::posix_time::ptime _epoch(boost::gregorian::date(1970, 1, 1));
 
@@ -67,7 +61,7 @@ Microtime::Microtime(bool maybe_null_arg,
 
 int Microtime::store(const char *from,
                      uint32_t len,
-                     const CHARSET_INFO * const )
+                     const charset_info_st * const )
 {
   MicroTimestamp temporal;
 
@@ -91,13 +85,12 @@ int Microtime::store(const char *from,
   return 0;
 }
 
-int Microtime::store_time(type::Time &ltime, type::timestamp_t )
+int Microtime::store_time(type::Time &ltime, type::timestamp_t)
 {
   long my_timezone;
-  bool in_dst_time_gap;
 
-  type::Time::epoch_t time_tmp;
-  ltime.convert(time_tmp, &my_timezone, &in_dst_time_gap, true);
+  type::epoch_t time_tmp;
+  ltime.convert(time_tmp, &my_timezone);
   uint64_t tmp_seconds= time_tmp;
   uint32_t tmp_micro= ltime.second_part;
 
@@ -112,7 +105,7 @@ int Microtime::store(double from)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   uint64_t from_tmp= (uint64_t)from;
-  type::Time::usec_t fractional_seconds= (type::Time::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS;
+  type::usec_t fractional_seconds= (type::usec_t)((from - from_tmp) * type::Time::FRACTIONAL_DIGITS) % type::Time::FRACTIONAL_DIGITS;
 
   MicroTimestamp temporal;
   if (not temporal.from_int64_t(from_tmp))
@@ -161,7 +154,7 @@ int Microtime::store(int64_t from, bool)
 double Microtime::val_real(void) const
 {
   uint64_t temp;
-  type::Time::usec_t micro_temp;
+  type::usec_t micro_temp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -210,7 +203,7 @@ int64_t Microtime::val_int(void) const
 String *Microtime::val_str(String *val_buffer, String *) const
 {
   uint64_t temp= 0;
-  type::Time::usec_t micro_temp= 0;
+  type::usec_t micro_temp= 0;
 
   unpack_num(temp);
   unpack_num(micro_temp, ptr +8);
@@ -277,17 +270,12 @@ void Microtime::sort_string(unsigned char *to,uint32_t )
   }
 }
 
-void Microtime::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("microsecond timestamp"));
-}
-
 void Microtime::set_time()
 {
   Session *session= getTable() ? getTable()->in_use : current_session;
 
-  type::Time::usec_t fractional_seconds= 0;
-  uint64_t epoch_seconds= session->getCurrentTimestampEpoch(fractional_seconds);
+  type::usec_t fractional_seconds= 0;
+  uint64_t epoch_seconds= session->times.getCurrentTimestampEpoch(fractional_seconds);
 
   set_notnull();
   pack_num(epoch_seconds);

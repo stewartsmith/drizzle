@@ -32,34 +32,26 @@ BOOST_AUTO_TEST_CASE(CreateStandard)
 {
   identifier::Table identifier("test", "a");
   BOOST_REQUIRE_EQUAL("test/a", identifier.getPath());
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.a", path);
+  BOOST_REQUIRE_EQUAL("test.a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateTemporary)
 {
   identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateInternal)
 {
   identifier::Table identifier("test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
-  std::string path;
-  identifier.getSQLPath(path);
-  BOOST_REQUIRE_EQUAL("test.#a", path);
+  BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(StaticTmpTable)
 {
-  std::vector<char> pathname;
-
-  identifier::Table::build_tmptable_filename(pathname);
+  std::string pathname(identifier::Table::build_tmptable_filename());
 
   BOOST_REQUIRE_GT(pathname.size(), 0);
   BOOST_REQUIRE_GT(strlen(&pathname[0]), 0);
@@ -71,14 +63,21 @@ BOOST_AUTO_TEST_CASE(Key)
 
   const identifier::Table::Key key= identifier.getKey();
 
-  BOOST_REQUIRE_EQUAL(key.size(), 7);
-  BOOST_REQUIRE_EQUAL(key.vector()[0], 't');
-  BOOST_REQUIRE_EQUAL(key.vector()[1], 'e');
-  BOOST_REQUIRE_EQUAL(key.vector()[2], 's');
-  BOOST_REQUIRE_EQUAL(key.vector()[3], 't');
-  BOOST_REQUIRE_EQUAL(key.vector()[4], 0);
-  BOOST_REQUIRE_EQUAL(key.vector()[5], 'a');
-  BOOST_REQUIRE_EQUAL(key.vector()[6], 0);
+  BOOST_REQUIRE_EQUAL(key.size(), 13);
+  int i=0;
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'L');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'O');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'C');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'A');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'L');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'e');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 's');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 't');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 'a');
+  BOOST_REQUIRE_EQUAL(key.vector()[i++], 0);
 }
 
 BOOST_AUTO_TEST_CASE(KeyCompare)

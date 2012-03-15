@@ -23,7 +23,7 @@ Table	Create Table
 SESSION_STATEMENTS	CREATE TABLE `SESSION_STATEMENTS` (
   `VARIABLE_NAME` VARCHAR(256) NOT NULL,
   `VARIABLE_VALUE` VARCHAR(1024) NOT NULL
-) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE DEFINER 'SYSTEM'
 SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
 count(*)
 #
@@ -33,11 +33,11 @@ alter_db	0
 alter_table	1
 analyze	0
 begin	2
-change_db	0
+change_db	1
 check	0
 checksum	0
 commit	1
-create_db	0
+create_db	2
 create_index	0
 create_table	2
 delete	1

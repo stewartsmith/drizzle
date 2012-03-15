@@ -1,0 +1,7 @@
+CREATE TABLE t3 (a int) replicate=FALSE;
+SHOW CREATE TABLE t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `a` INT DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci REPLICATE = FALSE
+DROP TABLE t3;

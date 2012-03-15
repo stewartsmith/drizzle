@@ -3,24 +3,21 @@
 # All paths should be given relative to the root
 
 EXTRA_DIST+= \
-	     docs/_static \
-	     docs/_templates \
-	     docs/conf.py \
-	     docs/Doxyfile \
-	     docs/drizzled_header.html \
-	     docs/logo.png \
-	     docs/plugins/list.rst \
-	     docs/pyext/__init__.py \
-	     docs/pyext/options.py \
-	     docs/pyext/confval.py \
-	     docs/pyext/dbtable.py \
-	     docs/_static/drizzle.ico \
+	     ${top_srcdir}/docs/_static \
+	     ${top_srcdir}/docs/_templates \
+	     ${top_srcdir}/docs/conf.py \
+	     ${top_srcdir}/docs/Doxyfile \
+	     ${top_srcdir}/docs/drizzled_header.html \
+	     ${top_srcdir}/docs/*.png \
+	     ${top_srcdir}/docs/pyext/__init__.py \
+	     ${top_srcdir}/docs/pyext/options.py \
+	     ${top_srcdir}/docs/pyext/confval.py \
+	     ${top_srcdir}/docs/pyext/dbtable.py \
+	     ${top_srcdir}/docs/python-inv.txt \
+	     ${top_srcdir}/docs/_static/drizzle.ico \
 	     ${top_srcdir}/docs/*.rst \
-	     ${top_srcdir}/docs/clients/*.rst \
-	     ${top_srcdir}/docs/contributing/*.rst \
-	     ${top_srcdir}/docs/libdrizzle/*.rst \
-	     ${top_srcdir}/docs/installing/*.rst \
-             ${top_srcdir}/docs/testing/*.rst
+	     ${top_srcdir}/docs/*/*.rst \
+	     ${top_srcdir}/docs/*/*/*.rst
 
 # Makefile for Sphinx documentation
 #
@@ -42,14 +39,11 @@ doxygen:
 
 if HAVE_RECENT_SPHINX
 man_MANS+= \
-	   docs/man/drizzledump.1 \
-	   docs/man/drizzleadmin.1
+	   docs/man/drizzledump.1
 DISTCLEANFILES+= \
-           docs/man/drizzledump.1 \
-	   docs/man/drizzleadmin.1
+           docs/man/drizzledump.1
 	   
 docs/man/drizzledump.1: man
-docs/man/drizzleadmin.1: man
 endif
 
 if HAVE_SPHINX

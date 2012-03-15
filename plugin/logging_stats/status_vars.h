@@ -27,10 +27,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
-#define PLUGIN_LOGGING_STATS_STATUS_VARS_H
+#pragma once
 
-#include <drizzled/session.h>
+#include <drizzled/common_fwd.h>
 
 class StatusVars
 {
@@ -66,4 +65,3 @@ private:
 
 };
 
-#endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

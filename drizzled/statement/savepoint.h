@@ -18,26 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SAVEPOINT_H
-#define DRIZZLED_STATEMENT_SAVEPOINT_H
+#pragma once
 
 #include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Savepoint : public Statement
 {
 public:
-  Savepoint(Session *in_session, const lex_string_t &ident) :
+  Savepoint(Session *in_session, str_ref ident) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SAVEPOINT;
-    getSession()->getLex()->ident= ident;
+    set_command(SQLCOM_SAVEPOINT);
+    lex().ident= ident;
   }
 
   bool execute();
@@ -48,7 +44,4 @@ public:
 };
 
 } /* namespace statement */
-
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_SAVEPOINT_H */

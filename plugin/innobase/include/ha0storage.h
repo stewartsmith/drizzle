@@ -25,6 +25,7 @@ its own storage, avoiding duplicates.
 Created September 22, 2007 Vasil Dimov
 *******************************************************/
 
+#pragma once
 #ifndef ha0storage_h
 #define ha0storage_h
 

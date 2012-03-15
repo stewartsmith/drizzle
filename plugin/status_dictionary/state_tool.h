@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H
-#define PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H
+#pragma once
 
 class StateTool : public drizzled::plugin::TableFunction
 {
@@ -36,12 +35,10 @@ public:
     drizzled::sql_var_t option_type;
     drizzled::drizzle_show_var *variables;
 
-    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
+    void fill(const std::string &name, const char *value, drizzled::SHOW_TYPE show_type);
 
   public:
-    Generator(drizzled::Field **arg, drizzled::sql_var_t option_arg,
-              drizzled::drizzle_show_var *show_arg);
-    ~Generator();
+    Generator(drizzled::Field **arg, drizzled::sql_var_t option_arg, drizzled::drizzle_show_var *show_arg);
 
     bool populate();
 
@@ -53,4 +50,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H */

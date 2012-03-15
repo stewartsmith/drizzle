@@ -18,16 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SYSTEM_VARIABLES_H
-#define DRIZZLED_SYSTEM_VARIABLES_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 struct drizzle_system_variables
 {
-  drizzle_system_variables()
-  {}
   /*
     How dynamically allocated system variables are handled:
 
@@ -81,23 +77,20 @@ struct drizzle_system_variables
   plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
-  const CHARSET_INFO  *character_set_filesystem;
+  const charset_info_st  *character_set_filesystem;
 
   /* Both charset and collation parts of these variables are important */
-  const CHARSET_INFO	*collation_server;
+  const charset_info_st	*collation_server;
 
-  inline const CHARSET_INFO  *getCollation(void) 
+  const charset_info_st* getCollation() const
   {
     return collation_server;
   }
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
-
-  Time_zone *time_zone;
 };
 
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SYSTEM_VARIABLES_H */

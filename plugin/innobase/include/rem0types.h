@@ -23,6 +23,7 @@ Record manager global types
 Created 5/30/1994 Heikki Tuuri
 *************************************************************************/
 
+#pragma once
 #ifndef rem0types_h
 #define rem0types_h
 

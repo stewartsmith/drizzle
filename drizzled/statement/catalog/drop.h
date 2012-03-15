@@ -18,22 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CATALOG_DROP_H
-#define DRIZZLED_STATEMENT_CATALOG_DROP_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
+namespace statement {
+namespace catalog {
 
-namespace statement
-{
-
-namespace catalog
-{
-
-class Drop :public Catalog
+class Drop : public Catalog
 {
 public:
-  Drop(Session *in_session, drizzled::lex_string_t &arg);
+  Drop(Session*, str_ref);
   bool authorized() const;
   bool perform() const;
 };
@@ -42,4 +36,3 @@ public:
 } /* namespace statement */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CATALOG_DROP_H */

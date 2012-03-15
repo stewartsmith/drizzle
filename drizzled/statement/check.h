@@ -18,17 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CHECK_H
-#define DRIZZLED_STATEMENT_CHECK_H
+#pragma once
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Check : public Statement
 {
@@ -36,16 +31,13 @@ public:
   Check(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_CHECK;
+    set_command(SQLCOM_CHECK);
   }
 
   bool execute();
-
-  HA_CHECK_OPT check_opt;			// check/repair options
 };
 
 } /* namespace statement */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CHECK_H */

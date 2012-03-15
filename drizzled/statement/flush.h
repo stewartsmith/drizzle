@@ -18,17 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_FLUSH_H
-#define DRIZZLED_STATEMENT_FLUSH_H
+#pragma once
 
+#include <drizzled/sql_lex.h>
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Flush : public Statement
 {
@@ -41,8 +37,8 @@ public:
     flush_status(false),
     flush_global_status(false)
   {
-    getSession()->getLex()->sql_command= SQLCOM_FLUSH;
-    getSession()->getLex()->type= 0;
+    set_command(SQLCOM_FLUSH);
+    lex().type= 0;
   }
 
   bool execute();
@@ -68,12 +64,6 @@ private:
   /**
    * Reload/resets privileges and the different caches.
    *
-   * @note Depending on 'options', it may be very bad to write the
-   * query to the binlog (e.g. FLUSH SLAVE); this is a
-   * pointer where reloadCache() will put 0 if
-   * it thinks we really should not write to the binlog.
-   * Otherwise it will put 1.
-   * 
    * @return Error status code
    * @retval 0 Ok
    * @retval !=0  Error; session->killed is set or session->is_error() is true
@@ -85,4 +75,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_FLUSH_H */

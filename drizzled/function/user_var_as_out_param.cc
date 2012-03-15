@@ -25,8 +25,7 @@
 #include <drizzled/user_var_entry.h>
 #include <drizzled/session.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
@@ -45,18 +44,15 @@ bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
   return false;
 }
 
-void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
+void Item_user_var_as_out_param::set_null_value(const charset_info_st* cs)
 {
-  entry->update_hash(true, 0, 0, STRING_RESULT, cs,
-                     DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
+  entry->update_hash(true, data_ref(), STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
 
-void Item_user_var_as_out_param::set_value(const char *str, uint32_t length,
-                                           const CHARSET_INFO * const cs)
+void Item_user_var_as_out_param::set_value(str_ref str, const charset_info_st* cs)
 {
-  entry->update_hash(false, (void*)str, length, STRING_RESULT, cs,
-                DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
+  entry->update_hash(false, str, STRING_RESULT, cs, DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
 double Item_user_var_as_out_param::val_real()
@@ -85,11 +81,10 @@ type::Decimal* Item_user_var_as_out_param::val_decimal(type::Decimal *)
   return 0;
 }
 
-
 void Item_user_var_as_out_param::print(String *str)
 {
   str->append('@');
-  str->append(name.str,name.length);
+  str->append(name);
 }
 
 } /* namespace drizzled */

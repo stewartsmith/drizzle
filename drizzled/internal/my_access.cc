@@ -15,13 +15,12 @@
 
 #include <config.h>
 
+#include <drizzled/charset.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 /*
   List of file names that causes problem on windows
@@ -56,10 +55,9 @@ static const char *reserved_names[]=
 */
 static int str_list_find(const char **list, const char *str)
 {
-  const char **name;
-  for (name= list; *name; name++)
+  for (const char** name= list; *name; name++)
   {
-    if (!my_strcasecmp(&my_charset_utf8_general_ci, *name, str))
+    if (!my_charset_utf8_general_ci.strcasecmp(*name, str))
       return 1;
   }
   return 0;

@@ -1,0 +1,148 @@
+Summary: Drizzle Database Server, client tools, and client libraries
+Name: @PACKAGE@
+Version: @PANDORA_RELEASE_VERSION@
+Release: 1
+License: GPL/BSD
+Group: System Environment/Libraries
+BuildRequires: gcc-c++
+URL: http://launchpad.net/drizzle
+Requires: boost-program-options >=  1.39
+
+Packager: Brian Aker <brian@tangent.org>
+
+Source: http://launchpad.net/drizzle/trunk/%{version}/+download/drizzle7-%{version}.tar.gz
+Source1: drizzled.init
+BuildRoot: %{_tmppath}/%{name}7-%{version}-%{release}-buildroot
+
+%description
+Drizzle Relational Database Server
+
+This package provides the client utilities.
+
+%package server
+Summary: Drizzle Server
+Group: Applications/Databases
+Requires: boost-program-options >=  1.39
+
+%description server
+Drizzle SQL Relational Database Server
+
+This package provides the Drizzle Server.
+
+%package devel
+Summary: Header files and development libraries for %{name}
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+
+%description devel
+This package contains the header files and development libraries
+for %{name}. If you like to develop programs using %{name}, 
+you will need to install %{name}-devel.
+
+%prep
+%setup -q
+
+%configure
+
+
+%build
+%{__make} %{_smp_mflags}
+
+%install
+%{__rm} -rf %{buildroot}
+%{__make} install  DESTDIR="%{buildroot}" AM_INSTALL_PROGRAM_FLAGS=""
+mkdir -p $RPM_BUILD_ROOT/
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+mkdir -p $RPM_BUILD_ROOT/var/log/drizzled
+mkdir -p $RPM_BUILD_ROOT/var/run/drizzled
+install -m 755 %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/drizzled
+
+%clean
+%{__rm} -rf %{buildroot}
+
+%pre server
+if ! /usr/bin/id -g drizzle &>/dev/null; then
+    /usr/sbin/groupadd -r drizzle
+fi
+if ! /usr/bin/id drizzle &>/dev/null; then
+    /usr/sbin/useradd -M -r -g drizzle -d /var/lib/drizzle -s /bin/false \
+	-c "Drizzle Database Server" drizzle > /dev/null 2>&1
+fi
+
+%post server
+if test $1 = 1
+then
+  /sbin/chkconfig --add drizzled
+fi
+
+%preun server
+if test $1 = 0
+then
+  /sbin/chkconfig --del drizzled
+fi
+
+%postun server
+if test $1 -ge 1
+then
+  /sbin/service drizzled condrestart >/dev/null 2>&1 || :
+fi
+
+%files
+%defattr(-,root,root,-)
+%doc AUTHORS COPYING NEWS README
+%{_bindir}/drizzle
+%{_libdir}/libdrizzle.la
+%{_mandir}/man1/drizzle.1.gz
+%{_mandir}/man1/drizzledump.1.gz
+%{_mandir}/man1/drizzleimport.1.gz
+%{_mandir}/man1/drizzleslap.1.gz
+
+%files server
+%defattr(-,root,root,-)
+%doc AUTHORS COPYING NEWS README
+%{_mandir}/man8/drizzled.8.gz
+%{_mandir}/man8/drizzled7.8.gz
+%{_sbindir}/drizzled
+/etc/rc.d/init.d/drizzled
+%attr(0755,drizzle,drizzle) %dir /var/log/drizzled
+%attr(0755,drizzle,drizzle) %dir /var/run/drizzled
+
+%files devel
+%defattr(-,root,root,-)
+%doc AUTHORS COPYING NEWS README
+%{_libdir}/libdrizzle.a
+%{_includedir}/libdrizzle/drizzle.h
+%{_includedir}/libdrizzle/drizzle_client.h
+%{_includedir}/libdrizzle-1.0/column_client.h
+%{_includedir}/libdrizzle-1.0/column.h
+%{_includedir}/libdrizzle-1.0/column_server.h
+%{_includedir}/libdrizzle-1.0/command_client.h
+%{_includedir}/libdrizzle-1.0/command_server.h
+%{_includedir}/libdrizzle-1.0/conn_client.h
+%{_includedir}/libdrizzle-1.0/conn.h
+%{_includedir}/libdrizzle-1.0/conn_server.h
+%{_includedir}/libdrizzle-1.0/constants.h
+%{_includedir}/libdrizzle-1.0/drizzle_client.h
+%{_includedir}/libdrizzle-1.0/drizzle.h
+%{_includedir}/libdrizzle-1.0/drizzle_server.h
+%{_includedir}/libdrizzle-1.0/field_client.h
+%{_includedir}/libdrizzle-1.0/field_server.h
+%{_includedir}/libdrizzle-1.0/handshake_client.h
+%{_includedir}/libdrizzle-1.0/handshake_server.h
+%{_includedir}/libdrizzle-1.0/libdrizzle.h
+%{_includedir}/libdrizzle-1.0/query.h
+%{_includedir}/libdrizzle-1.0/result_client.h
+%{_includedir}/libdrizzle-1.0/result.h
+%{_includedir}/libdrizzle-1.0/result_server.h
+%{_includedir}/libdrizzle-1.0/row_client.h
+%{_includedir}/libdrizzle-1.0/row_server.h
+%{_includedir}/libdrizzle-1.0/structs.h
+%{_includedir}/libdrizzle-1.0/visibility.h
+%{_libdir}/pkgconfig/drizzle.pc
+%{_libdir}/libdrizzle.so
+%{_mandir}/man3/drizzle_create.3.gz
+
+
+%changelog
+* Wed Dec 21 2012 Brian Aker <brian@tangent.org> - 0.1-1
+- Initial package

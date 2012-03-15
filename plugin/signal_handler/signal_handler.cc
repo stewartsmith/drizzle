@@ -16,25 +16,19 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <config.h>
-
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/signal_handler.h>
-
 #include <drizzled/session.h>
 #include <drizzled/session/cache.h>
-
 #include <drizzled/debug.h>
-
 #include <drizzled/drizzled.h>
-
-#include <drizzled/refresh_version.h>
+#include <drizzled/open_tables_state.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>
@@ -42,12 +36,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 static bool kill_in_progress= false;
 void signal_hand(void);
 
-namespace drizzled
-{
+namespace drizzled {
+
 extern int cleanup_done;
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
@@ -76,15 +69,25 @@ static void kill_server(int sig)
 {
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
+  {
     return;
-  kill_in_progress=true;
-  abort_loop=1;					// This should be set
+  }
+
+  kill_in_progress= true;
+  abort_loop= true;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
+  {
     ignore_signal(sig);                    /* purify inspected */
+  }
+
   if (sig == SIGTERM || sig == 0)
+  {
     errmsg_printf(error::INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
+  }
   else
+  {
     errmsg_printf(error::ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+  }
 
   close_connections();
   clean_up(1);
@@ -114,7 +117,7 @@ static void create_pid_file()
   memset(buff, 0, sizeof(buff));
   snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pid_file.file_string().c_str());
   sql_perror(buff);
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 
@@ -124,7 +127,6 @@ void signal_hand()
   sigset_t set;
   int sig;
   internal::my_thread_init();				// Init new thread
-  boost::this_thread::at_thread_exit(&internal::my_thread_end);
   signal_thread_in_use= true;
 
   if ((drizzled::getDebug().test(drizzled::debug::ALLOW_SIGINT)))
@@ -168,8 +170,8 @@ void signal_hand()
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  session::Cache::singleton().mutex().lock();
-  session::Cache::singleton().mutex().unlock();
+  session::Cache::mutex().lock();
+  session::Cache::mutex().unlock();
   COND_thread_count.notify_all();
 
   if (pthread_sigmask(SIG_BLOCK, &set, NULL))
@@ -179,25 +181,24 @@ void signal_hand()
 
   for (;;)
   {
-    int error;					// Used when debugging
-
-    if (shutdown_in_progress && !abort_loop)
+    if (shutdown_in_progress && not abort_loop)
     {
       sig= SIGTERM;
-      error=0;
     }
     else
     {
-      while ((error= sigwait(&set, &sig)) == EINTR) ;
+      while (sigwait(&set, &sig) == EINTR) 
+      {
+      }
     }
 
     if (cleanup_done)
     {
       signal_thread_in_use= false;
-
       return;
     }
-    switch (sig) {
+    switch (sig) 
+    {
     case SIGTERM:
     case SIGQUIT:
     case SIGKILL:
@@ -205,18 +206,16 @@ void signal_hand()
       /* switch to the old log message processing */
       if (!abort_loop)
       {
-        abort_loop=1;				// mark abort for threads
+        abort_loop= 1;				// mark abort for threads
         kill_server(sig);		// MIT THREAD has a alarm thread
       }
       break;
     case SIGHUP:
-      if (!abort_loop)
+      if (not abort_loop)
       {
-        refresh_version++;
+        g_refresh_version++;
         drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
-      break;
-    default:
       break;
     }
   }
@@ -225,16 +224,14 @@ void signal_hand()
 class SignalHandler :
   public drizzled::plugin::Daemon
 {
-  SignalHandler(const SignalHandler &);
-  SignalHandler& operator=(const SignalHandler &);
   boost::thread thread;
 
 public:
   SignalHandler() :
-    drizzled::plugin::Daemon("Signal Handler")
+    drizzled::plugin::Daemon("signal_handler")
   {
     // @todo fix spurious wakeup issue
-    boost::mutex::scoped_lock scopedLock(session::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
     thread= boost::thread(signal_hand);
     signal_thread= thread.native_handle();
     COND_thread_count.wait(scopedLock);
@@ -259,10 +256,9 @@ public:
     uint32_t count= 2; // How many times to try join and see if the caller died.
     while (not completed and count--)
     {
-      int error;
       int signal= count == 1 ? SIGTSTP : SIGTERM;
       
-      if ((error= pthread_kill(thread.native_handle(), signal)))
+      if (int error= pthread_kill(thread.native_handle(), signal))
       {
         char buffer[1024]; // No reason for number;
         strerror_r(error, buffer, sizeof(buffer));
@@ -292,10 +288,10 @@ DRIZZLE_DECLARE_PLUGIN
   "signal_handler",
   "0.1",
   "Brian Aker",
-  "Default Signal Handler",
+  N_("Signal handler"),
   PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

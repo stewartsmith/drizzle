@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
-#define PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H
+#pragma once
 
 #include <drizzled/generator.h>
 
@@ -36,8 +35,7 @@ public:
   public:
     bool populate();
 
-    Generator(drizzled::Field **arg);
-    ~Generator();
+    Generator(drizzled::Field**);
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -48,4 +46,3 @@ public:
 
 } /* namespace table_cache_dictionary */
 
-#endif /* PLUGIN_TABLE_CACHE_DICTIONARY_TABLE_DEFINITION_CACHE_H */

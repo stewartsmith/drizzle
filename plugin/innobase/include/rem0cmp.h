@@ -23,6 +23,7 @@ Comparison services for records
 Created 7/1/1994 Heikki Tuuri
 ************************************************************************/
 
+#pragma once
 #ifndef rem0cmp_h
 #define rem0cmp_h
 

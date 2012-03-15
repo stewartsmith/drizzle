@@ -17,20 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_HEX_STRING_H
-#define DRIZZLED_ITEM_HEX_STRING_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_hex_string: public Item_basic_constant
+class Item_hex_string : public Item_basic_constant
 {
 public:
   Item_hex_string() {}
-  Item_hex_string(const char *str,uint32_t str_length);
-  enum Type type() const { return VARBIN_ITEM; }
+  Item_hex_string(str_ref);
+  Type type() const { return VARBIN_ITEM; }
   double val_real()
   {
     assert(fixed == 1);
@@ -46,9 +44,8 @@ public:
   enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
   virtual void print(String *str);
   bool eq(const Item *item, bool binary_cmp) const;
-  virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  virtual Item *safe_charset_converter(const charset_info_st * const tocs);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_HEX_STRING_H */

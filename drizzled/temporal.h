@@ -39,8 +39,7 @@
  * @see drizzled/calendar.cc
  */
 
-#ifndef DRIZZLED_TEMPORAL_H
-#define DRIZZLED_TEMPORAL_H
+#pragma once
 
 #define DRIZZLE_MAX_SECONDS 59
 #define DRIZZLE_MAX_SECONDS_WITH_LEAP 61
@@ -68,29 +67,16 @@
 #define DRIZZLE_YY_PART_YEAR  70
 
 #include <drizzled/calendar.h>
-
+#include <drizzled/common_fwd.h>
 #include <cassert>
 #include <ostream>
 
-/* Outside forward declarations */
-namespace type {
-class Decimal;
-}
-
-namespace drizzled
-{
-
-/* Forward declaration needed */
-class TemporalInterval;
-class TemporalIntervalYear;
-class TemporalIntervalDayOrLess;
-class TemporalIntervalDayOrWeek;
-class TemporalIntervalYearMonth;
+namespace drizzled {
 
 /**
  * Base class for all temporal data classes.
  */
-class Temporal
+class DRIZZLED_API Temporal
 {
 protected:
   enum calendar _calendar;
@@ -198,16 +184,11 @@ public:
   friend class TemporalFormat;
 };
 
-/* Forward declaration needed */
-class DateTime;
-class Timestamp;
-class Time;
-
 /**
  * Class representing temporal components in a valid
  * SQL date range, with no time component
  */
-class Date: public Temporal
+class DRIZZLED_API Date: public Temporal
 {
 public:
   Date() :Temporal() {}
@@ -454,7 +435,7 @@ class DateTime;
  * Class representing temporal components having only
  * a time component, with no date structure
  */
-class Time: public Temporal
+class DRIZZLED_API Time: public Temporal
 {
 public:
   Time() :Temporal() {}
@@ -586,7 +567,7 @@ public:
  * Class representing temporal components in a valid
  * SQL datetime range, including a time component
  */
-class DateTime: public Date
+class DRIZZLED_API DateTime: public Date
 {
 public:
   DateTime() :Date() {}
@@ -699,7 +680,7 @@ public:
 /**
  * Class representing temporal components in the UNIX epoch
  */
-class Timestamp: public DateTime
+class DRIZZLED_API Timestamp: public DateTime
 {
 public:
   Timestamp() :DateTime() {}
@@ -765,7 +746,7 @@ std::ostream& operator<<(std::ostream& os, const Timestamp& subject);
  * Class representing temporal components in the UNIX epoch
  * with an additional microsecond component.
  */
-class MicroTimestamp: public Timestamp
+class DRIZZLED_API MicroTimestamp: public Timestamp
 {
 public:
   MicroTimestamp() :Timestamp() {}
@@ -808,7 +789,7 @@ public:
  * Class representing temporal components in the UNIX epoch
  * with an additional nanosecond component.
  */
-class NanoTimestamp: public Timestamp
+class DRIZZLED_API NanoTimestamp: public Timestamp
 {
 public:
   NanoTimestamp() :Timestamp() {}
@@ -830,4 +811,3 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_H */

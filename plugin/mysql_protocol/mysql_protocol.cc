@@ -18,34 +18,38 @@
  */
 
 #include <config.h>
+
+#include <boost/program_options.hpp>
+
+#include <algorithm>
+#include <climits>
+
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/query_id.h>
 #include <drizzled/error/sql_state.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
-#include <algorithm>
-#include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/util/tokenize.h>
-#include "errmsg.h"
-#include "mysql_protocol.h"
-#include "mysql_password.h"
-#include "options.h"
+#include <plugin/mysql_protocol/errmsg.h>
+#include <plugin/mysql_protocol/mysql_protocol.h>
+#include <plugin/mysql_protocol/mysql_password.h>
+#include <plugin/mysql_protocol/options.h>
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/function.h>
-#include <libdrizzle/constants.h>
+#include <drizzled/diagnostics_area.h>
+#include <drizzled/system_variables.h>
+#include <libdrizzle-2.0/constants.h>
 
+#define MIN_HANDSHAKE_SIZE 6
 #define PROTOCOL_VERSION 10
 
 namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
-std::vector<std::string> ClientMySQLProtocol::mysql_admin_ip_addresses;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 
 static port_constraint port;
@@ -60,56 +64,43 @@ static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
-
-ProtocolCounters *ListenMySQLProtocol::mysql_counters= new ProtocolCounters();
-
-ListenMySQLProtocol::~ListenMySQLProtocol()
-{ }
+ProtocolCounters ListenMySQLProtocol::mysql_counters;
 
 void ListenMySQLProtocol::addCountersToTable()
 {
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connection_count"), &getCounters()->connectionCount));
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connected"), &getCounters()->connected));
-  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters()->failedConnections));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connection_count"), &getCounters().connectionCount));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("connected"), &getCounters().connected));
+  counters.push_back(new drizzled::plugin::ListenCounter(new std::string("failed_connections"), &getCounters().failedConnections));
 }
 
-const std::string ListenMySQLProtocol::getHost(void) const
+const std::string ListenMySQLProtocol::getHost() const
 {
   return _hostname;
 }
 
-in_port_t ListenMySQLProtocol::getPort(void) const
+in_port_t ListenMySQLProtocol::getPort() const
 {
   return port.get();
 }
 
 plugin::Client *ListenMySQLProtocol::getClient(int fd)
 {
-  int new_fd;
-  new_fd= acceptTcp(fd);
-  if (new_fd == -1)
-    return NULL;
-
-  return new ClientMySQLProtocol(new_fd, _using_mysql41_protocol, getCounters());
+  int new_fd= acceptTcp(fd);
+  return new_fd == -1 ? NULL : new ClientMySQLProtocol(new_fd, getCounters());
 }
 
-ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol, ProtocolCounters *set_counters):
-  is_admin_connection(false),
-  _using_mysql41_protocol(using_mysql41_protocol),
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, ProtocolCounters& set_counters) :
   _is_interactive(false),
   counters(set_counters)
 {
-  
   net.vio= 0;
 
   if (fd == -1)
     return;
 
-  if (drizzleclient_net_init_sock(&net, fd, buffer_length.get()))
-    throw bad_alloc();
-
-  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
+  net.init(fd, buffer_length.get());
+  net.set_read_timeout(read_timeout.get());
+  net.set_write_timeout(write_timeout.get());
   net.retry_count=retry_count.get();
 }
 
@@ -119,9 +110,9 @@ ClientMySQLProtocol::~ClientMySQLProtocol()
     net.vio->close();
 }
 
-int ClientMySQLProtocol::getFileDescriptor(void)
+int ClientMySQLProtocol::getFileDescriptor()
 {
-  return drizzleclient_net_get_sd(&net);
+  return net.get_sd();
 }
 
 bool ClientMySQLProtocol::isConnected()
@@ -129,70 +120,41 @@ bool ClientMySQLProtocol::isConnected()
   return net.vio != 0;
 }
 
-bool ClientMySQLProtocol::isReading(void)
-{
-  return net.reading_or_writing == 1;
-}
-
-bool ClientMySQLProtocol::isWriting(void)
-{
-  return net.reading_or_writing == 2;
-}
-
 bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)
     return false;
-  bool ret= drizzleclient_net_write(&net, (unsigned char*) packet.ptr(),
-                           packet.length());
+  bool ret= net.write(packet.ptr(), packet.length());
   packet.length(0);
   return ret;
 }
 
-void ClientMySQLProtocol::close(void)
+void ClientMySQLProtocol::close()
 {
   if (net.vio)
   { 
-    drizzleclient_net_close(&net);
-    drizzleclient_net_end(&net);
-    if (is_admin_connection)
-    {
-      counters->adminConnected.decrement();
-    }
-    else
-    {
-      counters->connected.decrement();
-    }
+    net.close();
+    net.end();
+    counters.connected.decrement();
   }
 }
 
 bool ClientMySQLProtocol::authenticate()
 {
-  bool connection_is_valid;
-  if (is_admin_connection)
-  {
-    counters->adminConnectionCount.increment();
-    counters->adminConnected.increment();
-  }
-  else
-  {
-    counters->connectionCount.increment();
-    counters->connected.increment();
-  }
+  counters.connectionCount.increment();
+  counters.connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
-  drizzleclient_net_set_read_timeout(&net, connect_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, connect_timeout.get());
+  net.set_read_timeout(connect_timeout.get());
+  net.set_write_timeout(connect_timeout.get());
 
-  connection_is_valid= checkConnection();
-
-  if (connection_is_valid)
+  if (checkConnection())
   {
-    if (not is_admin_connection and (counters->connected > counters->max_connections))
+    if (counters.connected > counters.max_connections)
     {
       std::string errmsg(ER(ER_CON_COUNT_ERROR));
       sendError(ER_CON_COUNT_ERROR, errmsg.c_str());
-      counters->failedConnections.increment();
+      counters.failedConnections.increment();
     }
     else
     {
@@ -201,18 +163,18 @@ bool ClientMySQLProtocol::authenticate()
   }
   else
   {
-    sendError(session->main_da.sql_errno(), session->main_da.message());
-    counters->failedConnections.increment();
+    sendError(session->main_da().sql_errno(), session->main_da().message());
+    counters.failedConnections.increment();
     return false;
   }
 
   /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net, read_timeout.get());
-  drizzleclient_net_set_write_timeout(&net, write_timeout.get());
+  net.set_read_timeout(read_timeout.get());
+  net.set_write_timeout(write_timeout.get());
   return true;
 }
 
-bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
+bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t& packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -228,23 +190,22 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 #endif
 
   net.pkt_nr=0;
-
-  *packet_length= drizzleclient_net_read(&net);
-  if (*packet_length == packet_error)
+  packet_length= net.read();
+  if (packet_length == packet_error)
   {
     /* Check if we can continue without closing the connection */
 
     if(net.last_errno== ER_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    if (session->main_da.status() == Diagnostics_area::DA_ERROR)
-      sendError(session->main_da.sql_errno(), session->main_da.message());
+    if (session->main_da().status() == Diagnostics_area::DA_ERROR)
+      sendError(session->main_da().sql_errno(), session->main_da().message());
     else
       sendOK();
 
-    if (net.error != 3)
+    if (net.error_ != 3)
       return false;                       // We have to close it.
 
-    net.error= 0;
+    net.error_= 0;
   }
 
   *l_packet= (char*) net.read_pos;
@@ -258,16 +219,16 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
     it sets packet[packet_length]= 0, but only for non-zero packets.
   */
 
-  if (*packet_length == 0)                       /* safety */
+  if (packet_length == 0)                       /* safety */
   {
     /* Initialize with COM_SLEEP packet */
-    (*l_packet)[0]= (unsigned char) COM_SLEEP;
-    *packet_length= 1;
+    (*l_packet)[0]= COM_SLEEP;
+    packet_length= 1;
   }
-  else if (_using_mysql41_protocol)
+  else
   {
     /* Map from MySQL commands to Drizzle commands. */
-    switch ((int)(*l_packet)[0])
+    switch ((*l_packet)[0])
     {
     case 0: /* SLEEP */
     case 1: /* QUIT */
@@ -276,34 +237,31 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
       break;
 
     case 8: /* SHUTDOWN */
-      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      (*l_packet)[0]= COM_SHUTDOWN;
       break;
 
     case 12: /* KILL */
-      (*l_packet)[0]= (unsigned char) COM_KILL;
+      (*l_packet)[0]= COM_KILL;
       break;
 
     case 14: /* PING */
-      (*l_packet)[0]= (unsigned char) COM_PING;
+      (*l_packet)[0]= COM_PING;
       break;
-
 
     default:
       /* Respond with unknown command for MySQL commands we don't support. */
-      (*l_packet)[0]= (unsigned char) COM_END;
-      *packet_length= 1;
-      break;
+      (*l_packet)[0]= COM_END;
+      packet_length= 1;
     }
   }
 
   /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
-  (*l_packet)[*packet_length]= '\0';                  /* safety */
+  (*l_packet)[packet_length]= '\0';                  /* safety */
 
 #ifdef NEVER
   /* See comment above. */
   /* Restore read timeout value */
-  drizzleclient_net_set_read_timeout(&net,
-                                     session->variables.net_read_timeout);
+  drizzleclient_net_set_read_timeout(&net, session->variables.net_read_timeout);
 #endif
 
   return true;
@@ -342,17 +300,17 @@ void ClientMySQLProtocol::sendOK()
   }
 
   buff[0]=0;                    // No fields
-  if (session->main_da.status() == Diagnostics_area::DA_OK)
+  if (session->main_da().status() == Diagnostics_area::DA_OK)
   {
-    if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da.found_rows())
-      pos=storeLength(buff+1,session->main_da.found_rows());
+    if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da().found_rows())
+      pos=storeLength(buff+1,session->main_da().found_rows());
     else
-      pos=storeLength(buff+1,session->main_da.affected_rows());
-    pos=storeLength(pos, session->main_da.last_insert_id());
-    int2store(pos, session->main_da.server_status());
+      pos=storeLength(buff+1,session->main_da().affected_rows());
+    pos=storeLength(pos, session->main_da().last_insert_id());
+    int2store(pos, session->main_da().server_status());
     pos+=2;
-    tmp= min(session->main_da.total_warn_count(), (uint32_t)65535);
-    message= session->main_da.message();
+    tmp= min(session->main_da().total_warn_count(), (uint32_t)65535);
+    message= session->main_da().message();
   }
   else
   {
@@ -367,7 +325,7 @@ void ClientMySQLProtocol::sendOK()
   int2store(pos, tmp);
   pos+= 2;
 
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
 
   if (message && message[0])
   {
@@ -376,10 +334,10 @@ void ClientMySQLProtocol::sendOK()
     memcpy(pos,(unsigned char*) message,length);
     pos+=length;
   }
-  drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
-  drizzleclient_net_flush(&net);
+  net.write(buff, pos - buff);
+  net.flush();
 
-  session->main_da.can_overwrite_status= false;
+  session->main_da().can_overwrite_status= false;
 }
 
 /**
@@ -400,13 +358,12 @@ void ClientMySQLProtocol::sendOK()
 void ClientMySQLProtocol::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
-  if (net.vio != 0)
+  if (net.vio)
   {
-    session->main_da.can_overwrite_status= true;
-    writeEOFPacket(session->main_da.server_status(),
-                   session->main_da.total_warn_count());
-    drizzleclient_net_flush(&net);
-    session->main_da.can_overwrite_status= false;
+    session->main_da().can_overwrite_status= true;
+    writeEOFPacket(session->main_da().server_status(), session->main_da().total_warn_count());
+    net.flush();
+    session->main_da().can_overwrite_status= false;
   }
   packet.shrink(buffer_length.get());
 }
@@ -414,11 +371,8 @@ void ClientMySQLProtocol::sendEOF()
 
 void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err)
 {
-  uint32_t length;
-  /*
-    buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
-  */
-  unsigned char buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
+  // buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
+  unsigned char buff[2 + 1 + SQLSTATE_LENGTH + DRIZZLE_ERRMSG_SIZE];
 
   assert(sql_errno != EE_OK);
   assert(err && err[0]);
@@ -427,7 +381,7 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
     It's one case when we can push an error even though there
     is an OK or EOF already.
   */
-  session->main_da.can_overwrite_status= true;
+  session->main_da().can_overwrite_status= true;
 
   /* Abort multi-result sets */
   session->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
@@ -446,24 +400,18 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
   }
 
   int2store(buff, static_cast<uint16_t>(sql_errno));
-  pos= buff+2;
 
   /* The first # is to make the client backward compatible */
   buff[2]= '#';
-  pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
+  unsigned char* pos= (unsigned char*) strcpy((char*) buff+3, error::convert_to_sqlstate(sql_errno));
   pos+= strlen(error::convert_to_sqlstate(sql_errno));
 
   char *tmp= strncpy((char*)pos, err, DRIZZLE_ERRMSG_SIZE-1);
   tmp+= strlen((char*)pos);
   tmp[0]= '\0';
-  length= (uint32_t)(tmp-(char*)buff);
-  err= (char*) buff;
-
-  drizzleclient_net_write_command(&net,(unsigned char) 255, (unsigned char*) "", 0, (unsigned char*) err, length);
-
-  drizzleclient_net_flush(&net);
-
-  session->main_da.can_overwrite_status= false;
+  net.write_command(255, data_ref(), data_ref(buff, tmp));
+  net.flush();
+  session->main_da().can_overwrite_status= false;
 }
 
 /**
@@ -484,41 +432,38 @@ void ClientMySQLProtocol::sendError(drizzled::error_t sql_errno, const char *err
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ClientMySQLProtocol::sendFields(List<Item> *list)
+void ClientMySQLProtocol::sendFields(List<Item>& list)
 {
-  List<Item>::iterator it(list->begin());
-  Item *item;
+  List<Item>::iterator it(list.begin());
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  unsigned char *row_pos= storeLength(buff, list->size());
-  (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
+  unsigned char *row_pos= storeLength(buff, list.size());
+  (void) net.write(buff, row_pos - buff);
 
-  while ((item=it++))
+  while (Item* item=it++)
   {
-    char *pos;
     SendField field;
     item->make_field(&field);
 
     packet.length(0);
 
-    if (store(STRING_WITH_LEN("def")) ||
-        store(field.db_name) ||
-        store(field.table_name) ||
-        store(field.org_table_name) ||
-        store(field.col_name) ||
-        store(field.org_col_name) ||
-        packet.realloc(packet.length()+12))
-      goto err;
+    store(STRING_WITH_LEN("def"));
+    store(field.db_name);
+    store(field.table_name);
+    store(field.org_table_name);
+    store(field.col_name);
+    store(field.org_col_name);
+    packet.realloc(packet.length()+12);
 
     /* Store fixed length fields */
-    pos= (char*) packet.ptr()+packet.length();
+    char* pos= (char*) packet.ptr()+packet.length();
     *pos++= 12;                // Length of packed fields
     /* No conversion */
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
 
-    if (_using_mysql41_protocol)
+    if (true) // _using_mysql41_protocol)
     {
       /* Switch to MySQL field numbering. */
       switch (field.type)
@@ -567,6 +512,10 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
         pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
         break;
 
+      case DRIZZLE_TYPE_IPV6:
+        pos[6]= DRIZZLE_COLUMN_TYPE_VARCHAR;
+        break;
+
       case DRIZZLE_TYPE_BOOLEAN:
         pos[6]= DRIZZLE_COLUMN_TYPE_TINY;
         break;
@@ -607,15 +556,9 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
     Send no warning information, as it will be sent at statement end.
   */
   writeEOFPacket(session->server_status, session->total_warn_count);
-  return 0;
-
-err:
-  my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
-             MYF(0));
-  return 1;
 }
 
-bool ClientMySQLProtocol::store(Field *from)
+void ClientMySQLProtocol::store(Field *from)
 {
   if (from->is_null())
     return store();
@@ -629,76 +572,65 @@ bool ClientMySQLProtocol::store(Field *from)
 
   from->val_str_internal(&str);
 
-  return netStoreData((const unsigned char *)str.ptr(), str.length());
+  netStoreData(str.ptr(), str.length());
 }
 
-bool ClientMySQLProtocol::store(void)
+void ClientMySQLProtocol::store()
 {
   char buff[1];
   buff[0]= (char)251;
-  return packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
+  packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
 }
 
-bool ClientMySQLProtocol::store(int32_t from)
+void ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, internal::int10_to_str(from, buff, -10) - buff);
 }
 
-bool ClientMySQLProtocol::store(uint32_t from)
+void ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, internal::int10_to_str(from, buff, 10) - buff);
 }
 
-bool ClientMySQLProtocol::store(int64_t from)
+void ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
+  netStoreData(buff, internal::int64_t10_to_str(from, buff, -10) - buff);
 }
 
-bool ClientMySQLProtocol::store(uint64_t from)
+void ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
+  netStoreData(buff, internal::int64_t10_to_str(from, buff, 10) - buff);
 }
 
-bool ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
+void ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
-  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
+  netStoreData(buffer->ptr(), buffer->length());
 }
 
-bool ClientMySQLProtocol::store(const char *from, size_t length)
+void ClientMySQLProtocol::store(const char *from, size_t length)
 {
-  return netStoreData((const unsigned char *)from, length);
+  netStoreData(from, length);
 }
 
-bool ClientMySQLProtocol::wasAborted(void)
+bool ClientMySQLProtocol::wasAborted()
 {
-  return net.error && net.vio != 0;
+  return net.error_ && net.vio != 0;
 }
 
-bool ClientMySQLProtocol::haveMoreData(void)
+bool ClientMySQLProtocol::haveError()
 {
-  return drizzleclient_net_more_data(&net);
+  return net.error_ || net.vio == 0;
 }
 
-bool ClientMySQLProtocol::haveError(void)
+bool ClientMySQLProtocol::checkConnection()
 {
-  return net.error || net.vio == 0;
-}
-
-bool ClientMySQLProtocol::checkConnection(void)
-{
-  uint32_t pkt_len= 0;
-  char *end;
   char scramble[SCRAMBLE_LENGTH];
-  identifier::User::shared_ptr user_identifier= identifier::User::make_shared();
+  identifier::user::mptr user_identifier= identifier::User::make_shared();
 
   makeScramble(scramble);
 
@@ -707,7 +639,7 @@ bool ClientMySQLProtocol::checkConnection(void)
     char ip[NI_MAXHOST];
     uint16_t peer_port;
 
-    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
+    if (net.peer_addr(ip, NI_MAXHOST, peer_port))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), ip);
       return false;
@@ -715,17 +647,16 @@ bool ClientMySQLProtocol::checkConnection(void)
 
     user_identifier->setAddress(ip);
   }
-  drizzleclient_net_keepalive(&net, true);
+  net.keepalive(true);
 
+  char* end;
+  uint32_t pkt_len= 0;
   uint32_t server_capabilites;
   {
     /* buff[] needs to big enough to hold the server_version variable */
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
 
-    server_capabilites= CLIENT_BASIC_FLAGS;
-
-    if (_using_mysql41_protocol)
-      server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
+    server_capabilites= CLIENT_BASIC_FLAGS | CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
@@ -759,31 +690,25 @@ bool ClientMySQLProtocol::checkConnection(void)
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
-    if (drizzleclient_net_write_command(&net
-          , (unsigned char) PROTOCOL_VERSION
-          , (unsigned char*) ""
-          , 0
-          , (unsigned char*) buff
-          , (size_t) (end-buff)) 
-        ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
+    if (net.write_command(PROTOCOL_VERSION, data_ref(), data_ref(buff, end)) 
+        || (pkt_len= net.read()) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
       return false;
     }
   }
-  if (packet.alloc(buffer_length.get()))
-    return false; /* The error is set by alloc(). */
+  packet.alloc(buffer_length.get());
 
   client_capabilities= uint2korr(net.read_pos);
-  if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
+  if (not (client_capabilities & CLIENT_PROTOCOL_MYSQL41))
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
-  session->max_client_packet_length= uint4korr(net.read_pos + 4);
+  // session->max_client_packet_length= uint4korr(net.read_pos + 4);
   end= (char*) net.read_pos + 32;
 
   /*
@@ -797,8 +722,6 @@ bool ClientMySQLProtocol::checkConnection(void)
     my_error(ER_HANDSHAKE_ERROR, MYF(0), user_identifier->address().c_str());
     return false;
   }
-
-  net.return_status= &session->server_status;
 
   char *user= end;
   char *passwd= strchr(user, '\0')+1;
@@ -816,7 +739,11 @@ bool ClientMySQLProtocol::checkConnection(void)
       passwd < (char *) net.read_pos + pkt_len)
   {
     passwd_len= (unsigned char)(*passwd++);
-    if (passwd_len > 0)
+    if (passwd_len > 0 and client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
+    {
+      user_identifier->setPasswordType(identifier::User::PLAIN_TEXT);
+    }
+    else if (passwd_len > 0)
     {
       user_identifier->setPasswordType(identifier::User::MYSQL_HASH);
       user_identifier->setPasswordContext(scramble, SCRAMBLE_LENGTH);
@@ -854,54 +781,35 @@ bool ClientMySQLProtocol::checkConnection(void)
     user_len-= 2;
   }
 
-  if (client_capabilities & CLIENT_ADMIN)
-  {
-    if ((strncmp(user, "root", 4) == 0) and isAdminAllowed())
-    {
-      is_admin_connection= true;
-    }
-    else
-    {
-      my_error(ER_ADMIN_ACCESS, MYF(0));
-      return false;
-    }
-  }
-
   if (client_capabilities & CLIENT_INTERACTIVE)
   {
     _is_interactive= true;
   }
 
+  if (client_capabilities & CLIENT_CAPABILITIES_PLUGIN_AUTH)
+  {
+    passwd_len= strlen(passwd);
+  }
+
   user_identifier->setUser(user);
   session->setUser(user_identifier);
 
-  return session->checkUser(string(passwd, passwd_len),
-                            string(l_db ? l_db : ""));
+  return session->checkUser(string(passwd, passwd_len), string(l_db ? l_db : ""));
 
 }
 
-bool ClientMySQLProtocol::isAdminAllowed(void)
-{
-  if (std::find(mysql_admin_ip_addresses.begin(), mysql_admin_ip_addresses.end(), session->user()->address()) != mysql_admin_ip_addresses.end())
-    return true;
-
-  return false;
-}
-
-bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
+void ClientMySQLProtocol::netStoreData(const void* from, size_t length)
 {
   size_t packet_length= packet.length();
   /*
      The +9 comes from that strings of length longer than 16M require
      9 bytes to be stored (see storeLength).
   */
-  if (packet_length+9+length > packet.alloced_length() &&
-      packet.realloc(packet_length+9+length))
-    return 1;
+  if (packet_length+9+length > packet.alloced_length())
+      packet.realloc(packet_length+9+length);
   unsigned char *to= storeLength((unsigned char*) packet.ptr()+packet_length, length);
   memcpy(to,from,length);
   packet.length((size_t) (to+length-(unsigned char*) packet.ptr()));
-  return 0;
 }
 
 /**
@@ -909,8 +817,7 @@ bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
   write it to the network output buffer.
 */
 
-void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
-                                         uint32_t total_warn_count)
+void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status, uint32_t total_warn_count)
 {
   unsigned char buff[5];
   /*
@@ -928,7 +835,7 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
   if (session->is_fatal_error)
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
-  drizzleclient_net_write(&net, buff, 5);
+  net.write(buff, 5);
 }
 
 /*
@@ -946,26 +853,26 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
 
 unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t length)
 {
-  if (length < (uint64_t) 251LL)
+  if (length < 251)
   {
-    *buffer=(unsigned char) length;
+    *buffer= (unsigned char) length;
     return buffer+1;
   }
   /* 251 is reserved for NULL */
-  if (length < (uint64_t) 65536LL)
+  if (length < 65536)
   {
-    *buffer++=252;
-    int2store(buffer,(uint32_t) length);
+    *buffer++= 252;
+    int2store(buffer, (uint32_t) length);
     return buffer+2;
   }
-  if (length < (uint64_t) 16777216LL)
+  if (length < 16777216)
   {
     *buffer++=253;
-    int3store(buffer,(uint32_t) length);
+    int3store(buffer, (uint32_t) length);
     return buffer+3;
   }
   *buffer++=254;
-  int8store(buffer,length);
+  int8store(buffer, length);
   return buffer+8;
 }
 
@@ -990,19 +897,6 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   }
 }
 
-void ClientMySQLProtocol::mysql_compose_ip_addresses(vector<string> options)
-{
-  for (vector<string>::iterator it= options.begin();
-       it != options.end();
-       ++it)
-  {
-    tokenize(*it, mysql_admin_ip_addresses, ",", true);
-  }
-}
-
-static ListenMySQLProtocol *listen_obj= NULL;
-plugin::Create_function<MySQLPassword> *mysql_password= NULL;
-
 static int init(drizzled::module::Context &context)
 {  
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
@@ -1012,10 +906,9 @@ static int init(drizzled::module::Context &context)
 
   const module::option_map &vm= context.getOptions();
 
-  mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
-  context.add(mysql_password);
+  context.add(new plugin::Create_function<MySQLPassword>(MySQLPasswordName));
 
-  listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>(), true);
+  ListenMySQLProtocol* listen_obj= new ListenMySQLProtocol("mysql_protocol", vm["bind-address"].as<std::string>());
   listen_obj->addCountersToTable();
   context.add(listen_obj); 
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
@@ -1024,10 +917,8 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value<uint32_t>("write_timeout", write_timeout));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("retry_count", retry_count));
   context.registerVariable(new sys_var_constrained_value<uint32_t>("buffer_length", buffer_length));
-  context.registerVariable(new sys_var_const_string_val("bind_address",
-                                                        vm["bind-address"].as<std::string>()));
-
-  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_counters->max_connections));
+  context.registerVariable(new sys_var_const_string_val("bind_address", vm["bind-address"].as<std::string>()));
+  context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &ListenMySQLProtocol::mysql_counters.max_connections));
 
   return 0;
 }
@@ -1054,14 +945,11 @@ static void init_options(drizzled::module::option_context &context)
           po::value<buffer_constraint>(&buffer_length)->default_value(16384),
           _("Buffer length."));
   context("bind-address",
-          po::value<string>()->default_value(""),
+          po::value<string>()->default_value("localhost"),
           _("Address to bind to."));
   context("max-connections",
-          po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters->max_connections)->default_value(1000),
+          po::value<uint32_t>(&ListenMySQLProtocol::mysql_counters.max_connections)->default_value(1000),
           _("Maximum simultaneous connections."));
-  context("admin-ip-addresses",
-          po::value<vector<string> >()->composing()->notifier(&ClientMySQLProtocol::mysql_compose_ip_addresses),
-          _("A restrictive IP address list for incoming admin connections."));
 }
 
 } /* namespace drizzle_plugin */
@@ -1069,13 +957,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "mysql-protocol",
+  "mysql_protocol",
   "0.1",
   "Eric Day",
-  "MySQL Protocol Module",
+  N_("MySQL network protocol"),
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::init,             /* Plugin Init */
-  NULL, /* depends */
-  drizzle_plugin::init_options    /* config options */
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

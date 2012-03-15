@@ -15,13 +15,9 @@
 
 /* Defines to make different thread packages compatible */
 
-
-
-#ifndef DRIZZLED_INTERNAL_MY_PTHREAD_H
-#define DRIZZLED_INTERNAL_MY_PTHREAD_H
+#pragma once
 
 #include <unistd.h>
-
 #include <boost/date_time.hpp>
 
 #ifndef ETIME
@@ -41,14 +37,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-namespace internal
-{
-
-#define pthread_key(T,V) pthread_key_t V
-#define pthread_handler_t void *
-typedef void *(* pthread_handler)(void *);
+namespace drizzled {
+namespace internal {
 
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
@@ -108,21 +98,8 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define ESRCH 1
 #endif
 
-extern bool my_thread_global_init(void);
-extern void my_thread_global_end(void);
-DRIZZLED_API bool my_thread_init(void);
-DRIZZLED_API void my_thread_end(void);
-extern const char *my_thread_name(void);
-
-/* All thread specific variables are in the following struct */
-
-/**
-  A default thread stack size of zero means that we are going to use
-  the OS defined thread stack size (this varies from OS to OS).
- */
-#define DEFAULT_THREAD_STACK	0
+DRIZZLED_API void my_thread_init();
 
 } /* namespace internal */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_INTERNAL_MY_PTHREAD_H */

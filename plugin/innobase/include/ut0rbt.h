@@ -28,6 +28,7 @@ Various utilities
 Created 2007-03-20 Sunny Bains
 *******************************************************/
 
+#pragma once
 #ifndef INNOBASE_UT0RBT_H
 #define INNOBASE_UT0RBT_H
 

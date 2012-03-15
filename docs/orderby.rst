@@ -1,4 +1,4 @@
-Order By
+ORDER BY
 ========
 
 The ORDER BY keyword is used to sort the result-set by column; by default, it sorts the records in ascending order.
@@ -44,6 +44,8 @@ The result-set will look like this:
 | 2 	  | Roberts    | Teri 	  |21 Brown  | Chicago|
 +---------+------------+----------+----------+--------+
 
+Without using "ORDERBY" in the following query, the result-set will be non-deterministic, and could returned matching rows in a different order for each query. 
+
 ORDER BY DESC can be used to reverse the order of the result set.
 
 .. code-block:: mysql
@@ -51,9 +53,6 @@ ORDER BY DESC can be used to reverse the order of the result set.
 	SELECT * FROM Persons
 	ORDER BY LastName DESC;
 
-.. todo::
-
-   add something about SELECT * without ORDER BY being non-deterministic
 
 .. todo::
 

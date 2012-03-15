@@ -17,17 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_KEY_FIELD_H
-#define DRIZZLED_OPTIMIZER_KEY_FIELD_H
+#pragma once
 
 #include <drizzled/sql_select.h>
-
 #include <vector>
 
-namespace drizzled
-{
-namespace optimizer
-{
+namespace drizzled {
+namespace optimizer {
 
 /**
  * Class used when finding key fields
@@ -84,7 +80,7 @@ public:
     val= in_val;
   }
 
-  uint32_t getLevel()
+  uint32_t getLevel() const
   {
     return level;
   }
@@ -94,7 +90,7 @@ public:
     level= in_level;
   }
 
-  uint32_t getOptimizeFlags()
+  uint32_t getOptimizeFlags() const
   {
     return optimize;
   }
@@ -291,4 +287,3 @@ void add_key_equal_fields(KeyField **key_fields,
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_KEY_FIELD_H */

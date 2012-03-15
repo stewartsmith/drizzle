@@ -19,29 +19,19 @@
 
 
 
-#ifndef DRIZZLED_PLUGIN_PLUGIN_H
-#define DRIZZLED_PLUGIN_PLUGIN_H
+#pragma once
 
 #include <string>
 #include <vector>
 #include <map>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace plugin {
 
-class Session;
-
-namespace module
-{
-class Module;
-}
-
-namespace plugin
-{
-
-class DRIZZLED_API Plugin
+class DRIZZLED_API Plugin : boost::noncopyable
 {
 private:
   const std::string _name;
@@ -49,9 +39,6 @@ private:
   module::Module *_module;
   const std::string _type_name;
 
-  Plugin();
-  Plugin(const Plugin&);
-  Plugin& operator=(const Plugin &);
 public:
   typedef std::pair<const std::string, const std::string> map_key;
   typedef std::map<const map_key, plugin::Plugin *> map;
@@ -118,4 +105,3 @@ public:
 } /* end namespace plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_PLUGIN_H */

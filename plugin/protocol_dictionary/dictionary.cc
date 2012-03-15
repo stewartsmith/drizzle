@@ -75,10 +75,8 @@ static ProtocolTool *protocols;
 
 static int init(drizzled::module::Context &context)
 {
-  protocols= new(std::nothrow)ProtocolTool;
-
-  context.add(protocols);
-
+  protocols= new ProtocolTool;
+	context.add(protocols);
   return 0;
 }
 
@@ -88,11 +86,11 @@ DRIZZLE_DECLARE_PLUGIN
   "protocol_dictionary",
   "1.0",
   "Andrew Hutchings",
-  "Provides dictionary for protocol counters.",
+  N_("Dictionary of protocol counters"),
   PLUGIN_LICENSE_GPL,
-  init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;
 

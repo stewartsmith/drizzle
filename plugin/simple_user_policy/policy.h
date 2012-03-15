@@ -18,33 +18,34 @@
  */
 
 
-#ifndef PLUGIN_SIMPLE_USER_POLICY_POLICY_H
-#define PLUGIN_SIMPLE_USER_POLICY_POLICY_H
+#pragma once
 
-#include <iostream>
+#include <iosfwd>
 
 #include <drizzled/plugin/authorization.h>
 
 namespace simple_user_policy
 {
 
+extern std::string remap_dot_to;
+
 class Policy :
   public drizzled::plugin::Authorization
 {
 public:
   Policy() :
-    drizzled::plugin::Authorization("Simple User Policy")
+    drizzled::plugin::Authorization("simple_user_policy")
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
-                              drizzled::identifier::Schema::const_reference schema);
+                              const drizzled::identifier::Schema& schema);
 
   virtual bool restrictProcess(const drizzled::identifier::User &user_ctx,
                                const drizzled::identifier::User &session_ctx);
 };
 
 inline bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
-                                   drizzled::identifier::Schema::const_reference schema)
+                                   const drizzled::identifier::Schema& schema)
 {
   if ((user_ctx.username() == "root")
       || schema.compare("data_dictionary")
@@ -53,7 +54,17 @@ inline bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
     return false;
   }
 
-  return not schema.compare(user_ctx.username());
+  std::string username(user_ctx.username());
+  size_t found;
+
+  found=username.find_first_of('.');
+  while (found!=std::string::npos)
+  {
+    username.replace(found, 1, remap_dot_to);
+    found=username.find_first_of('.',found+1);
+  }
+
+  return not schema.compare(username);
 }
 
 inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
@@ -67,4 +78,3 @@ inline bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
 
 } /* namespace simple_user_policy */
 
-#endif /* PLUGIN_SIMPLE_USER_POLICY_POLICY_H */

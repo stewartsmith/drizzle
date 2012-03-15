@@ -27,9 +27,9 @@ using namespace drizzled;
 IndexesTool::IndexesTool() :
   TablesTool("INDEXES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("INDEX_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("INDEX_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
@@ -114,37 +114,7 @@ void IndexesTool::Generator::fill()
   push(static_cast<uint64_t>(index.key_length()));
 
   /* INDEX_TYPE */
-  {
-    const char *str;
-    uint32_t length;
-
-    switch (index.type())
-    {
-    default:
-    case message::Table::Index::UNKNOWN_INDEX:
-      str= "UNKNOWN";
-      length= sizeof("UNKNOWN");
-      break;
-    case message::Table::Index::BTREE:
-      str= "BTREE";
-      length= sizeof("BTREE");
-      break;
-    case message::Table::Index::RTREE:
-      str= "RTREE";
-      length= sizeof("RTREE");
-      break;
-    case message::Table::Index::HASH:
-      str= "HASH";
-      length= sizeof("HASH");
-      break;
-    case message::Table::Index::FULLTEXT:
-      str= "FULLTEXT";
-      length= sizeof("FULLTEXT");
-      break;
-    }
-    /* Subtract 1 here, because sizeof gives us the wrong amount */
-    push(str, length - 1);
-  }
+  push(message::type(index.type()));
 
  /* "INDEX_COMMENT" */
   if (index.has_comment())

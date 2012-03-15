@@ -34,7 +34,7 @@ static const std::string PROGRAM_ERROR("PROGRAM_ERROR");
 
 static const std::string COM_SLEEP("COM_SLEEP"); 
 static const std::string COM_QUIT("COM_QUIT"); 
-static const std::string COM_INIT_DB("COM_INIT_DB"); 
+static const std::string COM_USE_SCHEMA("COM_USE_SCHEMA"); 
 static const std::string COM_QUERY("COM_QUERY"); 
 static const std::string COM_SHUTDOWN("COM_SHUTDOWN"); 
 static const std::string COM_CONNECT("COM_CONNECT"); 
@@ -56,6 +56,7 @@ static const std::string DRIZZLE_TYPE_ENUM("DRIZZLE_TYPE_ENUM");
 static const std::string DRIZZLE_TYPE_BLOB("DRIZZLE_TYPE_BLOB"); 
 static const std::string DRIZZLE_TYPE_UUID("DRIZZLE_TYPE_UUID"); 
 static const std::string DRIZZLE_TYPE_BOOLEAN("DRIZZLE_TYPE_BOOLEAN"); 
+static const std::string DRIZZLE_TYPE_IPV6("DRIZZLE_TYPE_IPV6"); 
 
 static const std::string FIELD_ITEM("FIELD_ITEM");
 static const std::string FUNC_ITEM("FUNC_ITEM");
@@ -134,23 +135,31 @@ const std::string &type(drizzled::enum_server_command type)
   {
   case drizzled::COM_SLEEP : 
     return COM_SLEEP;
+
   case drizzled::COM_KILL : 
     {
       static std::string COM_KILL("COM_KILL");
       return COM_KILL;
     }
+
   case drizzled::COM_QUIT : 
     return COM_QUIT;
-  case drizzled::COM_INIT_DB : 
-    return COM_INIT_DB;
+
+  case drizzled::COM_USE_SCHEMA : 
+    return COM_USE_SCHEMA;
+
   case drizzled::COM_QUERY : 
     return COM_QUERY;
+
   case drizzled::COM_SHUTDOWN : 
     return COM_SHUTDOWN;
+
   case drizzled::COM_CONNECT : 
     return COM_CONNECT;
+
   case drizzled::COM_PING : 
     return COM_PING;
+
   case drizzled::COM_END : 
     return COM_END;
   }
@@ -271,6 +280,8 @@ const std::string &type(drizzled::enum_field_types type)
     return DRIZZLE_TYPE_UUID;
   case drizzled::DRIZZLE_TYPE_BOOLEAN : 
     return DRIZZLE_TYPE_BOOLEAN;
+  case drizzled::DRIZZLE_TYPE_IPV6 : 
+    return DRIZZLE_TYPE_IPV6;
   }
 
   assert(0);

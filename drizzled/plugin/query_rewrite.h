@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_QUERY_REWRITE_H
-#define DRIZZLED_PLUGIN_QUERY_REWRITE_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/plugin.h>
@@ -44,15 +43,11 @@ namespace plugin
  */
 class DRIZZLED_API QueryRewriter : public Plugin
 {
-
 public:
-
   explicit QueryRewriter(std::string name_arg)
     : 
       Plugin(name_arg, "QueryRewriter")
   {}
-
-  virtual ~QueryRewriter() {}
 
   /**
    * Rewrite a query in the form of a std::string
@@ -74,18 +69,8 @@ public:
    * @param[out] to_rewrite the query to rewrite
    */
   static void rewriteQuery(const std::string &schema, std::string &to_rewrite);
-
-private:
-
-  QueryRewriter();
-  QueryRewriter(const QueryRewriter&);
-  QueryRewriter& operator=(const QueryRewriter&);
-
-
 };
 
 } /* namespace plugin */
-
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_QUERY_REWRITE_H */

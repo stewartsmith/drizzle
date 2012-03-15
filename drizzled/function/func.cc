@@ -28,6 +28,7 @@
 #include <drizzled/field/int64.h>
 #include <drizzled/field/size.h>
 #include <drizzled/function/math/int.h>
+#include <drizzled/item/field.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/sql_string.h>
@@ -42,7 +43,6 @@ namespace drizzled
 
 
 Item_func::Item_func(void):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(0),
   const_item_cache(false)
   {
@@ -51,7 +51,6 @@ Item_func::Item_func(void):
   }
 
 Item_func::Item_func(Item *a):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(1),
   const_item_cache(false)
   {
@@ -62,7 +61,6 @@ Item_func::Item_func(Item *a):
   }
 
 Item_func::Item_func(Item *a,Item *b):
-  _session(*current_session),
   allowed_arg_cols(1), arg_count(2),
   const_item_cache(false)
   {
@@ -73,7 +71,6 @@ Item_func::Item_func(Item *a,Item *b):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -88,7 +85,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -104,7 +100,6 @@ Item_func::Item_func(Item *a,Item *b,Item *c,Item *d):
   }
 
 Item_func::Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
   {
@@ -127,10 +122,9 @@ void Item_func::set_arguments(List<Item> &list)
   if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     List<Item>::iterator li(list.begin());
-    Item *item;
     Item **save_args= args;
 
-    while ((item=li++))
+    while (Item* item=li++)
     {
       *(save_args++)= item;
       with_sum_func|=item->with_sum_func;
@@ -140,7 +134,6 @@ void Item_func::set_arguments(List<Item> &list)
 }
 
 Item_func::Item_func(List<Item> &list) :
-  _session(*current_session),
   allowed_arg_cols(1),
   const_item_cache(false)
 {
@@ -150,7 +143,6 @@ Item_func::Item_func(List<Item> &list) :
 
 Item_func::Item_func(Session *session, Item_func *item) :
   Item_result_field(session, item),
-  _session(*current_session),
   allowed_arg_cols(item->allowed_arg_cols),
   arg_count(item->arg_count),
   used_tables_cache(item->used_tables_cache),
@@ -163,8 +155,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
       args= tmp_arg;
     else
     {
-      if (!(args=(Item**) session->getMemRoot()->allocate(sizeof(Item*)*arg_count)))
-        return;
+      args= new (getSession().mem) Item*[arg_count];
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
   }
@@ -450,7 +441,7 @@ table_map Item_func::not_null_tables() const
 
 void Item_func::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   print_args(str, 0);
   str->append(')');
@@ -475,7 +466,7 @@ void Item_func::print_op(String *str)
   {
     args[i]->print(str);
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
   }
   args[arg_count-1]->print(str);
@@ -497,7 +488,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
       (func_type != Item_func::FUNC_SP &&
        func_name() != item_func->func_name()) ||
       (func_type == Item_func::FUNC_SP &&
-       my_strcasecmp(system_charset_info, func_name(), item_func->func_name())))
+       system_charset_info->strcasecmp(func_name(), item_func->func_name())))
     return 0;
   for (uint32_t i=0; i < arg_count ; i++)
     if (!args[i]->eq(item_func->args[i], binary_cmp))
@@ -554,13 +545,8 @@ Field *Item_func::tmp_table_field(Table *table)
     return make_string_field(table);
 
   case DECIMAL_RESULT:
-    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(),
-                                                            decimals,
-                                                            unsigned_flag),
-                             maybe_null,
-                             name,
-                             decimals,
-                             unsigned_flag);
+    field= new Field_decimal(class_decimal_precision_to_length(decimal_precision(), decimals, unsigned_flag),
+      maybe_null, name, decimals, unsigned_flag);
     break;
   case ROW_RESULT:
     // This case should never be chosen

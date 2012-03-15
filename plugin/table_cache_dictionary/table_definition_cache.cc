@@ -28,8 +28,8 @@ using namespace std;
 table_cache_dictionary::TableDefinitionCache::TableDefinitionCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_DEFINITION_CACHE")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_COUNT", plugin::TableFunction::NUMBER, 0, false);
   add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
@@ -40,15 +40,9 @@ table_cache_dictionary::TableDefinitionCache::Generator::Generator(drizzled::Fie
 {
 }
 
-table_cache_dictionary::TableDefinitionCache::Generator::~Generator()
-{
-}
-
 bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
 {
-  drizzled::TableShare::shared_ptr share;
-
-  while ((share= table_definition_cache_generator))
+  while (drizzled::TableShare::shared_ptr share= table_definition_cache_generator)
   {
     /**
       For test cases use:
@@ -56,11 +50,10 @@ bool table_cache_dictionary::TableDefinitionCache::Generator::populate()
     */
 
     /* TABLE_SCHEMA 1 */
-    string arg;
-    push(share->getSchemaName(arg));
+    push(share->getSchemaNameRef());
 
     /* TABLE_NAME  2 */
-    push(share->getTableName(arg));
+    push(share->getTableNameRef());
 
     /* VERSION 3 */
     push(static_cast<int64_t>(share->getVersion()));

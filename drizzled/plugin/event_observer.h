@@ -40,8 +40,7 @@
  *  SchemaEventObservers, or TableEventObservers class.
  *
  */
-#ifndef DRIZZLED_PLUGIN_EVENT_OBSERVER_H
-#define DRIZZLED_PLUGIN_EVENT_OBSERVER_H
+#pragma once
 
 #include <drizzled/plugin/plugin.h>
 
@@ -49,32 +48,18 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class Table;
-class TableShare;
-class Session;
-
-namespace plugin
-{
-class EventObserverList;
-class EventData;
-class EventObserver;
+namespace drizzled {
+namespace plugin {
 
 typedef std::vector<EventObserver *> EventObserverVector;
 typedef EventObserver* EventObserverPtr;
 
 class DRIZZLED_API EventObserver : public Plugin
 {
-  EventObserver();
-  EventObserver(const EventObserver &);
-  EventObserver& operator=(const EventObserver &);
 public:
   explicit EventObserver(std::string name_arg)
     : Plugin(name_arg, "EventObserver")
   {}
-  virtual ~EventObserver() {}
 
   enum EventType{
     /* Session events: */
@@ -208,14 +193,14 @@ public:
    * interested in this database. 
  */
   static void registerSchemaEvents(Session &session, const std::string &db); 
-  static void deregisterSchemaEvents(Session &session, const std::string &db); 
+  static void deregisterSchemaEvents(EventObserverList *observers); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
    * interested in this session. 
  */
   static void registerSessionEvents(Session &session); 
-  static void deregisterSessionEvents(Session &session); 
+  static void deregisterSessionEvents(EventObserverList *observers); 
 
 
   /*==========================================================*/
@@ -289,8 +274,6 @@ public:
     EventData(event_arg),
     session(session_arg)
   {}
-  virtual ~SessionEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
@@ -310,8 +293,6 @@ public:
     session(session_arg),
     db(db_arg)
   {}
-  virtual ~SchemaEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
@@ -330,8 +311,6 @@ public:
     session(session_arg),
     table(table_arg)
   {}
-  virtual ~TableEventData(){}
-
 
   // Call all the event observers that are registered for this event.
   virtual bool callEventObservers();
@@ -579,4 +558,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_EVENT_OBSERVER_H */

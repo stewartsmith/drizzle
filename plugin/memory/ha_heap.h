@@ -17,8 +17,7 @@
 
 /* class for the the heap Cursor */
 
-#ifndef PLUGIN_MEMORY_HA_HEAP_H
-#define PLUGIN_MEMORY_HA_HEAP_H
+#pragma once
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
@@ -26,8 +25,7 @@
 typedef struct st_heap_info HP_INFO;
 typedef unsigned char *HEAP_PTR;
 
-
-class ha_heap: public drizzled::Cursor
+class ha_heap : public drizzled::Cursor
 {
   HP_INFO *file;
   /* number of records changed since last statistics update */
@@ -84,7 +82,7 @@ public:
   drizzled::ha_rows records_in_range(uint32_t inx,
                                      drizzled::key_range *min_key,
                                      drizzled::key_range *max_key);
-  void drop_table(const char *name);
+  void drop_table();
 
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   int reset_auto_increment(uint64_t value)
@@ -96,4 +94,3 @@ private:
   void update_key_stats();
 };
 
-#endif /* PLUGIN_MEMORY_HA_HEAP_H */

@@ -17,15 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_STORAGE_ENGINE_H
-#define DRIZZLED_PLUGIN_STORAGE_ENGINE_H
+#pragma once
 
-
-#include <drizzled/cached_directory.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error_t.h>
 #include <drizzled/handler_structs.h>
-#include <drizzled/identifier.h>
 #include <drizzled/message.h>
 #include <drizzled/message/cache.h>
 #include <drizzled/plugin.h>
@@ -40,15 +36,10 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class TableList;
-class Session;
-class Cursor;
 struct HASH;
 
-class TableShare;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -113,11 +104,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
-class Table;
-class NamedSavepoint;
-
-namespace plugin
-{
+namespace plugin {
 
 typedef std::vector<StorageEngine *> EngineVector;
 
@@ -179,6 +166,11 @@ public:
     return table_definition_ext;
   }
 
+  virtual message::Table::Index::IndexType default_index_type() const
+  {
+    return message::Table::Index::BTREE;
+  }
+
 private:
   std::vector<std::string> aliases;
 
@@ -204,7 +196,7 @@ protected:
   pthread_mutex_t proto_cache_mutex;
 
 public:
-  StorageEngine(const std::string name_arg,
+  StorageEngine(const std::string &name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~StorageEngine();
@@ -282,7 +274,7 @@ protected:
   virtual int doCreateTable(Session &session,
                             Table &table_arg,
                             const drizzled::identifier::Table &identifier,
-                            message::Table &message)= 0;
+                            const message::Table &message)= 0;
 
   virtual int doRenameTable(Session &session,
                             const drizzled::identifier::Table &from, const drizzled::identifier::Table &to)= 0;
@@ -292,7 +284,7 @@ protected:
 
   virtual void doGetTableIdentifiers(CachedDirectory &directory,
                                      const drizzled::identifier::Schema &schema_identifier,
-                                     identifier::Table::vector &set_of_identifiers)= 0;
+                                     identifier::table::vector &set_of_identifiers)= 0;
 
   virtual bool doDoesTableExist(Session& session, const drizzled::identifier::Table &identifier);
 
@@ -333,7 +325,7 @@ public:
   static plugin::StorageEngine *findByName(const std::string &find_str);
   static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
 
-  static void closeConnection(Session* session);
+  static void closeConnection(Session&);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
 
@@ -345,31 +337,31 @@ public:
 
   static bool dropTable(Session& session,
                         StorageEngine &engine,
-                        identifier::Table::const_reference identifier,
+                        const identifier::Table& identifier,
                         drizzled::error_t &error);
 
   static void getIdentifiers(Session &session,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::identifier::Table &identifier);
 
   // @note All schema methods defined here
-  static void getIdentifiers(Session &session, identifier::Schema::vector &schemas);
+  static void getIdentifiers(Session &session, identifier::schema::vector &schemas);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Table &identifier);
   static message::schema::shared_ptr getSchemaDefinition(const drizzled::identifier::Schema &identifier);
   static bool doesSchemaExist(const drizzled::identifier::Schema &identifier);
-  static const CHARSET_INFO *getSchemaCollation(const drizzled::identifier::Schema &identifier);
+  static const charset_info_st *getSchemaCollation(const drizzled::identifier::Schema &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(Session &session,
-                         identifier::Schema::const_reference identifier,
+                         const identifier::Schema& identifier,
                          message::schema::const_reference schema_message);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
 protected:
-  virtual void doGetSchemaIdentifiers(identifier::Schema::vector&)
+  virtual void doGetSchemaIdentifiers(identifier::schema::vector&)
   { }
 
   virtual drizzled::message::schema::shared_ptr doGetSchemaDefinition(const drizzled::identifier::Schema&)
@@ -422,7 +414,7 @@ public:
 protected:
   static int deleteDefinitionFromPath(const drizzled::identifier::Table &identifier);
   static int renameDefinitionFromPath(const drizzled::identifier::Table &dest, const drizzled::identifier::Table &src);
-  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, message::Table &proto);
+  static int writeDefinitionFromPath(const drizzled::identifier::Table &identifier, const message::Table &proto);
   static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
@@ -465,4 +457,3 @@ std::ostream& operator<<(std::ostream& output, const StorageEngine &engine);
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

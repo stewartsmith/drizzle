@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_CMPFUNC_H
-#define DRIZZLED_ITEM_CMPFUNC_H
+#pragma once
 
 /* compare and test functions */
 
@@ -35,16 +34,9 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/qsort_cmp.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
-
-class Item_bool_func2;
-class Arg_comparator;
-class Item_sum_hybrid;
-class Item_row;
-class Session;
 
 typedef int (Arg_comparator::*arg_cmp_func)();
 
@@ -146,8 +138,6 @@ protected:
   : item::function::Boolean(a), value(a_value), affirmative(a_affirmative)
   {}
 
-  ~Item_func_truth()
-  {}
 private:
   /**
     True for <code>X IS [NOT] TRUE</code>,
@@ -169,7 +159,6 @@ class Item_func_istrue : public Item_func_truth
 {
 public:
   Item_func_istrue(Item *a) : Item_func_truth(a, true, true) {}
-  ~Item_func_istrue() {}
   virtual const char* func_name() const { return "istrue"; }
 };
 
@@ -182,7 +171,6 @@ class Item_func_isnottrue : public Item_func_truth
 {
 public:
   Item_func_isnottrue(Item *a) : Item_func_truth(a, true, false) {}
-  ~Item_func_isnottrue() {}
   virtual const char* func_name() const { return "isnottrue"; }
 };
 
@@ -195,7 +183,6 @@ class Item_func_isfalse : public Item_func_truth
 {
 public:
   Item_func_isfalse(Item *a) : Item_func_truth(a, false, true) {}
-  ~Item_func_isfalse() {}
   virtual const char* func_name() const { return "isfalse"; }
 };
 
@@ -208,12 +195,10 @@ class Item_func_isnotfalse : public Item_func_truth
 {
 public:
   Item_func_isnotfalse(Item *a) : Item_func_truth(a, false, false) {}
-  ~Item_func_isnotfalse() {}
   virtual const char* func_name() const { return "isnotfalse"; }
 };
 
 
-class Item_cache;
 #define UNKNOWN ((bool)-1)
 
 
@@ -263,8 +248,6 @@ public:
 class Eq_creator :public Comp_creator
 {
 public:
-  Eq_creator() {}                             /* Remove gcc warning */
-  virtual ~Eq_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<>" : "="; }
   virtual bool eqne_op() const { return 1; }
@@ -275,8 +258,6 @@ public:
 class Ne_creator :public Comp_creator
 {
 public:
-  Ne_creator() {}                             /* Remove gcc warning */
-  virtual ~Ne_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "=" : "<>"; }
   virtual bool eqne_op() const { return 1; }
@@ -287,8 +268,6 @@ public:
 class Gt_creator :public Comp_creator
 {
 public:
-  Gt_creator() {}                             /* Remove gcc warning */
-  virtual ~Gt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<=" : ">"; }
   virtual bool eqne_op() const { return 0; }
@@ -299,8 +278,6 @@ public:
 class Lt_creator :public Comp_creator
 {
 public:
-  Lt_creator() {}                             /* Remove gcc warning */
-  virtual ~Lt_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">=" : "<"; }
   virtual bool eqne_op() const { return 0; }
@@ -311,8 +288,6 @@ public:
 class Ge_creator :public Comp_creator
 {
 public:
-  Ge_creator() {}                             /* Remove gcc warning */
-  virtual ~Ge_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? "<" : ">="; }
   virtual bool eqne_op() const { return 0; }
@@ -323,8 +298,6 @@ public:
 class Le_creator :public Comp_creator
 {
 public:
-  Le_creator() {}                             /* Remove gcc warning */
-  virtual ~Le_creator() {}                    /* Remove gcc warning */
   virtual Item_bool_func2* create(Item *a, Item *b) const;
   virtual const char* symbol(bool invert) const { return invert? ">" : "<="; }
   virtual bool eqne_op() const { return 0; }
@@ -358,7 +331,7 @@ public:
 
   bool is_null() { return test(args[0]->is_null() || args[1]->is_null()); }
   bool is_bool_func() { return 1; }
-  const CHARSET_INFO *compare_collation() { return cmp.cmp_collation.collation; }
+  const charset_info_st *compare_collation() { return cmp.cmp_collation.collation; }
   uint32_t decimal_precision() const { return 1; }
   void top_level_item() { abort_on_null= true; }
 
@@ -388,8 +361,6 @@ public:
   Item *neg_transformer(Session *session);
   virtual void print(String *str);
 };
-
-class Item_maxmin_subselect;
 
 /*
   trigcond<param>(arg) ::= param? arg : TRUE
@@ -617,7 +588,7 @@ public:
   void fix_length_and_dec();
   virtual void print(String *str);
   bool is_bool_func() { return 1; }
-  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const charset_info_st *compare_collation() { return cmp_collation.collation; }
   uint32_t decimal_precision() const { return 1; }
 };
 
@@ -706,17 +677,20 @@ public:
 
 class Item_func_if :public Item_func
 {
-  enum Item_result cached_result_type;
+  Item_result cached_result_type;
   enum_field_types cached_field_type;
+
 public:
-  Item_func_if(Item *a,Item *b,Item *c)
-    :Item_func(a,b,c), cached_result_type(INT_RESULT)
+  Item_func_if(Item *a, Item *b, Item *c) :
+    Item_func(a,b,c),
+    cached_result_type(INT_RESULT)
   {}
+
   double val_real();
   int64_t val_int();
   String *val_str(String *str);
   type::Decimal *val_decimal(type::Decimal *);
-  enum Item_result result_type () const { return cached_result_type; }
+  Item_result result_type () const { return cached_result_type; }
   enum_field_types field_type() const { return cached_field_type; }
   bool fix_fields(Session *, Item **);
   void fix_length_and_dec();
@@ -762,12 +736,12 @@ public:
   char *base;
   uint32_t size;
   qsort2_cmp compare;
-  const CHARSET_INFO *collation;
+  const charset_info_st *collation;
   uint32_t count;
   uint32_t used_count;
   in_vector() {}
   in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func,
-  	    const CHARSET_INFO * const cmp_coll)
+  	    const charset_info_st * const cmp_coll)
     :base((char*) memory::sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
@@ -810,7 +784,7 @@ class in_string :public in_vector
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmp;
 public:
-  in_string(uint32_t elements,qsort2_cmp cmp_func, const CHARSET_INFO * const cs);
+  in_string(uint32_t elements,qsort2_cmp cmp_func, const charset_info_st * const cs);
   ~in_string();
   void set(uint32_t pos,Item *item);
   unsigned char *get_value(Item *item);
@@ -936,7 +910,7 @@ public:
 class cmp_item :public memory::SqlAlloc
 {
 public:
-  const CHARSET_INFO *cmp_charset;
+  const charset_info_st *cmp_charset;
 
   cmp_item()
   {
@@ -948,7 +922,7 @@ public:
   virtual int cmp(Item *item)= 0;
   // for optimized IN with row
   virtual int compare(cmp_item *item)= 0;
-  static cmp_item* get_comparator(Item_result type, const CHARSET_INFO * const cs);
+  static cmp_item* get_comparator(Item_result type, const charset_info_st * const cs);
   virtual cmp_item *make_same()= 0;
   virtual void store_value_by_template(cmp_item *, Item *item)
   {
@@ -962,8 +936,8 @@ protected:
   String *value_res;
 public:
   cmp_item_string () {}
-  cmp_item_string (const CHARSET_INFO * const cs) { cmp_charset= cs; }
-  void set_charset(const CHARSET_INFO * const cs) { cmp_charset= cs; }
+  cmp_item_string (const charset_info_st * const cs) { cmp_charset= cs; }
+  void set_charset(const charset_info_st * const cs) { cmp_charset= cs; }
   friend class cmp_item_sort_string;
   friend class cmp_item_sort_string_in_static;
 };
@@ -976,7 +950,7 @@ protected:
 public:
   cmp_item_sort_string():
     cmp_item_string() {}
-  cmp_item_sort_string(const CHARSET_INFO * const cs):
+  cmp_item_sort_string(const charset_info_st * const cs):
     cmp_item_string(cs),
     value(value_buff, sizeof(value_buff), cs) {}
   void store_value(Item *item)
@@ -997,7 +971,7 @@ public:
     return sortcmp(value_res, l_cmp->value_res, cmp_charset);
   }
   cmp_item *make_same();
-  void set_charset(const CHARSET_INFO * const cs)
+  void set_charset(const charset_info_st * const cs)
   {
     cmp_charset= cs;
     value.set_quick(value_buff, sizeof(value_buff), cs);
@@ -1008,7 +982,6 @@ class cmp_item_int :public cmp_item
 {
   int64_t value;
 public:
-  cmp_item_int() {}                           /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_int();
@@ -1054,7 +1027,6 @@ class cmp_item_real :public cmp_item
 {
   double value;
 public:
-  cmp_item_real() {}                          /* Remove gcc warning */
   void store_value(Item *item)
   {
     value= item->val_real();
@@ -1076,7 +1048,6 @@ class cmp_item_decimal :public cmp_item
 {
   type::Decimal value;
 public:
-  cmp_item_decimal() {}                       /* Remove gcc warning */
   void store_value(Item *item);
   int cmp(Item *arg);
   int compare(cmp_item *c);
@@ -1094,7 +1065,7 @@ class cmp_item_sort_string_in_static :public cmp_item_string
  protected:
   String value;
 public:
-  cmp_item_sort_string_in_static(const CHARSET_INFO * const cs):
+  cmp_item_sort_string_in_static(const charset_info_st * const cs):
     cmp_item_string(cs) {}
   void store_value(Item *item)
   {
@@ -1179,7 +1150,7 @@ public:
   const char *func_name() const { return "case"; }
   virtual void print(String *str);
   Item *find_item(String *str);
-  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const charset_info_st *compare_collation() { return cmp_collation.collation; }
   void cleanup();
   void agg_str_lengths(Item *arg);
   void agg_num_lengths(Item *arg);
@@ -1247,7 +1218,7 @@ public:
   const char *func_name() const { return " IN "; }
   bool nulls_in_row();
   bool is_bool_func() { return 1; }
-  const CHARSET_INFO *compare_collation() { return cmp_collation.collation; }
+  const charset_info_st *compare_collation() { return cmp_collation.collation; }
 };
 
 class cmp_item_row :public cmp_item
@@ -1318,12 +1289,10 @@ public:
   table_map not_null_tables() const { return 0; }
   optimize_type select_optimize() const { return OPTIMIZE_NULL; }
   Item *neg_transformer(Session *session);
-  const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
+  const charset_info_st *compare_collation() { return args[0]->collation.collation; }
 };
 
 /* Functions used by HAVING for rewriting IN subquery */
-
-class Item_in_subselect;
 
 /*
   This is like IS NOT NULL but it also remembers if it ever has
@@ -1365,7 +1334,7 @@ public:
   { return abort_on_null ? not_null_tables_cache : 0; }
   Item *neg_transformer(Session *session);
   virtual void print(String *str);
-  const CHARSET_INFO *compare_collation() { return args[0]->collation.collation; }
+  const charset_info_st *compare_collation() { return args[0]->collation.collation; }
   void top_level_item() { abort_on_null=1; }
 };
 
@@ -1410,8 +1379,6 @@ public:
 };
 
 
-typedef class Item COND;
-
 class Item_cond :public item::function::Boolean
 {
 protected:
@@ -1435,8 +1402,8 @@ public:
   Item_cond(Session *session, Item_cond *item);
   Item_cond(List<Item> &nlist)
     :item::function::Boolean(), list(nlist), abort_on_null(0) {}
-  bool add(Item *item) { return list.push_back(item); }
-  bool add_at_head(Item *item) { return list.push_front(item); }
+  void add(Item *item) { list.push_back(item); }
+  void add_at_head(Item *item) { list.push_front(item); }
   void add_at_head(List<Item> *nlist) { list.prepand(nlist); }
   bool fix_fields(Session *, Item **ref);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
@@ -1578,7 +1545,7 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *arg);
   Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str);
-  const CHARSET_INFO *compare_collation()
+  const charset_info_st *compare_collation()
   { return fields.front().collation.collation; }
 private:
   fields_t fields; /* list of equal field items                    */
@@ -1622,8 +1589,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_and *item;
-    if ((item= new Item_cond_and(session, this)))
-       item->copy_andor_arguments(session, this);
+    item= new Item_cond_and(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);
@@ -1652,8 +1619,8 @@ public:
   Item* copy_andor_structure(Session *session)
   {
     Item_cond_or *item;
-    if ((item= new Item_cond_or(session, this)))
-      item->copy_andor_arguments(session, this);
+    item= new Item_cond_or(session, this);
+    item->copy_andor_arguments(session, this);
     return item;
   }
   Item *neg_transformer(Session *session);
@@ -1702,4 +1669,3 @@ Item *and_expressions(Item *a, Item *b, Item **org_item);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CMPFUNC_H */

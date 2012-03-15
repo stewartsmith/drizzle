@@ -62,18 +62,16 @@
  * %End-Header%
  */
 
-#ifndef DRIZZLED_TYPE_UUID_H
-#define DRIZZLED_TYPE_UUID_H
+#pragma once
 
 #include <cstdio>
-#include <iostream>
+#include <iosfwd>
 
-namespace drizzled
-{
-namespace type
-{
+namespace drizzled {
+namespace type {
 
-class Uuid {
+class Uuid 
+{
 	uint32_t	time_low;
 	uint16_t	time_mid;
 	uint16_t	time_hi_and_version;
@@ -189,7 +187,7 @@ public:
     return false;
   }
 
-  void unparse(char *out)
+  void unparse(char *out) const
   {
     snprintf(out, DISPLAY_BUFFER_LENGTH, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
             time_low,
@@ -205,7 +203,7 @@ public:
             node[5]);
   }
 
-  void time(struct timeval ret_val)
+  void time(timeval& ret_val) const
   {
     uint32_t high;
     uint64_t clock_reg;
@@ -217,10 +215,9 @@ public:
     ret_val.tv_sec = clock_reg / 10000000;
     ret_val.tv_usec = (clock_reg % 10000000) / 10;
   }
-
-  bool isTimeType()
+  bool isTimeType() const
   {
-    return ((time_hi_and_version >> 12) & 0xF) == 1 ? true : false; 
+    return ((time_hi_and_version >> 12) & 0xF) == 1; 
   }
 
   static const size_t LENGTH= 16;
@@ -231,5 +228,4 @@ public:
 } /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_UUID_H */
 

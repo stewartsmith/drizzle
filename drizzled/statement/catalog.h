@@ -18,34 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_STATEMENT_CATALOG_H
-#define DRIZZLED_STATEMENT_CATALOG_H
+#pragma once
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class Catalog : public Statement
 {
-  identifier::Catalog _identifier;
-
 public:
-  Catalog(Session *in_session, drizzled::lex_string_t &arg);
+  Catalog(Session*, str_ref);
 
   virtual bool authorized() const= 0;
   virtual bool perform() const= 0;
 
   bool execute();
 
-  identifier::Catalog::const_reference identifier() const
+  const identifier::Catalog& identifier() const
   {
     return _identifier;
   }
+private:
+  identifier::Catalog _identifier;
 };
 
 } /* namespace statement */
@@ -53,5 +48,3 @@ public:
 
 #include <drizzled/statement/catalog/create.h>
 #include <drizzled/statement/catalog/drop.h>
-
-#endif /* DRIZZLED_STATEMENT_CATALOG_H */

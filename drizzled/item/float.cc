@@ -27,10 +27,9 @@
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-extern const CHARSET_INFO *system_charset_info;
+extern const charset_info_st *system_charset_info;
 
 static uint32_t nr_of_decimals(const char *str, const char *end)
 {
@@ -47,7 +46,7 @@ static uint32_t nr_of_decimals(const char *str, const char *end)
       break;
   }
   decimal_point= str;
-  for (; my_isdigit(system_charset_info, *str) ; str++)
+  for (; system_charset_info->isdigit(*str) ; str++)
     ;
   if (*str == 'e' || *str == 'E')
     return NOT_FIXED_DEC;
@@ -125,7 +124,7 @@ void Item_float::print(String *str)
 {
   if (presentation)
   {
-    str->append(presentation);
+    str->append(presentation, strlen(presentation));
     return;
   }
   char buffer[20];
@@ -154,18 +153,14 @@ bool Item_float::eq(const Item *arg, bool) const
   return false;
 }
 
-Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const)
+Item *Item_static_float_func::safe_charset_converter(const charset_info_st*)
 {
-  Item_string *conv;
   char buf[64];
-  String *s, tmp(buf, sizeof(buf), &my_charset_bin);
-  s= val_str(&tmp);
-  if ((conv= new Item_static_string_func(func_name, s->ptr(), s->length(),
-                                         s->charset())))
-  {
-    conv->str_value.copy();
-    conv->str_value.mark_as_const();
-  }
+  String tmp(buf, sizeof(buf), &my_charset_bin);
+  String* s= val_str(&tmp);
+  Item_string* conv= new Item_static_string_func(func_name, *s, s->charset());
+  conv->str_value.copy();
+  conv->str_value.mark_as_const();
   return conv;
 }
 

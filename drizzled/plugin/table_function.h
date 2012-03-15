@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TABLE_FUNCTION_H
-#define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
+#pragma once
 
 #include <drizzled/definitions.h>
 #include <drizzled/plugin.h>
@@ -37,11 +36,8 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 #define TABLE_FUNCTION_BLOB_SIZE 2049
 
@@ -62,19 +58,13 @@ static const char *local_string_append(const char *arg1, const char *arg2)
 
 class DRIZZLED_API TableFunction : public Plugin
 {
-  TableFunction();
-  TableFunction(const TableFunction &);
-  TableFunction& operator=(const TableFunction &);
-
   message::Table proto;
   identifier::Table identifier;
   std::string local_path;
   std::string original_table_label;
 
   void setName(); // init name
-
   void init();
-
 
 public:
   TableFunction(const char *schema_arg, const char *table_arg) :
@@ -85,10 +75,8 @@ public:
     init();
   }
 
-  virtual ~TableFunction() {}
-
   static bool addPlugin(TableFunction *function);
-  static void removePlugin(TableFunction *) 
+  static void removePlugin(TableFunction *)
   { }
   static TableFunction *getFunction(const std::string &arg);
   static void getNames(const std::string &arg,
@@ -102,13 +90,15 @@ public:
     SIZE
   };
 
-  class Generator 
+  class Generator
   {
     Field **columns;
     Field **columns_iterator;
     Session *session;
 
   protected:
+  	LEX& lex();
+  	statement::Statement& statement();
 
     drizzled::Session &getSession()
     {
@@ -116,7 +106,7 @@ public:
     }
 
   public:
-    const CHARSET_INFO *scs;
+    const charset_info_st *scs;
 
     Generator(Field **arg);
     virtual ~Generator()
@@ -135,7 +125,7 @@ public:
     void push(uint64_t arg);
     void push(int64_t arg);
     void push(const char *arg, uint32_t length= 0);
-    void push(const std::string& arg);
+    void push(str_ref);
     void push(bool arg);
     void push();
 
@@ -143,27 +133,27 @@ public:
   };
 
   void define(message::Table &arg)
-  { 
+  {
     arg.CopyFrom(proto);
   }
 
   const std::string &getTableLabel()
-  { 
+  {
     return original_table_label;
   }
 
   const std::string &getIdentifierTableName()
-  { 
+  {
     return identifier.getTableName();
   }
 
   const std::string &getSchemaHome()
-  { 
+  {
     return identifier.getSchemaName();
   }
 
   const std::string &getPath()
-  { 
+  {
     return identifier.getPath();
   }
 
@@ -191,4 +181,3 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TABLE_FUNCTION_H */

@@ -20,28 +20,25 @@
 #include <config.h>
 
 #include <drizzled/session.h>
-
-#include <drizzled/global_charset_info.h>
+#include <drizzled/sql_base.h>
 #include <drizzled/charset.h>
 #include <drizzled/transaction_services.h>
-
+#include <drizzled/open_tables_state.h>
+#include <drizzled/table/cache.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/authorization.h>
 
-namespace drizzled
-{
+namespace drizzled {
+namespace plugin {
 
-namespace plugin
-{
-
-class AddSchemaNames : 
+class AddSchemaNames :
   public std::unary_function<StorageEngine *, void>
 {
-  identifier::Schema::vector &schemas;
+  identifier::schema::vector &schemas;
 
 public:
 
-  AddSchemaNames(identifier::Schema::vector &of_names) :
+  AddSchemaNames(identifier::schema::vector &of_names) :
     schemas(of_names)
   {
   }
@@ -52,7 +49,7 @@ public:
   }
 };
 
-void StorageEngine::getIdentifiers(Session &session, identifier::Schema::vector &schemas)
+void StorageEngine::getIdentifiers(Session &session, identifier::schema::vector &schemas)
 {
   // Add hook here for engines to register schema.
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -70,7 +67,7 @@ public:
   StorageEngineGetSchemaDefinition(const identifier::Schema &identifier_arg,
                                    message::schema::shared_ptr &schema_proto_arg) :
     identifier(identifier_arg),
-    schema_proto(schema_proto_arg) 
+    schema_proto(schema_proto_arg)
   {
   }
 
@@ -114,36 +111,20 @@ bool StorageEngine::doesSchemaExist(const identifier::Schema &identifier)
 }
 
 
-const CHARSET_INFO *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
+const charset_info_st *StorageEngine::getSchemaCollation(const identifier::Schema &identifier)
 {
-  message::schema::shared_ptr schmema_proto;
-
-  schmema_proto= StorageEngine::getSchemaDefinition(identifier);
-
-  if (schmema_proto && schmema_proto->has_collation())
-  {
-    const std::string buffer= schmema_proto->collation();
-    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
-
-    if (not cs)
-    {
-      std::string path;
-      identifier.getSQLPath(path);
-
-      errmsg_printf(error::ERROR,
-                    _("Error while loading database options: '%s':"), path.c_str());
-      errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-
-      return default_charset_info;
-    }
-
-    return cs;
-  }
-
+  message::schema::shared_ptr schmema_proto= StorageEngine::getSchemaDefinition(identifier);
+  if (not schmema_proto || not schmema_proto->has_collation())
+		return default_charset_info;
+  const std::string buffer= schmema_proto->collation();
+  if (const charset_info_st* cs= get_charset_by_name(buffer.c_str()))
+		return cs;
+  errmsg_printf(error::ERROR, _("Error while loading database options: '%s':"), identifier.getSQLPath().c_str());
+  errmsg_printf(error::ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
   return default_charset_info;
 }
 
-class CreateSchema : 
+class CreateSchema :
   public std::unary_function<StorageEngine *, void>
 {
   const drizzled::message::Schema &schema_message;
@@ -162,11 +143,10 @@ public:
     // @todo eomeday check that at least one engine said "true"
     bool success= engine->doCreateSchema(schema_message);
 
-    if (success) 
+    if (success)
     {
       success_count++;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.allocateNewTransactionId();
+      TransactionServices::allocateNewTransactionId();
     }
   }
 };
@@ -178,16 +158,15 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
   std::for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
                 CreateSchema(schema_message, success_count));
 
-  if (success_count) 
+  if (success_count)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.allocateNewTransactionId();
+    TransactionServices::allocateNewTransactionId();
   }
 
   return (bool)success_count;
 }
 
-class DropSchema : 
+class DropSchema :
   public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
@@ -209,26 +188,21 @@ public:
     if (success)
     {
       success_count++;
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.allocateNewTransactionId();
+      TransactionServices::allocateNewTransactionId();
     }
   }
 };
 
 static bool drop_all_tables_in_schema(Session& session,
-                                      identifier::Schema::const_reference identifier,
-                                      identifier::Table::vector &dropped_tables,
+                                      const identifier::Schema& identifier,
+                                      identifier::table::vector &dropped_tables,
                                       uint64_t &deleted)
 {
-  TransactionServices &transaction_services= TransactionServices::singleton();
-
   plugin::StorageEngine::getIdentifiers(session, identifier, dropped_tables);
 
-  for (identifier::Table::vector::iterator it= dropped_tables.begin();
-       it != dropped_tables.end();
-       it++)
+  for (identifier::table::vector::iterator it= dropped_tables.begin(); it != dropped_tables.end(); it++)
   {
-    boost::mutex::scoped_lock scopedLock(table::Cache::singleton().mutex());
+    boost::mutex::scoped_lock scopedLock(table::Cache::mutex());
 
     message::table::shared_ptr message= StorageEngine::getTableMessage(session, *it, false);
     if (not message)
@@ -237,41 +211,39 @@ static bool drop_all_tables_in_schema(Session& session,
       return false;
     }
 
-    table::Cache::singleton().removeTable(&session, *it,
-                                          RTFC_WAIT_OTHER_THREAD_FLAG |
-                                          RTFC_CHECK_KILLED_FLAG);
+    table::Cache::removeTable(session, *it, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
     if (not plugin::StorageEngine::dropTable(session, *it))
     {
       my_error(ER_TABLE_DROP, *it);
       return false;
     }
-    transaction_services.dropTable(session, *it, *message, true);
+    TransactionServices::dropTable(session, *it, *message, true);
     deleted++;
   }
 
   return true;
 }
 
-bool StorageEngine::dropSchema(Session::reference session,
-                               identifier::Schema::const_reference identifier,
+bool StorageEngine::dropSchema(Session& session,
+                               const identifier::Schema& identifier,
                                message::schema::const_reference schema_message)
 {
   uint64_t deleted= 0;
   bool error= false;
-  identifier::Table::vector dropped_tables;
+  identifier::table::vector dropped_tables;
 
   do
   {
     // Remove all temp tables first, this prevents loss of table from
     // shadowing (ie temp over standard table)
     {
-      // Lets delete the temporary tables first outside of locks.  
-      identifier::Table::vector set_of_identifiers;
-      session.doGetTableIdentifiers(identifier, set_of_identifiers);
+      // Lets delete the temporary tables first outside of locks.
+      identifier::table::vector set_of_identifiers;
+      session.open_tables.doGetTableIdentifiers(identifier, set_of_identifiers);
 
-      for (identifier::Table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
+      for (identifier::table::vector::iterator iter= set_of_identifiers.begin(); iter != set_of_identifiers.end(); iter++)
       {
-        if (session.drop_temporary_table(*iter))
+        if (session.open_tables.drop_temporary_table(*iter))
         {
           my_error(ER_TABLE_DROP, *iter);
           error= true;
@@ -281,7 +253,7 @@ bool StorageEngine::dropSchema(Session::reference session,
     }
 
     /* After deleting database, remove all cache entries related to schema */
-    table::Cache::singleton().removeSchema(identifier);
+    table::Cache::removeSchema(identifier);
 
     if (not drop_all_tables_in_schema(session, identifier, dropped_tables, deleted))
     {
@@ -305,8 +277,7 @@ bool StorageEngine::dropSchema(Session::reference session,
     else
     {
       /* We've already verified that the schema does exist, so safe to log it */
-      TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.dropSchema(session, identifier, schema_message);
+      TransactionServices::dropSchema(session, identifier, schema_message);
     }
   } while (0);
 
@@ -322,7 +293,7 @@ bool StorageEngine::dropSchema(Session::reference session,
   return error;
 }
 
-class AlterSchema : 
+class AlterSchema :
   public std::unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
@@ -358,8 +329,7 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
   if (success_count)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.allocateNewTransactionId();
+    TransactionServices::allocateNewTransactionId();
   }
 
   return success_count ? true : false;

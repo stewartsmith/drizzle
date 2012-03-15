@@ -22,21 +22,21 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/truncate.h>
+#include <drizzled/sql_lex.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::Truncate::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
   }
 
-  return truncate(*getSession(), first_table);
+  return truncate(session(), first_table);
 }
 
 } /* namespace drizzled */

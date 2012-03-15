@@ -17,23 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_DECIMAL_H
-#define DRIZZLED_ITEM_DECIMAL_H
+#pragma once
 
 #include <drizzled/item/num.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* decimal (fixed point) constant */
-class Item_decimal :public Item_num
+class Item_decimal : public Item_num
 {
 protected:
   type::Decimal decimal_value;
 public:
-  Item_decimal(const char *str_arg, uint32_t length, const CHARSET_INFO * const charset);
-  Item_decimal(const char *str, const type::Decimal *val_arg,
-               uint32_t decimal_par, uint32_t length);
+  Item_decimal(const char *str_arg, uint32_t length, const charset_info_st*);
+  Item_decimal(const char *str, const type::Decimal *val_arg, uint32_t decimal_par, uint32_t length);
   Item_decimal(type::Decimal *value_par);
   Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
@@ -48,7 +45,7 @@ public:
   type::Decimal *val_decimal(type::Decimal *)
   { return &decimal_value; }
   int save_in_field(Field *field, bool no_conversions);
-  bool basic_const_item() const { return 1; }
+  bool basic_const_item() const { return true; }
   Item *clone_item()
   {
     return new Item_decimal(name, &decimal_value, decimals, max_length);
@@ -67,4 +64,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_DECIMAL_H */

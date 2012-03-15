@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SELECT_DUMPVAR_H
-#define DRIZZLED_SELECT_DUMPVAR_H
+#pragma once
 
 #include <drizzled/error.h>
 #include <drizzled/function/set_user_var.h>
@@ -27,33 +26,30 @@
 
 #include <vector>
 
-namespace drizzled
+namespace drizzled {
+
+class select_dumpvar : public select_result_interceptor 
 {
-
-class var;
-
-class select_dumpvar :public select_result_interceptor {
-  ha_rows row_count;
-
 public:
-  std::vector<var *> var_list;
-  select_dumpvar()  { var_list.clear(); row_count= 0;}
-  ~select_dumpvar() {}
+  int prepare(List<Item>&, Select_Lex_Unit*);
+  bool send_data(List<Item>&);
+  bool send_eof();
 
-  int prepare(List<Item> &list, Select_Lex_Unit *u);
+  select_dumpvar()  
+  { 
+    row_count= 0;
+  }
 
   void cleanup()
   {
     row_count= 0;
   }
 
+  std::vector<var*> var_list;
 
-  bool send_data(List<Item> &items);
-
-  bool send_eof();
-
+private:
+  ha_rows row_count;
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_DUMPVAR_H */

@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_LEX_H
-#define DRIZZLED_SQL_LEX_H
+#pragma once
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
@@ -29,28 +28,10 @@
 #include <drizzled/function/math/real.h>
 #include <drizzled/key_part_spec.h>
 #include <drizzled/index_hint.h>
-#include <drizzled/statement.h>
 #include <drizzled/optimizer/explain_plan.h>
 
 #include <bitset>
 #include <string>
-
-namespace drizzled {
-
-namespace plugin { class Function; }
-
-class st_lex_symbol;
-class select_result_interceptor;
-
-/* YACC and LEX Definitions */
-
-/* These may not be declared yet */
-class Table_ident;
-class file_exchange;
-class Lex_Column;
-class Item_outer_ref;
-
-} /* namespace drizzled */
 
 /*
   The following hack is needed because mysql_yacc.cc does not define
@@ -67,7 +48,8 @@ class Item_outer_ref;
 #  if defined(DRIZZLE_LEX)
 #   include <drizzled/foreign_key.h>
 #   include <drizzled/lex_symbol.h>
-#   include <drizzled/sql_yacc.h>
+#   include <drizzled/comp_creator.h>
+#   include <drizzled/sql_yacc.hh>
 #   define LEX_YYSTYPE YYSTYPE *
 #  else
 #   define LEX_YYSTYPE void *
@@ -225,9 +207,6 @@ enum olap_type
     Base class for Select_Lex (Select_Lex) &
     Select_Lex_Unit (Select_Lex_Unit)
 */
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
 class Select_Lex_Node {
 protected:
   Select_Lex_Node *next, **prev,   /* neighbor list */
@@ -246,7 +225,7 @@ public:
       UNCACHEABLE_PREPARE
   */
   std::bitset<8> uncacheable;
-  enum sub_select_type linkage;
+  sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
 
@@ -255,10 +234,10 @@ public:
     return memory::sql_alloc(size);
   }
   static void *operator new(size_t size, memory::Root *mem_root)
-  { return (void*) mem_root->alloc_root((uint32_t) size); }
-  static void operator delete(void *, size_t)
+  { return mem_root->alloc(size); }
+  static void operator delete(void*, size_t)
   {  }
-  static void operator delete(void *, memory::Root *)
+  static void operator delete(void*, memory::Root*)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -281,11 +260,11 @@ public:
   virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
   virtual TableList *add_table_to_list(Session *session, Table_ident *table,
-                                       LEX_STRING *alias,
+                                       lex_string_t *alias,
                                        const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                        thr_lock_type flags= TL_UNLOCK,
                                        List<Index_hint> *hints= 0,
-                                       LEX_STRING *option= 0);
+                                       lex_string_t *option= 0);
   virtual void set_lock_for_tables(thr_lock_type)
   {}
 
@@ -299,10 +278,6 @@ private:
    Select_Lex_Unit - unit of selects (UNION, INTERSECT, ...) group
    Select_Lexs
 */
-class Session;
-class select_result;
-class Join;
-class select_union;
 class Select_Lex_Unit: public Select_Lex_Node {
 protected:
   TableList result_table_list;
@@ -386,9 +361,9 @@ public:
                      select_result_interceptor *old_result);
   void set_limit(Select_Lex *values);
   void set_session(Session *session_arg) { session= session_arg; }
-  inline bool is_union ();
+  inline bool is_union();
 
-  friend void lex_start(Session *session);
+  friend void lex_start(Session*);
 
   List<Item> *get_unit_column_types();
 };
@@ -396,7 +371,7 @@ public:
 /*
   Select_Lex - store information of parsed SELECT statment
 */
-class Select_Lex: public Select_Lex_Node
+class Select_Lex : public Select_Lex_Node
 {
 public:
 
@@ -459,7 +434,7 @@ public:
   }
 
   Name_resolution_context context;
-  char *db;
+  const char *db;
   /* An Item representing the WHERE clause */
   Item *where;
   /* An Item representing the HAVING clause */
@@ -469,7 +444,7 @@ public:
   Item::cond_result having_value;
   /* point on lex in which it was created, used in view subquery detection */
   LEX *parent_lex;
-  enum olap_type olap;
+  olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
   SQL_LIST table_list;
   SQL_LIST group_list; /* GROUP BY clause. */
@@ -487,7 +462,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
+  drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -603,20 +578,20 @@ public:
   bool inc_in_sum_expr();
   uint32_t get_in_sum_expr();
 
-  bool add_item_to_list(Session *session, Item *item);
-  bool add_group_to_list(Session *session, Item *item, bool asc);
-  bool add_order_to_list(Session *session, Item *item, bool asc);
+  void add_item_to_list(Session *session, Item *item);
+  void add_group_to_list(Session *session, Item *item, bool asc);
+  void add_order_to_list(Session *session, Item *item, bool asc);
   TableList* add_table_to_list(Session *session,
                                Table_ident *table,
-                               LEX_STRING *alias,
+                               lex_string_t *alias,
                                const std::bitset<NUM_OF_TABLE_OPTIONS>& table_options,
                                thr_lock_type flags= TL_UNLOCK,
                                List<Index_hint> *hints= 0,
-                               LEX_STRING *option= 0);
+                               lex_string_t *option= 0);
   TableList* get_table_list();
-  bool init_nested_join(Session *session);
-  TableList *end_nested_join(Session *session);
-  TableList *nest_last_join(Session *session);
+  void init_nested_join(Session&);
+  TableList *end_nested_join();
+  TableList *nest_last_join(Session*);
   void add_joined_table(TableList *table);
   TableList *convert_right_join();
   List<Item>* get_item_list();
@@ -639,13 +614,13 @@ public:
   }
   bool test_limit();
 
-  friend void lex_start(Session *session);
+  friend void lex_start(Session*);
   void make_empty_select()
   {
     init_query();
     init_select();
   }
-  bool setup_ref_array(Session *session, uint32_t order_group_num);
+  void setup_ref_array(Session *session, uint32_t order_group_num);
   void print(Session *session, String *str);
   static void print_order(String *str, Order *order);
 
@@ -662,51 +637,48 @@ public:
   */
   void cleanup_all_joins(bool full);
 
-  void set_index_hint_type(enum index_hint_type type, index_clause_map clause);
+  void set_index_hint_type(index_hint_type type, index_clause_map clause);
 
   /*
    Add a index hint to the tagged list of hints. The type and clause of the
    hint will be the current ones (set by set_index_hint())
   */
-  bool add_index_hint (Session *session, char *str, uint32_t length);
+  void add_index_hint(Session*, const char*);
 
   /* make a list to hold index hints */
   void alloc_index_hints (Session *session);
   /* read and clear the index hints */
-  List<Index_hint>* pop_index_hints(void)
+  List<Index_hint>* pop_index_hints()
   {
     List<Index_hint> *hints= index_hints;
     index_hints= NULL;
     return hints;
   }
 
-  void clear_index_hints(void) { index_hints= NULL; }
+  void clear_index_hints() { index_hints= NULL; }
 
 private:
   /* current index hint kind. used in filling up index_hints */
-  enum index_hint_type current_index_hint_type;
+  index_hint_type current_index_hint_type;
   index_clause_map current_index_hint_clause;
   /* a list of USE/FORCE/IGNORE INDEX */
   List<Index_hint> *index_hints;
 };
 
-inline bool Select_Lex_Unit::is_union ()
+inline bool Select_Lex_Unit::is_union()
 {
-  return first_select()->next_select() &&
-    first_select()->next_select()->linkage == UNION_TYPE;
+  return first_select()->next_select() && first_select()->next_select()->linkage == UNION_TYPE;
 }
 
 enum xa_option_words
 {
-  XA_NONE
-, XA_JOIN
-, XA_RESUME
-, XA_ONE_PHASE
-, XA_SUSPEND
-, XA_FOR_MIGRATE
+  XA_NONE,
+  XA_JOIN,
+  XA_RESUME,
+  XA_ONE_PHASE,
+  XA_SUSPEND,
+  XA_FOR_MIGRATE
 };
-
-extern const LEX_STRING null_lex_str;
 
 /*
   Class representing list of all tables used by statement.
@@ -732,13 +704,6 @@ public:
     0 - indicates that this query does not need prelocking.
   */
   TableList **query_tables_own_last;
-
-  /*
-    These constructor and destructor serve for creation/destruction
-    of Query_tables_list instances which are used as backup storage.
-  */
-  Query_tables_list() {}
-  virtual ~Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
@@ -794,10 +759,7 @@ enum enum_comment_state
 
 } /* namespace drizzled */
 
-#include <drizzled/lex_input_stream.h>
-
-namespace drizzled
-{
+namespace drizzled {
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -810,18 +772,18 @@ public:
   /* list of all Select_Lex */
   Select_Lex *all_selects_list;
 
-  /* This is the "scale" for DECIMAL (S,P) notation */ 
-  char *length;
+  /* This is the "scale" for DECIMAL (S,P) notation */
+  const char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
-  char *dec;
-  
+  const char *dec;
+
   /**
-   * This is used kind of like the "ident" member variable below, as 
+   * This is used kind of like the "ident" member variable below, as
    * a place to store certain names of identifiers.  Unfortunately, it
    * is used differently depending on the Command (SELECT on a derived
    * table vs CREATE)
    */
-  LEX_STRING name;
+  lex_string_t name;
   /* The string literal used in a LIKE expression */
   String *wild;
   file_exchange *exchange;
@@ -832,13 +794,13 @@ public:
    * or a named savepoint.  It should probably be refactored out into
    * the eventual Command class built for the Keycache and Savepoint
    * commands.
-   */ 
-  LEX_STRING ident;
+   */
+  lex_string_t ident;
 
   unsigned char* yacc_yyss, *yacc_yyvs;
   /* The owning Session of this LEX */
   Session *session;
-  const CHARSET_INFO *charset;
+  const charset_info_st *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
   TableList *leaf_tables_insert;
@@ -937,17 +899,15 @@ public:
 
   void cleanup_after_one_table_open();
 
-  bool push_context(Name_resolution_context *context)
+  void push_context(Name_resolution_context *context)
   {
-    return context_stack.push_front(context);
+    context_stack.push_front(context);
   }
 
   void pop_context()
   {
     context_stack.pop();
   }
-
-  bool copy_db_to(char **p_db, size_t *p_db_length) const;
 
   Name_resolution_context *current_context()
   {
@@ -1012,6 +972,8 @@ public:
     return _create_table;
   }
 
+  message::AlterTable *alter_table();
+
   message::Table::Field *field()
   {
     return _create_field;
@@ -1032,20 +994,16 @@ public:
     return _exists;
   }
 
-private: 
+private:
   bool cacheable;
   bool sum_expr_used;
   message::Table *_create_table;
+  message::AlterTable *_alter_table;
   message::Table::Field *_create_field;
   bool _exists;
 };
 
 extern void lex_start(Session *session);
-extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
-extern bool is_lex_native_function(const LEX_STRING *name);
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const&);
-bool check_for_sql_keyword(drizzled::lex_string_t const&);
 
 /**
   @} (End of group Semantic_Analysis)
@@ -1054,4 +1012,3 @@ bool check_for_sql_keyword(drizzled::lex_string_t const&);
 } /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLED_SQL_LEX_H */

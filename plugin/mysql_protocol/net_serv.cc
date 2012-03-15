@@ -23,6 +23,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -39,8 +41,7 @@
 #include "vio.h"
 #include "net_serv.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 using namespace std;
 using namespace drizzled;
@@ -59,215 +60,90 @@ using namespace drizzled;
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
-const char  *not_error_sqlstate= "00000";
 
-static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
+static bool net_write_buff(NET*, const void*, uint32_t len);
 static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
 
 /** Init with packet info. */
 
-bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
+void NET::init(int sock, uint32_t buffer_length)
 {
-  net->vio = vio;
-  net->max_packet= (uint32_t) buffer_length;
-  net->max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
+  vio= new Vio(sock);
+  max_packet= (uint32_t) buffer_length;
+  max_packet_size= max(buffer_length, drizzled::global_system_variables.max_allowed_packet);
 
-  if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
-                                          NET_HEADER_SIZE + COMP_HEADER_SIZE)))
-    return(1);
-  net->buff_end=net->buff+net->max_packet;
-  net->error=0; net->return_status=0;
-  net->pkt_nr=net->compress_pkt_nr=0;
-  net->write_pos=net->read_pos = net->buff;
-  net->last_error[0]=0;
-  net->compress=0; net->reading_or_writing=0;
-  net->where_b = net->remain_in_buf=0;
-  net->last_errno=0;
-  net->unused= 0;
-
-  if (vio != 0)                    /* If real connection */
-  {
-    net->fd  = vio->get_fd();            /* For perl DBI/DBD */
-    vio->fastsend();
-  }
-  return(0);
+  buff= (unsigned char*) malloc((size_t) max_packet + NET_HEADER_SIZE + COMP_HEADER_SIZE);
+  buff_end= buff + max_packet;
+  error_= 0;
+  pkt_nr= compress_pkt_nr= 0;
+  write_pos= read_pos= buff;
+  compress= 0; 
+  where_b= remain_in_buf= 0;
+  last_errno= 0;
+  vio->fastsend();
 }
 
-bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length)
+void NET::end()
 {
-  Vio *vio_tmp= new Vio(sock);
-  if (vio_tmp == NULL)
-  {
-    return true;
-  }
-  else
-    if (drizzleclient_net_init(net, vio_tmp, buffer_length))
-    {
-      /* Only delete the temporary vio if we didn't already attach it to the
-       * NET object.
-       */
-      if (vio_tmp && (net->vio != vio_tmp))
-      {
-        delete vio_tmp;
-      }
-      else
-      {
-        (void) shutdown(sock, SHUT_RDWR);
-        (void) close(sock);
-      }
-      return true;
-    }
-  return false;
+  free(buff);
+  buff= NULL;
 }
 
-void drizzleclient_net_end(NET *net)
+void NET::close()
 {
-  if (net->buff != NULL)
-    free(net->buff);
-  net->buff= NULL;
-  return;
+  drizzled::safe_delete(vio);
 }
 
-void drizzleclient_net_close(NET *net)
+bool NET::peer_addr(char *buf, size_t buflen, uint16_t& port)
 {
-  drizzled::safe_delete(net->vio);
+  return vio->peer_addr(buf, buflen, port);
 }
 
-bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen)
+void NET::keepalive(bool flag)
 {
-  return net->vio->peer_addr(buf, port, buflen);
+  vio->keepalive(flag);
 }
 
-void drizzleclient_net_keepalive(NET *net, bool flag)
+int NET::get_sd() const
 {
-  net->vio->keepalive(flag);
-}
-
-int drizzleclient_net_get_sd(NET *net)
-{
-  return net->vio->get_fd();
-}
-
-bool drizzleclient_net_more_data(NET *net)
-{
-  return (net->vio == 0 || net->vio->get_read_pos() < net->vio->get_read_end());
+  return vio->get_fd();
 }
 
 /** Realloc the packet buffer. */
 
 static bool drizzleclient_net_realloc(NET *net, size_t length)
 {
-  unsigned char *buff;
-  size_t pkt_length;
-
   if (length >= net->max_packet_size)
   {
     /* @todo: 1 and 2 codes are identical. */
-    net->error= 3;
+    net->error_= 3;
     net->last_errno= ER_NET_PACKET_TOO_LARGE;
     my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    return(1);
+    return 1;
   }
-  pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1);
+  size_t pkt_length = (length + IO_SIZE - 1) & ~(IO_SIZE - 1);
   /*
     We must allocate some extra bytes for the end 0 and to be able to
     read big compressed blocks
   */
-  if (!(buff= (unsigned char*) realloc((char*) net->buff, pkt_length +
-                               NET_HEADER_SIZE + COMP_HEADER_SIZE)))
-  {
-    /* @todo: 1 and 2 codes are identical. */
-    net->error= 1;
-    net->last_errno= CR_OUT_OF_MEMORY;
-    /* In the server the error is reported by MY_WME flag. */
-    return(1);
-  }
-  net->buff=net->write_pos=buff;
-  net->buff_end=buff+(net->max_packet= (uint32_t) pkt_length);
-  return(0);
+  unsigned char* buff= (unsigned char*)realloc((char*) net->buff, pkt_length + NET_HEADER_SIZE + COMP_HEADER_SIZE);
+  net->buff=net->write_pos= buff;
+  net->buff_end= buff + (net->max_packet= (uint32_t) pkt_length);
+  return 0;
 }
 
-
-/**
-   Check if there is any data to be read from the socket.
-
-   @param sd   socket descriptor
-
-   @retval
-   0  No data to read
-   @retval
-   1  Data or EOF to read
-   @retval
-   -1   Don't know if data is ready or not
-*/
-
-static bool net_data_is_ready(int sd)
+bool NET::flush()
 {
-  struct pollfd ufds;
-  int res;
-
-  ufds.fd= sd;
-  ufds.events= POLLIN | POLLPRI;
-  if (!(res= poll(&ufds, 1, 0)))
-    return 0;
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
-    return 0;
-  return 1;
-}
-
-/**
-   Remove unwanted characters from connection
-   and check if disconnected.
-
-   Read from socket until there is nothing more to read. Discard
-   what is read.
-
-   If there is anything when to read 'drizzleclient_net_clear' is called this
-   normally indicates an error in the protocol.
-
-   When connection is properly closed (for TCP it means with
-   a FIN packet), then select() considers a socket "ready to read",
-   in the sense that there's EOF to read, but read() returns 0.
-
-   @param net            NET handler
-   @param clear_buffer           if <> 0, then clear all data from comm buff
-*/
-
-void drizzleclient_net_clear(NET *net, bool clear_buffer)
-{
-  if (clear_buffer)
+  bool error= false;
+  if (buff != write_pos)
   {
-    while (net_data_is_ready(net->vio->get_fd()) > 0)
-    {
-      /* The socket is ready */
-      if (net->vio->read(net->buff, (size_t) net->max_packet) <= 0)
-      {
-        net->error= 2;
-        break;
-      }
-    }
-  }
-  net->pkt_nr=net->compress_pkt_nr=0;        /* Ready for new command */
-  net->write_pos=net->buff;
-  return;
-}
-
-
-/** Flush write_buffer if not empty. */
-
-bool drizzleclient_net_flush(NET *net)
-{
-  bool error= 0;
-  if (net->buff != net->write_pos)
-  {
-    error=drizzleclient_net_real_write(net, net->buff,
-                         (size_t) (net->write_pos - net->buff)) ? 1 : 0;
-    net->write_pos=net->buff;
+    error= drizzleclient_net_real_write(this, buff, write_pos - buff) ? true : false;
+    write_pos= buff;
   }
   /* Sync packet number if using compression */
-  if (net->compress)
-    net->pkt_nr=net->compress_pkt_nr;
-  return(error);
+  if (compress)
+    pkt_nr= compress_pkt_nr;
+  return error;
 }
 
 
@@ -285,9 +161,10 @@ bool drizzleclient_net_flush(NET *net)
    If compression is used the original package is modified!
 */
 
-bool
-drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
+static bool
+drizzleclient_net_write(NET* net, const void* packet0, size_t len)
 {
+  const unsigned char* packet= reinterpret_cast<const unsigned char*>(packet0);
   unsigned char buff[NET_HEADER_SIZE];
   if (unlikely(!net->vio)) /* nowhere to write */
     return 0;
@@ -301,8 +178,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
     const uint32_t z_size = MAX_PACKET_LENGTH;
     int3store(buff, z_size);
     buff[3]= (unsigned char) net->pkt_nr++;
-    if (net_write_buff(net, buff, NET_HEADER_SIZE) ||
-        net_write_buff(net, packet, z_size))
+    if (net_write_buff(net, buff, NET_HEADER_SIZE) || net_write_buff(net, packet, z_size))
       return 1;
     packet += z_size;
     len-=     z_size;
@@ -310,9 +186,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
   /* Write last packet */
   int3store(buff,len);
   buff[3]= (unsigned char) net->pkt_nr++;
-  if (net_write_buff(net, buff, NET_HEADER_SIZE))
-    return 1;
-  return net_write_buff(net,packet,len) ? 1 : 0;
+  return net_write_buff(net, buff, NET_HEADER_SIZE) || net_write_buff(net, packet, len);
 }
 
 /**
@@ -342,7 +216,7 @@ drizzleclient_net_write(NET *net,const unsigned char *packet,size_t len)
    1    error
 */
 
-bool
+static bool
 drizzleclient_net_write_command(NET *net,unsigned char command,
                   const unsigned char *header, size_t head_len,
                   const unsigned char *packet, size_t len)
@@ -375,9 +249,9 @@ drizzleclient_net_write_command(NET *net,unsigned char command,
   }
   int3store(buff,length);
   buff[3]= (unsigned char) net->pkt_nr++;
-  return((net_write_buff(net, buff, header_size) ||
+  return (net_write_buff(net, buff, header_size) ||
           (head_len && net_write_buff(net, header, head_len)) ||
-          net_write_buff(net, packet, len) || drizzleclient_net_flush(net)) ? 1 : 0 );
+          net_write_buff(net, packet, len) || net->flush());
 }
 
 /**
@@ -407,8 +281,9 @@ drizzleclient_net_write_command(NET *net,unsigned char command,
 */
 
 static bool
-net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
+net_write_buff(NET* net, const void* packet0, uint32_t len)
 {
+  const unsigned char* packet= reinterpret_cast<const unsigned char*>(packet0);
   uint32_t left_length;
   if (net->compress && net->max_packet > MAX_PACKET_LENGTH)
     left_length= MAX_PACKET_LENGTH - (net->write_pos - net->buff);
@@ -468,56 +343,34 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
 static int
 drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
-  size_t length;
-  const unsigned char *pos, *end;
-  uint32_t retry_count= 0;
-
   /* Backup of the original SO_RCVTIMEO timeout */
 
-  if (net->error == 2)
+  if (net->error_ == 2)
     return(-1);                /* socket can't be used */
 
-  net->reading_or_writing=2;
   if (net->compress)
   {
-    size_t complen;
-    unsigned char *b;
     const uint32_t header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
-    if (!(b= (unsigned char*) malloc(len + NET_HEADER_SIZE +
-                             COMP_HEADER_SIZE)))
-    {
-      net->error= 2;
-      net->last_errno= CR_OUT_OF_MEMORY;
-      /* In the server, the error is reported by MY_WME flag. */
-      net->reading_or_writing= 0;
-      return(1);
-    }
+    unsigned char* b= (unsigned char*) malloc(len + NET_HEADER_SIZE + COMP_HEADER_SIZE);
     memcpy(b+header_length,packet,len);
 
-    complen= len * 120 / 100 + 12;
-    unsigned char * compbuf= (unsigned char *) malloc(complen);
-    if (compbuf != NULL)
-    {
-      uLongf tmp_complen= complen;
-      int res= compress((Bytef*) compbuf, &tmp_complen,
-                        (Bytef*) (b+header_length),
-                        len);
-      complen= tmp_complen;
+    size_t complen= len * 120 / 100 + 12;
+    unsigned char* compbuf= new unsigned char[complen];
+    uLongf tmp_complen= complen;
+    int res= compress((Bytef*) compbuf, &tmp_complen,
+      (Bytef*) (b+header_length),
+      len);
+    complen= tmp_complen;
 
-      free(compbuf);
+    delete[] compbuf;
 
-      if ((res != Z_OK) || (complen >= len))
-        complen= 0;
-      else
-      {
-        size_t tmplen= complen;
-        complen= len;
-        len= tmplen;
-      }
-    }
+    if (res != Z_OK || complen >= len)
+      complen= 0;
     else
     {
-      complen=0;
+      size_t tmplen= complen;
+      complen= len;
+      len= tmplen;
     }
     int3store(&b[NET_HEADER_SIZE],complen);
     int3store(b,len);
@@ -526,13 +379,15 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     packet= b;
   }
 
-  pos= packet;
-  end=pos+len;
+  uint32_t retry_count= 0;
+  const unsigned char* pos= packet;
+  const unsigned char* end= pos + len;
   /* Loop until we have read everything */
   while (pos != end)
   {
     assert(pos);
     // TODO - see bug comment below - will we crash now?
+    size_t length;
     if ((long) (length= net->vio->write( pos, (size_t) (end-pos))) <= 0)
     {
      /*
@@ -549,15 +404,14 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
         we need to switch to blocking mode and wait until the timeout
         on the socket kicks in.
       */
-      if ((interrupted || length == 0))
+      if (interrupted || length == 0)
       {
         bool old_mode;
-
         while (net->vio->blocking(true, &old_mode) < 0)
         {
           if (net->vio->should_retry() && retry_count++ < net->retry_count)
             continue;
-          net->error= 2;                     /* Close socket */
+          net->error_= 2;                     /* Close socket */
           net->last_errno= ER_NET_PACKET_TOO_LARGE;
           my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
           goto end;
@@ -575,23 +429,21 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       {
         continue;
       }
-      net->error= 2;                /* Close socket */
-      net->last_errno= (interrupted ? CR_NET_WRITE_INTERRUPTED :
-                        CR_NET_ERROR_ON_WRITE);
+      net->error_= 2;                /* Close socket */
+      net->last_errno= interrupted ? CR_NET_WRITE_INTERRUPTED : CR_NET_ERROR_ON_WRITE;
       break;
     }
-    pos+=length;
+    pos+= length;
 
     /* If this is an error we may not have a current_session any more */
     if (current_session)
       current_session->status_var.bytes_sent+= length;
   }
 end:
-  if ((net->compress) && (packet != NULL))
-    free((char*) packet);
-  net->reading_or_writing=0;
+  if (net->compress)
+    free((char*)packet);
 
-  return(((int) (pos != end)));
+  return (int) (pos != end);
 }
 
 
@@ -607,21 +459,18 @@ end:
 static uint32_t
 my_real_read(NET *net, size_t *complen)
 {
-  unsigned char *pos;
   size_t length= 0;
-  uint32_t i,retry_count=0;
+  uint32_t retry_count=0;
   size_t len=packet_error;
-  uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
-                    NET_HEADER_SIZE);
+  uint32_t remain= net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE : NET_HEADER_SIZE;
 
   *complen = 0;
 
-  net->reading_or_writing= 1;
   /* Read timeout is set in drizzleclient_net_set_read_timeout */
 
-  pos = net->buff + net->where_b;        /* net->packet -4 */
+  unsigned char* pos = net->buff + net->where_b;        /* net->packet -4 */
 
-  for (i= 0; i < 2 ; i++)
+  for (uint32_t i= 0; i < 2 ; i++)
   {
     while (remain > 0)
     {
@@ -643,10 +492,8 @@ my_real_read(NET *net, size_t *complen)
           continue;
         }
         len= packet_error;
-        net->error= 2;                /* Close socket */
-        net->last_errno= (net->vio->was_interrupted() ?
-                          CR_NET_READ_INTERRUPTED :
-                          CR_NET_READ_ERROR);
+        net->error_= 2;                /* Close socket */
+        net->last_errno= net->vio->was_interrupted() ? CR_NET_READ_INTERRUPTED : CR_NET_READ_ERROR;
         goto end;
       }
       remain -= (uint32_t) length;
@@ -701,9 +548,7 @@ my_real_read(NET *net, size_t *complen)
   }
 
 end:
-  net->reading_or_writing= 0;
-
-  return(len);
+  return len;
 }
 
 
@@ -723,12 +568,12 @@ end:
    net->read_pos points to the read data.
 */
 
-uint32_t
+static uint32_t
 drizzleclient_net_read(NET *net)
 {
   size_t len, complen;
 
-  if (!net->compress)
+  if (not net->compress)
   {
     len = my_real_read(net,&complen);
     if (len == MAX_PACKET_LENGTH)
@@ -736,19 +581,25 @@ drizzleclient_net_read(NET *net)
       /* First packet of a multi-packet.  Concatenate the packets */
       uint32_t save_pos = net->where_b;
       size_t total_length= 0;
+
       do
       {
         net->where_b += len;
         total_length += len;
         len = my_real_read(net,&complen);
       } while (len == MAX_PACKET_LENGTH);
+
       if (len != packet_error)
+      {
         len+= total_length;
+      }
       net->where_b = save_pos;
     }
     net->read_pos = net->buff + net->where_b;
+
     if (len != packet_error)
       net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
+
     return len;
   }
   else
@@ -846,7 +697,7 @@ drizzleclient_net_read(NET *net)
 
           if (error != Z_OK)
           {
-            net->error= 2;            /* caller will close socket */
+            net->error_= 2;            /* caller will close socket */
             net->last_errno= CR_NET_UNCOMPRESS_ERROR;
           }
           else
@@ -873,40 +724,41 @@ drizzleclient_net_read(NET *net)
     net->read_pos[len]=0;        /* Safeguard for drizzleclient_use_result */
   }
   return len;
-  }
+}
 
-
-void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout)
+void NET::set_read_timeout(uint32_t timeout)
 {
-  net->read_timeout= timeout;
+  read_timeout_= timeout;
 #ifndef __sun
-  if (net->vio)
-    net->vio->timeout(0, timeout);
+  if (vio)
+    vio->timeout(0, timeout);
 #endif
   return;
 }
 
-
-void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout)
+void NET::set_write_timeout(uint32_t timeout)
 {
-  net->write_timeout= timeout;
+  write_timeout_= timeout;
 #ifndef __sun
-  if (net->vio)
-    net->vio->timeout(1, timeout);
+  if (vio)
+    vio->timeout(1, timeout);
 #endif
   return;
 }
-/**
-  Clear possible error state of struct NET
 
-  @param net  clear the state of the argument
-*/
-
-void drizzleclient_drizzleclient_net_clear_error(NET *net)
+bool NET::write(const void* data, size_t size)
 {
-  net->last_errno= 0;
-  net->last_error[0]= '\0';
-  strcpy(net->sqlstate, not_error_sqlstate);
+  return drizzleclient_net_write(this, data, size);
+}
+
+bool NET::write_command(unsigned char command, data_ref header, data_ref body)
+{
+  return drizzleclient_net_write_command(this, command, header.data(), header.size(), body.data(), body.size());
+}
+
+uint32_t NET::read()
+{
+  return drizzleclient_net_read(this);
 }
 
 } /* namespace drizzle_plugin */

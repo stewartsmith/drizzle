@@ -21,13 +21,13 @@
 
 #include <drizzled/function/math/divide.h>
 #include <drizzled/session.h>
+#include <drizzled/system_variables.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 double Item_func_div::real_op()
 {

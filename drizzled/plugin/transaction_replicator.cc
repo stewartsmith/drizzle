@@ -23,20 +23,17 @@
 #include <drizzled/plugin/transaction_replicator.h>
 #include <drizzled/replication_services.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool plugin::TransactionReplicator::addPlugin(plugin::TransactionReplicator *replicator)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.attachReplicator(replicator);
+  ReplicationServices::attachReplicator(replicator);
   return false;
 }
 
 void plugin::TransactionReplicator::removePlugin(plugin::TransactionReplicator *replicator)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.detachReplicator(replicator);
+  ReplicationServices::detachReplicator(replicator);
 }
 
 } /* namespace drizzled */

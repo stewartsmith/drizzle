@@ -23,6 +23,7 @@ SQL parser
 Created 11/19/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef pars0pars_h
 #define pars0pars_h
 

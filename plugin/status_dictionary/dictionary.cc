@@ -29,8 +29,8 @@ static VariablesTool *session_variables;
 
 static int init(drizzled::module::Context &context)
 {
-  global_variables= new(std::nothrow)VariablesTool(true);
-  session_variables= new(std::nothrow)VariablesTool(false);
+  global_variables= new VariablesTool(true);
+  session_variables= new VariablesTool(false);
 
   context.add(global_variables);
   context.add(session_variables);
@@ -44,7 +44,7 @@ DRIZZLE_DECLARE_PLUGIN
   "status_dictionary",
   "1.0",
   "Brian Aker",
-  "Dictionary for status, statement, and variable information.",
+  N_("Dictionaries of global and session variables"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

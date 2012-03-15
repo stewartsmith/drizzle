@@ -107,7 +107,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 #include <plugin/myisam/myisampack.h>
@@ -214,8 +214,7 @@ int class_decimal2string(const type::Decimal *d,
                     ? (uint32_t)(((0 == fixed_dec) ? 1 : 0) + 1)
                     : (uint32_t)d->string_length());
   int result;
-  if (str->alloc(length))
-    return check_result(mask, E_DEC_OOM);
+  str->alloc(length);
 
   result= decimal2string((decimal_t*) d, (char*) str->ptr(),
                          &length, (int)0, fixed_dec,
@@ -283,7 +282,7 @@ int Decimal::val_binary(uint32_t mask, unsigned char *bin, int prec, int scale) 
    @retval E_DEC_OOM
 */
 
-int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const CHARSET_INFO * charset)
+int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const charset_info_st * charset)
 {
   char *end, *from_end;
   int err;
@@ -291,8 +290,7 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
   String tmp(buff, sizeof(buff), &my_charset_bin);
   if (charset->mbminlen > 1)
   {
-    size_t dummy_errors;
-    tmp.copy(from, length, charset, &my_charset_utf8_general_ci, &dummy_errors);
+    tmp.copy(from, length, &my_charset_utf8_general_ci);
     from= tmp.ptr();
     length=  tmp.length();
     charset= &my_charset_bin;
@@ -304,7 +302,7 @@ int type::Decimal::store(uint32_t mask, const char *from, uint32_t length, const
     /* Give warning if there is something other than end space */
     for ( ; end < from_end; end++)
     {
-      if (!my_isspace(&my_charset_utf8_general_ci, *end))
+      if (not my_charset_utf8_general_ci.isspace(*end))
       {
         err= E_DEC_TRUNCATED;
         break;
@@ -1030,7 +1028,7 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   sanity(to);
 
   error= E_DEC_BAD_NUM;                         /* In case of bad number */
-  while (s < end_of_string && my_isspace(&my_charset_utf8_general_ci, *s))
+  while (s < end_of_string && my_charset_utf8_general_ci.isspace(*s))
     s++;
   if (s == end_of_string)
     goto fatal_error;
@@ -1041,13 +1039,13 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
     s++;
 
   s1=s;
-  while (s < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *s))
+  while (s < end_of_string && my_charset_utf8_general_ci.isdigit(*s))
     s++;
   intg= (int) (s-s1);
   if (s < end_of_string && *s=='.')
   {
     endp= s+1;
-    while (endp < end_of_string && my_isdigit(&my_charset_utf8_general_ci, *endp))
+    while (endp < end_of_string && my_charset_utf8_general_ci.isdigit(*endp))
       endp++;
     frac= (int) (endp - s - 1);
   }
@@ -1180,16 +1178,13 @@ fatal_error:
 
 int decimal2double(const decimal_t *from, double *to)
 {
-  char strbuf[FLOATING_POINT_BUFFER], *end;
+  char strbuf[FLOATING_POINT_BUFFER];
   int len= sizeof(strbuf);
-  int rc, error;
-
-  rc = decimal2string(from, strbuf, &len, 0, 0, 0);
-  end= strbuf + len;
-
+  int rc = decimal2string(from, strbuf, &len, 0, 0, 0);
+  char* end= strbuf + len;
+  int error;
   *to= internal::my_strtod(strbuf, &end, &error);
-
-  return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
+  return rc != E_DEC_OK ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
 
 /**
@@ -1210,7 +1205,7 @@ int double2decimal(const double from, decimal_t *to)
                                 internal::MY_GCVT_ARG_DOUBLE,
                                 sizeof(buff) - 1, buff, NULL);
   res= string2decimal(buff, to, &end);
-  return(res);
+  return res;
 }
 
 
@@ -2082,8 +2077,7 @@ static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 int decimal_intg(const decimal_t *from)
 {
   int res;
-  dec1 *tmp_res;
-  tmp_res= remove_leading_zeroes(from, &res);
+  remove_leading_zeroes(from, &res);
   return res;
 }
 
@@ -2675,17 +2669,17 @@ void test_d2f(const char *s, int ex)
 void test_d2b2d(const char *str, int p, int s, const char *orig, int ex)
 {
   char s1[100], buf[100], *end;
-  int res, i, size=decimal_bin_size(p, s);
+  int size=decimal_bin_size(p, s);
 
   snprintf(s1, sizeof(s1), "'%s'", str);
   end= strend(str);
   string2decimal(str, &a, &end);
-  res=decimal2bin(&a, buf, p, s);
+  int res=decimal2bin(&a, buf, p, s);
   printf("%-31s {%2d, %2d} => res=%d size=%-2d ", s1, p, s, res, size);
   if (full)
   {
     printf("0x");
-    for (i=0; i < size; i++)
+    for (int i= 0; i < size; i++)
       printf("%02x", ((unsigned char *)buf)[i]);
   }
   res=bin2decimal(buf, &a, p, s);

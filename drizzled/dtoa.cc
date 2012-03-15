@@ -600,7 +600,6 @@ typedef struct Bigint
 {
   union {
     ULong *x;              /* points right after this Bigint object */
-    struct Bigint *next;   /* to maintain free lists */
   } p;
   int k;                   /* 2^k = maxwds */
   int maxwds;              /* maximum length in 32-bit words */
@@ -622,12 +621,8 @@ static Bigint *Bcopy(Bigint* dst, Bigint* src)
 
 static Bigint *Balloc(int k)
 {
-  Bigint *rv;
-
-  /* TODO: some malloc failure checking */
-
   int x= 1 << k;
-  rv= (Bigint*) malloc(sizeof(Bigint));
+  Bigint* rv= (Bigint*) malloc(sizeof(Bigint));
 
   rv->p.x= (ULong*)malloc(x * sizeof(ULong));
 

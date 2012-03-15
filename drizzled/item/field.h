@@ -17,16 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_FIELD_H
-#define DRIZZLED_ITEM_FIELD_H
+#pragma once
 
 #include <drizzled/item/ident.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class COND_EQUAL;
-class Item;
 
 extern Item **not_found_item;
 
@@ -75,7 +72,7 @@ public:
   String *str_result(String* tmp);
   type::Decimal *val_decimal_result(type::Decimal *);
   bool val_bool_result();
-  bool send(plugin::Client *client, String *str_arg);
+  void send(plugin::Client *client, String *str_arg);
   void reset_field(Field *f);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
@@ -106,7 +103,7 @@ public:
   bool set_no_const_sub(unsigned char *arg);
   Item *replace_equal_field(unsigned char *arg);
   uint32_t max_disp_length();
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
   virtual void print(String *str);
@@ -118,4 +115,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_FIELD_H */

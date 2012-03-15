@@ -35,7 +35,7 @@
  **/
 
 #include <config.h>
-#include <libdrizzle/drizzle_client.h>
+#include <libdrizzle-2.0/libdrizzle.h>
 
 #include "server_detect.h"
 #include "get_password.h"
@@ -154,6 +154,8 @@ typedef Function drizzle_compentry_func_t;
 #include <boost/scoped_ptr.hpp>
 #include <drizzled/program_options/config_file.h>
 
+#include "user_detect.h"
+
 using namespace std;
 namespace po=boost::program_options;
 namespace dpo=drizzled::program_options;
@@ -163,6 +165,9 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 
 /* Buffer to hold 'version' and 'version_comment' */
 const int MAX_SERVER_VERSION_LENGTH= 128;
+
+/* Options used during connect */
+drizzle_con_options_t global_con_options= DRIZZLE_CON_NONE;
 
 #define PROMPT_CHAR '\\'
 
@@ -241,7 +246,7 @@ public:
 
   void setLineBuff(int max_size, FILE *file=NULL)
   {
-    line_buff= new(std::nothrow) LineBuffer(max_size, file);
+    line_buff= new LineBuffer(max_size, file);
   }
 
   void setLineBuff(LineBuffer *in_line_buff)
@@ -276,8 +281,8 @@ static string completion_string;
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
-static drizzle_st drizzle;      /* The library handle */
-static drizzle_con_st con;      /* The connection */
+static drizzle_st *drizzle= NULL;      /* The library handle */
+static drizzle_con_st *con= NULL;      /* The connection */
 static bool ignore_errors= false, quick= false,
   connected= false, opt_raw_data= false, unbuffered= false,
   output_tables= false, opt_rehash= true, skip_updates= false,
@@ -318,6 +323,8 @@ std::string current_db,
   current_password,
   opt_password,
   opt_protocol;
+
+static std::string socket_file;
 
 static const char* get_day_name(int day_of_week)
 {
@@ -383,15 +390,12 @@ static string pager("");
 static string outfile("");
 static FILE *PAGER, *OUTFILE;
 static uint32_t prompt_counter;
-static char *delimiter= NULL;
+static const char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
-                                      drizzle_result_st *result,
-                                      uint32_t *error_code);
+int drizzleclient_real_query_for_lazy(const char *buf, size_t length, drizzle_result_st *result, uint32_t *error_code);
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result);
-
 
 void tee_fprintf(FILE *file, const char *fmt, ...);
 void tee_fputs(const char *s, FILE *file);
@@ -440,26 +444,24 @@ private:
   const char *name;        /* User printable name of the function. */
   char cmd_char;        /* msql command character */
 public:
-Commands(const char *in_name,
-         char in_cmd_char,
-         int (*in_func)(string *str,const char *name),
-         bool in_takes_params,
-         const char *in_doc)
-  :
-  name(in_name),
-  cmd_char(in_cmd_char),
-  func(in_func),
-  takes_params(in_takes_params),
-  doc(in_doc)
+  Commands(const char *in_name,
+           char in_cmd_char,
+           int (*in_func)(string *str,const char *name),
+           bool in_takes_params,
+           const char *in_doc) :
+    name(in_name),
+    cmd_char(in_cmd_char),
+    func(in_func),
+    takes_params(in_takes_params),
+    doc(in_doc)
   {}
 
-  Commands()
-  :
-  name(),
-  cmd_char(),
-  func(NULL),
-  takes_params(false),
-  doc()
+  Commands() :
+    name(),
+    cmd_char(),
+    func(NULL),
+    takes_params(false),
+    doc()
   {}
 
   int (*func)(string *str,const char *);/* Function to call to do the job. */
@@ -537,9 +539,9 @@ static Commands commands[] = {
     N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
   Commands( "use",    'u', com_use,    1,
     N_("Use another schema. Takes schema name as argument.") ),
-  Commands( "shutdown",    'u', com_shutdown,    1,
+  Commands( "shutdown",    'Q', com_shutdown,    false,
     N_("Shutdown the instance you are connected too.") ),
-  Commands( "warnings", 'W', com_warnings,  0,
+  Commands( "warnings", 'W', com_warnings,  false,
     N_("Show warnings after every statement.") ),
   Commands( "nowarning", 'w', com_nowarnings, 0,
     N_("Don't show warnings after every statement.") ),
@@ -1188,29 +1190,29 @@ static void window_resize(int sig);
 static bool server_shutdown(void)
 {
   drizzle_result_st result;
-  drizzle_return_t ret;
 
   if (verbose)
   {
     printf(_("shutting down drizzled"));
     if (opt_drizzle_port > 0)
+    {
       printf(_(" on port %d"), opt_drizzle_port);
+    }
     printf("... ");
   }
 
-  if (drizzle_shutdown(&con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
-                       &ret) == NULL || ret != DRIZZLE_RETURN_OK)
+  drizzle_return_t ret;
+  if (drizzle_shutdown(con, &result, DRIZZLE_SHUTDOWN_DEFAULT, &ret) == NULL or
+      ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, _("shutdown failed; error: '%s'"),
-              drizzle_result_error(&result));
+      fprintf(stderr, _("shutdown failed; error: '%s'"), drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, _("shutdown failed; error: '%s'"),
-              drizzle_con_error(&con));
+      fprintf(stderr, _("shutdown failed; error: '%s'"), drizzle_con_error(con));
     }
     return false;
   }
@@ -1218,7 +1220,9 @@ static bool server_shutdown(void)
   drizzle_result_free(&result);
 
   if (verbose)
+  {
     printf(_("done\n"));
+  }
 
   return true;
 }
@@ -1234,7 +1238,7 @@ static bool kill_query(uint32_t query_id)
     printf("... ");
   }
 
-  if (drizzle_kill(&con, &result, query_id,
+  if (drizzle_kill(con, &result, query_id,
                    &ret) == NULL || ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
@@ -1245,8 +1249,7 @@ static bool kill_query(uint32_t query_id)
     }
     else
     {
-      fprintf(stderr, _("kill failed; error: '%s'"),
-              drizzle_con_error(&con));
+      fprintf(stderr, _("kill failed; error: '%s'"), drizzle_con_error(con));
     }
     return false;
   }
@@ -1272,7 +1275,7 @@ static bool server_ping(void)
   drizzle_result_st result;
   drizzle_return_t ret;
 
-  if (drizzle_ping(&con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
+  if (drizzle_ping(con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
   {
     if (opt_silent < 2)
       printf(_("drizzled is alive\n"));
@@ -1287,8 +1290,7 @@ static bool server_ping(void)
     }
     else
     {
-      fprintf(stderr, _("drizzled won't answer to ping, error: '%s'"),
-              drizzle_con_error(&con));
+      fprintf(stderr, _("drizzled won't answer to ping, error: '%s'"), drizzle_con_error(con));
     }
     return false;
   }
@@ -1372,8 +1374,8 @@ try
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   po::options_description commandline_options(_("Options used only in command line"));
@@ -1470,27 +1472,22 @@ try
   ("max-join-size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   _("Automatic limit for rows in a join when using --safe-updates"))
   ;
-#ifndef DRIZZLE_ADMIN_TOOL
-  const char* unix_user= getlogin();
-#endif
+
   po::options_description client_options(_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   _("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
+  _("Socket file to use when connecting to server."))
+  ("socket", po::value<string>(&socket_file),
   _("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   _("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
-#ifdef DRIZZLE_ADMIN_TOOL
-  ("user,u", po::value<string>(&current_user)->default_value("root"),
-#else
-  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
-#endif
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   _("User for login if not current user."))
   ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
-  _("The protocol of connection (mysql or drizzle)."))
+  _("The protocol of connection (mysql, mysql-plugin-auth, or drizzle)."))
   ;
-
   po::options_description long_options(_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
@@ -1545,15 +1542,9 @@ try
 
   po::notify(vm);
 
-#ifdef DRIZZLE_ADMIN_TOOL
-  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
-                         getenv("DRIZZLE_PS1") :
-                         "drizzleadmin> ");
-#else
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-#endif
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1576,18 +1567,19 @@ try
   prompt_counter=0;
 
   outfile.clear();      // no (default) outfile
-  pager.assign("stdout");  // the default, if --pager wasn't given
+  pager= "stdout";  // the default, if --pager wasn't given
+  if (const char* tmp= getenv("PAGER"))
   {
-    const char *tmp= getenv("PAGER");
-    if (tmp && strlen(tmp))
+    if (*tmp)
     {
       default_pager_set= 1;
-      default_pager.assign(tmp);
+      default_pager= tmp;
     }
   }
-  if (! isatty(0) || ! isatty(1))
+  if (not isatty(0) || not isatty(1))
   {
-    status.setBatch(1); opt_silent=1;
+    status.setBatch(1); 
+    opt_silent= 1;
   }
   else
     status.setAddToHistory(1);
@@ -1609,10 +1601,10 @@ try
 
   /* Inverted Booleans */
 
-  line_numbers= (vm.count("disable-line-numbers")) ? false : true;
-  column_names= (vm.count("disable-column-names")) ? false : true;
-  opt_rehash= (vm.count("disable-auto-rehash")) ? false : true;
-  opt_reconnect= (vm.count("disable-reconnect")) ? false : true;
+  line_numbers= not vm.count("disable-line-numbers");
+  column_names= not vm.count("disable-column-names");
+  opt_rehash= not vm.count("disable-auto-rehash");
+  opt_reconnect= not vm.count("disable-reconnect");
 
   /* Don't rehash with --shutdown */
   if (vm.count("shutdown"))
@@ -1626,7 +1618,7 @@ try
     /* Check that delimiter does not contain a backslash */
     if (! strstr(delimiter_str.c_str(), "\\"))
     {
-      delimiter= (char *)delimiter_str.c_str();  
+      delimiter= delimiter_str.c_str();  
     }
     else
     {
@@ -1647,7 +1639,7 @@ try
     else
       init_tee(vm["tee"].as<string>().c_str());
   }
-  if (vm["disable-tee"].as<bool>() == true)
+  if (vm["disable-tee"].as<bool>())
   {
     if (opt_outfile)
       end_tee();
@@ -1662,11 +1654,11 @@ try
       if (vm[pager].as<string>().length())
       {
         default_pager_set= 1;
-        pager.assign(vm["pager"].as<string>());
-        default_pager.assign(pager);
+        pager= vm["pager"].as<string>();
+        default_pager= pager;
       }
       else if (default_pager_set)
-        pager.assign(default_pager);
+        pager= default_pager;
       else
         opt_nopager= 1;
     }
@@ -1700,13 +1692,22 @@ try
 
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(), 
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
-      use_drizzle_protocol=false;
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
+      use_drizzle_protocol= false;
+    }
+    else if (not opt_protocol.compare("mysql-plugin-auth"))
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE|DRIZZLE_CON_AUTH_PLUGIN);
+      use_drizzle_protocol= false;
+    }
     else if (not opt_protocol.compare("drizzle"))
-      use_drizzle_protocol=true;
+    {
+      global_con_options= (drizzle_con_options_t)(DRIZZLE_CON_EXPERIMENTAL);
+      use_drizzle_protocol= true;
+    }
     else
     {
       cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
@@ -1843,10 +1844,10 @@ try
   glob_buffer->reserve(512);
 
   snprintf(&output_buff[0], output_buff.size(),
-          _("Your Drizzle connection id is %u\nConnection protocol: %s\nServer version: %s\n"),
-          drizzle_con_thread_id(&con),
-          opt_protocol.c_str(),
-          server_version_string(&con));
+           _("Your Drizzle connection id is %u\nConnection protocol: %s\nServer version: %s\n"),
+           drizzle_con_thread_id(con),
+           opt_protocol.c_str(),
+           server_version_string(con));
   put_info(&output_buff[0], INFO_INFO, 0, 0);
 
 
@@ -1879,11 +1880,7 @@ try
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
-      {
-        fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
-        exit(1);
-      }
+      histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5);
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
@@ -1905,8 +1902,8 @@ try
 
 void drizzle_end(int sig)
 {
-  drizzle_con_free(&con);
-  drizzle_free(&drizzle);
+  drizzle_con_free(con);
+  drizzle_free(drizzle);
   if (!status.getBatch() && !quick && histfile)
   {
     /* write-history */
@@ -1944,38 +1941,38 @@ void drizzle_end(int sig)
 extern "C"
 void handle_sigint(int sig)
 {
-  char kill_buffer[40];
-  boost::scoped_ptr<drizzle_con_st> kill_drizzle(new drizzle_con_st);
-  drizzle_result_st res;
-  drizzle_return_t ret;
-
   /* terminate if no query being executed, or we already tried interrupting */
-  if (!executing_query || interrupted_query) {
-    goto err;
-  }
-
-  if (drizzle_con_add_tcp(&drizzle, kill_drizzle.get(), current_host.c_str(),
-    opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
-    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
+  if (executing_query == false or interrupted_query)
+  { }
+  else if (drizzle)
   {
-    goto err;
+    drizzle_con_st *kill_drizzle_con;
+    if ((kill_drizzle_con= drizzle_con_add_tcp(drizzle,
+                                               current_host.c_str(), opt_drizzle_port,
+                                               current_user.c_str(), opt_password.c_str(), NULL,
+                                               use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
+    {
+      /* kill_buffer is always big enough because max length of %lu is 15 */
+      char kill_buffer[40];
+      snprintf(kill_buffer, sizeof(kill_buffer), "KILL /*!50000 QUERY */ %u", drizzle_con_thread_id(kill_drizzle_con));
+
+      drizzle_return_t ret;
+      drizzle_result_st res;
+      if ((drizzle_query_str(kill_drizzle_con, &res, kill_buffer, &ret)))
+      {
+        drizzle_result_free(&res);
+      }
+
+      drizzle_con_free(kill_drizzle_con);
+
+      tee_fprintf(stdout, _("Query aborted by Ctrl+C\n"));
+
+      interrupted_query= true;
+
+      return;
+    }
   }
 
-  /* kill_buffer is always big enough because max length of %lu is 15 */
-  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u",
-          drizzle_con_thread_id(&con));
-
-  if (drizzle_query_str(kill_drizzle.get(), &res, kill_buffer, &ret) != NULL)
-    drizzle_result_free(&res);
-
-  drizzle_con_free(kill_drizzle.get());
-  tee_fprintf(stdout, _("Query aborted by Ctrl+C\n"));
-
-  interrupted_query= 1;
-
-  return;
-
-err:
   drizzle_end(sig);
 }
 
@@ -1992,33 +1989,28 @@ void window_resize(int)
 
 
 
-static int process_options(void)
+static int process_options()
 {
-  char *tmp, *pagpoint;
-  
+  if (const char* tmp= getenv("DRIZZLE_HOST"))
+    current_host= tmp;
 
-  tmp= (char *) getenv("DRIZZLE_HOST");
-  if (tmp)
-    current_host.assign(tmp);
-
-  pagpoint= getenv("PAGER");
-  if (!((char*) (pagpoint)))
+  if (const char* pagpoint= getenv("PAGER"))
   {
-    pager.assign("stdout");
-    opt_nopager= 1;
+    pager= pagpoint;
   }
   else
   {
-    pager.assign(pagpoint);
+    pager= "stdout";
+    opt_nopager= 1;
   }
-  default_pager.assign(pager);
+  default_pager= pager;
 
   //
 
   if (status.getBatch()) /* disable pager and outfile in this case */
   {
-    default_pager.assign("stdout");
-    pager.assign("stdout");
+    default_pager= "stdout";
+    pager= "stdout";
     opt_nopager= 1;
     default_pager_set= 0;
     opt_outfile= 0;
@@ -2188,7 +2180,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
     return(0);
   if (status.getAddToHistory() && line[0] && not_in_history(line))
     add_history(line);
-  char *end_of_line=line+(uint32_t) strlen(line);
 
   for (pos=out=line ; (inchar= (unsigned char) *pos) ; pos++)
   {
@@ -2218,7 +2209,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
       }
     }
     if (!*ml_comment && inchar == '\\' &&
-        !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
+        !(*in_string && (drizzle_con_status(con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
     {
       // Found possbile one character command like \c
 
@@ -2282,37 +2273,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
       }
     }
-    else if (!*ml_comment && !*in_string &&
-             (end_of_line - pos) >= 10 &&
-             !strncmp(pos, "delimiter ", 10))
-    {
-      // Flush previously accepted characters
-      if (out != line)
-      {
-        buffer->append(line, (out - line));
-        out= line;
-      }
-
-      // Flush possible comments in the buffer
-      if (!buffer->empty())
-      {
-        if (com_go(buffer, 0) > 0) // < 0 is not fatal
-          return(1);
-        assert(buffer!=NULL);
-        buffer->clear();
-      }
-
-      /*
-        Delimiter wants the get rest of the given line as argument to
-        allow one to change ';' to ';;' and back
-      */
-      buffer->append(pos);
-      if (com_delimiter(buffer, pos) > 0)
-        return(1);
-
-      buffer->clear();
-      break;
-    }
     else if (!*ml_comment && !*in_string && !strncmp(pos, delimiter,
                                                      strlen(delimiter)))
     {
@@ -2372,7 +2332,22 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
       // comment to end of line
       if (preserve_comments)
+      {
+        bool started_with_nothing= !buffer->empty();
         buffer->append(pos);
+
+        /*
+          A single-line comment by itself gets sent immediately so that
+          client commands (delimiter, status, etc) will be interpreted on
+          the next line.
+        */
+        if (started_with_nothing)
+        {
+          if (com_go(buffer, 0) > 0)             // < 0 is not fatal
+           return 1;
+          buffer->clear();
+        }
+      }  
 
       break;
     }
@@ -2566,17 +2541,14 @@ char **mysql_completion (const char *text, int, int)
     return (char**) 0;
 }
 
-inline string lower_string(const string &from_string)
+inline string lower_string(const string& from)
 {
-  string to_string= from_string;
-  transform(to_string.begin(), to_string.end(),
-            to_string.begin(), ::tolower);
-  return to_string;
+  return boost::to_lower_copy(from);
 }
-inline string lower_string(const char * from_string)
+
+inline string lower_string(const char* from)
 {
-  string to_string= from_string;
-  return lower_string(to_string);
+  return boost::to_lower_copy(string(from));
 }
 
 template <class T>
@@ -2589,8 +2561,7 @@ public:
   CompletionMatch(string text) : match_text(text) {}
   inline bool operator() (const pair<string,string> &match_against) const
   {
-    string sub_match=
-      lower_string(match_against.first.substr(0,match_text.size()));
+    string sub_match= lower_string(match_against.first.substr(0,match_text.size()));
     return match_func(sub_match,match_text);
   }
 };
@@ -2654,12 +2625,14 @@ static void build_completion_hash(bool rehash, bool write_info)
   /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
-  if (drizzle_query_str(&con, &databases, "select schema_name from information_schema.schemata", &ret) != NULL)
+  if (drizzle_query_str(con, &databases, "select schema_name from information_schema.schemata", &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK)
     {
       if (drizzle_result_buffer(&databases) != DRIZZLE_RETURN_OK)
-        put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
+      {
+        put_info(drizzle_error(drizzle),INFO_INFO,0,0);
+      }
       else
       {
         while ((database_row=drizzle_row_next(&databases)))
@@ -2678,8 +2651,7 @@ static void build_completion_hash(bool rehash, bool write_info)
   query.append(current_db);
   query.append("' order by table_name");
   
-  if (drizzle_query(&con, &fields, query.c_str(), query.length(),
-                    &ret) != NULL)
+  if (drizzle_query(con, &fields, query.c_str(), query.length(), &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK &&
         drizzle_result_buffer(&fields) == DRIZZLE_RETURN_OK)
@@ -2744,14 +2716,14 @@ static void get_current_db(void)
   current_db.erase();
   current_db= "";
   /* In case of error below current_db will be NULL */
-  if (drizzle_query_str(&con, &res, "SELECT DATABASE()", &ret) != NULL)
+  if (drizzle_query_str(con, &res, "SELECT DATABASE()", &ret) != NULL)
   {
     if (ret == DRIZZLE_RETURN_OK &&
         drizzle_result_buffer(&res) == DRIZZLE_RETURN_OK)
     {
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
-        current_db.assign(row[0]);
+        current_db= row[0];
       drizzle_result_free(&res);
     }
   }
@@ -2770,12 +2742,12 @@ int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
   for (uint32_t retry=0;; retry++)
   {
     int error;
-    if (drizzle_query(&con,result,buf,length,&ret) != NULL &&
+    if (drizzle_query(con, result, buf, length, &ret) != NULL and
         ret == DRIZZLE_RETURN_OK)
     {
       return 0;
     }
-    error= put_error(&con, result);
+    error= put_error(con, result);
 
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
@@ -2783,7 +2755,7 @@ int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
       drizzle_result_free(result);
     }
 
-    if (ret != DRIZZLE_RETURN_SERVER_GONE || retry > 1 ||
+    if (ret != DRIZZLE_RETURN_LOST_CONNECTION || retry > 1 ||
         !opt_reconnect)
     {
       return error;
@@ -2797,14 +2769,17 @@ int drizzleclient_real_query_for_lazy(const char *buf, size_t length,
 int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
 {
   if (drizzle_result_buffer(result) == DRIZZLE_RETURN_OK)
-    return 0;
-
-  if (drizzle_con_error(&con)[0])
   {
-    int ret= put_error(&con, result);
+    return 0;
+  }
+
+  if (drizzle_con_error(con)[0])
+  {
+    int ret= put_error(con, result);
     drizzle_result_free(result);
     return ret;
   }
+
   return 0;
 }
 
@@ -2868,7 +2843,7 @@ com_go(string *buffer, const char *)
   uint32_t      error_code= 0;
   int           err= 0;
 
-  interrupted_query= 0;
+  interrupted_query= false;
 
   /* Remove garbage for nicer messages */
   remove_cntrl(buffer);
@@ -2898,7 +2873,7 @@ com_go(string *buffer, const char *)
   }
 
   timer=start_timer();
-  executing_query= 1;
+  executing_query= true;
   error= drizzleclient_real_query_for_lazy(buffer->c_str(),buffer->length(),&result, &error_code);
 
   if (status.getAddToHistory())
@@ -2921,7 +2896,7 @@ com_go(string *buffer, const char *)
     {
       if (drizzle_column_buffer(&result) != DRIZZLE_RETURN_OK)
       {
-        error= put_error(&con, &result);
+        error= put_error(con, &result);
         goto end;
       }
     }
@@ -2960,7 +2935,7 @@ com_go(string *buffer, const char *)
                 (long) drizzle_result_row_count(&result));
         end_pager();
         if (drizzle_result_error_code(&result))
-          error= put_error(&con, &result);
+          error= put_error(con, &result);
       }
     }
     else if (drizzle_result_affected_rows(&result) == ~(uint64_t) 0)
@@ -2995,9 +2970,9 @@ com_go(string *buffer, const char *)
       fflush(stdout);
     drizzle_result_free(&result);
 
-    if (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_MORE_RESULTS_EXISTS)
+    if (drizzle_con_status(con) & DRIZZLE_CON_STATUS_MORE_RESULTS_EXISTS)
     {
-      if (drizzle_result_read(&con, &result, &ret) == NULL ||
+      if (drizzle_result_read(con, &result, &ret) == NULL ||
           ret != DRIZZLE_RETURN_OK)
       {
         if (ret == DRIZZLE_RETURN_ERROR_CODE)
@@ -3006,14 +2981,16 @@ com_go(string *buffer, const char *)
           drizzle_result_free(&result);
         }
 
-        error= put_error(&con, NULL);
+        error= put_error(con, NULL);
         goto end;
       }
     }
 
-  } while (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_MORE_RESULTS_EXISTS);
+  } while (drizzle_con_status(con) & DRIZZLE_CON_STATUS_MORE_RESULTS_EXISTS);
   if (err >= 1)
-    error= put_error(&con, NULL);
+  {
+    error= put_error(con, NULL);
+  }
 
 end:
 
@@ -3021,20 +2998,20 @@ end:
   if (show_warnings == 1 && (warnings >= 1 || error))
     print_warnings(error_code);
 
-  if (!error && !status.getBatch() &&
-      drizzle_con_status(&con) & DRIZZLE_CON_STATUS_DB_DROPPED)
+  if (!error && !status.getBatch() and
+      drizzle_con_status(con) & DRIZZLE_CON_STATUS_DB_DROPPED)
   {
     get_current_db();
   }
 
-  executing_query= 0;
+  executing_query= false;
   return error;        /* New command follows */
 }
 
 
 static void init_pager()
 {
-  if (!opt_nopager)
+  if (opt_nopager == false)
   {
     if (!(PAGER= popen(pager.c_str(), "w")))
     {
@@ -3043,7 +3020,9 @@ static void init_pager()
     }
   }
   else
+  {
     PAGER= stdout;
+  }
 }
 
 static void end_pager()
@@ -3057,14 +3036,17 @@ static void init_tee(const char *file_name)
 {
   FILE* new_outfile;
   if (opt_outfile)
+  {
     end_tee();
-  if (!(new_outfile= fopen(file_name, "a")))
+  }
+
+  if ((new_outfile= fopen(file_name, "a")) == NULL)
   {
     tee_fprintf(stdout, _("Error logging to file '%s'\n"), file_name);
     return;
   }
   OUTFILE = new_outfile;
-  outfile.assign(file_name);
+  outfile= file_name;
   tee_fprintf(stdout, _("Logging to file '%s'\n"), file_name);
   opt_outfile= 1;
 
@@ -3291,7 +3273,7 @@ print_table_data(drizzle_result_st *result)
       cur= drizzle_row_buffer(result, &ret);
       if (ret != DRIZZLE_RETURN_OK)
       {
-        (void)put_error(&con, result);
+        (void)put_error(con, result);
         break;
       }
     }
@@ -3497,7 +3479,7 @@ print_table_data_vertically(drizzle_result_st *result)
       cur= drizzle_row_buffer(result, &ret);
       if (ret != DRIZZLE_RETURN_OK)
       {
-        (void)put_error(&con, result);
+        (void)put_error(con, result);
         break;
       }
     }
@@ -3663,7 +3645,7 @@ print_tab_data(drizzle_result_st *result)
       cur= drizzle_row_buffer(result, &ret);
       if (ret != DRIZZLE_RETURN_OK)
       {
-        (void)put_error(&con, result);
+        (void)put_error(con, result);
         break;
       }
     }
@@ -3796,11 +3778,11 @@ com_pager(string *, const char *line)
     {
       tee_fprintf(stdout, _("Default pager wasn't set, using stdout.\n"));
       opt_nopager=1;
-      pager.assign("stdout");
+      pager= "stdout";
       PAGER= stdout;
       return 0;
     }
-    pager.assign(default_pager);
+    pager= default_pager;
   }
   else
   {
@@ -3810,8 +3792,8 @@ com_pager(string *, const char *line)
            (isspace(*(end-1)) || iscntrl(*(end-1))))
       --end;
     pager_name.erase(end, pager_name.end());
-    pager.assign(pager_name);
-    default_pager.assign(pager_name);
+    pager= pager_name;
+    default_pager= pager_name;
   }
   opt_nopager=0;
   tee_fprintf(stdout, _("PAGER set to '%s'\n"), pager.c_str());
@@ -3822,7 +3804,7 @@ com_pager(string *, const char *line)
 static int
 com_nopager(string *, const char *)
 {
-  pager.assign("stdout");
+  pager= "stdout";
   opt_nopager=1;
   PAGER= stdout;
   tee_fprintf(stdout, _("PAGER set to stdout\n"));
@@ -3883,8 +3865,7 @@ com_connect(string *buffer, const char *line)
     tmp= get_arg(buff, 0);
     if (tmp && *tmp)
     {
-      current_db.erase();
-      current_db.assign(tmp);
+      current_db= tmp;
       tmp= get_arg(buff, 1);
       if (tmp)
       {
@@ -3908,7 +3889,7 @@ com_connect(string *buffer, const char *line)
 
   if (connected)
   {
-    sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
+    sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(con));
     put_info(buff,INFO_INFO,0,0);
     sprintf(buff, _("Current schema: %.128s\n"),
             !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
@@ -3950,12 +3931,7 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,sql_file);
-  if (line_buff == NULL)
-  {
-    fclose(sql_file);
-    return put_info(_("Can't initialize LineBuffer"), INFO_ERROR, 0, 0);
-  }
+  line_buff= new LineBuffer(opt_max_input_line,sql_file);
 
   /* Save old status */
   old_status=status;
@@ -3983,27 +3959,25 @@ static int com_source(string *, const char *line)
 static int
 com_delimiter(string *, const char *line)
 {
-  char buff[256], *tmp;
+  char buff[256];
 
   strncpy(buff, line, sizeof(buff) - 1);
-  tmp= get_arg(buff, 0);
+  char* tmp= get_arg(buff, 0);
 
   if (!tmp || !*tmp)
   {
-    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"),
-             INFO_ERROR, 0, 0);
+    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"), INFO_ERROR, 0, 0);
     return 0;
   }
   else
   {
     if (strstr(tmp, "\\"))
     {
-      put_info(_("DELIMITER cannot contain a backslash character"),
-               INFO_ERROR, 0, 0);
+      put_info(_("DELIMITER cannot contain a backslash character"), INFO_ERROR, 0, 0);
       return 0;
     }
   }
-  strncpy(delimiter, tmp, sizeof(delimiter) - 1);
+  delimiter= strdup(tmp);
   delimiter_length= (int)strlen(delimiter);
   delimiter_str= delimiter;
   return 0;
@@ -4066,27 +4040,30 @@ com_use(string *, const char *line)
       return opt_reconnect ? -1 : 1;                        // Fatal error
     for (bool try_again= true; try_again; try_again= false)
     {
-      if (drizzle_select_db(&con,&result,tmp,&ret) == NULL ||
+      if (drizzle_select_db(con, &result, tmp, &ret) == NULL ||
           ret != DRIZZLE_RETURN_OK)
       {
         if (ret == DRIZZLE_RETURN_ERROR_CODE)
         {
-          int error= put_error(&con, &result);
+          int error= put_error(con, &result);
           drizzle_result_free(&result);
           return error;
         }
 
-        if (ret != DRIZZLE_RETURN_SERVER_GONE || !try_again)
-          return put_error(&con, NULL);
+        if (ret != DRIZZLE_RETURN_LOST_CONNECTION || !try_again)
+        {
+          return put_error(con, NULL);
+        }
 
         if (reconnect())
+        {
           return opt_reconnect ? -1 : 1;                      // Fatal error
+        }
       }
       else
         drizzle_result_free(&result);
     }
-    current_db.erase();
-    current_db.assign(tmp);
+    current_db= tmp;
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
   }
@@ -4108,19 +4085,17 @@ static int com_shutdown(string *, const char *)
     printf("... ");
   }
 
-  if (drizzle_shutdown(&con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
+  if (drizzle_shutdown(con, &result, DRIZZLE_SHUTDOWN_DEFAULT,
                        &ret) == NULL || ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, _("shutdown failed; error: '%s'"),
-              drizzle_result_error(&result));
+      fprintf(stderr, _("shutdown failed; error: '%s'"), drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, _("shutdown failed; error: '%s'"),
-              drizzle_con_error(&con));
+      fprintf(stderr, _("shutdown failed; error: '%s'"), drizzle_con_error(con));
     }
     return false;
   }
@@ -4218,33 +4193,44 @@ sql_connect(const string &host, const string &database, const string &user, cons
   if (connected)
   {
     connected= 0;
-    drizzle_con_free(&con);
-    drizzle_free(&drizzle);
+    drizzle_con_free(con);
+    drizzle_free(drizzle);
   }
-  drizzle_create(&drizzle);
 
-#ifdef DRIZZLE_ADMIN_TOOL
-  drizzle_con_options_t options= (drizzle_con_options_t) (DRIZZLE_CON_ADMIN | (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE));
-#else
-  drizzle_con_options_t options= (drizzle_con_options_t) (use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL|DRIZZLE_CON_INTERACTIVE);
-#endif
-
-  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
-                          opt_drizzle_port, (char *)user.c_str(),
-                          (char *)password.c_str(), (char *)database.c_str(),
-                          options) == NULL)
+  drizzle= drizzle_create();
+  if (drizzle == NULL)
   {
-    (void) put_error(&con, NULL);
+    return 1;
+  }
+
+  if (socket_file.size())
+  {
+    if ((con= drizzle_con_add_uds(drizzle, socket_file.c_str(),
+                                  user.c_str(), password.c_str(),
+                                  database.c_str(),
+                                  global_con_options)) == NULL)
+    {
+      (void) put_error(con, NULL);
+      (void) fflush(stdout);
+      return 1;
+    }
+  }
+  else if ((con= drizzle_con_add_tcp(drizzle, host.c_str(),
+                                     opt_drizzle_port, user.c_str(),
+                                     password.c_str(), database.c_str(),
+                                     global_con_options)) == NULL)
+  {
+    (void) put_error(con, NULL);
     (void) fflush(stdout);
     return 1;
   }
 
-  if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
+  if ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
 
     if (opt_silent < 2)
     {
-      (void) put_error(&con, NULL);
+      (void) put_error(con, NULL);
       (void) fflush(stdout);
       return ignore_errors ? -1 : 1;    // Abort
     }
@@ -4252,7 +4238,7 @@ sql_connect(const string &host, const string &database, const string &user, cons
   }
   connected= 1;
 
-  ServerDetect server_detect(&con);
+  ServerDetect server_detect(con);
   server_type= server_detect.getServerType();
 
   build_completion_hash(opt_rehash, 1);
@@ -4278,12 +4264,12 @@ com_status(string *, const char *)
 
   if (connected)
   {
-    tee_fprintf(stdout, _("\nConnection id:\t\t%lu\n"),drizzle_con_thread_id(&con));
+    tee_fprintf(stdout, _("\nConnection id:\t\t%lu\n"),drizzle_con_thread_id(con));
     /*
       Don't remove "limit 1",
       it is protection againts SQL_SELECT_LIMIT=0
     */
-    if (drizzle_query_str(&con,&result,"select DATABASE(), USER() limit 1",
+    if (drizzle_query_str(con, &result, "select DATABASE(), USER() limit 1",
                           &ret) != NULL && ret == DRIZZLE_RETURN_OK &&
         drizzle_result_buffer(&result) == DRIZZLE_RETURN_OK)
     {
@@ -4315,19 +4301,23 @@ com_status(string *, const char *)
   tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());
   tee_fprintf(stdout, _("Using outfile:\t\t'%s'\n"), opt_outfile ? outfile.c_str() : "");
   tee_fprintf(stdout, _("Using delimiter:\t%s\n"), delimiter);
-  tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(&con));
+  tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(con));
   tee_fprintf(stdout, _("Protocol:\t\t%s\n"), opt_protocol.c_str());
-  tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(&con));
-  tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(&con));
+  tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(con));
+  tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(con));
 /* XXX need to save this from result
   if ((id= drizzleclient_insert_id(&drizzle)))
     tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
-  if (drizzle_con_uds(&con))
-    tee_fprintf(stdout, _("UNIX socket:\t\t%s\n"), drizzle_con_uds(&con));
+  if (drizzle_con_uds(con))
+  {
+    tee_fprintf(stdout, _("UNIX socket:\t\t%s\n"), drizzle_con_uds(con));
+  }
   else
-    tee_fprintf(stdout, _("TCP port:\t\t%d\n"), drizzle_con_port(&con));
+  {
+    tee_fprintf(stdout, _("TCP port:\t\t%d\n"), drizzle_con_port(con));
+  }
 
   if (safe_updates)
   {
@@ -4466,10 +4456,14 @@ put_error(drizzle_con_st *local_con, drizzle_result_st *res)
   {
     error= drizzle_result_error(res);
     if (!strcmp(error, ""))
+    {
       error= drizzle_con_error(local_con);
+    }
   }
   else
+  {
     error= drizzle_con_error(local_con);
+  }
 
   return put_info(error, INFO_ERROR,
                   res == NULL ? drizzle_con_error_code(local_con) :
@@ -4620,7 +4614,7 @@ static const char * construct_prompt()
         break;
       case 'v':
         if (connected)
-          processed_prompt->append(drizzle_con_server_version(&con));
+          processed_prompt->append(drizzle_con_server_version(con));
         else
           processed_prompt->append("not_connected");
         break;
@@ -4629,7 +4623,7 @@ static const char * construct_prompt()
         break;
       case 'h':
       {
-        const char *prompt= connected ? drizzle_con_host(&con) : "not_connected";
+        const char *prompt= connected ? drizzle_con_host(con) : "not_connected";
         if (strstr(prompt, "Localhost"))
           processed_prompt->append("localhost");
         else
@@ -4648,13 +4642,13 @@ static const char * construct_prompt()
           break;
         }
 
-        if (drizzle_con_uds(&con))
+        if (drizzle_con_uds(con))
         {
-          const char *pos=strrchr(drizzle_con_uds(&con),'/');
-          processed_prompt->append(pos ? pos+1 : drizzle_con_uds(&con));
+          const char *pos=strrchr(drizzle_con_uds(con),'/');
+          processed_prompt->append(pos ? pos+1 : drizzle_con_uds(con));
         }
         else
-          add_int_to_prompt(drizzle_con_port(&con));
+          add_int_to_prompt(drizzle_con_port(con));
       }
       break;
       case 'U':
@@ -4810,14 +4804,14 @@ static int com_prompt(string *, const char *line)
 
 static const char * strcont(const char *str, const char *set)
 {
-  const char * start = (const char *) set;
+  const char * start = set;
 
   while (*str)
   {
     while (*set)
     {
       if (*set++ == *str)
-        return ((const char*) str);
+        return str;
     }
     set=start; str++;
   }

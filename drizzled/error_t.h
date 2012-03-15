@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ERROR_T_H
-#define DRIZZLED_ERROR_T_H
+#pragma once
 
 namespace drizzled { 
 
@@ -95,7 +94,7 @@ enum error_t {
   HA_ERR_NULL_IN_SPATIAL= 158,       /* NULLs are not supported in spatial index */
   HA_ERR_TABLE_DEF_CHANGED= 159,     /* The table changed in storage engine */
   HA_ERR_NO_PARTITION_FOUND= 160,    /* There's no partition in table for given value */
-  HA_ERR_RBR_LOGGING_FAILED= 161,    /* Row-based binlogging of row failed */
+  HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED= 161,    /* Logging of row change for replication failed */
   HA_ERR_DROP_INDEX_FK= 162,         /* Index needed in foreign key constr */
   HA_ERR_FOREIGN_DUPLICATE_KEY= 163, // Upholding foreign key constraints would lead to a duplicate key error
   HA_ERR_TABLE_NEEDS_UPGRADE= 164,   /* The table changed in storage engine */
@@ -651,7 +650,7 @@ enum error_t {
   ER_UNUSED1531,
   ER_UNUSED1532,
   ER_UNUSED1533,
-  ER_BINLOG_ROW_LOGGING_FAILED,
+  ER_LOG_ROW_FOR_REPLICATION_FAILED,
   ER_UNUSED1535,
   ER_UNUSED1536,
   ER_UNUSED1537,
@@ -851,6 +850,7 @@ enum error_t {
   ER_INVALID_CAST_TO_UNSIGNED,
   ER_INVALID_UUID_TIME,
   ER_INVALID_UUID_VALUE,
+  ER_INVALID_IPV6_VALUE,
   ER_SQL_KEYWORD,
   ER_TABLE_DROP,
   ER_TABLE_DROP_ERROR_OCCURRED,
@@ -866,10 +866,10 @@ enum error_t {
   ER_USE_DATA_DICTIONARY,
   ER_TRANSACTION_ALREADY_STARTED,
   ER_CARTESIAN_JOIN_ATTEMPTED,
-  ER_NO_LOCK_HELD
+  ER_NO_LOCK_HELD,
+  ER_SCRIPT                                         /* Error executing script: (such as JavaScript) */
 };
 
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ERROR_T_H */

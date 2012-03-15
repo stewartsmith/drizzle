@@ -18,19 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FIELD_MICROTIME_H
-#define DRIZZLED_FIELD_MICROTIME_H
+#pragma once
 
 #include <drizzled/field/epoch.h>
 
-namespace drizzled
-{
-
-namespace field
-{
-
-class TableShare;
-typedef struct charset_info_st CHARSET_INFO;
+namespace drizzled {
+namespace field {
 
 class Microtime :public Epoch {
 public:
@@ -51,7 +44,7 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   enum Item_result cmp_type () const { return STRING_RESULT; }
   int store(const char *to,uint32_t length,
-            const CHARSET_INFO * const charset);
+            const charset_info_st * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int store_time(type::Time &ltime, type::timestamp_t t_type);
@@ -64,7 +57,6 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return 12; }
-  void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return false; }
   bool zero_pack() const { return 0; }
   void set_time();
@@ -86,5 +78,4 @@ public:
 } /* namespace field */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_MICROTIME_H */
 

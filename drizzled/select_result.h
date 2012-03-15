@@ -18,16 +18,11 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_RESULT_H
-#define DRIZZLED_SELECT_RESULT_H
+#pragma once
 
 #include <drizzled/current_session.h>
 
-namespace drizzled
-{
-
-class Join;
-class Select_Lex_Unit;
+namespace drizzled {
 
 class select_result :public memory::SqlAlloc {
 protected:
@@ -53,9 +48,9 @@ public:
   */
   virtual uint32_t field_count(List<Item> &fields) const
   { return fields.size(); }
-  virtual bool send_fields(List<Item> &list)=0;
-  virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (Join *)
+  virtual void send_fields(List<Item>&)=0;
+  virtual bool send_data(List<Item>&)=0;
+  virtual bool initialize_tables(Join*)
   { return 0; }
   virtual bool send_eof()=0;
   virtual void abort() {}
@@ -81,4 +76,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_RESULT_H */

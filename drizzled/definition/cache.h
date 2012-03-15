@@ -18,56 +18,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_DEFINITION_CACHE_H
-#define DRIZZLED_DEFINITION_CACHE_H
+#pragma once
 
 #include <drizzled/table/instance.h>
 
 namespace drizzled {
-
-namespace generator {
-class TableDefinitionCache;
-}
-
 namespace definition {
 
 class Cache
 {
 public:
-  static inline Cache &singleton()
+  static size_t size()
   {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
-  size_t size() const
-  {
+    // no lock?
     return cache.size();
   }
 
-  void rehash(size_t arg)
+  static void rehash(size_t arg)
   {
+    // no lock?
     cache.rehash(arg);
   }
 
-  table::instance::Shared::shared_ptr find(const identifier::Table::Key &identifier);
-  void erase(const identifier::Table::Key &identifier);
-  bool insert(const identifier::Table::Key &identifier, table::instance::Shared::shared_ptr share);
-
-protected:
-  friend class drizzled::generator::TableDefinitionCache;
-
-  void CopyFrom(table::instance::Shared::vector &vector);
-
+  static table::instance::Shared::shared_ptr find(const identifier::Table::Key&);
+  static void erase(const identifier::Table::Key&);
+  static bool insert(const identifier::Table::Key&, table::instance::Shared::shared_ptr);
 private:
+  static void CopyFrom(table::instance::Shared::vector&);
+
   typedef boost::unordered_map< identifier::Table::Key, table::instance::Shared::shared_ptr> Map;
 
-  Map cache;
-  boost::mutex _mutex;
+  static Map cache;
+  static boost::mutex _mutex;
+
+  friend class generator::TableDefinitionCache;
 };
 
 } /* namespace definition */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEFINITION_CACHE_H */

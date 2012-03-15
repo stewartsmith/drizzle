@@ -23,6 +23,7 @@ Compressed page interface
 Created June 2005 by Marko Makela
 *******************************************************/
 
+#pragma once
 #ifndef page0zip_h
 #define page0zip_h
 

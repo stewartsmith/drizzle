@@ -1,0 +1,8 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1, t2;
+--enable_warnings
+
+CREATE TABLE t1 (a int);
+CREATE TABLE t2 (a int) REPLICATE=FALSE;
+--exec $DRIZZLE_DUMP --compact test t1 t2
+DROP TABLE t1, t2;

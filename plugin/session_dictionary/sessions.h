@@ -22,8 +22,7 @@
 #include <drizzled/session.h>
 #include <drizzled/generator/session.h>
 
-#ifndef PLUGIN_SESSION_DICTIONARY_SESSIONS_H
-#define PLUGIN_SESSION_DICTIONARY_SESSIONS_H
+#pragma once
 
 namespace session_dictionary {
 
@@ -39,7 +38,6 @@ public:
 
   public:
     Generator(drizzled::Field **arg);
-    ~Generator();
 
     bool populate();
   };
@@ -52,4 +50,3 @@ public:
 
 } // namespace session_dictionary
 
-#endif /* PLUGIN_SESSION_DICTIONARY_SESSIONS_H */

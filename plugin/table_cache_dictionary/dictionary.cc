@@ -26,11 +26,10 @@ using namespace drizzled;
 static table_cache_dictionary::TableCache *tables_in_cache;
 static table_cache_dictionary::TableDefinitionCache *table_definitions;
 
-
 static int init(drizzled::module::Context &context)
 {
-  table_definitions= new(std::nothrow)table_cache_dictionary::TableDefinitionCache;
-  tables_in_cache= new(std::nothrow)table_cache_dictionary::TableCache;
+  table_definitions= new table_cache_dictionary::TableDefinitionCache;
+  tables_in_cache= new table_cache_dictionary::TableCache;
 
   context.add(table_definitions);
   context.add(tables_in_cache);
@@ -41,10 +40,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Table Cache Dictionary",
+  "table_cache_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for table and table definition cache.",
+  N_("Dictionaries of table cache and table definition cache"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

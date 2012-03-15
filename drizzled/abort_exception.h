@@ -17,22 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ABORT_EXCEPTION_H
-#define DRIZZLED_ABORT_EXCEPTION_H
+#pragma once
 
 #include <boost/throw_exception.hpp>
 #include <boost/exception/get_error_info.hpp>
 
 #define DRIZZLE_ABORT BOOST_THROW_EXCEPTION(::drizzled::abort_exception())
 
-namespace drizzled
-{
-
-
-class abort_exception :
-  public boost::exception, public std::exception
+namespace drizzled {
+  
+class abort_exception : public boost::exception, public std::exception
 { };
 
 }
-
-#endif /* DRIZZLED_ABORT_EXCEPTION_H */

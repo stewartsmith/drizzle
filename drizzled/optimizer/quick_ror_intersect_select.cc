@@ -25,14 +25,14 @@
 #include <drizzled/optimizer/quick_ror_intersect_select.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/key.h>
+#include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
 #include <vector>
 
 using namespace std;
 
-namespace drizzled
-{
-
+namespace drizzled {
 
 optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
                                                             Table *table,
@@ -49,21 +49,16 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   record= head->record[0];
   if (! parent_alloc)
   {
-    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    alloc.init(session->variables.range_alloc_block_size);
   }
   else
   {
     memset(&alloc, 0, sizeof(memory::Root));
   }
 
-  if (parent_alloc)
-  {
-    last_rowid= (unsigned char*) parent_alloc->alloc_root(head->cursor->ref_length);
-  }
-  else
-  {
-    last_rowid= (unsigned char*) alloc.alloc_root(head->cursor->ref_length);
-  }
+  last_rowid= parent_alloc
+    ? parent_alloc->alloc(head->cursor->ref_length)
+    : alloc.alloc(head->cursor->ref_length);
 }
 
 
@@ -92,11 +87,11 @@ int optimizer::QuickRorIntersectSelect::init()
 
 int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 {
-  vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+  vector<optimizer::QuickRangeSelect*>::iterator it= quick_selects.begin();
 
   /* Initialize all merged "children" quick selects */
   assert(! need_to_fetch_row || reuse_handler);
-  if (! need_to_fetch_row && reuse_handler)
+  if (not need_to_fetch_row && reuse_handler)
   {
     optimizer::QuickRangeSelect *quick= *it;
     ++it;
@@ -131,38 +126,26 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 int optimizer::QuickRorIntersectSelect::reset()
 {
   if (! scans_inited && init_ror_merged_scan(true))
-  {
     return 0;
-  }
   scans_inited= true;
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
-  {
-    (*it)->reset();
-  }
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
+    it->reset();
   return 0;
 }
 
 
-bool
-optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
+void optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
 {
   quick_selects.push_back(quick);
-  return false;
 }
 
 
 bool optimizer::QuickRorIntersectSelect::is_keys_used(const boost::dynamic_bitset<>& fields)
 {
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    if (is_key_used(head, (*it)->index, fields))
-    {
+    if (is_key_used(head, it->index, fields))
       return 1;
-    }
   }
   return 0;
 }
@@ -251,11 +234,9 @@ void optimizer::QuickRorIntersectSelect::add_info_string(string *str)
 {
   bool first= true;
   str->append("intersect(");
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     if (! first)
       str->append(",");
     else
@@ -278,11 +259,9 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
   char buf[64];
   uint32_t length;
   bool first= true;
-  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
-       it != quick_selects.end();
-       ++it)
+  BOOST_FOREACH(QuickRangeSelect* it, quick_selects)
   {
-    KeyInfo *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + it->index;
     if (first)
     {
       first= false;
@@ -293,7 +272,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(string *key_names,
       used_lengths->append(",");
     }
     key_names->append(key_info->name);
-    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(it->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 

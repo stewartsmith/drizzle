@@ -18,8 +18,7 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_BIT_COUNT_H
-#define PLUGIN_UTILITY_FUNCTIONS_BIT_COUNT_H
+#pragma once
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
@@ -45,4 +44,3 @@ public:
 } /* namespace drizzled */
 
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_BIT_COUNT_H */

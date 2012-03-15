@@ -35,6 +35,7 @@ SchemasTool::SchemasTool() :
   add_field("SCHEMA_VERSION", plugin::TableFunction::NUMBER, 0, true);
   add_field("SCHEMA_USE_COUNT", plugin::TableFunction::NUMBER, 0, true);
   add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("SCHEMA_DEFINER", plugin::TableFunction::STRING, 64, true);
 }
 
 SchemasTool::Generator::Generator(drizzled::Field **arg) :
@@ -80,6 +81,16 @@ bool SchemasTool::Generator::populate()
 
     /* IS_REPLICATED */
     push(message::is_replicated(*schema_ptr));
+
+    /* _DEFINER */
+    if (message::has_definer(*schema_ptr))
+    {
+      push(message::definer(*schema_ptr));
+    }
+    else
+    {
+      push();
+    }
 
     return true;
   }

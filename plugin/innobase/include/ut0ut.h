@@ -30,6 +30,7 @@ Various utilities
 Created 1/20/1994 Heikki Tuuri
 ***********************************************************************/
 
+#pragma once
 #ifndef ut0ut_h
 #define ut0ut_h
 
@@ -171,7 +172,7 @@ when m is a power of two.  In other words, rounds n down to m * k.
 @param n	in: number to round down
 @param m	in: alignment, must be a power of two
 @return		n rounded down to the biggest possible integer multiple of m */
-#define ut_2pow_round(n, m) ((n) & ~((m) - 1))
+#define ut_2pow_round(n, m) ((n) & ~(typeof(n))((m) - 1))
 /** Align a number down to a multiple of a power of two.
 @param n	in: number to round down
 @param m	in: alignment, must be a power of two
@@ -183,7 +184,7 @@ when m is a power of two.  In other words, rounds n up to m * k.
 @param n	in: number to round up
 @param m	in: alignment, must be a power of two
 @return		n rounded up to the smallest possible integer multiple of m */
-#define ut_calc_align(n, m) (((n) + ((m) - 1)) & ~((m) - 1))
+#define ut_calc_align(n, m) (((n) + ((m) - 1)) & ~(typeof(n))((m) - 1))
 /*************************************************************//**
 Calculates fast the 2-logarithm of a number, rounded upward to an
 integer.

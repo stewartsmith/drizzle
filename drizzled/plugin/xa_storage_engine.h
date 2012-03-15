@@ -18,21 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_XA_STORAGE_ENGINE_H
-#define DRIZZLED_PLUGIN_XA_STORAGE_ENGINE_H
+#pragma once
 
 #include <drizzled/plugin/transactional_storage_engine.h>
 #include <drizzled/plugin/xa_resource_manager.h>
-
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
-
-class XID;
-
-namespace plugin
-{
+namespace drizzled {
+namespace plugin {
 
 /**
  * A type of storage engine which supports distributed
@@ -52,22 +45,20 @@ class DRIZZLED_API XaStorageEngine :
   public XaResourceManager
 {
 public:
-  XaStorageEngine(const std::string name_arg,
+  XaStorageEngine(const std::string &name_arg,
                   const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~XaStorageEngine();
 
   int startTransaction(Session *session, start_transaction_option_t options)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(*session, this, this, this);
+    TransactionServices::registerResourceForTransaction(*session, this, this, this);
     return doStartTransaction(session, options);
   }
 
   void startStatement(Session *session)
   {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(*session, this, this, this);
+    TransactionServices::registerResourceForStatement(*session, this, this, this);
     doStartStatement(session);
   }
 
@@ -130,4 +121,3 @@ private:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_XA_STORAGE_ENGINE_H */

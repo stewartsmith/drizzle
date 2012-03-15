@@ -31,9 +31,15 @@
 #include <drizzled/index_hint.h>
 #include <drizzled/select_result.h>
 #include <drizzled/item/subselect.h>
+#include <drizzled/statement.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/plugin.h>
+#include <drizzled/lex_input_stream.h>
 
 #include <cstdio>
 #include <ctype.h>
+
+#include <drizzled/message/alter_table.pb.h>
 
 union ParserType;
 
@@ -42,21 +48,16 @@ using namespace std;
 /* Stay outside of the namespace because otherwise bison goes nuts */
 int base_sql_lex(ParserType *arg, drizzled::Session *yysession);
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int lex_one_token(ParserType *arg, drizzled::Session *yysession);
 
 /**
   save order by and tables in own lists.
 */
-static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
+static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
 {
-  Order *order;
-
-  if (!(order = (Order *) session->getMemRoot()->allocate(sizeof(Order))))
-    return true;
-
+  Order* order = new (session->mem) Order;
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
@@ -64,14 +65,7 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   order->used=0;
   order->counter_used= 0;
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
-
-  return false;
 }
-
-/**
-  LEX_STRING constant for null-string to be used in parser and other places.
-*/
-const LEX_STRING null_lex_str= {NULL, 0};
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
@@ -99,38 +93,8 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->getMemRoot()->allocate(length + 1);
+  m_cpp_buf= (char*) session->mem.alloc(length + 1);
   m_cpp_ptr= m_cpp_buf;
-}
-
-Lex_input_stream::~Lex_input_stream()
-{}
-
-/**
-  The operation is called from the parser in order to
-  1) designate the intention to have utf8 body;
-  1) Indicate to the lexer that we will need a utf8 representation of this
-     statement;
-  2) Determine the beginning of the body.
-
-  @param session        Thread context.
-  @param begin_ptr  Pointer to the start of the body in the pre-processed
-                    buffer.
-*/
-void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
-{
-  assert(begin_ptr);
-  assert(m_cpp_buf <= begin_ptr && begin_ptr <= m_cpp_buf + m_buf_length);
-
-  uint32_t body_utf8_length=
-    (m_buf_length / default_charset_info->mbminlen) *
-    my_charset_utf8_bin.mbmaxlen;
-
-  m_body_utf8= (char *) session->getMemRoot()->allocate(body_utf8_length + 1);
-  m_body_utf8_ptr= m_body_utf8;
-  *m_body_utf8_ptr= 0;
-
-  m_cpp_utf8_processed_ptr= begin_ptr;
 }
 
 /**
@@ -153,8 +117,7 @@ void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append(const char *ptr,
-                                        const char *end_ptr)
+void Lex_input_stream::body_utf8_append(const char *ptr, const char *end_ptr)
 {
   assert(m_cpp_buf <= ptr && ptr <= m_cpp_buf + m_buf_length);
   assert(m_cpp_buf <= end_ptr && end_ptr <= m_cpp_buf + m_buf_length);
@@ -197,16 +160,15 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
-                                                const char *end_ptr)
+void Lex_input_stream::body_utf8_append_literal(str_ref txt, const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
     return;
 
   /* NOTE: utf_txt.length is in bytes, not in symbols. */
 
-  memcpy(m_body_utf8_ptr, txt->str, txt->length);
-  m_body_utf8_ptr += txt->length;
+  memcpy(m_body_utf8_ptr, txt.data(), txt.size());
+  m_body_utf8_ptr += txt.size();
   *m_body_utf8_ptr= 0;
 
   m_cpp_utf8_processed_ptr= end_ptr;
@@ -224,7 +186,7 @@ void LEX::start(Session *arg)
 
 void lex_start(Session *session)
 {
-  LEX *lex= session->getLex();
+  LEX *lex= &session->lex();
 
   lex->session= lex->unit.session= session;
 
@@ -268,8 +230,7 @@ void lex_start(Session *session)
   lex->expr_allows_subselect= true;
   lex->use_only_table_context= false;
 
-  lex->name.str= 0;
-  lex->name.length= 0;
+  lex->name.assign(NULL, 0);
   lex->nest_level=0 ;
   lex->allow_sum_func= 0;
   lex->in_sum_func= NULL;
@@ -277,7 +238,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->statement= NULL;
-  
+
   lex->is_cross= false;
   lex->reset();
 }
@@ -294,7 +255,9 @@ void LEX::end()
 
   safe_delete(result);
   safe_delete(_create_table);
+  safe_delete(_alter_table);
   _create_table= NULL;
+  _alter_table= NULL;
   _create_field= NULL;
 
   result= 0;
@@ -310,7 +273,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   const char *tok= lip->get_tok_start();
   uint32_t tok_pos= 0;
   for (;tok_pos<len && tok_pos<63;tok_pos++)
-    tok_upper[tok_pos]=my_toupper(system_charset_info, tok[tok_pos]);
+    tok_upper[tok_pos]= system_charset_info->toupper(tok[tok_pos]);
   tok_upper[tok_pos]=0;
 
   const SYMBOL *symbol= lookup_symbol(tok_upper, len, function);
@@ -326,23 +289,15 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   return 0;
 }
 
-bool is_lex_native_function(const LEX_STRING *name)
-{
-  assert(name != NULL);
-  return (lookup_symbol(name->str, name->length, 1) != 0);
-}
-
 /* make a copy of token before ptr and set yytoklen */
-static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
+static lex_string_t get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
-  LEX_STRING tmp;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.length=lip->yytoklen=length;
-  tmp.str= lip->m_session->strmake(lip->get_tok_start() + skip, tmp.length);
-
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign(lip->m_session->mem.strdup(lip->get_tok_start() + skip, length), length);
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
-  lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.length;
-
+  lip->m_cpp_text_end= lip->m_cpp_text_start + tmp.size();
   return tmp;
 }
 
@@ -352,19 +307,17 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
    get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
-static LEX_STRING get_quoted_token(Lex_input_stream *lip,
+static lex_string_t get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
 {
-  LEX_STRING tmp;
-  const char *from, *end;
-  char *to;
   lip->yyUnget();                       // ptr points now after last token char
-  tmp.length= lip->yytoklen=length;
-  tmp.str=(char*) lip->m_session->getMemRoot()->allocate(tmp.length+1);
-  from= lip->get_tok_start() + skip;
-  to= tmp.str;
-  end= to+length;
+  lip->yytoklen= length;
+  lex_string_t tmp;
+  tmp.assign((char*)lip->m_session->mem.alloc(length + 1), length);
+  const char* from= lip->get_tok_start() + skip;
+  char* to= (char*)tmp.data();
+  const char* end= to+length;
 
   lip->m_cpp_text_start= lip->get_cpp_tok_start() + skip;
   lip->m_cpp_text_end= lip->m_cpp_text_start + length;
@@ -388,21 +341,20 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
 */
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
-  unsigned char c,sep;
   bool found_escape= false;
-  const CHARSET_INFO * const cs= lip->m_session->charset();
+  const charset_info_st* const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
-  sep= lip->yyGetLast();                        // String should end with this
-  while (! lip->eof())
+  unsigned char sep= lip->yyGetLast();                        // String should end with this
+  while (not lip->eof())
   {
-    c= lip->yyGet();
+    unsigned char c= lip->yyGet();
     lip->tok_bitmap|= c;
     {
       if (use_mb(cs))
       {
         int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
-        if (l != 0) 
+        if (l != 0)
         {
           lip->skip_binary(l-1);
           continue;
@@ -427,18 +379,14 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
         lip->yyUnget();
 
       /* Found end. Unescape and return string */
-      const char *str, *end;
-      char *start;
-
-      str= lip->get_tok_start();
-      end= lip->get_ptr();
+      const char* str= lip->get_tok_start();
+      const char* end= lip->get_ptr();
       /* Extract the text from the token */
       str+= pre_skip;
       end-= post_skip;
       assert(end >= str);
 
-      if (!(start= (char*) lip->m_session->getMemRoot()->allocate((uint32_t) (end-str)+1)))
-        return (char*) "";		// memory::SqlAlloc has set error flag
+      char* start= (char*) lip->m_session->mem.alloc((uint32_t) (end-str)+1);
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
@@ -671,8 +619,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
   unsigned int length;
   enum my_lex_states state;
   Lex_input_stream *lip= session->m_lip;
-  LEX *lex= session->getLex();
-  const CHARSET_INFO * const cs= session->charset();
+  LEX *lex= &session->lex();
+  const charset_info_st * const cs= session->charset();
   unsigned char *state_map= cs->state_map;
   unsigned char *ident_map= cs->ident_map;
 
@@ -703,15 +651,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
     case MY_LEX_ESCAPE:
       if (lip->yyGet() == 'N')
       {					// Allow \N as shortcut for NULL
-        yylval->lex_str.str=(char*) "\\N";
-        yylval->lex_str.length=2;
+        yylval->lex_str.assign("\\N", 2);
         return NULL_SYM;
       }
     case MY_LEX_CHAR:			// Unknown or single char token
     case MY_LEX_SKIP:			// This should not happen
       if (c == '-' && lip->yyPeek() == '-' &&
-          (my_isspace(cs,lip->yyPeekn(1)) ||
-           my_iscntrl(cs,lip->yyPeekn(1))))
+          (cs->isspace(lip->yyPeekn(1)) ||
+           cs->iscntrl(lip->yyPeekn(1))))
       {
         state=MY_LEX_COMMENT;
         break;
@@ -803,17 +750,16 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         }
         lip->yySkip();                  // next state does a unget
       }
-      yylval->lex_str=get_token(lip, 0, length);
+      yylval->lex_str= get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);			// IDENT or IDENT_QUOTED
 
     case MY_LEX_IDENT_SEP:		// Found ident and now '.'
-      yylval->lex_str.str= (char*) lip->get_ptr();
-      yylval->lex_str.length= 1;
+      yylval->lex_str.assign(lip->get_ptr(), 1);
       c= lip->yyGet();                  // should be '.'
       lip->next_state= MY_LEX_IDENT_START;// Next is an ident (not a keyword)
       if (!ident_map[(uint8_t)lip->yyPeek()])            // Probably ` or "
@@ -826,11 +772,11 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         c= lip->yyGet();
         if (c == 'x')
         {
-          while (my_isxdigit(cs,(c = lip->yyGet()))) ;
+          while (cs->isxdigit((c = lip->yyGet()))) ;
           if ((lip->yyLength() >= 3) && !ident_map[c])
           {
             /* skip '0x' */
-            yylval->lex_str=get_token(lip, 2, lip->yyLength()-2);
+            yylval->lex_str= get_token(lip, 2, lip->yyLength()-2);
             return (HEX_NUM);
           }
           lip->yyUnget();
@@ -853,7 +799,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->yyUnget();
       }
 
-      while (my_isdigit(cs, (c = lip->yyGet()))) ;
+      while (cs->isdigit((c = lip->yyGet()))) ;
       if (!ident_map[c])
       {					// Can't be identifier
         state=MY_LEX_INT_OR_REAL;
@@ -862,14 +808,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       if (c == 'e' || c == 'E')
       {
         // The following test is written this way to allow numbers of type 1e1
-        if (my_isdigit(cs,lip->yyPeek()) ||
+        if (cs->isdigit(lip->yyPeek()) ||
             (c=(lip->yyGet())) == '+' || c == '-')
         {				// Allow 1E+10
-          if (my_isdigit(cs,lip->yyPeek()))     // Number must have digit after sign
+          if (cs->isdigit(lip->yyPeek()))     // Number must have digit after sign
           {
             lip->yySkip();
-            while (my_isdigit(cs,lip->yyGet())) ;
-            yylval->lex_str=get_token(lip, 0, lip->yyLength());
+            while (cs->isdigit(lip->yyGet())) ;
+            yylval->lex_str= get_token(lip, 0, lip->yyLength());
             return(FLOAT_NUM);
           }
         }
@@ -904,8 +850,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str= get_token(lip, 0, lip->yyLength());
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
 
@@ -931,38 +876,37 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
           break;				// Error
         lip->skip_binary(var_length-1);
       }
-      if (double_quotes)
-	      yylval->lex_str=get_quoted_token(lip, 1, lip->yyLength() - double_quotes -1, quote_char);
-      else
-        yylval->lex_str=get_token(lip, 1, lip->yyLength() -1);
+      yylval->lex_str= double_quotes
+        ? get_quoted_token(lip, 1, lip->yyLength() - double_quotes - 1, quote_char)
+        : get_token(lip, 1, lip->yyLength() - 1);
       if (c == quote_char)
         lip->yySkip();                  // Skip end `
       lip->next_state= MY_LEX_START;
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-      return(IDENT_QUOTED);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
+      return IDENT_QUOTED;
     }
     case MY_LEX_INT_OR_REAL:		// Complete int or incomplete real
       if (c != '.')
       {					// Found complete integer number.
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
-      	return int_token(yylval->lex_str.str,yylval->lex_str.length);
+      	return int_token(yylval->lex_str.data(), yylval->lex_str.size());
       }
       // fall through
     case MY_LEX_REAL:			// Incomplete real number
-      while (my_isdigit(cs,c = lip->yyGet())) ;
+      while (cs->isdigit(c = lip->yyGet())) ;
 
       if (c == 'e' || c == 'E')
       {
         c = lip->yyGet();
         if (c == '-' || c == '+')
                 c = lip->yyGet();                     // Skip sign
-        if (!my_isdigit(cs,c))
+        if (!cs->isdigit(c))
         {				// No digit after sign
           state= MY_LEX_CHAR;
           break;
         }
-        while (my_isdigit(cs,lip->yyGet())) ;
+        while (cs->isdigit(lip->yyGet())) ;
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
         return(FLOAT_NUM);
       }
@@ -971,13 +915,13 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
     case MY_LEX_HEX_NUMBER:		// Found x'hexstring'
       lip->yySkip();                    // Accept opening '
-      while (my_isxdigit(cs, (c= lip->yyGet()))) ;
+      while (cs->isxdigit((c= lip->yyGet()))) ;
       if (c != '\'')
         return(ABORT_SYM);              // Illegal hex constant
       lip->yySkip();                    // Accept closing '
       length= lip->yyLength();          // Length of hexnum+3
-      if ((length % 2) == 0)
-        return(ABORT_SYM);              // odd number of hex digits
+      if (length % 2 == 0)
+        return ABORT_SYM;               // odd number of hex digits
       yylval->lex_str=get_token(lip,
                                 2,          // skip x'
                                 length-3);  // don't count x' and last '
@@ -1042,16 +986,15 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       /* " used for strings */
     case MY_LEX_STRING:			// Incomplete text string
-      if (!(yylval->lex_str.str = get_text(lip, 1, 1)))
+      if (!(yylval->lex_str.str_ = get_text(lip, 1, 1)))
       {
         state= MY_LEX_CHAR;		// Read char by char
         break;
       }
-      yylval->lex_str.length=lip->yytoklen;
+      yylval->lex_str.assign(yylval->lex_str.data(), lip->yytoklen);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
       return(TEXT_STRING);
@@ -1219,7 +1162,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       /* Actually real shouldn't start with . but allow them anyhow */
 
     case MY_LEX_REAL_OR_POINT:
-      if (my_isdigit(cs,lip->yyPeek()))
+      if (cs->isdigit(lip->yyPeek()))
         state= MY_LEX_REAL;		// Real
       else
       {
@@ -1241,20 +1184,18 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->next_state=MY_LEX_HOSTNAME;
         break;
       }
-      yylval->lex_str.str=(char*) lip->get_ptr();
-      yylval->lex_str.length=1;
-      return((int) '@');
+      yylval->lex_str.assign(lip->get_ptr(), 1);
+      return '@';
 
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
-           my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
+           cs->isalnum(c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
 
     case MY_LEX_SYSTEM_VAR:
-      yylval->lex_str.str=(char*) lip->get_ptr();
-      yylval->lex_str.length=1;
+      yylval->lex_str.assign(lip->get_ptr(), 1);
       lip->yySkip();                                    // Skip '@'
       lip->next_state= (state_map[(uint8_t)lip->yyPeek()] ==
 			MY_LEX_USER_VARIABLE_DELIMITER ?
@@ -1288,34 +1229,10 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str=get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-
-      return(result_state);
+      return result_state;
     }
-  }
-}
-
-void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
-{
-  /*
-    TODO:
-    This code assumes that there are no multi-bytes characters
-    that can be considered white-space.
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[0])))
-  {
-    str->length--;
-    str->str++;
-  }
-
-  /*
-    FIXME:
-    Also, parsing backward is not safe with multi bytes characters
-  */
-  while ((str->length > 0) && (my_isspace(cs, str->str[str->length-1])))
-  {
-    str->length--;
   }
 }
 
@@ -1621,7 +1538,7 @@ bool Select_Lex_Node::set_braces(bool)
 bool Select_Lex_Node::inc_in_sum_expr()
 { return true; }
 
-uint32_t Select_Lex_Node::get_in_sum_expr() 
+uint32_t Select_Lex_Node::get_in_sum_expr()
 { return 0; }
 
 TableList* Select_Lex_Node::get_table_list()
@@ -1630,13 +1547,13 @@ TableList* Select_Lex_Node::get_table_list()
 List<Item>* Select_Lex_Node::get_item_list()
 { return NULL; }
 
-TableList *Select_Lex_Node::add_table_to_list(Session *, 
-                                              Table_ident *, 
-                                              LEX_STRING *, 
+TableList *Select_Lex_Node::add_table_to_list(Session *,
+                                              Table_ident *,
+                                              lex_string_t *,
                                               const bitset<NUM_OF_TABLE_OPTIONS>&,
-                                              thr_lock_type, 
-                                              List<Index_hint> *, 
-                                              LEX_STRING *)
+                                              thr_lock_type,
+                                              List<Index_hint> *,
+                                              lex_string_t *)
 {
   return 0;
 }
@@ -1666,19 +1583,19 @@ Select_Lex* Select_Lex_Unit::outer_select()
   return (Select_Lex*) master;
 }
 
-bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, order_list, item, asc);
+  add_to_list(session, order_list, item, asc);
 }
 
-bool Select_Lex::add_item_to_list(Session *, Item *item)
+void Select_Lex::add_item_to_list(Session *, Item *item)
 {
-  return(item_list.push_back(item));
+	item_list.push_back(item);
 }
 
-bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
+void Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
-  return add_to_list(session, group_list, item, asc);
+  add_to_list(session, group_list, item, asc);
 }
 
 Select_Lex_Unit* Select_Lex::master_unit()
@@ -1718,18 +1635,10 @@ List<Item>* Select_Lex::get_item_list()
   return &item_list;
 }
 
-
-bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
+void Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
-  if (ref_pointer_array)
-    return false;
-
-  return (ref_pointer_array=
-          (Item **)session->getMemRoot()->allocate(sizeof(Item*) * (n_child_sum_items +
-                                                 item_list.size() +
-                                                 select_n_having_items +
-                                                 select_n_where_fields +
-                                                 order_group_num)*5)) == 0;
+  if (not ref_pointer_array)
+    ref_pointer_array= new (session->mem) Item*[5 * (n_child_sum_items + item_list.size() + select_n_having_items + select_n_where_fields + order_group_num)];
 }
 
 void Select_Lex_Unit::print(String *str)
@@ -1825,6 +1734,7 @@ void Select_Lex::print_limit(Session *, String *str)
 LEX::~LEX()
 {
   delete _create_table;
+  delete _alter_table;
 }
 
 /*
@@ -1875,46 +1785,24 @@ void Query_tables_list::reset_query_tables_list(bool init)
     for this.
 */
 LEX::LEX() :
-    result(0), 
-    yacc_yyss(0), 
+    result(0),
+    yacc_yyss(0),
     yacc_yyvs(0),
     session(NULL),
     charset(NULL),
     var_list(),
-    sql_command(SQLCOM_END), 
+    sql_command(SQLCOM_END),
     statement(NULL),
-    option_type(OPT_DEFAULT), 
+    option_type(OPT_DEFAULT),
     is_lex_started(0),
     cacheable(true),
     sum_expr_used(false),
     _create_table(NULL),
+    _alter_table(NULL),
     _create_field(NULL),
     _exists(false)
 {
   reset_query_tables_list(true);
-}
-
-/**
-  This method should be called only during parsing.
-  It is aware of compound statements (stored routine bodies)
-  and will initialize the destination with the default
-  database of the stored routine, rather than the default
-  database of the connection it is parsed in.
-  E.g. if one has no current database selected, or current database
-  set to 'bar' and then issues:
-
-  CREATE PROCEDURE foo.p1() BEGIN SELECT * FROM t1 END//
-
-  t1 is meant to refer to foo.t1, not to bar.t1.
-
-  This method is needed to support this rule.
-
-  @return true in case of error (parsing should be aborted, false in
-  case of success
-*/
-bool LEX::copy_db_to(char **p_db, size_t *p_db_length) const
-{
-  return session->copy_db_to(p_db, p_db_length);
 }
 
 /*
@@ -2079,11 +1967,11 @@ void LEX::link_first_table_back(TableList *first, bool link_to_local)
 void LEX::cleanup_after_one_table_open()
 {
   /*
-    session->getLex()->derived_tables & additional units may be set if we open
-    a view. It is necessary to clear session->getLex()->derived_tables flag
+    session->lex().derived_tables & additional units may be set if we open
+    a view. It is necessary to clear session->lex().derived_tables flag
     to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
-    NOTE: all units will be connected to session->getLex()->select_lex, because we
+    NOTE: all units will be connected to session->lex().select_lex, because we
     have not UNION on most upper level.
     */
   if (all_selects_list != &select_lex)
@@ -2128,7 +2016,7 @@ void LEX::cleanup_after_one_table_open()
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
-void Select_Lex::set_index_hint_type(enum index_hint_type type_arg, index_clause_map clause)
+void Select_Lex::set_index_hint_type(index_hint_type type_arg, index_clause_map clause)
 {
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;
@@ -2159,29 +2047,17 @@ void Select_Lex::alloc_index_hints (Session *session)
   RETURN VALUE
     0 on success, non-zero otherwise
 */
-bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
+void Select_Lex::add_index_hint(Session *session, const char *str)
 {
-  return index_hints->push_front (new (session->mem_root)
-                                 Index_hint(current_index_hint_type,
-                                            current_index_hint_clause,
-                                            str, length));
+  index_hints->push_front(new (session->mem_root) Index_hint(current_index_hint_type, current_index_hint_clause, str));
 }
 
-bool check_for_sql_keyword(drizzled::lex_string_t const& string)
+message::AlterTable *LEX::alter_table()
 {
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
+  if (not _alter_table)
+    _alter_table= new message::AlterTable;
 
-  return false;
+  return _alter_table;
 }
-
-bool check_for_sql_keyword(drizzled::st_lex_symbol const& string)
-{
-  if (sql_reserved_words::in_word_set(string.str, string.length))
-      return true;
-
-  return false;
-}
-
 
 } /* namespace drizzled */

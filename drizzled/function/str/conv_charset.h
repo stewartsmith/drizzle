@@ -17,41 +17,39 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_CONV_CHARSET_H
-#define DRIZZLED_FUNCTION_STR_CONV_CHARSET_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class Item_func_conv_charset :public Item_str_func
 {
   bool use_cached_value;
 public:
   bool safe;
-  const CHARSET_INFO *conv_charset; // keep it public
-  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs) :Item_str_func(a)
+  const charset_info_st *conv_charset; // keep it public
+  Item_func_conv_charset(Item *a, const charset_info_st * const cs) :Item_str_func(a)
   { conv_charset= cs; use_cached_value= 0; safe= 0; }
-  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs, bool cache_if_const)
+  Item_func_conv_charset(Item *a, const charset_info_st * const cs, bool cache_if_const)
     :Item_str_func(a)
   {
     assert(args[0]->fixed);
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {
-      size_t errors= 0;
       String tmp, *str= args[0]->val_str(&tmp);
-      if (!str || str_value.copy(str->ptr(), str->length(),
-                                 str->charset(), conv_charset, &errors))
+      if (!str)
         null_value= 1;
+      else
+        str_value.copy(str->ptr(), str->length(), conv_charset);
       use_cached_value= 1;
       str_value.mark_as_const();
-      safe= (errors == 0);
+      safe= true;
     }
     else
     {
-      use_cached_value= 0;
+      use_cached_value= false;
       /*
         Conversion from and to "binary" is safe.
         Conversion to Unicode is safe.
@@ -70,4 +68,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_STR_CONV_CHARSET_H */

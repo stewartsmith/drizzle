@@ -17,28 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
-#define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
+#pragma once
 
+#include <drizzled/memory/sql_alloc.h>
 #include <drizzled/util/functors.h>
 #include <algorithm>
 
-namespace drizzled
-{
-
-namespace optimizer
-{
-
-class Parameter;
-class SEL_ARG;
-class SEL_TREE;
-class RorScanInfo;
+namespace drizzled {
+namespace optimizer {
 
 /*
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
   objects from table read plans.
 */
-class TableReadPlan
+class TableReadPlan : public memory::SqlAlloc
 {
 public:
   /*
@@ -74,20 +66,7 @@ public:
                                            bool retrieve_full_rows,
                                            memory::Root *parent_alloc= NULL) = 0;
 
-  /* Table read plans are allocated on memory::Root and are never deleted */
-  static void *operator new(size_t size, memory::Root *mem_root)
-  { 
-    return (void*) mem_root->alloc_root((uint32_t) size); 
-  }
-
-  static void operator delete(void *, size_t)
-  { }
-
-  static void operator delete(void *, memory::Root *)
-    { /* Never called */ }
-
   virtual ~TableReadPlan() {} /* Remove gcc warning */
-
 };
 
 
@@ -99,9 +78,7 @@ public:
 */
 class RangeReadPlan : public TableReadPlan
 {
-
 public:
-
   SEL_ARG *key; /* set of intervals to be used in "range" method retrieval */
   uint32_t     key_idx; /* key number in Parameter::key */
   uint32_t     mrr_flags;
@@ -113,10 +90,8 @@ public:
       key_idx(idx_arg),
       mrr_flags(mrr_flags_arg)
   {}
-  virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param, bool, memory::Root *parent_alloc);
-
 };
 
 
@@ -124,10 +99,6 @@ public:
 class RorIntersectReadPlan : public TableReadPlan
 {
 public:
-
-  RorIntersectReadPlan() {}                      /* Remove gcc warning */
-  virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
-
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
@@ -152,8 +123,6 @@ public:
 class RorUnionReadPlan : public TableReadPlan
 {
 public:
-  RorUnionReadPlan() {}                          /* Remove gcc warning */
-  virtual ~RorUnionReadPlan() {}                 /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
@@ -171,8 +140,6 @@ public:
 class IndexMergeReadPlan : public TableReadPlan
 {
 public:
-  IndexMergeReadPlan() {}                        /* Remove gcc warning */
-  virtual ~IndexMergeReadPlan() {}               /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
@@ -206,19 +173,19 @@ public:
   ha_rows quick_prefix_records;
 
 public:
-  GroupMinMaxReadPlan(bool have_min_arg, 
+  GroupMinMaxReadPlan(bool have_min_arg,
                       bool have_max_arg,
                       KeyPartInfo *min_max_arg_part_arg,
-                      uint32_t group_prefix_len_arg, 
+                      uint32_t group_prefix_len_arg,
                       uint32_t used_key_parts_arg,
-                      uint32_t group_key_parts_arg, 
+                      uint32_t group_key_parts_arg,
                       KeyInfo *index_info_arg,
-                      uint32_t index_arg, 
+                      uint32_t index_arg,
                       uint32_t key_infix_len_arg,
                       unsigned char *key_infix_arg,
-                      SEL_TREE *tree_arg, 
+                      SEL_TREE *tree_arg,
                       SEL_ARG *index_tree_arg,
-                      uint32_t param_idx_arg, 
+                      uint32_t param_idx_arg,
                       ha_rows quick_prefix_records_arg)
     :
       have_min(have_min_arg),
@@ -238,7 +205,6 @@ public:
       if (key_infix_len)
         memcpy(this->key_infix, key_infix_arg, key_infix_len);
     }
-  virtual ~GroupMinMaxReadPlan() {}             /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
@@ -250,4 +216,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H */

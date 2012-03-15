@@ -17,19 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_IDENT_H
-#define DRIZZLED_ITEM_IDENT_H
+#pragma once
 
 #include <drizzled/item.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Name_resolution_context;
-class TableList;
-extern uint32_t lower_case_table_names;
-
-class Item_ident :public Item
+class Item_ident : public Item
 {
 protected:
   /*
@@ -78,7 +72,7 @@ public:
 };
 
 
-class Item_ident_for_show :public Item
+class Item_ident_for_show : public Item
 {
 public:
   Field *field;
@@ -100,4 +94,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_IDENT_H */

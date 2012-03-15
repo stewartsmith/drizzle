@@ -184,7 +184,7 @@ bool DrizzleDumpTableMySQL::populateFields()
     DrizzleDumpFieldMySQL *field = new DrizzleDumpFieldMySQL(fieldName, dcon);
     /* Stop valgrind warning */
     field->convertDateTime= false;
-    field->isNull= (strcmp(row[3], "YES") == 0) ? true : false;
+    field->isNull= strcmp(row[3], "YES") == 0;
     /* Also sets collation */
     field->setType(row[1], row[8]);
     if (field->type.compare("ENUM") == 0)
@@ -203,7 +203,7 @@ bool DrizzleDumpTableMySQL::populateFields()
       field->defaultValue= "";
     }
 
-    field->isAutoIncrement= (strcmp(row[8], "auto_increment") == 0) ? true : false;
+    field->isAutoIncrement= strcmp(row[8], "auto_increment") == 0;
     field->defaultIsNull= field->isNull;
 
     /* Seriously MySQL, why is BIT length in NUMERIC_PRECISION? */
@@ -291,11 +291,11 @@ bool DrizzleDumpTableMySQL::populateIndexes()
       index->isPrimary= (strcmp(row[2], "PRIMARY") == 0);
       index->isUnique= (strcmp(row[1], "0") == 0);
       index->isHash= (strcmp(row[10], "HASH") == 0);
-      index->length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
       lastKey= row[2];
       firstIndex= false;
     }
-    index->columns.push_back(row[4]);
+    uint32_t length= (row[7]) ? boost::lexical_cast<uint32_t>(row[7]) : 0;
+    index->columns.push_back(std::make_pair(row[4], length));
   }
   if (!firstIndex)
     indexes.push_back(index);
@@ -382,7 +382,7 @@ void DrizzleDumpFieldMySQL::setType(const char* raw_type, const char* raw_collat
     old_type.erase(pos, std::string::npos);
   }
 
-  std::transform(old_type.begin(), old_type.end(), old_type.begin(), ::toupper);
+  boost::to_upper(old_type);
   if ((old_type.find("CHAR") != std::string::npos) or 
     (old_type.find("TEXT") != std::string::npos))
     setCollate(raw_collation);

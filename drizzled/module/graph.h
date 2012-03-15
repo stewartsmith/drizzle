@@ -17,32 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_GRAPH_H
-#define DRIZZLED_MODULE_GRAPH_H
+#pragma once
 
 #include <drizzled/module/vertex.h>
 
 
-namespace drizzled
+namespace drizzled {
+namespace module {
+
+class Graph : boost::noncopyable
 {
-
-namespace module
-{
-
-class Graph
-{
-
-private:
-  VertexGraph graph_;
-
-  Graph(const Graph&);
-  Graph& operator=(const Graph&);
-
 public:
-  Graph() :
-    graph_()
-  { }
-
   VertexGraph& getGraph()
   {
     return graph_;
@@ -50,12 +35,11 @@ public:
 
   Vertex& properties(const VertexDesc& v)
   {
-     boost::property_map<VertexGraph, vertex_properties_t>::type param=
-       boost::get(vertex_properties, graph_);
-     return param[v];
+     return boost::get(vertex_properties, graph_)[v];
   }
+private:
+  VertexGraph graph_;
 };
 
 } /* namespace module */
 } /* namespace drizzled */
-#endif /* DRIZZLED_MODULE_GRAPH_H */

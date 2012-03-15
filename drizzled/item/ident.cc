@@ -26,8 +26,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
@@ -41,7 +40,7 @@ Item_ident::Item_ident(Name_resolution_context *context_arg,
    alias_name_used(false), cached_field_index(NO_CACHED_FIELD_INDEX),
    cached_table(0), depended_from(0)
 {
-  name = (char*) field_name_arg;
+  name = field_name_arg;
 }
 
 /**
@@ -70,40 +69,34 @@ void Item_ident::cleanup()
   table_name= orig_table_name;
   field_name= orig_field_name;
   depended_from= 0;
-  return;
 }
 
 bool Item_ident::remove_dependence_processor(unsigned char * arg)
 {
   if (depended_from == (Select_Lex *) arg)
     depended_from= 0;
-  return(0);
+  return 0;
 }
 
 const char *Item_ident::full_name() const
 {
-  char *tmp;
-	size_t tmp_len;
   if (!table_name || !field_name)
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
-    tmp= (char*) memory::sql_alloc(tmp_len);
+    size_t tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
+    char* tmp= (char*) memory::sql_alloc(tmp_len);
     snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
+    return tmp;
   }
-  else
+  if (table_name[0])
   {
-    if (table_name[0])
-    {
-      tmp_len=strlen(table_name)+strlen(field_name)+2;
-      tmp= (char*) memory::sql_alloc(tmp_len);
-      snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
-    }
-    else
-      tmp= (char*) field_name;
+    size_t tmp_len= strlen(table_name)+strlen(field_name)+2;
+    char* tmp= (char*) memory::sql_alloc(tmp_len);
+    snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
+    return tmp;
   }
-  return tmp;
+  return field_name;
 }
 
 
@@ -113,48 +106,39 @@ void Item_ident::print(String *str)
 
   if (table_name && table_name[0])
   {
-    t_name.assign(table_name);
-    std::transform(t_name.begin(), t_name.end(),
-                   t_name.begin(), ::tolower);
+    t_name= table_name;
+    boost::to_lower(t_name);
   }
  
   if (db_name && db_name[0])
   {
-    d_name.assign(db_name);
-    // Keeping the std:: prefix here, since Item_ident has a transform
-    // method
-      std::transform(d_name.begin(), d_name.end(),
-                     d_name.begin(), ::tolower);
+    d_name= db_name;
+    boost::to_lower(d_name);
   }
 
   if (!table_name || !field_name || !field_name[0])
   {
-    const char *nm= (field_name && field_name[0]) ?
-                      field_name : name ? name : "tmp_field";
-    str->append_identifier(nm, (uint32_t) strlen(nm));
-
+    str->append_identifier(str_ref((field_name && field_name[0]) ? field_name : name ? name : "tmp_field"));
     return;
   }
   if (db_name && db_name[0] && !alias_name_used)
   {
-    {
-      str->append_identifier(d_name.c_str(), d_name.length());
-      str->append('.');
-    }
-    str->append_identifier(t_name.c_str(), t_name.length());
+    str->append_identifier(d_name);
     str->append('.');
-    str->append_identifier(field_name, (uint32_t)strlen(field_name));
+    str->append_identifier(t_name);
+    str->append('.');
+    str->append_identifier(str_ref(field_name));
   }
   else
   {
     if (table_name[0])
     {
-      str->append_identifier(t_name.c_str(), t_name.length());
+      str->append_identifier(t_name);
       str->append('.');
-      str->append_identifier(field_name, (uint32_t) strlen(field_name));
+      str->append_identifier(str_ref(field_name));
     }
     else
-      str->append_identifier(field_name, (uint32_t) strlen(field_name));
+      str->append_identifier(str_ref(field_name));
   }
 }
 
@@ -189,8 +173,7 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->charsetnr= field->charset()->number;
   tmp_field->length=field->field_length;
   tmp_field->type=field->type();
-  tmp_field->flags= field->getTable()->maybe_null ?
-    (field->flags & ~NOT_NULL_FLAG) : field->flags;
+  tmp_field->flags= field->getTable()->maybe_null ? (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }
 

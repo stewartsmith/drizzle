@@ -18,16 +18,12 @@
 /* This file should be included when using heap_database_functions */
 /* Author: Michael Widenius */
 
-#ifndef PLUGIN_MEMORY_HEAP_H
-#define PLUGIN_MEMORY_HEAP_H
+#pragma once
 
 #include <drizzled/base.h>
-#include <drizzled/common.h>
-#include <drizzled/internal/my_pthread.h>
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include <drizzled/tree.h>
 
 #include <vector>
 
@@ -306,11 +302,3 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
 extern unsigned char *heap_position(HP_INFO *info);
-
-/* The following is for programs that uses the old HEAP interface where
-   pointer to rows where a long instead of a (unsigned char*).
-*/
-
-typedef unsigned char *HEAP_PTR;
-
-#endif /* PLUGIN_MEMORY_HEAP_H */

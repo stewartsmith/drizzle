@@ -24,46 +24,31 @@
 
 
 
-#ifndef DRIZZLED_FIELD_H
-#define DRIZZLED_FIELD_H
+#pragma once
 
+#include <drizzled/common_fwd.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/type/decimal.h>
 #include <drizzled/key_map.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/structs.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/item_result.h>
-#include <drizzled/charset_info.h>
 
 #include <string>
 #include <vector>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
-#ifdef DEBUG
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
-#else
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable())
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable())
-#endif
-
-typedef struct st_typelib TYPELIB;
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(getTable() && (not getTable()->read_set || isReadSet()))
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(getTable() && (not getTable()->write_set || isWriteSet()))
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
-
-class SendField;
-class CreateField;
-class TableShare;
-class Field;
-struct CacheField;
 
 int field_conv(Field *to,Field *from);
 
@@ -80,12 +65,8 @@ int field_conv(Field *to,Field *from);
  * The store_xxx() methods take various input and convert
  * the input into the raw bytes stored in the ptr member variable.
  */
-class DRIZZLED_API Field
+class DRIZZLED_API Field : boost::noncopyable
 {
-  /* Prevent use of these */
-  Field(const Field&);
-  void operator=(Field &);
-
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
@@ -119,7 +100,7 @@ public:
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char *field_name; /**< Name of the field */
-  LEX_STRING comment; /**< A comment about the field */
+  str_ref comment; /**< A comment about the field */
 
   /** The field is part of the following keys */
   key_map	key_start;
@@ -202,14 +183,14 @@ public:
   /* Store functions returns 1 on overflow and -1 on fatal error */
   virtual int store(const char *to,
                     uint32_t length,
-                    const CHARSET_INFO * const cs)=0;
+                    const charset_info_st * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
   virtual int store_decimal(const type::Decimal *d)=0;
   int store_and_check(enum_check_fields check_level,
                       const char *to,
                       uint32_t length,
-                      const CHARSET_INFO * const cs);
+                      const charset_info_st * const cs);
   /**
     This is called when storing a date in a string.
 
@@ -353,13 +334,6 @@ public:
   virtual int key_cmp(const unsigned char *str, uint32_t length);
   virtual uint32_t decimals() const;
 
-  /*
-    Caller beware: sql_type can change str.Ptr, so check
-    ptr() to see if it changed if you are using your own buffer
-    in str and restore it with set() if needed
-  */
-  virtual void sql_type(String &str) const =0;
-
   // For new field
   virtual uint32_t size_of() const =0;
 
@@ -387,15 +361,13 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(memory::Root *root,
-                           Table *new_table,
-                           bool keep_type);
+  virtual Field *new_field(memory::Root*, Table*, bool keep_type);
   virtual Field *new_key_field(memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(memory::Root *mem_root, Table *new_table);
+  Field* clone(memory::Root*, Table*);
   void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -409,15 +381,15 @@ public:
     if (null_ptr)
       null_ptr= ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
-  virtual void get_image(unsigned char *buff, uint32_t length, const CHARSET_INFO * const)
+  virtual void get_image(unsigned char *buff, uint32_t length, const charset_info_st * const)
   {
     memcpy(buff,ptr,length);
   }
-  virtual void get_image(std::basic_string<unsigned char> &buff, uint32_t length, const CHARSET_INFO * const)
+  virtual void get_image(std::basic_string<unsigned char> &buff, uint32_t length, const charset_info_st * const)
   {
     buff.append(ptr,length);
   }
-  virtual void set_image(const unsigned char *buff,uint32_t length, const CHARSET_INFO * const)
+  virtual void set_image(const unsigned char *buff,uint32_t length, const charset_info_st * const)
   {
     memcpy(ptr,buff,length);
   }
@@ -598,10 +570,10 @@ public:
   uint32_t fill_cache_field(CacheField *copy);
   virtual bool get_date(type::Time &ltime,uint32_t fuzzydate) const;
   virtual bool get_time(type::Time &ltime) const;
-  virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
-  virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
+  virtual const charset_info_st *charset(void) const { return &my_charset_bin; }
+  virtual const charset_info_st *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(const CHARSET_INFO * const)
+  virtual void set_charset(const charset_info_st * const)
   {}
   virtual enum Derivation derivation(void) const
   {
@@ -789,6 +761,7 @@ inline bool isDateTime(const enum_field_types &arg)
   case DRIZZLE_TYPE_LONGLONG:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_UUID:
+  case DRIZZLE_TYPE_IPV6:
   case DRIZZLE_TYPE_VARCHAR:
     return false;
   }
@@ -800,14 +773,6 @@ inline bool isDateTime(const enum_field_types &arg)
 } // namespace field
 
 std::ostream& operator<<(std::ostream& output, const Field &field);
-
-} /* namespace drizzled */
-
-/** @TODO Why is this in the middle of the file???*/
-#include <drizzled/create_field.h>
-
-namespace drizzled
-{
 
 /**
  * A class for sending field information to a client.
@@ -830,7 +795,6 @@ public:
   uint32_t flags;
   uint32_t decimals;
   enum_field_types type;
-  SendField() {}
 };
 
 uint32_t pack_length_to_packflag(uint32_t type);
@@ -851,10 +815,9 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
  * @retval
  *  true  - If string has some important data
  */
-bool test_if_important_data(const CHARSET_INFO * const cs,
+bool test_if_important_data(const charset_info_st * const cs,
                             const char *str,
                             const char *strend);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FIELD_H */

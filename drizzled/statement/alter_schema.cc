@@ -25,39 +25,36 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/schema.h>
 #include <drizzled/message.h>
+#include <drizzled/sql_lex.h>
 
 #include <string>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &getSession()->getLex()->name;
-  message::schema::shared_ptr old_definition;
-
   if (not validateSchemaOptions())
     return true;
 
-  identifier::Schema schema_identifier(string(db->str, db->length));
+  identifier::Schema schema_identifier(lex().name);
 
-  if (not schema::check(*getSession(), schema_identifier))
+  if (not schema::check(session(), schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, schema_identifier);
-
     return false;
   }
 
-  identifier::Schema identifier(db->str);
-  if (not (old_definition= plugin::StorageEngine::getSchemaDefinition(identifier)))
+  identifier::Schema identifier(lex().name);
+  message::schema::shared_ptr old_definition= plugin::StorageEngine::getSchemaDefinition(identifier);
+  if (not old_definition)
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, identifier); 
     return true;
   }
 
-  if (getSession()->inTransaction())
+  if (session().inTransaction())
   {
     my_error(ER_TRANSACTIONAL_DDL_NOT_SUPPORTED, MYF(0));
     return true;
@@ -83,10 +80,7 @@ bool statement::AlterSchema::execute()
   
   drizzled::message::update(schema_message);
 
-  bool res= schema::alter(*getSession(), schema_message, *old_definition);
-
-  return not res;
+  return not schema::alter(session(), schema_message, *old_definition);
 }
 
 } /* namespace drizzled */
-

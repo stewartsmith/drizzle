@@ -26,6 +26,7 @@
 #include <drizzled/show.h>
 #include <drizzled/message/schema.h>
 #include <drizzled/session.h>
+#include <drizzled/charset.h>
 
 #include <drizzled/catalog/local.h>
 
@@ -33,7 +34,7 @@ namespace drizzled {
 namespace message {
 namespace schema {
 
-shared_ptr make_shared(identifier::Schema::const_reference identifier)
+shared_ptr make_shared(const identifier::Schema& identifier)
 {
   shared_ptr shared(new message::Schema);
 

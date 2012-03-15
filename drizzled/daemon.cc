@@ -45,6 +45,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/select.h>
 
 #include <drizzled/daemon.h>
@@ -52,98 +53,139 @@
 namespace drizzled
 {
 
-pid_t parent_pid;
+int parent_pipe_fds[2];
 
 extern "C"
 {
 
-static void sigusr1_handler(int sig)
+static void sigchld_handler(int sig)
 {
-  if (sig == SIGUSR1)
-    _exit(EXIT_SUCCESS);
+  int status= -1;
+  if (sig == SIGCHLD)
+  {
+    (void)wait(&status);
+  }
+  _exit(status);
 }
 
 }
 
 void daemon_is_ready()
 {
-  kill(parent_pid, SIGUSR1);
+  int fd;
+  ssize_t wbytes;
+  while ((wbytes= write(parent_pipe_fds[1], "\0", sizeof("\0"))) == 0)
+  {
+    if (wbytes < 0)
+    {
+      perror("write");
+      _exit(errno);
+    }
+  }
+  if (close(parent_pipe_fds[1]))
+  {
+    perror("close");
+    _exit(errno);
+  }
+
+  if ((fd = open("/dev/null", O_RDWR, 0)) != -1) 
+  {
+    if(dup2(fd, STDIN_FILENO) < 0)
+    {
+      perror("dup2 stdin");
+      return;
+    }
+
+    if(dup2(fd, STDOUT_FILENO) < 0)
+    {
+      perror("dup2 stdout");
+      return;
+    }
+
+    if(dup2(fd, STDERR_FILENO) < 0)
+    {
+      perror("dup2 stderr");
+      return;
+    }
+
+    if (fd > STDERR_FILENO)
+    {
+      if (close(fd) < 0)
+      {
+        perror("close");
+        return;
+      }
+    }
+  }
 }
 
-bool daemonize(bool nochdir, bool noclose, bool wait_sigusr1)
+bool daemonize()
 {
-    int fd;
-    pid_t child= -1;
+  pid_t child= -1;
 
-    parent_pid= getpid();
-    signal(SIGUSR1, sigusr1_handler);
+  if (pipe(parent_pipe_fds))
+  {
+      perror("pipe");
+      _exit(errno);
+  }
 
-    child= fork();
+  child= fork();
 
-    switch (child)
+  switch (child)
+  {
+  case -1:
+    return true;
+
+  case 0:
+    break;
+
+  default:
     {
-    case -1:
-        return true;
-    case 0:
-        break;
-    default:
-      if (wait_sigusr1)
+      /* parent */
+      char ready_byte[1];
+      size_t rbytes;
+      /* Register SIGCHLD handler for case where child exits before
+         writing to the pipe */
+      signal(SIGCHLD, sigchld_handler);
+
+      if (close(parent_pipe_fds[1]))
       {
-        /* parent */
-        int exit_code= -1;
-        int status;
-        while (waitpid(child, &status, 0) != child)
-        { }
-
-        if (WIFEXITED(status))
-        {
-          exit_code= WEXITSTATUS(status);
-        }
-        if (WIFSIGNALED(status))
-        {
-          exit_code= -1;
-        }
-        _exit(exit_code);
+          perror("close");
+          _exit(errno);
       }
-      else
+      /* If the pipe is closed before a write, we exit -1, otherwise errno is used */
+      if ((rbytes= read(parent_pipe_fds[0],ready_byte,sizeof(ready_byte))) < 1)
       {
-        _exit(EXIT_SUCCESS);
+          int estatus= -1;
+          if (rbytes != 0)
+          {
+              estatus= errno;
+              perror("read");
+          }
+          _exit(estatus);
       }
+      if (close(parent_pipe_fds[0]))
+      {
+          perror("close");
+          _exit(errno);
+      }
+
+      _exit(EXIT_SUCCESS);
     }
+  }
 
-    /* child */
-    if (setsid() == -1)
-        return true;
+  /* child */
+  if (close(parent_pipe_fds[0]))
+  {
+      perror("close");
+      _exit(errno);
+  }
+  if (setsid() == -1)
+  {
+    return true;
+  }
 
-    if (nochdir == 0) {
-        if(chdir("/") != 0) {
-            perror("chdir");
-            return true;
-        }
-    }
-
-    if (noclose == 0 && (fd = open("/dev/null", O_RDWR, 0)) != -1) {
-        if(dup2(fd, STDIN_FILENO) < 0) {
-            perror("dup2 stdin");
-            return true;
-        }
-        if(dup2(fd, STDOUT_FILENO) < 0) {
-            perror("dup2 stdout");
-            return true;
-        }
-        if(dup2(fd, STDERR_FILENO) < 0) {
-            perror("dup2 stderr");
-            return true;
-        }
-
-        if (fd > STDERR_FILENO) {
-            if(close(fd) < 0) {
-                perror("close");
-                return true;
-            }
-        }
-    }
-    return false; 
+  return false; 
 }
 
 } /* namespace drizzled */

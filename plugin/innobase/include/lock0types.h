@@ -23,6 +23,7 @@ The transaction lock system global types
 Created 5/7/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef lock0types_h
 #define lock0types_h
 

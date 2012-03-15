@@ -18,16 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_SCHEMA_H
-#define DRIZZLED_GENERATOR_SCHEMA_H
+#pragma once
 
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/plugin/storage_engine.h>
 
 namespace drizzled {
-
-class Session;
-
 namespace generator {
 
 class Schema
@@ -35,8 +31,8 @@ class Schema
   Session &session;
   message::schema::shared_ptr schema;
 
-  identifier::Schema::vector schema_names;
-  identifier::Schema::vector::const_iterator schema_iterator;
+  identifier::schema::vector schema_names;
+  identifier::schema::vector::const_iterator schema_iterator;
 
 public:
 
@@ -49,4 +45,3 @@ public:
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_SCHEMA_H */

@@ -19,8 +19,7 @@
  * 2010-05-12
  */
 
-#ifndef PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H
-#define PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H
+#pragma once
 
 #include <drizzled/plugin/event_observer.h>
 
@@ -59,7 +58,7 @@ private:
 public:
   void setDatabasesOfInterest(const char *list) 
   {
-    db_list.assign(list);
+    db_list= list;
   }
   
   const char *getDatabasesOfInterest() 
@@ -85,7 +84,7 @@ private:
 public:
   void setTablesOfInterest(const char *list) 
   {
-    table_list.assign(list);
+    table_list= list;
   }
   
   const char *getTablesOfInterest() 
@@ -119,4 +118,3 @@ private:
 };
 } /* namespace plugin */
 } /* namespace drizzled */
-#endif /* PLUGIN_HELLO_EVENTS_HELLO_EVENTS_H */

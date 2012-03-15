@@ -21,6 +21,7 @@
 #include <config.h>
 #include <plugin/schema_dictionary/dictionary.h>
 #include <drizzled/identifier.h>
+#include <drizzled/table_proto.h>
 
 using namespace std;
 using namespace drizzled;
@@ -45,8 +46,8 @@ static const string DATETIME("DATETIME");
 TablesTool::TablesTool() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLES")
 {
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("TABLE_TYPE");
   add_field("TABLE_ARCHETYPE");
   add_field("ENGINE");
@@ -54,11 +55,13 @@ TablesTool::TablesTool() :
   add_field("TABLE_COLLATION");
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
-  add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
+  add_field("TABLE_COMMENT", plugin::TableFunction::STRING,
+            TABLE_COMMENT_MAXLEN, true);
   add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_UUID", plugin::TableFunction::STRING, 36, true);
   add_field("TABLE_VERSION", plugin::TableFunction::NUMBER, 0, true);
   add_field("IS_REPLICATED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("TABLE_DEFINER", plugin::TableFunction::STRING, 64, true);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -192,4 +195,14 @@ void TablesTool::Generator::fill()
 
   /* IS_REPLICATED */
   push(message::is_replicated(getTableMessage()));
+
+  /* _DEFINER */
+  if (message::has_definer(getTableMessage()))
+  {
+    push(message::definer(getTableMessage()));
+  }
+  else
+  {
+    push();
+  }
 }

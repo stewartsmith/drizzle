@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ATOMIC_SUN_STUDIO_H
-#define DRIZZLED_ATOMIC_SUN_STUDIO_H
+#pragma once
 
 #define _KERNEL
 #include <atomic.h>
@@ -298,4 +297,3 @@ inline uint64_t __sync_bool_compare_and_swap(volatile uint64_t* ptr,
 }
 #endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
 
-#endif /* DRIZZLED_ATOMIC_SUN_STUDIO_H */

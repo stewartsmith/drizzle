@@ -30,9 +30,9 @@
 #include <drizzled/records.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
+#include <drizzled/system_variables.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 static int rr_sequential(ReadRecord *info);
 static int rr_quick(ReadRecord *info);
@@ -81,7 +81,7 @@ int ReadRecord::init_read_record(Session *session_arg,
                                  int use_record_cache,
                                  bool print_error_arg)
 {
-  internal::IO_CACHE *tempfile;
+  internal::io_cache_st *tempfile;
   int error= 0;
 
   session= session_arg;
@@ -105,7 +105,7 @@ int ReadRecord::init_read_record(Session *session_arg,
   ignore_not_found_rows= 0;
   table->status=0;			/* And it's always found */
 
-  if (select && my_b_inited(select->file))
+  if (select && select->file->inited())
   {
     tempfile= select->file;
   }
@@ -114,10 +114,9 @@ int ReadRecord::init_read_record(Session *session_arg,
     tempfile= table->sort.io_cache;
   }
 
-  if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used
+  if (tempfile && tempfile->inited()) // Test if ref-records was used
   {
-    read_record= (table->sort.addon_field ?
-                  rr_unpack_from_tempfile : rr_from_tempfile);
+    read_record= table->sort.addon_field ? rr_unpack_from_tempfile : rr_from_tempfile;
 
     io_cache=tempfile;
     io_cache->reinit_io_cache(internal::READ_CACHE,0L,0,0);
@@ -316,7 +315,7 @@ static int rr_from_tempfile(ReadRecord *info)
   int tmp;
   for (;;)
   {
-    if (my_b_read(info->io_cache,info->ref_pos,info->ref_length))
+    if (info->io_cache->read(info->ref_pos, info->ref_length))
       return -1;					/* End of cursor */
     if (!(tmp=info->cursor->rnd_pos(info->record,info->ref_pos)))
       break;
@@ -347,7 +346,7 @@ static int rr_from_tempfile(ReadRecord *info)
 */
 static int rr_unpack_from_tempfile(ReadRecord *info)
 {
-  if (my_b_read(info->io_cache, info->rec_buf, info->ref_length))
+  if (info->io_cache->read(info->rec_buf, info->ref_length))
     return -1;
   Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->rec_buf);
@@ -430,11 +429,9 @@ bool ReadRecord::init_rr_cache()
   }
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
-  if (cache_records <= 2 ||
-      !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
-  {
+  if (cache_records <= 2)
     return false;
-  }
+  cache= (unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1);
 #ifdef HAVE_VALGRIND
   // Avoid warnings in qsort
   memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
@@ -472,13 +469,13 @@ static int rr_from_cache(ReadRecord *info)
       return ((int) error);
     }
     length=info->rec_cache_size;
-    rest_of_file= info->io_cache->end_of_file - my_b_tell(info->io_cache);
+    rest_of_file= info->io_cache->end_of_file - info->io_cache->tell();
     if ((internal::my_off_t) length > rest_of_file)
     {
       length= (uint32_t) rest_of_file;
     }
 
-    if (!length || my_b_read(info->io_cache, info->getCache(), length))
+    if (!length || info->io_cache->read(info->getCache(), length))
     {
       return -1;			/* End of cursor */
     }

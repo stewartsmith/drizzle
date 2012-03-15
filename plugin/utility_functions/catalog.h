@@ -18,12 +18,10 @@
  */
 
 
-#ifndef PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
-#define PLUGIN_UTILITY_FUNCTIONS_CATALOG_H
+#pragma once
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/global_charset_info.h>
 
 namespace drizzled
 {
@@ -48,4 +46,3 @@ public:
 } /* namespace utility_functions */
 } /* namespace drizzled */
 
-#endif /* PLUGIN_UTILITY_FUNCTIONS_CATALOG_H */

@@ -21,16 +21,15 @@
 #include <config.h>
 #include <drizzled/definitions.h>
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
 #include <algorithm>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
-void my_hash_sort_bin(const CHARSET_INFO * const,
+void my_hash_sort_bin(const charset_info_st * const,
                       const unsigned char *key, size_t len,
                       uint32_t *nr1, uint32_t *nr2);
 
@@ -80,14 +79,7 @@ static unsigned char bin_char_array[] =
 };
 
 
-bool my_coll_init_8bit_bin(CHARSET_INFO *cs,
-                           cs_alloc_func)
-{
-  cs->max_sort_char=255;
-  return false;
-}
-
-int my_strnncoll_binary(const CHARSET_INFO * const,
+int my_strnncoll_binary(const charset_info_st * const,
                         const unsigned char *s, size_t slen,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
@@ -98,7 +90,7 @@ int my_strnncoll_binary(const CHARSET_INFO * const,
 }
 
 
-size_t my_lengthsp_binary(const CHARSET_INFO * const,
+size_t my_lengthsp_binary(const charset_info_st * const,
                           const char *, size_t length)
 {
   return length;
@@ -127,7 +119,7 @@ size_t my_lengthsp_binary(const CHARSET_INFO * const,
   > 0	s > t
 */
 
-int my_strnncollsp_binary(const CHARSET_INFO * const cs,
+int my_strnncollsp_binary(const charset_info_st * const cs,
                           const unsigned char *s, size_t slen,
                           const unsigned char *t, size_t tlen,
                           bool)
@@ -136,7 +128,7 @@ int my_strnncollsp_binary(const CHARSET_INFO * const cs,
 }
 
 
-int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
+int my_strnncoll_8bit_bin(const charset_info_st * const,
                           const unsigned char *s, size_t slen,
                           const unsigned char *t, size_t tlen,
                           bool t_is_prefix)
@@ -172,7 +164,7 @@ int my_strnncoll_8bit_bin(const CHARSET_INFO * const,
   > 0	s > t
 */
 
-int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
+int my_strnncollsp_8bit_bin(const charset_info_st * const,
                             const unsigned char *a, size_t a_length,
                             const unsigned char *b, size_t b_length,
                             bool diff_if_only_endspace_difference)
@@ -221,33 +213,33 @@ int my_strnncollsp_8bit_bin(const CHARSET_INFO * const,
 
 /* This function is used for all conversion functions */
 
-size_t my_case_str_bin(const CHARSET_INFO * const, char *)
+size_t my_case_str_bin(const charset_info_st * const, char *)
 {
   return 0;
 }
 
 
-size_t my_case_bin(const CHARSET_INFO * const, char *,
+size_t my_case_bin(const charset_info_st * const, char *,
                    size_t srclen, char *, size_t)
 {
   return srclen;
 }
 
 
-int my_strcasecmp_bin(const CHARSET_INFO * const,
+int my_strcasecmp_bin(const charset_info_st * const,
                       const char *s, const char *t)
 {
   return strcmp(s,t);
 }
 
 
-uint32_t my_mbcharlen_8bit(const CHARSET_INFO * const, uint32_t)
+uint32_t my_mbcharlen_8bit(const charset_info_st * const, uint32_t)
 {
   return 1;
 }
 
 
-int my_mb_wc_bin(const CHARSET_INFO * const,
+int my_mb_wc_bin(const charset_info_st * const,
                  my_wc_t *wc, const unsigned char *str,
                  const unsigned char *end)
 {
@@ -259,7 +251,7 @@ int my_mb_wc_bin(const CHARSET_INFO * const,
 }
 
 
-int my_wc_mb_bin(const CHARSET_INFO * const, my_wc_t wc,
+int my_wc_mb_bin(const charset_info_st * const, my_wc_t wc,
                  unsigned char *str, unsigned char *end)
 {
   if (str >= end)
@@ -274,7 +266,7 @@ int my_wc_mb_bin(const CHARSET_INFO * const, my_wc_t wc,
 }
 
 
-void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
+void my_hash_sort_8bit_bin(const charset_info_st * const,
                            const unsigned char *key, size_t len,
                            uint32_t *nr1, uint32_t *nr2)
 {
@@ -294,7 +286,7 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
 }
 
 
-void my_hash_sort_bin(const CHARSET_INFO * const,
+void my_hash_sort_bin(const charset_info_st * const,
                       const unsigned char *key, size_t len,
                       uint32_t *nr1, uint32_t *nr2)
 {
@@ -319,7 +311,7 @@ void my_hash_sort_bin(const CHARSET_INFO * const,
 #define INC_PTR(cs,A,B) (A)++
 
 
-int my_wildcmp_bin(const CHARSET_INFO * const cs,
+int my_wildcmp_bin(const charset_info_st * const cs,
                    const char *str,const char *str_end,
                    const char *wildstr,const char *wildend,
                    int escape, int w_one, int w_many)
@@ -333,7 +325,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
       if (*wildstr == escape && wildstr+1 != wildend)
 	wildstr++;
       if (str == str_end || likeconv(cs,*wildstr++) != likeconv(cs,*str++))
-	return(1);			/* No match */
+	return 1;			/* No match */
       if (wildstr == wildend)
 	return(str != str_end);		/* Match if both are at end */
       result=1;				/* Found an anchor char */
@@ -368,7 +360,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
 	break;				/* Not a wild character */
       }
       if (wildstr == wildend)
-	return(0);			/* match if w_many is last */
+	return 0;			/* match if w_many is last */
       if (str == str_end)
 	return(-1);
 
@@ -398,7 +390,7 @@ int my_wildcmp_bin(const CHARSET_INFO * const cs,
 
 
 size_t
-my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
+my_strnxfrm_8bit_bin(const charset_info_st * const cs,
                      unsigned char * dst, size_t dstlen, uint32_t nweights,
                      const unsigned char *src, size_t srclen, uint32_t flags)
 {
@@ -411,7 +403,7 @@ my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
 }
 
 
-uint32_t my_instr_bin(const CHARSET_INFO * const,
+uint32_t my_instr_bin(const charset_info_st * const,
                       const char *b, size_t b_length,
                       const char *s, size_t s_length,
                       my_match_t *match, uint32_t nmatch)
@@ -489,7 +481,6 @@ static MY_COLLATION_HANDLER my_collation_binary_handler =
 
 static MY_CHARSET_HANDLER my_charset_handler=
 {
-  NULL,			/* init */
   NULL,			/* ismbchar      */
   my_mbcharlen_8bit,	/* mbcharlen     */
   my_numchars_8bit,
@@ -519,7 +510,7 @@ static MY_CHARSET_HANDLER my_charset_handler=
 };
 
 
-DRIZZLED_API CHARSET_INFO my_charset_bin =
+DRIZZLED_API charset_info_st my_charset_bin =
 {
     63,0,0,			/* number        */
     MY_CS_COMPILED|MY_CS_BINSORT|MY_CS_PRIMARY,/* state */
@@ -546,7 +537,6 @@ DRIZZLED_API CHARSET_INFO my_charset_bin =
     0,				/* min_sort_char */
     255,			/* max_sort_char */
     0,                          /* pad char      */
-    0,                          /* escape_with_backslash_is_dangerous */
     1,                          /* levels_for_compare */
     1,                          /* levels_for_order   */
     &my_charset_handler,

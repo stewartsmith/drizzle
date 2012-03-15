@@ -19,13 +19,11 @@
 
 #include <drizzled/item/cache.h>
 
-#ifndef DRIZZLED_ITEM_CACHE_STR_H
-#define DRIZZLED_ITEM_CACHE_STR_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache_str: public Item_cache
+class Item_cache_str : public Item_cache
 {
   char buffer[STRING_BUFFER_USUAL_SIZE];
   String *value, value_buff;
@@ -39,10 +37,9 @@ public:
   String* val_str(String *) { assert(fixed == 1); return value; }
   type::Decimal *val_decimal(type::Decimal *);
   enum Item_result result_type() const { return STRING_RESULT; }
-  const CHARSET_INFO *charset() const { return value->charset(); };
+  const charset_info_st *charset() const { return value->charset(); };
   int save_in_field(Field *field, bool no_conversions);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CACHE_STR_H */

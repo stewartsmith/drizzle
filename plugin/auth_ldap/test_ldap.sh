@@ -43,7 +43,7 @@ datadir=$1
 ./drizzled/drizzled \
   --datadir=$datadir \
   --plugin-add=auth_ldap \
-  --auth-ldap-uri=ldap://127.0.0.1:12321/ \
+  --auth-ldap-uri=ldap://localhost:12321/ \
   --auth-ldap-bind-dn="cn=root,dc=drizzle,dc=org" \
   --auth-ldap-bind-password=testldap \
   --auth-ldap-base-dn="dc=drizzle,dc=org" \

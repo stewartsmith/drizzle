@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_INSERT_VALUE_H
-#define DRIZZLED_ITEM_INSERT_VALUE_H
+#pragma once
 
 #include <drizzled/item/field.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Item_insert_value -- an implementation of VALUES() function.
@@ -40,8 +38,7 @@ class Item_insert_value : public Item_field
 public: 
   Item *arg;
   Item_insert_value(Name_resolution_context *context_arg, Item *a)
-    :Item_field(context_arg, (const char *)NULL, (const char *)NULL,
-               (const char *)NULL),
+    : Item_field(context_arg, NULL, NULL, NULL),
      arg(a) {}
   bool eq(const Item *item, bool binary_cmp) const;
   bool fix_fields(Session *, Item **);
@@ -58,11 +55,9 @@ public:
 
   bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
   {
-    return arg->walk(processor, walk_subquery, args) ||
-            (this->*processor)(args);
+    return arg->walk(processor, walk_subquery, args) || (this->*processor)(args);
   }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_INSERT_VALUE_H */

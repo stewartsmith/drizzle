@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_MODULE_CONTEXT_H
-#define DRIZZLED_MODULE_CONTEXT_H
+#pragma once
 
 /**
  * @file Defines a Plugin Context
@@ -40,13 +39,7 @@
 #include <drizzled/visibility.h>
 
 namespace drizzled {
-
-class sys_var;
-
 namespace module {
-
-class Module;
-class option_map;
 
 class DRIZZLED_API Context : boost::noncopyable
 {
@@ -86,4 +79,3 @@ private:
 } /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MODULE_CONTEXT_H */

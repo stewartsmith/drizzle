@@ -1,0 +1,16 @@
+# mysql_migrate.varbinary_type
+# test the ENUM data type migration 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_varbinary_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test varbinary type
+eval SHOW CREATE TABLE $database.varbinary_table;
+eval SELECT * FROM $database.varbinary_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

@@ -21,16 +21,91 @@
 
 #include <drizzled/current_session.h>
 #include <drizzled/gettext.h>
-#include <drizzled/global_charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 #include <drizzled/table_function_container.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <vector>
 
-namespace drizzled
+namespace drizzled {
+
+static int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
 {
+  int flag;
+
+  while (*wildstr)
+  {
+    while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
+    {
+      if (*wildstr == internal::wild_prefix && wildstr[1])
+      {
+        wildstr++;
+      }
+
+      if (cs->toupper(*wildstr++) != cs->toupper(*str++))
+      {
+        return (1);
+      }
+    }
+
+    if (! *wildstr )
+      return (*str != 0);
+
+    if (*wildstr++ == internal::wild_one)
+    {
+      if (! *str++)
+      {
+        return (1);	/* One char; skip */
+      }
+    }
+    else
+    {						/* Found '*' */
+      if (! *wildstr)
+      {
+        return (0);		/* '*' as last char: OK */
+      }
+
+      flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
+      do
+      {
+        if (flag)
+        {
+          char cmp;
+          if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
+          {
+            cmp= wildstr[1];
+          }
+
+          cmp= cs->toupper(cmp);
+
+          while (*str && cs->toupper(*str) != cmp)
+          {
+            str++;
+          }
+
+          if (! *str)
+          {
+            return (1);
+          }
+        }
+
+        if (wild_case_compare(cs, str, wildstr) == 0)
+        {
+          return (0);
+        }
+
+      } while (*str++);
+
+      return (1);
+    }
+  }
+
+  return (*str != '\0');
+}
 
 static TableFunctionContainer table_functions;
 
@@ -41,12 +116,13 @@ void plugin::TableFunction::init()
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
   message::set_is_replicated(proto, false);
+  message::set_definer(proto, SYSTEM_USER);
 }
 
 bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
 {
   assert(tool != NULL);
-  table_functions.addFunction(tool); 
+  table_functions.addFunction(tool);
   return false;
 }
 
@@ -59,6 +135,16 @@ void plugin::TableFunction::getNames(const std::string &arg,
                                      std::set<std::string> &set_of_names)
 {
   table_functions.getNames(arg, set_of_names);
+}
+
+LEX& plugin::TableFunction::Generator::lex()
+{
+	return getSession().lex();
+}
+
+statement::Statement& plugin::TableFunction::Generator::statement()
+{
+	return *lex().statement;
 }
 
 plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
@@ -96,7 +182,7 @@ void plugin::TableFunction::add_field(const char *label,
   field_options->set_default_null(is_default_null);
   field_constraints->set_is_notnull(not is_default_null);
 
-  switch (type) 
+  switch (type)
   {
   case TableFunction::STRING:
     {
@@ -150,18 +236,10 @@ plugin::TableFunction::Generator::Generator(Field **arg) :
 
 bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
-  bool ret;
-  uint64_t difference;
-
   columns_iterator= columns;
-  ret= populate();
-  difference= columns_iterator - columns;
-
-  if (ret == true)
-  {
-    assert(difference == field_size);
-  }
-
+  bool ret= populate();
+  if (ret)
+    assert(columns_iterator == columns + field_size);
   return ret;
 }
 
@@ -183,11 +261,15 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 {
   assert(columns_iterator);
   assert(*columns_iterator);
-  assert(arg);
-  length= length ? length : strlen(arg);
+  if (arg and length == 0)
+  {
+    length= strlen(arg);
+  }
 
   if ((*columns_iterator)->char_length() < length)
+  {
     length= (*columns_iterator)->char_length();
+  }
 
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();
@@ -202,9 +284,9 @@ void plugin::TableFunction::Generator::push()
   columns_iterator++;
 }
 
-void plugin::TableFunction::Generator::push(const std::string& arg)
+void plugin::TableFunction::Generator::push(str_ref arg)
 {
-  push(arg.c_str(), arg.length());
+  push(arg.data(), arg.size());
 }
 
 void plugin::TableFunction::Generator::push(bool arg)
@@ -217,20 +299,12 @@ void plugin::TableFunction::Generator::push(bool arg)
   {
     (*columns_iterator)->store("NO", 2, scs);
   }
-
   columns_iterator++;
 }
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  if (not getSession().getLex()->wild)
-    return false;
-
-  bool match= wild_case_compare(system_charset_info,
-                                predicate.c_str(),
-                                getSession().getLex()->wild->ptr());
-
-  return match;
+  return lex().wild ? wild_case_compare(system_charset_info, predicate.c_str(), lex().wild->ptr()) : false;
 }
 
 } /* namespace drizzled */

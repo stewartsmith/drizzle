@@ -17,19 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_CACHE_ROW_H
-#define DRIZZLED_ITEM_CACHE_ROW_H
+#pragma once
 
 #include <drizzled/item/cache.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache;
-class Item;
-class SendField;
-
-class Item_cache_row: public Item_cache
+class Item_cache_row : public Item_cache
 {
   Item_cache  **values;
   uint32_t item_count;
@@ -43,13 +37,13 @@ public:
     'allocate' used only in row transformer, to preallocate space for row
     cache.
   */
-  bool allocate(uint32_t num);
+  void allocate(uint32_t num);
   /*
     'setup' is needed only by row => it not called by simple row subselect
     (only by IN subselect (in subselect optimizer))
   */
-  bool setup(Item *item);
-  void store(Item *item);
+  bool setup(Item*);
+  void store(Item*);
   void illegal_method_call(const char * method_name);
   void make_field(SendField *field);
   double val_real();
@@ -72,4 +66,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CACHE_ROW_H */

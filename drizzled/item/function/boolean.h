@@ -20,8 +20,7 @@
  */
 
 
-#ifndef DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
-#define DRIZZLED_ITEM_FUNCTION_BOOLEAN_H
+#pragma once
 
 #include <drizzled/function/math/int.h>
 
@@ -74,4 +73,3 @@ public:
 } /* namespace item */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_FUNCTION_BOOLEAN_H */

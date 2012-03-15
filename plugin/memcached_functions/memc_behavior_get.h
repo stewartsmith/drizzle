@@ -29,8 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_GET_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_GET_H
+#pragma once
 
 #include <drizzled/item/func.h>
 
@@ -253,4 +252,3 @@ private:
   std::map<uint64_t, const std::string> ketama_hash_settings_reverse_map;
 };
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_GET_H */

@@ -29,6 +29,6 @@ DROP TABLE t2;
 --echo
 --replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/g /end_timestamp: [0-9]+/END_TIMESTAMP/g/creation_timestamp: [0-9]+/CREATE_TIMESTAMP/ /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/ /transaction_id: [0-9]+/TRANSACTION_ID/ /$DRIZZLETEST_VARDIR/VARDIR/
 
---exec ../plugin/transaction_log/utilities/transaction_reader $DRIZZLETEST_VARDIR/master-data/local/transaction.log
+--exec $DRIZZLE_TRX_READER $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

@@ -23,6 +23,7 @@ The wait array used in synchronization primitives
 Created 9/5/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef sync0arr_h
 #define sync0arr_h
 

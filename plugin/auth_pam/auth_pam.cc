@@ -24,13 +24,13 @@
 
 #include <config.h>
 
+#include <drizzled/identifier.h>
+#include <drizzled/plugin/authentication.h>
+
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
-
-#include <drizzled/identifier.h>
-#include <drizzled/plugin/authentication.h>
 
 using namespace drizzled;
 
@@ -60,19 +60,16 @@ int auth_pam_talker(int num_msg,
 {
   auth_pam_userinfo *userinfo = (auth_pam_userinfo*)appdata_ptr;
   struct pam_response *response = 0;
-  int x;
 
   /* parameter sanity checking */
-  if(!resp || !msg || !userinfo)
+  if(not resp || not msg || not userinfo)
     return PAM_CONV_ERR;
 
   /* allocate memory to store response */
   response= (struct pam_response*)malloc(num_msg * sizeof(struct pam_response));
-  if(!response)
-    return PAM_CONV_ERR;
 
   /* copy values */
-  for(x= 0; x < num_msg; x++)
+  for(int x= 0; x < num_msg; x++)
   {
     /* initialize to safe values */
     response[x].resp_retcode= 0;
@@ -89,8 +86,7 @@ int auth_pam_talker(int num_msg,
       response[x].resp = strdup(userinfo->password);
       break;
     default:
-      if(response)
-        free(response);
+      free(response);
       return PAM_CONV_ERR;
     }
   }
@@ -147,10 +143,10 @@ DRIZZLE_DECLARE_PLUGIN
   "pam",
   "0.1",
   "Brian Aker",
-  "PAM based authenication.",
+  N_("Authenication against system user accounts using PAM"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

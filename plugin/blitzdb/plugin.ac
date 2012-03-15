@@ -1,8 +1,0 @@
-AC_LIB_HAVE_LINKFLAGS(tokyocabinet,,
-  [#include <tchdb.h>],
-  [
-     TCHDB hdb;
-  ])
-  AS_IF([test "x$ac_cv_libtokyocabinet" = "xno"],
-        AC_MSG_WARN([tokyocabinet not found: not building BlitzDB plugin.]))
-DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBTOKYOCABINET}"

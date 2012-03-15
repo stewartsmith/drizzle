@@ -26,38 +26,30 @@
 #include <drizzled/error.h>
 #include <drizzled/internal/m_string.h>
 
-namespace drizzled
-{
-namespace internal
-{
+namespace drizzled {
+namespace internal {
 
 int my_create_with_symlink(const char *linkname, const char *filename,
                            int createflags, int access_flags, myf MyFlags)
 {
-  int file;
-  int tmp_errno;
   /* Test if we should create a link */
-  int create_link;
-  char abs_linkname[FN_REFLEN];
+  bool create_link= false;
   char rp_buff[PATH_MAX];
 
   if (my_disable_symlinks)
   {
     /* Create only the file, not the link and file */
-    create_link= 0;
     if (linkname)
       filename= linkname;
   }
-  else
+  else if (linkname)
   {
-    if (linkname)
-    {
-      if (!realpath(linkname,rp_buff))
-        my_load_path(rp_buff, linkname, NULL);
-      rp_buff[FN_REFLEN-1]= '\0';
-      strcpy(abs_linkname,rp_buff);
-    }
-    create_link= (linkname && strcmp(abs_linkname,filename));
+    if (!realpath(linkname,rp_buff))
+      my_load_path(rp_buff, linkname, NULL);
+    rp_buff[FN_REFLEN-1]= '\0';
+    char abs_linkname[FN_REFLEN];
+    strcpy(abs_linkname, rp_buff);
+    create_link= strcmp(abs_linkname, filename);
   }
 
   if (!(MyFlags & MY_DELETE_OLD))
@@ -76,28 +68,26 @@ int my_create_with_symlink(const char *linkname, const char *filename,
     }
   }
 
-  if ((file=my_create(filename, createflags, access_flags, MyFlags)) >= 0)
+  int file= my_create(filename, createflags, access_flags, MyFlags);
+  if (file >= 0 && create_link)
   {
-    if (create_link)
+    /* Delete old link/file */
+    if (MyFlags & MY_DELETE_OLD)
+      my_delete(linkname, MYF(0));
+    /* Create link */
+    if (symlink(filename,linkname))
     {
-      /* Delete old link/file */
-      if (MyFlags & MY_DELETE_OLD)
-	my_delete(linkname, MYF(0));
-      /* Create link */
-      if (symlink(filename,linkname))
-      {
-	/* Fail, remove everything we have done */
-	tmp_errno=errno;
-	my_close(file,MYF(0));
-	my_delete(filename, MYF(0));
-	file= -1;
-	errno=tmp_errno;
-      }
-      else if (MyFlags & MY_SYNC_DIR)
-        my_sync_dir_by_file(linkname, MyFlags);
+      /* Fail, remove everything we have done */
+      int tmp_errno= errno;
+      my_close(file, MYF(0));
+      my_delete(filename, MYF(0));
+      file= -1;
+      errno= tmp_errno;
     }
+    else if (MyFlags & MY_SYNC_DIR)
+      my_sync_dir_by_file(linkname, MyFlags);
   }
-  return(file);
+  return file;
 }
 
 /*
@@ -157,12 +147,12 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     errno= EEXIST;
     if (MyFlags & MY_WME)
       my_error(EE_CANTCREATEFILE, MYF(0), tmp_name, EEXIST);
-    return(1);
+    return 1;
   }
 
   /* Create new symlink */
   if (symlink(tmp_name, to))
-    return(1);
+    return 1;
   else if (MyFlags & MY_SYNC_DIR)
     my_sync_dir_by_file(to, MyFlags);
 
@@ -177,7 +167,7 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     int save_errno=errno;
     my_delete(to, MyFlags);			/* Remove created symlink */
     errno=save_errno;
-    return(1);
+    return 1;
   }
 
   /* Remove original symlink */

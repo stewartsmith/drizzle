@@ -19,18 +19,16 @@
  */
 
 #include <config.h>
-#include <drizzled/session.h>
 #include <drizzled/join_table.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/optimizer/access_method/system.h>
+#include <drizzled/table.h>
 
 using namespace drizzled;
 
-bool optimizer::System::getStats(Table *table,
-                                 JoinTable *join_tab)
+void optimizer::System::getStats(Table& table, JoinTable& join_tab)
 {
-  table->status= STATUS_NO_RECORD;
-  join_tab->read_first_record= reinterpret_cast<Read_record_func>(join_tab->joinReadSystem());
-  join_tab->read_record.read_record= join_no_more_records;
-  return false;
+  table.status= STATUS_NO_RECORD;
+  join_tab.read_first_record= join_read_system;
+  join_tab.read_record.read_record= join_no_more_records;
 }

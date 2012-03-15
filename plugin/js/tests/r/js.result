@@ -1,0 +1,35 @@
+SELECT JS("var foo = 'Hello'; foo + ', World';");
+JS("var foo = 'Hello'; foo + ', World';")
+Hello, World
+SELECT JS("var foo = 'Hello'; foo + ', ' + arguments[0];", "World");
+JS("var foo = 'Hello'; foo + ', ' + arguments[0];", "World")
+Hello, World
+SELECT JS("var foo = 'Hello'; foo + ', ' + bar;", "World" AS 'bar');
+JS("var foo = 'Hello'; foo + ', ' + bar;", "World" AS 'bar')
+Hello, World
+CREATE TABLE jstest (id INT PRIMARY KEY auto_increment, i INT, d DOUBLE, t TIMESTAMP, dt DATETIME);
+INSERT INTO jstest VALUES (1, -5, 7.5, '2001-02-16 20:38:40', '2011-09-24 22:26:31');
+SELECT JS("arguments[0] + 1", i) FROM jstest WHERE id=1;
+JS("arguments[0] + 1", i)
+-4
+SELECT JS("arguments[0] + 1.1", d) FROM jstest WHERE id=1;
+JS("arguments[0] + 1.1", d)
+8.6
+SELECT JS("var d = arguments[0]; d.getUTCFullYear() + ' - ' + d.getUTCHours() + ' - ' +  + d.getUTCSeconds();", t) FROM jstest WHERE id=1;
+JS("var d = arguments[0]; d.getUTCFullYear() + ' - ' + d.getUTCHours() + ' - ' +  + d.getUTCSeconds();", t)
+2001 - 20 - 40
+SELECT JS("var d = arguments[0]; d.getUTCDate() + ' - ' + d.getUTCHours() + ' - ' + d.getUTCMinutes();", dt) FROM jstest WHERE id=1;
+JS("var d = arguments[0]; d.getUTCDate() + ' - ' + d.getUTCHours() + ' - ' + d.getUTCMinutes();", dt)
+24 - 22 - 26
+SELECT JS("var num = arguments[0] + arguments[1]; arguments[2] + num;", i, d, "The sum is: ") FROM jstest WHERE id=1;
+JS("var num = arguments[0] + arguments[1]; arguments[2] + num;", i, d, "The sum is: ")
+The sum is: 2.5
+SELECT JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"]["firstname"]);', '{ "name" : {"firstname" : "Henrik", "lastname" : "Ingo"} }');
+JS('var jsondoc = JSON.parse(arguments[0]); JSON.stringify(jsondoc["name"]["firstname"]);', '{ "name" : {"firstname" : "Henrik", "lastname" : "Ingo"} }')
+"Henrik"
+DROP TABLE jstest;
+SELECT JS("this is not javascript");
+ERROR HY000: Script error: At line 1: SyntaxError: Unexpected identifier (Do SHOW ERRORS for more information.)
+SELECT JS("var foo = 'Another'; foo + ' thread';");
+JS("var foo = 'Another'; foo + ' thread';")
+Another thread

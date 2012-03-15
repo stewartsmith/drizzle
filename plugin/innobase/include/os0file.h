@@ -32,6 +32,7 @@ The interface to the operating system file io
 Created 10/21/1995 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef os0file_h
 #define os0file_h
 
@@ -100,7 +101,7 @@ whole block gets written. This should be true even in most cases of a crash:
 if this fails for a log block, then it is equivalent to a media failure in the
 log. */
 
-#define OS_FILE_LOG_BLOCK_SIZE		512
+#define OS_FILE_LOG_BLOCK_SIZE		srv_log_block_size
 
 /** Options for file_create @{ */
 #define	OS_FILE_OPEN			51
@@ -188,6 +189,8 @@ log. */
 extern ulint	os_n_file_reads;
 extern ulint	os_n_file_writes;
 extern ulint	os_n_fsyncs;
+
+extern uint32_t srv_log_block_size;
 
 #ifdef UNIV_PFS_IO
 /* Keys to register InnoDB I/O with performance schema */

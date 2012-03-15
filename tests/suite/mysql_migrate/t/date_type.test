@@ -1,0 +1,16 @@
+# mysql_migrate.basic
+# simple test to ensure that we can get data from a MySQL
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_date_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test date type
+eval SHOW CREATE TABLE $database.date_table;
+eval SELECT * FROM $database.date_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

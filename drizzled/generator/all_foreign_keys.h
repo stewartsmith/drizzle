@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H
-#define DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H
+#pragma once
 
 namespace drizzled {
 namespace generator {
@@ -50,8 +49,7 @@ public:
       do {
         if (foreign_keys_iterator != table_message.fk_constraint_size())
         {
-          const message::Table::ForeignKeyConstraint &fk_constraint(table_message.fk_constraint(foreign_keys_iterator++));
-          return &fk_constraint;
+          return &table_message.fk_constraint(foreign_keys_iterator++);
         }
 
       } while ((table_ptr= all_tables_generator) && table_setup());
@@ -72,12 +70,10 @@ public:
       } while ((table_ptr= all_tables_generator) && table_setup());
     }
 
-    ForeignKeyConstraintPair null_pair;
-    return null_pair;
+    return ForeignKeyConstraintPair();
   }
 };
 
 } /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_GENERATOR_ALL_FOREIGN_KEYS_H */

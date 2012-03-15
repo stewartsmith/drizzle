@@ -28,11 +28,9 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_H
-#define PLUGIN_LOGGING_STATS_SCOREBOARD_H
+#pragma once
 
 #include "scoreboard_slot.h"
-#include <drizzled/session.h>
 #include <boost/thread/shared_mutex.hpp>
 
 #include <vector>
@@ -64,19 +62,19 @@ public:
    */
   ScoreboardSlot* findOurScoreboardSlot(drizzled::Session *session);
 
-  uint32_t getBucketNumber(drizzled::Session *session);
+  uint32_t getBucketNumber(drizzled::Session*) const;
 
-  uint32_t getNumberBuckets()
+  uint32_t getNumberBuckets() const
   {
     return number_buckets;
   }
 
-  uint32_t getNumberPerBucket()
+  uint32_t getNumberPerBucket() const
   {
     return number_per_bucket;
   }
 
-  uint64_t getScoreboardSizeBytes()
+  uint64_t getScoreboardSizeBytes() const
   {
     return scoreboard_size_bytes;
   } 
@@ -96,10 +94,9 @@ private:
   uint32_t number_per_bucket;
   uint32_t number_buckets;
   uint64_t scoreboard_size_bytes;
-  std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
-  std::vector<boost::shared_mutex* > vector_of_scoreboard_locks;
+  std::vector<std::vector<ScoreboardSlot*>*> vector_of_scoreboard_vectors;
+  std::vector<boost::shared_mutex*> vector_of_scoreboard_locks;
 
   ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session); 
 };
 
-#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_H */

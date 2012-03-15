@@ -18,37 +18,15 @@
  */
 
 #include <config.h>
-
-#include <drizzled/identifier.h>
+#include <boost/make_shared.hpp>
 #include <drizzled/identifier/user.h>
 
-namespace drizzled
-{
-namespace identifier
-{
+namespace drizzled {
+namespace identifier {
 
-User::shared_ptr User::make_shared()
+user::mptr User::make_shared()
 {
-  return shared_ptr(new User);
-}
-
-void User::getSQLPath(std::string &arg) const
-{
-  if (_user.empty())
-  {
-    arg+= "<no user>";
-  }
-  else
-  {
-    arg+= _user;
-  }
-  // We should fix the below, to do so we need to match on localhost when we
-  // create the object.
-#if 0
-  arg+= "@";
-  arg+= _address;
-#endif
-
+  return boost::make_shared<User>();
 }
 
 } /* namespace identifier */

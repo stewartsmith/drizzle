@@ -43,7 +43,7 @@ namespace drizzled
 
 int Field_datetime::store(const char *from,
                           uint32_t len,
-                          const CHARSET_INFO * const )
+                          const charset_info_st * const )
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 
@@ -286,12 +286,6 @@ void Field_datetime::sort_string(unsigned char *to,uint32_t )
     to[6] = ptr[1];
     to[7] = ptr[0];
   }
-}
-
-
-void Field_datetime::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("datetime"));
 }
 
 } /* namespace drizzled */

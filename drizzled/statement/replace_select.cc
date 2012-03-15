@@ -24,21 +24,19 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
 #include <drizzled/select_insert.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/open_tables_state.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 bool statement::ReplaceSelect::execute()
 {
-  TableList *first_table= (TableList *) getSession()->getLex()->select_lex.table_list.first;
-  TableList *all_tables= getSession()->getLex()->query_tables;
+  TableList *first_table= (TableList *) lex().select_lex.table_list.first;
+  TableList *all_tables= lex().query_tables;
   assert(first_table == all_tables && first_table != 0);
-  Select_Lex *select_lex= &getSession()->getLex()->select_lex;
-  Select_Lex_Unit *unit= &getSession()->getLex()->unit;
-  select_result *sel_result= NULL;
-  bool res;
+  Select_Lex *select_lex= &lex().select_lex;
 
-  if (insert_precheck(getSession(), all_tables))
+  if (insert_precheck(&session(), all_tables))
   {
     return true;
   }
@@ -46,48 +44,38 @@ bool statement::ReplaceSelect::execute()
   /* Don't unlock tables until command is written to binary log */
   select_lex->options|= SELECT_NO_UNLOCK;
 
-  unit->set_limit(select_lex);
+  lex().unit.set_limit(select_lex);
 
-  if (getSession()->wait_if_global_read_lock(false, true))
+  if (session().wait_if_global_read_lock(false, true))
   {
     return true;
   }
 
-  if (! (res= getSession()->openTablesLock(all_tables)))
+  bool res;
+  if (! (res= session().openTablesLock(all_tables)))
   {
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
-    select_lex->context.table_list=
-      select_lex->context.first_name_resolution_table= second_table;
-    res= insert_select_prepare(getSession());
-    if (! res && (sel_result= new select_insert(first_table,
-                                                first_table->table,
-                                                &getSession()->getLex()->field_list,
-                                                &getSession()->getLex()->update_list,
-                                                &getSession()->getLex()->value_list,
-                                                getSession()->getLex()->duplicates,
-                                                getSession()->getLex()->ignore)))
+    select_lex->context.table_list= select_lex->context.first_name_resolution_table= second_table;
+    res= insert_select_prepare(&session());
+    if (not res)
     {
-      res= handle_select(getSession(),
-                         getSession()->getLex(),
-                         sel_result,
-                         OPTION_SETUP_TABLES_DONE);
+      select_insert sel_result(first_table, first_table->table, &lex().field_list, &lex().update_list,&lex().value_list, lex().duplicates, lex().ignore);
+      res= handle_select(&session(), &lex(), &sel_result, OPTION_SETUP_TABLES_DONE);
       /*
          Invalidate the table in the query cache if something changed
          after unlocking when changes become visible.
          TODO: this is a workaround. right way will be move invalidating in
          the unlock procedure.
        */
-      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT &&
-          getSession()->lock)
+      if (first_table->lock_type == TL_WRITE_CONCURRENT_INSERT && session().open_tables.lock)
       {
         /* INSERT ... SELECT should invalidate only the very first table */
         TableList *save_table= first_table->next_local;
         first_table->next_local= 0;
         first_table->next_local= save_table;
       }
-      delete sel_result;
     }
     /* revert changes for SP */
     select_lex->table_list.first= (unsigned char*) first_table;
@@ -97,7 +85,7 @@ bool statement::ReplaceSelect::execute()
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
-  getSession()->startWaitingGlobalReadLock();
+  session().startWaitingGlobalReadLock();
 
   return res;
 }

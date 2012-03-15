@@ -31,8 +31,7 @@
  *
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
+#pragma once
 
 #include <string>
 #include <drizzled/function/str/strfunc.h>
@@ -76,4 +75,3 @@ public:
 
 };
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H */

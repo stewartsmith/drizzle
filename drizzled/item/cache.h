@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_CACHE_H
-#define DRIZZLED_ITEM_CACHE_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
 #include <drizzled/item/field.h>
@@ -26,10 +25,9 @@
 #include <drizzled/type/decimal.h>
 #include <drizzled/util/test.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_cache: public Item_basic_constant
+class Item_cache : public Item_basic_constant
 {
 protected:
   Item *example;
@@ -58,8 +56,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint32_t)
-  { return 0; }
+  virtual void allocate(uint32_t) {};
   virtual bool setup(Item *item)
   {
     example= item;
@@ -91,4 +88,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_CACHE_H */

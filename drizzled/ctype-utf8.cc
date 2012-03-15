@@ -21,7 +21,7 @@
 #include <config.h>
 
 #include <drizzled/internal/m_string.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <errno.h>
 
 #include <algorithm>
@@ -42,7 +42,7 @@ using namespace std;
 namespace drizzled
 {
 
-void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
+void my_hash_sort_utf8mb4(const charset_info_st* cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2);
 
@@ -1725,7 +1725,7 @@ MY_UNICASE_INFO *my_unicase_turkish[256]=
     @retval  1 if matched with wildcard.
 */
 
-int my_wildcmp_unicode(const CHARSET_INFO * const cs,
+int my_wildcmp_unicode(const charset_info_st* cs,
 		       const char *str,const char *str_end,
 		       const char *wildstr,const char *wildend,
 		       int escape, int w_one, int w_many,
@@ -1868,26 +1868,22 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
           return -1;
 
         str+= scan;
-        result= my_wildcmp_unicode(cs, str, str_end, wildstr, wildend,
-                                   escape, w_one, w_many,
-                                   weights);
+        result= my_wildcmp_unicode(cs, str, str_end, wildstr, wildend, escape, w_one, w_many, weights);
         if (result <= 0)
           return result;
       }
     }
   }
-  return (str != str_end ? 1 : 0);
+  return str != str_end;
 }
 
 
-int make_escape_code(const CHARSET_INFO * const cs, const char *escape)
+int make_escape_code(const charset_info_st* cs, const char *escape)
 {
   my_charset_conv_mb_wc mb_wc= cs->cset->mb_wc;
   my_wc_t escape_wc;
-  int rc= mb_wc(cs, &escape_wc,
-                (const unsigned char*) escape,
-                (const unsigned char*) escape + strlen(escape));
-  return (int)(rc > 0 ? escape_wc : '\\');
+  int rc= mb_wc(cs, &escape_wc, (const unsigned char*) escape, (const unsigned char*) escape + strlen(escape));
+  return rc > 0 ? escape_wc : '\\';
 }
 
 /*
@@ -1971,16 +1967,12 @@ bincmp_utf8mb4(const unsigned char *s, const unsigned char *se,
 }
 
 
-int
-my_mb_wc_utf8mb4(const CHARSET_INFO * const,
-                 my_wc_t * pwc, const unsigned char *s, const unsigned char *e)
+static int my_mb_wc_utf8mb4(const charset_info_st*, my_wc_t * pwc, const unsigned char *s, const unsigned char *e)
 {
-  unsigned char c;
-
   if (s >= e)
     return MY_CS_TOOSMALL;
 
-  c= s[0];
+  unsigned char c= s[0];
   if (c < 0x80)
   {
     *pwc= c;
@@ -2038,7 +2030,7 @@ my_mb_wc_utf8mb4(const CHARSET_INFO * const,
   for example, for a null-terminated string
 */
 static int
-my_mb_wc_utf8mb4_no_range(const CHARSET_INFO * const,
+my_mb_wc_utf8mb4_no_range(const charset_info_st*,
                           my_wc_t *pwc, const unsigned char *s)
 {
   unsigned char c;
@@ -2091,9 +2083,7 @@ my_mb_wc_utf8mb4_no_range(const CHARSET_INFO * const,
 }
 
 
-int
-my_wc_mb_utf8mb4(const CHARSET_INFO * const,
-                 my_wc_t wc, unsigned char *r, unsigned char *e)
+static int my_wc_mb_utf8mb4(const charset_info_st*, my_wc_t wc, unsigned char *r, unsigned char *e)
 {
   int count;
 
@@ -2111,9 +2101,10 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const,
   else return MY_CS_ILUNI;
 
   if (r + count > e)
-    return my_cs_toosmalln(count);
+    return -100 - count;
 
-  switch (count) {
+  switch (count) 
+  {
     /* Fall through all cases!!! */
     case 4: r[3] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x10000;
     case 3: r[2] = (unsigned char) (0x80 | (wc & 0x3f)); wc = wc >> 6; wc |= 0x800;
@@ -2128,7 +2119,7 @@ my_wc_mb_utf8mb4(const CHARSET_INFO * const,
   The same as above, but without range check.
 */
 static int
-my_wc_mb_utf8mb4_no_range(const CHARSET_INFO * const,
+my_wc_mb_utf8mb4_no_range(const charset_info_st*,
                           my_wc_t wc, unsigned char *r)
 {
   int count;
@@ -2193,9 +2184,7 @@ my_tosort_utf8mb4(MY_UNICASE_INFO **uni_plane, my_wc_t *wc)
 }
 
 
-size_t
-my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
-                  char *dst, size_t dstlen)
+static size_t my_caseup_utf8mb4(const charset_info_st* cs, char *src, size_t srclen, char *dst, size_t dstlen)
 {
   my_wc_t wc;
   int srcres, dstres;
@@ -2225,7 +2214,7 @@ my_hash_add(uint32_t *n1, uint32_t *n2, uint32_t ch)
 }
 
 
-void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
+void my_hash_sort_utf8mb4(const charset_info_st* cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2)
 {
@@ -2262,8 +2251,7 @@ void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
 }
 
 
-size_t
-my_caseup_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
+static size_t my_caseup_str_utf8mb4(const charset_info_st* cs, char *src)
 {
   my_wc_t wc;
   int srcres, dstres;
@@ -2285,10 +2273,7 @@ my_caseup_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
 }
 
 
-size_t
-my_casedn_utf8mb4(const CHARSET_INFO * const cs,
-                  char *src, size_t srclen,
-                  char *dst, size_t dstlen)
+static size_t my_casedn_utf8mb4(const charset_info_st* cs, char *src, size_t srclen, char *dst, size_t dstlen)
 {
   my_wc_t wc;
   int srcres, dstres;
@@ -2310,8 +2295,7 @@ my_casedn_utf8mb4(const CHARSET_INFO * const cs,
 }
 
 
-size_t
-my_casedn_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
+static size_t my_casedn_str_utf8mb4(const charset_info_st* cs, char *src)
 {
   my_wc_t wc;
   int srcres, dstres;
@@ -2349,8 +2333,7 @@ my_casedn_str_utf8mb4(const CHARSET_INFO * const cs, char *src)
 }
 
 
-int
-my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
+static int my_strnncoll_utf8mb4(const charset_info_st* cs,
                      const unsigned char *s, size_t slen,
                      const unsigned char *t, size_t tlen,
                      bool t_is_prefix)
@@ -2414,8 +2397,7 @@ my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
     @retval Positive number, if a > b
 */
 
-int
-my_strnncollsp_utf8mb4(const CHARSET_INFO * const cs,
+static int my_strnncollsp_utf8mb4(const charset_info_st* cs,
                        const unsigned char *s, size_t slen,
                        const unsigned char *t, size_t tlen,
                        bool diff_if_only_endspace_difference)
@@ -2503,8 +2485,7 @@ my_strnncollsp_utf8mb4(const CHARSET_INFO * const cs,
     @retval 0 is the strings are equal
 */
 
-int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
-                          const char *s, const char *t)
+static int my_strcasecmp_utf8mb4(const charset_info_st* cs, const char *s, const char *t)
 {
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
   while (s[0] && t[0])
@@ -2563,27 +2544,23 @@ int my_strcasecmp_utf8mb4(const CHARSET_INFO * const cs,
 }
 
 
-int
-my_wildcmp_utf8mb4(const CHARSET_INFO * const cs,
+static int my_wildcmp_utf8mb4(const charset_info_st* cs,
                    const char *str, const char *strend,
                    const char *wildstr, const char *wildend,
                    int escape, int w_one, int w_many)
 {
-  return my_wildcmp_unicode(cs, str, strend, wildstr, wildend,
-                            escape, w_one, w_many, cs->caseinfo);
+  return my_wildcmp_unicode(cs, str, strend, wildstr, wildend, escape, w_one, w_many, cs->caseinfo);
 }
 
 
-size_t
-my_strnxfrmlen_utf8mb4(const CHARSET_INFO * const, size_t len)
+static size_t my_strnxfrmlen_utf8mb4(const charset_info_st*, size_t len)
 {
   /* TODO: fix when working on WL "Unicode new version" */
   return (len * 2 + 2) / 4;
 }
 
 
-size_t
-my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
+static size_t my_strnxfrm_utf8mb4(const charset_info_st* cs,
                     unsigned char *dst, size_t dstlen, uint32_t nweights,
                     const unsigned char *src, size_t srclen, uint32_t flags)
 {
@@ -2627,8 +2604,7 @@ my_strnxfrm_utf8mb4(const CHARSET_INFO * const cs,
 }
 
 
-unsigned int my_ismbchar_utf8mb4(const CHARSET_INFO * const cs,
-                                 const char *b, const char *e)
+static unsigned int my_ismbchar_utf8mb4(const charset_info_st* cs, const char *b, const char *e)
 {
   my_wc_t wc;
   int res= my_mb_wc_utf8mb4(cs,&wc, (const unsigned char*)b, (const unsigned char*)e);
@@ -2636,7 +2612,7 @@ unsigned int my_ismbchar_utf8mb4(const CHARSET_INFO * const cs,
 }
 
 
-unsigned int my_mbcharlen_utf8mb4(const CHARSET_INFO * const, uint32_t c)
+static unsigned int my_mbcharlen_utf8mb4(const charset_info_st*, uint32_t c)
 {
   if (c < 0x80)
     return 1;
@@ -2686,7 +2662,6 @@ static MY_COLLATION_HANDLER my_collation_utf8mb4_bin_handler =
 
 MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
 {
-  NULL,               /* init */
   my_ismbchar_utf8mb4,
   my_mbcharlen_utf8mb4,
   my_numchars_mb,
@@ -2717,7 +2692,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
 
 
 
-DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_general_ci=
+DRIZZLED_API charset_info_st my_charset_utf8mb4_general_ci=
 {
   45,0,0,              /* number       */
   MY_CS_COMPILED|MY_CS_PRIMARY|MY_CS_STRNXFRM|MY_CS_UNICODE,  /* state  */
@@ -2744,7 +2719,6 @@ DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_general_ci=
   0,                  /* min_sort_char */
   0xFFFF,             /* max_sort_char */
   ' ',                /* pad char      */
-  0,                  /* escape_with_backslash_is_dangerous */
   1,                  /* levels_for_compare */
   1,                  /* levels_for_order   */
   &my_charset_utf8mb4_handler,
@@ -2752,7 +2726,7 @@ DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_general_ci=
 };
 
 
-DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_bin=
+DRIZZLED_API charset_info_st my_charset_utf8mb4_bin=
 {
   46,0,0,             /* number       */
   MY_CS_COMPILED|MY_CS_BINSORT|MY_CS_UNICODE, /* state  */
@@ -2779,7 +2753,6 @@ DRIZZLED_API CHARSET_INFO my_charset_utf8mb4_bin=
   0,                  /* min_sort_char */
   0xFFFF,             /* max_sort_char */
   ' ',                /* pad char      */
-  0,                  /* escape_with_backslash_is_dangerous */
   1,                  /* levels_for_compare */
   1,                  /* levels_for_order   */
   &my_charset_utf8mb4_handler,
@@ -2826,7 +2799,7 @@ All other characters are encoded using five bytes:
 #ifdef MY_TEST_UTF8
 #include <stdio.h>
 
-static void test_mb(CHARSET_INFO *cs, unsigned char *s)
+static void test_mb(charset_info_st *cs, unsigned char *s)
 {
   while(*s)
   {
@@ -2851,7 +2824,7 @@ static void test_mb(CHARSET_INFO *cs, unsigned char *s)
 int main()
 {
   char str[1024]=" utf8 test проба ПЕРА по-РУССКИ";
-  CHARSET_INFO *cs;
+  charset_info_st *cs;
 
   test_mb(cs,(unsigned char*)str);
 

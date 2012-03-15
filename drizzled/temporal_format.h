@@ -28,19 +28,16 @@
  * Defines the API for matching datetime formats.
  */
 
-#ifndef DRIZZLED_TEMPORAL_FORMAT_H
-#define DRIZZLED_TEMPORAL_FORMAT_H
+#pragma once
+
+#include <drizzled/common_fwd.h>
 
 #include PCRE_HEADER
 
 /* Output vector size for pcre matching.  Should be multiple of 3. */
 #define OUT_VECTOR_SIZE 30
 
-namespace drizzled
-{
-
-/* Forward declaration needed */
-class Temporal;
+namespace drizzled {
 
 class TemporalFormat
 {
@@ -66,6 +63,9 @@ public:
    * @param Pattern to use in matching
    */
   TemporalFormat(const char *pattern);
+
+  ~TemporalFormat();
+
   /**
    * Returns whether the instance is compiled
    * and contains a valid regular expression.
@@ -150,4 +150,3 @@ void deinit_temporal_formats();
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_TEMPORAL_FORMAT_H */

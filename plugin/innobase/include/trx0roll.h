@@ -23,6 +23,7 @@ Transaction rollback
 Created 3/26/1996 Heikki Tuuri
 *******************************************************/
 
+#pragma once
 #ifndef trx0roll_h
 #define trx0roll_h
 

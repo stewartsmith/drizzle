@@ -31,6 +31,7 @@
 #include <drizzled/join.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/select_result.h>
+#include <drizzled/sql_lex.h>
 
 #include <cstdio>
 #include <string>
@@ -79,7 +80,7 @@ void optimizer::ExplainPlan::printPlan()
   Session *session= join->session;
   select_result *result= join->result;
   Item *item_null= new Item_null();
-  const CHARSET_INFO * const cs= system_charset_info;
+  const charset_info_st * const cs= system_charset_info;
   int quick_type;
   /* Don't log this into the slow query log */
   session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -91,18 +92,15 @@ void optimizer::ExplainPlan::printPlan()
    */
   if (message)
   {
-    item_list.push_back(new Item_int((int32_t)
-                        join->select_lex->select_number));
-    item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
-                                        select_type_str[join->select_lex->type].length(),
-                                        cs));
+    item_list.push_back(new Item_int((int32_t)join->select_lex->select_number));
+    item_list.push_back(new Item_string(select_type_str[join->select_lex->type], cs));
     for (uint32_t i= 0; i < 7; i++)
       item_list.push_back(item_null);
 
-    if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
+    if (join->session->lex().describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
 
-    item_list.push_back(new Item_string(message,strlen(message),cs));
+    item_list.push_back(new Item_string(str_ref(message), cs));
     if (result->send_data(item_list))
       join->error= 1;
   }
@@ -120,9 +118,7 @@ void optimizer::ExplainPlan::printPlan()
     /* id */
     item_list.push_back(new Item_null);
     /* select_type */
-    item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
-                                        select_type_str[join->select_lex->type].length(),
-                                        cs));
+    item_list.push_back(new Item_string(select_type_str[join->select_lex->type], cs));
     /* table */
     {
       Select_Lex *sl= join->unit->first_select();
@@ -147,9 +143,7 @@ void optimizer::ExplainPlan::printPlan()
       item_list.push_back(new Item_string(table_name_buffer, len, cs));
     }
     /* type */
-    item_list.push_back(new Item_string(access_method_str[AM_ALL].c_str(),
-                                        access_method_str[AM_ALL].length(),
-                                        cs));
+    item_list.push_back(new Item_string(access_method_str[AM_ALL], cs));
     /* possible_keys */
     item_list.push_back(item_null);
     /* key*/
@@ -159,17 +153,15 @@ void optimizer::ExplainPlan::printPlan()
     /* ref */
     item_list.push_back(item_null);
     /* in_rows */
-    if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
+    if (join->session->lex().describe & DESCRIBE_EXTENDED)
       item_list.push_back(item_null);
     /* rows */
     item_list.push_back(item_null);
     /* extra */
     if (join->unit->global_parameters->order_list.first)
-      item_list.push_back(new Item_string("Using filesort",
-                                          14, 
-                                          cs));
+      item_list.push_back(new Item_string(str_ref("Using filesort"), cs));
     else
-      item_list.push_back(new Item_string("", 0, cs));
+      item_list.push_back(new Item_string(str_ref(""), cs));
 
     if (result->send_data(item_list))
       join->error= 1;
@@ -191,12 +183,9 @@ void optimizer::ExplainPlan::printPlan()
       quick_type= -1;
       item_list.clear();
       /* id */
-      item_list.push_back(new Item_uint((uint32_t)
-            join->select_lex->select_number));
+      item_list.push_back(new Item_uint((uint32_t)join->select_lex->select_number));
       /* select_type */
-      item_list.push_back(new Item_string(select_type_str[join->select_lex->type].c_str(),
-                                          select_type_str[join->select_lex->type].length(),
-                                          cs));
+      item_list.push_back(new Item_string(select_type_str[join->select_lex->type], cs));
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
         quick_type= tab->select->quick->get_type();
@@ -220,14 +209,10 @@ void optimizer::ExplainPlan::printPlan()
       else
       {
         TableList *real_table= table->pos_in_table_list;
-        item_list.push_back(new Item_string(real_table->alias,
-                                            strlen(real_table->alias),
-                                            cs));
+        item_list.push_back(new Item_string(str_ref(real_table->alias), cs));
       }
       /* "type" column */
-      item_list.push_back(new Item_string(access_method_str[tab->type].c_str(),
-                                          access_method_str[tab->type].length(),
-                                          cs));
+      item_list.push_back(new Item_string(access_method_str[tab->type], cs));
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
       {
@@ -243,7 +228,7 @@ void optimizer::ExplainPlan::printPlan()
         }
       }
       if (tmp1.length())
-        item_list.push_back(new Item_string(tmp1.c_str(),tmp1.length(),cs));
+        item_list.push_back(new Item_string(tmp1, cs));
       else
         item_list.push_back(item_null);
 
@@ -251,14 +236,9 @@ void optimizer::ExplainPlan::printPlan()
       if (tab->ref.key_parts)
       {
         KeyInfo *key_info= table->key_info+ tab->ref.key;
-        item_list.push_back(new Item_string(key_info->name,
-                                            strlen(key_info->name),
-                                            system_charset_info));
-        uint32_t length= internal::int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
-                                     keylen_str_buf;
-        item_list.push_back(new Item_string(keylen_str_buf, 
-                                            length,
-                                            system_charset_info));
+        item_list.push_back(new Item_string(str_ref(key_info->name), system_charset_info));
+        uint32_t length= internal::int64_t2str(tab->ref.key_length, keylen_str_buf, 10) - keylen_str_buf;
+        item_list.push_back(new Item_string(keylen_str_buf, length, system_charset_info));
         for (StoredKey **ref= tab->ref.key_copy; *ref; ref++)
         {
           if (tmp2.length())
@@ -266,25 +246,21 @@ void optimizer::ExplainPlan::printPlan()
           tmp2.append((*ref)->name(),
                       strlen((*ref)->name()));
         }
-        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
+        item_list.push_back(new Item_string(tmp2, cs));
       }
       else if (tab->type == AM_NEXT)
       {
         KeyInfo *key_info=table->key_info+ tab->index;
-        item_list.push_back(new Item_string(key_info->name,
-              strlen(key_info->name),cs));
-        uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) -
-                                     keylen_str_buf;
-        item_list.push_back(new Item_string(keylen_str_buf,
-                                            length,
-                                            system_charset_info));
+        item_list.push_back(new Item_string(str_ref(key_info->name),cs));
+        uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) - keylen_str_buf;
+        item_list.push_back(new Item_string(keylen_str_buf, length, system_charset_info));
         item_list.push_back(item_null);
       }
       else if (tab->select && tab->select->quick)
       {
         tab->select->quick->add_keys_and_lengths(&tmp2, &tmp3);
-        item_list.push_back(new Item_string(tmp2.c_str(),tmp2.length(),cs));
-        item_list.push_back(new Item_string(tmp3.c_str(),tmp3.length(),cs));
+        item_list.push_back(new Item_string(tmp2, cs));
+        item_list.push_back(new Item_string(tmp3, cs));
         item_list.push_back(item_null);
       }
       else
@@ -314,7 +290,7 @@ void optimizer::ExplainPlan::printPlan()
                                        MY_INT64_NUM_DECIMAL_DIGITS));
 
       /* Add "filtered" field to item_list. */
-      if (join->session->getLex()->describe & DESCRIBE_EXTENDED)
+      if (join->session->lex().describe & DESCRIBE_EXTENDED)
       {
         float f= 0.0;
         if (examined_rows)
@@ -335,7 +311,7 @@ void optimizer::ExplainPlan::printPlan()
         key_read= 1;
 
       if (tab->info)
-        item_list.push_back(new Item_string(tab->info,strlen(tab->info),cs));
+        item_list.push_back(new Item_string(str_ref(tab->info),cs));
       else if (tab->packed_info & TAB_INFO_HAVE_VALUE)
       {
         if (tab->packed_info & TAB_INFO_USING_INDEX)
@@ -346,16 +322,10 @@ void optimizer::ExplainPlan::printPlan()
           extra.append("; Full scan on NULL key");
         if (extra.length())
           extra.erase(0, 2);        /* Skip initial "; "*/
-        item_list.push_back(new Item_string(extra.c_str(), extra.length(), cs));
+        item_list.push_back(new Item_string(extra, cs));
       }
       else
       {
-        uint32_t keyno= MAX_KEY;
-        if (tab->ref.key_parts)
-          keyno= tab->ref.key;
-        else if (tab->select && tab->select->quick)
-          keyno = tab->select->quick->index;
-
         if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
             quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE)
@@ -436,7 +406,7 @@ void optimizer::ExplainPlan::printPlan()
 
         if (extra.length())
           extra.erase(0, 2);
-        item_list.push_back(new Item_string(extra.c_str(), extra.length(), cs));
+        item_list.push_back(new Item_string(extra, cs));
       }
       // For next iteration
       used_tables|=table->map;
@@ -467,7 +437,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
     sl->uncacheable.reset(UNCACHEABLE_EXPLAIN);
-    if (&session->getLex()->select_lex == sl)
+    if (&session->lex().select_lex == sl)
     {
       if (sl->first_inner_unit() || sl->next_select())
       {
@@ -540,7 +510,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   }
   else
   {
-    session->getLex()->current_select= first;
+    session->lex().current_select= first;
     unit->set_limit(unit->global_parameters);
     res= select_query(session, 
                       &first->ref_pointer_array,

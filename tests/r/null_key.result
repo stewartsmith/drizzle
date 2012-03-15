@@ -79,8 +79,8 @@ Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
   `a` INT DEFAULT NULL,
   `b` INT NOT NULL,
-  UNIQUE KEY `a` (`a`,`b`),
-  KEY `b` (`b`)
+  UNIQUE KEY `a` (`a`,`b`) USING BTREE,
+  KEY `b` (`b`) USING BTREE
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 insert into t2 select * from t1;
 alter table t1 modify b blob not null, add c int DEFAULT 42 not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));

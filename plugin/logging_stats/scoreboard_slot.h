@@ -28,12 +28,12 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
-#define PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
+#pragma once
 
 #include "status_vars.h"
 #include "user_commands.h"
 
+#include <drizzled/session.h>
 #include <string>
 
 class ScoreboardSlot
@@ -78,4 +78,3 @@ private:
   drizzled::session_id_t session_id;
 };
  
-#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H */

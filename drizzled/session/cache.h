@@ -17,71 +17,54 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SESSION_CACHE_H
-#define DRIZZLED_SESSION_CACHE_H
+#pragma once
 
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/mutex.hpp>
+#include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 #include <list>
 
-#include <drizzled/visibility.h>
-
-namespace drizzled
-{
-
-class Session;
-
-namespace session
-{
+namespace drizzled {
+namespace session {
 
 class DRIZZLED_API Cache 
 {
-  typedef boost::shared_ptr<drizzled::Session> session_shared_ptr;
+  typedef boost::shared_ptr<drizzled::Session> session_ptr;
 public:
-  typedef std::list<session_shared_ptr> list;
+  typedef std::list<session_ptr> list;
 
-  Cache() :
-    _ready_to_exit(false)
-  {
-  }
-
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
-  list &getCache()
+  static list &getCache()
   {
     return cache;
   }
 
-  boost::mutex &mutex()
+  static boost::mutex &mutex()
   {
     return _mutex;
   }
 
-  boost::condition_variable &cond()
+  static boost::condition_variable &cond()
   {
     return _end;
   }
 
-  void shutdownFirst();
-  void shutdownSecond();
+  static void shutdownFirst();
+  static void shutdownSecond();
 
-  void erase(session_shared_ptr&);
-  size_t count();
-  void insert(session_shared_ptr &arg);
+  static void erase(const session_ptr&);
+  static size_t count();
+  static void insert(const session_ptr&);
 
-  session_shared_ptr find(const session_id_t &id);
+  static session_ptr find(const session_id_t&);
 
 private:
-  bool volatile _ready_to_exit;
-  list cache;
-  boost::mutex _mutex;
-  boost::condition_variable _end;
+  static bool volatile _ready_to_exit;
+  static list cache;
+  static boost::mutex _mutex;
+  static boost::condition_variable _end;
 };
 
 } /* namespace session */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SESSION_CACHE_H */

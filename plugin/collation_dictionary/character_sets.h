@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H
-#define PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H
+#pragma once
 
 class CharacterSetsTool : public drizzled::plugin::TableFunction
 {
@@ -35,7 +34,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::CHARSET_INFO **character_set_iter;
+    drizzled::charset_info_st **character_set_iter;
     bool is_char_primed;
     bool nextCharacterSetCore();
 
@@ -47,7 +46,7 @@ public:
     bool checkCharacterSet();
     virtual void fill();
 
-    drizzled::CHARSET_INFO const * character_set()
+    drizzled::charset_info_st const * character_set()
     {
       return character_set_iter[0];
     }
@@ -65,4 +64,3 @@ public:
   }
 };
 
-#endif /* PLUGIN_COLLATION_DICTIONARY_CHARACTER_SETS_H */

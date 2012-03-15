@@ -17,10 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef CLIENT_DRIZZLEDUMP_DRIZZLE_H
-#define CLIENT_DRIZZLEDUMP_DRIZZLE_H
+#pragma once
 
-#include "drizzledump_data.h"
+#include "client/drizzledump_data.h"
 
 class DrizzleDumpDatabaseDrizzle;
 class DrizzleDumpDataDrizzle;
@@ -105,6 +104,3 @@ class DrizzleDumpDataDrizzle : public DrizzleDumpData
       DrizzleDumpConnection *connection);
     ~DrizzleDumpDataDrizzle();
 };
-
-
-#endif /* CLIENT_DRIZZLEDUMP_DRIZZLE_H */

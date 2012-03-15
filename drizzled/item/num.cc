@@ -24,8 +24,7 @@
 #include <drizzled/item/string.h>
 #include <drizzled/item/decimal.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /**
   @details
@@ -38,17 +37,14 @@ namespace drizzled
   the latter returns a non-fixed Item, so val_str() crashes afterwards.
   Override Item_num method, to return a fixed item.
 */
-Item *Item_num::safe_charset_converter(const CHARSET_INFO * const)
+Item *Item_num::safe_charset_converter(const charset_info_st*)
 {
-  Item_string *conv;
   char buf[64];
-  String *s, tmp(buf, sizeof(buf), &my_charset_bin);
-  s= val_str(&tmp);
-  if ((conv= new Item_string(s->ptr(), s->length(), s->charset())))
-  {
-    conv->str_value.copy();
-    conv->str_value.mark_as_const();
-  }
+  String tmp(buf, sizeof(buf), &my_charset_bin);
+  String* s= val_str(&tmp);
+  Item_string* conv= new Item_string(s->ptr(), s->length(), s->charset());
+  conv->str_value.copy();
+  conv->str_value.mark_as_const();
   return conv;
 }
 

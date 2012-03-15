@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SYSLOG_ERRMSG_H
-#define PLUGIN_SYSLOG_ERRMSG_H
+#pragma once
 
 #include <stdarg.h>
 #include <drizzled/plugin/error_message.h>
@@ -32,20 +31,13 @@ class Syslog : public drizzled::plugin::ErrorMessage
 {
 private:
   int _facility;
-  int _priority;
-
-  Syslog();
-  Syslog(const Syslog&);
-  Syslog& operator=(const Syslog&);
 
 public:
-  explicit Syslog(const std::string& facility,
-                  const std::string& priority);
+  explicit Syslog(const std::string& facility);
 
-  virtual bool errmsg(drizzled::error::level_t, const char *format, va_list ap);
+  virtual bool errmsg(drizzled::error::priority_t, const char *format, va_list ap);
 };
 
 } /* namespace error_message */
 } /* namespace drizzle_plugin */
 
-#endif /* PLUGIN_SYSLOG_ERRMSG_H */

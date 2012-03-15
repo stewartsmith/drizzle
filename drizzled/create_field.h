@@ -17,15 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CREATE_FIELD_H
-#define DRIZZLED_CREATE_FIELD_H
+#pragma once
 
 #include <drizzled/field.h>
 
-namespace drizzled
-{
-class Item;
-typedef struct st_typelib TYPELIB;
+namespace drizzled {
 
 /**
  * Class representing a field in a CREATE TABLE statement.
@@ -33,15 +29,15 @@ typedef struct st_typelib TYPELIB;
  * Basically, all information for a new or altered field
  * definition is contained in the Create_field class.
  */
-class CreateField :public memory::SqlAlloc
+class CreateField : public memory::SqlAlloc
 {
 public:
   const char *field_name; /**< Name of the field to be created */
   const char *change; /**< If done with alter table */
   const char *after; /**< Put this new Field after this Field */
-  LEX_STRING comment; /**< A comment for this field */
+  str_ref comment; /**< A comment for this field */
   Item *def; /**< Default value for the new field */
-  enum enum_field_types sql_type; /**< The data type of the new field */
+  enum_field_types sql_type; /**< The data type of the new field */
 
   enum_field_types type() const
   {
@@ -65,7 +61,7 @@ public:
   Field::utype unireg_check; /**< See Field::unireg_check */
   TYPELIB *interval; /**< Which interval to use (ENUM types..) */
   List<String> interval_list;
-  const CHARSET_INFO *charset; /**< Character set for the column -- @TODO should be deleted */
+  const charset_info_st *charset; /**< Character set for the column -- @TODO should be deleted */
   Field *field; // For alter table
 
   uint8_t interval_id;	// For rea_create_table
@@ -73,9 +69,6 @@ public:
 
   CreateField() :after(0) {}
   CreateField(Field *field, Field *orig_field);
-  /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  CreateField *clone(memory::Root *mem_root) const
-    { return new (mem_root) CreateField(*this); }
   void create_length_to_internal_length(void);
 
   inline enum column_format_type column_format() const
@@ -115,24 +108,23 @@ public:
     @retval
       true  on error
   */
-  bool init(Session *session,
-            char *field_name,
+  bool init(Session*,
+            const char *field_name,
             enum_field_types type,
-            char *length,
-            char *decimals,
+            const char *length,
+            const char *decimals,
             uint32_t type_modifier,
-            Item *default_value,
-            Item *on_update_value,
-            LEX_STRING *comment,
-            char *change,
+            str_ref comment,
+            const char *change,
             List<String> *interval_list,
-            const CHARSET_INFO * const cs,
+            const charset_info_st*,
             uint32_t uint_geom_type,
-            enum column_format_type column_format);
+            column_format_type column_format);
+
+  bool setDefaultValue(Item *default_value, Item *on_update_item);
 };
 
-std::ostream& operator<<(std::ostream& output, const CreateField &field);
+std::ostream& operator<<(std::ostream&, const CreateField&);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CREATE_FIELD_H */

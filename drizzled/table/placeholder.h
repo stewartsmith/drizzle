@@ -20,8 +20,7 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
-#define DRIZZLED_TABLE_PLACEHOLDER_H
+#pragma once
 
 namespace drizzled
 {
@@ -58,4 +57,3 @@ public:
 } /* namespace table */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */

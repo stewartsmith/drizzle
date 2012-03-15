@@ -23,8 +23,7 @@
  * Mostly constants and some macros/functions used by the server
  */
 
-#ifndef DRIZZLED_DEFINITIONS_H
-#define DRIZZLED_DEFINITIONS_H
+#pragma once
 
 #include <drizzled/enum.h>
 
@@ -433,17 +432,7 @@ template<class T> inline void safe_delete(T*& ptr)
   ((sizeof(a) / sizeof(*(a))) / \
    static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 
-
-/* Some types that is different between systems */
-
-#ifndef FN_LIBCHAR
 #define FN_LIBCHAR  '/'
-#define FN_ROOTDIR  "/"
-#endif
-#define MY_NFILE  64  /* This is only used to save filenames */
-#ifndef OS_FILE_LIMIT
-#define OS_FILE_LIMIT  65535
-#endif
 
 /*
   How much overhead does malloc have. The code often allocates
@@ -593,4 +582,3 @@ typedef uint32_t nesting_map; /* Used for flags of nesting constructs */
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_DEFINITIONS_H */

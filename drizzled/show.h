@@ -24,51 +24,39 @@
  * will eventually go away, but for now we split these definitions out into
  * their own header file for easier maintenance
  */
-#ifndef DRIZZLED_SHOW_H
-#define DRIZZLED_SHOW_H
+#pragma once
 
 #include <drizzled/enum.h>
-#include <drizzled/lex_string.h>
-
+#include <drizzled/util/data_ref.h>
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
-namespace drizzled
-{
-
-/* Forward declarations */
-class Session;
-class Table_ident;
-struct charset_info_st;
-
-int wild_case_compare(const charset_info_st * const cs, 
-                      const char *str,const char *wildstr);
+namespace drizzled {
 
 DRIZZLED_API int get_quote_char_for_identifier();
 
 namespace show {
 
-bool buildColumns(Session *session, const char *schema_ident, Table_ident *table_ident);
-bool buildCreateSchema(Session *session, LEX_STRING &ident);
-bool buildCreateTable(Session *session, Table_ident *ident);
-bool buildDescribe(Session *session, Table_ident *ident);
-bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_ident);
-bool buildProcesslist(Session *session);
-bool buildScemas(Session *session);
-bool buildStatus(Session *session, const drizzled::sql_var_t is_global);
-bool buildEngineStatus(Session *session, LEX_STRING);
-bool buildTableStatus(Session *session, const char *ident);
-bool buildTables(Session *session, const char *ident);
-bool buildTemporaryTables(Session *session);
-bool buildVariables(Session *session, const drizzled::sql_var_t is_global);
+bool buildColumns(Session*, const char *schema_ident, Table_ident *table_ident);
+bool buildCreateSchema(Session*, str_ref ident);
+bool buildCreateTable(Session*, Table_ident *ident);
+bool buildDescribe(Session*, Table_ident *ident);
+bool buildIndex(Session*, const char *schema_ident, Table_ident *table_ident);
+bool buildProcesslist(Session*);
+bool buildSchemas(Session*);
+bool buildStatus(Session*, const drizzled::sql_var_t is_global);
+bool buildEngineStatus(Session*, str_ref);
+bool buildTableStatus(Session*, const char *ident);
+bool buildTables(Session*, const char *ident);
+bool buildTemporaryTables(Session*);
+bool buildVariables(Session*, const drizzled::sql_var_t is_global);
 
-void buildErrors(Session *session);
-void buildWarnings(Session *session);
+void buildErrors(Session*);
+void buildWarnings(Session*);
 
-void buildSelectWarning(Session *session);
-void buildSelectError(Session *session);
+void buildSelectWarning(Session*);
+void buildSelectError(Session*);
 
 } // namespace show
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_SHOW_H */

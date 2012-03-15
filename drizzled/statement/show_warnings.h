@@ -18,18 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SHOW_WARNINGS_H
-#define DRIZZLED_STATEMENT_SHOW_WARNINGS_H
+#pragma once
 
 #include <drizzled/statement.h>
 
-namespace drizzled
-{
-
-class Session;
-
-namespace statement
-{
+namespace drizzled {
+namespace statement {
 
 class ShowWarnings : public Statement
 {
@@ -37,7 +31,7 @@ public:
   ShowWarnings(Session *in_session) :
     Statement(in_session)
   {
-    getSession()->getLex()->sql_command= SQLCOM_SHOW_WARNS;
+    set_command(SQLCOM_SHOW_WARNS);
   }
 
   bool execute();
@@ -47,4 +41,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_SHOW_WARNINGS_H */

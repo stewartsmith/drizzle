@@ -24,10 +24,9 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/type/time.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-bool plugin::Client::store(const type::Time *from)
+void plugin::Client::store(const type::Time *from)
 {
   const size_t buff_len= 40;
   char buff[buff_len];
@@ -69,19 +68,16 @@ bool plugin::Client::store(const type::Time *from)
   case type::DRIZZLE_TIMESTAMP_NONE:
   case type::DRIZZLE_TIMESTAMP_ERROR:
   default:
-    assert(0);
-    return false;
+    assert(false);
+    return;
   }
 
   return store(buff);
 }
 
-bool plugin::Client::store(const char *from)
+void plugin::Client::store(const char *from)
 {
-  if (from == NULL)
-    return store();
-
-  return store(from, strlen(from));
+  return from ? store(from, strlen(from)) : store();
 }
 
 

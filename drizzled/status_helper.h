@@ -18,27 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATUS_HELPER_H
-#define DRIZZLED_STATUS_HELPER_H
+#pragma once
 
 #include <drizzled/plugin.h>
 #include <drizzled/statistics_variables.h>
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 class DRIZZLED_API StatusHelper 
 {
 public:
 
-  static std::string fillHelper(drizzled::system_status_var *status_var, char *value, 
-                                SHOW_TYPE show_type);
-
-  static drizzled::drizzle_show_var status_vars_defs[];
+  static std::string fillHelper(system_status_var*, const char* value, SHOW_TYPE);
+  static drizzle_show_var status_vars_defs[];
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_STATUS_HELPER_H */

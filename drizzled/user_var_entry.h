@@ -18,23 +18,18 @@
  */
 
 
-#ifndef DRIZZLED_USER_VAR_ENTRY_H
-#define DRIZZLED_USER_VAR_ENTRY_H
+#pragma once
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/query_id.h>
+#include <drizzled/item_result.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-namespace type { class Decimal; }
-
-// this is needed for user_vars hash
 class user_var_entry
 {
- public:
-  user_var_entry(const char *arg, query_id_t id) :
-    value(0),
+public:
+  user_var_entry(const char*, query_id_t id) :
+    value(NULL),
     length(0),
     size(0),
     update_query_id(0),
@@ -43,38 +38,29 @@ class user_var_entry
     unsigned_flag(false),
     collation(NULL, DERIVATION_IMPLICIT)
   { 
-    name.str= strdup(arg);
-    name.length= strlen(arg);
   }
 
   ~user_var_entry()
   {
-    if (name.str) 
-      free(name.str);
-
-    if (value) 
-      free(value);
+    free(value);
   }
-  LEX_STRING name;
-  char *value;
+
+  char* value;
   ulong length;
   size_t size;
   query_id_t update_query_id;
   query_id_t used_query_id;
   Item_result type;
   bool unsigned_flag;
-
-  double val_real(bool *null_value);
-  int64_t val_int(bool *null_value) const;
-  String *val_str(bool *null_value, String *str, uint32_t decimals);
-  type::Decimal *val_decimal(bool *null_value, type::Decimal *result);
   DTCollation collation;
 
-  bool update_hash(bool set_null, void *ptr, uint32_t length,
-                   Item_result type, const CHARSET_INFO * const cs, Derivation dv,
-                   bool unsigned_arg);
+  double val_real(bool *null_value) const;
+  int64_t val_int(bool *null_value) const;
+  String *val_str(bool *null_value, String*, uint32_t decimals) const;
+  type::Decimal *val_decimal(bool *null_value, type::Decimal *result) const;
+
+  void update_hash(bool set_null, data_ref, Item_result type, const charset_info_st* cs, Derivation dv, bool unsigned_arg);
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_USER_VAR_ENTRY_H */

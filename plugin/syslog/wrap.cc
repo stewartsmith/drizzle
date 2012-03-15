@@ -17,11 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
 #include "wrap.h"
 
-#include <assert.h>
-#include <stdarg.h>
-#include <string.h>
+#include <cassert>
+#include <cstdarg>
+#include <cstring>
 
 #ifdef __sun
 # include <syslog.h>
@@ -31,35 +33,16 @@
 # include <syslog.h>
 #endif
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
 
 WrapSyslog::WrapSyslog () :
   _check(false)
-{ }
+{
+}
 
 WrapSyslog::~WrapSyslog ()
 {
   ::closelog();
-}
-
-
-/* TODO, for the sake of performance, scan through all the priority
-   and facility names, and construct a stl hash, minimal perfect hash,
-   or some other high performance read data structure.  This can even
-   be done at compile time. */
-
-int WrapSyslog::getPriorityByName(const char *priority_name)
-{
-  for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
-  {
-    if (strcasecmp(prioritynames[ndx].c_name, priority_name) == 0)
-    {
-      return prioritynames[ndx].c_val;
-    }
-  }
-  // no matching priority found
-  return -1;
 }
 
 int WrapSyslog::getFacilityByName(const char *facility_name)
@@ -75,6 +58,25 @@ int WrapSyslog::getFacilityByName(const char *facility_name)
   return -1;
 }
 
+/* 
+  TODO, for the sake of performance, scan through all the priority
+   and facility names, and construct a stl hash, minimal perfect hash,
+   or some other high performance read data structure.  This can even
+   be done at compile time. 
+ */
+int WrapSyslog::getPriorityByName(const char *priority_name)
+{
+  for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
+  {
+    if (strcasecmp(prioritynames[ndx].c_name, priority_name) == 0)
+    {
+      return prioritynames[ndx].c_val;
+    }
+  }
+  // no matching priority found
+  return -1;
+}
+
 void WrapSyslog::openlog(const std::string &ident)
 {
   if (_check == false)
@@ -84,18 +86,18 @@ void WrapSyslog::openlog(const std::string &ident)
   }
 }
 
-void WrapSyslog::vlog(int facility, int priority, const char *format, va_list ap)
+void WrapSyslog::vlog(int facility, const drizzled::error::priority_t priority, const char *format, va_list ap)
 {
   assert(_check == true);
-  vsyslog(facility | priority, format, ap);
+  vsyslog(facility | int(priority), format, ap);
 }
 
-void WrapSyslog::log (int facility, int priority, const char *format, ...)
+void WrapSyslog::log (int facility, const drizzled::error::priority_t priority, const char *format, ...)
 {
   assert(_check == true);
   va_list ap;
   va_start(ap, format);
-  vsyslog(facility | priority, format, ap);
+  vsyslog(facility | int(priority), format, ap);
   va_end(ap);
 }
 

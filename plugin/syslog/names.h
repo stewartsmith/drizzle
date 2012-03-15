@@ -28,8 +28,7 @@
  *
  *      @(#)syslog.h    8.1 (Berkeley) 6/2/93
  */
-#ifndef PLUGIN_SYSLOG_NAMES_H
-#define PLUGIN_SYSLOG_NAMES_H
+#pragma once
 
 /* Solaris doesn't define these, so we copy them in. So Sad. */
 
@@ -97,4 +96,3 @@ CODE facilitynames[] =
   };
 
 
-#endif /* PLUGIN_SYSLOG_NAMES_H */

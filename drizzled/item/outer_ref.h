@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_OUTER_REF_H
-#define DRIZZLED_ITEM_OUTER_REF_H
+#pragma once
 
 #include <drizzled/item/ref.h>
 #include <drizzled/item/direct_ref.h>
@@ -34,10 +33,9 @@
   Item_field::fix_outer_field() functions.
 */
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_outer_ref :public Item_direct_ref
+class Item_outer_ref : public Item_direct_ref
 {
 public:
   Item *outer_ref;
@@ -81,4 +79,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_OUTER_REF_H */

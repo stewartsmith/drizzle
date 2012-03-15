@@ -49,14 +49,13 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
     }
     if (info->opt_flag & WRITE_CACHE_USED)
     {				/* Cash in use */
-      if (my_b_write(&info->rec_cache, record,
-		     info->s->base.reclength))
+      if (info->rec_cache.write(record, info->s->base.reclength))
 	goto err;
       if (info->s->base.pack_reclength != info->s->base.reclength)
       {
 	uint32_t length=info->s->base.pack_reclength - info->s->base.reclength;
 	memset(temp, 0, length);
-	if (my_b_write(&info->rec_cache, temp,length))
+	if (info->rec_cache.write(temp,length))
 	  goto err;
       }
     }
@@ -115,7 +114,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
 {
   if (info->opt_flag & WRITE_CACHE_USED)
   {
-    if (flush_io_cache(&info->rec_cache))
+    if (info->rec_cache.flush())
     {
       return(-1);
     }
@@ -160,18 +159,15 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t pos,
 			   register unsigned char *record)
 {
-  int error;
-
   if (pos != HA_OFFSET_ERROR)
   {
     if (info->opt_flag & WRITE_CACHE_USED &&
 	info->rec_cache.pos_in_file <= pos &&
-	flush_io_cache(&info->rec_cache))
+	info->rec_cache.flush())
       return(-1);
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
 
-    error=info->s->file_read(info, record, info->s->base.reclength,
-		   pos,MYF(MY_NABP)) != 0;
+    int error= info->s->file_read(info, record, info->s->base.reclength, pos,MYF(MY_NABP)) != 0;
     fast_mi_writeinfo(info);
     if (! error)
     {
@@ -196,22 +192,19 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
 			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;
-  uint32_t cache_length;
   MYISAM_SHARE *share=info->s;
 
   cache_read=0;
-  cache_length=0;
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
-      flush_io_cache(&info->rec_cache))
+      info->rec_cache.flush())
     return(errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */
-    if (filepos == my_b_tell(&info->rec_cache) &&
+    if (filepos == info->rec_cache.tell() &&
 	(skip_deleted_blocks || !filepos))
     {
       cache_read=1;				/* Read record using cache */
-      cache_length=(uint) (info->rec_cache.read_end - info->rec_cache.read_pos);
     }
     else
       info->rec_cache.seek_not_done=1;		/* Filepos is changed */
@@ -255,12 +248,11 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   }
 
 	/* Read record with cacheing */
-  error=my_b_read(&info->rec_cache,(unsigned char*) buf,share->base.reclength);
+  error= info->rec_cache.read(buf, share->base.reclength);
   if (info->s->base.pack_reclength != info->s->base.reclength && !error)
   {
     char tmp[8];				/* Skill fill bytes */
-    error=my_b_read(&info->rec_cache,(unsigned char*) tmp,
-		    info->s->base.pack_reclength - info->s->base.reclength);
+    error= info->rec_cache.read(tmp, info->s->base.pack_reclength - info->s->base.reclength);
   }
   if (locked)
     _mi_writeinfo(info,0);		/* Unlock keyfile */

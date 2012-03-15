@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_SELECT_EXPORT_H
-#define DRIZZLED_SELECT_EXPORT_H
+#pragma once
 
 #include <drizzled/select_to_file.h>
 
@@ -88,4 +87,3 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SELECT_EXPORT_H */

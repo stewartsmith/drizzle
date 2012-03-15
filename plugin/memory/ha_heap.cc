@@ -20,6 +20,10 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/plugin/daemon.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session/table_messages.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/system_variables.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -27,7 +31,6 @@
 #include "ha_heap.h"
 
 #include <string>
-
 
 using namespace drizzled;
 using namespace std;
@@ -65,14 +68,20 @@ public:
     return new ha_heap(*this, table);
   }
 
-  const char **bas_ext() const {
+  const char **bas_ext() const 
+  {
     return ha_heap_exts;
+  }
+
+  drizzled::message::Table::Index::IndexType default_index_type() const
+  {
+    return drizzled::message::Table::Index::HASH;
   }
 
   int doCreateTable(Session &session,
                     Table &table_arg,
                     const identifier::Table &identifier,
-                    message::Table &create_proto);
+                    const message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
      for MEMORY.
@@ -82,7 +91,7 @@ public:
   int heap_create_table(Session *session, const char *table_name,
                         Table *table_arg,
                         bool internal_table,
-                        message::Table &create_proto,
+                        const message::Table &create_proto,
                         HP_SHARE **internal_share);
 
   int doRenameTable(Session&, const identifier::Table &from, const identifier::Table &to);
@@ -104,12 +113,12 @@ public:
   bool doDoesTableExist(Session& session, const identifier::Table &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
                              const identifier::Schema &schema_identifier,
-                             identifier::Table::vector &set_of_identifiers);
+                             identifier::table::vector &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
                                        const identifier::Schema&,
-                                       identifier::Table::vector&)
+                                       identifier::table::vector&)
 {
 }
 
@@ -219,7 +228,7 @@ int ha_heap::doOpen(const drizzled::identifier::Table &identifier, int mode, uin
     */
     key_stat_version= file->getShare()->key_stat_version - 1;
   }
-  return (file ? 0 : 1);
+  return file ? 0 : 1;
 }
 
 int ha_heap::close(void)
@@ -612,12 +621,12 @@ int ha_heap::enable_indexes(uint32_t mode)
    [2  non-unique indexes are disabled - NOT YET IMPLEMENTED]
 */
 
-int ha_heap::indexes_are_disabled(void)
+int ha_heap::indexes_are_disabled()
 {
   return heap_indexes_are_disabled(file);
 }
 
-void ha_heap::drop_table(const char *)
+void ha_heap::drop_table()
 {
   file->getShare()->delete_on_close= 1;
   close();
@@ -654,7 +663,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
                               const identifier::Table &identifier,
-                              message::Table& create_proto)
+                              const message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
@@ -677,7 +686,7 @@ int HeapEngine::doCreateTable(Session &session,
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   Table *table_arg,
                                   bool internal_table, 
-                                  message::Table &create_proto,
+                                  const message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0;
@@ -834,13 +843,13 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "MEMORY",
+  "memory",
   "1.0",
   "MySQL AB",
-  "Hash based, stored in memory, useful for temporary tables",
+  N_("MEMORY storage engine"),
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,                       /* depends */
-  NULL                        /* config options                  */
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

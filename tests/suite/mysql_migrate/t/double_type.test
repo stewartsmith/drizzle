@@ -1,0 +1,16 @@
+# mysql_migrate.double_type
+# test the ENUM data type migration 
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_double_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo test double type
+eval SHOW CREATE TABLE $database.double_table;
+eval SELECT * FROM $database.double_table;
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;

@@ -35,9 +35,12 @@ set global hello_events1_watch_tables = "x,y";
 #include <string>
 #include <cstdio>
 #include <boost/program_options.hpp>
+#include <drizzled/item.h>
 #include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
+#include <drizzled/table/instance/base.h>
 #include "hello_events.h"
+#include <drizzled/plugin.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -245,8 +248,6 @@ void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &o
 /* The event observer.*/
 bool HelloEvents::observeEventDo(EventData &data)
 {
-  bool result= false;
-  
   switch (data.event) {
   case AFTER_DROP_TABLE:
     observeAfterDropTable((AfterDropTableEventData &)data);
@@ -257,7 +258,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;
     
   case BEFORE_INSERT_RECORD:
-     result = observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
+    observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
     break;
     
   case AFTER_INSERT_RECORD:
@@ -265,7 +266,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
        
   case BEFORE_UPDATE_RECORD:
-    result = observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
+    observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
     break;
              
   case AFTER_UPDATE_RECORD:
@@ -273,7 +274,7 @@ bool HelloEvents::observeEventDo(EventData &data)
     break;     
     
   case BEFORE_DELETE_RECORD:
-    result = observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
+    observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
     break;
 
   case AFTER_DELETE_RECORD:
@@ -343,7 +344,7 @@ static int set_db_list(Session *, set_var *var)
   if (hello_events)
   {
     hello_events->setDatabasesOfInterest(db_list);
-    sysvar_db_list.assign(db_list);
+    sysvar_db_list= db_list;
   }
   return 0;
 }
@@ -357,7 +358,7 @@ static int set_table_list(Session *, set_var *var)
   if (hello_events)
   {
     hello_events->setTablesOfInterest(table_list);
-    sysvar_table_list.assign(table_list);
+    sysvar_table_list= table_list;
   }
   return 0;
 }
@@ -420,14 +421,14 @@ static void init_options(drizzled::module::option_context &context)
 
 DRIZZLE_DECLARE_PLUGIN
 {
-  DRIZZLE_VERSION_ID,
-  PLUGIN_NAME,
-  "0.1",
-  "Barry Leslie",
-  N_("An example events Plugin"),
-  PLUGIN_LICENSE_BSD,
-  init,   /* Plugin Init      */
-  NULL, /* depends */
-  init_options    /* config options   */
+  DRIZZLE_VERSION_ID,                 /* DRIZZLE_VERSION_ID */
+  PLUGIN_NAME,                        /* module name */
+  "0.1",                              /* module version */
+  "Barry Leslie",                     /* author(s) */
+  N_("Example EventObserver plugin"), /* description */
+  PLUGIN_LICENSE_BSD,                 /* license */
+  init,                               /* init module function */
+  NULL,                               /* module dependencies */
+  init_options                        /* init options function */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

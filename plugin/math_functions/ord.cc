@@ -21,7 +21,7 @@
 
 #include "ord.h"
 
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 #include <drizzled/type/decimal.h>
 
 namespace drizzled

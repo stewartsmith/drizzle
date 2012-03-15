@@ -24,17 +24,15 @@
  * Defines the API for index hints
  */
 
-#ifndef DRIZZLED_INDEX_HINT_H
-#define DRIZZLED_INDEX_HINT_H
+#pragma once
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   String names used to print a statement with index hints.
   Keep in sync with index_hint_type.
 */
-extern const char * index_hint_type_name[];
+extern const char* index_hint_type_name[];
 typedef unsigned char index_clause_map;
 
 enum index_hint_type
@@ -52,34 +50,28 @@ enum index_hint_type
 #define INDEX_HINT_MASK_GROUP (1 << 1)
 #define INDEX_HINT_MASK_ORDER (1 << 2)
 
-#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | \
-                             INDEX_HINT_MASK_ORDER)
+#define INDEX_HINT_MASK_ALL (INDEX_HINT_MASK_JOIN | INDEX_HINT_MASK_GROUP | INDEX_HINT_MASK_ORDER)
 
 /* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
 class Index_hint : public memory::SqlAlloc
 {
 public:
   /* The type of the hint : USE/FORCE/IGNORE */
-  enum index_hint_type type;
+  index_hint_type type;
   /* Where the hit applies to. A bitmask of INDEX_HINT_MASK_<place> values */
   index_clause_map clause;
   /*
     The index name. Empty (str=NULL) name represents an empty list
     USE INDEX () clause
   */
-  LEX_STRING key_name;
+  const char* key_name;
 
-  Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
-              char *str, uint32_t length) :
-    type(type_arg), clause(clause_arg)
+  Index_hint(index_hint_type type_arg, index_clause_map clause_arg, const char *str) :
+    type(type_arg), clause(clause_arg), key_name(str)
   {
-    key_name.str= str;
-    key_name.length= length;
   }
 
-  void print(Session *session, String *str);
+  void print(String&) const;
 };
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_INDEX_HINT_H */

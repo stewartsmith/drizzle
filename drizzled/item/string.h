@@ -17,23 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_STRING_H
-#define DRIZZLED_ITEM_STRING_H
+#pragma once
 
 #include <drizzled/item/basic_constant.h>
-#include <drizzled/charset_info.h>
+#include <drizzled/charset.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
-class Item_string :public Item_basic_constant
+class Item_string : public Item_basic_constant
 {
 public:
-  Item_string(const char *str,uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
-    : m_cs_specified(false)
+  Item_string(str_ref str, const charset_info_st* cs, Derivation dv= DERIVATION_COERCIBLE)
   {
-    str_value.set_or_copy_aligned(str, length, cs);
+    assert(not (str.size() % cs->mbminlen));
+    str_value.set(str.data(), str.size(), cs);
+    collation.set(cs, dv);
+    /*
+      We have to have a different max_length than 'length' here to
+      ensure that we get the right length if we do use the item
+      to create a new table. In this case max_length must be the maximum
+      number of chars for a string of this type because we in CreateField::
+      divide the max_length with mbmaxlen).
+    */
+    max_length= str_value.numchars() * cs->mbmaxlen;
+    set_name(str.data(), str.size(), cs);
+    decimals=NOT_FIXED_DEC;
+    // it is constant => can be used without fix_fields (and frequently used)
+    fixed= 1;
+  }
+
+  Item_string(const char *str,uint32_t length,
+              const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
+  {
+    assert(not (length % cs->mbminlen));
+    str_value.set(str, length, cs);
     collation.set(cs, dv);
     /*
       We have to have a different max_length than 'length' here to
@@ -49,8 +66,7 @@ public:
     fixed= 1;
   }
   /* Just create an item and do not fill string representation */
-  Item_string(const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
-    : m_cs_specified(false)
+  Item_string(const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
   {
     collation.set(cs, dv);
     max_length= 0;
@@ -59,10 +75,10 @@ public:
     fixed= 1;
   }
   Item_string(const char *name_par, const char *str, uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
-    : m_cs_specified(false)
+              const charset_info_st * const cs, Derivation dv= DERIVATION_COERCIBLE)
   {
-    str_value.set_or_copy_aligned(str, length, cs);
+    assert(not (length % cs->mbminlen));
+    str_value.set(str, length, cs);
     collation.set(cs, dv);
     max_length= str_value.numchars()*cs->mbmaxlen;
     set_name(name_par, 0, cs);
@@ -86,78 +102,36 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   Item *clone_item()
   {
-    return new Item_string(name, str_value.ptr(),
-    			   str_value.length(), collation.collation);
+    return new Item_string(name, str_value.ptr(), str_value.length(), collation.collation);
   }
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  inline void append(char *str, uint32_t length)
+  Item *safe_charset_converter(const charset_info_st * const tocs);
+  inline void append(str_ref v)
   {
-    str_value.append(str, length);
+    str_value.append(v);
     max_length= str_value.numchars() * collation.collation->mbmaxlen;
   }
   virtual void print(String *str);
-
-  /**
-    Return true if character-set-introducer was explicitly specified in the
-    original query for this item (text literal).
-
-    This operation is to be called from Item_string::print(). The idea is
-    that when a query is generated (re-constructed) from the Item-tree,
-    character-set-introducers should appear only for those literals, where
-    they were explicitly specified by the user. Otherwise, that may lead to
-    loss collation information (character set introducers implies default
-    collation for the literal).
-
-    Basically, that makes sense only for views and hopefully will be gone
-    one day when we start using original query as a view definition.
-
-    @return This operation returns the value of m_cs_specified attribute.
-      @retval true if character set introducer was explicitly specified in
-      the original query.
-      @retval false otherwise.
-  */
-  inline bool is_cs_specified() const
-  {
-    return m_cs_specified;
-  }
-
-  /**
-    Set the value of m_cs_specified attribute.
-
-    m_cs_specified attribute shows whether character-set-introducer was
-    explicitly specified in the original query for this text literal or
-    not. The attribute makes sense (is used) only for views.
-
-    This operation is to be called from the parser during parsing an input
-    query.
-  */
-  inline void set_cs_specified(bool cs_specified)
-  {
-    m_cs_specified= cs_specified;
-  }
-
-private:
-  bool m_cs_specified;
 };
 
 
-class Item_static_string_func :public Item_string
+class Item_static_string_func : public Item_string
 {
   const char *func_name;
 public:
-  Item_static_string_func(const char *name_par, const char *str, uint32_t length,
-                          const CHARSET_INFO * const cs,
-                          Derivation dv= DERIVATION_COERCIBLE)
-    :Item_string(NULL, str, length, cs, dv), func_name(name_par)
+  Item_static_string_func(const char *name_par,
+                          str_ref str,
+                          const charset_info_st* cs, 
+                          Derivation dv= DERIVATION_COERCIBLE) :
+    Item_string(NULL, str.data(), str.size(), cs, dv),
+    func_name(name_par)
   {}
-  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
+  Item *safe_charset_converter(const charset_info_st*);
 
   virtual inline void print(String *str)
   {
-    str->append(func_name);
+    str->append(func_name, strlen(func_name));
   }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_ITEM_STRING_H */

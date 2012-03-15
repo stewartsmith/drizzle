@@ -27,8 +27,7 @@
  * @see drizzled/plugin/transaction_applier.h
  */
 
-#ifndef PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
-#define PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/transaction_replicator.h>
@@ -69,4 +68,3 @@ public:
   
 };
 
-#endif /* PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H */

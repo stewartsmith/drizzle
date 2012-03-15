@@ -18,20 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TYPE_BOOLEAN_H
-#define DRIZZLED_TYPE_BOOLEAN_H
+#pragma once
 
-namespace drizzled
-{
-
-namespace type
-{
+namespace drizzled {
+namespace type {
 
 bool convert(bool &destination, String &source);
 bool convert(bool &destination, const char *source, const size_t source_length);
-bool convert(String &destination, const bool source, bool ansi_display);
+const char* convert(bool source, bool ansi_display);
+void convert(String& destination, bool source, bool ansi_display);
 
 } /* namespace type */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TYPE_BOOLEAN_H */

@@ -17,13 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_STRFUNC_H
-#define DRIZZLED_FUNCTION_STR_STRFUNC_H
+#pragma once
 
 #include <drizzled/function/func.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 /* This file defines all string functions */
 
@@ -38,7 +36,6 @@ public:
   Item_str_func(Item *a,Item *b,Item *c,Item *d) :Item_func(a,b,c,d) {decimals=NOT_FIXED_DEC; }
   Item_str_func(Item *a,Item *b,Item *c,Item *d, Item* e) :Item_func(a,b,c,d,e) {decimals=NOT_FIXED_DEC; }
   Item_str_func(List<Item> &list) :Item_func(list) {decimals=NOT_FIXED_DEC; }
-  virtual ~Item_str_func();
   int64_t val_int();
   double val_real();
   type::Decimal *val_decimal(type::Decimal *);
@@ -49,4 +46,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_FUNCTION_STR_STRFUNC_H */

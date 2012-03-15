@@ -1,4 +1,5 @@
 /* Copyright (C) 2000-2006 MySQL AB
+   Copyright (C) 2011 Stewart Smith
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,13 +21,18 @@
 
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/epoch.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/internal/iocache.h>
 #include <drizzled/plugin/storage_engine.h>
+#include <drizzled/sql_lex.h>
+#include <drizzled/copy_info.h>
+#include <drizzled/file_exchange.h>
+#include <drizzled/util/test.h>
+#include <drizzled/session/transactions.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -51,15 +57,15 @@ class READ_INFO {
   int	*stack,*stack_pos;
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
-  internal::IO_CACHE cache;
+  internal::io_cache_st cache;
 
 public:
   bool error,line_cuted,found_null,enclosed;
   unsigned char	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
-  const CHARSET_INFO *read_charset;
+  const charset_info_st *read_charset;
 
-  READ_INFO(int cursor, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(int cursor, size_t tot_length, const charset_info_st * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -139,27 +145,26 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  util::string::const_shared_ptr schema(session->schema());
+  util::string::ptr schema(session->schema());
   const char *tdb= (schema and not schema->empty()) ? schema->c_str() : table_list->getSchemaName(); // Result should never be null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
-  Session::killed_state_t killed_status= Session::NOT_KILLED;
 
   /* Escape and enclosed character may be a utf8 4-byte character */
   if (escaped->length() > 4 || enclosed->length() > 4)
   {
     my_error(ER_WRONG_FIELD_TERMINATORS,MYF(0),enclosed->c_ptr(), enclosed->length());
-    return(true);
+    return true;
   }
 
   if (session->openTablesLock(table_list))
-    return(true);
+    return true;
 
-  if (setup_tables_and_check_access(session, &session->getLex()->select_lex.context,
-                                    &session->getLex()->select_lex.top_join_list,
+  if (setup_tables_and_check_access(session, &session->lex().select_lex.context,
+                                    &session->lex().select_lex.top_join_list,
                                     table_list,
-                                    &session->getLex()->select_lex.leaf_tables, true))
+                                    &session->lex().select_lex.leaf_tables, true))
      return(-1);
 
   /*
@@ -173,7 +178,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (unique_table(table_list, table_list->next_global))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->getTableName());
-    return(true);
+    return true;
   }
 
   table= table_list->table;
@@ -192,7 +197,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(true);
+      return true;
   }
   else
   {						// Part field list
@@ -200,7 +205,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     if (setup_fields(session, 0, fields_vars, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(session, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         check_that_all_fields_are_given_values(session, table, table_list))
-      return(true);
+      return true;
     /*
       Check whenever TIMESTAMP field with auto-set feature specified
       explicitly.
@@ -218,7 +223,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     }
     /* Fix the expressions in SET clause */
     if (setup_fields(session, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(true);
+      return true;
   }
 
   table->mark_columns_needed_for_insert();
@@ -250,16 +255,16 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   {
     my_message(ER_BLOBS_AND_NO_TERMINATED,ER(ER_BLOBS_AND_NO_TERMINATED),
 	       MYF(0));
-    return(true);
+    return true;
   }
   if (use_vars && !field_term->length() && !enclosed->length())
   {
     my_error(ER_LOAD_FROM_FIXED_SIZE_ROWS_TO_VAR, MYF(0));
-    return(true);
+    return true;
   }
 
   fs::path to_file(ex->file_name);
-  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path target_path(fs::system_complete(catalog::local_identifier().getPath()));
   if (not to_file.has_root_directory())
   {
     int count_elements= 0;
@@ -285,7 +290,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
     {
       /* Read only allowed from within dir specified by secure_file_priv */
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-      return(true);
+      return true;
     }
   }
 
@@ -293,7 +298,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (stat(target_path.file_string().c_str(), &stat_info))
   {
     my_error(ER_FILE_NOT_FOUND, MYF(0), target_path.file_string().c_str(), errno);
-    return(true);
+    return true;
   }
 
   // if we are not in slave thread, the cursor must be:
@@ -303,7 +308,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
          (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
   {
     my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), target_path.file_string().c_str());
-    return(true);
+    return true;
   }
   if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
     is_fifo = 1;
@@ -312,7 +317,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if ((file=internal::my_open(target_path.file_string().c_str(), O_RDONLY,MYF(MY_WME))) < 0)
   {
     my_error(ER_CANT_OPEN_FILE, MYF(0), target_path.file_string().c_str(), errno);
-    return(true);
+    return true;
   }
   CopyInfo info;
   memset(&info, 0, sizeof(info));
@@ -329,7 +334,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   {
     if	(file >= 0)
       internal::my_close(file,MYF(0));			// no files in net reading
-    return(true);				// Can't allocate buffers
+    return true;				// Can't allocate buffers
   }
 
   /*
@@ -390,11 +395,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  /*
-     simulated killing in the middle of per-row loop
-     must be effective for binlogging
-  */
-  killed_status= (error == 0)? Session::NOT_KILLED : session->getKilled();
+
   if (error)
   {
     error= -1;				// Error on read
@@ -408,7 +409,6 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->transaction.stmt.hasModifiedNonTransData())
     session->transaction.all.markModifiedNonTransData();
 
-  /* ok to client sent only after binlog write and engine commit */
   session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
@@ -434,17 +434,14 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
   List<Item>::iterator it(fields_vars.begin());
   Item_field *sql_field;
   Table *table= table_list->table;
-  uint64_t id;
   bool err;
-
-  id= 0;
 
   while (!read_info.read_fixed_length())
   {
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
     if (skip_lines)
     {
@@ -518,12 +515,12 @@ read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
 
     /*
       We don't need to reset auto-increment field since we are restoring
@@ -556,18 +553,16 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
   Item *item;
   Table *table= table_list->table;
   uint32_t enclosed_length;
-  uint64_t id;
   bool err;
 
   enclosed_length=enclosed.length();
-  id= 0;
 
   for (;;it= fields_vars.begin())
   {
     if (session->getKilled())
     {
       session->send_kill_message();
-      return(1);
+      return 1;
     }
 
     table->restoreRecordAsDefault();
@@ -601,7 +596,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0), field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           field->set_null();
           if (not field->maybe_null())
@@ -624,7 +619,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
 
 	continue;
@@ -641,13 +636,12 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
       else if (item->type() == Item::STRING_ITEM)
       {
-        ((Item_user_var_as_out_param *)item)->set_value((char*) pos, length,
-                                                        read_info.read_charset);
+        ((Item_user_var_as_out_param *)item)->set_value(str_ref((char*) pos, length), read_info.read_charset);
       }
       else
       {
         my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-        return(1);
+        return 1;
       }
     }
     if (read_info.error)
@@ -672,7 +666,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
           {
             my_error(ER_WARN_NULL_TO_NOTNULL, MYF(0),field->field_name,
                      session->row_count);
-            return(1);
+            return 1;
           }
           if (not field->maybe_null() and field->is_timestamp())
               ((field::Epoch::pointer) field)->set_time();
@@ -695,7 +689,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
         else
         {
           my_error(ER_LOAD_DATA_INVALID_COLUMN, MYF(0), item->full_name());
-          return(1);
+          return 1;
         }
       }
     }
@@ -703,12 +697,12 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
     if (session->getKilled() ||
         fill_record(session, set_fields, set_values,
                     ignore_check_option_errors))
-      return(1);
+      return 1;
 
     err= write_record(session, table, &info);
     table->auto_increment_field_not_null= false;
     if (err)
-      return(1);
+      return 1;
     /*
       We don't need to reset auto-increment field since we are restoring
       its default value at the beginning of each loop iteration.
@@ -722,7 +716,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                           ER_WARN_TOO_MANY_RECORDS, ER(ER_WARN_TOO_MANY_RECORDS),
                           session->row_count);
       if (session->getKilled())
-        return(1);
+        return 1;
     }
     session->row_count++;
   }
@@ -758,7 +752,7 @@ READ_INFO::unescape(char chr)
 
 
 READ_INFO::READ_INFO(int file_par, size_t tot_length,
-                     const CHARSET_INFO * const cs,
+                     const charset_info_st * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
   :cursor(file_par),escape_char(escape)
@@ -837,7 +831,7 @@ READ_INFO::~READ_INFO()
 }
 
 
-#define GET (stack_pos != stack ? *--stack_pos : my_b_get(&cache))
+#define GET (stack_pos != stack ? *--stack_pos : cache.get())
 #define PUSH(A) *(stack_pos++)=(A)
 
 
@@ -1008,8 +1002,7 @@ int READ_INFO::read_field()
     /*
      ** We come here if buffer is too small. Enlarge it and continue
      */
-    if (!(new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE)))
-      return (error=1);
+    new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE);
     to=new_buffer + (to-buffer);
     buffer=new_buffer;
     buff_length+=IO_SIZE;

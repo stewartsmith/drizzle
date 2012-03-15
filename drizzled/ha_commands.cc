@@ -40,22 +40,20 @@
 
 using namespace std;
 
-namespace drizzled
+namespace drizzled {
+
+KEY_CREATE_INFO default_key_create_info;
+
+const char *ha_row_type[] = 
 {
-
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
-
-const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
-
-
 
 /**
   Register Cursor error messages for use with my_error().
 */
 
-void ha_init_errors(void)
+void ha_init_errors()
 {
   // Set the dedicated error messages.
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_KEY_NOT_FOUND,          ER(ER_KEY_NOT_FOUND));
@@ -99,6 +97,7 @@ void ha_init_errors(void)
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_TABLE_READONLY,         ER(ER_OPEN_AS_READONLY));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_AUTOINC_READ_FAILED,    ER(ER_AUTOINC_READ_FAILED));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_AUTOINC_ERANGE,         ER(ER_WARN_DATA_OUT_OF_RANGE));
+  DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED, N_("Logging a row change (insert, update or delete) for replication failed"));
 }
 
 } /* namespace drizzled */

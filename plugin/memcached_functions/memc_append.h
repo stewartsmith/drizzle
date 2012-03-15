@@ -30,8 +30,7 @@
  *
  */
 
-#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
-#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
+#pragma once
 
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
@@ -72,4 +71,3 @@ public:
 
 };
 
-#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H */

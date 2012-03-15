@@ -19,20 +19,17 @@
  */
 
 #include <config.h>
-#include <boost/lexical_cast.hpp>
 #include "status_helper.h"
+#include <boost/lexical_cast.hpp>
+#include <drizzled/open_tables_state.h>
 #include <drizzled/set_var.h>
 #include <drizzled/drizzled.h>
 #include <plugin/myisam/myisam.h>
-
-#include <drizzled/refresh_version.h>
-
 #include <sstream>
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 extern time_t server_start_time;
 extern time_t flush_status_time;
@@ -67,68 +64,54 @@ static st_show_var_func_container show_flushstatustime_cont_new= { &show_flushst
 
 static st_show_var_func_container show_connection_count_cont_new= { &show_connection_count_new };
 
-string StatusHelper::fillHelper(system_status_var *status_var, char *value, SHOW_TYPE show_type)
+string StatusHelper::fillHelper(system_status_var *status_var, const char *value, SHOW_TYPE show_type)
 {
   ostringstream oss;
-  string return_value;
-
-  switch (show_type) {
+  switch (show_type) 
+  {
   case SHOW_DOUBLE_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_DOUBLE:
     oss.precision(6);
     oss << *(double *) value;
-    return_value= oss.str();
-    break;
+    return oss.str();
   case SHOW_LONG_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    return_value=boost::lexical_cast<std::string>(*(long*) value);
+    return boost::lexical_cast<std::string>(*(long*) value);
     break;
   case SHOW_LONGLONG_STATUS:
     value= ((char *) status_var + (uint64_t) value);
     /* fall through */
   case SHOW_LONGLONG:
-    return_value=boost::lexical_cast<std::string>(*(int64_t*) value);
-    break;
+    return boost::lexical_cast<std::string>(*(int64_t*) value);
   case SHOW_SIZE:
-    return_value=boost::lexical_cast<std::string>(*(size_t*) value);
-    break;
+    return boost::lexical_cast<std::string>(*(size_t*) value);
   case SHOW_HA_ROWS:
-    return_value=boost::lexical_cast<std::string>((int64_t) *(ha_rows*) value);
-    break;
+    return boost::lexical_cast<std::string>((int64_t) *(ha_rows*) value);
   case SHOW_BOOL:
   case SHOW_MY_BOOL:
-    return_value= *(bool*) value ? "ON" : "OFF";
-    break;
+    return *(bool*) value ? "ON" : "OFF";
   case SHOW_INT:
   case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    return_value=boost::lexical_cast<std::string>((long) *(uint32_t*) value);
-    break;
+    return boost::lexical_cast<std::string>((long) *(uint32_t*) value);
   case SHOW_CHAR:
-    {
-      if (value)
-        return_value= value;
-      break;
-    }
+    if (value)
+      return value;
+    break;
   case SHOW_CHAR_PTR:
-    {
-      if (*(char**) value)
-        return_value= *(char**) value;
-
-      break;
-    }
+    if (*(char**) value)
+      return *(char**) value;
+    break;
   case SHOW_UNDEF:
     break;                                        // Return empty string
   case SHOW_SYS:                                  // Cannot happen
   default:
     assert(0);
-    break;
   }
-
-  return return_value;
+  return string();
 }
 
 drizzle_show_var StatusHelper::status_vars_defs[]=
@@ -140,7 +123,7 @@ drizzle_show_var StatusHelper::status_vars_defs[]=
   {"Connections",               (char*) &current_global_counters.connections,  SHOW_LONGLONG},
   {"Created_tmp_disk_tables",   (char*) offsetof(system_status_var, created_tmp_disk_tables), SHOW_LONGLONG_STATUS},
   {"Created_tmp_tables",        (char*) offsetof(system_status_var, created_tmp_tables), SHOW_LONGLONG_STATUS},
-  {"Flush_commands",            (char*) &refresh_version,    SHOW_INT_NOFLUSH},
+  {"Flush_commands",            (char*) &g_refresh_version, SHOW_INT_NOFLUSH},
   {"Handler_commit",            (char*) offsetof(system_status_var, ha_commit_count), SHOW_LONGLONG_STATUS},
   {"Handler_delete",            (char*) offsetof(system_status_var, ha_delete_count), SHOW_LONGLONG_STATUS},
   {"Handler_prepare",           (char*) offsetof(system_status_var, ha_prepare_count),  SHOW_LONGLONG_STATUS},

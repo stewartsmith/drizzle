@@ -21,29 +21,21 @@ using namespace drizzled;
 
 	/* Fetch a key-page in memory */
 
-unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
-			 internal::my_off_t page, int level,
-                         unsigned char *buff, int return_buffer)
+unsigned char *_mi_fetch_keypage(MI_INFO *info, MI_KEYDEF *keyinfo,
+			 internal::my_off_t page, int, unsigned char *buff, int)
 {
-  unsigned char *tmp;
-  uint32_t page_size;
-
-  tmp=(unsigned char*) key_cache_read(info->s->getKeyCache(),
-                             info->s->kfile, page, level, (unsigned char*) buff,
-			     (uint) keyinfo->block_length,
-			     (uint) keyinfo->block_length,
-			     return_buffer);
-  if (tmp == info->buff)
-    info->buff_used=1;
-  else if (!tmp)
+  if (not pread(info->s->kfile, buff, keyinfo->block_length, page))
   {
     info->last_keypage=HA_OFFSET_ERROR;
     mi_print_error(info->s, HA_ERR_CRASHED);
     errno=HA_ERR_CRASHED;
     return(0);
   }
+  unsigned char* tmp= buff;
+  if (tmp == info->buff)
+    info->buff_used=1;
   info->last_keypage=page;
-  page_size=mi_getint(tmp);
+  uint32_t page_size=mi_getint(tmp);
   if (page_size < 4 || page_size > keyinfo->block_length)
   {
     info->last_keypage = HA_OFFSET_ERROR;
@@ -57,10 +49,10 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
 
 	/* Write a key-page on disk */
 
-int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		      internal::my_off_t page, int level, unsigned char *buff)
+int _mi_write_keypage(MI_INFO *info, MI_KEYDEF *keyinfo,
+		      internal::my_off_t page, int, unsigned char *buff)
 {
-  register uint32_t length;
+  uint32_t length;
 
 #ifndef FAST					/* Safety check */
   if (page < info->s->base.keystart ||
@@ -82,18 +74,13 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     length=keyinfo->block_length;
   }
 #endif
-  return((key_cache_write(info->s->getKeyCache(),
-                         info->s->kfile,page, level, (unsigned char*) buff,length,
-			 (uint) keyinfo->block_length,
-			 (int) ((info->lock_type != F_UNLCK) ||
-				info->s->delay_key_write))));
+  return not pwrite(info->s->kfile, buff, length, page);
 } /* mi_write_keypage */
 
 
 	/* Remove page from disk */
 
-int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, internal::my_off_t pos,
-                int level)
+int _mi_dispose(MI_INFO *info, MI_KEYDEF *keyinfo, internal::my_off_t pos, int)
 {
   internal::my_off_t old_link;
   unsigned char buff[8];
@@ -102,17 +89,13 @@ int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, internal::my_off_t p
   info->s->state.key_del[keyinfo->block_size_index]= pos;
   mi_sizestore(buff,old_link);
   info->s->state.changed|= STATE_NOT_SORTED_PAGES;
-  return(key_cache_write(info->s->getKeyCache(),
-                              info->s->kfile, pos , level, buff,
-			      sizeof(buff),
-			      (uint) keyinfo->block_length,
-			      (int) (info->lock_type != F_UNLCK)));
+  return not pwrite(info->s->kfile, buff, sizeof(buff), pos);
 } /* _mi_dispose */
 
 
 	/* Make new page on disk */
 
-internal::my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level)
+internal::my_off_t _mi_new(MI_INFO *info, MI_KEYDEF *keyinfo, int)
 {
   internal::my_off_t pos;
   unsigned char buff[8];
@@ -129,17 +112,10 @@ internal::my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level
     pos=info->state->key_file_length;
     info->state->key_file_length+= keyinfo->block_length;
   }
+  else if (pread(info->s->kfile, buff, sizeof(buff), pos))
+    info->s->state.key_del[keyinfo->block_size_index]= mi_sizekorr(buff);
   else
-  {
-    if (!key_cache_read(info->s->getKeyCache(),
-                        info->s->kfile, pos, level,
-			buff,
-			(uint) sizeof(buff),
-			(uint) keyinfo->block_length,0))
-      pos= HA_OFFSET_ERROR;
-    else
-      info->s->state.key_del[keyinfo->block_size_index]= mi_sizekorr(buff);
-  }
+    pos= HA_OFFSET_ERROR;
   info->s->state.changed|= STATE_NOT_SORTED_PAGES;
   return(pos);
 } /* _mi_new */

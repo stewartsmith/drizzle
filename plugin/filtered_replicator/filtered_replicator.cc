@@ -154,59 +154,59 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
     case message::Statement::INSERT:
     {
       const message::TableMetadata &metadata= in_statement.insert_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::UPDATE:
     {
       const message::TableMetadata &metadata= in_statement.update_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::DELETE:
     {
       const message::TableMetadata &metadata= in_statement.delete_header().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     case message::Statement::CREATE_SCHEMA:
     {
-      in_schema_name.assign(in_statement.create_schema_statement().schema().name());
+      in_schema_name= in_statement.create_schema_statement().schema().name();
       in_table_name.clear();
       break;
     }
     case message::Statement::ALTER_SCHEMA:
     {
-      in_schema_name.assign(in_statement.alter_schema_statement().after().name());
+      in_schema_name= in_statement.alter_schema_statement().after().name();
       in_table_name.clear();
       break;
     }
     case message::Statement::DROP_SCHEMA:
     {
-      in_schema_name.assign(in_statement.drop_schema_statement().schema_name());
+      in_schema_name= in_statement.drop_schema_statement().schema_name();
       in_table_name.clear();
       break;
     }
     case message::Statement::CREATE_TABLE:
     {
-      in_schema_name.assign(in_statement.create_table_statement().table().schema());
-      in_table_name.assign(in_statement.create_table_statement().table().name());
+      in_schema_name= in_statement.create_table_statement().table().schema();
+      in_table_name= in_statement.create_table_statement().table().name();
       break;
     }
     case message::Statement::ALTER_TABLE:
     {
-      in_schema_name.assign(in_statement.alter_table_statement().after().schema());
-      in_table_name.assign(in_statement.alter_table_statement().after().name());
+      in_schema_name= in_statement.alter_table_statement().after().schema();
+      in_table_name= in_statement.alter_table_statement().after().name();
       break;
     }
     case message::Statement::DROP_TABLE:
     {
       const message::TableMetadata &metadata= in_statement.drop_table_statement().table_metadata();
-      in_schema_name.assign(metadata.schema_name());
-      in_table_name.assign(metadata.table_name());
+      in_schema_name= metadata.schema_name();
+      in_table_name= metadata.table_name();
       break;
     }
     default:
@@ -271,13 +271,10 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
      * also keep all entries in the vectors of schemas and tables to filter in
      * lowercase.
      */
-    std::transform(schema_name.begin(), schema_name.end(),
-                  schema_name.begin(), ::tolower);
-    std::transform(table_name.begin(), table_name.end(),
-                  table_name.begin(), ::tolower);
+    boost::to_lower(schema_name);
+    boost::to_lower(table_name);
 
-    if (! isSchemaFiltered(schema_name) &&
-        ! isTableFiltered(table_name))
+    if (! isSchemaFiltered(schema_name) && ! isTableFiltered(table_name))
     {
       message::Statement *s= filtered_transaction.add_statement();
       *s= statement; /* copy contruct */
@@ -305,8 +302,7 @@ void FilteredReplicator::populateFilter(std::string input,
    * Convert the input string to lowercase so that all entries in the vector
    * will be in lowercase.
    */
-  std::transform(input.begin(), input.end(),
-                 input.begin(), ::tolower);
+  boost::to_lower(input);
   string::size_type last_pos= input.find_first_not_of(',', 0);
   string::size_type pos= input.find_first_of(',', last_pos);
 
@@ -321,9 +317,7 @@ void FilteredReplicator::populateFilter(std::string input,
 bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 {
   pthread_mutex_lock(&sch_vector_lock);
-  std::vector<string>::iterator it= find(schemas_to_filter.begin(),
-                                         schemas_to_filter.end(),
-                                         schema_name);
+  std::vector<string>::iterator it= find(schemas_to_filter.begin(), schemas_to_filter.end(), schema_name);
   if (it != schemas_to_filter.end())
   {
     pthread_mutex_unlock(&sch_vector_lock);
@@ -338,18 +332,9 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
    */
   if (not _sch_regex.empty())
   {
-    int32_t result= pcre_exec(sch_re,
-                              NULL,
-                              schema_name.c_str(),
-                              schema_name.length(),
-                              0,
-                              0,
-                              NULL,
-                              0);
+    int32_t result= pcre_exec(sch_re, NULL, schema_name.c_str(), schema_name.length(), 0, 0, NULL, 0);
     if (result >= 0)
-    {
       return true;
-    }
   }
 
   return false;
@@ -358,9 +343,7 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 bool FilteredReplicator::isTableFiltered(const string &table_name)
 {
   pthread_mutex_lock(&tab_vector_lock);
-  std::vector<string>::iterator it= find(tables_to_filter.begin(),
-                                         tables_to_filter.end(),
-                                         table_name);
+  std::vector<string>::iterator it= find(tables_to_filter.begin(), tables_to_filter.end(), table_name);
   if (it != tables_to_filter.end())
   {
     pthread_mutex_unlock(&tab_vector_lock);
@@ -375,18 +358,9 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
    */
   if (not _tab_regex.empty())
   {
-    int32_t result= pcre_exec(tab_re,
-                              NULL,
-                              table_name.c_str(),
-                              table_name.length(),
-                              0,
-                              0,
-                              NULL,
-                              0);
+    int32_t result= pcre_exec(tab_re, NULL, table_name.c_str(), table_name.length(), 0, 0, NULL, 0);
     if (result >= 0)
-    {
       return true;
-    }
   }
 
   return false;
@@ -407,8 +381,7 @@ void FilteredReplicator::parseQuery(const string &sql,
    * Convert the type string to uppercase here so that it doesn't
    * matter what case the user entered the statement in.
    */
-  std::transform(type.begin(), type.end(),
-                 type.begin(), ::toupper);
+  boost::to_upper(type);
 
   if (type.compare("DROP") == 0)
   {
@@ -425,11 +398,11 @@ void FilteredReplicator::parseQuery(const string &sql,
     {
       /* the name must be the fifth word */
       pos= sql.find_first_of(' ', 21);
-      target_name.assign(sql.substr(21, pos - 21));
+      target_name= sql.substr(21, pos - 21);
     }
     else
     {
-      target_name.assign(cmp_str);
+      target_name= cmp_str;
     }
     /*
      * Determine whether the name is a concatenation of the schema
@@ -442,15 +415,15 @@ void FilteredReplicator::parseQuery(const string &sql,
       /*
        * There is a schema name here...
        */
-      schema_name.assign(target_name.substr(0, pos));
+      schema_name= target_name.substr(0, pos);
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(target_name.substr(pos + 1));
+      table_name= target_name.substr(pos + 1);
     }
     else
     {
-      table_name.assign(target_name);
+      table_name= target_name;
     }
   }
   else if (type.compare("CREATE") == 0)
@@ -473,15 +446,15 @@ void FilteredReplicator::parseQuery(const string &sql,
       /*
        * There is a schema name here...
        */
-      schema_name.assign(target_name.substr(0, pos));
+      schema_name= target_name.substr(0, pos);
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(target_name.substr(pos + 1));
+      table_name= target_name.substr(pos + 1);
     }
     else
     {
-      table_name.assign(target_name);
+      table_name= target_name;
     }
   }
   else
@@ -495,7 +468,7 @@ void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
   pthread_mutex_lock(&sysvar_sch_lock);
-  _sch_filter.assign(input);
+  _sch_filter= input;
   schemas_to_filter.clear();
   populateFilter(_sch_filter, schemas_to_filter);
   pthread_mutex_unlock(&sysvar_sch_lock);
@@ -506,7 +479,7 @@ void FilteredReplicator::setTableFilter(const string &input)
 {
   pthread_mutex_lock(&tab_vector_lock);
   pthread_mutex_lock(&sysvar_tab_lock);
-  _tab_filter.assign(input);
+  _tab_filter= input;
   tables_to_filter.clear();
   populateFilter(_tab_filter, tables_to_filter);
   pthread_mutex_unlock(&sysvar_tab_lock);
@@ -518,9 +491,6 @@ static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicato
 static int filtered_schemas_validate(Session*, set_var *var)
 {
   const char *input= var->value->str_value.ptr();
-  if (input == NULL)
-    return 1;
-
   if (input && filtered_replicator)
   {
     filtered_replicator->setSchemaFilter(input);
@@ -533,9 +503,6 @@ static int filtered_schemas_validate(Session*, set_var *var)
 static int filtered_tables_validate(Session*, set_var *var)
 {
   const char *input= var->value->str_value.ptr();
-  if (input == NULL)
-    return 1;
-
   if (input && filtered_replicator)
   {
     filtered_replicator->setTableFilter(input);
@@ -589,4 +556,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "filtered_replicator",
+  "0.2",
+  "Padraig O Sullivan",
+  N_("Replicates events filtered by schema or table name"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

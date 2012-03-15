@@ -22,7 +22,6 @@
 #include <gcrypt.h>
 
 #include <drizzled/charset.h>
-#include <drizzled/charset_info.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
@@ -33,15 +32,12 @@ using namespace drizzled;
 class Md5Function : public Item_str_func
 {
 public:
-  Md5Function() : Item_str_func() {}
   String *val_str(String*);
 
   void fix_length_and_dec() 
   {
     max_length= 32;
-    args[0]->collation.set(
-      get_charset_by_csname(args[0]->collation.collation->csname,
-                            MY_CS_BINSORT), DERIVATION_COERCIBLE);
+    args[0]->collation.set(get_charset_by_csname(args[0]->collation.collation->csname, MY_CS_BINSORT), DERIVATION_COERCIBLE);
   }
 
   const char *func_name() const 
@@ -61,11 +57,12 @@ String *Md5Function::val_str(String *str)
   assert(fixed == true);
 
   String *sptr= args[0]->val_str(str);
-  if (sptr == NULL || str->alloc(32)) 
+  if (sptr == NULL) 
   {
     null_value= true;
     return 0;
   }
+  str->alloc(32);
 
   null_value= false;
 
@@ -89,9 +86,6 @@ String *Md5Function::val_str(String *str)
   return str;
 }
 
-
-plugin::Create_function<Md5Function> *md5udf= NULL;
-
 static int initialize(module::Context &context)
 {
   /* Initialize libgcrypt */
@@ -106,8 +100,7 @@ static int initialize(module::Context &context)
   /* Tell Libgcrypt that initialization has completed. */
   gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
 
-  md5udf= new plugin::Create_function<Md5Function>("md5");
-  context.add(md5udf);
+  context.add(new plugin::Create_function<Md5Function>("md5"));
   return 0;
 }
 
@@ -117,10 +110,10 @@ DRIZZLE_DECLARE_PLUGIN
   "md5",
   "1.0",
   "Stewart Smith",
-  "UDF for computing md5sum",
+  N_("MD5 function"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

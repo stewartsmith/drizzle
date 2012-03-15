@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_UNIQUE_H
-#define DRIZZLED_UNIQUE_H
+#pragma once
 
 #include <drizzled/tree.h>
 /*
@@ -35,13 +34,13 @@ namespace drizzled
 
 namespace internal
 {
-typedef struct st_io_cache IO_CACHE;
+struct st_io_cache;
 }
 
 class Unique : public memory::SqlAlloc
 {
   size_t max_in_memory_size;
-  TREE tree;
+  Tree tree;
   unsigned char *record_pointers;
   uint32_t size;
 
@@ -50,10 +49,10 @@ public:
   Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
 	 uint32_t size_arg, size_t max_in_memory_size_arg);
   ~Unique();
-  ulong elements_in_tree() { return tree.elements_in_tree; }
+  ulong elements_in_tree() { return tree.getElementsInTree(); }
   inline bool unique_add(void *ptr)
   {
-    return (not tree_insert(&tree, ptr, 0, tree.custom_arg));
+    return (not tree.tree_insert(ptr, 0, tree.getCustomArg()));
   }
 
   bool get(Table *table);
@@ -63,7 +62,7 @@ public:
                                             size_t sortbuff_size)
   {
     register size_t max_elems_in_tree=
-      (1 + sortbuff_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
+      (1 + sortbuff_size / ALIGN_SIZE(sizeof(Tree_Element)+key_size));
     return (int) (sizeof(uint32_t)*(1 + nkeys/max_elems_in_tree));
   }
 
@@ -76,4 +75,3 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_UNIQUE_H */

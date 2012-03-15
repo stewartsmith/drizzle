@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CATALOG_CACHE_H
-#define DRIZZLED_CATALOG_CACHE_H
+#pragma once
 
 #include <boost/bind.hpp>
 
+#include <drizzled/identifier.h>
 #include <drizzled/error.h>
 #include <drizzled/catalog.h>
 #include <drizzled/plugin/catalog.h>
@@ -31,63 +31,28 @@
 #include <boost/thread/mutex.hpp>
 
 namespace drizzled {
-
-namespace plugin {
-class Catalog;
-}
-namespace generator {
-namespace catalog {
-class Cache;
-class Instance;
-
-} //namespace catalog
-} //namespace generator
-
-namespace catalog {
-
-namespace lock {
-class Create;
-class Erase;
-
-} //namespace lock
+namespace catalog  {
 
 class Cache
 {
-  static inline Cache &singleton()
-  {
-    static Cache open_cache;
-
-    return open_cache;
-  }
-
-  size_t size() const
+public:
+  static size_t size()
   {
     return cache.size();
   }
 
-  void rehash(size_t arg)
-  {
-    cache.rehash(arg);
-  }
+  static Instance::shared_ptr find(const identifier::Catalog&, error_t&);
+  static bool exist(const identifier::Catalog&);
+  static bool erase(const identifier::Catalog&, error_t&);
+  static bool insert(const identifier::Catalog&, Instance::shared_ptr, error_t&);
+  static bool lock(const identifier::Catalog&, error_t&);
+  static bool unlock(const identifier::Catalog&, error_t&);
+  static void copy(catalog::Instance::vector&);
 
-  Instance::shared_ptr find(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool exist(const identifier::Catalog &identifier);
-  bool erase(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool insert(const identifier::Catalog &identifier, Instance::shared_ptr instance, drizzled::error_t &error);
-  bool lock(const identifier::Catalog &identifier, drizzled::error_t &error);
-  bool unlock(const identifier::Catalog &identifier, drizzled::error_t &error);
+  typedef boost::unordered_map<identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
 
-  friend class drizzled::generator::catalog::Cache;
-  friend class drizzled::plugin::Catalog;
-  friend class drizzled::catalog::lock::Erase;
-  friend class drizzled::catalog::lock::Create;
-
-  void copy(catalog::Instance::vector &vector);
-
-  typedef boost::unordered_map< identifier::Catalog, catalog::Instance::shared_ptr> unordered_map;
-
-  unordered_map cache;
-  boost::mutex _mutex;
+  static unordered_map cache;
+  static boost::mutex _mutex;
 };
 
 
@@ -97,7 +62,7 @@ class Erase
 {
   bool _locked;
   const identifier::Catalog &identifier;
-  drizzled::error_t error;
+  error_t error;
 
 public:
   Erase(const identifier::Catalog &identifier_arg) :
@@ -116,7 +81,7 @@ public:
   {
     if (_locked)
     {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
+      if (not catalog::Cache::unlock(identifier, error))
       {
         my_error(error, identifier);
         assert(0);
@@ -128,7 +93,7 @@ private:
   void init()
   {
     // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
+    if (not catalog::Cache::lock(identifier, error))
     {
       assert(0);
       return;
@@ -143,7 +108,7 @@ class Create
 {
   bool _locked;
   const identifier::Catalog &identifier;
-  drizzled::error_t error;
+  error_t error;
 
 public:
   Create(const identifier::Catalog &identifier_arg) :
@@ -162,7 +127,7 @@ public:
   {
     if (_locked)
     {
-      if (not catalog::Cache::singleton().unlock(identifier, error))
+      if (not catalog::Cache::unlock(identifier, error))
       {
         my_error(error, identifier);
         assert(0);
@@ -175,7 +140,7 @@ private:
   void init()
   {
     // We insert a lock into the cache, if this fails we bail.
-    if (not catalog::Cache::singleton().lock(identifier, error))
+    if (not catalog::Cache::lock(identifier, error))
     {
       my_error(error, identifier);
       return;
@@ -189,4 +154,3 @@ private:
 } /* namespace catalog */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CATALOG_CACHE_H */

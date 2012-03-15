@@ -24,8 +24,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef DRIZZLED_UTF8_CORE_H
-#define DRIZZLED_UTF8_CORE_H
+#pragma once
  
  #include <iterator>
  
@@ -349,6 +348,5 @@ namespace internal
 } // namespace utf8
 } // namespace drizzled
 
-#endif /* DRIZZLED_UTF8_CORE_H */
 
 

@@ -27,9 +27,13 @@
 #include <boost/program_options.hpp>
 #include <pthread.h>
 
+#include <drizzled/definitions.h>
+#include <drizzled/internal/my_sys.h>
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 #include <drizzled/configmake.h>
+
+#include "user_detect.h"
 
 namespace po= boost::program_options;
 using namespace std;
@@ -197,11 +201,20 @@ static drizzle_con_st *db_connect(const string host, const string database,
   drizzle_return_t ret;
 
   if (verbose)
+  {
     fprintf(stdout, "Connecting to %s, using protocol %s...\n", ! host.empty() ? host.c_str() : "localhost", opt_protocol.c_str());
-  if (!(drizzle= drizzle_create(NULL)))
+  }
+
+  if ((drizzle= drizzle_create()) == NULL)
+  {
     return 0;
-  if (!(con= drizzle_con_add_tcp(drizzle,NULL,(char *)host.c_str(),opt_drizzle_port,(char *)user.c_str(),(char *)passwd.c_str(),
-                                 (char *)database.c_str(), use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
+  }
+
+  if (!(con= drizzle_con_add_tcp(drizzle,
+                                 host.c_str(), opt_drizzle_port,
+                                 user.c_str(), passwd.c_str(),
+                                 database.c_str(),
+                                 use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)))
   {
     return 0;
   }
@@ -350,8 +363,6 @@ int main(int argc, char **argv)
 {
 try
 {
-  int error=0;
-
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
 
@@ -397,8 +408,6 @@ try
   "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
-  const char* unix_user= getlogin();
-
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
@@ -409,7 +418,7 @@ try
   "Port number to use for connection") 
   ("protocol", po::value<string>(&opt_protocol)->default_value("mysql"),
   "The protocol of connection (mysql or drizzle).")
-  ("user,u", po::value<string>(&current_user)->default_value((unix_user ? unix_user : "")),
+  ("user,u", po::value<string>(&current_user)->default_value(UserDetect().getUser()),
   "User for login if not current user.")
   ;
 
@@ -461,9 +470,7 @@ try
   po::notify(vm);
   if (vm.count("protocol"))
   {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
+    boost::to_lower(opt_protocol);
     if (not opt_protocol.compare("mysql"))
       use_drizzle_protocol=false;
     else if (not opt_protocol.compare("drizzle"))
@@ -601,7 +608,7 @@ try
     }
 
     for (; *argv != NULL; argv++)
-      if ((error= write_to_table(*argv, con)))
+      if (int error= write_to_table(*argv, con))
         if (exitcode == 0)
           exitcode= error;
     db_disconnect(current_host, con);

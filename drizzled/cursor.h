@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_CURSOR_H
-#define DRIZZLED_CURSOR_H
+#pragma once
 
 #include <drizzled/atomics.h>
 #include <drizzled/definitions.h>
@@ -37,46 +36,20 @@
 
 #include <drizzled/visibility.h>
 
-namespace drizzled
-{
+namespace drizzled {
 
 #define HA_MAX_ALTER_FLAGS 40
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
-class AlterInfo;
-class CreateField;
-class ForeignKeyInfo;
-class Item;
-class Item_ident;
-class LEX;
-class Select_Lex;
-class Select_Lex_Unit;
-class String;
-class Table;
-class TableList;
-class TableShare;
-class select_result;
-class sys_var_str;
-struct Order;
-
 typedef List<Item> List_item;
 extern KEY_CREATE_INFO default_key_create_info;
-
-/* Forward declaration for condition pushdown to storage engine */
-typedef class Item COND;
-
-typedef struct system_status_var system_status_var;
-
-namespace optimizer { class CostVector; }
-namespace plugin { class StorageEngine; }
 
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
 */
-template<class T>
-inline key_part_map make_keypart_map(T a)
+inline key_part_map make_keypart_map(int a)
 {
   return (((key_part_map)2 << a) - 1);
 }
@@ -85,8 +58,7 @@ inline key_part_map make_keypart_map(T a)
   bitmap with first N bits set
   (keypart_map for a key prefix of [0..N-1] keyparts)
 */
-template<class T>
-inline key_part_map make_prev_keypart_map(T a)
+inline key_part_map make_prev_keypart_map(int a)
 {
   return (((key_part_map)1 << a) - 1);
 }
@@ -198,7 +170,7 @@ public:
     get_auto_increment().
   */
   uint64_t next_insert_id;
-  uint64_t getNextInsertId()
+  uint64_t getNextInsertId() const
   {
     return next_insert_id;
   }
@@ -206,7 +178,7 @@ public:
   /**
     Used by SHOW TABLE STATUS to get the current auto_inc from the engine
   */
-  uint64_t getAutoIncrement()
+  uint64_t getAutoIncrement() const
   {
     return stats.auto_increment_value;
   }
@@ -251,20 +223,17 @@ public:
   int updateRecord(const unsigned char * old_data, unsigned char * new_data) __attribute__ ((warn_unused_result));
   int deleteRecord(const unsigned char * buf) __attribute__ ((warn_unused_result));
   void ha_release_auto_increment();
-
-  /** to be actually called to get 'check()' functionality*/
-  int ha_check(Session *session, HA_CHECK_OPT *check_opt);
-
+  int ha_check(Session*);
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
+  int ha_analyze(Session*);
 
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void closeMarkForDelete(const char *name);
+  void closeMarkForDelete();
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -631,7 +600,7 @@ private:
     no new engine should ever use it). Right
     now HEAP does rely on it, so we cannot remove it.
   */
-  virtual void drop_table(const char *name);
+  virtual void drop_table();
 };
 
 extern const char *ha_row_type[];
@@ -639,7 +608,6 @@ extern const char *ha_row_type[];
 /* basic stuff */
 void ha_init_errors(void);
 
-class SortField;
 SortField *make_unireg_sortorder(Order *order, uint32_t *length,
                                  SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
@@ -680,8 +648,8 @@ bool create_table_no_lock(Session *session,
                           bool is_if_not_exists);
 
 bool create_like_table(Session* session,
-                       identifier::Table::const_reference destination_identifier,
-                       identifier::Table::const_reference source_identifier,
+                       const identifier::Table& destination_identifier,
+                       const identifier::Table& source_identifier,
                        message::Table &create_table_proto,
                        bool is_if_not_exists,
                        bool is_engine_set);
@@ -746,4 +714,3 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_CURSOR_H */

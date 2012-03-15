@@ -1,0 +1,136 @@
+# vim:ft=automake
+#
+# Drizzle Client Library
+#
+# Copyright (C) 2008 Eric Day (eday@oddments.org)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#
+#     * The names of its contributors may not be used to endorse or
+# promote products derived from this software without specific prior
+# written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+noinst_LTLIBRARIES+= libdrizzle-2.0/libdrizzle-2.0.la
+
+if HAVE_LIBSQLITE3
+SQLITE_PROGS= examples/sqlite_server
+endif
+
+noinst_PROGRAMS+= \
+		  $(SQLITE_PROGS) \
+		  examples/client \
+		  examples/pipe_query \
+		  examples/proxy \
+		  examples/server \
+		  examples/simple \
+		  examples/simple_multi
+
+libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
+					   ${AM_CXXFLAGS} \
+					   ${CFLAG_VISIBILITY} \
+					   -DBUILDING_LIBDRIZZLE
+
+libdrizzle_2_0_libdrizzle_2_0_la_LDFLAGS= \
+					  $(AM_LDFLAGS) \
+					  $(GCOV_LIBS)
+libdrizzle_2_0_libdrizzle_2_0_la_SOURCES= \
+					  libdrizzle-2.0/column.cc \
+					  libdrizzle-2.0/command.cc \
+					  libdrizzle-2.0/conn.cc \
+					  libdrizzle-2.0/conn_uds.cc \
+					  libdrizzle-2.0/drizzle.cc \
+					  libdrizzle-2.0/field.cc \
+					  libdrizzle-2.0/handshake.cc \
+					  libdrizzle-2.0/pack.cc \
+					  libdrizzle-2.0/query.cc \
+					  libdrizzle-2.0/result.cc \
+					  libdrizzle-2.0/row.cc \
+					  libdrizzle-2.0/sha1.cc \
+					  libdrizzle-2.0/state.cc
+
+examples_server_SOURCES= examples/server.cc
+examples_server_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+examples_proxy_SOURCES= examples/proxy.cc
+examples_proxy_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+examples_client_SOURCES= examples/client.cc
+examples_client_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+examples_simple_SOURCES= examples/simple.cc
+examples_simple_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+examples_simple_multi_SOURCES= examples/simple_multi.cc
+examples_simple_multi_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+examples_pipe_query_SOURCES= examples/pipe_query.cc
+examples_pipe_query_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+
+if HAVE_LIBSQLITE3
+examples_sqlite_server_LDFLAGS= libdrizzle-2.0/libdrizzle-2.0.la $(LTLIBSQLITE3)
+examples_sqlite_server_DEPENDENCIES= libdrizzle-2.0/libdrizzle-2.0.la
+examples_sqlite_server_SOURCES= examples/sqlite_server.cc
+endif
+
+noinst_HEADERS+= \
+		 libdrizzle-2.0/column.h \
+		 libdrizzle-2.0/column_client.h \
+		 libdrizzle-2.0/column_server.h \
+		 libdrizzle-2.0/command.h \
+		 libdrizzle-2.0/command_client.h \
+		 libdrizzle-2.0/command_server.h \
+		 libdrizzle-2.0/common.h \
+		 libdrizzle-2.0/conn.h \
+		 libdrizzle-2.0/conn_client.h \
+		 libdrizzle-2.0/conn_local.h \
+		 libdrizzle-2.0/conn_server.h \
+		 libdrizzle-2.0/constants.h \
+		 libdrizzle-2.0/deprecated_enum.h \
+		 libdrizzle-2.0/drizzle.h \
+		 libdrizzle-2.0/drizzle_client.h \
+		 libdrizzle-2.0/drizzle_local.h \
+		 libdrizzle-2.0/drizzle_server.h \
+		 libdrizzle-2.0/field_client.h \
+		 libdrizzle-2.0/field_server.h \
+		 libdrizzle-2.0/handshake_client.h \
+		 libdrizzle-2.0/handshake_server.h \
+		 libdrizzle-2.0/libdrizzle.h \
+		 libdrizzle-2.0/libdrizzle.hpp \
+		 libdrizzle-2.0/limits.h \
+		 libdrizzle-2.0/pack.h \
+		 libdrizzle-2.0/query.h \
+		 libdrizzle-2.0/result.h \
+		 libdrizzle-2.0/result_client.h \
+		 libdrizzle-2.0/result_server.h \
+		 libdrizzle-2.0/return.h \
+		 libdrizzle-2.0/row_client.h \
+		 libdrizzle-2.0/row_server.h \
+		 libdrizzle-2.0/sha1.h \
+		 libdrizzle-2.0/state.h \
+		 libdrizzle-2.0/structs.h \
+		 libdrizzle-2.0/verbose.h \
+		 libdrizzle-2.0/visibility.h

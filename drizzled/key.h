@@ -18,8 +18,7 @@
  */
 
 
-#ifndef DRIZZLED_KEY_H
-#define DRIZZLED_KEY_H
+#pragma once
 
 #include <string>
 #include <boost/dynamic_bitset.hpp>
@@ -31,26 +30,19 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/handler_structs.h>
 
-namespace drizzled
+namespace drizzled {
+
+class Key : public memory::SqlAlloc 
 {
-
-namespace memory { class Root; }
-
-class Item;
-
-class Key :public memory::SqlAlloc {
 public:
-  enum Keytype { PRIMARY, UNIQUE, MULTIPLE, FOREIGN_KEY};
+  enum Keytype { PRIMARY, UNIQUE, MULTIPLE, FOREIGN_KEY };
   Keytype type;
   KEY_CREATE_INFO key_create_info;
   List<Key_part_spec> columns;
-  LEX_STRING name;
+  str_ref name;
   bool generated;
 
-  Key(Keytype type_par,
-      const lex_string_t &name_arg,
-      KEY_CREATE_INFO *key_info_arg,
-      bool generated_arg, List<Key_part_spec> &cols) :
+  Key(Keytype type_par, str_ref name_arg, KEY_CREATE_INFO *key_info_arg, bool generated_arg, List<Key_part_spec> &cols) :
     type(type_par),
     key_create_info(*key_info_arg),
     columns(cols),
@@ -58,29 +50,13 @@ public:
     generated(generated_arg)
   {}
 
-  Key(Keytype type_par,
-      const char *name_arg,
-      size_t name_len_arg,
-      KEY_CREATE_INFO *key_info_arg,
-      bool generated_arg,
-      List<Key_part_spec> &cols) :
-    type(type_par),
-    key_create_info(*key_info_arg),
-    columns(cols),
-    generated(generated_arg)
-  {
-    name.str= const_cast<char *>(name_arg);
-    name.length= name_len_arg;
-  }
-
   virtual ~Key() {}
   /* Equality comparison of keys (ignoring name) */
   friend bool foreign_key_prefix(Key *a, Key *b);
 };
 
 
-int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field,
-                 uint32_t *key_length, uint32_t *keypart);
+int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field, uint32_t *key_length, uint32_t *keypart);
 /**
   Copy part of a record that forms a key or key prefix to a buffer.
 
@@ -97,10 +73,8 @@ int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field 
 */
 
 DRIZZLED_API void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
-void key_copy(std::basic_string<unsigned char> &to_key,
-              unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
-void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info,
-                 uint16_t key_length);
+void key_copy(std::basic_string<unsigned char> &to_key, unsigned char *from_record, KeyInfo *key_info, uint32_t key_length);
+void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info, uint16_t key_length);
 void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info);
 bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
 void key_unpack(String *to, const Table *form,uint32_t index);
@@ -108,5 +82,3 @@ bool is_key_used(Table *table, uint32_t idx, const boost::dynamic_bitset<>& fiel
 int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length);
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_KEY_H */

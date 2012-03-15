@@ -18,29 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_LIST_H
-#define DRIZZLED_TABLE_LIST_H
+#pragma once
 
 #include <drizzled/nested_join.h>
 #include <drizzled/table.h>
 
-namespace drizzled
-{
-
-class Index_hint;
-class COND_EQUAL;
-class Natural_join_column;
-class select_union;
-class Select_Lex_Unit;
-class Select_Lex;
-class Tmp_Table_Param;
-class Item_subselect;
-class Table;
-
-namespace plugin
-{
-  class StorageEngine;
-}
+namespace drizzled {
 
 /**
  * A Table referenced in the FROM clause.
@@ -79,7 +62,7 @@ public:
     next_local(NULL),
     next_global(NULL),
     prev_global(NULL),
-    db(NULL),
+    schema(NULL),
     alias(NULL),
     table_name(NULL),
     option(NULL),
@@ -103,8 +86,6 @@ public:
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
-    db_length(0),
-    table_name_length(0),
     dep_tables(0),
     on_expr_dep_tables(0),
     nested_join(NULL),
@@ -115,7 +96,8 @@ public:
     is_alias(false),
     is_fqtn(false),
     create(false)
-  {}
+  {
+  }
 
   /**
    * List of tables local to a subquery (used by SQL_LIST). Considers
@@ -129,41 +111,36 @@ public:
   TableList **prev_global;
 
 private:
-  char *db;
+  const char* schema;
 
 public:
-  const char *getSchemaName()
+  const char *getSchemaName() const
   {
-    return db;
+    return schema;
   }
 
-  char **getSchemaNamePtr()
+  void setSchemaName(const char* v)
   {
-    return &db;
-  }
-
-  void setSchemaName(char *arg)
-  {
-    db= arg;
+    schema= v;
   }
 
   const char *alias;
 
 private:
-  const char *table_name;
+  const char* table_name;
 
 public:
-  const char *getTableName()
+  const char *getTableName() const
   {
     return table_name;
   }
 
-  void setTableName(const char *arg)
+  void setTableName(const char* v)
   {
-    table_name= arg;
+    table_name= v;
   }
 
-  char *option; ///< Used by cache index
+  const char *option; ///< Used by cache index
   Item *on_expr; ///< Used with outer join
   Table *table; ///< opened table
   /**
@@ -237,8 +214,6 @@ public:
   TableList *next_leaf;
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
-  size_t db_length;
-  size_t table_name_length;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -264,7 +239,7 @@ public:
    * @retval
    *  true - out of memory
    */
-  bool set_insert_values(memory::Root *mem_root);
+  void set_insert_values();
   /**
    * Find underlying base tables (TableList) which represent given
    * table_to_find (Table)
@@ -323,7 +298,7 @@ public:
    * @retval
    *  true if a leaf, false otherwise.
    */
-  bool is_leaf_for_name_resolution();
+  bool is_leaf_for_name_resolution() const;
   inline TableList *top_table()
   { return this; }
 
@@ -395,9 +370,9 @@ public:
   friend std::ostream& operator<<(std::ostream& output, const TableList &list)
   {
     output << "TableList:(";
-    output << list.db;
+    output << list.getSchemaName();
     output << ", ";
-    output << list.table_name;
+    output << list.getTableName();
     output << ", ";
     output << list.alias;
     output << ", ";
@@ -555,4 +530,3 @@ void close_thread_tables(Session *session);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_LIST_H */

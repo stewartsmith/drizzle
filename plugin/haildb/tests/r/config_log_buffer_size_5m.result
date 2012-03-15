@@ -1,6 +1,0 @@
-SHOW VARIABLES LIKE 'innodb_log_buffer_size';
-Variable_name	Value
-innodb_log_buffer_size	5242880
-SELECT * FROM DATA_DICTIONARY.HAILDB_CONFIGURATION WHERE NAME='log_buffer_size';
-NAME	TYPE	VALUE
-log_buffer_size	ULINT	5242880

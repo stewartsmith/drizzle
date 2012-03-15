@@ -1,0 +1,36 @@
+# mysql_migrate.basic
+# simple test to ensure that we can get data from a MySQL
+
+let $datafile = $DRIZZLETEST_VARDIR/std_data_ln/mysqlmigrate_integer_type.dat;
+let $database = drizzledump_migrate_test;
+
+--source suite/mysql_migrate/include/drizzledump_migrate.inc
+
+--echo test our table:
+--echo tinyint
+eval SHOW CREATE TABLE $database.tinyint_table;
+eval SELECT * FROM $database.tinyint_table;
+
+--echo smallint
+eval SHOW CREATE TABLE $database.smallint_table;
+eval SELECT * FROM $database.smallint_table;
+
+--echo mediumint
+eval SHOW CREATE TABLE $database.mediumint_table;
+eval SELECT * FROM $database.mediumint_table;
+
+--echo test int(4) mysql extension
+eval SHOW CREATE TABLE $database.int_ext;
+
+--echo int
+eval SHOW CREATE TABLE $database.int_table;
+eval SELECT * FROM $database.int_table;
+
+--echo bigint
+eval SHOW CREATE TABLE $database.bigint_table;
+eval SELECT * FROM $database.bigint_table;
+
+
+--source suite/mysql_migrate/include/mysql_cleanup.inc
+
+eval DROP SCHEMA $database;
