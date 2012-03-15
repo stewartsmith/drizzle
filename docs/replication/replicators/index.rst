@@ -3,7 +3,7 @@
 .. _replication_replicators:
 
 Replicators
-===========
+***********
 
 Replicators are one end point of a
 :ref:`replication stream <replication_streams>` which provide an interface

@@ -65,7 +65,7 @@ To run Drizzle in the background, thereby keeping the database running if the us
 With the master running, you can optionally now create a backup of any databases to be imported on the new slave by using :doc:`/clients/drizzledump`. This example, however, assumes that we are starting with a fresh database with no data.
 
 Slave Setup
--------------
+-----------
 
 Starting the slave is very similar to starting the master. There are two Drizzle database server options required for the slave: --plugin-add=slave and --slave.config-file. For example: ::
 

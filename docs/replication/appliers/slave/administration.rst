@@ -3,27 +3,45 @@
 .. _slave_admin:
 
 Slave Administration
-********************
-
-This page walks you through some common administration tasks when using
-the replication slave plugin.
-
-Monitoring the Slave
 ====================
 
-On the slave server, the :ref:`slave` plugin uses two threads per master to read and apply replication events:
+.. _slave_threads:
+
+Slave Threads
+=============
+
+The :ref:`slave` plugin uses two threads per master to read and apply replication events:
 
 * An IO (or producer) thread
 * An applier (or consumer) thread
 
-An IO thread connects to a master and reads replication events from the :ref:`innodb_transaction_log` on the master.  An applier thread applies the replication events to the slave.  The status of these threads is stored in :ref:`sys_replication_tables`.
+The IO thread connects to a master and reads replication events from the :ref:`slave_innodb_transaction_log` on the master.  The applier thread applies the replication events from the IO thread to the slave.  In other words, the IO thread produces replication events from the master, and the applier thread consumes and applies them to the slave.
+
+There is currently no way to stop, start, or restart the threads.  Unless a replication error occurs, the threads should function continuously and remain in :ref:`RUNNING <slave_thread_running_status>` status.  If a replication error does occur, the Drizzle server must be stopped, the error fixed, and the server restarted.
+
+.. _slave_thread_statuses:
+
+Statuses
+--------
+
+Slave thread statuses are indicated by the ``status`` columns of the :ref:`sys_replication_tables`.  A slave thread status is always one of these values:
+
+.. _slave_thread_running_status:
+
+RUNNING
+   The thread is working properly, applying replicaiton events.
+
+.. _slave_thread_stopped_status:
+
+STOPPED
+   The thread has stopped due to an error; replication events are not being applied.
 
 .. _sys_replication_tables:
 
 sys_replication Tables
-----------------------
+======================
 
-The ``sys_replication`` schema on the slave has tables with information about the slave's threads:
+The ``sys_replication`` schema on the slave has tables with information about the state of :ref:`slave_threads` and other replication-related information:
 
 .. code-block:: mysql
 
@@ -38,10 +56,12 @@ The ``sys_replication`` schema on the slave has tables with information about th
 
 If the ``sys_replication`` table is not available, then the :ref:`slave` plugin failed to load.
 
-io_state
-^^^^^^^^
+.. _sys_replication_io_state:
 
-``sys_replication.io_state`` contains the status of IO threads:
+io_state
+--------
+
+``sys_replication.io_state`` contains the state of IO threads, one per row:
 
 .. code-block:: mysql
 
@@ -55,15 +75,17 @@ master_id
    ID (number) of the master to which the thread is connected.  The number corresponds to the the master number in the :ref:`slave_config_file`.
 
 status
-   Status of the IO thread: **RUNNING** or **STOPPED**.  If **STOPPED**, ``error_msg`` should contain an error message.
+   :ref:`Status <slave_thread_statuses>` of the IO thread.
 
 error_msg
-   Error message explaining why the thread has **STOPPED**.
+   Error message explaining why the thread has :ref:`STOPPED <slave_thread_statuses>`.
+
+.. _sys_replication_applier_state:
 
 applier_state
-^^^^^^^^^^^^^
+-------------
 
-``sys_replication.applier_stat`` contains the status of applier threads:
+``sys_replication.applier_state`` contains the state of applier threads, one per row:
 
 .. code-block:: mysql
 
@@ -89,15 +111,17 @@ originating_commit_id
    ``COMMIT_ID`` from the :ref:`originating_server`.
 
 status
-   Status of the applier thread: **RUNNING** or **STOPPED**.  If **STOPPED**, ``error_msg`` should contain an error message.
+   :ref:`Status <slave_thread_statuses>` of the applier thread.
 
 error_msg
-   Error message explaining why the thread has **STOPPED**.
+   Error message explaining why the thread has :ref:`STOPPED <slave_thread_stopped_status>`.
+
+.. _sys_replication_queue:
 
 queue
-^^^^^
+-----
 
-``sys_replication.io_state`` contains replication events that have not yet been applied by the applier thread:
+``sys_replication.io_state`` contains replication events that have not yet been applied by the applier thread, one per row:
 
 .. code-block:: mysql
 
@@ -126,94 +150,10 @@ queue
    end_segment: true
                  master_id: 1
 
-InnoDB Transaction Log
-======================
+Master Connections
+==================
 
-The slave plugin uses the InnoDB transaction log (see
-:ref:`innodb_transaction_log`) on the master to retrieve replication
-messages. This transaction log, though stored as an internal table within
-InnoDB, offers two different views to the table contents. Two tables in
-the DATA_DICTIONARY schema provide the different views into the transaction
-log: the SYS_REPLICATION_LOG table and the INNODB_REPLICATION_LOG table.
-
-The SYS_REPLICATION_LOG table is read directly by the slave plugin.
-This table is described as below::
-
-  drizzle> SHOW CREATE TABLE data_dictionary.sys_replication_log\G
-  *************************** 1. row ***************************
-         Table: SYS_REPLICATION_LOG
-  Create Table: CREATE TABLE `SYS_REPLICATION_LOG` (
-    `ID` BIGINT,
-    `SEGID` INT,
-    `COMMIT_ID` BIGINT,
-    `END_TIMESTAMP` BIGINT,
-    `MESSAGE_LEN` INT,
-    `MESSAGE` BLOB,
-    PRIMARY KEY (`ID`,`SEGID`) USING BTREE,
-    KEY `COMMIT_IDX` (`COMMIT_ID`,`ID`) USING BTREE
-  ) ENGINE=InnoDB COLLATE = binary
-
-The INNODB_REPLICATION_LOG is similar to the SYS_REPLICATION_LOG, the
-main difference being that the Google Protobuffer message representing
-the changed rows is converted to plain text before being output::
-
-  drizzle> SHOW CREATE TABLE data_dictionary.innodb_replication_log\G
-  *************************** 1. row ***************************
-         Table: INNODB_REPLICATION_LOG
-  Create Table: CREATE TABLE `INNODB_REPLICATION_LOG` (
-    `TRANSACTION_ID` BIGINT NOT NULL,
-    `TRANSACTION_SEGMENT_ID` BIGINT NOT NULL,
-    `COMMIT_ID` BIGINT NOT NULL,
-    `END_TIMESTAMP` BIGINT NOT NULL,
-    `TRANSACTION_MESSAGE_STRING` TEXT COLLATE utf8_general_ci NOT NULL,
-    `TRANSACTION_LENGTH` BIGINT NOT NULL
-  ) ENGINE=FunctionEngine COLLATE = utf8_general_ci REPLICATE = FALSE
-
-The INNODB_REPLICATION_LOG table is read-only due to the way it is
-implemented. The SYS_REPLICATION_LOG table, on the other hand, allows you
-to modify the contents of the transaction log. You would use this table
-to trim the transaction log.
-
-Transaction Log Maintenance
----------------------------
-
-Currently, the InnoDB transaction log grows without bounds and is never
-trimmed of unneeded entries. This can present a problem for long running
-replication setups. You may trim the log manually, but you must make certain
-to not remove any entries that are needed by slave servers.
-
-Follow these steps to trim the InnoDB transaction without affecting slave
-function:
-
-#. Query each slave for the *last_applied_commit_id* value from the *sys_replication.applier_state* table.
-#. Choose the **minimum** value obtained from step one. This will be the marker for the slave that is the furthest behind the master.
-#. Using this marker value from the previous step, delete all entries from the master's transaction log that has a COMMIT_ID less than the marker value.
-
-Below is an example of the steps defined above. First, step 1 and 2. Assume
-that we have two slave hosts connected to the master (slave-1 and slave-2).
-We need to query both to check their relationship with the master transaction
-log::
-
-  slave-1> SELECT last_applied_commit_id FROM sys_replication.applier_state\G
-  *************************** 1. row ***************************
-  last_applied_commit_id: 3000
-
-  slave-2> SELECT last_applied_commit_id FROM sys_replication.applier_state\G
-  *************************** 1. row ***************************
-  last_applied_commit_id: 2877
-
-We see that slave-2 has the smallest value for *last_applied_commit_id*. We
-will use this value in the next step to trim the transaction log on the
-master::
-
-  master> DELETE FROM data_dictionary.sys_replication_log WHERE commit_id < 2877;
-
-This will remove all old, unneeded entries from the InnoDB transaction log. Note that the SYS_REPLICATION_LOG table is used for this maintenance task.
-
-Monitoring on a Master
-======================
-
-Slaves connected to a master are visible in the master's processlist, but they are not specially indicated.  If the :ref:`slave_user_account` uses special slave usernames, then slave connections can be selected like:
+Slaves connect to masters like normal users by specifying a username and password (see the :ref:`slave_cfg_master_options`).  Therefore, slave connections on a master are visible in the master's processlist and sessions, but they are not specially indicated.  If the :ref:`slave_user_account` uses slave-specific usernames like "slave1", then the slave connections can be viewed like:
 
 .. code-block:: mysql
 
@@ -229,3 +169,133 @@ Slaves connected to a master are visible in the master's processlist, but they a
               INFO: NULL
    HAS_GLOBAL_LOCK: 0
 
+The ``DATA_DICTIONARY.SESSIONS`` table can be queried similarly:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.SESSIONS WHERE SESSION_USERNAME LIKE 'slave%'\G
+   *************************** 1. row ***************************
+         SESSION_ID: 2
+   SESSION_USERNAME: slave1
+       SESSION_HOST: 127.0.0.1
+    SESSION_CATALOG: LOCAL
+     SESSION_SCHEMA: NULL
+            COMMAND: Sleep
+              STATE: NULL
+              QUERY: NULL
+    HAS_GLOBAL_LOCK: 0
+     IS_INTERACTIVE: 0
+         IS_CONSOLE: 0
+
+Or, slave connections can be viewed by specifying the slave server's hostname, like:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM DATA_DICTIONARY.PROCESSLIST  WHERE HOSTNAME = '192.168.1.5'\G
+   *************************** 1. row ***************************
+                ID: 3
+          USERNAME: slave
+              HOST: 192.168.1.5
+                DB: NULL
+           COMMAND: Sleep
+              TIME: 0
+             STATE: NULL
+              INFO: NULL
+   HAS_GLOBAL_LOCK: 0
+
+.. _slave_innodb_transaction_log:
+
+InnoDB Transaction Log
+======================
+
+The :ref:`slave` requires the :ref:`innodb_transaction_log` on the master to retrieve replication events.  This transaction log is stored as an internal table within InnoDB, but there are two tables which provide access to its data:
+
+* ``DATA_DICTIONARY.SYS_REPLICATION_LOG``
+* ``DATA_DICTIONARY.INNODB_REPLICATION_LOG``
+
+The :ref:`IO thread <slave_threads>` from a slave (which connects to a master) reads transactions (replicaiton events) directly from ``DATA_DICTIONARY.SYS_REPLICATION_LOG``.  The transaction messages are binary which makes the table data unreadable by most humans:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * from DATA_DICTIONARY.SYS_REPLICATION_LOG\G
+   *************************** 1. row ***************************
+                        ID: 772
+                     SEGID: 1
+                 COMMIT_ID: 1
+             END_TIMESTAMP: 1331841800496546
+   ORIGINATING_SERVER_UUID: 98ECEA09-BA65-489D-9382-F8D15098B1AE
+     ORIGINATING_COMMIT_ID: 1
+               MESSAGE_LEN: 33
+                   MESSAGE: ?????????
+
+The last column, ``MESSAGE``, contains the actual transaction data that the client renders as question marks because the data is binary, not text.
+
+The ``DATA_DICTIONARY.INNODB_REPLICATION_LOG`` table contains the same data as the ``DATA_DICTIONARY.SYS_REPLICATION_LOG`` table, but it converts the transaction data to text:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * from DATA_DICTIONARY.INNODB_REPLICATION_LOG\G
+   *************************** 1. row ***************************
+               TRANSACTION_ID: 772
+       TRANSACTION_SEGMENT_ID: 1
+                    COMMIT_ID: 1
+                END_TIMESTAMP: 1331841800496546
+      ORIGINATING_SERVER_UUID: 98ECEA09-BA65-489D-9382-F8D15098B1AE
+        ORIGINATING_COMMIT_ID: 1
+   TRANSACTION_MESSAGE_STRING: transaction_context {
+      server_id: 1
+      transaction_id: 772
+      start_timestamp: 1331841800496542
+      end_timestamp: 1331841800496546
+   }
+   event {
+      type: STARTUP
+   }
+   segment_id: 1
+   end_segment: true
+           TRANSACTION_LENGTH: 33
+
+The ``TRANSACTION_MESSAGE_STRING`` column contains the text representation of the ``MESSAGE`` column from the ``DATA_DICTIONARY.SYS_REPLICATION_LOG`` table.
+
+
+``DATA_DICTIONARY.INNODB_REPLICATION_LOG`` is read-only, but ``DATA_DICTIONARY.SYS_REPLICATION_LOG`` can be modified which allows the transaction log to be maintained, as described in the next section.
+
+Transaction Log Maintenance
+---------------------------
+
+Currently, the InnoDB transaction log grows without bounds and old transactions are never deleted.  The InnoDB transaction log must be maintained manually by carefully deleting old transactions that are no longer needed from the ``DATA_DICTIONARY.SYS_REPLICATION_LOG`` table.
+
+.. warning:: Care must be taken to avoid deleting transactions that slaves have not yet applied else data will be lost and replication will break.
+
+Follow these steps to trim the InnoDB transaction log without affecting slave function:
+
+#. Query each slave for the ``last_applied_commit_id`` value from the :ref:`sys_replication.applier_state <sys_replication_applier_state>` table.
+#. Choose the **minimum** value obtained from step one. This is the marker value for the slave that is the furthest behind the master.
+#. Using the marker value from the previous step, delete rows from ``DATA_DICTIONARY.SYS_REPLICATION_LOG`` that have a ``COMMIT_ID`` less than the marker value.
+
+For example, if there are two slaves, query each one for the minimum ``last_applied_commit_id``:
+
+.. code-block:: mysql
+
+   slave1> SELECT last_applied_commit_id FROM sys_replicaiton.applier_state;
+   +------------------------+
+   | last_applied_commit_id |
+   +------------------------+
+   |                   3000 | 
+   +------------------------+
+
+   slave2> SELECT last_applied_commit_id FROM sys_replicaiton.applier_state;
+   +------------------------+
+   | last_applied_commit_id |
+   +------------------------+
+   |                   2877 | 
+   +------------------------+
+
+slave2 has the smallest value for ``last_applied_commit_id``, 2877, so this value is the marker for deleting records from the master's transaction log:
+
+.. code-block:: mysql
+
+  master> DELETE FROM DATA_DICTIONARY.SYS_REPLICATION_LOG
+       -> WHERE COMMIT_ID < 2877;
+
+This permanently deletes all old, unneeded records from the InnoDB transaction log.

@@ -5,7 +5,7 @@
 .. _slave_config:
 
 Slave Configuration
-*******************
+===================
 
 Configuring a Drizzle :ref:`replication stream <replication_streams>` using the :ref:`slave` requires:
 
@@ -114,6 +114,8 @@ The simplest possible slave config file is:
 
 See :ref:`slave_examples` for complete, working examples.
 
+.. _slave_cfg_common_options:
+
 Common Options
 --------------
 
@@ -144,6 +146,8 @@ These options must be specified first, before any ``[masterN]`` headers.
 
    The number of seconds to wait between reconnect attempts when the master
    server becomes unreachable.
+
+.. _slave_cfg_master_options:
 
 Master-specific Options
 -----------------------

@@ -1,8 +1,8 @@
 Messages
-========
+********
 
 Message Definitions
-###################
+===================
 
 The GPB messages are defined in .proto files in the drizzled/message
 directory of the Drizzle source code. The primary definition file is
@@ -67,7 +67,7 @@ with each Statement message looking like so::
   ------------------------------------------------------------------
 
 The Transaction Message
-#######################
+=======================
 
 The main "envelope" message which represents an atomic transaction
 which changed the state of a server is the Transaction message class.
@@ -85,7 +85,7 @@ The Transaction message contains two pieces:
    occurred on the server (such as, for instance, an INSERT statement).
 
 The Statement Message
-#####################
+=====================
 
 The generic "envelope" message containing information common to each
 SQL statement executed against a server (such as a start and end timestamp
@@ -103,7 +103,7 @@ have to be rolled back.
 .. _bulk-operations:
 
 How Bulk Operations Work
-########################
+========================
 
 Certain operations which change large volumes of data on a server
 present a specific set of problems for a transaction coordinator or
@@ -143,7 +143,7 @@ submessages is not helpful if the Statement isn't segmented. We need this
 information in the Transaction message itself.
 
 Segmenting a Single SQL Statement
-*********************************
+=================================
 
 When a regular SQL statement modifies or inserts more rows than a
 certain threshold, Drizzle's replication services component will begin
@@ -212,7 +212,7 @@ will do the following:
    to true.
 
 Segmenting a Transaction
-************************
+========================
 
 The Transaction protobuf message also contains *segment_id* member and a
 *end_segment* member. These values are also set appropriately when a
@@ -225,7 +225,7 @@ is **not** segmented). In either case, it is enough to check the
 to determine if this is a multi-message transaction.
 
 Handling ROLLBACKs
-##################
+==================
 
 Both transactions and individual statements may be rolled back.
 

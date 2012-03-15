@@ -3,7 +3,7 @@
 .. _slave_applier:
 
 Slave Applier
-*************
+=============
 
 The slave applier plugin, named ``slave``, provides a native implementation
 of replication between Drizzle servers by applying replication events from
@@ -40,7 +40,7 @@ work.
 .. _slave_version:
 
 Version
-=======
+-------
 
 This documentation applies to :ref:`slave_1.1_drizzle_7.1`.
 
@@ -54,7 +54,7 @@ execute:
 .. _slave_changelog:
 
 Changelog
-=========
+---------
 
 .. toctree::
    :maxdepth: 2
@@ -64,7 +64,7 @@ Changelog
 .. _slave_authors:
 
 Authors
-=======
+-------
 
 David Shrewsbury
    Original ``slave`` plugin code.  Multi-master code.

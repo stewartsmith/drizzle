@@ -3,7 +3,7 @@
 .. _replication_appliers:
 
 Appliers
-========
+********
 
 Appliers are the other end point of a
 :ref:`replication stream <replication_streams>`, the first being
