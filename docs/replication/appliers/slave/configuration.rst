@@ -194,7 +194,7 @@ These options must be specified after a ``[masterN]`` header.
 .. _slave_plugin:
 
 slave Plugin
-============
+------------
 
 A slave must load the ``slave`` plugin which is not loaded by default.
 This plugin has only one option:
