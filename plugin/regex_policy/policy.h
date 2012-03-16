@@ -169,7 +169,7 @@ class Policy :
 public:
   Policy(const fs::path &f_path) :
     drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
-    table_check_cache(NULL), schema_check_cache(NULL), process_check_cache(NULL)
+    table_check_cache(), schema_check_cache(), process_check_cache()
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
