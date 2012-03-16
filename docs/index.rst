@@ -73,7 +73,7 @@ Administration
 .. toctree::
    :maxdepth: 2
    
-   administration/getting_started
+   administration/index
    administration/drizzled
    administration/authentication
    administration/authorization

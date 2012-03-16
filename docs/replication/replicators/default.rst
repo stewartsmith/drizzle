@@ -8,8 +8,7 @@ does not modify or filter any replication events; it simply sends every
 replication event it receives from the Drizzle kernel to every applier
 with which it is paired.
 
-The :ref:`slave_applier` is hard-coded to use the default replicator,
-and most appliers default to this replicator.
+:ref:`appliers` default to this replicator.
 
 .. _default_replicator_loading:
 

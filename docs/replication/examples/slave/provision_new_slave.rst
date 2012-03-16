@@ -3,6 +3,12 @@
 Provision New Slave
 ===================
 
+:Synopsis: Provision a new slave from a backup of a master
+:Replicator: :ref:`default_replicator`
+:Applier: :ref:`slave`
+:Difficulty: Nontrivial
+:Use cases: New slaves, existing deployments
+
 The basic formula for creating a new slave host for an existing replication setup is:
 
    1. Make a backup of the master databases.

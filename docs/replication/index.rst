@@ -1,12 +1,14 @@
 .. program:: drizzled
 
-Getting Started
-===============
+.. _drizzle_replication:
+
+Drizzle Replication
+===================
 
 .. topic:: Want to skip the details and setup Drizzle replicaiton as quickly as possible?
 
    Then start with the
-   :ref:`Simplest Master-Slave example <simplest_master-slave_example>`.
+   :ref:`Simple Master-Slave example <simple_master_slave_example>`.
    Otherwise, start here and read each section in sequence for a complete
    understanding of Drizzle replication.
 

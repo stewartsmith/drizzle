@@ -1,14 +1,16 @@
-.. _simplest_master-slave_example:
+.. _simple_master_slave_example:
 
-Simplest Master-Slave
-=====================
+Simple Master-Slave
+===================
 
-A simple replication setup (using a single master and a single slave) between two Drizzle servers is done with the replication slave plugin. With Drizzle replication, you can also provision a new slave into an existing setup.
-
-Replication setup begins with making certain that both master and slave share the same version of Drizzle to avoid any potential incompatibility issues.
+:Synopsis: Set up one master and one slave, neither of which have existing data
+:Replicator: :ref:`default_replicator`
+:Applier: :ref:`slave`
+:Difficulty: Easiest
+:Use cases: Learning, testing, new small deployments
 
 Master Setup
--------------
+------------
 
 Setting up the master is the first step. An important requirement is to start the master Drizzle database server with the --innodb.replication-log option, and a few other options in most circumstances. More options can be found in the options documentation. These are the most common options needed for a replication master. For example:
 

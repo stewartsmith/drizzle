@@ -16,10 +16,7 @@ with replication events that provides useful behavior for the service.
 For example, an applier may write the replicaiton event to a file on disk,
 or it may send it over the network to some other service to be processed.
 
-Appliers are implemented by plugins and specify the unique name of a
-replicator with which Drizzle should pair it to create a replicaiton stream.
-Most appliers can be configured to use a specific replicator, but some are
-hard-coded to use a specific replicator.
+Appliers are implemented by plugins and specify the unique name of a replicator with which Drizzle should pair it to create a replicaiton stream.  Applier plugins default to using the :ref:`default_replicator`, but they can be configured to use another replicator.
 
 Most applier plugins are loaded and ran on the :ref:`originating_server`,
 but this is not a requirement.  For example, the :ref:`slave_applier` is

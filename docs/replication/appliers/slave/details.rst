@@ -1,19 +1,11 @@
 .. _slave_details:
 
 Slave Details
-*************
+=============
 
-The replication slave plugin creates two worker threads, each accessing a
-work queue (implemented as an InnoDB table) that contains the replication
-events. This is a producer/consumer paradigm where one thread populates the
-queue (the producer), and the other thread (the consumer) reads events from
-the queue.
+The following sections dive into the technical aspects of the :ref:`slave`.  In general, it should not be necessary to know this information to :ref:`configure <slave_configuration>` or :ref:`adminster <slave_admin>` a slave.  This information is useful for troubleshooting, developers, hackers, and those who wish to "look under the hood."
 
-The producer thread (or I/O thread) is in charge of connecting to the master
-server and pulling down replication events from the master's transaction
-log and storing them locally in the slave queue. It is required that the
-master use the InnoDB replication log (:option:`--innodb.replication-log <drizzled --innodb.replication-log>`).
+Slave Plugin Class
+------------------
 
-The consumer thread (or applier thread) reads the replication events from
-the local slave queue, applies them locally, and then deletes successfully
-applied events from the queue.
+Although the documentation for the :ref:`slave` calls the plugin an applier, which implies that the plugin subclasses the TransactionApplier class, the :ref:`slave_plugin` is not in fact a TransactionApplier, it is a Daemon.  The :ref:`innodb_transaction_log` is a TransactionApplier which defaults to using with the :ref:`default_replicator` (see :file:`plugin/innobase/handler/replication_log.h`).

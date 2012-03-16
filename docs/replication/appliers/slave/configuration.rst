@@ -9,7 +9,7 @@ Slave Configuration
 
 Configuring a Drizzle :ref:`replication stream <replication_streams>` using the :ref:`slave` requires:
 
-#. Verifying that the :ref:`default_replicator` plugin is loaded on the masters
+#. Load a :ref:`replicator plugin <replicators>` on the masters
 #. Enabling :option:`--innodb.replication-log` on the masters
 #. Creating user accounts for the slaves on the masters
 #. Writing a :ref:`slave_config_file` for :option:`--slave.config-file` on the slave
@@ -25,14 +25,11 @@ Configuring a Master
 A single slave can apply replication events from up to ten masters at once.
 There are three requirements for each master:
 
-#. :ref:`default_replicator`
+#. :ref:`replicators`
 #. :option:`--innodb.replication-log`
 #. :ref:`slave_user_account`
 
-Each master must have the :ref:`default_replicator` plugin loaded because
-the slave applier is hard-coded to pair only with this replicator.  The
-:ref:`default_replicator` plugin loads by default, but to verify that it is
-loaded on a master, execute:
+A :ref:`replicator plugin <replicators>` must be loaded on each master.  The :ref:`default_replicator` is loaded by default.  To verify that it is loaded on a master, execute:
 
 .. code-block:: sql
 
@@ -47,8 +44,7 @@ If the plugin is not loaded, verify that the server was *not* started with
 ``--plugin-remove default_replicator``.  If it was, remove that option and
 restart the server.
 
-A master can be started with other :ref:`replicators`, but only the
-:ref:`default_replicator` is required for the ``slave`` plugin.
+To use a different replicator, :ref:`configure Drizzle <configuring_drizzle>` to load the replicator plugin on startup, and specify the replicator name with :option:`--innodb.use-replicator`.
 
 Each master must also be started with :option:`--innodb.replication-log`
 to enable the :ref:`innodb_transaction_log` which is not enabled by default.
@@ -75,7 +71,19 @@ Slave User Account
 
 A user account is required on the master for slave connections, unless no :ref:`authentication` is used (which is highly inadvisable).  One user account can be used for all slaves, or individual user accounts can be used for each slave.  In either case, the user account credentials (username and password) for a master are specified in the :ref:`slave_config_file`.
 
-:ref:`authorization` has no effect on slaves.  Since the :ref:`slave` plugin is hard-coded to pair only with the :ref:`default_replicator`, it replicates events for every schema and every table.  At present, there is no way to filter replication for the :ref:`slave`.
+:ref:`authorization` must be configured on the master to allow slave user accounts to access the ``DATA_DICTIONARY`` schema, else the :ref:`slave IO thread <slave_threads>` will fail to start on the slave:
+
+.. code-block:: mysql
+
+   drizzle> SELECT * FROM sys_replication.io_state\G
+   *************************** 1. row ***************************
+   master_id: 1
+      status: STOPPED
+   error_msg: Replication slave: Access denied for user 'slave' to schema 'data_dictionary'
+
+The :ref:`sys_replication_tables` are discussed in :ref:`slave_admin`.
+
+:ref:`authorization` cannot be used to filter which schemas or tables are replicated because slave connections do no access individual schemas and tables, they only access the :ref:`innodb_transaction_log`.  To filter which schemas or tables are replicated, configure the master to use a filtering replicator like :ref:`filtered_replicator`, as described above. 
 
 .. _configuring_a_slave:
 
@@ -212,17 +220,10 @@ This plugin has only one option:
    :option:`--basedir`.
 
 Since a slave can connect to multiple masters, all other options are set
-per-master in a :ref:`slave_config_file`.
-Once a slave config file has been written, start Drizzle with the ``slave``
-plugin like:
+in the :ref:`slave_config_file`.  Once a slave config file has been written, start Drizzle with the ``slave`` plugin like:
 
 .. code-block:: bash
 
   $ drizzled --plugin-add slave --slave.config-file /etc/drizzled/slave.conf
 
-See :ref:`slave_examples` for complete, working examples.
-
-If the masters are configured properly and the slave config file is correct,
-Drizzle should start without errors and it should be
-possible to :ref:`administer the slave <slave_admin>` as described
-in the next section.
+If the masters are configured properly, and the slave config file is correct, and the slave plugin loads successfully, the :ref:`sys_replication_tables` will be accessible on the slave as described in the next topic, :ref:`slave_admin`.

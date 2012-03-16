@@ -524,6 +524,13 @@ command line options.
 
    Use InnoDB's internal memory allocator instead of the system's malloc.
 
+.. option:: --innodb.use-replicator
+
+   :Default: default
+   :Variable: `innodb_use_replicator <innodb_use_sys_malloc>`
+
+   Use this replicator for the :ref:`innodb_transaction_log`.
+
 .. option:: --innodb.version ARG
 
    :Default:
@@ -1109,6 +1116,16 @@ See `variables` for more information about querying and setting variables.
    :Option: :option:`--innodb.use-internal-malloc`
 
    If system or internal malloc() is being used.
+
+.. _innodb_use_replicator:
+
+* ``innodb_use_replicator``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--innodb.use-replicator`
+
+   Replicator to which the :ref:`innodb_transaction_log` is paired.
 
 .. _innodb_version_var:
 
