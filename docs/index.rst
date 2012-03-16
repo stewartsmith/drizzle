@@ -91,7 +91,7 @@ Replication
    replication/replicators/index
    replication/appliers/index
    replication/messages/index
-   replication/examples
+   replication/examples/index
 
 SQL Language
 ------------

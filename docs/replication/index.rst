@@ -1,7 +1,7 @@
 .. program:: drizzled
 
 Getting Started
-***************
+===============
 
 .. topic:: Want to skip the details and setup Drizzle replicaiton as quickly as possible?
 
@@ -68,7 +68,7 @@ replication.
 .. _replication_events:
 
 Replication Events
-==================
+------------------
 
 Replication events are, in general, any SQL statements which change data or
 schema objects on a server.  :doc:`/dml` queries are the primary cause of
@@ -95,7 +95,7 @@ replication events correctly and efficiently.
 .. _replication_streams:
 
 Replication Streams
-===================
+-------------------
 
 Replication stream are logical conduits created by pairing one replicator
 with one applier.  As logical entities, replicaiton streams exist only inside
@@ -119,7 +119,7 @@ let it automatically recreate the new replication stream.
 .. _originating_server:
 
 Originating Server
-==================
+------------------
 
 The originating server of a replication event is the server on which the
 SQL statement that caused the replication was first executed.  Since one
@@ -142,7 +142,7 @@ not the originating server, but an applier could, in theory, apply events
 from and to the same originating server.
 
 Configuration
-=============
+-------------
 
 Drizzle replication is primarily configured by options specific to
 each :ref:`replicator <replicators>` and :ref:`applier <appliers>`.

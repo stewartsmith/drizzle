@@ -21,20 +21,13 @@ masters and slaves can be enchained.
 Replication circles, or master-master replication, are not currently supported.
 Replication will break on one of the masters if this is attempted.
 
-The next two sections, :ref:`slave_configuration` and
-:ref:`slave_administration`,  contain necessary information for configuring
-and administering slave-based replication.  The third section,
-:ref:`slave_examples`, provides working examples, presuming a knowledge of
-the first two sections.  The forth section, :ref:`slave_details`, covers
-technical details about how the ``slave`` plugin and slave-based replication
-work.
+The next two sections, :ref:`slave_configuration` and :ref:`slave_administration`,  contain necessary information for configuring and administering slave-based replication.  The third section, :ref:`slave_details`, covers technical details about how the ``slave`` plugin and slave-based replication work.
 
 .. toctree::
    :maxdepth: 2
 
    slave/configuration
    slave/administration
-   slave/examples
    slave/details
 
 .. _slave_version:
