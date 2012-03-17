@@ -1276,7 +1276,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() <<".\t"<< "Use --help to get a list of available options. "; 
+    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. "; 
   }
 
   if (vm.count("version"))
@@ -1316,9 +1316,8 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     po::notify(vm);
   }
   catch (po::validation_error &err)
-
   {
-   unireg_abort  << err.what() <<".\t"<< "Use --help to get a list of available options. ";
+   unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
   }
 
   return true;
