@@ -155,7 +155,7 @@ queue
 Slave Lag
 =========
 
-Slaves intentionally lag masters by at least :ref:`applier-thread-sleep <slave_cfg_common_options>` or :ref:`io-thread-sleep <slave_cfg_common_options>` seconds.  Since :ref:`replication_events` are transactions, *slave lag is the number of committed transactions behind a master*.  To determine a slave's lag, first query the 's last committed transaction ID on the master:
+Slaves intentionally lag masters by at least :ref:`applier-thread-sleep <slave_cfg_common_options>` or :ref:`io-thread-sleep <slave_cfg_common_options>` seconds.  Since :ref:`replication_events` are transactions, *slave lag is the number of committed transactions behind a master*.  To determine a slave's lag, first query the last committed transaction ID on the master:
 
 .. code-block:: mysql
 
