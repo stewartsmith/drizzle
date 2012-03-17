@@ -44,8 +44,6 @@ execute:
 
    SELECT MODULE_VERSION FROM DATA_DICTIONARY.MODULES WHERE MODULE_NAME='slave'
 
-.. _slave_changelog:
-
 Changelog
 ---------
 

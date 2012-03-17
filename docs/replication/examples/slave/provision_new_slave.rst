@@ -6,40 +6,56 @@ Provision New Slave
 :Synopsis: Provision a new slave from a backup of a master
 :Replicator: :ref:`default_replicator`
 :Applier: :ref:`slave`
-:Difficulty: Nontrivial
-:Use cases: New slaves, existing deployments
+:Version: :ref:`slave_1.1_drizzle_7.1`
+:Authors: Marisa Plumb, Kent Bozlinski, Daniel Nichter
 
-The basic formula for creating a new slave host for an existing replication setup is:
+The basic formula for creating a new slave for an existing master is:
 
-   1. Make a backup of the master databases.
-   2. Record the state of the master transaction log at the point the backup was made.
-   3. Restore the backup on the new slave machine.
-   4. Start the new slave and tell it to begin reading the transaction log from the point recorded in #2.
+#. Make a backup of the master databases.
+#. Record the max committed transaction ID of the master at the point the backup was made.
+#. Restore the backup on the new slave.
+#. Start the new slave from the recorded max committed transaction ID of the master.
 
-Steps #1 and #2 are covered with the drizzledump client program. If you use the --single-transaction option to drizzledump, it will place a comment near the beginning of the dump output with the InnoDB transaction log metadata. For example: ::
+.. program:: drizzledump
 
-	master> drizzledump --all-databases --single-transaction > master.backup
-	master> head -1 master.backup
-	-- SYS_REPLICATION_LOG: COMMIT_ID = 33426, ID = 35074
+Steps #1 and #2 are performed using the :ref:`drizzledump` and its :option:`--single-transaction` option which prints a comment near the beginning of the dump output with the InnoDB transaction log metadata:
 
-The SYS_REPLICATION_LOG line provides the replication log metadata needed when starting a new slave. It has two pieces of information:
+.. code-block:: bash
 
-* **COMMIT_ID**:  This value is the commit sequence number recorded for the most recently executed transaction stored in the transaction log. We can use this value to determine proper commit order within the log. The unique transaction ID cannot be used since that value is assigned when the transaction is started, not when it is committed.
-* **ID**:  This is the unique transaction identifier associated with the most recently executed transaction stored in the transaction log.
+   master$ drizzledump --all-databases --single-transaction > master-backup.sql
 
-Next, steps #3 and #4 must be completed to start the new slave. First, you must start the slave WITHOUT the replication slave plugin enabled, to prevent it from reading from the master until the backup is imported. To start it without the plugin enabled, import your backup, then shutdown the server: ::
+   master$ grep SYS_REPLICATION_LOG master-backup.sql
+   -- SYS_REPLICATION_LOG: COMMIT_ID = 3303, ID = 3500
 
-	slave> sbin/drizzled --datadir=$PWD/var &
-	slave> drizzle < master.backup
-	slave> drizzle --shutdown
+The ``SYS_REPLICATION_LOG`` comment provides the replication log metadata needed to start a new slave. There are two values:
 
-Now that the backup is imported, restart the slave with the replication slave plugin enabled and use a new option, --slave.max-commit-id, to force the slave to begin reading the master's transaction log at the proper location:
+COMMIT_ID
+   The commit sequence number recorded for the most recently executed transaction stored in the transaction log.  This value is used to determine proper commit order within the log.  ``ID``, the unique transaction identifier, cannot be used because it is assigned when the transaction is started, not when it is committed.
 
-   slave> sbin/drizzled --datadir=$PWD/var \
-                        --plugin-add=slave \
-                        --slave.config-file=/user/local/etc/slave.cfg \
-                        --slave.max-commit-id=33426 &
+ID
+   The unique transaction identifier associated with the most recently executed transaction stored in the transaction log.
 
-We give the --slave.max-commit-id the value from the comment in the master dump file, which defines the maximum COMMIT_ID value (the latest transaction) represented by the slave's contents.
+For step #3, start the slave *without* the :ref:`slave_plugin` to prevent it from reading from the master until the backup is imported.  Then import the backup on the slave:
 
-This is the full cycle for a simple replication example. Please see the other Drizzle slave plugin docs for more information on replication and configuration options.
+.. code-block:: bash
+
+	slave$ drizzle < master-backup.sql
+
+Stop the slave once the backup finishes importing.
+
+For step #4, add the :ref:`max-commit-id option <slave_cfg_master_options>` to the :ref:`slave_config_file`:
+
+.. code-block:: ini
+
+   # Example of existing lines
+   [master1]
+   master-host=10.0.0.1
+   master-user=slave
+   master-pass=foo
+
+   # Add this line
+   max-commit-id=3303
+
+The value for :ref:`max-commit-id <slave_cfg_master_options>` is the ``COMMIT_ID`` value from the ``SYS_REPLICATION_LOG`` comment in the master dump file (steps #1 and #2).  This value defines the committed transaction ID on the master from which the slave will start applying transactions.
+
+Finally, start the slave *with* the :ref:`slave_plugin` and verify that replication is working (see :ref:`slave_admin`). 

@@ -1,15 +1,14 @@
-Slave Changelog
-***************
+.. _slave_changelog:
+
+slave Changelog
+===============
 
 .. _slave_1.1_drizzle_7.1:
 
-slave v1.1 (Drizzle 7.1)
-========================
+slave 1.1 (Drizzle 7.1)
+-----------------------
 
 :Released:
-
-Features
---------
 
 * Added multi-master-support (https://blueprints.launchpad.net/drizzle/+spec/slave-multi-master).
 
@@ -20,8 +19,8 @@ Features
 
 .. _slave_1.0_drizzle_7.0:
 
-slave v1.0 (Drizzle 7.0)
-========================
+slave 1.0 (Drizzle 7.0)
+-----------------------
 
 :Released: March 15, 2011
 

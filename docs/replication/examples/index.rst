@@ -25,9 +25,8 @@ Slave Applier
 RabbitMQ Applier
 ----------------
 
-*Sorry, there are no examples for this applier yet*.
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-ZeroMQ Applier
---------------
-
-*Sorry, there are no examples for this applier yet*.
+   rabbitmq/*

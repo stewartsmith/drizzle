@@ -15,6 +15,10 @@ Options
 General Options
 ^^^^^^^^^^^^^^^
 
+.. option:: --daemon, -d
+
+   Run :program:`drizzled` as a daemon.
+
 .. option:: --help, -?
 
    Display this help and exit.
@@ -22,6 +26,20 @@ General Options
 .. option:: --help-extended
 
    Display this help and exit after initializing plugins.
+
+.. option:: --user, -u ARG
+
+   :Default:
+   :Variable: 
+
+   Run drizzled daemon as user.
+
+.. option:: --version, -V
+
+   :Default:
+   :Variable: ``version``
+
+   Print the version of Drizzle and exit.
 
 .. _drizzled_config_file_options:
 
@@ -550,20 +568,6 @@ Kernel Options
    :Variable: ``tx_isolation``
 
    Default transaction isolation level.
-
-.. option:: --user, -u ARG
-
-   :Default:
-   :Variable: 
-
-   Run drizzled daemon as user.
-  
-.. option:: --version, -V
-
-   :Default:
-   :Variable: ``version``
-
-   Output version information and exit.
 
 .. _drizzled_variables:
 

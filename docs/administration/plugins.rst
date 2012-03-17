@@ -1,5 +1,7 @@
 .. program:: drizzled
 
+.. _plugins:
+
 Plugins
 =======
 

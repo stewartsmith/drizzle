@@ -150,6 +150,37 @@ queue
    end_segment: true
                  master_id: 1
 
+.. _slave_lag:
+
+Slave Lag
+=========
+
+Slaves intentionally lag masters by at least :ref:`applier-thread-sleep <slave_cfg_common_options>` or :ref:`io-thread-sleep <slave_cfg_common_options>` seconds.  Since :ref:`replication_events` are transactions, *slave lag is the number of committed transactions behind a master*.  To determine a slave's lag, first query the 's last committed transaction ID on the master:
+
+.. code-block:: mysql
+
+   drizzle> SELECT MAX(COMMIT_ID) FROM DATA_DICTIONARY.SYS_REPLICATION_LOG;
+   +----------------+
+   | MAX(COMMIT_ID) |
+   +----------------+
+   |              6 | 
+   +----------------+
+
+Then query the last applied transaction ID on the slave:
+
+.. code-block:: mysql
+
+   drizzle> SELECT MAX(last_applied_commit_id) FROM sys_replication.applier_state;
+   +-----------------------------+
+   | MAX(last_applied_commit_id) |
+   +-----------------------------+
+   |                           6 | 
+   +-----------------------------+
+
+In this example, the slave is caught up to the master because both the last commited transaction ID on the master and the last applied transaction ID on the slave are 6.
+
+If the last applied transaction ID on a slave is less than the last committed transaciton ID on a master, then the slave lags the master by *N transactions* (not seconds) where N is the difference of the two transaction ID values.
+
 Master Connections
 ==================
 
