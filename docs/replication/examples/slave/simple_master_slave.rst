@@ -170,7 +170,3 @@ The root username and password should be required:
    $ drizzle --user=root --password=foo
 
 The :ref:`sys_replication_tables` should still show that the :ref:`slave_threads` are :ref:`RUNNING <slave_thread_statuses>`.  Any changes on the master should replicate to the slave within a few seconds.  If any problems occur, consult the :ref:`slave` documentation or ask for :ref:`help`.  Else, congratulations: you are up and running with slave-based Drizzle replication!  Be sure to familiarize yourself with :ref:`slave_admin`.
-
----
-
-:Authors: Daniel Nichter
