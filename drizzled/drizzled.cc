@@ -23,13 +23,16 @@
 #include <drizzled/atomics.h>
 #include <drizzled/data_home.h>
 
+#include <climits>
+#include <fcntl.h>
 #include <netdb.h>
-#include <sys/types.h>
-#include <netinet/tcp.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <signal.h>
-#include <limits.h>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/types.h>
 
 #include <boost/program_options.hpp>
 #include <drizzled/program_options/config_file.h>
@@ -383,7 +386,32 @@ static void print_version()
     version from the output of 'drizzled --version', so don't change it!
   */
   printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
-	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
+         PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
+}
+
+/**
+  Create file to store pid number.
+*/
+static void create_pid_file()
+{
+  int file;
+
+  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
+  {
+    char buff[1024];
+    int length= snprintf(buff, sizeof(buff), "%ld\n", (long) getpid()); 
+
+    if ((write(file, buff, length)) == length)
+    {
+      if (close(file) != -1)
+      {
+        return;
+      }
+    }
+    (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
+  }
+
+  unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.file_string();
 }
 
 /****************************************************************************
@@ -435,8 +463,13 @@ void close_connections()
     }
   }
 
-  if (session::Cache::count())
-    sleep(2);                                   // Give threads time to die
+  if (session::Cache::count()) // Give threads time to die
+  {
+    struct timespec requested;
+    requested.tv_sec= 2;
+    requested.tv_nsec= 0;
+    nanosleep(&requested, NULL);
+  }
 
   /*
     Force remaining threads to die by closing the connection to the client
@@ -487,7 +520,9 @@ void unireg_actual_abort(const char *file, int line, const char *func, const std
 void clean_up(bool print_message)
 {
   if (cleanup_done++)
+  {
     return;
+  }
 
   table_cache_free();
   free_charsets();
@@ -503,7 +538,9 @@ void clean_up(bool print_message)
   (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
+  {
     errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
+  }
 
   session::Cache::shutdownFirst();
 
@@ -541,38 +578,45 @@ passwd *check_user(const char *user)
     unireg_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
   }
 
-  if (not strcmp(user, "root"))
+  if (strcmp(user, "root") == 0)
   {
     return NULL;                        // Avoid problem with dynamic libraries
   }
 
+  bool failed= false;
   if ((tmp_user_info= getpwnam(user)) == NULL)
   {
     // Allow a numeric uid to be used
     const char *pos= user;
     for (; my_charset_utf8_general_ci.isdigit(*pos); pos++) 
-    {
-    }
+    { }
     if (*pos)                                   // Not numeric id
-      goto err;
+    {
+      failed= true;
+    }
 
     if ((tmp_user_info= getpwuid(atoi(user))) == NULL)
-      goto err;
+    {
+      failed= true;
+    }
   }
-  return tmp_user_info;
 
-err:
-  unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
+  if (failed)
+  {
+    unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
 
 #ifdef PR_SET_DUMPABLE
-  if (getDebug().test(debug::CORE_ON_SIGNAL))
-  {
-    /* inform kernel that process is dumpable */
-    (void) prctl(PR_SET_DUMPABLE, 1);
-  }
+    if (getDebug().test(debug::CORE_ON_SIGNAL))
+    {
+      /* inform kernel that process is dumpable */
+      (void) prctl(PR_SET_DUMPABLE, 1);
+    }
 #endif
 
-  return NULL;
+    return NULL;
+  }
+
+  return tmp_user_info;
 }
 
 void set_user(const char *user, passwd *user_info_arg)
@@ -988,10 +1032,17 @@ static void process_defaults_files()
     {
       string new_unknown_opt("--" + *it);
       ++it;
+
       if (it == file_unknown.end())
+      {
 				break;
+      }
+
       if (*it != "true")
+      {
         new_unknown_opt += "=" + *it;
+      }
+
       unknown_options.push_back(new_unknown_opt);
     }
     store(file_parsed, vm);
@@ -1389,6 +1440,9 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
 
   fix_paths();
+
+  /* Save pid to this process (or thread on Linux) */
+  create_pid_file();
 
   init_time();				/* Init time-functions (read zone) */
 
@@ -2120,15 +2174,19 @@ static void get_options()
 static void fix_paths()
 {
   if (vm.count("help"))
-    return;
-
-  fs::path pid_file_path(pid_file);
-  if (pid_file_path.root_path().string() == "")
   {
-    pid_file_path= getDataHome();
-    pid_file_path /= pid_file;
+    return;
   }
-  pid_file= fs::system_complete(pid_file_path);
+
+  {
+    fs::path pid_file_path(pid_file);
+    if (pid_file_path.root_path().string() == "")
+    {
+      pid_file_path= getDataHome();
+      pid_file_path /= pid_file;
+    }
+    pid_file= fs::system_complete(pid_file_path);
+  }
 
   const char *tmp_string= getenv("TMPDIR");
   struct stat buf;
