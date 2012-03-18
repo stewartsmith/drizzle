@@ -1,3 +1,5 @@
+.. _drizzledump:
+
 drizzledump Backup Tool
 =======================
 

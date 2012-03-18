@@ -62,7 +62,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "slave",
-  "1.0",
+  "1.1",
   "David Shrewsbury",
   N_("Drizzle replication slave"),
   PLUGIN_LICENSE_GPL,

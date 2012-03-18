@@ -15,6 +15,10 @@ Options
 General Options
 ^^^^^^^^^^^^^^^
 
+.. option:: --daemon, -d
+
+   Run :program:`drizzled` as a daemon.
+
 .. option:: --help, -?
 
    Display this help and exit.
@@ -22,6 +26,20 @@ General Options
 .. option:: --help-extended
 
    Display this help and exit after initializing plugins.
+
+.. option:: --user, -u ARG
+
+   :Default:
+   :Variable: 
+
+   Run drizzled daemon as user.
+
+.. option:: --version, -V
+
+   :Default:
+   :Variable: ``version``
+
+   Print the version of Drizzle and exit.
 
 .. _drizzled_config_file_options:
 
@@ -92,6 +110,25 @@ Plugin Options
    For example::
 
      --plugin_remove=syslog,md5
+
+.. _drizzled_replication_options:
+
+Replication Options
+^^^^^^^^^^^^^^^^^^^
+
+.. option:: --replicate-query
+
+   :Default:
+   :Variable: ``replicate_query``
+   
+   Include the SQL query in replicated protobuf messages.
+
+.. option:: --transaction-message-threshold
+
+   :Default: 1048576
+   :Variable: ``transaction_message_threshold``
+
+   Max message size written to transaction log, valid values 131072 - 1048576 bytes.
 
 .. _drizzled_kernel_options:
 
@@ -421,13 +458,6 @@ Kernel Options
    A global constraint for read-rnd-buffer-size for all clients, cannot be set
    lower than --read-rnd-buffer-size.  Setting to 0 means unlimited.
 
-.. option:: --replicate-query
-
-   :Default:
-   :Variable: ``replicate_query``
-   
-   Include the SQL query in replicated protobuf messages.
-
 .. option:: --scheduler ARG
 
    :Default: multi-thread
@@ -538,27 +568,6 @@ Kernel Options
    :Variable: ``tx_isolation``
 
    Default transaction isolation level.
-
-.. option:: --transaction-message-threshold
-
-   :Default: 1048576
-   :Variable: ``transaction_message_threshold``
-
-   Max message size written to transaction log, valid values 131072 - 1048576 bytes.
-
-.. option:: --user, -u ARG
-
-   :Default:
-   :Variable: 
-
-   Run drizzled daemon as user.
-  
-.. option:: --version, -V
-
-   :Default:
-   :Variable: ``version``
-
-   Output version information and exit.
 
 .. _drizzled_variables:
 
