@@ -1276,7 +1276,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. "; 
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. "; 
   }
 
   if (vm.count("version"))
@@ -1317,7 +1317,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-   unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
+   unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   return true;
@@ -1357,15 +1357,15 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::invalid_command_line_syntax &err)
   {
-    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::unknown_option &err)
   {
-    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   try
@@ -1374,7 +1374,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() <<". "<< "Use --help to get a list of available options. ";
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   get_options();
