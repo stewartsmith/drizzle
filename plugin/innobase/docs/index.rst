@@ -49,10 +49,10 @@ To confirm that Linux native AIO is enabled, execute:
 
 .. _innodb_transaction_log:
 
-InnoDB Transaction Log
+InnoDB Replicaiton Log
 ----------------------
 
-The :program:`innodb` plugin provides a mechanism to store replication
+The ``innodb`` plugin provides a mechanism to store replication
 events in an InnoDB table. When enabled, this transaction log can be accessed
 through the SYS_REPLICATION_LOG and INNODB_REPLICATION_LOG tables in the
 DATA_DICTIONARY schema.
@@ -523,6 +523,13 @@ command line options.
    :Variable: `innodb_use_sys_malloc <innodb_use_sys_malloc>`
 
    Use InnoDB's internal memory allocator instead of the system's malloc.
+
+.. option:: --innodb.use-replicator
+
+   :Default: default
+   :Variable: `innodb_use_replicator <innodb_use_sys_malloc>`
+
+   Use this replicator for the :ref:`innodb_transaction_log`.
 
 .. option:: --innodb.version ARG
 
@@ -1109,6 +1116,16 @@ See `variables` for more information about querying and setting variables.
    :Option: :option:`--innodb.use-internal-malloc`
 
    If system or internal malloc() is being used.
+
+.. _innodb_use_replicator:
+
+* ``innodb_use_replicator``
+
+   :Scope: Global
+   :Dynamic: No
+   :Option: :option:`--innodb.use-replicator`
+
+   Replicator to which the :ref:`innodb_transaction_log` is paired.
 
 .. _innodb_version_var:
 

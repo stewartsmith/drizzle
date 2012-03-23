@@ -1,6 +1,7 @@
-All code descends from the work by Michael Widenius and David Axmark the original authors.
-Many others from MySQL AB have participated in the creation of this as well,
-Please see "SHOW AUTHORS" in MySQL 5.1 for a complete list of names. 
+Drizzle is a descendant of the MySQL database, created by Michael Widenius and 
+David Axmark, and developed for many years by MySQL AB and Sun Microsystems Inc. 
+The below list contains authors of MySQL until the time of 5.1, when Drizzle 
+was forked, and the authors of Drizzle code.
 -----------
 Andrew Ettinger 
 Andrew Garner 
@@ -33,6 +34,7 @@ Gleb Shchepa
 Grant Limberg 
 Harrison Fisk 
 Hartmut Holzgraefe 
+Henrik Ingo
 Jay Pipes 
 Jim Winstead 
 Jobin Augustine
@@ -48,6 +50,7 @@ Monty Taylor
 Moriyoshi Koizumi 
 Nathan Williams 
 Nobuhiro Iwamatsu
+Olaf van der Spek
 Padraig O'Sullivan 
 Patrick Crews 
 Patrick Galbraith 

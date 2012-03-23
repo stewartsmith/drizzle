@@ -129,8 +129,8 @@ Command Line Options
 ^^^^^^^^^^^^^^^^^^^^
 
 Command line options have the form ``--option-name=value`` (the ``=`` is
-optional).  This form works for both :ref:`drizzled_options` and all
-plugin options.  For example::
+optional).  This form works for :ref:`drizzled options <drizzled_options>`
+and all plugin options.  For example::
 
    drizzled --basedir=/opt/drizzle --innodb.buffer-pool-size=500M
 

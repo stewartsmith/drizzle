@@ -1,0 +1,73 @@
+create schema user0;
+create schema user1;
+create schema user2;
+create schema user3;
+create schema user4;
+create schema user5;
+create schema user6;
+create schema user7;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+SCHEMA_NAME
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+user0
+user1
+user2
+user3
+user4
+user5
+user6
+user7
+use user0;
+create table t1 (id int);
+insert into t1 values(1);
+create table user1.t1 as select * from user0.t1;
+create table user2.t1 as select * from user0.t1;
+create table user3.t1 as select * from user0.t1;
+create table user4.t1 as select * from user0.t1;
+create table user5.t1 as select * from user0.t1;
+create table user6.t1 as select * from user0.t1;
+create table user7.t1 as select * from user0.t1;
+SELECT * from user1.dont_exist0;
+ERROR 42S02: Unknown table 'user1.dont_exist0'
+SELECT * from user1.dont_exist1;
+ERROR 42S02: Unknown table 'user1.dont_exist1'
+SELECT * from user1.dont_exist2;
+ERROR 42S02: Unknown table 'user1.dont_exist2'
+SELECT * from user1.dont_exist3;
+ERROR 42S02: Unknown table 'user1.dont_exist3'
+SELECT * from user1.dont_exist4;
+ERROR 42S02: Unknown table 'user1.dont_exist4'
+SELECT * from user1.dont_exist5;
+ERROR 42S02: Unknown table 'user1.dont_exist5'
+SELECT * from user1.dont_exist6;
+ERROR 42S02: Unknown table 'user1.dont_exist6'
+SELECT * from user1.dont_exist7;
+ERROR 42S02: Unknown table 'user1.dont_exist7'
+SELECT * from user1.t1;
+id
+1
+SELECT * from user0.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user0'
+SELECT * from user2.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user2'
+SELECT * from user3.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user3'
+SELECT * from user4.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user4'
+SELECT * from user5.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user5'
+SELECT * from user6.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user6'
+SELECT * from user7.t1;
+ERROR 42000: Access denied for user 'user1' to schema 'user7'
+drop schema user0;
+drop schema user1;
+drop schema user2;
+drop schema user3;
+drop schema user4;
+drop schema user5;
+drop schema user6;
+drop schema user7;

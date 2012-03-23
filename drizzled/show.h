@@ -33,8 +33,6 @@
 
 namespace drizzled {
 
-int wild_case_compare(const charset_info_st*, const char *str, const char *wildstr);
-
 DRIZZLED_API int get_quote_char_for_identifier();
 
 namespace show {

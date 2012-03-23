@@ -1,0 +1,70 @@
+# Check for error if no parameter provided
+create schema user0;
+create schema user1;
+create schema user2;
+create schema user3;
+create schema user4;
+create schema user5;
+create schema user6;
+create schema user7;
+SELECT SCHEMA_NAME FROM DATA_DICTIONARY.SCHEMAS ORDER BY SCHEMA_NAME;
+
+# Set up a table to be able to test not being able to kill other people
+use user0;
+create table t1 (id int);
+insert into t1 values(1);
+create table user1.t1 as select * from user0.t1;
+create table user2.t1 as select * from user0.t1;
+create table user3.t1 as select * from user0.t1;
+create table user4.t1 as select * from user0.t1;
+create table user5.t1 as select * from user0.t1;
+create table user6.t1 as select * from user0.t1;
+create table user7.t1 as select * from user0.t1;
+
+connect (should_succeed,localhost,user1,,user1,,);
+connection should_succeed;
+# Try selecting from 8 tables that don't exist
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist0;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist1;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist2;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist3;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist4;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist5;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist6;
+--error ER_TABLE_UNKNOWN
+SELECT * from user1.dont_exist7;
+
+# Try accessing 8 different existing schemas/tables
+SELECT * from user1.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user0.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user2.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user3.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user4.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user5.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user6.t1;
+--error ER_DBACCESS_DENIED_ERROR
+SELECT * from user7.t1;
+
+connection default;
+drop schema user0;
+drop schema user1;
+drop schema user2;
+drop schema user3;
+drop schema user4;
+drop schema user5;
+drop schema user6;
+drop schema user7;
+disconnect should_succeed;

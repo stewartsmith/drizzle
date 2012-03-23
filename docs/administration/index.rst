@@ -1,5 +1,7 @@
-Getting Started
-===============
+.. _administering_drizzle:
+
+Administering Drizzle
+=====================
 
 Drizzle is a unique database server because most of its functionality is
 provided by plugins.  In fact, the primary job of :program:`drizzled`,

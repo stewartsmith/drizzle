@@ -29,6 +29,8 @@
 #include <boost/regex.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 #include <drizzled/configmake.h>
 #include <drizzled/plugin/authorization.h>
@@ -39,6 +41,9 @@ namespace regex_policy {
 
 static const fs::path DEFAULT_POLICY_FILE= SYSCONFDIR "/drizzle.policy";
 
+static const uint64_t DEFAULT_MAX_LRU_LENGTH= 16384;
+static const uint64_t DEFAULT_MAX_CACHE_BUCKETS= 4096;
+
 static const char *comment_regex = "^[[:space:]]*#.*$";
 static const char *empty_regex = "^[[:space:]]*$";
 static const char *table_match_regex = "^([^ ]+) table\\=([^ ]+) (ACCEPT|DENY)$";
@@ -48,6 +53,7 @@ static const char *schema_match_regex = "^([^ ]+) schema\\=([^ ]+) (ACCEPT|DENY)
 static const int MATCH_REGEX_USER_POS= 1;
 static const int MATCH_REGEX_OBJECT_POS= 2;
 static const int MATCH_REGEX_ACTION_POS= 3;
+
 
 typedef enum 
 {
@@ -100,9 +106,23 @@ public:
 };
 
 typedef std::list<PolicyItem *> PolicyItemList;
-typedef boost::unordered_map<std::string, bool> CheckMap;
+typedef std::vector<std::string> LruList;
+typedef boost::unordered_map<std::string, bool> UnorderedCheckMap;
 
-static boost::mutex check_cache_mutex;
+class CheckMap
+{
+  LruList lru;
+  boost::mutex lru_mutex;
+  boost::shared_mutex map_mutex;
+  UnorderedCheckMap map;
+public:
+  UnorderedCheckMap::iterator find(std::string const&k);
+  UnorderedCheckMap::const_iterator end() const
+  {
+    return map.end();
+  }
+  void insert(std::string const &k, bool v);
+};
 
 class CheckItem
 {
@@ -111,9 +131,9 @@ class CheckItem
   std::string key;
   bool has_cached_result;
   bool cached_result;
-  CheckMap **check_cache;
+  CheckMap &check_cache;
 public:
-  CheckItem(const std::string &u, const std::string &obj, CheckMap **check_cache);
+  CheckItem(const std::string &u, const std::string &obj, CheckMap &check_cache);
   bool operator()(PolicyItem *p);
   bool hasCachedResult() const
   {
@@ -149,7 +169,7 @@ class Policy :
 public:
   Policy(const fs::path &f_path) :
     drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
-    table_check_cache(NULL), schema_check_cache(NULL), process_check_cache(NULL)
+    table_check_cache(), schema_check_cache(), process_check_cache()
   { }
 
   virtual bool restrictSchema(const drizzled::identifier::User &user_ctx,
@@ -167,15 +187,16 @@ public:
 private:
   bool restrictObject(const drizzled::identifier::User &user_ctx,
                                    const std::string &obj, const PolicyItemList &policies,
-                                   CheckMap **check_cache);
+                                   CheckMap &check_cache);
   fs::path policy_file;
+
   std::stringstream error;
   PolicyItemList table_policies;
   PolicyItemList schema_policies;
   PolicyItemList process_policies;
-  CheckMap *table_check_cache;
-  CheckMap *schema_check_cache;
-  CheckMap *process_check_cache;
+  CheckMap table_check_cache;
+  CheckMap schema_check_cache;
+  CheckMap process_check_cache;
 };
 
 } /* namespace regex_policy */
