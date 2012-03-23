@@ -493,7 +493,8 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
  * @return a json document is returned to client with evhttp_send_reply()
  */
 void process_api02_json_post_req(struct evhttp_request *req, void* )
- {
+{
+  bool table_exists = true;
   Json::Value json_out;
 
   struct evbuffer *buf = evbuffer_new();
@@ -543,8 +544,78 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
         json_in["_id"] = (Json::Value::UInt) atol(id);
       }
     }
+
+    // For POST method, we check if table exists.
+    // If it doesn't, we automatically CREATE TABLE that matches the structure
+    // in the given json document. (This means, your first JSON document must
+    // contain all top-level keys you'd like to use.)
+    drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
+                                            drizzled::catalog::local());
+    drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
+    user_id->setUser("");
+    _session->setUser(user_id);
+    drizzled::Execute execute(*(_session.get()), true);
+
+    drizzled::sql::ResultSet result_set(1);
+    std::string sql="select count(*) from information_schema.tables where table_schema = '";
+    sql.append(schema);
+    sql.append("' AND table_name = '");
+    sql.append(table); sql.append("';"); 
+    /* Execute wraps the SQL to run within a transaction */
+    execute.run(sql, result_set);
+
+    drizzled::sql::Exception exception= result_set.getException();
+
+    drizzled::error_t err= exception.getErrorCode();
+    while(result_set.next())
+    {
+      if(result_set.getString(0)=="0")
+      {
+        table_exists = false;
+      }
+    }
+    if(table_exists == false)
+    {
+      std::string tmp = "CREATE TABLE ";
+      tmp.append(schema);
+      tmp.append(".");
+      tmp.append(table);
+      tmp.append(" (_id BIGINT PRIMARY KEY auto_increment,");
+      // Iterate over json_in keys
+      Json::Value::Members createKeys( json_in.getMemberNames() );
+      for ( Json::Value::Members::iterator it = createKeys.begin(); it != createKeys.end(); ++it )
+      {
+        const std::string &key = *it;
+        if(key=="_id") {
+           continue;
+        }
+        tmp.append(key);
+        tmp.append(" TEXT");
+        if( it !=createKeys.end()-1 && key !="_id")
+        {
+          tmp.append(",");
+        }
+      }  
+      tmp.append(")"); 
+      vector<string> csql;       
+      csql.clear();
+      csql.push_back("COMMIT");
+      csql.push_back (tmp);
+      sql.clear();       
+      BOOST_FOREACH(string& it, csql)
+      {
+        sql.append(it);
+        sql.append("; ");
+      }
+      drizzled::sql::ResultSet createtable_result_set(1);
+      execute.run(sql, createtable_result_set);
+        
+      exception= createtable_result_set.getException();
+      err= exception.getErrorCode();
+    }
     // Now we "parse" the json_in object and build an SQL query
-    std::string sql = "REPLACE INTO `";
+    sql.clear();
+    sql.append("REPLACE INTO `");
     sql.append(schema);
     sql.append("`.`");
     sql.append(table);
@@ -553,64 +624,54 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
     Json::Value::Members keys( json_in.getMemberNames() );
     for ( Json::Value::Members::iterator it = keys.begin(); it != keys.end(); ++it )
     {
-        if ( it != keys.begin() )
-        {
-            sql.append(", ");
-        }
-        // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
-        const std::string &key = *it;
-        sql.append(key); sql.append("=");
-        Json::StyledWriter writeobject;
-        switch ( json_in[key].type() )
-        {
-            case Json::nullValue:
-                sql.append("NULL");
-                break;
-            case Json::intValue:
-            case Json::uintValue:
-            case Json::realValue:
-            case Json::booleanValue:
-                sql.append(json_in[key].asString());
-                break;
-            case Json::stringValue:
-                sql.append("'\"");
-                // TODO: MUST be sql quoted!
-                sql.append(json_in[key].asString());
-                sql.append("\"'");
-                break;
-            case Json::arrayValue:
-            case Json::objectValue:
-                sql.append("'");
-                sql.append(writeobject.write(json_in[key]));
-                sql.append("'");
-                break;
-            default:
-                sql.append("'Error in json_server.cc. This should never happen.'");
-                json_out["error_type"]="json error";
-                json_out["error_message"]= "json_in object had a value that wasn't of any of the types that we recognize.";
-                break;
-        }
-        sql.append(" ");
-     }
-     sql.append(";");
-    
-    // We have sql string. Use Execute API to run it.
-    drizzled::Session::shared_ptr _session= drizzled::Session::make_shared(drizzled::plugin::Listen::getNullClient(),
-                                            drizzled::catalog::local());
-    drizzled::identifier::user::mptr user_id= identifier::User::make_shared();
-    user_id->setUser("");
-    _session->setUser(user_id);
-    //_session->set_schema("test");
+      if ( it != keys.begin() )
+      {
+        sql.append(", ");
+      }
+      // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
+      const std::string &key = *it;
+      sql.append(key); sql.append("=");
+      Json::StyledWriter writeobject;
+      switch ( json_in[key].type() )
+      {
+        case Json::nullValue:
+          sql.append("NULL");
+          break;
+        case Json::intValue:
+        case Json::uintValue:
+        case Json::realValue:
+        case Json::booleanValue:
+          sql.append(json_in[key].asString());
+          break;
+        case Json::stringValue:
+          sql.append("'\"");
+          // TODO: MUST be sql quoted!
+          sql.append(json_in[key].asString());
+          sql.append("\"'");
+          break;
+        case Json::arrayValue:
+        case Json::objectValue:
+          sql.append("'");
+          sql.append(writeobject.write(json_in[key]));
+          sql.append("'");
+          break;
+        default:
+          sql.append("'Error in json_server.cc. This should never happen.'");
+          json_out["error_type"]="json error";
+          json_out["error_message"]= "json_in object had a value that wasn't of any of the types that we recognize.";
+        break;
+      }
+      sql.append(" ");
+    }
+    sql.append(";");
+    drizzled::sql::ResultSet replace_result_set(1);
 
-    drizzled::Execute execute(*(_session.get()), true);
+    // Execute wraps the SQL to run within a transaction
+    execute.run(sql, replace_result_set);
+   
+    exception= replace_result_set.getException();
 
-    drizzled::sql::ResultSet result_set(1);
-
-    /* Execute wraps the SQL to run within a transaction */
-    execute.run(sql, result_set);
-    drizzled::sql::Exception exception= result_set.getException();
-
-    drizzled::error_t err= exception.getErrorCode();
+    err= exception.getErrorCode();
 
     json_out["sqlstate"]= exception.getSQLState();
 
@@ -618,11 +679,11 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
     // TODO: Return last_insert_id();
     if ((err != drizzled::EE_OK) && (err != drizzled::ER_EMPTY_QUERY))
     {
-        json_out["error_type"]="sql error";
-        json_out["error_message"]= exception.getErrorMessage();
-        json_out["error_code"]= exception.getErrorCode();
-        json_out["internal_sql_query"]= sql;
-        json_out["schema"]= "test";
+      json_out["error_type"]="sql error";
+      json_out["error_message"]= exception.getErrorMessage();
+      json_out["error_code"]= exception.getErrorCode();
+      json_out["internal_sql_query"]= sql;
+      json_out["schema"]= "test";
     }
     json_out["query"]= json_in;
   }
