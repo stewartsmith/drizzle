@@ -1757,7 +1757,7 @@ struct option my_long_options[] =
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
+   REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
@@ -1897,13 +1897,13 @@ struct option my_long_options[] =
    (char**) &my_thread_stack_size,
    NULL, 0, GET_SIZE,
    REQUIRED_ARG,0,
-   UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
+   REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
