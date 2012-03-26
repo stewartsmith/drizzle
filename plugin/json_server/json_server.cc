@@ -354,7 +354,7 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
   input.append(query, strlen(query));
 
   // Set test as default schema
-  if (strcmp( schema, "") || schema == NULL)
+  if ( !strcmp( schema, "") || schema == NULL)
   {
       schema = "test";
   }
@@ -522,7 +522,7 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   id = (char *)evhttp_find_header(req->input_headers, "_id");
   
   // Set test as default schema
-  if (strcmp( schema, "") || schema == NULL)
+  if ( !strcmp( schema, "") || schema == NULL)
   {
       schema = "test";
   }
@@ -737,7 +737,7 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   input.append(query, strlen(query));
 
   // Set test as default schema
-  if ( strcmp( schema, "") || schema == NULL)
+  if ( !strcmp( schema, "") || schema == NULL)
   {
       schema = "test";
   }
