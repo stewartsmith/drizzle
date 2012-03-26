@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 Stewart Smith, Henrik Ingo
+ *  Copyright (C) 2011 Stewart Smith, Henrik Ingo, Mohit Srivastava
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@
  * 
  * @todo Implement HTTP response codes other than just 200 as defined in
  *       http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
+ *
+ * @todo Shouldn't we be using event2/http.h? Why does this even work without it?
  */
 
 #include <config.h>
@@ -91,7 +93,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
 extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* );
 extern "C" void process_api02_json_post_req(struct evhttp_request *req, void* );
-extern "C" void process_api02_json_put_req(struct evhttp_request *req, void* );
+/* extern "C" void process_api02_json_put_req(struct evhttp_request *req, void* ); */
 extern "C" void process_api02_json_delete_req(struct evhttp_request *req, void* );
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
@@ -694,12 +696,14 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
+/*
 void process_api02_json_put_req(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
+*/
 
 void process_api02_json_delete_req(struct evhttp_request *req, void* )
 {
