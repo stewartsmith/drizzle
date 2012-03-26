@@ -548,7 +548,6 @@ chrpath --delete %{buildroot}%{_bindir}/drizzleslap
 chrpath --delete %{buildroot}%{_bindir}/drizzledump
 chrpath --delete %{buildroot}%{_bindir}/drizzleimport
 chrpath --delete %{buildroot}%{_bindir}/drizzle
-chrpath --delete %{buildroot}%{_bindir}/drizzletrx
 chrpath --delete %{buildroot}%{_sbindir}/drizzled
 
 %clean
@@ -786,8 +785,8 @@ fi
 
 * Sun Mar 11 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 7.1.31.2520-1
 - Removed Filtered replicator plugin as it is disabled in upstream.
-- Transaction Log and some other plugins were deleted, but those were part of
-  main rpm so no actions necessary.
+- Transaction Log was also deleted, but those were part of
+  main rpm so no change in spec file. This also removes drizzletrx utility.
 
 * Thu Feb 02 2012 Henrik Ingo <henrik.ingo@avoinelama.fi> - 7.1.31-1
 - Drizzle name and versioning is changing from drizzle7-2012.01.30 to
