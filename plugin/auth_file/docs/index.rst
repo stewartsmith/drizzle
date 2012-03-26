@@ -1,12 +1,19 @@
+.. _auth_file_plugin:
+
 File-based Authentication
 =========================
 
-.. warning:: :program:`auth_file` is a security risk!  Do not use this plugin with production servers!
+.. warning::
+
+   :program:`auth_file` is a security risk!  Do not use this plugin with production servers!
 
 :program:`auth_file` is an authentication plugin that authenticates connections
 using a list of ``username:password`` entries in a plain text file.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_file_loading:
@@ -21,7 +28,7 @@ To load this plugin, start :program:`drizzled` with::
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`auth_file_configuration` and :ref:`auth_file_variables`.
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_file_configuration:
 
@@ -29,7 +36,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

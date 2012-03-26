@@ -441,7 +441,7 @@ table_map Item_func::not_null_tables() const
 
 void Item_func::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   print_args(str, 0);
   str->append(')');
@@ -466,7 +466,7 @@ void Item_func::print_op(String *str)
   {
     args[i]->print(str);
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
   }
   args[arg_count-1]->print(str);
@@ -488,7 +488,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
       (func_type != Item_func::FUNC_SP &&
        func_name() != item_func->func_name()) ||
       (func_type == Item_func::FUNC_SP &&
-       my_strcasecmp(system_charset_info, func_name(), item_func->func_name())))
+       system_charset_info->strcasecmp(func_name(), item_func->func_name())))
     return 0;
   for (uint32_t i=0; i < arg_count ; i++)
     if (!args[i]->eq(item_func->args[i], binary_cmp))

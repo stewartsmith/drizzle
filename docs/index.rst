@@ -1,3 +1,6 @@
+.. _auth_all@:
+
+
 .. Drizzle documentation master file, created by
    sphinx-quickstart on Fri Aug 27 08:33:41 2010.
    You can adapt this file completely to your liking, but it should at least
@@ -23,7 +26,6 @@ Scope
  * Simple design for ease of use and administration
  * Reliable, ACID transactional
 
-
 Introduction
 ------------
 .. toctree::
@@ -34,27 +36,62 @@ Introduction
    what_is_drizzle
    brief_history_of_drizzle
    how_to_report_a_bug
+   help
    versioning
    mysql_differences
-
-Compiling and Installing
-------------------------
-.. toctree::
-   :maxdepth: 2
-
-   installing/requirements
-   installing/from_source
-   installing/ubuntu
-   installing/redhat
 
 Contributing
 ------------
 .. toctree::
    :maxdepth: 2
 
-   contributing/introduction
+   contributing/getting_started
    contributing/code
    contributing/documentation
+   contributing/more_ways
+
+Installing
+----------
+.. toctree::
+   :maxdepth: 2
+
+   installing/requirements
+   installing/ubuntu
+   installing/redhat
+   installing/from_source
+
+Configuration
+-------------
+.. toctree::
+   :maxdepth: 2
+
+   configuration/index
+   configuration/drizzled
+
+Administration
+--------------
+.. toctree::
+   :maxdepth: 2
+   
+   administration/index
+   administration/drizzled
+   administration/authentication
+   administration/authorization
+   administration/logging
+   administration/plugins
+   administration/storage_engines
+
+Replication
+-----------
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   replication/index
+   replication/replicators/index
+   replication/appliers/index
+   replication/messages/index
+   replication/examples/index
 
 SQL Language
 ------------
@@ -76,35 +113,6 @@ SQL Language
    administrative
    resources/index
 
-Replication
------------
-.. toctree::
-   :maxdepth: 2
-
-   replication
-
-Configuration
--------------
-.. toctree::
-   :maxdepth: 2
-
-   configuration
-   options
-
-Administration
---------------
-.. toctree::
-   :maxdepth: 2
-
-   administration/index
-
-Plugins
--------
-.. toctree::
-   :maxdepth: 2
-
-   plugins/list
-
 Clients
 -------
 .. toctree::
@@ -112,7 +120,21 @@ Clients
 
    clients/drizzle.rst
    clients/drizzledump.rst
-   clients/errors.rst
+
+Plugins
+-------
+.. toctree::
+   :maxdepth: 2
+
+   plugins/list
+   
+Release Notes
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   release_notes/drizzle-7.0
 
 libdrizzle
 ----------
@@ -129,11 +151,12 @@ Testing
    :maxdepth: 2
  
    testing/test-run.rst
-   testing/dbqp.rst
+   testing/kewpie.rst
    testing/randgen.rst
    testing/sql-bench.rst
    testing/sysbench.rst
    testing/writing_tests.rst
+   testing/dbqp.rst
 
 Indices and tables
 ==================

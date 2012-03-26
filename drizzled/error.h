@@ -25,7 +25,7 @@
 
 #include <drizzled/common_fwd.h>
 #include <drizzled/definitions.h>
-#include <drizzled/error/level_t.h>
+#include <drizzled/error/priority_t.h>
 #include <drizzled/error_t.h>
 #include <drizzled/identifier.h>
 #include <drizzled/visibility.h>
@@ -81,7 +81,7 @@ void access(const identifier::User&, const identifier::Schema&);
 void access(const identifier::User&, const identifier::Table&);
 
 const std::string &verbose_string();
-error::level_t &verbosity();
+error::priority_t &verbosity();
 void check_verbosity(const std::string &arg);
 
 } // namespace error

@@ -46,12 +46,12 @@ void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *)
 
 class Print : public std::unary_function<plugin::ErrorMessage *, bool>
 {
-  error::level_t priority;
+  error::priority_t priority;
   const char *format;
   va_list ap;
 
 public:
-  Print(error::level_t priority_arg,
+  Print(error::priority_t priority_arg,
         const char *format_arg, va_list ap_arg) : 
     std::unary_function<plugin::ErrorMessage *, bool>(),
     priority(priority_arg), format(format_arg)
@@ -76,6 +76,7 @@ public:
               _("errmsg plugin '%s' errmsg() failed"),
               handler->getName().c_str());
       va_end(handler_ap);
+
       return true;
     }
     va_end(handler_ap);
@@ -84,23 +85,27 @@ public:
 }; 
 
 
-bool plugin::ErrorMessage::vprintf(error::level_t priority, char const *format, va_list ap)
+bool plugin::ErrorMessage::vprintf(error::priority_t priority, char const *format, va_list ap)
 {
-  if (not (priority >= error::verbosity()))
+  if (priority > error::verbosity())
+  {
     return false;
+  }
 
   /* 
     Check to see if any errmsg plugin has been loaded
     if not, just fall back to emitting the message to stderr.
   */
-  if (not all_errmsg_handler.size())
+  if (all_errmsg_handler.size() == 0)
   {
     /* if it turns out that the vfprintf doesnt do one single write
-       (single writes are atomic), then this needs to be rewritten to
-       vsprintf into a char buffer, and then write() that char buffer
-       to stderr */
-      vfprintf(stderr, format, ap);
-      fputc('\n', stderr);
+      (single writes are atomic), then this needs to be rewritten to
+      vsprintf into a char buffer, and then write() that char buffer
+      to stderr 
+    */
+    vfprintf(stderr, format, ap);
+    fputc('\n', stderr);
+
     return false;
   }
 

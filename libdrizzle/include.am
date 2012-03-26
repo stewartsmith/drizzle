@@ -1,0 +1,13 @@
+# vim:ft=automake
+
+nobase_include_HEADERS+= libdrizzle/drizzle.h
+nobase_include_HEADERS+= libdrizzle/drizzle_client.h
+
+
+noinst_HEADERS+= \
+		 libdrizzle/common.h \
+		 libdrizzle/drizzle_local.h \
+		 libdrizzle/conn_local.h \
+		 libdrizzle/pack.h \
+		 libdrizzle/state.h \
+		 libdrizzle/sha1.h

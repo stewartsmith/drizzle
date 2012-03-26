@@ -206,17 +206,17 @@ static void compose_plugin_options(vector<string> &target,
     std::replace(it.begin(), it.end(), '-', '_');
 }
 
-void compose_plugin_add(vector<string> options)
+void compose_plugin_add(const vector<string>& options)
 {
   compose_plugin_options(opt_plugin_add, options);
 }
 
-void compose_plugin_remove(vector<string> options)
+void compose_plugin_remove(const vector<string>& options)
 {
   compose_plugin_options(opt_plugin_remove, options);
 }
 
-void notify_plugin_load(string in_plugin_load)
+void notify_plugin_load(const string& in_plugin_load)
 {
   tokenize(in_plugin_load, opt_plugin_load, ",", true);
 }
@@ -514,7 +514,7 @@ class OptionCmp
 public:
   bool operator() (const option &a, const option &b)
   {
-    return my_strcasecmp(&my_charset_utf8_general_ci, a.name, b.name);
+    return my_charset_utf8_general_ci.strcasecmp(a.name, b.name);
   }
 };
 

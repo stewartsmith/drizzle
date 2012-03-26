@@ -411,11 +411,7 @@ static void do_cut_string_complex(CopyField *copy)
   int well_formed_error;
   const charset_info_st * const cs= copy->from_field->charset();
   const unsigned char *from_end= copy->from_ptr + copy->from_length;
-  uint32_t copy_length= cs->cset->well_formed_len(cs,
-                                              (char*) copy->from_ptr,
-                                              (char*) from_end,
-                                              copy->to_length / cs->mbmaxlen,
-                                              &well_formed_error);
+  uint32_t copy_length= cs->cset->well_formed_len(*cs, str_ref(copy->from_ptr, from_end), copy->to_length / cs->mbmaxlen, &well_formed_error);
   if (copy->to_length < copy_length)
     copy_length= copy->to_length;
   memcpy(copy->to_ptr, copy->from_ptr, copy_length);
@@ -481,15 +477,12 @@ static void do_varstring1_mb(CopyField *copy)
   uint32_t from_length= (uint32_t) *(unsigned char*) copy->from_ptr;
   const unsigned char *from_ptr= copy->from_ptr + 1;
   uint32_t to_char_length= (copy->to_length - 1) / cs->mbmaxlen;
-  uint32_t length= cs->cset->well_formed_len(cs, (char*) from_ptr,
-                                         (char*) from_ptr + from_length,
-                                         to_char_length, &well_formed_error);
+  uint32_t length= cs->cset->well_formed_len(*cs, str_ref(from_ptr, from_length), to_char_length, &well_formed_error);
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
     {
-      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                  ER_WARN_DATA_TRUNCATED, 1);
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     }
   }
   *copy->to_ptr= (unsigned char) length;
@@ -522,9 +515,7 @@ static void do_varstring2_mb(CopyField *copy)
   uint32_t char_length= (copy->to_length - HA_KEY_BLOB_LENGTH) / cs->mbmaxlen;
   uint32_t from_length= uint2korr(copy->from_ptr);
   const unsigned char *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
-  uint32_t length= cs->cset->well_formed_len(cs, (char*) from_beg,
-                                             (char*) from_beg + from_length,
-                                             char_length, &well_formed_error);
+  uint32_t length= cs->cset->well_formed_len(*cs, str_ref(from_beg, from_length), char_length, &well_formed_error);
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)

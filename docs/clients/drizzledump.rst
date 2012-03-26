@@ -1,4 +1,6 @@
-Drizzledump Backup Tool
+.. _drizzledump:
+
+drizzledump Backup Tool
 =======================
 
 Synopsis
@@ -26,7 +28,7 @@ does not corrupt the dump file.
 
 .. _drizzledump-options-label:
 
-Drizzledump options
+drizzledump Options
 -------------------
 
 The :program:`drizzledump` tool has several available options:
@@ -51,7 +53,7 @@ The :program:`drizzledump` tool has several available options:
 
    Locks all the tables for all databases with a global read lock.  The lock is
    released automatically when :program:`drizzledump` ends.
-   Turns on :option:`--single-transaction` and :option:`--lock-tables`.
+   Also turns on :option:`--single-transaction`.
 
 .. option:: --single-transaction
 
@@ -77,6 +79,10 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --tables t1 t2 ...
 
    Dump a list of tables.
+
+.. option:: --skip-drop-table
+
+   Do not add a 'drop table' before each create.
 
 .. option:: --show-progress-size rows (=10000)
 
@@ -113,8 +119,7 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --compact
 
    Gives a more compact output by disabling header/footer comments and enabling
-   :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
-   and :option:`--skip-add-locks`.
+   :option:`--skip-disable-keys`.
 
 .. option:: --databases, -B
 
@@ -245,7 +250,7 @@ The :program:`drizzledump` tool has several available options:
    **drizzle**
    The Drizzle protocol.
 
-Backups using Drizzledump
+Backups Using drizzledump
 -------------------------
 
 Backups of a database can be made very simply by running the following:
@@ -262,7 +267,7 @@ This can then be re-imported into drizzle at a later date using:
 
 .. _drizzledump-migration-label:
 
-MySQL Migration using Drizzledump
+MySQL Migration Using drizzledump
 ---------------------------------
 
 As of version 2010-09-27 there is the capability to migrate databases from
@@ -298,6 +303,7 @@ into a Drizzle server as follows:
    issues from :program:`drizzledump` to your MySQL server.
 
 .. note::
+
    If you find your VARCHAR and TEXT data does not look correct in a drizzledump
    output, it is likely that you have UTF8 data stored in a non-UTF8 table.  In
    which case please check the :option:`--my-data-is-mangled` option.

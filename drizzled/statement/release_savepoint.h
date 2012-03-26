@@ -29,7 +29,7 @@ namespace statement {
 class ReleaseSavepoint : public Statement
 {
 public:
-  ReleaseSavepoint(Session *in_session, const lex_string_t &ident) :
+  ReleaseSavepoint(Session *in_session, str_ref ident) :
     Statement(in_session)
   {
     set_command(SQLCOM_RELEASE_SAVEPOINT);

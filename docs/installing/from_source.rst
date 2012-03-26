@@ -1,11 +1,38 @@
-Installing From Source
-======================
+Installing Drizzle from Source
+==============================
 
+* :ref:`obtain-source`
+* :ref:`compile-source`
 * :ref:`dependencies`
 * :ref:`ubuntu-install`
 * :ref:`debian-install`
-* :ref:`obtain-source`
-* :ref:`compile-source`
+* :ref:`redhat-install`
+
+.. _obtain-source:
+
+Obtaining the Source
+--------------------
+The latest source release can always be found on our `LaunchPad site
+<https://launchpad.net/drizzle>`_. Alternatively, the bzr source from our stable
+trunk can be obtained by doing:
+
+.. code-block:: bash
+
+   bzr branch lp:drizzle
+
+.. _compile-source:
+
+Compiling the Source
+--------------------
+Compiling is done by performing the standard automake commands from the top level directory inside the source:
+
+.. code-block:: bash
+
+   ./config/autorun.sh
+   ./configure
+   make
+   make install
+
 
 .. _dependencies:
 
@@ -53,6 +80,7 @@ these additional dependencies:
  * libpam0g-dev
  * libprotobuf-dev (>= 2.1.0)
  * libtokyocabinet-dev (>= 1.4.23)
+ * libv8-dev
  * systemtap-sdt-dev
  * libnotifymm-dev
  * doxygen
@@ -60,8 +88,8 @@ these additional dependencies:
 
 .. _ubuntu-install:
 
-Ubuntu Install Commands
--------------------------
+Installing Build Dependencies on Ubuntu
+---------------------------------------
 
 The following commands work on Ubuntu to install the tools and libraries needed to build Drizzle:
 
@@ -74,8 +102,8 @@ The following commands work on Ubuntu to install the tools and libraries needed 
 
 .. _debian-install:
 
-Debian Install Commands
--------------------------
+Installing Build Dependencies on Debian
+---------------------------------------
 
 Since apt-repository isn't in Debian, you can instead add the Maverick PPA to /etc/apt/sources.list as follows:
 
@@ -109,28 +137,37 @@ or (if you want to install and not build drizzle):
 
   apt-get install drizzle 
 
-.. _obtain-source:
+.. _redhat-install:
 
-Obtaining The Source
---------------------
-The latest source release can always be found on our `LaunchPad site
-<https://launchpad.net/drizzle>`_. Alternatively, the bzr source from our stable
-trunk can be obtained by doing:
+Installing Build Dependencies on Red Hat or Fedora
+--------------------------------------------------
+
+Depending on whether you use Red Hat (RHEL) or Fedora, you should add the
+repositories as explained in :doc:`redhat`.
+
+After that, install the following packages:
+
+ * bzr
+ * boost-devel
+ * autoconf
+ * automake
+ * gcc
+ * gcc-c++
+ * libtool
+ * gperf
+ * libuuid-devel (part of e2fsprogs-devel on older RedHat based distributions)
+ * zlib-devel
+ * pcre-devel
+ * readline-devel
+ * flex
+ * bison
+
+Note that you should be able to install all of the above simply with
 
 .. code-block:: bash
 
-   bzr branch lp:drizzle
+  yum-builddep drizzle
 
-.. _compile-source:
 
-Compiling The Source
---------------------
-Compiling is done by performing the standard automake commands from the top level directory inside the source:
 
-.. code-block:: bash
-
-   ./config/autorun.sh
-   ./configure
-   make
-   make install
 

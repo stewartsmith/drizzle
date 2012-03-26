@@ -1511,13 +1511,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "MyISAM",
+  "myisam",
   "2.0",
   "MySQL AB",
-  "Default engine as of MySQL 3.23 with great performance",
+  N_("MyISAM storage engine: non-transactional, legacy, deprecated"),
   PLUGIN_LICENSE_GPL,
-  myisam_init, /* Plugin Init */
-  NULL,           /* depends */
-  init_options                        /* config options                  */
+  myisam_init,
+  NULL,
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -48,6 +48,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 #include <drizzled/identifier/schema.h>
 
 namespace drizzled {
@@ -62,11 +63,15 @@ public:
   {
     std::vector<char> key_buffer;
     size_t hash_value;
+    size_t schema_offset;
+    size_t table_offset;
 
   public:
 
     Key() :
-      hash_value(0)
+      hash_value(0),
+      schema_offset(0),
+      table_offset(0)
     {
     }
 
@@ -75,12 +80,22 @@ public:
       return &key_buffer[0];
     }
 
+    const char *schema_name() const
+    {
+      return &key_buffer[0] +schema_offset;
+    }
+
+    const char *table_name() const
+    {
+      return &key_buffer[0] +table_offset;
+    }
+
     std::vector<char> &vectorPtr()
     {
       return key_buffer;
     }
 
-    void set(size_t resize_arg, const std::string &a, const std::string &b);
+    void set(size_t resize_arg, const std::string &catalog_arg, const std::string &schema_arg, const std::string &table_arg);
 
     friend bool operator==(const Key &left, const Key &right)
     {
@@ -122,7 +137,7 @@ private:
 
   size_t getKeySize() const
   {
-    return getSchemaName().size() + getTableName().size() + 2;
+    return getCatalogName().size() + getSchemaName().size() + getTableName().size() + 3;
   }
 
 public:

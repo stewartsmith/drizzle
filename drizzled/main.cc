@@ -95,7 +95,9 @@ static void my_message_sql(drizzled::error_t error, const char *str, myf MyFlags
   if (session)
   {
     if (MyFlags & ME_FATALERROR)
+    {
       session->is_fatal_error= 1;
+    }
 
     /*
       @TODO There are two exceptions mechanism (Session and sp_rcontext),
@@ -235,8 +237,8 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   module::Registry &modules= module::Registry::singleton();
@@ -255,7 +257,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
 
   /* init_common_variables must get basic settings such as data_home_dir and plugin_load_list. */
-  if (not init_variables_before_daemonizing(argc, argv))
+  if (init_variables_before_daemonizing(argc, argv) == false)
   {
     unireg_abort << "init_variables_before_daemonizing() failed";				// Will do exit
   }
@@ -266,17 +268,17 @@ int main(int argc, char **argv)
     {
       perror("Failed to ignore SIGHUP");
     }
+
     if (daemonize())
     {
       unireg_abort << "--daemon failed";
     }
   }
 
-  if (not init_variables_after_daemonizing(modules))
+  if (init_variables_after_daemonizing(modules) == false)
   {
     unireg_abort << "init_variables_after_daemonizing() failed";				// Will do exit
   }
-
 
   /*
     init signals & alarm
@@ -399,6 +401,9 @@ int main(int argc, char **argv)
     daemon_is_ready();
   }
 
+
+  errmsg_printf(error::INFO, "Drizzle startup complete, listening for connections will now begin.");
+
   /*
     Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
@@ -410,7 +415,9 @@ int main(int argc, char **argv)
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
+    {
       Session::unlink(session);
+    }
   }
 
   /* Send server shutdown event */
@@ -432,6 +439,8 @@ int main(int argc, char **argv)
   clean_up(1);
   module::Registry::shutdown();
   internal::my_end();
+
+  errmsg_printf(error::INFO, "Drizzle is now shutting down");
 
   return 0;
 }

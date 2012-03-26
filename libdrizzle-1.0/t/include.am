@@ -1,0 +1,53 @@
+# vim:ft=automake
+
+noinst_HEADERS+= \
+		 libdrizzle-1.0/t/common.h
+
+# Test linking with C application
+libdrizzle_1_0_t_c_test_SOURCES= libdrizzle-1.0/t/c_test.c
+libdrizzle_1_0_t_c_test_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_c_test_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/c_test
+noinst_PROGRAMS+= libdrizzle-1.0/t/c_test
+
+# Test structure
+libdrizzle_1_0_t_drizzle_st_SOURCES= libdrizzle-1.0/t/drizzle_st.c
+libdrizzle_1_0_t_drizzle_st_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_drizzle_st_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/drizzle_st
+noinst_PROGRAMS+= libdrizzle-1.0/t/drizzle_st
+
+# Test drizzle_query_st
+libdrizzle_1_0_t_drizzle_query_st_SOURCES= libdrizzle-1.0/t/drizzle_query_st.c
+libdrizzle_1_0_t_drizzle_query_st_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_drizzle_query_st_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/drizzle_query_st
+noinst_PROGRAMS+= libdrizzle-1.0/t/drizzle_query_st
+
+# Test client_server
+libdrizzle_1_0_t_client_server_SOURCES= libdrizzle-1.0/t/client_server.c
+libdrizzle_1_0_t_client_server_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_client_server_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/client_server
+noinst_PROGRAMS+= libdrizzle-1.0/t/client_server
+
+# Test drizzle_con_st
+libdrizzle_1_0_t_drizzle_con_st_SOURCES= libdrizzle-1.0/t/drizzle_con_st.c
+libdrizzle_1_0_t_drizzle_con_st_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_drizzle_con_st_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/drizzle_con_st
+noinst_PROGRAMS+= libdrizzle-1.0/t/drizzle_con_st
+
+# Test drizzle_result_st
+libdrizzle_1_0_t_drizzle_result_st_SOURCES= libdrizzle-1.0/t/drizzle_result_st.c
+libdrizzle_1_0_t_drizzle_result_st_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_drizzle_result_st_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/drizzle_result_st
+noinst_PROGRAMS+= libdrizzle-1.0/t/drizzle_result_st
+
+# Test drizzle_column_st
+libdrizzle_1_0_t_drizzle_column_st_SOURCES= libdrizzle-1.0/t/drizzle_column_st.c
+libdrizzle_1_0_t_drizzle_column_st_LDADD= libdrizzle-1.0/libdrizzle.la
+libdrizzle_1_0_t_drizzle_column_st_DEPENDENCIES= libdrizzle-1.0/libdrizzle.la
+check_PROGRAMS+= libdrizzle-1.0/t/drizzle_column_st
+noinst_PROGRAMS+= libdrizzle-1.0/t/drizzle_column_st

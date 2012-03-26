@@ -268,7 +268,7 @@ class QuickSelectDescending : public QuickRangeSelect
 {
 public:
 
-  QuickSelectDescending(QuickRangeSelect *q, 
+  QuickSelectDescending(QuickRangeSelect *q,
                         uint32_t used_key_parts,
                         bool *create_err);
 
@@ -298,6 +298,7 @@ private:
 
   std::vector<QuickRange *>::iterator rev_it;
 
+  uint32_t used_key_parts;
 };
 
 } /* namespace optimizer */

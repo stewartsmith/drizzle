@@ -27,19 +27,16 @@
 
 namespace drizzled {
 
-Item_func_get_system_var::
-Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
-                       lex_string_t *component_arg, const char *name_arg,
-                       size_t name_len_arg)
-  :var(var_arg), var_type(var_type_arg), component(*component_arg)
+Item_func_get_system_var::Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
+                       str_ref component_arg, const char *name_arg, size_t name_len_arg)
+  : var(var_arg), var_type(var_type_arg), component(component_arg)
 {
   /* set_name() will allocate the name */
   set_name(name_arg, name_len_arg);
 }
 
 
-bool
-Item_func_get_system_var::fix_fields(Session *session, Item **ref)
+bool Item_func_get_system_var::fix_fields(Session *session, Item **ref)
 {
 
   /*
@@ -47,7 +44,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
     instead of this item. If the variable can not be evaluated,
     the error is reported in sys_var::item().
   */
-  Item *item= var->item(session, var_type, &component);
+  Item *item= var->item(session, var_type);
   if (not item)
     return 1;                             // Impossible
 
@@ -57,36 +54,35 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   return 0;
 }
 
-Item *get_system_var(Session *session, sql_var_t var_type, lex_string_t name,
-                     lex_string_t component)
+Item *get_system_var(Session *session, sql_var_t var_type, str_ref name, str_ref component)
 {
-  sys_var *var;
-  lex_string_t *base_name, *component_name;
+  str_ref *base_name, *component_name;
 
-  if (component.data())
-  {
-    base_name= &component;
-    component_name= &name;
-  }
-  else
+  if (component.empty())
   {
     base_name= &name;
     component_name= &component;                 // Empty string
   }
+  else
+  {
+    base_name= &component;
+    component_name= &name;
+  }
 
-  if (!(var= find_sys_var(base_name->data())))
-    return 0;
-  if (component.data())
+  sys_var *var= find_sys_var(*base_name);
+  if (not var)
+    return NULL;
+  if (not component.empty())
   {
     my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->data());
-    return 0;
+    return NULL;
   }
   session->lex().setCacheable(false);
 
   if (component_name->size() > MAX_SYS_VAR_LENGTH)
     component_name->assign(component_name->data(), MAX_SYS_VAR_LENGTH);
 
-  return new Item_func_get_system_var(var, var_type, component_name, NULL, 0);
+  return new Item_func_get_system_var(var, var_type, *component_name, NULL, 0);
 }
 
 

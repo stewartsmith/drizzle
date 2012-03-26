@@ -79,7 +79,7 @@ static int init(module::Context &context)
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("allow_anonymous", 
+  context("allow-anonymous", 
           po::value<bool>(&opt_allow_anonymous)->default_value(false),
           N_("Allow anonymous access"));
 }
@@ -90,10 +90,10 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Allow-All-Authentication",
+  "auth_all",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for utility tables",
+  N_("Allows all users to authenticate regardless of username or password"),
   PLUGIN_LICENSE_GPL,
   auth_all::init,
   NULL,

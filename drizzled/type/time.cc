@@ -189,10 +189,10 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
   was_cut= type::VALID;
 
   /* Skip space at start */
-  for (; str != end && my_isspace(&my_charset_utf8_general_ci, *str) ; str++)
+  for (; str != end && my_charset_utf8_general_ci.isspace(*str) ; str++)
     ;
 
-  if (str == end || ! my_isdigit(&my_charset_utf8_general_ci, *str))
+  if (str == end || not my_charset_utf8_general_ci.isdigit(*str))
   {
     was_cut= type::CUT;
     return(type::DRIZZLE_TIMESTAMP_NONE);
@@ -208,7 +208,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
     (YYYY-MM-DD,  YYYYMMDD, YYYYYMMDDHHMMSS)
   */
   for (pos=str;
-       pos != end && (my_isdigit(&my_charset_utf8_general_ci,*pos) || *pos == 'T');
+       pos != end && (my_charset_utf8_general_ci.isdigit(*pos) || *pos == 'T');
        pos++)
     ;
 
@@ -233,9 +233,9 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
         We do this by checking if there is two numbers separated by
         space in the input.
       */
-      while (pos < end && !my_isspace(&my_charset_utf8_general_ci, *pos))
+      while (pos < end && not my_charset_utf8_general_ci.isspace(*pos))
         pos++;
-      while (pos < end && !my_isdigit(&my_charset_utf8_general_ci, *pos))
+      while (pos < end && not my_charset_utf8_general_ci.isdigit(*pos))
         pos++;
       if (pos == end)
       {
@@ -269,12 +269,12 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
   not_zero_date= 0;
   for (i = start_loop;
        i < MAX_DATE_PARTS-1 && str != end &&
-         my_isdigit(&my_charset_utf8_general_ci,*str);
+         my_charset_utf8_general_ci.isdigit(*str);
        i++)
   {
     const char *start= str;
     uint32_t tmp_value= (uint32_t) (unsigned char) (*str++ - '0');
-    while (str != end && my_isdigit(&my_charset_utf8_general_ci,str[0]) &&
+    while (str != end && my_charset_utf8_general_ci.isdigit(str[0]) &&
            (!is_internal_format || --field_length))
     {
       tmp_value=tmp_value*10 + (uint32_t) (unsigned char) (*str - '0');
@@ -313,10 +313,10 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       continue;
     }
     while (str != end &&
-           (my_ispunct(&my_charset_utf8_general_ci,*str) ||
-            my_isspace(&my_charset_utf8_general_ci,*str)))
+           (my_charset_utf8_general_ci.ispunct(*str) ||
+            my_charset_utf8_general_ci.isspace(*str)))
     {
-      if (my_isspace(&my_charset_utf8_general_ci,*str))
+      if (my_charset_utf8_general_ci.isspace(*str))
       {
         if (!(allow_space & (1 << i)))
         {
@@ -342,7 +342,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
             continue;                           /* Not AM/PM */
           str+= 2;                              /* Skip AM/PM */
           /* Skip space after AM/PM */
-          while (str != end && my_isspace(&my_charset_utf8_general_ci,*str))
+          while (str != end && my_charset_utf8_general_ci.isspace(*str))
             str++;
         }
       }
@@ -425,7 +425,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
       {
         for (; str != end ; str++)
         {
-          if (!my_isspace(&my_charset_utf8_general_ci, *str))
+          if (not my_charset_utf8_general_ci.isspace(*str))
           {
             not_zero_date= 1;                     /* Give warning */
             break;
@@ -446,7 +446,7 @@ type::timestamp_t Time::store(const char *str, uint32_t length, uint32_t flags, 
 
     for (; str != end ; str++)
     {
-      if (!my_isspace(&my_charset_utf8_general_ci,*str))
+      if (not my_charset_utf8_general_ci.isspace(*str))
       {
         was_cut= type::CUT;
         break;
@@ -504,7 +504,7 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
 
   this->neg=0;
   warning= 0;
-  for (; str != end && my_isspace(&my_charset_utf8_general_ci,*str) ; str++)
+  for (; str != end && my_charset_utf8_general_ci.isspace(*str) ; str++)
     length--;
   if (str != end && *str == '-')
   {
@@ -530,24 +530,24 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
   }
 
   /* Not a timestamp. Try to get this as a DAYS_TO_SECOND string */
-  for (value=0; str != end && my_isdigit(&my_charset_utf8_general_ci,*str) ; str++)
+  for (value=0; str != end && my_charset_utf8_general_ci.isdigit(*str) ; str++)
     value=value*10L + (long) (*str - '0');
 
   /* Skip all space after 'days' */
   end_of_days= str;
-  for (; str != end && my_isspace(&my_charset_utf8_general_ci, str[0]) ; str++)
+  for (; str != end && my_charset_utf8_general_ci.isspace(str[0]) ; str++)
     ;
 
   found_days=found_hours=0;
   if ((uint32_t) (end-str) > 1 && str != end_of_days &&
-      my_isdigit(&my_charset_utf8_general_ci, *str))
+      my_charset_utf8_general_ci.isdigit(*str))
   {                                             /* Found days part */
     date[0]= (uint32_t) value;
     state= 1;                                   /* Assume next is hours */
     found_days= 1;
   }
   else if ((end-str) > 1 &&  *str == time_separator &&
-           my_isdigit(&my_charset_utf8_general_ci, str[1]))
+           my_charset_utf8_general_ci.isdigit(str[1]))
   {
     date[0]= 0;                                 /* Assume we found hours */
     date[1]= (uint32_t) value;
@@ -569,11 +569,11 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
   /* Read hours, minutes and seconds */
   for (;;)
   {
-    for (value=0; str != end && my_isdigit(&my_charset_utf8_general_ci,*str) ; str++)
+    for (value=0; str != end && my_charset_utf8_general_ci.isdigit(*str) ; str++)
       value=value*10L + (long) (*str - '0');
     date[state++]= (uint32_t) value;
     if (state == 4 || (end-str) < 2 || *str != time_separator ||
-        !my_isdigit(&my_charset_utf8_general_ci,str[1]))
+        !my_charset_utf8_general_ci.isdigit(str[1]))
       break;
     str++;                                      /* Skip time_separator (':') */
   }
@@ -593,11 +593,11 @@ bool Time::store(const char *str, uint32_t length, int &warning, type::timestamp
 
 fractional:
   /* Get fractional second part */
-  if ((end-str) >= 2 && *str == '.' && my_isdigit(&my_charset_utf8_general_ci,str[1]))
+  if ((end-str) >= 2 && *str == '.' && my_charset_utf8_general_ci.isdigit(str[1]))
   {
     int field_length= 5;
     str++; value=(uint32_t) (unsigned char) (*str - '0');
-    while (++str != end && my_isdigit(&my_charset_utf8_general_ci, *str))
+    while (++str != end && my_charset_utf8_general_ci.isdigit(*str))
     {
       if (field_length-- > 0)
         value= value*10 + (uint32_t) (unsigned char) (*str - '0');
@@ -622,16 +622,16 @@ fractional:
   /* (may occur as result of %g formatting of time value) */
   if ((end - str) > 1 &&
       (*str == 'e' || *str == 'E') &&
-      (my_isdigit(&my_charset_utf8_general_ci, str[1]) ||
+      (my_charset_utf8_general_ci.isdigit(str[1]) ||
        ((str[1] == '-' || str[1] == '+') &&
         (end - str) > 2 &&
-        my_isdigit(&my_charset_utf8_general_ci, str[2]))))
+        my_charset_utf8_general_ci.isdigit(str[2]))))
     return 1;
 
   if (internal_format_positions[7] != 255)
   {
     /* Read a possible AM/PM */
-    while (str != end && my_isspace(&my_charset_utf8_general_ci, *str))
+    while (str != end && my_charset_utf8_general_ci.isspace(*str))
       str++;
     if (str+2 <= end && (str[1] == 'M' || str[1] == 'm'))
     {
@@ -671,7 +671,7 @@ fractional:
   {
     do
     {
-      if (!my_isspace(&my_charset_utf8_general_ci,*str))
+      if (not my_charset_utf8_general_ci.isspace(*str))
       {
         warning|= DRIZZLE_TIME_WARN_TRUNCATED;
         break;

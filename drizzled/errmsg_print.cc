@@ -74,7 +74,7 @@ void sql_perror(std::string message, const std::string &extra)
 
   if (not extra.empty())
   {
-    if (message.at(message.size()) != ' ')
+    if (message.at(message.size()-1) != ' ')
       message+= " ";
 
     message+= "'";
@@ -85,7 +85,7 @@ void sql_perror(std::string message, const std::string &extra)
   errmsg_printf(error::ERROR, "%s: %s\n", message.c_str(), errmsg_ptr);
 }
 
-bool errmsg_printf(error::level_t priority, char const *format, ...)
+bool errmsg_printf(error::priority_t priority, char const *format, ...)
 {
   bool rv;
   va_list args;

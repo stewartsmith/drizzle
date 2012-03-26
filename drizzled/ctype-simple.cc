@@ -27,8 +27,7 @@
 
 using namespace std;
 
-namespace drizzled
-{
+namespace drizzled {
 
 /*
   Returns the number of bytes required for strnxfrm().
@@ -82,7 +81,7 @@ long my_strntol_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for ( ; s<e && my_isspace(cs, *s) ; s++) {}
+  for ( ; s<e && cs->isspace(*s) ; s++) {}
 
   if (s == e)
   {
@@ -205,7 +204,7 @@ ulong my_strntoul_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for( ; s<e && my_isspace(cs, *s); s++) {}
+  for( ; s<e && cs->isspace(*s); s++) {}
 
   if (s==e)
   {
@@ -318,7 +317,7 @@ int64_t my_strntoll_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -441,7 +440,7 @@ uint64_t my_strntoull_8bit(const charset_info_st * const cs,
   s = nptr;
   e = nptr+l;
 
-  for(; s<e && my_isspace(cs,*s); s++) {}
+  for(; s<e && cs->isspace(*s); s++) {}
 
   if (s == e)
   {
@@ -682,7 +681,7 @@ cnv:
 inline static int likeconv(const charset_info_st *cs, const char c) 
 {
 #ifdef LIKE_CMP_TOUPPER
-  return (unsigned char) my_toupper(cs, c);
+  return (unsigned char) cs->toupper(c);
 #else
   return cs->sort_order[(unsigned char)c];
 #endif    
@@ -861,7 +860,7 @@ size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const cha
   case MY_SEQ_SPACES:
     for ( ; str < end ; str++)
     {
-      if (!my_isspace(cs,*str))
+      if (!cs->isspace(*str))
         break;
     }
     return (size_t) (str - str0);
@@ -871,41 +870,34 @@ size_t my_scan_8bit(const charset_info_st * const cs, const char *str, const cha
 }
 
 
-void my_fill_8bit(const charset_info_st * const,
-		  char *s, size_t l, int fill)
+void my_fill_8bit(const charset_info_st * const, char *s, size_t l, int fill)
 {
   memset(s, fill, l);
 }
 
 
-size_t my_numchars_8bit(const charset_info_st * const,
-		        const char *b, const char *e)
+size_t my_numchars_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_numcells_8bit(const charset_info_st * const,
-                        const char *b, const char *e)
+size_t my_numcells_8bit(const charset_info_st * const, const char *b, const char *e)
 {
   return (size_t) (e - b);
 }
 
 
-size_t my_charpos_8bit(const charset_info_st * const,
-                       const char *, const char *, size_t pos)
+size_t my_charpos_8bit(const charset_info_st * const, const char *, const char *, size_t pos)
 {
   return pos;
 }
 
 
-size_t my_well_formed_len_8bit(const charset_info_st * const,
-                               const char *start, const char *end,
-                               size_t nchars, int *error)
+size_t my_well_formed_len_8bit(const charset_info_st&, str_ref str, size_t nchars, int *error)
 {
-  size_t nbytes= (size_t) (end-start);
   *error= 0;
-  return min(nbytes, nchars);
+  return min(str.size(), nchars);
 }
 
 
@@ -1502,15 +1494,12 @@ ret_too_big:
 
 
 
-bool my_propagate_simple(const charset_info_st * const, const unsigned char *,
-                         size_t)
+bool my_propagate_simple()
 {
   return 1;
 }
 
-
-bool my_propagate_complex(const charset_info_st * const, const unsigned char *,
-                          size_t)
+bool my_propagate_complex()
 {
   return 0;
 }

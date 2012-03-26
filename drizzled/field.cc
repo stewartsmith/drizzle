@@ -900,7 +900,6 @@ Field::Field(unsigned char *ptr_arg,
     table(NULL),
     orig_table(NULL),
     field_name(field_name_arg),
-    comment(null_lex_string()),
     key_start(0),
     part_of_key(0),
     part_of_key_not_clustered(0),
@@ -1080,7 +1079,7 @@ bool Field::get_date(type::Time &ltime, uint32_t fuzzydate) const
   assert(getTable() and getTable()->getSession());
 
   String* res= val_str_internal(&tmp);
-  return not res or str_to_datetime_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR;
+  return not res or str_to_datetime_with_warn(*getTable()->getSession(), *res, ltime, fuzzydate) <= type::DRIZZLE_TIMESTAMP_ERROR;
 }
 
 bool Field::get_time(type::Time &ltime) const
@@ -1089,7 +1088,7 @@ bool Field::get_time(type::Time &ltime) const
   String tmp(buff,sizeof(buff),&my_charset_bin);
 
   String* res= val_str_internal(&tmp);
-  return not res or str_to_time_with_warn(getTable()->getSession(), res->ptr(), res->length(), &ltime);
+  return not res or str_to_time_with_warn(*getTable()->getSession(), *res, ltime);
 }
 
 int Field::store_time(type::Time &ltime, type::timestamp_t)
@@ -1247,8 +1246,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   if ((session->abortOnWarning() and
        level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
-    make_truncated_value_warning(session, level, str, str_length, ts_type,
-                                 field_name);
+    make_truncated_value_warning(*session, level, str_ref(str, str_length), ts_type, field_name);
 }
 
 void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
@@ -1264,8 +1262,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   {
     char str_nr[DECIMAL_LONGLONG_DIGITS];
     char *str_end= internal::int64_t10_to_str(nr, str_nr, -10);
-    make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
-                                 ts_type, field_name);
+    make_truncated_value_warning(*session, level, str_ref(str_nr, (uint32_t) (str_end - str_nr)), ts_type, field_name);
   }
 }
 
@@ -1282,8 +1279,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
     /* DBL_DIG is enough to print '-[digits].E+###' */
     char str_nr[DBL_DIG + 8];
     uint32_t str_len= snprintf(str_nr, sizeof(str_nr), "%g", nr);
-    make_truncated_value_warning(session, level, str_nr, str_len, ts_type,
-                                 field_name);
+    make_truncated_value_warning(*session, level, str_ref(str_nr, str_len), ts_type, field_name);
   }
 }
 

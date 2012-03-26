@@ -19,12 +19,14 @@
 # MA 02110-1301, USA
 
 EXTRA_DIST+= \
+	     support-files/drizzle.spec \
+	     support-files/drizzled.init \
 	     support-files/smf/drizzle \
 	     support-files/smf/drizzle.xml \
 	     support-files/smf/install.sh 
 
 pkgconfigdir= $(libdir)/pkgconfig
 pkgconfig_DATA= \
-		support-files/drizzle7.pc \
-		support-files/libdrizzle-1.0.pc \
-		support-files/libdrizzle-2.0.pc
+		support-files/drizzle.pc \
+		support-files/libdrizzle.pc \
+		support-files/libdrizzle-1.0.pc

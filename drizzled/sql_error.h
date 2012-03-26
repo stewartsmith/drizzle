@@ -31,7 +31,8 @@ class DRIZZLE_ERROR : public memory::SqlAlloc
 {
 public:
   static const uint32_t NUM_ERRORS= 4;
-  enum enum_warning_level {
+  enum enum_warning_level 
+  {
     WARN_LEVEL_NOTE,
     WARN_LEVEL_WARN,
     WARN_LEVEL_ERROR,
@@ -40,12 +41,9 @@ public:
 
   drizzled::error_t code;
   enum_warning_level level;
-  char *msg;
+  const char *msg;
 
-  DRIZZLE_ERROR(Session *session,
-                drizzled::error_t code_arg,
-                enum_warning_level level_arg,
-                const char *msg_arg) :
+  DRIZZLE_ERROR(Session *session, drizzled::error_t code_arg, enum_warning_level level_arg, const char *msg_arg) :
     code(code_arg),
     level(level_arg)
   {
@@ -56,15 +54,12 @@ public:
   void set_msg(Session *session, const char *msg_arg);
 };
 
-DRIZZLED_API DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                            drizzled::error_t code, const char *msg);
+DRIZZLED_API DRIZZLE_ERROR *push_warning(Session*, DRIZZLE_ERROR::enum_warning_level level, error_t code, const char *msg);
 
-DRIZZLED_API void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                         drizzled::error_t code, const char *format, ...);
+DRIZZLED_API void push_warning_printf(Session*, DRIZZLE_ERROR::enum_warning_level level, error_t code, const char *format, ...);
 
 void drizzle_reset_errors(Session&, bool force);
-bool show_warnings(Session *session, 
-                   std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
+bool show_warnings(Session *session, std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
 extern const lex_string_t warning_level_names[];
 

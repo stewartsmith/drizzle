@@ -191,7 +191,7 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
     List<CreateField>::iterator it= table_fields.begin();
     CreateField* sql_field;
     while ((sql_field= it++) 
-      && my_strcasecmp(system_charset_info, column->field_name.data(), sql_field->field_name))
+      && system_charset_info->strcasecmp(column->field_name.data(), sql_field->field_name))
     {
     }
     if (!sql_field)

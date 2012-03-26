@@ -38,7 +38,7 @@
 #include <cstring>
 #include <getopt.h>
 #include <iostream>
-#include <libdrizzle/libdrizzle.hpp>
+#include <libdrizzle-2.0/libdrizzle.hpp>
 #include <netdb.h>
 #include <unistd.h>
 

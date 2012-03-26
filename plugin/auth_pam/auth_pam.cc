@@ -24,13 +24,13 @@
 
 #include <config.h>
 
+#include <drizzled/identifier.h>
+#include <drizzled/plugin/authentication.h>
+
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
-
-#include <drizzled/identifier.h>
-#include <drizzled/plugin/authentication.h>
 
 using namespace drizzled;
 
@@ -143,10 +143,10 @@ DRIZZLE_DECLARE_PLUGIN
   "pam",
   "0.1",
   "Brian Aker",
-  "PAM based authenication.",
+  N_("Authenication against system user accounts using PAM"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

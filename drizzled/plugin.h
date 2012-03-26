@@ -101,9 +101,7 @@ struct drizzle_value;
   automatically at the end of the statement.
 */
 
-typedef int (*var_check_func)(Session *session,
-                                    drizzle_sys_var *var,
-                                    void *save, drizzle_value *value);
+typedef int (*var_check_func)(Session*, drizzle_sys_var*, void* save, drizzle_value*);
 
 /*
   SYNOPSIS
@@ -119,9 +117,7 @@ typedef int (*var_check_func)(Session *session,
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
 */
-typedef void (*var_update_func)(Session *session,
-                                      drizzle_sys_var *var,
-                                      void *var_ptr, const void *save);
+typedef void (*var_update_func)(Session*, drizzle_sys_var*, void*, const void* save);
 
 
 
@@ -147,20 +143,17 @@ struct drizzle_value
   Miscellaneous functions for plugin implementors
 */
 
-extern bool plugin_init(module::Registry &registry,
-                        boost::program_options::options_description &long_options);
-extern bool plugin_finalize(module::Registry &registry);
-extern void plugin_startup_window(module::Registry &registry, drizzled::Session &session);
-extern void my_print_help_inc_plugins(option *options);
-extern bool plugin_is_ready(const lex_string_t *name, int type);
-extern void plugin_sessionvar_init(Session *session);
-extern void plugin_sessionvar_cleanup(Session *session);
+extern bool plugin_init(module::Registry&, boost::program_options::options_description &long_options);
+extern bool plugin_finalize(module::Registry&);
+extern void plugin_startup_window(module::Registry&, drizzled::Session&);
+extern void my_print_help_inc_plugins(option* options);
+extern void plugin_sessionvar_init(Session*);
+extern void plugin_sessionvar_cleanup(Session*);
 
-int session_in_lock_tables(const Session *session);
-DRIZZLED_API int64_t session_test_options(const Session *session, int64_t test_options);
-void compose_plugin_add(std::vector<std::string> options);
-void compose_plugin_remove(std::vector<std::string> options);
-void notify_plugin_load(std::string in_plugin_load);
+DRIZZLED_API int64_t session_test_options(const Session*, int64_t test_options);
+void compose_plugin_add(const std::vector<std::string>& options);
+void compose_plugin_remove(const std::vector<std::string>& options);
+void notify_plugin_load(const std::string& in_plugin_load);
 
 
 /**
@@ -178,5 +171,3 @@ void notify_plugin_load(std::string in_plugin_load);
 DRIZZLED_API int tmpfile(const char *prefix);
 
 } /* namespace drizzled */
-
-

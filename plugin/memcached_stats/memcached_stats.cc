@@ -95,10 +95,10 @@ DRIZZLE_DECLARE_PLUGIN
   "memcached_stats",
   "1.0",
   "Padraig O'Sullivan",
-  N_("Memcached Stats as I_S tables"),
+  N_("Dictionary of memcached statistics"),
   PLUGIN_LICENSE_BSD,
-  drizzle_plugin::init,   /* Plugin Init      */
-  NULL, /* depends */
-  drizzle_plugin::init_options    /* config options   */
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -190,8 +190,7 @@ size_t my_numchars_mb(const charset_info_st * const cs,
 }
 
 
-size_t my_charpos_mb(const charset_info_st * const cs,
-		     const char *pos, const char *end, size_t length)
+size_t my_charpos_mb(const charset_info_st * const cs, const char *pos, const char *end, size_t length)
 {
   const char *start= pos;
 
@@ -205,17 +204,17 @@ size_t my_charpos_mb(const charset_info_st * const cs,
 }
 
 
-size_t my_well_formed_len_mb(const charset_info_st * const cs, const char *b, const char *e,
-                             size_t pos, int *error)
+size_t my_well_formed_len_mb(const charset_info_st& cs, str_ref str, size_t pos, int *error)
 {
+  const char *b= str.begin();
+  const char *e= str.end();
   const char *b_start= b;
   *error= 0;
   while (pos)
   {
     my_wc_t wc;
-    int mb_len;
-
-    if ((mb_len= cs->cset->mb_wc(cs, &wc, (const unsigned char*) b, (const unsigned char*) e)) <= 0)
+    int mb_len= cs.cset->mb_wc(&cs, &wc, (const unsigned char*) b, (const unsigned char*) e);
+    if (mb_len <= 0)
     {
       *error= b < e ? 1 : 0;
       break;
@@ -1061,9 +1060,7 @@ int my_mb_ctype_mb(const charset_info_st * const cs, int *ctype,
   if (res <= 0 || wc > 0xFFFF)
     *ctype= 0;
   else
-    *ctype= my_uni_ctype[wc>>8].ctype ?
-            my_uni_ctype[wc>>8].ctype[wc&0xFF] :
-            my_uni_ctype[wc>>8].pctype;
+    *ctype= my_uni_ctype[wc>>8].ctype ? my_uni_ctype[wc>>8].ctype[wc&0xFF] : my_uni_ctype[wc>>8].pctype;
   return res;
 }
 

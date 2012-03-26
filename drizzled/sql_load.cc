@@ -1,4 +1,5 @@
 /* Copyright (C) 2000-2006 MySQL AB
+   Copyright (C) 2011 Stewart Smith
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
 
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/epoch.h>
@@ -263,7 +264,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   }
 
   fs::path to_file(ex->file_name);
-  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path target_path(fs::system_complete(catalog::local_identifier().getPath()));
   if (not to_file.has_root_directory())
   {
     int count_elements= 0;
@@ -394,11 +395,8 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-  /*
-     simulated killing in the middle of per-row loop
-     must be effective for binlogging
-  */
-  if (error) 
+
+  if (error)
   {
     error= -1;				// Error on read
     goto err;
@@ -411,7 +409,6 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   if (session->transaction.stmt.hasModifiedNonTransData())
     session->transaction.all.markModifiedNonTransData();
 
-  /* ok to client sent only after binlog write and engine commit */
   session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
@@ -639,8 +636,7 @@ read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
       }
       else if (item->type() == Item::STRING_ITEM)
       {
-        ((Item_user_var_as_out_param *)item)->set_value((char*) pos, length,
-                                                        read_info.read_charset);
+        ((Item_user_var_as_out_param *)item)->set_value(str_ref((char*) pos, length), read_info.read_charset);
       }
       else
       {

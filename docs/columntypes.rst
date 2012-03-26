@@ -9,7 +9,8 @@ A VARCHAR or VARBINARY type is used to store variable length data. Indexes
 on these types are by default the full length of the data stored.
 The only difference between the two types is the COLLATION which is
 used. VARBINARY uses a binary collation for all index usage. VARCHAR can only
-contain valid UTF-8 characters. If you need to store ASCII values the VARBINARY type.
+contain valid UTF-8 characters. If you need to store ASCII values the VARBINARY 
+type.
 
 -------------
 TEXT and BLOB
@@ -26,7 +27,8 @@ NUMERICAL
 ---------
 
 BIGINT and INTEGER exist as Drizzle's two integer numerical types. BIGINT is
-a 64bit integer while INTEGER is a 32bit integer. Declaring a numerical types as UNSIGNED the value to be 64bit.
+a 64 bit integer while INTEGER is a 32 bit integer. Declaring a numerical types 
+as  UNSIGNED causes the value to be 64 bit.
 
 DOUBLE is the systems native double type.
 
@@ -44,7 +46,9 @@ DATE
 
 TIME
 
-TIMESTAMP can be supplied an optional parameter of (6) during creation. This causes microseconds to be recorded as well. The TIME type represents duration of an event in seconds.
+TIMESTAMP can be supplied an optional parameter of (6) during creation. This 
+causes microseconds to be recorded as well. The TIME type represents duration 
+of an event in seconds.
 
 ----
 ENUM
@@ -62,8 +66,16 @@ A SERIAL is a meta type that creates a column where a number is inserted in
 increasing order as rows are inserted into the table. The actual type is a
 BIGINT.
 
+----
+IPV6
+----
+
+IPV6 is a special column type that allows you to insert and query both IPv4 and
+IPv6 addresses in their human readable presentation forms (e.g. 127.0.0.1 and 
+::1 respectively) but stores them as binary 128 bit values. For example usage,
+see:
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    ipv6_data_type
-

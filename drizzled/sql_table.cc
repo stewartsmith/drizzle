@@ -73,7 +73,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (not create_info->default_table_charset)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(db));
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(str_ref(db)));
 }
 
 /*
@@ -685,9 +685,7 @@ static int prepare_create_table(Session *session,
     /* Check if we have used the same field name before */
     for (dup_no=0; (dup_field=it2++) != sql_field; dup_no++)
     {
-      if (my_strcasecmp(system_charset_info,
-                        sql_field->field_name,
-                        dup_field->field_name) == 0)
+      if (system_charset_info->strcasecmp(sql_field->field_name, dup_field->field_name) == 0)
       {
 	/*
 	  If this was a CREATE ... SELECT statement, accept a field
@@ -831,7 +829,7 @@ static int prepare_create_table(Session *session,
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
       return true;
     }
-    if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
+    if (check_identifier_name(key->name, ER_TOO_LONG_IDENT))
       return true;
     key_iterator2= alter_info->key_list.begin();
     if (key->type != Key::FOREIGN_KEY)
@@ -950,11 +948,9 @@ static int prepare_create_table(Session *session,
       it= alter_info->create_list.begin();
       field=0;
       while ((sql_field=it++) && ++proto_field_nr &&
-	     my_strcasecmp(system_charset_info,
-			   column->field_name.data(),
-			   sql_field->field_name))
+	     system_charset_info->strcasecmp(column->field_name.data(), sql_field->field_name))
       {
-	field++;
+        field++;
       }
 
       if (!sql_field)
@@ -965,8 +961,7 @@ static int prepare_create_table(Session *session,
 
       while ((dup_column= cols2++) != column)
       {
-        if (!my_strcasecmp(system_charset_info,
-                           column->field_name.data(), dup_column->field_name.data()))
+        if (!system_charset_info->strcasecmp(column->field_name.data(), dup_column->field_name.data()))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
@@ -1531,9 +1526,11 @@ bool create_table(Session *session,
 static bool
 check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KeyInfo *key=start ; key != end ; key++)
-    if (!my_strcasecmp(system_charset_info,name,key->name))
+  for (KeyInfo *key= start; key != end; key++)
+  {
+    if (!system_charset_info->strcasecmp(name, key->name))
       return 1;
+  }
   return 0;
 }
 
@@ -1544,7 +1541,9 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
   char buff[MAX_FIELD_NAME],*buff_end;
 
   if (not check_if_keyname_exists(field_name,start,end) && not is_primary_key(field_name))
+  {
     return field_name;			// Use fieldname
+  }
 
   buff_end= strncpy(buff, field_name, sizeof(buff)-4);
   buff_end+= strlen(buff);

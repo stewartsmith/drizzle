@@ -1859,12 +1859,14 @@ Item_allany_subselect::select_transformer(Join *join)
 void Item_allany_subselect::print(String *str)
 {
   if (exec_method == IN_TO_EXISTS)
+  {
     str->append(STRING_WITH_LEN("<exists>"));
+  }
   else
   {
     left_expr->print(str);
     str->append(' ');
-    str->append(func->symbol(all));
+    str->append(func->symbol(all), strlen(func->symbol(all)));
     str->append(all ? " all " : " any ", 5);
   }
   Item_subselect::print(str);
@@ -1875,7 +1877,9 @@ void subselect_engine::set_session(Session *session_arg)
 {
   session= session_arg;
   if (result)
+  {
     result->set_session(session_arg);
+  }
 }
 
 
@@ -2736,7 +2740,7 @@ void subselect_uniquesubquery_engine::print(String *str)
   else
     str->append(tab->table->getShare()->getTableNameRef());
   str->append(STRING_WITH_LEN(" on "));
-  str->append(tab->table->key_info[tab->ref.key].name);
+  str->append(tab->table->key_info[tab->ref.key].name, strlen(tab->table->key_info[tab->ref.key].name));
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
@@ -2777,19 +2781,24 @@ void subselect_indexsubquery_engine::print(String *str)
   str->append(tab->table->getShare()->getTableNameRef());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
-  str->append(key_info->name);
+  str->append(key_info->name, strlen(key_info->name));
   if (check_null)
+  {
     str->append(STRING_WITH_LEN(" checking NULL"));
+  }
+
   if (cond)
   {
     str->append(STRING_WITH_LEN(" where "));
     cond->print(str);
   }
+
   if (having)
   {
     str->append(STRING_WITH_LEN(" having "));
     having->print(str);
   }
+
   str->append(')');
 }
 

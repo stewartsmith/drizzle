@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/gettext.h>
 #include <drizzled/constrained_value.h>
 #include <drizzled/configmake.h>
-#include <drizzled/error/level_t.h>
+#include <drizzled/error/priority_t.h>
 
 #include "ha_prototypes.h"
  //#define XTRABACKUP_TARGET_IS_PLUGIN
@@ -109,9 +109,9 @@ using namespace drizzled;
 namespace po=boost::program_options;
 
 namespace drizzled {
-  bool errmsg_printf (error::level_t, char const *format, ...);
+  bool errmsg_printf (error::priority_t, char const *format, ...);
 
-  bool errmsg_printf (error::level_t, char const *format, ...)
+  bool errmsg_printf (error::priority_t, char const *format, ...)
   {
     bool rv;
     va_list args;
@@ -491,7 +491,7 @@ innobase_isspace(
   const void *cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+  return static_cast<const CHARSET_INFO*>(cs)->isspace(char_to_test);
 }
 
 UNIV_INTERN
@@ -634,7 +634,7 @@ typedef struct {
 static void print_version(void)
 {
   printf("%s  Ver %s Rev %s for %s %s (%s)\n" ,my_progname,
-	  XTRABACKUP_VERSION, XTRABACKUP_REVISION, "Drizzle7",
+	  XTRABACKUP_VERSION, XTRABACKUP_REVISION, "Drizzle",
          TARGET_OS, TARGET_CPU);
 }
 
@@ -752,14 +752,14 @@ innobase_strcasecmp(
 	const char*	a,
 	const char*	b)
 {
-	return(my_strcasecmp(&my_charset_utf8_general_ci, a, b));
+	return my_charset_utf8_general_ci.strcasecmp(a, b);
 }
 
 void
 innobase_casedn_str(
 	char*	a)
 {
-	my_casedn_str(&my_charset_utf8_general_ci, a);
+	my_charset_utf8_general_ci.casedn_str(a);
 }
 
 UNIV_INTERN

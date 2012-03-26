@@ -3,6 +3,7 @@
 Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
 Copyright (C) 2008, 2009 Google Inc.
 Copyright (C) 2009, Percona Inc.
+Copyright (C) 2011, Stewart Smith
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -50,6 +51,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <drizzled/plugin.h>
 #include <drizzled/show.h>
 #include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/error.h>
 #include <drizzled/field.h>
 #include <drizzled/charset.h>
@@ -240,6 +242,8 @@ typedef constrained_check<uint32_t, 999999999, 100> ibuf_accel_rate_constraint;
 static ibuf_accel_rate_constraint ibuf_accel_rate;
 static uint32_constraint checkpoint_age_target;
 static binary_constraint flush_neighbor_pages;
+
+static string sysvar_transaction_log_use_replicator;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -603,7 +607,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
+    if (ext == NULL || system_charset_info->strcasecmp(ext, DEFAULT_FILE_EXTENSION) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
@@ -1324,7 +1328,7 @@ innobase_strcasecmp(
   const char* a,  /*!< in: first string to compare */
   const char* b)  /*!< in: second string to compare */
 {
-  return(my_strcasecmp(system_charset_info, a, b));
+  return(system_charset_info->strcasecmp(a, b));
 }
 
 /******************************************************************//**
@@ -1335,16 +1339,16 @@ innobase_casedn_str(
 /*================*/
   char* a)  /*!< in/out: string to put in lower case */
 {
-  my_casedn_str(system_charset_info, a);
+  system_charset_info->casedn_str(a);
 }
 
 UNIV_INTERN
 bool
 innobase_isspace(
-  const void *cs,
+  const void* cs,
   char char_to_test)
 {
-  return my_isspace(static_cast<const charset_info_st *>(cs), char_to_test);
+  return static_cast<const charset_info_st*>(cs)->isspace(char_to_test);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -2514,7 +2518,7 @@ innobase_change_buffering_inited_ok:
   {
     ReplicationLog *replication_logger= new ReplicationLog();
     context.add(replication_logger);
-    ReplicationLog::setup(replication_logger);
+    ReplicationLog::setup(replication_logger, sysvar_transaction_log_use_replicator);
   }
 
   context.registerVariable(new sys_var_const_string_val("data-home-dir", innobase_data_home_dir));
@@ -2626,6 +2630,9 @@ innobase_change_buffering_inited_ok:
   /* Get the current high water mark format. */
   innobase_file_format_max = trx_sys_file_format_max_get();
   btr_search_fully_disabled = (!btr_search_enabled);
+
+  context.registerVariable(new sys_var_const_string("use-replicator",
+                                                    sysvar_transaction_log_use_replicator));
 
   return(FALSE);
 
@@ -4112,12 +4119,7 @@ ha_innobase::store_key_val_for_row(
       the true length of the key */
 
       if (len > 0 && cs->mbmaxlen > 1) {
-        true_len = (ulint) cs->cset->well_formed_len(cs,
-            (const char *) data,
-            (const char *) data + len,
-                                                (uint) (key_len /
-                                                        cs->mbmaxlen),
-            &error);
+        true_len = (ulint) cs->cset->well_formed_len(*cs, str_ref(data, len), (uint) (key_len / cs->mbmaxlen), &error);
       }
 
       /* In a column prefix index, we may need to truncate
@@ -4178,13 +4180,7 @@ ha_innobase::store_key_val_for_row(
       the true length of the key */
 
       if (blob_len > 0 && cs->mbmaxlen > 1) {
-        true_len = (ulint) cs->cset->well_formed_len(cs,
-                                                     (const char *) blob_data,
-                                                     (const char *) blob_data
-                                                     + blob_len,
-                                                     (uint) (key_len /
-                                                             cs->mbmaxlen),
-                                                     &error);
+        true_len = (ulint) cs->cset->well_formed_len(*cs, str_ref(blob_data, blob_len), (uint) (key_len / cs->mbmaxlen), &error);
       }
 
       /* All indexes on BLOB and TEXT are column prefix
@@ -6784,13 +6780,10 @@ InnobaseEngine::doDropSchema(
 
 void InnobaseEngine::dropTemporarySchema()
 {
-  identifier::Schema schema_identifier(GLOBAL_TEMPORARY_EXT);
-  trx_t*  trx= NULL;
   string schema_path(GLOBAL_TEMPORARY_EXT);
+  schema_path += "/";
 
-  schema_path.append("/");
-
-  trx = trx_allocate_for_mysql();
+  trx_t* trx = trx_allocate_for_mysql();
 
   trx->mysql_thd = NULL;
 
@@ -7301,7 +7294,7 @@ ha_innobase::info(
 
     prebuilt->trx->op_info = "returning various info to MySQL";
 
-    fs::path get_status_path(getDataHomeCatalog());
+    fs::path get_status_path(catalog::local_identifier().getPath());
     get_status_path /= ib_table->name;
     fs::change_extension(get_status_path, "dfe");
 
@@ -7860,8 +7853,8 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   mutex_enter(&(dict_sys->mutex));
   dict_foreign_t* foreign = UT_LIST_GET_FIRST(prebuilt->table->foreign_list);
 
-  while (foreign != NULL) {
-
+  while (foreign != NULL) 
+  {
     uint ulen;
     char uname[NAME_LEN + 1];           /* Unencoded name */
     char db_name[NAME_LEN + 1];
@@ -7904,63 +7897,34 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
         break;
     }
 
-    ulong length;
     if (foreign->type & DICT_FOREIGN_ON_DELETE_CASCADE)
-    {
-      length=7;
       tmp_buff= "CASCADE";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_DELETE_SET_NULL)
-    {
-      length=8;
       tmp_buff= "SET NULL";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_DELETE_NO_ACTION)
-    {
-      length=9;
       tmp_buff= "NO ACTION";
-    }
     else
-    {
-      length=8;
       tmp_buff= "RESTRICT";
-    }
-    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
-
+    lex_string_t *tmp_delete_method = session->make_lex_string(NULL, str_ref(tmp_buff));
 
     if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
-    {
-      length=7;
       tmp_buff= "CASCADE";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_UPDATE_SET_NULL)
-    {
-      length=8;
       tmp_buff= "SET NULL";
-    }
     else if (foreign->type & DICT_FOREIGN_ON_UPDATE_NO_ACTION)
-    {
-      length=9;
       tmp_buff= "NO ACTION";
-    }
     else
-    {
-      length=8;
       tmp_buff= "RESTRICT";
-    }
-    lex_string_t *tmp_update_method = session->make_lex_string(NULL, str_ref(tmp_buff, length));
+    lex_string_t *tmp_update_method = session->make_lex_string(NULL, str_ref(tmp_buff));
 
-    lex_string_t *tmp_referenced_key_name = NULL;
-
-    if (foreign->referenced_index && foreign->referenced_index->name)
-    {
-      tmp_referenced_key_name = session->make_lex_string(NULL, str_ref(foreign->referenced_index->name));
-    }
+    lex_string_t *tmp_referenced_key_name = foreign->referenced_index && foreign->referenced_index->name
+      ? session->make_lex_string(NULL, str_ref(foreign->referenced_index->name))
+      : NULL;
 
     ForeignKeyInfo f_key_info(
-                              tmp_foreign_id, tmp_referenced_db, tmp_referenced_table,
-                              tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
-                              tmp_foreign_fields, tmp_referenced_fields);
+      tmp_foreign_id, tmp_referenced_db, tmp_referenced_table,
+      tmp_update_method, tmp_delete_method, tmp_referenced_key_name,
+      tmp_foreign_fields, tmp_referenced_fields);
 
     f_key_list->push_back((ForeignKeyInfo*)session->mem.memdup(&f_key_info, sizeof(ForeignKeyInfo)));
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
@@ -7968,7 +7932,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   mutex_exit(&(dict_sys->mutex));
   prebuilt->trx->op_info = "";
 
-  return(0);
+  return 0;
 }
 
 /*****************************************************************//**
@@ -9489,6 +9453,9 @@ static void init_options(drizzled::module::option_context &context)
   context("replication-log",
           po::value<bool>(&innobase_use_replication_log)->default_value(false)->zero_tokens(),
           _("Enable internal replication log."));
+  context("use-replicator",
+          po::value<string>(&sysvar_transaction_log_use_replicator)->default_value(DEFAULT_USE_REPLICATOR),
+          _("Name of the replicator plugin to use (default='default_replicator')")); 
   context("lock-wait-timeout",
           po::value<lock_wait_constraint>(&lock_wait_timeout)->default_value(50),
           _("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
@@ -9507,10 +9474,10 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  innobase_engine_name,
+  "innodb",
   INNODB_VERSION_STR,
   "Innobase Oy",
-  "Supports transactions, row-level locking, and foreign keys",
+  "InnoDB storage engine: transactional, row-level locking, foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   NULL, /* depends */

@@ -1,3 +1,5 @@
+.. _query_log_plugin:
+
 Query Log
 =========
 
@@ -17,7 +19,7 @@ To load this plugin, start :program:`drizzled` with::
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`query_log_configuration` and :ref:`query_log_variables`.
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _query_log_configuration:
 

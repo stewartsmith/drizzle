@@ -52,64 +52,6 @@ inline const char* str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
-{
-  int flag;
-
-  while (*wildstr)
-  {
-    while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
-    {
-      if (*wildstr == internal::wild_prefix && wildstr[1])
-        wildstr++;
-
-      if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
-        return (1);
-    }
-
-    if (! *wildstr )
-      return (*str != 0);
-
-    if (*wildstr++ == internal::wild_one)
-    {
-      if (! *str++)
-        return (1);	/* One char; skip */
-    }
-    else
-    {						/* Found '*' */
-      if (! *wildstr)
-        return (0);		/* '*' as last char: OK */
-
-      flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
-      do
-      {
-        if (flag)
-        {
-          char cmp;
-          if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
-            cmp= wildstr[1];
-
-          cmp= my_toupper(cs, cmp);
-
-          while (*str && my_toupper(cs, *str) != cmp)
-            str++;
-
-          if (! *str)
-            return (1);
-        }
-
-        if (wild_case_compare(cs, str, wildstr) == 0)
-          return (0);
-
-      } while (*str++);
-
-      return (1);
-    }
-  }
-
-  return (*str != '\0');
-}
-
 /*
   Get the quote character for displaying an identifier.
 
@@ -174,9 +116,9 @@ bool buildTables(Session *session, const char *ident)
   util::string::ptr schema(session->schema());
   if (ident)
   {
-    identifier::Schema identifier(ident);
+    identifier::Schema identifier= str_ref(ident);
     column_name.append(ident);
-    session->lex().select_lex.db= const_cast<char *>(ident);
+    session->lex().select_lex.db= ident;
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
       my_error(ER_BAD_DB_ERROR, identifier);
@@ -238,9 +180,9 @@ bool buildTableStatus(Session *session, const char *ident)
   util::string::ptr schema(session->schema());
   if (ident)
   {
-    session->lex().select_lex.db= const_cast<char *>(ident);
+    session->lex().select_lex.db= ident;
 
-    identifier::Schema identifier(ident);
+    identifier::Schema identifier= str_ref(ident);
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
       my_error(ER_BAD_DB_ERROR, identifier);
@@ -266,7 +208,7 @@ bool buildTableStatus(Session *session, const char *ident)
   return true;
 }
 
-bool buildEngineStatus(Session *session, lex_string_t)
+bool buildEngineStatus(Session *session, str_ref)
 {
   session->lex().sql_command= SQLCOM_SELECT;
   drizzled::statement::Show *select= new statement::Show(session);
@@ -479,7 +421,7 @@ bool buildVariables(Session *session, const drizzled::sql_var_t is_global)
   return true;
 }
 
-bool buildCreateSchema(Session *session, lex_string_t &ident)
+bool buildCreateSchema(Session *session, str_ref ident)
 {
   session->lex().sql_command= SQLCOM_SELECT;
   drizzled::statement::Show *select= new statement::Show(session);

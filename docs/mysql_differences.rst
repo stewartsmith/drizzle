@@ -139,14 +139,13 @@ There is no Drizzle admin command.
 Storage Engines
 ---------------
 
- * MERGE storage engine has been removed
- * FEDERATED storage engine has been removed (all current development is
-   focused on FederatedX, so having FEDERATED made no sense).
- * CSV engine is now for temporary tables only. See the filesystem_engine for
-   the future of reading files as database tables.
- * MyISAM is for temporary tables only.
- * ARCHIVE is fully supported
- * PBXT is merged
+The default Storage Engine is InnoDB and the MyISAM storage engine only exists for temporary tables only. In a future release, it will not be user accessible at all.
+
+A number of storage engines have been removed:
+ * MERGE - this was always a interim solution to the absence of SQL VIEWs
+ * FEDERATED - it is effectively unmaintanied, with any recent development occuring in FederatedX
+ * CSV
+ * ARCHIVE
 
 FRM Files
 ---------
@@ -215,9 +214,9 @@ Objects Removed
  * There is no TINYINT, SMALLINT or MEDIUMINT. Integer operations have been optimized around 32 and 64 bit integers.
  * There are no TINYBLOB, MEDIUMBLOB and LONGBLOB datatypes. We have optimized a single BLOB container.
  * There are no TINYTEXT, MEDIUMTEXT and LONGTEXT datatypes. Use TEXT or BLOB.
- * There is no UNSIGNED (as per the standard).
- * There are no spatial data types GEOMETRY, POINT, LINESTRING & POLYGON (go use `Postgres <http://www.postgresql.org>`_).
- * No YEAR field type.
- * There are no FULLTEXT indexes for the MyISAM storage engine (the only engine FULLTEXT was supported in). Look at either Lucene, Sphinx, or Solr.
- * No "dual" table.
- * The "LOCAL" keyword in "LOAD DATA LOCAL INFILE" is not supported
+ * There is no UNSIGNED (as per the standard).  * There are no spatial data
+   types GEOMETRY, POINT, LINESTRING & POLYGON (go use `Postgres
+   <http://www.postgresql.org/>`_).  * No YEAR field type.  * There are no
+   FULLTEXT indexes for the MyISAM storage engine (the only engine FULLTEXT was
+   supported in).  Look at either Lucene, Sphinx, or Solr.  * No "dual" table.
+   * The "LOCAL" keyword in "LOAD DATA LOCAL INFILE" is not supported

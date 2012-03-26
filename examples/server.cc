@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-2.0/drizzle_server.h>
 
 #define DRIZZLE_FIELD_MAX 32
 #define DRIZZLE_RESULT_ROWS 20
@@ -58,8 +58,7 @@
   return; \
 }
 
-static void server(drizzle_st *drizzle, drizzle_con_st *con,
-                   drizzle_result_st *result, drizzle_column_st *column);
+static void server(drizzle_st *drizzle, drizzle_con_st *con, drizzle_column_st *column);
 
 int main(int argc, char *argv[])
 {
@@ -70,10 +69,7 @@ int main(int argc, char *argv[])
   in_port_t port= 0;
   drizzle_verbose_t verbose= DRIZZLE_VERBOSE_NEVER;
   drizzle_return_t ret;
-  drizzle_st drizzle;
-  drizzle_con_st *con_listen= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
-  drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
-  drizzle_result_st result;
+  drizzle_st *drizzle;
   drizzle_column_st column;
 
   while((c = getopt(argc, argv, "c:h:mp:v")) != -1)
@@ -132,18 +128,19 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (drizzle_create(&drizzle) == NULL)
+  if ((drizzle= drizzle_create()) == NULL)
   {
-    printf("drizzle_create:NULL\n");
+    fprintf(stderr, "drizzle_create:NULL\n");
     return 1;
   }
 
-  drizzle_add_options(&drizzle, DRIZZLE_FREE_OBJECTS);
-  drizzle_set_verbose(&drizzle, verbose);
+  drizzle_set_option(drizzle, DRIZZLE_FREE_OBJECTS, true);
+  drizzle_set_verbose(drizzle, verbose);
 
-  if (drizzle_con_create(&drizzle, con_listen) == NULL)
+  drizzle_con_st* con_listen;
+  if ((con_listen= drizzle_con_create(drizzle)) == NULL)
   {
-    printf("drizzle_con_create:NULL\n");
+    fprintf(stderr, "drizzle_con_create:NULL\n");
     return 1;
   }
 
@@ -151,24 +148,26 @@ int main(int argc, char *argv[])
   drizzle_con_set_tcp(con_listen, host, port);
 
   if (mysql)
+  {
     drizzle_con_add_options(con_listen, DRIZZLE_CON_MYSQL);
+  }
 
   if (drizzle_con_listen(con_listen) != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_con_listen:%s\n", drizzle_error(&drizzle));
+    fprintf(stderr, "drizzle_con_listen:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
   while (1)
   {
-    (void)drizzle_con_accept(&drizzle, con, &ret);
+    drizzle_con_st *con= drizzle_con_accept(drizzle, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      printf("drizzle_con_accept:%s\n", drizzle_error(&drizzle));
+      fprintf(stderr, "drizzle_con_accept:%s\n", drizzle_error(drizzle));
       return 1;
     }
 
-    server(&drizzle, con, &result, &column);
+    server(drizzle, con, &column);
 
     drizzle_con_free(con);
 
@@ -182,16 +181,13 @@ int main(int argc, char *argv[])
   }
 
   drizzle_con_free(con_listen);
-  drizzle_free(&drizzle);
-
-  free(con);
-  free(con_listen);
+  drizzle_free(drizzle);
 
   return 0;
 }
 
 static void server(drizzle_st *drizzle, drizzle_con_st *con,
-                   drizzle_result_st *result, drizzle_column_st *column)
+                   drizzle_column_st *column)
 {
   drizzle_return_t ret;
   drizzle_command_t command;
@@ -220,10 +216,13 @@ static void server(drizzle_st *drizzle, drizzle_con_st *con,
   DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_server_write", drizzle)
 
   ret= drizzle_handshake_client_read(con);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_read", drizzle)
+  DRIZZLE_RETURN_CHECK(ret, "drizzle_handshake_client_read", drizzle);
 
-  if (drizzle_result_create(con, result) == NULL)
+  drizzle_result_st *result;
+  if ((result= drizzle_result_create(con)) == NULL)
+  {
     DRIZZLE_RETURN_ERROR("drizzle_result_create", drizzle)
+  }
 
   ret= drizzle_result_write(con, result, true);
   DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
@@ -243,8 +242,10 @@ static void server(drizzle_st *drizzle, drizzle_con_st *con,
     }
     DRIZZLE_RETURN_CHECK(ret, "drizzle_con_command_buffer", drizzle)
 
-    if (drizzle_result_create(con, result) == NULL)
+    if ((result= drizzle_result_create(con)) == NULL)
+    {
       DRIZZLE_RETURN_ERROR("drizzle_result_create", drizzle)
+    }
 
     if (command != DRIZZLE_COMMAND_QUERY)
     {
@@ -260,7 +261,9 @@ static void server(drizzle_st *drizzle, drizzle_con_st *con,
 
     /* Columns. */
     if (drizzle_column_create(result, column) == NULL)
+    {
       DRIZZLE_RETURN_ERROR("drizzle_column_create", drizzle)
+    }
 
     drizzle_column_set_catalog(column, "default");
     drizzle_column_set_db(column, "drizzle_test_db");

@@ -1,3 +1,5 @@
+.. _compression_plugin:
+
 Compression Functions
 =====================
 
@@ -19,7 +21,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=compression
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _compression_authors:
 

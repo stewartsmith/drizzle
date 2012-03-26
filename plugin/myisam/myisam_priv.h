@@ -21,7 +21,8 @@
 
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include <drizzled/tree.h>
+#include <drizzled/memory/root.h>
+
 #include <drizzled/internal/my_pthread.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
@@ -35,6 +36,10 @@
 #include <list>
 
 #include <boost/thread/mutex.hpp>
+
+namespace drizzled {
+class Tree;
+}
 
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
@@ -249,7 +254,7 @@ struct st_myisam_info {
   MI_BLOB     *blobs;			/* Pointer to blobs */
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
-  drizzled::TREE	        *bulk_insert;
+  drizzled::Tree	*bulk_insert;
   drizzled::Session *in_use;                      /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   unsigned char *buff,				/* Temp area for key                */

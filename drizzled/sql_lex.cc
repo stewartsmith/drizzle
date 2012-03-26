@@ -117,8 +117,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append(const char *ptr,
-                                        const char *end_ptr)
+void Lex_input_stream::body_utf8_append(const char *ptr, const char *end_ptr)
 {
   assert(m_cpp_buf <= ptr && ptr <= m_cpp_buf + m_buf_length);
   assert(m_cpp_buf <= end_ptr && end_ptr <= m_cpp_buf + m_buf_length);
@@ -161,16 +160,15 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(const lex_string_t *txt,
-                                                const char *end_ptr)
+void Lex_input_stream::body_utf8_append_literal(str_ref txt, const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
     return;
 
   /* NOTE: utf_txt.length is in bytes, not in symbols. */
 
-  memcpy(m_body_utf8_ptr, txt->data(), txt->size());
-  m_body_utf8_ptr += txt->size();
+  memcpy(m_body_utf8_ptr, txt.data(), txt.size());
+  m_body_utf8_ptr += txt.size();
   *m_body_utf8_ptr= 0;
 
   m_cpp_utf8_processed_ptr= end_ptr;
@@ -275,7 +273,7 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   const char *tok= lip->get_tok_start();
   uint32_t tok_pos= 0;
   for (;tok_pos<len && tok_pos<63;tok_pos++)
-    tok_upper[tok_pos]=my_toupper(system_charset_info, tok[tok_pos]);
+    tok_upper[tok_pos]= system_charset_info->toupper(tok[tok_pos]);
   tok_upper[tok_pos]=0;
 
   const SYMBOL *symbol= lookup_symbol(tok_upper, len, function);
@@ -659,8 +657,8 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
     case MY_LEX_CHAR:			// Unknown or single char token
     case MY_LEX_SKIP:			// This should not happen
       if (c == '-' && lip->yyPeek() == '-' &&
-          (my_isspace(cs,lip->yyPeekn(1)) ||
-           my_iscntrl(cs,lip->yyPeekn(1))))
+          (cs->isspace(lip->yyPeekn(1)) ||
+           cs->iscntrl(lip->yyPeekn(1))))
       {
         state=MY_LEX_COMMENT;
         break;
@@ -752,11 +750,11 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         }
         lip->yySkip();                  // next state does a unget
       }
-      yylval->lex_str=get_token(lip, 0, length);
+      yylval->lex_str= get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);			// IDENT or IDENT_QUOTED
 
@@ -774,11 +772,11 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         c= lip->yyGet();
         if (c == 'x')
         {
-          while (my_isxdigit(cs,(c = lip->yyGet()))) ;
+          while (cs->isxdigit((c = lip->yyGet()))) ;
           if ((lip->yyLength() >= 3) && !ident_map[c])
           {
             /* skip '0x' */
-            yylval->lex_str=get_token(lip, 2, lip->yyLength()-2);
+            yylval->lex_str= get_token(lip, 2, lip->yyLength()-2);
             return (HEX_NUM);
           }
           lip->yyUnget();
@@ -801,7 +799,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
         lip->yyUnget();
       }
 
-      while (my_isdigit(cs, (c = lip->yyGet()))) ;
+      while (cs->isdigit((c = lip->yyGet()))) ;
       if (!ident_map[c])
       {					// Can't be identifier
         state=MY_LEX_INT_OR_REAL;
@@ -810,14 +808,14 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       if (c == 'e' || c == 'E')
       {
         // The following test is written this way to allow numbers of type 1e1
-        if (my_isdigit(cs,lip->yyPeek()) ||
+        if (cs->isdigit(lip->yyPeek()) ||
             (c=(lip->yyGet())) == '+' || c == '-')
         {				// Allow 1E+10
-          if (my_isdigit(cs,lip->yyPeek()))     // Number must have digit after sign
+          if (cs->isdigit(lip->yyPeek()))     // Number must have digit after sign
           {
             lip->yySkip();
-            while (my_isdigit(cs,lip->yyGet())) ;
-            yylval->lex_str=get_token(lip, 0, lip->yyLength());
+            while (cs->isdigit(lip->yyGet())) ;
+            yylval->lex_str= get_token(lip, 0, lip->yyLength());
             return(FLOAT_NUM);
           }
         }
@@ -852,8 +850,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str= get_token(lip, 0, lip->yyLength());
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
 
@@ -879,16 +876,15 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
           break;				// Error
         lip->skip_binary(var_length-1);
       }
-      if (double_quotes)
-	      yylval->lex_str=get_quoted_token(lip, 1, lip->yyLength() - double_quotes -1, quote_char);
-      else
-        yylval->lex_str=get_token(lip, 1, lip->yyLength() -1);
+      yylval->lex_str= double_quotes
+        ? get_quoted_token(lip, 1, lip->yyLength() - double_quotes - 1, quote_char)
+        : get_token(lip, 1, lip->yyLength() - 1);
       if (c == quote_char)
         lip->yySkip();                  // Skip end `
       lip->next_state= MY_LEX_START;
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-      return(IDENT_QUOTED);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
+      return IDENT_QUOTED;
     }
     case MY_LEX_INT_OR_REAL:		// Complete int or incomplete real
       if (c != '.')
@@ -898,19 +894,19 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       }
       // fall through
     case MY_LEX_REAL:			// Incomplete real number
-      while (my_isdigit(cs,c = lip->yyGet())) ;
+      while (cs->isdigit(c = lip->yyGet())) ;
 
       if (c == 'e' || c == 'E')
       {
         c = lip->yyGet();
         if (c == '-' || c == '+')
                 c = lip->yyGet();                     // Skip sign
-        if (!my_isdigit(cs,c))
+        if (!cs->isdigit(c))
         {				// No digit after sign
           state= MY_LEX_CHAR;
           break;
         }
-        while (my_isdigit(cs,lip->yyGet())) ;
+        while (cs->isdigit(lip->yyGet())) ;
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
         return(FLOAT_NUM);
       }
@@ -919,7 +915,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
     case MY_LEX_HEX_NUMBER:		// Found x'hexstring'
       lip->yySkip();                    // Accept opening '
-      while (my_isxdigit(cs, (c= lip->yyGet()))) ;
+      while (cs->isxdigit((c= lip->yyGet()))) ;
       if (c != '\'')
         return(ABORT_SYM);              // Illegal hex constant
       lip->yySkip();                    // Accept closing '
@@ -998,7 +994,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str.assign(yylval->lex_str.data(), lip->yytoklen);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
       return(TEXT_STRING);
@@ -1166,7 +1162,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       /* Actually real shouldn't start with . but allow them anyhow */
 
     case MY_LEX_REAL_OR_POINT:
-      if (my_isdigit(cs,lip->yyPeek()))
+      if (cs->isdigit(lip->yyPeek()))
         state= MY_LEX_REAL;		// Real
       else
       {
@@ -1193,7 +1189,7 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
 
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
-           my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
+           cs->isalnum(c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
@@ -1233,10 +1229,9 @@ int lex_one_token(ParserType *yylval, drizzled::Session *session)
       yylval->lex_str=get_token(lip, 0, length);
 
       lip->body_utf8_append(lip->m_cpp_text_start);
+      lip->body_utf8_append_literal(yylval->lex_str, lip->m_cpp_text_end);
 
-      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
-
-      return(result_state);
+      return result_state;
     }
   }
 }

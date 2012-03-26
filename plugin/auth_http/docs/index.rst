@@ -1,3 +1,5 @@
+.. _auth_http_plugin:
+
 HTTP Authentication
 ===================
 
@@ -7,7 +9,10 @@ to provide authentication.  For example, see Apache's documentation
 for `Authentication, Authorization and Access Control <http://httpd.apache.org/docs/2.0/howto/auth.html>`_.
 Currently, SSL connections are not supported.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_http_loading:
@@ -22,7 +27,7 @@ To load this plugin, start :program:`drizzled` with::
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`auth_http_configuration` and :ref:`auth_http_variables`.
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_http_configuration:
 
@@ -30,7 +35,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

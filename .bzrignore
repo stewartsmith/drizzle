@@ -43,6 +43,7 @@ client/drizzleimport
 client/drizzleslap
 client/drizzletest
 client/mysqlslap
+client/drizzle_password_hash
 comp_creator.gcno
 compile
 config.guess
@@ -166,8 +167,6 @@ install-sh
 item.gcno
 key.gcno
 key_map.gcno
-libdrizzle-2.0/libdrizzle/mysql_password_hash
-libdrizzle-2.0/libdrizzle/drizzle_password_hash
 libmysql/Makefile.in
 libserialutil_la-db.gcno
 libserialutil_la-unireg.gcno
@@ -225,6 +224,7 @@ plugin/storage_engine_api_tester/engine_states_to_dot
 plugin/transaction_log/utilities/drizzletrx
 po/POTFILES
 po/drizzle7.pot
+po/drizzle.pot
 po/remove-potcdate.sed
 po/stamp-it
 po/stamp-po
@@ -304,8 +304,10 @@ strings/tests/Makefile.in
 support-files/Makefile.in
 support-files/drizzle-log-rotate
 support-files/drizzle7.pc
+support-files/drizzle.pc
 support-files/drizzle.server
 support-files/drizzle.spec
+support-files/libdrizzle.pc
 support-files/libdrizzle-1.0.pc
 support-files/libdrizzle-2.0.pc
 support-files/libdrizzleclient.pc
@@ -324,6 +326,8 @@ tests/dbqp
 tests/dbqp_data/uuid
 tests/dbqp_work
 tests/install_test_db
+tests/kewpie/qp_data/uuid
+tests/kewpie/workdir
 tests/mtr
 tests/mtr@
 tests/resolve_stack_dump
@@ -376,3 +380,21 @@ drizzled/execute/parser.output
 drizzled/execute/scanner.cc
 drizzled/execute/scanner.h
 plugin/innobase/xtrabackup/drizzlebackup.innobase
+libdrizzle-2.0/drizzle_password_hash
+libdrizzle-2.0/mysql_password_hash
+.autotools
+.cproject
+.metadata
+.project
+.settings
+tags
+libdrizzle-1.0/t/c_test
+libdrizzle-1.0/t/client_server
+libdrizzle-1.0/t/drizzle_column_st
+libdrizzle-1.0/t/drizzle_con_st
+libdrizzle-1.0/t/drizzle_query_st
+libdrizzle-1.0/t/drizzle_result_st
+libdrizzle-1.0/t/drizzle_st
+drizzled/sql_yacc.hh
+stripped_log
+total_warning_count

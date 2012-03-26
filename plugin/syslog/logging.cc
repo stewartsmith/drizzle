@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <stdarg.h>
+#include <cstdarg>
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,6 +33,7 @@
 #include <drizzled/session/times.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/plugin.h>
+#include <drizzled/error.h>
 
 #include "logging.h"
 #include "wrap.h"
@@ -40,13 +41,11 @@
 namespace drizzle_plugin {
 
 logging::Syslog::Syslog(const std::string &facility,
-                        const std::string &priority,
                         uint64_t threshold_slow,
                         uint64_t threshold_big_resultset,
                         uint64_t threshold_big_examined) :
-  drizzled::plugin::Logging("Syslog Logging"),
+  drizzled::plugin::Logging("syslog_query_log"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str())),
-  _priority(WrapSyslog::getPriorityByName(priority.c_str())),
   _threshold_slow(threshold_slow),
   _threshold_big_resultset(threshold_big_resultset),
   _threshold_big_examined(threshold_big_examined)
@@ -58,14 +57,6 @@ logging::Syslog::Syslog(const std::string &facility,
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
   }
-
-  if (_priority < 0)
-  {
-    drizzled::errmsg_printf(drizzled::error::WARN,
-                            _("syslog priority \"%s\" not known, using \"info\""),
-                            priority.c_str());
-    _priority= WrapSyslog::getPriorityByName("info");
-  }
 }
 
 
@@ -75,9 +66,14 @@ bool logging::Syslog::post(drizzled::Session *session)
 
   // return if query was not too small
   if (session->sent_row_count < _threshold_big_resultset)
+  {
     return false;
+  }
+
   if (session->examined_row_count < _threshold_big_examined)
+  {
     return false;
+  }
 
   /*
     TODO, the session object should have a "utime command completed"
@@ -88,13 +84,15 @@ bool logging::Syslog::post(drizzled::Session *session)
 
   // return if query was not too slow
   if (session->times.getElapsedTime() < _threshold_slow)
+  {
     return false;
+  }
 
   drizzled::Session::QueryString query_string(session->getQueryString());
   drizzled::util::string::ptr schema(session->schema());
 
   WrapSyslog::singleton()
-    .log(_facility, _priority,
+    .log(_facility, drizzled::error::INFO,
          "thread_id=%ld query_id=%ld"
          " db=\"%.*s\""
          " query=\"%.*s\""

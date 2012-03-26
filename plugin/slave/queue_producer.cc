@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
+
 #include <plugin/slave/queue_producer.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/sql/result_set.h>
@@ -133,34 +135,34 @@ bool QueueProducer::reconnect(bool initial_connection)
 
 bool QueueProducer::openConnection()
 {
-  if (drizzle_create(&_drizzle) == NULL)
+  if ((_drizzle= drizzle_create()) == NULL)
   {
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
-  if (drizzle_con_create(&_drizzle, &_connection) == NULL)
+  if ((_connection= drizzle_con_create(_drizzle)) == NULL)
   {
     _last_return= DRIZZLE_RETURN_INTERNAL_ERROR;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
   
-  drizzle_con_set_tcp(&_connection, _master_host.c_str(), _master_port);
-  drizzle_con_set_auth(&_connection, _master_user.c_str(), _master_pass.c_str());
+  drizzle_con_set_tcp(_connection, _master_host.c_str(), _master_port);
+  drizzle_con_set_auth(_connection, _master_user.c_str(), _master_pass.c_str());
 
-  drizzle_return_t ret= drizzle_con_connect(&_connection);
+  drizzle_return_t ret= drizzle_con_connect(_connection);
 
   if (ret != DRIZZLE_RETURN_OK)
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     return false;
   }
@@ -177,7 +179,7 @@ bool QueueProducer::closeConnection()
 
   _is_connected= false;
 
-  if (drizzle_quit(&_connection, &result, &ret) == NULL)
+  if (drizzle_quit(_connection, &result, &ret) == NULL)
   {
     _last_return= ret;
     drizzle_result_free(&result);
@@ -242,17 +244,21 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   string sql("SELECT `id` FROM `data_dictionary`.`sys_replication_log`"
              " WHERE `commit_id` > ");
   sql.append(boost::lexical_cast<string>(max_commit_id));
+  sql.append(" AND `originating_server_uuid` != ");
+  sql.append("'", 1);
+  sql.append(_session.get()->getServerUUID());
+  sql.append("'", 1);
   sql.append(" ORDER BY `commit_id` LIMIT 25");
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
+  drizzle_query_str(_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return false;
@@ -264,7 +270,7 @@ bool QueueProducer::queryForTrxIdList(uint64_t max_commit_id,
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return false;
@@ -418,13 +424,13 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
 
   drizzle_return_t ret;
   drizzle_result_st result;
-  drizzle_query_str(&_connection, &result, sql.c_str(), &ret);
+  drizzle_query_str(_connection, &result, sql.c_str(), &ret);
   
   if (ret != DRIZZLE_RETURN_OK)
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return ER_YES;
@@ -438,7 +444,7 @@ enum drizzled::error_t QueueProducer::queryForReplicationEvents(uint64_t max_com
   {
     _last_return= ret;
     _last_error_message= "Replication slave: ";
-    _last_error_message.append(drizzle_error(&_drizzle));
+    _last_error_message.append(drizzle_error(_drizzle));
     errmsg_printf(error::ERROR, _("%s"), _last_error_message.c_str());
     drizzle_result_free(&result);
     return ER_YES;

@@ -49,19 +49,16 @@ public:
     In particular, the following members/methods can be set/called,
     depending on the function called and the function possible side effects.
     <ul>
-      <li><code>session->lex().binlog_row_based_if_mixed</code></li>
       <li><code>session->lex().current_context()</code></li>
-      <li><code>session->lex().safe_to_cache_query</code></li>
       <li><code>session->lex().uncacheable(UNCACHEABLE_SIDEEFFECT)</code></li>
       <li><code>session->lex().uncacheable(UNCACHEABLE_RAND)</code></li>
-      <li><code>session->lex().add_time_zone_tables_to_query_tables(session)</code></li>
     </ul>
     @param session The current thread
     @param name The function name
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call, or NULL
   */
-  virtual Item *create(Session *session, lex_string_t name, List<Item> *item_list) = 0;
+  virtual Item *create(Session*, str_ref name, List<Item> *item_list) = 0;
 
 protected:
   virtual ~Create_func() {}
@@ -84,7 +81,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  virtual Item *create(Session *session, lex_string_t name, List<Item> *item_list);
+  virtual Item *create(Session*, str_ref name, List<Item> *item_list);
 
   /**
     The builder create method, for qualified functions.
@@ -95,7 +92,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  virtual Item* create(Session*, lex_string_t db, lex_string_t name, bool use_explicit_name, List<Item>*) = 0;
+  virtual Item* create(Session*, str_ref db, str_ref name, bool use_explicit_name, List<Item>*) = 0;
 };
 
 
@@ -104,7 +101,7 @@ public:
   @param name The native function name
   @return The native function builder associated with the name, or NULL
 */
-extern Create_func* find_native_function_builder(lex_string_t name);
+extern Create_func* find_native_function_builder(str_ref name);
 
 
 /**
@@ -122,7 +119,7 @@ extern Create_qfunc* find_qualified_function_builder(Session*);
 class Create_udf_func : public Create_func
 {
 public:
-  virtual Item *create(Session *session, lex_string_t name, List<Item> *item_list);
+  virtual Item *create(Session*, str_ref name, List<Item> *item_list);
 
   /**
     The builder create method, for User Defined Functions.
@@ -131,7 +128,7 @@ public:
     @param item_list The list of arguments to the function, can be NULL
     @return An item representing the parsed function call
   */
-  Item *create(Session *session, const plugin::Function *fct, List<Item> *item_list);
+  Item *create(Session*, const plugin::Function *fct, List<Item> *item_list);
 
   /** Singleton. */
   static Create_udf_func s_singleton;
@@ -142,7 +139,7 @@ protected:
 };
 
 Item*
-create_func_char_cast(Session *session, Item *a, int len, const charset_info_st * const cs);
+create_func_char_cast(Session*, Item *a, int len, const charset_info_st * const cs);
 
 /**
   Builder for cast expressions.

@@ -22,7 +22,7 @@
 namespace drizzled {
 namespace item {
 
-class True: public Boolean
+class True : public Boolean
 {
 public:
   True() :

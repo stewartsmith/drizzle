@@ -1,6 +1,8 @@
 Requirements
 ============
 
+.. _supported_platforms:
+
 Supported Platforms
 -------------------
 When installing Drizzle we typically recommend either using the packages from
@@ -8,12 +10,21 @@ a Linux distribution or packages provided by our own repositories.  This is
 because the dependencies required by Drizzle can sometimes be too old or missing
 in some Linux distributions.
 
-Every build of Drizzle is currently tested on:
+Drizzle 7 was tested on:
  * Fedora 12 through 14
  * RedHat (or CentOS) 5 and 6
- * Debian Squeeze (6.0)
+ * Debian Squeeze 6.0
  * Ubuntu 10.04 and 10.10
- * Apple OSX 10.6.4
+ * Apple OS X 10.6.4
+
+Drizzle 7.1 was tested on
+ * Fedora 15
+ * RedHat and CentOS 5 and 6
+ * Debian Squeeze 6.0
+ * Ubuntu 10.04 through 11.10
+ * OpenSuse 11
+ * FreeBSD 8.0 and 8.1
+
 
 We recommend using these platforms with Drizzle. Older platforms may have various
 unforseen difficulties when compiling and/or installing.  Drizzle is tested on
@@ -28,4 +39,8 @@ To install and use Drizzle you will need the following basic packages:
  * libuuid (part of the `E2fsprogs <http://e2fsprogs.sourceforge.net/>`_ project)
  * `zlib <http://www.zlib.net/>`_ 1.1.3-5 or higher
 
-Our repositories for RedHat/CentOS/Fedora and for Ubuntu will provide these where required.
+In addition, several optional plugins will depend on additional libraries, like 
+V8 for JavaScript, or clients for Memcache, Gearman, RabbitMQ, ZeroMQ...
+
+Our repositories for RedHat/CentOS/Fedora and for Ubuntu will provide these 
+when they are not part of the distribution repositories.

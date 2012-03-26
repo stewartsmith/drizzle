@@ -69,11 +69,9 @@ bool my_charset_same(const charset_info_st *cs1, const charset_info_st *cs2)
 
 static uint get_collation_number_internal(const char *name)
 {
-  for (charset_info_st **cs= all_charsets;
-       cs < all_charsets+array_elements(all_charsets)-1;
-       cs++)
+  for (charset_info_st **cs= all_charsets; cs < all_charsets + array_elements(all_charsets) - 1; cs++)
   {
-    if ( cs[0] && cs[0]->name && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->name, name))
+    if (cs[0] && cs[0]->name && not my_charset_utf8_general_ci.strcasecmp(cs[0]->name, name))
     {
       return cs[0]->number;
     }
@@ -98,13 +96,13 @@ static void init_state_maps(charset_info_st *cs)
   /* Fill state_map with states to get a faster parser */
   for (int i= 0; i < 256; i++)
   {
-    if (my_isalpha(cs,i))
+    if (cs->isalpha(i))
       state_map[i]= MY_LEX_IDENT;
-    else if (my_isdigit(cs,i))
+    else if (cs->isdigit(i))
       state_map[i]= MY_LEX_NUMBER_IDENT;
-    else if (my_mbcharlen(cs, i)>1)
+    else if (my_mbcharlen(cs, i) > 1)
       state_map[i]= MY_LEX_IDENT;
-    else if (my_isspace(cs,i))
+    else if (cs->isspace(i))
       state_map[i]= MY_LEX_SKIP;
     else
       state_map[i]= MY_LEX_CHAR;
@@ -220,14 +218,11 @@ uint32_t get_collation_number(const char *name)
 
 uint32_t get_charset_number(const char *charset_name, uint32_t cs_flags)
 {
-  charset_info_st **cs;
   init_available_charsets();
 
-  for (cs= all_charsets;
-       cs < all_charsets+array_elements(all_charsets)-1 ;
-       cs++)
+  for (charset_info_st** cs= all_charsets; cs < all_charsets + array_elements(all_charsets) - 1; cs++)
   {
-    if ( cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) && !my_strcasecmp(&my_charset_utf8_general_ci, cs[0]->csname, charset_name))
+    if (cs[0] && cs[0]->csname && (cs[0]->state & cs_flags) && not my_charset_utf8_general_ci.strcasecmp(cs[0]->csname, charset_name))
       return cs[0]->number;
   }
   return 0;

@@ -1,3 +1,5 @@
+.. _function_dictionary_plugin:
+
 Function Dictionary
 ===================
 
@@ -13,7 +15,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=function_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _function_dictionary_examples:
 

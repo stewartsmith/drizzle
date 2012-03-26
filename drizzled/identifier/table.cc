@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <assert.h>
+#include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/my_sys.h>
@@ -184,12 +184,14 @@ std::string Table::build_table_filename(const std::string &in_db, const std::str
 }
 
 Table::Table(const drizzled::Table &table) :
-  identifier::Schema(table.getShare()->getSchemaName()),
+  identifier::Schema(str_ref(table.getShare()->getSchemaName())),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
   if (type == message::Table::TEMPORARY)
+  {
     path= table.getShare()->getPath();
+  }
 
   init();
 }
@@ -203,13 +205,17 @@ void Table::init()
     assert(path.empty());
     path= build_table_filename(getSchemaName(), table_name, false);
     break;
+
   case message::Table::INTERNAL:
     assert(path.empty());
     path= build_table_filename(getSchemaName(), table_name, true);
     break;
+
   case message::Table::TEMPORARY:
     if (path.empty())
+    {
       path= build_tmptable_filename();
+    }
     break;
   }
 
@@ -217,11 +223,13 @@ void Table::init()
   {
     size_t pos= path.find("tmp/#sql");
     if (pos != std::string::npos) 
+    {
       key_path= path.substr(pos);
+    }
   }
 
   hash_value= util::insensitive_hash()(path);
-  key.set(getKeySize(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
+  key.set(getKeySize(), getCatalogName(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 
@@ -242,8 +250,10 @@ std::string Table::getSQLPath() const  // @todo this is just used for errors, we
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
 		return getSchemaName() + "." + table_name;
+
   case message::Table::INTERNAL:
 		return "temporary." + table_name;
+
   case message::Table::TEMPORARY:
     return getSchemaName() + ".#" + table_name;
   }
@@ -253,8 +263,10 @@ std::string Table::getSQLPath() const  // @todo this is just used for errors, we
 
 bool Table::isValid() const
 {
-  if (not identifier::Schema::isValid())
+  if (identifier::Schema::isValid() == false)
+  {
     return false;
+  }
 
   bool error= false;
   if (table_name.empty()
@@ -266,15 +278,21 @@ bool Table::isValid() const
   }
 	else
   {
+    const charset_info_st& cs= my_charset_utf8mb4_general_ci;
     int well_formed_error;
-    uint32_t res= my_charset_utf8mb4_general_ci.cset->well_formed_len(&my_charset_utf8mb4_general_ci, 
-			table_name.c_str(), table_name.c_str() + table_name.length(), NAME_CHAR_LEN, &well_formed_error);
+    uint32_t res= cs.cset->well_formed_len(cs, table_name, NAME_CHAR_LEN, &well_formed_error);
     if (well_formed_error or table_name.length() != res)
+    {
       error= true;
+    }
   }
-  if (not error)
+
+  if (error == false)
+  {
 		return true;
+  }
   my_error(ER_WRONG_TABLE_NAME, MYF(0), getSQLPath().c_str());
+
   return false;
 }
 
@@ -284,12 +302,16 @@ void Table::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
-void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+void Table::Key::set(size_t resize_arg, const std::string &catalog_arg, const std::string &schema_arg, const std::string &table_arg)
 {
   key_buffer.resize(resize_arg);
 
-  std::copy(a.begin(), a.end(), key_buffer.begin());
-  std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+  schema_offset= catalog_arg.length() +1;
+  table_offset= schema_offset +schema_arg.length() +1;
+
+  std::copy(catalog_arg.begin(), catalog_arg.end(), key_buffer.begin());
+  std::copy(schema_arg.begin(), schema_arg.end(), key_buffer.begin() +schema_offset);
+  std::copy(table_arg.begin(), table_arg.end(), key_buffer.begin() +table_offset);
 
   util::sensitive_hash hasher;
   hash_value= hasher(key_buffer);

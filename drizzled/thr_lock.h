@@ -22,14 +22,16 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 
 extern uint64_t max_write_lock_count;
 extern uint64_t table_lock_wait_timeout;
 
-
-enum thr_lock_type { TL_IGNORE=-1,
+enum thr_lock_type 
+{ 
+                     TL_IGNORE=-1,
                      /* UNLOCK ANY LOCK */
                      TL_UNLOCK,
                      /* Read lock */
@@ -62,10 +64,17 @@ enum thr_lock_type { TL_IGNORE=-1,
                      /* Normal WRITE lock */
                      TL_WRITE,
                      /* Abort new lock request with an error */
-                     TL_WRITE_ONLY};
+                     TL_WRITE_ONLY
+};
 
-enum enum_thr_lock_result { THR_LOCK_SUCCESS= 0, THR_LOCK_ABORTED= 1,
-                            THR_LOCK_WAIT_TIMEOUT= 2, THR_LOCK_DEADLOCK= 3 };
+enum enum_thr_lock_result 
+{ 
+  THR_LOCK_SUCCESS= 0, 
+  THR_LOCK_ABORTED= 1,
+  THR_LOCK_WAIT_TIMEOUT= 2, 
+  THR_LOCK_DEADLOCK= 3 
+};
+
 /*
   A description of the thread which owns the lock. The address
   of an instance of this structure is used to uniquely identify the thread.
@@ -96,7 +105,7 @@ struct THR_LOCK_OWNER
   THR_LOCK_INFO *info;
 
   THR_LOCK_OWNER() :
-    info(0)
+    info(NULL)
   { }
 
 };
@@ -104,7 +113,8 @@ struct THR_LOCK_OWNER
 struct THR_LOCK;
 struct THR_LOCK_DATA;
 
-struct DRIZZLED_API THR_LOCK_DATA {
+struct DRIZZLED_API THR_LOCK_DATA 
+{
   THR_LOCK_OWNER *owner;
   struct THR_LOCK_DATA *next,**prev;
   struct THR_LOCK *lock;
@@ -122,11 +132,11 @@ struct DRIZZLED_API THR_LOCK_DATA {
     status_param(0)
   { }
 
-  void init(THR_LOCK *lock,
-            void *status_param= NULL);
+  void init(THR_LOCK*, void *status_param= NULL);
 };
 
-struct st_lock_list {
+struct st_lock_list 
+{
   THR_LOCK_DATA *data,**last;
 
   st_lock_list() :
@@ -135,7 +145,8 @@ struct st_lock_list {
   { }
 };
 
-struct THR_LOCK {
+struct THR_LOCK 
+{
 private:
   boost::mutex mutex;
 public:
@@ -171,11 +182,9 @@ public:
   }
 };
 
-#define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 DRIZZLED_API void thr_lock_init(THR_LOCK *lock);
-enum enum_thr_lock_result thr_multi_lock(Session &session, THR_LOCK_DATA **data,
-                                         uint32_t count, THR_LOCK_OWNER *owner);
-void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
+enum_thr_lock_result thr_multi_lock(Session&, THR_LOCK_DATA**, uint32_t count, THR_LOCK_OWNER*);
+void thr_multi_unlock(THR_LOCK_DATA**, uint32_t count);
 
 } /* namespace drizzled */
 

@@ -34,10 +34,7 @@ public:
   template <class U>
   data_ref_basic(const U& c)
   {
-    if (c.begin() == c.end())
-      clear();
-    else
-      assign(&*c.begin(), &*c.end());
+    assign(&*c.begin(), &*c.end());
   }
 
   data_ref_basic(const void* b, const void* e)
@@ -57,8 +54,7 @@ public:
 
   void clear()
   {
-    begin_ = NULL;
-    end_ = NULL;
+    begin_ = end_ = reinterpret_cast<T>("");
   }
 
   void assign(const void* b, const void* e)
@@ -97,6 +93,11 @@ public:
   {
     return begin() == end();
   }
+
+  operator std::string() const
+  {
+    return to_string(*this);
+  }
 private:
   T begin_;
   T end_;
@@ -107,8 +108,7 @@ typedef data_ref_basic<const char*> str_ref;
 
 inline std::ostream& operator<<(std::ostream& os, str_ref v)
 {
-  os.write(v.data(), v.size());
-  return os;
+  return os.write(v.data(), v.size());
 }
 
 inline std::string to_string(str_ref v)

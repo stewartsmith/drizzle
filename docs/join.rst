@@ -1,4 +1,4 @@
-Join
+JOIN
 ====
 
 The JOIN keyword is used in an SQL statement to query data from two or more tables, based on a relationship between certain columns in these tables.
@@ -57,7 +57,9 @@ Here are the types of JOIN you can use, and the differences between them:
 
 
 .. note::
-   Implicit cartesian products of the form ``SELECT * FROM t1, t2`` without a ``WHERE`` or ``ON`` condition will error. If such behavior is intended please use ``SELECT * FROM t1 CROSS JOIN t2``.
+   Implicit cartesian products of the form ``SELECT * FROM t1, t2``
+   without a ``WHERE`` or ``ON`` condition will error. If such
+   behavior is intended please use ``SELECT * FROM t1 CROSS JOIN t2``.
 
 
 How joins are executed

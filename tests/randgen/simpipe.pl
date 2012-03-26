@@ -11,7 +11,7 @@ use GenTest::Executor::MySQL;
 use DBI;
 use Data::Dumper;
 
-my $dsn = 'dbi:mysql:port=9306:user=root:host=127.0.0.1:database=test';
+my $dsn = 'dbi:mysql:port=9306:user=root:host=localhost:database=test';
 my $oracle = GenTest::SimPipe::Oracle::FullScan->new( dsn => $dsn , basedir => '/home/philips/bzr/maria-5.3' );
 
 my $dbh = DBI->connect($dsn, undef, undef, { mysql_multi_statements => 1, RaiseError => 1 });

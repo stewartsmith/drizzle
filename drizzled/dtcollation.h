@@ -21,6 +21,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 namespace drizzled {
 

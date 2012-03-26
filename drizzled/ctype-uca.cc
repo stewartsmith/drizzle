@@ -7200,7 +7200,7 @@ static int my_uca_charcmp(const charset_info_st * const cs, my_wc_t wc1, my_wc_t
 **	 1 if matched with wildcard
 */
 
-int my_wildcmp_uca(const charset_info_st * const cs,
+static int my_wildcmp_uca(const charset_info_st * const cs,
 		   const char *str,const char *str_end,
 		   const char *wildstr,const char *wildend,
 		   int escape, int w_one, int w_many)
@@ -7863,7 +7863,7 @@ static bool my_coll_init_uca(charset_info_st& cs, cs_alloc_func alloc)
   return create_tailoring(&cs, alloc);
 }
 
-int my_strnncoll_any_uca(const charset_info_st * const cs,
+static int my_strnncoll_any_uca(const charset_info_st * const cs,
                          const unsigned char *s, size_t slen,
                          const unsigned char *t, size_t tlen,
                          bool t_is_prefix)
@@ -7872,7 +7872,7 @@ int my_strnncoll_any_uca(const charset_info_st * const cs,
                           s, slen, t, tlen, t_is_prefix);
 }
 
-int my_strnncollsp_any_uca(const charset_info_st * const cs,
+static int my_strnncollsp_any_uca(const charset_info_st * const cs,
                            const unsigned char *s, size_t slen,
                            const unsigned char *t, size_t tlen,
                            bool diff_if_only_endspace_difference)
@@ -7882,14 +7882,14 @@ int my_strnncollsp_any_uca(const charset_info_st * const cs,
                             diff_if_only_endspace_difference);
 }
 
-void my_hash_sort_any_uca(const charset_info_st * const cs,
+static void my_hash_sort_any_uca(const charset_info_st * const cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2)
 {
   my_hash_sort_uca(cs, &my_any_uca_scanner_handler, s, slen, n1, n2);
 }
 
-size_t my_strnxfrm_any_uca(const charset_info_st * const cs,
+static size_t my_strnxfrm_any_uca(const charset_info_st * const cs,
                            unsigned char *dst, size_t dstlen, uint32_t nweights,
                            const unsigned char *src, size_t srclen,
                            uint32_t flags)
@@ -7971,7 +7971,6 @@ charset_info_st my_charset_utf8mb4_unicode_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8006,7 +8005,6 @@ charset_info_st my_charset_utf8mb4_icelandic_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8040,7 +8038,6 @@ charset_info_st my_charset_utf8mb4_latvian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8074,7 +8071,6 @@ charset_info_st my_charset_utf8mb4_romanian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8108,7 +8104,6 @@ charset_info_st my_charset_utf8mb4_slovenian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8142,7 +8137,6 @@ charset_info_st my_charset_utf8mb4_polish_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8176,7 +8170,6 @@ charset_info_st my_charset_utf8mb4_estonian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8210,7 +8203,6 @@ charset_info_st my_charset_utf8mb4_spanish_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8244,7 +8236,6 @@ charset_info_st my_charset_utf8mb4_swedish_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8278,7 +8269,6 @@ charset_info_st my_charset_utf8mb4_turkish_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8312,7 +8302,6 @@ charset_info_st my_charset_utf8mb4_czech_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8347,7 +8336,6 @@ charset_info_st my_charset_utf8mb4_danish_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8381,7 +8369,6 @@ charset_info_st my_charset_utf8mb4_lithuanian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8415,7 +8402,6 @@ charset_info_st my_charset_utf8mb4_slovak_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8449,7 +8435,6 @@ charset_info_st my_charset_utf8mb4_spanish2_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8483,7 +8468,6 @@ charset_info_st my_charset_utf8mb4_roman_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8517,7 +8501,6 @@ charset_info_st my_charset_utf8mb4_persian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8551,7 +8534,6 @@ charset_info_st my_charset_utf8mb4_esperanto_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8585,7 +8567,6 @@ charset_info_st my_charset_utf8mb4_hungarian_uca_ci=
     9,                   /* min_sort_char */
     0xFFFF,              /* max_sort_char */
     ' ',                 /* pad char      */
-    0,                   /* escape_with_backslash_is_dangerous */
     1,                   /* levels_for_compare */
     1,                   /* levels_for_order   */
     &my_charset_utf8mb4_handler,
@@ -8619,7 +8600,6 @@ charset_info_st my_charset_utf8mb4_sinhala_uca_ci=
     9,                  /* min_sort_char */
     0xFFFF,             /* max_sort_char */
     ' ',                /* pad char      */
-    0,                  /* escape_with_backslash_is_dangerous */
     1,                  /* levels_for_compare */
     1,                  /* levels_for_order   */
     &my_charset_utf8mb4_handler,

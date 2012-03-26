@@ -26,10 +26,8 @@ namespace drizzled {
 
 DRIZZLED_API const boost::filesystem::path& getFullDataHome();
 DRIZZLED_API const boost::filesystem::path& getDataHome();
-DRIZZLED_API const boost::filesystem::path& getDataHomeCatalog();
 DRIZZLED_API boost::filesystem::path& getMutableDataHome();
 DRIZZLED_API void setFullDataHome(const boost::filesystem::path&);
-DRIZZLED_API void setDataHomeCatalog(const boost::filesystem::path&);
 
 } /* namespace drizzled */
 

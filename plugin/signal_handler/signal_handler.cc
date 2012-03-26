@@ -44,7 +44,6 @@ namespace drizzled {
 extern int cleanup_done;
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
-extern boost::filesystem::path pid_file;
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
 }
@@ -69,45 +68,28 @@ static void kill_server(int sig)
 {
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
+  {
     return;
-  kill_in_progress=true;
-  abort_loop=1;					// This should be set
+  }
+
+  kill_in_progress= true;
+  abort_loop= true;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
+  {
     ignore_signal(sig);                    /* purify inspected */
+  }
+
   if (sig == SIGTERM || sig == 0)
+  {
     errmsg_printf(error::INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
+  }
   else
+  {
     errmsg_printf(error::ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
+  }
 
   close_connections();
   clean_up(1);
-}
-
-/**
-  Create file to store pid number.
-*/
-static void create_pid_file()
-{
-  int file;
-  char buff[1024];
-
-  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
-  {
-    int length;
-
-    length= snprintf(buff, 1024, "%ld\n", (long) getpid()); 
-
-    if ((write(file, buff, length)) == length)
-    {
-      if (close(file) != -1)
-        return;
-    }
-    (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
-  }
-  memset(buff, 0, sizeof(buff));
-  snprintf(buff, sizeof(buff)-1, "Can't start server: can't create PID file (%s)", pid_file.file_string().c_str());
-  sql_perror(buff);
-  exit(1);
 }
 
 
@@ -131,22 +113,22 @@ void signal_hand()
   {
     std::cerr << "failed setting sigaddset() with SIGQUIT\n";
   }
+
   if (sigaddset(&set,SIGHUP))
   {
     std::cerr << "failed setting sigaddset() with SIGHUP\n";
   }
 #endif
+
   if (sigaddset(&set,SIGTERM))
   {
     std::cerr << "failed setting sigaddset() with SIGTERM\n";
   }
+
   if (sigaddset(&set,SIGTSTP))
   {
     std::cerr << "failed setting sigaddset() with SIGTSTP\n";
   }
-
-  /* Save pid to this process (or thread on Linux) */
-  create_pid_file();
 
   /*
     signal to init that we are ready
@@ -171,15 +153,14 @@ void signal_hand()
 
   for (;;)
   {
-    if (shutdown_in_progress && not abort_loop)
+    if (shutdown_in_progress and abort_loop == false)
     {
       sig= SIGTERM;
     }
     else
     {
       while (sigwait(&set, &sig) == EINTR) 
-      {
-      }
+      { }
     }
 
     if (cleanup_done)
@@ -194,14 +175,14 @@ void signal_hand()
     case SIGKILL:
     case SIGTSTP:
       /* switch to the old log message processing */
-      if (!abort_loop)
+      if (abort_loop == false)
       {
-        abort_loop= 1;				// mark abort for threads
+        abort_loop= true;               // mark abort for threads
         kill_server(sig);		// MIT THREAD has a alarm thread
       }
       break;
     case SIGHUP:
-      if (not abort_loop)
+      if (abort_loop == false)
       {
         g_refresh_version++;
         drizzled::plugin::StorageEngine::flushLogs(NULL);
@@ -218,7 +199,7 @@ class SignalHandler :
 
 public:
   SignalHandler() :
-    drizzled::plugin::Daemon("Signal Handler")
+    drizzled::plugin::Daemon("signal_handler")
   {
     // @todo fix spurious wakeup issue
     boost::mutex::scoped_lock scopedLock(session::Cache::mutex());
@@ -244,7 +225,7 @@ public:
      * prefer this. -Brian
    */
     uint32_t count= 2; // How many times to try join and see if the caller died.
-    while (not completed and count--)
+    while (completed == false and count--)
     {
       int signal= count == 1 ? SIGTSTP : SIGTERM;
       
@@ -278,10 +259,10 @@ DRIZZLE_DECLARE_PLUGIN
   "signal_handler",
   "0.1",
   "Brian Aker",
-  "Default Signal Handler",
+  N_("Signal handler"),
   PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

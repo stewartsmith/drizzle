@@ -94,8 +94,8 @@ extern TYPELIB tx_isolation_typelib;
 
 namespace
 {
-static size_t revno= DRIZZLE7_VC_REVNO;
-static size_t release_id= DRIZZLE7_RELEASE_ID;
+  static size_t revno= DRIZZLE_VC_REVNO;
+  static size_t release_id= DRIZZLE_RELEASE_ID;
 }
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -104,20 +104,18 @@ TYPELIB bool_typelib=
   array_elements(bool_type_names)-1, "", bool_type_names, NULL
 };
 
-static bool set_option_bit(Session *session, set_var *var);
-static bool set_option_autocommit(Session *session, set_var *var);
-static int  check_pseudo_thread_id(Session *session, set_var *var);
-static int check_tx_isolation(Session *session, set_var *var);
-static void fix_tx_isolation(Session *session, sql_var_t type);
-static int check_completion_type(Session *session, set_var *var);
-static void fix_completion_type(Session *session, sql_var_t type);
-static void fix_max_join_size(Session *session, sql_var_t type);
-static void fix_session_mem_root(Session *session, sql_var_t type);
-static void fix_server_id(Session *session, sql_var_t type);
-void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val);
-static unsigned char *get_error_count(Session *session);
-static unsigned char *get_warning_count(Session *session);
-static unsigned char *get_tmpdir(Session *session);
+static bool set_option_bit(Session*, set_var*);
+static bool set_option_autocommit(Session*, set_var*);
+static int  check_pseudo_thread_id(Session*, set_var*);
+static int check_tx_isolation(Session*, set_var*);
+static void fix_tx_isolation(Session*, sql_var_t);
+static int check_completion_type(Session*, set_var*);
+static void fix_max_join_size(Session*, sql_var_t);
+static void fix_session_mem_root(Session*, sql_var_t);
+void throw_bounds_warning(Session*, bool fixed, bool unsignd, const std::string &name, int64_t);
+static unsigned char *get_error_count(Session*);
+static unsigned char *get_warning_count(Session*);
+static unsigned char *get_tmpdir(Session*);
 
 /*
   Variable definition list
@@ -129,109 +127,66 @@ static unsigned char *get_tmpdir(Session *session);
   it in the constructor (see sys_var class for details).
 */
 static sys_var_session_uint64_t
-sys_auto_increment_increment("auto_increment_increment",
-                             &drizzle_system_variables::auto_increment_increment);
+sys_auto_increment_increment("auto_increment_increment", &drizzle_system_variables::auto_increment_increment);
 static sys_var_session_uint64_t
-sys_auto_increment_offset("auto_increment_offset",
-                          &drizzle_system_variables::auto_increment_offset);
+sys_auto_increment_offset("auto_increment_offset", &drizzle_system_variables::auto_increment_offset);
 
 static sys_var_fs_path sys_basedir("basedir", basedir);
 static sys_var_fs_path sys_pid_file("pid_file", pid_file);
 static sys_var_fs_path sys_plugin_dir("plugin_dir", plugin_dir);
 
-static sys_var_size_t_ptr sys_thread_stack_size("thread_stack",
-                                                      &my_thread_stack_size);
+static sys_var_size_t_ptr sys_thread_stack_size("thread_stack", &my_thread_stack_size);
 static sys_var_constrained_value_readonly<uint32_t> sys_back_log("back_log", back_log);
 
-static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size",
-                                                          &drizzle_system_variables::bulk_insert_buff_size);
-static sys_var_session_uint32_t	sys_completion_type("completion_type",
-                                                    &drizzle_system_variables::completion_type,
-                                                    check_completion_type,
-                                                    fix_completion_type);
+static sys_var_session_uint64_t	sys_bulk_insert_buff_size("bulk_insert_buffer_size", &drizzle_system_variables::bulk_insert_buff_size);
+static sys_var_session_uint32_t	sys_completion_type("completion_type", &drizzle_system_variables::completion_type, check_completion_type);
 static sys_var_collation_sv
 sys_collation_server("collation_server", &drizzle_system_variables::collation_server, &default_charset_info);
-static sys_var_fs_path       sys_datadir("datadir", getDataHome());
+static sys_var_fs_path sys_datadir("datadir", getDataHome());
 
-static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size",
-                                                     &drizzle_system_variables::join_buff_size);
-static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet",
-                                                       &drizzle_system_variables::max_allowed_packet);
-static sys_var_session_uint64_t	sys_max_error_count("max_error_count",
-                                                  &drizzle_system_variables::max_error_count);
-static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size",
-                                                        &drizzle_system_variables::max_heap_table_size);
-static sys_var_session_uint64_t sys_pseudo_thread_id("pseudo_thread_id",
-                                              &drizzle_system_variables::pseudo_thread_id,
-                                              0, check_pseudo_thread_id);
-static sys_var_session_ha_rows	sys_max_join_size("max_join_size",
-                                                  &drizzle_system_variables::max_join_size,
-                                                  fix_max_join_size);
-static sys_var_session_uint64_t	sys_max_seeks_for_key("max_seeks_for_key",
-                                                      &drizzle_system_variables::max_seeks_for_key);
-static sys_var_session_uint64_t   sys_max_length_for_sort_data("max_length_for_sort_data",
-                                                               &drizzle_system_variables::max_length_for_sort_data);
-static sys_var_session_size_t	sys_max_sort_length("max_sort_length",
-                                                    &drizzle_system_variables::max_sort_length);
-static sys_var_uint64_t_ptr	sys_max_write_lock_count("max_write_lock_count",
-                                                 &max_write_lock_count);
-static sys_var_session_uint64_t sys_min_examined_row_limit("min_examined_row_limit",
-                                                           &drizzle_system_variables::min_examined_row_limit);
+static sys_var_session_uint64_t	sys_join_buffer_size("join_buffer_size", &drizzle_system_variables::join_buff_size);
+static sys_var_session_uint32_t	sys_max_allowed_packet("max_allowed_packet", &drizzle_system_variables::max_allowed_packet);
+static sys_var_session_uint64_t	sys_max_error_count("max_error_count", &drizzle_system_variables::max_error_count);
+static sys_var_session_uint64_t	sys_max_heap_table_size("max_heap_table_size", &drizzle_system_variables::max_heap_table_size);
+static sys_var_session_uint64_t sys_pseudo_thread_id("pseudo_thread_id", &drizzle_system_variables::pseudo_thread_id, 0, check_pseudo_thread_id);
+static sys_var_session_ha_rows	sys_max_join_size("max_join_size", &drizzle_system_variables::max_join_size, fix_max_join_size);
+static sys_var_session_uint64_t	sys_max_seeks_for_key("max_seeks_for_key", &drizzle_system_variables::max_seeks_for_key);
+static sys_var_session_uint64_t sys_max_length_for_sort_data("max_length_for_sort_data", &drizzle_system_variables::max_length_for_sort_data);
+static sys_var_session_size_t	sys_max_sort_length("max_sort_length", &drizzle_system_variables::max_sort_length);
+static sys_var_uint64_t_ptr	sys_max_write_lock_count("max_write_lock_count", &max_write_lock_count);
+static sys_var_session_uint64_t sys_min_examined_row_limit("min_examined_row_limit", &drizzle_system_variables::min_examined_row_limit);
 
-/* these two cannot be static */
-static sys_var_session_bool sys_optimizer_prune_level("optimizer_prune_level",
-                                                      &drizzle_system_variables::optimizer_prune_level);
-static sys_var_session_uint32_t sys_optimizer_search_depth("optimizer_search_depth",
-                                                           &drizzle_system_variables::optimizer_search_depth);
+static sys_var_session_bool sys_optimizer_prune_level("optimizer_prune_level", &drizzle_system_variables::optimizer_prune_level);
+static sys_var_session_uint32_t sys_optimizer_search_depth("optimizer_search_depth", &drizzle_system_variables::optimizer_search_depth);
 
-static sys_var_session_uint64_t sys_preload_buff_size("preload_buffer_size",
-                                                      &drizzle_system_variables::preload_buff_size);
-static sys_var_session_uint32_t sys_read_buff_size("read_buffer_size",
-                                                   &drizzle_system_variables::read_buff_size);
-static sys_var_session_uint32_t	sys_read_rnd_buff_size("read_rnd_buffer_size",
-                                                       &drizzle_system_variables::read_rnd_buff_size);
-static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment",
-                                                      &drizzle_system_variables::div_precincrement);
+static sys_var_session_uint64_t sys_preload_buff_size("preload_buffer_size", &drizzle_system_variables::preload_buff_size);
+static sys_var_session_uint32_t sys_read_buff_size("read_buffer_size", &drizzle_system_variables::read_buff_size);
+static sys_var_session_uint32_t	sys_read_rnd_buff_size("read_rnd_buffer_size", &drizzle_system_variables::read_rnd_buff_size);
+static sys_var_session_uint32_t	sys_div_precincrement("div_precision_increment", &drizzle_system_variables::div_precincrement);
 
-static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size",
-                                                           &drizzle_system_variables::range_alloc_block_size);
+static sys_var_session_size_t	sys_range_alloc_block_size("range_alloc_block_size", &drizzle_system_variables::range_alloc_block_size);
 
-static sys_var_session_bool sys_replicate_query("replicate_query",
-                                                &drizzle_system_variables::replicate_query);
+static sys_var_session_bool sys_replicate_query("replicate_query", &drizzle_system_variables::replicate_query);
 
-static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size",
-                                                           &drizzle_system_variables::query_alloc_block_size,
-                                                           NULL, fix_session_mem_root);
-static sys_var_session_uint32_t	sys_query_prealloc_size("query_prealloc_size",
-                                                        &drizzle_system_variables::query_prealloc_size,
-                                                        NULL, fix_session_mem_root);
+static sys_var_session_uint32_t	sys_query_alloc_block_size("query_alloc_block_size", &drizzle_system_variables::query_alloc_block_size, NULL, fix_session_mem_root);
+static sys_var_session_uint32_t	sys_query_prealloc_size("query_prealloc_size", &drizzle_system_variables::query_prealloc_size, NULL, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir("tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
-static sys_var_fs_path sys_secure_file_priv("secure_file_priv",
-                                            secure_file_priv);
+static sys_var_fs_path sys_secure_file_priv("secure_file_priv", secure_file_priv);
+static sys_var_const_str_ptr sys_scheduler("scheduler", (char**)&opt_scheduler);
 
-static sys_var_const_str_ptr sys_scheduler("scheduler",
-                                           (char**)&opt_scheduler);
-
-static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id,
-                                           fix_server_id);
+static sys_var_uint32_t_ptr  sys_server_id("server_id", &server_id);
 
 static sys_var_const_string sys_server_uuid("server_uuid", server_uuid);
 
-static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size",
-                                                &drizzle_system_variables::sortbuff_size);
+static sys_var_session_size_t	sys_sort_buffer("sort_buffer_size", &drizzle_system_variables::sortbuff_size);
 
-static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold",
-                                                                &transaction_message_threshold);
+static sys_var_size_t_ptr_readonly sys_transaction_message_threshold("transaction_message_threshold", &transaction_message_threshold);
 
-static sys_var_session_storage_engine sys_storage_engine("storage_engine",
-				       &drizzle_system_variables::storage_engine);
-static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache",
-                                             &table_def_size);
-static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache",
-					     &table_cache_size);
-static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout("table_lock_wait_timeout",
-                                                    &table_lock_wait_timeout);
+static sys_var_session_storage_engine sys_storage_engine("storage_engine", &drizzle_system_variables::storage_engine);
+static sys_var_size_t_ptr	sys_table_def_size("table_definition_cache", &table_def_size);
+static sys_var_uint64_t_ptr	sys_table_cache_size("table_open_cache", &table_cache_size);
+static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout("table_lock_wait_timeout", &table_lock_wait_timeout);
 static sys_var_session_enum	sys_tx_isolation("tx_isolation",
                                              &drizzle_system_variables::tx_isolation,
                                              &tx_isolation_typelib,
@@ -242,43 +197,23 @@ static sys_var_session_uint64_t	sys_tmp_table_size("tmp_table_size",
 static sys_var_bool_ptr  sys_timed_mutexes("timed_mutexes", &internal::timed_mutexes);
 static sys_var_const_str  sys_version("version", version().c_str());
 
-static sys_var_const_str	sys_version_comment("version_comment",
-                                            COMPILATION_COMMENT);
-static sys_var_const_str	sys_version_compile_machine("version_compile_machine",
-                                                      HOST_CPU);
-static sys_var_const_str	sys_version_compile_os("version_compile_os",
-                                                 HOST_OS);
-static sys_var_const_str	sys_version_compile_vendor("version_compile_vendor",
-                                                 HOST_VENDOR);
+static sys_var_const_str sys_version_comment("version_comment", COMPILATION_COMMENT);
+static sys_var_const_str sys_version_compile_machine("version_compile_machine", HOST_CPU);
+static sys_var_const_str sys_version_compile_os("version_compile_os", HOST_OS);
+static sys_var_const_str sys_version_compile_vendor("version_compile_vendor", HOST_VENDOR);
 
 /* Variables that are bits in Session */
 
-sys_var_session_bit sys_autocommit("autocommit", 0,
-                               set_option_autocommit,
-                               OPTION_NOT_AUTOCOMMIT,
-                               1);
-static sys_var_session_bit	sys_big_selects("sql_big_selects", 0,
-					set_option_bit,
-					OPTION_BIG_SELECTS);
-static sys_var_session_bit	sys_sql_warnings("sql_warnings", 0,
-					 set_option_bit,
-					 OPTION_WARNINGS);
-static sys_var_session_bit	sys_sql_notes("sql_notes", 0,
-					 set_option_bit,
-					 OPTION_SQL_NOTES);
-static sys_var_session_bit	sys_buffer_results("sql_buffer_result", 0,
-					   set_option_bit,
-					   OPTION_BUFFER_RESULT);
-static sys_var_session_bit	sys_foreign_key_checks("foreign_key_checks", 0,
-					       set_option_bit,
-					       OPTION_NO_FOREIGN_KEY_CHECKS, 1);
-static sys_var_session_bit	sys_unique_checks("unique_checks", 0,
-					  set_option_bit,
-					  OPTION_RELAXED_UNIQUE_CHECKS, 1);
+sys_var_session_bit sys_autocommit("autocommit", 0, set_option_autocommit, OPTION_NOT_AUTOCOMMIT, 1);
+static sys_var_session_bit sys_big_selects("sql_big_selects", 0, set_option_bit, OPTION_BIG_SELECTS);
+static sys_var_session_bit sys_sql_warnings("sql_warnings", 0, set_option_bit, OPTION_WARNINGS);
+static sys_var_session_bit sys_sql_notes("sql_notes", 0, set_option_bit, OPTION_SQL_NOTES);
+static sys_var_session_bit sys_buffer_results("sql_buffer_result", 0, set_option_bit, OPTION_BUFFER_RESULT);
+static sys_var_session_bit sys_foreign_key_checks("foreign_key_checks", 0, set_option_bit, OPTION_NO_FOREIGN_KEY_CHECKS, 1);
+static sys_var_session_bit sys_unique_checks("unique_checks", 0, set_option_bit, OPTION_RELAXED_UNIQUE_CHECKS, 1);
 /* Local state variables */
 
-static sys_var_session_ha_rows	sys_select_limit("sql_select_limit",
-						 &drizzle_system_variables::select_limit);
+static sys_var_session_ha_rows	sys_select_limit("sql_select_limit", &drizzle_system_variables::select_limit);
 static sys_var_timestamp sys_timestamp("timestamp");
 static sys_var_last_insert_id
 sys_last_insert_id("last_insert_id");
@@ -302,23 +237,16 @@ static sys_var_session_lc_time_names sys_lc_time_names("lc_time_names");
   statement-based logging mode: t will be different on master and
   slave).
 */
-static sys_var_readonly sys_error_count("error_count",
-                                        OPT_SESSION,
-                                        SHOW_INT,
-                                        get_error_count);
-static sys_var_readonly sys_warning_count("warning_count",
-                                          OPT_SESSION,
-                                          SHOW_INT,
-                                          get_warning_count);
+static sys_var_readonly sys_error_count("error_count", OPT_SESSION, SHOW_INT, get_error_count);
+static sys_var_readonly sys_warning_count("warning_count", OPT_SESSION, SHOW_INT, get_warning_count);
 
-sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len",
-                                                  &drizzle_system_variables::group_concat_max_len);
+sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len", &drizzle_system_variables::group_concat_max_len);
 
 /* Global read-only variable containing hostname */
 static sys_var_const_string sys_hostname("hostname", getServerHostname());
 
-static sys_var_const_str sys_revid("vc_revid", DRIZZLE7_VC_REVID);
-static sys_var_const_str sys_branch("vc_branch", DRIZZLE7_VC_BRANCH);
+static sys_var_const_str sys_revid("vc_revid", DRIZZLE_VC_REVID);
+static sys_var_const_str sys_branch("vc_branch", DRIZZLE_VC_BRANCH);
 static sys_var_size_t_ptr_readonly sys_revno("vc_revno", &revno);
 static sys_var_size_t_ptr_readonly sys_release_id("vc_release_id", &release_id);
 
@@ -326,8 +254,8 @@ bool sys_var::check(Session *session, set_var *var)
 {
   if (check_func)
   {
-    int res;
-    if ((res=(*check_func)(session, var)) < 0)
+    int res= (*check_func)(session, var);
+    if (res < 0)
       my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
     return res;
   }
@@ -337,24 +265,21 @@ bool sys_var::check(Session *session, set_var *var)
 
 bool sys_var_str::check(Session *session, set_var *var)
 {
-  if (!check_func)
+  if (not check_func)
     return 0;
 
-  int res;
-  if ((res=(*check_func)(session, var)) < 0)
+  int res= (*check_func)(session, var);
+  if (res < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
 }
 
 bool sys_var_std_string::check(Session *session, set_var *var)
 {
-  if (check_func == NULL)
-  {
+  if (not check_func)
     return false;
-  }
 
-  int res= (*check_func)(session, var);
-  if (res != 0)
+  if ((*check_func)(session, var))
   {
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
     return true;
@@ -404,11 +329,8 @@ static int check_tx_isolation(Session *session, set_var *var)
 static void fix_tx_isolation(Session *session, sql_var_t type)
 {
   if (type == OPT_SESSION)
-    session->session_tx_isolation= ((enum_tx_isolation)
-                                    session->variables.tx_isolation);
+    session->session_tx_isolation= (enum_tx_isolation) session->variables.tx_isolation;
 }
-
-static void fix_completion_type(Session *, sql_var_t) {}
 
 static int check_completion_type(Session *, set_var *var)
 {
@@ -429,10 +351,6 @@ static void fix_session_mem_root(Session *session, sql_var_t type)
     session->mem.reset_defaults(session->variables.query_alloc_block_size, session->variables.query_prealloc_size);
 }
 
-
-static void fix_server_id(Session *, sql_var_t)
-{
-}
 
 void throw_bounds_warning(Session *session, bool fixed, bool unsignd, const std::string &name, int64_t val)
 {
@@ -628,13 +546,11 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
  }
 
 
-unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
-                                                sql_var_t type,
-                                                const lex_string_t *)
+unsigned char *sys_var_session_uint32_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 
@@ -680,13 +596,11 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
-                                                  sql_var_t type,
-                                                  const lex_string_t *)
+unsigned char *sys_var_session_ha_rows::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_uint64_t::check(Session *session, set_var *var)
@@ -738,13 +652,11 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
-                                                   sql_var_t type,
-                                                   const lex_string_t *)
+unsigned char *sys_var_session_uint64_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_size_t::check(Session *session, set_var *var)
@@ -793,13 +705,11 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_size_t::value_ptr(Session *session,
-                                                 sql_var_t type,
-                                                 const lex_string_t *)
+unsigned char *sys_var_session_size_t::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset) 
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 bool sys_var_session_bool::check(Session *session, set_var *var)
@@ -827,18 +737,15 @@ void sys_var_session_bool::set_default(Session *session,  sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_bool::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_session_bool::value_ptr(Session *session, sql_var_t type)
 {
-  if (type == OPT_GLOBAL)
-    return (unsigned char*) &(global_system_variables.*offset);
-  return (unsigned char*) &(session->variables.*offset);
+  return type == OPT_GLOBAL
+    ? (unsigned char*) &(global_system_variables.*offset)
+    : (unsigned char*) &(session->variables.*offset);
 }
 
 
-bool sys_var::check_enum(Session *,
-                         set_var *var, const TYPELIB *enum_names)
+bool sys_var::check_enum(Session *, set_var *var, const TYPELIB *enum_names)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *value;
@@ -888,109 +795,76 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, sql_var_t var_type, const lex_string_t *base)
+Item *sys_var::item(Session *session, sql_var_t var_type)
 {
   if (check_type(var_type))
   {
     if (var_type != OPT_DEFAULT)
     {
-      my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
-               name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
+      my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0), name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
       return 0;
     }
     /* As there was no local variable, return the global value */
     var_type= OPT_GLOBAL;
   }
-  switch (show_type()) {
+  boost::mutex::scoped_lock lock(session->catalog().systemVariableLock());
+  switch (show_type()) 
+  {
   case SHOW_LONG:
   case SHOW_INT:
   {
-    uint32_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(uint*) value_ptr(session, var_type, base);
-
+    uint32_t value= *(uint*) value_ptr(session, var_type);
     return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
-    int64_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(int64_t*) value_ptr(session, var_type, base);
-
+    int64_t value= *(int64_t*) value_ptr(session, var_type);
     return new Item_int(value);
   }
   case SHOW_DOUBLE:
   {
-    double value;
-    {
-      boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-      value= *(double*) value_ptr(session, var_type, base);
-    }
-
+    double value= *(double*) value_ptr(session, var_type);
     /* 6, as this is for now only used with microseconds */
     return new Item_float(value, 6);
   }
   case SHOW_HA_ROWS:
   {
-    ha_rows value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(ha_rows*) value_ptr(session, var_type, base);
-
+    ha_rows value= *(ha_rows*) value_ptr(session, var_type);
     return new Item_int((uint64_t) value);
   }
   case SHOW_SIZE:
   {
-    size_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(size_t*) value_ptr(session, var_type, base);
-
+    size_t value= *(size_t*) value_ptr(session, var_type);
     return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
-    int32_t value;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    value= *(bool*) value_ptr(session, var_type, base);
-    return new Item_int(value,1);
+    int32_t value= *(bool*) value_ptr(session, var_type);
+    return new Item_int(value, 1);
   }
   case SHOW_CHAR_PTR:
   {
-    Item *tmp;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    char *str= *(char**) value_ptr(session, var_type, base);
-    if (str)
+    if (const char *str= *(char**) value_ptr(session, var_type))
     {
       uint32_t length= strlen(str);
-      tmp= new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
+      return new Item_string(session->mem.strdup(str, length), length, system_charset_info, DERIVATION_SYSCONST);
     }
-    else
-    {
-      tmp= new Item_null();
-      tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
-    }
-
+    Item* tmp= new Item_null();
+    tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     return tmp;
   }
   case SHOW_CHAR:
   {
-    Item *tmp;
-    boost::mutex::scoped_lock scopedLock(session->catalog().systemVariableLock());
-    char *str= (char*) value_ptr(session, var_type, base);
-    if (str)
-      tmp= new Item_string(str, strlen(str),
-                           system_charset_info, DERIVATION_SYSCONST);
-    else
-    {
-      tmp= new Item_null();
-      tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
-    }
-
+    if (const char* str= (char*) value_ptr(session, var_type))
+      return new Item_string(str_ref(str), system_charset_info, DERIVATION_SYSCONST);
+    Item* tmp= new Item_null();
+    tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     return tmp;
   }
   default:
     my_error(ER_VAR_CANT_BE_READ, MYF(0), name.c_str());
   }
-  return 0;
+  return NULL;
 }
 
 
@@ -1013,38 +887,30 @@ void sys_var_session_enum::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_session_enum::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_session_enum::value_ptr(Session *session, sql_var_t type)
 {
-  uint32_t tmp= ((type == OPT_GLOBAL) ?
-	      global_system_variables.*offset :
-	      session->variables.*offset);
+  uint32_t tmp= type == OPT_GLOBAL ? global_system_variables.*offset : session->variables.*offset;
   return (unsigned char*) enum_names->type_names[tmp];
 }
 
 bool sys_var_session_bit::check(Session *session, set_var *var)
 {
-  return (check_enum(session, var, &bool_typelib) ||
-          (check_func && (*check_func)(session, var)));
+  return check_enum(session, var, &bool_typelib) || (check_func && (*check_func)(session, var));
 }
 
 bool sys_var_session_bit::update(Session *session, set_var *var)
 {
-  int res= (*update_func)(session, var);
-  return res;
+  return (*update_func)(session, var);
 }
 
 
-unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
-                                              const lex_string_t *)
+unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t)
 {
   /*
     If reverse is 0 (default) return 1 if bit is set.
     If reverse is 1, return 0 if bit is set
   */
-  session->sys_var_tmp.bool_value= ((session->options & bit_flag) ?
-				   !reverse : reverse);
+  session->sys_var_tmp.bool_value= (session->options & bit_flag) ? !reverse : reverse;
   return (unsigned char*) &session->sys_var_tmp.bool_value;
 }
 
@@ -1101,13 +967,9 @@ void sys_var_collation_sv::set_default(Session *session, sql_var_t type)
 }
 
 
-unsigned char *sys_var_collation_sv::value_ptr(Session *session,
-                                               sql_var_t type,
-                                               const lex_string_t *)
+unsigned char *sys_var_collation_sv::value_ptr(Session *session, sql_var_t type)
 {
-  const charset_info_st *cs= ((type == OPT_GLOBAL) ?
-                           global_system_variables.*offset :
-                           session->variables.*offset);
+  const charset_info_st *cs= type == OPT_GLOBAL ? global_system_variables.*offset : session->variables.*offset;
   return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";
 }
 
@@ -1126,8 +988,7 @@ void sys_var_timestamp::set_default(Session *session, sql_var_t)
 }
 
 
-unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
-                                            const lex_string_t *)
+unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t)
 {
   session->sys_var_tmp.int32_t_value= (int32_t) session->times.getCurrentTimestampEpoch();
   return (unsigned char*) &session->sys_var_tmp.int32_t_value;
@@ -1141,9 +1002,7 @@ bool sys_var_last_insert_id::update(Session *session, set_var *var)
 }
 
 
-unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
-                                                 sql_var_t,
-                                                 const lex_string_t *)
+unsigned char *sys_var_last_insert_id::value_ptr(Session *session, sql_var_t)
 {
   /*
     this tmp var makes it robust againt change of type of
@@ -1194,13 +1053,11 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 }
 
 
-unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
-                                                        sql_var_t type,
-                                                        const lex_string_t *)
+unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session, sql_var_t type)
 {
-  return type == OPT_GLOBAL ?
-                 (unsigned char *) global_system_variables.lc_time_names->name :
-                 (unsigned char *) session->variables.lc_time_names->name;
+  return type == OPT_GLOBAL 
+    ? (unsigned char *) global_system_variables.lc_time_names->name 
+    : (unsigned char *) session->variables.lc_time_names->name;
 }
 
 
@@ -1301,10 +1158,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
   else
     session->options|= ((sys_var_session_bit*) var->var)->bit_flag;
 
-  if (not success)
-    return true;
-
-  return 0;
+  return not success;
 }
 
 static int check_pseudo_thread_id(Session *, set_var *var)
@@ -1567,15 +1421,12 @@ sys_var *find_sys_var(const std::string &name)
  Functions to handle table_type
 ****************************************************************************/
 
-unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
-                                                         sql_var_t type,
-                                                         const lex_string_t *)
+unsigned char *sys_var_session_storage_engine::value_ptr(Session *session, sql_var_t type)
 {
-  plugin::StorageEngine *engine= session->variables.*offset;
-  if (type == OPT_GLOBAL)
-    engine= global_system_variables.*offset;
-  string engine_name= engine->getName();
-  return (unsigned char *) session->mem.strdup(engine_name);
+  plugin::StorageEngine *engine= type == OPT_GLOBAL
+    ? global_system_variables.*offset
+    : session->variables.*offset;
+  return (unsigned char *) session->mem.strdup(engine->getName());
 }
 
 

@@ -1,3 +1,5 @@
+.. _catalog_plugin:
+
 Catalog System
 ==============
 

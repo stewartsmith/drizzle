@@ -796,8 +796,8 @@ TYPELIB* typelib(memory::Root&, List<String>&);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 
-bool check_column_name(const char *name);
-bool check_table_name(const char *name, uint32_t length);
+bool check_column_name(const char*);
+bool check_table_name(str_ref);
 
 } /* namespace drizzled */
 

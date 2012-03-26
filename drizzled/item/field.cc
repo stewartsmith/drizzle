@@ -369,11 +369,11 @@ bool Item_field::eq(const Item *item, bool) const
     (In cases where we would choose wrong we would have to generate a
     ER_NON_UNIQ_ERROR).
   */
-  return (not my_strcasecmp(system_charset_info, item_field->name, field_name) &&
+  return (not system_charset_info->strcasecmp(item_field->name, field_name) &&
           (not item_field->table_name || not table_name ||
-           (not my_strcasecmp(table_alias_charset, item_field->table_name, table_name) &&
+           (not table_alias_charset->strcasecmp(item_field->table_name, table_name) &&
             (not item_field->db_name || not db_name ||
-             (item_field->db_name && not my_strcasecmp(system_charset_info, item_field->db_name, db_name))))));
+             (item_field->db_name && not system_charset_info->strcasecmp(item_field->db_name, db_name))))));
 }
 
 
@@ -1236,7 +1236,7 @@ void Item_field::print(String *str)
     String tmp(buff,sizeof(buff),str->charset());
     field->val_str_internal(&tmp);
     if (field->is_null())  {
-      str->append("NULL");
+      str->append(STRING_WITH_LEN("NULL"));
     }
     else {
       str->append('\'');

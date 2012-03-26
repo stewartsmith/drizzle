@@ -32,24 +32,16 @@ namespace drizzle_plugin {
 namespace auth_schema {
 
 /**
- * Forward declarations.
- */
-bool update_table(Session *, set_var *var);
-
-/**
  * Singleton instance of the plugin.
  */
 static AuthSchema *auth_schema= NULL;
 
-bool update_table(Session *, set_var *var)
+static bool update_table(Session*, set_var* var)
 {
-  if (not var->value->str_value.data())
-  {
-    errmsg_printf(error::ERROR, _("auth_schema table cannot be NULL"));
-    return true; // error
-  }
-  const string table(var->value->str_value.data());
-  return auth_schema->setTable(table);
+  if (not var->value->str_value.empty())
+    return auth_schema->setTable(var->value->str_value.data());
+  errmsg_printf(error::ERROR, _("auth_schema table cannot be NULL"));
+  return true; // error
 }
 
 static void init_options(module::option_context &context)
@@ -69,12 +61,8 @@ static int init(module::Context &context)
     auth_schema->setTable(vm["table"].as<string>());
 
   context.add(auth_schema);
-
-  context.registerVariable(
-    new sys_var_bool_ptr("enabled", &auth_schema->sysvar_enabled));
-
-  context.registerVariable(
-    new sys_var_std_string("table", auth_schema->sysvar_table, NULL, &update_table));
+  context.registerVariable(new sys_var_bool_ptr("enabled", &auth_schema->sysvar_enabled));
+  context.registerVariable(new sys_var_std_string("table", auth_schema->sysvar_table, NULL, &update_table));
 
   return 0;
 }
@@ -82,8 +70,16 @@ static int init(module::Context &context)
 } /* end namespace drizzle_plugin::auth_schema */
 } /* end namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_schema",
+  "1.0",
+  "Daniel Nichter",
+  N_("Authentication against a table with encrypted passwords"),
+  PLUGIN_LICENSE_GPL,
   drizzle_plugin::auth_schema::init,
   NULL,
-  drizzle_plugin::auth_schema::init_options
-);
+  drizzle_plugin::auth_schema::init_options,
+}
+DRIZZLE_DECLARE_PLUGIN_END;

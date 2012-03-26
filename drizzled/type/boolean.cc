@@ -64,7 +64,7 @@ bool convert(bool &destination, const char *source, const size_t source_length)
     break;
 
   case 5:
-    if (not (my_strcasecmp(system_charset_info, source, "FALSE")))
+    if (not (system_charset_info->strcasecmp(source, "FALSE")))
     {
       destination= false;
       return true;
@@ -72,7 +72,7 @@ bool convert(bool &destination, const char *source, const size_t source_length)
     break;
 
   case 4:
-    if (not (my_strcasecmp(system_charset_info, source, "TRUE")))
+    if (not (system_charset_info->strcasecmp(source, "TRUE")))
     {
       destination= true;
       return true;
@@ -80,7 +80,7 @@ bool convert(bool &destination, const char *source, const size_t source_length)
     break;
 
   case 3:
-    if (not (my_strcasecmp(system_charset_info, source, "YES")))
+    if (not (system_charset_info->strcasecmp(source, "YES")))
     {
       destination= true;
       return true;
@@ -88,7 +88,7 @@ bool convert(bool &destination, const char *source, const size_t source_length)
     break;
 
   case 2:
-    if (not (my_strcasecmp(system_charset_info, source, "NO")))
+    if (not (system_charset_info->strcasecmp(source, "NO")))
     {
       destination= false;
       return true;

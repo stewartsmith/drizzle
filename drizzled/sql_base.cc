@@ -348,11 +348,11 @@ TableList *find_table_in_list(TableList *table,
                               const char *db_name,
                               const char *table_name)
 {
-  for (; table; table= table->*link )
+  for (; table; table= table->*link)
   {
-    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) and
-        my_strcasecmp(system_charset_info, table->getSchemaName(), db_name) == 0 and
-        my_strcasecmp(system_charset_info, table->getTableName(), table_name) == 0)
+    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD)
+        && not system_charset_info->strcasecmp(table->getSchemaName(), db_name)
+        && not system_charset_info->strcasecmp(table->getTableName(), table_name))
     {
       break;
     }
@@ -433,7 +433,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   {
     if ((! (res= find_table_in_global_list(table_list, d_name, t_name))) ||
         ((!res->table || res->table != table->table) &&
-         (!check_alias || !(my_strcasecmp(files_charset_info, t_alias, res->alias))) &&
+         (!check_alias || !(files_charset_info->strcasecmp(t_alias, res->alias))) &&
          res->select_lex && !res->select_lex->exclude_from_table_unique_test))
       break;
     /*
@@ -809,14 +809,20 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
   /* find a unused table in the open table cache */
   if (refresh)
+  {
     *refresh= false;
+  }
 
   /* an open table operation needs a lot of the stack space */
   if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
+  {
     return NULL;
+  }
 
   if (getKilled())
+  {
     return NULL;
+  }
 
   identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
   const identifier::Table::Key &key(identifier.getKey());
@@ -1786,18 +1792,16 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
                            const char *name, uint32_t , Item **,
                            bool, TableList **actual_table)
 {
-  List<Natural_join_column>::iterator
-    field_it(table_ref->join_columns->begin());
+  List<Natural_join_column>::iterator field_it(table_ref->join_columns->begin());
   Natural_join_column *nj_col, *curr_nj_col;
   Field *found_field;
 
   assert(table_ref->is_natural_join && table_ref->join_columns);
   assert(*actual_table == NULL);
 
-  for (nj_col= NULL, curr_nj_col= field_it++; curr_nj_col;
-       curr_nj_col= field_it++)
+  for (nj_col= NULL, curr_nj_col= field_it++; curr_nj_col; curr_nj_col= field_it++)
   {
-    if (!my_strcasecmp(system_charset_info, curr_nj_col->name(), name))
+    if (!system_charset_info->strcasecmp(curr_nj_col->name(), name))
     {
       if (nj_col)
       {
@@ -1848,9 +1852,8 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   uint32_t cached_field_index= *cached_field_index_ptr;
 
   /* We assume here that table->field < NO_CACHED_FIELD_INDEX = UINT_MAX */
-  if (cached_field_index < table->getShare()->sizeFields() &&
-      !my_strcasecmp(system_charset_info,
-                     table->getField(cached_field_index)->field_name, name))
+  if (cached_field_index < table->getShare()->sizeFields() 
+    && not system_charset_info->strcasecmp(table->getField(cached_field_index)->field_name, name))
   {
     field_ptr= table->getFields() + cached_field_index;
   }
@@ -1869,9 +1872,9 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   else
   {
     if (!(field_ptr= table->getFields()))
-      return((Field *)0);
+      return NULL;
     for (; *field_ptr; ++field_ptr)
-      if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
+      if (not system_charset_info->strcasecmp((*field_ptr)->field_name, name))
         break;
   }
 
@@ -1883,9 +1886,9 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   else
   {
     if (!allow_rowid ||
-        my_strcasecmp(system_charset_info, name, "_rowid") ||
+        system_charset_info->strcasecmp(name, "_rowid") ||
         table->getShare()->rowid_field_offset == 0)
-      return((Field*) 0);
+      return NULL;
     field= table->getField(table->getShare()->rowid_field_offset-1);
   }
 
@@ -1975,7 +1978,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
         to search.
       */
       table_name && table_name[0] &&
-      (my_strcasecmp(table_alias_charset, table_list->alias, table_name) ||
+      (table_alias_charset->strcasecmp(table_list->alias, table_name) ||
        (db_name && db_name[0] && table_list->getSchemaName() && table_list->getSchemaName()[0] &&
         strcmp(db_name, table_list->getSchemaName()))))
     return 0;
@@ -2174,7 +2177,7 @@ find_field_in_tables(Session *session, Item_ident *item,
       'name' of the item which may be used in the select list
     */
     strncpy(name_buff, db, sizeof(name_buff)-1);
-    my_casedn_str(files_charset_info, name_buff);
+    files_charset_info->casedn_str(name_buff);
     db= name_buff;
   }
 
@@ -2359,12 +2362,9 @@ find_item_in_list(Session *session,
           item is not fix_field()'ed yet.
         */
         if (item_field->field_name && item_field->table_name &&
-            !my_strcasecmp(system_charset_info, item_field->field_name,
-                           field_name) &&
-            !my_strcasecmp(table_alias_charset, item_field->table_name,
-                           table_name) &&
-            (!db_name || (item_field->db_name &&
-                          !strcmp(item_field->db_name, db_name))))
+            not system_charset_info->strcasecmp(item_field->field_name, field_name) &&
+            not table_alias_charset->strcasecmp(item_field->table_name, table_name) &&
+            (!db_name || (item_field->db_name && !strcmp(item_field->db_name, db_name))))
         {
           if (found_unaliased)
           {
@@ -2389,11 +2389,8 @@ find_item_in_list(Session *session,
       }
       else
       {
-        int fname_cmp= my_strcasecmp(system_charset_info,
-                                     item_field->field_name,
-                                     field_name);
-        if (!my_strcasecmp(system_charset_info,
-                           item_field->name,field_name))
+        int fname_cmp= system_charset_info->strcasecmp(item_field->field_name, field_name);
+        if (not system_charset_info->strcasecmp(item_field->name, field_name))
         {
           /*
             If table name was not given we should scan through aliases
@@ -2413,8 +2410,7 @@ find_item_in_list(Session *session,
           }
           found= li.ref();
           *counter= i;
-          *resolution= fname_cmp ? RESOLVED_AGAINST_ALIAS:
-            RESOLVED_WITH_NO_ALIAS;
+          *resolution= fname_cmp ? RESOLVED_AGAINST_ALIAS : RESOLVED_WITH_NO_ALIAS;
         }
         else if (!fname_cmp)
         {
@@ -2438,7 +2434,7 @@ find_item_in_list(Session *session,
     else if (!table_name)
     {
       if (is_ref_by_name && find->name && item->name &&
-          !my_strcasecmp(system_charset_info,item->name,find->name))
+          not system_charset_info->strcasecmp(item->name,find->name))
       {
         found= li.ref();
         *counter= i;
@@ -2511,7 +2507,7 @@ test_if_string_in_list(const char *find, List<String> *str_list)
   {
     if (find_length != curr_str->length())
       continue;
-    if (!my_strcasecmp(system_charset_info, find, curr_str->ptr()))
+    if (not system_charset_info->strcasecmp(find, curr_str->ptr()))
       return true;
   }
   return false;
@@ -2636,7 +2632,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
         here. These columns must be checked only on unqualified reference
         by name (e.g. in SELECT list).
       */
-      if (!my_strcasecmp(system_charset_info, field_name_1, cur_field_name_2))
+      if (!system_charset_info->strcasecmp(field_name_1, cur_field_name_2))
       {
         if (cur_nj_col_2->is_common ||
             (found && (!using_fields || is_using_column_1)))
@@ -2834,7 +2830,7 @@ store_natural_using_join_columns(Session *session,
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr, session->where());
           return true;
         }
-        if (!my_strcasecmp(system_charset_info, common_field->name(), using_field_name_ptr))
+        if (!system_charset_info->strcasecmp(common_field->name(), using_field_name_ptr))
           break;                                // Found match
       }
     }
@@ -3386,7 +3382,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       'name' of the item which may be used in the select list
     */
     strncpy(name_buff, db_name, sizeof(name_buff)-1);
-    my_casedn_str(files_charset_info, name_buff);
+    files_charset_info->casedn_str(name_buff);
     db_name= name_buff;
   }
 
@@ -3409,8 +3405,8 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
 
     assert(tables->is_leaf_for_name_resolution());
 
-    if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
-        (db_name && my_strcasecmp(system_charset_info, tables->getSchemaName(),db_name)))
+    if ((table_name && table_alias_charset->strcasecmp(table_name, tables->alias)) ||
+        (db_name && system_charset_info->strcasecmp(tables->getSchemaName(),db_name)))
       continue;
 
     /*
@@ -3717,7 +3713,9 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
     table= field->getTable();
 
     if (field == table->next_number_field)
+    {
       table->auto_increment_field_not_null= true;
+    }
 
     if (value->save_in_field(field, 0) < 0)
     {
@@ -3748,7 +3746,7 @@ void drizzle_rm_tmp_tables()
 void kill_drizzle(void)
 {
   pthread_kill(signal_thread, SIGTERM);
-  shutdown_in_progress= 1;			// Safety if kill didn't work
+  shutdown_in_progress= true;			// Safety if kill didn't work
 }
 
 } /* namespace drizzled */

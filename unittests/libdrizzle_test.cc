@@ -23,17 +23,16 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <libdrizzle/drizzle_client.h>
-#include <libdrizzle/drizzle_server.h>
+#include <libdrizzle-1.0/drizzle_client.h>
+#include <libdrizzle-1.0/drizzle_server.h>
 
 BOOST_AUTO_TEST_SUITE(LibDrizzle)
 BOOST_AUTO_TEST_CASE(drizzleEscapeString)
 {
   const char* orig= "hello \"world\"\n";
   char out[255];
-  size_t out_len;
 
-  out_len= drizzle_escape_string(out, orig, strlen(orig));
+  ssize_t out_len= drizzle_safe_escape_string(out, sizeof(out), orig, strlen(orig));
 
   BOOST_REQUIRE_EQUAL(17, out_len);
   BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
@@ -43,9 +42,8 @@ BOOST_AUTO_TEST_CASE(drizzleEscapeStringBinary)
 {
   const char orig[6]= {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
   char out[255];
-  size_t out_len;
 
-  out_len= drizzle_escape_string(out, orig, 6);
+  ssize_t out_len= drizzle_safe_escape_string(out, sizeof(out), orig, 6);
 
   BOOST_REQUIRE_EQUAL(7, out_len);
   BOOST_REQUIRE_EQUAL("\\0\1\2\3\4\5", out);
@@ -55,9 +53,8 @@ BOOST_AUTO_TEST_CASE(drizzleSafeEscapeString)
 {
   const char* orig= "hello \"world\"\n";
   char out[255];
-  ssize_t out_len;
 
-  out_len= drizzle_safe_escape_string(out, 255, orig, strlen(orig));
+  ssize_t out_len= drizzle_safe_escape_string(out, sizeof(out), orig, strlen(orig));
 
   BOOST_REQUIRE_EQUAL(17, out_len);
   BOOST_REQUIRE_EQUAL("hello \\\"world\\\"\\n", out);
@@ -67,9 +64,8 @@ BOOST_AUTO_TEST_CASE(drizzleSafeEscapeStringFail)
 {
   const char* orig= "hello \"world\"\n";
   char out[5];
-  ssize_t out_len;
 
-  out_len= drizzle_safe_escape_string(out, 5, orig, strlen(orig));
+  ssize_t out_len= drizzle_safe_escape_string(out, sizeof(out), orig, strlen(orig));
 
   BOOST_REQUIRE_EQUAL(-1, out_len);
 }
@@ -78,9 +74,8 @@ BOOST_AUTO_TEST_CASE(drizzleHexString)
 {
   const unsigned char orig[5]= {0x34, 0x26, 0x80, 0x99, 0xFF};
   char out[255];
-  size_t out_len;
 
-  out_len= drizzle_hex_string(out, (char*) orig, 5);
+  size_t out_len= drizzle_hex_string(out, (char*) orig, 5);
 
   BOOST_REQUIRE_EQUAL(10, out_len);
   BOOST_REQUIRE_EQUAL("34268099FF", out);

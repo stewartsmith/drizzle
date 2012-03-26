@@ -1,4 +1,4 @@
-Order By
+ORDER BY
 ========
 
 The ORDER BY keyword is used to sort the result-set by column; by default, it sorts the records in ascending order.

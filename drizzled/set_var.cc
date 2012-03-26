@@ -80,13 +80,11 @@ err:
 /*****************************************************************************
   Functions to handle SET mysql_internal_variable=const_expr
 *****************************************************************************/
-set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
-                 const lex_string_t *base_name_arg, Item *value_arg) :
+set_var::set_var(sql_var_t type_arg, sys_var *var_arg, str_ref base_name_arg, Item *value_arg) :
   uint64_t_value(0),
-  str_value(""),
   var(var_arg),
   type(type_arg),
-  base(*base_name_arg)
+  base(base_name_arg)
 {
   /*
     If the set value is a field, change it to a string to allow things like
@@ -95,7 +93,7 @@ set_var::set_var(sql_var_t type_arg, sys_var *var_arg,
   if (value_arg && value_arg->type() == Item::FIELD_ITEM)
   {
     Item_field *item= (Item_field*) value_arg;
-    value=new Item_string(item->field_name, (uint32_t) strlen(item->field_name), item->collation.collation);
+    value= new Item_string(str_ref(item->field_name), item->collation.collation);
   }
   else
   {

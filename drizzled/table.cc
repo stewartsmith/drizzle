@@ -306,13 +306,9 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
   ' ' at the end
   returns 1 on error
 */
-bool check_table_name(const char *name, uint32_t length)
+bool check_table_name(str_ref str)
 {
-  if (!length || length > NAME_LEN || name[length - 1] == ' ')
-    return 1;
-  lex_string_t ident;
-  ident.assign(name, length);
-  return check_identifier_name(&ident);
+  return str.empty() || str.size() > NAME_LEN || str.data()[str.size() - 1] == ' ' || check_identifier_name(str);
 }
 
 
@@ -328,7 +324,7 @@ bool check_column_name(const char *name)
 
   while (*name)
   {
-    last_char_is_space= my_isspace(system_charset_info, *name);
+    last_char_is_space= system_charset_info->isspace(*name);
     if (use_mb(system_charset_info))
     {
       int len=my_ismbchar(system_charset_info, name,

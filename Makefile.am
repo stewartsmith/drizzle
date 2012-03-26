@@ -41,6 +41,8 @@ noinst_PROGRAMS =
 man_MANS =
 bin_PROGRAMS =
 
+nobase_include_HEADERS=
+
 # scripts or bin_scripts
 dist_bin_SCRIPTS=
 # sbin_scripts
@@ -134,7 +136,6 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
 	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
 	  echo '#define INCLUDEDIR "$(includedir)"'; \
-	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
 	  echo '#define DOCDIR "$(docdir)"'; \
 	  echo '#define INFODIR "$(infodir)"'; \
 	  echo '#define HTMLDIR "$(htmldir)"'; \
@@ -181,8 +182,9 @@ include client/include.am
 include support-files/include.am
 include tests/include.am
 include unittests/include.am
-include libdrizzle-1.0/libdrizzle/include.am
-include libdrizzle-2.0/libdrizzle/include.am
+include libdrizzle/include.am
+include libdrizzle-1.0/include.am
+include libdrizzle-2.0/include.am
 include win32/include.am
 include docs/include.am
 
@@ -195,16 +197,16 @@ merge-clean:
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
 
-install-exec-hook:
-	cd $(DESTDIR)$(sbindir) && \
-	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
-	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
+rpm-build: support-files/drizzle.spec
+	@rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
+	@rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
+	@cp drizzle-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
+	@cp support-files/drizzled.init ~/rpmbuild/SOURCES/
+	@rpmbuild -ba support-files/drizzle.spec
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-devel-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-debuginfo-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/RPMS/x86_64/drizzle-server-$(VERSION)*.rpm .
+	@cp ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm .
 
-install-data-hook:
-	cd $(DESTDIR)$(man8dir) && \
-	mv -f drizzled.8 drizzled7.8 && \
-	$(LN_S) drizzled7.8 drizzled.8
-
-uninstall-hook:
-	rm $(DESTDIR)$(man8dir)/drizzled7.8
-	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)
+rpm: man distcheck rpm-build

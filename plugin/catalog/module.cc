@@ -38,10 +38,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Catalog System",
+  "catalog",
   "0.1",
   "Brian Aker",
-  "Basic Catalog functions, data dictionary, and system.",
+  N_("Catalog system and functions"),
   drizzled::PLUGIN_LICENSE_GPL,
   init,
   NULL,

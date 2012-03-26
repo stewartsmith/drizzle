@@ -189,7 +189,7 @@ UNIV_INTERN sync_array_t*	sync_primary_wait_array;
 UNIV_INTERN ibool	sync_initialized	= FALSE;
 
 /** An acquired mutex or rw-lock and its level in the latching order */
-typedef struct sync_level_struct	sync_level_t;
+typedef struct sync_level_struct	sync_priority_t;
 /** Mutexes or rw-locks held by a thread */
 typedef struct sync_thread_struct	sync_thread_t;
 
@@ -225,7 +225,7 @@ UNIV_INTERN ibool	sync_order_checks_on	= FALSE;
 /** Mutexes or rw-locks held by a thread */
 struct sync_thread_struct{
 	os_thread_id_t	id;	/*!< OS thread id */
-	sync_level_t*	levels;	/*!< level array for this thread; if
+	sync_priority_t*	levels;	/*!< level array for this thread; if
 				this is NULL this slot is unused */
 };
 
@@ -851,10 +851,10 @@ sync_thread_level_arrays_find_free(void)
 Gets the value in the nth slot in the thread level array.
 @return	pointer to level slot */
 static
-sync_level_t*
+sync_priority_t*
 sync_thread_levels_get_nth(
 /*=======================*/
-	sync_level_t*	arr,	/*!< in: pointer to level array for an OS
+	sync_priority_t*	arr,	/*!< in: pointer to level array for an OS
 				thread */
 	ulint		n)	/*!< in: slot number */
 {
@@ -871,12 +871,12 @@ static
 ibool
 sync_thread_levels_g(
 /*=================*/
-	sync_level_t*	arr,	/*!< in: pointer to level array for an OS
+	sync_priority_t*	arr,	/*!< in: pointer to level array for an OS
 				thread */
 	ulint		limit,	/*!< in: level limit */
 	ulint		warn)	/*!< in: TRUE=display a diagnostic message */
 {
-	sync_level_t*	slot;
+	sync_priority_t*	slot;
 	rw_lock_t*	lock;
 	mutex_t*	mutex;
 	ulint		i;
@@ -947,11 +947,11 @@ static
 ibool
 sync_thread_levels_contain(
 /*=======================*/
-	sync_level_t*	arr,	/*!< in: pointer to level array for an OS
+	sync_priority_t*	arr,	/*!< in: pointer to level array for an OS
 				thread */
 	ulint		level)	/*!< in: level */
 {
-	sync_level_t*	slot;
+	sync_priority_t*	slot;
 	ulint		i;
 
 	for (i = 0; i < SYNC_THREAD_N_LEVELS; i++) {
@@ -980,9 +980,9 @@ sync_thread_levels_contains(
 	ulint	level)			/*!< in: latching order level
 					(SYNC_DICT, ...)*/
 {
-	sync_level_t*	arr;
+	sync_priority_t*	arr;
 	sync_thread_t*	thread_slot;
-	sync_level_t*	slot;
+	sync_priority_t*	slot;
 	ulint		i;
 
 	if (!sync_order_checks_on) {
@@ -1031,9 +1031,9 @@ sync_thread_levels_nonempty_gen(
 					also purge_is_running mutex is
 					allowed */
 {
-	sync_level_t*	arr;
+	sync_priority_t*	arr;
 	sync_thread_t*	thread_slot;
-	sync_level_t*	slot;
+	sync_priority_t*	slot;
 	ulint		i;
 
 	if (!sync_order_checks_on) {
@@ -1098,8 +1098,8 @@ sync_thread_add_level(
 	ulint	level)	/*!< in: level in the latching order; if
 			SYNC_LEVEL_VARYING, nothing is done */
 {
-	sync_level_t*	array;
-	sync_level_t*	slot;
+	sync_priority_t*	array;
+	sync_priority_t*	slot;
 	sync_thread_t*	thread_slot;
 	ulint		i;
 
@@ -1127,7 +1127,7 @@ sync_thread_add_level(
 
 	if (thread_slot == NULL) {
 		/* We have to allocate the level array for a new thread */
-		array = ut_malloc(sizeof(sync_level_t) * SYNC_THREAD_N_LEVELS);
+		array = ut_malloc(sizeof(sync_priority_t) * SYNC_THREAD_N_LEVELS);
 
 		thread_slot = sync_thread_level_arrays_find_free();
 
@@ -1331,8 +1331,8 @@ sync_thread_reset_level(
 /*====================*/
 	void*	latch)	/*!< in: pointer to a mutex or an rw-lock */
 {
-	sync_level_t*	array;
-	sync_level_t*	slot;
+	sync_priority_t*	array;
+	sync_priority_t*	slot;
 	sync_thread_t*	thread_slot;
 	ulint		i;
 

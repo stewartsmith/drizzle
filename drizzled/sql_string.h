@@ -30,6 +30,7 @@
 #include <string>
 
 #include <drizzled/visibility.h>
+#include <drizzled/common_fwd.h>
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31
@@ -63,10 +64,11 @@ class DRIZZLED_API String
 public:
   String();
   String(size_t length_arg);
-  String(const char *str, const charset_info_st * const cs);
-  String(const char *str, size_t len, const charset_info_st * const cs);
-  String(char *str, size_t len, const charset_info_st * const cs);
-  String(const String &str);
+  String(const char*, const charset_info_st*);
+  String(const char*, size_t, const charset_info_st*);
+  String(char *str, size_t len, const charset_info_st*);
+  String(str_ref, const charset_info_st*);
+  String(const String&);
 
   static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
@@ -251,7 +253,6 @@ public:
   static bool needs_conversion(size_t arg_length, const charset_info_st* cs_from, const charset_info_st* cs_to);
   void set_or_copy_aligned(const char *s, size_t arg_length, const charset_info_st*);
   void copy(const char*s,size_t arg_length, const charset_info_st& csto);
-  void append(const char*);
   void append(const char*, size_t);
   void append(str_ref);
   void append_with_prefill(const char *s, size_t arg_length, size_t full_length, char fill_char);

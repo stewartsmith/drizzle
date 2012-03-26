@@ -1,7 +1,7 @@
+.. _auth_all_plugin:
+
 Allow All Authentication
 ========================
-
-.. warning:: :program:`auth_all` is a security risk!  Do not use this plugin with production servers!
 
 :program:`auth_all` is an authentication plugin that allows *all* connections
 regardless of username or password, so it does not actually authenticate and
@@ -23,7 +23,7 @@ with::
 
    --plugin-remove=auth_all
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_all_configuration:
 
@@ -31,7 +31,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

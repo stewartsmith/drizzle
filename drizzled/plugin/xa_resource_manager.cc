@@ -186,11 +186,10 @@ int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &
     errmsg_printf(error::ERROR,
                   _("Found %d prepared transactions! It means that drizzled "
                     "was not shut down properly last time and critical "
-                    "recovery information (last binlog or %s file) was "
-                    "manually deleted after a crash. You have to start "
-                    "drizzled with the --tc-heuristic-recover switch to "
-                    "commit or rollback pending transactions."),
-                    recover_func.getMyXIDs(), opt_tc_log_file);
+                    "recovery information was "
+                    "manually deleted after a crash. "
+                    "This should never happen."),
+                  recover_func.getMyXIDs());
     return 1;
   }
 

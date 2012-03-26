@@ -49,6 +49,7 @@
 #include <drizzled/var.h>
 #include <drizzled/system_variables.h>
 #include <drizzled/lex_input_stream.h>
+#include <drizzled/show.h>
 
 int yylex(union ParserType *yylval, drizzled::Session *session);
 
@@ -267,6 +268,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  CROSS                         /* SQL-2003-R */
 %token  CUBE_SYM                      /* SQL-2003-R */
 %token  CURDATE                       /* MYSQL-FUNC */
+%token  CURTIME                       /* MYSQL-FUNC */
 %token  CURRENT_USER                  /* SQL-2003-R */
 %token  CURSOR_SYM                    /* SQL-2003-R */
 %token  DATABASE
@@ -543,6 +545,7 @@ bool my_yyoverflow(short **a, union ParserType **b, unsigned long *yystacksize);
 %token  USE_SYM
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
+%token  UTC_TIME_SYM
 %token  UTC_TIMESTAMP_SYM
 %token  UTF8_SYM
 %token  UUID_SYM
@@ -1012,7 +1015,7 @@ custom_database_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-            parser::buildSchemaDefiner(&Lex, $2);
+            parser::buildSchemaDefiner(&Lex, identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
@@ -1079,8 +1082,7 @@ custom_engine_option:
           }
         | DEFINER TEXT_STRING_sys
           {
-	    drizzled::identifier::User user($2.data());
-            message::set_definer(*Lex.table(), user);
+            message::set_definer(*Lex.table(), identifier::User($2));
           }
         | DEFINER CURRENT_USER optional_braces
           {
@@ -1233,11 +1235,11 @@ field_spec:
               Lex.field()->set_name($1.data());
             }
 
-            if (add_field_to_list(Lex.session, &$1, (enum enum_field_types) $3,
+            if (add_field_to_list(Lex.session, $1, (enum_field_types) $3,
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value, statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   statement->change, &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
 
@@ -1936,13 +1938,13 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex.statement;
 
-            if (add_field_to_list(Lex.session,&$3,
+            if (add_field_to_list(Lex.session, $3,
                                   (enum enum_field_types) $5,
                                   Lex.length, Lex.dec, Lex.type,
                                   statement->column_format,
                                   statement->default_value,
                                   statement->on_update_value,
-                                  &statement->comment,
+                                  statement->comment,
                                   $3.data(), &Lex.interval_list, Lex.charset))
               DRIZZLE_YYABORT;
           }
@@ -2014,7 +2016,7 @@ alter_list_item:
               Lex.select_lex.db = db.data();
             }
 
-            if (check_table_name($3->table.data(), $3->table.size()))
+            if (check_table_name($3->table))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.data());
               DRIZZLE_YYABORT;
@@ -2690,7 +2692,7 @@ simple_expr:
         | function_call_conflict
         | simple_expr COLLATE_SYM ident_or_text %prec UMINUS
           {
-            Item *i1= new (YYSession->mem_root) Item_string($3.data(), $3.size(), YYSession->charset());
+            Item *i1= new (YYSession->mem_root) Item_string($3, YYSession->charset());
             $$= new (YYSession->mem_root) Item_func_set_collation($1, i1);
           }
         | literal
@@ -2867,6 +2869,11 @@ function_call_nonkeyword:
           }
         | ADDDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 0); }
+        | CURTIME optional_braces
+          {
+            $$= new (YYSession->mem_root) Item_func_curtime_local();
+            Lex.setCacheable(false);
+          }
         | CURDATE optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
@@ -2953,6 +2960,11 @@ function_call_nonkeyword:
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_timestamp_diff($5,$7,$3); }
+        | UTC_TIME_SYM optional_braces
+          {
+            $$= new (YYSession->mem_root) Item_func_curtime_utc();
+            Lex.setCacheable(false);
+          }
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();
@@ -3169,7 +3181,7 @@ sum_expr:
         | AVG_SYM '(' DISTINCT in_sum_expr ')'
           { $$=new Item_sum_avg_distinct($4); }
         | COUNT_SYM '(' opt_all '*' ')'
-          { $$=new Item_sum_count(new Item_int((int32_t) 0L,1)); }
+          { $$=new Item_sum_count(new Item_int(0, 1)); }
         | COUNT_SYM '(' in_sum_expr ')'
           { $$=new Item_sum_count($3); }
         | COUNT_SYM '(' DISTINCT
@@ -3240,7 +3252,7 @@ variable_aux:
         | '@' opt_var_ident_type user_variable_ident opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
-            if ($3.data() && $4.data() && parser::check_reserved_words(&$3))
+            if ($3.data() && $4.data() && parser::check_reserved_words($3))
             {
               parser::my_parse_error(YYSession->m_lip);
               DRIZZLE_YYABORT;
@@ -3704,7 +3716,7 @@ select_derived:
             /* for normal joins, $3 != NULL and end_nested_join() != NULL,
                for derived tables, both must equal NULL */
 
-            if (!($$= $1->end_nested_join(Lex.session)) && $3)
+            if (!($$= $1->end_nested_join()) && $3)
               DRIZZLE_YYABORT;
 
             if (!$3 && $$)
@@ -3745,7 +3757,7 @@ select_derived_init:
           {
             Select_Lex *sel= Lex.current_select;
             TableList *embedding;
-            if (!sel->embedding || sel->end_nested_join(Lex.session))
+            if (!sel->embedding || sel->end_nested_join())
             {
               /* we are not in parentheses */
               parser::my_parse_error(YYSession->m_lip);
@@ -3941,7 +3953,7 @@ opt_escape:
         | /* empty */
           {
             Lex.escape_used= false;
-            $$= new Item_string("\\", 1, &my_charset_utf8_general_ci);
+            $$= new Item_string(str_ref("\\"), &my_charset_utf8_general_ci);
           }
         ;
 
@@ -4932,19 +4944,16 @@ text_string:
               it is OK only emulate fix_fields, because we need only
               value of constant
             */
-            $$= tmp ?
-              tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
+            $$= tmp ? tmp->quick_fix_field(), tmp->val_str(NULL) : NULL;
           }
         | BIN_NUM
           {
-            Item *tmp= new Item_bin_string($1.data(), $1.size());
+            Item *tmp= new Item_bin_string($1);
             /*
               it is OK only emulate fix_fields, because we need only
               value of constant
             */
-            $$= tmp ? tmp->quick_fix_field(), tmp->val_str((String*) 0) :
-              (String*) 0;
+            $$= tmp ? tmp->quick_fix_field(), tmp->val_str(NULL) : NULL;
           }
         ;
 
@@ -4969,7 +4978,7 @@ literal:
         | FALSE_SYM { $$= new drizzled::item::False(); }
         | TRUE_SYM { $$= new drizzled::item::True(); }
         | HEX_NUM { $$ = new Item_hex_string($1);}
-        | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
+        | BIN_NUM { $$= new Item_bin_string($1); }
         | DATE_SYM text_literal { $$ = $2; }
         | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;
@@ -4977,7 +4986,7 @@ literal:
 integer_literal:
           text_literal { $$ = $1; }
         | HEX_NUM { $$ = new Item_hex_string($1);}
-        | BIN_NUM { $$= new Item_bin_string($1.data(), $1.size()); }
+        | BIN_NUM { $$= new Item_bin_string($1); }
         | NUM_literal { $$ = $1; }
         | NULL_SYM
           {
@@ -5155,7 +5164,7 @@ IDENT_sys:
           {
             const charset_info_st * const cs= system_charset_info;
             int dummy_error;
-            uint32_t wlen= cs->cset->well_formed_len(cs, $1.begin(), $1.end(), $1.size(), &dummy_error);
+            uint32_t wlen= cs->cset->well_formed_len(*cs, $1, $1.size(), &dummy_error);
             if (wlen < $1.size())
             {
               my_error(ER_INVALID_CHARACTER_STRING, MYF(0), cs->csname, $1.data() + wlen);
@@ -5438,17 +5447,13 @@ sys_option_value:
               {
                 Lex.option_type= $1;
               }
-              Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, $2.var, &$2.base_name, $4)));
+              Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, $2.var, $2.base_name, $4)));
             }
           }
         | option_type TRANSACTION_SYM ISOLATION LEVEL_SYM isolation_types
           {
             Lex.option_type= $1;
-            Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type,
-                                              find_sys_var("tx_isolation"),
-                                              &(null_lex_string()),
-                                              new Item_int((int32_t)
-                                              $5))));
+            Lex.var_list.push_back(SetVarPtr(new set_var(Lex.option_type, find_sys_var("tx_isolation"), str_ref(), new Item_int((int32_t) $5))));
           }
         ;
 
@@ -5459,7 +5464,7 @@ option_value:
           }
         | '@' '@' opt_var_ident_type internal_variable_name equal set_expr_or_default
           {
-            Lex.var_list.push_back(SetVarPtr(new set_var($3, $4.var, &$4.base_name, $6)));
+            Lex.var_list.push_back(SetVarPtr(new set_var($3, $4.var, $4.base_name, $6)));
           }
         ;
 
@@ -5484,7 +5489,7 @@ internal_variable_name:
             {
               /* Not an SP local variable */
               sys_var *tmp= find_sys_var(to_string($1));
-              if (!tmp)
+              if (not tmp)
                 DRIZZLE_YYABORT;
               $$.var= tmp;
               $$.base_name= null_lex_string();
@@ -5502,9 +5507,9 @@ isolation_types:
 set_expr_or_default:
           expr { $$=$1; }
         | DEFAULT { $$=0; }
-        | ON     { $$=new Item_string("ON",  2, system_charset_info); }
-        | ALL    { $$=new Item_string("ALL", 3, system_charset_info); }
-        | BINARY { $$=new Item_string("binary", 6, system_charset_info); }
+        | ON     { $$=new Item_string(str_ref("ON"), system_charset_info); }
+        | ALL    { $$=new Item_string(str_ref("ALL"), system_charset_info); }
+        | BINARY { $$=new Item_string(str_ref("binary"), system_charset_info); }
         ;
 
 table_or_tables:

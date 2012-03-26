@@ -743,9 +743,7 @@ get_date_from_str(Session *session, String *str, type::timestamp_t warn_type, co
 
   if (error != type::VALID)
   {
-    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                 str->ptr(), str->length(),
-                                 warn_type, warn_name);
+    make_truncated_value_warning(*session, DRIZZLE_ERROR::WARN_LEVEL_WARN, *str, warn_type, warn_name);
   }
 
   return value;
@@ -4185,7 +4183,7 @@ void Item_cond::print(String *str)
   while ((item=li++))
   {
     str->append(' ');
-    str->append(func_name());
+    str->append(func_name(), strlen(func_name()));
     str->append(' ');
     item->print(str);
   }
@@ -4390,8 +4388,7 @@ int64_t Item_func_like::val_int()
   return my_wildcmp(cmp.cmp_collation.collation,
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
-		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    internal::wild_one,internal::wild_many) ? 0 : 1;
+		    make_escape_code(cmp.cmp_collation.collation, escape), internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 
@@ -4451,7 +4448,7 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation))
+    if (args[1]->const_item() && not collation.collation->use_strnxfrm())
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)
@@ -5177,7 +5174,7 @@ Item *Item_equal::transform(Item_transformer transformer, unsigned char *arg)
 
 void Item_equal::print(String *str)
 {
-  str->append(func_name());
+  str->append(func_name(), strlen(func_name()));
   str->append('(');
   List<Item_field>::iterator it(fields.begin());
   Item *item;

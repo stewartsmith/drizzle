@@ -28,12 +28,6 @@ namespace drizzled {
 
 bool select_dumpvar::send_data(List<Item> &items)
 {
-  std::vector<var *>::const_iterator iter= var_list.begin();
-
-  List<Item>::iterator it(items.begin());
-  Item *item= NULL;
-  var *current_var;
-
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
@@ -44,26 +38,26 @@ bool select_dumpvar::send_data(List<Item> &items)
     my_message(ER_TOO_MANY_ROWS, ER(ER_TOO_MANY_ROWS), MYF(0));
     return 1;
   }
-  while ((iter != var_list.end()) && (item= it++))
+  List<Item>::iterator it(items.begin());
+  BOOST_FOREACH(var* current_var, var_list)
   {
-    current_var= *iter;
-    if (current_var->local == 0)
-    {
-      Item_func_set_user_var *suv= new Item_func_set_user_var(current_var->s, item);
-      suv->fix_fields(session, 0);
-      suv->check(0);
-      suv->update();
-    }
-    ++iter;
+    Item* item= it++;
+    if (not item)
+      break;
+    if (current_var->local)
+      continue;
+    Item_func_set_user_var *suv= new Item_func_set_user_var(current_var->s, item);
+    suv->fix_fields(session, 0);
+    suv->check(0);
+    suv->update();
   }
-  return(session->is_error());
+  return session->is_error();
 }
 
 bool select_dumpvar::send_eof()
 {
-  if (! row_count)
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-		 ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
+  if (not row_count)
+    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
   /*
     In order to remember the value of affected rows for ROW_COUNT()
     function, SELECT INTO has to have an own SQLCOM.
@@ -76,14 +70,10 @@ bool select_dumpvar::send_eof()
 int select_dumpvar::prepare(List<Item> &list, Select_Lex_Unit *u)
 {
   unit= u;
-
-  if (var_list.size() != list.size())
-  {
-    my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT,
-	       ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT), MYF(0));
-    return 1;
-  }
-  return 0;
+  if (var_list.size() == list.size())
+    return 0;
+  my_message(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT, ER(ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT), MYF(0));
+  return 1;
 }
 
 } // namespace drizzled

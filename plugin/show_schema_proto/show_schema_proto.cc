@@ -40,15 +40,12 @@ using namespace google;
 class ShowSchemaProtoFunction : public Item_str_func
 {
 public:
-  ShowSchemaProtoFunction() : Item_str_func() {}
   String *val_str(String*);
 
   void fix_length_and_dec()
   {
     max_length= 16384; /* Guesswork? */
-    args[0]->collation.set(
-      get_charset_by_csname(args[0]->collation.collation->csname,
-                            MY_CS_BINSORT), DERIVATION_COERCIBLE);
+    args[0]->collation.set(get_charset_by_csname(args[0]->collation.collation->csname, MY_CS_BINSORT), DERIVATION_COERCIBLE);
   }
 
   const char *func_name() const
@@ -69,7 +66,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   String *db_sptr= args[0]->val_str(str);
 
-  if (db_sptr == NULL)
+  if (not db_sptr)
   {
     null_value= true;
     return NULL;
@@ -77,19 +74,15 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   null_value= false;
 
-  const char* db= db_sptr->c_str();
-
-  string proto_as_text("");
-  message::schema::shared_ptr proto;
-
-
-  identifier::Schema schema_identifier(db);
-  if (not (proto= plugin::StorageEngine::getSchemaDefinition(schema_identifier)))
+  identifier::Schema schema_identifier(*db_sptr);
+  message::schema::shared_ptr proto= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
+  if (not proto)
   {
     my_error(ER_BAD_DB_ERROR, schema_identifier);
     return NULL;
   }
 
+  string proto_as_text;
   protobuf::TextFormat::PrintToString(*proto, &proto_as_text);
 
   str->alloc(proto_as_text.length());
@@ -115,10 +108,10 @@ DRIZZLE_DECLARE_PLUGIN
   "show_schema_proto",
   "1.0",
   "Stewart Smith",
-  "Shows text representation of schema definition proto",
+  N_("Shows text representation of schema definition proto"),
   PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  initialize,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

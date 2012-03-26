@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "plugin_stubs.h"
+#include "unittests/plugin/plugin_stubs.h"
 
 using namespace drizzled;
 

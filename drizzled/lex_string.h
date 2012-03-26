@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstddef>
+#include <drizzled/util/data_ref.h>
 
 namespace drizzled {
 
@@ -54,6 +55,11 @@ struct lex_string_t
   {
     str_= const_cast<char*>(d);
     length_ = s;
+  }
+
+  void operator=(str_ref v)
+  {
+    assign(v.data(), v.size());
   }
 
   char* str_;

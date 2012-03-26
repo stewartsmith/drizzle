@@ -715,10 +715,10 @@ DRIZZLE_DECLARE_PLUGIN
   "SEAPITESTER",
   "1.0",
   "Stewart Smith",
-  "Test the Storage Engine API callls are in correct order",
+  N_("StorageEngine module for testing call order"),
   PLUGIN_LICENSE_GPL,
-  seapi_tester_init,     /* Plugin Init */
-  NULL, /* depends */
-  NULL                /* config options   */
+  seapi_tester_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

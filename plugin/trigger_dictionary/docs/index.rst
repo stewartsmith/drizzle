@@ -1,3 +1,5 @@
+.. _trigger_dictionary_plugin:
+
 Trigger Dictionary
 ==================
 
@@ -12,7 +14,7 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=trigger_dictionary
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 Examples
 --------

@@ -73,7 +73,9 @@ bool SQLExecutor::executeSQL(vector<string> &sql)
   {
     /* avoid recursive errors */
     if (_in_error_state)
+    {
       return true;
+    }
 
     _in_error_state= true;
     _error_message= "(SQLSTATE ";

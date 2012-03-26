@@ -19,7 +19,7 @@ Returns the current date as a value in 'YYYY-MM-DD' or YYYYMMDD format, dependin
 now()	                            
 ------
 
-NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS:mmmmmm' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+NOW returns the current date and time. The return value will be expressed as 'YYYY-MM-DD HH:MM:SS:mmmmmm' or YYYYMMDDHHMMSS.uuuuuu, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone (Drizzle timezone is always UTC).
 
 .. code-block:: mysql
 

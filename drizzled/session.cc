@@ -27,7 +27,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/ptr_container/ptr_container.hpp>
 #include <drizzled/copy_field.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/display.h>
 #include <drizzled/drizzled.h>
@@ -102,9 +102,9 @@ uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
-  return length == other.length &&
-         field_name.size() == other.field_name.size() &&
-    !my_strcasecmp(system_charset_info, field_name.data(), other.field_name.data());
+  return length == other.length 
+    && field_name.size() == other.field_name.size()
+    && not system_charset_info->strcasecmp(field_name.data(), other.field_name.data());
 }
 
 Open_tables_state::Open_tables_state(Session& session, uint64_t version_arg) :
@@ -283,7 +283,7 @@ Session::Session(plugin::Client *client_arg, catalog::Instance::shared_ptr catal
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
-  thr_lock_owner_init(&main_lock_id, &lock_info);
+  main_lock_id.info= &lock_info;
 
   plugin::EventObserver::registerSessionEvents(*this);
 }
@@ -390,15 +390,11 @@ void Session::cleanup()
   assert(not cleanup_done);
 
   setKilled(KILL_CONNECTION);
-#ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
-  if (transaction.xid_state.xa_state == XA_PREPARED)
-  {
-#error xid_state in the cache should be replaced by the allocated value
-  }
-#endif
-  {
-    TransactionServices::rollbackTransaction(*this, true);
-  }
+
+  /* In the future, you may want to do something about XA_PREPARED here.
+     In the dim distant past there was some #ifdefed out #error here about it.
+  */
+  TransactionServices::rollbackTransaction(*this, true);
 
   BOOST_FOREACH(UserVars::reference iter, user_vars)
     boost::checked_delete(iter.second);
@@ -419,10 +415,7 @@ Session::~Session()
     assert(security_ctx);
     if (global_system_variables.log_warnings)
     {
-      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE),
-                    internal::my_progname,
-                    thread_id,
-                    security_ctx->username().c_str());
+      errmsg_printf(error::WARN, ER(ER_FORCING_CLOSE), internal::my_progname, thread_id, security_ctx->username().c_str());
     }
 
     disconnect();
@@ -713,13 +706,13 @@ bool Session::executeStatement()
 void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
 {
   /* Remove garbage at start and end of query */
-  while (in_packet_length > 0 && my_isspace(charset(), in_packet[0]))
+  while (in_packet_length > 0 && charset()->isspace(in_packet[0]))
   {
     in_packet++;
     in_packet_length--;
   }
   const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 && (pos[-1] == ';' || my_isspace(charset() ,pos[-1])))
+  while (in_packet_length > 0 && (pos[-1] == ';' || charset()->isspace(pos[-1])))
   {
     pos--;
     in_packet_length--;
@@ -999,7 +992,7 @@ static int create_file(Session& session,
 
   if (not to_file.has_root_directory())
   {
-    target_path= fs::system_complete(getDataHomeCatalog());
+    target_path= fs::system_complete(catalog::local_identifier().getPath());
     util::string::ptr schema(session.schema());
     if (not schema->empty())
     {
@@ -1163,24 +1156,15 @@ bool select_export::send_data(List<Item> &items)
           escape_char != -1)
       {
         char *pos, *start, *end;
-        const charset_info_st * const res_charset= res->charset();
-        const charset_info_st * const character_set_client= default_charset_info;
+        const charset_info_st* const res_charset= res->charset();
 
-        bool check_second_byte= (res_charset == &my_charset_bin) &&
-          character_set_client->
-          escape_with_backslash_is_dangerous;
-        assert(character_set_client->mbmaxlen == 2 ||
-               !character_set_client->escape_with_backslash_is_dangerous);
-        for (start=pos=(char*) res->ptr(),end=pos+used_length ;
-             pos != end ;
-             pos++)
+        for (start= pos= (char*) res->ptr(),end=pos+used_length; pos != end; pos++)
         {
           if (use_mb(res_charset))
           {
-            int l;
-            if ((l=my_ismbchar(res_charset, pos, end)))
+            if (int l= my_ismbchar(res_charset, pos, end))
             {
-              pos += l-1;
+              pos += l - 1;
               continue;
             }
           }
@@ -1217,11 +1201,7 @@ bool select_export::send_data(List<Item> &items)
             assert before the loop makes that sure.
           */
 
-          if ((needs_escaping(*pos, enclosed) ||
-               (check_second_byte &&
-                my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
-                pos + 1 < end &&
-                needs_escaping(pos[1], enclosed))) &&
+          if (needs_escaping(*pos, enclosed) &&
               /*
                 Don't escape field_term_char by doubling - doubling is only
                 valid for ENCLOSED BY characters:
@@ -1231,8 +1211,7 @@ bool select_export::send_data(List<Item> &items)
           {
             char tmp_buff[2];
             tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
-                          is_ambiguous_field_sep) ?
-              field_sep_char : escape_char;
+                          is_ambiguous_field_sep) ? field_sep_char : escape_char;
             tmp_buff[1]= *pos ? *pos : '0';
             if (cache->write(start, pos - start) || cache->write(tmp_buff, 2))
               return true;
@@ -1686,16 +1665,12 @@ void Session::refresh_status()
   current_global_counters.connections= 0;
 }
 
-user_var_entry *Session::getVariable(lex_string_t &name, bool create_if_not_exists)
-{
-  return getVariable(to_string(name), create_if_not_exists);
-}
-
-user_var_entry *Session::getVariable(const std::string  &name, bool create_if_not_exists)
+user_var_entry* Session::getVariable(str_ref name0, bool create_if_not_exists)
 {
   if (cleanup_done)
     return NULL;
 
+  string name(name0.data(), name0.size());
   if (UserVars::mapped_type* iter= find_ptr(user_vars, name))
     return *iter;
 
@@ -1716,14 +1691,9 @@ user_var_entry *Session::getVariable(const std::string  &name, bool create_if_no
 
 void Session::setVariable(const std::string &name, const std::string &value)
 {
-  user_var_entry *updateable_var= getVariable(name.c_str(), true);
-  if (updateable_var)
+  if (user_var_entry* var= getVariable(name, true))
   {
-    updateable_var->update_hash(false,
-                                (void*)value.c_str(),
-                                static_cast<uint32_t>(value.length()), STRING_RESULT,
-                                &my_charset_bin,
-                                DERIVATION_IMPLICIT, false);
+    var->update_hash(false, value, STRING_RESULT, &my_charset_bin, DERIVATION_IMPLICIT, false);
   }
 }
 
@@ -1773,15 +1743,6 @@ void Session::close_thread_tables()
 
   if (open_tables.lock)
   {
-    /*
-      For RBR we flush the pending event just before we unlock all the
-      tables.  This means that we are at the end of a topmost
-      statement, so we ensure that the STMT_END_F flag is set on the
-      pending event.  For statements that are *inside* stored
-      functions, the pending event will not be flushed: that will be
-      handled either before writing a query log event (inside
-      binlog_query()) or when preparing a pending event.
-     */
     unlockTables(open_tables.lock);
     open_tables.lock= 0;
   }

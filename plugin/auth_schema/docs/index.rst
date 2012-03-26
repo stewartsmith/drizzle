@@ -1,3 +1,5 @@
+.. _auth_schema_plugin:
+
 Schema Authentication
 =====================
 
@@ -9,7 +11,10 @@ users can authenticate until the auth table is created, this circular
 dependency is resolved by temporarily using another authentication plugin.
 See the :ref:`auth_schema_examples`.
 
-.. note:: Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+.. note::
+
+   Unload the :doc:`/plugins/auth_all/index` plugin before using this plugin.
+
 .. seealso:: :doc:`/administration/authentication` 
 
 .. _auth_schema_loading:
@@ -24,7 +29,7 @@ To load this plugin, start :program:`drizzled` with::
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`auth_schema_configuration` and :ref:`auth_schema_variables`.
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _auth_schema_configuration:
 
@@ -32,7 +37,7 @@ Configuration
 -------------
 
 These command line options configure the plugin when :program:`drizzled`
-is started.  See :doc:`/configuration` for more information about specifying
+is started.  See :ref:`command_line_options` for more information about specifying
 command line options.
 
 .. program:: drizzled

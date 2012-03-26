@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010-2011 Brian Aker, Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,9 @@
 
 namespace drizzled {
 namespace catalog {
+
+/* only for use by drizzled after command line parsing (new datadir) */
+void resetPath_for_local_identifier();
 
 DRIZZLED_API const identifier::Catalog& local_identifier();
 DRIZZLED_API Instance::shared_ptr local();

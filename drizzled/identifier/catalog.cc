@@ -69,7 +69,7 @@ bool Catalog::isValid() const
     return false;
   const charset_info_st& cs= my_charset_utf8mb4_general_ci;
   int well_formed_error;
-  uint32_t res= cs.cset->well_formed_len(&cs, _name.c_str(), _name.c_str() + _name.length(), NAME_CHAR_LEN, &well_formed_error);
+  uint32_t res= cs.cset->well_formed_len(cs, _name, NAME_CHAR_LEN, &well_formed_error);
   if (well_formed_error)
   {
     my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", _name.c_str());

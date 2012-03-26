@@ -19,7 +19,7 @@
 
 #include <config.h>
 #include <boost/algorithm/string.hpp>
-#include "option_context.h"
+#include "drizzled/module/option_context.h"
 
 namespace drizzled {
 namespace module {

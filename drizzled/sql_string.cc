@@ -275,7 +275,9 @@ void String::set_ascii(const char *str, size_t arg_length)
 void String::append(const char *s,size_t arg_length)
 {
   if (arg_length == 0)
+  {
     return;
+  }
 
   /*
     For an ASCII compatinble string we can just append.
@@ -283,15 +285,6 @@ void String::append(const char *s,size_t arg_length)
   realloc(str_length + arg_length);
   memcpy(Ptr + str_length, s, arg_length);
   str_length+= arg_length;
-}
-
-/*
-  Append a 0-terminated ASCII string
-*/
-
-void String::append(const char *s)
-{
-  append(s, strlen(s));
 }
 
 void String::append(str_ref s)
@@ -580,8 +573,7 @@ well_formed_copy_nchars(const charset_info_st * const to_cs,
     }
 
     set_if_smaller(from_length, to_length);
-    res= to_cs->cset->well_formed_len(to_cs, from, from + from_length,
-                                      nchars, &well_formed_error);
+    res= to_cs->cset->well_formed_len(*to_cs, str_ref(from, from_length), nchars, &well_formed_error);
     memmove(to, from, res);
     *from_end_pos= from + res;
     *well_formed_error_pos= well_formed_error ? from + res : NULL;

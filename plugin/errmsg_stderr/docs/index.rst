@@ -1,4 +1,6 @@
-Error Messages To STDERR
+.. _errmsg_stderr_plugin:
+
+Error Messages to STDERR
 ========================
 
 :program:`errmsg_stderr` is an error message plugin that prints all
@@ -20,7 +22,7 @@ with::
 
    --plugin-remove=errmsg_stderr
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _errmsg_stderr_configuration:
 

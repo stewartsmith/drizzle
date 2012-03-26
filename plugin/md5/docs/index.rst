@@ -1,3 +1,5 @@
+.. _md5_plugin:
+
 MD5 Function
 ============
 
@@ -15,7 +17,7 @@ default, start :program:`drizzled` with::
 
    --plugin-remove=md5
 
-.. seealso:: :doc:`/options` for more information about adding and removing plugins.
+.. seealso:: :ref:`drizzled_plugin_options` for more information about adding and removing plugins.
 
 .. _md5_authors:
 

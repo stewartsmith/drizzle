@@ -67,8 +67,6 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
     expression the <subquery> is.
   */
 
-  Item *result;
-
   if (expr->type() == Item::SUBSELECT_ITEM)
   {
     Item_subselect *expr2 = (Item_subselect*) expr;
@@ -76,7 +74,6 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
     if (expr2->substype() == Item_subselect::SINGLEROW_SUBS)
     {
       Item_singlerow_subselect *expr3 = (Item_singlerow_subselect*) expr2;
-      Select_Lex *subselect;
 
       /*
         Implement the mandated change, by altering the semantic tree:
@@ -86,22 +83,14 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
         which is represented as
           Item_in_subselect(left, subselect)
       */
-      subselect= expr3->invalidate_and_restore_select_lex();
-      result= new (session->mem_root) Item_in_subselect(left, subselect);
-
-      if (! equal)
-        result = negate_expression(session, result);
-
-      return(result);
+      Select_Lex* subselect= expr3->invalidate_and_restore_select_lex();
+      Item* result= new (session->mem_root) Item_in_subselect(left, subselect);
+      return equal ? result : negate_expression(session, result);
     }
   }
-
-  if (equal)
-    result= new (session->mem_root) Item_func_eq(left, expr);
-  else
-    result= new (session->mem_root) Item_func_ne(left, expr);
-
-  return(result);
+  return equal
+    ? (Item*) new (session->mem_root) Item_func_eq(left, expr)
+    : (Item*) new (session->mem_root) Item_func_ne(left, expr);
 }
 
 /**
@@ -221,14 +210,11 @@ void my_parse_error(const char *message)
   my_printf_error(ER_PARSE_ERROR_UNKNOWN, ER(ER_PARSE_ERROR_UNKNOWN), MYF(0), message);
 }
 
-bool check_reserved_words(lex_string_t *name)
+bool check_reserved_words(str_ref name)
 {
-  if (!my_strcasecmp(system_charset_info, name->data(), "GLOBAL") ||
-      !my_strcasecmp(system_charset_info, name->data(), "LOCAL") ||
-      !my_strcasecmp(system_charset_info, name->data(), "SESSION"))
-    return true;
-
-  return false;
+  return not system_charset_info->strcasecmp(name.data(), "GLOBAL") 
+    || not system_charset_info->strcasecmp(name.data(), "LOCAL")
+    || not system_charset_info->strcasecmp(name.data(), "SESSION");
 }
 
 
@@ -301,7 +287,7 @@ bool buildOrderBy(LEX *lex)
   return true;
 }
 
-void buildEngineOption(LEX *lex, const char *key, const lex_string_t &value)
+void buildEngineOption(LEX *lex, const char *key, str_ref value)
 {
   message::Engine::Option *opt= lex->table()->mutable_engine()->add_options();
   opt->set_name(key);
@@ -315,50 +301,39 @@ void buildEngineOption(LEX *lex, const char *key, uint64_t value)
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-void buildSchemaOption(LEX *lex, const char *key, const lex_string_t &value)
+void buildSchemaOption(LEX *lex, const char *key, str_ref value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(value.data(), value.size());
 }
 
-void buildSchemaDefiner(LEX *lex, const lex_string_t &value)
-{
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
-  identifier::User user(value.data());
-  message::set_definer(statement->schema_message, user);
-}
-
 void buildSchemaDefiner(LEX *lex, const identifier::User &user)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::set_definer(statement->schema_message, user);
 }
 
 void buildSchemaOption(LEX *lex, const char *key, uint64_t value)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
   opt->set_name(key);
   opt->set_state(boost::lexical_cast<std::string>(value));
 }
 
-bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
+bool checkFieldIdent(LEX *lex, str_ref schema_name, str_ref table_name)
 {
   TableList *table= reinterpret_cast<TableList*>(lex->current_select->table_list.first);
 
-  if (schema_name.size())
+  if (schema_name.size() && table_alias_charset->strcasecmp(schema_name.data(), table->getSchemaName()))
   {
-    if (my_strcasecmp(table_alias_charset, schema_name.data(), table->getSchemaName()))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
-      return false;
-    }
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_name.data());
+    return false;
   }
 
-  if (my_strcasecmp(table_alias_charset, table_name.data(),
-                    table->getTableName()))
+  if (table_alias_charset->strcasecmp(table_name.data(), table->getTableName()))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.data());
     return false;
@@ -367,7 +342,7 @@ bool checkFieldIdent(LEX *lex, const lex_string_t &schema_name, const lex_string
   return true;
 }
 
-Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name, const lex_string_t &field_name)
+Item *buildIdent(LEX *lex, str_ref schema_name, str_ref table_name, str_ref field_name)
 {
   Select_Lex *sel= lex->current_select;
 
@@ -381,7 +356,7 @@ Item *buildIdent(LEX *lex, const lex_string_t &schema_name, const lex_string_t &
     : (Item*) new Item_ref(lex->current_context(), schema_name.data(), table_name.data(), field_name.data());
 }
 
-Item *buildTableWild(LEX *lex, const lex_string_t &schema_name, const lex_string_t &table_name)
+Item *buildTableWild(LEX *lex, str_ref schema_name, str_ref table_name)
 {
   Select_Lex *sel= lex->current_select;
   Item *item= new Item_field(lex->current_context(), schema_name.data(), table_name.data(), "*");
@@ -430,7 +405,7 @@ bool buildCollation(LEX *lex, const charset_info_st *arg)
   return true;
 }
 
-void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
+void buildKey(LEX *lex, Key::Keytype type_par, str_ref name_arg)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
   Key *key= new Key(type_par, name_arg, &statement->key_create_info, 0, lex->col_list);
@@ -438,19 +413,13 @@ void buildKey(LEX *lex, Key::Keytype type_par, const lex_string_t &name_arg)
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
 }
 
-void buildForeignKey(LEX *lex, const lex_string_t &name_arg, drizzled::Table_ident *table)
+void buildForeignKey(LEX *lex, str_ref name_arg, drizzled::Table_ident *table)
 {
   statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
-  Key *key= new Foreign_key(name_arg, lex->col_list,
-                            table,
-                            lex->ref_list,
-                            statement->fk_delete_opt,
-                            statement->fk_update_opt,
-                            statement->fk_match_option);
+  statement->alter_info.key_list.push_back(new Foreign_key(name_arg, lex->col_list, table, lex->ref_list, 
+    statement->fk_delete_opt, statement->fk_update_opt, statement->fk_match_option));
 
-  statement->alter_info.key_list.push_back(key);
-  key= new Key(Key::MULTIPLE, name_arg, &default_key_create_info, 1, lex->col_list);
-  statement->alter_info.key_list.push_back(key);
+  statement->alter_info.key_list.push_back(new Key(Key::MULTIPLE, name_arg, &default_key_create_info, 1, lex->col_list));
   lex->col_list.clear(); /* Alloced by memory::sql_alloc */
   /* Only used for ALTER TABLE. Ignored otherwise. */
   statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
@@ -660,7 +629,7 @@ void buildPrimaryOnColumn(LEX *lex)
 
 void buildReplicationOption(LEX *lex, bool arg)
 {
-  statement::CreateSchema *statement= (statement::CreateSchema *)lex->statement;
+  statement::CreateSchema *statement= static_cast<statement::CreateSchema*>(lex->statement);
   message::set_is_replicated(statement->schema_message, arg);
 }
 

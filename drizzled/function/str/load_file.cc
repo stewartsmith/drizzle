@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2011 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/my_sys.h>
 #include <drizzled/sys_var.h>
@@ -52,7 +53,7 @@ String *Item_load_file::val_str(String *str)
     return 0;
   }
 
-  fs::path target_path(fs::system_complete(getDataHomeCatalog()));
+  fs::path target_path(fs::system_complete(catalog::local_identifier().getPath()));
   fs::path to_file(file_name->c_ptr());
   if (not to_file.has_root_directory())
   {

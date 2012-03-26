@@ -68,7 +68,7 @@ public:
 
   virtual inline void print(String *str)
   {
-    str->append(func_name);
+    str->append(func_name, strlen(func_name));
   }
 
   Item *safe_charset_converter(const charset_info_st * const tocs);

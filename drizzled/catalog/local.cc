@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010-2011 Brian Aker, Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,14 @@ static void init()
 const identifier::Catalog& local_identifier()
 {
   return default_catalog;
+}
+
+void resetPath_for_local_identifier()
+{
+  /* this is currently commented out to do nothing as we don't need
+     to reset the relative path ../local to anything but that.
+     We will need to enable this when we don't chdir into local on startup */
+//  default_catalog.resetPath();
 }
 
 Instance::shared_ptr local()

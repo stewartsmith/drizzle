@@ -20,30 +20,13 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle7],[7],[http://bugs.launchpad.net/drizzle])
+AC_INIT([drizzle],[7.1],[http://bugs.launchpad.net/drizzle],[drizzle],[http://drizzle.org/])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
-AC_CONFIG_MACRO_DIR([m4])
-LT_INIT
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
-LIBDRIZZLE_LIBRARY_VERSION=3:0:0
-#                          | | |
-#                   +------+ | +---+
-#                   |        |     |
-#                current:revision:age
-#                   |        |     |
-#                   |        |     +- increment if interfaces have been added
-#                   |        |        set to zero if interfaces have been
-#                   |        |        removed or changed
-#                   |        +- increment if source code has changed
-#                   |           set to zero if current is incremented
-#                   +- increment if interfaces have been added, removed or
-#                      changed
-AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
-
-OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
+LIBDRIZZLE_LIBRARY_VERSION=4:0:0
 #                             | | |
 #                      +------+ | +---+
 #                      |        |     |
@@ -56,17 +39,7 @@ OLDLIBDRIZZLE_LIBRARY_VERSION=2:0:1
 #                      |           set to zero if current is incremented
 #                      +- increment if interfaces have been added, removed or
 #                         changed
-AC_SUBST(OLDLIBDRIZZLE_LIBRARY_VERSION)
-
-libdrizzleincludedir='${includedir}/libdrizzle-2.0'
-libdrizzleinstalldir='${libdrizzleincludedir}/libdrizzle'
-AC_SUBST(libdrizzleinstalldir)
-AC_SUBST(libdrizzleincludedir)
-
-oldlibdrizzleincludedir='${includedir}/libdrizzle-1.0'
-oldlibdrizzleinstalldir='${oldlibdrizzleincludedir}/libdrizzle'
-AC_SUBST(oldlibdrizzleinstalldir)
-AC_SUBST(oldlibdrizzleincludedir)
+AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
 
 # libdrizzle versioning when linked with GNU ld.
 AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
@@ -155,7 +128,6 @@ AC_LANG_POP
 PANDORA_DRIZZLE_BUILD
 PANDORA_HAVE_BOOST_TEST
 PANDORA_HAVE_LIBSQLITE3
-PANDORA_HAVE_LIBV8
 
 
 #########################################################################
@@ -182,9 +154,10 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
- support-files/drizzle7.pc dnl
+ support-files/drizzle.spec dnl
+ support-files/drizzle.pc dnl
+ support-files/libdrizzle.pc dnl
  support-files/libdrizzle-1.0.pc dnl
- support-files/libdrizzle-2.0.pc dnl
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
@@ -240,3 +213,7 @@ esac
 
 dnl libtoolize scans configure.ac  and needs to see some text
 m4_define([LIBTOOLIZE_AC_INIT], [])
+m4_define([UNUSED_MACRO], [
+  LT_INIT
+  AC_CONFIG_MACRO_DIR([m4])
+])

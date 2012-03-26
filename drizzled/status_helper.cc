@@ -64,68 +64,54 @@ static st_show_var_func_container show_flushstatustime_cont_new= { &show_flushst
 
 static st_show_var_func_container show_connection_count_cont_new= { &show_connection_count_new };
 
-string StatusHelper::fillHelper(system_status_var *status_var, char *value, SHOW_TYPE show_type)
+string StatusHelper::fillHelper(system_status_var *status_var, const char *value, SHOW_TYPE show_type)
 {
   ostringstream oss;
-  string return_value;
-
-  switch (show_type) {
+  switch (show_type) 
+  {
   case SHOW_DOUBLE_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_DOUBLE:
     oss.precision(6);
     oss << *(double *) value;
-    return_value= oss.str();
-    break;
+    return oss.str();
   case SHOW_LONG_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    return_value=boost::lexical_cast<std::string>(*(long*) value);
+    return boost::lexical_cast<std::string>(*(long*) value);
     break;
   case SHOW_LONGLONG_STATUS:
     value= ((char *) status_var + (uint64_t) value);
     /* fall through */
   case SHOW_LONGLONG:
-    return_value=boost::lexical_cast<std::string>(*(int64_t*) value);
-    break;
+    return boost::lexical_cast<std::string>(*(int64_t*) value);
   case SHOW_SIZE:
-    return_value=boost::lexical_cast<std::string>(*(size_t*) value);
-    break;
+    return boost::lexical_cast<std::string>(*(size_t*) value);
   case SHOW_HA_ROWS:
-    return_value=boost::lexical_cast<std::string>((int64_t) *(ha_rows*) value);
-    break;
+    return boost::lexical_cast<std::string>((int64_t) *(ha_rows*) value);
   case SHOW_BOOL:
   case SHOW_MY_BOOL:
-    return_value= *(bool*) value ? "ON" : "OFF";
-    break;
+    return *(bool*) value ? "ON" : "OFF";
   case SHOW_INT:
   case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    return_value=boost::lexical_cast<std::string>((long) *(uint32_t*) value);
-    break;
+    return boost::lexical_cast<std::string>((long) *(uint32_t*) value);
   case SHOW_CHAR:
-    {
-      if (value)
-        return_value= value;
-      break;
-    }
+    if (value)
+      return value;
+    break;
   case SHOW_CHAR_PTR:
-    {
-      if (*(char**) value)
-        return_value= *(char**) value;
-
-      break;
-    }
+    if (*(char**) value)
+      return *(char**) value;
+    break;
   case SHOW_UNDEF:
     break;                                        // Return empty string
   case SHOW_SYS:                                  // Cannot happen
   default:
     assert(0);
-    break;
   }
-
-  return return_value;
+  return string();
 }
 
 drizzle_show_var StatusHelper::status_vars_defs[]=

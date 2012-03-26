@@ -25,16 +25,15 @@
 
 namespace drizzled {
 
-class Key_part_spec :public memory::SqlAlloc {
+class Key_part_spec : public memory::SqlAlloc 
+{
 public:
-  lex_string_t field_name;
+  str_ref field_name;
   uint32_t length;
-  Key_part_spec(const lex_string_t &name, uint32_t len)
+  Key_part_spec(str_ref name, uint32_t len)
     : field_name(name), length(len)
   {}
-  Key_part_spec(const char *name, const size_t name_len, uint32_t len)
-    : length(len)
-  { field_name.assign(name, name_len); }
+
   bool operator==(const Key_part_spec& other) const;
   /**
     Construct a copy of this Key_part_spec. field_name is copied
