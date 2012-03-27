@@ -44,7 +44,7 @@ class basicTest(mysqlBaseTestCase):
     def test_xb_stats(self):
         self.servers = servers
         logging = test_executor.logging
-        if servers[0].type not in ['mysql','percona']:
+        if servers[0].type not in ['drizzle','mysql','percona']:
             return
         else:
             innobackupex = test_executor.system_manager.innobackupex_path

@@ -25,8 +25,8 @@ import shutil
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 
 server_requirements = [['--innodb.file-per-table'
-                       ,'--innodb.strict_mode'
-                       ,'--innodb.file_format=Barracuda'
+                       ,'--innodb.strict-mode'
+                       ,'--innodb.file-format=Barracuda'
                       ]]
 servers = []
 server_manager = None
