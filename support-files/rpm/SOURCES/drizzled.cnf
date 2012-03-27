@@ -1,0 +1,10 @@
+# Drizzle Server Configuration
+#
+# Parsed in the following order:
+#   /etc/drizzled.cnf 
+#   /etc/drizzle/drizzled.cnf 
+#   ~/.drizzled.cnf
+#
+
+pid-file = /var/run/drizzle/drizzled.pid
+datadir = /var/lib/drizzle

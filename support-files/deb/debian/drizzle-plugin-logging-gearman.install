@@ -1,0 +1,2 @@
+usr/lib/drizzle/liblogging_gearman_plugin.so
+etc/drizzle/conf.d/logging-gearman.cnf

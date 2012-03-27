@@ -1,0 +1,2 @@
+usr/lib/drizzle/libauth_file_plugin.so
+etc/drizzle/conf.d/auth-file.cnf

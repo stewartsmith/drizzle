@@ -1,0 +1,4 @@
+tests/r/information_schema_inno.result
+tests/r/information_schema.result
+tests/r/pbxt/outfile.result
+tests/r/pbxt/information_schema.result

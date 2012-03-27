@@ -1,0 +1,3 @@
+plugin-remove=auth_all
+plugin-add=auth_file
+auth-file.users=/etc/drizzle/drizzle.users

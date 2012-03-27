@@ -1,0 +1,2 @@
+etc/drizzle/conf.d/regex-policy.cnf
+usr/lib/drizzle/libregex_policy_plugin.so

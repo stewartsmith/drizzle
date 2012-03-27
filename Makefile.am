@@ -169,7 +169,8 @@ clean-local:
 	$(SPHINX_BUILDDIR)/qthelp $(SPHINX_BUILDDIR)/devhelp $(SPHINX_BUILDDIR)/epub \
 	$(SPHINX_BUILDDIR)/latex $(SPHINX_BUILDDIR)/latexpdf $(SPHINX_BUILDDIR)/text \
 	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
-	$(SPHINX_BUILDDIR)/doctest
+	$(SPHINX_BUILDDIR)/doctest deb-work-dir support-files/rpm/BUILDROOT/* \
+	support-files/rpm/BUILD/* support-files/rpm/SRPMS/* support-files/rpm/RPMS/*
 
 include config/lcov.am
 
@@ -196,17 +197,3 @@ merge-clean:
 	find ./ | $(GREP) \.rej | xargs rm -f
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
-
-rpm-build: support-files/drizzle.spec
-	@rm -f ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm
-	@rm -f ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm
-	@cp drizzle-$(VERSION).tar.gz ~/rpmbuild/SOURCES/
-	@cp support-files/drizzled.init ~/rpmbuild/SOURCES/
-	@rpmbuild -ba support-files/drizzle.spec
-	@cp ~/rpmbuild/RPMS/x86_64/drizzle-$(VERSION)*.rpm .
-	@cp ~/rpmbuild/RPMS/x86_64/drizzle-devel-$(VERSION)*.rpm .
-	@cp ~/rpmbuild/RPMS/x86_64/drizzle-debuginfo-$(VERSION)*.rpm .
-	@cp ~/rpmbuild/RPMS/x86_64/drizzle-server-$(VERSION)*.rpm .
-	@cp ~/rpmbuild/SRPMS/drizzle-$(VERSION)*.rpm .
-
-rpm: man distcheck rpm-build

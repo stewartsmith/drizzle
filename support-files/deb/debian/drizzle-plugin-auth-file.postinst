@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+configure)
+    if ! [ -e /etc/drizzle/drizzle.users ] ; then
+        install -m 0640 -o drizzle -g drizzle /dev/null /etc/drizzle/drizzle.users
+        echo \# This file was created automatically during install > /etc/drizzle/drizzle.users
+        echo -n root: >> /etc/drizzle/drizzle.users
+	pwgen -s 14 >> /etc/drizzle/drizzle.users
+    fi
+    ;;
+*)
+    ;;
+esac
+
+#DEBHELPER#

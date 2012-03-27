@@ -139,6 +139,7 @@ AC_DEFUN([PANDORA_VC_VERSION],[
     # We now support release tags to append a descriptive tag -stable, -rc, -beta, -alpha, -milestone.
     # But for the release id we want to remove that.
     PANDORA_VC_TAG_JUST_NUMBERS=`echo ${PANDORA_VC_TAG} | sed -e 's/-stable//' -e 's/-rc//' -e 's/-beta//' -e 's/-alpha//' -e 's/-milestone//'`
+    PANDORA_RELEASE_VERSION_JUST_NUMBERS="${PANDORA_VC_TAG_JUST_NUMBERS}"
     # For release id we make sure each part is at least 2 digits, prepended with 0 when necessary. 
     # Example: 1.2.3 should end up as 10203.
     # The sed's from left to right:
@@ -154,11 +155,13 @@ AC_DEFUN([PANDORA_VC_VERSION],[
       # Since this is just a snapshot build, we need to remove that.
       PANDORA_VC_LATEST_TAG_JUST_NUMBERS=`echo ${PANDORA_VC_LATEST_TAG} | sed -e 's/-stable//' -e 's/-rc//' -e 's/-beta//' -e 's/-alpha//' -e 's/-milestone//'`
       PANDORA_RELEASE_VERSION="${PANDORA_VC_LATEST_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}-snapshot"
+      PANDORA_RELEASE_VERSION_JUST_NUMBERS="${PANDORA_VC_LATEST_TAG_JUST_NUMBERS}.${PANDORA_VC_REVNO}"
       changequote(<<, >>)dnl
       PANDORA_RELEASE_ID=`echo ${PANDORA_VC_LATEST_TAG_JUST_NUMBERS} | sed -e 's/\.\([0-9]\)\./.0\1./' | sed -e 's/\.\([0-9]\)$/.0\1/' | sed 's/[^0-9]//g'`
       changequote([, ])dnl
     ],[
       PANDORA_RELEASE_VERSION="${PANDORA_RELEASE_DATE}.${PANDORA_VC_REVNO}"
+      PANDORA_RELEASE_VERSION_JUST_NUMBERS="${PANDORA_RELEASE_VERSION}"
       changequote(<<, >>)dnl
       PANDORA_RELEASE_ID=`echo ${PANDORA_RELEASE_DATE} | sed 's/[^0-9]//g'`
       changequote([, ])dnl
@@ -169,6 +172,7 @@ AC_DEFUN([PANDORA_VC_VERSION],[
   VERSION="${PANDORA_RELEASE_VERSION}"
   AC_DEFINE_UNQUOTED([PANDORA_RELEASE_VERSION],["${PANDORA_RELEASE_VERSION}"],
                      [The real version of the software])
+  AC_SUBST(PANDORA_RELEASE_VERSION_JUST_NUMBERS)
   AC_SUBST(PANDORA_VC_REVNO)
   AC_SUBST(PANDORA_VC_REVID)
   AC_SUBST(PANDORA_VC_BRANCH)
