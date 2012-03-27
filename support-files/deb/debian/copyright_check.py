@@ -1,4 +1,37 @@
+###############################################################################
+# Note: Drizzle requires all files to include both copyright attribution and
+# the license that the file is shared under. This file is widely distributed
+# without any license. The below Apache License 2.0 is inferred from tracing
+# back the original publication of this file to the pyjamas software package.
+# I have added reference to Apache License so as to conform to Drizzle
+# contribution guidelines.
+#
+# Original publication of this script:
+# http://lists.debian.org/debian-devel/2009/09/msg00766.html
+#
+# The script in pyjamas SCM doesn't contain a copyright license, however
+# pyjamas itself is licensed under Apache License 2.0:
+# http://pyjamas.svn.sourceforge.net/viewvc/pyjamas/trunk/COPYING?revision=2
+#
+#                                            -- Henrik
+#
+###############################################################################
+#
 # Copyright (C) 2009, Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 
 """ This is a debian copyright file checker.  Put debian/copyright
     file conforming to http://dep.debian.net/deps/dep5/ and
