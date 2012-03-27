@@ -104,6 +104,7 @@ class drizzleServer(Server):
                                                     ,self.name)
             self.logging.verbose("Changing to alternate: %s" %(self.socket_file))
         self.timer_file = os.path.join(self.logdir,('timer'))
+        self.cnf_file = os.path.join(self.vardir,'drizzled.cnf')
 
         # Do magic to create a config file for use with the slave
         # plugin
@@ -161,6 +162,7 @@ class drizzleServer(Server):
                       , self.secure_file_string
                       , self.user_string
                       ]
+        self.gen_cnf_file(server_args)
 
         if self.gdb:
             server_args.append('--gdb')
@@ -242,4 +244,22 @@ class drizzleServer(Server):
             if len(split_data) > 1:
                 return split_data[-1]
         return None
+
+    def gen_cnf_file(self, server_args):
+        """ We generate a .cnf file for the server based
+            on the arguments.  We currently don't use
+            this for much, but xtrabackup uses it, so
+            we must produce one.  This could also be
+            helpful for testing / etc
+
+        """
+
+        config_file = open(self.cnf_file,'w')
+        config_file.write('[mysqld]')
+        for server_arg in server_args:
+            # We currently have a list of string values
+            # We need to remove any '--' stuff
+            server_arg = server_arg.replace('--','')+'\n'
+            config_file.write(server_arg)
+        config_file.close()
 
