@@ -46,9 +46,9 @@ static const uint64_t DEFAULT_MAX_CACHE_BUCKETS= 4096;
 
 static const char *comment_regex = "^[[:space:]]*#.*$";
 static const char *empty_regex = "^[[:space:]]*$";
-static const char *table_match_regex = "^([^ ]+) table\\=([^ ]+) (ACCEPT|DENY)$";
-static const char *process_match_regex = "^([^ ]+) process\\=([^ ]+) (ACCEPT|DENY)$";
-static const char *schema_match_regex = "^([^ ]+) schema\\=([^ ]+) (ACCEPT|DENY)$";
+static const char *table_match_regex = "^([^ ]+) table\\=([^ ]+) (ACCEPT|REJECT|ALLOW|DENY)$";
+static const char *process_match_regex = "^([^ ]+) process\\=([^ ]+) (ACCEPT|REJECT|ALLOW|DENY)$";
+static const char *schema_match_regex = "^([^ ]+) schema\\=([^ ]+) (ACCEPT|REJECT|ALLOW|DENY)$";
 /* These correspond to the parenthesis above and must stay in sync */
 static const int MATCH_REGEX_USER_POS= 1;
 static const int MATCH_REGEX_OBJECT_POS= 2;
@@ -75,11 +75,11 @@ public:
     user_re(u),
     object_re(obj)
   { 
-    if (act == "ACCEPT")
+    if ((act == "ACCEPT")||(act == "ALLOW"))
     {
       action = POLICY_ACCEPT;
     }
-    else if (act == "DENY")
+    else if ((act == "REJECT")||(act == "DENY"))
     {
       action = POLICY_DENY;
     }
