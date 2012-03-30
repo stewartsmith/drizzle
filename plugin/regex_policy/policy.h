@@ -101,7 +101,7 @@ public:
   }
   const char *getAction() const
   {
-    return action == POLICY_ACCEPT ? "ACCEPT" : "DENY";
+    return action == POLICY_ACCEPT ? "ALLOW" : "DENY";
   }
 };
 
