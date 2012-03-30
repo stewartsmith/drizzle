@@ -361,7 +361,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "regex_policy",
-  "1.0",
+  "2.0",
   "Clint Byrum",
   N_("Authorization using a regex-matched policy file"),
   PLUGIN_LICENSE_GPL,
