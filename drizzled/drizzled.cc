@@ -1336,7 +1336,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     unireg_exit();
   }
 
-  if (vm.count("no-defaults"))
+  if (!vm["no-defaults"].as<bool>())
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
