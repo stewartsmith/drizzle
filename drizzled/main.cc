@@ -159,6 +159,7 @@ static void init_signals(void)
     sa.sa_handler= drizzled_handle_segfault;
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
+    //sigaction(SIGINT, &sa, NULL);
 #ifdef SIGBUS
     sigaction(SIGBUS, &sa, NULL);
 #endif
@@ -195,7 +196,7 @@ static void init_signals(void)
   sa.sa_handler = drizzled_print_signal_warning;
   sigaction(SIGHUP, &sa, NULL);
 #ifdef SIGTSTP
-  sigaddset(&set,SIGTSTP);
+  //sigaddset(&set,SIGTSTP);
 #endif
   if (getDebug().test(debug::ALLOW_SIGINT))
   {
@@ -204,12 +205,13 @@ static void init_signals(void)
     sigaction(thr_kill_signal, &sa, NULL);
 
     // May be SIGINT
-    sigdelset(&set, thr_kill_signal);
+    //sigdelset(&set, thr_kill_signal);
   }
   else
   {
-    sigaddset(&set,SIGINT);
+    //sigaddset(&set,SIGINT);
   }
+  //signal(SIGINT,u);
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
   return;
