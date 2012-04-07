@@ -51,16 +51,16 @@ bool Barriers::create(const user_locks::Key &arg, drizzled::session_id_t owner, 
 return_t Barriers::release(const user_locks::Key &arg, drizzled::session_id_t owner)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  Map::iterator iter= barrier_map.find(arg);
+  Barrier::shared_ptr* iter= find_ptr(barrier_map, arg);
 
   // Nothing is found
-  if ( iter == barrier_map.end())
+  if (not iter)
     return NOT_FOUND;
 
-  if (not iter->second->getOwner() == owner)
+  if ((*iter)->getOwner() != owner)
     return NOT_OWNED_BY;
 
-  iter->second->signal(); // We tell anyone left to start running
+  (*iter)->signal(); // We tell anyone left to start running
   (void)barrier_map.erase(arg);
 
   return SUCCESS;
@@ -69,10 +69,8 @@ return_t Barriers::release(const user_locks::Key &arg, drizzled::session_id_t ow
 Barrier::shared_ptr Barriers::find(const user_locks::Key &arg)
 {
   boost::unique_lock<boost::mutex> scope(mutex);
-  Map::iterator iter= barrier_map.find(arg);
-
-  if (iter != barrier_map.end())
-    return iter->second;
+  if (Barrier::shared_ptr* iter= find_ptr(barrier_map, arg))
+    return *iter;
 
   return Barrier::shared_ptr();
 }
