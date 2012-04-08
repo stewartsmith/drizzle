@@ -116,11 +116,7 @@ class CheckMap
   boost::shared_mutex map_mutex;
   UnorderedCheckMap map;
 public:
-  UnorderedCheckMap::iterator find(std::string const&k);
-  UnorderedCheckMap::const_iterator end() const
-  {
-    return map.end();
-  }
+  bool* find(std::string const&k);
   void insert(std::string const &k, bool v);
 };
 
@@ -160,8 +156,6 @@ inline bool PolicyItem::isRestricted() const
 {
   return action == POLICY_DENY;
 }
-
-void clearPolicyItemList(PolicyItemList policies);
 
 class Policy :
   public drizzled::plugin::Authorization
