@@ -123,12 +123,20 @@ bool QueueProducer::reconnect(bool initial_connection)
 
   uint32_t attempts= 1;
 
+  setIOState("Connecting...", true);
+
   while (not openConnection())
   {
+    char buf[250];
+    snprintf(buf, sizeof(buf),_("Connection attempt %d of %d failed, sleeping for %d seconds and retrying. %s"), attempts, _max_reconnects, _seconds_between_reconnects, _last_error_message.c_str());
+
+    setIOState(buf, true);
     if (attempts++ == _max_reconnects)
       break;
     boost::this_thread::sleep(duration);
   }
+
+  setIOState(_is_connected ? _("Connected") : _("Disconnected"), true);
 
   return _is_connected;
 }
