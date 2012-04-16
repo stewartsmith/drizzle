@@ -1,0 +1,2 @@
+usr/lib//drizzle/libdebug_plugin.so
+etc/drizzle/conf.d/debug.cnf

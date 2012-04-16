@@ -1,0 +1,96 @@
+--- drizzle7-2011.11.29/plugin/auth_file/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/auth_file/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=auth_file
++
+--- drizzle7-2011.11.29/plugin/auth_http/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/auth_http/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=auth_http
++
+--- drizzle7-2011.11.29/plugin/auth_ldap/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/auth_ldap/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=auth_ldap
++
+--- drizzle7-2011.11.29/plugin/auth_pam/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/auth_pam/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=auth_pam
++
+--- drizzle7-2011.11.29/plugin/auth_schema/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/auth_schema/plugin.cnf	2011-11-14 18:32:24.000000000 -0600
+@@ -0,0 +1 @@
++plugin-add=auth_schema
+--- drizzle7-2011.11.29/plugin/debug/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/debug/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=debug
++
+--- drizzle7-2011.11.29/plugin/filtered_replicator/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/filtered_replicator/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=filtered_replicator
++
+--- drizzle7-2011.11.29/plugin/gearman_udf/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/gearman_udf/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=gearman_udf
++
+--- drizzle7-2011.11.29/plugin/http_functions/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/http_functions/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1 @@
++plugin-add=http_functions
+--- drizzle7-2011.11.29/plugin/json_server/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/json_server/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1 @@
++plugin-add=json_server
+--- drizzle7-2011.11.29/plugin/logging_gearman/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/logging_gearman/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=logging_gearman
++
+--- drizzle7-2011.11.29/plugin/logging_query/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/logging_query/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=logging_query
++
+--- drizzle7-2011.11.29/plugin/mysql_protocol/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/mysql_protocol/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,9 @@
++# This configuration is disabled by default, as it potentially conflicts
++# with mysqld.  Uncomment the settings below to enable the mysql_protocol
++# plugin.
++#
++# ---
++#
++# plugin-add = mysql_protocol
++# mysql-protocol.port = 3306
++
+--- drizzle7-2011.11.29/plugin/pbms/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/pbms/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=pbms
++
+--- drizzle7-2011.11.29/plugin/query_log/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/query_log/plugin.cnf	2011-11-14 18:32:45.000000000 -0600
+@@ -0,0 +1 @@
++plugin-add=query_log
+--- drizzle7-2011.11.29/plugin/rabbitmq/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/rabbitmq/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=rabbitmq
++
+--- drizzle7-2011.11.29/plugin/regex_policy/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/regex_policy/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1 @@
++plugin-add=regex_policy
+--- drizzle7-2011.11.29/plugin/simple_user_policy/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/simple_user_policy/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1,2 @@
++plugin-add=simple_user_policy
++
+--- drizzle7-2011.11.29/plugin/slave/plugin.cnf.orig	2011-11-14 23:41:51.000000000 -0600
++++ drizzle7-2011.11.29/plugin/slave/plugin.cnf	2011-06-29 16:35:52.000000000 -0500
+@@ -0,0 +1 @@
++plugin-add=slave

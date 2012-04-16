@@ -1,0 +1,10 @@
+Document: drizzle-dev-doc
+Title: Drizzle API Documentation
+Author: Brian Aker, Jay Pipes, Eric Day, Stewart Smith, Monty Taylor
+Abstract: Public API doxygen descriptions for Drizzle
+Section: Programming/C
+
+Format: HTML
+Index: /usr/share/doc/drizzle-dev-doc/html/index.html
+Files: /usr/share/doc/drizzle-dev-doc/html/*.html
+

@@ -1,0 +1,3 @@
+version=3
+http://launchpad.net/drizzle http://launchpad.net/drizzle/.*/drizzle-(.*)\.tar\.gz
+

@@ -126,28 +126,6 @@ namespace drizzled {
 
 #include "xtrabackup_api.h"
 
- /* prototypes for static functions in original */
-
- ulint
- recv_find_max_checkpoint(
- /*=====================*/
-                                         /* out: error code or DB_SUCCESS */
-         log_group_t**	max_group,	/* out: max group */
-         ulint*		max_field);	/* out: LOG_CHECKPOINT_1 or
-                                         LOG_CHECKPOINT_2 */
-
-
- void
- os_file_set_nocache(
- /*================*/
-         int		fd,		/* in: file descriptor to alter */
-         const char*	file_name,	/* in: used in the diagnostic message */
-         const char*	operation_name);	/* in: used in the diagnostic message,
-                                         we call os_file_set_nocache()
-                                         immediately after opening or creating
-                                         a file, so this is either "open" or
-                                         "create" */
-
  #include <fcntl.h>
  #include <regex.h>
 
@@ -529,13 +507,6 @@ innobase_rec_reset(
   fprintf(stderr, "ERROR: innobase_rec_reset called\n");
   return;
 }
-
-UNIV_INTERN
-void
-thd_set_lock_wait_time(
-/*===================*/
-	drizzled::Session*	,	/*!< in: thread handle (THD*) */
-	ulint	);	/*!< in: time waited for the lock */
 
 UNIV_INTERN
 void
