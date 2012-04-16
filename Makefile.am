@@ -162,6 +162,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	fi
 
 clean-local:
+	rm  libdrizzle-1.0/version.h
 	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 	rm -Rf $(SPHINX_BUILDDIR)/html $(SPHINX_BUILDDIR)/dirhtml $(SPHINX_BUILDDIR)/singlehtml \
