@@ -195,7 +195,7 @@ static void init_signals(void)
   sa.sa_handler = drizzled_print_signal_warning;
   sigaction(SIGHUP, &sa, NULL);
 #ifdef SIGTSTP
-  //sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGTSTP);
 #endif
   if (getDebug().test(debug::ALLOW_SIGINT))
   {
@@ -208,10 +208,17 @@ static void init_signals(void)
   }
   else
   {
-    //sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGINT);
   }
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+  (void) sigemptyset(&set);
+  sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGINT);
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+
   return;
 }
 
