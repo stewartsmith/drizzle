@@ -42,6 +42,7 @@
 
 #pragma once
 
+#include <libdrizzle-1.0/version.h>
 #include <libdrizzle-1.0/drizzle.h>
 #include <libdrizzle-1.0/conn_client.h>
 #include <libdrizzle-1.0/handshake_client.h>

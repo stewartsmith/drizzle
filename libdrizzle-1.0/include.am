@@ -64,6 +64,7 @@ libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/sha1.cc \
 				      libdrizzle/state.cc
 
+nobase_include_HEADERS+= libdrizzle-1.0/version.h
 nobase_include_HEADERS+= \
 			 libdrizzle-1.0/column.h \
 			 libdrizzle-1.0/column_client.h \
