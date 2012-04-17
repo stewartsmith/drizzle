@@ -389,6 +389,25 @@ static void print_version()
          PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
+extern "C" {
+
+  char at_exit_pid_file[1024 * 4]= { 0 };
+
+  static void remove_pidfile(void)
+  {
+    if (at_exit_pid_file[0])
+    {
+      if (unlink(at_exit_pid_file) == -1)
+      {
+        std::cerr << "Could not remove pidfile: " << at_exit_pid_file << "(" << strerror(errno) << ")" << std::endl;
+      }
+
+      at_exit_pid_file[0]= 0;
+    }
+  }
+
+}
+
 /**
   Create file to store pid number.
 */
@@ -405,6 +424,8 @@ static void create_pid_file()
     {
       if (close(file) != -1)
       {
+        snprintf(at_exit_pid_file, sizeof(at_exit_pid_file), "%s", pid_file.file_string().c_str());
+        atexit(remove_pidfile);
         return;
       }
     }
@@ -534,8 +555,6 @@ void clean_up(bool print_message)
 #if GOOGLE_PROTOBUF_VERSION >= 2001000
   google::protobuf::ShutdownProtobufLibrary();
 #endif
-
-  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
   {
@@ -1336,7 +1355,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     unireg_exit();
   }
 
-  if (vm.count("no-defaults"))
+  if (!vm["no-defaults"].as<bool>())
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
@@ -2179,13 +2198,18 @@ static void fix_paths()
   }
 
   {
-    fs::path pid_file_path(pid_file);
-    if (pid_file_path.root_path().string() == "")
+    if (pid_file.string().size() and pid_file.string()[0] == '/')
+    { } // Do nothing if the file starts with a slash
+    else
     {
-      pid_file_path= getDataHome();
-      pid_file_path /= pid_file;
+      fs::path pid_file_path(pid_file);
+      if (pid_file_path.root_path().string() == "")
+      {
+        pid_file_path= getDataHome();
+        pid_file_path /= pid_file;
+      }
+      pid_file= fs::system_complete(pid_file_path);
     }
-    pid_file= fs::system_complete(pid_file_path);
   }
 
   const char *tmp_string= getenv("TMPDIR");
