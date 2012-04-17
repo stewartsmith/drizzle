@@ -1,7 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2012 Ajaya K. Agrawal
+ *  Copyright (C) 2011 Andrew Hutchings
+                  2012 Ajaya K. Agrawal
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
