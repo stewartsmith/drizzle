@@ -59,6 +59,24 @@ in_port_t Protocol::getPort() const
   return 0;
 }
 
+extern "C" {
+
+  char at_exit_socket_file[1024 * 4]= { 0 };
+
+  static void remove_socket_file(void)
+  {
+    if (at_exit_socket_file[0])
+    {
+      if (unlink(at_exit_socket_file) == -1)
+      {
+        std::cerr << "Could not remove socket: " << at_exit_socket_file << "(" << strerror(errno) << ")" << std::endl;
+      }
+
+      at_exit_socket_file[0]= 0;
+    }
+  }
+}
+
 static int init(drizzled::module::Context &context)
 {  
   const module::option_map &vm= context.getOptions();
@@ -72,6 +90,8 @@ static int init(drizzled::module::Context &context)
     context.registerVariable(new sys_var_const_string_val("path", fs::system_complete(uds_path).file_string()));
     context.registerVariable(new sys_var_bool_ptr_readonly("clobber", &clobber));
     context.registerVariable(new sys_var_uint32_t_ptr("max-connections", &Protocol::mysql_unix_counters.max_connections));
+    snprintf(at_exit_socket_file, sizeof(at_exit_socket_file), "%s", uds_path.file_string().c_str());
+    atexit(remove_socket_file);
   }
   else
   {
