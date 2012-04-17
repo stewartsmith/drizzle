@@ -58,6 +58,86 @@
  */
 static drizzle_return_t _con_setsockopt(drizzle_con_st *con);
 
+static bool connect_poll(drizzle_con_st *con)
+{
+  struct pollfd fds[1];
+  fds[0].fd= con->fd;
+  fds[0].events= POLLOUT;
+
+  size_t loop_max= 5;
+  while (--loop_max) // Should only loop on cases of ERESTART or EINTR
+  {
+    int error= poll(fds, 1, con->drizzle->timeout);
+    switch (error)
+    {
+    case 1:
+      {
+        int err;
+        socklen_t len= sizeof (err);
+        // We replace errno with err if getsockopt() passes, but err has been
+        // set.
+        if (getsockopt(con->fd, SOL_SOCKET, SO_ERROR, &err, &len) == 0)
+        {
+          // We check the value to see what happened wth the socket.
+          if (err == 0)
+          {
+            return true;
+          }
+          errno= err;
+        }
+
+        // "getsockopt() failed"
+        return false;
+      }
+
+    case 0:
+      {
+        // "timeout occurred while trying to connect"
+        return false;
+      }
+
+    default: // A real error occurred and we need to completely bail
+      switch (get_socket_errno())
+      {
+#ifdef TARGET_OS_LINUX
+      case ERESTART:
+#endif
+      case EINTR:
+        continue;
+
+      case EFAULT:
+      case ENOMEM:
+        // "poll() failure"
+        return false;
+
+      case EINVAL:
+        // "RLIMIT_NOFILE exceeded, or if OSX the timeout value was invalid"
+        return false;
+
+      default: // This should not happen
+        if (fds[0].revents & POLLERR)
+        {
+          int err;
+          socklen_t len= sizeof (err);
+          (void)getsockopt(con->fd, SOL_SOCKET, SO_ERROR, &err, &len);
+          errno= err;
+        }
+        else
+        {
+          errno= get_socket_errno();
+        }
+
+        //"socket error occurred");
+        return false;
+      }
+    }
+  }
+
+  // This should only be possible from ERESTART or EINTR; 
+  // "connection failed (error should be from either ERESTART or EINTR"
+  return false;
+}
+
 /** @} */
 
 /*
@@ -700,13 +780,17 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 
     *ret_ptr= drizzle_con_connect(con);
     if (*ret_ptr != DRIZZLE_RETURN_OK)
+    {
       return result;
+    }
   }
 
   if (drizzle_state_none(con))
   {
     if (con->options & (DRIZZLE_CON_RAW_PACKET | DRIZZLE_CON_NO_RESULT_READ))
+    {
       con->result= NULL;
+    }
     else
     {
       for (old_result= con->result_list; old_result != NULL; old_result= old_result->next)
@@ -743,7 +827,9 @@ drizzle_result_st *drizzle_con_command_write(drizzle_con_st *con,
 
   *ret_ptr= drizzle_state_loop(con);
   if (*ret_ptr == DRIZZLE_RETURN_PAUSE)
+  {
     *ret_ptr= DRIZZLE_RETURN_OK;
+  }
   else if (*ret_ptr != DRIZZLE_RETURN_OK &&
            *ret_ptr != DRIZZLE_RETURN_IO_WAIT &&
            *ret_ptr != DRIZZLE_RETURN_ERROR_CODE)
@@ -1300,6 +1386,11 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
 
       if (errno == EINPROGRESS)
       {
+        if (connect_poll(con))
+        {
+          drizzle_state_pop(con);
+          return DRIZZLE_RETURN_OK;
+        }
         drizzle_state_pop(con);
         drizzle_state_push(con, drizzle_state_connecting);
         return DRIZZLE_RETURN_OK;
