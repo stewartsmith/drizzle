@@ -29,7 +29,7 @@ ServerDetect::ServerDetect(drizzle_con_st *connection) :
 {
   version= drizzle_con_server_version(connection);
   
-  const char *safe_query = "SHOW VARIABLES LIKE 'vc_%'";
+  const char *safe_query = "SHOW VARIABLES LIKE 'vc_release_id'";
   drizzle_result_st* result= new drizzle_result_st;
   drizzle_return_t ret_ptr;
   drizzle_query_str(connection, result, safe_query, &ret_ptr);
