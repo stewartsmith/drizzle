@@ -69,7 +69,6 @@
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
-int execute_lex(YYSTYPE* lvalp, void* scanner);
 std::string query;
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0)
 
