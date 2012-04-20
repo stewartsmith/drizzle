@@ -25,9 +25,8 @@ include drizzled/execute/include.am
 
 drizzled/sql_yacc.cc: drizzled/sql_yacc.yy
 	$(AM_V_YACC)$(am__skipyacc) $(YACC) $(YLFLAGS) $(AM_YFLAGS) -o $@ $<
-	mv drizzled/sql_yacc.hh drizzled/sql_yacc.h
 
-
+drizzled/sql_yacc.hh: drizzled/sql_yacc.cc
 
 DTRACEFILES= \
 	     drizzled/cursor.o \
@@ -177,6 +176,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/function/str/strfunc.h \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/time/curdate.h \
+            drizzled/function/time/curtime.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
 			      drizzled/function/time/date_format.h \
@@ -198,6 +198,7 @@ nobase_dist_pkginclude_HEADERS+= \
 			      drizzled/function/time/quarter.h \
 			      drizzled/function/time/second.h \
 			      drizzled/function/time/sysdate_local.h \
+            drizzled/function/time/time.h \
 			      drizzled/function/time/timestamp_diff.h \
 			      drizzled/function/time/to_days.h \
 			      drizzled/function/time/typecast.h \
@@ -650,6 +651,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/function/str/strfunc.cc \
 			   drizzled/function/str/trim.cc \
 			   drizzled/function/time/curdate.cc \
+         drizzled/function/time/curtime.cc \
 			   drizzled/function/time/date.cc \
 			   drizzled/function/time/date_add_interval.cc \
 			   drizzled/function/time/date_format.cc \
@@ -671,6 +673,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/function/time/quarter.cc \
 			   drizzled/function/time/second.cc \
 			   drizzled/function/time/sysdate_local.cc \
+         drizzled/function/time/time.cc \
 			   drizzled/function/time/timestamp_diff.cc \
 			   drizzled/function/time/to_days.cc \
 			   drizzled/function/time/typecast.cc \
@@ -835,7 +838,7 @@ drizzled_drizzled_SOURCES+= \
 			   drizzled/sql_table.cc \
 			   drizzled/sql_union.cc \
 			   drizzled/sql_update.cc \
-			   drizzled/sql_yacc.yy \
+			   drizzled/sql_yacc.cc \
 			   drizzled/statement/alter_schema.cc \
 			   drizzled/statement/alter_table.cc \
 			   drizzled/statement/analyze.cc \
@@ -953,8 +956,8 @@ PCHHEADERS =
 endif
 
 BUILT_MAINT_SRC+= \
-		 drizzled/sql_yacc.cc \
-		 drizzled/sql_yacc.h
+		  drizzled/sql_yacc.cc \
+		  drizzled/sql_yacc.hh
 
 BUILT_SOURCES+= \
 		$(BUILT_MAINT_SRC) \
@@ -970,6 +973,7 @@ EXTRA_DIST+= \
 	     drizzled/probes.d \
 	     drizzled/sql_non_reserved_words.gperf \
 	     drizzled/sql_reserved_words.gperf \
+	     drizzled/sql_yacc.yy \
 	     drizzled/symbol_hash.gperf
 
 CLEANFILES+= \
@@ -1027,7 +1031,7 @@ drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
 drizzled/sql_reserved_words.h: drizzled/sql_reserved_words.stamp-h
 
-.gperf.stamp-h:
+.gperf.stamp-h: drizzled/sql_yacc.hh
 	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$(*F) $<  > $@

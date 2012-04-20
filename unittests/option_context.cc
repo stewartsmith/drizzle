@@ -36,14 +36,17 @@ BOOST_AUTO_TEST_CASE(parsing)
 {
   const std::string module_name("test");
   po::options_description command_line_options("Test prefix injection");
-  module::option_context ctx(module_name, command_line_options.add_options());
+  module::option_context ctx(module_name, command_line_options.add_options()(
+                             "command-option",
+                             po::value<bool>()->default_value(false)->zero_tokens(),
+                             "Test command line option"));
 
   ctx("option", po::value<std::string>(), "Test option name prefix injection");
 
   po::variables_map vm;
 
   const char *options[]= {
-    "test", "--test.option=foo"
+    "test", "--test.option=foo",    
   };
 
   // Disable allow_guessing
@@ -56,5 +59,7 @@ BOOST_AUTO_TEST_CASE(parsing)
   BOOST_REQUIRE_EQUAL(0, vm.count("option"));
   BOOST_REQUIRE_EQUAL(1, vm.count("test.option"));
   BOOST_REQUIRE_EQUAL(0, vm["test.option"].as<std::string>().compare("foo"));
+  BOOST_REQUIRE_EQUAL(1, vm.count("command-option"));
+  BOOST_REQUIRE_EQUAL(0, vm["command-option"].as<bool>()); 
 }
 BOOST_AUTO_TEST_SUITE_END()

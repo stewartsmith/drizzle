@@ -73,7 +73,7 @@ Administration
 .. toctree::
    :maxdepth: 2
    
-   administration/getting_started
+   administration/index
    administration/drizzled
    administration/authentication
    administration/authorization
@@ -85,8 +85,13 @@ Replication
 -----------
 .. toctree::
    :maxdepth: 2
+   :glob:
 
-   replication/drizzle
+   replication/index
+   replication/replicators/index
+   replication/appliers/index
+   replication/messages/index
+   replication/examples/index
 
 SQL Language
 ------------
@@ -146,11 +151,12 @@ Testing
    :maxdepth: 2
  
    testing/test-run.rst
-   testing/dbqp.rst
+   testing/kewpie.rst
    testing/randgen.rst
    testing/sql-bench.rst
    testing/sysbench.rst
    testing/writing_tests.rst
+   testing/dbqp.rst
 
 Indices and tables
 ==================

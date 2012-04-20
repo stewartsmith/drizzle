@@ -41,7 +41,7 @@
  * @brief Column definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /*
  * Private variables.
@@ -365,8 +365,7 @@ drizzle_column_st *drizzle_column_create(drizzle_result_st *result,
     column= new (std::nothrow) (drizzle_column_st);
     if (column == NULL)
     {
-      drizzle_set_error(result->con->drizzle, "drizzle_column_create",
-                        "malloc");
+      drizzle_set_error(result->con->drizzle, __func__, "Failed to allocate.");
       return NULL;
     }
 
@@ -700,7 +699,7 @@ drizzle_return_t drizzle_column_buffer(drizzle_result_st *result)
     result->column_buffer= new (std::nothrow) drizzle_column_st[result->column_count];
     if (result->column_buffer == NULL)
     {
-      drizzle_set_error(result->con->drizzle, __func__, "malloc");
+      drizzle_set_error(result->con->drizzle, __func__, "Failed to allocate.");
 
       return DRIZZLE_RETURN_MEMORY;
     }

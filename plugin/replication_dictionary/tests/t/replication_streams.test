@@ -1,5 +1,0 @@
-# Drizzle's replication dictionary's replication_streams table.
-
-use data_dictionary;
-
-SELECT * FROM data_dictionary.replication_streams;

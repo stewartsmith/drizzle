@@ -3,9 +3,6 @@ select http_post("http://localhost:PORT/0.1/sql", 'select * from t1;');;
 http_post("http://localhost:PORT/0.1/sql", 'select * from t1;')
 {
    "query" : "select * from t1;",
-   "result_set" : [
-      [ "", "" ]
-   ],
    "sqlstate" : "00000"
 }
 
@@ -15,8 +12,7 @@ http_post('http://localhost:PORT/0.1/sql', 'select * from t1;')
 {
    "query" : "select * from t1;",
    "result_set" : [
-      [ "1", "from MySQL protocol" ],
-      [ "", "" ]
+      [ "1", "from MySQL protocol" ]
    ],
    "sqlstate" : "00000"
 }

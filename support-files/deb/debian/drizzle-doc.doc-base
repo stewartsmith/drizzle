@@ -1,0 +1,10 @@
+Document: drizzle-doc
+Title: Drizzle Documentation
+Author: Brian Aker, Monty Taylor, Andrew Hutchings
+Abstract: Public Sphinx Documents for Drizzle
+Section: Programming/C
+
+Format: HTML
+Index: /usr/share/doc/drizzle-doc/html/index.html
+Files: /usr/share/doc/drizzle-doc/html/*.html
+

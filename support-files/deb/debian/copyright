@@ -1,0 +1,1630 @@
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: drizzle
+Maintainer: Monty Taylor <mordred@inaugust.com>
+Debianized-Date: Sat, 11 Apr 2009 11:28:25 -0700
+Source: http://launchpad.net/drizzle
+
+Files: drizzled/function/* plugin/mysql_protocol/* plugin/string_functions/* plugin/math_functions/* plugin/compression/* drizzled/sql_* drizzled/item/*  drizzled/field/microtime.cc drizzled/show.h /drizzled/module/graph.h drizzled/module/vertex_handle.h drizzled/function/bit
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/identifier/* drizzled/message/* drizzled/statement/* support-files/smf/* plugin/filtered_replicator/* plugin/function_engine/* plugin/gearman_udf/* plugin/transaction_log/* drizzled/error_t.h 
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/definition/*  drizzled/generator/* drizzled/message/* drizzled/table/* drizzled/util/* plugin/function_dictionary/* plugin/information_schema_dictionary/* plugin/innobase/handler/* plugin/performance_dictionary/* plugin/schema_dictionary/* plugin/schema_engine/* plugin/session_dictionary/* plugin/show_dictionary/* plugin/user_locks/* plugin/table_cache_dictionary/* plugin/trigger_dictionary/* plugin/utility_dictionary/* plugin/utility_functions/* drizzled/function/cast/*  drizzled/item/boolean.h drizzled/item/function/boolean.*  drizzled/item/false.h drizzled/item/true.h drizzled/identifier/session.h drizzled/identifier/catalog.*
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: drizzled/identifier.cc drizzled/sql_*.gperf drizzled/statement/catalog/*  drizzled/statement/catalog.*  drizzled/identifier/constants/* drizzled/type/boolean.* drizzled/data_home.cc drizzled/kill.* drizzled/sql/*
+Copyright: Copyright (C) 2011 Brian Aker
+License: GPL-2
+
+Files: plugin/session_dictionary/plugin.ini plugin/session_dictionary/sessions.h
+Copyright: Copyright (C) 2011 Brian Aker
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/optimizer/*
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/filesystem_engine/*
+Copyright: Copyright (C) 2010 Zimin
+License: GPL-2
+
+Files: plugin/haildb/*
+Copyright: Copyright (C) 2010 Stewart Smith
+License: GPL-2
+
+Files: plugin/logging_stats/*  plugin/innobase/handler/internal_dictionary.h
+Copyright: Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/memcached_functions/*
+Copyright: Copyright (C) 2009, Patrick "CaptTofu" Galbraith, Padraig O'Sullivan
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/memcached_query_cache/*
+Copyright: Copyright (C) 2010 Djellel Eddine Difallah
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/memcached_stats/*
+Copyright: Copyright (C) 2009, Padraig O'Sullivan
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/pbms/src/*
+Copyright: Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: plugin/pbms/src/*
+Copyright: Copyright (C) 2009 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: plugin/pbms/src/* plugin/hello_events/hello_events.* plugin/pbms/plugin.ini
+Copyright: Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: plugin/rabbitmq/*
+Copyright: Copyright (C) 2010 Marcus Eriksson
+License: GPL-2
+
+Files: plugin/syslog/*
+Copyright: Copyright (C) 2010 Mark Atwood
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: po/*
+Copyright: Copyright (C) 2008 Rosetta Contributors and Canonical Ltd 2008
+License: GPL-2
+
+Files: po/*
+Copyright: Copyright (C) 2009 Rosetta Contributors and Canonical Ltd 2009
+License: GPL-2
+
+Files: po/*
+Copyright: Copyright (C) 20010 Rosetta Contributors and Canonical Ltd 2010
+License: GPL-2
+
+Files: m4/pandora_intltool.m4
+Copyright: Copyright (C) 2001 Eazel, Inc.
+License: GPL-2
+
+Files: m4/pandora_visibility.m4
+Copyright: Copyright (C) 2005, 2008 Free Software Foundation, Inc.
+Copyright: Copyright (C) 2009 Monty Taylor
+License: Other
+  This file is free software; the Free Software Foundation
+  gives unlimited permission to copy and/or distribute it,
+  with or without modifications, as long as this notice is preserved.
+
+Files: client/client_priv.h
+Copyright: Copyright (C) 2001-2006 MySQL AB
+License: GPL-2
+
+Files: plugin/syslog/names.h
+Copyright: Copyright (C) 1982, 1986, 1988, 1993
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: drizzled/algorithm/crc32.h
+Copyright: Copyright (C) 1992-2007 The FreeBSD Project. All rights reserved.
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/innobase/data/data0data.c plugin/innobase/ha/ha0ha.c plugin/innobase/include/* plugin/innobase/page/page0cur.c plugin/innobase/rem/rem0cmp.c plugin/innobase/ut/ut0byte.c plugin/innobase/ut/ut0dbg.c plugin/innobase/ut/ut0mem.c plugin/innobase/ut/ut0rnd.c plugin/innobase/include/ut0mem.ic
+Copyright: Copyright (C) 1994, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/btr/btr0pcur.c plugin/innobase/dict/dict0boot.c plugin/innobase/dict/dict0crea.c plugin/innobase/dict/dict0dict.c plugin/innobase/dict/dict0load.c plugin/innobase/dict/dict0mem.c plugin/innobase/include/* plugin/innobase/lock/lock0lock.c plugin/innobase/pars/pars0pars.c plugin/innobase/row/row0ins.c plugin/innobase/row/row0row.c plugin/innobase/row/row0upd.c plugin/innobase/trx/trx0rec.c plugin/innobase/trx/trx0rseg.c plugin/innobase/trx/trx0sys.c plugin/innobase/trx/trx0trx.c
+Copyright: Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/eval/eval0eval.c plugin/innobase/ha/hash0hash.c plugin/innobase/include/* plugin/innobase/mem/mem0pool.c plugin/innobase/pars/pars0grm.y plugin/innobase/pars/pars0lex.l plugin/innobase/pars/pars0opt.c plugin/innobase/pars/pars0sym.c plugin/innobase/read/read0read.c plugin/innobase/row/row0undo.c plugin/innobase/row/row0vers.c
+Copyright: Copyright (C) 1997, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/fut/fut0fut.c plugin/innobase/fut/fut0lst.c plugin/innobase/include/* plugin/innobase/mach/mach0data.c plugin/innobase/mtr/mtr0log.c plugin/innobase/mtr/mtr0mtr.c plugin/innobase/os/os0proc.c plugin/innobase/os/os0sync.c plugin/innobase/sync/sync0rw.c plugin/innobase/thr/thr0loc.c plugin/innobase/include/fut0fut.ic
+Copyright: Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/data/data0type.c plugin/innobase/dyn/dyn0dyn.c plugin/innobase/include/* plugin/innobase/que/que0que.c plugin/innobase/trx/trx0purge.c plugin/innobase/trx/trx0roll.c plugin/innobase/trx/trx0undo.c plugin/innobase/usr/usr0sess.c
+Copyright: Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/btr/btr0btr.c plugin/innobase/include/btr0btr.* plugin/innobase/include/btr0cur.h plugin/innobase/include/mem0dbg.* plugin/innobase/include/mem0mem.* plugin/innobase/mem/mem0dbg.c plugin/innobase/mem/mem0mem.c plugin/innobase/page/page0page.c plugin/innobase/rem/rem0rec.c
+Copyright: Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/btr/btr0cur.c
+Copyright: Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2008, Google Inc.
+License: GPL-2
+
+Files: plugin/innobase/include/ut0ut.h plugin/innobase/ut/ut0ut.c
+Copyright: Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/gettext.h
+Copyright: Copyright (C) 1995-1998, 2000-2002, 2004-2006 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: drizzled/sql_error.cc
+Copyright: Copyright (C) 1995-2002 MySQL AB
+License: GPL-2
+
+Files: plugin/archive/azio.h
+Copyright: Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
+License: Other
+ This software is provided 'as-is', without any express or implied
+ warranty.  In no event will the authors be held liable for any damages
+ arising from the use of this software.
+
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+
+ 1. The origin of this software must not be misrepresented; you
+    must not claim that you wrote the original software. If you use
+    this software in a product, an acknowledgment in the product
+    documentation would be appreciated but is not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+
+Files: plugin/archive/azio.cc
+Copyright: Copyright (C) 1995-2005 Jean-loup Gailly.
+License: Other
+ This software is provided 'as-is', without any express or implied
+ warranty.  In no event will the authors be held liable for any damages
+ arising from the use of this software.
+
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+
+ 1. The origin of this software must not be misrepresented; you
+    must not claim that you wrote the original software. If you use
+    this software in a product, an acknowledgment in the product
+    documentation would be appreciated but is not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+
+Files: drizzled/utf8/utf8.h
+Copyright: Copyright (C) 1995-2006 International Business Machines Corporation and others
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: po/Makefile.in.in
+Copyright: Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+Copyright: Copyright (C) 2004-2008 Rodney Dawes <dobey.pwns@gmail.com>
+License: Other
+ This file may be copied and used freely without restrictions.  It may
+ be used in projects which are not available under a GNU Public License,
+ but which still want to provide support for the GNU gettext functionality.
+
+Files: win32/alloca.*
+Copyright: Copyright (C) 1995, 1999, 2001-2004, 2006-2008 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: plugin/haildb/haildb_engine.cc
+Copyright: Copyright (C) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 2008, 2009 Google Inc.
+License: GPL-2
+
+Files: plugin/innobase/include/sync0rw.ic plugin/innobase/include/sync0sync.ic plugin/innobase/sync/sync0arr.c plugin/innobase/sync/sync0rw.c plugin/innobase/include/os0sync.h
+Copyright: Copyright (C) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2008, Google Inc.
+License: GPL-2
+
+Files: plugin/innobase/buf/buf0buf.c plugin/innobase/include/buf0buf.ic plugin/innobase/include/sync0rw.h plugin/innobase/include/sync0sync.h
+Copyright: Copyright (C) 2008, Google Inc.
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/buf/buf0flu.c plugin/innobase/buf/buf0lru.c plugin/innobase/buf/buf0rea.c plugin/innobase/fil/fil0fil.c plugin/innobase/fsp/fsp0fsp.c plugin/innobase/include/buf0buf.h plugin/innobase/include/buf0flu.h plugin/innobase/include/fil0fil.h plugin/innobase/include/log0log.ic plugin/innobase/include/mtr0mtr.ic plugin/innobase/include/ut0lst.h plugin/innobase/os/os0thread.c
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/include/log0log.h plugin/innobase/log/log0log.c plugin/innobase/sync/sync0sync.c
+Copyright: Copyright (C) 2009 Google Inc.
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/include/os0file.h plugin/innobase/os/os0file.c
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/include/srv0srv.h plugin/innobase/srv/srv0srv.c
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 2008, 2009, Google Inc.
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 2008, 2009 Google Inc.
+Copyright: Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: drizzled/type/uuid.h
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 1996, 1997 Theodore Ts'o.
+License: GPL-2 and BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+"
+
+Files: plugin/innobase/btr/btr0sea.c
+Copyright: Copyright (C) 2008, Google Inc.
+Copyright: Copyright (C) 1996, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/ibuf/ibuf0ibuf.c plugin/innobase/include/log0recv.h plugin/innobase/include/row0sel.h plugin/innobase/log/log0recv.c plugin/innobase/row/row0purge.c plugin/innobase/row/row0uins.c plugin/innobase/row/row0umod.c
+Copyright: Copyright (C) 1997, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/row/row0sel.c
+Copyright: Copyright (C) 2008, Google Inc.
+Copyright: Copyright (C) 1997, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/eval/eval0proc.c plugin/innobase/include/eval0proc.* plugin/innobase/include/pars0types.h
+Copyright: Copyright (C) 1998, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/pbms/src/cslib/CSMd5.cc
+Copyright: Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.
+License: Other
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+
+Files: plugin/pbms/src/cslib/CSMd5.h
+Copyright: Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
+Copyright: Copyright (C) 1999, 2002 Aladdin Enterprises.  All rights reserved.
+License: Other
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+
+Files: client/linebuffer.* drizzled/charset-def.cc drizzled/charset.cc drizzled/charset_info.h drizzled/ctype-mb.cc drizzled/ctype-utf8.cc drizzled/ctype.cc drizzled/decimal.* drizzled/dynamic_array.cc drizzled/internal/* drizzled/item/row.cc drizzled/item/subselect.cc drizzled/memory/multi_malloc.cc drizzled/memory/root.* drizzled/sql_delete.cc drizzled/sql_string.cc drizzled/thr_lock.* drizzled/tree.* drizzled/tree.h drizzled/typelib.* plugin/myisam/mf_keycache.cc plugin/myisam/my_pread.cc plugin/myisam/myisam.h plugin/myisam/myisampack.h plugin/mysql_protocol/vio.*
+Copyright: Copyright (C) 2000 MySQL AB
+License: GPL-2
+
+Files: drizzled/internal/dtoa.cc
+Copyright: Copyright (C) 1991, 2000, 2001 by Lucent Technologies.
+Copyright: Copyright (C) 2007 MySQL AB
+License: GPL-2
+
+Files: drizzled/internal/t_ctype.h
+Copyright: Copyright (C) 2000 MySQL AB
+Copyright: Copyright (C) 1998, 1999 by Pruet Boonma, all rights reserved.
+Copyright: Copyright (C) 1998 by Theppitak Karoonboonyanan, all rights reserved.
+License: GPL-2
+
+Files: plugin/memory/hp_static.cc plugin/myisam/mi_rfirst.cc plugin/myisam/mi_rlast.cc plugin/myisam/mi_scan.cc
+Copyright: Copyright (C) 2000-2001 MySQL AB
+License: GPL-2
+
+Files: plugin/myisam/mi_panic.cc
+Copyright: Copyright (C) 2000-2001, 2003 MySQL AB
+License: GPL-2
+
+Files: drizzled/memory/sql_alloc.cc plugin/myisam/mi_checksum.cc plugin/myisam/mi_info.cc
+Copyright: Copyright (C) 2000-2001, 2003-2004 MySQL AB
+License: GPL-2
+
+Files: drizzled/sql_list.cc
+Copyright: Copyright (C) 2000-2001, 2003, 2005 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/hp_extra.cc myisam/mi_rename.cc plugin/myisam/mi_rprev.cc
+Copyright: Copyright (C) 2000-2001, 2004 MySQL AB
+License: GPL-2
+
+Files: plugin/myisam/mi_delete_table.cc
+Copyright: Copyright (C) 2000-2001, 2004, 2006 MySQL AB
+License: GPL-2
+
+Files: plugin/myisam/mi_rsame.cc
+Copyright: Copyright (C) 2000-2001, 2005 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/hp_close.cc plugin/memory/hp_panic.cc plugin/memory/hp_rectest.cc plugin/memory/hp_rename.cc plugin/memory/hp_rlast.cc plugin/memory/hp_rnext.cc plugin/memory/hp_rprev.cc plugin/memory/hp_rsame.cc plugin/memory/hp_scan.cc
+Copyright: Copyright (C) 2000-2002 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/hp_dspace.cc plugin/memory/hp_record.cc
+Copyright: Copyright (C) 2008 eBay, Inc
+Copyright: Copyright (C) 2000-2002 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/heap_priv.h plugin/memory/hp_block.cc plugin/memory/hp_rfirst.cc plugin/myisam/mi_rrnd.cc
+Copyright: Copyright (C) 2000-2002, 2004 MySQL AB
+License: GPL-2
+
+Files: plugin/innobase/include/row0mysql.h plugin/innobase/row/row0mysql.c
+Copyright: Copyright (C) 2000, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/include/row0mysql.ic
+Copyright: Copyright (C) 2001, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/handler/ha_innodb.cc
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 2008, 2009 Google Inc.
+Copyright: Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/handler/ha_innodb.h
+Copyright: Copyright (C) 2000, 2010, MySQL AB & Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: client/drizzledump.cc
+Copyright: Copyright 2000-2008 MySQL AB, 2008, 2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Vijay Samuel
+Copyright: Copyright (C) 2010 Andrew Hutchings
+License: GPL-2
+
+Files: plugin/memory/hp_update.cc plugin/myisam/mi_static.cc
+Copyright: Copyright (C) 2000-2002, 2004-2005 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/hp_delete.cc plugin/memory/hp_write.cc plugin/myisam/mi_statrec.cc plugin/memory/hp_clear.cc plugin/memory/hp_rrnd.cc
+Copyright: Copyright (C) 2000-2002, 2004-2006 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/plugin.am
+Copyright: Copyright (C) 2000-2002, 2005-2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/db.cc drizzled/field_conv.cc drizzled/internal/default.cc drizzled/internal/my_init.cc drizzled/item/create.cc drizzled/item/sum.cc drizzled/parser.h drizzled/sql_parse.cc drizzled/sql_union.cc drizzled/sql_yacc.yy plugin/myisam/mi_cache.cc
+Copyright: Copyright (C) 2000-2003 MySQL AB
+License: GPL-2
+
+Files: plugin/myisam/mi_delete_all.cc
+Copyright: Copyright (C) 2000-2003, 2005 MySQL AB
+License: GPL-2
+
+Files: plugin/memory/hp_open.cc plugin/memory/hp_rkey.cc myisam/mi_page.cc plugin/myisam/mi_range.cc
+Copyright: Copyright (C) 2000-2004, 2006 MySQL AB
+License: GPL-2
+
+Files: plugin/myisam/mi_extra.cc
+Copyright: Copyright (C) 2000-2005 MySQL AB
+License: GPL-2
+
+Files: client/drizzleimport.cc
+Copyright: Copyright (C) 2010 Vijay Samuel
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2000-2006 MySQL AB
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/filesort.cc drizzled/function/str/strfunc.cc drizzled/item/cmpfunc.cc drizzled/key.cc drizzled/records.cc drizzled/sql_base.cc drizzled/sql_insert.cc drizzled/sql_lex.cc drizzled/sql_load.cc drizzled/sql_select.cc drizzled/sql_update.cc drizzled/table_proto_write.cc drizzled/table.cc plugin/memory/ha_heap.* plugin/memory/hp_create.cc plugin/memory/hp_hash.cc plugin/myisam/ha_myisam.* plugin/myisam/mi_check.cc plugin/myisam/mi_create.cc plugin/myisam/mi_delete.cc plugin/myisam/mi_dynrec.cc plugin/myisam/mi_key.cc plugin/myisam/mi_locking.cc plugin/myisam/mi_open.cc plugin/myisam/mi_rkey.cc plugin/myisam/mi_rnext_same.cc plugin/myisam/mi_search.cc plugin/myisam/mi_unique.cc plugin/myisam/mi_update.cc plugin/myisam/mi_write.cc plugin/myisam/myisam_priv.h plugin/myisam/sort.cc
+Copyright: Copyright (C) 2000-2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/locking/global.cc 
+Copyright: Copyright (C) 2000-2006 MySQL AB
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: drizzled/message/include.am
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2000-2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/definition/table.cc drizzled/table/instance/*
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: tests/include.am
+Copyright: Copyright (C) 2010 Monty Taylor
+Copyright: Copyright (C) 2000-2006 MySQL AB
+License: GPL-2
+
+Files: plugin/innobase/include/data0types.h
+Copyright: Copyright (C) 2000, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/memory/heap.h
+Copyright: Copyright (C) 2000,2004 MySQL AB
+License: GPL-2
+
+Files: support-files/include.am
+Copyright: Copyright (C) 2000-2001, 2003-2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/unique.cc
+Copyright: Copyright (C) 2001 MySQL AB
+License: GPL-2
+
+Files: drizzled/ctype-simple.cc
+Copyright: Copyright (C) 2002 MySQL AB
+License: GPL-2
+
+Files: drizzled/ctype-bin.cc
+Copyright: Copyright (C) 2002 MySQL AB & tommy@valley.ne.jp.
+License: GPL-2
+
+Files: drizzled/option.h
+Copyright: Copyright (C) 2002-2004 MySQL AB
+License: GPL-2
+
+Files: drizzled/program_options/config_file.h
+Copyright: Copyright (C) 2002-2004 Vladimir Prus.
+Copyright: Copyright (C) 2010 Monty Taylor
+License: Boost
+  Boost Software License - Version 1.0 - August 17th, 2003
+
+  Permission is hereby granted, free of charge, to any person or organization
+  obtaining a copy of the software and accompanying documentation covered by
+  this license (the "Software") to use, reproduce, display, distribute,
+  execute, and transmit the Software, and to prepare derivative works of the
+  Software, and to permit third-parties to whom the Software is furnished to
+  do so, all subject to the following:
+
+  The copyright notices in the Software and this entire statement, including
+  the above license grant, this restriction and the following disclaimer,
+  must be included in all copies of the Software, in whole or in part, and
+  all derivative works of the Software, unless such copies or derivative
+  works are solely in the form of machine-executable object code generated by
+  a source language processor.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+  SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+  FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+Files: drizzled/option.cc plugin/myisam/my_handler.h
+Copyright: Copyright (C) 2002-2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/internal/my_strtoll10.cc drizzled/internal/my_sync.cc drizzled/strfunc.cc plugin/archive/ha_archive.h plugin/csv/ha_tina.* plugin/csv/transparent_file.* plugin/filesystem_engine/transparent_file.* plugin/myisam/keycache.h
+Copyright: Copyright (C) 2003 MySQL AB
+License: GPL-2
+
+Files: plugin/archive/archive_engine.h plugin/archive/ha_archive.cc
+Copyright: Copyright (C) 2003 MySQL AB
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: plugin/myisam/mi_preload.cc
+Copyright: Copyright (C) 2003, 2005 MySQL AB
+License: GPL-2
+
+Files: drizzled/ctype-uca.cc tests/lib/dtr_gprof.pl
+Copyright: Copyright (C) 2004 MySQL AB
+License: GPL-2
+
+Files: drizzled/drizzle_time.cc tests/lib/dtr_io.pl tests/lib/dtr_match.pl tests/lib/dtr_misc.pl tests/lib/dtr_process.pl tests/lib/dtr_report.pl
+Copyright: Copyright (C) 2004-2006 MySQL AB
+License: GPL-2
+
+Files: tests/lib/dtr_gcov.pl
+Copyright: Copyright (C) 2004, 2006 MySQL AB
+License: GPL-2
+
+Files: drizzled/module/loader.cc drizzled/sql_locale.cc plugin/blackhole/ha_blackhole.* tests/lib/dtr_diff.pl
+Copyright: Copyright (C) 2005 MySQL AB
+License: GPL-2
+
+Files: plugin/pbxt/bin/xtstat_xt.cc plugin/pbxt/src/*
+Copyright: Copyright (C) 2005 PrimeBase Technologies GmbH
+License: GPL-2
+
+Files: plugin/pbxt/src/ha_pbxt.*
+Copyright: Copyright (C) 2003 MySQL AB
+Copyright: Copyright (C) 2005 PrimeBase Technologies GmbH
+License: GPL-2
+
+Files: plugin/pbxt/src/cache_xt.cc
+Copyright: Copyright (C) 2005 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: plugin/archive/plugin.am tests/lib/dtr_cases.pl tests/lib/dtr_timer.pl
+Copyright: Copyright (C) 2005-2006 MySQL AB
+License: GPL-2
+
+Files: plugin/pbxt/src/win_inttypes.h
+Copyright: Copyright (C) 1997-2001, 2004, 2007 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: drizzled/sql_table.cc plugin/memory/hp_info.cc plugin/myisam/mi_close.cc plugin/myisam/mi_rnext.cc
+Copyright: Copyright (C) 2000-2004 MySQL AB
+License: GPL-2
+
+Files: plugin/innobase/include/page0zip.* plugin/innobase/page/page0zip.c
+Copyright: Copyright (C) 2005, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: win32/windows/inttypes.h
+Copyright: Copyright (C) 2006 Alexander Chemeris
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: win32/windows/stdint.h
+Copyright: Copyright (C) 2006-2008 Alexander Chemeris
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: config/autorun.sh
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2006 Jan Kneschke
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/innobase/handler/handler0alter.cc plugin/innobase/include/handler0alter.h plugin/innobase/include/row0merge.h plugin/innobase/row/row0merge.c
+Copyright: Copyright (C) 2005, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: drizzled/ctype-uni.cc plugin/archive/archive_performance.cc plugin/archive/archive_test.cc plugin/compression/compress.cc plugin/compression/compressionudf.cc plugin/md5/md5.cc plugin/multi_thread/multi_thread.cc tests/lib/dtr_im.pl tests/lib/dtr_stress.pl tests/lib/dtr_unique.pl
+Copyright: Copyright (C) 2006 MySQL AB
+License: GPL-2
+
+Files: plugin/archive/archive_reader.cc
+Copyright: Copyright (C) 2006 MySQL AB
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/innobase/include/buf0buddy.* plugin/innobase/include/row0ext.* plugin/innobase/include/ut0list.* plugin/innobase/include/ut0vec.* plugin/innobase/include/ut0wqueue.h plugin/innobase/plugin.ac plugin/innobase/row/row0ext.c plugin/innobase/ut/ut0list.c plugin/innobase/ut/ut0vec.c plugin/innobase/ut/ut0wqueue.c plugin/pbxt/plugin.ini
+Copyright: Copyright (C) 2006, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/plugin.am
+Copyright: Copyright (C) 2001, 2004, 2006 MySQL AB & Innobase Oy
+Copyright: Copyright (C) 2010 Brian Aker, Joe Daly, Monty Taylor
+License: GPL-2
+
+Files: plugin/innobase/buf/buf0buddy.c plugin/innobase/include/ha_prototypes.h plugin/innobase/plugin.ini
+Copyright: Copyright (C) 2006, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: drizzled/internal/mf_arr_appstr.cc
+Copyright: Copyright (C) 2007 MySQL AB
+License: GPL-2
+
+Files: config/link-warning.h
+Copyright: Copyright (C) 2007, 2009  Free Software Foundation, Inc.
+License: GPL-2
+
+Files: plugin/pbxt/src/restart_xt.* plugin/pbxt/src/tabcache_xt.* plugin/pbxt/src/xactlog_xt.*
+Copyright: Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: plugin/innobase/ha/ha0storage.c plugin/innobase/handler/data_dictionary.cc plugin/innobase/handler/internal_dictionary.cc plugin/innobase/include/ha0storage.* plugin/innobase/include/lock0iter.h plugin/innobase/include/lock0priv.* plugin/innobase/include/trx0i_s.h plugin/innobase/lock/lock0iter.c
+Copyright: Copyright (C) 2007, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/include/ut0rbt.h plugin/innobase/trx/trx0i_s.c plugin/innobase/ut/ut0rbt.c
+Copyright: Copyright (C) 2007, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: tests/lib/My/Config.pm stress-test.pl tests/test-run.pl
+Copyright: Copyright (C) 2008
+License: GPL-2
+
+Files: m4/pandora_python3_devel.m4
+Copyright: Copyright (C) 2008 Rafael Laboissiere <rafael@laboissiere.net>
+Copyright: Copyright (C) 2008 Sebastian Huber <sebastian-huber@web.de>
+Copyright: Copyright (C) 2008 Alan W. Irwin <irwin@beluga.phys.uvic.ca>
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2008 Horst Knorr <hk_classes@knoda.org>
+Copyright: Copyright (C) 2008 Andrew Collier <colliera@ukzn.ac.za>
+Copyright: Copyright (C) 2008 Matteo Settenvini <matteo@member.fsf.org>
+License: GPL-2
+
+Files: examples/* extra/mysql_password_hash.c libdrizzle/* plugin/mysql_protocol/prototest/drizzle_prototest plugin/mysql_protocol/prototest/prototest/mysql/* unittests/client_server.c win32/conn_uds.c
+Copyright: Copyright (C) 2008 Eric Day (eday@oddments.org)
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: libdrizzle/sha1.*
+Copyright: Copyright (C) 2010 nobody (this is public domain)
+License: Other
+  This file is based on public domain code.
+  Initial source code is in the public domain,
+  so clarified by Steve Reid <steve@edmweb.com>
+
+Files: win32/mingw/errno.h win32/windows/errno.h
+Copyright: Copyright (C) 2008 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: plugin/innobase/include/univ.i
+Copyright: Copyright (C) 2008 Google Inc.
+Copyright: Copyright (C) 1994, 2010, Innobase Oy. All Rights Reserved.
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/errmsg_stderr/errmsg_stderr.cc
+Copyright: Copyright (C) 2008 Mark Atwood
+License: GPL-2
+
+Files: client/errname.cc client/errname.h drizzled/drizzle_time.h drizzled/dynamic_array.h drizzled/field/blob.* drizzled/field/date.* drizzled/field/datetime.* drizzled/field/decimal.* drizzled/field/double.* drizzled/field/enum.* drizzled/field/int64_t.* drizzled/field/long.* drizzled/field/null.* drizzled/field/num.* drizzled/field/real.* drizzled/field/str.* drizzled/field/timestamp.h drizzled/field/varstring.* drizzled/internal/aio_result.h drizzled/internal/iocache.h drizzled/internal/my_sys.h drizzled/util/convert.h drizzled/field/microtime.h
+Copyright: Copyright (C) 2008 MySQL
+License: GPL-2
+
+Files: client/conclusions.h client/drizzle.cc client/drizzleslap.cc client/drizzletest.cc client/option_string.h client/statement.h client/stats.h client/thread_context.h
+Copyright: Copyright (C) 2008 MySQL
+Copyright: Copyright (C) 2010 Vijay Samuel
+License: GPL-2
+
+Files: plugin/benchmark/benchmarkudf.cc
+Copyright: Copyright (C) 2008 MySQL AB
+License: GPL-2
+
+Files: plugin/pbms/src/discover_ms.cc plugin/pbxt/src/discover_xt.cc
+Copyright: Copyright (C) 2008 PrimeBase Technologies GmbH, Germany
+Copyright: Copyright (C) 2000-2004 MySQL AB
+License: GPL-2
+
+Files: drizzled/drizzled.h drizzled/include.am
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: drizzled/error.cc
+Copyright: Copyright (C) 2000 MySQL AB
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: client/get_password.* drizzled/alter_column.* drizzled/base.h drizzled/cached_directory.* drizzled/cached_item.* drizzled/calendar.* drizzled/charset.h drizzled/check_stack_overrun.* drizzled/common.h drizzled/comp_creator.* drizzled/current_session.* drizzled/cursor.* drizzled/data_home.h drizzled/db.h drizzled/diagnostics_area.h drizzled/discrete_interval.h drizzled/drizzled.cc drizzled/dtcollation.* drizzled/errmsg_print.* drizzled/error.h drizzled/field_iterator.* drizzled/field.h drizzled/field/timestamp.cc drizzled/file_exchange.h drizzled/filesort_info.h drizzled/foreign_key.* drizzled/function_hash.gperf drizzled/ha_commands.cc drizzled/ha_statistics.h drizzled/handler_structs.h drizzled/hybrid_type_traits_decimal.* drizzled/hybrid_type.h drizzled/index_hint.cc drizzled/internal_error_handler.h drizzled/item.h drizzled/join_cache.h drizzled/key_map.* drizzled/key_part_spec.h drizzled/key.h drizzled/korr.h drizzled/lex_* drizzled/lock.h drizzled/main.cc drizzled/memory/multi_malloc.h drizzled/memory/sql_alloc.h drizzled/module/registry.* drizzled/my_hash.* drizzled/name_resolution_context* drizzled/named_savepoint.h drizzled/natural_join_column.h drizzled/nested_join.h drizzled/open_tables_state.h drizzled/optimizer/cost_vector.h drizzled/order.h drizzled/plugin/* drizzled/qsort_cmp.h drizzled/query_id.* drizzled/resource_context.* drizzled/select_* drizzled/session.* drizzled/set_var.* drizzled/show_type.h drizzled/signal_handler.cc drizzled/stored_key.h drizzled/structs.h drizzled/symbol_hash.gperf drizzled/sys_var.* drizzled/table_ident.h drizzled/table_list.h drizzled/table_proto.h drizzled/table.h drizzled/temporal_* drizzled/temporal.cc drizzled/tmp_table_param.h drizzled/transaction_context.h drizzled/tz* drizzled/unique.h drizzled/unireg.h drizzled/user_var_entry.* drizzled/util/test.h drizzled/var.h drizzled/version.* drizzled/xid.* plugin/ascii/ascii.cc plugin/charlength/charlength.cc plugin/connection_id/connection_id.cc plugin/crc32/crc32udf.cc plugin/hello_world/hello_world.cc plugin/hex_functions/hex_functions.cc plugin/length/length.cc plugin/myisam/my_handler_errors.cc plugin/myisam/my_handler.cc plugin/version/versionudf.cc win32/include.am drizzled/internal/CHARSET_INFO.txt config/lint-source.am extra/include.am client/include.am config/uncrustify.cfg plugin/utility_functions/bit_count.*
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/plugin/catalog.*
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: drizzled/lock.cc drizzled/identifier/user.h drizzled/show.cc
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/named_savepoint.cc
+Copyright: Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/plugin/function.cc
+Copyright: Copyright (C) 2000 MySQL AB
+Copyright: Copyright (C) 2008, 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/signal_handler.h
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: drizzled/statistics_variables.h drizzled/status_helper.*
+Copyright: Copyright (C) 2010 Joseph Daly
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/transaction_services.*
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/coercibility_function/coercibility_function.cc
+Copyright: Copyright (C) 2010 Andrew Hutchings
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/math_functions/functions.cc
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: plugin/math_functions/functions.h plugin/registry_dictionary/dictionary.*
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: plugin/rand_function/rand_function.cc plugin/reverse_function/reverse_function.cc plugin/substr_functions/substr_functions.cc plugin/utility_functions/catalog.cc plugin/utility_functions/schema.cc plugin/utility_functions/user.cc drizzled/item_result.h plugin/uuid_function/uuid_function.cc
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/sql_derived.cc
+Copyright: Copyright (C) 2002-2003 MySQL AB
+License: GPL-2
+
+Files: drizzled/plugin/query_cache.h
+Copyright: Copyright (C) 2008 Sun Microsystems, Toru Maesaka
+Copyright: Copyright (C) 2010 Djellel Eddine Difallah
+License: GPL-2
+
+Files: drizzled/create_field.cc drizzled/create_field.h drizzled/diagnostics_area.cc drizzled/enum_nested_loop_state.h drizzled/index_hint.h drizzled/item.cc drizzled/join_cache.cc drizzled/join_table.* drizzled/join.* drizzled/sql_select.h drizzled/table_reference.h drizzled/temporal.h drizzled/time_functions.* plugin/default_replicator/default_replicator.* plugin/transaction_log/hexdump_transaction_message.h plugin/transaction_log/print_transaction_message.h plugin/transaction_log/transaction_log*
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/plugin/transaction_applier.h drizzled/plugin/transaction_replicator.h
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Jay Pipes
+License: GPL-2
+
+Files: plugin/transaction_log/module.cc plugin/transaction_log/transaction_log_applier.cc plugin/transaction_log/transaction_log.cc plugin/transaction_log/transaction_log.h plugin/transaction_log/transaction_log_applier.h
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+License: GPL-2
+
+Files: plugin/mysql_protocol/prototest/drizzle_flood
+Copyright: Copyright (C) 2008-2010 Eric Day (eday@oddments.org)
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: drizzled/file_exchange.cc drizzled/internal/my_bit.h plugin/logging_gearman/logging_gearman.cc plugin/logging_query/logging_query.cc
+Copyright: Copyright (C) 2008, 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/innobase/handler/handler0vars.h
+Copyright: Copyright (C) 2008, 2009, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/innobase/srv/srv0start.c
+Copyright: Copyright (C) 2009, Percona Inc.
+Copyright: Copyright (C) 2008, Google Inc.
+Copyright: Copyright (C) 1996, 2010, Innobase Oy. All Rights Reserved.
+License: GPL-2
+
+Files: plugin/blitzdb/blitzcmp.cc plugin/blitzdb/blitzcursor.cc plugin/blitzdb/blitzdata.cc plugin/blitzdb/blitzindex.cc plugin/blitzdb/blitzlock.cc plugin/blitzdb/ha_blitz.*
+Copyright: Copyright (C) 2009 - 2010 Toru Maesaka
+License: GPL-2
+
+Files: extra/cpplint.py
+Copyright: Copyright (C) 2009 Google Inc.
+License: GPL-2
+
+Files: config/pre_hook.sh
+Copyright: Copyright (C) 2009 Monty Taylor
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/innobase/CMakeLists.txt
+Copyright: Copyright (C) 2009 Oracle/Innobase Oy
+License: GPL-2
+
+Files: plugin/pbxt/src/backup_xt.* plugin/pbxt/src/locklist_xt.*
+Copyright: Copyright (C) 2009 PrimeBase Technologies GmbH
+License: GPL-2
+
+Files: config/make-lint.py
+Copyright: Copyright (C) 2009 Robert Collins
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: configure.ac drizzled/algorithm/include.am drizzled/alter_info.* drizzled/atomic/gcc_traits.h drizzled/atomic/sun_studio.h drizzled/definition/table.h drizzled/enum.h drizzled/global_charset_info.h drizzled/internal/include.am drizzled/lookup_symbol.* drizzled/module/library.* drizzled/module/load_list.h.in drizzled/module/manifest.h drizzled/module/module.h drizzled/natural_join_column.cc drizzled/optimizer/key_field.h drizzled/optimizer/key_use.h drizzled/optimizer/position.h drizzled/optimizer/sargable_param.h drizzled/plugin/plugin.* drizzled/plugin/transaction_applier.cc drizzled/plugin/transaction_replicator.cc drizzled/plugin/version.h.in drizzled/probes.* drizzled/pthread_globals.h drizzled/records.h drizzled/session/cache.* drizzled/table_list.cc drizzled/temporal_interval.h drizzled/util/convert.cc drizzled/util/functors.h drizzled/visibility.h extra/clean_source.sh extra/run_cpplint.sh Makefile.am plugin/archive/concurrency_test.cc plugin/auth_http/auth_http.cc plugin/auth_pam/auth_pam.cc plugin/console/console.cc plugin/multi_thread/multi_thread.h plugin/myisam/plugin.* plugin/registry_dictionary/modules.cc plugin/registry_dictionary/plugins.cc plugin/session_dictionary/processlist.cc plugin/show_schema_proto/show_schema_proto.cc plugin/sleep/sleep.cc tests/Makefile.am drizzled/message/catalog_reader.cc drizzled/message/table_reader.cc drizzled/message/ioutil.h drizzled/message/table_raw_reader.cc drizzled/message/transaction_writer.cc drizzled/message/table_writer.cc drizzled/message/schema_reader.cc
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/atomics.h
+Copyright: Copyright 2005-2008 Intel Corporation.  All Rights Reserved.
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/atomic/pthread_traits.h
+Copyright: Copyright 2005-2008 Intel Corporation.  All Rights Reserved.
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/identifier/table.h drizzled/util/include.am
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/message/statement_transform.cc
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Jay Pipes
+License: GPL-2
+
+Files: drizzled/message/statement_transform.h
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/plugin/transactional_storage_engine.*
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+License: GPL-2
+
+Files: drizzled/replication_services.*
+Copyright: Copyright (C) 2008-2009 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2009-2010 Jay Pipes <jaypipes@gmail.com>
+License: GPL-2
+
+Files: drizzled/plugin/table_function.h
+Copyright: Copyright (C) 2010 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: plugin/schema_dictionary/foreign_keys.cc
+Copyright: Copyright (C) 2010 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Andrew Hutchings
+License: GPL-2
+
+Files: client/wakeup.h drizzled/display.* drizzled/execute.* drizzled/field/uuid.* drizzled/filesort.h drizzled/generator.h drizzled/identifier.h drizzled/locking/global.h drizzled/message.* drizzled/plugin/schema_engine.cc drizzled/statement/execute.* m4/valgrind.m4 plugin/archive/plugin.cc plugin/collation_dictionary/dictionary.* plugin/drizzle_protocol/drizzle_protocol.* plugin/innobase/dict/create_replication.c plugin/innobase/include/create_replication.h plugin/innobase/include/read_replication.h plugin/mysql_unix_socket_protocol/* plugin/shutdown_function/shutdown.cc plugin/status_dictionary/dictionary.* plugin/string_functions/functions.* plugin/string_functions/regex.* unittests/table_identifier.cc drizzled/message/schema_writer.cc drizzled/message/schema.h drizzled/message/table.h drizzled/identifier/user.cc drizzled/message/cache.*
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: drizzled/table/cache.h drizzled/table/unused.h
+Copyright: Copyright (C) 2010 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: plugin/debug/module.cc
+Copyright: Copyright (C) 2010 Brian Aker
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/utility_functions/functions.cc
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: plugin/transaction_log/plugin.am
+Copyright: Copyright (C) 2010 David Shrewsbury
+License: GPL-2
+
+Files: plugin/transaction_log/utilities/transaction_file_reader.* plugin/transaction_log/utilities/transaction_manager.*
+Copyright: Copyright (C) 2010 David Shrewsbury <shrewsbury.dave@gmail.com>
+License: GPL-2
+
+Files: plugin/memcached_query_cache/start_mc.sh
+Copyright: Copyright (C) 2010 Djellel E. Difallah <ded@ubuntu>
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: drizzled/plugin/query_cache.cc
+Copyright: Copyright (C) 2010 Djellel Eddine Difallah
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/auth_ldap/schema/gentestusers.sh plugin/auth_ldap/schema/openldap/drizzle.ldif plugin/auth_ldap/schema/openldap/drizzle.schema
+Copyright: Copyright (C) 2010 Edward "Koko" Konetzko <konetzed@quixoticagony.com>
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/auth_file/auth_file.cc plugin/auth_ldap/auth_ldap.cc plugin/auth_ldap/test_ldap.sh
+Copyright: Copyright (C) 2010 Eric Day
+License: GPL-2
+
+Files: config/lcov.am m4/pandora_bison.m4 m4/pandora_flex.m4
+Copyright: Copyright (C) 2010 Hartmut Holzgraefe
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: drizzled/plugin/replication.h
+Copyright: Copyright (C) 2010 Jay Pipes
+License: GPL-2
+
+Files: drizzled/plugin/monitored_in_transaction.*
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+License: GPL-2
+
+Files: drizzled/plugin/xa_resource_manager.* drizzled/plugin/xa_storage_engine.* drizzled/resource_context.h plugin/transaction_log/transaction_log_applier.h
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/replication_dictionary/module.cc plugin/replication_dictionary/streams.* plugin/transaction_log/write_buffer.cc plugin/transaction_log/write_buffer.h
+Copyright: Copyright (C) 2010 Jay Pipes <jaypipes@gmail.com>
+License: BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Joseph Daly nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: plugin/innobase/handler/data_dictionary.h plugin/transaction_log/utilities/transaction_log_connection.*
+Copyright: Copyright (C) 2010 Joseph Daly <skinny.moey@gmail.com>
+License: GPL-2
+
+Files: drizzled/constrained_value.h drizzled/module/context.* drizzled/module/module.cc drizzled/module/option_context.* drizzled/module/option_map.* drizzled/plugin/authorization.* drizzled/plugin/daemon.h drizzled/plugin/table_function.cc drizzled/util/tokenize.h plugin/errmsg_notify/errmsg_notify.cc tests/strip-valgrind unittests/constrained_value.cc unittests/option_context.cc unittests/utf8_test.cc plugin/simple_user_policy/* m4/pandora_have_lib* m4/pandora_clock_gettime.m4 m4/pandora_have_boost.m4 unittests/include.am drizzled/abort_exception.h win32/config.h
+Copyright: Copyright (C) 2010 Monty Taylor
+License: GPL-2
+
+Files: drizzled/algorithm/sha1.*
+Copyright: Copyright (C) 2010 nobody (this is public domain)
+License: Other
+  This file is based on public domain code.
+  Initial source code is in the public domain, 
+  so clarified by Steve Reid <steve@edmweb.com>
+
+Files: drizzled/optimizer/access_method_factory.* drizzled/optimizer/access_method.h drizzled/optimizer/access_method/const.* drizzled/optimizer/access_method/index.* drizzled/optimizer/access_method/scan.* drizzled/optimizer/access_method/system.* drizzled/optimizer/access_method/unique_index.* drizzled/plugin/query_rewrite.* m4/pandora_have_libcassandra.m4 m4/pandora_have_libpqxx.m4 m4/pandora_have_thrift.m4 drizzled/plugin/query_rewrite.*
+Copyright: Copyright (C) 2010 Padraig O'Sullivan
+License: GPL-2
+
+Files: unittests/calendar_test.cc unittests/date_test.cc unittests/date_time_test.cc unittests/micro_timestamp_test.cc unittests/nano_timestamp_test.cc unittests/plugin/authentication_test.cc unittests/plugin/client_test.cc unittests/plugin/error_message_test.cc unittests/plugin/plugin_stubs.h unittests/temporal_format_test.cc unittests/temporal_generator.cc unittests/temporal_generator.h unittests/time_test.cc unittests/timestamp_test.cc
+Copyright: Copyright (C) 2010 Pawel Blokus
+License: GPL-2
+
+Files: plugin/auth_test/auth_test.cc plugin/mysql_protocol/mysql_password.*
+Copyright: Copyright (C) 2010 Rackspace
+License: GPL-2
+
+Files: plugin/storage_engine_api_tester/cursor_states_to_dot.cc plugin/storage_engine_api_tester/cursor_states.cc plugin/storage_engine_api_tester/engine_states.cc plugin/storage_engine_api_tester/engine_states_to_dot.cc plugin/storage_engine_api_tester/storage_engine_api_tester.cc plugin/tableprototester/tableprototester.* unittests/atomics_test.cc /pthread_atomics_test.cc
+Copyright: Copyright (C) 2010 Stewart Smith
+License: GPL-2
+
+Files: unittests/main.cc 
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 2011 Andrew Hutchings
+License: GPL-2
+
+Files: drizzled/function_container.* drizzled/table_function_container.* plugin/collation_dictionary/character_sets.* plugin/collation_dictionary/collations.* plugin/function_engine/function.cc plugin/registry_dictionary/modules.h plugin/registry_dictionary/plugins.h plugin/schema_dictionary/columns.* plugin/schema_dictionary/foreign_keys.h plugin/schema_dictionary/index_parts.* plugin/schema_dictionary/indexes.* plugin/schema_dictionary/schemas.* plugin/schema_dictionary/schemas.h plugin/schema_dictionary/table_constraints.* plugin/schema_dictionary/tables.* plugin/session_dictionary/processlist.h plugin/status_dictionary/state_tool.h plugin/status_dictionary/status.cc plugin/status_dictionary/variables.h
+Copyright: Copyright (C) 2010 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: plugin/rot13/rot13.cc
+Copyright: Copyright (C) 2010 Tim Penhey <tim@penhey.net>
+License: GPL-2
+
+Files: plugin/innobase/include/os0file.ic
+Copyright: Copyright (C) 2010, Oracle and/or its affiliates. All Rights Reserved.
+License: GPL-2
+
+Files: win32/mingw/poll.c
+Copyright: Copyright 2001, 2002, 2003, 2006, 2007, 2008 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: win32/mingw/poll.h  win32/poll.*
+Copyright: Copyright 2001, 2002, 2003, 2007 Free Software Foundation, Inc.
+License: GPL-2
+
+Files: drizzled/utf8/checked.h drizzled/utf8/core.h drizzled/utf8/unchecked.h
+Copyright: Copyright 2006 Nemanja Trifunovic
+License: MIT
+  Permission is hereby granted, free of charge, to any person or organization
+  obtaining a copy of the software and accompanying documentation covered by
+  this license (the "Software") to use, reproduce, display, distribute,
+  execute, and transmit the Software, and to prepare derivative works of the
+  Software, and to permit third-parties to whom the Software is furnished to
+  do so, all subject to the following:
+
+  The copyright notices in the Software and this entire statement, including
+  the above license grant, this restriction and the following disclaimer,
+  must be included in all copies of the Software, in whole or in part, and
+  all derivative works of the Software, unless such copies or derivative
+  works are solely in the form of machine-executable object code generated by
+  a source language processor.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+  SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+  FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+
+Files: plugin/pbxt/src/pbms.h plugin/pbxt/src/xactlog_xt.h
+Copyright: Copyright (C) 2007 PrimeBase Technologies GmbH
+License: GPL-2
+
+Files: plugin/transaction_log/data_dictionary_schema.h
+Copyright: Copyright (C) 2010 Jay Pipes, Joseph Daly
+License: GPL-2
+
+Files: plugin/string_functions/functions.cc
+Copyright: Copyright (C) 2010 Stewart Smith
+Copyright: Copyright (C) 2010 Brian Aker
+License: GPL-2
+
+Files: drizzled/field.cc
+Copyright: Copyright (C) 2010 Brian Aker
+Copyright: Copyright (C) 2008 MySQL
+License: GPL-2
+
+Files: drizzled/plugin/event_observer.*
+Copyright: Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
+License: GPL-2
+
+Files: client/drizzledump_* drizzled/global_buffer.h m4/pandora_have_libboost_iostreams.m4 m4/pandora_have_libboost_regex.m4 unittests/global_buffer_test.cc unittests/libdrizzle_test.cc
+Copyright: Copyright (C) 2010 Andrew Hutchings
+License: GPL-2
+
+Files: m4/pandora_have_libaio.m4
+Copyright: Copyright (C) 2010 Andrew Hutchings
+License: GPL-2
+
+Files: m4/pandora_have_libreadline.m4
+Copyright: Copyright (C) 2002 Ville Laurikari <vl@iki.fi>
+Copyright: Copyright (C) 2009 Monty Taylor
+License: Other
+  Copying and distribution of this file, with or without
+  modification, are permitted in any medium without royalty provided
+  the copyright notice and this notice are preserved.
+
+Files: m4/pandora_have_libvbucket.m4 m4/pandora_have_libhashkit.m4
+Copyright: Copyright (C) 2010 NorthScale
+License: Other
+  This file is free software; NorthScale
+  gives unlimited permission to copy and/or distribute it,
+  with or without modifications, as long as this notice is preserved.
+
+Files: m4/pandora_have_libbdb.m4 m4/pandora_have_libsqlite3.m4 m4/pandora_have_libxml2.m4 m4/pandora_have_libpq.m4 m4/pandora_have_libtokyocabinet.m4 m4/pandora_have_libgearman.m4 m4/pandora_have_libdrizzle.m4 m4/pandora_have_libmemcached.m4 m4/pandora_have_libhaildb.m4 m4/pandora_have_libevent.m4 m4/pandora_have_libavahi.m4 m4/pandora_have_libz.m4 m4/pandora_have_libldap.m4 m4/pandora_have_libpcre.m4 m4/pandora_have_libuuid.m4 m4/pandora_have_libdl.m4
+Copyright: Copyright (C) 2009 Sun Microsystesm, Inc.
+License: Other
+  This file is free software; Sun Microsystems, Inc.
+  gives unlimited permission to copy and/or distribute it,
+  with or without modifications, as long as this notice is preserved.
+
+Files: m4/pandora_cinttypes.m4 m4/pandora_cstdint.m4 m4/pandora_stl_hash.m4
+Copyright: Copyright (C) 2008 Sun Microsystems, Inc.
+License: Other
+  This file is free software; Sun Microsystems, Inc.
+  gives unlimited permission to copy and/or distribute it,
+  with or without modifications, as long as this notice is preserved.
+
+Files: m4/stack.m4
+Copyright: Copyright (C) 2010 Brian Aker
+License: Other
+  This file is free software
+  gives unlimited permission to copy and/or distribute it,
+  with or without modifications, as long as this notice is preserved.
+
+Files:  config/config.rpath
+Copyright: Copyright 1996-2007 Free Software Foundation, Inc.
+License: Other
+  Taken from GNU libtool, 2001
+  Originally by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
+
+  This file is free software; the Free Software Foundation gives
+  unlimited permission to copy and/or distribute it, with or without
+  modifications, as long as this notice is preserved.
+
+Files:  COPYING
+Copyright: Copyright (C) 1989, 1991 Free Software Foundation, Inc.
+License: GPL
+
+Files: plugin/innobase/include/pars0grm.hh drizzled/sql_yacc.cc drizzled/sql_yacc.h
+Copyright: Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+License: GPL-3
+
+Files: plugin/rabbitmq/admin.sh
+Copyright:  Copyright (C) 2011 Lee Bieber
+License: BSD
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+   * Neither the name of Patrick Galbraith nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: config/pandora-plugin
+Copyright: Copyright 2010, 2011 Monty Taylor
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/util/gmtime.cc
+Copyright: Copyright (C) 2002 Michael Ringgaard. All rights reserved.
+License: BSD
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the project nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+Files: m4/pandora_have_libboost_test.m4
+Copyright: Copyright (C) 2011 Andrew Hutchings
+License: Other
+This file is free software; Andrew Hutchings
+gives unlimited permission to copy and/or distribute it,
+with or without modifications, as long as this notice is preserved.
+
+Files: drizzled/module/vertex.h docs/pyext/*
+Copyright: Copyright (C) 2011 Monty Taylor
+License: GPL-2
+
+Files: plugin/protocol_dictionary/* client/server_detect.h docs/pyext/confval.py docs/pyext/dbtable.py
+Copyright: Copyright (C) 2011 Andrew Hutchings
+License: GPL-2
+
+Files: tests/dbqp.py tests/lib/__init__.py tests/lib/drizzle_test_run tests/lib/drizzle_test_run/__init__.py tests/lib/drizzle_test_run/dtr_test_execution.py tests/lib/drizzle_test_run/dtr_test_management.py tests/lib/server_mgmt tests/lib/server_mgmt/__init__.py tests/lib/server_mgmt/drizzled.py tests/lib/server_mgmt/server_management.py tests/lib/sys_mgmt/* tests/lib/test_mgmt/* tests/lib/test_mode.py tests/lib/test_run_options.py tests/lib/randgen
+Copyright: Copyright (C) 2010 Patrick Crews
+License: GPL-2
+
+Files: tests/lib/sys_mgmt/logging_management.py
+Copyright: Copyright (C) 2009 Sun Microsystems
+Copyright: Copyright (C) 2011 Patrick Crews
+License: GPL-2
+
+Files: drizzled/daemon.cc drizzled/daemon.h
+Copyright: Copyright (c) 1990, 1993 The Regents of the University of California
+Copyright: Copyright (C) 2010 Stewart Smith
+License: BSD
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+Files:  plugin/signal_handler/signal_handler.cc
+Copyright: Copyright (C) 2006 MySQL AB
+Copyright: Copyright (C) 2011 Brian Aker
+License: GPL-2
+
+Files: drizzled/util/find_ptr.h
+Copyright: Copyright (C) 2011 Olaf van der Spek
+License: GPL-2
+
+Files: plugin/slave/*
+Copyright: Copyright (C) 2011 David Shrewsbury
+License: GPL-2
+
+Files: plugin/session_dictionary/sessions.cc
+Copyright: Copyright (C) 2011 Sun Microsystems, Inc.
+Copyright: Copyright (C) 2009 Sun Microsystems, Inc.
+License: GPL-2
+
+Files: drizzled/plugin/client/cached.h  drizzled/sql/*
+Copyright: Copyright (C) 2011 Brian Aker
+License: GPL-2
+
+On Debian GNU/Linux systems, the complete text of the GNU General Public License v2 can be found in `/usr/share/common-licenses/GPL-2

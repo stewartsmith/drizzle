@@ -53,8 +53,8 @@
 
 #define drizzle_test_error(...) do \
 { \
-  printf("*** %s:%d *** ", __FILE__, __LINE__); \
-  printf(__VA_ARGS__); \
-  printf("\n"); \
-  exit(1); \
+  fprintf(stderr, "%s:%d *** ", __FILE__, __LINE__); \
+  fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n"); \
+  exit(EXIT_FAILURE); \
 } while (0);

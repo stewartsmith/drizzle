@@ -19,12 +19,89 @@
 # MA 02110-1301, USA
 
 EXTRA_DIST+= \
+	     support-files/rpm \
+	     support-files/deb \
 	     support-files/smf/drizzle \
 	     support-files/smf/drizzle.xml \
 	     support-files/smf/install.sh 
 
 pkgconfigdir= $(libdir)/pkgconfig
 pkgconfig_DATA= \
-		support-files/drizzle7.pc \
+		support-files/drizzle.pc \
+		support-files/libdrizzle.pc \
 		support-files/libdrizzle-1.0.pc
-#		support-files/libdrizzle-2.0.pc
+
+# Above we just threw everything from support-files/rpm into
+# EXTRA_DIST, because currently there is all kinds of stuff there
+# and content may fluctuate (but will eventually be cleaned away.)
+# Now, the following should not actually be in a source dist:
+#  - In case there are some output files there for some reason,
+#    we don't want to put these in the source package.
+#  - Also don't put the source package itself into a source package.
+# Note: For support-files/deb/ the problem doesn't arise, as we never
+# build anything there.
+dist-hook:
+	rm -rf ${distdir}/support-files/rpm/BUILD/* \
+               ${distdir}/support-files/rpm/BUILDROOT/* \
+               ${distdir}/support-files/rpm/SRPMS/* \
+               ${distdir}/support-files/rpm/SOURCES/${PACKAGE_NAME}*.tar.gz
+
+# For convenience we support make rpm directly from bzr repo
+rpm: dist
+	cp ${PACKAGE_NAME}*.tar.gz support-files/rpm/SOURCES/
+	rpmbuild --define="_topdir `pwd`/support-files/rpm/" -ba  support-files/rpm/SPECS/${PACKAGE_NAME}.spec
+	mv support-files/rpm/SRPMS/* .
+	mv support-files/rpm/RPMS/*/* .
+
+srpm: dist
+	cp ${PACKAGE_NAME}*.tar.gz support-files/rpm/SOURCES/
+	rpmbuild --define="_topdir `pwd`/support-files/rpm/" -bs  support-files/rpm/SPECS/${PACKAGE_NAME}.spec
+	mv support-files/rpm/SRPMS/* .
+
+# TODO:
+# Ultimately the goal is to also support the simple way:
+# rpmbuild -ta drizzle-*.tar.gz
+# To get there we must work away all extra Patch Source files from the spec file.
+
+
+# For convenience we support make deb directly from bzr repo ...kind of. 
+# In fact, everything is done inside a temp dir that is deleted at the end.
+deb: deb-work-dir
+	(test "${DEBEMAIL}" && test "${DEBFULLNAME}" && \
+	                 test `gpg --list-secret-keys | grep "${DEBEMAIL}" | grep "${DEBFULLNAME}" | wc -l` -gt 0 && \
+	                 echo "Found gpg key for ${DEBFULLNAME} <${DEBEMAIL}> and will use it for signing packages." && \
+	                 echo "" > deb-work-dir/DPKGPARAM ) \
+	                 || \
+	                 ( echo "-us -uc" > deb-work-dir/DPKGPARAM && \
+	                 echo "Warning: no gpg key found for signing. Building unsigned packages." )
+	(test "x${DEBEMAIL}" = "x" && export DEBEMAIL="drizzle-developers@launchpad.net") || true
+	(test "x${DEBFULLNAME}" = "x" && export DEBFULLNAME="Automatic Drizzle Build") || true
+	cd deb-work-dir/${distdir}/ && dch -b -D `lsb_release -sc` -v "1:${PANDORA_RELEASE_VERSION}-1~`lsb_release -sc`1" \
+	                                   "Automated Drizzle Build directly within upstream source."
+	cd deb-work-dir/${distdir}/ && dpkg-buildpackage `cat ../DPKGPARAM`
+	mv deb-work-dir/*.deb .
+	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
+	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
+	rm -rf deb-work-dir
+
+
+# Just the .changes .dsc and .debian.tar.gz files. 
+# (This is what we would upload to a launchpad ppa to be built.)
+# Note: $DEBEMAIL and $DEBFULLNAME are required here.
+deb-source: deb-work-dir
+	cd deb-work-dir/${distdir}/ && dch -b -D `lsb_release -sc` -v "1:${PANDORA_RELEASE_VERSION}-1~`lsb_release -sc`1" \
+	                                   "Automated Drizzle Build directly within upstream source."
+	cd deb-work-dir/${distdir}/ && debuild -S -sa
+	mv deb-work-dir/*.debian.tar.gz deb-work-dir/*.orig.tar.gz .
+	mv deb-work-dir/*.dsc deb-work-dir/*.changes .
+	rm -rf deb-work-dir
+
+
+deb-work-dir: dist
+	rm -rf deb-work-dir
+	mkdir deb-work-dir
+	cp ${distdir}.tar.gz deb-work-dir/
+	cp ${distdir}.tar.gz deb-work-dir/`echo ${distdir} | sed -e s/-/_/ `.orig.tar.gz
+	cd deb-work-dir && tar xf ${distdir}.tar.gz
+	cp -ar deb-work-dir/${distdir}/support-files/deb/debian deb-work-dir/${distdir}/debian 
+

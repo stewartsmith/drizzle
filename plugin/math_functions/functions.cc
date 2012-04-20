@@ -67,10 +67,10 @@ static int init(drizzled::module::Context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "Math Functions",
+  "math_functions",
   "1.0",
   "Brian Aker, Stewart Smith",
-  "Math Functions.",
+  N_("Math functions (ABS, LOG, POW, LN, SQRT, CEIL, FLOOR, ORD, etc.)"),
   PLUGIN_LICENSE_GPL,
   init,
   NULL,

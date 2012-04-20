@@ -35,12 +35,12 @@ template <class T, class U>
 typename T::value_type::second_type find_ptr2(T& c, U v)
 {
 	typename T::value_type::second_type* i = find_ptr(c, v);
-	return i ? *i : NULL;
+	return i ? *i : typename T::value_type::second_type();
 }
 
 template <class T, class U>
 const typename T::value_type::second_type find_ptr2(const T& c, U v)
 {
 	const typename T::value_type::second_type* i = find_ptr(c, v);
-	return i ? *i : NULL;
+	return i ? *i : typename T::value_type::second_type();
 }

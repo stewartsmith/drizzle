@@ -1,3 +1,5 @@
+.. _drizzledump:
+
 drizzledump Backup Tool
 =======================
 
@@ -51,7 +53,7 @@ The :program:`drizzledump` tool has several available options:
 
    Locks all the tables for all databases with a global read lock.  The lock is
    released automatically when :program:`drizzledump` ends.
-   Turns on :option:`--single-transaction` and :option:`--lock-tables`.
+   Also turns on :option:`--single-transaction`.
 
 .. option:: --single-transaction
 
@@ -77,6 +79,10 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --tables t1 t2 ...
 
    Dump a list of tables.
+
+.. option:: --skip-drop-table
+
+   Do not add a 'drop table' before each create.
 
 .. option:: --show-progress-size rows (=10000)
 
@@ -113,8 +119,7 @@ The :program:`drizzledump` tool has several available options:
 .. option:: --compact
 
    Gives a more compact output by disabling header/footer comments and enabling
-   :option:`--skip-add-drop-table`, :option:`--skip-disable-keys` 
-   and :option:`--skip-add-locks`.
+   :option:`--skip-disable-keys`.
 
 .. option:: --databases, -B
 

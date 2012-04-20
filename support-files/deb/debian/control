@@ -1,0 +1,408 @@
+Source: drizzle
+Section: database
+Priority: optional
+Maintainer: Drizzle Development Team <drizzle-developers@launchpad.net>
+Uploaders: Clint Byrum <clint@fewbar.com>, Henrik Ingo <henrik.ingo@avoinelama.fi>
+Build-Depends: debhelper (>= 7.0.50), 
+ autoconf,
+ automake,
+ bison,
+ doxygen,
+ flex,
+ gettext,
+ gperf,
+ intltool,
+ libaio-dev,
+ libboost-date-time-dev,
+ libboost-dev,
+ libboost-filesystem-dev,
+ libboost-iostreams-dev,
+ libboost-program-options-dev,
+ libboost-regex-dev,
+ libboost-test-dev,
+ libboost-thread-dev,
+ libcloog-ppl0,
+ libcurl4-gnutls-dev,
+ libgcrypt11-dev,
+ libgearman-dev (>= 0.12),
+ libldap2-dev,
+ libmemcached-dev (>= 0.39),
+ libpam0g-dev,
+ libpcre3-dev,
+ libprotobuf-dev,
+ librabbitmq-dev,
+ libreadline-dev (>= 5.0),
+ libtokyocabinet-dev (>= 1.4.23),
+ libtool,
+ libv8-dev,
+ protobuf-compiler,
+ python-sphinx,
+ systemtap-sdt-dev,
+ uuid-dev,
+ zlib1g-dev (>= 1:1.1.3-5)
+Standards-Version: 3.9.1
+Homepage: http://launchpad.net/drizzle
+
+Package: drizzle-client
+Architecture: any
+Depends: debianutils (>=1.6), ${shlibs:Depends}, ${misc:Depends}
+Description: Client binaries for Drizzle Database
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the client binaries.
+
+Package: drizzle
+Architecture: any                                                               
+Pre-Depends: adduser (>= 3.40)
+Conflicts: drizzle-server
+Replaces: drizzle-server
+Depends: drizzle-client (>= ${source:Version}),
+ libdrizzledmessage0 (= ${binary:Version}),
+ psmisc,
+ passwd,
+ lsb-base (>= 3.0-10),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Server binaries for Drizzle Database
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the server binaries.
+
+Package: drizzle-plugin-auth-file
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ pwgen,
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: File-based authentication for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the File-based Authentication plugin.
+
+Package: drizzle-plugin-auth-http
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: HTTP authentication for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the HTTP Authentication plugin.
+
+Package: drizzle-plugin-auth-ldap
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: LDAP authentication for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the LDAP Authentication plugin.
+
+Package: drizzle-plugin-auth-pam
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: PAM authentication for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the PAM Authentication plugin.
+
+Package: drizzle-plugin-auth-schema
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Schema authentication for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Schema Authentication plugin.
+
+Package: drizzle-plugin-debug
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: A plugin that facilitates debugging Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Debug plugin.
+
+Package: drizzle-plugin-gearman-udf
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Gearman User Defined Functions for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Gearman User Defined Functions plugin.
+
+Package: drizzle-plugin-http-functions
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: HTTP Functions for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the HTTP Functions plugin.
+
+Package: drizzle-plugin-json-server
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: JSON HTTP (NoSQL) interface for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the JSON Server plugin.
+
+Package: drizzle-plugin-logging-gearman
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Gearman Logging for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Gearman Logging plugin.
+
+Package: drizzle-plugin-logging-query
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Query Logging for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Query Logging plugin.
+
+
+Package: drizzle-plugin-performance-dictionary
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Performance Dictionary for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Performance Dictionary plugin.
+
+Package: drizzle-plugin-rabbitmq
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: RabbitMQ Transaction Log for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the RabbitMQ Transaction Log plugin.
+
+Package: drizzle-plugin-regex-policy
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Regex based authorization rules for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Regex Policy plugin.
+
+Package: drizzle-plugin-slave
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Replication Slave Plugin for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the replication slave plugin.
+
+Package: drizzle-plugin-simple-user-policy
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Simple User Policy for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes a plugin implementing a simple schema-per-user
+ authorization policy.
+
+Package: drizzle-plugin-query-log
+Architecture: any
+Depends: drizzle (= ${binary:Version}),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Query logging for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the Query Log plugin.
+
+
+Package: drizzle-plugin-dev
+Architecture: all
+Recommends: protobuf-compiler,
+ pandora-build
+Depends: build-essential,
+ autoconf,
+ automake,
+ gettext,
+ intltool,
+ libaio-dev,
+ libboost-date-time-dev,
+ libboost-dev,
+ libboost-filesystem-dev,
+ libboost-iostreams-dev,
+ libboost-program-options-dev,
+ libboost-regex-dev,
+ libboost-thread-dev,
+ libcurl4-gnutls-dev,
+ libdrizzledmessage-dev,
+ libgearman-dev,
+ libldap2-dev,
+ libmemcached-dev (>= 0.39),
+ libpam0g-dev,
+ libpcre3-dev,
+ libprotobuf-dev,
+ libreadline5-dev | libreadline-dev,
+ libtokyocabinet-dev (>= 1.4.23),
+ libtool,
+ lsb-base (>= 3.0-10),
+ python,
+ uuid-dev,
+ zlib1g-dev (>= 1:1.1.3-5),
+ ${misc:Depends}
+Description: Development files for Drizzle plugin development
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the headers needed to develop plugins.
+
+
+Package: libdrizzledmessage0
+Section: libs
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Library containing serialized messages used with Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the protobuf-based message serializations.
+
+Package: libdrizzledmessage-dev
+Section: libdevel
+Architecture: any
+Depends: libdrizzledmessage0 (= ${binary:Version}),
+ ${misc:Depends}
+Description: Devel library containing serialized messages used with Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the protobuf-based message serializations dev files.
+
+Package: drizzle-doc
+Section: doc
+Architecture: all
+Depends: libjs-jquery, ${misc:Depends}
+Description: API Documentation for Drizzle internals
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package includes the API docs for all of the Drizzle internals.
+
+
+Package: drizzle-dev
+Architecture: any
+Section: devel
+Depends: drizzle-plugin-dev (= ${source:Version}),
+ bzr,
+ bzrtools,
+ uncrustify,
+ protobuf-compiler,
+ lcov,
+ doxygen,
+ perl,
+ flex,
+ bison,
+ gperf,
+ valgrind,
+ systemtap-sdt-dev,
+ libjs-jquery,
+ ${misc:Depends} 
+Recommends: drizzle-dev-doc
+Description: Development files for Drizzle development
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This is an empty package depends on everything needed to hack on Drizzle.
+
+Package: drizzle-dev-doc
+Section: doc
+Architecture: all
+Depends: libjs-jquery, ${misc:Depends}
+Description: API Documentation for drizzle
+ The Drizzle project is building a database optimized for Cloud and Net
+ applications. It is being designed for massive concurrency on modern
+ multi-cpu/core architecture. The code is originally derived from MySQL.
+ .
+ This package includes the doxygen documentation for drizzle's API.
+
+Package: drizzle-dbg
+Section: debug
+Architecture: any
+Priority: extra
+Depends: drizzle (= ${binary:Version}),
+ drizzle-client (= ${binary:Version}),
+ ${misc:Depends}
+Description: Debugging symbols for Drizzle
+ The Drizzle project is building a database optimized for Cloud and Net 
+ applications. It is being designed for massive concurrency on modern 
+ multi-cpu/core architecture. The code is originally derived from MySQL. 
+ .
+ This package provides debugging symbols.

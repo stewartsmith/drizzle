@@ -40,7 +40,7 @@
  * @brief Handshake Definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /*
  * Client Definitions
@@ -283,9 +283,13 @@ drizzle_return_t drizzle_state_handshake_server_write(drizzle_con_st *con)
   ptr+= 4;
 
   if (con->scramble == NULL)
+  {
     memset(ptr, 0, 8);
+  }
   else
+  {
     memcpy(ptr, con->scramble, 8);
+  }
   ptr+= 8;
 
   ptr[0]= 0;
@@ -308,9 +312,13 @@ drizzle_return_t drizzle_state_handshake_server_write(drizzle_con_st *con)
   ptr+= 13;
 
   if (con->scramble == NULL)
+  {
     memset(ptr, 0, 12);
+  }
   else
+  {
     memcpy(ptr, con->scramble + 8, 12);
+  }
   ptr+= 12;
 
   ptr[0]= 0;

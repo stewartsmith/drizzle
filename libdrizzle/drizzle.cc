@@ -40,7 +40,7 @@
  * @brief Drizzle Definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /**
  * @addtogroup drizzle_static Static Drizzle Declarations
@@ -69,7 +69,7 @@ static const char *_verbose_name[DRIZZLE_VERBOSE_MAX]=
 
 const char *drizzle_version(void)
 {
-  return PACKAGE_VERSION;
+  return LIBDRIZZLE_VERSION_STRING;
 }
 
 const char *drizzle_bugreport(void)
@@ -391,7 +391,7 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
     {
       if (drizzle != NULL)
       {
-        drizzle_set_error(drizzle, "drizzle_con_create", "malloc");
+        drizzle_set_error(drizzle, __func__, "Failed to allocate.");
       }
 
       return NULL;
@@ -492,7 +492,7 @@ drizzle_con_st *drizzle_con_clone(drizzle_st *drizzle, drizzle_con_st *con,
     break;
 
   case DRIZZLE_CON_SOCKET_UDS:
-    drizzle_con_set_uds(con, from->socket.uds.sockaddr.sun_path);
+    drizzle_con_set_uds(con, from->socket.uds.path_buffer);
     break;
 
   default:
@@ -566,7 +566,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
     pfds= (struct pollfd *)realloc(drizzle->pfds, drizzle->con_count * sizeof(struct pollfd));
     if (pfds == NULL)
     {
-      drizzle_set_error(drizzle, "drizzle_con_wait", "realloc");
+      drizzle_set_error(drizzle, __func__, "Failed to realloc file descriptors.");
       return DRIZZLE_RETURN_MEMORY;
     }
 
@@ -594,8 +594,7 @@ drizzle_return_t drizzle_con_wait(drizzle_st *drizzle)
 
   if (x == 0)
   {
-    drizzle_set_error(drizzle, "drizzle_con_wait",
-                      "no active file descriptors");
+    drizzle_set_error(drizzle, __func__, "no active file descriptors");
     return DRIZZLE_RETURN_NO_ACTIVE_CONNECTIONS;
   }
 

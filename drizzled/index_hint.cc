@@ -61,9 +61,13 @@ void Index_hint::print(String& str) const
   if (*key_name)
   {
     if (is_primary_key(key_name))
-      str.append(key_name);
+    {
+      str.append(str_ref(key_name));
+    }
     else
+    {
       str.append_identifier(str_ref(key_name));
+    }
   }
   str.append(')');
 }

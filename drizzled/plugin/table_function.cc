@@ -27,10 +27,85 @@
 #include <drizzled/show.h>
 #include <drizzled/table_function_container.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/internal/my_sys.h>
 
 #include <vector>
 
 namespace drizzled {
+
+static int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
+{
+  int flag;
+
+  while (*wildstr)
+  {
+    while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
+    {
+      if (*wildstr == internal::wild_prefix && wildstr[1])
+      {
+        wildstr++;
+      }
+
+      if (cs->toupper(*wildstr++) != cs->toupper(*str++))
+      {
+        return (1);
+      }
+    }
+
+    if (! *wildstr )
+      return (*str != 0);
+
+    if (*wildstr++ == internal::wild_one)
+    {
+      if (! *str++)
+      {
+        return (1);	/* One char; skip */
+      }
+    }
+    else
+    {						/* Found '*' */
+      if (! *wildstr)
+      {
+        return (0);		/* '*' as last char: OK */
+      }
+
+      flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
+      do
+      {
+        if (flag)
+        {
+          char cmp;
+          if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
+          {
+            cmp= wildstr[1];
+          }
+
+          cmp= cs->toupper(cmp);
+
+          while (*str && cs->toupper(*str) != cmp)
+          {
+            str++;
+          }
+
+          if (! *str)
+          {
+            return (1);
+          }
+        }
+
+        if (wild_case_compare(cs, str, wildstr) == 0)
+        {
+          return (0);
+        }
+
+      } while (*str++);
+
+      return (1);
+    }
+  }
+
+  return (*str != '\0');
+}
 
 static TableFunctionContainer table_functions;
 
@@ -186,11 +261,15 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 {
   assert(columns_iterator);
   assert(*columns_iterator);
-  if (arg && not length)
+  if (arg and length == 0)
+  {
     length= strlen(arg);
+  }
 
   if ((*columns_iterator)->char_length() < length)
+  {
     length= (*columns_iterator)->char_length();
+  }
 
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();
@@ -213,9 +292,13 @@ void plugin::TableFunction::Generator::push(str_ref arg)
 void plugin::TableFunction::Generator::push(bool arg)
 {
   if (arg)
+  {
     (*columns_iterator)->store("YES", 3, scs);
+  }
   else
+  {
     (*columns_iterator)->store("NO", 2, scs);
+  }
   columns_iterator++;
 }
 

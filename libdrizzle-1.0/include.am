@@ -46,7 +46,7 @@ libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      $(AM_LDFLAGS) \
 				      $(GCOV_LIBS) \
 				      -version-info \
-				      $(OLDLIBDRIZZLE_LIBRARY_VERSION)
+				      $(LIBDRIZZLE_LIBRARY_VERSION)
 
 libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/column.cc \
@@ -54,6 +54,7 @@ libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/conn.cc \
 				      libdrizzle/conn_uds.cc \
 				      libdrizzle/drizzle.cc \
+				      libdrizzle/error.cc \
 				      libdrizzle/field.cc \
 				      libdrizzle/handshake.cc \
 				      libdrizzle/pack.cc \
@@ -63,6 +64,7 @@ libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/sha1.cc \
 				      libdrizzle/state.cc
 
+nobase_include_HEADERS+= libdrizzle-1.0/version.h
 nobase_include_HEADERS+= \
 			 libdrizzle-1.0/column.h \
 			 libdrizzle-1.0/column_client.h \
@@ -76,6 +78,7 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/drizzle.h \
 			 libdrizzle-1.0/drizzle_client.h \
 			 libdrizzle-1.0/drizzle_server.h \
+			 libdrizzle-1.0/error.h \
 			 libdrizzle-1.0/field_client.h \
 			 libdrizzle-1.0/field_server.h \
 			 libdrizzle-1.0/handshake_client.h \
@@ -85,7 +88,9 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/result.h \
 			 libdrizzle-1.0/result_client.h \
 			 libdrizzle-1.0/result_server.h \
+			 libdrizzle-1.0/return.h \
 			 libdrizzle-1.0/row_client.h \
 			 libdrizzle-1.0/row_server.h \
 			 libdrizzle-1.0/structs.h \
+			 libdrizzle-1.0/verbose.h \
 			 libdrizzle-1.0/visibility.h

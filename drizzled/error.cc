@@ -541,7 +541,7 @@ ErrorMap::ErrorMap()
   ADD_ERROR_MESSAGE(ER_INVALID_OPTION_VALUE, N_("Error setting %-.32s. Given value %-.128s %-.128s"));
   ADD_ERROR_MESSAGE(ER_WRONG_VALUE, N_("Incorrect %-.32s value: '%-.128s'"));
   ADD_ERROR_MESSAGE(ER_NO_PARTITION_FOR_GIVEN_VALUE, N_("Table has no partition for value %-.64s"));
-  ADD_ERROR_MESSAGE(ER_BINLOG_ROW_LOGGING_FAILED, N_("Writing one row to the row-based binary log failed"));
+  ADD_ERROR_MESSAGE(ER_LOG_ROW_FOR_REPLICATION_FAILED, N_("Logging a row change (insert, update or delete) for replication failed"));
   ADD_ERROR_MESSAGE(ER_DROP_INDEX_FK, N_("Cannot drop index '%-.192s': needed in a foreign key constraint"));
   ADD_ERROR_MESSAGE(ER_FOREIGN_DUPLICATE_KEY, N_("Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %d would lead to a duplicate entry"));
   ADD_ERROR_MESSAGE(ER_CANT_CHANGE_TX_ISOLATION, N_("Transaction isolation level can't be changed while a transaction is in progress"));

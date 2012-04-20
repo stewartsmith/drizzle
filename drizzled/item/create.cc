@@ -729,7 +729,7 @@ public:
 
   virtual Item* create(Session *session)
   {
-    return new (session->mem) Item_static_float_func("pi()", M_PI, 6, 8);
+    return new (session->mem) Item_static_float_func("pi()",  M_PI, 6, 8);
   }
 
   static Create_func_pi s_singleton;

@@ -223,4 +223,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace auth_file */
 
-DRIZZLE_PLUGIN(auth_file::init, NULL, auth_file::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_file",
+  "0.1",
+  "Eric Day",
+  N_("Authentication against a plain text file"),
+  PLUGIN_LICENSE_GPL,
+  auth_file::init,
+  NULL,
+  auth_file::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

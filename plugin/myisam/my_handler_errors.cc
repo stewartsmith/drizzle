@@ -80,7 +80,6 @@ void my_handler_error_register(void)
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_NULL_IN_SPATIAL, N_("Unexpected null pointer found when using spatial index"));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_TABLE_DEF_CHANGED, N_("The table changed in storage engine"));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_NO_PARTITION_FOUND, N_("There's no partition in table for the given value"));
-  DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_RBR_LOGGING_FAILED, N_("Row-based binlogging of row failed"));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_DROP_INDEX_FK, N_("Index needed in foreign key constraint"));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_FOREIGN_DUPLICATE_KEY, N_("Upholding foreign key constraints would lead to a duplicate key error"));
   DRIZZLE_ADD_ERROR_MESSAGE(HA_ERR_TABLE_NEEDS_UPGRADE, N_("Table needs to be upgraded before it can be used"));

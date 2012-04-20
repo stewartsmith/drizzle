@@ -121,4 +121,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "syslog",
+  "0.3",
+  "Mark Atwood",
+  N_("Logs error messages and queries to syslog"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

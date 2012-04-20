@@ -40,7 +40,7 @@
  * @brief Result definitions
  */
 
-#include <libdrizzle-1.0/common.h>
+#include <libdrizzle/common.h>
 
 /*
  * Common definitions
@@ -56,14 +56,13 @@ drizzle_result_st *drizzle_result_create(drizzle_con_st *con,
 
   if (result == NULL)
   {
-    result= new drizzle_result_st;
+    result= new (std::nothrow) drizzle_result_st;
     if (result == NULL)
     {
-      drizzle_set_error(con->drizzle, "drizzle_result_create", "malloc");
+      drizzle_set_error(con->drizzle, __func__, "Failed to allocate.");
       return NULL;
     }
 
-    memset(result, 0, sizeof(drizzle_result_st));
     result->options|= DRIZZLE_RESULT_ALLOCATED;
   }
   else
@@ -355,8 +354,7 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
       if (row_list == NULL)
       {
         drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
+        drizzle_set_error(result->con->drizzle, __func__, "Failed to realloc row_list.");
         return DRIZZLE_RETURN_MEMORY;
       }
 
@@ -366,8 +364,7 @@ drizzle_return_t drizzle_result_buffer(drizzle_result_st *result)
       if (field_sizes_list == NULL)
       {
         drizzle_row_free(result, row);
-        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer",
-                          "realloc");
+        drizzle_set_error(result->con->drizzle, "drizzle_result_buffer", "Failed to realloc field list.");
         return DRIZZLE_RETURN_MEMORY;
       }
 

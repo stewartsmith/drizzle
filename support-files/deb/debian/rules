@@ -1,0 +1,63 @@
+#!/usr/bin/make -f
+
+MAKE_J = -j$(shell if [ -f /proc/cpuinfo ] ; then grep -c processor.* /proc/cpuinfo ; else echo 1 ; fi)
+ifeq (${MAKE_J}, -j0)
+  MAKE_J = -j1
+endif
+
+
+TMP=$(CURDIR)/debian/tmp/
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	bash config/autorun.sh
+	dh_auto_configure -- \
+	  --disable-rpath \
+	  --localstatedir=/var/lib/drizzle \
+	  --disable-mysql-protocol-plugin \
+	  --disable-mysql-unix-socket-protocol-plugin 
+
+# FIX ME: Would be nice to add this back to the above configure, but I need
+# to discover dynamically whether running on Ubuntu or Debian. (This didn't produce anything.)
+#	export deb_linuxdistro=`lsb_release --id | sed 's/Distributor ID:\t//'`
+#	  --with-comment="${deb_linuxdistro}"
+
+override_dh_auto_build:
+	${MAKE} ${MAKE_J}
+	${MAKE} doxygen
+	${MAKE} html
+
+override_dh_auto_install:
+	dh_auto_install
+	mkdir -p $(TMP)/etc/drizzle
+	cp -a debian/conf.d $(TMP)/etc/drizzle
+
+override_dh_strip:
+	dh_strip -Xlibdrizzle.so --dbg-package=drizzle-dbg
+
+override_dh_auto_test:
+	echo "skipping tests"
+
+override_dh_auto_clean:                                                                                                                    
+	dh_testdir                                                                                                                         
+	dh_auto_clean                                                                                                                      
+	dh_clean                                                                                                                           
+	-${RM} -rf docs/drizzled docs/html docs/pyext/*.pyc  Makefile.in aclocal.m4 config/config.guess config/config.sub config/ltmain.sh doxerr.log  configure m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/lt~obsolete.m4 tests/Makefile.in
+
+override_dh_installdocs:
+	dh_installdocs -A
+	rm -f $(CURDIR)/debian/drizzle-doc/usr/share/doc/drizzle-doc/html/_sources/license.txt
+	
+grepdiff:
+	bzr diff | grepdiff Copyright
+
+scan-copyright:
+	for f in `bzr status  --short | grep '^.[NM]' | awk '{print $$2}'` ; do [ -f $$f ] && bzr diff $$f | grep 'Copyright' && echo $$f; done
+
+get-orig-source:
+	# Uscan will read debian/watch, grab the correct version, repack, and
+	# leave it in the current directory
+	uscan --noconf --force-download --rename --repack \
+	  --download-current-version --destdir=.

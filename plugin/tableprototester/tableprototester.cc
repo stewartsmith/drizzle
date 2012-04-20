@@ -362,10 +362,10 @@ DRIZZLE_DECLARE_PLUGIN
   "TABLEPROTOTESTER",
   "1.0",
   "Stewart Smith",
-  "Used to test rest of server with various table proto messages",
+  N_("StorageEngine module for testing table proto messages"),
   PLUGIN_LICENSE_GPL,
-  tableprototester_init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  tableprototester_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

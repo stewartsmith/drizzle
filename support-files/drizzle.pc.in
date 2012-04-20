@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+pkgincludedir=@pkgincludedir@
+
+Name: drizzle
+Description: Drizzle CLI
+Version: @VERSION@
+URL: http://drizzle.org/
+Cflags:
+

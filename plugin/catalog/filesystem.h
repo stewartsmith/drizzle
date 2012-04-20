@@ -31,7 +31,7 @@ class Filesystem : public drizzled::plugin::Catalog
 
 public:
   Filesystem() :
-    drizzled::plugin::Catalog("FilesystemCatalog")
+    drizzled::plugin::Catalog("filesystem")
   {}
 
   catalog::Engine::shared_ptr engine()

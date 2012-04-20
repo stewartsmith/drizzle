@@ -133,8 +133,7 @@ static int init(drizzled::module::Context &context)
   }
   try 
   {
-    rabbitmqLogger= new RabbitMQLog("rabbit_log_applier",
-                                    rabbitmqHandler);
+    rabbitmqLogger= new RabbitMQLog("rabbitmq_applier", rabbitmqHandler);
   } 
   catch (exception& e) 
   {
@@ -188,5 +187,16 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace drizzle_plugin */
 
-DRIZZLE_PLUGIN(drizzle_plugin::init, NULL, drizzle_plugin::init_options);
-
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "rabbitmq",
+  "0.1",
+  "Marcus Eriksson",
+  N_("Publishes transactions to RabbitMQ"),
+  PLUGIN_LICENSE_GPL,
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -124,10 +124,6 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
     - There is no limit clause
     - The condition is constant
     - If there is a condition, then it it produces a non-zero value
-    - If the current command is DELETE FROM with no where clause
-      (i.e., not TRUNCATE) then:
-      - We should not be binlogging this statement row-based, and
-      - there should be no delete triggers associated with the table.
   */
   if (!using_limit && const_cond_result)
   {
@@ -278,14 +274,6 @@ bool delete_query(Session *session, TableList *table_list, COND *conds,
       else
       {
 	table->print_error(error,MYF(0));
-	/*
-	  In < 4.0.14 we set the error number to 0 here, but that
-	  was not sensible, because then MySQL would not roll back the
-	  failed DELETE, and also wrote it to the binlog. For MyISAM
-	  tables a DELETE probably never should fail (?), but for
-	  InnoDB it can fail in a FOREIGN KEY error or an
-	  out-of-tablespace error.
-	*/
  	error= 1;
 	break;
       }
@@ -323,7 +311,6 @@ cleanup:
   if (!transactional_table && deleted > 0)
     session->transaction.stmt.markModifiedNonTransData();
 
-  /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {
     if (session->transaction.stmt.hasModifiedNonTransData())

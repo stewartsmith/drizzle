@@ -1,0 +1,41 @@
+A few notes on the deb and rpm directories...
+
+
+
+Rationale:
+
+We strive to provide a way to build DEB and RPM packages directly from drizzle 
+sources. This should work both from a bzr tree as well as a source tar ball with
+a simple "make deb" and "make rpm" respectively. (see support-files/include.am)
+The changelog and spec files are automatically generated in the ./configure
+phase, so that version will automatically match the source version you are
+building from.
+
+By keeping the packaging scripts within the drizzle repository itself, we also
+want to provide a common base for distro packagers to work from. We realize you
+probably won't do "make rpm|deb" yourself, but at least consider the spec/debian
+scripts as a base to work from, and please push any enhancements back upstream.
+
+Finally, going forward we hope to minimize the amount of "enhancements" done
+in the packaging phase, so that any patches, conf files, init files, etc...
+are moved to the actual drizzle sources. (But this will not yet be reality for
+7.1 release.)
+
+
+
+Status:
+
+We missed the boat on having this included in the sources for the 7.1 -rc.
+The plan now is to maintain a parallel repository 
+lp:~drizzle-developers/drizzle/drizzle-7.1-packaging which will merge from trunk.
+
+Once we start working on 7.2, we hope to merge this into trunk asap.
+
+First packages are now released based on 7.1.31-rc. For Fedora 16
+we don't have any systemd support yet so Fedora packages were not released.
+
+See https://blueprints.launchpad.net/drizzle/+spec/7.1-packaging for more 
+details and most current status.
+
+
+  - Henrik / Feb 11, 2012

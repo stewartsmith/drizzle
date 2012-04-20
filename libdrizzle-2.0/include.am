@@ -40,18 +40,6 @@ if HAVE_LIBSQLITE3
 SQLITE_PROGS= examples/sqlite_server
 endif
 
-noinst_PROGRAMS+= libdrizzle-2.0/mysql_password_hash
-libdrizzle_2_0_mysql_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
-libdrizzle_2_0_mysql_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.cc
-
-# For some reason this has originally been called mysql_password_hash. I'd prefer
-# to call it drizzle_password_hash but to remain backward compatible I didn't
-# change any sources, rather just build it twice and provide both.
-# Only drizzle_password_hash is installed by make install though.
-noinst_PROGRAMS+= libdrizzle-2.0/drizzle_password_hash
-libdrizzle_2_0_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
-libdrizzle_2_0_drizzle_password_hash_SOURCES= libdrizzle-2.0/mysql_password_hash.cc
-
 noinst_PROGRAMS+= \
 		  $(SQLITE_PROGS) \
 		  examples/client \
@@ -59,8 +47,7 @@ noinst_PROGRAMS+= \
 		  examples/proxy \
 		  examples/server \
 		  examples/simple \
-		  examples/simple_multi \
-		  libdrizzle-2.0/mysql_password_hash
+		  examples/simple_multi
 
 libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
 					   ${AM_CXXFLAGS} \
@@ -69,10 +56,7 @@ libdrizzle_2_0_libdrizzle_2_0_la_CXXFLAGS= \
 
 libdrizzle_2_0_libdrizzle_2_0_la_LDFLAGS= \
 					  $(AM_LDFLAGS) \
-					  $(GCOV_LIBS) \
-					  -version-info \
-					  $(LIBDRIZZLE_LIBRARY_VERSION)
-
+					  $(GCOV_LIBS)
 libdrizzle_2_0_libdrizzle_2_0_la_SOURCES= \
 					  libdrizzle-2.0/column.cc \
 					  libdrizzle-2.0/command.cc \

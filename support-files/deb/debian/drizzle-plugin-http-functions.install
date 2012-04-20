@@ -1,0 +1,2 @@
+etc/drizzle/conf.d/http-functions.cnf
+usr/lib/drizzle/libhttp_functions_plugin.so

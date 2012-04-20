@@ -162,6 +162,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	fi
 
 clean-local:
+	rm  libdrizzle-1.0/version.h
 	find . -name '*.gcno' | xargs rm -f
 	-rm -rf docs/api docs/dev docs/_build docs/doctrees
 	rm -Rf $(SPHINX_BUILDDIR)/html $(SPHINX_BUILDDIR)/dirhtml $(SPHINX_BUILDDIR)/singlehtml \
@@ -169,7 +170,8 @@ clean-local:
 	$(SPHINX_BUILDDIR)/qthelp $(SPHINX_BUILDDIR)/devhelp $(SPHINX_BUILDDIR)/epub \
 	$(SPHINX_BUILDDIR)/latex $(SPHINX_BUILDDIR)/latexpdf $(SPHINX_BUILDDIR)/text \
 	$(SPHINX_BUILDDIR)/man $(SPHINX_BUILDDIR)/changes $(SPHINX_BUILDDIR)/linkcheck \
-	$(SPHINX_BUILDDIR)/doctest
+	$(SPHINX_BUILDDIR)/doctest deb-work-dir support-files/rpm/BUILDROOT/* \
+	support-files/rpm/BUILD/* support-files/rpm/SRPMS/* support-files/rpm/RPMS/*
 
 include config/lcov.am
 
@@ -196,17 +198,3 @@ merge-clean:
 	find ./ | $(GREP) \.rej | xargs rm -f
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns
-
-install-exec-hook:
-	cd $(DESTDIR)$(sbindir) && \
-	mv -f drizzled$(EXEEXT) drizzled7$(EXEEXT) && \
-	$(LN_S) drizzled7$(EXEEXT) drizzled$(EXEEXT)
-
-install-data-hook:
-	cd $(DESTDIR)$(man8dir) && \
-	mv -f drizzled.8 drizzled7.8 && \
-	$(LN_S) drizzled7.8 drizzled.8
-
-uninstall-hook:
-	rm $(DESTDIR)$(man8dir)/drizzled7.8
-	rm $(DESTDIR)$(sbindir)/drizzled7$(EXEEXT)
