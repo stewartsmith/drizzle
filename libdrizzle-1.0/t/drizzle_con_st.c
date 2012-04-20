@@ -111,7 +111,9 @@ int main(void)
   drizzle_test("drizzle_con_connect");
   ret= drizzle_con_connect(con);
   if (ret != DRIZZLE_RETURN_COULD_NOT_CONNECT) 
+  {
     drizzle_test_error("expected COULD_NOT_CONNECT, got: %s\n", drizzle_error(drizzle));
+  }
 
   if (drizzle_con_fd(con) != -1)
     drizzle_test_error("drizzle_con_fd != -1 for unconnected connection");
