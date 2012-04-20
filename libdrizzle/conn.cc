@@ -1391,12 +1391,8 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
           drizzle_state_pop(con);
           return DRIZZLE_RETURN_OK;
         }
-        drizzle_state_pop(con);
-        drizzle_state_push(con, drizzle_state_connecting);
-        return DRIZZLE_RETURN_OK;
       }
-
-      if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
+      else if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
       {
         con->addrinfo_next= con->addrinfo_next->ai_next;
         return DRIZZLE_RETURN_OK;
