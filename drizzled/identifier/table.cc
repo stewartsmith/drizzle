@@ -88,9 +88,13 @@ uint32_t Table::filename_to_tablename(const char *from, char *to, uint32_t to_le
       for (int x=1; x >= 0; x--)
       {
         if (*from >= '0' && *from <= '9')
+        {
           to[length] += ((*from++ - '0') << (4 * x));
+        }
         else if (*from >= 'a' && *from <= 'f')
+        {
           to[length] += ((*from++ - 'a' + 10) << (4 * x));
+        }
       }
       /* Backup because we advanced extra in the inner loop */
       from--;
@@ -196,6 +200,37 @@ Table::Table(const drizzled::Table &table) :
   init();
 }
 
+Table::Table(const identifier::Schema &schema,
+             const std::string &table_name_arg,
+             Type tmp_arg) :
+  Schema(schema),
+  type(tmp_arg),
+  table_name(table_name_arg)
+{ 
+  init();
+}
+
+Table::Table(const std::string &db_arg,
+             const std::string &table_name_arg,
+             Type tmp_arg) :
+  Schema(db_arg),
+  type(tmp_arg),
+  table_name(table_name_arg)
+{ 
+  init();
+}
+
+Table::Table(const std::string &schema_name_arg,
+             const std::string &table_name_arg,
+             const std::string &path_arg ) :
+  Schema(schema_name_arg),
+  type(message::Table::TEMPORARY),
+  path(path_arg),
+  table_name(table_name_arg)
+{ 
+  init();
+}
+
 void Table::init()
 {
   switch (type) 
@@ -229,7 +264,7 @@ void Table::init()
   }
 
   hash_value= util::insensitive_hash()(path);
-  key.set(getKeySize(), getCatalogName(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
+  key.set(getKeySize(), getCatalogName(), getCompareWithSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 
@@ -325,6 +360,11 @@ std::size_t hash_value(Table const& b)
 std::size_t hash_value(Table::Key const& b)
 {
   return b.getHashValue();
+}
+
+std::ostream& operator<<(std::ostream& output, const Table::Key& arg)
+{
+  return output << "Key:(" <<  arg.schema_name() << ", " << arg.table_name() << ", " << arg.hash() << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& output, const Table& identifier)

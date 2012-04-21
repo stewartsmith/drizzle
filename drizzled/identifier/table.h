@@ -36,6 +36,8 @@
 #include <drizzled/definitions.h>
 #include <drizzled/message/table.pb.h>
 
+#include <drizzled/util/backtrace.h>
+
 #include <string.h>
 
 #include <assert.h>
@@ -88,6 +90,11 @@ public:
     const char *table_name() const
     {
       return &key_buffer[0] +table_offset;
+    }
+
+    size_t hash() const
+    {
+      return hash_value;
     }
 
     std::vector<char> &vectorPtr()
@@ -146,34 +153,15 @@ public:
                    
   Table(const identifier::Schema &schema,
         const std::string &table_name_arg,
-        Type tmp_arg= message::Table::STANDARD) :
-    Schema(schema),
-    type(tmp_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+        Type tmp_arg= message::Table::STANDARD);
 
-  Table( const std::string &db_arg,
-                   const std::string &table_name_arg,
-                   Type tmp_arg= message::Table::STANDARD) :
-    Schema(db_arg),
-    type(tmp_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+  Table(const std::string &db_arg,
+        const std::string &table_name_arg,
+        Type tmp_arg= message::Table::STANDARD);
 
-  Table( const std::string &schema_name_arg,
-                   const std::string &table_name_arg,
-                   const std::string &path_arg ) :
-    Schema(schema_name_arg),
-    type(message::Table::TEMPORARY),
-    path(path_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+  Table(const std::string &schema_name_arg,
+        const std::string &table_name_arg,
+        const std::string &path_arg );
 
   using Schema::compare;
 
@@ -267,7 +255,8 @@ public:
   }
 };
 
-std::ostream& operator<<(std::ostream& output, const Table& identifier);
+std::ostream& operator<<(std::ostream& output, const Table&);
+std::ostream& operator<<(std::ostream& output, const Table::Key&);
 std::size_t hash_value(Table const& b);
 std::size_t hash_value(Table::Key const& b);
 

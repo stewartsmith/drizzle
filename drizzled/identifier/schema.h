@@ -39,6 +39,7 @@ namespace identifier {
 
 class DRIZZLED_API Schema : public Identifier
 {
+  std::string _corrected_db;
   std::string db;
   std::string db_path;
 
@@ -55,6 +56,11 @@ public:
   const std::string &getSchemaName() const
   {
     return db;
+  }
+
+  const std::string &getCompareWithSchemaName() const
+  {
+    return _corrected_db;
   }
 
   const std::string &getCatalogName() const;
@@ -76,7 +82,7 @@ public:
 
   friend bool operator==(const Schema& left, const Schema& right)
   {
-    return boost::iequals(left.getSchemaName(), right.getSchemaName());
+    return boost::iequals(left._corrected_db, right._corrected_db);
   }
 };
 
