@@ -412,3 +412,4 @@ libdrizzle-1.0/t/drizzle_st
 drizzled/sql_yacc.hh
 stripped_log
 total_warning_count
+libdrizzle-1.0/version.h

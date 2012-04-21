@@ -405,7 +405,6 @@ extern "C" {
       at_exit_pid_file[0]= 0;
     }
   }
-
 }
 
 /**

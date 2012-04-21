@@ -1391,12 +1391,8 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
           drizzle_state_pop(con);
           return DRIZZLE_RETURN_OK;
         }
-        drizzle_state_pop(con);
-        drizzle_state_push(con, drizzle_state_connecting);
-        return DRIZZLE_RETURN_OK;
       }
-
-      if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
+      else if (errno == ECONNREFUSED || errno == ENETUNREACH || errno == ETIMEDOUT)
       {
         con->addrinfo_next= con->addrinfo_next->ai_next;
         return DRIZZLE_RETURN_OK;
@@ -1557,8 +1553,8 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
 
     if (read_size == 0)
     {
-      drizzle_set_error(con->drizzle, "drizzle_state_read",
-                        "lost connection to server (EOF)");
+      drizzle_set_error(con->drizzle, __func__,
+                        "%s:%d lost connection to server (EOF)", __FILE__, __LINE__);
       return DRIZZLE_RETURN_LOST_CONNECTION;
     }
     else if (read_size == -1)
@@ -1595,7 +1591,8 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       else if (errno == EPIPE || errno == ECONNRESET)
       {
         drizzle_set_error(con->drizzle, __func__,
-                          "lost connection to server (%s)", strerror(errno));
+                          "%s:%d lost connection to server (%s)",
+                          __FILE__, __LINE__, strerror(errno));
         return DRIZZLE_RETURN_LOST_CONNECTION;
       }
 
@@ -1676,24 +1673,27 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
                       write_size, strerror(errno));
 
     if (write_size == 0)
-    {
-      drizzle_set_error(con->drizzle, __func__, "lost connection to server (EOF)");
-      return DRIZZLE_RETURN_LOST_CONNECTION;
-    }
+    { }
     else if (write_size == -1)
     {
       if (errno == EAGAIN)
       {
         ret= drizzle_con_set_events(con, POLLOUT);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
         if (con->drizzle->options & DRIZZLE_NON_BLOCKING)
+        {
           return DRIZZLE_RETURN_IO_WAIT;
+        }
 
         ret= drizzle_con_wait(con->drizzle);
         if (ret != DRIZZLE_RETURN_OK)
+        {
           return ret;
+        }
 
         continue;
       }
@@ -1703,7 +1703,8 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
       }
       else if (errno == EPIPE || errno == ECONNRESET)
       {
-        drizzle_set_error(con->drizzle, __func__, "lost connection to server (%s)", strerror(errno));
+        drizzle_set_error(con->drizzle, __func__, "%s:%d lost connection to server (%s)", 
+                          __FILE__, __LINE__, strerror(errno));
         return DRIZZLE_RETURN_LOST_CONNECTION;
       }
 
