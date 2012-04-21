@@ -23,6 +23,7 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/thread/locks.hpp>
 
@@ -104,7 +105,7 @@ bool Policy::loadFile()
     table_matches_re= table_match_regex;
     process_matches_re= process_match_regex;
     schema_matches_re= schema_match_regex;
-  }   
+  }
   catch (const std::exception &e)
   {
     error << e.what();
@@ -120,11 +121,9 @@ bool Policy::loadFile()
   int lines= 0;
   try
   {
-    while (! file.eof())
+    for (string line; getline(file, line); )
     {
       ++lines;
-      string line;
-      getline(file, line);
       if (boost::regex_match(line, comment_re))
       {
         continue;
@@ -151,23 +150,18 @@ bool Policy::loadFile()
       {
         throw std::exception();
       }
-      string user_regex;
-      string object_regex;
-      string action;
-      user_regex= matches[MATCH_REGEX_USER_POS];
-      object_regex= matches[MATCH_REGEX_OBJECT_POS];
-      action= matches[MATCH_REGEX_ACTION_POS];
-      PolicyItem *i;
+      string user_regex= matches[MATCH_REGEX_USER_POS];
+      string object_regex= matches[MATCH_REGEX_OBJECT_POS];
+      string action= matches[MATCH_REGEX_ACTION_POS];
       try
       {
-        i= new PolicyItem(user_regex, object_regex, action);
+        policies->push_back(new PolicyItem(user_regex, object_regex, action));
       }
       catch (const std::exception &e)
       {
         error << "Bad policy item: user=" << user_regex << " object=" << object_regex << " action=" << action;
         throw std::exception();
       }
-      policies->push_back(i);
     }
     return true;
   }
@@ -179,14 +173,13 @@ bool Policy::loadFile()
   }
 }
 
-void clearPolicyItemList(PolicyItemList policies)
+static void clearPolicyItemList(PolicyItemList& policies)
 {
-  for (PolicyItemList::iterator x= policies.begin() ; x != policies.end() ; ++x)
+  BOOST_FOREACH(PolicyItem* x, policies)
   {
-    delete *x;
-    *x= NULL;
+    delete x;
   }
-} 
+}
 
 Policy::~Policy()
 {
@@ -241,13 +234,13 @@ bool CheckItem::operator()(PolicyItem *p)
     errmsg_printf(error::INSPECT, _("User %s matches regex\n"), user.c_str());
     if (p->objectMatches(object))
     {
-      errmsg_printf(error::INSPECT, _("Object %s matches regex %s (%s)\n"), 
+      errmsg_printf(error::INSPECT, _("Object %s matches regex %s (%s)\n"),
           object.c_str(),
           p->getObject().c_str(),
           p->getAction());
       return true;
     }
-    errmsg_printf(error::INSPECT, _("Object %s NOT restricted by regex %s (%s)\n"), 
+    errmsg_printf(error::INSPECT, _("Object %s NOT restricted by regex %s (%s)\n"),
         object.c_str(),
         p->getObject().c_str(),
         p->getAction());
@@ -258,18 +251,17 @@ bool CheckItem::operator()(PolicyItem *p)
 CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap &check_cache_in)
   : user(user_in), object(obj_in), has_cached_result(false), check_cache(check_cache_in)
 {
-  UnorderedCheckMap::iterator check_val;
   key= user + "_" + object;
 
-  if ((check_val= check_cache.find(key)) != check_cache.end())
+  if (bool* check_val= check_cache.find(key))
   {
     /* It was in the cache, no need to do any more lookups */
-    cached_result= check_val->second;
+    cached_result= *check_val;
     has_cached_result= true;
   }
 }
 
-UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
+bool* CheckMap::find(std::string const &k)
 {
   /* tack on to LRU list */
   boost::mutex::scoped_lock lock(lru_mutex);
@@ -294,7 +286,7 @@ UnorderedCheckMap::iterator CheckMap::find(std::string const &k)
   }
   lock.unlock();
   boost::shared_lock<boost::shared_mutex> map_lock(map_mutex);
-  return map.find(k);
+  return find_ptr(map, k);
 }
 
 void CheckMap::insert(std::string const &k, bool v)
@@ -338,8 +330,8 @@ void CheckMap::insert(std::string const &k, bool v)
       else
       {
         /* Nothing to delete, warn */
-        errmsg_printf(error::WARN, 
-            _("Unable to reduce size of cache below max buckets (current buckets=%" PRIu64 ")"), 
+        errmsg_printf(error::WARN,
+            _("Unable to reduce size of cache below max buckets (current buckets=%" PRIu64 ")"),
             static_cast<uint64_t>(map.bucket_count()));
       }
     }
