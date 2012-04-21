@@ -22,7 +22,7 @@
 
 #include <drizzled/visibility.h>
 
-#define call_backtrace() drizzled::util::custom_backtrace(__FILE__, __LINE__, __func__)
+#include <cstddef>
 
 namespace drizzled
 {
@@ -31,9 +31,11 @@ namespace util
 {
 
 DRIZZLED_API
-void custom_backtrace(const char *file, int line, const char *func);
+void custom_backtrace(const char *file, int line, const char *func, size_t depth= 0);
 
 } /* namespace util */
 } /* namespace drizzled */
 
+#define call_backtrace() drizzled::util::custom_backtrace(__FILE__, __LINE__, __func__)
+#define call_backtrace_limit(__limit) drizzled::util::custom_backtrace(__FILE__, __LINE__, __func__, __limit)
 

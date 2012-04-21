@@ -54,11 +54,13 @@ Schema::Schema(str_ref db_arg) :
   }
 #endif
 
-  if (not db_arg.empty())
+  if (db_arg.empty() == false)
   {
     db_path += util::tablename_to_filename(db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
+
+  _corrected_db= boost::to_lower_copy(db);
 }
 
 const std::string &Schema::getPath() const

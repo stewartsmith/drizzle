@@ -343,7 +343,6 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   std::string tb_name(identifier.getTableName());
   boost::to_lower(tb_name);
   assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
-  assert(strcmp(identifier.getSchemaName().c_str(), db.data()) == 0);
 }
 
 TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
@@ -462,7 +461,6 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_in_use(0),
   keys_for_keyread(0)
 {
-
   private_key_for_cache= identifier.getKey();
   /*
     Let us use the fact that the key is "db/0/table_name/0" + optional
