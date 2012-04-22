@@ -50,7 +50,7 @@ Catalog::Catalog(str_ref name_arg) :
 void Catalog::init()
 { 
   assert(not _name.empty());
-  path += "../";
+  path.clear();
   path += util::tablename_to_filename(_name);
   assert(path.length()); // TODO throw exception, this is a possibility
   hash_value= util::insensitive_hash()(path);

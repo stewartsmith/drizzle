@@ -225,6 +225,11 @@ dict_remove_db_name(
 	const char*	s = strchr(name, '/');
 	ut_a(s);
 
+        s= strchr(s+1, '/');
+
+        if (s == NULL)
+          s= strchr(name, '/');
+
 	return(s + 1);
 }
 
@@ -239,8 +244,14 @@ dict_get_db_name_len(
 				dbname '/' tablename */
 {
 	const char*	s;
-	s = strchr(name, '/');
-	ut_a(s);
+	const char*	catalog;
+	catalog = strchr(name, '/');
+	ut_a(catalog);
+        s= strchr(catalog+1, '/');
+
+        if (s == NULL)
+                s = catalog;
+
 	return(s - name);
 }
 

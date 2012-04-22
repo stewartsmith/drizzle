@@ -33,6 +33,7 @@
 
 #include <drizzled/util/string.h>
 #include <drizzled/util/tablename_to_filename.h>
+#include <drizzled/catalog/local.h>
 
 #include <algorithm>
 #include <sstream>
@@ -183,7 +184,8 @@ std::string Table::build_tmptable_filename()
 
 std::string Table::build_table_filename(const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  string in_path= util::tablename_to_filename(in_db) + FN_LIBCHAR;
+  string in_path= drizzled::catalog::local_identifier().getPath();
+  in_path+= FN_LIBCHAR + util::tablename_to_filename(in_db) + FN_LIBCHAR;
   return in_path + (is_tmp ? in_table_name : util::tablename_to_filename(in_table_name));
 }
 
