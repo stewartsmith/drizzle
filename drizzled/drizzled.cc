@@ -1753,7 +1753,7 @@ struct option my_long_options[] =
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     NULL,
-    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, (int64_t)ULONG_MAX, 0, 1, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -1764,7 +1764,7 @@ struct option my_long_options[] =
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
    NULL, 0, GET_UINT64,
-   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
+   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, (int64_t)ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
@@ -1775,7 +1775,7 @@ struct option my_long_options[] =
    N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
+   REQUIRED_ARG, 16*1024*1024L, 16384, (int64_t)MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
    N_("Joins that are probably going to read more than max_join_size records "
@@ -1792,7 +1792,7 @@ struct option my_long_options[] =
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
     NULL, 0, GET_UINT64,
-    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
+    REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
    N_("The number of bytes to use when sorting BLOB or TEXT values "
       "(only the first max_sort_length bytes of each value are used; the "
@@ -1803,13 +1803,13 @@ struct option my_long_options[] =
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, NULL, 0, GET_ULL,
-   REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
+   REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
+   REQUIRED_ARG, 0, 0, (int64_t)ULONG_MAX, 0, 1L, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -1861,13 +1861,13 @@ struct option my_long_options[] =
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
    NULL, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
+   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, (int64_t)ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
    N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
    NULL, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
-   ULONG_MAX, 0, 1024, 0},
+   (int64_t)ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
@@ -1915,13 +1915,13 @@ struct option my_long_options[] =
    (char**) &my_thread_stack_size,
    NULL, 0, GET_SIZE,
    REQUIRED_ARG,0,
-   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), (int64_t)SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
+   REQUIRED_ARG, 16*1024*1024L, 1024, (int64_t)MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
