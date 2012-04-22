@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 if HAVE_BOOST_TEST
-check_PROGRAMS += unittests/unittests
+noinst_PROGRAMS += unittests/unittests
 endif
 
 noinst_HEADERS += \
