@@ -31,7 +31,7 @@
  * and all the MySQL developers over the years.
 */
 
-#include "client_priv.h"
+#include "client/client_priv.h"
 #include <string>
 #include <iostream>
 #include <stdarg.h>

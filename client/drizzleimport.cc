@@ -19,7 +19,7 @@
 
 #define IMPORT_VERSION "4.0"
 
-#include "client_priv.h"
+#include "client/client_priv.h"
 #include <string>
 #include <sstream>
 #include <iostream>
