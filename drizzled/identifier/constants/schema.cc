@@ -30,14 +30,8 @@ class Schema : public identifier::Schema
 {
 public:
   Schema(const char* name) :
-    identifier::Schema(str_ref(name)),
-    path_(boost::to_lower_copy(getSchemaName()))
+    identifier::Schema(str_ref(name))
   {
-  }
-
-  const std::string& getPath() const
-  {
-    return path_;
   }
 
   bool isSystem() const
@@ -46,21 +40,20 @@ public:
   }
 
 private:
-  std::string path_;
 };
 
 } /* namespace constants */
 
-static constants::Schema g_dd= "DATA_DICTIONARY";
-static constants::Schema g_is= "INFORMATION_SCHEMA";
 
 const Schema& data_dictionary()
 {
+  static constants::Schema g_dd= "DATA_DICTIONARY";
   return g_dd;
 }
 
 const Schema& information_schema()
 {
+  static constants::Schema g_is= "INFORMATION_SCHEMA";
   return g_is;
 }
 
