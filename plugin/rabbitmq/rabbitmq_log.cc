@@ -85,7 +85,7 @@ RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
     } 
     catch(exception& e)
     {
-      errmsg_printf(error::ERROR, _(e.what()));
+      errmsg_printf(error::ERROR, "%s", e.what());
       try {
   	_rabbitMQHandler->reconnect();
       } catch(exception &e) {
