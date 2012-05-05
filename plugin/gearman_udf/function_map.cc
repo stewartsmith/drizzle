@@ -14,7 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "function_map.h"
-#include <libgearman/client.h>
+#include <libgearman/gearman.h>
 #include <string.h>
 #include <stdlib.h>
 
