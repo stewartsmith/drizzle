@@ -34,6 +34,8 @@ unit: unittests/unittests
 
 unittests_unittests_DEPENDENCIES=
 unittests_unittests_DEPENDENCIES+= plugin/libmyisam_plugin.la
+unittests_unittests_DEPENDENCIES+= drizzled/drizzled
+unittests_unittests_DEPENDENCIES+= libdrizzle-1.0/libdrizzle.la
 unittests_unittests_SOURCES = \
                               unittests/main.cc \
 			      unittests/atomics_test.cc \
