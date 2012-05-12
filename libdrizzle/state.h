@@ -79,6 +79,7 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con);
 drizzle_return_t drizzle_state_handshake_server_write(drizzle_con_st *con);
 drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con);
 drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con);
+drizzle_return_t drizzle_state_handshake_ssl_client_write(drizzle_con_st *con);
 drizzle_return_t drizzle_state_handshake_result_read(drizzle_con_st *con);
 
 /* Functions in command.c */

@@ -53,6 +53,7 @@
 #include <libdrizzle-1.0/row_client.h>
 #include <libdrizzle-1.0/field_client.h>
 #include <libdrizzle-1.0/error.h>
+#include <libdrizzle-1.0/ssl.h>
 
 #ifdef __cplusplus
 extern "C" {
