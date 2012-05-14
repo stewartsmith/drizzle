@@ -1422,11 +1422,10 @@ drizzle_return_t drizzle_state_connecting(drizzle_con_st *con)
 
   while (1)
   {
-    int error;
+    int error= 0;
     if (con->revents & POLLOUT)
     {
       drizzle_state_pop(con);
-      return DRIZZLE_RETURN_OK;
       socklen_t error_length= sizeof(error);
       int getsockopt_error;
       if ((getsockopt_error= getsockopt(con->fd, SOL_SOCKET, SO_ERROR, (void*)&error, &error_length)) < 1)
