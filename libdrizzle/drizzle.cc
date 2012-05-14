@@ -67,6 +67,11 @@ static const char *_verbose_name[DRIZZLE_VERBOSE_MAX]=
  * Common Definitions
  */
 
+void drizzle_library_init(void)
+{
+  SSL_library_init();
+}
+
 const char *drizzle_version(void)
 {
   return LIBDRIZZLE_VERSION_STRING;
@@ -457,6 +462,9 @@ drizzle_con_st *drizzle_con_create(drizzle_st *drizzle, drizzle_con_st *con)
   con->server_version[0]= 0;
   /* con->state_stack doesn't need to be set */
   con->user[0]= 0;
+  con->ssl_context= NULL;
+  con->ssl= NULL;
+  con->ssl_state= DRIZZLE_SSL_STATE_NONE;
 
   return con;
 }
@@ -538,6 +546,12 @@ void drizzle_con_free(drizzle_con_st *con)
 
   if (con->next != NULL)
     con->next->prev= con->prev;
+
+  if (con->ssl)
+    SSL_free(con->ssl);
+
+  if (con->ssl_context)
+    SSL_CTX_free(con->ssl_context);
 
   con->drizzle->con_count--;
 

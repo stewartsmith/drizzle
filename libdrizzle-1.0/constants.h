@@ -444,6 +444,12 @@ enum drizzle_column_flags_t
   DRIZZLE_COLUMN_FLAGS_RENAMED=          (1 << 21)
 };
 
+typedef enum
+{
+  DRIZZLE_SSL_STATE_NONE= 0,
+  DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE
+} drizzle_ssl_state_t;
+
 #ifndef __cplusplus
 typedef enum drizzle_column_flags_t drizzle_column_flags_t;
 #endif
