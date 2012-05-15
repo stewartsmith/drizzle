@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "client_priv.h"
+#include "client/client_priv.h"
 
 #include <boost/regex.hpp>
 #include <iostream>

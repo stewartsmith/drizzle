@@ -69,7 +69,7 @@ static const char *_verbose_name[DRIZZLE_VERBOSE_MAX]=
 
 const char *drizzle_version(void)
 {
-  return PACKAGE_VERSION;
+  return LIBDRIZZLE_VERSION_STRING;
 }
 
 const char *drizzle_bugreport(void)

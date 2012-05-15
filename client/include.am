@@ -17,79 +17,107 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-CLIENT2_LDADD= \
-	       drizzled/internal/libinternal.la \
-	       libdrizzle-2.0/libdrizzle-2.0.la \
-	       $(LIBINTL) \
-	       $(LIBZ) \
-	       client/libgetpassword.la
+CLIENT2_LDADD=
+CLIENT2_LDADD+= drizzled/internal/libinternal.la
+CLIENT2_LDADD+= libdrizzle-2.0/libdrizzle-2.0.la
+CLIENT2_LDADD+= $(LIBINTL)
+CLIENT2_LDADD+= $(LIBZ)
+CLIENT2_LDADD+= client/libgetpassword.la
 
-noinst_LTLIBRARIES+= \
-		     client/libgetpassword.la
+noinst_LTLIBRARIES+= client/libgetpassword.la
 
-noinst_PROGRAMS+= \
-		  client/drizzletest
+noinst_PROGRAMS+= client/drizzletest
 
-bin_PROGRAMS+= \
-	       client/drizzle \
-	       client/drizzledump \
-	       client/drizzleimport \
-	       client/drizzleslap \
-	       client/drizzle_password_hash
+bin_PROGRAMS+= client/drizzle
+bin_PROGRAMS+= client/drizzledump
+bin_PROGRAMS+= client/drizzleimport
+bin_PROGRAMS+= client/drizzleslap
+bin_PROGRAMS+= client/drizzle_password_hash
 
-man_MANS+= \
-	   client/drizzle.1 \
-	   client/drizzled.8 \
-	   client/drizzleimport.1 \
-	   client/drizzleslap.1
+man_MANS+= client/drizzle.1
+man_MANS+= client/drizzled.8
+man_MANS+= client/drizzleimport.1
+man_MANS+= client/drizzleslap.1
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
-noinst_HEADERS+= \
-		 client/client_priv.h \
-		 client/get_password.h \
-		 client/linebuffer.h \
-                 client/conclusions.h \
-                 client/drizzledump_data.h \
-                 client/drizzledump_drizzle.h \
-                 client/drizzledump_mysql.h \
-                 client/option_string.h \
-                 client/server_detect.h \
-                 client/statement.h \
-                 client/stats.h \
-                 client/thread_context.h \
-                 client/user_detect.h \
-                 client/wakeup.h
+noinst_HEADERS+= client/client_priv.h
+noinst_HEADERS+= client/get_password.h
+noinst_HEADERS+= client/linebuffer.h
+noinst_HEADERS+= client/conclusions.h
+noinst_HEADERS+= client/drizzledump_data.h
+noinst_HEADERS+= client/drizzledump_drizzle.h
+noinst_HEADERS+= client/drizzledump_mysql.h
+noinst_HEADERS+= client/option_string.h
+noinst_HEADERS+= client/server_detect.h
+noinst_HEADERS+= client/statement.h
+noinst_HEADERS+= client/stats.h
+noinst_HEADERS+= client/thread_context.h
+noinst_HEADERS+= client/user_detect.h
+noinst_HEADERS+= client/wakeup.h
 
-client_drizzle_SOURCES= \
-			client/drizzle.cc \
-			client/linebuffer.cc \
-			client/server_detect.cc
-client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
-				libdrizzle-2.0/libdrizzle-2.0.la \
-				$(LIBINTL) \
-				$(LIBZ) \
-				client/libgetpassword.la
+client_drizzle_SOURCES=
+client_drizzle_SOURCES+= client/drizzle.cc
+client_drizzle_SOURCES+= client/linebuffer.cc
+client_drizzle_SOURCES+= client/server_detect.cc
 
-client_drizzledump_SOURCES= \
-			    client/drizzledump.cc \
-			    client/drizzledump_data.cc \
-			    client/drizzledump_drizzle.cc \
-			    client/drizzledump_mysql.cc \
-			    client/server_detect.cc
+client_drizzle_LDADD=
+client_drizzle_LDADD+= ${READLINE_LIBS}
+client_drizzle_LDADD+= ${BOOST_LIBS}
+client_drizzle_LDADD+= libdrizzle-2.0/libdrizzle-2.0.la
+client_drizzle_LDADD+= $(LIBINTL)
+client_drizzle_LDADD+= $(LIBZ)
+client_drizzle_LDADD+= client/libgetpassword.la
 
-client_drizzledump_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
+client_drizzledump_DEPENDENCIES=
+client_drizzledump_SOURCES= 
+client_drizzledump_LDADD=
 
-client_drizzleimport_SOURCES=	client/drizzleimport.cc
-client_drizzleimport_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
+client_drizzledump_DEPENDENCIES+= plugin/libmyisam_plugin.la
+client_drizzledump_SOURCES+= client/drizzledump.cc
+client_drizzledump_SOURCES+= client/drizzledump_data.cc
+client_drizzledump_SOURCES+= client/drizzledump_drizzle.cc
+client_drizzledump_SOURCES+= client/drizzledump_mysql.cc
+client_drizzledump_SOURCES+= client/server_detect.cc
+client_drizzledump_LDADD+= ${CLIENT2_LDADD}
+client_drizzledump_LDADD+= ${BOOST_LIBS}
 
-client_drizzleslap_SOURCES=	client/drizzleslap.cc
-client_drizzleslap_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS}
-client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
+client_drizzleimport_DEPENDENCIES=
+client_drizzleimport_SOURCES=
+client_drizzleimport_LDADD=
 
-client_drizzletest_SOURCES=	client/drizzletest.cc
-client_drizzletest_LDADD=	${CLIENT2_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
+client_drizzleimport_DEPENDENCIES+= plugin/libmyisam_plugin.la
+client_drizzleimport_SOURCES+=	client/drizzleimport.cc
+client_drizzleimport_LDADD+= ${CLIENT2_LDADD}
+client_drizzleimport_LDADD+= ${BOOST_LIBS}
+
+client_drizzleslap_DEPENDENCIES=
+client_drizzleslap_LDADD=
+client_drizzleslap_SOURCES=
+client_drizzleslap_CXXFLAGS=
+
+client_drizzleslap_DEPENDENCIES+= plugin/libmyisam_plugin.la
+client_drizzleslap_SOURCES+= client/drizzleslap.cc
+client_drizzleslap_LDADD+= ${CLIENT2_LDADD}
+client_drizzleslap_LDADD+= ${BOOST_LIBS}
+client_drizzleslap_CXXFLAGS+= ${AM_CXXFLAGS}
+client_drizzleslap_CXXFLAGS+= ${BOOSTSKIP_WARNINGS}
+
+client_drizzletest_DEPENDENCIES=
+client_drizzletest_SOURCES=
+client_drizzletest_LDADD=
+
+client_drizzletest_DEPENDENCIES+= plugin/libmyisam_plugin.la
+client_drizzletest_SOURCES+= client/drizzletest.cc
+client_drizzletest_LDADD+=${CLIENT2_LDADD}
+client_drizzletest_LDADD+=${BOOST_LIBS} ${LIBPCRE} 
 
 
-client_drizzle_password_hash_SOURCES= client/drizzle_password_hash.cc
-client_drizzle_password_hash_LDADD= libdrizzle-2.0/libdrizzle-2.0.la
+client_drizzle_password_hash_DEPENDENCIES=
+client_drizzle_password_hash_LDADD=
+client_drizzle_password_hash_SOURCES=
+
+client_drizzle_password_hash_DEPENDENCIES+= plugin/libmyisam_plugin.la
+client_drizzle_password_hash_LDADD+= libdrizzle-2.0/libdrizzle-2.0.la
+client_drizzle_password_hash_LDADD+= libdrizzle-2.0/libdrizzle-2.0.la
+client_drizzle_password_hash_SOURCES+= client/drizzle_password_hash.cc

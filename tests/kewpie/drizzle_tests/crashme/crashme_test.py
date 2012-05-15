@@ -23,14 +23,13 @@ import unittest
 import subprocess
 
 from lib.util.crashme_methods import execute_crashme
-from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 
 server_requirements = [[]]
 servers = []
 server_manager = None
 test_executor = None
 
-class basicTest(mysqlBaseTestCase):
+class basicTest(unittest.TestCase):
 
     def test_runCrashme(self):
         test_cmd = "$SQLBENCH_DIR/crash-me --server=drizzled --host=127.0.0.1 --force --dir=$DRIZZLE_TEST_WORKDIR  --connect-options=port=$MASTER_MYPORT --verbose --debug --user=root --batch-mode"

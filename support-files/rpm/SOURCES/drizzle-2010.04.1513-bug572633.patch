@@ -1,0 +1,51 @@
+--- drizzle-2010.04.1513/plugin/pbxt/src/filesys_xt.cc.orig	2010-04-29 19:31:12.000000000 -0500
++++ drizzle-2010.04.1513/plugin/pbxt/src/filesys_xt.cc	2010-05-04 12:28:07.138437464 -0500
+@@ -1498,7 +1498,7 @@
+ 				/* Consolidate 2 blocks that are closest to each other in other to
+ 				 * make space for another block:
+ 				 */
+-				int		i;
++				size_t	i;
+ 				off_t	gap;
+ 				off_t	min_gap = (off_t) -1;
+ 
+@@ -1527,7 +1527,7 @@
+ 			/* Wait for flush to pass this point: */
+ 			for (;;) {
+ 				flush_offset = ((xtWord8) rf->rf_flush_offset_hi << 32) | rf->rf_flush_offset_lo;
+-				if (offset < flush_offset)
++				if ((xtWord8) offset < flush_offset)
+ 					break;
+ 				xt_critical_wait();
+ 			}
+@@ -1730,7 +1730,7 @@
+ 		case XT_FT_REWRITE_FLUSH:
+ 			XTRewriteFlushPtr	rf;
+ 			RewriteBlockPtr		rec;
+-			int					i;
++			size_t				i;
+ 			off_t				offset;
+ 			off_t				size;
+ 			off_t				tfer;
+--- drizzle-2010.04.1513/plugin/pbxt/src/index_xt.cc.orig	2010-04-12 22:50:31.000000000 -0500
++++ drizzle-2010.04.1513/plugin/pbxt/src/index_xt.cc	2010-05-04 12:29:25.112437756 -0500
+@@ -1852,7 +1852,7 @@
+ 
+ 	dirty_blocks = 0;
+ 	indp = tab->tab_dic.dic_keys;
+-	for (int i=0; i<tab->tab_dic.dic_key_count; i++, indp++) {
++	for (u_int i=0; i<tab->tab_dic.dic_key_count; i++, indp++) {
+ 		ind = *indp;
+ 		dirty_blocks += ind->mi_dirty_blocks;
+ 	}
+--- drizzle-2010.04.1513/plugin/pbxt/src/restart_xt.cc.orig	2010-04-12 22:50:31.000000000 -0500
++++ drizzle-2010.04.1513/plugin/pbxt/src/restart_xt.cc	2010-05-04 12:30:26.097312939 -0500
+@@ -2645,7 +2645,7 @@
+ 	return to_read;
+ 
+ 	header_corrupt:
+-	if (log_id == xres_cp_log_id && xres_cp_log_offset > sizeof(XTXactLogHeaderDRec))
++	if (log_id == xres_cp_log_id && xres_cp_log_offset > (xtLogOffset) sizeof(XTXactLogHeaderDRec))
+ 		xt_throw_ulxterr(XT_CONTEXT, XT_ERR_LOG_HEADER_CORRUPT, (u_long) log_id);
+ 
+ 	freer_(); // xt_close_file(of)

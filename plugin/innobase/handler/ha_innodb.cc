@@ -1799,6 +1799,12 @@ innobase_convert_name(
   const char* bufend  = buf + buflen;
 
   if (table_id) {
+    const char* catalog_skip= (const char*) memchr(id, '/', idlen);
+    if (catalog_skip)
+    {
+      idlen = idlen - (catalog_skip - id);
+      id = catalog_skip + 1;
+    }
     const char* slash = (const char*) memchr(id, '/', idlen);
     if (!slash) {
 
@@ -3521,6 +3527,15 @@ ha_innobase::doOpen(const identifier::Table &identifier,
   else
   {
     ib_table = dict_table_get(identifier.getKeyPath().c_str(), TRUE);
+    if (ib_table == NULL
+        && drizzled::identifier::Catalog(identifier.getCatalogName())==drizzled::catalog::local_identifier())
+    {
+      std::string table_path_no_catalog(identifier.getKeyPath());
+      table_path_no_catalog.erase(0, drizzled::catalog::local_identifier().getPath().length()+1);
+      /* We try without local/ as old InnoDB data dictionary (pre CATALOG)
+         did not have local/ in data dict, just in filesystem path */
+      ib_table = dict_table_get(table_path_no_catalog.c_str(), TRUE);
+    }
   }
   
   if (NULL == ib_table) {
@@ -6667,6 +6682,16 @@ InnobaseEngine::doDropTable(
   error = row_drop_table_for_mysql(identifier.getKeyPath().c_str(), trx,
                                    session.getSqlCommand()
                                    == SQLCOM_DROP_DB);
+
+  if (error == ENOENT
+      && drizzled::identifier::Catalog(identifier.getCatalogName())==drizzled::catalog::local_identifier())
+  {
+    std::string table_path_no_catalog(identifier.getKeyPath());
+    table_path_no_catalog.erase(0, drizzled::catalog::local_identifier().getPath().length()+1);
+  error = row_drop_table_for_mysql(table_path_no_catalog.c_str(), trx,
+                                   session.getSqlCommand()
+                                   == SQLCOM_DROP_DB);
+  }
 
   session.setXaId(trx->id);
 

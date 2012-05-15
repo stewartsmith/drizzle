@@ -1,0 +1,16 @@
+Resolves protobuf issue on Fedora 13, reported upstream at:
+
+https://bugs.launchpad.net/drizzle/+bug/591960
+
+--- drizzle-2010.06.1607/drizzled/include.am.orig	2010-06-08 13:23:28.000000000 -0500
++++ drizzle-2010.06.1607/drizzled/include.am	2010-06-09 17:16:02.893210229 -0500
+@@ -456,7 +456,8 @@
+ 				$(LIBDL_LIBS) \
+ 				$(LIBPCRE) \
+ 				$(LIBTBB) \
+-				$(GCOV_LIBS) 
++				$(GCOV_LIBS) \
++				${LTLIBPROTOBUF} 
+ 
+ drizzled_drizzled_DEPENDENCIES= \
+                                       drizzled/message/libdrizzledmessage.la \

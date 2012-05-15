@@ -7,5 +7,5 @@ Name: drizzle
 Description: Drizzle CLI
 Version: @VERSION@
 URL: http://drizzle.org/
-Cflags: -I${pkgincludedir}
+Cflags:
 

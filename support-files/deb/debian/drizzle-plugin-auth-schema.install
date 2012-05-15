@@ -1,0 +1,2 @@
+etc/drizzle/conf.d/auth-schema.cnf
+usr/lib/drizzle/libauth_schema_plugin.so

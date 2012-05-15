@@ -17,9 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzledump_data.h"
-#include "drizzledump_mysql.h"
-#include "client_priv.h"
+#include "client/drizzledump_data.h"
+#include "client/drizzledump_mysql.h"
+#include "client/client_priv.h"
 #include <string>
 #include <iostream>
 #include <boost/regex.hpp>

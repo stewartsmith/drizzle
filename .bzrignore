@@ -13,6 +13,9 @@
 *.rej
 *.reject
 *.rpm
+*.deb
+*.dsc
+*.changes
 *replication.pb.*
 *stamp-h
 ./ChangeLog
@@ -67,6 +70,7 @@ configure
 configvar.gcno
 current_session.gcno
 dbug/Makefile.in
+deb-work-dir
 depcomp
 docs
 docs/doctrees
@@ -311,10 +315,20 @@ support-files/libdrizzle.pc
 support-files/libdrizzle-1.0.pc
 support-files/libdrizzle-2.0.pc
 support-files/libdrizzleclient.pc
+support-files/deb/debian/changelog
 support-files/smf/Makefile.in
 support-files/smf/drizzle
 support-files/smf/drizzle.xml
 support-files/smf/install.sh
+support-files/rpm/BUILD/*
+support-files/rpm/BUILDROOT/*
+support-files/rpm/SRPMS/*
+support-files/rpm/RPMS/*
+support-files/rpm/RPMS/*/*
+support-files/rpm/SOURCES/*.tar.gz
+support-files/rpm/SPECS/drizzle.spec
+*.tar.gz
+*.rpm
 table.gcno
 table_map_iterator.gcno
 temporal.gcno
@@ -398,3 +412,4 @@ libdrizzle-1.0/t/drizzle_st
 drizzled/sql_yacc.hh
 stripped_log
 total_warning_count
+libdrizzle-1.0/version.h

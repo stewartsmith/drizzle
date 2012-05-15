@@ -1,0 +1,20 @@
+Author: Clint Byrum <clint@fewbar.com>
+Bug: https://launchpad.net/bugs/740583
+Forwarded: https://code.launchpad.net/~clint-fewbar/drizzle/elliot-fix-user-option/+merge/54446
+Description: Fixes inoperable --user option. 
+Applied-Upstream: http://bazaar.launchpad.net/~drizzle-developers/drizzle/elliot/revision/2241
+
+=== modified file 'drizzled/drizzled.cc'
+Index: natty-no-run-as-root/drizzled/drizzled.cc
+===================================================================
+--- natty-no-run-as-root.orig/drizzled/drizzled.cc	2011-04-10 12:18:05.433791995 -0700
++++ natty-no-run-as-root/drizzled/drizzled.cc	2011-04-10 12:18:24.402552367 -0700
+@@ -1475,7 +1475,7 @@
+   global_system_variables.optimizer_prune_level=
+     vm.count("disable-optimizer-prune") ? false : true;
+ 
+-  if (vm.count("help") == 0 && vm.count("help-extended") == 0)
++  if (! vm["help"].as<bool>())
+   {
+     if ((user_info= check_user(drizzled_user)))
+     {

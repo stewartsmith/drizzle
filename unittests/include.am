@@ -18,12 +18,11 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 if HAVE_BOOST_TEST
-check_PROGRAMS += unittests/unittests
+noinst_PROGRAMS+= unittests/unittests
 endif
 
-noinst_HEADERS += \
-		  unittests/plugin/plugin_stubs.h \
-		  unittests/temporal_generator.h
+noinst_HEADERS+= unittests/plugin/plugin_stubs.h
+noinst_HEADERS+= unittests/temporal_generator.h
 
 unit: unittests/unittests
 	unittests/unittests
@@ -33,6 +32,10 @@ unit: unittests/unittests
 #		      unittests/temporal_interval_test.cc
 #		     
 
+unittests_unittests_DEPENDENCIES=
+unittests_unittests_DEPENDENCIES+= plugin/libmyisam_plugin.la
+unittests_unittests_DEPENDENCIES+= drizzled/drizzled
+unittests_unittests_DEPENDENCIES+= libdrizzle-1.0/libdrizzle.la
 unittests_unittests_SOURCES = \
                               unittests/main.cc \
 			      unittests/atomics_test.cc \

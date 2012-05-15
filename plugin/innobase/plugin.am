@@ -226,6 +226,7 @@ noinst_LTLIBRARIES+= \
 bin_PROGRAMS+= plugin/innobase/xtrabackup/drizzlebackup.innobase
 endif
 
+plugin_innobase_xtrabackup_drizzlebackup_innobase_DEPENDENCIES= plugin/libmyisam_plugin.la
 plugin_innobase_xtrabackup_drizzlebackup_innobase_SOURCES = plugin/innobase/xtrabackup/xtrabackup.cc
 plugin_innobase_xtrabackup_drizzlebackup_innobase_LDADD = \
 	plugin/innobase/libinnobase.la \

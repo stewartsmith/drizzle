@@ -116,6 +116,7 @@ ALNUM       {LETTERS}|{DIGITS}
 %option perf-report
 %option prefix="execute_"
 %option reentrant
+%option never-interactive
 %%
 
 {UTF8_BYTE_ORDER_MARK}       {  /*  Byte Order Mark */   } 

@@ -1,0 +1,17 @@
+Tests fail if protocols aren't loaded.  The mysql_protocol is loaded optionally,
+so this forces it to load for tests.
+
+--- drizzle7-2011.01.07/tests/test-run.pl.orig  2011-01-04 06:54:45.000000000 -0600
++++ drizzle7-2011.01.07/tests/test-run.pl   2011-01-11 12:54:47.151745689 -0600
+@@ -2510,6 +2510,10 @@
+ 
+   dtr_add_arg($args, "%s--no-defaults", $prefix);
+ 
++  # add protocol plugins for testing (in case they were built optionally)
++  dtr_add_arg($args, "%s--plugin-add=mysql_protocol", $prefix);
++  dtr_add_arg($args, "%s--plugin-add=drizzle_protocol", $prefix);
++
+   if ($opt_engine)
+   {
+     dtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
+

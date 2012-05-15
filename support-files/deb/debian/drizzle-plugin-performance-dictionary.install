@@ -1,0 +1,2 @@
+usr/lib/drizzle/libperformance_dictionary_plugin.so
+etc/drizzle/conf.d/performance-dictionary.cnf

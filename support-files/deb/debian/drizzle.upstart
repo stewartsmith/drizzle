@@ -1,0 +1,11 @@
+# Drizzle Service
+
+description     "Drizzle Server"
+author          "Monty Taylor <mordred@inaugust.com>"
+
+start on runlevel [2345]
+stop on runlevel [016]
+
+respawn
+
+exec /usr/sbin/drizzled --user drizzle 2>&1 | logger -t drizzle -p daemon.err

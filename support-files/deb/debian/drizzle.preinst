@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# summary of how this script can be called:
+#        * <new-preinst> install
+#        * <new-preinst> install <old-version>
+#        * <new-preinst> upgrade <old-version>
+#        * <old-preinst> abort-upgrade <new-version>
+#
+
+set -e
+
+DATADIR=/var/lib/drizzle
+LOGDIR=/var/log/drizzle
+
+# creating drizzle group if it isn't already there
+if ! getent group drizzle >/dev/null; then
+        # Adding system group: drizzle.
+        addgroup --system drizzle >/dev/null
+fi
+
+# creating drizzle user if it isn't already there
+if ! getent passwd drizzle >/dev/null; then
+        # Adding system user: drizzle.
+        adduser \
+          --system \
+          --disabled-login \
+          --ingroup drizzle \
+          --home $DATADIR \
+          --gecos "Drizzle Server" \
+          --shell /bin/false \
+          drizzle  >/dev/null
+fi
+
+# Its possible drizzled was running as root before
+if [ "$1" = "upgrade" ] && \
+     dpkg --compare-versions "$2" lt "2011.03.13-0ubuntu2" && \
+     [ -d $DATADIR ] ; then
+  chown -R drizzle.drizzle $DATADIR
+fi
+
+if [ ! -d $LOGDIR ]; then
+  mkdir $LOGDIR
+  chown drizzle:drizzle $LOGDIR
+fi
+
+#DEBHELPER#
+
+exit 0
