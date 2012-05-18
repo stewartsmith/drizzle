@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2011-05-14 10:23+0000\n"
-"Last-Translator: Wei Fan <Unknown>\n"
+"PO-Revision-Date: 2012-05-17 07:53+0000\n"
+"Last-Translator: Kun HeW <u5058161@anu.edu.au>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2011-05-15 04:39+0000\n"
-"X-Generator: Launchpad (build 12959)\n"
+"X-Launchpad-Export-Date: 2012-05-18 04:39+0000\n"
+"X-Generator: Launchpad (build 15259)\n"
 
 msgid "Synonym for `help'."
 msgstr "同\"help\"命令。"
@@ -164,7 +164,7 @@ msgid "Synonym for option --safe-updates, -U."
 msgstr "设置 --safe-updates 和 -U 相同"
 
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
-msgstr ""
+msgstr "设置冗余为3，用到指定的这个冗余"
 
 msgid "Output version information and exit."
 msgstr "输出版本信息并退出。"
@@ -302,7 +302,7 @@ msgstr "使用密码登录服务器.如果没有密码，请询问tty"
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
-msgstr ""
+msgstr "端口值被用作链接，0为默认设置。 在drizzle.cnf,$DRIZZLE_TCP_PORT,built-in 中设置此参数"
 
 msgid "User for login if not current user."
 msgstr "无当前用户时的登陆用户"
@@ -455,7 +455,7 @@ msgstr ""
 
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "错位返回： %d %s"
 
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
@@ -508,13 +508,13 @@ msgstr "-- 警告: 忽略表 '%s'的数据，因为数据类型是%s\n"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
-msgstr ""
+msgstr "'%s' 以为着掉过一个DUMP DATA\n"
 
 msgid "-- Sending SELECT query...\n"
 msgstr ""
 
 msgid "when executing 'SELECT INTO OUTFILE'"
-msgstr ""
+msgstr "当执行 ‘SELECT INTO OUTFILE’"
 
 #, c-format
 msgid ""
@@ -525,15 +525,15 @@ msgid ""
 msgstr ""
 
 msgid "-- Retrieving rows...\n"
-msgstr ""
+msgstr "检索列\n"
 
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr ""
+msgstr "%s: 数表领域发生错误： %s !中止执行\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
-msgstr ""
+msgstr "%s: 错误读取表行：%s(%d:%s)! 中止执行。\n"
 
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
@@ -544,7 +544,7 @@ msgid "Not enough fields from table %s! Aborting.\n"
 msgstr "表 %s 空间不足! 取消操作\n"
 
 msgid "when doing refresh"
-msgstr ""
+msgstr "当执行刷新"
 
 msgid "alloc_root failure."
 msgstr ""
@@ -564,7 +564,7 @@ msgstr "错误: 没有足够空间用于储存指令 ORDER BY 的结果\n"
 
 msgid ""
 "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
+msgstr "在输出过程前 需要行数"
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
@@ -584,7 +584,7 @@ msgstr ""
 
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "输入文件名太长： %s"
 
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
@@ -604,7 +604,7 @@ msgstr ""
 
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
-msgstr ""
+msgstr "无效模式-兼容： %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
 msgstr ""
@@ -751,13 +751,13 @@ msgid ""
 msgstr ""
 
 msgid "Path for temporary files."
-msgstr ""
+msgstr "设置路径为临时文件夹"
 
 msgid "Default transaction isolation level."
 msgstr ""
 
 msgid "Run drizzled daemon as user."
-msgstr ""
+msgstr "运行 DRIZZLED DAEMON 作为用户"
 
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
@@ -792,7 +792,7 @@ msgid "Max number of errors/warnings to store for a statement."
 msgstr ""
 
 msgid "Don't allow creation of heap tables bigger than this."
-msgstr ""
+msgstr "不允许创建一个比缓存表大的"
 
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
@@ -855,7 +855,7 @@ msgid ""
 msgstr ""
 
 msgid "The size of the buffer that is allocated when preloading indexes"
-msgstr ""
+msgstr "当与装载索引时，缓存大小被占用"
 
 msgid "Allocation block size for query parsing and execution"
 msgstr ""
@@ -922,14 +922,14 @@ msgid ""
 msgstr ""
 
 msgid "Can't start server: cannot resolve hostname!"
-msgstr ""
+msgstr "不能开启服务： 不能分析到主机名"
 
 msgid "Can't start server: bind-address refers to multiple interfaces!"
-msgstr ""
+msgstr "不能开启服务： 绑定-地址出现多个接口"
 
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "未知错误 %d"
 
 msgid "NO"
 msgstr ""
@@ -939,15 +939,15 @@ msgstr ""
 
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能创建文件 %-.200s' (错误： %d)"
 
 #, c-format
 msgid "Can't create table '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能创建表%-.200s' (错误： %d)"
 
 #, c-format
 msgid "Can't create database '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "不能创建数据库%-.192s' (错误： %d)"
 
 #, c-format
 msgid "Can't create database '%-.192s'; database exists"
@@ -955,7 +955,7 @@ msgstr ""
 
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
-msgstr ""
+msgstr "不能删除数据库%-.192s'；数据库不存在"
 
 #, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
@@ -970,7 +970,7 @@ msgid "Error on delete of '%-.192s' (errno: %d)"
 msgstr ""
 
 msgid "Can't read record in system table"
-msgstr ""
+msgstr "不能读取系统表记录"
 
 #, c-format
 msgid "Can't get status of '%-.200s' (errno: %d)"
@@ -986,11 +986,11 @@ msgstr ""
 
 #, c-format
 msgid "Can't open file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能打开文件： ’%-.200s' (错误: %d)"
 
 #, c-format
 msgid "Can't find file: '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "不能找到文件： ’%-.200s' (错误: %d)"
 
 #, c-format
 msgid "Can't read dir of '%-.192s' (errno: %d)"
@@ -1018,7 +1018,7 @@ msgstr ""
 
 #, c-format
 msgid "Error reading file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "读取文件错误'%-.200s' (错误: %d)"
 
 #, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
@@ -1053,7 +1053,7 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "文件中出现不正确的信息： '%-.200s'"
 
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
@@ -1102,10 +1102,10 @@ msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
 msgstr ""
 
 msgid "No database selected"
-msgstr ""
+msgstr "未选择数据库"
 
 msgid "Unknown command"
-msgstr ""
+msgstr "未知命令"
 
 #, c-format
 msgid "Column '%-.192s' cannot be null"
@@ -1117,22 +1117,22 @@ msgstr ""
 
 #, c-format
 msgid "Table '%-.192s' already exists"
-msgstr ""
+msgstr "表'%-.192s'已经存在"
 
 #, c-format
 msgid "Unknown table '%-.100s'"
-msgstr ""
+msgstr "未知表  '%-.100s'"
 
 #, c-format
 msgid "Column '%-.192s' in %-.192s is ambiguous"
 msgstr ""
 
 msgid "Server shutdown in progress"
-msgstr ""
+msgstr "服务器正在关闭"
 
 #, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
-msgstr ""
+msgstr "未知列 '%-.192s' 在 '%-.192s'"
 
 #, c-format
 msgid "'%-.192s' isn't in GROUP BY"
@@ -1146,7 +1146,7 @@ msgid "Statement has sum functions and columns in same statement"
 msgstr ""
 
 msgid "Column count doesn't match value count"
-msgstr ""
+msgstr "列数不匹配"
 
 #, c-format
 msgid "Identifier name '%-.100s' is too long"
@@ -1181,10 +1181,10 @@ msgstr ""
 
 #, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr ""
+msgstr "无效的默认值对于 '%-.192s'"
 
 msgid "Multiple primary key defined"
-msgstr ""
+msgstr "多个主键被定义"
 
 #, c-format
 msgid "Too many keys specified; max %d keys allowed"
@@ -1212,7 +1212,7 @@ msgstr ""
 msgid ""
 "Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT "
 "instead"
-msgstr ""
+msgstr "列数过长'%-.192s' (max = %d); 用 BLOB 或 TEXT 替换"
 
 msgid ""
 "Incorrect table definition; there can be only one auto column and it must be "
@@ -1227,7 +1227,7 @@ msgstr ""
 
 #, c-format
 msgid "%s: Normal shutdown\n"
-msgstr ""
+msgstr "%s:  正常关闭\n"
 
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
@@ -1235,14 +1235,14 @@ msgstr ""
 
 #, c-format
 msgid "%s: Shutdown complete\n"
-msgstr ""
+msgstr "%s:完全关闭\n"
 
 #, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
 msgstr ""
 
 msgid "Can't create IP socket"
-msgstr ""
+msgstr "不能建立IP 端口"
 
 #, c-format
 msgid ""
@@ -1284,7 +1284,7 @@ msgid ""
 msgstr ""
 
 msgid "You can't delete all columns with ALTER TABLE; use DROP TABLE instead"
-msgstr ""
+msgstr "在ALTER TABLE 下 你不能删除所有的列; 用DROP TABLE 代替"
 
 #, c-format
 msgid "Can't DROP '%-.192s'; check that column/key exists"
@@ -1300,18 +1300,18 @@ msgstr ""
 
 #, c-format
 msgid "Unknown thread id: %lu"
-msgstr ""
+msgstr "未知的进程ID: %lu"
 
 #, c-format
 msgid "You are not owner of thread %lu"
-msgstr ""
+msgstr "你不是这个进程的所有者%lu"
 
 msgid "No tables used"
-msgstr ""
+msgstr "没有表可以使用"
 
 #, c-format
 msgid "Too many strings for column %-.192s and SET"
-msgstr ""
+msgstr "对于次列字符过多%-.192s and SET"
 
 #, c-format
 msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
@@ -1331,11 +1331,11 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect database name '%-.100s'"
-msgstr ""
+msgstr "不正确的数据库名称'%-.100s'"
 
 #, c-format
 msgid "Incorrect table name '%-.100s'"
-msgstr ""
+msgstr "不正确的表名 '%-.100s'"
 
 msgid ""
 "The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
@@ -1343,19 +1343,19 @@ msgid ""
 msgstr ""
 
 msgid "Unknown error"
-msgstr ""
+msgstr "未知的错误"
 
 #, c-format
 msgid "Unknown procedure '%-.192s'"
-msgstr ""
+msgstr "未知步骤'%-.192s'"
 
 #, c-format
 msgid "Incorrect parameter count to procedure '%-.192s'"
-msgstr ""
+msgstr "不正确的PROCEDURE参数个数 '%-.192s'"
 
 #, c-format
 msgid "Incorrect parameters to procedure '%-.192s'"
-msgstr ""
+msgstr "不正确的PROCEDURE参数 '%-.192s'"
 
 #, c-format
 msgid "Unknown table '%-.192s' in %-.32s"
@@ -1378,7 +1378,7 @@ msgstr ""
 
 #, c-format
 msgid "The table '%-.192s' is full"
-msgstr ""
+msgstr "表 '%-.192s'  满了"
 
 #, c-format
 msgid "Unknown character set: '%-.64s'"
@@ -1389,7 +1389,7 @@ msgid "Too many tables; Drizzle can only use %d tables in a join"
 msgstr ""
 
 msgid "Too many columns"
-msgstr ""
+msgstr "列过多"
 
 #, c-format
 msgid ""
@@ -1414,14 +1414,14 @@ msgstr ""
 
 #, c-format
 msgid "Can't load function '%-.192s'"
-msgstr ""
+msgstr "不能装载函数 '%-.192s'"
 
 #, c-format
 msgid "Can't initialize function '%-.192s'; %-.80s"
-msgstr ""
+msgstr "不能初始化函数'%-.192s'; %-.80s"
 
 msgid "No paths allowed for plugin library"
-msgstr ""
+msgstr "路径中不允许这个插件库"
 
 #, c-format
 msgid "Plugin '%-.192s' already exists"
@@ -1429,7 +1429,7 @@ msgstr ""
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
-msgstr ""
+msgstr "不能打开共享库 '%-.192s' (errno: %d %-.128s)"
 
 #, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
@@ -1437,7 +1437,7 @@ msgstr ""
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
-msgstr ""
+msgstr "函数 '%-.192s'  没有定义"
 
 #, c-format
 msgid ""
@@ -1460,17 +1460,17 @@ msgid ""
 msgstr ""
 
 msgid "Can't find any matching row in the user table"
-msgstr ""
+msgstr "在用户表中没有找到与之匹配的行"
 
 #, c-format
 msgid "Rows matched: %ld  Changed: %ld  Warnings: %ld"
-msgstr ""
+msgstr "行匹配: %ld 改变%ld 警告: %ld"
 
 #, c-format
 msgid ""
 "Can't create a new thread (errno %d); if you are not out of available "
 "memory, you can consult the manual for a possible OS-dependent bug"
-msgstr ""
+msgstr "不能创建新的线程 (errno %d)); 你可以咨询你的独立操作系统的漏洞如果不是因为内存溢出"
 
 #, c-format
 msgid "Column count doesn't match value count at row %ld"
@@ -1478,14 +1478,14 @@ msgstr ""
 
 #, c-format
 msgid "Can't reopen table: '%-.192s'"
-msgstr ""
+msgstr "不能再次打开表: '%-.192s'"
 
 msgid "Invalid use of NULL value"
-msgstr ""
+msgstr "使用空值无效"
 
 #, c-format
 msgid "Got error '%-.64s' from regexp"
-msgstr ""
+msgstr "从 regexp 中去的错误 '%-.64s'"
 
 msgid ""
 "Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is "
@@ -1504,7 +1504,7 @@ msgstr ""
 msgid ""
 "%-.16s command denied to user '%-.48s'@'%-.64s' for column '%-.192s' in "
 "table '%-.192s'"
-msgstr ""
+msgstr "%-.16s 命令被拒绝对于用户 '%-.48s'@'%-.64s' 对于列 '%-.192s' 在表 '%-.192s'"
 
 msgid ""
 "Illegal GRANT/REVOKE command; please consult the manual to see which "
@@ -1512,11 +1512,11 @@ msgid ""
 msgstr ""
 
 msgid "The host or user argument to GRANT is too long"
-msgstr ""
+msgstr "主机或用户的参数太长对于GRANT"
 
 #, c-format
 msgid "Table '%-.192s.%-.192s' doesn't exist"
-msgstr ""
+msgstr "表 '%-.192s.%-.192s' 不存在"
 
 #, c-format
 msgid ""
@@ -1525,23 +1525,23 @@ msgid ""
 msgstr ""
 
 msgid "The used command is not allowed with this Drizzle version"
-msgstr ""
+msgstr "这个命令不允许在次Drizzle版本中使用"
 
 msgid ""
 "You have an error in your SQL syntax; check the manual that corresponds to "
 "your Drizzle server version for the right syntax to use"
-msgstr ""
+msgstr "你的SQL语法错误; 查看适用与次Drizzle服务琦的版本用户手册纠正语法后使用"
 
 #, c-format
 msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
-msgstr ""
+msgstr "插入进程延迟不能获得锁表请求%-.192s"
 
 msgid "Too many delayed threads in use"
-msgstr ""
+msgstr "在使用中太多进程延迟"
 
 #, c-format
 msgid "Aborted connection %ld to db: '%-.192s' user: '%-.48s' (%-.64s)"
-msgstr ""
+msgstr "中之链接%ld 对于 db: '%-.192s' 用户: '%-.48s' (%-.64s)"
 
 msgid "Got a packet bigger than 'max_allowed_packet' bytes"
 msgstr ""
@@ -1562,7 +1562,7 @@ msgid "Got an error reading communication packets"
 msgstr ""
 
 msgid "Got timeout reading communication packets"
-msgstr ""
+msgstr "读取通信包超时"
 
 msgid "Got an error writing communication packets"
 msgstr ""
@@ -1571,10 +1571,10 @@ msgid "Got timeout writing communication packets"
 msgstr ""
 
 msgid "Result string is longer than 'max_allowed_packet' bytes"
-msgstr ""
+msgstr "结果字符长于 'max_allowed_packet'"
 
 msgid "The used table type doesn't support BLOB/TEXT columns"
-msgstr ""
+msgstr "已用表类型不支持BLOB/TEXT列"
 
 msgid "The used table type doesn't support AUTO_INCREMENT columns"
 msgstr ""
@@ -1587,7 +1587,7 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect column name '%-.100s'"
-msgstr ""
+msgstr "不正确的列名'%-.100s'"
 
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
@@ -1600,7 +1600,7 @@ msgstr ""
 
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
-msgstr ""
+msgstr "对于表'%-.192s'表因为unique constraint不能写入"
 
 #, c-format
 msgid ""
@@ -1610,13 +1610,13 @@ msgstr ""
 msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
 "UNIQUE instead"
-msgstr ""
+msgstr "主键所有部分不能为空; 如果你需要空值, 使用 UNIQUE 替换主键"
 
 msgid "Result consisted of more than one row"
-msgstr ""
+msgstr "结果不止一行"
 
 msgid "This table type requires a primary key"
-msgstr ""
+msgstr "这个表形式需要一个主键"
 
 msgid "This version of Drizzle is not compiled with RAID support"
 msgstr ""
@@ -1624,29 +1624,29 @@ msgstr ""
 msgid ""
 "You are using safe update mode and you tried to update a table without a "
 "WHERE that uses a KEY column"
-msgstr ""
+msgstr "你正在使用安全模式更新，有尝试在不用WHERE锁定一个列去更新此表"
 
 #, c-format
 msgid "Key '%-.192s' doesn't exist in table '%-.192s'"
 msgstr ""
 
 msgid "Can't open table"
-msgstr ""
+msgstr "不能打开表"
 
 #, c-format
 msgid "The storage engine for the table doesn't support %s"
-msgstr ""
+msgstr "存储引擎对此表%s不支持"
 
 msgid "You are not allowed to execute this command in a transaction"
-msgstr ""
+msgstr "你不被允许执行次命令在这个事务中"
 
 #, c-format
 msgid "Got error %d during COMMIT"
-msgstr ""
+msgstr "在COMMIT中发生错误%d"
 
 #, c-format
 msgid "Got error %d during ROLLBACK"
-msgstr ""
+msgstr "在数据回滚中发生错误 %d"
 
 #, c-format
 msgid "Got error %d during FLUSH_LOGS"
@@ -1654,7 +1654,7 @@ msgstr ""
 
 #, c-format
 msgid "Got error %d during CHECKPOINT"
-msgstr ""
+msgstr "在CHECKPOINT中发生错误%d"
 
 #, c-format
 msgid ""
@@ -1692,11 +1692,11 @@ msgstr ""
 
 #, c-format
 msgid "Unknown system variable '%-.64s'"
-msgstr ""
+msgstr "未知系统变量 '%-.64s'"
 
 #, c-format
 msgid "Table '%-.192s' is marked as crashed and should be repaired"
-msgstr ""
+msgstr "表 '%-.192s' 被标记为冲突需要被修复"
 
 #, c-format
 msgid ""
@@ -1704,7 +1704,7 @@ msgid ""
 msgstr ""
 
 msgid "Some non-transactional changed tables couldn't be rolled back"
-msgstr ""
+msgstr "一些非事务改变了表不能被回滚"
 
 msgid ""
 "Multi-statement transaction required more than 'max_binlog_cache_size' bytes "
@@ -1748,37 +1748,37 @@ msgid "Update locks cannot be acquired during a READ UNCOMMITTED transaction"
 msgstr ""
 
 msgid "DROP DATABASE not allowed while thread is holding global read lock"
-msgstr ""
+msgstr "删除数据库不被允许当全局读锁进程被占用"
 
 msgid "CREATE DATABASE not allowed while thread is holding global read lock"
 msgstr ""
 
 #, c-format
 msgid "Incorrect arguments to %s"
-msgstr ""
+msgstr "不正确的传输值对于 %s"
 
 #, c-format
 msgid "'%-.48s'@'%-.64s' is not allowed to create new users"
-msgstr ""
+msgstr "'%-.48s'@'%-.64s' 不允许创建一个新的用户"
 
 msgid ""
 "Incorrect table definition; all MERGE tables must be in the same database"
-msgstr ""
+msgstr "不正确的表定义; 所有合并表必须在同一个数据库下"
 
 msgid "Deadlock found when trying to get lock; try restarting transaction"
-msgstr ""
+msgstr "当尝试获得锁时，发生死锁k; 尝试重启事务"
 
 msgid "The used table type doesn't support FULLTEXT indexes"
-msgstr ""
+msgstr "此表类型不支持 FULLTEXT 索引"
 
 msgid "Cannot add foreign key constraint"
-msgstr ""
+msgstr "不能增加外键"
 
 msgid "Cannot add or update a child row: a foreign key constraint fails"
-msgstr ""
+msgstr "不能增加或更新一个子列;一个外键发生错误"
 
 msgid "Cannot delete or update a parent row: a foreign key constraint fails"
-msgstr ""
+msgstr "不能增加或更新一个父列;一个外键发生错误"
 
 #, c-format
 msgid "Error connecting to master: %-.128s"
@@ -1790,17 +1790,17 @@ msgstr ""
 
 #, c-format
 msgid "Error when executing command %s: %-.128s"
-msgstr ""
+msgstr "当执行命令%s: %-.128s时发生错误"
 
 #, c-format
 msgid "Incorrect usage of %s and %s"
-msgstr ""
+msgstr "不正确的使用%s和 %s"
 
 msgid "The used SELECT statements have a different number of columns"
 msgstr ""
 
 msgid "Can't execute the query because you have a conflicting read lock"
-msgstr ""
+msgstr "不能执行一个语句因为和读锁发生冲突"
 
 msgid "Mixing of transactional and non-transactional tables is disabled"
 msgstr ""
@@ -1815,12 +1815,12 @@ msgstr ""
 
 #, c-format
 msgid "Access denied; you need the %-.128s privilege for this operation"
-msgstr ""
+msgstr "访问被拒绝 你需要 %-.128s 权限对于这个操作"
 
 #, c-format
 msgid ""
 "Variable '%-.64s' is a SESSION variable and can't be used with SET GLOBAL"
-msgstr ""
+msgstr "变量 '%-.64s' 是 一个 SESSION 变量 不能被用做全局SET"
 
 #, c-format
 msgid ""
@@ -1829,27 +1829,27 @@ msgstr ""
 
 #, c-format
 msgid "Variable '%-.64s' doesn't have a default value"
-msgstr ""
+msgstr "变量'%-.64s' 没有默认值"
 
 #, c-format
 msgid "Variable '%-.64s' can't be set to the value of '%-.200s'"
-msgstr ""
+msgstr "变量 '%-.64s' 不能设置为值'%-.200s'"
 
 #, c-format
 msgid "Incorrect argument type to variable '%-.64s'"
-msgstr ""
+msgstr "不正确的传入变量类型 '%-.64s'"
 
 #, c-format
 msgid "Variable '%-.64s' can only be set, not read"
-msgstr ""
+msgstr "变量 '%-.64s' 只能被设置不能读取"
 
 #, c-format
 msgid "Incorrect usage/placement of '%s'"
-msgstr ""
+msgstr "不正确的使用/位置 '%s'"
 
 #, c-format
 msgid "This version of Drizzle doesn't yet support '%s'"
-msgstr ""
+msgstr "这个Drizzle版本还不支持'%s'"
 
 #, c-format
 msgid ""
@@ -1861,14 +1861,14 @@ msgstr ""
 
 #, c-format
 msgid "Variable '%-.192s' is a %s variable"
-msgstr ""
+msgstr "变量 '%-.192s'是一个%s变量"
 
 #, c-format
 msgid "Incorrect foreign key definition for '%-.192s': %s"
-msgstr ""
+msgstr "不正确的外键定义 '%-.192s': %s"
 
 msgid "Key reference and table reference don't match"
-msgstr ""
+msgstr "键应用和表应用不能匹配"
 
 #, c-format
 msgid "Operand should contain %d column(s)"
@@ -1882,7 +1882,7 @@ msgid "Unknown prepared statement handler (%.*s) given to %s"
 msgstr ""
 
 msgid "Help database is corrupt or does not exist"
-msgstr ""
+msgstr "数据库帮助被破坏或不存在"
 
 msgid "Cyclic reference on subqueries"
 msgstr ""
@@ -1931,7 +1931,7 @@ msgid ""
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
-msgstr ""
+msgstr "ZLIB: 没有足够的内存"
 
 msgid ""
 "ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
@@ -1947,7 +1947,7 @@ msgstr ""
 
 #, c-format
 msgid "Row %ld doesn't contain data for all columns"
-msgstr ""
+msgstr "行%ld不能包含所有的列数据"
 
 #, c-format
 msgid ""
@@ -4820,34 +4820,3 @@ msgstr "解析事务失败.错误代码：%s.\n"
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "缓冲区： %s\n"
-
-#~ msgid "Connect to host."
-#~ msgstr "链接到主机。"
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "退出时打印部份调试信息。"
-
-#~ msgid "Set the default character set."
-#~ msgstr "设置默认字符集。"
-
-#~ msgid "Shutdown the server."
-#~ msgstr "关闭服务器。"
-
-#~ msgid "Socket file to use for connection."
-#~ msgstr "供连接用的 Socket 文件。"
-
-#, c-format
-#~ msgid "Usage: %s [OPTIONS] [database]\n"
-#~ msgstr "用法: %s [选项] [数据库]\n"
-
-#~ msgid "Synonym for -?"
-#~ msgstr "同-?。"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "退出时检查物理内存和已开启文件的使用情况。"
-
-#~ msgid "built-in default"
-#~ msgstr "内建默认值"
-
-#~ msgid "Value supplied for port is not valid."
-#~ msgstr "给出的端口值不合法。"
