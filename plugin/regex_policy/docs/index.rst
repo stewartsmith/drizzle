@@ -4,7 +4,7 @@ Regex-based Authorization
 =========================
 
 :program:`regex_policy` is an :doc:`/administration/authorization` plugin
-that uses regex patterns to match policies.
+that uses regex patterns to match policies. When :program:`drizzled` is started with  ``--plugin-add=regex_policy``, the regex policy plugin is enabled with the default policy file. Policy file can be specified by either specifying ``--regex-policy.policy=<policy file>`` at the time of server startup or by changing the ``regex_policy_policy`` with ``SET GLOBAL``.
 
 .. _regex_policy_loading:
 
@@ -82,6 +82,17 @@ For example::
    # Default to denying everything
    .+ schema=.+ DENY
    .+ process=.+ DENY
+
+Changing policy file at runtime
+-------------------------------
+
+Policy file can be reloaded by::
+
+   SET GLOBAL regex_policy_policy=@@regex_policy_policy
+
+Moreover, the policy file can be changed by::
+
+   SET GLOBAL regex_policy_policy=/path/to/new/policy/file
 
 Examples
 --------
