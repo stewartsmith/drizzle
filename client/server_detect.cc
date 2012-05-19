@@ -2,6 +2,7 @@
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2011 Andrew Hutchings
+                  2012 Ajaya K. Agrawal
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,43 +20,38 @@
  */
 
 #include "client/client_priv.h"
+#include "client/server_detect.h"
 
-#include <boost/regex.hpp>
 #include <iostream>
-#include <client/server_detect.h>
 
 ServerDetect::ServerDetect(drizzle_con_st *connection) :
   type(SERVER_UNKNOWN_FOUND),
   version("")
 {
-  boost::match_flag_type flags = boost::match_default;
-
-  // FIXME: Detecting capabilities from a version number is a recipe for
-  // disaster, like we've seen with 15 years of JavaScript :-)
-  // Anyway, as there is no MySQL 7.x yet, this will do for tonight.
-  // I will get back to detect something tangible after the release (like
-  // presence of some table or its record in DATA_DICTIONARY.
-  boost::regex mysql_regex("^([3-6]\\.[0-9]+\\.[0-9]+)");
-  boost::regex drizzle_regex7("^(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
-  boost::regex drizzle_regex71("^([7-9]\\.[0-9]+\\.[0-9]+)");
-
   version= drizzle_con_server_version(connection);
+  
+  const char *safe_query = "SHOW VARIABLES LIKE 'vc_release_id'";
+  drizzle_result_st* result= NULL;
+  drizzle_return_t ret_ptr;
+  result = drizzle_query_str(connection, NULL, safe_query, &ret_ptr);
 
-  if (regex_search(version, drizzle_regex7, flags))
+  if(ret_ptr == DRIZZLE_RETURN_OK)
   {
-    type= SERVER_DRIZZLE_FOUND;
-  }
-  else if (regex_search(version, drizzle_regex71, flags))
-  {
-    type= SERVER_DRIZZLE_FOUND;
-  }
-  else if (regex_search(version, mysql_regex, flags))
-  {
-    type= SERVER_MYSQL_FOUND;
+    ret_ptr = drizzle_result_buffer(result);
+    if(drizzle_result_row_count(result) > 0)
+    {
+      type = SERVER_DRIZZLE_FOUND;
+    }
+    else 
+    {
+      type = SERVER_MYSQL_FOUND;
+    }
   }
   else
   {
     std::cerr << "Server version not detectable. Assuming MySQL." << std::endl;
     type= SERVER_MYSQL_FOUND;
   }
-}
+
+  drizzle_result_free(result);    
+}                
