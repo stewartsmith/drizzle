@@ -1,7 +1,8 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
- * Copyright (C) 2008 Eric Day (eday@oddments.org)
+ * Copyright (C) 2012 Andrew Hutchings (andrew@linuxjedi.co.uk)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,59 +35,49 @@
  *
  */
 
-#pragma once
+#include <libdrizzle/common.h>
 
-/**
- * @file
- * @brief Handshake Declarations for Clients
- */
+drizzle_return_t drizzle_set_ssl(drizzle_con_st *con, const char *key, const char *cert, const char *ca, const char *capath, const char *cipher)
+{
+  con->ssl_context= SSL_CTX_new(TLSv1_client_method());
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  if (cipher)
+  {
+    drizzle_set_error(con->drizzle, "drizzle_set_ssl", "Cannot set the SSL cipher list");
+    return DRIZZLE_RETURN_SSL_ERROR;
+  }
 
-/**
- * @addtogroup drizzle_handshake_client Handshake Declarations for Clients
- * @ingroup drizzle_client_interface
- *
- * These functions are used to send and receive handshake packets for a client.
- * These are only used by low-level clients when the DRIZZLE_CON_RAW_PACKET
- * option is set, so most applications will never need to use these.
- * @{
- */
+  if (SSL_CTX_load_verify_locations(con->ssl_context, ca, capath) != 1)
+  {
+    drizzle_set_error(con->drizzle, "drizzle_set_ssl", "Cannot load the SSL certificate authority file");
+    return DRIZZLE_RETURN_SSL_ERROR;
+  }
 
-/**
- * Read handshake packet from the server in a client.
- *
- * @param[in] con Connection structure previously initialized with
- *  drizzle_con_create(), drizzle_con_clone(), or related functions.
- * @return Standard drizzle return value.
- */
-DRIZZLE_API
-drizzle_return_t drizzle_handshake_server_read(drizzle_con_st *con);
+  if (cert)
+  {
+    if (SSL_CTX_use_certificate_file(con->ssl_context, cert, SSL_FILETYPE_PEM) != 1)
+    {
+      drizzle_set_error(con->drizzle, "drizzle_set_ssl", "Cannot load the SSL certificate file");
+      return DRIZZLE_RETURN_SSL_ERROR;
+    }
 
-/**
- * Write client handshake packet to a server.
- *
- * @param[in] con Connection structure previously initialized with
- *  drizzle_con_create(), drizzle_con_clone(), or related functions.
- * @return Standard drizzle return value.
- */
-DRIZZLE_API
-drizzle_return_t drizzle_handshake_client_write(drizzle_con_st *con);
+    if (!key)
+      key= cert;
 
-/**
- * Write client SSL handshake packet to a server.
- *
- * @param[in] con Connection structure previously initialized with
- *  drizzle_con_create(), drizzle_con_clone(), or related functions.
- * @return Standard drizzle return value.
- */
-DRIZZLE_API
-drizzle_return_t drizzle_handshake_ssl_client_write(drizzle_con_st *con);
+    if (SSL_CTX_use_PrivateKey_file(con->ssl_context, key, SSL_FILETYPE_PEM) != 1)
+    {
+      drizzle_set_error(con->drizzle, "drizzle_set_ssl", "Cannot load the SSL key file");
+      return DRIZZLE_RETURN_SSL_ERROR;
+    }
 
-/** @} */
+    if (SSL_CTX_check_private_key(con->ssl_context) != 1)
+    {
+      drizzle_set_error(con->drizzle, "drizzle_set_ssl", "Error validating the SSL private key");
+      return DRIZZLE_RETURN_SSL_ERROR;
+    }
+  }
 
-#ifdef __cplusplus
+  con->ssl= SSL_new(con->ssl_context);
+
+  return DRIZZLE_RETURN_OK;
 }
-#endif
