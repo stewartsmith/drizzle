@@ -40,6 +40,7 @@
 #include <plugin/json_server/json/value.h>
 #include <plugin/json_server/json/writer.h>
 
+#include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -308,6 +309,7 @@ Value::Value( ValueType type_arg )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    switch ( type_arg )
    {
@@ -351,6 +353,7 @@ Value::Value( Int value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.int_ = value;
 }
@@ -362,6 +365,7 @@ Value::Value( UInt value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.uint_ = value;
 }
@@ -372,6 +376,7 @@ Value::Value( double value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.real_ = value;
 }
@@ -383,6 +388,7 @@ Value::Value( const char *value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.string_ = valueAllocator()->duplicateStringValue( value );
 }
@@ -396,6 +402,7 @@ Value::Value( const char *beginValue,
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.string_ = valueAllocator()->duplicateStringValue( beginValue, 
                                                             UInt(endValue - beginValue) );
@@ -409,6 +416,7 @@ Value::Value( const std::string &value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.string_ = valueAllocator()->duplicateStringValue( value.c_str(), 
                                                             (unsigned int)value.length() );
@@ -422,6 +430,7 @@ Value::Value( const StaticString &value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.string_ = const_cast<char *>( value.c_str() );
 }
@@ -435,6 +444,7 @@ Value::Value( const CppTL::ConstString &value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.string_ = valueAllocator()->duplicateStringValue( value, value.length() );
 }
@@ -446,6 +456,7 @@ Value::Value( bool value )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    value_.bool_ = value;
 }
@@ -457,6 +468,7 @@ Value::Value( const Value &other )
 # ifdef JSON_VALUE_USE_INTERNAL_MAP
    , itemIsUsed_( 0 )
 #endif
+   , value_as_string_( 0 )
 {
    switch ( type_ )
    {
@@ -504,7 +516,6 @@ Value::Value( const Value &other )
    }
 }
 
-
 Value::~Value()
 {
    switch ( type_ )
@@ -514,7 +525,9 @@ Value::~Value()
    case uintValue:
    case realValue:
    case booleanValue:
-      break;
+       if ( value_as_string_ )
+           valueAllocator()->releaseStringValue( value_as_string_ );
+       break;
    case stringValue:
       if ( allocated_ )
          valueAllocator()->releaseStringValue( value_.string_ );
@@ -715,9 +728,12 @@ Value::asCString() const
    return value_.string_;
 }
 
-
+/**
+ * If type_ is not stringValue, we will here convert other values to value_as_string_ field,
+ * then return it.
+ */
 std::string 
-Value::asString() const
+Value::asString()
 {
    switch ( type_ )
    {
@@ -728,8 +744,29 @@ Value::asString() const
    case booleanValue:
       return value_.bool_ ? "true" : "false";
    case intValue:
+      if(!value_as_string_)
+      {
+          char buf[64];
+          sprintf(buf, "%d", value_.int_);
+          value_as_string_ = valueAllocator()->duplicateStringValue( buf );
+      }
+      return value_as_string_;
    case uintValue:
+      if(!value_as_string_)
+      {
+          char buf[64];
+          sprintf(buf, "%d", value_.uint_);
+          value_as_string_ = valueAllocator()->duplicateStringValue( buf );
+      }
+      return value_as_string_;
    case realValue:
+      if(!value_as_string_)
+      {
+          char buf[256];
+          sprintf(buf, "%f", value_.real_);
+          value_as_string_ = valueAllocator()->duplicateStringValue( buf );
+      }
+      return value_as_string_;
    case arrayValue:
    case objectValue:
       JSON_ASSERT_MESSAGE( false, "Type is not convertible to string" );

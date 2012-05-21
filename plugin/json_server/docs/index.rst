@@ -3,7 +3,12 @@
 JSON Server
 ===========
 
-JSON HTTP interface.
+JSON Server implements a simple HTTP server that allows you to access your
+Drizzle database with JSON based protocols. Currently two API's are supported:
+a SQL-over-HTTP protocol allows you to execute any single statement SQL
+transactions and a pure JSON protocol currently supports storing of JSON
+documents as blobs in a key-value table.
+
 
 .. _json_server_loading:
 
@@ -51,30 +56,380 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
-   :Option: :option:`--json-server.port`
 
    Port number to use for connection or 0 for default (port 8086) 
 
-.. _json_server_examples:
+.. _json_server_apis:
 
-Examples
---------
+APIs
+----
 
-Sorry, there are no examples for this plugin.
+JSON Server supports a few APIs that offer different functionalities. Each API
+is accessed via it's own URI, and parameters can be given in the query string
+or in the POST data. 
+
+The APIs are versioned, the version number is prepended to the API name. If 
+functionality is added or changed, it will not be available if an API is 
+accessed via an earlier version number. Finally, the latest version of each API
+is also available from the root, without any version number.
+
+As of this writing, the following APIs exist:
+
+.. code-block:: none
+
+    /0.1/sql
+    /0.2/sql
+    /sql
+
+Because the SQL API did not change between 0.1 and 0.2, all of the above URIs
+are exactly the same.
+
+.. code-block:: none
+
+    /0.2/json
+    /json
+
+The pure JSON API did not exist in the 0.1 release, as you can see from above.
+
+.. code-block:: none
+
+    /version
+    /
+
+The ``/version`` URI will return the version of Drizzle (in a JSON document, of 
+course):
+
+.. code-block:: none
+
+    $ curl http://localhost:8086/version
+    {
+      "version" : "7.1.31.2451-snapshot"
+    }
+
+The root URI returns a simple HTML GUI that can be used to test both the SQL and
+pure JSON APIs. Just point your browser to http://localhost:8086/ and try it!
+
+.. _json_server_sql_api:
+
+The SQL-over-HTTP API: /sql
+---------------------------
+
+The first API in JSON Server is the SQL-over-HTTP API. It allows you to execute
+almost any SQL and the result is returned as a 2 dimensional JSON array.
+
+On the HTTP level this is a simple API. The method is always ``POST`` and the
+functionality is determined by the SQL statement you send.
+
+.. code-block:: none
+  
+  POST /sql
+  
+  SELECT * from test.foo;
+
+Returns:
+
+.. code-block:: none
+
+  {
+   "query" : "SELECT * from test.foo;\n",
+   "result_set" : [
+      [ "1", "Hello Drizzle Day Audience!" ],
+      [ "2", "this text came in over http" ]
+   ],
+   "sqlstate" : "00000"
+  }
+
+The above corresponds to the following query from a drizzle command line:
+
+.. code-block:: mysql
+
+  drizzle> select * from test.foo;
+
++----+-----------------------------+
+| id | bar                         |
++====+=============================+
+|  1 | Hello Drizzle Day Audience! | 
++----+-----------------------------+
+|  2 | this text came in over http | 
++----+-----------------------------+
+
+
+.. _json_server_json_api:
+
+Pure JSON key-value API: /json
+------------------------------
+
+The pure JSON key-value API is found at the URI ``/json``. It takes a rather
+opposite approach than the ``/sql`` API. Queries are expressed as JSON query 
+documents, similar to what is found in Metabase, CouchDB or MongoDB. It is not
+possible to use any SQL.
+
+The purpose of the ``/json`` API is to use Drizzle as a key-value document 
+storage. This means that the table layout is determined by the JSON Server 
+module. Therefore, it is not possible for the user to access arbitrary 
+relational tables via the ``/json`` API, rather tables must adhere to the 
+format explained further below, and it must contain valid JSON documents in the 
+data columns.
+
+If you post (insert) a document to a table that doesn't exist, it will be 
+automatically created. For this reason, a user mostly doesn't need to even
+know the specific format of a JSON server table. 
+
+.. _json_server_json_parameters:
+
+Parameters
+^^^^^^^^^^
+
+Following parameters can be passed in the URI query string:
+
+.. _json_server_json_parameters_id:
+
+``_id``
+
+   :Type: Unsigned integer
+   :Mandatory: No
+   :Default: 
+
+   Optionally, a user may also specify the _id value which is requested. 
+   Typically this is given in the JSON query document instead. If both are given
+   the _id value in the query document has precedence.
+
+.. _json_server_json_parameters_query:
+
+``query``
+
+   :Type: JSON query document
+   :Mandatory: No
+   :Default: 
+
+   A JSON document, the so called *query document*. This document specifies
+   which records/documents to return from the database. Currently it is only
+   possible to query for a single value by the primary key, which is 
+   called ``_id``. Any other fields in the query document will be ignored.
+
+   The query parameter is used for GET, PUT and DELETE where it is passed in 
+   URL encoded form in the URI query string. For POST requests the query 
+   document is passed as the POST data. (In that case only the query document
+   is passed, there is no ``query=`` part, in other words the data is never
+   encoded in www-form-urlencoded format.)
+
+   Example query document:
+
+   .. code-block:: none
+
+       { "_id" : 1 }
+
+.. _json_server_json_parameters_schema:
+
+``schema``
+
+   :Type: String
+   :Mandatory: No
+   :Default: test
+
+   Name of the schema which we are querying. The schema must exist. 
+
+.. _json_server_parameters_table:
+
+``table``
+
+   :Type: String
+   :Mandatory: No
+   :Default: jsonkv
+
+   Name of the table which we are querying. For POST requests, if the table 
+   doesn't exist, it will be automatically created. For other requests the
+   table must exist, otherwise an error is returned.
+
+POSTing a document
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: none
+  
+  POST /json?schema=test&table=people HTTP/1.1
+
+  {
+    "_id" : 2, 
+    "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
+  }
+
+Returns:
+
+.. code-block:: none
+
+  HTTP/1.1 200 OK
+  Content-Type: text/html
+
+  {
+       "query" : {
+              "_id" : 2,
+              "document" : {
+                   "age" : 35,
+                   "firstname" : "Henrik",
+                   "lastname" : "Ingo"
+                  }
+           },
+       "sqlstate" : "00000"
+  }
+
+
+(The use of Content-type: text/html is considered a bug and will be
+fixed in a future version.)
+
+Under the hood, this has inserted the following record into a table "jsontable":
+
+.. code-block:: mysql
+
+  drizzle> select * from people where _id=2;
+
++-----+--------------------------+
+| _id | document                 |
++=====+==========================+
+|   2 |{                         |
+|     |"age" : 35,               |
+|     |"firstname" : "Henrik",   |
+|     |"lastname" : "Ingo"       |
+|     |}                         |
++-----+--------------------------+
+
+The ``_id`` field is always present. If it isn't specified, an auto_increment
+value will be generated. If a record with the given ``_id`` already exists in
+the table, the record will be updated (using REPLACE INTO).
+
+In addition there are one or more columns of type TEXT.
+The column name(s) corresponds to the top level key(s) that were specified in the
+POSTed JSON document. You can use any name(s) for the top level key(s), but
+the name ``document`` is commonly used as a generic name. The contents of such a
+column is the value of the corresponding top level key and has to be valid JSON.
+
+A table of this format is automatically created when the first document is
+POSTed to the table. This means that the column names are defined from the top
+level key(s) of that first document and future JSON documents must use the same 
+top level key(s). Below the top level key(s) the JSON document can be of any 
+arbitrary structure. A common practice is to always use ``_id`` and ``document``
+as the top level keys, and place the actual JSON document, which can be of
+arbitrary structure, under the ``document`` key.
+
+
+GET a document
+^^^^^^^^^^^^^^
+
+The equivalent of an SQL SELECT is HTTP GET.
+
+Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+
+.. code-block:: none
+  
+  GET /json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D%0A
+
+Returns
+
+.. code-block:: none
+  
+  HTTP/1.0 200 OK
+  Content-Type: text/html
+  
+  {
+    "query" : {
+        "_id" : 1
+         },
+       "result_set" : [
+              {
+                 "_id" : 1,
+                 "document" : {
+                        "age" : 21,
+                        "firstname" : "Mohit",
+                        "lastname" : "Srivastava"
+                     }
+              }
+           ],
+       "sqlstate" : "00000"
+  }
+
+It is also allowed to specify the ``_id`` as a URI query string parameter and
+omit the query document:
+
+.. code-block:: none
+  
+  GET /json?schema=test&table=people&_id=1
+
+If both are specified, the query document takes precedence.
+
+Finally, it is possible to issue a GET request to a table without specifying
+neither the ``_id`` parameter or a query document. In this case all records of 
+the whole table is returned.
+
+
+Updating a record
+^^^^^^^^^^^^^^^^^
+
+To update a record, POST new version of json document with same ``_id`` as an 
+already existing record.
+
+(PUT is currently not supported, instead POST is used for both inserting and
+updating.)
+
+Deleting a record
+^^^^^^^^^^^^^^^^^
+ 
+Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+
+.. code-block:: none
+  
+  DELETE http://14.139.228.217:8086/json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D
+
+Returns:
+
+.. code-block:: none
+  
+  HTTP/1.0 200 OK
+  Content-Type: text/html
+
+  {
+       "query" : {
+              "_id" : 1
+         },
+       "sqlstate" : "00000"
+  }
+
+It is also allowed to specify the ``_id`` as a URI query string parameter and
+omit the query document:
+
+.. code-block:: none
+  
+  DELETE /json?schema=test&table=people&_id=1
+
+If both are specified, the query document takes precedence.
+ 
+.. _json_server_limitations:
+
+Limitations
+^^^^^^^^^^^
+
+The ``/sql`` and ``/json`` APIs are both feature complete, yet JSON Server is
+still an experimental module. There are known crashes, the module is still
+single threaded and there is no authentication... and that's just a start! 
+These limitations are being worked on. For a full list of the current state of 
+JSON Server, please follow 
+`this launchpad blueprint <https://blueprints.launchpad.net/drizzle/+spec/json-server>`_.
+
+An inherent limitation is that each HTTP request is its own transaction. While
+it would be possible to support maintaining a complex SQL transaction over the
+span of multiple HTTP requests, we currently do not plan to support that.
 
 .. _json_server_authors:
 
 Authors
 -------
 
-Stewart Smith
+Stewart Smith, Henrik Ingo, Mohit Srivastava
 
 .. _json_server_version:
 
 Version
 -------
 
-This documentation applies to **json_server 0.1**.
+This documentation applies to **json_server 0.2**.
 
 To see which version of the plugin a Drizzle server is running, execute:
 
@@ -87,4 +442,11 @@ Changelog
 
 v0.1
 ^^^^
-* First release.
+* /sql API
+* Simple web based GUI at /
+* /version API
+
+v0.2
+^^^^
+* /json API supporting pure JSON key-value operations (POST, GET, DELETE)
+* Automatic creation of table on first post. 

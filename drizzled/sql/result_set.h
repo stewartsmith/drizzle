@@ -34,6 +34,7 @@
 #include <drizzled/visibility.h>
 #include <drizzled/sql/exception.h>
 #include <drizzled/sql/result_set_meta_data.h>
+#include <drizzled/field.h>
 #include <cassert>
 #include <queue>
 
@@ -94,19 +95,48 @@ public:
   bool error() const;
   sql::Exception getException() const;
 
-  ResultSet(size_t fields) :
+  ResultSet(size_t columns) :
     _has_next_been_called(false),
     _current_row(_results.end()),
-    _meta_data(fields)
+    _meta_data(columns)
   {
   }
 
-  void setColumnCount(size_t fields)
+  void setColumnCount(size_t columns)
   {
-    _meta_data.setColumnCount(fields);
+    _meta_data.setColumnCount(columns);
   }
 
-  ~ResultSet();
+  void setColumnInfo(size_t column_number, const SendField& field)
+  {
+    _meta_data.setColumnInfo(column_number, field);
+  }
+
+  /**
+   * @brief Get object that holds column meta data.
+   * 
+   * The following info is available:
+   * 
+   * metadata = rs.getColumnInfo(0);
+   * metadata.db_name;
+   * metadata.org_table_name;
+   * metadata.org_col_name;
+   * metadata.table_name;
+   * metadata.col_name;
+   * metadata.charsetnr;
+   * metadata.flags;
+   * metadata.type;
+   * metadata.length;
+   * metadata.decimals;
+   * 
+   * @see drizzled/item.cc to see where these are set.
+   */
+  SendField getColumnInfo(size_t column_number)
+  {
+    return _meta_data.getColumnInfo(column_number);
+  }
+
+~ResultSet();
 
   void createRow();
   void setColumn(size_t column_number, const std::string &arg);

@@ -47,17 +47,20 @@ public:
   virtual void sendFields(List<Item>& list)
   {
     List<Item>::iterator it(list.begin());
-
     column= 0;
     max_column= 0;
 
     while (Item* item= it++)
     {
-      SendField field;
+      // max_column starts from 0, ColumnCount from 1
+      _result_set->setColumnCount(max_column+1);
+      // Get pointer to next column metadata class
+      SendField field = _result_set->getColumnInfo(max_column);
       item->make_field(&field);
+      // Is this necessary or does it just set the same pointer back?
+      _result_set->setColumnInfo(max_column, field);
       max_column++;
     }
-    _result_set->setColumnCount(max_column);
     // Moved to checkRowBegin()
     //_result_set->createRow();
   }
@@ -75,7 +78,7 @@ public:
     }
   }
 
-virtual void checkRowEnd()
+  virtual void checkRowEnd()
   {
     column++;
   }
