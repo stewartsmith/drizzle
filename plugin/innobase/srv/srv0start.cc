@@ -1292,7 +1292,7 @@ innobase_start_or_create_for_mysql(void)
         drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: Completed initialization of buffer pool");
 
 	if (err != DB_SUCCESS) {
-          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Fatal error: cannot allocate the memory for the buffer pool");
+          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Fatal error: cannot allocate memory for the buffer pool");
 
           return(DB_ERROR);
 	}
@@ -1695,6 +1695,24 @@ innobase_start_or_create_for_mysql(void)
 	start the purge thread. */
 	if (srv_n_purge_threads == 1) {
 		os_thread_create(&srv_purge_thread, NULL, NULL);
+	}
+
+	/* Wait for the purge and master thread to startup. */
+
+	while (srv_shutdown_state == SRV_SHUTDOWN_NONE) {
+		if (srv_thread_has_reserved_slot(SRV_MASTER) == ULINT_UNDEFINED
+		    || (srv_n_purge_threads == 1
+			&& srv_thread_has_reserved_slot(SRV_WORKER)
+			== ULINT_UNDEFINED)) {
+
+			ut_print_timestamp(stderr);
+			fprintf(stderr, "  InnoDB: "
+				"Waiting for the background threads to "
+				"start\n");
+			os_thread_sleep(1000000);
+		} else {
+			break;
+		}
 	}
 
 #ifdef UNIV_DEBUG

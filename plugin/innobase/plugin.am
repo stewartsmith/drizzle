@@ -193,6 +193,8 @@ noinst_HEADERS+= \
                  plugin/innobase/include/ut0byte.h \
                  plugin/innobase/include/ut0byte.ic \
                  plugin/innobase/include/ut0dbg.h \
+		 plugin/innobase/include/ut0bh.h \
+		 plugin/innobase/include/ut0bh.ic \
                  plugin/innobase/include/ut0lst.h \
                  plugin/innobase/include/ut0mem.h \
                  plugin/innobase/include/ut0mem.ic \
@@ -319,6 +321,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/trx/trx0undo.cc \
                                         plugin/innobase/usr/usr0sess.cc \
                                         plugin/innobase/ut/ut0byte.cc \
+					plugin/innobase/ut/ut0bh.cc \
                                         plugin/innobase/ut/ut0dbg.cc \
                                         plugin/innobase/ut/ut0list.cc \
                                         plugin/innobase/ut/ut0mem.cc \

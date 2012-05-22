@@ -7370,7 +7370,7 @@ ha_innobase::info(
       /* We do not update delete_length if no
          locking is requested so the "old" value can
          remain. delete_length is initialized to 0 in
-         the ha_statistics' constructor. */
+         the ha_statistics' constructor.*/
     } else if (UNIV_UNLIKELY
                (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE)) {
       /* Avoid accessing the tablespace if
