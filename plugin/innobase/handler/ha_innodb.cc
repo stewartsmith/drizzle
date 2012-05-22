@@ -292,6 +292,18 @@ static lock_wait_constraint lock_wait_timeout;
 
 static char*  internal_innobase_data_file_path  = NULL;
 
+/** Possible values for system variable "innodb_stats_method". The values
+are defined the same as its corresponding MyISAM system variable
+"myisam_stats_method"(see "myisam_stats_method_names"), for better usability */
+static const char* innodb_stats_method_names[] = {
+	"nulls_equal",
+	"nulls_unequal",
+	"nulls_ignored",
+	NULL
+};
+
+static string innodb_stats_method;
+
 /* The following counter is used to convey information to InnoDB
 about server activity: in selects it is not sensible to call
 srv_active_wake_master_thread after each fetch or search, we only do
@@ -2014,6 +2026,36 @@ innodb_file_format_name_validate(
   return(1);
 }
 
+static
+int
+innodb_stats_method_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *stats_method_input = var->value->str_value.ptr();
+
+  if (stats_method_input == NULL)
+    return 1;
+
+  ulint use;
+
+  for (use = 0;
+       use < UT_ARR_SIZE(innodb_stats_method_names);
+       ++use) {
+    if (!innobase_strcasecmp(stats_method_input,
+                             innodb_stats_method_names[use]))
+    {
+      srv_innodb_stats_method= use;
+      innodb_stats_method= innodb_stats_method_names[use];
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+
 /*************************************************************//**
 Check if it is a valid value of innodb_change_buffering. This function is
 registered as a callback with MySQL.
@@ -2577,6 +2619,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", innodb_max_purge_lag));
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
   context.registerVariable(new sys_var_bool_ptr("adaptive_hash_index", &btr_search_enabled, innodb_adaptive_hash_index_update));
+  context.registerVariable(new sys_var_std_string("stats_method",
+						  innodb_stats_method,
+						  innodb_stats_method_validate));
 
   context.registerVariable(new sys_var_constrained_value<uint32_t>("commit_concurrency",
                                                                    innobase_commit_concurrency,
@@ -7247,6 +7292,65 @@ innobase_get_mysql_key_number_for_index(
 
         return(0);
 }
+
+/*********************************************************************//**
+Calculate Record Per Key value. Need to exclude the NULL value if
+innodb_stats_method is set to "nulls_ignored"
+@return estimated record per key value */
+static
+ha_rows
+innodb_rec_per_key(
+/*===============*/
+	dict_index_t*	index,		/*!< in: dict_index_t structure */
+	ulint		i,		/*!< in: the column we are
+					calculating rec per key */
+	ha_rows		records)	/*!< in: estimated total records */
+{
+	ha_rows		rec_per_key;
+
+	ut_ad(i < dict_index_get_n_unique(index));
+
+	/* Note the stat_n_diff_key_vals[] stores the diff value with
+	n-prefix indexing, so it is always stat_n_diff_key_vals[i + 1] */
+	if (index->stat_n_diff_key_vals[i + 1] == 0) {
+
+		rec_per_key = records;
+	} else if (srv_innodb_stats_method == SRV_STATS_NULLS_IGNORED) {
+		ib_int64_t	num_null;
+
+		/* Number of rows with NULL value in this
+		field */
+		num_null = records - index->stat_n_non_null_key_vals[i];
+
+		/* In theory, index->stat_n_non_null_key_vals[i]
+		should always be less than the number of records.
+		Since this is statistics value, the value could
+		have slight discrepancy. But we will make sure
+		the number of null values is not a negative number. */
+		num_null = (num_null < 0) ? 0 : num_null;
+
+		/* If the number of NULL values is the same as or
+		large than that of the distinct values, we could
+		consider that the table consists mostly of NULL value. 
+		Set rec_per_key to 1. */
+		if (index->stat_n_diff_key_vals[i + 1] <= num_null) {
+			rec_per_key = 1;
+		} else {
+			/* Need to exclude rows with NULL values from
+			rec_per_key calculation */
+			rec_per_key = (ha_rows)(
+				(records - num_null)
+				/ (index->stat_n_diff_key_vals[i + 1]
+				   - num_null));
+		}
+	} else {
+		rec_per_key = (ha_rows)
+			 (records / index->stat_n_diff_key_vals[i + 1]);
+	}
+
+	return(rec_per_key);
+}
+
 /*********************************************************************//**
 Returns statistics information of the table to the MySQL interpreter,
 in various fields of the handle object. */
@@ -7468,13 +7572,7 @@ ha_innobase::info(
           break;
         }
 
-        if (index->stat_n_diff_key_vals[j + 1] == 0) {
-
-          rec_per_key = stats.records;
-        } else {
-          rec_per_key = (ha_rows)(stats.records /
-           index->stat_n_diff_key_vals[j + 1]);
-        }
+	rec_per_key = innodb_rec_per_key(index, j, stats.records);
 
         /* Since MySQL seems to favor table scans
         too much over index searches, we pretend
@@ -9467,6 +9565,11 @@ static void init_options(drizzled::module::option_context &context)
           _("ove blocks to the 'new' end of the buffer pool if the first access"
             " was at least this many milliseconds ago."
             " The timeout is disabled if 0 (the default)."));
+  context("stats-method",
+          po::value<string>(&innodb_stats_method),
+          "Specifies how InnoDB index statistics collection code should "
+	  "treat NULLs. Possible values are NULLS_EQUAL (default), "
+	  "NULLS_UNEQUAL and NULLS_IGNORED");
 }
 
 
