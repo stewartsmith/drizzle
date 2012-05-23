@@ -1075,7 +1075,7 @@ srv_thread_has_reserved_slot(
 
 		slot = srv_table_get_nth_slot(i);
 
-		if (slot->in_use && slot->type == type) {
+		if (slot->in_use && slot->type == (unsigned int)type) {
 			slot_no = i;
 			break;
 		}
