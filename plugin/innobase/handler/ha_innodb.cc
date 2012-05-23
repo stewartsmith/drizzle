@@ -245,6 +245,10 @@ static binary_constraint flush_neighbor_pages;
 
 static string sysvar_transaction_log_use_replicator;
 
+typedef constrained_check<uint32_t, TRX_SYS_N_RSEGS, 1> rollback_segments_constraint;
+static rollback_segments_constraint innobase_rollback_segments;
+
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -1932,6 +1936,12 @@ static void innodb_thread_concurrency_update(Session *, sql_var_t)
   srv_thread_concurrency= innobase_thread_concurrency.get();
 }
 
+static void innodb_rollback_segments_update(Session *, sql_var_t)
+{
+  srv_rollback_segments= innobase_rollback_segments.get();
+}
+
+
 static void innodb_sync_spin_loops_update(Session *, sql_var_t)
 {
   srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
@@ -2223,6 +2233,7 @@ innobase_init(
   srv_ibuf_accel_rate= ibuf_accel_rate.get();
   srv_checkpoint_age_target= checkpoint_age_target.get();
   srv_flush_neighbor_pages= flush_neighbor_pages.get();
+  srv_rollback_segments= innobase_rollback_segments.get();
 
   srv_read_ahead = read_ahead_typelib.find_type_or_exit(vm["read-ahead"].as<string>().c_str(),
                                                         "read_ahead_typelib") + 1;
@@ -2678,6 +2689,10 @@ innobase_change_buffering_inited_ok:
 
   context.registerVariable(new sys_var_const_string("use-replicator",
                                                     sysvar_transaction_log_use_replicator));
+
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("rollback_segments",
+                                                                   innobase_rollback_segments,
+                                                                   innodb_rollback_segments_update));
 
   return(FALSE);
 
@@ -9392,8 +9407,7 @@ static void init_options(drizzled::module::option_context &context)
           "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
   context("purge-batch-size",
           po::value<purge_batch_constraint>(&innodb_purge_batch_size)->default_value(20),
-          "Number of UNDO logs to purge in one batch from the history list. "
-          "Default is 20.");
+          "Number of UNDO log pages to purge in one batch from the history list.");
   context("purge-threads",
           po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(1),
           "Purge threads can be either 0 or 1. Default is 1.");
@@ -9570,6 +9584,10 @@ static void init_options(drizzled::module::option_context &context)
           "Specifies how InnoDB index statistics collection code should "
 	  "treat NULLs. Possible values are NULLS_EQUAL (default), "
 	  "NULLS_UNEQUAL and NULLS_IGNORED");
+  context("rollback-segments",
+          po::value<rollback_segments_constraint>(&innobase_rollback_segments)->default_value(128),
+          "Number of UNDO logs to use");
+
 }
 
 

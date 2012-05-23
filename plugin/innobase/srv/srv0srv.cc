@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (c) 1995, 2011, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (C) 2008, 2009 Google Inc.
 Copyright (C) 2009, Percona Inc.
 
@@ -315,8 +315,11 @@ UNIV_INTERN ulong	srv_max_buf_pool_modified_pct	= 75;
 /* the number of purge threads to use from the worker pool (currently 0 or 1).*/
 UNIV_INTERN ulong srv_n_purge_threads = 0;
 
-/* the number of records to purge in one batch */
+/* the number of pages to purge in one batch */
 UNIV_INTERN ulong srv_purge_batch_size = 20;
+
+/* the number of rollback segments to use */
+UNIV_INTERN ulong srv_rollback_segments = TRX_SYS_N_RSEGS;
 
 /* variable counts amount of data read in total (in bytes) */
 UNIV_INTERN ulint srv_data_read = 0;
@@ -2720,7 +2723,7 @@ void
 srv_master_do_purge(void)
 /*=====================*/
 {
-	ulint	n_pages_purged;
+	ulint	n_pages_purged = 0;
 
 	ut_ad(!mutex_own(&kernel_mutex));
 
@@ -3474,6 +3477,7 @@ srv_purge_thread(
 						required by os_thread_create */
 {
 	srv_slot_t*	slot;
+	ulint		retries = 0;
 	ulint		slot_no = ULINT_UNDEFINED;
 	ulint		n_total_purged = ULINT_UNDEFINED;
 	ulint		next_itr_time;
@@ -3508,7 +3512,8 @@ srv_purge_thread(
 		because in the worst case we will end up waiting for
 		the next purge event. */
 		if (trx_sys->rseg_history_len < srv_purge_batch_size
-		    || n_total_purged == 0) {
+		    || (n_total_purged == 0
+			&& retries >= TRX_SYS_N_RSEGS)) {
 
 			os_event_t	event;
 
@@ -3519,6 +3524,8 @@ srv_purge_thread(
 			mutex_exit(&kernel_mutex);
 
 			os_event_wait(event);
+
+			retries = 0;
 		}
 
 		/* Check for shutdown and whether we should do purge at all. */
@@ -3529,7 +3536,12 @@ srv_purge_thread(
 			break;
 		}
 
-		n_total_purged = 0;
+		if (n_total_purged == 0 && retries <= TRX_SYS_N_RSEGS) {
+			++retries;
+		} else if (n_total_purged > 0) {
+			retries = 0;
+			n_total_purged = 0;
+		}
 
 		/* Purge until there are no more records to purge and there is
 		no change in configuration or server state. */

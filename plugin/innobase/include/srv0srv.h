@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2011, Innobase Oy. All Rights Reserved.
 Copyright (C) 2008, 2009, Google Inc.
 Copyright (C) 2009, Percona Inc.
 
@@ -318,8 +318,11 @@ extern ulint srv_log_waits;
 /* the number of purge threads to use from the worker pool (currently 0 or 1) */
 extern ulong srv_n_purge_threads;
 
-/* the number of records to purge in one batch */
+/* the number of pages to purge in one batch */
 extern ulong srv_purge_batch_size;
+
+/* the number of rollback segments to use */
+extern ulong srv_rollback_segments;
 
 /* variable that counts amount of data read in total (in bytes) */
 extern ulint srv_data_read;
