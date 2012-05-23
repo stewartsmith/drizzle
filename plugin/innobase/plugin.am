@@ -167,8 +167,6 @@ noinst_HEADERS+= \
                  plugin/innobase/include/sync0sync.h \
                  plugin/innobase/include/sync0sync.ic \
                  plugin/innobase/include/sync0types.h \
-                 plugin/innobase/include/thr0loc.h \
-                 plugin/innobase/include/thr0loc.ic \
                  plugin/innobase/include/trx0i_s.h \
                  plugin/innobase/include/trx0purge.h \
                  plugin/innobase/include/trx0purge.ic \
@@ -310,7 +308,6 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/sync/sync0arr.cc \
                                         plugin/innobase/sync/sync0rw.cc \
                                         plugin/innobase/sync/sync0sync.cc \
-                                        plugin/innobase/thr/thr0loc.cc	\
                                         plugin/innobase/trx/trx0i_s.cc	\
                                         plugin/innobase/trx/trx0purge.cc \
                                         plugin/innobase/trx/trx0rec.cc \

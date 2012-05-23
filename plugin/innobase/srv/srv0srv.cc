@@ -69,7 +69,6 @@ Created 10/8/1995 Heikki Tuuri
 #include "mem0mem.h"
 #include "mem0pool.h"
 #include "sync0sync.h"
-#include "thr0loc.h"
 #include "que0que.h"
 #include "log0recv.h"
 #include "pars0pars.h"
@@ -760,7 +759,7 @@ Unix.*/
 struct srv_slot_struct{
 	os_thread_id_t	id;		/*!< thread id */
 	os_thread_t	handle;		/*!< thread handle */
-	unsigned	type:3;		/*!< thread type: user, utility etc. */
+	unsigned	type:1;		/*!< thread type: user, utility etc. */
 	unsigned	in_use:1;	/*!< TRUE if this slot is in use */
 	unsigned	suspended:1;	/*!< TRUE if the thread is waiting
 					for the event of this slot */
@@ -860,6 +859,7 @@ srv_table_get_nth_slot(
 /*===================*/
 	ulint	index)		/*!< in: index of the slot */
 {
+	ut_ad(mutex_own(&kernel_mutex));
 	ut_a(index < OS_THREAD_MAX_N);
 
 	return(srv_sys->threads + index);
@@ -878,7 +878,7 @@ srv_get_n_threads(void)
 
 	mutex_enter(&kernel_mutex);
 
-	for (i = SRV_COM; i < SRV_MASTER + 1; i++) {
+	for (i = 0; i < SRV_MASTER + 1; i++) {
 
 		n_threads += srv_n_threads[i];
 	}
@@ -888,13 +888,46 @@ srv_get_n_threads(void)
 	return(n_threads);
 }
 
+#ifdef UNIV_DEBUG
 /*********************************************************************//**
-Reserves a slot in the thread table for the current thread. Also creates the
-thread local storage struct for the current thread. NOTE! The server mutex
-has to be reserved by the caller!
-@return	reserved slot index */
+Validates the type of a thread table slot.
+@return TRUE if ok */
 static
-ulint
+ibool
+srv_thread_type_validate(
+/*=====================*/
+	enum srv_thread_type	type)	/*!< in: thread type */
+{
+	switch (type) {
+	case SRV_WORKER:
+	case SRV_MASTER:
+		return(TRUE);
+	}
+	ut_error;
+	return(FALSE);
+}
+#endif /* UNIV_DEBUG */
+
+/*********************************************************************//**
+Gets the type of a thread table slot.
+@return thread type */
+static
+enum srv_thread_type
+srv_slot_get_type(
+/*==============*/
+	const srv_slot_t*	slot)	/*!< in: thread slot */
+{
+	enum srv_thread_type	type	= (enum srv_thread_type) slot->type;
+	ut_ad(srv_thread_type_validate(type));
+	return(type);
+}
+
+/*********************************************************************//**
+Reserves a slot in the thread table for the current thread.
+NOTE! The server mutex has to be reserved by the caller!
+@return	reserved slot */
+static
+srv_slot_t*
 srv_table_reserve_slot(
 /*===================*/
 	enum srv_thread_type	type)	/*!< in: type of the thread */
@@ -902,8 +935,7 @@ srv_table_reserve_slot(
 	srv_slot_t*	slot;
 	ulint		i;
 
-	ut_a(type > 0);
-	ut_a(type <= SRV_MASTER);
+	ut_ad(srv_thread_type_validate(type));
 	ut_ad(mutex_own(&kernel_mutex));
 
 	i = 0;
@@ -914,53 +946,41 @@ srv_table_reserve_slot(
 		slot = srv_table_get_nth_slot(i);
 	}
 
-	ut_a(slot->in_use == FALSE);
-
 	slot->in_use = TRUE;
 	slot->suspended = FALSE;
 	slot->type = type;
+	ut_ad(srv_slot_get_type(slot) == type);
 	slot->id = os_thread_get_curr_id();
 	slot->handle = os_thread_get_curr();
 
-	thr_local_create();
-
-	thr_local_set_slot_no(os_thread_get_curr_id(), i);
-
-	return(i);
+	return(slot);
 }
 
 /*********************************************************************//**
 Suspends the calling thread to wait for the event in its thread slot.
-NOTE! The server mutex has to be reserved by the caller!
-@return	event for the calling thread to wait */
+NOTE! The server mutex has to be reserved by the caller! */
 static
-os_event_t
-srv_suspend_thread(void)
-/*====================*/
+void
+srv_suspend_thread(
+/*===============*/
+	srv_slot_t*	slot)	/*!< in/out: thread slot */
 {
-	srv_slot_t*		slot;
-	os_event_t		event;
-	ulint			slot_no;
 	enum srv_thread_type	type;
 
 	ut_ad(mutex_own(&kernel_mutex));
 
-	slot_no = thr_local_get_slot_no(os_thread_get_curr_id());
+	ut_ad(slot->in_use);
+	ut_ad(!slot->suspended);
+	ut_ad(slot->id == os_thread_get_curr_id());
 
 	if (srv_print_thread_releases) {
 		fprintf(stderr,
 			"Suspending thread %lu to slot %lu\n",
-			(ulong) os_thread_get_curr_id(), (ulong) slot_no);
+			(ulong) os_thread_get_curr_id(),
+			(ulong) (slot - srv_sys->threads));
 	}
 
-	slot = srv_table_get_nth_slot(slot_no);
-
-        type = static_cast<srv_thread_type>(slot->type);
-
-	ut_ad(type >= SRV_WORKER);
-	ut_ad(type <= SRV_MASTER);
-
-	event = slot->event;
+	type = srv_slot_get_type(slot);
 
 	slot->suspended = TRUE;
 
@@ -968,9 +988,7 @@ srv_suspend_thread(void)
 
 	srv_n_threads_active[type]--;
 
-	os_event_reset(event);
-
-	return(event);
+	os_event_reset(slot->event);
 }
 
 /*********************************************************************//**
@@ -989,8 +1007,7 @@ srv_release_threads(
 	ulint		i;
 	ulint		count	= 0;
 
-	ut_ad(type >= SRV_WORKER);
-	ut_ad(type <= SRV_MASTER);
+	ut_ad(srv_thread_type_validate(type));
 	ut_ad(n > 0);
 	ut_ad(mutex_own(&kernel_mutex));
 
@@ -998,9 +1015,8 @@ srv_release_threads(
 
 		slot = srv_table_get_nth_slot(i);
 
-                if (slot->in_use &&
-                    (static_cast<srv_thread_type>(slot->type) == type) &&
-                    slot->suspended) {
+                if (slot->in_use && slot->suspended
+                    && srv_slot_get_type(slot) == type) {
 
 			slot->suspended = FALSE;
 
@@ -1028,34 +1044,6 @@ srv_release_threads(
 }
 
 /*********************************************************************//**
-Returns the calling thread type.
-@return	SRV_COM, ... */
-UNIV_INTERN
-enum srv_thread_type
-srv_get_thread_type(void)
-/*=====================*/
-{
-	ulint			slot_no;
-	srv_slot_t*		slot;
-	enum srv_thread_type	type;
-
-	mutex_enter(&kernel_mutex);
-
-	slot_no = thr_local_get_slot_no(os_thread_get_curr_id());
-
-	slot = srv_table_get_nth_slot(slot_no);
-
-        type = static_cast<srv_thread_type>(slot->type);
-
-	ut_ad(type >= SRV_WORKER);
-	ut_ad(type <= SRV_MASTER);
-
-	mutex_exit(&kernel_mutex);
-
-	return(type);
-}
-
-/*********************************************************************//**
 Check whether thread type has reserved a slot. Return the first slot that
 is found. This works because we currently have only 1 thread of each type.
 @return	slot number or ULINT_UNDEFINED if not found*/
@@ -1068,6 +1056,7 @@ srv_thread_has_reserved_slot(
 	ulint			i;
 	ulint			slot_no = ULINT_UNDEFINED;
 
+	ut_ad(srv_thread_type_validate(type));
 	mutex_enter(&kernel_mutex);
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
@@ -1108,22 +1097,18 @@ srv_init(void)
 	mutex_create(srv_innodb_monitor_mutex_key,
 		     &srv_innodb_monitor_mutex, SYNC_NO_ORDER_CHECK);
 
-        srv_sys->threads = static_cast<srv_table_t *>(mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
+        srv_sys->threads = static_cast<srv_table_t *>(mem_zalloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
-		slot = srv_table_get_nth_slot(i);
-		slot->in_use = FALSE;
-		slot->type=0;	/* Avoid purify errors */
+		slot = srv_sys->threads + i;
 		slot->event = os_event_create(NULL);
 		ut_a(slot->event);
 	}
 
-        srv_mysql_table = static_cast<srv_slot_t *>(mem_alloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
+        srv_mysql_table = static_cast<srv_slot_t *>(mem_zalloc(OS_THREAD_MAX_N * sizeof(srv_slot_t)));
 
 	for (i = 0; i < OS_THREAD_MAX_N; i++) {
 		slot = srv_mysql_table + i;
-		slot->in_use = FALSE;
-		slot->type = 0;
 		slot->event = os_event_create(NULL);
 		ut_a(slot->event);
 	}
@@ -1213,7 +1198,6 @@ srv_general_init(void)
 	os_sync_init();
 	sync_init();
 	mem_init(srv_mem_pool_size);
-	thr_local_init();
 }
 
 /*======================= InnoDB Server FIFO queue =======================*/
@@ -1570,7 +1554,7 @@ srv_table_reserve_slot_for_mysql(void)
 	while (slot->in_use) {
 		i++;
 
-		if (i >= OS_THREAD_MAX_N) {
+		if (UNIV_UNLIKELY(i >= OS_THREAD_MAX_N)) {
 
 			ut_print_timestamp(stderr);
 
@@ -2448,6 +2432,12 @@ srv_error_monitor_thread(
 	ib_uint64_t	old_lsn;
 	ib_uint64_t	new_lsn;
 	ib_int64_t	sig_count;
+	/* longest waiting thread for a semaphore */
+	os_thread_id_t	waiter		= os_thread_get_curr_id();
+	os_thread_id_t	old_waiter	= waiter;
+	/* the semaphore that is being waited for */
+	const void*	sema		= NULL;
+	const void*	old_sema	= NULL;
 
 	old_lsn = srv_start_lsn;
 
@@ -2497,7 +2487,8 @@ loop:
 
 	sync_arr_wake_threads_if_sema_free();
 
-	if (sync_array_print_long_waits()) {
+	if (sync_array_print_long_waits(&waiter, &sema)
+	    && sema == old_sema && os_thread_eq(waiter, old_waiter)) {
 		fatal_cnt++;
 		if (fatal_cnt > 10) {
 
@@ -2512,6 +2503,8 @@ loop:
 		}
 	} else {
 		fatal_cnt = 0;
+		old_waiter = waiter;
+		old_sema = sema;
 	}
 
 	/* Flush stderr so that a database user gets the output
@@ -2601,7 +2594,7 @@ srv_is_any_background_thread_active(void)
 
 	mutex_enter(&kernel_mutex);
 
-	for (i = SRV_COM; i <= SRV_MASTER; ++i) {
+	for (i = 0; i <= SRV_MASTER; ++i) {
 		if (srv_n_threads_active[i] != 0) {
 			ret = TRUE;
 			break;
@@ -2755,7 +2748,7 @@ srv_master_thread(
 			os_thread_create */
 {
 	buf_pool_stat_t buf_stat;
-	os_event_t	event;
+	srv_slot_t*	slot;
 	ulint		old_activity_count;
 	ulint		n_pages_purged	= 0;
 	ulint		n_bytes_merged;
@@ -2797,7 +2790,7 @@ srv_master_thread(
 
 	mutex_enter(&kernel_mutex);
 
-	srv_table_reserve_slot(SRV_MASTER);
+	slot = srv_table_reserve_slot(SRV_MASTER);
 
 	srv_n_threads_active[SRV_MASTER]++;
 
@@ -3435,7 +3428,7 @@ suspend_thread:
 		goto loop;
 	}
 
-	event = srv_suspend_thread();
+	srv_suspend_thread(slot);
 
 	mutex_exit(&kernel_mutex);
 
@@ -3445,7 +3438,7 @@ suspend_thread:
 	manual also mentions this string in several places. */
 	srv_main_thread_op_info = "waiting for server activity";
 
-	os_event_wait(event);
+	os_event_wait(slot->event);
 
 	if (srv_shutdown_state == SRV_SHUTDOWN_EXIT_THREADS) {
 		/* This is only extra safety, the thread should exit
@@ -3460,10 +3453,7 @@ suspend_thread:
 
 	goto loop;
 
-
-#if !defined(__SUNPRO_C)
-	OS_THREAD_DUMMY_RETURN;	/* Not reached, avoid compiler warning */
-#endif
+	OS_THREAD_DUMMY_RETURN;
 }
 
 /*********************************************************************//**
@@ -3478,7 +3468,6 @@ srv_purge_thread(
 {
 	srv_slot_t*	slot;
 	ulint		retries = 0;
-	ulint		slot_no = ULINT_UNDEFINED;
 	ulint		n_total_purged = ULINT_UNDEFINED;
 	ulint		next_itr_time;
 
@@ -3491,9 +3480,7 @@ srv_purge_thread(
 
 	mutex_enter(&kernel_mutex);
 
-	slot_no = srv_table_reserve_slot(SRV_WORKER);
-
-	slot = srv_table_get_nth_slot(slot_no);
+	slot = srv_table_reserve_slot(SRV_WORKER);
 
 	++srv_n_threads_active[SRV_WORKER];
 
@@ -3515,15 +3502,13 @@ srv_purge_thread(
 		    || (n_total_purged == 0
 			&& retries >= TRX_SYS_N_RSEGS)) {
 
-			os_event_t	event;
-
 			mutex_enter(&kernel_mutex);
 
-			event = srv_suspend_thread();
+			srv_suspend_thread(slot);
 
 			mutex_exit(&kernel_mutex);
 
-			os_event_wait(event);
+			os_event_wait(slot->event);
 
 			retries = 0;
 		}
@@ -3567,15 +3552,10 @@ srv_purge_thread(
 
 	mutex_enter(&kernel_mutex);
 
-	ut_ad(srv_table_get_nth_slot(slot_no) == slot);
-
 	/* Decrement the active count. */
-	srv_suspend_thread();
+	srv_suspend_thread(slot);
 
 	slot->in_use = FALSE;
-
-	/* Free the thread local memory. */
-	thr_local_free(os_thread_get_curr_id());
 
 	mutex_exit(&kernel_mutex);
 

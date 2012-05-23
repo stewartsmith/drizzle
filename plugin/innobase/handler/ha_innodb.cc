@@ -81,6 +81,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
+#include <drizzled/internal/my_sys.h>
 
 namespace po= boost::program_options;
 namespace fs=boost::filesystem;
@@ -115,7 +116,6 @@ using namespace std;
 #include "fil0fil.h"
 #include "trx0xa.h"
 #include "row0merge.h"
-#include "thr0loc.h"
 #include "dict0boot.h"
 #include "ha_prototypes.h"
 #include "ut0mem.h"
@@ -1345,6 +1345,19 @@ innobase_strcasecmp(
   const char* b)  /*!< in: second string to compare */
 {
   return(system_charset_info->strcasecmp(a, b));
+}
+
+/******************************************************************//**
+Strip dir name from a full path name and return only the file name
+@return file name or "null" if no file name */
+const char*
+innobase_basename(
+/*==============*/
+	const char*	path_name)	/*!< in: full path name */
+{
+  const char*	name = path_name + drizzled::internal::dirname_length(path_name);
+
+	return((name) ? name : "null");
 }
 
 /******************************************************************//**
@@ -3084,7 +3097,6 @@ InnobaseEngine::close_connection(
 
   innobase_rollback_trx(trx);
 
-  thr_local_free(trx->mysql_thread_id);
   trx_free_for_mysql(trx);
 
   return(0);
@@ -8413,8 +8425,7 @@ innodb_mutex_show_status(
     if (mutex->mutex_type != 1) {
       if (mutex->count_using > 0) {
         buf1len= my_snprintf(buf1, sizeof(buf1),
-          "%s:%s",
-          mutex->cmutex_name, mutex->cfile_name);
+          "%s:%s", mutex->cmutex_name, innobase_basename(mutex->cfile_name));
         buf2len= my_snprintf(buf2, sizeof(buf2),
           "count=%lu, spin_waits=%lu,"
           " spin_rounds=%lu, "
@@ -8444,7 +8455,8 @@ innodb_mutex_show_status(
     }
 #else /* UNIV_DEBUG */
     buf1len= snprintf(buf1, sizeof(buf1), "%s:%lu",
-          mutex->cfile_name, (ulong) mutex->cline);
+		      innobase_basename(mutex->cfile_name),
+		      (ulong) mutex->cline);
     buf2len= snprintf(buf2, sizeof(buf2), "os_waits=%lu",
                       (ulong) mutex->count_os_wait);
 
@@ -8460,7 +8472,7 @@ innodb_mutex_show_status(
   if (block_mutex) {
     buf1len = snprintf(buf1, sizeof buf1,
                        "combined %s:%lu",
-                       block_mutex->cfile_name,
+                       innobase_basename(block_mutex->cfile_name),
                        (ulong) block_mutex->cline);
     buf2len = snprintf(buf2, sizeof buf2,
                        "os_waits=%lu",
@@ -8491,7 +8503,8 @@ innodb_mutex_show_status(
     }
 
     buf1len = snprintf(buf1, sizeof buf1, "%s:%lu",
-                       lock->cfile_name, (ulong) lock->cline);
+                       innobase_basename(lock->cfile_name),
+		       (ulong) lock->cline);
     buf2len = snprintf(buf2, sizeof buf2, "os_waits=%lu",
                        (ulong) lock->count_os_wait);
 
@@ -8506,7 +8519,7 @@ innodb_mutex_show_status(
   if (block_lock) {
     buf1len = snprintf(buf1, sizeof buf1,
                        "combined %s:%lu",
-                       block_lock->cfile_name,
+                       innobase_basename(block_lock->cfile_name),
                        (ulong) block_lock->cline);
     buf2len = snprintf(buf2, sizeof buf2,
                        "os_waits=%lu",

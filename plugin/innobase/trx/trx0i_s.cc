@@ -523,7 +523,7 @@ fill_trx_row(
 		query[stmt_len] = '\0';
 
                 row->trx_query = static_cast<const char *>(ha_storage_put_memlim(
-			cache->storage, stmt, stmt_len + 1,
+			cache->storage, query, stmt_len + 1,
                         MAX_ALLOWED_FOR_STORAGE(cache)));
 
 		if (row->trx_query == NULL) {
