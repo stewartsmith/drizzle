@@ -472,6 +472,19 @@ innobase_isspace(
   return static_cast<const CHARSET_INFO*>(cs)->isspace(char_to_test);
 }
 
+/******************************************************************//**
+Strip dir name from a full path name and return only the file name
+@return file name or "null" if no file name */
+const char*
+innobase_basename(
+/*==============*/
+        const char*     path_name)      /*!< in: full path name */
+{
+  const char*     name = path_name + drizzled::internal::dirname_length(path_name);
+
+        return((name) ? name : "null");
+}
+
 UNIV_INTERN
 void
 innobase_rec_to_mysql(

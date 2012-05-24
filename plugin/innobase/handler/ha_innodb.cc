@@ -81,6 +81,7 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <boost/filesystem.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
+#include <drizzled/internal/my_sys.h>
 
 namespace po= boost::program_options;
 namespace fs=boost::filesystem;
@@ -115,7 +116,6 @@ using namespace std;
 #include "fil0fil.h"
 #include "trx0xa.h"
 #include "row0merge.h"
-#include "thr0loc.h"
 #include "dict0boot.h"
 #include "ha_prototypes.h"
 #include "ut0mem.h"
@@ -245,6 +245,10 @@ static binary_constraint flush_neighbor_pages;
 
 static string sysvar_transaction_log_use_replicator;
 
+typedef constrained_check<uint32_t, TRX_SYS_N_RSEGS, 1> rollback_segments_constraint;
+static rollback_segments_constraint innobase_rollback_segments;
+
+
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
 
@@ -291,6 +295,18 @@ typedef constrained_check<uint32_t, 1024*1024*1024, 1> lock_wait_constraint;
 static lock_wait_constraint lock_wait_timeout;
 
 static char*  internal_innobase_data_file_path  = NULL;
+
+/** Possible values for system variable "innodb_stats_method". The values
+are defined the same as its corresponding MyISAM system variable
+"myisam_stats_method"(see "myisam_stats_method_names"), for better usability */
+static const char* innodb_stats_method_names[] = {
+	"nulls_equal",
+	"nulls_unequal",
+	"nulls_ignored",
+	NULL
+};
+
+static string innodb_stats_method;
 
 /* The following counter is used to convey information to InnoDB
 about server activity: in selects it is not sensible to call
@@ -1332,6 +1348,19 @@ innobase_strcasecmp(
 }
 
 /******************************************************************//**
+Strip dir name from a full path name and return only the file name
+@return file name or "null" if no file name */
+const char*
+innobase_basename(
+/*==============*/
+	const char*	path_name)	/*!< in: full path name */
+{
+  const char*	name = path_name + drizzled::internal::dirname_length(path_name);
+
+	return((name) ? name : "null");
+}
+
+/******************************************************************//**
 Makes all characters in a NUL-terminated UTF-8 string lower case. */
 UNIV_INTERN
 void
@@ -1920,6 +1949,12 @@ static void innodb_thread_concurrency_update(Session *, sql_var_t)
   srv_thread_concurrency= innobase_thread_concurrency.get();
 }
 
+static void innodb_rollback_segments_update(Session *, sql_var_t)
+{
+  srv_rollback_segments= innobase_rollback_segments.get();
+}
+
+
 static void innodb_sync_spin_loops_update(Session *, sql_var_t)
 {
   srv_n_spin_wait_rounds= innodb_sync_spin_loops.get();
@@ -2013,6 +2048,36 @@ innodb_file_format_name_validate(
 
   return(1);
 }
+
+static
+int
+innodb_stats_method_validate(
+/*=============================*/
+  Session*      , /*!< in: thread handle */
+  set_var *var)
+{
+  const char *stats_method_input = var->value->str_value.ptr();
+
+  if (stats_method_input == NULL)
+    return 1;
+
+  ulint use;
+
+  for (use = 0;
+       use < UT_ARR_SIZE(innodb_stats_method_names);
+       ++use) {
+    if (!innobase_strcasecmp(stats_method_input,
+                             innodb_stats_method_names[use]))
+    {
+      srv_innodb_stats_method= use;
+      innodb_stats_method= innodb_stats_method_names[use];
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 
 /*************************************************************//**
 Check if it is a valid value of innodb_change_buffering. This function is
@@ -2181,6 +2246,7 @@ innobase_init(
   srv_ibuf_accel_rate= ibuf_accel_rate.get();
   srv_checkpoint_age_target= checkpoint_age_target.get();
   srv_flush_neighbor_pages= flush_neighbor_pages.get();
+  srv_rollback_segments= innobase_rollback_segments.get();
 
   srv_read_ahead = read_ahead_typelib.find_type_or_exit(vm["read-ahead"].as<string>().c_str(),
                                                         "read_ahead_typelib") + 1;
@@ -2577,6 +2643,9 @@ innobase_change_buffering_inited_ok:
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("max_purge_lag", innodb_max_purge_lag));
   context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("stats_sample_pages", innodb_stats_sample_pages));
   context.registerVariable(new sys_var_bool_ptr("adaptive_hash_index", &btr_search_enabled, innodb_adaptive_hash_index_update));
+  context.registerVariable(new sys_var_std_string("stats_method",
+						  innodb_stats_method,
+						  innodb_stats_method_validate));
 
   context.registerVariable(new sys_var_constrained_value<uint32_t>("commit_concurrency",
                                                                    innobase_commit_concurrency,
@@ -2633,6 +2702,10 @@ innobase_change_buffering_inited_ok:
 
   context.registerVariable(new sys_var_const_string("use-replicator",
                                                     sysvar_transaction_log_use_replicator));
+
+  context.registerVariable(new sys_var_constrained_value<uint32_t>("rollback_segments",
+                                                                   innobase_rollback_segments,
+                                                                   innodb_rollback_segments_update));
 
   return(FALSE);
 
@@ -3024,7 +3097,6 @@ InnobaseEngine::close_connection(
 
   innobase_rollback_trx(trx);
 
-  thr_local_free(trx->mysql_thread_id);
   trx_free_for_mysql(trx);
 
   return(0);
@@ -7247,6 +7319,65 @@ innobase_get_mysql_key_number_for_index(
 
         return(0);
 }
+
+/*********************************************************************//**
+Calculate Record Per Key value. Need to exclude the NULL value if
+innodb_stats_method is set to "nulls_ignored"
+@return estimated record per key value */
+static
+ha_rows
+innodb_rec_per_key(
+/*===============*/
+	dict_index_t*	index,		/*!< in: dict_index_t structure */
+	ulint		i,		/*!< in: the column we are
+					calculating rec per key */
+	ha_rows		records)	/*!< in: estimated total records */
+{
+	ha_rows		rec_per_key;
+
+	ut_ad(i < dict_index_get_n_unique(index));
+
+	/* Note the stat_n_diff_key_vals[] stores the diff value with
+	n-prefix indexing, so it is always stat_n_diff_key_vals[i + 1] */
+	if (index->stat_n_diff_key_vals[i + 1] == 0) {
+
+		rec_per_key = records;
+	} else if (srv_innodb_stats_method == SRV_STATS_NULLS_IGNORED) {
+		ib_int64_t	num_null;
+
+		/* Number of rows with NULL value in this
+		field */
+		num_null = records - index->stat_n_non_null_key_vals[i];
+
+		/* In theory, index->stat_n_non_null_key_vals[i]
+		should always be less than the number of records.
+		Since this is statistics value, the value could
+		have slight discrepancy. But we will make sure
+		the number of null values is not a negative number. */
+		num_null = (num_null < 0) ? 0 : num_null;
+
+		/* If the number of NULL values is the same as or
+		large than that of the distinct values, we could
+		consider that the table consists mostly of NULL value. 
+		Set rec_per_key to 1. */
+		if (index->stat_n_diff_key_vals[i + 1] <= num_null) {
+			rec_per_key = 1;
+		} else {
+			/* Need to exclude rows with NULL values from
+			rec_per_key calculation */
+			rec_per_key = (ha_rows)(
+				(records - num_null)
+				/ (index->stat_n_diff_key_vals[i + 1]
+				   - num_null));
+		}
+	} else {
+		rec_per_key = (ha_rows)
+			 (records / index->stat_n_diff_key_vals[i + 1]);
+	}
+
+	return(rec_per_key);
+}
+
 /*********************************************************************//**
 Returns statistics information of the table to the MySQL interpreter,
 in various fields of the handle object. */
@@ -7370,7 +7501,7 @@ ha_innobase::info(
       /* We do not update delete_length if no
          locking is requested so the "old" value can
          remain. delete_length is initialized to 0 in
-         the ha_statistics' constructor. */
+         the ha_statistics' constructor.*/
     } else if (UNIV_UNLIKELY
                (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE)) {
       /* Avoid accessing the tablespace if
@@ -7468,13 +7599,7 @@ ha_innobase::info(
           break;
         }
 
-        if (index->stat_n_diff_key_vals[j + 1] == 0) {
-
-          rec_per_key = stats.records;
-        } else {
-          rec_per_key = (ha_rows)(stats.records /
-           index->stat_n_diff_key_vals[j + 1]);
-        }
+	rec_per_key = innodb_rec_per_key(index, j, stats.records);
 
         /* Since MySQL seems to favor table scans
         too much over index searches, we pretend
@@ -8300,8 +8425,7 @@ innodb_mutex_show_status(
     if (mutex->mutex_type != 1) {
       if (mutex->count_using > 0) {
         buf1len= my_snprintf(buf1, sizeof(buf1),
-          "%s:%s",
-          mutex->cmutex_name, mutex->cfile_name);
+          "%s:%s", mutex->cmutex_name, innobase_basename(mutex->cfile_name));
         buf2len= my_snprintf(buf2, sizeof(buf2),
           "count=%lu, spin_waits=%lu,"
           " spin_rounds=%lu, "
@@ -8331,7 +8455,8 @@ innodb_mutex_show_status(
     }
 #else /* UNIV_DEBUG */
     buf1len= snprintf(buf1, sizeof(buf1), "%s:%lu",
-          mutex->cfile_name, (ulong) mutex->cline);
+		      innobase_basename(mutex->cfile_name),
+		      (ulong) mutex->cline);
     buf2len= snprintf(buf2, sizeof(buf2), "os_waits=%lu",
                       (ulong) mutex->count_os_wait);
 
@@ -8347,7 +8472,7 @@ innodb_mutex_show_status(
   if (block_mutex) {
     buf1len = snprintf(buf1, sizeof buf1,
                        "combined %s:%lu",
-                       block_mutex->cfile_name,
+                       innobase_basename(block_mutex->cfile_name),
                        (ulong) block_mutex->cline);
     buf2len = snprintf(buf2, sizeof buf2,
                        "os_waits=%lu",
@@ -8378,7 +8503,8 @@ innodb_mutex_show_status(
     }
 
     buf1len = snprintf(buf1, sizeof buf1, "%s:%lu",
-                       lock->cfile_name, (ulong) lock->cline);
+                       innobase_basename(lock->cfile_name),
+		       (ulong) lock->cline);
     buf2len = snprintf(buf2, sizeof buf2, "os_waits=%lu",
                        (ulong) lock->count_os_wait);
 
@@ -8393,7 +8519,7 @@ innodb_mutex_show_status(
   if (block_lock) {
     buf1len = snprintf(buf1, sizeof buf1,
                        "combined %s:%lu",
-                       block_lock->cfile_name,
+                       innobase_basename(block_lock->cfile_name),
                        (ulong) block_lock->cline);
     buf2len = snprintf(buf2, sizeof buf2,
                        "os_waits=%lu",
@@ -9294,8 +9420,7 @@ static void init_options(drizzled::module::option_context &context)
           "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
   context("purge-batch-size",
           po::value<purge_batch_constraint>(&innodb_purge_batch_size)->default_value(20),
-          "Number of UNDO logs to purge in one batch from the history list. "
-          "Default is 20.");
+          "Number of UNDO log pages to purge in one batch from the history list.");
   context("purge-threads",
           po::value<purge_threads_constraint>(&innodb_n_purge_threads)->default_value(1),
           "Purge threads can be either 0 or 1. Default is 1.");
@@ -9467,6 +9592,15 @@ static void init_options(drizzled::module::option_context &context)
           _("ove blocks to the 'new' end of the buffer pool if the first access"
             " was at least this many milliseconds ago."
             " The timeout is disabled if 0 (the default)."));
+  context("stats-method",
+          po::value<string>(&innodb_stats_method),
+          "Specifies how InnoDB index statistics collection code should "
+	  "treat NULLs. Possible values are NULLS_EQUAL (default), "
+	  "NULLS_UNEQUAL and NULLS_IGNORED");
+  context("rollback-segments",
+          po::value<rollback_segments_constraint>(&innobase_rollback_segments)->default_value(128),
+          "Number of UNDO logs to use");
+
 }
 
 

@@ -46,7 +46,6 @@ St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "fil0fil.h"
 #include "trx0xa.h"
 #include "row0merge.h"
-#include "thr0loc.h"
 #include "dict0boot.h"
 #include "ha_prototypes.h"
 #include "ut0mem.h"

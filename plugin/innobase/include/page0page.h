@@ -953,7 +953,7 @@ UNIV_INTERN
 ibool
 page_rec_validate(
 /*==============*/
-	rec_t*		rec,	/*!< in: physical record */
+	const rec_t*	rec,	/*!< in: physical record */
 	const ulint*	offsets);/*!< in: array returned by rec_get_offsets() */
 /***************************************************************//**
 Checks that the first directory slot points to the infimum record and
@@ -973,7 +973,7 @@ UNIV_INTERN
 ibool
 page_simple_validate_old(
 /*=====================*/
-	page_t*	page);	/*!< in: old-style index page */
+	const page_t*	page);	/*!< in: index page in ROW_FORMAT=REDUNDANT */
 /***************************************************************//**
 This function checks the consistency of an index page when we do not
 know the index. This is also resilient so that this should never crash
@@ -983,7 +983,7 @@ UNIV_INTERN
 ibool
 page_simple_validate_new(
 /*=====================*/
-	page_t*	block);	/*!< in: new-style index page */
+	const page_t*	page);	/*!< in: index page in ROW_FORMAT!=REDUNDANT */
 /***************************************************************//**
 This function checks the consistency of an index page.
 @return	TRUE if ok */
@@ -991,7 +991,7 @@ UNIV_INTERN
 ibool
 page_validate(
 /*==========*/
-	page_t*		page,	/*!< in: index page */
+	const page_t*	page,	/*!< in: index page */
 	dict_index_t*	index);	/*!< in: data dictionary index containing
 				the page record type definition */
 /***************************************************************//**
