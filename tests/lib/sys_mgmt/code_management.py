@@ -42,15 +42,20 @@ class codeManager:
         self.system_manager = system_manager
         self.logging = self.system_manager.logging
         self.code_trees = {} # we store type: codeTree
+        self.type_delimiter = ':type:'
 
         # We go through the various --basedir values provided
         provided_basedirs = variables['basedir']
+        first = True
         for basedir in provided_basedirs:
             # We initialize a codeTree object
             # and store some information about it
             code_type, code_tree = self.process_codeTree(basedir, variables)
+            if first:
+                self.test_tree = code_tree #first basedir = type under test
+                self.test_type = code_type
+                first = False
             self.add_codeTree(code_type, code_tree)
-
 
     def add_codeTree(self, code_type, code_tree):
         # We add the codeTree to a list under 'type'
@@ -61,7 +66,7 @@ class codeManager:
             self.code_trees[code_type] = []
         self.code_trees[code_type].append(code_tree)
 
-    def process_codeTree(self, basedir, variables):
+    def process_codeTree(self, basedir, variables, code_type=None):
         """Import the appropriate module depending on the type of tree
            we are testing. 
 
@@ -70,24 +75,37 @@ class codeManager:
         """
 
         self.logging.verbose("Processing code rooted at basedir: %s..." %(basedir))
-        code_type = self.get_code_type(basedir)
+        # We comment out / remove the old get_code_type method
+        # as the expectation is that the type will be passed as part of the 
+        # basedir string / will be the default type (which will be configurable)
+
+        #code_type = self.get_code_type(basedir)
+        if basedir.find(self.type_delimiter) != -1:
+            basedir, code_type = basedir.split(self.type_delimiter)
+        elif code_type:
+            code_type = code_type
+        else:
+            code_type = variables['defaultservertype']
         if code_type == 'drizzle':
             # base_case
             from lib.sys_mgmt.codeTree import drizzleTree
-            test_tree = drizzleTree(variables,self.system_manager)
+            test_tree = drizzleTree(basedir,variables,self.system_manager)
+            return code_type, test_tree
+        elif code_type == 'mysql':
+            from lib.sys_mgmt.codeTree import mysqlTree
+            test_tree = mysqlTree(basedir,variables,self.system_manager)
+            return code_type, test_tree
+        elif code_type == 'galera':
+            from lib.sys_mgmt.codeTree import galeraTree
+            test_tree = galeraTree(basedir, variables, self.system_manager)
+            return code_type, test_tree
+        elif code_type == 'percona':
+            from lib.sys_mgmt.codeTree import perconaTree
+            test_tree = perconaTree(basedir,variables,self.system_manager)
             return code_type, test_tree
         else:
             self.logging.error("Tree_type: %s not supported yet" %(tree_type))
             sys.exit(1)        
-
-    def get_code_type(self, basedir):
-        """ We do some quick scans of the basedir to determine
-            what type of tree we are dealing with (mysql, drizzle, etc)
-
-        """
-        # We'll do something later, but we're cheating for now
-        # as we KNOW we're using drizzle code by default (only)
-        return 'drizzle'
 
     def get_tree(self, server_type, server_version):
         """ We return an appropriate server tree for use in testing """

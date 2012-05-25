@@ -1,1 +1,0 @@
-SET GLOBAL optimizer_use_mrr = 'disable';

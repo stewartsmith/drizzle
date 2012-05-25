@@ -24,9 +24,9 @@
 
 """
 # imports
-import thread
 import time
 import os
+import shutil
 import subprocess
 from ConfigParser import RawConfigParser
 
@@ -60,17 +60,42 @@ class serverManager:
         self.user_server_opts = variables['drizzledoptions']
         self.servers = {}
 
-        self.mutex = thread.allocate_lock()
-        self.timer_increment = .5
         self.libeatmydata = variables['libeatmydata']
         self.libeatmydata_path = variables['libeatmydatapath']
 
         self.logging.info("Using default-storage-engine: %s" %(self.default_storage_engine))
+        test_server = self.allocate_server( 'test_bot' 
+                                          , None 
+                                          , []
+                                          , self.system_manager.workdir
+                                          )
+        self.logging.info("Testing for Innodb / Xtradb version...")
+        test_server.start(working_environ=os.environ)
+        try:
+            innodb_ver, xtradb_ver = test_server.get_engine_info()
+            self.logging.info("Innodb version: %s" %innodb_ver)
+            self.logging.info("Xtradb version: %s" %xtradb_ver)
+        except Exception, e:
+            self.logging.error("Problem detecting innodb/xtradb version:")
+            self.logging.error(Exception)
+            self.logging.error(e)
+            self.logging.error("Dumping server error.log...")
+            test_server.dump_errlog()
+        test_server.stop()
+        test_server.cleanup()
+        shutil.rmtree(test_server.workdir)
+        del(test_server)
 
         self.logging.debug_class(self)
 
-    def request_servers( self, requester, workdir, cnf_path, server_requirements
-                       , working_environ, expect_fail = 0):
+    def request_servers( self
+                       , requester 
+                       , workdir
+                       , cnf_path
+                       , server_requests
+                       , server_requirements
+                       , test_executor
+                       , expect_fail = 0):
         """ We produce the server objects / start the server processes
             as requested.  We report errors and whatnot if we can't
             That is, unless we expect the server to not start, then
@@ -87,14 +112,20 @@ class serverManager:
         self.check_server_status(requester)
         
         # Make sure we have the proper number of servers for this requester
-        self.process_server_count( requester, len(server_requirements)
-                                 , workdir, server_requirements)
+        self.process_server_count( requester
+                                 , test_executor
+                                 , len(server_requirements)
+                                 , workdir
+                                 , server_requirements)
 
         # Make sure we are running with the correct options 
-        self.evaluate_existing_servers(requester, cnf_path, server_requirements)
+        self.evaluate_existing_servers( requester
+                                      , cnf_path
+                                      , server_requests
+                                      , server_requirements)
 
         # Fire our servers up
-        bad_start = self.start_servers( requester, working_environ
+        bad_start = self.start_servers( requester
                                       , expect_fail)
  
         # Return them to the requester
@@ -102,8 +133,13 @@ class serverManager:
 
 
     
-    def allocate_server( self, requester, server_options
-                       , workdir, server_type=None, server_version=None):
+    def allocate_server( self
+                       , requester
+                       , test_executor
+                       , server_options
+                       , workdir
+                       , server_type=None
+                       , server_version=None):
         """ Intialize an appropriate server object.
             Start up occurs elsewhere
 
@@ -124,6 +160,8 @@ class serverManager:
             from lib.server_mgmt.drizzled import drizzleServer as server_type
         elif server_type == 'mysql':
             from lib.server_mgmt.mysqld import mysqlServer as server_type
+        elif server_type == 'galera':
+            from lib.server_mgmt.galera import mysqlServer as server_type
 
         new_server = server_type( server_name
                                 , self
@@ -131,177 +169,30 @@ class serverManager:
                                 , self.default_storage_engine
                                 , server_options
                                 , requester
+                                , test_executor
                                 , workdir )
         return new_server
 
-    def start_servers(self, requester, working_environ, expect_fail):
+    def start_servers(self, requester, expect_fail):
         """ Start all servers for the requester """
         bad_start = 0
 
         for server in self.get_server_list(requester):
             if server.status == 0:
-                bad_start = bad_start + self.start_server( server
-                                                         , requester
-                                                         , working_environ
-                                                         , expect_fail
-                                                         )
+                bad_start = bad_start + server.start()
             else:
                 self.logging.debug("Server %s already running" %(server.name))
         return bad_start
 
-    def start_server(self, server, requester, working_environ, expect_fail):
-        """ Start an individual server and return
-            an error code if it did not start in a timely manner
- 
-            Start the server, using the options in option_list
-            as well as self.standard_options
-            
-            if expect_fail = 1, we know the server shouldn't 
-            start up
-
-        """
-        # take care of any environment updates we need to do
-        self.handle_environment_reqs(server, working_environ)
-
-        self.logging.verbose("Starting server: %s.%s" %(server.owner, server.name))
-        start_cmd = server.get_start_cmd()
-        self.logging.debug("Starting server with:")
-        self.logging.debug("%s" %(start_cmd))
-        # we signal we tried to start as an attempt
-        # to catch the case where a server is just 
-        # starting up and the user ctrl-c's
-        # we don't know the server is running (still starting up)
-        # so we give it a few minutes
-        self.tried_start = 1
-        error_log = open(server.error_log,'w')
-        if start_cmd: # It will be none if --manual-gdb used
-            if not self.gdb:
-                server_subproc = subprocess.Popen( start_cmd
-                                                 , shell=True
-                                                 , env=working_environ
-                                                 , stdout=error_log
-                                                 , stderr=error_log
-                                                 )
-                server_subproc.wait()
-                server_retcode = server_subproc.returncode
-            else: 
-                # This is a bit hackish - need to see if there is a cleaner
-                # way of handling this
-                # It is annoying that we have to say stdout + stderr = None
-                # We might need to further manipulate things so that we 
-                # have a log
-                server_subproc = subprocess.Popen( start_cmd
-                                                 , shell=True
-                                                 , env = working_environ
-                                                 , stdin=None
-                                                 , stdout=None
-                                                 , stderr=None
-                                                 , close_fds=True
-                                                 )
-        
-                server_retcode = 0
-        else:
-            # manual-gdb issue
-            server_retcode = 0
-        
-        timer = float(0)
-        timeout = float(server.server_start_timeout)
-
-        #if server_retcode: # We know we have an error, no need to wait
-        #    timer = timeout
-
-        
-
-        while not server.is_started() and timer != timeout:
-            time.sleep(self.timer_increment)
-            # If manual-gdb, this == None and we want to give the 
-            # user all the time they need
-            if start_cmd:
-                timer= timer + self.timer_increment
-            
-        if timer == timeout and not self.ping_server(server, quiet=True):
-            self.logging.error(( "Server failed to start within %d seconds.  This could be a problem with the test machine or the server itself" %(timeout)))
-            server_retcode = 1
-     
-        if server_retcode == 0:
-            server.status = 1 # we are running
-            if os.path.exists(server.pid_file):
-                pid_file = open(server.pid_file,'r')
-                pid = pid_file.readline().strip()
-                pid_file.close()
-                server.pid = pid
-
-        if server_retcode != 0 and not expect_fail:
-            self.logging.error("Server startup command: %s failed with error code %d" %( start_cmd
-                                                                                  , server_retcode))
-        elif server_retcode == 0 and expect_fail:
-        # catch a startup that should have failed and report
-            self.logging.error("Server startup command :%s expected to fail, but succeeded" %(start_cmd))
-
-        server.tried_start = 0 
-        return server_retcode ^ expect_fail
-
-    def ping_server(self, server, quiet=False):
-        """ Ping / check if the server is alive 
-            Return True if server is up and running, False otherwise
-        """
- 
-        ping_cmd = server.get_ping_cmd()
-        if not quiet:
-            self.logging.info("Pinging Drizzled server on port %d" % server.master_port)
-        (retcode, output)= self.system_manager.execute_cmd(ping_cmd, must_pass = 0)
-        return retcode == 0
-             
-
-    def stop_server(self, server):
-        """ Stop an individual server if it is running """
-        if server.tried_start:
-            # we expect that we issued the command to start
-            # the server but it isn't up and running
-            # we kill a bit of time waiting for it
-            attempts_remain = 10
-            while not self.ping_server(server, quiet=True) and attempts_remain:
-                time.sleep(1)
-                attempts_remain = attempts_remain - 1
-        # Now we try to shut the server down
-        if self.ping_server(server, quiet=True):
-            self.logging.verbose("Stopping server %s.%s" %(server.owner, server.name))
-            stop_cmd = server.get_stop_cmd()
-            #retcode, output = self.system_manager.execute_cmd(stop_cmd)
-            shutdown_subproc = subprocess.Popen( stop_cmd
-                                               , shell=True
-                                               )
-            shutdown_subproc.wait()
-            shutdown_retcode = shutdown_subproc.returncode
-            # We do some monitoring for the server PID and kill it
-            # if need be.  This is a bit of a band-aid for the 
-            # zombie-server bug on Natty : (  Need to find the cause.
-            attempts_remain = 3
-            while self.system_manager.find_pid(server.pid) and attempts_remain:
-                time.sleep(1)
-                attempts_remain = attempts_remain - 1
-                if not attempts_remain: # we kill the pid
-                    if self.verbose:
-                        self.logging.warning("Forcing kill of server pid: %s" %(server.pid))
-                    self.system_manager.kill_pid(server.pid)
-            if shutdown_retcode:
-                self.logging.error("Problem shutting down server:")
-                self.logging.error("%s : %s" %(shutdown_retcode))
-            else:
-                server.status = 0 # indicate we are shutdown
-        else:
-            # make sure the server is indicated as stopped
-            server.status = 0
-
     def stop_servers(self, requester):
         """ Stop all servers running for the requester """
         for server in self.get_server_list(requester):
-            self.stop_server(server)
+            server.stop()
 
     def stop_server_list(self, server_list, free_ports=False):
         """ Stop the servers in an arbitrary list of them """
         for server in server_list:
-            self.stop_server(server)
+            server.stop()
         if free_ports:
             server.cleanup()
 
@@ -311,7 +202,7 @@ class serverManager:
         self.logging.info("Stopping all running servers...")
         for server_list in self.servers.values():
             for server in server_list:
-                self.stop_server(server)
+                server.stop()
 
     def cleanup_all_servers(self):
         """Mainly for freeing server ports for now """
@@ -349,7 +240,8 @@ class serverManager:
     def log_server(self, new_server, requester):
         self.servers[requester].append(new_server)
 
-    def evaluate_existing_servers( self, requester, cnf_path, server_requirements):
+    def evaluate_existing_servers( self, requester, cnf_path
+                                 , server_requests, server_requirements):
         """ See if the requester has any servers and if they
             are suitable for the current test
 
@@ -360,6 +252,10 @@ class serverManager:
         # A dictionary that holds various tricks
         # we can do with our test servers
         special_processing_reqs = {}
+        if server_requests:
+            # we have a direct dictionary in the testcase
+            # that asks for what we want and we use it
+            special_processing_reqs = server_requests
 
         current_servers = self.servers[requester]
 
@@ -382,15 +278,14 @@ class serverManager:
 
             if self.compare_options( server.server_options
                                    , desired_server_options):
-                return
+                pass 
             else:
                 # We need to reset what is running and change the server
                 # options
                 desired_server_options = self.filter_server_options(desired_server_options)
                 self.reset_server(server)
                 self.update_server_options(server, desired_server_options)
-            
-            self.handle_special_server_requests(special_processing_reqs)
+        self.handle_special_server_requests(special_processing_reqs, current_servers)
 
     def handle_server_config_file( self
                                  , cnf_path
@@ -420,14 +315,16 @@ class serverManager:
                     special_processing_reqs[request_key] = []
                 special_processing_reqs[request_key].append((datadir_path,server))
 
-    def handle_special_server_requests(self, request_dictionary):
+    def handle_special_server_requests(self, request_dictionary, current_servers):
         """ We run through our set of special requests and do 
             the appropriate voodoo
 
         """
         for key, item in request_dictionary.items():
             if key == 'datadir_requests':
-                self.load_datadirs(item)
+                self.load_datadirs(item, current_servers)
+            if key == 'join_cluster':
+                self.join_clusters(item, current_servers)
 
     def filter_server_options(self, server_options):
         """ Remove a list of options we don't want passed to the server
@@ -454,7 +351,7 @@ class serverManager:
         return sorted(optlist1) == sorted(optlist2)
 
     def reset_server(self, server):
-        self.stop_server(server)
+        server.stop()
         server.restore_snapshot()
         server.reset()
 
@@ -462,18 +359,55 @@ class serverManager:
         for server in self.servers[requester]:
             self.reset_server(server)
 
-    def load_datadirs(self, datadir_requests):
+    def load_datadirs(self, datadir_requests, current_servers):
         """ We load source_dir to the server's datadir """
         for source_dir, server in datadir_requests:
-            source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
-            self.system_manager.remove_dir(server.datadir)
-            self.system_manager.copy_dir(source_dir_path, server.datadir)
-            # We need to signal that the server will need to be reset as we're
-            # using a non-standard datadir
-            server.need_reset = True
+            self.load_datadir(source_dir, server, current_servers)
 
+    def load_datadir(self, source_dir, server, current_servers):
+        """ We load source_dir to the server's datadir """
 
-    def process_server_count(self, requester, desired_count, workdir, server_reqs):
+        if type(server) == int:
+            # we have just an index (as we use in unittest files)
+            # and we get the server from current_servers[idx]
+            server = current_servers[server]
+        source_dir_path = os.path.join(server.vardir,'std_data_ln',source_dir)
+        self.system_manager.remove_dir(server.datadir)
+        self.system_manager.copy_dir(source_dir_path, server.datadir)
+        # We need to signal that the server will need to be reset as we're
+        # using a non-standard datadir
+        server.need_reset = True
+
+    def join_clusters(self, cluster_requests, current_servers):
+        """ We get a list of master, slave tuples and join
+            them as needed
+
+        """
+        for cluster_set in cluster_requests:
+            self.join_node_to_cluster(cluster_set, current_servers)
+        
+
+    def join_node_to_cluster(self, node_set, current_servers):
+        """ We join node_set[1] to node_set[0].
+            The server object is responsible for 
+            implementing the voodoo required to 
+            make this happen
+
+        """
+            
+        master = current_servers[node_set[0]]
+        slave = current_servers[node_set[1]]
+        slave.set_master(master)
+        # Assuming we'll reset master and slave for now...
+        master.need_reset = True
+        slave.need_reset = True
+
+    def process_server_count( self
+                            , requester
+                            , test_executor
+                            , desired_count
+                            , workdir
+                            , server_reqs):
         """ We see how many servers we have.  We shrink / grow
             the requesters set of servers as needed.
 
@@ -488,7 +422,7 @@ class serverManager:
             for i in range(desired_count - current_count):
                 # We pass an empty options list when allocating
                 # We'll update the options to what is needed elsewhere
-                self.allocate_server(requester,[] , workdir)
+                self.allocate_server(requester, test_executor, [], workdir)
         elif desired_count < current_count:
             good_servers = self.get_server_list(requester)[:desired_count]
             retired_servers = self.get_server_list(requester)[desired_count - current_count:]
@@ -570,15 +504,4 @@ class serverManager:
 
                                  })
         self.env_manager.update_environment_vars(environment_reqs)
-
-
-
-        
-
-
-
-
-
-
-
 

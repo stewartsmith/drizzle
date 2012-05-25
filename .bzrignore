@@ -336,12 +336,9 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
-tests/dbqp
-tests/dbqp_data/uuid
-tests/dbqp_work
+tests/qp
+tests/qp_data/uuid
 tests/install_test_db
-tests/kewpie/qp_data/uuid
-tests/kewpie/workdir
 tests/mtr
 tests/mtr@
 tests/resolve_stack_dump
