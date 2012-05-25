@@ -85,7 +85,6 @@ Created 2/16/1996 Heikki Tuuri
 # include "row0row.h"
 # include "row0mysql.h"
 # include "btr0pcur.h"
-# include "thr0loc.h"
 # include "os0sync.h" /* for INNODB_RW_LOCKS_USE_ATOMICS */
 # include "zlib.h" /* for ZLIB_VERSION */
 #include "xtrabackup_api.h"
@@ -1041,6 +1040,12 @@ innobase_start_or_create_for_mysql(void)
 		));
 #endif
 
+#ifdef UNIV_BLOB_DEBUG
+	fprintf(stderr,
+		"InnoDB: !!!!!!!! UNIV_BLOB_DEBUG switched on !!!!!!!!!\n"
+		"InnoDB: Server restart may fail with UNIV_BLOB_DEBUG\n");
+#endif /* UNIV_BLOB_DEBUG */
+
 #ifdef UNIV_SYNC_DEBUG
         drizzled::errmsg_printf(drizzled::error::INFO,
                                 _("InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n"));
@@ -1261,13 +1266,16 @@ innobase_start_or_create_for_mysql(void)
 
 	ut_a(srv_n_file_io_threads <= SRV_MAX_N_IO_THREADS);
 
-	/* TODO: Investigate if SRV_N_PENDING_IOS_PER_THREAD (32) limit
-	still applies to windows. */
-	if (!srv_use_native_aio) {
-		io_limit = 8 * SRV_N_PENDING_IOS_PER_THREAD;
-	} else {
+	io_limit = 8 * SRV_N_PENDING_IOS_PER_THREAD;
+
+	/* On Windows when using native aio the number of aio requests
+	that a thread can handle at a given time is limited to 32
+	i.e.: SRV_N_PENDING_IOS_PER_THREAD */
+# ifdef __WIN__
+	if (srv_use_native_aio) {
 		io_limit = SRV_N_PENDING_IOS_PER_THREAD;
 	}
+# endif /* __WIN__ */
 
 	os_aio_init(io_limit,
 		    srv_n_read_io_threads,
@@ -1292,7 +1300,7 @@ innobase_start_or_create_for_mysql(void)
         drizzled::errmsg_printf(drizzled::error::INFO, "InnoDB: Completed initialization of buffer pool");
 
 	if (err != DB_SUCCESS) {
-          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Fatal error: cannot allocate the memory for the buffer pool");
+          drizzled::errmsg_printf(drizzled::error::ERROR, "InnoDB: Fatal error: cannot allocate memory for the buffer pool");
 
           return(DB_ERROR);
 	}
@@ -1697,6 +1705,24 @@ innobase_start_or_create_for_mysql(void)
 		os_thread_create(&srv_purge_thread, NULL, NULL);
 	}
 
+	/* Wait for the purge and master thread to startup. */
+
+	while (srv_shutdown_state == SRV_SHUTDOWN_NONE) {
+		if (srv_thread_has_reserved_slot(SRV_MASTER) == ULINT_UNDEFINED
+		    || (srv_n_purge_threads == 1
+			&& srv_thread_has_reserved_slot(SRV_WORKER)
+			== ULINT_UNDEFINED)) {
+
+			ut_print_timestamp(stderr);
+			fprintf(stderr, "  InnoDB: "
+				"Waiting for the background threads to "
+				"start\n");
+			os_thread_sleep(1000000);
+		} else {
+			break;
+		}
+	}
+
 #ifdef UNIV_DEBUG
 	/* buf_debug_prints = TRUE; */
 #endif /* UNIV_DEBUG */
@@ -1973,7 +1999,6 @@ innobase_shutdown_for_mysql(void)
 	ibuf_close();
 	log_shutdown();
 	lock_sys_close();
-	thr_local_close();
 	trx_sys_file_format_close();
 	trx_sys_close();
 

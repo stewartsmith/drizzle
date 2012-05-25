@@ -42,6 +42,8 @@ Created 11/5/1995 Heikki Tuuri
 /* @{ */
 #define BUF_GET			10	/*!< get always */
 #define	BUF_GET_IF_IN_POOL	11	/*!< get if in pool */
+#define BUF_PEEK_IF_IN_POOL	12	/*!< get if in pool, do not make
+					the block young in the LRU list */
 #define BUF_GET_NO_LATCH	14	/*!< get and bufferfix, but
 					set no latch; we have
 					separated this case, because
@@ -112,6 +114,76 @@ enum buf_page_state {
 	BUF_BLOCK_REMOVE_HASH		/*!< hash index should be removed
 					before putting to the free list */
 };
+
+
+/** This structure defines information we will fetch from each buffer pool. It
+will be used to print table IO stats */
+struct buf_pool_info_struct{
+	/* General buffer pool info */
+	ulint	pool_unique_id;		/*!< Buffer Pool ID */
+	ulint	pool_size;		/*!< Buffer Pool size in pages */
+	ulint	lru_len;		/*!< Length of buf_pool->LRU */
+	ulint	old_lru_len;		/*!< buf_pool->LRU_old_len */
+	ulint	free_list_len;		/*!< Length of buf_pool->free list */
+	ulint	flush_list_len;		/*!< Length of buf_pool->flush_list */
+	ulint	n_pend_unzip;		/*!< buf_pool->n_pend_unzip, pages
+					pending decompress */
+	ulint	n_pend_reads;		/*!< buf_pool->n_pend_reads, pages
+					pending read */
+	ulint	n_pending_flush_lru;	/*!< Pages pending flush in LRU */
+	ulint	n_pending_flush_list;	/*!< Pages pending flush in FLUSH
+					LIST */
+	ulint	n_pending_flush_single_page;/*!< Pages pending flush in
+					BUF_FLUSH_SINGLE_PAGE list */
+	ulint	n_pages_made_young;	/*!< number of pages made young */
+	ulint	n_pages_not_made_young;	/*!< number of pages not made young */
+	ulint	n_pages_read;		/*!< buf_pool->n_pages_read */
+	ulint	n_pages_created;	/*!< buf_pool->n_pages_created */
+	ulint	n_pages_written;	/*!< buf_pool->n_pages_written */
+	ulint	n_page_gets;		/*!< buf_pool->n_page_gets */
+	ulint	n_ra_pages_read;	/*!< buf_pool->n_ra_pages_read, number
+					of pages readahead */
+	ulint	n_ra_pages_evicted;	/*!< buf_pool->n_ra_pages_evicted,
+					number of readahead pages evicted
+					without access */
+	ulint	n_page_get_delta;	/*!< num of buffer pool page gets since
+					last printout */
+
+	/* Buffer pool access stats */
+	double	page_made_young_rate;	/*!< page made young rate in pages
+					per second */
+	double	page_not_made_young_rate;/*!< page not made young rate
+					in pages per second */
+	double	pages_read_rate;	/*!< num of pages read per second */
+	double	pages_created_rate;	/*!< num of pages create per second */
+	double	pages_written_rate;	/*!< num of  pages written per second */
+	ulint	page_read_delta;	/*!< num of pages read since last
+					printout */
+	ulint	young_making_delta;	/*!< num of pages made young since
+					last printout */
+	ulint	not_young_making_delta;	/*!< num of pages not make young since
+					last printout */
+
+	/* Statistics about read ahead algorithm.  */
+	double	pages_readahead_rate;	/*!< readahead rate in pages per
+					second */
+	double	pages_evicted_rate;	/*!< rate of readahead page evicted
+					without access, in pages per second */
+
+	/* Stats about LRU eviction */
+	ulint	unzip_lru_len;		/*!< length of buf_pool->unzip_LRU
+					list */
+	/* Counters for LRU policy */
+	ulint	io_sum;			/*!< buf_LRU_stat_sum.io */
+	ulint	io_cur;			/*!< buf_LRU_stat_cur.io, num of IO
+					for current interval */
+	ulint	unzip_sum;		/*!< buf_LRU_stat_sum.unzip */
+	ulint	unzip_cur;		/*!< buf_LRU_stat_cur.unzip, num
+					pages decompressed in current
+					interval */
+};
+
+typedef struct buf_pool_info_struct	buf_pool_info_t;
 
 #ifndef UNIV_HOTBACKUP
 /********************************************************************//**
@@ -203,9 +275,9 @@ UNIV_INTERN
 buf_block_t*
 buf_block_alloc(
 /*============*/
-	buf_pool_t*	buf_pool,	/*!< buffer pool instance */
-	ulint		zip_size);	/*!< in: compressed page size in bytes,
-					or 0 if uncompressed tablespace */
+	buf_pool_t*	buf_pool);	/*!< in: buffer pool instance,
+					or NULL for round-robin selection
+					of the buffer pool */
 /********************************************************************//**
 Frees a buffer block which does not contain a file page. */
 UNIV_INLINE
@@ -323,7 +395,7 @@ buf_page_get_gen(
 	ulint		rw_latch,/*!< in: RW_S_LATCH, RW_X_LATCH, RW_NO_LATCH */
 	buf_block_t*	guess,	/*!< in: guessed block or NULL */
 	ulint		mode,	/*!< in: BUF_GET, BUF_GET_IF_IN_POOL,
-				BUF_GET_NO_LATCH or
+				BUF_PEEK_IF_IN_POOL, BUF_GET_NO_LATCH or
 				BUF_GET_IF_IN_POOL_OR_WATCH */
 	const char*	file,	/*!< in: file name */
 	ulint		line,	/*!< in: line where called */
@@ -407,7 +479,7 @@ buf_reset_check_index_page_at_flush(
 /*================================*/
 	ulint	space,	/*!< in: space id */
 	ulint	offset);/*!< in: page number */
-#ifdef UNIV_DEBUG_FILE_ACCESSES
+#if defined UNIV_DEBUG_FILE_ACCESSES || defined UNIV_DEBUG
 /********************************************************************//**
 Sets file_page_was_freed TRUE if the page is found in the buffer pool.
 This function should be called when we free a file page and want the
@@ -432,7 +504,7 @@ buf_page_reset_file_page_was_freed(
 /*===============================*/
 	ulint	space,	/*!< in: space id */
 	ulint	offset);	/*!< in: page number */
-#endif /* UNIV_DEBUG_FILE_ACCESSES */
+#endif /* UNIV_DEBUG_FILE_ACCESSES || UNIV_DEBUG */
 /********************************************************************//**
 Reads the freed_page_clock of a buffer block.
 @return	freed_page_clock */
@@ -1330,11 +1402,11 @@ struct buf_page_struct{
 					0 if the block was never accessed
 					in the buffer pool */
 	/* @} */
-# ifdef UNIV_DEBUG_FILE_ACCESSES
+# if defined UNIV_DEBUG_FILE_ACCESSES || defined UNIV_DEBUG
 	ibool		file_page_was_freed;
 					/*!< this is set to TRUE when fsp
 					frees a page in buffer pool */
-# endif /* UNIV_DEBUG_FILE_ACCESSES */
+# endif /* UNIV_DEBUG_FILE_ACCESSES || UNIV_DEBUG */
 #endif /* !UNIV_HOTBACKUP */
 };
 
