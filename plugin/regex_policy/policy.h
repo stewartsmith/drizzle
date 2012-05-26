@@ -35,7 +35,6 @@
 #include <drizzled/configmake.h>
 #include <drizzled/plugin/authorization.h>
 
-using namespace std;
 namespace fs= boost::filesystem;
 
 namespace regex_policy {
@@ -123,7 +122,7 @@ public:
     return map.end();
   }
   void insert(std::string const &k, bool v);
-  void clearMapOnReload()
+  void clear()
   {
         map.clear();
   }
@@ -172,7 +171,7 @@ class Policy :
   public drizzled::plugin::Authorization
 {
 public:
-  Policy(const string &f_path) :
+  Policy(const fs::path &f_path) :
     drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
     table_check_cache(), schema_check_cache(), process_check_cache()
   { }
@@ -186,10 +185,10 @@ public:
   virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
-  bool loadFile();
-  string policy_file;
-  void clearPoliciesOnReload();
-  bool setPolicyFile(const string &policyFile);
+  void loadFile();
+  fs::path policy_file;
+  void clearPolicies();
+  bool setPolicyFile(const fs::path &policyFile);
   std::stringstream &getError() { return error; }
   ~Policy();
 private:

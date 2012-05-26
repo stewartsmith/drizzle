@@ -22,7 +22,7 @@
  */
 
 #include <config.h>
-
+#include <iostream>
 #include <boost/unordered_set.hpp>
 #include <boost/thread/locks.hpp>
 
@@ -44,19 +44,22 @@ namespace regex_policy
 
 uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
 uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
-bool reload_Regex_Policy(Session *, set_var *);
-bool isValidPolicyFile(std::string);
+bool updatePolicyFile(Session *, set_var *);
+bool isValidPolicyFile(fs::path);
 Policy *policy= NULL;
+PolicyItemList table_policies_dummy;
+PolicyItemList schema_policies_dummy;
+PolicyItemList process_policies_dummy;
 
-bool reload_Regex_Policy(Session *, set_var* var)
+bool updatePolicyFile(Session *, set_var* var)
 {
   if (not var->value->str_value.empty())
   {
-    std::string newPolicyFile = var->value->str_value.data();
-    if(isValidPolicyFile(newPolicyFile))
+    fs::path newPolicyFile(var->value->str_value.data());
+    if (isValidPolicyFile(newPolicyFile))
     {
       policy->setPolicyFile(newPolicyFile);
-      policy->clearPoliciesOnReload();
+      policy->clearPolicies();
       policy->loadFile();
       return false; //success
     }
@@ -67,14 +70,17 @@ bool reload_Regex_Policy(Session *, set_var* var)
   return true; // error
 }
 
-bool isValidPolicyFile(std::string new_policy_file)
+bool isValidPolicyFile(fs::path new_policy_file)
 {
-  ifstream file(new_policy_file.c_str());
+  ifstream file(new_policy_file.string().c_str());
   boost::regex comment_re;
   boost::regex empty_re;
   boost::regex table_matches_re;
   boost::regex process_matches_re;
   boost::regex schema_matches_re;
+  table_policies_dummy.clear();
+  schema_policies_dummy.clear();
+  process_policies_dummy.clear();
 
   try
   {
@@ -92,133 +98,8 @@ bool isValidPolicyFile(std::string new_policy_file)
 
   if (! file.is_open())
   {
-    string error_msg = "Unable to open regex policy file: " + new_policy_file;
+    string error_msg= "Unable to open regex policy file: " + new_policy_file.string();
     errmsg_printf(error::ERROR, _(error_msg.c_str()));
-    return false;
-  }
-
-  int lines= 0;
-  try
-  {
-    while (! file.eof())
-    {
-      ++lines;
-      string line;
-      getline(file, line);
-      if (boost::regex_match(line, comment_re))
-      {
-        continue;
-      }
-      if (boost::regex_match(line, empty_re))
-      {
-        continue;
-      }
-      boost::smatch matches;
-      if (boost::regex_match(line, matches, table_matches_re, boost::match_extra)||boost::regex_match(line, matches, process_matches_re, boost::match_extra)||boost::regex_match(line, matches, schema_matches_re, boost::match_extra))
-      {
-        string user_regex = matches[MATCH_REGEX_USER_POS];
-        string object_regex = matches[MATCH_REGEX_OBJECT_POS];
-        string action = matches[MATCH_REGEX_ACTION_POS];
-        PolicyItem *i;
-        try
-        {
-          i= new PolicyItem(user_regex, object_regex, action);
-        }
-        catch (const std::exception &e)
-        {
-	  string error_msg = "Bad policy item: user=" + user_regex + " object=" + object_regex + " action=" + action;
-	  errmsg_printf(error::ERROR, _(error_msg.c_str()));
-          throw std::exception();
-        }
-      }
-      else
-      {
-        throw std::exception();
-      }
-    }
-    return true;
-  }
-  catch (const std::exception &e)
-  {
-    /* On any non-EOF break, unparseable line */
-    string error_msg = "Unable to parse policy file " + new_policy_file + ":" + e.what();
-    errmsg_printf(error::ERROR, _(error_msg.c_str()));
-    return false;
-  }
-
-}
-
-static int init(module::Context &context)
-{
-  const module::option_map &vm= context.getOptions();
-
-  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
-  if (max_cache_buckets < 1)
-  {
-    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
-    return 1;
-  }
-  max_lru_length= vm["max-lru-length"].as<uint64_t>();
-  if (max_lru_length < 1)
-  {
-    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
-    return 1;
-  }
-  policy= new Policy(vm["policy"].as<string>());
-  if (not policy->loadFile())
-  {
-    errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
-                  (policy ? policy->getError().str().c_str() : _("Unknown")));
-    delete policy;
-    return 1;
-  }
-  std::string policy_variable = "policy";
-  std::string policy_path = vm["policy"].as<string>();
-  context.add(policy);
-  context.registerVariable(new sys_var_std_string(policy_variable, policy->policy_file, NULL, &reload_Regex_Policy));
-
-  return 0;
-}
-
-static void init_options(drizzled::module::option_context &context)
-{
-  context("policy",
-      po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
-      N_("File to load for regex authorization policies"));
-  context("max-cache-buckets",
-      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
-      N_("Maximum buckets for authorization cache"));
-  context("max-lru-length",
-      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
-      N_("Maximum number of LRU entries to track at once"));
-}
-
-bool Policy::loadFile()
-{
-  ifstream file(policy_file.c_str());
-  boost::regex comment_re;
-  boost::regex empty_re;
-  boost::regex table_matches_re;
-  boost::regex process_matches_re;
-  boost::regex schema_matches_re;
-
-  try
-  {
-    comment_re= comment_regex;
-    empty_re= empty_regex;
-    table_matches_re= table_match_regex;
-    process_matches_re= process_match_regex;
-    schema_matches_re= schema_match_regex;
-  }   
-  catch (const std::exception &e)
-  {
-    error << e.what();
-    return false;
-  }
-
-  if (! file.is_open())
-  {
-    error << "Unable to open regex policy file: " << policy_file;
     return false;
   }
 
@@ -242,15 +123,15 @@ bool Policy::loadFile()
       PolicyItemList *policies;
       if (boost::regex_match(line, matches, table_matches_re, boost::match_extra))
       {
-        policies= &table_policies;
+        policies= &table_policies_dummy;
       }
       else if (boost::regex_match(line, matches, process_matches_re, boost::match_extra))
       {
-        policies= &process_policies;
+        policies= &process_policies_dummy;
       }
       else if (boost::regex_match(line, matches, schema_matches_re, boost::match_extra))
       {
-        policies= &schema_policies;
+        policies= &schema_policies_dummy;
       }
       else
       {
@@ -269,7 +150,8 @@ bool Policy::loadFile()
       }
       catch (const std::exception &e)
       {
-        error << "Bad policy item: user=" << user_regex << " object=" << object_regex << " action=" << action;
+	string error_msg= "Bad policy item: user=" + user_regex + " object=" + object_regex + " action=" + action;
+        errmsg_printf(error::ERROR, _(error_msg.c_str()));
         throw std::exception();
       }
       policies->push_back(i);
@@ -279,20 +161,83 @@ bool Policy::loadFile()
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
-    error << "Unable to parse line " << lines << " of policy file " << policy_file << ":" << e.what();
+    string error_msg= "Unable to parse policy file " + new_policy_file.string() + ":" + e.what();
+    errmsg_printf(error::ERROR, _(error_msg.c_str()));
     return false;
   }
+
 }
 
-bool Policy::setPolicyFile(const string &policyFile)
+static int init(module::Context &context)
 {
-  if (policyFile.empty())
+  const module::option_map &vm= context.getOptions();
+
+  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
+  if (max_cache_buckets < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
+    return 1;
+  }
+  max_lru_length= vm["max-lru-length"].as<uint64_t>();
+  if (max_lru_length < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
+    return 1;
+  }
+  policy= new Policy(vm["policy"].as<string>());
+  if (isValidPolicyFile(policy->policy_file))
+  {
+    policy->loadFile();
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
+                  (policy ? policy->getError().str().c_str() : _("Unknown")));
+    delete policy;
+    return 1;
+  }
+  std::string policy_variable= "policy";
+  std::string policy_value= policy->policy_file.string();
+  context.add(policy);
+  context.registerVariable(new sys_var_std_string("policy", policy_value, NULL, &updatePolicyFile));
+
+  return 0;
+}
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("policy",
+      po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
+      N_("File to load for regex authorization policies"));
+  context("max-cache-buckets",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
+      N_("Maximum buckets for authorization cache"));
+  context("max-lru-length",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
+      N_("Maximum number of LRU entries to track at once"));
+}
+
+void Policy::loadFile()
+{
+  for (PolicyItemList::iterator it= table_policies_dummy.begin(); it!= table_policies_dummy.end(); it++)
+    table_policies.push_back(*it);
+
+  for (PolicyItemList::iterator it= schema_policies_dummy.begin(); it!= schema_policies_dummy.end(); it++)
+    schema_policies.push_back(*it);
+
+  for (PolicyItemList::iterator it= process_policies_dummy.begin(); it!= process_policies_dummy.end(); it++)
+    process_policies.push_back(*it);
+}
+
+bool Policy::setPolicyFile(const fs::path &policyFile)
+{
+  if (policyFile.string().empty())
   {
     errmsg_printf(error::ERROR, _("regex_policy file cannot be an empty string"));
     return true;  // error
   }
 
-  policy_file = policyFile;
+  policy_file= policyFile;
 
   return false;  // success
 
@@ -319,14 +264,14 @@ Policy::~Policy()
 This function will be called when the policy file needs to be reloaded.
 This deletes all the policies stored and cached.
 */
-void Policy::clearPoliciesOnReload()
+void Policy::clearPolicies()
 {
   table_policies.clear();
   process_policies.clear();
   schema_policies.clear();
-  table_check_cache.clearMapOnReload();
-  process_check_cache.clearMapOnReload();
-  schema_check_cache.clearMapOnReload();
+  table_check_cache.clear();
+  process_check_cache.clear();
+  schema_check_cache.clear();
 }
 
 
