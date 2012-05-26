@@ -72,13 +72,19 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
 
+#define DRIZZLE_UNIX_SOCKET_PATH "/tmp/mysql.socket"
+
 using namespace drizzled;
 using namespace std;
+namespace fs= boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
 extern bool opt_daemon;
+
+void signal_handler(int sig);
+
 
 
 /**
@@ -159,7 +165,6 @@ static void init_signals(void)
     sa.sa_handler= drizzled_handle_segfault;
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
-    //sigaction(SIGINT, &sa, NULL);
 #ifdef SIGBUS
     sigaction(SIGBUS, &sa, NULL);
 #endif
@@ -196,7 +201,7 @@ static void init_signals(void)
   sa.sa_handler = drizzled_print_signal_warning;
   sigaction(SIGHUP, &sa, NULL);
 #ifdef SIGTSTP
-  //sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGTSTP);
 #endif
   if (getDebug().test(debug::ALLOW_SIGINT))
   {
@@ -205,16 +210,39 @@ static void init_signals(void)
     sigaction(thr_kill_signal, &sa, NULL);
 
     // May be SIGINT
-    //sigdelset(&set, thr_kill_signal);
+    sigdelset(&set, thr_kill_signal);
   }
   else
   {
-    //sigaddset(&set,SIGINT);
+    sigaddset(&set,SIGINT);
   }
-  //signal(SIGINT,u);
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+  (void)sigemptyset(&set);
+  sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGINT);
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+  sa.sa_handler = signal_handler;
+  sigaction(SIGINT,&sa,NULL);
   return;
+}
+
+void signal_handler(int sig){
+    struct sigaction sa;
+    switch(sig){
+        case SIGINT:{
+            if (fs::exists(DRIZZLE_UNIX_SOCKET_PATH))
+            {
+                fs::remove(DRIZZLE_UNIX_SOCKET_PATH);
+            }
+            sa.sa_handler=SIG_DFL;
+            sigaction(SIGINT, &sa, NULL);
+            pthread_kill(pthread_self(),SIGINT);
+        break;
+        }
+    }
 }
 
 static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
@@ -286,8 +314,8 @@ int main(int argc, char **argv)
     init signals & alarm
     After this we can't quit by a simple unireg_abort
   */
-  init_signals();
 
+  init_signals();
 
   select_thread= pthread_self();
   select_thread_in_use=1;
