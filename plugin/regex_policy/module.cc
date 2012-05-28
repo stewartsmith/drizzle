@@ -22,7 +22,7 @@
  */
 
 #include <config.h>
-#include <iostream>
+
 #include <boost/unordered_set.hpp>
 #include <boost/thread/locks.hpp>
 
@@ -45,24 +45,16 @@ namespace regex_policy
 uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
 uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
 bool updatePolicyFile(Session *, set_var *);
-bool isValidPolicyFile(fs::path);
+bool parsePolicyFile(fs::path, PolicyItemList&, PolicyItemList&, PolicyItemList&);
 Policy *policy= NULL;
-PolicyItemList table_policies_dummy;
-PolicyItemList schema_policies_dummy;
-PolicyItemList process_policies_dummy;
 
 bool updatePolicyFile(Session *, set_var* var)
 {
   if (not var->value->str_value.empty())
   {
     fs::path newPolicyFile(var->value->str_value.data());
-    if (isValidPolicyFile(newPolicyFile))
-    {
-      policy->setPolicyFile(newPolicyFile);
-      policy->clearPolicies();
-      policy->loadFile();
+    if (policy->setPolicyFile(newPolicyFile))
       return false; //success
-    }
     else
       return true; // error
   }
@@ -70,7 +62,7 @@ bool updatePolicyFile(Session *, set_var* var)
   return true; // error
 }
 
-bool isValidPolicyFile(fs::path new_policy_file)
+bool parsePolicyFile(fs::path new_policy_file, PolicyItemList& table_policies_dummy, PolicyItemList& schema_policies_dummy, PolicyItemList& process_policies_dummy)
 {
   ifstream file(new_policy_file.string().c_str());
   boost::regex comment_re;
@@ -185,11 +177,7 @@ static int init(module::Context &context)
     return 1;
   }
   policy= new Policy(vm["policy"].as<string>());
-  if (isValidPolicyFile(policy->policy_file))
-  {
-    policy->loadFile();
-  }
-  else
+  if (!policy->setPolicyFile(policy->policy_file))
   {
     errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
                   (policy ? policy->getError().str().c_str() : _("Unknown")));
@@ -197,9 +185,9 @@ static int init(module::Context &context)
     return 1;
   }
   std::string policy_variable= "policy";
-  std::string policy_value= policy->policy_file.string();
+  std::string policy_value= "";
   context.add(policy);
-  context.registerVariable(new sys_var_std_string("policy", policy_value, NULL, &updatePolicyFile));
+  context.registerVariable(new sys_var_std_string(policy_variable, (string&)policy->policy_file, NULL, &updatePolicyFile));
 
   return 0;
 }
@@ -217,7 +205,7 @@ static void init_options(drizzled::module::option_context &context)
       N_("Maximum number of LRU entries to track at once"));
 }
 
-void Policy::loadFile()
+void Policy::setPolicies(PolicyItemList table_policies_dummy, PolicyItemList schema_policies_dummy, PolicyItemList process_policies_dummy)
 {
   for (PolicyItemList::iterator it= table_policies_dummy.begin(); it!= table_policies_dummy.end(); it++)
     table_policies.push_back(*it);
@@ -234,14 +222,20 @@ bool Policy::setPolicyFile(const fs::path &policyFile)
   if (policyFile.string().empty())
   {
     errmsg_printf(error::ERROR, _("regex_policy file cannot be an empty string"));
-    return true;  // error
+    return false;  // error
   }
 
-  policy_file= policyFile;
-
-  return false;  // success
-
-
+  PolicyItemList table_policies_dummy;
+  PolicyItemList schema_policies_dummy;
+  PolicyItemList process_policies_dummy;
+  if(parsePolicyFile(policyFile, table_policies_dummy, schema_policies_dummy, process_policies_dummy))
+  {
+    policy->clearPolicies();
+    policy->setPolicies(table_policies_dummy, schema_policies_dummy, process_policies_dummy);
+    policy_file= policyFile;
+    return true;  // success
+  }
+  return false;  // error
 }
 
 void clearPolicyItemList(PolicyItemList policies)

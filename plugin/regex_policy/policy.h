@@ -185,7 +185,7 @@ public:
   virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
-  void loadFile();
+  void setPolicies(PolicyItemList, PolicyItemList, PolicyItemList);
   fs::path policy_file;
   void clearPolicies();
   bool setPolicyFile(const fs::path &policyFile);
