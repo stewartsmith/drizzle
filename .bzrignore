@@ -336,7 +336,7 @@ temporal_format.gcno
 tests/Makefile.in
 tests/dtr
 tests/dtr@
-tests/qp
+tests/kewpie
 tests/qp_data/uuid
 tests/install_test_db
 tests/mtr

@@ -20,7 +20,7 @@
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/dbqp
+GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/qp
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
 NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,execute,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
@@ -75,7 +75,6 @@ EXTRA_DIST += \
 	${srcdir}/tests/qp_tests/sqlbench/*.py \
 	${srcdir}/tests/lib/modes/dtr/*py \
 	${srcdir}/tests/lib/modes/native/*py \
-	${srcdir}/tests/lib/modes/sysbench/*py \
 	${srcdir}/tests/lib/opts/*.py \
 	${srcdir}/tests/lib/server_mgmt/*py \
 	${srcdir}/tests/lib/sys_mgmt/*py \
@@ -84,7 +83,6 @@ EXTRA_DIST += \
 	${srcdir}/tests/lib/*.py \
 	${srcdir}/tests/test_tools/randgen \
 	${srcdir}/tests/test_tools/sql-bench \
-	${srcdir}/tests/sysbench_tests \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -97,16 +95,7 @@ EXTRA_DIST += \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
         ${srcdir}/tests/lib/*.py \
-	${srcdir}/tests/lib/modes/crashme/*.py \
-	${srcdir}/tests/lib/modes/dtr/*.py \
-	${srcdir}/tests/lib/modes/randgen/*.py \
-	${srcdir}/tests/lib/modes/sqlbench/*py \
-	${srcdir}/tests/lib/modes/sysbench/*py \
-	${srcdir}/tests/lib/opts/*.py \
 	${srcdir}/tests/lib/My/*.pm \
-        ${srcdir}/tests/lib/server_mgmt/*py \
-	${srcdir}/tests/lib/sys_mgmt/*py \
-	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind
 
 
@@ -135,7 +124,7 @@ tests/test-run: tests/var/drizzle
 
 tests/qp: tests/var/drizzle
 	$(RM) -f tests/kewpie
-	$(LN_S) dbqp.py tests/kewpie
+	$(LN_S) kewpie.py tests/kewpie
 
 
 .PHONY: test
