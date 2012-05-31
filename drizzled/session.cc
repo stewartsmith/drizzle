@@ -700,7 +700,7 @@ bool Session::executeStatement()
     command= COM_END;                           // Wrong command
 
   assert(packet_length);
-  return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+  return not dispatch_command(l_command, *this, str_ref(l_packet + 1, packet_length - 1));
 }
 
 void Session::readAndStoreQuery(str_ref v)
