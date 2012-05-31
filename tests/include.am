@@ -94,7 +94,6 @@ EXTRA_DIST += \
 	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
-        ${srcdir}/tests/lib/*.py \
 	${srcdir}/tests/lib/My/*.pm \
 	tests/strip-valgrind
 
