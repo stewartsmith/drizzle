@@ -714,7 +714,7 @@ void Session::readAndStoreQuery(str_ref v)
   util::string::mptr new_query= boost::make_shared<std::string>(v.data(), v.size());
   plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
   query= new_query;
-  impl_->state= boost::make_shared<session::State>(v.data(), v.size());
+  impl_->state= boost::make_shared<session::State>(v);
 }
 
 bool Session::endTransaction(enum_mysql_completiontype completion)
