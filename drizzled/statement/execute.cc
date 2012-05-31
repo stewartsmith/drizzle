@@ -32,7 +32,7 @@
 
 namespace drizzled {
 
-void parse(drizzled::Session&, const char *inBuf, uint32_t length);
+void parse(drizzled::Session&, str_ref);
 
 namespace statement {
 
@@ -48,7 +48,7 @@ Execute::Execute(Session *in_session,
   to_execute(to_execute_arg)
 {
 }
-  
+
 
 bool statement::Execute::parseVariable()
 {
@@ -59,7 +59,7 @@ bool statement::Execute::parseVariable()
     if (var && var->length && var->value && var->type == STRING_RESULT)
     {
       lex_string_t tmp_for_var;
-      tmp_for_var.assign(var->value, var->length); 
+      tmp_for_var.assign(var->value, var->length);
       to_execute.set(tmp_for_var);
 
       return true;
@@ -130,7 +130,7 @@ bool statement::Execute::execute_shell()
       boost::scoped_ptr<plugin::NullClient> null_client(new plugin::NullClient);
 
       session().setClient(null_client.get());
-      
+
       bool error_occured= false;
       bool is_savepoint= false;
       {
@@ -150,7 +150,7 @@ bool statement::Execute::execute_shell()
       }
 
       // @note this is copied from code in NULL client, all of this belongs
-      // in the pluggable parser pieces.  
+      // in the pluggable parser pieces.
       if (not error_occured)
       {
         typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
@@ -173,8 +173,8 @@ bool statement::Execute::execute_shell()
           std::string final_sql;
           if (is_savepoint)
           {
-            final_sql= error_occured ? 
-              "ROLLBACK TO SAVEPOINT execute_internal_savepoint" : 
+            final_sql= error_occured ?
+              "ROLLBACK TO SAVEPOINT execute_internal_savepoint" :
               "RELEASE SAVEPOINT execute_internal_savepoint";
           }
           else
@@ -204,7 +204,7 @@ bool statement::Execute::execute_shell()
     }
     else
     {
-      parse(session(), to_execute.data(), to_execute.size());
+      parse(session(), to_execute);
     }
   }
 
