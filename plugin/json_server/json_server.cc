@@ -354,11 +354,10 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
   input.append(query, strlen(query));
 
   // Set test as default schema
-  if ( !strcmp( schema, "") || schema == NULL)
+  if( schema == NULL || strcmp(schema, "") == 0)
   {
-      schema = "test";
+	schema = "test";
   }
-  
   // Parse "input" into "json_in".
   Json::Value  json_in;
   Json::Features json_conf;
@@ -368,7 +367,7 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
   }
-  else if (strcmp( table, "") == 0 || table == NULL) {
+  else if (table == NULL || strcmp(table, "")==0) {
     json_out["error_type"]="http error";
     json_out["error_message"]= "You must specify \"table\" in the request uri query string.";
     http_response_code = HTTP_NOTFOUND;
@@ -496,6 +495,10 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
  */
 void process_api02_json_post_req(struct evhttp_request *req, void* )
 {
+  int http_response_code = HTTP_OK;
+  const char *http_response_text;
+  http_response_text = "OK";
+  
   bool table_exists = true;
   Json::Value json_out;
 
@@ -522,9 +525,9 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   id = (char *)evhttp_find_header(req->input_headers, "_id");
   
   // Set test as default schema
-  if ( !strcmp( schema, "") || schema == NULL)
+  if( schema == NULL || strcmp(schema, "") == 0)
   {
-      schema = "test";
+        schema = "test";
   }
   
   // Parse "input" into "json_in".
@@ -535,6 +538,12 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   if (retval != true) {
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
+  }
+  else if (table == NULL || strcmp(table, "")==0) {
+    json_out["error_type"]="http error";
+    json_out["error_message"]= "You must specify table in the request uri query string.";
+    http_response_code = HTTP_NOTFOUND;
+    http_response_text = "You must specify table in the request uri query string.";
   } 
   else {
     // It is allowed to specify _id in the uri and leave it out from the json query.
@@ -693,7 +702,7 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   Json::StyledWriter writer;
   std::string output= writer.write(json_out);
   evbuffer_add(buf, output.c_str(), output.length());
-  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+  evhttp_send_reply(req, http_response_code, http_response_text, buf);
 }
 
 /*
@@ -707,6 +716,10 @@ void process_api02_json_put_req(struct evhttp_request *req, void* )
 
 void process_api02_json_delete_req(struct evhttp_request *req, void* )
 {
+  int http_response_code = HTTP_OK;
+  const char *http_response_text;
+  http_response_text = "OK";
+
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
 
@@ -737,9 +750,9 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   input.append(query, strlen(query));
 
   // Set test as default schema
-  if ( !strcmp( schema, "") || schema == NULL)
+  if( schema == NULL || strcmp(schema, "") == 0)
   {
-      schema = "test";
+        schema = "test";
   }
 
   // Parse "input" into "json_in".
@@ -752,6 +765,13 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
   }
+ else if (table == NULL || strcmp(table, "")==0) {
+    json_out["error_type"]="http error";
+    json_out["error_message"]= "You must specify \"table\" in the request uri query string.";
+    http_response_code = HTTP_NOTFOUND;
+    http_response_text = "You must specify \"table\" in the request uri query string.";
+  }
+
   else {
     // It is allowed to specify _id in the uri and leave it out from the json query.
     // In that case we put the value from uri into json_in here.
@@ -801,7 +821,7 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   Json::StyledWriter writer;
   std::string output= writer.write(json_out);
   evbuffer_add(buf, output.c_str(), output.length());
-  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+  evhttp_send_reply(req, http_response_code, http_response_text, buf);
   
  }
 
