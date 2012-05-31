@@ -132,7 +132,7 @@ const std::string &getCommandName(const enum_server_command& command)
 
 void init_update_queries(void)
 {
-  for (uint32_t x= uint32_t(SQLCOM_SELECT); 
+  for (uint32_t x= uint32_t(SQLCOM_SELECT);
        x <= uint32_t(SQLCOM_END); x++)
   {
     sql_command_flags[x].reset();
@@ -235,7 +235,7 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   case COM_QUERY:
     {
-      session->readAndStoreQuery(packet, packet_length);
+      session->readAndStoreQuery(str_ref(packet, packet_length));
       DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
       parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
       break;
@@ -932,7 +932,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->setIsFqtn(true);
     ptr->setSchemaName(table->db.data());
   }
-  else 
+  else
   {
     str_ref schema = lex->session->copy_db_to();
     if (schema.empty())

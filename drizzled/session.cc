@@ -102,7 +102,7 @@ uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
-  return length == other.length 
+  return length == other.length
     && field_name.size() == other.field_name.size()
     && not system_charset_info->strcasecmp(field_name.data(), other.field_name.data());
 }
@@ -443,7 +443,7 @@ Session::~Session()
   setCurrentSession(NULL);
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
+  plugin::EventObserver::deregisterSessionEvents(session_event_observers);
 
 	BOOST_FOREACH(impl_c::schema_event_observers_t::reference it, impl_->schema_event_observers)
     plugin::EventObserver::deregisterSchemaEvents(it.second);
@@ -703,25 +703,18 @@ bool Session::executeStatement()
   return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
-void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
+void Session::readAndStoreQuery(str_ref v)
 {
   /* Remove garbage at start and end of query */
-  while (in_packet_length > 0 && charset()->isspace(in_packet[0]))
-  {
-    in_packet++;
-    in_packet_length--;
-  }
-  const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 && (pos[-1] == ';' || charset()->isspace(pos[-1])))
-  {
-    pos--;
-    in_packet_length--;
-  }
+  while (not v.empty() && charset()->isspace(v.front()))
+  	v.pop_front();
+  while (not v.empty() && (v.back() == ';' || charset()->isspace(v.back())))
+  	v.pop_back();
 
-  util::string::mptr new_query= boost::make_shared<std::string>(in_packet, in_packet_length);
+  util::string::mptr new_query= boost::make_shared<std::string>(v.data(), v.size());
   plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
   query= new_query;
-  impl_->state= boost::make_shared<session::State>(in_packet, in_packet_length);
+  impl_->state= boost::make_shared<session::State>(v.data(), v.size());
 }
 
 bool Session::endTransaction(enum_mysql_completiontype completion)
@@ -1875,9 +1868,9 @@ void Session::clearDiagnostics()
 
   To raise this flag, use my_error().
 */
-bool Session::is_error() const 
-{ 
-  return impl_->diagnostics.is_error(); 
+bool Session::is_error() const
+{
+  return impl_->diagnostics.is_error();
 }
 
 /** A short cut for session->main_da().set_ok_status(). */
@@ -1951,7 +1944,7 @@ const std::string& display::type(drizzled::Session::global_read_lock_t type)
   static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
   static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
 
-  switch (type) 
+  switch (type)
   {
     default:
     case Session::NONE:
