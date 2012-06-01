@@ -45,14 +45,14 @@ namespace regex_policy
 uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
 uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
 bool updatePolicyFile(Session *, set_var *);
-bool parsePolicyFile(fs::path, PolicyItemList&, PolicyItemList&, PolicyItemList&);
+bool parsePolicyFile(std::string, PolicyItemList&, PolicyItemList&, PolicyItemList&);
 Policy *policy= NULL;
 
 bool updatePolicyFile(Session *, set_var* var)
 {
   if (not var->value->str_value.empty())
   {
-    fs::path newPolicyFile(var->value->str_value.data());
+    std::string newPolicyFile(var->value->str_value.data());
     if (policy->setPolicyFile(newPolicyFile))
       return false; //success
     else
@@ -62,9 +62,9 @@ bool updatePolicyFile(Session *, set_var* var)
   return true; // error
 }
 
-bool parsePolicyFile(fs::path new_policy_file, PolicyItemList& table_policies_dummy, PolicyItemList& schema_policies_dummy, PolicyItemList& process_policies_dummy)
+bool parsePolicyFile(std::string new_policy_file, PolicyItemList& table_policies_dummy, PolicyItemList& schema_policies_dummy, PolicyItemList& process_policies_dummy)
 {
-  ifstream file(new_policy_file.string().c_str());
+  ifstream file(new_policy_file.c_str());
   boost::regex comment_re;
   boost::regex empty_re;
   boost::regex table_matches_re;
@@ -90,7 +90,7 @@ bool parsePolicyFile(fs::path new_policy_file, PolicyItemList& table_policies_du
 
   if (! file.is_open())
   {
-    string error_msg= "Unable to open regex policy file: " + new_policy_file.string();
+    string error_msg= "Unable to open regex policy file: " + new_policy_file;
     errmsg_printf(error::ERROR, _(error_msg.c_str()));
     return false;
   }
@@ -153,7 +153,7 @@ bool parsePolicyFile(fs::path new_policy_file, PolicyItemList& table_policies_du
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
-    string error_msg= "Unable to parse policy file " + new_policy_file.string() + ":" + e.what();
+    string error_msg= "Unable to parse policy file " + new_policy_file + ":" + e.what();
     errmsg_printf(error::ERROR, _(error_msg.c_str()));
     return false;
   }
@@ -177,7 +177,7 @@ static int init(module::Context &context)
     return 1;
   }
   policy= new Policy(vm["policy"].as<string>());
-  if (!policy->setPolicyFile(policy->policy_file))
+  if (!policy->setPolicyFile(policy->getPolicyFile()))
   {
     errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
                   (policy ? policy->getError().str().c_str() : _("Unknown")));
@@ -187,7 +187,7 @@ static int init(module::Context &context)
   std::string policy_variable= "policy";
   std::string policy_value= "";
   context.add(policy);
-  context.registerVariable(new sys_var_std_string(policy_variable, (string&)policy->policy_file, NULL, &updatePolicyFile));
+  context.registerVariable(new sys_var_std_string(policy_variable, policy->getPolicyFile(), NULL, &updatePolicyFile));
 
   return 0;
 }
@@ -217,9 +217,14 @@ void Policy::setPolicies(PolicyItemList table_policies_dummy, PolicyItemList sch
     process_policies.push_back(*it);
 }
 
-bool Policy::setPolicyFile(const fs::path &policyFile)
+std::string& Policy::getPolicyFile()
 {
-  if (policyFile.string().empty())
+  return sysvar_policy_file;
+}
+
+bool Policy::setPolicyFile(std::string &policyFile)
+{
+  if (policyFile.empty())
   {
     errmsg_printf(error::ERROR, _("regex_policy file cannot be an empty string"));
     return false;  // error
@@ -232,7 +237,9 @@ bool Policy::setPolicyFile(const fs::path &policyFile)
   {
     policy->clearPolicies();
     policy->setPolicies(table_policies_dummy, schema_policies_dummy, process_policies_dummy);
-    policy_file= policyFile;
+    sysvar_policy_file= policyFile;
+    fs::path newPolicyFile(getPolicyFile());
+    policy_file= newPolicyFile;
     return true;  // success
   }
   return false;  // error
