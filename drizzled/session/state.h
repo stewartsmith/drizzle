@@ -22,20 +22,19 @@
 
 #include <vector>
 #include <cstring>
+#include <drizzled/util/data_ref.h>
 
 namespace drizzled {
 namespace session {
 
-class State 
+class State
 {
 public:
-  State(const char*, size_t);
+  State(str_ref);
 
   const char* query() const;
   const char* query(size_t&) const;
 
-protected:
-  friend class Session;
 private:
   std::vector<char> _query;
 };
