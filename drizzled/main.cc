@@ -72,18 +72,13 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/system_variables.h>
 
-#define DRIZZLE_UNIX_SOCKET_PATH "/tmp/mysql.socket"
-
 using namespace drizzled;
 using namespace std;
-namespace fs= boost::filesystem;
 
 static pthread_t select_thread;
 static uint32_t thr_kill_signal;
 
 extern bool opt_daemon;
-
-void signal_handler(int sig);
 
 
 
@@ -224,26 +219,12 @@ static void init_signals(void)
   sigaddset(&set,SIGINT);
   sigprocmask(SIG_UNBLOCK,&set,NULL);
   pthread_sigmask(SIG_UNBLOCK,&set,NULL);
-  sa.sa_handler = signal_handler;
+  sa.sa_handler = drizzled_sigint_handler;
   sigaction(SIGINT,&sa,NULL);
   return;
 }
 
-void signal_handler(int sig){
-    struct sigaction sa;
-    switch(sig){
-        case SIGINT:{
-            if (fs::exists(DRIZZLE_UNIX_SOCKET_PATH))
-            {
-                fs::remove(DRIZZLE_UNIX_SOCKET_PATH);
-            }
-            sa.sa_handler=SIG_DFL;
-            sigaction(SIGINT, &sa, NULL);
-            pthread_kill(pthread_self(),SIGINT);
-        break;
-        }
-    }
-}
+
 
 static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
                                     const char* ,
