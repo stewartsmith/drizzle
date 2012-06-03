@@ -17,8 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzledump_data.h"
-#include "client_priv.h"
+#include <config.h>
+
+#include "client/drizzledump_data.h"
+#include "client/client_priv.h"
 #include <drizzled/definitions.h>
 #include <drizzled/gettext.h>
 #include <string>
@@ -541,10 +543,10 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
   hostName(host),
   drizzleProtocol(drizzle_protocol)
 {
-  drizzle_return_t ret;
-
   if (host.empty())
+  {
     host= "localhost";
+  }
 
   std::string protocol= (drizzle_protocol) ? "Drizzle" : "MySQL";
   if (verbose)
@@ -552,21 +554,27 @@ DrizzleDumpConnection::DrizzleDumpConnection(std::string &host, uint16_t port,
     std::cerr << _("-- Connecting to ") << host  << _(" using protocol ")
       << protocol << "..." << std::endl;
   }
-  drizzle_create(&drizzle);
-  drizzle_con_create(&drizzle, &connection);
-  drizzle_con_set_tcp(&connection, (char *)host.c_str(), port);
-  drizzle_con_set_auth(&connection, (char *)username.c_str(),
-    (char *)password.c_str());
-  drizzle_con_add_options(&connection, 
-    drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
-  ret= drizzle_con_connect(&connection);
+
+  drizzle= drizzle_create();
+
+  if (drizzle == NULL)
+  {
+    std::cerr << "drizzle_create() failed" << std::endl;
+  }
+
+  connection= drizzle_con_create(drizzle);
+  drizzle_con_set_tcp(connection, (char *)host.c_str(), port);
+  drizzle_con_set_auth(connection, (char *)username.c_str(), (char *)password.c_str());
+  drizzle_con_add_options(connection, drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+
+  drizzle_return_t ret= drizzle_con_connect(connection);
   if (ret != DRIZZLE_RETURN_OK)
   {
     errorHandler(NULL, ret, "when trying to connect");
     throw std::exception();
   }
 
-  ServerDetect server_detect= ServerDetect(&connection);
+  ServerDetect server_detect= ServerDetect(connection);
 
   serverType= server_detect.getServerType();
   serverVersion= server_detect.getServerVersion();
@@ -576,7 +584,7 @@ drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)
 {
   drizzle_return_t ret;
   drizzle_result_st* result= new drizzle_result_st;
-  if (drizzle_query_str(&connection, result, str_query.c_str(), &ret) == NULL ||
+  if (drizzle_query_str(connection, result, str_query.c_str(), &ret) == NULL or
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
@@ -587,16 +595,14 @@ drizzle_result_st* DrizzleDumpConnection::query(std::string &str_query)
     }
     else
     {
-      std::cerr << _("Error executing query: ") <<
-        drizzle_con_error(&connection) << std::endl;
+      std::cerr << _("Error executing query: ") << drizzle_con_error(connection) << std::endl;
     }
     return NULL;
   }
 
   if (drizzle_result_buffer(result) != DRIZZLE_RETURN_OK)
   {
-    std::cerr << _("Could not buffer result: ") <<
-        drizzle_con_error(&connection) << std::endl;
+    std::cerr << _("Could not buffer result: ") << drizzle_con_error(connection) << std::endl;
     return NULL;
   }
   return result;
@@ -613,7 +619,7 @@ bool DrizzleDumpConnection::queryNoResult(std::string &str_query)
   drizzle_return_t ret;
   drizzle_result_st result;
 
-  if (drizzle_query_str(&connection, &result, str_query.c_str(), &ret) == NULL ||
+  if (drizzle_query_str(connection, &result, str_query.c_str(), &ret) == NULL or
       ret != DRIZZLE_RETURN_OK)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
@@ -624,8 +630,7 @@ bool DrizzleDumpConnection::queryNoResult(std::string &str_query)
     }
     else
     {
-      std::cerr << _("Error executing query: ") <<
-        drizzle_con_error(&connection) << std::endl;
+      std::cerr << _("Error executing query: ") << drizzle_con_error(connection) << std::endl;
     }
     return false;
   }
@@ -638,15 +643,20 @@ bool DrizzleDumpConnection::setDB(std::string databaseName)
 {
   drizzle_return_t ret;
   drizzle_result_st result;
-  if (drizzle_select_db(&connection, &result, databaseName.c_str(), &ret) == 
-    NULL || ret != DRIZZLE_RETURN_OK)
+
+  if (drizzle_select_db(connection, &result, databaseName.c_str(), &ret) == NULL or 
+      ret != DRIZZLE_RETURN_OK)
   {
     std::cerr << _("Error: Could not set db '") << databaseName << "'" << std::endl;
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    {
       drizzle_result_free(&result);
+    }
+
     return false;
   }
   drizzle_result_free(&result);
+
   return true;
 }
 
@@ -655,8 +665,7 @@ void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
 {
   if (res == NULL)
   {
-    std::cerr << _("Got error: ") << drizzle_con_error(&connection) << " "
-      << when << std::endl;
+    std::cerr << _("Got error: ") << drizzle_con_error(connection) << " " << when << std::endl;
   }
   else if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
@@ -675,7 +684,10 @@ void DrizzleDumpConnection::errorHandler(drizzle_result_st *res,
 DrizzleDumpConnection::~DrizzleDumpConnection()
 {
   if (verbose)
+  {
     std::cerr << _("-- Disconnecting from ") << hostName << "..." << std::endl;
-  drizzle_con_free(&connection);
-  drizzle_free(&drizzle);
+  }
+
+  drizzle_con_free(connection);
+  drizzle_free(drizzle);
 }

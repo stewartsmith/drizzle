@@ -44,14 +44,14 @@ namespace auth_ldap
 {
 
 std::string uri;
-const std::string DEFAULT_URI= "ldap://127.0.0.1/";
+const std::string DEFAULT_URI= "ldap://localhost/";
 std::string bind_dn;
 std::string bind_password;
 std::string base_dn;
 std::string password_attribute;
 std::string DEFAULT_PASSWORD_ATTRIBUTE= "userPassword";
 std::string mysql_password_attribute;
-const std::string DEFAULT_MYSQL_PASSWORD_ATTRIBUTE= "mysqlUserPassword";
+const std::string DEFAULT_MYSQL_PASSWORD_ATTRIBUTE= "drizzleMysqlUserPassword";
 static const int DEFAULT_CACHE_TIMEOUT= 600;
 typedef constrained_check<int, DEFAULT_CACHE_TIMEOUT, 0, 2147483647> cachetimeout_constraint;
 static cachetimeout_constraint cache_timeout= 0;
@@ -272,7 +272,7 @@ bool AuthLDAP::authenticate(const identifier::User &sctx, const string &password
 
 void AuthLDAP::lookupUser(const string& user)
 {
-  string filter("(cn=" + user + ")");
+  string filter("(uid=" + user + ")");
   const char *attributes[3]=
   {
     (char *)password_attribute.c_str(),
@@ -421,7 +421,7 @@ static int init(module::Context &context)
 
   context.registerVariable(new sys_var_const_string_val("uri", uri));
   context.registerVariable(new sys_var_const_string_val("bind-dn", bind_dn));
-  context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
+  //context.registerVariable(new sys_var_const_string_val("bind-password", bind_password));
   context.registerVariable(new sys_var_const_string_val("base-dn", base_dn));
   context.registerVariable(new sys_var_const_string_val("password-attribute",password_attribute));
   context.registerVariable(new sys_var_const_string_val("mysql-password-attribute", mysql_password_attribute));
@@ -435,7 +435,7 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("uri", po::value<string>(&uri)->default_value(DEFAULT_URI),
           N_("URI of the LDAP server to contact"));
-  context("bind-db", po::value<string>(&bind_dn)->default_value(""),
+  context("bind-dn", po::value<string>(&bind_dn)->default_value(""),
           N_("DN to use when binding to the LDAP server"));
   context("bind-password", po::value<string>(&bind_password)->default_value(""),
           N_("Password to use when binding the DN"));
@@ -451,4 +451,17 @@ static void init_options(drizzled::module::option_context &context)
 
 } /* namespace auth_ldap */
 
-DRIZZLE_PLUGIN(auth_ldap::init, NULL, auth_ldap::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "auth_ldap",
+  "0.2",
+  "Eric Day, Henrik Ingo, Edward Konetzko",
+  N_("Authentication against an LDAP server"),
+  PLUGIN_LICENSE_GPL,
+  auth_ldap::init,
+  NULL,
+  auth_ldap::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;
+

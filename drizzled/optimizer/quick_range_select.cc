@@ -451,9 +451,10 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(string *key_names,
   which handle the ranges and implement the get_next() function.  But
   for now, this seems to work right at least.
  */
-optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t, bool *)
+optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t used_key_parts_arg, bool *)
   :
-    optimizer::QuickRangeSelect(*q)
+  optimizer::QuickRangeSelect(*q),
+  used_key_parts(used_key_parts_arg)
 {
   optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.size();
@@ -493,7 +494,8 @@ int optimizer::QuickSelectDescending::get_next()
     int result;
     if (last_range)
     {						// Already read through key
-      result= ((last_range->flag & EQ_RANGE) ?
+      result= ((last_range->flag & EQ_RANGE &&
+               used_key_parts <= head->key_info[index].key_parts) ?
 		           cursor->index_next_same(record, last_range->min_key,
 					                             last_range->min_length) :
 		           cursor->index_prev(record));
@@ -524,7 +526,8 @@ int optimizer::QuickSelectDescending::get_next()
       continue;
     }
 
-    if (last_range->flag & EQ_RANGE)
+    if (last_range->flag & EQ_RANGE
+        && used_key_parts <= head->key_info[index].key_parts)
     {
       result = cursor->index_read_map(record,
                                       last_range->max_key,
@@ -534,6 +537,8 @@ int optimizer::QuickSelectDescending::get_next()
     else
     {
       assert(last_range->flag & NEAR_MAX ||
+             (last_range->flag & EQ_RANGE &&
+              used_key_parts > head->key_info[index].key_parts) ||
              range_reads_after_key(last_range));
       result= cursor->index_read_map(record,
                                      last_range->max_key,

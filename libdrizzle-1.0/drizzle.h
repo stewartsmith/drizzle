@@ -90,6 +90,8 @@ typedef _Bool bool;
 # include <poll.h>
 #endif
 
+#include <openssl/ssl.h>
+
 #include <assert.h>
 #include <errno.h>
 
@@ -117,6 +119,14 @@ extern "C" {
  * multiple drizzle_st structures (for example, one for each thread).
  * @{
  */
+
+/**
+ * Intialize the Drizzle library
+ *
+ * Currently only initalizes the SSL library
+ */
+DRIZZLE_API
+void drizzle_library_init(void);
 
 /**
  * Get library version string.

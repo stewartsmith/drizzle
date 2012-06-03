@@ -52,64 +52,6 @@ inline const char* str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-int wild_case_compare(const charset_info_st * const cs, const char *str, const char *wildstr)
-{
-  int flag;
-
-  while (*wildstr)
-  {
-    while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
-    {
-      if (*wildstr == internal::wild_prefix && wildstr[1])
-        wildstr++;
-
-      if (cs->toupper(*wildstr++) != cs->toupper(*str++))
-        return (1);
-    }
-
-    if (! *wildstr )
-      return (*str != 0);
-
-    if (*wildstr++ == internal::wild_one)
-    {
-      if (! *str++)
-        return (1);	/* One char; skip */
-    }
-    else
-    {						/* Found '*' */
-      if (! *wildstr)
-        return (0);		/* '*' as last char: OK */
-
-      flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
-      do
-      {
-        if (flag)
-        {
-          char cmp;
-          if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
-            cmp= wildstr[1];
-
-          cmp= cs->toupper(cmp);
-
-          while (*str && cs->toupper(*str) != cmp)
-            str++;
-
-          if (! *str)
-            return (1);
-        }
-
-        if (wild_case_compare(cs, str, wildstr) == 0)
-          return (0);
-
-      } while (*str++);
-
-      return (1);
-    }
-  }
-
-  return (*str != '\0');
-}
-
 /*
   Get the quote character for displaying an identifier.
 

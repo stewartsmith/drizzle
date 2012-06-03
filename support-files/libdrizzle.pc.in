@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libdrizzle
 Description: Drizzle Protocol Library
-Version: @PANDORA_RELEASE_VERSION@
+Version: @LIBDRIZZLE_VERSION@
 Libs: -L${libdir} -ldrizzle
 URL: http://drizzle.org/
-Cflags: -I$@includedir@
+Cflags: -I${includedir}

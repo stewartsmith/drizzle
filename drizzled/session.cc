@@ -27,7 +27,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/ptr_container/ptr_container.hpp>
 #include <drizzled/copy_field.h>
-#include <drizzled/data_home.h>
+#include <drizzled/catalog/local.h>
 #include <drizzled/diagnostics_area.h>
 #include <drizzled/display.h>
 #include <drizzled/drizzled.h>
@@ -102,7 +102,7 @@ uint64_t g_refresh_version = 1;
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
-  return length == other.length 
+  return length == other.length
     && field_name.size() == other.field_name.size()
     && not system_charset_info->strcasecmp(field_name.data(), other.field_name.data());
 }
@@ -390,15 +390,11 @@ void Session::cleanup()
   assert(not cleanup_done);
 
   setKilled(KILL_CONNECTION);
-#ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
-  if (transaction.xid_state.xa_state == XA_PREPARED)
-  {
-#error xid_state in the cache should be replaced by the allocated value
-  }
-#endif
-  {
-    TransactionServices::rollbackTransaction(*this, true);
-  }
+
+  /* In the future, you may want to do something about XA_PREPARED here.
+     In the dim distant past there was some #ifdefed out #error here about it.
+  */
+  TransactionServices::rollbackTransaction(*this, true);
 
   BOOST_FOREACH(UserVars::reference iter, user_vars)
     boost::checked_delete(iter.second);
@@ -447,7 +443,7 @@ Session::~Session()
   setCurrentSession(NULL);
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEvents(session_event_observers); 
+  plugin::EventObserver::deregisterSessionEvents(session_event_observers);
 
 	BOOST_FOREACH(impl_c::schema_event_observers_t::reference it, impl_->schema_event_observers)
     plugin::EventObserver::deregisterSchemaEvents(it.second);
@@ -704,28 +700,21 @@ bool Session::executeStatement()
     command= COM_END;                           // Wrong command
 
   assert(packet_length);
-  return not dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
+  return not dispatch_command(l_command, *this, str_ref(l_packet + 1, packet_length - 1));
 }
 
-void Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length)
+void Session::readAndStoreQuery(str_ref v)
 {
   /* Remove garbage at start and end of query */
-  while (in_packet_length > 0 && charset()->isspace(in_packet[0]))
-  {
-    in_packet++;
-    in_packet_length--;
-  }
-  const char *pos= in_packet + in_packet_length; /* Point at end null */
-  while (in_packet_length > 0 && (pos[-1] == ';' || charset()->isspace(pos[-1])))
-  {
-    pos--;
-    in_packet_length--;
-  }
+  while (not v.empty() && charset()->isspace(v.front()))
+  	v.pop_front();
+  while (not v.empty() && (v.back() == ';' || charset()->isspace(v.back())))
+  	v.pop_back();
 
-  util::string::mptr new_query= boost::make_shared<std::string>(in_packet, in_packet_length);
+  util::string::mptr new_query= boost::make_shared<std::string>(v.data(), v.size());
   plugin::QueryRewriter::rewriteQuery(*impl_->schema, *new_query);
   query= new_query;
-  impl_->state= boost::make_shared<session::State>(in_packet, in_packet_length);
+  impl_->state= boost::make_shared<session::State>(v);
 }
 
 bool Session::endTransaction(enum_mysql_completiontype completion)
@@ -996,7 +985,7 @@ static int create_file(Session& session,
 
   if (not to_file.has_root_directory())
   {
-    target_path= fs::system_complete(getDataHomeCatalog());
+    target_path= fs::system_complete(catalog::local_identifier().getPath());
     util::string::ptr schema(session.schema());
     if (not schema->empty())
     {
@@ -1747,15 +1736,6 @@ void Session::close_thread_tables()
 
   if (open_tables.lock)
   {
-    /*
-      For RBR we flush the pending event just before we unlock all the
-      tables.  This means that we are at the end of a topmost
-      statement, so we ensure that the STMT_END_F flag is set on the
-      pending event.  For statements that are *inside* stored
-      functions, the pending event will not be flushed: that will be
-      handled either before writing a query log event (inside
-      binlog_query()) or when preparing a pending event.
-     */
     unlockTables(open_tables.lock);
     open_tables.lock= 0;
   }
@@ -1888,9 +1868,9 @@ void Session::clearDiagnostics()
 
   To raise this flag, use my_error().
 */
-bool Session::is_error() const 
-{ 
-  return impl_->diagnostics.is_error(); 
+bool Session::is_error() const
+{
+  return impl_->diagnostics.is_error();
 }
 
 /** A short cut for session->main_da().set_ok_status(). */
@@ -1964,7 +1944,7 @@ const std::string& display::type(drizzled::Session::global_read_lock_t type)
   static const std::string GOT_GLOBAL_READ_LOCK= "HAS GLOBAL READ LOCK";
   static const std::string MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT= "HAS GLOBAL READ LOCK WITH BLOCKING COMMIT";
 
-  switch (type) 
+  switch (type)
   {
     default:
     case Session::NONE:

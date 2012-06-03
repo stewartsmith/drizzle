@@ -72,13 +72,13 @@
 */
 
 #include <config.h>
-#include "client_priv.h"
+#include "client/client_priv.h"
 
-#include "option_string.h"
-#include "stats.h"
-#include "thread_context.h"
-#include "conclusions.h"
-#include "wakeup.h"
+#include "client/option_string.h"
+#include "client/stats.h"
+#include "client/thread_context.h"
+#include "client/conclusions.h"
+#include "client/wakeup.h"
 
 #include <signal.h>
 #include <stdarg.h>
@@ -233,8 +233,8 @@ void statement_cleanup(Statement *stmt);
 void option_cleanup(OptionString *stmt);
 void concurrency_loop(drizzle_con_st &con, uint32_t current, OptionString *eptr);
 static void run_statements(drizzle_con_st &con, Statement *stmt);
-void slap_connect(drizzle_con_st &con, bool connect_to_schema);
-void slap_close(drizzle_con_st &con);
+drizzle_con_st *slap_connect(bool connect_to_schema);
+void slap_close(drizzle_con_st *con);
 static int run_query(drizzle_con_st &con, drizzle_result_st *result, const char *query, int len);
 void standard_deviation(Conclusions &con, Stats *sptr);
 
@@ -273,23 +273,25 @@ static void run_task(ThreadContext *ctx)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   uint32_t commit_counter;
-  boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
-  drizzle_con_st &con= *con_ap.get();
   drizzle_result_st result;
   drizzle_row_t row;
   Statement *ptr;
 
   master_wakeup.wait();
 
-  slap_connect(con, true);
+  drizzle_con_st *con= slap_connect(true);
 
   if (verbose >= 3)
+  {
     printf("connected!\n");
+  }
   queries= 0;
 
   commit_counter= 0;
   if (commit_rate)
-    run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+  {
+    run_query(*con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+  }
 
 limit_not_met:
   for (ptr= ctx->getStmt(), detach_counter= 0;
@@ -299,7 +301,7 @@ limit_not_met:
     if (not opt_only_print && detach_rate && !(detach_counter % detach_rate))
     {
       slap_close(con);
-      slap_connect(con, true);
+      con= slap_connect(true);
     }
 
     /*
@@ -329,7 +331,7 @@ limit_not_met:
 
         int length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'", (int)ptr->getLength(), ptr->getString(), key);
 
-        if (run_query(con, &result, buffer, length))
+        if (run_query(*con, &result, buffer, length))
         {
           if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) and commit_rate)
           {
@@ -342,7 +344,7 @@ limit_not_met:
           else
           {
             fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                    SLAP_NAME, (uint32_t)length, buffer, drizzle_con_error(&con));
+                    SLAP_NAME, (uint32_t)length, buffer, drizzle_con_error(con));
             abort();
           }
         }
@@ -350,7 +352,7 @@ limit_not_met:
     }
     else
     {
-      if (run_query(con, &result, ptr->getString(), ptr->getLength()))
+      if (run_query(*con, &result, ptr->getString(), ptr->getLength()))
       {
         if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) and commit_rate)
         {
@@ -363,7 +365,7 @@ limit_not_met:
         else
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
+                  SLAP_NAME, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
           abort();
         }
       }
@@ -380,7 +382,7 @@ limit_not_met:
     if (commit_rate && (++commit_counter == commit_rate) and not is_failed_update)
     {
       commit_counter= 0;
-      run_query(con, NULL, "COMMIT", strlen("COMMIT"));
+      run_query(*con, NULL, "COMMIT", strlen("COMMIT"));
     }
 
     /* If the timer is set, and the alarm is not active then end */
@@ -401,9 +403,12 @@ limit_not_met:
 
 end:
   if (commit_rate)
-    run_query(con, NULL, "COMMIT", strlen("COMMIT"));
+  {
+    run_query(*con, NULL, "COMMIT", strlen("COMMIT"));
+  }
 
   slap_close(con);
+  con= NULL;
 
   delete ctx;
 }
@@ -560,7 +565,6 @@ int main(int argc, char **argv)
 
     uint64_t temp_drizzle_port= 0;
     boost::scoped_ptr<drizzle_con_st> con_ap(new drizzle_con_st);
-    drizzle_con_st &con= *con_ap.get();
     OptionString *eptr;
 
     // Disable allow_guessing
@@ -674,7 +678,7 @@ int main(int argc, char **argv)
     /* globals? Yes, so we only have to run strlen once */
     delimiter_length= delimiter.length();
 
-    slap_connect(con, false);
+    drizzle_con_st *con= slap_connect(false);
 
     /* Main iterations loop */
 burnin:
@@ -690,24 +694,26 @@ burnin:
       if (concurrency.size())
       {
         for (current= &concurrency[0]; current && *current; current++)
-          concurrency_loop(con, *current, eptr);
+          concurrency_loop(*con, *current, eptr);
       }
       else
       {
         uint32_t infinite= 1;
         do {
-          concurrency_loop(con, infinite, eptr);
+          concurrency_loop(*con, infinite, eptr);
         }
         while (infinite++);
       }
 
       if (not opt_preserve)
-        drop_schema(con, create_schema_string.c_str());
+        drop_schema(*con, create_schema_string.c_str());
 
     } while (eptr ? (eptr= eptr->getNext()) : 0);
 
     if (opt_burnin)
+    {
       goto burnin;
+    }
 
     slap_close(con);
 
@@ -2372,12 +2378,12 @@ void statement_cleanup(Statement *stmt)
   }
 }
 
-void slap_close(drizzle_con_st &con)
+void slap_close(drizzle_con_st *con)
 {
-  drizzle_free(drizzle_con_drizzle(&con));
+  drizzle_free(drizzle_con_drizzle(con));
 }
 
-void slap_connect(drizzle_con_st &con, bool connect_to_schema)
+drizzle_con_st* slap_connect(bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
@@ -2388,12 +2394,13 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   if (opt_delayed_start)
     usleep(random()%opt_delayed_start);
 
-  if ((drizzle= drizzle_create(NULL)) == NULL ||
-      drizzle_con_add_tcp(drizzle, &con, host.c_str(), opt_drizzle_port,
-        user.c_str(),
-        opt_password.c_str(),
-        connect_to_schema ? create_schema_string.c_str() : NULL,
-        use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
+  drizzle_con_st* con;
+  if ((drizzle= drizzle_create()) == NULL or
+      (con= drizzle_con_add_tcp(drizzle,
+                                host.c_str(), opt_drizzle_port,
+                                user.c_str(), opt_password.c_str(),
+                                connect_to_schema ? create_schema_string.c_str() : NULL,
+                                use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL)) == NULL)
   {
     fprintf(stderr,"%s: Error creating drizzle object\n", SLAP_NAME);
     abort();
@@ -2402,11 +2409,13 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   drizzle_set_context(drizzle, (void*)(connection_count.fetch_and_increment()));
 
   if (opt_only_print)
-    return;
+  {
+    return con;
+  }
 
   for (uint32_t x= 0; x < 10; x++)
   {
-    if ((ret= drizzle_con_connect(&con)) == DRIZZLE_RETURN_OK)
+    if ((ret= drizzle_con_connect(con)) == DRIZZLE_RETURN_OK)
     {
       /* Connect suceeded */
       connect_error= 0;
@@ -2417,9 +2426,11 @@ void slap_connect(drizzle_con_st &con, bool connect_to_schema)
   if (connect_error)
   {
     fprintf(stderr,"%s: Error when connecting to server: %d %s\n", SLAP_NAME,
-            ret, drizzle_con_error(&con));
+            ret, drizzle_con_error(con));
     abort();
   }
+
+  return con;
 }
 
 void standard_deviation(Conclusions &con, Stats *sptr)

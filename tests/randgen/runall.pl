@@ -220,7 +220,7 @@ foreach my $server_id (0..1) {
 		($server_id == 0) ||
 		($rpl_mode eq '') 
 	) {
-		$master_dsns[$server_id] = "dbi:mysql:host=127.0.0.1:port=".$master_ports[$server_id].":user=root:database=".$database;
+		$master_dsns[$server_id] = "dbi:mysql:host=localhost:port=".$master_ports[$server_id].":user=root:database=".$database;
 	}
 
 	my @mtr_options;
@@ -259,7 +259,7 @@ foreach my $server_id (0..1) {
 		# If we are running in replication, and we start the slave separately (because it is a different binary)
 		# add a few options that allow the slave and the master to be distinguished and SHOW SLAVE HOSTS to work
 		push @mtr_options, "--mysqld=--server-id=".($server_id + 1);
-		push @mtr_options, "--mysqld=--report-host=127.0.0.1";
+		push @mtr_options, "--mysqld=--report-host=localhost";
 		push @mtr_options, "--mysqld=--report-port=".$master_ports[$server_id];
 	}
 
@@ -321,7 +321,7 @@ chdir($cwd);
 my $master_dbh = DBI->connect($master_dsns[0], undef, undef, { RaiseError => 1 } );
 
 if ($rpl_mode) {
-	my $slave_dsn = "dbi:mysql:host=127.0.0.1:port=".$slave_port.":user=root:database=".$database;
+	my $slave_dsn = "dbi:mysql:host=localhost:port=".$slave_port.":user=root:database=".$database;
 	my $slave_dbh = DBI->connect($slave_dsn, undef, undef, { RaiseError => 1 } );
 
 	say("Establishing replication, mode $rpl_mode ...");
@@ -339,7 +339,7 @@ if ($rpl_mode) {
 
 	$slave_dbh->do("CHANGE MASTER TO
 		MASTER_PORT = $master_ports[0],
-		MASTER_HOST = '127.0.0.1',
+		MASTER_HOST = 'localhost',
                MASTER_USER = 'root',
                MASTER_CONNECT_RETRY = 1
 	");

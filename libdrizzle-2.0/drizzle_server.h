@@ -79,7 +79,6 @@ extern "C" {
  */
 DRIZZLE_API
 drizzle_con_st *drizzle_con_add_tcp_listen(drizzle_st *drizzle,
-                                           drizzle_con_st *con,
                                            const char *host, in_port_t port,
                                            int backlog,
                                            drizzle_con_options_t options);
@@ -89,7 +88,6 @@ drizzle_con_st *drizzle_con_add_tcp_listen(drizzle_st *drizzle,
  *
  * @param[in] drizzle Drizzle structure previously initialized with
  *  drizzle_create() or drizzle_clone().
- * @param[in] con Caller allocated structure, or NULL to allocate one.
  * @param[in] uds Path to unix domain socket to use for listening.
  * @param[in] backlog Number of backlog connections passed to listen().
  * @param[in] options Drizzle connection options to add.
@@ -97,7 +95,6 @@ drizzle_con_st *drizzle_con_add_tcp_listen(drizzle_st *drizzle,
  */
 DRIZZLE_API
 drizzle_con_st *drizzle_con_add_uds_listen(drizzle_st *drizzle,
-                                           drizzle_con_st *con,
                                            const char *uds, int backlog,
                                            drizzle_con_options_t options);
 
@@ -116,12 +113,11 @@ drizzle_con_st *drizzle_con_ready_listen(drizzle_st *drizzle);
  *
  * @param[in] drizzle Drizzle structure previously initialized with
  *  drizzle_create() or drizzle_clone().
- * @param[in] con Caller allocated structure, or NULL to allocate one.
  * @param[out] ret_ptr Standard drizzle return value.
  * @return Same return as drizzle_con_create().
  */
 DRIZZLE_API
-drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle, drizzle_con_st *con,
+drizzle_con_st *drizzle_con_accept(drizzle_st *drizzle,
                                    drizzle_return_t *ret_ptr);
 
 /** @} */

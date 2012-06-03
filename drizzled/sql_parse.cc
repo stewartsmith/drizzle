@@ -21,7 +21,6 @@
 #include <drizzled/abort_exception.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
-#include <drizzled/query_id.h>
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
@@ -88,6 +87,8 @@ void parse(Session&, const char *inBuf, uint32_t length);
 extern size_t my_thread_stack_size;
 extern const charset_info_st *character_set_filesystem;
 
+static atomic<uint64_t> g_query_id;
+
 namespace
 {
   static const std::string command_name[]=
@@ -131,7 +132,7 @@ const std::string &getCommandName(const enum_server_command& command)
 
 void init_update_queries(void)
 {
-  for (uint32_t x= uint32_t(SQLCOM_SELECT); 
+  for (uint32_t x= uint32_t(SQLCOM_SELECT);
        x <= uint32_t(SQLCOM_END); x++)
   {
     sql_command_flags[x].reset();
@@ -188,69 +189,66 @@ void init_update_queries(void)
     1   request of thread shutdown, i. e. if command is
         COM_QUIT/COM_SHUTDOWN
 */
-bool dispatch_command(enum_server_command command, Session *session,
-                      const char* packet, uint32_t packet_length)
+bool dispatch_command(enum_server_command command, Session& session, str_ref packet)
 {
   bool error= false;
-  Query_id& query_id= Query_id::get_query_id();
 
-  DRIZZLE_COMMAND_START(session->thread_id, command);
+  DRIZZLE_COMMAND_START(session.thread_id, command);
 
-  session->command= command;
-  session->lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
-  session->times.set_time();
-  session->setQueryId(query_id.value());
+  session.command= command;
+  session.lex().sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
+  session.times.set_time();
+  session.setQueryId(g_query_id.increment());
 
   if (command != COM_PING)
   {
     // Increase id and count all other statements
-    session->status_var.questions++;
-    query_id.next();
+    session.status_var.questions++;
   }
 
-  /* @todo set session->lex().sql_command to SQLCOM_END here */
+  /* @todo set session.lex().sql_command to SQLCOM_END here */
 
-  plugin::Logging::preDo(session);
-  if (unlikely(plugin::EventObserver::beforeStatement(*session)))
+  plugin::Logging::preDo(&session);
+  if (unlikely(plugin::EventObserver::beforeStatement(session)))
   {
     // We should do something about an error...
   }
 
-  session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
+  session.server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
 
   switch (command)
   {
   case COM_USE_SCHEMA:
     {
-      if (packet_length == 0)
+      if (packet.empty())
       {
         my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
         break;
       }
-      if (not schema::change(*session, identifier::Schema(string(packet, packet_length))))
+      if (not schema::change(session, identifier::Schema(packet)))
       {
-        session->my_ok();
+        session.my_ok();
       }
       break;
     }
 
   case COM_QUERY:
     {
-      session->readAndStoreQuery(packet, packet_length);
-      DRIZZLE_QUERY_START(session->getQueryString()->c_str(), session->thread_id, session->schema()->c_str());
-      parse(*session, session->getQueryString()->c_str(), session->getQueryString()->length());
+      session.readAndStoreQuery(packet);
+      DRIZZLE_QUERY_START(session.getQueryString()->c_str(), session.thread_id, session.schema()->c_str());
+      parse(session, session.getQueryString()->c_str(), session.getQueryString()->length());
       break;
     }
 
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->main_da().disable_status();              // Don't send anything back
+    session.main_da().disable_status();              // Don't send anything back
     error= true;					// End server
     break;
 
   case COM_KILL:
     {
-      if (packet_length != 4)
+      if (packet.size() != 4)
       {
         my_error(ER_NO_SUCH_THREAD, MYF(0), 0);
         break;
@@ -258,28 +256,28 @@ bool dispatch_command(enum_server_command command, Session *session,
       else
       {
         uint32_t kill_id;
-        memcpy(&kill_id, packet, sizeof(uint32_t));
+        memcpy(&kill_id, packet.data(), sizeof(uint32_t));
 
         kill_id= ntohl(kill_id);
-        (void)drizzled::kill(*session->user(), kill_id, true);
+        (void)drizzled::kill(*session.user(), kill_id, true);
       }
-      session->my_ok();
+      session.my_ok();
       break;
     }
 
   case COM_SHUTDOWN:
     {
-      session->status_var.com_other++;
-      session->my_eof();
-      session->close_thread_tables();			// Free before kill
+      session.status_var.com_other++;
+      session.my_eof();
+      session.close_thread_tables();			// Free before kill
       kill_drizzle();
       error= true;
       break;
     }
 
   case COM_PING:
-    session->status_var.com_other++;
-    session->my_ok();				// Tell client we are alive
+    session.status_var.com_other++;
+    session.my_ok();				// Tell client we are alive
     break;
 
   case COM_SLEEP:
@@ -291,42 +289,41 @@ bool dispatch_command(enum_server_command command, Session *session,
   }
 
   /* If commit fails, we should be able to reset the OK status. */
-  session->main_da().can_overwrite_status= true;
-  TransactionServices::autocommitOrRollback(*session, session->is_error());
-  session->main_da().can_overwrite_status= false;
+  session.main_da().can_overwrite_status= true;
+  TransactionServices::autocommitOrRollback(session, session.is_error());
+  session.main_da().can_overwrite_status= false;
 
-  session->transaction.stmt.reset();
+  session.transaction.stmt.reset();
 
 
   /* report error issued during command execution */
-  if (session->killed_errno())
+  if (session.killed_errno())
   {
-    if (not session->main_da().is_set())
-      session->send_kill_message();
+    if (not session.main_da().is_set())
+      session.send_kill_message();
   }
-  if (session->getKilled() == Session::KILL_QUERY || session->getKilled() == Session::KILL_BAD_DATA)
+  if (session.getKilled() == Session::KILL_QUERY || session.getKilled() == Session::KILL_BAD_DATA)
   {
-    session->setKilled(Session::NOT_KILLED);
-    session->setAbort(false);
+    session.setKilled(Session::NOT_KILLED);
+    session.setAbort(false);
   }
 
   /* Can not be true, but do not take chances in production. */
-  assert(! session->main_da().is_sent);
+  assert(not session.main_da().is_sent);
 
-  switch (session->main_da().status())
+  switch (session.main_da().status())
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->getClient()->sendError(session->main_da().sql_errno(),
-                               session->main_da().message());
+    session.getClient()->sendError(session.main_da().sql_errno(), session.main_da().message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->getClient()->sendEOF();
+    session.getClient()->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->getClient()->sendOK();
+    session.getClient()->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -334,37 +331,36 @@ bool dispatch_command(enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->getClient()->sendOK();
-    break;
+    session.getClient()->sendOK();
   }
 
-  session->main_da().is_sent= true;
+  session.main_da().is_sent= true;
 
-  session->set_proc_info("closing tables");
+  session.set_proc_info("closing tables");
   /* Free tables */
-  session->close_thread_tables();
+  session.close_thread_tables();
 
-  plugin::Logging::postDo(session);
-  if (unlikely(plugin::EventObserver::afterStatement(*session)))
+  plugin::Logging::postDo(&session);
+  if (unlikely(plugin::EventObserver::afterStatement(session)))
   {
     // We should do something about an error...
   }
 
   /* Store temp state for processlist */
-  session->set_proc_info("cleaning up");
-  session->command= COM_SLEEP;
-  session->resetQueryString();
+  session.set_proc_info("cleaning up");
+  session.command= COM_SLEEP;
+  session.resetQueryString();
 
-  session->set_proc_info(NULL);
-  session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
+  session.set_proc_info(NULL);
+  session.mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
     if (command == COM_QUERY)
     {
-      DRIZZLE_QUERY_DONE(session->is_error());
+      DRIZZLE_QUERY_DONE(session.is_error());
     }
-    DRIZZLE_COMMAND_DONE(session->is_error());
+    DRIZZLE_COMMAND_DONE(session.is_error());
   }
 
   return error;
@@ -933,7 +929,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->setIsFqtn(true);
     ptr->setSchemaName(table->db.data());
   }
-  else 
+  else
   {
     str_ref schema = lex->session->copy_db_to();
     if (schema.empty())

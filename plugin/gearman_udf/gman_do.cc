@@ -14,8 +14,8 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <config.h>
-#include "gman_do.h"
-#include "function_map.h"
+#include "plugin/gearman_udf/gman_do.h"
+#include "plugin/gearman_udf/function_map.h"
 
 using namespace std;
 using namespace drizzled;

@@ -94,8 +94,8 @@ extern TYPELIB tx_isolation_typelib;
 
 namespace
 {
-  static size_t revno= DRIZZLE7_VC_REVNO;
-  static size_t release_id= DRIZZLE7_RELEASE_ID;
+  static size_t revno= DRIZZLE_VC_REVNO;
+  static size_t release_id= DRIZZLE_RELEASE_ID;
 }
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -245,8 +245,8 @@ sys_var_session_uint64_t sys_group_concat_max_len("group_concat_max_len", &drizz
 /* Global read-only variable containing hostname */
 static sys_var_const_string sys_hostname("hostname", getServerHostname());
 
-static sys_var_const_str sys_revid("vc_revid", DRIZZLE7_VC_REVID);
-static sys_var_const_str sys_branch("vc_branch", DRIZZLE7_VC_BRANCH);
+static sys_var_const_str sys_revid("vc_revid", DRIZZLE_VC_REVID);
+static sys_var_const_str sys_branch("vc_branch", DRIZZLE_VC_BRANCH);
 static sys_var_size_t_ptr_readonly sys_revno("vc_revno", &revno);
 static sys_var_size_t_ptr_readonly sys_release_id("vc_release_id", &release_id);
 

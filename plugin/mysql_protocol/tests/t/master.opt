@@ -1,1 +1,1 @@
---allow-all-authentication.allow_anonymous=true
+--auth-all.allow-anonymous=true

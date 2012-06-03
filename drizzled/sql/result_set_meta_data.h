@@ -33,9 +33,12 @@
 
 #include <cassert>
 #include <queue>
+#include <vector>
+#include <drizzled/field.h>
 
 namespace drizzled {
 namespace sql {
+
 
 class ResultSetMetaData
 {
@@ -51,17 +54,31 @@ protected:
   ResultSetMetaData(size_t columns) :
     _columns(columns)
   {
+    _columnInfo.resize(columns);
   }
 
-  void setColumnCount(size_t fields)
+  void setColumnCount(size_t columns)
   {
-    _columns= fields;
+    _columns= columns;
+    _columnInfo.resize(columns);
   }
 
+  void setColumnInfo(size_t column_number, const SendField& field)
+  {
+    _columnInfo.at(column_number) = field;
+  }
+
+  SendField getColumnInfo(size_t column_number)
+  {
+    return _columnInfo.at(column_number);
+  }
+  
 private: // Member methods
 
 private: // Member variables
   size_t _columns;
+  typedef std::vector<SendField> ColumnInfoVector;
+  ColumnInfoVector _columnInfo;
 };
 
 std::ostream& operator<<(std::ostream& output, const ResultSetMetaData &result_set);

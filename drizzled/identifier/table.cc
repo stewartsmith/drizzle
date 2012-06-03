@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <assert.h>
+#include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <drizzled/identifier.h>
 #include <drizzled/internal/my_sys.h>
@@ -33,6 +33,7 @@
 
 #include <drizzled/util/string.h>
 #include <drizzled/util/tablename_to_filename.h>
+#include <drizzled/catalog/local.h>
 
 #include <algorithm>
 #include <sstream>
@@ -88,9 +89,13 @@ uint32_t Table::filename_to_tablename(const char *from, char *to, uint32_t to_le
       for (int x=1; x >= 0; x--)
       {
         if (*from >= '0' && *from <= '9')
+        {
           to[length] += ((*from++ - '0') << (4 * x));
+        }
         else if (*from >= 'a' && *from <= 'f')
+        {
           to[length] += ((*from++ - 'a' + 10) << (4 * x));
+        }
       }
       /* Backup because we advanced extra in the inner loop */
       from--;
@@ -179,7 +184,8 @@ std::string Table::build_tmptable_filename()
 
 std::string Table::build_table_filename(const std::string &in_db, const std::string &in_table_name, bool is_tmp)
 {
-  string in_path= util::tablename_to_filename(in_db) + FN_LIBCHAR;
+  string in_path= drizzled::catalog::local_identifier().getPath();
+  in_path+= FN_LIBCHAR + util::tablename_to_filename(in_db) + FN_LIBCHAR;
   return in_path + (is_tmp ? in_table_name : util::tablename_to_filename(in_table_name));
 }
 
@@ -189,8 +195,41 @@ Table::Table(const drizzled::Table &table) :
   table_name(table.getShare()->getTableName())
 {
   if (type == message::Table::TEMPORARY)
+  {
     path= table.getShare()->getPath();
+  }
 
+  init();
+}
+
+Table::Table(const identifier::Schema &schema,
+             const std::string &table_name_arg,
+             Type tmp_arg) :
+  Schema(schema),
+  type(tmp_arg),
+  table_name(table_name_arg)
+{ 
+  init();
+}
+
+Table::Table(const std::string &db_arg,
+             const std::string &table_name_arg,
+             Type tmp_arg) :
+  Schema(db_arg),
+  type(tmp_arg),
+  table_name(table_name_arg)
+{ 
+  init();
+}
+
+Table::Table(const std::string &schema_name_arg,
+             const std::string &table_name_arg,
+             const std::string &path_arg ) :
+  Schema(schema_name_arg),
+  type(message::Table::TEMPORARY),
+  path(path_arg),
+  table_name(table_name_arg)
+{ 
   init();
 }
 
@@ -203,13 +242,17 @@ void Table::init()
     assert(path.empty());
     path= build_table_filename(getSchemaName(), table_name, false);
     break;
+
   case message::Table::INTERNAL:
     assert(path.empty());
     path= build_table_filename(getSchemaName(), table_name, true);
     break;
+
   case message::Table::TEMPORARY:
     if (path.empty())
+    {
       path= build_tmptable_filename();
+    }
     break;
   }
 
@@ -217,11 +260,13 @@ void Table::init()
   {
     size_t pos= path.find("tmp/#sql");
     if (pos != std::string::npos) 
+    {
       key_path= path.substr(pos);
+    }
   }
 
   hash_value= util::insensitive_hash()(path);
-  key.set(getKeySize(), getSchemaName(), boost::to_lower_copy(std::string(getTableName())));
+  key.set(getKeySize(), getCatalogName(), getCompareWithSchemaName(), boost::to_lower_copy(std::string(getTableName())));
 }
 
 
@@ -242,8 +287,10 @@ std::string Table::getSQLPath() const  // @todo this is just used for errors, we
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
 		return getSchemaName() + "." + table_name;
+
   case message::Table::INTERNAL:
 		return "temporary." + table_name;
+
   case message::Table::TEMPORARY:
     return getSchemaName() + ".#" + table_name;
   }
@@ -253,8 +300,10 @@ std::string Table::getSQLPath() const  // @todo this is just used for errors, we
 
 bool Table::isValid() const
 {
-  if (not identifier::Schema::isValid())
+  if (identifier::Schema::isValid() == false)
+  {
     return false;
+  }
 
   bool error= false;
   if (table_name.empty()
@@ -270,11 +319,17 @@ bool Table::isValid() const
     int well_formed_error;
     uint32_t res= cs.cset->well_formed_len(cs, table_name, NAME_CHAR_LEN, &well_formed_error);
     if (well_formed_error or table_name.length() != res)
+    {
       error= true;
+    }
   }
-  if (not error)
+
+  if (error == false)
+  {
 		return true;
+  }
   my_error(ER_WRONG_TABLE_NAME, MYF(0), getSQLPath().c_str());
+
   return false;
 }
 
@@ -284,12 +339,16 @@ void Table::copyToTableMessage(message::Table &message) const
   message.set_schema(getSchemaName());
 }
 
-void Table::Key::set(size_t resize_arg, const std::string &a, const std::string &b)
+void Table::Key::set(size_t resize_arg, const std::string &catalog_arg, const std::string &schema_arg, const std::string &table_arg)
 {
   key_buffer.resize(resize_arg);
 
-  std::copy(a.begin(), a.end(), key_buffer.begin());
-  std::copy(b.begin(), b.end(), key_buffer.begin() + a.length() + 1);
+  schema_offset= catalog_arg.length() +1;
+  table_offset= schema_offset +schema_arg.length() +1;
+
+  std::copy(catalog_arg.begin(), catalog_arg.end(), key_buffer.begin());
+  std::copy(schema_arg.begin(), schema_arg.end(), key_buffer.begin() +schema_offset);
+  std::copy(table_arg.begin(), table_arg.end(), key_buffer.begin() +table_offset);
 
   util::sensitive_hash hasher;
   hash_value= hasher(key_buffer);
@@ -303,6 +362,11 @@ std::size_t hash_value(Table const& b)
 std::size_t hash_value(Table::Key const& b)
 {
   return b.getHashValue();
+}
+
+std::ostream& operator<<(std::ostream& output, const Table::Key& arg)
+{
+  return output << "Key:(" <<  arg.schema_name() << ", " << arg.table_name() << ", " << arg.hash() << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& output, const Table& identifier)

@@ -36,6 +36,8 @@
 #include <drizzled/definitions.h>
 #include <drizzled/message/table.pb.h>
 
+#include <drizzled/util/backtrace.h>
+
 #include <string.h>
 
 #include <assert.h>
@@ -63,11 +65,15 @@ public:
   {
     std::vector<char> key_buffer;
     size_t hash_value;
+    size_t schema_offset;
+    size_t table_offset;
 
   public:
 
     Key() :
-      hash_value(0)
+      hash_value(0),
+      schema_offset(0),
+      table_offset(0)
     {
     }
 
@@ -76,12 +82,27 @@ public:
       return &key_buffer[0];
     }
 
+    const char *schema_name() const
+    {
+      return &key_buffer[0] +schema_offset;
+    }
+
+    const char *table_name() const
+    {
+      return &key_buffer[0] +table_offset;
+    }
+
+    size_t hash() const
+    {
+      return hash_value;
+    }
+
     std::vector<char> &vectorPtr()
     {
       return key_buffer;
     }
 
-    void set(size_t resize_arg, const std::string &a, const std::string &b);
+    void set(size_t resize_arg, const std::string &catalog_arg, const std::string &schema_arg, const std::string &table_arg);
 
     friend bool operator==(const Key &left, const Key &right)
     {
@@ -123,7 +144,7 @@ private:
 
   size_t getKeySize() const
   {
-    return getSchemaName().size() + getTableName().size() + 2;
+    return getCatalogName().size() + getSchemaName().size() + getTableName().size() + 3;
   }
 
 public:
@@ -132,34 +153,15 @@ public:
                    
   Table(const identifier::Schema &schema,
         const std::string &table_name_arg,
-        Type tmp_arg= message::Table::STANDARD) :
-    Schema(schema),
-    type(tmp_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+        Type tmp_arg= message::Table::STANDARD);
 
-  Table( const std::string &db_arg,
-                   const std::string &table_name_arg,
-                   Type tmp_arg= message::Table::STANDARD) :
-    Schema(db_arg),
-    type(tmp_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+  Table(const std::string &db_arg,
+        const std::string &table_name_arg,
+        Type tmp_arg= message::Table::STANDARD);
 
-  Table( const std::string &schema_name_arg,
-                   const std::string &table_name_arg,
-                   const std::string &path_arg ) :
-    Schema(schema_name_arg),
-    type(message::Table::TEMPORARY),
-    path(path_arg),
-    table_name(table_name_arg)
-  { 
-    init();
-  }
+  Table(const std::string &schema_name_arg,
+        const std::string &table_name_arg,
+        const std::string &path_arg );
 
   using Schema::compare;
 
@@ -253,7 +255,8 @@ public:
   }
 };
 
-std::ostream& operator<<(std::ostream& output, const Table& identifier);
+std::ostream& operator<<(std::ostream& output, const Table&);
+std::ostream& operator<<(std::ostream& output, const Table::Key&);
 std::size_t hash_value(Table const& b);
 std::size_t hash_value(Table::Key const& b);
 

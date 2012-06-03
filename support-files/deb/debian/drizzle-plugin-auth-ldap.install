@@ -1,0 +1,2 @@
+usr/lib/drizzle/libauth_ldap_plugin.so
+etc/drizzle/conf.d/auth-ldap.cnf

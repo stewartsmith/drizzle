@@ -118,11 +118,11 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::identifier::Table &identifier)
 {
-  if (not identifier.getPath().compare("test/t1"))
+  if (not identifier.getPath().compare("local/test/t1"))
     return true;
-  if (not identifier.getPath().compare("test/too_many_enum_values"))
+  if (not identifier.getPath().compare("local/test/too_many_enum_values"))
     return true;
-  if (not identifier.getPath().compare("test/invalid_table_collation"))
+  if (not identifier.getPath().compare("local/test/invalid_table_collation"))
     return true;
 
   return false;
@@ -239,17 +239,17 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  const drizzled::identifier::Table &identifier,
                                                  drizzled::message::Table &table_proto)
 {
-  if (not identifier.getPath().compare("test/t1"))
+  if (not identifier.getPath().compare("local/test/t1"))
   {
     fill_table1(table_proto);
     return EEXIST;
   }
-  else if (not identifier.getPath().compare("test/too_many_enum_values"))
+  else if (not identifier.getPath().compare("local/test/too_many_enum_values"))
   {
     fill_table_too_many_enum_values(table_proto);
     return EEXIST;
   }
-  else if (not identifier.getPath().compare("test/invalid_table_collation"))
+  else if (not identifier.getPath().compare("local/test/invalid_table_collation"))
   {
     fill_table_invalid_table_collation(table_proto);
     return EEXIST;
@@ -362,10 +362,10 @@ DRIZZLE_DECLARE_PLUGIN
   "TABLEPROTOTESTER",
   "1.0",
   "Stewart Smith",
-  "Used to test rest of server with various table proto messages",
+  N_("StorageEngine module for testing table proto messages"),
   PLUGIN_LICENSE_GPL,
-  tableprototester_init,     /* Plugin Init */
-  NULL,               /* depends */
-  NULL                /* config options   */
+  tableprototester_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

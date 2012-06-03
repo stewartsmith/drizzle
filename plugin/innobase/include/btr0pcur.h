@@ -151,7 +151,7 @@ UNIV_INLINE
 ulint
 btr_pcur_get_up_match(
 /*==================*/
-	btr_pcur_t*	cursor); /*!< in: memory buffer for persistent cursor */
+	const btr_pcur_t*	cursor); /*!< in: persistent cursor */
 /**************************************************************//**
 Gets the low_match value for a pcur after a search.
 @return number of matched fields at the cursor or to the right if
@@ -160,7 +160,7 @@ UNIV_INLINE
 ulint
 btr_pcur_get_low_match(
 /*===================*/
-	btr_pcur_t*	cursor); /*!< in: memory buffer for persistent cursor */
+	const btr_pcur_t*	cursor); /*!< in: persistent cursor */
 /**************************************************************//**
 If mode is PAGE_CUR_G or PAGE_CUR_GE, opens a persistent cursor on the first
 user record satisfying the search condition, in the case PAGE_CUR_L or
@@ -265,22 +265,6 @@ ulint
 btr_pcur_get_rel_pos(
 /*=================*/
 	const btr_pcur_t*	cursor);/*!< in: persistent cursor */
-/*********************************************************//**
-Sets the mtr field for a pcur. */
-UNIV_INLINE
-void
-btr_pcur_set_mtr(
-/*=============*/
-	btr_pcur_t*	cursor,	/*!< in: persistent cursor */
-	mtr_t*		mtr);	/*!< in, own: mtr */
-/*********************************************************//**
-Gets the mtr field for a pcur.
-@return	mtr */
-UNIV_INLINE
-mtr_t*
-btr_pcur_get_mtr(
-/*=============*/
-	btr_pcur_t*	cursor);	/*!< in: persistent cursor */
 /**************************************************************//**
 Commits the mtr and sets the pcur latch mode to BTR_NO_LATCHES,
 that is, the cursor becomes detached. If there have been modifications
@@ -293,14 +277,6 @@ btr_pcur_commit_specify_mtr(
 /*========================*/
 	btr_pcur_t*	pcur,	/*!< in: persistent cursor */
 	mtr_t*		mtr);	/*!< in: mtr to commit */
-/**************************************************************//**
-Tests if a cursor is detached: that is the latch mode is BTR_NO_LATCHES.
-@return	TRUE if detached */
-UNIV_INLINE
-ibool
-btr_pcur_is_detached(
-/*=================*/
-	btr_pcur_t*	pcur);	/*!< in: persistent cursor */
 /*********************************************************//**
 Moves the persistent cursor to the next record in the tree. If no records are
 left, the cursor stays 'after last in tree'.
@@ -388,10 +364,6 @@ page_cur_t*
 btr_pcur_get_page_cur(
 /*==================*/
 	const btr_pcur_t*	cursor);	/*!< in: persistent cursor */
-#else /* UNIV_DEBUG */
-# define btr_pcur_get_btr_cur(cursor) (&(cursor)->btr_cur)
-# define btr_pcur_get_page_cur(cursor) (&(cursor)->btr_cur.page_cur)
-#endif /* UNIV_DEBUG */
 /*********************************************************//**
 Returns the page of a persistent cursor.
 @return	pointer to the page */
@@ -399,7 +371,7 @@ UNIV_INLINE
 page_t*
 btr_pcur_get_page(
 /*==============*/
-	btr_pcur_t*	cursor);/*!< in: persistent cursor */
+	const btr_pcur_t*	cursor);/*!< in: persistent cursor */
 /*********************************************************//**
 Returns the buffer block of a persistent cursor.
 @return	pointer to the block */
@@ -407,7 +379,7 @@ UNIV_INLINE
 buf_block_t*
 btr_pcur_get_block(
 /*===============*/
-	btr_pcur_t*	cursor);/*!< in: persistent cursor */
+	const btr_pcur_t*	cursor);/*!< in: persistent cursor */
 /*********************************************************//**
 Returns the record of a persistent cursor.
 @return	pointer to the record */
@@ -415,7 +387,14 @@ UNIV_INLINE
 rec_t*
 btr_pcur_get_rec(
 /*=============*/
-	btr_pcur_t*	cursor);/*!< in: persistent cursor */
+	const btr_pcur_t*	cursor);/*!< in: persistent cursor */
+#else /* UNIV_DEBUG */
+# define btr_pcur_get_btr_cur(cursor) (&(cursor)->btr_cur)
+# define btr_pcur_get_page_cur(cursor) (&(cursor)->btr_cur.page_cur)
+# define btr_pcur_get_page(cursor) ((cursor)->btr_cur.page_cur.block->frame)
+# define btr_pcur_get_block(cursor) ((cursor)->btr_cur.page_cur.block)
+# define btr_pcur_get_rec(cursor) ((cursor)->btr_cur.page_cur.rec)
+#endif /* UNIV_DEBUG */
 /*********************************************************//**
 Checks if the persistent cursor is on a user record. */
 UNIV_INLINE
@@ -518,9 +497,6 @@ struct btr_pcur_struct{
 	/* NOTE that the following fields may possess dynamically allocated
 	memory which should be freed if not needed anymore! */
 
-	mtr_t*		mtr;		/*!< NULL, or this field may contain
-					a mini-transaction which holds the
-					latch on the cursor page */
 	byte*		old_rec_buf;	/*!< NULL, or a dynamically allocated
 					buffer for old_rec */
 	ulint		buf_size;	/*!< old_rec_buf size if old_rec_buf

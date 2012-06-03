@@ -58,23 +58,23 @@ FOREIGN KEY (parent_id) REFERENCES parent(id)
 ON DELETE CASCADE) ENGINE=INNODB;
 SELECT * FROM DATA_DICTIONARY.INNODB_SYS_FOREIGN;
 ID	FOR_NAME	REF_NAME	N_COLS	TYPE
-test/constraint_test	test/child	test/parent	1	1
+local/test/constraint_test	local/test/child	local/test/parent	1	1
 SELECT * FROM DATA_DICTIONARY.INNODB_SYS_FOREIGN_COLS;
 ID	FOR_COL_NAME	REF_COL_NAME	POS
-test/constraint_test	parent_id	id	0
+local/test/constraint_test	parent_id	id	0
 INSERT INTO parent VALUES(1);
 SELECT name, num_rows, handles_opened
 FROM DATA_DICTIONARY.INNODB_SYS_TABLESTATS
 WHERE name LIKE "%parent";
 name	num_rows	handles_opened
-test/parent	1	1
+local/test/parent	1	1
 SELECT NAME, FLAG, N_COLS, SPACE FROM DATA_DICTIONARY.INNODB_SYS_TABLES;
 NAME	FLAG	N_COLS	SPACE
 SYS_FOREIGN	0	7	0
 SYS_FOREIGN_COLS	0	7	0
 SYS_REPLICATION_LOG	0	11	0
-test/child	1	5	0
-test/parent	1	4	0
+local/test/child	1	5	0
+local/test/parent	1	4	0
 SELECT name, n_fields
 from DATA_DICTIONARY.INNODB_SYS_INDEXES
 WHERE table_id In (SELECT table_id from
@@ -109,11 +109,11 @@ FOREIGN KEY (id, parent_id) REFERENCES parent(id, newid)
 ON DELETE CASCADE) ENGINE=INNODB;
 SELECT * FROM DATA_DICTIONARY.INNODB_SYS_FOREIGN;
 ID	FOR_NAME	REF_NAME	N_COLS	TYPE
-test/constraint_test	test/child	test/parent	2	1
+local/test/constraint_test	local/test/child	local/test/parent	2	1
 SELECT * FROM DATA_DICTIONARY.INNODB_SYS_FOREIGN_COLS;
 ID	FOR_COL_NAME	REF_COL_NAME	POS
-test/constraint_test	id	id	0
-test/constraint_test	parent_id	newid	1
+local/test/constraint_test	id	id	0
+local/test/constraint_test	parent_id	newid	1
 INSERT INTO parent VALUES(1, 9);
 SELECT * FROM parent WHERE id IN (SELECT id FROM parent);
 id	newid
@@ -122,6 +122,6 @@ SELECT name, num_rows, handles_opened
 FROM DATA_DICTIONARY.INNODB_SYS_TABLESTATS
 WHERE name LIKE "%parent";
 name	num_rows	handles_opened
-test/parent	1	2
+local/test/parent	1	2
 DROP TABLE child;
 DROP TABLE parent;

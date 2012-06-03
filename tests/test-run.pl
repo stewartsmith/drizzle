@@ -258,7 +258,8 @@ our $opt_timer= 1;
 
 our $opt_user;
 
-my $opt_valgrind= 0;
+my $test_environment= $ENV{'TESTS_ENVIRONMENT'}; # Assume valgrind
+my $opt_valgrind;
 my $opt_valgrind_drizzled= 0;
 my $opt_valgrind_drizzletest= 0;
 my $opt_valgrind_drizzleslap= 0;
@@ -341,6 +342,11 @@ sub usage ($);
 main();
 
 sub main () {
+
+  if ($test_environment)
+  {
+    $opt_valgrind= $test_environment =~ m/valgrind/;
+  }
 
   command_line_setup();
 

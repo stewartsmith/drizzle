@@ -1,1 +1,0 @@
---plugin-add=pbms --pbms.port=$PBMS_PORT --plugin-add=utility_dictionary

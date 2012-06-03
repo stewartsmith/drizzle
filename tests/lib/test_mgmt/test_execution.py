@@ -265,7 +265,6 @@ class testExecutor():
                    ,  'DRIZZLE': "%s -uroot -p%d" %( self.master_server.drizzle_client
                                                    , self.master_server.master_port)
                    ,  'DRIZZLE_BASEDIR' : self.system_manager.code_manager.code_trees['drizzle'][0].basedir
-                   ,  'DRIZZLE_TRX_READER' : self.master_server.trx_reader
                    ,  'DRIZZLE_TEST_WORKDIR' : self.system_manager.workdir
                    }     
 

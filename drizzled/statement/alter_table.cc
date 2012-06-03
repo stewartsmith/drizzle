@@ -1367,10 +1367,7 @@ static int apply_online_rename_table(Session *session,
   /*
     Unlike to the above case close_cached_table() below will remove ALL
     instances of Table from table cache (it will also remove table lock
-    held by this thread). So to make actual table renaming and writing
-    to binlog atomic we have to put them into the same critical section
-    protected by table::Cache::mutex() mutex. This also removes gap for races between
-    access() and rename_table() calls.
+    held by this thread).
   */
 
   if (not (original_table_identifier == new_table_identifier))

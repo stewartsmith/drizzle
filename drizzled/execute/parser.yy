@@ -69,7 +69,6 @@
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
 
-int execute_lex(YYSTYPE* lvalp, void* scanner);
 std::string query;
 #define parser_abort(A, B) do { parser::abort_func((A), (B)); YYABORT; } while (0)
 
@@ -117,12 +116,20 @@ std::vector<std::string> Context::start()
 {
   execute_parse(this, (void **)scanner);
   std::vector<std::string> parsed_queries;
-  while ((pos= query.find(';')) != std::string::npos)
+  size_t start_pos= 0;
+  while ((pos= query.find(';', start_pos)) != std::string::npos)
   {
+    if ((pos > 0) && (query[pos-1] == '\\'))
+    {
+      start_pos= pos + 1;
+      continue;
+    }
     parsed_queries.push_back(query.substr(0, pos));
     pos++;
     if (query[pos] == ' ')
-    	pos++;
+    {
+      pos++;
+    }
     query.erase(0, pos);
   }
   parsed_queries.push_back(query);

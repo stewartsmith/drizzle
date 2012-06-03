@@ -95,9 +95,10 @@ If writing a plugin, the other plugins in trunk have many examples of test cases
 You should attempt to test your code on multiple platforms before publishing
 it or proposing it for merging.  Your tests must pass on all
 :ref:`supported_platforms` and be idempotent (pass when ran with
-:option:`--repeat-test` 2).  You can test on other platforms by using
-`VirtualBox <https://www.virtualbox.org/>`_ or another virtualization
-server, or by requesting access to the `Drizzle Jenkins server <http://jenkins.drizzle.org/>`_.
+:option:`test-run --repeat-test` 2).  You can test on other platforms by
+using `VirtualBox <https://www.virtualbox.org/>`_ or another virtualization
+server, or by requesting access to the `Drizzle Jenkins server
+<http://jenkins.drizzle.org/>`_.
 
 Pushing Work
 ------------

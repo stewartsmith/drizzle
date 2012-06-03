@@ -47,18 +47,22 @@ public:
   virtual void sendFields(List<Item>& list)
   {
     List<Item>::iterator it(list.begin());
-
     column= 0;
     max_column= 0;
 
     while (Item* item= it++)
     {
-      SendField field;
+      // max_column starts from 0, ColumnCount from 1
+      _result_set->setColumnCount(max_column+1);
+      // Get pointer to next column metadata class
+      SendField field = _result_set->getColumnInfo(max_column);
       item->make_field(&field);
+      // Is this necessary or does it just set the same pointer back?
+      _result_set->setColumnInfo(max_column, field);
       max_column++;
     }
-    _result_set->setColumnCount(max_column);
-    _result_set->createRow();
+    // Moved to checkRowBegin()
+    //_result_set->createRow();
   }
 
   virtual void sendError(drizzled::error_t error_code, const char *error_message)
@@ -66,12 +70,17 @@ public:
     _result_set->pushException(sql::Exception(error_message, error_code));
   }
 
-  virtual void checkRowEnd()
+  virtual void checkRowBegin()
   {
-    if (++column % max_column == 0)
+    if (currentColumn() == 0)
     {
       _result_set->createRow();
     }
+  }
+
+  virtual void checkRowEnd()
+  {
+    column++;
   }
 
   using Client::store;
@@ -90,42 +99,49 @@ public:
 
   virtual void store()
   {
+    checkRowBegin();
     _result_set->setColumnNull(currentColumn());
     checkRowEnd();
   }
 
   virtual void store(int32_t from)
   {
+    checkRowBegin();
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
   }
 
   virtual void store(uint32_t from)
   {
+    checkRowBegin();
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
   }
 
   virtual void store(int64_t from)
   {
+    checkRowBegin();
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
   }
 
   virtual void store(uint64_t from)
   {
+    checkRowBegin();
     _result_set->setColumn(currentColumn(), boost::lexical_cast<std::string>(from));
     checkRowEnd();
   }
 
   virtual void store(double from, uint32_t decimals, String *buffer)
   {
+    checkRowBegin();
     buffer->set_real(from, decimals, &my_charset_bin);
     return store(buffer->ptr(), buffer->length());
   }
 
   virtual void store(const char *from, size_t length)
   {
+    checkRowBegin();
     _result_set->setColumn(currentColumn(), std::string(from, length));
     checkRowEnd();
   }

@@ -950,8 +950,8 @@ class Item_func_group_concat : public Item_sum
   DRIZZLE_ERROR *warning;
   String result;
   String *separator;
-  TREE tree_base;
-  TREE *tree;
+  Tree tree_base;
+  Tree *tree;
 
   /**
      If DISTINCT is used with this GROUP_CONCAT, this member is used to filter

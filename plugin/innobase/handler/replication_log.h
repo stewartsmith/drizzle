@@ -30,7 +30,7 @@ class ReplicationLog :
 public:
   ReplicationLog();
 
-  static void setup(ReplicationLog*);
+  static void setup(ReplicationLog*, const std::string&);
   drizzled::plugin::ReplicationReturnCode apply(drizzled::Session&, const drizzled::message::Transaction &to_apply);
 };
 

@@ -72,7 +72,7 @@ drizzle_query_st *drizzle_query_add(drizzle_st *drizzle,
                                     drizzle_con_st *con,
                                     drizzle_result_st *result,
                                     const char *query_string, size_t size,
-                                    drizzle_query_options_t options,
+                                    drizzle_query_options_t,
                                     void *context)
 {
   // @note drizzle_query_st handle the null drizzle case
@@ -85,14 +85,12 @@ drizzle_query_st *drizzle_query_add(drizzle_st *drizzle,
   drizzle_query_set_con(query, con);
   drizzle_query_set_result(query, result);
   drizzle_query_set_string(query, query_string, size);
-  drizzle_query_add_options(query, options);
   drizzle_query_set_context(query, context);
 
   return query;
 }
 
-drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
-                                       drizzle_query_st *query)
+drizzle_query_st *drizzle_query_create(drizzle_st *drizzle, drizzle_query_st *query)
 {
   if (drizzle == NULL)
   {
@@ -107,12 +105,11 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
     {
       return NULL;
     }
-    query->options|= DRIZZLE_CON_ALLOCATED;
+    query->options.is_allocated= true;
   }
   else
   {
     query->prev= NULL;
-    query->options= 0;
     query->state= DRIZZLE_QUERY_STATE_INIT;
     query->con= NULL;
     query->result= NULL;
@@ -120,6 +117,7 @@ drizzle_query_st *drizzle_query_create(drizzle_st *drizzle,
     query->size= 0;
     query->context= NULL;
     query->context_free_fn= NULL;
+    query->options.is_allocated= false;
   }
 
   query->drizzle= drizzle;
@@ -144,21 +142,31 @@ void drizzle_query_free(drizzle_query_st *query)
   }
 
   if (query->context != NULL && query->context_free_fn != NULL)
+  {
     query->context_free_fn(query, query->context);
+  }
 
   if (query->drizzle->query_list == query)
+  {
     query->drizzle->query_list= query->next;
+  }
 
   if (query->prev)
+  {
     query->prev->next= query->next;
+  }
 
   if (query->next)
+  {
     query->next->prev= query->prev;
+  }
 
   query->drizzle->query_count--;
 
-  if (query->options & DRIZZLE_QUERY_ALLOCATED)
+  if (query->options.is_allocated)
+  {
     delete query;
+  }
 }
 
 void drizzle_query_free_all(drizzle_st *drizzle)
@@ -233,47 +241,21 @@ void drizzle_query_set_string(drizzle_query_st *query, const char *string,
   query->size= size;
 }
 
-int drizzle_query_options(drizzle_query_st *query)
+int drizzle_query_options(drizzle_query_st *)
 {
-  if (query == NULL)
-  {
-    return 0;
-  }
-
-  return query->options;
+  return 0;
 }
 
-void drizzle_query_set_options(drizzle_query_st *query,
-                               int options)
+void drizzle_query_set_options(drizzle_query_st *, int)
 {
-  if (query == NULL)
-  {
-    return;
-  }
-
-  query->options= options;
 }
 
-void drizzle_query_add_options(drizzle_query_st *query,
-                               int options)
+void drizzle_query_add_options(drizzle_query_st *, int)
 {
-  if (query == NULL)
-  {
-    return;
-  }
-
-  query->options|= options;
 }
 
-void drizzle_query_remove_options(drizzle_query_st *query,
-                                  int options)
+void drizzle_query_remove_options(drizzle_query_st *, int)
 {
-  if (query == NULL)
-  {
-    return;
-  }
-
-  query->options&= ~options;
 }
 
 void *drizzle_query_context(drizzle_query_st *query)

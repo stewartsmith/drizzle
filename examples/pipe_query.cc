@@ -54,31 +54,23 @@ int main(int argc, char *argv[])
   char *buffer= NULL;
   size_t buffer_size= 0;
   ssize_t read_size= 0;
-  drizzle_st drizzle;
-  drizzle_con_st *con= (drizzle_con_st*)malloc(sizeof(drizzle_con_st));
+  drizzle_st *drizzle;
   drizzle_result_st result;
-  drizzle_return_t ret;
-  drizzle_field_t field;
   size_t offset;
   size_t size;
   size_t total;
 
-  if (con == NULL)
-  {
-    printf("Failed to allocate memory for drizzle connection");
-    exit(1);
-  }
-
   /* The docs say this might fail, so check for errors. */
-  if (drizzle_create(&drizzle) == NULL)
+  if ((drizzle= drizzle_create()) == NULL)
   {
     printf("drizzle_create:failed\n");
     exit(1);
   }
 
-  if (drizzle_con_create(&drizzle, con) == NULL)
+  drizzle_con_st *con;
+  if ((con= drizzle_con_create(drizzle)) == NULL)
   {
-    printf("drizzle_con_create:%s\n", drizzle_error(&drizzle));
+    printf("drizzle_con_create:%s\n", drizzle_error(drizzle));
     exit(1);
   }
 
@@ -146,10 +138,11 @@ int main(int argc, char *argv[])
 
   } while ((read_size= read(0, buffer + buffer_size, BUFFER_CHUNK)) != 0);
 
+  drizzle_return_t ret;
   (void)drizzle_query(con, &result, buffer, buffer_size, &ret);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_query:%s\n", drizzle_error(&drizzle));
+      printf("drizzle_query:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
@@ -158,7 +151,7 @@ int main(int argc, char *argv[])
   ret= drizzle_column_skip(&result);
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_column_skip:%s\n", drizzle_error(&drizzle));
+    printf("drizzle_column_skip:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
@@ -166,22 +159,30 @@ int main(int argc, char *argv[])
   {
     while (1)
     {
-      field= drizzle_field_read(&result, &offset, &size, &total, &ret);
+      drizzle_field_t field= drizzle_field_read(&result, &offset, &size, &total, &ret);
       if (ret == DRIZZLE_RETURN_ROW_END)
+      {
         break;
+      }
       else if (ret != DRIZZLE_RETURN_OK)
       {
-        printf("drizzle_field_read:%s\n", drizzle_error(&drizzle));
+        printf("drizzle_field_read:%s\n", drizzle_error(drizzle));
         return 1;
       }
 
       if (field == NULL)
+      {
         printf("NULL");
+      }
       else
+      {
         printf("%.*s", (int)size, field);
+      }
 
       if (offset + size == total)
+      {
         printf("\t");
+      }
     }
 
     printf("\n");
@@ -189,14 +190,13 @@ int main(int argc, char *argv[])
 
   if (ret != DRIZZLE_RETURN_OK)
   {
-    printf("drizzle_row_read:%s\n", drizzle_error(&drizzle));
+    printf("drizzle_row_read:%s\n", drizzle_error(drizzle));
     return 1;
   }
 
   drizzle_result_free(&result);
   drizzle_con_free(con);
-  drizzle_free(&drizzle);
+  drizzle_free(drizzle);
 
-  free(con);
   return 0;
 }

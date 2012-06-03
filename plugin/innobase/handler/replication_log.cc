@@ -54,7 +54,6 @@
 #include "fil0fil.h"
 #include "trx0xa.h"
 #include "row0merge.h"
-#include "thr0loc.h"
 #include "dict0boot.h"
 #include "ha_prototypes.h"
 #include "ut0mem.h"
@@ -68,7 +67,7 @@ ReplicationLog::ReplicationLog() :
 {
 }
 
-void ReplicationLog::setup(ReplicationLog *logger)
+void ReplicationLog::setup(ReplicationLog *logger, const std::string& arg)
 {
-  ReplicationServices::attachApplier(logger, "default");
+  ReplicationServices::attachApplier(logger, arg);
 }

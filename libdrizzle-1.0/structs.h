@@ -1,4 +1,5 @@
-/*
+/* vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  * Drizzle Client & Protocol Library
  *
  * Copyright (C) 2008 Eric Day (eday@oddments.org)
@@ -39,13 +40,19 @@
  * @brief Struct Definitions
  */
 
-#ifndef __DRIZZLE_STRUCTS_H
-#define __DRIZZLE_STRUCTS_H
+#pragma once
 
 #include <sys/types.h>
+#include <openssl/ssl.h>
 
-#ifndef NI_MAXHOST
-# define NI_MAXHOST 1025
+#ifdef NI_MAXHOST
+# define LIBDRIZZLE_NI_MAXHOST NI_MAXHOST
+#else
+# define LIBDRIZZLE_NI_MAXHOST 1025
+#endif
+
+#ifdef __cplusplus
+#include <cstddef>
 #endif
 
 #ifdef __cplusplus
@@ -58,7 +65,7 @@ extern "C" {
 struct drizzle_st
 {
   uint16_t error_code;
-  drizzle_options_t options;
+  int options;
   drizzle_verbose_t verbose;
   uint32_t con_count;
   uint32_t pfds_size;
@@ -88,7 +95,7 @@ struct drizzle_con_tcp_st
   in_port_t port;
   struct addrinfo *addrinfo;
   char *host;
-  char host_buffer[NI_MAXHOST];
+  char host_buffer[LIBDRIZZLE_NI_MAXHOST];
 };
 
 /**
@@ -96,8 +103,7 @@ struct drizzle_con_tcp_st
  */
 struct drizzle_con_uds_st
 {
-  struct addrinfo addrinfo;
-  struct sockaddr_un sockaddr;
+  char path_buffer[LIBDRIZZLE_NI_MAXHOST];
 };
 
 /**
@@ -110,10 +116,10 @@ struct drizzle_con_st
   uint8_t state_current;
   short events;
   short revents;
-  drizzle_capabilities_t capabilities;
+  int capabilities;
   drizzle_charset_t charset;
   drizzle_command_t command;
-  drizzle_con_options_t options;
+  int options;
   drizzle_con_socket_t socket_type;
   drizzle_con_status_t status;
   uint32_t max_packet_size;
@@ -152,6 +158,9 @@ struct drizzle_con_st
   char server_extra[DRIZZLE_MAX_SERVER_EXTRA_SIZE];
   drizzle_state_fn *state_stack[DRIZZLE_STATE_STACK_SIZE];
   char user[DRIZZLE_MAX_USER_SIZE];
+  SSL_CTX *ssl_context;
+  SSL *ssl;
+  drizzle_ssl_state_t ssl_state;
 };
 
 /**
@@ -162,7 +171,7 @@ struct drizzle_query_st
   drizzle_st *drizzle;
   drizzle_query_st *next;
   drizzle_query_st *prev;
-  drizzle_query_options_t options;
+  int options;
   drizzle_query_state_t state;
   drizzle_con_st *con;
   drizzle_result_st *result;
@@ -170,6 +179,25 @@ struct drizzle_query_st
   size_t size;
   void *context;
   drizzle_query_context_free_fn *context_free_fn;
+
+#ifdef __cplusplus
+
+  drizzle_query_st() :
+    drizzle(NULL),
+    next(NULL),
+    prev(NULL),
+    options(0),
+    state(DRIZZLE_QUERY_STATE_INIT),
+    con(NULL),
+    result(NULL),
+    string(NULL),
+    size(0),
+    context(NULL),
+    context_free_fn(NULL)
+  { 
+  }
+
+#endif
 };
 
 /**
@@ -180,7 +208,7 @@ struct drizzle_result_st
   drizzle_con_st *con;
   drizzle_result_st *next;
   drizzle_result_st *prev;
-  drizzle_result_options_t options;
+  int options;
 
   char info[DRIZZLE_MAX_INFO_SIZE];
   uint16_t error_code;
@@ -210,6 +238,42 @@ struct drizzle_result_st
   drizzle_row_t *row_list;
   size_t *field_sizes;
   size_t **field_sizes_list;
+
+#ifdef __cplusplus
+
+  drizzle_result_st() :
+    con(NULL),
+    next(NULL),
+    prev(NULL),
+    options(0),
+    error_code(0),
+    insert_id(0),
+    warning_count(0),
+    affected_rows(0),
+    column_count(0),
+    column_current(0),
+    column_list(NULL),
+    column(NULL),
+    column_buffer(NULL),
+    row_count(0),
+    row_current(0),
+    field_current(0),
+    field_total(0),
+    field_offset(0),
+    field_size(0),
+    field(),
+    field_buffer(),
+    row_list_size(0),
+    row(),
+    row_list(NULL),
+    field_sizes(NULL),
+    field_sizes_list(NULL)
+  {
+    info[0]= 0;
+    sqlstate[0]= 0;
+  }
+
+#endif
 };
 
 /**
@@ -220,7 +284,7 @@ struct drizzle_column_st
   drizzle_result_st *result;
   drizzle_column_st *next;
   drizzle_column_st *prev;
-  drizzle_column_options_t options;
+  int options;
   char catalog[DRIZZLE_MAX_CATALOG_SIZE];
   char db[DRIZZLE_MAX_DB_SIZE];
   char table[DRIZZLE_MAX_TABLE_SIZE];
@@ -231,7 +295,7 @@ struct drizzle_column_st
   uint32_t size;
   size_t max_size;
   drizzle_column_type_t type;
-  drizzle_column_flags_t flags;
+  int flags;
   uint8_t decimals;
   uint8_t default_value[DRIZZLE_MAX_DEFAULT_VALUE_SIZE];
   size_t default_value_size;
@@ -240,5 +304,3 @@ struct drizzle_column_st
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_STRUCTS_H */

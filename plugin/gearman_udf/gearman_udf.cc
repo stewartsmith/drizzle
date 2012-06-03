@@ -16,8 +16,8 @@
 #include <config.h>
 #include <drizzled/plugin/function.h>
 
-#include "gman_servers_set.h"
-#include "gman_do.h"
+#include "plugin/gearman_udf/gman_servers_set.h"
+#include "plugin/gearman_udf/gman_do.h"
 
 using namespace std;
 using namespace drizzled;
@@ -57,10 +57,10 @@ DRIZZLE_DECLARE_PLUGIN
   "gearman_udf",
   "0.1",
   "Eric Day",
-  "Gearman Client UDFs",
+  N_("Gearman client"),
   PLUGIN_LICENSE_BSD,
-  gearman_udf_plugin_init, /* Plugin Init */
-  NULL,   /* depends */
-  NULL    /* config options */
+  gearman_udf_plugin_init,
+  NULL,
+  NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

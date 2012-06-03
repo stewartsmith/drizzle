@@ -23,6 +23,10 @@
 
 #include <config.h>
 
+#include <boost/foreach.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/thread/locks.hpp>
+
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/module/option_map.h>
 
@@ -38,10 +42,25 @@ using namespace drizzled;
 namespace regex_policy
 {
 
+uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
+uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
+
 static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
+  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
+  if (max_cache_buckets < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
+    return 1;
+  }
+  max_lru_length= vm["max-lru-length"].as<uint64_t>();
+  if (max_lru_length < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
+    return 1;
+  }
   Policy *policy= new Policy(fs::path(vm["policy"].as<string>()));
   if (not policy->loadFile())
   {
@@ -62,6 +81,12 @@ static void init_options(drizzled::module::option_context &context)
   context("policy",
       po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
       N_("File to load for regex authorization policies"));
+  context("max-cache-buckets",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
+      N_("Maximum buckets for authorization cache"));
+  context("max-lru-length",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
+      N_("Maximum number of LRU entries to track at once"));
 }
 
 bool Policy::loadFile()
@@ -80,7 +105,7 @@ bool Policy::loadFile()
     table_matches_re= table_match_regex;
     process_matches_re= process_match_regex;
     schema_matches_re= schema_match_regex;
-  }   
+  }
   catch (const std::exception &e)
   {
     error << e.what();
@@ -96,11 +121,9 @@ bool Policy::loadFile()
   int lines= 0;
   try
   {
-    while (! file.eof())
+    for (string line; getline(file, line); )
     {
       ++lines;
-      string line;
-      getline(file, line);
       if (boost::regex_match(line, comment_re))
       {
         continue;
@@ -127,23 +150,18 @@ bool Policy::loadFile()
       {
         throw std::exception();
       }
-      string user_regex;
-      string object_regex;
-      string action;
-      user_regex= matches[MATCH_REGEX_USER_POS];
-      object_regex= matches[MATCH_REGEX_OBJECT_POS];
-      action= matches[MATCH_REGEX_ACTION_POS];
-      PolicyItem *i;
+      string user_regex= matches[MATCH_REGEX_USER_POS];
+      string object_regex= matches[MATCH_REGEX_OBJECT_POS];
+      string action= matches[MATCH_REGEX_ACTION_POS];
       try
       {
-        i= new PolicyItem(user_regex, object_regex, action);
+        policies->push_back(new PolicyItem(user_regex, object_regex, action));
       }
       catch (const std::exception &e)
       {
         error << "Bad policy item: user=" << user_regex << " object=" << object_regex << " action=" << action;
         throw std::exception();
       }
-      policies->push_back(i);
     }
     return true;
   }
@@ -155,28 +173,24 @@ bool Policy::loadFile()
   }
 }
 
-void clearPolicyItemList(PolicyItemList policies)
+static void clearPolicyItemList(PolicyItemList& policies)
 {
-  for (PolicyItemList::iterator x= policies.begin() ; x != policies.end() ; ++x)
+  BOOST_FOREACH(PolicyItem* x, policies)
   {
-    delete *x;
-    *x= NULL;
+    delete x;
   }
-} 
+}
 
 Policy::~Policy()
 {
   clearPolicyItemList(table_policies);
   clearPolicyItemList(process_policies);
   clearPolicyItemList(schema_policies);
-  delete table_check_cache;
-  delete process_check_cache;
-  delete schema_check_cache;
 }
 
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
                                    const string &obj, const PolicyItemList &policies,
-                                   CheckMap **check_cache)
+                                   CheckMap &check_cache)
 {
   CheckItem c(user_ctx.username(), obj, check_cache);
   if (!c.hasCachedResult())
@@ -198,19 +212,19 @@ bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
 bool Policy::restrictSchema(const drizzled::identifier::User &user_ctx,
                                    const drizzled::identifier::Schema& schema)
 {
-  return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, &schema_check_cache);
+  return restrictObject(user_ctx, schema.getSchemaName(), schema_policies, schema_check_cache);
 }
 
 bool Policy::restrictProcess(const drizzled::identifier::User &user_ctx,
                                     const drizzled::identifier::User &session_ctx)
 {
-  return restrictObject(user_ctx, session_ctx.username(), process_policies, &process_check_cache);
+  return restrictObject(user_ctx, session_ctx.username(), process_policies, process_check_cache);
 }
 
 bool Policy::restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table)
 {
-  return restrictObject(user_ctx, table.getTableName(), table_policies, &table_check_cache);
+  return restrictObject(user_ctx, table.getTableName(), table_policies, table_check_cache);
 }
 
 bool CheckItem::operator()(PolicyItem *p)
@@ -220,13 +234,13 @@ bool CheckItem::operator()(PolicyItem *p)
     errmsg_printf(error::INSPECT, _("User %s matches regex\n"), user.c_str());
     if (p->objectMatches(object))
     {
-      errmsg_printf(error::INSPECT, _("Object %s matches regex %s (%s)\n"), 
+      errmsg_printf(error::INSPECT, _("Object %s matches regex %s (%s)\n"),
           object.c_str(),
           p->getObject().c_str(),
           p->getAction());
       return true;
     }
-    errmsg_printf(error::INSPECT, _("Object %s NOT restricted by regex %s (%s)\n"), 
+    errmsg_printf(error::INSPECT, _("Object %s NOT restricted by regex %s (%s)\n"),
         object.c_str(),
         p->getObject().c_str(),
         p->getAction());
@@ -234,43 +248,117 @@ bool CheckItem::operator()(PolicyItem *p)
   return false;
 }
 
-CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap **check_cache_in)
+CheckItem::CheckItem(const std::string &user_in, const std::string &obj_in, CheckMap &check_cache_in)
   : user(user_in), object(obj_in), has_cached_result(false), check_cache(check_cache_in)
 {
-  CheckMap::iterator check_val;
-  std::stringstream keystream;
-  keystream << user << "_" << object;
-  key= keystream.str();
+  key= user + "_" + object;
 
-  /* using RCU to only need to lock when updating the cache */
-  if ((*check_cache) && (check_val= (*check_cache)->find(key)) != (*check_cache)->end())
+  if (bool* check_val= check_cache.find(key))
   {
-    setCachedResult(check_val->second);
+    /* It was in the cache, no need to do any more lookups */
+    cached_result= *check_val;
+    has_cached_result= true;
+  }
+}
+
+bool* CheckMap::find(std::string const &k)
+{
+  /* tack on to LRU list */
+  boost::mutex::scoped_lock lock(lru_mutex);
+  lru.push_back(k);
+  if (lru.size() > max_lru_length)
+  {
+    /* Fold all of the oldest entries into a single list at the front */
+    uint64_t size_halfway= lru.size() / 2;
+    LruList::iterator halfway= lru.begin();
+    halfway += size_halfway;
+    boost::unordered_set<std::string> uniqs;
+    uniqs.insert(lru.begin(), halfway);
+
+    /* If we can save space, drop the oldest half */
+    if (size_halfway < uniqs.size())
+    {
+      lru.erase(lru.begin(), halfway);
+
+      /* Re-add set elements to front */
+      lru.insert(lru.begin(), uniqs.begin(), uniqs.end());
+    }
+  }
+  lock.unlock();
+  boost::shared_lock<boost::shared_mutex> map_lock(map_mutex);
+  return find_ptr(map, k);
+}
+
+void CheckMap::insert(std::string const &k, bool v)
+{
+  boost::unique_lock<boost::shared_mutex> map_lock(map_mutex);
+  /* add our new hotness to the map */
+  map[k]=v;
+  /* Now prune if necessary */
+  if (map.bucket_count() > max_cache_buckets)
+  {
+    /* Determine LRU key by running through the LRU list */
+    boost::unordered_set<std::string> found;
+
+    /* Must unfortunately lock the LRU list while we traverse it */
+    boost::mutex::scoped_lock lock(lru_mutex);
+    for (LruList::reverse_iterator x= lru.rbegin(); x < lru.rend(); ++x)
+    {
+      if (found.find(*x) == found.end())
+      {
+        /* Newly found key */
+        if (found.size() >= max_cache_buckets)
+        {
+          /* Since found is already as big as the cache can be, anything else
+             is LRU */
+          map.erase(*x);
+        }
+        else
+        {
+          found.insert(*x);
+        }
+      }
+    }
+    if (map.bucket_count() > max_cache_buckets)
+    {
+      /* Still too big. */
+      if (lru.size())
+      {
+        /* Just delete the oldest item */
+        map.erase(*(lru.begin()));
+      }
+      else
+      {
+        /* Nothing to delete, warn */
+        errmsg_printf(error::WARN,
+            _("Unable to reduce size of cache below max buckets (current buckets=%" PRIu64 ")"),
+            static_cast<uint64_t>(map.bucket_count()));
+      }
+    }
+    lru.clear();
+    lock.unlock();
   }
 }
 
 void CheckItem::setCachedResult(bool result)
 {
-  // TODO: make the mutex per-cache
-  boost::mutex::scoped_lock lock(check_cache_mutex, boost::defer_lock);
-  lock.lock();
-
-  // Copy the current one
-  CheckMap* new_cache= *check_cache ? new CheckMap(**check_cache) : new CheckMap;
-
-  // Update it
-  (*new_cache)[key]= result;
-  // Replace old
-  CheckMap* old_cache= *check_cache;
-  *check_cache= new_cache;
-
-  lock.unlock();
+  check_cache.insert(key, result);
   has_cached_result= true;
   cached_result= result;
-
-  delete old_cache;
 }
 
 } /* namespace regex_policy */
 
-DRIZZLE_PLUGIN(regex_policy::init, NULL, regex_policy::init_options);
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "regex_policy",
+  "2.0",
+  "Clint Byrum",
+  N_("Authorization using a regex-matched policy file"),
+  PLUGIN_LICENSE_GPL,
+  regex_policy::init,
+  NULL,
+  regex_policy::init_options
+}
+DRIZZLE_DECLARE_PLUGIN_END;

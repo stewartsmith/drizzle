@@ -23,13 +23,16 @@
 #include <drizzled/atomics.h>
 #include <drizzled/data_home.h>
 
+#include <climits>
+#include <fcntl.h>
 #include <netdb.h>
-#include <sys/types.h>
-#include <netinet/tcp.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <signal.h>
-#include <limits.h>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/types.h>
 
 #include <boost/program_options.hpp>
 #include <drizzled/program_options/config_file.h>
@@ -297,7 +300,6 @@ fs::path secure_file_priv;
 fs::path plugin_dir;
 fs::path system_config_dir(SYSCONFDIR);
 
-const char *opt_tc_log_file;
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
@@ -384,7 +386,52 @@ static void print_version()
     version from the output of 'drizzled --version', so don't change it!
   */
   printf("%s  Ver %s for %s-%s on %s (%s)\n", internal::my_progname,
-	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
+         PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
+}
+
+extern "C" {
+
+  char at_exit_pid_file[1024 * 4]= { 0 };
+
+  static void remove_pidfile(void)
+  {
+    if (at_exit_pid_file[0])
+    {
+      if (unlink(at_exit_pid_file) == -1)
+      {
+        std::cerr << "Could not remove pidfile: " << at_exit_pid_file << "(" << strerror(errno) << ")" << std::endl;
+      }
+
+      at_exit_pid_file[0]= 0;
+    }
+  }
+}
+
+/**
+  Create file to store pid number.
+*/
+static void create_pid_file()
+{
+  int file;
+
+  if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
+  {
+    char buff[1024];
+    int length= snprintf(buff, sizeof(buff), "%ld\n", (long) getpid());
+
+    if ((write(file, buff, length)) == length)
+    {
+      if (close(file) != -1)
+      {
+        snprintf(at_exit_pid_file, sizeof(at_exit_pid_file), "%s", pid_file.file_string().c_str());
+        atexit(remove_pidfile);
+        return;
+      }
+    }
+    (void)close(file); /* We can ignore the error, since we are going to error anyway at this point */
+  }
+
+  unireg_abort << "Can't start server, was unable to create PID file: " <<  pid_file.file_string();
 }
 
 /****************************************************************************
@@ -436,8 +483,13 @@ void close_connections()
     }
   }
 
-  if (session::Cache::count())
-    sleep(2);                                   // Give threads time to die
+  if (session::Cache::count()) // Give threads time to die
+  {
+    struct timespec requested;
+    requested.tv_sec= 2;
+    requested.tv_nsec= 0;
+    nanosleep(&requested, NULL);
+  }
 
   /*
     Force remaining threads to die by closing the connection to the client
@@ -488,7 +540,9 @@ void unireg_actual_abort(const char *file, int line, const char *func, const std
 void clean_up(bool print_message)
 {
   if (cleanup_done++)
+  {
     return;
+  }
 
   table_cache_free();
   free_charsets();
@@ -501,10 +555,10 @@ void clean_up(bool print_message)
   google::protobuf::ShutdownProtobufLibrary();
 #endif
 
-  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
-
   if (print_message && server_start_time)
+  {
     errmsg_printf(drizzled::error::INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
+  }
 
   session::Cache::shutdownFirst();
 
@@ -542,38 +596,45 @@ passwd *check_user(const char *user)
     unireg_abort << _("drizzled cannot be run as root, use --user to start drizzled up as another user");
   }
 
-  if (not strcmp(user, "root"))
+  if (strcmp(user, "root") == 0)
   {
     return NULL;                        // Avoid problem with dynamic libraries
   }
 
+  bool failed= false;
   if ((tmp_user_info= getpwnam(user)) == NULL)
   {
     // Allow a numeric uid to be used
     const char *pos= user;
-    for (; my_charset_utf8_general_ci.isdigit(*pos); pos++) 
-    {
-    }
+    for (; my_charset_utf8_general_ci.isdigit(*pos); pos++)
+    { }
     if (*pos)                                   // Not numeric id
-      goto err;
+    {
+      failed= true;
+    }
 
     if ((tmp_user_info= getpwuid(atoi(user))) == NULL)
-      goto err;
+    {
+      failed= true;
+    }
   }
-  return tmp_user_info;
 
-err:
-  unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
+  if (failed)
+  {
+    unireg_abort << "Fatal error: Can't change to run as user '" << user << "' ;  Please check that the user exists!";
 
 #ifdef PR_SET_DUMPABLE
-  if (getDebug().test(debug::CORE_ON_SIGNAL))
-  {
-    /* inform kernel that process is dumpable */
-    (void) prctl(PR_SET_DUMPABLE, 1);
-  }
+    if (getDebug().test(debug::CORE_ON_SIGNAL))
+    {
+      /* inform kernel that process is dumpable */
+      (void) prctl(PR_SET_DUMPABLE, 1);
+    }
 #endif
 
-  return NULL;
+    return NULL;
+  }
+
+  return tmp_user_info;
 }
 
 void set_user(const char *user, passwd *user_info_arg)
@@ -582,7 +643,7 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    unireg_abort << _("Set process group ID failed ") << strerror(errno); 
+    unireg_abort << _("Set process group ID failed ") << strerror(errno);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
@@ -989,10 +1050,17 @@ static void process_defaults_files()
     {
       string new_unknown_opt("--" + *it);
       ++it;
+
       if (it == file_unknown.end())
+      {
 				break;
+      }
+
       if (*it != "true")
+      {
         new_unknown_opt += "=" + *it;
+      }
+
       unknown_options.push_back(new_unknown_opt);
     }
     store(file_parsed, vm);
@@ -1277,7 +1345,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what(); 
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   if (vm.count("version"))
@@ -1286,7 +1354,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     unireg_exit();
   }
 
-  if (vm.count("no-defaults"))
+  if (!vm["no-defaults"].as<bool>())
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
@@ -1318,7 +1386,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+   unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   return true;
@@ -1358,15 +1426,15 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::invalid_command_line_syntax &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
   catch (po::unknown_option &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   try
@@ -1375,7 +1443,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort << "Use --help to get a list of available options. " << err.what();
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   get_options();
@@ -1390,6 +1458,9 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
   }
 
   fix_paths();
+
+  /* Save pid to this process (or thread on Linux) */
+  create_pid_file();
 
   init_time();				/* Init time-functions (read zone) */
 
@@ -1441,7 +1512,7 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
 bool was_help_requested()
 {
-  return vm.count("help") != 0;
+  return bool(vm.count("help"));
 }
 
 void usage();
@@ -1682,7 +1753,7 @@ struct option my_long_options[] =
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     NULL,
-    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, (int64_t)ULONG_MAX, 0, 1, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -1693,7 +1764,7 @@ struct option my_long_options[] =
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
    NULL, 0, GET_UINT64,
-   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
+   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, (int64_t)ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
@@ -1721,7 +1792,7 @@ struct option my_long_options[] =
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
     NULL, 0, GET_UINT64,
-    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
+    REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
    N_("The number of bytes to use when sorting BLOB or TEXT values "
       "(only the first max_sort_length bytes of each value are used; the "
@@ -1732,13 +1803,13 @@ struct option my_long_options[] =
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, NULL, 0, GET_ULL,
-   REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
+   REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
+   REQUIRED_ARG, 0, 0, (int64_t)ULONG_MAX, 0, 1L, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -1790,13 +1861,13 @@ struct option my_long_options[] =
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
    NULL, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
+   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, (int64_t)ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
    N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
    NULL, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
-   ULONG_MAX, 0, 1024, 0},
+   (int64_t)ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
@@ -1906,7 +1977,6 @@ void usage()
 static void drizzle_init_variables()
 {
   /* Things reset to zero */
-  opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   cleanup_done= 0;
   dropping_tables= ha_open_options=0;
   getDebug().reset();
@@ -1977,7 +2047,7 @@ static void drizzle_init_variables()
 */
 static void get_options()
 {
-  setDataHomeCatalog(getDataHome() / "local");
+  catalog::resetPath_for_local_identifier();
 
   if (vm.count("user"))
   {
@@ -2122,15 +2192,24 @@ static void get_options()
 static void fix_paths()
 {
   if (vm.count("help"))
-    return;
-
-  fs::path pid_file_path(pid_file);
-  if (pid_file_path.root_path().string() == "")
   {
-    pid_file_path= getDataHome();
-    pid_file_path /= pid_file;
+    return;
   }
-  pid_file= fs::system_complete(pid_file_path);
+
+  {
+    if (pid_file.string().size() and pid_file.string()[0] == '/')
+    { } // Do nothing if the file starts with a slash
+    else
+    {
+      fs::path pid_file_path(pid_file);
+      if (pid_file_path.root_path().string() == "")
+      {
+        pid_file_path= getDataHome();
+        pid_file_path /= pid_file;
+      }
+      pid_file= fs::system_complete(pid_file_path);
+    }
+  }
 
   const char *tmp_string= getenv("TMPDIR");
   struct stat buf;
@@ -2164,10 +2243,10 @@ static void fix_paths()
   {
     if (errno != EEXIST)
     {
-      unireg_abort << "There was an error creating the '" 
-        << fs::path(drizzle_tmpdir).leaf() 
-        << "' part of the path '" 
-        << drizzle_tmpdir 
+      unireg_abort << "There was an error creating the '"
+        << fs::path(drizzle_tmpdir).leaf()
+        << "' part of the path '"
+        << drizzle_tmpdir
         << "'.  Please check the path exists and is writable.";
     }
   }

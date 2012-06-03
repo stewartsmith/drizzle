@@ -237,8 +237,8 @@ int main(int argc, char **argv)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
 # endif
-  bindtextdomain("drizzle7", LOCALEDIR);
-  textdomain("drizzle7");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
 #endif
 
   module::Registry &modules= module::Registry::singleton();
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
 
   /* init_common_variables must get basic settings such as data_home_dir and plugin_load_list. */
-  if (not init_variables_before_daemonizing(argc, argv))
+  if (init_variables_before_daemonizing(argc, argv) == false)
   {
     unireg_abort << "init_variables_before_daemonizing() failed";				// Will do exit
   }
@@ -268,17 +268,17 @@ int main(int argc, char **argv)
     {
       perror("Failed to ignore SIGHUP");
     }
+
     if (daemonize())
     {
       unireg_abort << "--daemon failed";
     }
   }
 
-  if (not init_variables_after_daemonizing(modules))
+  if (init_variables_after_daemonizing(modules) == false)
   {
     unireg_abort << "init_variables_after_daemonizing() failed";				// Will do exit
   }
-
 
   /*
     init signals & alarm
@@ -334,11 +334,6 @@ int main(int argc, char **argv)
           unireg_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
         }
       }
-    }
-
-    if (chdir("local") == -1)
-    {
-      unireg_abort << "Local catalog does not exist, was unable to chdir() to " << getDataHome().file_string();
     }
 
     setFullDataHome(boost::filesystem::system_complete(getDataHome()));
@@ -415,7 +410,9 @@ int main(int argc, char **argv)
 
     /* If we error on creation we drop the connection and delete the session. */
     if (Session::schedule(session))
+    {
       Session::unlink(session);
+    }
   }
 
   /* Send server shutdown event */

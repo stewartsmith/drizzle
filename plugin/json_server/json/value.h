@@ -263,7 +263,7 @@ namespace Json {
       int compare( const Value &other );
 
       const char *asCString() const;
-      std::string asString() const;
+      std::string asString();
 # ifdef JSON_USE_CPPTL
       CppTL::ConstString asConstString() const;
 # endif
@@ -481,6 +481,7 @@ namespace Json {
       int memberNameIsStatic_ : 1;       // used by the ValueInternalMap container.
 # endif
       CommentInfo *comments_;
+      char *value_as_string_; // Used when asString is called on non-string types.
    };
 
 

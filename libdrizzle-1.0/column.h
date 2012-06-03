@@ -40,8 +40,7 @@
  * @brief Column Declarations
  */
 
-#ifndef __DRIZZLE_COLUMN_H
-#define __DRIZZLE_COLUMN_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -174,5 +173,3 @@ const uint8_t *drizzle_column_default_value(drizzle_column_st *column,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __DRIZZLE_COLUMN_H */

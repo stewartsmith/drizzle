@@ -123,7 +123,7 @@ select * from t1;
 select a from t1;
 select c from t1;
 select * from mysqltest.t1,test.t1;
---replace_result 127.0.0.1 localhost
+--replace_result localhost localhost
 --error ER_TABLEACCESS_DENIED_ERROR
 select * from t2;
 show status like "Qcache_queries_in_cache";
@@ -135,17 +135,17 @@ show status like "Qcache_not_cached";
 connect (user3,localhost,mysqltest_3,,mysqltest,$MASTER_MYPORT,$MASTER_MYSOCK);
 connection user3;
 select "user3";
---replace_result 127.0.0.1 localhost
+--replace_result localhost localhost
 --error ER_COLUMNACCESS_DENIED_ERROR
 select * from t1;
 select a from t1;
---replace_result 127.0.0.1 localhost
+--replace_result localhost localhost
 --error ER_COLUMNACCESS_DENIED_ERROR
 select c from t1;
---replace_result 127.0.0.1 localhost
+--replace_result localhost localhost
 --error ER_TABLEACCESS_DENIED_ERROR
 select * from t2;
---replace_result 127.0.0.1 localhost
+--replace_result localhost localhost
 --error ER_COLUMNACCESS_DENIED_ERROR
 select mysqltest.t1.c from test.t1,mysqltest.t1;
 show status like "Qcache_queries_in_cache";

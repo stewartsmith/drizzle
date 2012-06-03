@@ -1,8 +1,0 @@
-# Drizzle's replication dictionary.
-
-use data_dictionary;
-
---replace_column 1 #
-SELECT count(*) FROM replication_streams;
-
-show create table replication_streams;

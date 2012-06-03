@@ -18,19 +18,23 @@
  */
 
 #include <config.h>
+
+#include <boost/program_options.hpp>
+
+#include <algorithm>
+#include <climits>
+
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/error/sql_state.h>
 #include <drizzled/session.h>
 #include <drizzled/internal/m_string.h>
-#include <algorithm>
-#include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <drizzled/util/tokenize.h>
-#include "errmsg.h"
-#include "mysql_protocol.h"
-#include "mysql_password.h"
-#include "options.h"
+#include <plugin/mysql_protocol/errmsg.h>
+#include <plugin/mysql_protocol/mysql_protocol.h>
+#include <plugin/mysql_protocol/mysql_password.h>
+#include <plugin/mysql_protocol/options.h>
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/diagnostics_area.h>
@@ -953,13 +957,13 @@ static void init_options(drizzled::module::option_context &context)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "mysql-protocol",
+  "mysql_protocol",
   "0.1",
   "Eric Day",
-  "MySQL Protocol Module",
+  N_("MySQL network protocol"),
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::init,             /* Plugin Init */
-  NULL, /* depends */
-  drizzle_plugin::init_options    /* config options */
+  drizzle_plugin::init,
+  NULL,
+  drizzle_plugin::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

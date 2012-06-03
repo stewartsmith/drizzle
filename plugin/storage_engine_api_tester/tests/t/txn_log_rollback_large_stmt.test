@@ -3,9 +3,9 @@
 #
 
 # Ignore startup/shutdown events
---disable_query_log
---source ../plugin/transaction_log/tests/t/truncate_log.inc
---enable_query_log
+#--disable_query_log
+#--source ../plugin/transaction_log/tests/t/truncate_log.inc
+#--enable_query_log
 
 
 # Populate log with some records...
@@ -51,9 +51,9 @@ select seapitester_error_inject(0);
 select * from data_dictionary.seapitester_engine_state_history;
 select seapitester_clear_engine_state_history();
 
---replace_result $DRIZZLETEST_VARDIR VARDIR
---exec $DRIZZLE_TRX_READER $DRIZZLETEST_VARDIR/master-data/local/transaction.log
+#--replace_result $DRIZZLETEST_VARDIR VARDIR
+#--exec $DRIZZLE_TRX_READER $DRIZZLETEST_VARDIR/master-data/local/transaction.log
 
 # Truncate the log file to reset for the next test
---source ../plugin/transaction_log/tests/t/truncate_log.inc
+#--source ../plugin/transaction_log/tests/t/truncate_log.inc
 
