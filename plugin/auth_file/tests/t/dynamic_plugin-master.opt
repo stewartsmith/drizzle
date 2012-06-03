@@ -1,0 +1,1 @@
+--plugin-remove=auth_all --plugin-add=auth_file --auth-file.users=$TOP_SRCDIR/plugin/auth_file/tests/t/dynamic.users1

@@ -1,0 +1,31 @@
+# Making connection using the username:password pair provided in dynamic.users1 file.
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (connection1,localhost,auth_file_password,test_password1,,);
+connection connection1;
+
+#Test that the auth_file_users can't be replaced with an empty value
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL auth_file_users="";
+
+#Test that the auth_file_users can't be replaced with a non existent file
+--replace_result $TOP_SRCDIR TOP_SRCDIR
+--error ER_WRONG_ARGUMENTS
+eval SET GLOBAL auth_file_users="$TOP_SRCDIR/plugin/auth_file/tests/t/dynamic.users3";
+
+#Test that the auth_file_users can be replaced with a different file
+--replace_result $TOP_SRCDIR TOP_SRCDIR
+eval SET GLOBAL auth_file_users="$TOP_SRCDIR/plugin/auth_file/tests/t/dynamic.users2";
+
+disconnect connection1;
+# Test that the connection to database can't be now made using the old username:password pair given in dynamic.users1 file.
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (connection2,localhost,auth_file_password,test_password1,,);
+
+# Test that the connection to database can now be made using the username:password pair provided in dynamic.users2 file
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (connection3,localhost,auth_file_password,test_password2,,);
+connection connection3;
+SELECT 1;
+disconnect connection3;

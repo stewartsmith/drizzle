@@ -7,8 +7,8 @@ File-based Authentication
 
    :program:`auth_file` is a security risk!  Do not use this plugin with production servers!
 
-:program:`auth_file` is an authentication plugin that authenticates connections
-using a list of ``username:password`` entries in a plain text file.
+:program:`auth_file` is an :doc:`/administration/authorization` plugin that authenticates connections
+using a list of ``username:password`` entries in a plain text file. When :program:`drizzled` is started with  ``--plugin-add=auth_file``, the file based authorization plugin is enabled with the default users file. Users file can be specified by either specifying ``--auth-file.users=<users file>`` at the time of server startup or by changing the ``auth_file_users`` with ``SET GLOBAL``.
 
 .. note::
 
@@ -61,7 +61,7 @@ See `variables` for more information about querying and setting variables.
 * ``auth_file_users``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--auth-file.users`
 
    File to load for usernames and passwords.
@@ -93,6 +93,17 @@ Test that it works::
    $ drizzle --user=user1 --password=password1
    Welcome to the Drizzle client..  Commands end with ; or \g.
    ...
+
+Changing users file at runtime
+-------------------------------
+
+Users file can be reloaded by::
+
+   SET GLOBAL auth_file_users=@@auth_file_users
+
+Moreover, the users file can be changed by::
+
+   SET GLOBAL auth_file_users=/path/to/new/users/file
 
 .. _auth_file_authors:
 

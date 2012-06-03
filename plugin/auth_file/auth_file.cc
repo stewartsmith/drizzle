@@ -27,6 +27,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
+#include <drizzled/item.h>
 #include <drizzled/configmake.h>
 #include <drizzled/plugin/authentication.h>
 #include <drizzled/identifier.h>
@@ -43,24 +44,22 @@ using namespace drizzled;
 namespace auth_file {
 
 static const fs::path DEFAULT_USERS_FILE= SYSCONFDIR "/drizzle.users";
+typedef std::map<string, string> users_t;
+bool updateUsersFile(Session *, set_var *);
+bool parseUsersFile(std::string, users_t&);
 
 class AuthFile : public plugin::Authentication
 {
 public:
-  AuthFile(fs::path users_file_arg);
+  AuthFile(std::string users_file_arg);
 
   /**
    * Retrieve the last error encountered in the class.
    */
   const string& getError() const;
 
-  /**
-   * Load the users file into a map cache.
-   *
-   * @return True on success, false on error. If false is returned an error
-   *  is set and can be retrieved with getError().
-   */
-  bool loadFile();
+  std::string& getUsersFile();
+  bool setUsersFile(std::string& usersFile);
 
 private:
 
@@ -85,18 +84,29 @@ private:
                        const string &scrambled_password);
 
   string error;
-  const fs::path users_file;
+  fs::path users_file;
+  std::string sysvar_users_file;
 
   /**
    * Cache or username:password entries from the file.
    */
-  typedef std::map<string, string> users_t;
   users_t users;
+  /**
+   * This method is called to update the users cache with the new 
+   * username:password pairs given in new users file upon update.
+   */
+  void setUsers(users_t);
+  /**
+   * This method is called to delete all the cached username:password pairs
+   * when users file is updated.
+   */
+  void clearUsers();
 };
+AuthFile *auth_file= NULL;
 
-AuthFile::AuthFile(fs::path users_file_arg) :
+AuthFile::AuthFile(std::string users_file_arg) :
   plugin::Authentication("auth_file"),
-  users_file(users_file_arg)
+  users_file(users_file_arg), sysvar_users_file(users_file_arg)
 {
 }
 
@@ -105,41 +115,29 @@ const string& AuthFile::getError() const
   return error;
 }
 
-bool AuthFile::loadFile()
+std::string& AuthFile::getUsersFile()
 {
-  ifstream file(users_file.string().c_str());
+  return sysvar_users_file;
+}
 
-  if (!file.is_open())
+bool AuthFile::setUsersFile(std::string& usersFile)
+{
+  if (usersFile.empty())
   {
-    error = "Could not open users file: " + users_file.string();
-    return false;
+    errmsg_printf(error::ERROR, _("users file cannot be an empty string"));
+    return false;  // error
   }
-
-  string line;
-  while (getline(file, line))
+  users_t users_dummy;
+  if(parseUsersFile(usersFile, users_dummy))
   {
-    /* Ignore blank lines and lines starting with '#'. */
-    if (line.empty() || line[line.find_first_not_of(" \t")] == '#')
-      continue;
-
-    string username;
-    string password;
-    size_t password_offset = line.find(":");
-    if (password_offset == string::npos)
-      username = line;
-    else
-    {
-      username = string(line, 0, password_offset);
-      password = string(line, password_offset + 1);
-    }
-
-    if (not users.insert(pair<string, string>(username, password)).second)
-    {
-      error = "Duplicate entry found in users file: " + username;
-      return false;
-    }
+    this->clearUsers();
+    this->setUsers(users_dummy);
+    sysvar_users_file= usersFile;
+    fs::path newUsersFile(getUsersFile());
+    users_file= newUsersFile;
+    return true;  //success
   }
-  return true;
+  return false;  // error
 }
 
 bool AuthFile::verifyMySQLHash(const string &password,
@@ -195,12 +193,96 @@ bool AuthFile::authenticate(const identifier::User &sctx, const string &password
     : password == *user;
 }
 
+void AuthFile::setUsers(users_t users_dummy)
+{
+  users.insert(users_dummy.begin(), users_dummy.end());
+}
+
+void AuthFile::clearUsers()
+{
+  users.clear();
+}
+
+/**
+ * This function is called when the value of users file is changed in the system.
+ *
+ * @return False on success, True on error.
+ */
+bool updateUsersFile(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string newUsersFile(var->value->str_value.data());
+    if (auth_file->setUsersFile(newUsersFile))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("auth_file file cannot be NULL"));
+  return true; // error
+}
+
+/**
+ * Parse the users file into a map cache.
+ *
+ * @return True on success, false on error. If an error is encountered, false is
+ * returned with error message printed.
+ */
+bool parseUsersFile(std::string new_users_file, users_t& users_dummy)
+{
+  ifstream file(new_users_file.c_str());
+
+  if (!file.is_open())
+  {
+    string error_msg= "Could not open users file: " + new_users_file;
+    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    return false;
+  }
+
+  string line;
+  try
+  {
+    while (getline(file, line))
+    {
+      /* Ignore blank lines and lines starting with '#'. */
+      if (line.empty() || line[line.find_first_not_of(" \t")] == '#')
+        continue;
+
+      string username;
+      string password;
+      size_t password_offset = line.find(":");
+      if (password_offset == string::npos)
+        username = line;
+      else
+      {
+        username = string(line, 0, password_offset);
+        password = string(line, password_offset + 1);
+      }
+  
+      if (not users_dummy.insert(pair<string, string>(username, password)).second)
+      {
+        string error_msg= "Duplicate entry found in users file: " + username;
+        errmsg_printf(error::ERROR, _(error_msg.c_str()));
+        return false;
+      }
+    }
+    return true;
+  }
+  catch (const std::exception &e)
+  {
+    /* On any non-EOF break, unparseable line */
+    string error_msg= "Unable to parse users file " + new_users_file + ":" + e.what();
+    errmsg_printf(error::ERROR, _(error_msg.c_str()));
+    return false;
+  }
+}
+
 static int init(module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  AuthFile *auth_file = new AuthFile(fs::path(vm["users"].as<string>()));
-  if (not auth_file->loadFile())
+  auth_file= new AuthFile(vm["users"].as<string>());
+  if (!auth_file->setUsersFile(auth_file->getUsersFile()))
   {
     errmsg_printf(error::ERROR, _("Could not load auth file: %s\n"), auth_file->getError().c_str());
     delete auth_file;
@@ -208,7 +290,7 @@ static int init(module::Context &context)
   }
 
   context.add(auth_file);
-  context.registerVariable(new sys_var_const_string_val("users", vm["users"].as<string>()));
+  context.registerVariable(new sys_var_std_string("users", auth_file->getUsersFile(), NULL, &updateUsersFile));
 
   return 0;
 }
