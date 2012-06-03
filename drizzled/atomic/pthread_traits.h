@@ -62,6 +62,8 @@ private:
 public:
   typedef T value_type;
 
+  pthread_traits() {}
+
   inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
     my_lock.lock();

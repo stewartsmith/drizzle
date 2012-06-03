@@ -28,6 +28,8 @@ class gcc_traits
 public:
   typedef T value_type;
 
+  gcc_traits() {}
+
   inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
     return __sync_add_and_fetch(value, addend);
@@ -63,7 +65,7 @@ public:
 
   inline value_type fetch(const volatile value_type *value) const volatile
   {
-    /* 
+    /*
      * This is necessary to ensure memory barriers are respected when
      * simply returning the value pointed at.  However, this does not
      * compile on ICC.
