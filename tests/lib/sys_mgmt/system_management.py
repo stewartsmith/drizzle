@@ -58,42 +58,68 @@ class systemManager:
             self.logging.verbose("Initializing system manager...")
 
         self.skip_keys = [ 'port_manager'
-                         , 'logging_manager'
+                         , 'logging'
                          , 'code_manager'
                          , 'env_manager'
                          , 'environment_reqs'
                          ]
         self.debug = variables['debug']
         self.verbose = variables['verbose']
+        self.port_manager = portManager(self,variables['debug'])
+        self.time_manager = timeManager(self)
+
+        # environment manager handles updates / whatever to testing environments
+        self.env_manager = environmentManager(self, variables)
+
         self.no_shm = variables['noshm']
         self.shm_path = self.find_path(["/dev/shm", "/tmp"], required=0)
         self.cur_os = os.uname()[0]
         self.cur_user = getpass.getuser()
+        self.rootdir = variables['qp_root']
         self.workdir = os.path.abspath(variables['workdir'])
         self.testdir = os.path.abspath(variables['testdir'])
-        self.datadir = os.path.abspath(os.path.join(variables['testdir'],'dbqp_data'))
+        self.datadir = os.path.join(self.rootdir,'qp_data')
         self.top_srcdir = os.path.abspath(variables['topsrcdir'])
         self.top_builddir = os.path.abspath(variables['topbuilddir'])
         self.start_dirty = variables['startdirty']
         self.valgrind = variables['valgrind']
         self.valgrind_suppress_file = variables['valgrindsuppressions']
+        self.helgrind = variables['helgrind']
+        # helgrind implies --valgrind
+        if self.helgrind:
+            self.valgrind=self.helgrind
         self.gdb = variables['gdb']
         self.manual_gdb = variables['manualgdb']
         self.randgen_path = variables['randgenpath']
+        self.randgen_seed = variables['randgenseed']
+        # there may be a better place to put this...
+        self.innobackupex_path = variables['innobackupexpath']
+        self.xtrabackup_path = variables['xtrabackuppath']
+        self.tar4ibd_path = variables['tar4ibdpath']
+        # We add tar4ibd to PATH if defined
+        if self.tar4ibd_path:
+            self.env_manager.set_env_var( 'PATH', self.env_manager.append_env_var( 'PATH'
+                                                           , os.path.dirname(self.tar4ibd_path)
+                                                           , suffix=0
+                                                           ))
+
+        self.wsrep_provider_path = variables['wsrepprovider']
 
         # we use this to preface commands in order to run valgrind and such
         self.cmd_prefix = '' 
+
+        # We find or generate our id file
+        # We use a uuid to identify the symlinked
+        # workdirs.  That way, each installation
+        # Will have a uuid/tmpfs workingdir
+        # We store in a file so we know what
+        # is ours
+        self.uuid = self.get_uuid()
+        self.symlink_name = 'qp_workdir_%s_%s' %(self.cur_user, self.uuid)
+
+        # initialize our workdir
+        self.process_workdir()
         
-        self.port_manager = portManager(self,variables['debug'])
-        self.time_manager = timeManager(self)
-
-        # use our code_manager to handle the various basedirs 
-        # we have been passed
-        self.code_manager = codeManager(self, variables)
-
-        # environment manager handles updates / whatever to testing environments
-        self.env_manager = environmentManager(self, variables)
-
         # Some ENV vars are system-standard
         # We describe and set them here and now
         # The format is name: (value, append, suffix)
@@ -112,17 +138,9 @@ class systemManager:
         # self.process_environment_reqs(self.environment_reqs)
         self.env_manager.update_environment_vars(self.environment_reqs)
 
-        # We find or generate our id file
-        # We use a uuid to identify the symlinked
-        # workdirs.  That way, each installation
-        # Will have a uuid/tmpfs workingdir
-        # We store in a file so we know what
-        # is ours
-        self.uuid = self.get_uuid()
-        self.symlink_name = 'dbqp_workdir_%s_%s' %(self.cur_user, self.uuid)
-
-        # initialize our workdir
-        self.process_workdir()
+        # use our code_manager to handle the various basedirs 
+        # we have been passed
+        self.code_manager = codeManager(self, variables)
 
         # check for libtool
         self.libtool = self.libtool_check()
@@ -231,7 +249,12 @@ class systemManager:
             else:
                 shutil.rmtree(full_path)
             self.logging.debug("Creating directory: %s" %(dirname))   
-        os.makedirs(full_path)
+        try:
+            os.makedirs(full_path)
+        except IOError, e:
+            self.logging.error("Problem creating directory: %s" %(full_path))
+            self.logging.error(e)
+            sys.exit(1)
         return full_path
 
     def remove_dir(self, dirname, require_empty=0 ):
@@ -342,7 +365,11 @@ class systemManager:
 
         # do we need to setup for valgrind?
         if self.valgrind:
-            self.handle_valgrind_reqs(variables['valgrindarglist'])
+            if self.helgrind:
+               valgrind_mode='helgrind'
+            else:
+                valgrind_mode='valgrind'
+            self.handle_valgrind_reqs(variables['valgrindarglist'], mode=valgrind_mode)
 
     def handle_gdb_reqs(self, server, server_args):
         """ We generate the gdb init file and whatnot so we
@@ -431,10 +458,13 @@ class systemManager:
             cmd_prefix = "%s --mode=execute valgrind " %(self.libtool)
         if mode == 'valgrind':
             # default mode
-
             args = [ "--tool=memcheck"
                    , "--leak-check=yes"
                    , "--num-callers=16" 
+                   ]
+        elif mode == 'helgrind':
+            args = [ "--tool=helgrind"
+                   , "--num-callers=16"
                    ]
             # look for our suppressions file and add it to the mix if found
             if os.path.exists(self.valgrind_suppress_file):
@@ -482,24 +512,36 @@ class systemManager:
     def find_pid(self, pid):
         """ Execute ps and see if we find the pid """
 
-        cmd = "ps"
-        retcode, output = self.execute_cmd(cmd)
-        output = output.split('\n')
-        for line in output:
-            found_pid = line.strip().split(' ')
-            if str(pid) == pid:
-                return True
-        return False
+        try:
+            os.kill(int(pid),0)
+        except OSError:
+            return False
+        else:
+            return True
 
     def kill_pid(self, pid):
         """ We kill the specified pid """
-        
-        self.execute_cmd("kill -9 %s" %pid, must_pass=0)
-
+        try:
+            os.kill(int(pid),9)
+        except OSError:
+            self.logging.verbose("PID: %s was not running despite the existence of a pid file.  This may be of note...")
+        return
    
-    
+    def get_ip_address(self):
+        """ We find the ip address of our host.
+            Currently a bit hacky
+       
+        """
 
-
+        ip_address = '127.0.0.1' 
+        retcode, output = self.execute_cmd("ifconfig") 
+        for line in output.split('\n'):
+            line = line.strip()
+            if line.startswith('inet addr'):
+                ip_address = line.split(':')[1].split(' ')[0].strip()
+                if ip_address != '127.0.0.1':
+                    return ip_address
+        return ip_address
  
         
         

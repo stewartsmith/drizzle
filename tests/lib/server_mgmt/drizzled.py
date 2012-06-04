@@ -42,16 +42,17 @@ class drizzleServer(Server):
     """
 
     def __init__( self, name, server_manager, code_tree, default_storage_engine
-                , server_options, requester, workdir_root):
+                , server_options, requester, test_executor, workdir_root):
         super(drizzleServer, self).__init__( name
                                            , server_manager
                                            , code_tree
                                            , default_storage_engine
                                            , server_options
                                            , requester
+                                           , test_executor
                                            , workdir_root)
         self.preferred_base_port = 9306
-        
+                
         # client files
         self.drizzledump = self.code_tree.drizzledump
         self.drizzle_client = self.code_tree.drizzle_client
@@ -73,29 +74,37 @@ class drizzleServer(Server):
         self.json_server_port = self.port_block[5]
 
         # Generate our working directories
-        self.dirset = { self.name : { 'var': {'std_data_ln':( os.path.join(self.code_tree.testdir,'std_data'))
-                                             ,'log':None
-                                             ,'run':None
-                                             ,'tmp':None
-                                             ,'master-data': {'local': { 'test':None
-                                                                       , 'mysql':None
-                                                                       }
-                                                             }
-                                             }  
-                                    } 
+        self.dirset = {'var_%s' %(self.name): {'std_data_ln':( os.path.join(self.code_tree.testdir,'std_data'))
+                                               ,'log':None
+                                               ,'run':None
+                                               ,'tmp':None
+                                               ,'master-data': {'local': { 'test':None
+                                                                         , 'mysql':None
+                                                                         }
+                                                               }
+                                               }  
                       }
         self.workdir = self.system_manager.create_dirset( workdir_root
                                                         , self.dirset)
-        self.vardir = os.path.join(self.workdir,'var')
+        self.vardir = self.workdir
         self.tmpdir = os.path.join(self.vardir,'tmp')
         self.rundir = os.path.join(self.vardir,'run')
         self.logdir = os.path.join(self.vardir,'log')
         self.datadir = os.path.join(self.vardir,'master-data')
 
-        self.error_log = os.path.join(self.logdir,('%s.err' %(self.name)))
+        self.error_log = os.path.join(self.logdir,'error.log')
         self.pid_file = os.path.join(self.rundir,('%s.pid' %(self.name)))
         self.socket_file = os.path.join(self.vardir, ('%s.sock' %(self.name)))
+        if len(self.socket_file) > 107:
+            # MySQL has a limitation of 107 characters for socket file path
+            # we copy the mtr workaround of creating one in /tmp
+            self.logging.verbose("Default socket file path: %s" %(self.socket_file))
+            self.socket_file = "/tmp/%s_%s.%s.sock" %(self.system_manager.uuid
+                                                    ,self.owner
+                                                    ,self.name)
+            self.logging.verbose("Changing to alternate: %s" %(self.socket_file))
         self.timer_file = os.path.join(self.logdir,('timer'))
+        self.cnf_file = os.path.join(self.vardir,'drizzled.cnf')
 
         # Do magic to create a config file for use with the slave
         # plugin
@@ -153,6 +162,7 @@ class drizzleServer(Server):
                       , self.secure_file_string
                       , self.user_string
                       ]
+        self.gen_cnf_file(server_args)
 
         if self.gdb:
             server_args.append('--gdb')
@@ -212,16 +222,44 @@ class drizzleServer(Server):
        outfile.close()
 
 
+    def get_innodb_version(self):
+        """ SHOW VARIABLES LIKE innodb_version
+            mostly used as a check to ensure if a
+            test should/shouldn't be executed
 
+        """
 
-                  
+        query = "SHOW VARIABLES LIKE 'innodb_version'"
+        retcode, result = execute_query(query, self)
+        return retcode, result
 
+    def get_xtradb_version(self):
+        """ Return the xtradb version or None """
 
+        retcode, result = self.get_innodb_version()
+        # result format = (('innodb_version', '1.1.6-20.1'),)
+        if result:
+            innodb_version = result[0][1]
+            split_data = innodb_version.split('-')
+            if len(split_data) > 1:
+                return split_data[-1]
+        return None
 
+    def gen_cnf_file(self, server_args):
+        """ We generate a .cnf file for the server based
+            on the arguments.  We currently don't use
+            this for much, but xtrabackup uses it, so
+            we must produce one.  This could also be
+            helpful for testing / etc
 
- 
-         
+        """
 
-
-
+        config_file = open(self.cnf_file,'w')
+        config_file.write('[mysqld]')
+        for server_arg in server_args:
+            # We currently have a list of string values
+            # We need to remove any '--' stuff
+            server_arg = server_arg.replace('--','')+'\n'
+            config_file.write(server_arg)
+        config_file.close()
 
