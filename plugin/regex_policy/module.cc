@@ -197,15 +197,17 @@ static void init_options(drizzled::module::option_context &context)
       N_("Maximum number of LRU entries to track at once"));
 }
 
-void Policy::setPolicies(PolicyItemList table_policies_dummy, PolicyItemList schema_policies_dummy, PolicyItemList process_policies_dummy)
+void Policy::setPolicies(PolicyItemList new_table_policies, PolicyItemList new_schema_policies, PolicyItemList new_process_policies)
 {
-  for (PolicyItemList::iterator it= table_policies_dummy.begin(); it!= table_policies_dummy.end(); it++)
+  policy->clearPolicies();
+
+  for (PolicyItemList::iterator it= new_table_policies.begin(); it!= new_table_policies.end(); it++)
     table_policies.push_back(*it);
 
-  for (PolicyItemList::iterator it= schema_policies_dummy.begin(); it!= schema_policies_dummy.end(); it++)
+  for (PolicyItemList::iterator it= new_schema_policies.begin(); it!= new_schema_policies.end(); it++)
     schema_policies.push_back(*it);
 
-  for (PolicyItemList::iterator it= process_policies_dummy.begin(); it!= process_policies_dummy.end(); it++)
+  for (PolicyItemList::iterator it= new_process_policies.begin(); it!= new_process_policies.end(); it++)
     process_policies.push_back(*it);
 }
 
@@ -214,22 +216,21 @@ std::string& Policy::getPolicyFile()
   return sysvar_policy_file;
 }
 
-bool Policy::setPolicyFile(std::string &policyFile)
+bool Policy::setPolicyFile(std::string &new_policy_file)
 {
-  if (policyFile.empty())
+  if (new_policy_file.empty())
   {
     errmsg_printf(error::ERROR, _("regex_policy file cannot be an empty string"));
     return false;  // error
   }
 
-  PolicyItemList table_policies_dummy;
-  PolicyItemList schema_policies_dummy;
-  PolicyItemList process_policies_dummy;
-  if(parsePolicyFile(policyFile, table_policies_dummy, schema_policies_dummy, process_policies_dummy))
+  PolicyItemList new_table_policies;
+  PolicyItemList new_schema_policies;
+  PolicyItemList new_process_policies;
+  if(parsePolicyFile(new_policy_file, new_table_policies, new_schema_policies, new_process_policies))
   {
-    policy->clearPolicies();
-    policy->setPolicies(table_policies_dummy, schema_policies_dummy, process_policies_dummy);
-    sysvar_policy_file= policyFile;
+    policy->setPolicies(new_table_policies, new_schema_policies, new_process_policies);
+    sysvar_policy_file= new_policy_file;
     fs::path newPolicyFile(getPolicyFile());
     policy_file= newPolicyFile;
     return true;  // success

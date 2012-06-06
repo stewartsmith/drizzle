@@ -179,10 +179,10 @@ public:
   virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
-  void setPolicies(PolicyItemList table_policies_dummy, PolicyItemList schema_policies_dummy, PolicyItemList process_policies_dummy);
+  void setPolicies(PolicyItemList new_table_policies, PolicyItemList new_schema_policies, PolicyItemList new_process_policies);
   void clearPolicies();
   std::string& getPolicyFile();
-  bool setPolicyFile(std::string& policyFile);
+  bool setPolicyFile(std::string& new_policy_file);
   std::stringstream &getError() { return error; }
   ~Policy();
 private:
