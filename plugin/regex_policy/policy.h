@@ -118,6 +118,10 @@ class CheckMap
 public:
   bool* find(std::string const&k);
   void insert(std::string const &k, bool v);
+  void clear()
+  {
+        map.clear();
+  }
 };
 
 class CheckItem
@@ -161,8 +165,8 @@ class Policy :
   public drizzled::plugin::Authorization
 {
 public:
-  Policy(const fs::path &f_path) :
-    drizzled::plugin::Authorization("regex_policy"), policy_file(f_path), error(),
+  Policy(const std::string &f_path) :
+    drizzled::plugin::Authorization("regex_policy"), sysvar_policy_file(f_path), policy_file(f_path), error(),
     table_check_cache(), schema_check_cache(), process_check_cache()
   { }
 
@@ -175,15 +179,18 @@ public:
   virtual bool restrictTable(const drizzled::identifier::User& user_ctx,
                              const drizzled::identifier::Table& table);
 
-  bool loadFile();
+  void setPolicies(PolicyItemList table_policies_dummy, PolicyItemList schema_policies_dummy, PolicyItemList process_policies_dummy);
+  void clearPolicies();
+  std::string& getPolicyFile();
+  bool setPolicyFile(std::string& policyFile);
   std::stringstream &getError() { return error; }
   ~Policy();
 private:
   bool restrictObject(const drizzled::identifier::User &user_ctx,
                                    const std::string &obj, const PolicyItemList &policies,
                                    CheckMap &check_cache);
+  std::string sysvar_policy_file;
   fs::path policy_file;
-
   std::stringstream error;
   PolicyItemList table_policies;
   PolicyItemList schema_policies;

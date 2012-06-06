@@ -1,0 +1,3 @@
+# Syntax error in the policy file. In line 1 in place of 'ACCEPT', 'ACCEP' is written.
+.+ schema=.+ ACCEP
+.+ process=.+ ACCEPT
