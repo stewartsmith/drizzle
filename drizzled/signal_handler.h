@@ -28,6 +28,7 @@ static bool volatile signal_thread_in_use= false;
 extern "C" void drizzled_print_signal_warning(int sig);
 extern "C" void drizzled_handle_segfault(int sig);
 extern "C" void drizzled_end_thread_signal(int sig);
+extern "C" void drizzled_sigint_handler(int sig);
 
 /*
   posix sigaction() based signal handler implementation
