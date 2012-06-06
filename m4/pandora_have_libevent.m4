@@ -64,3 +64,16 @@ AC_DEFUN([_PANDORA_REQUIRE_LIBEVENT],[
 AC_DEFUN([PANDORA_REQUIRE_LIBEVENT],[
   AC_REQUIRE([_PANDORA_REQUIRE_LIBEVENT])
 ])
+
+AC_DEFUN([PANDORA_LIBEVENT_RECENT],[
+  dnl FIXME I really wanted to check for existence of EVHTTP_REQ_DELETE, 
+  dnl but autoconf gods were not favorable to me, so the below is all I got
+  AC_CACHE_CHECK([if libevent is recent enough],
+    [pandora_cv_libevent_recent],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <event2/event.h>
+#include <event2/http.h>
+    ]])],
+    [pandora_cv_libevent_recent=yes],
+    [pandora_cv_libevent_recent=no])])
+])

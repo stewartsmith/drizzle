@@ -48,6 +48,8 @@ libdrizzle_1_0_libdrizzle_la_LDFLAGS= \
 				      -version-info \
 				      $(LIBDRIZZLE_LIBRARY_VERSION)
 
+libdrizzle_1_0_libdrizzle_la_LIBADD= $(LIBSSL)
+
 libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/column.cc \
 				      libdrizzle/command.cc \
@@ -62,8 +64,10 @@ libdrizzle_1_0_libdrizzle_la_SOURCES= \
 				      libdrizzle/result.cc \
 				      libdrizzle/row.cc \
 				      libdrizzle/sha1.cc \
-				      libdrizzle/state.cc
+				      libdrizzle/state.cc \
+				      libdrizzle/ssl.cc
 
+nobase_include_HEADERS+= libdrizzle-1.0/version.h
 nobase_include_HEADERS+= \
 			 libdrizzle-1.0/column.h \
 			 libdrizzle-1.0/column_client.h \
@@ -90,6 +94,7 @@ nobase_include_HEADERS+= \
 			 libdrizzle-1.0/return.h \
 			 libdrizzle-1.0/row_client.h \
 			 libdrizzle-1.0/row_server.h \
+			 libdrizzle-1.0/ssl.h \
 			 libdrizzle-1.0/structs.h \
 			 libdrizzle-1.0/verbose.h \
 			 libdrizzle-1.0/visibility.h

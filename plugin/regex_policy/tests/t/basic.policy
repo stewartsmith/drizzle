@@ -1,15 +1,15 @@
 # This is a comment line and should be skipped
-.+ schema=DATA_DICTIONARY ACCEPT
-.+ schema=INFORMATION_SCHEMA ACCEPT
-.+ schema=data_dictionary ACCEPT
-.+ schema=information_schema ACCEPT
-root table=.+ ACCEPT
-root schema=.+ ACCEPT
-root process=.+ ACCEPT
-user1 schema=user1 ACCEPT
-user2 schema=user2 ACCEPT
-user1 process=user1 ACCEPT
-user2 process=user2 ACCEPT
+.+ schema=DATA_DICTIONARY ALLOW
+.+ schema=INFORMATION_SCHEMA ALLOW
+.+ schema=data_dictionary ALLOW
+.+ schema=information_schema ALLOW
+root table=.+ ALLOW
+root schema=.+ ALLOW
+root process=.+ ALLOW
+user1 schema=user1 ALLOW
+user2 schema=user2 ALLOW
+user1 process=user1 ALLOW
+user2 process=user2 ALLOW
 # Default to denying everything
 .+ schema=.+ DENY
 .+ process=.+ DENY

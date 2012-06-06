@@ -389,6 +389,24 @@ static void print_version()
          PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
+extern "C" {
+
+  char at_exit_pid_file[1024 * 4]= { 0 };
+
+  static void remove_pidfile(void)
+  {
+    if (at_exit_pid_file[0])
+    {
+      if (unlink(at_exit_pid_file) == -1)
+      {
+        std::cerr << "Could not remove pidfile: " << at_exit_pid_file << "(" << strerror(errno) << ")" << std::endl;
+      }
+
+      at_exit_pid_file[0]= 0;
+    }
+  }
+}
+
 /**
   Create file to store pid number.
 */
@@ -405,6 +423,8 @@ static void create_pid_file()
     {
       if (close(file) != -1)
       {
+        snprintf(at_exit_pid_file, sizeof(at_exit_pid_file), "%s", pid_file.file_string().c_str());
+        atexit(remove_pidfile);
         return;
       }
     }
@@ -534,8 +554,6 @@ void clean_up(bool print_message)
 #if GOOGLE_PROTOBUF_VERSION >= 2001000
   google::protobuf::ShutdownProtobufLibrary();
 #endif
-
-  (void) unlink(pid_file.file_string().c_str());	// This may not always exist
 
   if (print_message && server_start_time)
   {
@@ -1336,7 +1354,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
     unireg_exit();
   }
 
-  if (vm.count("no-defaults"))
+  if (!vm["no-defaults"].as<bool>())
   {
     fs::path system_config_file_drizzle(system_config_dir);
     system_config_file_drizzle /= "drizzled.cnf";
@@ -1735,7 +1753,7 @@ struct option my_long_options[] =
        "a limit per thread!"),
     (char**) &global_system_variables.bulk_insert_buff_size,
     NULL,
-    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+    0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, (int64_t)ULONG_MAX, 0, 1, 0},
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -1746,7 +1764,7 @@ struct option my_long_options[] =
     N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
    NULL, 0, GET_UINT64,
-   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
+   REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, (int64_t)ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
@@ -1774,7 +1792,7 @@ struct option my_long_options[] =
     N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
     NULL, 0, GET_UINT64,
-    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
+    REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
    N_("The number of bytes to use when sorting BLOB or TEXT values "
       "(only the first max_sort_length bytes of each value are used; the "
@@ -1785,13 +1803,13 @@ struct option my_long_options[] =
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, NULL, 0, GET_ULL,
-   REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
+   REQUIRED_ARG, (int64_t)ULONG_MAX, 1, (int64_t)ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
    N_("Don't log queries which examine less than min_examined_row_limit "
       "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
    NULL, 0, GET_ULL,
-   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
+   REQUIRED_ARG, 0, 0, (int64_t)ULONG_MAX, 0, 1L, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -1843,13 +1861,13 @@ struct option my_long_options[] =
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
    NULL, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
+   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, (int64_t)ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
    N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
    NULL, 0, GET_UINT,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
-   ULONG_MAX, 0, 1024, 0},
+   (int64_t)ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
@@ -2179,13 +2197,18 @@ static void fix_paths()
   }
 
   {
-    fs::path pid_file_path(pid_file);
-    if (pid_file_path.root_path().string() == "")
+    if (pid_file.string().size() and pid_file.string()[0] == '/')
+    { } // Do nothing if the file starts with a slash
+    else
     {
-      pid_file_path= getDataHome();
-      pid_file_path /= pid_file;
+      fs::path pid_file_path(pid_file);
+      if (pid_file_path.root_path().string() == "")
+      {
+        pid_file_path= getDataHome();
+        pid_file_path /= pid_file;
+      }
+      pid_file= fs::system_complete(pid_file_path);
     }
-    pid_file= fs::system_complete(pid_file_path);
   }
 
   const char *tmp_string= getenv("TMPDIR");

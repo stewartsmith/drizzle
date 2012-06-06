@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "client_priv.h"
+#include "client/client_priv.h"
 #include <string>
 #include <iosfwd>
 

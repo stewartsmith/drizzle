@@ -648,16 +648,16 @@ page_zip_dir_encode(
 
 /**********************************************************************//**
 Allocate memory for zlib. */
-extern "C" void* page_zip_malloc(void* opaque, uInt items, uInt size);
+extern "C" void* page_zip_zalloc(void* opaque, uInt items, uInt size);
 
-extern "C" void* page_zip_malloc
+extern "C" void* page_zip_zalloc
 (
 /*============*/
 	void*	opaque,	/*!< in/out: memory heap */
 	uInt	items,	/*!< in: number of items to allocate */
 	uInt	size)	/*!< in: size of an item in bytes */
 {
-	return(mem_heap_alloc(static_cast<mem_block_info_t *>(opaque), items * size));
+	return(mem_heap_zalloc(static_cast<mem_block_info_t *>(opaque), items * size));
 }
 
 /**********************************************************************//**
@@ -678,7 +678,7 @@ page_zip_set_alloc(
 {
 	z_stream*	strm = static_cast<z_stream *>(stream);
 
-	strm->zalloc = page_zip_malloc;
+	strm->zalloc = page_zip_zalloc;
 	strm->zfree = page_zip_free;
 	strm->opaque = heap;
 }
@@ -2906,18 +2906,17 @@ zlib_error:
 
 	page_zip_set_alloc(&d_stream, heap);
 
-	if (UNIV_UNLIKELY(inflateInit2(&d_stream, UNIV_PAGE_SIZE_SHIFT)
-			  != Z_OK)) {
-		ut_error;
-	}
-
 	d_stream.next_in = page_zip->data + PAGE_DATA;
 	/* Subtract the space reserved for
 	the page header and the end marker of the modification log. */
 	d_stream.avail_in = page_zip_get_size(page_zip) - (PAGE_DATA + 1);
-
 	d_stream.next_out = page + PAGE_ZIP_START;
 	d_stream.avail_out = UNIV_PAGE_SIZE - PAGE_ZIP_START;
+
+	if (UNIV_UNLIKELY(inflateInit2(&d_stream, UNIV_PAGE_SIZE_SHIFT)
+			  != Z_OK)) {
+		ut_error;
+	}
 
 	/* Decode the zlib header and the index information. */
 	if (UNIV_UNLIKELY(inflate(&d_stream, Z_BLOCK) != Z_OK)) {
@@ -4434,7 +4433,7 @@ page_zip_reorganize(
 	log_mode = mtr_set_log_mode(mtr, MTR_LOG_NONE);
 
 #ifndef UNIV_HOTBACKUP
-	temp_block = buf_block_alloc(buf_pool, 0);
+	temp_block = buf_block_alloc(buf_pool);
 	btr_search_drop_page_hash_index(block);
 	block->check_index_page_at_flush = TRUE;
 #else /* !UNIV_HOTBACKUP */
@@ -4445,6 +4444,8 @@ page_zip_reorganize(
 
 	/* Copy the old page to temporary space */
 	buf_frame_copy(temp_page, page);
+
+	btr_blob_dbg_remove(page, index, "zip_reorg");
 
 	/* Recreate the page: note that global data on page (possible
 	segment headers, next page-field, etc.) is preserved intact */
@@ -4504,7 +4505,7 @@ page_zip_copy_recs(
 	mtr_t*			mtr)		/*!< in: mini-transaction */
 {
 	ut_ad(mtr_memo_contains_page(mtr, page, MTR_MEMO_PAGE_X_FIX));
-	ut_ad(mtr_memo_contains_page(mtr, (page_t*) src, MTR_MEMO_PAGE_X_FIX));
+	ut_ad(mtr_memo_contains_page(mtr, src, MTR_MEMO_PAGE_X_FIX));
 	ut_ad(!dict_index_is_ibuf(index));
 #ifdef UNIV_ZIP_DEBUG
 	/* The B-tree operations that call this function may set
@@ -4574,6 +4575,7 @@ page_zip_copy_recs(
 #ifdef UNIV_ZIP_DEBUG
 	ut_a(page_zip_validate(page_zip, page));
 #endif /* UNIV_ZIP_DEBUG */
+	btr_blob_dbg_add(page, index, "page_zip_copy_recs");
 
 	page_zip_compress_write_log(page_zip, page, index, mtr);
 }

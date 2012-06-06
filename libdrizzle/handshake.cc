@@ -63,6 +63,12 @@ drizzle_return_t drizzle_handshake_client_write(drizzle_con_st *con)
   {
     drizzle_state_push(con, drizzle_state_write);
     drizzle_state_push(con, drizzle_state_handshake_client_write);
+
+    if (con->ssl)
+    {
+      drizzle_state_push(con, drizzle_state_write);
+      drizzle_state_push(con, drizzle_state_handshake_ssl_client_write);
+    }
   }
 
   return drizzle_state_loop(con);
@@ -226,6 +232,11 @@ drizzle_return_t drizzle_state_handshake_server_read(drizzle_con_st *con)
     drizzle_state_push(con, drizzle_state_packet_read);
     drizzle_state_push(con, drizzle_state_write);
     drizzle_state_push(con, drizzle_state_handshake_client_write);
+    if (con->ssl)
+    {
+      drizzle_state_push(con, drizzle_state_write);
+      drizzle_state_push(con, drizzle_state_handshake_ssl_client_write);
+    }
   }
 
   return DRIZZLE_RETURN_OK;
@@ -491,10 +502,49 @@ drizzle_return_t drizzle_state_handshake_client_read(drizzle_con_st *con)
   return DRIZZLE_RETURN_OK;
 }
 
+int drizzle_compile_capabilities(drizzle_con_st *con)
+{
+  int capabilities;
+
+  if (con->options & DRIZZLE_CON_MYSQL)
+    con->capabilities|= DRIZZLE_CAPABILITIES_PROTOCOL_41;
+
+  capabilities= con->capabilities & int(DRIZZLE_CAPABILITIES_CLIENT);
+  if (!(con->options & DRIZZLE_CON_FOUND_ROWS))
+    capabilities&= ~int(DRIZZLE_CAPABILITIES_FOUND_ROWS);
+
+  if (con->options & DRIZZLE_CON_INTERACTIVE)
+  {
+    capabilities|= int(DRIZZLE_CAPABILITIES_INTERACTIVE);
+  }
+
+  if (con->options & DRIZZLE_CON_MULTI_STATEMENTS)
+  {
+    capabilities|= int(DRIZZLE_CAPABILITIES_MULTI_STATEMENTS);
+  }
+
+  if (con->options & DRIZZLE_CON_AUTH_PLUGIN)
+  {
+    capabilities|= int(DRIZZLE_CAPABILITIES_PLUGIN_AUTH);
+  }
+
+  if (con->ssl)
+  {
+    capabilities|= int(DRIZZLE_CAPABILITIES_SSL);
+  }
+
+  capabilities&= ~(int(DRIZZLE_CAPABILITIES_COMPRESS));
+  if (con->db[0] == 0)
+    capabilities&= ~int(DRIZZLE_CAPABILITIES_CONNECT_WITH_DB);
+
+  return capabilities;
+}
+
 drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 {
   uint8_t *ptr;
   int capabilities;
+  int ssl_ret;
   drizzle_return_t ret;
 
   if (con == NULL)
@@ -502,6 +552,17 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
     return DRIZZLE_RETURN_INVALID_ARGUMENT;
   }
   drizzle_log_debug(con->drizzle, "drizzle_state_handshake_client_write");
+
+  if (con->ssl)
+  {
+    ssl_ret= SSL_connect(con->ssl);
+    if (ssl_ret != 1)
+    {
+      drizzle_set_error(con->drizzle, "drizzle_state_handshake_client_write", "SSL error: %d", SSL_get_error(con->ssl, ssl_ret));
+      return DRIZZLE_RETURN_SSL_ERROR;
+    }
+    con->ssl_state= DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE;
+  }
 
   /* Calculate max packet size. */
   con->packet_size= 4   /* Capabilities */
@@ -528,31 +589,7 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
   con->packet_number++;
   ptr+= 4;
 
-  if (con->options & DRIZZLE_CON_MYSQL)
-    con->capabilities|= DRIZZLE_CAPABILITIES_PROTOCOL_41;
-
-  capabilities= con->capabilities & int(DRIZZLE_CAPABILITIES_CLIENT);
-  if (!(con->options & DRIZZLE_CON_FOUND_ROWS))
-    capabilities&= ~int(DRIZZLE_CAPABILITIES_FOUND_ROWS);
-
-  if (con->options & DRIZZLE_CON_INTERACTIVE)
-  {
-    capabilities|= int(DRIZZLE_CAPABILITIES_INTERACTIVE);
-  }
-
-  if (con->options & DRIZZLE_CON_MULTI_STATEMENTS)
-  {
-    capabilities|= int(DRIZZLE_CAPABILITIES_MULTI_STATEMENTS);
-  }
-
-  if (con->options & DRIZZLE_CON_AUTH_PLUGIN)
-  {
-    capabilities|= int(DRIZZLE_CAPABILITIES_PLUGIN_AUTH);
-  }
-
-  capabilities&= ~(int(DRIZZLE_CAPABILITIES_COMPRESS) | int(DRIZZLE_CAPABILITIES_SSL));
-  if (con->db[0] == 0)
-    capabilities&= ~int(DRIZZLE_CAPABILITIES_CONNECT_WITH_DB);
+  capabilities= drizzle_compile_capabilities(con);
 
   drizzle_set_byte4(ptr, capabilities);
   ptr+= 4;
@@ -583,6 +620,42 @@ drizzle_return_t drizzle_state_handshake_client_write(drizzle_con_st *con)
 
   /* Store packet size now. */
   drizzle_set_byte3(con->buffer_ptr, con->packet_size);
+
+  drizzle_state_pop(con);
+  return DRIZZLE_RETURN_OK;
+}
+
+drizzle_return_t drizzle_state_handshake_ssl_client_write(drizzle_con_st *con)
+{
+  uint8_t *ptr;
+  int capabilities;
+
+  drizzle_log_debug(con->drizzle, "drizzle_state_handshake_ssl_client_write");
+
+  /* SSL handshake packet structure */
+  con->packet_size= 4   /* Capabilities */
+                  + 4   /* Max packet size */
+                  + 1   /* Charset */
+                  + 23; /* Padding unused bytes */
+
+  ptr= con->buffer_ptr;
+  drizzle_set_byte3(ptr, con->packet_size);
+  ptr[3]= con->packet_number;
+  con->packet_number++;
+  ptr+= 4;
+
+  capabilities= drizzle_compile_capabilities(con);
+  drizzle_set_byte4(ptr, capabilities);
+  ptr+= 4;
+  drizzle_set_byte4(ptr, con->max_packet_size);
+  ptr+= 4;
+
+  ptr[0]= con->charset;
+
+  con->buffer_size+= con->packet_size + 4;
+  ptr++;
+
+  memset(ptr, 0, 23);
 
   drizzle_state_pop(con);
   return DRIZZLE_RETURN_OK;

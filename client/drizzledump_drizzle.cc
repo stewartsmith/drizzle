@@ -19,7 +19,7 @@
 
 #include "drizzledump_data.h"
 #include "drizzledump_drizzle.h"
-#include "client_priv.h"
+#include "client/client_priv.h"
 #include <string>
 #include <iostream>
 #include <drizzled/gettext.h>

@@ -54,7 +54,7 @@ void create_select_for_variable(Session*, const char *var_name);
 
 void init_update_queries();
 
-bool dispatch_command(enum_server_command command, Session*, const char* packet, uint32_t packet_length);
+bool dispatch_command(enum_server_command, Session&, str_ref);
 
 bool check_simple_select(Session*);
 

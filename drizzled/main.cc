@@ -212,6 +212,13 @@ static void init_signals(void)
   }
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+  (void) sigemptyset(&set);
+  sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGINT);
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+
   return;
 }
 
@@ -334,11 +341,6 @@ int main(int argc, char **argv)
           unireg_abort << "Could not create local catalog, in directory:" << getcwd(cwd, sizeof(cwd)) << " system error was:" << strerror(errno);
         }
       }
-    }
-
-    if (chdir("local") == -1)
-    {
-      unireg_abort << "Local catalog does not exist, was unable to chdir() to " << getDataHome().file_string();
     }
 
     setFullDataHome(boost::filesystem::system_complete(getDataHome()));

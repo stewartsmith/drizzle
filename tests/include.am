@@ -20,7 +20,7 @@
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	tests/valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/dbqp
+GENSCRIPTS =		tests/dtr tests/mtr tests/test-run tests/qp
 PRESCRIPTS =		tests/test-run.pl tests/stress-test.pl
 PLUGIN_TESTS =		$(pandora_plugin_test_list)
 NORMAL_TESTS =		main,bool_type,cast,ddl_transactions,execute,flush_tables,identifiers,jp,mysql_compatibility,regression,tamil,time_type,unsigned_integer_type,uuid_type,microtime_type,$(PLUGIN_TESTS)
@@ -48,66 +48,41 @@ TEST_RUN_MEM= $(PERL) -I$(top_srcdir)/tests/lib \
 	      --testdir=${top_srcdir}/tests \
 	      --dtr-build-thread=$$$$
 
-TEST_RUN_DBQP= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
-		--top-srcdir=${top_srcdir} \
-		--top-builddir=${top_builddir} \
-		--reorder \
-		--basedir=${top_srcdir} \
-		--testdir=${top_srcdir}/tests \
-                --workdir=${top_srcdir}/tests/workdir
-
-TEST_RUN_DBQP_MODE= $(PYTHON) $(top_srcdir)/tests/dbqp.py \
-		--top-srcdir=${top_srcdir} \
-		--top-builddir=${top_builddir} \
-		--basedir=${top_srcdir} \
-		--testdir=${top_srcdir}/tests \
-		--workdir=${top_srcdir}/tests/workdir
-
-TEST_RUN_QP= $(PYTHON) $(top_srcdir)/tests/kewpie/kewpie.py \
+TEST_RUN_QP= $(PYTHON) $(top_srcdir)/tests/kewpie.py \
                 --top-srcdir=${top_srcdir} \
                 --top-builddir=${top_builddir} \
                 --reorder \
                 --basedir=${top_srcdir} \
                 --testdir=${top_srcdir}/tests \
-                --workdir=${top_srcdir}/tests/kewpie/workdir
+                --workdir=${top_srcdir}/tests/workdir
 
-TEST_RUN_QP_MODE= $(PYTHON) $(top_srcdir)/tests/kewpie/kewpie.py \
+TEST_RUN_QP_MODE= $(PYTHON) $(top_srcdir)/tests/kewpie.py \
                 --top-srcdir=${top_srcdir} \
                 --top-builddir=${top_builddir} \
                 --basedir=${top_srcdir} \
-                --testdir=${top_srcdir}/tests/kewpie \
-                --workdir=${top_srcdir}/tests/kewpie/workdir
+                --testdir=${top_srcdir}/tests \
+                --workdir=${top_srcdir}/tests/workdir
 
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
-	${srcdir}/tests/kewpie/kewpie.py \
-	${srcdir}/tests/kewpie/qp_data \
-	${srcdir}/tests/kewpie/drizzle_tests/crashme/*.py \
-	${srcdir}/tests/kewpie/drizzle_tests/randgen_basic/*.py \
-	${srcdir}/tests/kewpie/drizzle_tests/randgen_innoTrxLog/*.py \
-	${srcdir}/tests/kewpie/drizzle_tests/randgen_slavePlugin/*.py \
-	${srcdir}/tests/kewpie/drizzle_tests/sqlbench/*.py \
-	${srcdir}/tests/kewpie/lib/modes/dtr/*py \
-	${srcdir}/tests/kewpie/lib/modes/native/*py \
-	${srcdir}/tests/kewpie/lib/modes/sysbench/*py \
-	${srcdir}/tests/kewpie/lib/opts/*.py \
-	${srcdir}/tests/kewpie/lib/server_mgmt/*py \
-	${srcdir}/tests/kewpie/lib/sys_mgmt/*py \
-	${srcdir}/tests/kewpie/lib/test_mgmt/*py \
-	${srcdir}/tests/kewpie/lib/util/*py \
-	${srcdir}/tests/kewpie/lib/*.py \
-	${srcdir}/tests/kewpie/randgen \
-	${srcdir}/tests/kewpie/sql-bench \
-	${srcdir}/tests/kewpie/sysbench_tests \
-	${srcdir}/tests/crashme_tests \
-	${srcdir}/tests/dbqp.py \
-	${srcdir}/tests/dbqp_data \
-	${srcdir}/tests/randgen \
-	${srcdir}/tests/randgen_tests \
-	${srcdir}/tests/sql-bench \
-	${srcdir}/tests/sqlbench_tests \
-	${srcdir}/tests/sysbench_tests \
+	${srcdir}/tests/kewpie.py \
+	${srcdir}/tests/qp_data \
+	${srcdir}/tests/qp_tests/crashme/*.py \
+	${srcdir}/tests/qp_tests/randgen_basic/*.py \
+	${srcdir}/tests/qp_tests/randgen_innoTrxLog/*.py \
+	${srcdir}/tests/qp_tests/randgen_slavePlugin/*.py \
+	${srcdir}/tests/qp_tests/sqlbench/*.py \
+	${srcdir}/tests/lib/modes/dtr/*py \
+	${srcdir}/tests/lib/modes/native/*py \
+	${srcdir}/tests/lib/opts/*.py \
+	${srcdir}/tests/lib/server_mgmt/*py \
+	${srcdir}/tests/lib/sys_mgmt/*py \
+	${srcdir}/tests/lib/test_mgmt/*py \
+	${srcdir}/tests/lib/util/*py \
+	${srcdir}/tests/lib/*.py \
+	${srcdir}/tests/test_tools/randgen \
+	${srcdir}/tests/test_tools/sql-bench \
 	${srcdir}/tests/README.stress \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
@@ -119,17 +94,7 @@ EXTRA_DIST += \
 	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
-        ${srcdir}/tests/lib/*.py \
-	${srcdir}/tests/lib/dbqp_modes/crashme/*.py \
-	${srcdir}/tests/lib/dbqp_modes/dtr/*.py \
-	${srcdir}/tests/lib/dbqp_modes/randgen/*.py \
-	${srcdir}/tests/lib/dbqp_modes/sqlbench/*py \
-	${srcdir}/tests/lib/dbqp_modes/sysbench/*py \
-	${srcdir}/tests/lib/dbqp_opts/*.py \
 	${srcdir}/tests/lib/My/*.pm \
-        ${srcdir}/tests/lib/server_mgmt/*py \
-	${srcdir}/tests/lib/sys_mgmt/*py \
-	${srcdir}/tests/lib/test_mgmt/*py \
 	tests/strip-valgrind
 
 
@@ -156,9 +121,9 @@ tests/test-run: tests/var/drizzle
 	$(RM) -f tests/test-run
 	$(LN_S) test-run.pl tests/test-run
 
-tests/dbqp: tests/var/drizzle
-	$(RM) -f tests/dbqp
-	$(LN_S) dbqp.py tests/dbqp
+tests/qp: tests/var/drizzle
+	$(RM) -f tests/kewpie
+	$(LN_S) kewpie.py tests/kewpie
 
 
 .PHONY: test
@@ -166,7 +131,6 @@ tests/dbqp: tests/var/drizzle
 .PHONY: test-big
 .PHONY: test-crashme
 .PHONY: test-drizzle
-.PHONY: test-dbqp
 .PHONY: test-qp
 .PHONY: test-plugins
 .PHONY: test-randgen

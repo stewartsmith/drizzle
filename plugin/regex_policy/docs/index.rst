@@ -64,21 +64,22 @@ Regex Policy File Format
 The general line format of a regex policy file is::
 
    USER_PATTERN SCHEMA_OBJECT_PATTERN POLICY
+   In Drizzle 7 and Drizzle 7.1 the POLICY values supported were 'ACCEPT' and 'DENY'. Beginning with Drizzle 7.2.0, the values used should be 'ALLOW' and 'DENY'. Although 'ACCEPT' and 'REJECT' are also supported for backward compatibility, but their use is deprecated.
 
 For example::
 
    # This is a comment line and should be skipped
-   .+ schema=DATA_DICTIONARY ACCEPT
-   .+ schema=INFORMATION_SCHEMA ACCEPT
-   .+ schema=data_dictionary ACCEPT
-   .+ schema=information_schema ACCEPT
-   root table=.+ ACCEPT
-   root schema=.+ ACCEPT
-   root process=.+ ACCEPT
-   user1 schema=user1 ACCEPT
-   user2 schema=user2 ACCEPT
-   user1 process=user1 ACCEPT
-   user2 process=user2 ACCEPT
+   .+ schema=DATA_DICTIONARY ALLOW
+   .+ schema=INFORMATION_SCHEMA ALLOW
+   .+ schema=data_dictionary ALLOW
+   .+ schema=information_schema ALLOW
+   root table=.+ ALLOW
+   root schema=.+ ALLOW
+   root process=.+ ALLOW
+   user1 schema=user1 ALLOW
+   user2 schema=user2 ALLOW
+   user1 process=user1 ALLOW
+   user2 process=user2 ALLOW
    # Default to denying everything
    .+ schema=.+ DENY
    .+ process=.+ DENY
@@ -111,7 +112,7 @@ Clint Byrum
 Version
 -------
 
-This documentation applies to **regex_policy 1.0**.
+This documentation applies to **regex_policy 2.0**.
 
 To see which version of the plugin a Drizzle server is running, execute:
 
@@ -122,6 +123,6 @@ To see which version of the plugin a Drizzle server is running, execute:
 Changelog
 ---------
 
-v1.0
+v2.0
 ^^^^
 * First release.

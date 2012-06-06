@@ -49,12 +49,14 @@ class loggingManager():
     def __init__(self, variables):
 
         self.log_file = sys.stdout
+        self.subunit_file = variables['subunitoutfile']
         self.report_fmt = '{0:<42} {1} {2:>8}'
         self.report_started = 0
         self.thick_line = '='*(80 - len("20110420-105402  "))
         self.thin_line = '-'*(80- len("20110420-105402  "))
         self.verbose_flag = variables['verbose']
         self.debug_flag = variables['debug']
+        self.test_debug_flag = variables['testdebug']
 
     def _write_message(self,level, msg):
       self.log_file.write("%s %s %s\n" % (time.strftime("%Y%m%d-%H%M%S"), level, str(msg)))
@@ -82,6 +84,10 @@ class loggingManager():
     def debug(self,msg):
       if self.debug_flag:
           self._write_message("DEBUG", msg)
+
+    def test_debug(self,msg):
+        if self.test_debug_flag:
+            self._write_message("TEST_DEBUG", msg)
  
     def debug_class(self,codeClass):
       if self.debug_flag:
@@ -123,6 +129,29 @@ class loggingManager():
     def write_thick_line(self):
         self._write_message("",self.thick_line)
 
+    def subunit_start(self,test_name):
+        """ We log a test being started for subunit output """
+        with open(self.subunit_file,'a') as subunit_outfile:
+            subunit_outfile.write("time: %sZ\n" %(time.strftime("%Y-%m-%d-%H:%M:%S")))
+            subunit_outfile.write("test: %s\n" %(test_name))
 
+    def subunit_stop(self, test_name, retcode, output):
+        """ We log the return of a test appropriately:
+            success, skip, failure, etc
 
-
+        """
+        result_map = {'pass':'success'
+                     ,'fail':'failure'
+                     }
+        result = result_map[retcode]
+        with open(self.subunit_file,'a') as subunit_outfile:
+            subunit_outfile.write(time.strftime("time: %Y-%m-%d-%H:%M:%SZ\n"))
+            if output:
+                output_string = " [\n%s]\n" %(output)
+            else:
+                output_string = "\n" # we just want a newline if nothing here 
+            subunit_outfile.write("%s: %s%s" %( result
+                                              , test_name
+                                              , output_string))
+            
+        

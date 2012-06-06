@@ -1526,7 +1526,7 @@ row_ins_check_foreign_constraints(
 		if (foreign->foreign_index == index) {
 
 			if (foreign->referenced_table == NULL) {
-				dict_table_get(foreign->referenced_table_name,
+				dict_table_get(foreign->referenced_table_name_lookup,
 					       FALSE);
 			}
 
@@ -2123,7 +2123,7 @@ function_exit:
 
 		err = btr_store_big_rec_extern_fields(
 			index, btr_cur_get_block(&cursor),
-			exit_rec, offsets, big_rec, &mtr);
+			exit_rec, offsets, &mtr, FALSE, big_rec);
 
 		if (modify) {
 			dtuple_big_rec_free(big_rec);

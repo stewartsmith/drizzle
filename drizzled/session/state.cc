@@ -27,17 +27,13 @@
 namespace drizzled {
 namespace session {
 
-State::State(const char *in_packet, size_t in_packet_length)
+State::State(str_ref v)
 {
-  if (in_packet_length)
+  if (not v.empty())
   {
-    size_t minimum= std::min(in_packet_length, static_cast<size_t>(PROCESS_LIST_WIDTH));
+    size_t minimum= std::min<size_t>(v.size(), PROCESS_LIST_WIDTH);
     _query.resize(minimum + 1);
-    memcpy(&_query[0], in_packet, minimum);
-  }
-  else
-  {
-    _query.resize(0);
+    memcpy(&_query[0], v.data(), minimum);
   }
 }
 
@@ -53,7 +49,7 @@ const char *State::query(size_t &size) const
 {
   if (_query.size())
   {
-    size= _query.size() -1;
+    size= _query.size() - 1;
     return &_query[0];
   }
 

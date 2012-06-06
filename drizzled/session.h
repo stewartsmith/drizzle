@@ -728,7 +728,7 @@ public:
    * @param The packet pointer to read from
    * @param The length of the query to read
    */
-  void readAndStoreQuery(const char *in_packet, uint32_t in_packet_length);
+  void readAndStoreQuery(str_ref);
 
   /**
    * Ends the current transaction and (maybe) begins the next.
@@ -1131,7 +1131,7 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
-namespace display  
+namespace display
 {
   const std::string &type(Session::global_read_lock_t);
   size_t max_string_length(Session::global_read_lock_t);

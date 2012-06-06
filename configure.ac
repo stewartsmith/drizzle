@@ -20,32 +20,13 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
-AC_INIT([drizzle],[7.1],[http://bugs.launchpad.net/drizzle],[drizzle],[http://drizzle.org/])
+AC_INIT([drizzle],[7.2],[http://bugs.launchpad.net/drizzle],[drizzle],[http://drizzle.org/])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
 PANDORA_CANONICAL_TARGET(less-warnings, require-cxx, force-gcc42, version-from-vc) 
 
-LIBDRIZZLE_LIBRARY_VERSION=4:0:0
-#                             | | |
-#                      +------+ | +---+
-#                      |        |     |
-#                   current:revision:age
-#                      |        |     |
-#                      |        |     +- increment if interfaces have been added
-#                      |        |        set to zero if interfaces have been
-#                      |        |        removed or changed
-#                      |        +- increment if source code has changed
-#                      |           set to zero if current is incremented
-#                      +- increment if interfaces have been added, removed or
-#                         changed
-AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
-
-# libdrizzle versioning when linked with GNU ld.
-AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/config/drizzle.ver"
-  ])
-AC_SUBST(LD_VERSION_SCRIPT)
+m4_include([m4/libdrizzle_version.m4])
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -120,6 +101,7 @@ AC_LANG_PUSH(C++)
 PANDORA_REQUIRE_PTHREAD
 PANDORA_REQUIRE_LIBUUID
 PANDORA_REQUIRE_LIBZ
+PANDORA_REQUIRE_LIBSSL
 PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
 PANDORA_REQUIRE_LIBDL
@@ -154,7 +136,8 @@ AS_IF([test "x${ac_gcc_profile_mode}" = "xyes" -a "x${pandora_cv_boost_profile}"
 AC_CONFIG_FILES(Makefile dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
- support-files/drizzle.spec dnl
+ support-files/rpm/SPECS/drizzle.spec dnl
+ libdrizzle-1.0/version.h dnl
  support-files/drizzle.pc dnl
  support-files/libdrizzle.pc dnl
  support-files/libdrizzle-1.0.pc dnl

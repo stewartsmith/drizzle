@@ -1,1 +1,9 @@
 PANDORA_HAVE_LIBEVENT
+
+AS_IF([test "x$ac_cv_libevent" = "xno"],
+  AC_MSG_WARN([libevent not found: not building json_server.]))
+
+PANDORA_LIBEVENT_RECENT
+
+AS_IF([test "$pandora_cv_libevent_recent" = "no"],
+  AC_MSG_WARN([Your version of libevent is too old. json_server requires v 2.0 or newer: not building json_server.]))

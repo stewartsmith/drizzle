@@ -16,8 +16,8 @@
 #include <config.h>
 #include <drizzled/plugin/function.h>
 
-#include "gman_servers_set.h"
-#include "gman_do.h"
+#include "plugin/gearman_udf/gman_servers_set.h"
+#include "plugin/gearman_udf/gman_do.h"
 
 using namespace std;
 using namespace drizzled;

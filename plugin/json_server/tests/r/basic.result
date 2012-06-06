@@ -29,3 +29,176 @@ a	b
 1	from MySQL protocol
 2	from http
 drop table t1;
+create schema json;
+use json;
+{
+   "query" : {
+      "_id" : 1,
+      "document" : {
+         "age" : 35,
+         "firstname" : "Henrik",
+         "lastname" : "Ingo"
+      }
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1
+   },
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 35,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1,
+      "document" : {
+         "age" : 36,
+         "firstname" : "Henrik",
+         "lastname" : "Ingo"
+      }
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1
+   },
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "error_message" : "You must specify table in the request uri query string.",
+   "error_type" : "http error"
+}
+{
+   "error_message" : "You must specify \"table\" in the request uri query string.",
+   "error_type" : "http error"
+}
+{
+   "query" : {
+      "_id" : null,
+      "document" : {
+         "age" : 21,
+         "firstname" : "Mohit",
+         "lastname" : "Srivastava"
+      }
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : null
+   },
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      },
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "error_message" : "* Line 1, Column 10\n  Missing ',' or '}' in object declaration\n",
+   "error_type" : "json error"
+}
+{
+   "query" : {
+      "_id" : 1,
+      "document" : "It is for testing"
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1,
+      "document" : 98765
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1,
+      "document" : {
+         "age" : 35,
+         "firstname" : "Henrik",
+         "lastname" : "Ingo"
+      },
+      "metadata" : {
+         "dob" : "16-feb-1977",
+         "interest" : "opensource",
+         "nick" : "hingo"
+      }
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : null
+   },
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 35,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         },
+         "metadata" : {
+            "dob" : "16-feb-1977",
+            "interest" : "opensource",
+            "nick" : "hingo"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1
+   },
+   "sqlstate" : "00000"
+}
+{
+   "query" : {
+      "_id" : 1
+   },
+   "sqlstate" : "00000"
+}
+{
+   "error_message" : "You must specify \"table\" in the request uri query string.",
+   "error_type" : "http error"
+}
+drop table people;
+drop table aboutpeople;
+drop schema json;

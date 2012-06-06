@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (C) 1995, 2010, Innobase Oy. All Rights Reserved.
+Copyright (C) 1995, 2011, Innobase Oy. All Rights Reserved.
 Copyright (C) 2008, 2009, Google Inc.
 Copyright (C) 2009, Percona Inc.
 
@@ -77,8 +77,8 @@ at a time */
 #define SRV_AUTO_EXTEND_INCREMENT	\
 	(srv_auto_extend_increment * ((1024 * 1024) / UNIV_PAGE_SIZE))
 
-/* This is set to TRUE if the MySQL user has set it in MySQL */
-extern ibool	srv_lower_case_table_names;
+/* This is set to the MySQL server value for this variable. */
+extern uint	srv_lower_case_table_names;
 
 /* Mutex for locking srv_monitor_file */
 extern mutex_t	srv_monitor_file_mutex;
@@ -182,6 +182,11 @@ extern ulong    srv_io_capacity;
 capacity. PCT_IO(5) -> returns the number of IO operations that
 is 5% of the max where max is srv_io_capacity.  */
 #define PCT_IO(p) ((ulong) (srv_io_capacity * ((double) p / 100.0)))
+
+/* The "innodb_stats_method" setting, decides how InnoDB is going
+to treat NULL value when collecting statistics. It is not defined
+as enum type because the configure option takes unsigned integer type. */
+extern ulong	srv_innodb_stats_method;
 
 #ifdef UNIV_LOG_ARCHIVE
 extern ibool		srv_log_archive_on;
@@ -313,8 +318,11 @@ extern ulint srv_log_waits;
 /* the number of purge threads to use from the worker pool (currently 0 or 1) */
 extern ulong srv_n_purge_threads;
 
-/* the number of records to purge in one batch */
+/* the number of pages to purge in one batch */
 extern ulong srv_purge_batch_size;
+
+/* the number of rollback segments to use */
+extern ulong srv_rollback_segments;
 
 /* variable that counts amount of data read in total (in bytes) */
 extern ulint srv_data_read;
@@ -445,19 +453,24 @@ enum {
 					in connection with recovery */
 };
 
+/* Alternatives for srv_innodb_stats_method, which could be changed by
+setting innodb_stats_method */
+enum srv_stats_method_name_enum {
+	SRV_STATS_NULLS_EQUAL,		/* All NULL values are treated as
+					equal. This is the default setting
+					for innodb_stats_method */
+	SRV_STATS_NULLS_UNEQUAL,	/* All NULL values are treated as
+					NOT equal. */
+	SRV_STATS_NULLS_IGNORED		/* NULL values are ignored */
+};
+
+typedef enum srv_stats_method_name_enum		srv_stats_method_name_t;
+
 #ifndef UNIV_HOTBACKUP
 /** Types of threads existing in the system. */
 enum srv_thread_type {
-	SRV_COM = 1,	/**< threads serving communication and queries */
-	SRV_CONSOLE,	/**< thread serving console */
-	SRV_WORKER,	/**< threads serving parallelized queries and
+	SRV_WORKER = 0,	/**< threads serving parallelized queries and
 			queries released from lock wait */
-#if 0
-	/* Utility threads */
-	SRV_BUFFER,	/**< thread flushing dirty buffer blocks */
-	SRV_RECOVERY,	/**< threads finishing a recovery */
-	SRV_INSERT,	/**< thread flushing the insert buffer to disk */
-#endif
 	SRV_MASTER	/**< the master thread, (whose type number must
 			be biggest) */
 };
@@ -496,12 +509,13 @@ ulint
 srv_get_n_threads(void);
 /*===================*/
 /*********************************************************************//**
-Returns the calling thread type.
-@return	SRV_COM, ... */
-
-enum srv_thread_type
-srv_get_thread_type(void);
-/*=====================*/
+Check whether thread type has reserved a slot.
+@return	slot number or UNDEFINED if not found*/
+UNIV_INTERN
+ulint
+srv_thread_has_reserved_slot(
+/*=========================*/
+	enum srv_thread_type	type);	/*!< in: thread type to check */
 /*********************************************************************//**
 Sets the info describing an i/o thread current state. */
 UNIV_INTERN
