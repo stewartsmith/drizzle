@@ -24,6 +24,8 @@
 #include <string>
 #include <cassert>
 #include <boost/program_options.hpp>
+
+#include <drizzled/item.h>
 #include <drizzled/module/option_map.h>
 #include <drizzled/identifier.h>
 #include <drizzled/plugin/authentication.h>
@@ -31,6 +33,9 @@
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
+
+namespace auth_http {
+bool updateAuthURL(Session *, set_var *);
 
 static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -44,11 +49,11 @@ class Auth_http : public drizzled::plugin::Authentication
 {
   CURLcode rv;
   CURL *curl_handle;
-  const std::string auth_url;
+  std::string sysvar_auth_url;
 public:
   Auth_http(std::string name_arg, const std::string &url_arg) :
     drizzled::plugin::Authentication(name_arg),
-    auth_url(url_arg)
+    sysvar_auth_url(url_arg)
   {
     // we are trusting that plugin initializers are called singlethreaded at startup
     // if something else also calls curl_global_init() in a threadrace while we are here,
@@ -66,6 +71,22 @@ public:
     // set the read callback.  this shouldnt get called, because we are doing a HEAD
     rv= curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, curl_cb_read);
   }
+  
+  std::string& getAuthURL()
+  {
+    return sysvar_auth_url;
+  }
+
+  bool setAuthURL(std::string& new_auth_url)
+  {
+    if (new_auth_url.empty())
+    {
+      errmsg_printf(error::ERROR, _("auth url cannot be an empty string"));
+      return false;  // error
+    }
+    sysvar_auth_url= new_auth_url;
+    return true;
+  }
 
   ~Auth_http()
   {
@@ -80,7 +101,7 @@ public:
     assert(sctx.username().c_str());
 
     // set the parameters: url, username, password
-    rv= curl_easy_setopt(curl_handle, CURLOPT_URL, auth_url.c_str());
+    rv= curl_easy_setopt(curl_handle, CURLOPT_URL, sysvar_auth_url.c_str());
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
@@ -116,6 +137,26 @@ public:
 
 Auth_http* auth= NULL;
 
+/**
+ * This function is called when the value of auth_http_url is changed in the system.
+ *
+ * @return False on success, True on error.
+ */
+bool updateAuthURL(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_auth_url(var->value->str_value.data());
+    if (auth->setAuthURL(new_auth_url))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("auth_http url cannot be NULL"));
+  return true; // error
+}
+
+
 static int initialize(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
@@ -140,7 +181,7 @@ static int initialize(drizzled::module::Context &context)
 
   auth= new Auth_http("auth_http", auth_url);
   context.add(auth);
-  context.registerVariable(new sys_var_const_string_val("url", auth_url));
+  context.registerVariable(new sys_var_std_string("url", auth->getAuthURL(), NULL, &updateAuthURL));
 
   return 0;
 }
@@ -151,6 +192,7 @@ static void init_options(drizzled::module::option_context &context)
           N_("URL for HTTP Auth check"));
 } 
 
+} /* namespace auth_http */
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -160,8 +202,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Mark Atwood",
   N_("Authenication against a web server using HTTP"),
   PLUGIN_LICENSE_GPL,
-  initialize,
+  auth_http::initialize,
   NULL,
-  init_options
+  auth_http::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

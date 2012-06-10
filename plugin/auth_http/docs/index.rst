@@ -3,9 +3,9 @@
 HTTP Authentication
 ===================
 
-:program:`auth_http` is an authentication plugin that authenticates connections
-using web-based HTTP authentication through a URL.  A web server is required
-to provide authentication.  For example, see Apache's documentation
+:program:`auth_http` is an :doc:`/administration/authorization` plugin that authenticates connections using web-based HTTP authentication through a URL. 
+When :program:`drizzled` is started with  ``--plugin-add=auth_http``, the http based authorization plugin is loaded. To enable the plugin, it is required to provide the server url against which the authentication is being made using ``--auth-http.url=<server url>``. The authetication server url can be dynamically changed using ``SET GLOBAL auth_http_url="<new server url>"``.
+A web server is required to provide authentication.  For example, see Apache's documentation
 for `Authentication, Authorization and Access Control <http://httpd.apache.org/docs/2.0/howto/auth.html>`_.
 Currently, SSL connections are not supported.
 
@@ -62,7 +62,7 @@ See `variables` for more information about querying and setting variables.
 * ``auth_http_url``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--auth-http.url`
 
    URL for HTTP authentication.
