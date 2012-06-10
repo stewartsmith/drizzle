@@ -27,6 +27,7 @@
 #include <boost/unordered_set.hpp>
 #include <boost/thread/locks.hpp>
 
+#include <drizzled/item.h>
 #include <drizzled/plugin/authorization.h>
 #include <drizzled/module/option_map.h>
 
@@ -44,59 +45,35 @@ namespace regex_policy
 
 uint64_t max_cache_buckets= DEFAULT_MAX_CACHE_BUCKETS;
 uint64_t max_lru_length= DEFAULT_MAX_LRU_LENGTH;
+bool updatePolicyFile(Session *, set_var *);
+bool parsePolicyFile(std::string, PolicyItemList&, PolicyItemList&, PolicyItemList&);
+Policy *policy= NULL;
 
-static int init(module::Context &context)
+bool updatePolicyFile(Session *, set_var* var)
 {
-  const module::option_map &vm= context.getOptions();
-
-  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
-  if (max_cache_buckets < 1)
+  if (not var->value->str_value.empty())
   {
-    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
-    return 1;
+    std::string newPolicyFile(var->value->str_value.data());
+    if (policy->setPolicyFile(newPolicyFile))
+      return false; //success
+    else
+      return true; // error
   }
-  max_lru_length= vm["max-lru-length"].as<uint64_t>();
-  if (max_lru_length < 1)
-  {
-    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
-    return 1;
-  }
-  Policy *policy= new Policy(fs::path(vm["policy"].as<string>()));
-  if (not policy->loadFile())
-  {
-    errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
-                  (policy ? policy->getError().str().c_str() : _("Unknown")));
-    delete policy;
-    return 1;
-  }
-
-  context.add(policy);
-  context.registerVariable(new sys_var_const_string_val("policy", vm["policy"].as<string>()));
-
-  return 0;
+  errmsg_printf(error::ERROR, _("regex_policy file cannot be NULL"));
+  return true; // error
 }
 
-static void init_options(drizzled::module::option_context &context)
+bool parsePolicyFile(std::string new_policy_file, PolicyItemList& table_policies_dummy, PolicyItemList& schema_policies_dummy, PolicyItemList& process_policies_dummy)
 {
-  context("policy",
-      po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
-      N_("File to load for regex authorization policies"));
-  context("max-cache-buckets",
-      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
-      N_("Maximum buckets for authorization cache"));
-  context("max-lru-length",
-      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
-      N_("Maximum number of LRU entries to track at once"));
-}
-
-bool Policy::loadFile()
-{
-  ifstream file(policy_file.string().c_str());
+  ifstream file(new_policy_file.c_str());
   boost::regex comment_re;
   boost::regex empty_re;
   boost::regex table_matches_re;
   boost::regex process_matches_re;
   boost::regex schema_matches_re;
+  table_policies_dummy.clear();
+  schema_policies_dummy.clear();
+  process_policies_dummy.clear();
 
   try
   {
@@ -108,13 +85,14 @@ bool Policy::loadFile()
   }
   catch (const std::exception &e)
   {
-    error << e.what();
+    errmsg_printf(error::ERROR, _(e.what()));
     return false;
   }
 
   if (! file.is_open())
   {
-    error << "Unable to open regex policy file: " << policy_file.string();
+    string error_msg= "Unable to open regex policy file: " + new_policy_file;
+    errmsg_printf(error::ERROR, _(error_msg.c_str()));
     return false;
   }
 
@@ -136,15 +114,15 @@ bool Policy::loadFile()
       PolicyItemList *policies;
       if (boost::regex_match(line, matches, table_matches_re, boost::match_extra))
       {
-        policies= &table_policies;
+        policies= &table_policies_dummy;
       }
       else if (boost::regex_match(line, matches, process_matches_re, boost::match_extra))
       {
-        policies= &process_policies;
+        policies= &process_policies_dummy;
       }
       else if (boost::regex_match(line, matches, schema_matches_re, boost::match_extra))
       {
-        policies= &schema_policies;
+        policies= &schema_policies_dummy;
       }
       else
       {
@@ -159,7 +137,8 @@ bool Policy::loadFile()
       }
       catch (const std::exception &e)
       {
-        error << "Bad policy item: user=" << user_regex << " object=" << object_regex << " action=" << action;
+	string error_msg= "Bad policy item: user=" + user_regex + " object=" + object_regex + " action=" + action;
+        errmsg_printf(error::ERROR, _(error_msg.c_str()));
         throw std::exception();
       }
     }
@@ -168,9 +147,95 @@ bool Policy::loadFile()
   catch (const std::exception &e)
   {
     /* On any non-EOF break, unparseable line */
-    error << "Unable to parse line " << lines << " of policy file " << policy_file.string() << ":" << e.what();
+    string error_msg= "Unable to parse policy file " + new_policy_file + ":" + e.what();
+    errmsg_printf(error::ERROR, _(error_msg.c_str()));
     return false;
   }
+
+}
+
+static int init(module::Context &context)
+{
+  const module::option_map &vm= context.getOptions();
+
+  max_cache_buckets= vm["max-cache-buckets"].as<uint64_t>();
+  if (max_cache_buckets < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-cache-buckets is too low, must be greater than 0"));
+    return 1;
+  }
+  max_lru_length= vm["max-lru-length"].as<uint64_t>();
+  if (max_lru_length < 1)
+  {
+    errmsg_printf(error::ERROR, _("max-lru-length is too low, must be greater than 0"));
+    return 1;
+  }
+  policy= new Policy(vm["policy"].as<string>());
+  if (!policy->setPolicyFile(policy->getPolicyFile()))
+  {
+    errmsg_printf(error::ERROR, _("Could not load regex policy file: %s\n"),
+                  (policy ? policy->getError().str().c_str() : _("Unknown")));
+    delete policy;
+    return 1;
+  }
+  context.add(policy);
+  context.registerVariable(new sys_var_std_string("policy", policy->getPolicyFile(), NULL, &updatePolicyFile));
+
+  return 0;
+}
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("policy",
+      po::value<string>()->default_value(DEFAULT_POLICY_FILE.string()),
+      N_("File to load for regex authorization policies"));
+  context("max-cache-buckets",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_CACHE_BUCKETS),
+      N_("Maximum buckets for authorization cache"));
+  context("max-lru-length",
+      po::value<uint64_t>()->default_value(DEFAULT_MAX_LRU_LENGTH),
+      N_("Maximum number of LRU entries to track at once"));
+}
+
+void Policy::setPolicies(PolicyItemList new_table_policies, PolicyItemList new_schema_policies, PolicyItemList new_process_policies)
+{
+  policy->clearPolicies();
+
+  for (PolicyItemList::iterator it= new_table_policies.begin(); it!= new_table_policies.end(); it++)
+    table_policies.push_back(*it);
+
+  for (PolicyItemList::iterator it= new_schema_policies.begin(); it!= new_schema_policies.end(); it++)
+    schema_policies.push_back(*it);
+
+  for (PolicyItemList::iterator it= new_process_policies.begin(); it!= new_process_policies.end(); it++)
+    process_policies.push_back(*it);
+}
+
+std::string& Policy::getPolicyFile()
+{
+  return sysvar_policy_file;
+}
+
+bool Policy::setPolicyFile(std::string &new_policy_file)
+{
+  if (new_policy_file.empty())
+  {
+    errmsg_printf(error::ERROR, _("regex_policy file cannot be an empty string"));
+    return false;  // error
+  }
+
+  PolicyItemList new_table_policies;
+  PolicyItemList new_schema_policies;
+  PolicyItemList new_process_policies;
+  if(parsePolicyFile(new_policy_file, new_table_policies, new_schema_policies, new_process_policies))
+  {
+    policy->setPolicies(new_table_policies, new_schema_policies, new_process_policies);
+    sysvar_policy_file= new_policy_file;
+    fs::path newPolicyFile(getPolicyFile());
+    policy_file= newPolicyFile;
+    return true;  // success
+  }
+  return false;  // error
 }
 
 static void clearPolicyItemList(PolicyItemList& policies)
@@ -187,6 +252,21 @@ Policy::~Policy()
   clearPolicyItemList(process_policies);
   clearPolicyItemList(schema_policies);
 }
+
+/*
+This function will be called when the policy file needs to be reloaded.
+This deletes all the policies stored and cached.
+*/
+void Policy::clearPolicies()
+{
+  table_policies.clear();
+  process_policies.clear();
+  schema_policies.clear();
+  table_check_cache.clear();
+  process_check_cache.clear();
+  schema_check_cache.clear();
+}
+
 
 bool Policy::restrictObject(const drizzled::identifier::User &user_ctx,
                                    const string &obj, const PolicyItemList &policies,
@@ -353,7 +433,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "regex_policy",
-  "2.0",
+  "2.1",
   "Clint Byrum",
   N_("Authorization using a regex-matched policy file"),
   PLUGIN_LICENSE_GPL,

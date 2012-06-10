@@ -1,0 +1,13 @@
+SHOW SCHEMAS;
+Database
+DATA_DICTIONARY
+INFORMATION_SCHEMA
+mysql
+test
+SET GLOBAL regex_policy_policy="";
+ERROR HY000: Incorrect arguments to SET
+SET GLOBAL regex_policy_policy="TOP_SRCDIR/plugin/regex_policy/tests/t/dynamic.policy2";
+SHOW SCHEMAS;
+ERROR 42000: Access denied for user 'root' to schema 'data_dictionary'
+SET GLOBAL regex_policy_policy="TOP_SRCDIR/plugin/regex_policy/tests/t/dynamic.policy3";
+ERROR HY000: Incorrect arguments to SET
