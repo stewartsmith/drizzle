@@ -157,6 +157,7 @@ Testing
    testing/sysbench.rst
    testing/writing_tests.rst
    testing/dbqp.rst
+   testing/drizzletest_commands.rst
 
 Indices and tables
 ==================
