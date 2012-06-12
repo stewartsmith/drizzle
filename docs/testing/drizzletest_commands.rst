@@ -241,349 +241,942 @@ connect
 connection
 ----------
 
+:Syntax:
+
+:program:`connection connection_name`
+
+``connection`` creates ``connection_name`` as the current connection. The connection_name can be specified by variables. Specifying the connection_name as ``default`` creates the connections that drizzletest opens when it starts.
+
+:Example:
+
+.. code-block:: python
+
+    connection default;
+    connection conn;
+    connection root;
+
 .. _copy_file:
 
 copy_file
 ---------
+
+:Syntax:
+
+:program:`copy_file from_file to_file`
+
+`copy_file` copies the contents of `from_file` into `to_file`. If the file `to_file` exists, then the command fails to execute. The names of the files can be provided through variables.
+
+:Example:
+
+.. code-block:: python
+
+    copy_file source_file1.txt dest_file.txt;
+    copy_file source_file2.txt dest_file.txt; (this command will not execute since dest_file.txt already exists)
 
 .. _dec:
 
 dec
 ---
 
+:Syntax:
+
+:program:`dec $variable_name`
+
+``dec`` command is used to decrement the numeric value of a variable. If the variable does not have a numeric value associated with it, the result is undefined.
+
+:Example:
+
+.. code-block:: python
+
+    dec $100;
+    dec $count_value;
+    
 .. _delimiter:
 
 delimiter
 ---------
+
+:Syntax:
+
+:program:`delimiter string`
+
+``delimiter`` makes the ``string`` specified, as the default delimiter for the commands. The string can consist of 1 to 15 characters. The default delimiter for commands is semicolon(;)
+
+:Example:
+
+.. code-block:: python
+
+    delimiter /;
+    delimeter stop;
+    
+.. note:: Changing the delimiter becomes handy when we need to use a long SQL statement like the ``CREATE PROCEDURE`` which includes a semicolon delimited statement, but to be considered as a single statement. 
+
+To reset the previous default delimiter, we can use ``delimiter ;|``
 
 .. _die:
 
 die
 ---
 
+:Syntax:
+
+:program:`die [message]`
+
+``die`` command kills the test with appropriate error code. It also prints the message given as argument, as the reason for killing the test. 
+
+:Example:
+
+.. code-block:: python
+
+    die cannot continue;
+    drizzletest: At line 1: cannot continue
+    not ok
+    
+When this command is executed, the test is killed and the message for killing the test is also displayed.
+
 .. _diff_files:
 
 diff_files
 ----------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _dirty_close:
 
 dirty_close
 -----------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_abort_on_error:
 
 disable/enable_abort_on_error
 -----------------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disable/enable_connect_log:
 
 disable/enable_connect_log
 --------------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_info:
 
 disable/enable_info
 -------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disable/enable_metadata:
 
 disable/enable_metadata
 -----------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_parsing:
 
 disable/enable_parsing
 ----------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disable/enable_ps_protocol:
 
 disable/enable_ps_protocol
 --------------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_query_log:
 
 disable/enable_query_log
 ------------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disable/enable_reconnect:
 
 disable/enable_reconnect
 ------------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_result_log:
 
 disable/enable_result_log
 -------------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disable/enable_rpl_parse:
 
 disable/enable_rpl_parse
 ------------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _disable/enable_warnings:
 
 disable/enable_warnings
 -----------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _disconnect:
 
 disconnect
 ----------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _echo:
 
 echo
 ----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _end:
 
 end
 ---
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _end_timer:
 
 end_timer
 ---------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _error:
 
 error
 -----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _eval:
 
 eval
 ----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _exec:
 
 exec
 ----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _exit:
 
 exit
 ----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _file_exists:
 
 file_exists
 -----------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _horizontal_results:
 
 horizontal_results
 ------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _if:
 
 if
 --
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _inc:
 
 inc
 ---
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _let:
 
 let
 ---
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _mkdir:
 
 mkdir
 -----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _list_files:
 
 list_files
 ----------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _list_files_append_file:
 
 list_files_append_file
 ----------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _list_files_write_file:
 
 list_files_write_file
 ---------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _lowercase_result:
 
 lowercase_result
 ----------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _move_file:
 
 move_file
 ---------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _perl:
 
 perl
 ----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _ping:
 
 ping
 ----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _query:
 
 query
 -----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _query_get_value:
 
 query_get_value
 ---------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _query_horizontal:
 
 query_horizontal
 ----------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _query_vertical:
 
 query_vertical
 --------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _real_sleep:
 
 real_sleep
 ----------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _reap:
 
 reap
 ----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _remove_file:
 
 remove_file
 -----------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _remove_files_wildcard:
 
 remove_files_wildcard
 ---------------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _replace_column:
 
 replace_column
 --------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _replace_regex:
 
 replace_regex
 -------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _replace_result:
 
 replace_result
 --------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _require:
 
 require
 -------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _result:
 
 result
 ------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _rmdir:
 
 rmdir
 -----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _save_master_pos:
 
 save_master_pos
 ---------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _send:
 
 send
 ----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _send_eval:
 
 send_eval
 ---------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _send_quit:
 
 send_quit
 ---------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _shutdown_server:
 
 shutdown_server
 --------------- 
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _skip:
 
 skip
 ----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _sleep:
 
 sleep
 -----
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _sorted_result:
 
 sorted_result
 -------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _source:
 
 source
 ------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _start_timer:
 
 start_timer
 -----------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _sync_slave_with_master:
 
 sync_slave_with_master
 ----------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _sync_with_master:
 
 sync_with_master
 ----------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _system:
 
 system
 ------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _vertical_results:
 
 vertical_results
 ----------------
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _wait_for_slave_to_stop:
 
 wait_for_slave_to_stop
 ----------------------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
 
 .. _while:
 
 while
 -----
 
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
+
 .. _write_file:
 
 write_file
 ----------
+
+:Syntax:
+
+:program:``
+
+:Example:
+
+.. code-block:: python
    
    
