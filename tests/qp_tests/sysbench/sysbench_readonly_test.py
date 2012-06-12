@@ -32,8 +32,6 @@ server_manager = None
 test_executor = None
 
 class basicTest(mysqlBaseTestCase):
-    def setUp(self):
-        retcode, output = sysbench_methods.prepare_sysbench(test_executor, test_cmd)
         
     def test_sysbench_readonly(self):
         self.logging = test_executor.logging
@@ -50,7 +48,7 @@ class basicTest(mysqlBaseTestCase):
                    , "--drizzle-mysql=on"
                    , "--drizzle-user=root"
                    , "--drizzle-db=test"
-                   , "--drizzle-port=$MASTER_MYPORT"
+                   , "--drizzle-port=%d" %master_server.master_port
                    , "--drizzle-host=localhost"
                    , "--db-driver=drizzle"
                    ]
@@ -64,19 +62,25 @@ class basicTest(mysqlBaseTestCase):
         # start the test!
         for concurrency in concurrencies:
             test_cmd.append("--num-threads=%d" %concurrency)
-        # we setup once per concurrency, copying drizzle-automation
-        # this should likely change and if not for readonly, then definitely
-        # for readwrite
-        retcode, output = sysbench_methods.prepare_sysbench(test_executor, test_cmd)
-        self.assertEqual(retcode, 0, msg = ("sysbench 'prepare' phase failed.\n"
-                                            "retcode: %d"
-                                            "output: %s"
-                                             %(retcode, output))
-            for iteration in iterations:
+            # we setup once per concurrency, copying drizzle-automation
+            # this should likely change and if not for readonly, then definitely
+            # for readwrite
+
+            test_cmd = " ".join(test_cmd)
+            print concurrency
+            print test_cmd
+
+            retcode, output = prepare_sysbench(test_executor, test_cmd)
+            err_msg = ("sysbench 'prepare' phase failed.\n"
+                       "retcode:  %d"
+                       "output:  %s" %(retcode,output))
+
+            self.assertEqual(retcode, 0, msg = err_msg) 
+            for test_iteration in iterations:
                 test_cmd = " ".join(test_cmd)            
                 retcode, output = execute_sysbench(test_cmd, test_executor, servers)
                 self.assertEqual(retcode, 0, msg = output)
-                parsed_output = sysbench_methods.process_output(output)
+                parsed_output = process_output(output)
                 for line in parsed_output:
                     self.logging.info(line)
 
