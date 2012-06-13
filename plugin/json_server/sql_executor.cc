@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 David Shrewsbury
+ *  Copyright (C) 2012 Mohit Srivastava
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,18 +46,20 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
   _session->setUser(user_id);
   _session->set_schema(schema);
   _result_set= new sql::ResultSet(1);
+  _sql="";
 }
 
 
 bool SQLExecutor::executeSQL(string &sql)
 {
+  _sql=sql;
   if (not _in_error_state)
     _error_message.clear();
 
   Execute execute(*(_session.get()), true);
 
   /* Execute wraps the SQL to run within a transaction */
-  execute.run(sql, *_result_set);
+  execute.run(_sql, *_result_set);
 
   _exception= _result_set->getException();
 
@@ -84,47 +86,5 @@ bool SQLExecutor::executeSQL(string &sql)
 
   return true;
 }
-
-void SQLExecutor::markInErrorState()
-  {
-    _in_error_state= true;
-  }
-
-  void SQLExecutor::clearErrorState()
-  {
-    _in_error_state= false;
-  }
-
-  const string& SQLExecutor::getErrorMessage() const
-  {
-    return _error_message;
-  }
-
-  const string& SQLExecutor::getErrorType() const
-  {
-    return _error_type;
-  }
-
-  const string& SQLExecutor::getErrorCode() const
-  {
-    return _error_code;
-  }
-
-  const string& SQLExecutor::getInternalSqlQuery() const
-  {
-    return _internal_sql_query;	
-  }
-
-  const string& SQLExecutor::getSqlState() const
-  {
-    return _sql_state;
-  }
- 
-  sql::ResultSet* SQLExecutor::getResultSet() const
-  {
-    return _result_set;
-  }
-
-
-} /* namespace slave */
+} /* namespace json_server */
 }

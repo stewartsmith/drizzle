@@ -71,6 +71,8 @@
 #include <plugin/json_server/json/json.h>
 #include <plugin/json_server/sql_generator.h>
 #include <plugin/json_server/sql_executor.h>
+#include <plugin/json_server/SQLToJsonGenerator.h>
+#include <plugin/json_server/http_handler.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -324,140 +326,48 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
  */
 void process_api02_json_get_req(struct evhttp_request *req, void* )
 {
-  int http_response_code = HTTP_OK;
-  const char *http_response_text;
-  http_response_text = "OK";
-  
-  struct evbuffer *buf = evbuffer_new();
-  if (buf == NULL) return;
-
   Json::Value json_out;
-
-  std::string input;
-  // Schema and table are given in request uri.
-  // TODO: If we want to be really NoSQL, we will some day allow to use synonyms like "collection" instead of "table".
-  // For GET, also the query is in the uri
-  const char *schema;
-  const char *table;
-  const char *query;
-  const char *id;
-  evhttp_parse_query(evhttp_request_uri(req), req->input_headers);
-  schema = (char *)evhttp_find_header(req->input_headers, "schema");
-  table = (char *)evhttp_find_header(req->input_headers, "table");
-  query = (char *)evhttp_find_header(req->input_headers, "query");
-  id = (char *)evhttp_find_header(req->input_headers, "_id");
-  
-  // query can be null if _id was given
-  if ( query == NULL || strcmp(query, "") == 0 )
-  {
-      // Empty JSON object
-      query = "{}";
-  }
-  input.append(query, strlen(query));
-  /*
-  // Set test as default schema
-  if( schema == NULL || strcmp(schema, "") == 0)
-  {
-	schema = "test";
-  }
-*/
-  // Parse "input" into "json_in".
-  Json::Value  json_in;
+  Json::Value json_in;
   Json::Features json_conf;
   Json::Reader reader(json_conf);
-  bool retval = reader.parse(input, json_in);
-  if (retval != true) {
-    json_out["error_type"]="json error";
-    json_out["error_message"]= reader.getFormatedErrorMessages();
-  }
-  else if (table == NULL || strcmp(table, "")==0) {
-    json_out["error_type"]="http error";
-    json_out["error_message"]= "You must specify \"table\" in the request uri query string.";
-    http_response_code = HTTP_NOTFOUND;
-    http_response_text = "You must specify \"table\" in the request uri query string.";
-  }
-  else { 
-        
-    	if( schema == NULL || strcmp(schema, "") == 0)
-  	{
-        schema = "test";
-	}
-
-
-  
-    // It is allowed to specify _id in the uri and leave it out from the json query.
-    // In that case we put the value from uri into json_in here.
-    // If both are specified, the one existing in json_in wins. (This is still valid, no error.)
-    if ( ! json_in["_id"].asBool() )
-    {
-      if( id ) {
-        json_in["_id"] = (Json::Value::UInt) atol(id);
-      }
-    }
-
-    std::string sql;
-
-    SQLGenerator *sg = new SQLGenerator(json_in,schema,table);
-    if(sg->generateGetSql())
-    sql=sg->getSQL();
-
-    sql::ResultSet* rs = new sql::ResultSet(1);
-    SQLExecutor *se = new SQLExecutor("",schema);
-    if(se->executeSQL(sql))
-     rs=se->getResultSet();
-    else
-     {
-      json_out["error_type"]=se->getErrorType();
-      json_out["error_message"]= se->getErrorMessage();
-      json_out["error_code"]= se->getErrorCode();
-      json_out["internal_sql_query"]= sql;
-      json_out["schema"]= schema;
-     }
-     json_out["sqlstate"]= se->getSqlState();
-    
-  while (rs->next())
-    {
-        Json::Value json_row;
-        bool got_error = false; 
-        for (size_t x= 0; x < rs->getMetaData().getColumnCount() && got_error == false; x++)
-        {
-            if (not rs->isNull(x))
-            {
-                // The values are now serialized json. We must first
-                // parse them to make them part of this structure, only to immediately
-                // serialize them again in the next step. For large json documents
-                // stored into the blob this must be very, very inefficient.
-                // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
-                // TODO: Massimo knows of a library to create JSON in streaming mode.
-                Json::Value  json_doc;
-                Json::Reader readrow(json_conf);
-                std::string col_name = rs->getColumnInfo(x).col_name;
-                bool r = readrow.parse(rs->getString(x), json_doc);
-                if (r != true) {
-                    json_out["error_type"]="json parse error on row value";
-                    json_out["error_internal_sql_column"]=col_name;
-                    json_out["error_message"]= reader.getFormatedErrorMessages();
-                    // Just put the string there as it is, better than nothing.
-                    json_row[col_name]= rs->getString(x);
-                    got_error=true;
-                    break;
-                }
-                else {
-                    json_row[col_name]= json_doc;
-                }
-            }
-        }
-        // When done, append this to result set tree
-        json_out["result_set"].append(json_row);
-    }
-
-    json_out["query"]= json_in;
-  }
-  // Return either the results or an error message, in json.
   Json::StyledWriter writer;
-  std::string output= writer.write(json_out);
-  evbuffer_add(buf, output.c_str(), output.length());
-  evhttp_send_reply(req, http_response_code, http_response_text, buf);
+  std::string sql;
+  const char* schema;
+
+  HttpHandler* handler = new HttpHandler(json_out,json_in,req);
+  if(handler->handleRequest())
+  {
+    if(handler->validateJson(reader))
+    {
+      json_in= handler->getInputJson();
+      schema= handler->getSchema();
+      SQLGenerator* generator = new SQLGenerator(json_in,handler);
+      generator->generateSql("GET");
+      sql= generator->getSQL();
+
+      SQLExecutor* executor = new SQLExecutor("",schema);
+      SQLToJsonGenerator* jsonGenerator = new SQLToJsonGenerator(json_out,handler,executor);
+      if(executor->executeSQL(sql))
+      {
+        jsonGenerator->generateGetJson();  
+      }
+      else
+      {
+        jsonGenerator->generateSQLErrorJson();
+      }
+      json_out= jsonGenerator->getJson();
+    }
+    else
+    {
+      json_out= handler->getOutputJson();
+    }
+  }
+  else
+  {
+    json_out= handler->getOutputJson();
+  }
+  
+  handler->sendResponse(writer,json_out);
 }
 
 /**
@@ -477,7 +387,9 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
  */
 void process_api02_json_post_req(struct evhttp_request *req, void* )
 {
-  int http_response_code = HTTP_OK;
+  if(req->type == EVHTTP_REQ_POST)
+    return;
+  /* int http_response_code = HTTP_OK;
   const char *http_response_text;
   http_response_text = "OK";
   
@@ -509,7 +421,7 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   // Set test as default schema
   if( schema == NULL || strcmp(schema, "") == 0)
   {
-        schema = "test";
+    schema = "test";
   }
   
   // Parse "input" into "json_in".
@@ -517,23 +429,27 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   Json::Features json_conf;
   Json::Reader reader(json_conf);
   bool retval = reader.parse(input, json_in);
-  if (retval != true) {
+  if (retval != true) 
+  {
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
   }
-  else if (table == NULL || strcmp(table, "")==0) {
+  else if (table == NULL || strcmp(table, "")==0) 
+  {
     json_out["error_type"]="http error";
     json_out["error_message"]= "You must specify table in the request uri query string.";
     http_response_code = HTTP_NOTFOUND;
     http_response_text = "You must specify table in the request uri query string.";
   } 
-  else {
+  else 
+  {
     // It is allowed to specify _id in the uri and leave it out from the json query.
     // In that case we put the value from uri into json_in here.
     // If both are specified, the one existing in json_in wins. (This is still valid, no error.)
     if ( ! json_in["_id"].asBool() )
     {
-      if( id ) {
+      if( id ) 
+      {
         json_in["_id"] = (Json::Value::UInt) atol(id);
       }
     }
@@ -550,19 +466,21 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
     if(sg->generateIsTableExistsSql())
     sql=sg->getSQL();
 	
-     sql::ResultSet* rs = new sql::ResultSet(1);
+    sql::ResultSet* rs = new sql::ResultSet(1);
     SQLExecutor *se = new SQLExecutor("",schema);
     if(se->executeSQL(sql))
-     rs=se->getResultSet();
+    {
+      rs=se->getResultSet();
+    }
     else
-     {
+    {
       json_out["error_type"]=se->getErrorType();
       json_out["error_message"]= se->getErrorMessage();
       json_out["error_code"]= se->getErrorCode();
       json_out["internal_sql_query"]= sql;
       json_out["schema"]= schema;
-     }
-     json_out["sqlstate"]= se->getSqlState();
+    }
+      json_out["sqlstate"]= se->getSqlState();
 
     while(rs->next())
     {
@@ -574,37 +492,42 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
     if(table_exists == false)
     {
       if(sg->generateCreateTableSql())
-      sql=sg->getSQL();
-      
-     if(se->executeSQL(sql))
-      rs=se->getResultSet();
-    else
-     {
-      json_out["error_type"]=se->getErrorType();
-      json_out["error_message"]= se->getErrorMessage();
-      json_out["error_code"]= se->getErrorCode();
-      json_out["internal_sql_query"]= sql;
-      json_out["schema"]= schema;
-     }
-     json_out["sqlstate"]= se->getSqlState();
-
+      {
+        sql=sg->getSQL();
+      }
+      if(se->executeSQL(sql))
+      {
+        rs=se->getResultSet();
+      }
+      else
+      {
+        json_out["error_type"]=se->getErrorType();
+        json_out["error_message"]= se->getErrorMessage();
+        json_out["error_code"]= se->getErrorCode();
+        json_out["internal_sql_query"]= sql;
+        json_out["schema"]= schema;
+      }
+        json_out["sqlstate"]= se->getSqlState();
     }
     
     if(sg->generatePostSql())
-    sql=sg->getSQL();
+    {
+      sql=sg->getSQL();
+    }
     if(se->executeSQL(sql))
-     rs=se->getResultSet();
+    {
+      rs=se->getResultSet();
+    }
     else
-     {
+    {
       json_out["error_type"]=se->getErrorType();
       json_out["error_message"]= se->getErrorMessage();
       json_out["error_code"]= se->getErrorCode();
       json_out["internal_sql_query"]= sql;
       json_out["schema"]= schema;
-     }
-     json_out["sqlstate"]= se->getSqlState();
-
-    json_out["query"]= json_in;
+    }
+      json_out["sqlstate"]= se->getSqlState();
+      json_out["query"]= json_in;
   }
   
   // Return either the results or an error message, in json.
@@ -612,6 +535,7 @@ void process_api02_json_post_req(struct evhttp_request *req, void* )
   std::string output= writer.write(json_out);
   evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, http_response_code, http_response_text, buf);
+  */
 }
 
 /*
@@ -625,7 +549,50 @@ void process_api02_json_put_req(struct evhttp_request *req, void* )
 
 void process_api02_json_delete_req(struct evhttp_request *req, void* )
 {
-  int http_response_code = HTTP_OK;
+  Json::Value json_out;
+  Json::Value json_in;
+  Json::Features json_conf;
+  Json::Reader reader(json_conf);
+  Json::StyledWriter writer;
+  std::string sql;
+  const char* schema;
+
+  HttpHandler* handler = new HttpHandler(json_out,json_in,req);
+  if(handler->handleRequest())
+  {
+    if(handler->validateJson(reader))
+    {
+      json_in= handler->getInputJson();
+      schema= handler->getSchema();
+      SQLGenerator* generator = new SQLGenerator(json_in,handler);
+      generator->generateSql("DELETE");
+      sql= generator->getSQL();
+
+      SQLExecutor* executor = new SQLExecutor("",schema);
+      SQLToJsonGenerator* jsonGenerator = new SQLToJsonGenerator(json_out,handler,executor);
+      if(executor->executeSQL(sql))
+      {
+        jsonGenerator->generateDeleteJson();  
+      }
+      else
+      {
+        jsonGenerator->generateSQLErrorJson();
+      }
+      json_out= jsonGenerator->getJson();
+    }
+    else
+    {
+      json_out= handler->getOutputJson();
+    }
+  }
+  else
+  {
+    json_out= handler->getOutputJson();
+  }
+  
+  handler->sendResponse(writer,json_out);
+}
+ /* int http_response_code = HTTP_OK;
   const char *http_response_text;
   http_response_text = "OK";
 
@@ -654,14 +621,14 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   if ( query == NULL || strcmp(query, "") == 0 )
   {
       // Empty JSON object
-      query = "{}";
+    query = "{}";
   }
   input.append(query, strlen(query));
 
   // Set test as default schema
   if( schema == NULL || strcmp(schema, "") == 0)
   {
-        schema = "test";
+    schema = "test";
   }
 
   // Parse "input" into "json_in".
@@ -670,31 +637,35 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   json_conf.strictMode();
   Json::Reader reader(json_conf);
   bool retval = reader.parse(input, json_in);
-  if (retval != true) {
+  if (retval != true) 
+  {
     json_out["error_type"]="json error";
     json_out["error_message"]= reader.getFormatedErrorMessages();
   }
- else if (table == NULL || strcmp(table, "")==0) {
+  else if (table == NULL || strcmp(table, "")==0) 
+  {
     json_out["error_type"]="http error";
     json_out["error_message"]= "You must specify \"table\" in the request uri query string.";
     http_response_code = HTTP_NOTFOUND;
     http_response_text = "You must specify \"table\" in the request uri query string.";
   }
 
-  else {
+  else 
+  {
     // It is allowed to specify _id in the uri and leave it out from the json query.
     // In that case we put the value from uri into json_in here.
     // If both are specified, the one existing in json_in wins. (This is still valid, no error.)
     if ( ! json_in["_id"].asBool() )
     {
-      if( id ) {
+      if( id ) 
+      {
         json_in["_id"] = (Json::Value::UInt) atol(id);
       }
     }
     std::string sql;
     SQLGenerator *sg = new SQLGenerator(json_in,schema,table);
     if(sg->generateDeleteSql())
-	sql=sg->getSQL();
+	  sql=sg->getSQL();
     
     SQLExecutor *se = new SQLExecutor("",schema);
     if(!se->executeSQL(sql))
@@ -714,8 +685,8 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   std::string output= writer.write(json_out);
   evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, http_response_code, http_response_text, buf);
-  
- }
+  */
+ //}
 
 
 static void shutdown_event(int fd, short, void *arg)

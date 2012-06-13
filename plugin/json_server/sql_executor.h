@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2011 David Shrewsbury
+ *  Copyright (C) 2011 Mohit Srivastava
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <string>
 #include <vector>
 #include <drizzled/session.h>
 #include <drizzled/plugin/listen.h>
@@ -46,21 +45,50 @@ public:
 
   SQLExecutor(const string &user, const string &schema);
 
-  void markInErrorState();
+  void setErrorState()
+  {
+    _in_error_state= true;
+  }
 
-  void clearErrorState();
+  void clearErrorState()
+  {
+    _in_error_state= false;
+  }
 
-  const string &getErrorMessage() const;
+  const string& getErrorMessage() const
+  {
+    return _error_message;
+  }
 
-  const string &getErrorType() const;
+  const string& getErrorType() const
+  {
+    return _error_type;
+  }
 
-  const string &getErrorCode() const;
+  const string& getErrorCode() const
+  {
+    return _error_code;
+  }
 
-  const string &getInternalSqlQuery() const;
+  const string& getInternalSqlQuery() const
+  {
+    return _internal_sql_query;	
+  }
 
-  const string &getSqlState() const;
+  const string& getSqlState() const
+  {
+    return _sql_state;
+  }
  
-  sql::ResultSet* getResultSet() const;
+  sql::ResultSet* getResultSet() const
+  {
+    return _result_set;
+  }
+
+ const string& getSql() const
+  {
+    return _sql;
+  }
 
   /**
    * Execute a batch of SQL statements.
@@ -85,9 +113,9 @@ private:
   sql::Exception _exception;
   drizzled::error_t _err;
   sql::ResultSet* _result_set;
-
+  string _sql;
 };
 
-} /* namespace slave */
+} /* namespace json_server */
 }
 

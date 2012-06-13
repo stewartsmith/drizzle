@@ -7,15 +7,29 @@ namespace drizzle_plugin
 namespace json_server
 {
 
-SQLGenerator::SQLGenerator(const Json::Value json_in,const char* schema , const char* table)
+SQLGenerator::SQLGenerator(const Json::Value json_in,HttpHandler* httpHandler)
 {
   _json_in=json_in;
   _sql="";
-  _schema=schema;
-  _table=table;
+  _schema=httpHandler->getSchema();
+  _table=httpHandler->getTable();
 }
 
-bool SQLGenerator::generateGetSql()
+void SQLGenerator::generateSql(const char* s)
+{
+  if(strcmp(s,"GET")==0)
+    generateGetSql();
+  else if(strcmp(s,"POST")==0)
+    generatePostSql();
+  else if(strcmp(s,"DELETE")==0)
+    generateDeleteSql();
+  else if(strcmp(s,"CREATETABLE")==0)
+    generateCreateTableSql();
+  else if(strcmp(s,"TABLEEXIST")==0)
+    generateIsTableExistsSql();
+}
+
+void SQLGenerator::generateGetSql()
 {
  _sql="SELECT * FROM `";
  _sql.append(_schema);
@@ -29,29 +43,20 @@ bool SQLGenerator::generateGetSql()
 	_sql.append(_json_in["_id"].asString());
     }
     _sql.append(";");
-   
-  if(_sql.empty())
-	return false;
   
- return true;
 }
 
 
-bool SQLGenerator::generateIsTableExistsSql()
+void SQLGenerator::generateIsTableExistsSql()
 {
     _sql="select count(*) from information_schema.tables where table_schema = '";
     _sql.append(_schema);
     _sql.append("' AND table_name = '");
     _sql.append(_table); 
     _sql.append("';");
-    
-    if(_sql.empty())
-        return false;
-
-	return true;
 }
 
-bool SQLGenerator::generateCreateTableSql()
+void SQLGenerator::generateCreateTableSql()
 { 	
       _sql="COMMIT ;";
       _sql.append("CREATE TABLE ");
@@ -76,14 +81,9 @@ bool SQLGenerator::generateCreateTableSql()
       }
       _sql.append(")");
       _sql.append("; ");
-
-     if(_sql.empty())
-        return false;
-
-        return true;
 }
 
-bool SQLGenerator::generatePostSql()
+void SQLGenerator::generatePostSql()
 {
  	_sql="REPLACE INTO `";
 	_sql.append(_schema);
@@ -102,7 +102,7 @@ bool SQLGenerator::generatePostSql()
       // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
       		const std::string &key = *it;
       		_sql.append(key); 
-		_sql.append("=");
+		      _sql.append("=");
       		Json::StyledWriter writeobject;
       		switch ( _json_in[key].type() )
       			{
@@ -126,22 +126,16 @@ bool SQLGenerator::generatePostSql()
           				_sql.append(writeobject.write(_json_in[key]));
           				_sql.append("'");
           				break;
-        			default:
-					return false;
+        			default:	
         				break;
-			}
+			  }
       		_sql.append(" ");
     		}
     	_sql.append(";");
 
-	if(_sql.empty())
-        	return false;
-
-        return true;
-
 }
 
-bool SQLGenerator::generateDeleteSql()
+void SQLGenerator::generateDeleteSql()
 {
 	if ( _json_in["_id"].asBool() )
     	{
@@ -163,12 +157,6 @@ bool SQLGenerator::generateDeleteSql()
 		_sql.append(_table);
 		_sql.append("`;");
 	}
-
-  	if(_sql.empty())
-        	return false;
-
- 	return true;
-
 
 }
 

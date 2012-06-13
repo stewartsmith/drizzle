@@ -20,10 +20,12 @@
 
 #pragma once
 
+#include <config.h>
 #include <cstring>
 #include <cstdio>
 #include <boost/program_options.hpp>
 #include <plugin/json_server/json/json.h>
+#include <plugin/json_server/http_handler.h>
 
 using namespace std;
 namespace drizzle_plugin
@@ -33,29 +35,25 @@ namespace json_server
 
 class SQLGenerator
 {
-private:
+  private:
+    
+    Json::Value _json_in;
+    Json::Value _json_out;
+    string _sql;
+    const char* _schema;
+    const char* _table;
 
-Json::Value _json_in;
-Json::Value _json_out;
-string _sql;
-const char* _schema;
-const char* _table;
+    void generateGetSql() ;
+    void generatePostSql() ;
+    void generateDeleteSql() ;
+    void generateCreateTableSql();
+    void generateIsTableExistsSql();
 
-public:
+  public:
 
-SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
-
-bool generateGetSql() ;
-
-bool generatePostSql() ;
-
-bool generateDeleteSql() ;
-
-bool generateCreateTableSql();
-
-bool generateIsTableExistsSql();
-
-const string getSQL() const;
+    SQLGenerator(const Json::Value json_in,HttpHandler *httpHandler);
+    void generateSql(const char *s);
+    const string getSQL() const;
 };
 
 }
