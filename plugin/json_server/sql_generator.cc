@@ -7,12 +7,12 @@ namespace drizzle_plugin
 namespace json_server
 {
 
-SQLGenerator::SQLGenerator(const Json::Value json_in,HttpHandler* httpHandler)
+SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const char* table)
 {
   _json_in=json_in;
   _sql="";
-  _schema=httpHandler->getSchema();
-  _table=httpHandler->getTable();
+  _schema=schema;
+  _table=table;
 }
 
 void SQLGenerator::generateSql(const char* s)

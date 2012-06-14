@@ -69,9 +69,7 @@
 
 #include <drizzled/version.h>
 #include <plugin/json_server/json/json.h>
-#include <plugin/json_server/sql_generator.h>
-#include <plugin/json_server/sql_executor.h>
-#include <plugin/json_server/SQLToJsonGenerator.h>
+#include <plugin/json_server/DBAccess.h>
 #include <plugin/json_server/http_handler.h>
 
 namespace po= boost::program_options;
@@ -333,6 +331,7 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
   Json::StyledWriter writer;
   std::string sql;
   const char* schema;
+  const char* table;
 
   HttpHandler* handler = new HttpHandler(json_out,json_in,req);
   if(handler->handleRequest())
@@ -341,21 +340,12 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
     {
       json_in= handler->getInputJson();
       schema= handler->getSchema();
-      SQLGenerator* generator = new SQLGenerator(json_in,handler);
-      generator->generateSql("GET");
-      sql= generator->getSQL();
-
-      SQLExecutor* executor = new SQLExecutor("",schema);
-      SQLToJsonGenerator* jsonGenerator = new SQLToJsonGenerator(json_out,handler,executor);
-      if(executor->executeSQL(sql))
-      {
-        jsonGenerator->generateGetJson();  
-      }
-      else
-      {
-        jsonGenerator->generateSQLErrorJson();
-      }
-      json_out= jsonGenerator->getJson();
+      table= handler->getTable();
+      
+      DBAccess* dbAccess = new DBAccess(json_in,json_out);
+      dbAccess->execute("GET",schema,table);
+      json_out= dbAccess->getOutputJson();
+      
     }
     else
     {
@@ -549,6 +539,9 @@ void process_api02_json_put_req(struct evhttp_request *req, void* )
 
 void process_api02_json_delete_req(struct evhttp_request *req, void* )
 {
+  if(req->type == EVHTTP_REQ_POST)
+    return;
+/*
   Json::Value json_out;
   Json::Value json_in;
   Json::Features json_conf;
@@ -591,6 +584,7 @@ void process_api02_json_delete_req(struct evhttp_request *req, void* )
   }
   
   handler->sendResponse(writer,json_out);
+  */
 }
  /* int http_response_code = HTTP_OK;
   const char *http_response_text;

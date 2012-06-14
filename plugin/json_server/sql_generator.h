@@ -51,7 +51,7 @@ class SQLGenerator
 
   public:
 
-    SQLGenerator(const Json::Value json_in,HttpHandler *httpHandler);
+    SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
     void generateSql(const char *s);
     const string getSQL() const;
 };
