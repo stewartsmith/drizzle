@@ -26,7 +26,12 @@ from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 
-server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+# TODO:  make server_options vary depending on the type of server being used here
+# drizzle options
+#server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+# mysql options
+#server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
+server_requirements = [[]]
 servers = []
 server_manager = None
 test_executor = None
@@ -42,16 +47,20 @@ class basicTest(mysqlBaseTestCase):
                    , "--max-requests=0"
                    , "--test=oltp"
                    , "--db-ps-mode=disable"
-                   , "--drizzle-table-engine=innodb" 
+                   , "--%s-table-engine=innodb" %master_server.type
                    , "--oltp-read-only=on"
                    , "--oltp-table-size=1000000"
-                   , "--drizzle-mysql=on"
-                   , "--drizzle-user=root"
-                   , "--drizzle-db=test"
-                   , "--drizzle-port=%d" %master_server.master_port
-                   , "--drizzle-host=localhost"
-                   , "--db-driver=drizzle"
+                   , "--%s-user=root" %master_server.type
+                   , "--%s-db=test" %master_server.type
+                   , "--%s-port=%d" %(master_server.type, master_server.master_port)
+                   , "--%s-host=localhost" %master_server.type
+                   , "--db-driver=%s" %master_server.type
                    ]
+
+        if master_server.type == 'drizzle':
+            test_cmd.append("--drizzle-mysql=on")
+        if master_server.type == 'mysql':
+            test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
         
         # how many times to run sysbench at each concurrency
         iterations = 1
@@ -67,18 +76,14 @@ class basicTest(mysqlBaseTestCase):
             # for readwrite
 
             test_cmd = " ".join(test_cmd)
-            print concurrency
-            print test_cmd
-
             retcode, output = prepare_sysbench(test_executor, test_cmd)
             err_msg = ("sysbench 'prepare' phase failed.\n"
                        "retcode:  %d"
                        "output:  %s" %(retcode,output))
-
             self.assertEqual(retcode, 0, msg = err_msg) 
-            for test_iteration in iterations:
-                test_cmd = " ".join(test_cmd)            
-                retcode, output = execute_sysbench(test_cmd, test_executor, servers)
+
+            for test_iteration in range(iterations):
+                retcode, output = execute_sysbench(test_executor, test_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_output(output)
                 for line in parsed_output:

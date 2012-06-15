@@ -55,7 +55,7 @@ def execute_sysbench(test_executor, test_cmd):
         
         bot = test_executor
         sysbench_cmd = ' '.join([test_cmd, 'run'])
-        self.logging.info("Executing sysbench:  %s" %(sysbench_cmd))
+        bot.logging.info("Executing sysbench:  %s" %(sysbench_cmd))
         sysbench_outfile = os.path.join(bot.logdir,'sysbench.out')
         with open(sysbench_outfile,'w') as sysbench_output:
             sysbench_subproc = subprocess.Popen( sysbench_cmd
@@ -70,7 +70,7 @@ def execute_sysbench(test_executor, test_cmd):
 
         sysbench_file = open(sysbench_outfile,'r')
         output = ''.join(sysbench_file.readlines())
-        self.logging.debug(output)
+        bot.logging.debug(output)
         sysbench_file.close()
         return retcode, output
         
