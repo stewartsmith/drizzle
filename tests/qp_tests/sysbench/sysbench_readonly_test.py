@@ -85,7 +85,7 @@ class basicTest(mysqlBaseTestCase):
             for test_iteration in range(iterations):
                 retcode, output = execute_sysbench(test_executor, test_cmd)
                 self.assertEqual(retcode, 0, msg = output)
-                parsed_output = process_output(output)
+                parsed_output = process_sysbench_output(output)
                 for line in parsed_output:
                     self.logging.info(line)
 
