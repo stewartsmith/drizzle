@@ -1,4 +1,4 @@
-#include <plugin/json_server/SQLToJsonGenerator.h>
+#include <plugin/json_server/sql_to_json_generator.h>
 
 using namespace std;
 using namespace drizzled;
@@ -23,15 +23,16 @@ namespace json_server
     _json_out["internal_sql_query"]= _sql_executor->getSql();
     _json_out["schema"]= _schema;
     _json_out["sqlstate"]= _sql_executor->getSqlState();
+    _json_out["table"]= _table;
   }
 
-  void SQLToJsonGenerator::generateJson(const char* s)
+  void SQLToJsonGenerator::generateJson(enum evhttp_cmd_type type)
   {
-    if(strcmp(s,"GET")==0)
+    if(type==EVHTTP_REQ_GET)
       generateGetJson();
-    else if(strcmp(s,"POST")==0)
+    else if(type==EVHTTP_REQ_POST)
       generatePostJson();
-    else if(strcmp(s,"DELETE")==0)
+    else if(type==EVHTTP_REQ_DELETE)
       generateDeleteJson();
   }
 

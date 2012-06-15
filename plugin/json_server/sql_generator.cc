@@ -15,18 +15,14 @@ SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const 
   _table=table;
 }
 
-void SQLGenerator::generateSql(const char* s)
+void SQLGenerator::generateSql(enum evhttp_cmd_type type)
 {
-  if(strcmp(s,"GET")==0)
+  if(type==EVHTTP_REQ_GET)
     generateGetSql();
-  else if(strcmp(s,"POST")==0)
+  else if(type==EVHTTP_REQ_POST)
     generatePostSql();
-  else if(strcmp(s,"DELETE")==0)
+  else if(type==EVHTTP_REQ_DELETE)
     generateDeleteSql();
-  else if(strcmp(s,"CREATETABLE")==0)
-    generateCreateTableSql();
-  else if(strcmp(s,"TABLEEXIST")==0)
-    generateIsTableExistsSql();
 }
 
 void SQLGenerator::generateGetSql()
@@ -99,8 +95,7 @@ void SQLGenerator::generatePostSql()
       			{
         			_sql.append(", ");
       			}
-      // TODO: Need to do json_in[].type() first and juggle it from there to be safe. See json/value.h
-      		const std::string &key = *it;
+          const std::string &key = *it;
       		_sql.append(key); 
 		      _sql.append("=");
       		Json::StyledWriter writeobject;

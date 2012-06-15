@@ -16,7 +16,7 @@ class SQLToJsonGenerator
 
     SQLToJsonGenerator(Json::Value &json_out,const char* schema,const char* table,SQLExecutor *sqlExecutor);
     void generateSQLErrorJson();
-    void generateJson(const char* s);
+    void generateJson(enum evhttp_cmd_type type);
     const Json::Value getJson() const 
     {
      return _json_out;

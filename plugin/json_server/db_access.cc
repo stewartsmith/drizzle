@@ -1,4 +1,4 @@
-#include <plugin/json_server/DBAccess.h>
+#include <plugin/json_server/db_access.h>
 
 namespace drizzle_plugin
 {
@@ -10,7 +10,7 @@ namespace json_server
     _json_out= json_out;
   }
   
-  void DBAccess::execute(const char* type,const char* schema,const char* table)
+  void DBAccess::execute(enum evhttp_cmd_type type,const char* schema,const char* table)
   {
       std::string sql;
       SQLGenerator* generator = new SQLGenerator(_json_in,schema,table);

@@ -52,7 +52,7 @@ class SQLGenerator
   public:
 
     SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
-    void generateSql(const char *s);
+    void generateSql(enum evhttp_cmd_type type);
     const string getSQL() const;
 };
 

@@ -69,7 +69,7 @@
 
 #include <drizzled/version.h>
 #include <plugin/json_server/json/json.h>
-#include <plugin/json_server/DBAccess.h>
+#include <plugin/json_server/db_access.h>
 #include <plugin/json_server/http_handler.h>
 
 namespace po= boost::program_options;
@@ -343,7 +343,7 @@ void process_api02_json_get_req(struct evhttp_request *req, void* )
       table= handler->getTable();
       
       DBAccess* dbAccess = new DBAccess(json_in,json_out);
-      dbAccess->execute("GET",schema,table);
+      dbAccess->execute(req->type,schema,table);
       json_out= dbAccess->getOutputJson();
       
     }
