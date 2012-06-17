@@ -501,7 +501,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "json_server",
-  "0.1",
+  "0.3",
   "Stewart Smith, Henrik Ingo, Mohit Srivastava",
   N_("JSON HTTP interface"),
   PLUGIN_LICENSE_GPL,

@@ -1,3 +1,26 @@
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2012 Mohit Srivastava
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+/**
+ * @file Handles the operations related to HTTP request and response
+ *  
+ */
 #include <plugin/json_server/http_handler.h>
 
 using namespace std;
@@ -6,6 +29,9 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
+  /**
+   * Constructor 
+   */
   HttpHandler::HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req)
   {
     _schema=NULL;
@@ -19,6 +45,9 @@ namespace json_server
     _req=req;
   }
   
+  /**
+   * Function to handle http request and parse the schema, table, query from it
+   */
   bool HttpHandler::handleRequest()
   { 
     evhttp_parse_query(evhttp_request_uri(_req), _req->input_headers);
@@ -37,12 +66,11 @@ namespace json_server
     {
       const char* input_query;
       input_query= (char *)evhttp_find_header(_req->input_headers, "query");
+      if(input_query == NULL || strcmp(input_query,"")==0)
+      {
+        input_query="{}";
+      }
       _query.append(input_query,strlen(input_query));
-    }
-
-    if(_query.empty())
-    {
-      _query = "{}";
     }
 
     _schema = (char *)evhttp_find_header(_req->input_headers, "schema");
@@ -67,6 +95,9 @@ namespace json_server
     return false;
   }
   
+  /**
+   * Function to validate the json
+   */
   bool HttpHandler::validateJson(Json::Reader reader)
   {
     bool retval = reader.parse(_query,_json_in);
@@ -84,7 +115,10 @@ namespace json_server
     }
     return !retval;
   }
-
+  
+  /**
+   * Function to send response back
+   */
   void HttpHandler::sendResponse(Json::StyledWriter writer,Json::Value &__json_out)
   {
     struct evbuffer *buf = evbuffer_new();

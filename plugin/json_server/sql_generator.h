@@ -17,7 +17,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+/**
+ * @file Header file for sql_generator.cc
+ *  
+ */
 #pragma once
 
 #include <config.h>
@@ -52,7 +55,12 @@ class SQLGenerator
     SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
     void generateSql(enum evhttp_cmd_type type);
     void generateCreateTableSql();
-    const string getSQL() const;
+    
+    const string getSQL() const
+    {
+	    return _sql;
+    }
+
 };
 
 }

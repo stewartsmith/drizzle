@@ -1,3 +1,27 @@
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2012 Mohit Srivastava
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+/**
+ * @file Generate the SQL strings corresponding to type of HTTP Request
+ *  
+ */
+
 #include <plugin/json_server/sql_generator.h>
 #include <cstdio>
 
@@ -6,7 +30,9 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-
+/**
+ * Constructor
+ */
 SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const char* table)
 {
   _json_in=json_in;
@@ -14,7 +40,9 @@ SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const 
   _schema=schema;
   _table=table;
 }
-
+/**
+  * Function to generate sql
+  */
 void SQLGenerator::generateSql(enum evhttp_cmd_type type)
 {
   if(type==EVHTTP_REQ_GET)
@@ -25,6 +53,9 @@ void SQLGenerator::generateSql(enum evhttp_cmd_type type)
     generateDeleteSql();
 }
 
+/**
+ * Function generate sql corresponds to Get request
+ */
 void SQLGenerator::generateGetSql()
 {
  _sql="SELECT * FROM `";
@@ -42,6 +73,9 @@ void SQLGenerator::generateGetSql()
   
 }
 
+/**
+ * Function generate sql for creating a table
+ */ 
 void SQLGenerator::generateCreateTableSql()
 { 	
       _sql="COMMIT ;";
@@ -69,6 +103,9 @@ void SQLGenerator::generateCreateTableSql()
       _sql.append("; ");
 }
 
+/**
+ * Function generates sql corresponds to POST request
+ */ 
 void SQLGenerator::generatePostSql()
 {
  	_sql="REPLACE INTO `";
@@ -119,7 +156,9 @@ void SQLGenerator::generatePostSql()
     	_sql.append(";");
 
 }
-
+/**
+ * Function generates sql corresponds to DELETE request
+ */
 void SQLGenerator::generateDeleteSql()
 {
 	if ( _json_in["_id"].asBool() )
@@ -144,12 +183,6 @@ void SQLGenerator::generateDeleteSql()
 	}
 
 }
-
-const string SQLGenerator::getSQL() const
-{
-	return _sql;
-}
-
 
 }
 
