@@ -90,6 +90,10 @@ public:
     return _sql;
   }
 
+ const drizzled::error_t& getErr() const
+ {
+   return _err;
+ }
   /**
    * Execute a batch of SQL statements.
    *

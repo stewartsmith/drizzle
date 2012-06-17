@@ -45,14 +45,13 @@ class SQLGenerator
 
     void generateGetSql() ;
     void generatePostSql() ;
-    void generateDeleteSql() ;
-    void generateCreateTableSql();
-    void generateIsTableExistsSql();
+    void generateDeleteSql() ; 
 
   public:
 
     SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
     void generateSql(enum evhttp_cmd_type type);
+    void generateCreateTableSql();
     const string getSQL() const;
 };
 

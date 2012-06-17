@@ -15,6 +15,9 @@ namespace json_server
 
       Json::Value _json_in;
       Json::Value _json_out;
+      enum evhttp_cmd_type _type;
+      const char* _schema;
+      const char* _table;
       
     public:
 
@@ -27,8 +30,8 @@ namespace json_server
         return _json_in;
       }
       
-      DBAccess(Json::Value &json_in,Json::Value &json_out);
-      void execute(enum evhttp_cmd_type type,const char* schema,const char* table);
+      DBAccess(Json::Value &json_in,Json::Value &json_out,enum evhttp_cmd_type type,const char* schema,const char* table);
+      void execute();
   
   };
 }

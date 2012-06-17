@@ -42,16 +42,6 @@ void SQLGenerator::generateGetSql()
   
 }
 
-
-void SQLGenerator::generateIsTableExistsSql()
-{
-    _sql="select count(*) from information_schema.tables where table_schema = '";
-    _sql.append(_schema);
-    _sql.append("' AND table_name = '");
-    _sql.append(_table); 
-    _sql.append("';");
-}
-
 void SQLGenerator::generateCreateTableSql()
 { 	
       _sql="COMMIT ;";
