@@ -106,11 +106,11 @@ namespace json_server
       _json_out["error_type"]="json error";
       _json_out["error_message"]= reader.getFormatedErrorMessages();
     }
-    if ( !_json_in["_id"].asBool() )
+    if ( !_json_in["query"]["_id"].asBool() )
     {
       if( _id ) 
       {
-        _json_in["_id"] = (Json::Value::UInt) atol(_id);
+        _json_in["query"]["_id"] = (Json::Value::UInt) atol(_id);
       }
     }
     return !retval;
