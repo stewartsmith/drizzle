@@ -96,7 +96,7 @@ use json;
    "sqlstate" : "00000"
 }
 {
-   "error_message" : "* Line 1, Column 10\n  Missing ',' or '}' in object declaration\n",
+   "error_message" : "* Line 1, Column 19\n  Missing ',' or '}' in object declaration\n",
    "error_type" : "json error"
 }
 {
@@ -136,6 +136,11 @@ use json;
    "error_message" : "table must be specified in URI query string.",
    "error_type" : "http error"
 }
-drop table people;
-drop table aboutpeople;
+{
+   "sqlstate" : "00000"
+}
+{
+   "sqlstate" : "00000"
+}
+
 drop schema json;
