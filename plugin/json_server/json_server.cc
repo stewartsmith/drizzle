@@ -93,10 +93,6 @@ extern "C" void process_root_request(struct evhttp_request *req, void* );
 extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
-extern "C" void process_api02_json_get_req(struct evhttp_request *req, void* );
-extern "C" void process_api02_json_post_req(struct evhttp_request *req, void* );
-/* extern "C" void process_api02_json_put_req(struct evhttp_request *req, void* ); */
-extern "C" void process_api02_json_delete_req(struct evhttp_request *req, void* );
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();

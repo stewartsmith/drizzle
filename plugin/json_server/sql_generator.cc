@@ -35,7 +35,7 @@ namespace json_server
  */
 SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const char* table)
 {
-  _json_in=json_in;
+  _json_in=json_in["query"];
   _sql="";
   _schema=schema;
   _table=table;
