@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Header file for sql_generator.cc
- *  
+ * @file Declare a class SQLGenerator that helps to generate sql string corresponding to a request.   
  */
 #pragma once
 
@@ -31,37 +30,93 @@
 #include <plugin/json_server/http_handler.h>
 
 using namespace std;
+/**
+ *  Drizzle Plugin Namespace
+ */
 namespace drizzle_plugin
 {
+/**
+ *  Json Server Plugin Namespace
+ */
 namespace json_server
 {
+  /**
+   * a class.
+   * used to generate sql string.
+   */
+  class SQLGenerator
+  {
+    private:
+      /**
+       * a private variable.
+       * stores input json object. 
+       */
+      Json::Value _json_in;
+      /**
+       * a private variable.
+       * stores output json object. 
+       */
+      Json::Value _json_out;
+      /**
+       * a private variable.
+       * stores sql string. 
+       */
+      string _sql;
+      /**
+       * a private variable.
+       * stores schema being used. 
+       */
+      const char* _schema;
+      /**
+       * a private variable.
+       * stores table being used. 
+       */
+      const char* _table;
+      /**
+       * a private function variable.
+       * used to generate sql string corresponds to GET request.
+       */
+      void generateGetSql() ;
+      /**
+       * a private function variable.
+       * used to generate sql string corresponds to POST request.
+       */
+      void generatePostSql() ;
+      /**
+       * a private function variable.
+       * used to generate sql string corresponds to DELETE request.
+       */
+      void generateDeleteSql() ; 
 
-class SQLGenerator
-{
-  private:
-    
-    Json::Value _json_in;
-    Json::Value _json_out;
-    string _sql;
-    const char* _schema;
-    const char* _table;
-
-    void generateGetSql() ;
-    void generatePostSql() ;
-    void generateDeleteSql() ; 
-
-  public:
-
-    SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
-    void generateSql(enum evhttp_cmd_type type);
-    void generateCreateTableSql();
-    
-    const string getSQL() const
-    {
-	    return _sql;
-    }
-
-};
-
+    public:
+      /**
+       * a constructor.
+       * intializes the members variables.
+       * @param json_in a Json::Value object.
+       * @param schema a constant character pointer.
+       * @param table a constant character pointer.
+       */
+      SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
+      /**
+       * a function variable.
+       * used to generate sql string corresponds to a request type.
+       * @param type a evhttp_cmd_type enum
+       */
+      void generateSql(enum evhttp_cmd_type type);
+      /**
+       * a function variable.
+       * used to generate CREATE TABLE sql string
+       */
+      void generateCreateTableSql();
+      /**
+       * a constant function variable.
+       * used to get sql string.
+       * @return a constant sql string.
+       */
+      const string getSQL() const
+      {
+	      return _sql;
+      }
+  };
 }
 }

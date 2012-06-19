@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Header file for http_handler.cc
- *  
+ * @file Declare a class HTTPHandler which handles the operations related to HTTP request and response. 
  */
 
 #pragma once
@@ -30,62 +29,154 @@
 #include <drizzled/plugin.h>
 
 using namespace std;
-
+/**
+ *  Drizzle Plugin Namespace
+ */
 namespace drizzle_plugin
 {
+/**
+ *  Json Server Plugin Namespace
+ */
 namespace json_server
-{
-class HttpHandler
-{
-  public:
+{ 
+  /**
+   * a class.
+   * used to handles http request and response. 
+   */
+  class HttpHandler
+  {
+    public:
+      /**
+       * a constructor
+       * intializes a member variables.
+       * @param json_out a Json::Value object.
+       * @param json_in a Json::Value object.
+       * @param req a evhttp_request pointer.
+       */
+      HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req);
+      /**
+       * a function variable.
+       * used to parse http request and retrieves various http headers.
+       * @return false Success
+       * @return true Failure
+       */
+      bool handleRequest();
+      /**
+       * a function variable.
+       * used to parse input json and generate input json object.
+       * @param reader a Json::Reader object.
+       * @return false Success.
+       * @return true Failure.
+       */
+      bool validateJson(Json::Reader reader);
+      /**
+       * a function variable.
+       * used to send http response back.
+       * @param writer a Json::Writer object.
+       */
+      void sendResponse(Json::StyledWriter writer,Json::Value &json_out);
+      /**
+       * a constant function variable.
+       * used to get schema being used.
+       * @return a constant schema string.
+       */
+      const char* getSchema() const
+      {
+        return _schema;
+      }
+      /**
+       * a constant function variable.
+       * used to get table being used.
+       * @return a constant table string.
+       */
+      const char* getTable() const
+      {
+        return _table;
+      }
+      /**
+       * a constant function variable.
+       * used to get query being used.
+       * @return a constant query string.
+       */
+      const string &getQuery() const
+      {
+        return _query;
+      }
+      /**
+       * a constant function variable.
+       * used to get id being used.
+       * @return a constant id string.
+       */
+      const char* getId() const
+      {
+        return _id;
+      }
+      /**
+       * a constant function variable.
+       * used to get output json object.
+       * @return a constant json object.
+       */
+      const Json::Value getOutputJson() const 
+      {
+        return _json_out;
+      }
+      /**
+       * a constant function variable.
+       * used to get input json object.
+       * @return a constant json object.
+       */
+      const Json::Value getInputJson() const 
+      {
+        return _json_in;
+      }
 
-    HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req);
-    bool handleRequest();
-    bool validateJson(Json::Reader reader);
-    void sendResponse(Json::StyledWriter writer,Json::Value &json_out);
-
-    const char* getSchema() const
-    {
-      return _schema;
-    }
-
-    const char* getTable() const
-    {
-      return _table;
-    }
-
-    const string &getQuery() const
-    {
-      return _query;
-    }
-
-    const char* getId() const
-    {
-      return _id;
-    }
-
-    const Json::Value getOutputJson() const 
-    {
-     return _json_out;
-    }
-
-    const Json::Value getInputJson() const 
-    {
-     return _json_in;
-    }
-
-  private:
-
-    const char *_schema;
-    const char *_table;
-    string _query;
-    const char *_id;
-    Json::Value _json_out;
-    Json::Value _json_in;
-    int _http_response_code;
-    const char *_http_response_text;
-    struct evhttp_request *_req;    
-};
+    private:
+      /**
+       * a private variable.
+       * stores schema being used.
+       */
+      const char *_schema;
+      /**
+       * a private variable.
+       * stores table being used.
+       */
+      const char *_table;
+      /**
+       * a private variable.
+       * stores query being used.
+       */
+      string _query;
+      /**
+       * a private variable.
+       * stores id primary key for a dcument.
+       */
+      const char *_id;
+      /**
+       * a private variable.
+       * stores output json object.
+       */
+      Json::Value _json_out;
+      /**
+       * a private variable.
+       * stores input json object.
+       */
+      Json::Value _json_in;
+      /**
+       * a private variable.
+       * stores http response code.
+       */
+      int _http_response_code;
+      /**
+       * a private variable.
+       * stores http response text.
+       */
+      const char *_http_response_text;
+      /**
+       * a private variable.
+       * stores http request object.
+       */
+      struct evhttp_request *_req;    
+  };
 
 }
 }

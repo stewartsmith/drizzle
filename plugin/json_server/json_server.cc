@@ -19,18 +19,6 @@
  */
 /**
  * @file Implements an HTTP server that will parse JSON and SQL queries
- * 
- * @todo Refactoring ideas:
- *  - Anything HTML should really be a separate file, not strings embedded
- *    in C++.
- *  - Put all json handling into try/catch blocks, the parser likes to throw
- *    exceptions which crash drizzled if not caught.
- *  - Need to implement a worker thread pool. Make workers proper OO classes.
- * 
- * @todo Implement HTTP response codes other than just 200 as defined in
- *       http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
- *
- * @todo Shouldn't we be using event2/http.h? Why does this even work without it?
  */
 
 #include <config.h>
@@ -297,13 +285,12 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
 
 
 /**
- * Transform a HTTP GET to SELECT and return results based on input json document
+ * Transform a HTTP request for sql transaction and return results based on input json document.
  * 
  * @todo allow DBA to set default schema (also in post,del methods)
  * @todo allow DBA to set whether to use strict mode for parsing json (should get rid of white space), especially for POST of course.
  * 
  * @param req should contain a "table" parameter in request uri. "query", "_id" and "schema" are optional.
- * @return a json document is returned to client with evhttp_send_reply()
  */
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
 {

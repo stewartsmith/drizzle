@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Handles the operations related to HTTP request and response
- *  
+ * @file Implements a class HttpHandler which handles the operations related to HTTP request and response.
  */
 #include <plugin/json_server/http_handler.h>
 
@@ -29,9 +28,6 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-  /**
-   * Constructor 
-   */
   HttpHandler::HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req)
   {
     _schema=NULL;
@@ -45,9 +41,6 @@ namespace json_server
     _req=req;
   }
   
-  /**
-   * Function to handle http request and parse the schema, table, query from it
-   */
   bool HttpHandler::handleRequest()
   { 
     evhttp_parse_query(evhttp_request_uri(_req), _req->input_headers);
@@ -95,9 +88,6 @@ namespace json_server
     return false;
   }
   
-  /**
-   * Function to validate the json
-   */
   bool HttpHandler::validateJson(Json::Reader reader)
   {
     bool retval = reader.parse(_query,_json_in);
@@ -116,9 +106,6 @@ namespace json_server
     return !retval;
   }
   
-  /**
-   * Function to send response back
-   */
   void HttpHandler::sendResponse(Json::StyledWriter writer,Json::Value &__json_out)
   {
     struct evbuffer *buf = evbuffer_new();

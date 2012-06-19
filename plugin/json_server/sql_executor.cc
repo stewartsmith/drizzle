@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Executes the sql command
+ * @file Implements the various functions of class SQLExecutor
  */
 
 
@@ -39,9 +39,6 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-/**
- * Constructor
- */
 SQLExecutor::SQLExecutor(const string &user, const string &schema)
   : _in_error_state(false)
 {
@@ -55,9 +52,6 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
   _sql="";
 }
 
-/**
- * Function to execute a sql string
- */
 bool SQLExecutor::executeSQL(string &sql)
 {
   _sql=sql;

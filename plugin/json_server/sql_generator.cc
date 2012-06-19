@@ -18,7 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Generate the SQL strings corresponding to type of HTTP Request
+ * @file Implements the various memver function of class SQLGenerator 
+ * which helps to generate the SQL strings corresponding to type of HTTP Request.
  *  
  */
 
@@ -30,160 +31,143 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-/**
- * Constructor
- */
-SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const char* table)
-{
-  _json_in=json_in["query"];
-  _sql="";
-  _schema=schema;
-  _table=table;
-}
-/**
-  * Function to generate sql
-  */
-void SQLGenerator::generateSql(enum evhttp_cmd_type type)
-{
-  if(type==EVHTTP_REQ_GET)
-    generateGetSql();
-  else if(type==EVHTTP_REQ_POST)
-    generatePostSql();
-  else if(type==EVHTTP_REQ_DELETE)
-    generateDeleteSql();
-}
+  SQLGenerator::SQLGenerator(const Json::Value json_in ,const char* schema ,const char* table)
+  {
+    _json_in=json_in["query"];
+    _sql="";
+    _schema=schema;
+    _table=table;
+  }
 
-/**
- * Function generate sql corresponds to Get request
- */
-void SQLGenerator::generateGetSql()
-{
- _sql="SELECT * FROM `";
- _sql.append(_schema);
- _sql.append("`.`");
- _sql.append(_table);
- _sql.append("`"); 
-  if ( _json_in["_id"].asBool() )
+  void SQLGenerator::generateSql(enum evhttp_cmd_type type)
+  {
+    if(type==EVHTTP_REQ_GET)
+      generateGetSql();
+    else if(type==EVHTTP_REQ_POST)
+      generatePostSql();
+    else if(type==EVHTTP_REQ_DELETE)
+      generateDeleteSql();
+  }
+
+  void SQLGenerator::generateGetSql()
+  {
+    _sql="SELECT * FROM `";
+    _sql.append(_schema);
+    _sql.append("`.`");
+    _sql.append(_table);
+    _sql.append("`"); 
+    if ( _json_in["_id"].asBool() )
     {
       // Now we build an SQL query, using _id from json_in
-	_sql.append(" WHERE _id = ");
-	_sql.append(_json_in["_id"].asString());
+  	  _sql.append(" WHERE _id = ");
+	    _sql.append(_json_in["_id"].asString());
     }
     _sql.append(";");
   
-}
-
-/**
- * Function generate sql for creating a table
- */ 
-void SQLGenerator::generateCreateTableSql()
-{ 	
-      _sql="COMMIT ;";
-      _sql.append("CREATE TABLE ");
-      _sql.append(_schema);
-      _sql.append(".");
-      _sql.append(_table);
-      _sql.append(" (_id BIGINT PRIMARY KEY auto_increment,");
-      // Iterate over json_in keys
-      Json::Value::Members createKeys(_json_in.getMemberNames() );
-      for ( Json::Value::Members::iterator it = createKeys.begin(); it != createKeys.end(); ++it )
+  }
+ 
+  void SQLGenerator::generateCreateTableSql()
+  { 	
+    _sql="COMMIT ;";
+    _sql.append("CREATE TABLE ");
+    _sql.append(_schema);
+    _sql.append(".");
+    _sql.append(_table);
+    _sql.append(" (_id BIGINT PRIMARY KEY auto_increment,");
+    // Iterate over json_in keys
+    Json::Value::Members createKeys(_json_in.getMemberNames() );
+    for ( Json::Value::Members::iterator it = createKeys.begin(); it != createKeys.end(); ++it )
+    {
+      const std::string &key = *it;
+      if(key=="_id") 
       {
-        const std::string &key = *it;
-        if(key=="_id") {
-           continue;
-        }
-        _sql.append(key);
-        _sql.append(" TEXT");
-        if( it !=createKeys.end()-1 && key !="_id")
-        {
-          _sql.append(",");
-        }
+        continue;
       }
-      _sql.append(")");
-      _sql.append("; ");
-}
-
-/**
- * Function generates sql corresponds to POST request
- */ 
-void SQLGenerator::generatePostSql()
-{
- 	_sql="REPLACE INTO `";
-	_sql.append(_schema);
-    	_sql.append("`.`");
-    	_sql.append(_table);
-    	_sql.append("` SET ");
+      _sql.append(key);
+      _sql.append(" TEXT");
+      if( it !=createKeys.end()-1 && key !="_id")
+      {
+        _sql.append(",");
+      }
+    }
+    _sql.append(")");
+    _sql.append("; ");
+  }
+ 
+  void SQLGenerator::generatePostSql()
+  {
+ 	  _sql="REPLACE INTO `";
+	  _sql.append(_schema);
+    _sql.append("`.`");
+    _sql.append(_table);
+    _sql.append("` SET ");
 	
-	Json::Value::Members keys( _json_in.getMemberNames() );
+	  Json::Value::Members keys( _json_in.getMemberNames() );
     
-	for ( Json::Value::Members::iterator it = keys.begin(); it != keys.end(); ++it )
-    	{
-      		if ( it != keys.begin() )
-      			{
-        			_sql.append(", ");
-      			}
-          const std::string &key = *it;
-      		_sql.append(key); 
-		      _sql.append("=");
-      		Json::StyledWriter writeobject;
-      		switch ( _json_in[key].type() )
-      			{
-        			case Json::nullValue:
-          				_sql.append("NULL");
-          				break;
-        			case Json::intValue:
-        			case Json::uintValue:
-        			case Json::realValue:
-        			case Json::booleanValue:
-          				_sql.append(_json_in[key].asString());
-					break;
-        			case Json::stringValue:
-          				_sql.append("'\"");
-          				_sql.append(_json_in[key].asString());
-          				_sql.append("\"'");
-          				break;
-        			case Json::arrayValue:
-        			case Json::objectValue:
-          				_sql.append("'");
-          				_sql.append(writeobject.write(_json_in[key]));
-          				_sql.append("'");
-          				break;
-        			default:	
-        				break;
-			  }
-      		_sql.append(" ");
-    		}
-    	_sql.append(";");
+	  for ( Json::Value::Members::iterator it = keys.begin(); it != keys.end(); ++it )
+    {
+      if ( it != keys.begin() )
+      {
+        _sql.append(", ");
+  		}
+      const std::string &key = *it;
+      _sql.append(key); 
+      _sql.append("=");
+      Json::StyledWriter writeobject;
+      switch ( _json_in[key].type() )
+      {
+        case Json::nullValue:
+          _sql.append("NULL");
+          break;
+        case Json::intValue:
+        case Json::uintValue:
+        case Json::realValue:
+        case Json::booleanValue:
+          _sql.append(_json_in[key].asString());
+          break;
+        case Json::stringValue:
+          _sql.append("'\"");
+          _sql.append(_json_in[key].asString());
+          _sql.append("\"'");
+          break;
+        case Json::arrayValue:
+        case Json::objectValue:
+          _sql.append("'");
+          _sql.append(writeobject.write(_json_in[key]));
+          _sql.append("'");
+          break;
+        default:	
+          break;
+      }
+      _sql.append(" ");
+    }
+    _sql.append(";");
+  }
+
+  void SQLGenerator::generateDeleteSql()
+  {
+    if ( _json_in["_id"].asBool() )
+    {
+      _sql= "DELETE FROM `";
+      _sql.append(_schema);
+      _sql.append("`.`");
+      _sql.append(_table);
+      _sql.append("`");
+      _sql.append(" WHERE _id = ");
+      _sql.append(_json_in["_id"].asString());
+      _sql.append(";");
+    }
+    else
+    {
+      _sql="COMMIT ;";
+      _sql.append("DROP TABLE `");
+      _sql.append(_schema);
+      _sql.append("`.`");
+      _sql.append(_table);
+      _sql.append("`;");
+    }
+
+  }
 
 }
-/**
- * Function generates sql corresponds to DELETE request
- */
-void SQLGenerator::generateDeleteSql()
-{
-	if ( _json_in["_id"].asBool() )
-    	{
-		_sql= "DELETE FROM `";
- 		_sql.append(_schema);
- 		_sql.append("`.`");
- 		_sql.append(_table);
- 		_sql.append("`");
-        	_sql.append(" WHERE _id = ");
-        	_sql.append(_json_in["_id"].asString());
-    		_sql.append(";");
-	}
-	else
-	{
-		_sql="COMMIT ;";
-		_sql.append("DROP TABLE `");
-		_sql.append(_schema);
-		_sql.append("`.`");
-		_sql.append(_table);
-		_sql.append("`;");
-	}
-
-}
-
-}
-
 }

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Generate the JSON strings corresponding to type of HTTP Request
+ * @file Implements a class SQLToJsonGenerator which generate the JSON strings corresponding to type of HTTP Request
  *  
  */
 #include <plugin/json_server/sql_to_json_generator.h>
@@ -30,9 +30,6 @@ namespace drizzle_plugin
 {
 namespace json_server
 { 
-  /**
-   *Constructor
-   */
   SQLToJsonGenerator::SQLToJsonGenerator(Json::Value &json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor)
   {
     _schema=schema;
@@ -41,9 +38,6 @@ namespace json_server
     _json_out=json_out;
   }
   
-  /**
-   * Generate SQL error json
-   */
   void SQLToJsonGenerator::generateSQLErrorJson()
   {
     _json_out["error_type"]= _sql_executor->getErrorType();
@@ -54,9 +48,7 @@ namespace json_server
     _json_out["sqlstate"]= _sql_executor->getSqlState();
     _json_out["table"]= _table;
   }
-  /**
-   * Generate json
-   */
+  
   void SQLToJsonGenerator::generateJson(enum evhttp_cmd_type type)
   {
     if(type==EVHTTP_REQ_GET)
@@ -67,9 +59,6 @@ namespace json_server
       generateDeleteJson();
   }
   
-  /**
-   * Generate json corresponds to GET request
-   */
   void SQLToJsonGenerator::generateGetJson()
   {
     sql::ResultSet *_result_set= _sql_executor->getResultSet();
@@ -114,17 +103,11 @@ namespace json_server
     _json_out["sqlstate"]= _sql_executor->getSqlState();
   }
   
-  /**
-   * Generate json corresponds to POST request
-   */ 
   void SQLToJsonGenerator::generatePostJson()
   {
     _json_out["sqlstate"]= _sql_executor->getSqlState();
   }
   
-  /**
-   * Generate json corresponds to DELETE request
-   */
   void SQLToJsonGenerator::generateDeleteJson()
   {
     _json_out["sqlstate"]= _sql_executor->getSqlState();
