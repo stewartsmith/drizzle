@@ -21,6 +21,7 @@
 
 import unittest
 import subprocess
+import time
 
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
@@ -61,12 +62,15 @@ class basicTest(mysqlBaseTestCase):
             test_cmd.append("--drizzle-mysql=on")
         if master_server.type == 'mysql':
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
-        
+       
+        # We sleep for a minute to wait
+        time.sleep(10) 
         # how many times to run sysbench at each concurrency
         iterations = 1
         
         # various concurrencies to use with sysbench
-        concurrencies = [16, 32, 64, 128, 256, 512, 1024]
+        #concurrencies = [16, 32, 64, 128, 256, 512, 1024]
+        concurrencies = [1, 4, 8 ]
 
         # start the test!
         for concurrency in concurrencies:
