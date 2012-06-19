@@ -25,6 +25,7 @@ import time
 
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
+from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 
 # TODO:  make server_options vary depending on the type of server being used here
