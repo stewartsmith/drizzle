@@ -75,6 +75,11 @@ class basicTest(mysqlBaseTestCase):
 
         # start the test!
         for concurrency in concurrencies:
+            self.logging.info("Resetting test server...")
+            for query in ["DROP SCHEMA IF EXISTS test"
+                         ,"CREATE SCHEMA test"
+                         ]:
+                retcode, result = self.execute_query(query, master_server, schema="INFORMATION_SCHEMA")
             test_cmd.append("--num-threads=%d" %concurrency)
             # we setup once per concurrency, copying drizzle-automation
             # this should likely change and if not for readonly, then definitely
@@ -91,8 +96,7 @@ class basicTest(mysqlBaseTestCase):
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_sysbench_output(output)
-                for line in parsed_output:
-                    self.logging.info(line)
+                self.logging.info(parsed_output)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
