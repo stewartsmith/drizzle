@@ -80,15 +80,15 @@ class basicTest(mysqlBaseTestCase):
             # this should likely change and if not for readonly, then definitely
             # for readwrite
 
-            test_cmd = " ".join(test_cmd)
-            retcode, output = prepare_sysbench(test_executor, test_cmd)
+            exec_cmd = " ".join(test_cmd)
+            retcode, output = prepare_sysbench(test_executor, exec_cmd)
             err_msg = ("sysbench 'prepare' phase failed.\n"
                        "retcode:  %d"
                        "output:  %s" %(retcode,output))
             self.assertEqual(retcode, 0, msg = err_msg) 
 
             for test_iteration in range(iterations):
-                retcode, output = execute_sysbench(test_executor, test_cmd)
+                retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_sysbench_output(output)
                 for line in parsed_output:
