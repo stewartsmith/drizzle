@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-06-08 05:12+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
+"PO-Revision-Date: 2012-06-20 00:47+0000\n"
+"Last-Translator: Eduardo Alberto Calvo <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2012-06-09 05:37+0000\n"
-"X-Generator: Launchpad (build 15376)\n"
+"X-Launchpad-Export-Date: 2012-06-20 04:33+0000\n"
+"X-Generator: Launchpad (build 15435)\n"
 
 msgid "Synonym for `help'."
 msgstr "Sinónimo de \"ayuda\"."
@@ -39,7 +39,7 @@ msgstr ""
 "vertical."
 
 msgid "Exit drizzle. Same as quit."
-msgstr "Salir de drizzle. Igual que quit."
+msgstr "Salir de Drizzle."
 
 msgid "Send command to drizzle server."
 msgstr "Enviar comando al servidor drizzle."
@@ -81,7 +81,7 @@ msgstr ""
 "dado."
 
 msgid "Use another database. Takes database name as argument."
-msgstr "Utiliza otra base de datos. Toma la base de datos como argumento."
+msgstr "Utiliza otra base de datos. Toma su nombre como argumento."
 
 msgid "Show warnings after every statement."
 msgstr "Mostrar advertencias despues de cada sentencia."
@@ -4362,7 +4362,7 @@ msgstr "El directorio de datos %s no existe\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
-msgstr ""
+msgstr "Uso: %s TRANSACTION_LOG [--checksum] \n"
 
 #, c-format
 msgid "Cannot open file: %s\n"
@@ -5409,6 +5409,8 @@ msgstr ""
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
+"Número de puerto que se utilizará para la conexión o 0 por defecto con el "
+"protocolo MySQL."
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -5466,6 +5468,8 @@ msgstr ""
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
+"Habilitar la suma de comprobación cíclica (CRC32) para cada entrada escrita "
+"en el histórico de transacciones."
 
 msgid ""
 "0 == rely on operating system to sync log file (default), 1 == sync file at "
@@ -5476,7 +5480,7 @@ msgid "Number of slots for in-memory write buffers (default=8)."
 msgstr ""
 
 msgid "Failed to open transaction log file "
-msgstr ""
+msgstr "No se pudo abrir el archivo de registro de transacciones "
 
 #, c-format
 msgid ""
