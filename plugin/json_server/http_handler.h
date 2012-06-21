@@ -60,7 +60,7 @@ namespace json_server
        * @return false Success
        * @return true Failure
        */
-      bool handleRequest();
+      void handleRequest();
       /**
        * a function variable.
        * used to parse input json and generate input json object.
@@ -75,6 +75,11 @@ namespace json_server
        * @param writer a Json::Writer object.
        */
       void sendResponse(Json::StyledWriter writer,Json::Value &json_out);
+      /**
+       * a function variable.
+       * used to generate a http error when table is null.
+       */
+      void generateHttpError();
       /**
        * a constant function variable.
        * used to get schema being used.

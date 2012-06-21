@@ -68,7 +68,12 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-
+static const string DEFAULT_SCHEMA = "test";
+static const string DEFAULT_TABLE = "";
+string default_schema;
+string default_table;
+bool updateSchema(Session *, set_var* var); 
+bool updateTable(Session *, set_var* var); 
 static port_constraint port;
 
 static in_port_t getPort(void)
@@ -304,26 +309,37 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
   const char* table;
 
   HttpHandler* handler = new HttpHandler(json_out,json_in,req);
-  if(!handler->handleRequest())
+  handler->handleRequest();
+  table= handler->getTable();
+  if(not table || strcmp(table,"")==0)
   {
+    table= default_table.c_str();
+  }
+
+  if(table && !strcmp(table,"")==0)
+  { 
     if(!handler->validateJson(reader))
     {
       json_in= handler->getInputJson();
-      schema= handler->getSchema();
-      table= handler->getTable();
-      
+      schema=handler->getSchema();
+      if(not schema || strcmp(schema, "") == 0)
+      {
+        schema = default_schema.c_str();
+      }
+
       DBAccess* dbAccess = new DBAccess(json_in,json_out,req->type,schema,table);
       dbAccess->execute();
       json_out= dbAccess->getOutputJson();
       
     }
     else
-    {
+    { 
       json_out= handler->getOutputJson();
     }
   }
   else
   {
+    handler->generateHttpError();
     json_out= handler->getOutputJson();
   }
   
@@ -454,13 +470,43 @@ public:
     }
   }
 };
+JsonServer *server=NULL;
+
+bool updateSchema(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_schema(var->value->str_value.data());
+    default_schema=new_schema;
+      return false; //success
+  }
+  errmsg_printf(error::ERROR, _("json_server_schema cannot be NULL"));
+  return true; // error
+}
+
+bool updateTable(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_table(var->value->str_value.data());
+    default_table=new_table;
+      return false; //success
+  }
+  errmsg_printf(error::ERROR, _("json_server_table cannot be NULL"));
+  return true; // error
+}
+
 
 static int json_server_init(drizzled::module::Context &context)
 {
+ 
+  server = new JsonServer(port);
+  context.add(server);
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
+  context.registerVariable(new sys_var_std_string("schema", default_schema, NULL, &updateSchema));
+  context.registerVariable(new sys_var_std_string("table", default_table, NULL, &updateTable));
 
-  JsonServer *server;
-  context.add(server= new JsonServer(port));
+
 
   if (server and not server->init())
   {
@@ -475,6 +521,14 @@ static void init_options(drizzled::module::option_context &context)
   context("port",
           po::value<port_constraint>(&port)->default_value(8086),
           _("Port number to use for connection or 0 for default (port 8086) "));
+  context("schema",
+          po::value<string>(&default_schema)->default_value(DEFAULT_SCHEMA),
+          _("Schema in use by json server"));
+  context("table",
+          po::value<string>(&default_table)->default_value(DEFAULT_TABLE),
+          _("table in use by json server"));
+
+
 }
 
 } /* namespace json_server */

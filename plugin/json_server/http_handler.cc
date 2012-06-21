@@ -41,7 +41,7 @@ namespace json_server
     _req=req;
   }
   
-  bool HttpHandler::handleRequest()
+  void HttpHandler::handleRequest()
   { 
     evhttp_parse_query(evhttp_request_uri(_req), _req->input_headers);
     if(_req->type== EVHTTP_REQ_POST )
@@ -70,22 +70,6 @@ namespace json_server
     _table = (char *)evhttp_find_header(_req->input_headers, "table");
     _id = (char *)evhttp_find_header(_req->input_headers, "_id");
     
-    
-    if( _schema == NULL || strcmp(_schema, "") == 0)
-    {
-      _schema = "test";
-    }
-    
-    if (_table == NULL || strcmp(_table, "")==0)
-    {
-      _json_out["error_type"]="http error";
-      _json_out["error_message"]= "table must be specified in URI query string.";
-      _http_response_code = HTTP_NOTFOUND;
-      _http_response_text = "table must be specified in URI query string.";
-      return true;
-    }
-
-    return false;
   }
   
   bool HttpHandler::validateJson(Json::Reader reader)
@@ -104,6 +88,14 @@ namespace json_server
       }
     }
     return !retval;
+  }
+
+  void HttpHandler::generateHttpError()
+  {
+    _json_out["error_type"]="http error";
+    _json_out["error_message"]= "table must be specified in URI query string.";
+    _http_response_code = HTTP_NOTFOUND;
+    _http_response_text = "table must be specified in URI query string.";
   }
   
   void HttpHandler::sendResponse(Json::StyledWriter writer,Json::Value &__json_out)
