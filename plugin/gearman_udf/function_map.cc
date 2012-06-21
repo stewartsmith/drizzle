@@ -13,10 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "function_map.h"
-#include <libgearman-1.0/client.h>
-#include <string.h>
-#include <stdlib.h>
+#include <config.h>
+
+#include "plugin/gearman_udf/function_map.h"
+
+#include <libgearman/gearman.h>
+#include <cstring>
+#include <cstdlib>
 
 using namespace std;
 
@@ -64,7 +67,9 @@ bool GearmanFunctionMap::add(string function, string servers)
   ret= gearman_client_add_servers(&(functionMap[function]), servers.c_str());
   pthread_mutex_unlock(&lock);
   if (ret != GEARMAN_SUCCESS)
+  {
     return false;
+  }
 
   return true;
 }
@@ -73,7 +78,10 @@ bool GearmanFunctionMap::get(string function, gearman_client_st *client)
 {
   map<string, gearman_client_st>::iterator x;
 
-  pthread_mutex_lock(&lock);
+  if (pthread_mutex_lock(&lock) != 0)
+  {
+    return false;
+  }
 
   x= functionMap.find(function);
   if (x == functionMap.end())

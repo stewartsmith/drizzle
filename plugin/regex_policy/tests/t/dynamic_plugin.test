@@ -1,0 +1,19 @@
+# Test that the access to schemas is allowed according to policy file
+SHOW SCHEMAS;
+
+#Test that the regex_policy_policy can't be replaced with an empty value
+--error ER_WRONG_ARGUMENTS
+SET GLOBAL regex_policy_policy="";
+
+#Test that the regex_policy_policy can be replaced with a different file
+--replace_result $TOP_SRCDIR TOP_SRCDIR
+eval SET GLOBAL regex_policy_policy="$TOP_SRCDIR/plugin/regex_policy/tests/t/dynamic.policy2";
+
+#Test that the access to schemas is now denied according to the new policy file
+--error ER_DBACCESS_DENIED_ERROR
+SHOW SCHEMAS;
+
+#Test that the regex_policy_policy can't be changed to a file which is not correct in syntax
+--replace_result $TOP_SRCDIR TOP_SRCDIR
+--error ER_WRONG_ARGUMENTS
+eval SET GLOBAL regex_policy_policy="$TOP_SRCDIR/plugin/regex_policy/tests/t/dynamic.policy3";

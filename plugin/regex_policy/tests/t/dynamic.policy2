@@ -1,0 +1,3 @@
+# Default to deny everything
+.+ schema=.+ DENY
+.+ process=.+ DENY

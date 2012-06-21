@@ -212,6 +212,13 @@ static void init_signals(void)
   }
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
+
+  (void) sigemptyset(&set);
+  sigaddset(&set,SIGTSTP);
+  sigaddset(&set,SIGINT);
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+
   return;
 }
 

@@ -1403,6 +1403,11 @@ drizzle_return_t drizzle_state_connect(drizzle_con_st *con)
       return DRIZZLE_RETURN_COULD_NOT_CONNECT;
     }
 
+    if (con->ssl)
+    {
+      SSL_set_fd(con->ssl, con->fd);
+    }
+
     drizzle_state_pop(con);
   }
 
@@ -1509,7 +1514,11 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
   {
     size_t available_buffer= (size_t)DRIZZLE_MAX_BUFFER_SIZE -
         ((size_t)(con->buffer_ptr - con->buffer) + con->buffer_size);
-    read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
+
+    if (con->ssl_state == DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE)
+      read_size= SSL_read(con->ssl, (char*)con->buffer_ptr + con->buffer_size, available_buffer);
+    else
+      read_size = recv(con->fd, (char *)con->buffer_ptr + con->buffer_size,
                      available_buffer, 0);
 #ifdef _WIN32
     errno = WSAGetLastError();
@@ -1547,8 +1556,10 @@ drizzle_return_t drizzle_state_read(drizzle_con_st *con)
       break;
     }
 #endif /* _WIN32 */	
-    drizzle_log_crazy(con->drizzle, "read fd=%d return=%zd errno=%s", con->fd,
-                      read_size, strerror(errno));
+    drizzle_log_crazy(con->drizzle, "read fd=%d return=%zd ssl= %d errno=%s",
+                      con->fd, read_size, 
+                      (con->ssl_state == DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE) ? 1 : 0,
+                      strerror(errno));
 
     if (read_size == 0)
     {
@@ -1628,8 +1639,10 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
 
   while (con->buffer_size != 0)
   {
-  
-    write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
+    if (con->ssl_state == DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE)
+      write_size= SSL_write(con->ssl, con->buffer_ptr, con->buffer_size);
+    else
+      write_size = send(con->fd,(char *) con->buffer_ptr, con->buffer_size, 0);
 
 #ifdef _WIN32
     errno = WSAGetLastError();
@@ -1668,8 +1681,10 @@ drizzle_return_t drizzle_state_write(drizzle_con_st *con)
     }
 #endif /* _WIN32 */	
 
-    drizzle_log_crazy(con->drizzle, "write fd=%d return=%zd errno=%s", con->fd,
-                      write_size, strerror(errno));
+    drizzle_log_crazy(con->drizzle, "write fd=%d return=%zd ssl=%d errno=%s",
+                      con->fd, write_size,
+                      (con->ssl_state == DRIZZLE_SSL_STATE_HANDSHAKE_COMPLETE) ? 1 : 0,
+                      strerror(errno));
 
     if (write_size == 0)
     { }
@@ -1943,18 +1958,21 @@ static drizzle_return_t _con_setsockopt(drizzle_con_st *con)
     ioctlsocket(con->fd, FIONBIO, &asyncmode);
   }
 #else
-  ret= fcntl(con->fd, F_GETFL, 0);
-  if (ret == -1)
+  if (!con->ssl)
   {
-    drizzle_set_error(con->drizzle, __func__, "fcntl:F_GETFL:%s", strerror(errno));
-    return DRIZZLE_RETURN_ERRNO;
-  }
+    ret= fcntl(con->fd, F_GETFL, 0);
+    if (ret == -1)
+    {
+      drizzle_set_error(con->drizzle, __func__, "fcntl:F_GETFL:%s", strerror(errno));
+      return DRIZZLE_RETURN_ERRNO;
+    }
 
-  ret= fcntl(con->fd, F_SETFL, ret | O_NONBLOCK);
-  if (ret == -1)
-  {
-    drizzle_set_error(con->drizzle, __func__, "fcntl:F_SETFL:%s", strerror(errno));
-    return DRIZZLE_RETURN_ERRNO;
+    ret= fcntl(con->fd, F_SETFL, ret | O_NONBLOCK);
+    if (ret == -1)
+    {
+      drizzle_set_error(con->drizzle, __func__, "fcntl:F_SETFL:%s", strerror(errno));
+      return DRIZZLE_RETURN_ERRNO;
+    }
   }
 #endif
 

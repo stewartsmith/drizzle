@@ -1,0 +1,10 @@
+SET GLOBAL auth_file_users="";
+ERROR HY000: Incorrect arguments to SET
+SET GLOBAL auth_file_users="TOP_SRCDIR/plugin/auth_file/tests/t/dynamic.users3";
+ERROR HY000: Incorrect arguments to SET
+SET GLOBAL auth_file_users="TOP_SRCDIR/plugin/auth_file/tests/t/dynamic.users2";
+connect(localhost,auth_file_password,test_password1,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'auth_file_password' (using password: YES)
+SELECT 1;
+1
+1
