@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Declare a class SQLToJsonGenerator that helps to generate json string corresponds to request type.
+ * @file Declare a class SQLToJsonGenerator that generates the outpu json object.
  */
 
 #include <config.h>
@@ -39,35 +39,31 @@ namespace drizzle_plugin
 namespace json_server
 {
   /**
-   * a class.
-   * used to generate json string
+   * Generate output json object.
    */
   class SQLToJsonGenerator
   {
     public:
       /**
-       * a constructor.
-       * intializes the members variables.
-       * @param json_in a Json::Value object.
-       * @param schema a constant character pointer.
-       * @param table a constant character pointer.
-       * @param sqlExecutor a SQLExecutor pointer.
+       * Constructor
+       * 
+       * @param json_in The input json object.
+       * @param schema The schema that was used.
+       * @param table The table that was used.
+       * @param sqlExecutor SQLExecutor instance that contains the result set or error from an executed sql query.
        */ 
       SQLToJsonGenerator(Json::Value &json_out,const char* schema,const char* table,SQLExecutor *sqlExecutor);
       /**
-       * a function variable.
-       * used to generate error json string
+       * Used to generate error json string.
        */
       void generateSQLErrorJson();
       /**
-       * a function variable.
-       * used to generate a json string corresponds to request type.
-       * @param type a evhttp_cmd_type enum.
+       * Used to generate a json string corresponds to request type.
+       * @param type GET, POST or DELETE.
        */
       void generateJson(enum evhttp_cmd_type type);
       /**
-       * a constant function variable.
-       * used to get a output json object.
+       * Used to get the output json object.
        * @return a json object. 
        */
       const Json::Value getJson() const 
@@ -77,38 +73,37 @@ namespace json_server
 
     private:
       /**
-       * a private variable.
-       * stores output json object. 
+       * Stores output json object. 
+       * 
+       * @todo Note that building the returned json string as a Json::Value object
+       * first - basically this is a full copy of the result_set - is inefficient for
+       * larger result sets. Better would be to find a streaming json parser.
+       * However, it should be notable that Execute API already stores the result set
+       * in a std::vector anyway, so we are not making the situation worse here.
        */
       Json::Value _json_out;
       /**
-       * a private variable.
-       * stores instance of sqlExecutor object. 
+       * Stores instance of sqlExecutor object. 
        */
       SQLExecutor* _sql_executor;
       /**
-       * a private variable.
-       * stores schema being used. 
+       * Stores schema being used. 
        */
       const char* _schema;
       /**
-       * a private variable.
-       * stores table being used. 
+       * Stores table being used. 
        */
       const char* _table;
       /**
-       * a private function variable.
-       * used to generate json string corresponds to GET request.
+       * Used to generate json string corresponds to GET request.
        */
       void generateGetJson();
       /**
-       * a private function variable.
-       * used to generate json string corresponds to POST request.
+       * Used to generate json string corresponds to POST request.
        */
       void generatePostJson();
       /**
-       * a private function variable.
-       * used to generate json string corresponds to DELETE request.
+       * Used to generate json string corresponds to DELETE request.
        */
       void generateDeleteJson();
 
