@@ -70,6 +70,7 @@ namespace json_server
 {
 static const string DEFAULT_SCHEMA = "test";
 static const string DEFAULT_TABLE = "";
+static const string JSON_SERVER_VERSION = "0.3"; 
 string default_schema;
 string default_table;
 bool updateSchema(Session *, set_var* var); 
@@ -218,6 +219,7 @@ extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
 
   Json::Value root;
   root["version"]= ::drizzled::version();
+  root["json_server_version"]=JSON_SERVER_VERSION;
 
   Json::StyledWriter writer;
   std::string output= writer.write(root);
