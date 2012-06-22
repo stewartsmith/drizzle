@@ -1,7 +1,8 @@
 CREATE SCHEMA
 ==============
 
-CREATE SCHEMA enters a new schema into the current database. The schema name used must be distinct from the name of any existing schema.
+TODO
+
 
 .. code-block:: mysql
 
@@ -11,7 +12,7 @@ CREATE SCHEMA enters a new schema into the current database. The schema name use
 engine_options
 --------------
 
-You can specify the storage engine to use for creating the schema. Please note, there is currently only one engine.
+TODO
 
 ::
 
@@ -20,7 +21,7 @@ You can specify the storage engine to use for creating the schema. Please note, 
 collate
 -------
 
-There are default settings for character sets and collations at four levels: server, database, table, and column. The COLLATE clause specifies the default database collation.
+TODO
 
 ::
 
