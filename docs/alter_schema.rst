@@ -1,12 +1,7 @@
 ALTER SCHEMA
 ============
 
-ALTER SCHEMA changes the definition of a schema.
-
-You must own the schema to use ALTER SCHEMA. To rename a schema you
-must also have the CREATE privilege for the database. To alter the
-owner, you must also be a direct or indirect member of the new owning
-role, and you must have the CREATE privilege for the database:
+'TODO'
 
 .. code-block:: mysql
 
