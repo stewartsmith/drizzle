@@ -63,20 +63,17 @@ namespace json_server
   {
     sql::ResultSet *_result_set= _sql_executor->getResultSet();
 
+    // Handle each row of the result set
     while (_result_set->next())
     {
       Json::Value json_row;
       bool got_error = false; 
+      // Handle each column of a row
       for (size_t x= 0; x < _result_set->getMetaData().getColumnCount() && got_error == false; x++)
       {
+        // Only output non-null rows
         if (not _result_set->isNull(x))
         {
-          // The values are now serialized json. We must first
-          // parse them to make them part of this structure, only to immediately
-          // serialize them again in the next step. For large json documents
-          // stored into the blob this must be very, very inefficient.
-          // TODO: Implement a smarter way to push the blob value directly to the client. Probably need to hand code some string appending magic.
-          // TODO: Massimo knows of a library to create JSON in streaming mode.
           Json::Value  json_doc;
           Json::Features json_conf;
           Json::Reader readrow(json_conf);
@@ -97,7 +94,7 @@ namespace json_server
           }
         }
       }
-        // When done, append this to result set tree
+        // When done, append this row to result set tree
       _json_out["result_set"].append(json_row);
     }
     _json_out["sqlstate"]= _sql_executor->getSqlState();

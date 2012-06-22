@@ -41,76 +41,64 @@ namespace drizzle_plugin
 namespace json_server
 {
   /**
-   * a class.
-   * used to generate sql string.
+   * Generate sql string from input json.
    */
   class SQLGenerator
   {
     private:
       /**
-       * a private variable.
-       * stores input json object. 
+       * Stores input json object. 
        */
       Json::Value _json_in;
       /**
-       * a private variable.
-       * stores output json object. 
+       * Stores output json object. 
        */
       Json::Value _json_out;
       /**
-       * a private variable.
-       * stores sql string. 
+       * Stores sql string. 
        */
       string _sql;
       /**
-       * a private variable.
-       * stores schema being used. 
+       * Stores schema being used. 
        */
       const char* _schema;
       /**
-       * a private variable.
-       * stores table being used. 
+       * Stores table being used. 
        */
       const char* _table;
       /**
-       * a private function variable.
-       * used to generate sql string corresponds to GET request.
+       * Generate sql string corresponds to GET request.
        */
       void generateGetSql() ;
       /**
-       * a private function variable.
-       * used to generate sql string corresponds to POST request.
+       * Generate sql string corresponds to POST request.
        */
       void generatePostSql() ;
       /**
-       * a private function variable.
-       * used to generate sql string corresponds to DELETE request.
+       * Generate sql string corresponds to DELETE request.
        */
       void generateDeleteSql() ; 
 
     public:
       /**
-       * a constructor.
-       * intializes the members variables.
+       * Constructor.
+       * 
        * @param json_in a Json::Value object.
        * @param schema a constant character pointer.
        * @param table a constant character pointer.
        */
       SQLGenerator(const Json::Value json_in,const char* schema,const char* table);
       /**
-       * a function variable.
-       * used to generate sql string corresponds to a request type.
-       * @param type a evhttp_cmd_type enum
+       * Generate sql string that corresponds to a request type.
+       * @param type GET, POST or DELETE
        */
       void generateSql(enum evhttp_cmd_type type);
       /**
-       * a function variable.
-       * used to generate CREATE TABLE sql string
+       * Generate CREATE TABLE sql string (for POST, when needed)
        */
       void generateCreateTableSql();
       /**
-       * a constant function variable.
-       * used to get sql string.
+       * Get sql string.
        * @return a constant sql string.
        */
       const string getSQL() const

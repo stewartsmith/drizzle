@@ -51,7 +51,8 @@ namespace json_server
       }
       else
       { 
-        // Creates a table if it doesn't exist for POST request.
+        // For POST request, if a table didn't exist, we create the table 
+        // transparently then retry the INSERT.
         if(_type == EVHTTP_REQ_POST && executor->getErr() == drizzled::ER_TABLE_UNKNOWN)
         {
           generator->generateCreateTableSql();

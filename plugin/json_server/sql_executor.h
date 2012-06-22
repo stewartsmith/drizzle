@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file Declare a class SQLExecutor that helps to execute a sql.
+ * @file Declare a class SQLExecutor that executes given sql string.
  */
  
 
@@ -49,23 +49,20 @@ namespace drizzle_plugin
 namespace json_server 
 {
   /**
-   * a class.
-   * used to execute sql.
+   * Execute given sql string.
    */
   class SQLExecutor
   {
     public:
     /**
-     * a constructor.
-     * set the session for executing sql with user and schema.
-     * intializes the member variables.
+     * Constructor
+     * 
      * @param user a constant string.
      * @param schema a constant string.
      */
     SQLExecutor(const string &user, const string &schema);
     
     /**
-     * a function variable.
      * set the error state as true.
      */
     void setErrorState()
@@ -74,7 +71,6 @@ namespace json_server
     }
     
     /**
-     * a function variable.
      * set the error state as false.
      */
     void clearErrorState()
@@ -83,7 +79,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get error message which occurs while executing a sql.
      * @return a constant error message string.
      */
@@ -93,7 +88,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get error type which occurs while executing a sql.
      * @return a constant error type string.
      */
@@ -103,7 +97,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get error code which occurs while executing a sql.
      * @return a constant error code string.
      */
@@ -113,7 +106,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get internal sql query.
      * @return a constant sql query string.
      */
@@ -123,7 +115,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get sql state.
      * @return a constant sql state string.
      */
@@ -133,7 +124,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get resultset object.
      * @return a resultset.
      */
@@ -143,7 +133,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get sql string.
      * @return a constant sql string.
      */
@@ -153,7 +142,6 @@ namespace json_server
     }
     
     /**
-     * a constant function variable.
      * used to get error.
      * @return a constant error_t object.
      */
@@ -163,7 +151,6 @@ namespace json_server
     }
   
     /**
-     * a function variable.
      * execute a batch of SQL statements.
      * @param sql Batch of SQL statements to execute.
      * @return true Success
@@ -173,60 +160,49 @@ namespace json_server
 
   protected:
     /**
-     * a protected variable.
      * stores session.
      */
     drizzled::Session::shared_ptr _session;
 
   private:
     /**
-     * a private variable
-     * stores an error state. 
+     * Stores whether an error has happened. 
      */
     bool _in_error_state;
     /**
-     * a private variable.
-     * stores an error message occurs while executing a sql.
+     * Stores an error message if an error occurs while executing a sql.
      */
     string _error_message;
     /**
-     * a private variable.
-     * stores an error type occurs while executing a sql.
+     * Stores the error type if an error occurs while executing a sql.
      */
     string _error_type;
     /**
-     * a private variable.
-     * stores an error code occurs while executing a sql.
+     * Stores an error code if an error occurs while executing a sql.
      */
     string _error_code;
     /**
-     * a private variable.
-     * stores an internal sql query.
+     * Stores an internal sql query.
      */
     string _internal_sql_query;
     /**
-     * a private variable.
-     * stores sql state.
+     * Stores sql state.
      */
     string _sql_state;
     /**
-     * a private variable.
-     * stores execption occurs while executing a sql query.
+     * Stores execption if one occurs while executing a sql query.
      */
     sql::Exception _exception;
     /**
-     * a private variable.
-     * stores an error occurs while executing a sql.
+     * Stores the error state of executing a sql.
      */
     drizzled::error_t _err;
     /**
-     * a private variable.
-     * stores resultset of a sql transaction.
+     * Stores resultset of a sql transaction.
      */
     sql::ResultSet* _result_set;
     /**
-     * a private variable.
-     * stores a sql string.
+     * Stores a sql string.
      */
     string _sql;
   };

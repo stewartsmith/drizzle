@@ -58,7 +58,6 @@ namespace json_server
     _sql.append("`"); 
     if ( _json_in["_id"].asBool() )
     {
-      // Now we build an SQL query, using _id from json_in
   	  _sql.append(" WHERE _id = ");
 	    _sql.append(_json_in["_id"].asString());
     }

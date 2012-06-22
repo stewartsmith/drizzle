@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
- * @file An interface that helps to access sql_generator, sql_executor, sql_to_json_generator
+ * @file A Facade to to access sql_generator, sql_executor, sql_to_json_generator
  * 
  */
 
@@ -39,58 +39,50 @@ namespace drizzle_plugin
 namespace json_server
 {
   /**
-   * a class 
-   * used to access various members and variables of sql_generator, sql_executor, sql_to_json_generator.
+   * Facade class to parse incoming json, access database and return outgoing json.
    */
   class DBAccess
   {
     private:
       /**
-       * a private variable.
-       * stores input json object. 
+       * Stores input json object. 
        */
       Json::Value _json_in;
       /**
-       * a private variable.
-       * stores output json object.
+       * Stores output json object.
        */
       Json::Value _json_out;
       /**
-       * a private variable.
-       * store type of request.
+       * Store type of request.
        */
       enum evhttp_cmd_type _type;
       /**
-       * a private variable.
-       * stores schema being used.
+       * Stores schema being used.
        */
       const char* _schema;
       /**
-       * a private variable.
-       * stores table being used.
+       * Stores table being used.
        */
       const char* _table;
       
     public:
       /**
-       * a function variable.
-       * used to get output json object
+       * Get output json object.
        */ 
       const Json::Value getOutputJson() const
       {
         return _json_out;
       }
       /**
-       * a function variable
-       * used to get input json object.
+       * Get input json object.
        */
       const Json::Value getInputJson() const
       {
         return _json_in;
       }
       /**
-       * A constructor.
-       * intializes the member variables.
+       * Create DBAccess instance.
+       * 
        * @param json_in a Json::Value object.
        * @param json_out a Json::Value object.
        * @param type a evttp_cmd_type enum.
@@ -99,8 +91,7 @@ namespace json_server
        */
       DBAccess(Json::Value &json_in,Json::Value &json_out,enum evhttp_cmd_type type,const char* schema,const char* table);
       /**
-       * a function variable.
-       * used to execute operations need to access sql_generator, sql_executor and sql_to_json_generator.
+       * used to execute operations via SQLGenerator, SQLExecutor and SQLToJsonGenerator.
        */ 
       void execute();
   
