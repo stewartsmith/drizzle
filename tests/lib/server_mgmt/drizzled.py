@@ -84,7 +84,7 @@ class drizzleServer(Server):
                                                                }
                                                }  
                       }
-        self.workdir = self.system_manager.create_dirset( workdir_root
+        self.workdir = self.system_manager.create_dirset( self.test_executor.workdir
                                                         , self.dirset)
         self.vardir = self.workdir
         self.tmpdir = os.path.join(self.vardir,'tmp')
@@ -147,7 +147,9 @@ class drizzleServer(Server):
  
         """
 
-        server_args = [ self.process_server_options()
+        server_args = [ "--no-defaults" 
+                      , "--server-id=%d" %(int(self.name.split('s')[1])+1)
+                      , self.process_server_options()
                       , "--mysql-protocol.port=%d" %(self.master_port)
                       , "--mysql-protocol.connect-timeout=60"
                       , "--innodb.data-file-path=ibdata1:20M:autoextend"

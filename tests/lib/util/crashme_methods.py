@@ -70,7 +70,7 @@ def execute_crashme(test_cmd, test_executor, servers):
         
     crashme_subproc = subprocess.Popen( crashme_cmd
                                       , shell=True
-                                      , cwd=os.path.join(bot.system_manager.testdir, 'sql-bench')
+                                      , cwd=os.path.join(bot.system_manager.testdir, 'test_tools/sql-bench')
                                       , env=bot.working_environment
                                       , stdout = crashme_output
                                       , stderr = subprocess.STDOUT
