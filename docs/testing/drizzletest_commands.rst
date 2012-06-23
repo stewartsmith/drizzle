@@ -669,11 +669,19 @@ eval
 
 :Syntax:
 
-:program:``
+:program:`eval statement`
+
+``eval`` command replaces all the variables within the statement with their corresponding values. This processed statement is then sent to the server for execution. In short, eval provides ``variable expansion`` unlike using just ``statement`` alone.
+
+.. note:: In order to specify a `$` character, use \$.
 
 :Example:
 
 .. code-block:: python
+
+    eval USE $DB;
+    eval CHANGE MASTER TO MASTER_PORT=$SLAVE_MYPORT;
+    eval PREPARE STMT FROM "$stmt_1";
 
 .. _exec:
 
@@ -682,11 +690,21 @@ exec
 
 :Syntax:
 
-:program:``
+:program:`exec command [arg1[,arg2[,...]]]`
+
+``exec`` executes shell commands using the ``popen()`` library call. Variables used in the command are replaced by their corresponding values. In order to specify a `$` character, use \$
+
+.. note:: In Cygwin, the commands are executed from cmd.exe. Some commands such as the ``rm`` cannot be executed using exec. For such cases, use ``system`` command.
 
 :Example:
 
 .. code-block:: python
+
+    --exec $MYSQL_DUMP --xml --skip-create test
+    --exec rm $MYSQLTEST_VARDIR/tmp/t1
+    exec $MYSQL_SHOW test -v -v;
+    
+.. note:: exec and system commands may perform file system operations. But in that case, the test portability is reduced because, the commands tend to be OS specific. In the motive of providing portability, drizzletest makes available several commands like remove_file, chmod_file, mkdir etc.
 
 .. _exit:
 
@@ -695,11 +713,9 @@ exit
 
 :Syntax:
 
-:program:``
+:program:`exit`
 
-:Example:
-
-.. code-block:: python
+``exit`` terminates a test. However, the termination is considered as normal and will not consider it as a failure.
 
 .. _file_exists:
 
@@ -708,11 +724,15 @@ file_exists
 
 :Syntax:
 
-:program:``
+:program:`file_exists file_name`
+
+``file_exists`` returns true if the file ``file_name`` exists, else it returns false. The file name can be provided via variable substitution. 
 
 :Example:
 
 .. code-block:: python
+
+    file_exists /etc/passwd;
 
 .. _horizontal_results:
 
@@ -721,11 +741,15 @@ horizontal_results
 
 :Syntax:
 
-:program:``
+:program:`horizontal_results`
+
+``horizontal_results`` displays the query results in horizontal format. By default, the results are displayed horizontally.
 
 :Example:
 
 .. code-block:: python
+
+    --horizontal_results
 
 .. _if:
 
@@ -734,12 +758,26 @@ if
 
 :Syntax:
 
-:program:``
+:program:`if(expr)`
+
+``if`` begins an if block. drizzletest executes the block if the condition / expression evaluates to a non-zero number. The block ends with ``end`` of ``}``.
+
+.. note:: if block doesn't have an else block
 
 :Example:
 
 .. code-block:: python
 
+    let $condition=1;
+    if($condition)
+    {
+        echo if block is executed;
+    }
+    if(!$condition)
+    {
+        echo if block is not executed;
+    }
+    
 .. _inc:
 
 inc
@@ -747,11 +785,16 @@ inc
 
 :Syntax:
 
-:program:``
+:program:`inc $var_name`
+
+``inc`` increments a variable of the type integer. If the variable is of any other type, the result is undefined.
 
 :Example:
 
 .. code-block:: python
+
+    inc $var;
+    inc $10
 
 .. _let:
 
@@ -760,7 +803,9 @@ let
 
 :Syntax:
 
-:program:``
+:program:`let $var_name = value`
+
+
 
 :Example:
 
@@ -773,11 +818,17 @@ mkdir
 
 :Syntax:
 
-:program:``
+:program:`mkdir dir_name`
+
+``mkdir`` creates a directory with the name specified by ``dir_name``. 
+
+.. note:: This command returns 0 for success and returns 1 for failure.
 
 :Example:
 
 .. code-block:: python
+
+    --mkdir repodir
 
 .. _list_files:
 
@@ -786,11 +837,17 @@ list_files
 
 :Syntax:
 
-:program:``
+:program:`list_files dir_name [pattern]`
+
+``list_files`` is used to list all the files in the directory given by ``dir_name``. A pattern can be given optionally. If given, ``list_files`` displays the files in the directory ``dir_name`` and matching the given ``pattern``
+
+.. note:: The pattern may contain wildcards 
 
 :Example:
 
 .. code-block:: python
+
+    --list_files $MYSQLD_DATADIR/test t1*
 
 .. _list_files_append_file:
 
@@ -799,11 +856,21 @@ list_files_append_file
 
 :Syntax:
 
-:program:``
+:program:`list_files_append_file file_name dir_name [pattern]`
+
+``list_files_append_file`` is similar to ``list_file``. Unlike list_file, this command lists the file in the given directory ``dir_name`` and appends the result into a file specified by ``file_name``.
+
+.. note:: If the file ``file_name`` is not present, then it is created
+
+ A pattern can be given optionally. If given, ``list_files_append_file`` displays the files which match the given ``pattern``.
+
+.. note:: The pattern may contain wildcards
 
 :Example:
 
 .. code-block:: python
+
+    --list_files_append_file $DRIZZLE_FILE_LIST_DIR/filelist $DRIZZLE_FILE_LIST_DIR/testdir *.txt;
 
 .. _list_files_write_file:
 
@@ -812,12 +879,18 @@ list_files_write_file
 
 :Syntax:
 
-:program:``
+:program:`list_files_write_file file_name dir_name [pattern]`
+
+``list_files_write_file`` is similar to ``list_file_append_file``. Unlike list_file_append_file, this command always writes the result into a new file. 
+
+.. note:: Even if the file ``file_name`` already exists, a new file will be created and the existing file will be replaced with it.
 
 :Example:
 
 .. code-block:: python
 
+    --list_file_write_file $DRIZZLE_FILE_LIST_DIR/filelist $DRIZZLE_FILE_LIST_DIR/testdir *.txt;
+    
 .. _lowercase_result:
 
 lowercase_result
@@ -825,11 +898,17 @@ lowercase_result
 
 :Syntax:
 
-:program:``
+:program:`lowercase_result`
+
+``lowercase_result`` will convert the resulting output of executing a SQL command into lowercase characters. This command is useful for achieving consistent results across different platforms.
+
+.. note:: This command can be used along with other commands like ``replace`` and ``sorted_result``. In that case, lowercase is performed first and followed by the other command
 
 :Example:
 
 .. code-block:: python
+
+    --lowercase_result
 
 .. _move_file:
 
@@ -838,11 +917,21 @@ move_file
 
 :Syntax:
 
-:program:``
+:program:`move_file from_file to_file`
+
+``move_file`` will move the file contents from the file specified by ``from_file`` to the file specified by ``to_file``. 
+
+.. note:: move_file actually performs a ``file renaming``. 
+
+The ``from_file`` will be deleted after the contents are moved to the ``to_file``
+
+.. note:: The filenames can be specified using variables.
 
 :Example:
 
 .. code-block:: python
+
+    move_file $DRIZZLE_FILE_LIST_DIR/source $DRIZZLE_FILE_LIST_DIR/destination.out;
 
 .. _perl:
 
@@ -851,11 +940,23 @@ perl
 
 :Syntax:
 
-:program:``
+:program:`perl [terminator]`
+
+``perl`` command uses ``Perl`` to execute the lines following this command. This processing ends, when a line with the terminator is reached. 
+
+.. note:: The default terminator is ``EOF``. The terminator can be changed by specifying along with the command.
 
 :Example:
 
 .. code-block:: python
+
+    perl;
+    print "using Perl to execute this line";
+    EOF
+    
+    perl END;
+    print "using Perl to execute till END";
+    END
 
 .. _ping:
 
@@ -864,11 +965,11 @@ ping
 
 :Syntax:
 
-:program:``
+:program:`ping`
 
-:Example:
+``ping`` command pings the server. Whenever this command is issued, the drizzle_ping() API function is invoked. 
 
-.. code-block:: python
+.. note:: ping is used to reconnect to a server when the connection is lost.
 
 .. _query:
 
@@ -877,11 +978,11 @@ query
 
 :Syntax:
 
-:program:``
+:program:`query [statement]`
 
-:Example:
+``query`` command is used to send a query specified by ``statement`` to the server for execution. 
 
-.. code-block:: python
+.. note:: This command is useful when we need to execute a SQL statement which begins with a drizzletest command.
 
 .. _query_get_value:
 
@@ -890,7 +991,7 @@ query_get_value
 
 :Syntax:
 
-:program:``
+:program:`query_get_value(query,col_name,row_num)`
 
 :Example:
 
@@ -903,11 +1004,15 @@ query_horizontal
 
 :Syntax:
 
-:program:``
+:program:`query_horizontal statement`
+
+``query_horizontal`` is used to execute the SQL specified using ``statement`` and then outputs the result of executing the query in horizontal manner.
 
 :Example:
 
 .. code-block:: python
+
+    query_horizontal SELECT VERSION();
 
 .. _query_vertical:
 
@@ -916,11 +1021,15 @@ query_vertical
 
 :Syntax:
 
-:program:``
+:program:`query_vertical statement`
+
+``query_vertical`` is used to execute the SQL specified using ``statement`` and then outputs the result of executing the query in vertical manner.
 
 :Example:
 
 .. code-block:: python
+
+    query_vertical SELECT VERSION();
 
 .. _real_sleep:
 
@@ -929,11 +1038,19 @@ real_sleep
 
 :Syntax:
 
-:program:``
+:program:`real_sleep num`
+
+``real_sleep`` command is used to sleep for a time specified by ``num``. The time is in seconds. This command should not be used above the required level. This makes the test suite slower.
+
 
 :Example:
 
 .. code-block:: python
+
+    --real_sleep 7;
+    real_sleep 24
+    
+.. note:: real_sleep is not affected by --sleep command-line option. However sleep command is affected
 
 .. _reap:
 
@@ -942,11 +1059,11 @@ reap
 
 :Syntax:
 
-:program:``
+:program:`reap`
 
-:Example:
+``reap`` command is used to receive a result of an SQL statement that is sent using the ``send`` command. 
 
-.. code-block:: python
+.. note:: The reap command should not be used if there is no send command issued prior to that. 
 
 .. _remove_file:
 
@@ -955,11 +1072,17 @@ remove_file
 
 :Syntax:
 
-:program:``
+:program:`remove_file file_name`
+
+``remove_file`` command is used to remove a file specified using  ``file_name``. The file name can be specified using variables. 
 
 :Example:
 
 .. code-block:: python
+
+    remove_file $DRIZZLE_FILE_DIR/temp_file;
+    
+.. note:: If the file specified using ``file_name`` is not existing, an error is thrown.
 
 .. _remove_files_wildcard:
 
@@ -968,11 +1091,19 @@ remove_files_wildcard
 
 :Syntax:
 
-:program:``
+:program:`remove_files_wildcard dir_name [pattern]`
+
+This command is used to remove files in a directory specified using ``dir_name``, whose filenames match with the pattern given. Directories, sub-directories and files in sub-directories will not be deleted even if they match the pattern.
+
+.. note:: ``?`` is used to represent single character. ``* `` is used to represent any sequence of 0 or more characters.  ``.`` is treated as normal character. The pattern should not include ``/``
+
+.. note:: If no pattern is included, then this command deletes all the files in the directory. The directory remains undeleted.
 
 :Example:
 
 .. code-block:: python
+
+    remove_files_wildcard $DRIZZLE_FILE_DIR temp*.txt;
 
 .. _replace_column:
 
@@ -981,7 +1112,7 @@ replace_column
 
 :Syntax:
 
-:program:``
+:program:`replace_column col_num value [col_num value [...] ]`
 
 :Example:
 
@@ -994,7 +1125,7 @@ replace_regex
 
 :Syntax:
 
-:program:``
+:program:`replace_regex /pattern/replacement/[i] ...`
 
 :Example:
 
@@ -1007,11 +1138,16 @@ replace_result
 
 :Syntax:
 
-:program:``
+:program:`replace_result from_val to_val [from_val to_val [...]]`
+
+This command replaces the ``from_val`` character in a string by the character specified using ``to_val``. We can issue more than one (from_val/to_val) pairs. 
 
 :Example:
 
 .. code-block:: python
+
+    --replace_result 1024 MAX_KEY_LENGTH 3072 MAX_KEY_LENGTH
+    replace_result $MASTER_MYPORT MASTER_PORT;
 
 .. _require:
 
@@ -1020,11 +1156,18 @@ require
 
 :Syntax:
 
-:program:``
+:program:`require file_name`
+
+``require`` command is used to specify a file ``file_name`` for comparing the results of the next query with the contents of the file. 
+
+.. note:: If the contents of the file, does not match with the results of the query / there is some error, then the test aborts.
 
 :Example:
 
 .. code-block:: python
+
+    --require r/test1.result
+    --require r/test2.require
 
 .. _result:
 
@@ -1033,11 +1176,11 @@ result
 
 :Syntax:
 
-:program:``
+:program:`result file_name`
 
-:Example:
+``result`` command is used to compare the contents of the file specified using ``file_name`` with the result of a test case, only after the test completes. If there is no match, then the result is written to ``r/file_name.reject`` file.
 
-.. code-block:: python
+.. note:: If the --record command-line option is given, then the result is written to the file.result.
 
 .. _rmdir:
 
@@ -1046,11 +1189,15 @@ rmdir
 
 :Syntax:
 
-:program:``
+:program:`rmdir dir_name`
+
+``rmdir`` command is used to delete / remove a directory specified by ``dir_name``. This command return 0 if the operation is successful or 1 if the operation fails.
 
 :Example:
 
 .. code-block:: python
+
+    --rmdir DRIZZLE_DIR/testdir
 
 .. _save_master_pos:
 
@@ -1059,11 +1206,9 @@ save_master_pos
 
 :Syntax:
 
-:program:``
+:program:`save_master_pos`
 
-:Example:
-
-.. code-block:: python
+``save_master_pos`` saves the current binary log file name and position for master replication server. These can be used with commands like ``sync_with_master`` and ``sync_slave_with_master``
 
 .. _send:
 
@@ -1072,11 +1217,24 @@ send
 
 :Syntax:
 
-:program:``
+:program:`send [statement]`
+
+``send`` command is used to send a SQL statement to the server. The result of the statement must be received with reap command. 
+
+.. note:: if statement is missed, then the next statement which is executed, will be sent. 
 
 :Example:
 
 .. code-block:: python
+
+    send SELECT VERSION();
+    
+.. code-block:: python
+
+    send;
+    SELECT VERSION();
+    
+.. note:: Another SQL statement cannot be sent on the same connection between the send and reap.
 
 .. _send_eval:
 
@@ -1085,11 +1243,15 @@ send_eval
 
 :Syntax:
 
-:program:``
+:program:`send_eval [statement]`
+
+This command sends the ``statement`` specifying the command, to the server, after evaluation. Thus, its a combination of send + eval. 
 
 :Example:
 
 .. code-block:: python
+
+    --send_eval $STATEMENT
 
 .. _send_quit:
 
@@ -1098,11 +1260,18 @@ send_quit
 
 :Syntax:
 
-:program:``
+:program:`send_quit [timeout]`
+
+``send_quit`` command is used to stop the server. This command has a view of the process ID of the server. It waits for the server to close by itself. If the server's process ID is still available even after the stipulated time ``timeout``, the process is killed. 
+
+.. note:: If the timeout is not mentioned, it defaults to 60 seconds.
 
 :Example:
 
 .. code-block:: python
+
+    send_quit;
+    send_quit 100;
 
 .. _shutdown_server:
 
@@ -1111,11 +1280,17 @@ shutdown_server
 
 :Syntax:
 
-:program:``
+:program:`shutdown_server [timeout]`
+
+This command is similar to 
+:ref:`send_quit` command.
 
 :Example:
 
 .. code-block:: python
+
+    shutdown_server;
+    shutdown_server 100;
 
 .. _skip:
 
@@ -1124,11 +1299,20 @@ skip
 
 :Syntax:
 
-:program:``
+:program:`skip [message]`
+
+``skip`` is used to terminate the processing of the test file. It stops the execution and displays the message specified as argument.
 
 :Example:
 
 .. code-block:: python
+
+    let $condition=$cond_for_execution
+    if(!$condition)
+    {
+        skip condition fails;
+    }
+        
 
 .. _sleep:
 
@@ -1137,11 +1321,23 @@ sleep
 
 :Syntax:
 
-:program:``
+:program:`sleep num`
+
+``sleep`` command is used to sleep for specified ``num`` seconds. The num value can be fractional too.
+
+.. note:: If a --sleep command-line argument is also given, it supresses the effect of sleep command. 
+
+:Example:
+
+If sleep 100 is given along with --sleep=50, then the command sleep 100 will sleep for 50 seconds only 
 
 :Example:
 
 .. code-block:: python
+
+    --sleep 50;
+    sleep 100;
+    sleep 50.25;
 
 .. _sorted_result:
 
@@ -1150,7 +1346,9 @@ sorted_result
 
 :Syntax:
 
-:program:``
+:program:`sorted_result`
+
+
 
 :Example:
 
@@ -1176,11 +1374,9 @@ start_timer
 
 :Syntax:
 
-:program:``
+:program:`start_timer`
 
-:Example:
-
-.. code-block:: python
+This command will restart an existing timer. Initially, the timer is always restarted during the start of each drizzletest.
 
 .. _sync_slave_with_master:
 
@@ -1189,7 +1385,9 @@ sync_slave_with_master
 
 :Syntax:
 
-:program:``
+:program:`sync_slave_with_master [connection_name]`
+
+
 
 :Example:
 
@@ -1228,11 +1426,15 @@ vertical_results
 
 :Syntax:
 
-:program:``
+:program:`vertical_results`
+
+This command will display the results in vertical format. Horizontal display is the default format.
 
 :Example:
 
 .. code-block:: python
+
+    --vertical_results
 
 .. _wait_for_slave_to_stop:
 
@@ -1241,11 +1443,9 @@ wait_for_slave_to_stop
 
 :Syntax:
 
-:program:``
+:program:`wait_for_slave_to_stop`
 
-:Example:
-
-.. code-block:: python
+This command polls the connection to the slave replication server, by executing SHOW STATUS LIKE `slave_running` statements, untill the result is ``OFF``
 
 .. _while:
 
@@ -1254,11 +1454,22 @@ while
 
 :Syntax:
 
-:program:``
+:program:`while(expr)`
+
+This statment marks the beginning of the while block. This block ends with ``end`` statement. The while block keeps on executing untill the expression ``expr`` evaluated to false.
+
+.. note:: The expr should evaluate to false at some point of time. Else, the block moves into an infinite loop
 
 :Example:
 
 .. code-block:: python
+
+    let $iter=10;
+    while($iter)
+    {
+        echo "executing this statement";
+        dec $iter;
+    }
 
 .. _write_file:
 
@@ -1267,10 +1478,26 @@ write_file
 
 :Syntax:
 
-:program:``
+:program:`write_file file_name [terminator]`
+
+``write_file`` command is used to write the lines following it, to the file specified using ``file_name``, untill the terminator is reached. 
+
+.. note:: The default terminator is EOF
 
 :Example:
 
 .. code-block:: python
+
+    write_file $DRIZZLE_FILE_DIR/test;
+    test condition 1
+    test condition 2
+    EOF
+    
+    write_file $DRIZZLE_FILE_DIR/test END;
+    test condition 1
+    test condition 2
+    END
+    
+.. note:: If the file specified using ``file_name`` already exists, an error is thrown.
    
    
