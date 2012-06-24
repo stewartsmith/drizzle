@@ -36,16 +36,18 @@ namespace json_server
     _table=table;
     _sql_executor=sqlExecutor;
     _json_out=json_out;
+  
   }
   
   void SQLToJsonGenerator::generateSQLErrorJson()
-  {
-    _json_out["error_type"]= _sql_executor->getErrorType();
-    _json_out["error_message"]= _sql_executor->getErrorMessage();
-    _json_out["error_code"]= _sql_executor->getErrorCode();
+  {  
+    _exception= _sql_executor->getException(); 
+    _json_out["error_type"]= "sql error";
+    _json_out["error_message"]= _exception.getErrorMessage();
+    _json_out["error_code"]= _exception.getErrorCode();
     _json_out["internal_sql_query"]= _sql_executor->getSql();
     _json_out["schema"]= _schema;
-    _json_out["sqlstate"]= _sql_executor->getSqlState();
+    _json_out["sqlstate"]= _exception.getSQLState();
     _json_out["table"]= _table;
   }
   
@@ -97,17 +99,19 @@ namespace json_server
         // When done, append this row to result set tree
       _json_out["result_set"].append(json_row);
     }
-    _json_out["sqlstate"]= _sql_executor->getSqlState();
+    _json_out["sqlstate"]= _exception.getSQLState();
   }
   
   void SQLToJsonGenerator::generatePostJson()
   {
-    _json_out["sqlstate"]= _sql_executor->getSqlState();
+    _exception= _sql_executor->getException();
+    _json_out["sqlstate"]= _exception.getSQLState();
   }
   
   void SQLToJsonGenerator::generateDeleteJson()
   {
-    _json_out["sqlstate"]= _sql_executor->getSqlState();
+    _exception= _sql_executor->getException();
+    _json_out["sqlstate"]= _exception.getSQLState();
   }
 
 }

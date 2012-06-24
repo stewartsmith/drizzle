@@ -70,7 +70,9 @@ namespace json_server
 {
 static const string DEFAULT_SCHEMA = "test";
 static const string DEFAULT_TABLE = "";
-static const string JSON_SERVER_VERSION = "0.3"; 
+static const string JSON_SERVER_VERSION = "0.3";
+static const bool ALLOW_DROP_TABLE=false;
+bool allow_drop_table;
 string default_schema;
 string default_table;
 bool updateSchema(Session *, set_var* var); 
@@ -302,37 +304,24 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
 {
   Json::Value json_out;
-  Json::Value json_in;
-  Json::Features json_conf;
-  Json::Reader reader(json_conf);
-  Json::StyledWriter writer;
+  Json::Value json_in; 
   std::string sql;
   const char* schema;
   const char* table;
 
-  HttpHandler* handler = new HttpHandler(json_out,json_in,req);
-  handler->handleRequest();
-  table= handler->getTable();
-  if(not table || strcmp(table,"")==0)
-  {
-    table= default_table.c_str();
-  }
-
-  if(table && !strcmp(table,"")==0)
+  HttpHandler* handler = new HttpHandler(json_out,json_in,req);  
+  if(!handler->handleRequest(default_schema,default_table,allow_drop_table))
   { 
-    if(!handler->validateJson(reader))
+    if(!handler->validate())
     {
       json_in= handler->getInputJson();
       schema=handler->getSchema();
-      if(not schema || strcmp(schema, "") == 0)
-      {
-        schema = default_schema.c_str();
-      }
+      table=handler->getTable();
 
       DBAccess* dbAccess = new DBAccess(json_in,json_out,req->type,schema,table);
       dbAccess->execute();
       json_out= dbAccess->getOutputJson();
-      
+      delete(dbAccess);
     }
     else
     { 
@@ -341,11 +330,11 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
   }
   else
   {
-    handler->generateHttpError();
     json_out= handler->getOutputJson();
   }
   
-  handler->sendResponse(writer,json_out);
+  handler->sendResponse(json_out);
+  delete(handler);
 }
 
 static void shutdown_event(int fd, short, void *arg)
@@ -498,7 +487,6 @@ bool updateTable(Session *, set_var* var)
   return true; // error
 }
 
-
 static int json_server_init(drizzled::module::Context &context)
 {
  
@@ -507,7 +495,8 @@ static int json_server_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", port));
   context.registerVariable(new sys_var_std_string("schema", default_schema, NULL, &updateSchema));
   context.registerVariable(new sys_var_std_string("table", default_table, NULL, &updateTable));
-
+  context.registerVariable(new sys_var_bool_ptr("allow_drop_table", &allow_drop_table));
+  
 
 
   if (server and not server->init())
@@ -529,7 +518,9 @@ static void init_options(drizzled::module::option_context &context)
   context("table",
           po::value<string>(&default_table)->default_value(DEFAULT_TABLE),
           _("table in use by json server"));
-
+  context("allow_drop_table",
+          po::value<bool>(&allow_drop_table)->default_value(ALLOW_DROP_TABLE),
+          _("allow to drop table"));
 
 }
 

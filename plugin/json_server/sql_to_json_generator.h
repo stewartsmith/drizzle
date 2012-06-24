@@ -52,7 +52,7 @@ namespace json_server
        * @param table The table that was used.
        * @param sqlExecutor SQLExecutor instance that contains the result set or error from an executed sql query.
        */ 
-      SQLToJsonGenerator(Json::Value &json_out,const char* schema,const char* table,SQLExecutor *sqlExecutor);
+      SQLToJsonGenerator(Json::Value &json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor);
       /**
        * Used to generate error json string.
        */
@@ -86,6 +86,10 @@ namespace json_server
        * Stores instance of sqlExecutor object. 
        */
       SQLExecutor* _sql_executor;
+      /**
+       * Stores execption. 
+       */
+      sql::Exception _exception;
       /**
        * Stores schema being used. 
        */

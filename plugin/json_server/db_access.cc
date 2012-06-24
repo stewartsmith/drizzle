@@ -81,6 +81,9 @@ namespace json_server
         }
       }
       _json_out= jsonGenerator->getJson();
+      delete(jsonGenerator);
+      delete(executor);
+      delete(generator);
    }
   
 }

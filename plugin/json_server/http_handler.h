@@ -56,28 +56,35 @@ namespace json_server
       HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req);
       /**
        * Parse http request and retrieve various http headers.
-       * 
+       *
+       * @param default_schema a string.
+       * @param default_table a string.
+       * @param allow_drop_table a boolean value.
        * @return false Success
        * @return true Failure
        */
-      void handleRequest();
+      bool handleRequest(string &default_schema,string &default_table,bool allow_drop_table);
       /**
        * Parse input json query and generate input json object.
-       * 
-       * @param reader a Json::Reader object.
+       *
        * @return false Success.
        * @return true Failure.
        */
-      bool validateJson(Json::Reader reader);
+      bool validate();
       /**
        * Send http response back.
-       * @param writer a Json::Writer object.
+       *
+       * @param json_out a Json::Value object.
        */
-      void sendResponse(Json::StyledWriter writer,Json::Value &json_out);
+      void sendResponse(Json::Value &json_out);
       /**
        * Generate a http error when table is null.
        */
       void generateHttpError();
+      /**
+       * Generate a error occurs using DROP Table command.
+       */
+      void generateDropTableError();
       /**
        * Get schema being used.
        * @return a constant schema string.

@@ -41,7 +41,7 @@ namespace json_server
     _req=req;
   }
   
-  void HttpHandler::handleRequest()
+  bool HttpHandler::handleRequest(string &default_schema,string &default_table,bool allow_drop_table)
   { 
     evhttp_parse_query(evhttp_request_uri(_req), _req->input_headers);
     if(_req->type== EVHTTP_REQ_POST )
@@ -69,11 +69,37 @@ namespace json_server
     _schema = (char *)evhttp_find_header(_req->input_headers, "schema");
     _table = (char *)evhttp_find_header(_req->input_headers, "table");
     _id = (char *)evhttp_find_header(_req->input_headers, "_id");
+
+    if((not _id || strcmp(_id,"")==0) && _req->type==EVHTTP_REQ_DELETE && !allow_drop_table)
+    {
+      generateDropTableError();
+      return true;
+    }
     
+    if(not _schema || strcmp(_schema, "") == 0)
+    {
+      _schema = default_schema.c_str();
+    }
+
+    if(not _table || strcmp(_table,"")==0)
+    {
+      _table= default_table.c_str();
+    }
+    
+    if(not _table || strcmp(_table,"")==0)
+    {
+      generateHttpError();
+      return true;
+    }
+
+    return false;
+
   }
   
-  bool HttpHandler::validateJson(Json::Reader reader)
+  bool HttpHandler::validate()
   {
+    Json::Features json_conf;
+    Json::Reader reader(json_conf);
     bool retval = reader.parse(_query,_json_in);
     if (retval != true) 
     {
@@ -97,16 +123,24 @@ namespace json_server
     _http_response_code = HTTP_NOTFOUND;
     _http_response_text = "table must be specified in URI query string.";
   }
-  
-  void HttpHandler::sendResponse(Json::StyledWriter writer,Json::Value &__json_out)
+
+  void HttpHandler::generateDropTableError()
   {
+    _json_out["error_type"]="http error";
+    _json_out["error_message"]= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
+    _http_response_code= HTTP_NOTFOUND;
+    _http_response_text= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
+  }
+  
+  void HttpHandler::sendResponse(Json::Value &json_out)
+  { 
     struct evbuffer *buf = evbuffer_new();
     if(buf == NULL)
     {
       return;
     }
-
-    std::string output= writer.write(__json_out);
+    Json::StyledWriter writer;
+    std::string output= writer.write(json_out);
     evbuffer_add(buf, output.c_str(), output.length());
     evhttp_send_reply( _req, _http_response_code, _http_response_text, buf);  
   }

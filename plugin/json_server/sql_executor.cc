@@ -55,8 +55,6 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
 bool SQLExecutor::executeSQL(string &sql)
 {
   _sql=sql;
-  if (not _in_error_state)
-    _error_message.clear();
 
   Execute execute(*(_session.get()), true);
 
@@ -67,8 +65,6 @@ bool SQLExecutor::executeSQL(string &sql)
 
   _err= _exception.getErrorCode();
 
-  _sql_state= _exception.getSQLState();
-
   if ((_err != EE_OK) && (_err != ER_EMPTY_QUERY))
   {
     /* avoid recursive errors */
@@ -77,11 +73,6 @@ bool SQLExecutor::executeSQL(string &sql)
       return true;
     }
 
-    _in_error_state= true; 
-    _error_type= "sql error";
-    _error_message= _exception.getErrorMessage();
-    _error_code= _exception.getErrorCode();
-    _internal_sql_query=sql;
 
     return false;
   }

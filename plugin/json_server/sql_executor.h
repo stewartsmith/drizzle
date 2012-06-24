@@ -79,50 +79,14 @@ namespace json_server
     }
     
     /**
-     * used to get error message which occurs while executing a sql.
-     * @return a constant error message string.
+     * used to get error execption which occurs while executing a sql.
+     * @return a constant sql exception object.
      */
-    const string& getErrorMessage() const
+    const sql::Exception getException() const
     {
-      return _error_message;
+      return _exception;
     }
-    
-    /**
-     * used to get error type which occurs while executing a sql.
-     * @return a constant error type string.
-     */
-    const string& getErrorType() const
-    {
-      return _error_type;
-    }
-    
-    /**
-     * used to get error code which occurs while executing a sql.
-     * @return a constant error code string.
-     */
-    const string& getErrorCode() const
-    {
-      return _error_code;
-    }
-    
-    /**
-     * used to get internal sql query.
-     * @return a constant sql query string.
-     */
-    const string& getInternalSqlQuery() const
-    {
-      return _internal_sql_query;	
-    }
-    
-    /**
-     * used to get sql state.
-     * @return a constant sql state string.
-     */
-    const string& getSqlState() const
-    {
-      return _sql_state;
-    }
-    
+
     /**
      * used to get resultset object.
      * @return a resultset.
@@ -169,26 +133,6 @@ namespace json_server
      * Stores whether an error has happened. 
      */
     bool _in_error_state;
-    /**
-     * Stores an error message if an error occurs while executing a sql.
-     */
-    string _error_message;
-    /**
-     * Stores the error type if an error occurs while executing a sql.
-     */
-    string _error_type;
-    /**
-     * Stores an error code if an error occurs while executing a sql.
-     */
-    string _error_code;
-    /**
-     * Stores an internal sql query.
-     */
-    string _internal_sql_query;
-    /**
-     * Stores sql state.
-     */
-    string _sql_state;
     /**
      * Stores execption if one occurs while executing a sql query.
      */
