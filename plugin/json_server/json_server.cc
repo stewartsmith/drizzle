@@ -310,9 +310,9 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
   const char* table;
 
   HttpHandler* handler = new HttpHandler(json_out,json_in,req);  
-  if(!handler->handleRequest(default_schema,default_table,allow_drop_table))
+  if(!handler->handleRequest(default_schema,default_table))
   { 
-    if(!handler->validate())
+    if(!handler->validate(allow_drop_table))
     {
       json_in= handler->getInputJson();
       schema=handler->getSchema();

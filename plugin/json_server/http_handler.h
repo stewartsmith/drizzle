@@ -63,14 +63,14 @@ namespace json_server
        * @return false Success
        * @return true Failure
        */
-      bool handleRequest(string &default_schema,string &default_table,bool allow_drop_table);
+      bool handleRequest(string &default_schema,string &default_table);
       /**
        * Parse input json query and generate input json object.
        *
        * @return false Success.
        * @return true Failure.
        */
-      bool validate();
+      bool validate(bool allow_drop_table);
       /**
        * Send http response back.
        *

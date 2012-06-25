@@ -47,15 +47,25 @@ command line options.
    :Default: test
    :Variable: :ref:`json_server_schema <json_server_schema>`
 
+   Schema which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
 .. option:: --json-server.table ARG
 
    :Default:
    :Variable: :ref:`json_server_table <json_server_table>`
 
+   Table which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
 .. option:: --json-server.allow_drop_table ARG
 
-   :Default: false/OFF
+   :Default: OFF
    :Variable: :ref:`json_server_allow_drop_table <json_server_allow_drop_table>`
+
+   When json-server.allow_drop_table is set to ON, it is possible to drop
+   a table with a HTTP DELETE request with no _id specified. When set to OFF
+   (the default), omitting _id will result in an error.
 
 .. _json_server_variables:
 
@@ -81,7 +91,8 @@ See `variables` for more information about querying and setting variables.
     :Scope: Global
     :Dynamic: yes
 
-    Schema in use by json_server.Default value (test)
+   Schema which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
 
 .. _json_server_table:
 
@@ -90,7 +101,8 @@ See `variables` for more information about querying and setting variables.
     :Scope: Global
     :Dynamic: yes
 
-    Table in use by json_sever.
+   Table which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
 
 .. _json_server_allow_drop_table:
 
@@ -99,7 +111,9 @@ See `variables` for more information about querying and setting variables.
     :Scope: Global
     :Dynamic: yes
 
-    Allow drop table. Default Value (false) 
+   When json-server.allow_drop_table is set to ON, it is possible to drop
+   a table with a HTTP DELETE request with no _id specified. When set to OFF
+   (the default), omitting _id will result in an error.
 
 .. _json_server_apis:
 
@@ -149,8 +163,9 @@ course):
       "version" : "7.1.31.2451-snapshot"
     }
 
-The root URI returns a simple HTML GUI that can be used to test both the SQL and
-pure JSON APIs. Just point your browser to http://localhost:8086/ and try it!
+The root URI / returns a simple HTML GUI that can be used to test both the SQL 
+and pure JSON APIs. Just point your browser to http://localhost:8086/ and try 
+it!
 
 .. _json_server_sql_api:
 
@@ -268,9 +283,9 @@ Following parameters can be passed in the URI query string:
 
    :Type: String
    :Mandatory: No
-   :Default: test
+   :Default: Specified by json_server_schema
 
-   Name of the schema which we are querying. The schema must exist. 
+   Name of the schema which we are querying. The schema must exist.
 
 .. _json_server_parameters_table:
 
@@ -278,7 +293,7 @@ Following parameters can be passed in the URI query string:
 
    :Type: String
    :Mandatory: No
-   :Default: jsonkv
+   :Default: Specified by json_server_table
 
    Name of the table which we are querying. For POST requests, if the table 
    doesn't exist, it will be automatically created. For other requests the
@@ -362,11 +377,11 @@ GET a document
 
 The equivalent of an SQL SELECT is HTTP GET.
 
-Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+Below we use the query document ``{ "query" : {"_id" : 1 } }`` in URL encoded form:
 
 .. code-block:: none
   
-  GET /json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D%0A
+  GET /json?schema=test&table=people&query={%22query%22%20:%20{%20%22_id%22%20:%201}%20}
 
 Returns
 
@@ -418,11 +433,11 @@ updating.)
 Deleting a record
 ^^^^^^^^^^^^^^^^^
  
-Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+Below we use the query document ``{ "query" : {"_id" : 1 } }`` in URL encoded form:
 
 .. code-block:: none
   
-  DELETE http://localhost:8086/json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D
+  DELETE /json?schema=test&table=people&query={%22query%22%20:%20{%20%22_id%22%20:%201}%20}
 
 Returns:
 
@@ -496,3 +511,13 @@ v0.2
 ^^^^
 * /json API supporting pure JSON key-value operations (POST, GET, DELETE)
 * Automatic creation of table on first post. 
+
+v0.3
+^^^^
+* Test cases for /json API
+* Major refactoring of the functionality behind /json
+* Changed structure of the query document to be 
+  ``{ "query" : <old query document> }`` This is to allow for future 
+  extensibility.
+* New options json_server.schema, json_server.table and 
+  json_server.allow_drop_table
