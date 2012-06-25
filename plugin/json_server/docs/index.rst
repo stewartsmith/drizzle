@@ -40,7 +40,22 @@ command line options.
    :Default: 8086
    :Variable: :ref:`json_server_port <json_server_port>`
 
-   Port number to use for connection or 0 for default (port 8086) 
+   Port number to use for connection or 0 for default (port 8086)
+
+.. option:: --json-server.schema ARG
+
+   :Default: test
+   :Variable: :ref:`json_server_schema <json_server_schema>`
+
+.. option:: --json-server.table ARG
+
+   :Default:
+   :Variable: :ref:`json_server_table <json_server_table>`
+
+.. option:: --json-server.allow_drop_table ARG
+
+   :Default: false/OFF
+   :Variable: :ref:`json_server_allow_drop_table <json_server_allow_drop_table>`
 
 .. _json_server_variables:
 
@@ -58,6 +73,33 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
 
    Port number to use for connection or 0 for default (port 8086) 
+
+.. _json_server_schema:
+
+* ``json_server_schema``
+
+    :Scope: Global
+    :Dynamic: yes
+
+    Schema in use by json_server.Default value (test)
+
+.. _json_server_table:
+
+* ``json_server_table``
+
+    :Scope: Global
+    :Dynamic: yes
+
+    Table in use by json_sever.
+
+.. _json_server_allow_drop_table:
+
+* ``json_server_allow_drop_table``
+
+    :Scope: Global
+    :Dynamic: yes
+
+    Allow drop table. Default Value (false) 
 
 .. _json_server_apis:
 
@@ -103,6 +145,7 @@ course):
 
     $ curl http://localhost:8086/version
     {
+      "json_server_version" : "0.3"
       "version" : "7.1.31.2451-snapshot"
     }
 
@@ -217,7 +260,7 @@ Following parameters can be passed in the URI query string:
 
    .. code-block:: none
 
-       { "_id" : 1 }
+       { query:{"_id" : 1 }}
 
 .. _json_server_json_parameters_schema:
 
@@ -249,8 +292,11 @@ POSTing a document
   POST /json?schema=test&table=people HTTP/1.1
 
   {
-    "_id" : 2, 
-    "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
+    query:
+    {
+      "_id" : 2, 
+      "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
+    }
   }
 
 Returns:
@@ -376,7 +422,7 @@ Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
 
 .. code-block:: none
   
-  DELETE http://14.139.228.217:8086/json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D
+  DELETE http://localhost:8086/json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D
 
 Returns:
 
@@ -429,7 +475,7 @@ Stewart Smith, Henrik Ingo, Mohit Srivastava
 Version
 -------
 
-This documentation applies to **json_server 0.2**.
+This documentation applies to **json_server 0.3**.
 
 To see which version of the plugin a Drizzle server is running, execute:
 
