@@ -53,30 +53,30 @@ namespace json_server
        * @param json_in an empty json input object.
        * @param req the http request object to parse.
        */
-      HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req);
+      HttpHandler(Json::Value* json_out,Json::Value json_in,struct evhttp_request *req);
       /**
        * Parse http request and retrieve various http headers.
+       *
+       * @return false Success
+       * @return true Failure
+       */
+      bool handleRequest();
+      /**
+       * Parse input json query and generate input json object.
        *
        * @param default_schema a string.
        * @param default_table a string.
        * @param allow_drop_table a boolean value.
-       * @return false Success
-       * @return true Failure
-       */
-      bool handleRequest(string &default_schema,string &default_table,bool allow_drop_table);
-      /**
-       * Parse input json query and generate input json object.
-       *
        * @return false Success.
        * @return true Failure.
        */
-      bool validate();
+      bool validate(string &default_schema,string &default_table,bool allow_drop_table);
       /**
        * Send http response back.
        *
        * @param json_out a Json::Value object.
        */
-      void sendResponse(Json::Value &json_out);
+      void sendResponse();
       /**
        * Generate a http error when table is null.
        */
@@ -122,7 +122,7 @@ namespace json_server
        * Get output json object.
        * @return a constant json object.
        */
-      const Json::Value getOutputJson() const 
+      Json::Value* getOutputJson() const 
       {
         return _json_out;
       }
@@ -155,7 +155,7 @@ namespace json_server
       /**
        * Stores output json object.
        */
-      Json::Value _json_out;
+      Json::Value* _json_out;
       /**
        * Stores input json object.
        */

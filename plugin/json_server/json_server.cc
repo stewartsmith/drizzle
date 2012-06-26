@@ -303,16 +303,16 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
  */
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
 {
-  Json::Value json_out;
+  Json::Value *json_out=NULL;
   Json::Value json_in; 
   std::string sql;
   const char* schema;
   const char* table;
 
   HttpHandler* handler = new HttpHandler(json_out,json_in,req);  
-  if(!handler->handleRequest(default_schema,default_table,allow_drop_table))
+  if(!handler->handleRequest())
   { 
-    if(!handler->validate())
+    if(!handler->validate(default_schema,default_table,allow_drop_table))
     {
       json_in= handler->getInputJson();
       schema=handler->getSchema();
@@ -333,7 +333,7 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
     json_out= handler->getOutputJson();
   }
   
-  handler->sendResponse(json_out);
+  handler->sendResponse();
   delete(handler);
 }
 

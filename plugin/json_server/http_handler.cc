@@ -28,7 +28,7 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-  HttpHandler::HttpHandler(Json::Value &json_out,Json::Value &json_in,struct evhttp_request *req)
+  HttpHandler::HttpHandler(Json::Value* json_out,Json::Value json_in,struct evhttp_request *req)
   {
     _schema=NULL;
     _table=NULL;
@@ -41,7 +41,7 @@ namespace json_server
     _req=req;
   }
   
-  bool HttpHandler::handleRequest(string &default_schema,string &default_table,bool allow_drop_table)
+  bool HttpHandler::handleRequest()
   { 
     evhttp_parse_query(evhttp_request_uri(_req), _req->input_headers);
     if(_req->type== EVHTTP_REQ_POST )
@@ -70,42 +70,37 @@ namespace json_server
     _table = (char *)evhttp_find_header(_req->input_headers, "table");
     _id = (char *)evhttp_find_header(_req->input_headers, "_id");
 
-    if((not _id || strcmp(_id,"")==0) && _req->type==EVHTTP_REQ_DELETE && !allow_drop_table)
-    {
-      generateDropTableError();
-      return true;
-    }
-    
+    return false;
+  }
+  
+  bool HttpHandler::validate(string &default_schema,string &default_table,bool allow_drop_table)
+  {
+  
     if(not _schema || strcmp(_schema, "") == 0)
     {
       _schema = default_schema.c_str();
     }
-
     if(not _table || strcmp(_table,"")==0)
     {
       _table= default_table.c_str();
     }
-    
     if(not _table || strcmp(_table,"")==0)
     {
       generateHttpError();
       return true;
     }
-
-    return false;
-
-  }
-  
-  bool HttpHandler::validate()
-  {
+    
+    // Parse query object from json doc
     Json::Features json_conf;
     Json::Reader reader(json_conf);
     bool retval = reader.parse(_query,_json_in);
     if (retval != true) 
     {
-      _json_out["error_type"]="json error";
-      _json_out["error_message"]= reader.getFormatedErrorMessages();
+     (*_json_out)["error_type"]="json error";
+     (*_json_out)["error_message"]= reader.getFormatedErrorMessages();
     }
+    
+    // If _id was given as a URI parameter, copy the value to query object now.
     if ( !_json_in["query"]["_id"].asBool() )
     {
       if( _id ) 
@@ -113,26 +108,33 @@ namespace json_server
         _json_in["query"]["_id"] = (Json::Value::UInt) atol(_id);
       }
     }
+    // Check parameters from URI string
+    // TODO: First if here is wrong: _id could have been given in query parameter
+    if(_json_in["query"]["_id"].isNull() && _req->type==EVHTTP_REQ_DELETE && !allow_drop_table)
+    {
+      generateDropTableError();
+      return true;
+    }
     return !retval;
   }
 
   void HttpHandler::generateHttpError()
   {
-    _json_out["error_type"]="http error";
-    _json_out["error_message"]= "table must be specified in URI query string.";
+    (*_json_out)["error_type"]="http error";
+    (*_json_out)["error_message"]= "table must be specified in URI query string.";
     _http_response_code = HTTP_NOTFOUND;
     _http_response_text = "table must be specified in URI query string.";
   }
 
   void HttpHandler::generateDropTableError()
   {
-    _json_out["error_type"]="http error";
-    _json_out["error_message"]= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
+    (*_json_out)["error_type"]="http error";
+    (*_json_out)["error_message"]= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
     _http_response_code= HTTP_NOTFOUND;
     _http_response_text= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
   }
   
-  void HttpHandler::sendResponse(Json::Value &json_out)
+  void HttpHandler::sendResponse()
   { 
     struct evbuffer *buf = evbuffer_new();
     if(buf == NULL)
@@ -140,7 +142,7 @@ namespace json_server
       return;
     }
     Json::StyledWriter writer;
-    std::string output= writer.write(json_out);
+    std::string output= writer.write(*_json_out);
     evbuffer_add(buf, output.c_str(), output.length());
     evhttp_send_reply( _req, _http_response_code, _http_response_text, buf);  
   }

@@ -51,7 +51,7 @@ namespace json_server
       /**
        * Stores output json object.
        */
-      Json::Value _json_out;
+      Json::Value* _json_out;
       /**
        * Store type of request.
        */
@@ -69,7 +69,7 @@ namespace json_server
       /**
        * Get output json object.
        */ 
-      const Json::Value getOutputJson() const
+      Json::Value* getOutputJson() const
       {
         return _json_out;
       }
@@ -89,7 +89,7 @@ namespace json_server
        * @param schema a constant character pointer.
        * @param table a constant character pointer.
        */
-      DBAccess(Json::Value &json_in,Json::Value &json_out,enum evhttp_cmd_type type,const char* schema,const char* table);
+      DBAccess(Json::Value &json_in,Json::Value* json_out,enum evhttp_cmd_type type,const char* schema,const char* table);
       /**
        * used to execute operations via SQLGenerator, SQLExecutor and SQLToJsonGenerator.
        */ 
