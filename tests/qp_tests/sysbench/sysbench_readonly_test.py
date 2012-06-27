@@ -100,16 +100,16 @@ class basicTest(mysqlBaseTestCase):
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
 
-            print output
+            #print output
             #gathering the data from the output
             regexes={
               'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
-            , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
-            , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
             , 'min_req_lat_ms':re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
             , 'max_req_lat_ms':re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
             , 'avg_req_lat_ms':re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
             , '95p_req_lat_ms':re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
+            , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
+            , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
             }
             
             run={}
@@ -118,18 +118,44 @@ class basicTest(mysqlBaseTestCase):
                     result=regexes[key].match(line)
                     if result:
                         run[key]=float(result.group(1))
-            print "======\noutput\n======"
-            for key in run:
-                print run[key]
-            print "======"
 
-        # conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd="",db="test",port=3306)
-        # cursor=conn.cursor()
-        # cursor.execute("select version()")
-        # row=cursor.fetchone()
-        # print "server version:",row[0]
-        # cursor.close()
-        # conn.close()
+
+            #inserting the data obtained into the results_db database
+            conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd="",db="results_db",port=3306)
+            cursor=conn.cursor()
+            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency
+            cursor.execute(sql_select)
+            data=cursor.fetchone()
+            fetch={'tps':data[1],
+                   'min_req_lat_ms':data[2],
+                   'max_req_lat_ms':data[3],
+                   'avg_req_lat_ms':data[4],
+                   '95p_req_lat_ms':data[5],
+                   'rwreqps':data[6],
+                   'deadlocksps':data[7]}
+           
+            sql_update="""UPDATE sysbench_run_iterations SET tps=%0.2f, min_req_lat_ms=%0.2f, max_req_lat_ms=%0.2f, avg_req_lat_ms=%0.2f, 95p_req_lat_ms=%0.2f,rwreqps=%0.2f, deadlocksps=%0.2f WHERE concurrency=%d""" % (  run['tps'],
+                                                                       run['min_req_lat_ms'],
+                                                                       run['max_req_lat_ms'],
+                                                                       run['avg_req_lat_ms'],
+                                                                       run['95p_req_lat_ms'],
+                                                                       run['rwreqps'],
+                                                                       run['deadlocksps'],
+                                                                       concurrency  )
+            cursor.execute(sql_update)
+            conn.autocommit(True)
+            cursor.close()
+            conn.close()
+
+            self.logging.info("Displaying regression report...")
+            print """==========================================================================
+field		value in database	recorded value		regression
+==========================================================================
+                  """
+
+            for key in fetch.keys():
+                print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
+            print "=========================================================================="
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
