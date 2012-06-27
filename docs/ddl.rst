@@ -1,7 +1,7 @@
-Data Description Language
+Data Definition Language
 =========================
 
-The Data Definition Language (DDL) is used to define data and their relationships to other data. It is primarily used to create and destroy databases and database objects.
+'TODO'
 
 .. toctree::
    :maxdepth: 2

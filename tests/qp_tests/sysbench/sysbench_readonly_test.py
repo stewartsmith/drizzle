@@ -21,9 +21,13 @@
 
 import unittest
 import subprocess
+import time
+import re
+import MySQLdb
 
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
+from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 
 # TODO:  make server_options vary depending on the type of server being used here
@@ -61,33 +65,71 @@ class basicTest(mysqlBaseTestCase):
             test_cmd.append("--drizzle-mysql=on")
         if master_server.type == 'mysql':
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
-        
+       
+        # We sleep for a minute to wait
+        time.sleep(10) 
         # how many times to run sysbench at each concurrency
         iterations = 1
         
         # various concurrencies to use with sysbench
-        concurrencies = [16, 32, 64, 128, 256, 512, 1024]
+        #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
+        concurrencies = [1 ]
 
         # start the test!
         for concurrency in concurrencies:
+            self.logging.info("Resetting test server...")
+            for query in ["DROP SCHEMA IF EXISTS test"
+                         ,"CREATE SCHEMA test"
+                         ]:
+                retcode, result = self.execute_query(query, master_server, schema="INFORMATION_SCHEMA")
             test_cmd.append("--num-threads=%d" %concurrency)
             # we setup once per concurrency, copying drizzle-automation
             # this should likely change and if not for readonly, then definitely
             # for readwrite
 
-            test_cmd = " ".join(test_cmd)
-            retcode, output = prepare_sysbench(test_executor, test_cmd)
+            exec_cmd = " ".join(test_cmd)
+            retcode, output = prepare_sysbench(test_executor, exec_cmd)
             err_msg = ("sysbench 'prepare' phase failed.\n"
                        "retcode:  %d"
                        "output:  %s" %(retcode,output))
             self.assertEqual(retcode, 0, msg = err_msg) 
 
             for test_iteration in range(iterations):
-                retcode, output = execute_sysbench(test_executor, test_cmd)
+                retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_sysbench_output(output)
-                for line in parsed_output:
-                    self.logging.info(line)
+                self.logging.info(parsed_output)
+
+            print output
+            #gathering the data from the output
+            regexes={
+              'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
+            , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
+            , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
+            , 'min_req_lat_ms':re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
+            , 'max_req_lat_ms':re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
+            , 'avg_req_lat_ms':re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
+            , '95p_req_lat_ms':re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
+            }
+            
+            run={}
+            for line in output.split("\n"):
+                for key in regexes:
+                    result=regexes[key].match(line)
+                    if result:
+                        run[key]=float(result.group(1))
+            print "======\noutput\n======"
+            for key in run:
+                print run[key]
+            print "======"
+
+        # conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd="",db="test",port=3306)
+        # cursor=conn.cursor()
+        # cursor.execute("select version()")
+        # row=cursor.fetchone()
+        # print "server version:",row[0]
+        # cursor.close()
+        # conn.close()
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
