@@ -36,16 +36,36 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace syslog {
 
-static bool sysvar_logging_enable= false;
+
+bool sysvar_logging_enable= false;
 static bool sysvar_errmsg_enable= true;
+void updateLoggingThresholdSlow(Session *, sql_var_t);
+void updateLoggingThresholdBigResultSet(Session *, sql_var_t);
+void updateLoggingThresholdBigExamined(Session *, sql_var_t);
 
 uint64_constraint sysvar_logging_threshold_slow;
 uint64_constraint sysvar_logging_threshold_big_resultset;
 uint64_constraint sysvar_logging_threshold_big_examined;
 
+logging::Syslog *logging_syslog_handler = NULL;
+
+void updateLoggingThresholdSlow(Session *, sql_var_t)
+{
+  logging_syslog_handler->setThresholdSlow(sysvar_logging_threshold_slow);
+}
+
+void updateLoggingThresholdBigResultSet(Session *, sql_var_t)
+{
+  logging_syslog_handler->setThresholdBigResultSet(sysvar_logging_threshold_big_resultset);
+}
+
+void updateLoggingThresholdBigExamined(Session *, sql_var_t)
+{
+  logging_syslog_handler->setThresholdBigExamined(sysvar_logging_threshold_big_examined);
+}
 
 static int init(drizzled::module::Context &context)
 {
@@ -57,13 +77,11 @@ static int init(drizzled::module::Context &context)
     context.add(new error_message::Syslog(vm["facility"].as<string>()));
   }
 
-  if (sysvar_logging_enable)
-  {
-    context.add(new logging::Syslog(vm["facility"].as<string>(),
-                                    sysvar_logging_threshold_slow.get(),
-                                    sysvar_logging_threshold_big_resultset.get(),
-                                    sysvar_logging_threshold_big_examined.get()));
-  }
+  logging_syslog_handler = new logging::Syslog(vm["facility"].as<string>(),
+                                  sysvar_logging_threshold_slow.get(),
+                                  sysvar_logging_threshold_big_resultset.get(),
+                                  sysvar_logging_threshold_big_examined.get());
+  context.add(logging_syslog_handler);
 
   context.add(new plugin::Create_function<udf::Syslog>("syslog"));
 
@@ -73,16 +91,12 @@ static int init(drizzled::module::Context &context)
                                                         vm["errmsg-priority"].as<string>()));
   context.registerVariable(new sys_var_const_string_val("logging_priority",
                                                         vm["logging-priority"].as<string>()));
-  context.registerVariable(new sys_var_bool_ptr_readonly("logging_enable",
-                                                         &sysvar_logging_enable));
+  context.registerVariable(new sys_var_bool_ptr("logging_enable", &sysvar_logging_enable, NULL));
   context.registerVariable(new sys_var_bool_ptr_readonly("errmsg_enable",
                                                          &sysvar_errmsg_enable));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("logging_threshold_slow",
-                                                                            sysvar_logging_threshold_slow));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("logging_threshold_big_resultset",
-                                                                            sysvar_logging_threshold_big_resultset));
-  context.registerVariable(new sys_var_constrained_value_readonly<uint64_t>("logging_threshold_big_examined",
-                                                                            sysvar_logging_threshold_big_examined));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_slow", sysvar_logging_threshold_slow, &updateLoggingThresholdSlow));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_resultset", sysvar_logging_threshold_big_resultset, &updateLoggingThresholdBigResultSet));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_examined", sysvar_logging_threshold_big_examined, &updateLoggingThresholdBigExamined));
 
   return 0;
 }
@@ -119,6 +133,7 @@ static void init_options(drizzled::module::option_context &context)
           _("Syslog Priority of error messages"));
 }
 
+} /* namespace syslog */
 } /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
@@ -129,8 +144,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Mark Atwood",
   N_("Logs error messages and queries to syslog"),
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::init,
+  drizzle_plugin::syslog::init,
   NULL,
-  drizzle_plugin::init_options
+  drizzle_plugin::syslog::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

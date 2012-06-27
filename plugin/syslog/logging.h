@@ -22,10 +22,9 @@
 
 #include <drizzled/plugin/logging.h>
 
-namespace drizzle_plugin
-{
-namespace logging
-{
+namespace drizzle_plugin {
+namespace syslog {
+namespace logging {
 
 class Syslog: public drizzled::plugin::Logging
 {
@@ -42,8 +41,12 @@ public:
          uint64_t threshold_big_examined);
 
   virtual bool post (drizzled::Session *session);
+  bool setThresholdSlow(uint64_t new_threshold);
+  bool setThresholdBigResultSet(uint64_t new_threshold);
+  bool setThresholdBigExamined(uint64_t new_threshold);
 };
 
 } /* namespace logging */
+} /* namespace syslog */
 } /* namespace drizzle_plugin */
 

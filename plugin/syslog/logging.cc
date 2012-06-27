@@ -39,6 +39,9 @@
 #include "wrap.h"
 
 namespace drizzle_plugin {
+namespace syslog {
+
+extern bool sysvar_logging_enable;
 
 logging::Syslog::Syslog(const std::string &facility,
                         uint64_t threshold_slow,
@@ -74,7 +77,12 @@ bool logging::Syslog::post(drizzled::Session *session)
   {
     return false;
   }
+  
+  // return if query logging is not enabled
+  if (sysvar_logging_enable == false)
+      return false;
 
+  
   /*
     TODO, the session object should have a "utime command completed"
     inside itself, so be more accurate, and so this doesnt have to
@@ -119,4 +127,23 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
 }
 
+bool logging::Syslog::setThresholdSlow(uint64_t new_threshold)
+{
+  _threshold_slow= new_threshold;
+  return true;
+}
+
+bool logging::Syslog::setThresholdBigResultSet(uint64_t new_threshold)
+{
+  _threshold_big_resultset= new_threshold;
+  return true;
+}
+
+bool logging::Syslog::setThresholdBigExamined(uint64_t new_threshold)
+{
+  _threshold_big_examined= new_threshold;
+  return true;
+}
+
+} /* namespace syslog */
 } /* namespsace drizzle_plugin */

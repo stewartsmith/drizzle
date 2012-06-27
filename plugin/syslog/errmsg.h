@@ -22,10 +22,9 @@
 #include <stdarg.h>
 #include <drizzled/plugin/error_message.h>
 
-namespace drizzle_plugin
-{
-namespace error_message
-{
+namespace drizzle_plugin {
+namespace syslog {
+namespace error_message {
 
 class Syslog : public drizzled::plugin::ErrorMessage
 {
@@ -38,6 +37,7 @@ public:
   virtual bool errmsg(drizzled::error::priority_t, const char *format, va_list ap);
 };
 
+} /* namespace syslog */
 } /* namespace error_message */
 } /* namespace drizzle_plugin */
 
