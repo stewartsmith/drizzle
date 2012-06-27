@@ -303,7 +303,7 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
  */
 extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
 {
-  Json::Value *json_out=NULL;
+  Json::Value json_out;
   Json::Value json_in; 
   std::string sql;
   const char* schema;
@@ -332,7 +332,7 @@ extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
   {
     json_out= handler->getOutputJson();
   }
-  
+  handler->setOutputJson(json_out);
   handler->sendResponse();
   delete(handler);
 }

@@ -27,7 +27,7 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-  DBAccess::DBAccess(Json::Value &json_in,Json::Value* json_out,enum evhttp_cmd_type type,const char* schema,const char* table)
+  DBAccess::DBAccess(Json::Value &json_in,Json::Value &json_out,enum evhttp_cmd_type type,const char* schema,const char* table)
   {
     _json_in= json_in;
     _json_out= json_out;

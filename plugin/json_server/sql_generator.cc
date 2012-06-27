@@ -67,7 +67,7 @@ namespace json_server
  
   void SQLGenerator::generateCreateTableSql()
   { 	
-    _sql="COMMIT ;";
+    _sql="COMMIT;";
     _sql.append("CREATE TABLE ");
     _sql.append(_schema);
     _sql.append(".");
@@ -90,12 +90,13 @@ namespace json_server
       }
     }
     _sql.append(")");
-    _sql.append("; ");
+    _sql.append(";");
   }
  
   void SQLGenerator::generatePostSql()
   {
- 	  _sql="REPLACE INTO `";
+    _sql="COMMIT;";
+ 	  _sql.append("REPLACE INTO `");
 	  _sql.append(_schema);
     _sql.append("`.`");
     _sql.append(_table);

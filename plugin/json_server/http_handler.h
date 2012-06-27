@@ -53,7 +53,7 @@ namespace json_server
        * @param json_in an empty json input object.
        * @param req the http request object to parse.
        */
-      HttpHandler(Json::Value* json_out,Json::Value json_in,struct evhttp_request *req);
+      HttpHandler(Json::Value& json_out,Json::Value json_in,struct evhttp_request *req);
       /**
        * Parse http request and retrieve various http headers.
        *
@@ -122,7 +122,7 @@ namespace json_server
        * Get output json object.
        * @return a constant json object.
        */
-      Json::Value* getOutputJson() const 
+      const Json::Value getOutputJson() const 
       {
         return _json_out;
       }
@@ -133,6 +133,14 @@ namespace json_server
       const Json::Value getInputJson() const 
       {
         return _json_in;
+      }
+     /**
+      * Set Output json object.
+      * @param json_out a Json::Value object.
+      */
+      void setOutputJson(Json::Value& json_out)
+      {
+        _json_out=json_out;
       }
 
     private:
@@ -155,7 +163,7 @@ namespace json_server
       /**
        * Stores output json object.
        */
-      Json::Value* _json_out;
+      Json::Value _json_out;
       /**
        * Stores input json object.
        */

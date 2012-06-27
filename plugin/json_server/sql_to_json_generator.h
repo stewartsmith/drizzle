@@ -52,7 +52,7 @@ namespace json_server
        * @param table The table that was used.
        * @param sqlExecutor SQLExecutor instance that contains the result set or error from an executed sql query.
        */ 
-      SQLToJsonGenerator(Json::Value* json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor);
+      SQLToJsonGenerator(Json::Value& json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor);
       /**
        * Used to generate error json string.
        */
@@ -66,7 +66,7 @@ namespace json_server
        * Used to get the output json object.
        * @return a json object. 
        */
-      Json::Value* getJson() const 
+      Json::Value getJson() const 
       {
         return _json_out;
       }
@@ -81,7 +81,7 @@ namespace json_server
        * However, it should be notable that Execute API already stores the result set
        * in a std::vector anyway, so we are not making the situation worse here.
        */
-      Json::Value* _json_out;
+      Json::Value _json_out;
       /**
        * Stores instance of sqlExecutor object. 
        */

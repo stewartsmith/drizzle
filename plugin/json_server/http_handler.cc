@@ -28,7 +28,7 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-  HttpHandler::HttpHandler(Json::Value* json_out,Json::Value json_in,struct evhttp_request *req)
+  HttpHandler::HttpHandler(Json::Value& json_out,Json::Value json_in,struct evhttp_request *req)
   {
     _schema=NULL;
     _table=NULL;
@@ -96,8 +96,8 @@ namespace json_server
     bool retval = reader.parse(_query,_json_in);
     if (retval != true) 
     {
-     (*_json_out)["error_type"]="json error";
-     (*_json_out)["error_message"]= reader.getFormatedErrorMessages();
+     _json_out["error_type"]="json error";
+     _json_out["error_message"]= reader.getFormatedErrorMessages();
     }
     
     // If _id was given as a URI parameter, copy the value to query object now.
@@ -120,16 +120,16 @@ namespace json_server
 
   void HttpHandler::generateHttpError()
   {
-    (*_json_out)["error_type"]="http error";
-    (*_json_out)["error_message"]= "table must be specified in URI query string.";
+    _json_out["error_type"]="http error";
+    _json_out["error_message"]= "table must be specified in URI query string.";
     _http_response_code = HTTP_NOTFOUND;
     _http_response_text = "table must be specified in URI query string.";
   }
 
   void HttpHandler::generateDropTableError()
   {
-    (*_json_out)["error_type"]="http error";
-    (*_json_out)["error_message"]= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
+    _json_out["error_type"]="http error";
+    _json_out["error_message"]= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
     _http_response_code= HTTP_NOTFOUND;
     _http_response_text= "_id must be specified in URI query string or set --json_server.allow_drop_table =true";
   }
@@ -142,7 +142,7 @@ namespace json_server
       return;
     }
     Json::StyledWriter writer;
-    std::string output= writer.write(*_json_out);
+    std::string output= writer.write(_json_out);
     evbuffer_add(buf, output.c_str(), output.length());
     evhttp_send_reply( _req, _http_response_code, _http_response_text, buf);  
   }

@@ -48,17 +48,15 @@ SQLExecutor::SQLExecutor(const string &user, const string &schema)
   user_id->setUser(user);
   _session->setUser(user_id);
   _session->set_schema(schema);
-  _result_set= new sql::ResultSet(1);
   _sql="";
 }
 
 bool SQLExecutor::executeSQL(string &sql)
 {
   _sql=sql;
-
+  _result_set= new sql::ResultSet(1);
   Execute execute(*(_session.get()), true);
-
-  /* Execute wraps the SQL to run within a transaction */
+  /*wraps the SQL to run within a transaction */
   execute.run(_sql, *_result_set);
 
   _exception= _result_set->getException();
@@ -79,5 +77,5 @@ bool SQLExecutor::executeSQL(string &sql)
 
   return true;
 }
-} /* namespace json_server */
-}
+} /* namespace json_server*/ 
+}     

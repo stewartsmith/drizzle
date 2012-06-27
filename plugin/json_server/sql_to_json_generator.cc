@@ -30,7 +30,7 @@ namespace drizzle_plugin
 {
 namespace json_server
 { 
-  SQLToJsonGenerator::SQLToJsonGenerator(Json::Value* json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor)
+  SQLToJsonGenerator::SQLToJsonGenerator(Json::Value& json_out,const char* schema,const char* table,SQLExecutor* sqlExecutor)
   {
     _schema=schema;
     _table=table;
@@ -42,13 +42,13 @@ namespace json_server
   void SQLToJsonGenerator::generateSQLErrorJson()
   {  
     _exception= _sql_executor->getException(); 
-    (*_json_out)["error_type"]= "sql error";
-    (*_json_out)["error_message"]= _exception.getErrorMessage();
-    (*_json_out)["error_code"]= _exception.getErrorCode();
-    (*_json_out)["internal_sql_query"]= _sql_executor->getSql();
-    (*_json_out)["schema"]= _schema;
-    (*_json_out)["sqlstate"]= _exception.getSQLState();
-    (*_json_out)["table"]= _table;
+    _json_out["error_type"]= "sql error";
+    _json_out["error_message"]= _exception.getErrorMessage();
+    _json_out["error_code"]= _exception.getErrorCode();
+    _json_out["internal_sql_query"]= _sql_executor->getSql();
+    _json_out["schema"]= _schema;
+    _json_out["sqlstate"]= _exception.getSQLState();
+    _json_out["table"]= _table;
   }
   
   void SQLToJsonGenerator::generateJson(enum evhttp_cmd_type type)
@@ -83,8 +83,8 @@ namespace json_server
           bool r = readrow.parse(_result_set->getString(x), json_doc);
           if (r != true) 
           {
-            (*_json_out)["error_type"]="json parse error on row value";
-            (*_json_out)["error_internal_sql_column"]=col_name;
+            _json_out["error_type"]="json parse error on row value";
+            _json_out["error_internal_sql_column"]=col_name;
             // Just put the string there as it is, better than nothing.
             json_row[col_name]= _result_set->getString(x);
             got_error=true;
@@ -97,21 +97,21 @@ namespace json_server
         }
       }
         // When done, append this row to result set tree
-      (*_json_out)["result_set"].append(json_row);
+      _json_out["result_set"].append(json_row);
     }
-    (*_json_out)["sqlstate"]= _exception.getSQLState();
+    _json_out["sqlstate"]= _exception.getSQLState();
   }
   
   void SQLToJsonGenerator::generatePostJson()
   {
     _exception= _sql_executor->getException();
-    (*_json_out)["sqlstate"]= _exception.getSQLState();
+    _json_out["sqlstate"]= _exception.getSQLState();
   }
   
   void SQLToJsonGenerator::generateDeleteJson()
   {
     _exception= _sql_executor->getException();
-   (*_json_out)["sqlstate"]= _exception.getSQLState();
+   _json_out["sqlstate"]= _exception.getSQLState();
   }
 
 }
