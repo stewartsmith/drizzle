@@ -1112,11 +1112,24 @@ replace_column
 
 :Syntax:
 
-:program:`replace_column col_num value [col_num value [...] ]`
+:program:`replace_column col_num value [col_num value [,...] ]`
+
+``replace_column`` is used to replace strings in the output of the next statement that is to be executed. In this command, the content of ``col_num`` is replaced by the content specified by ``value``. 
+
+.. note:: There can be any number of col_num value pairs. Column numbers start with 1
 
 :Example:
 
 .. code-block:: python
+
+    --replace_column 5 !
+    replace_column 1 a 2 b
+    
+.. note:: replace_column does not affect the output of exec (which replace_regex and replace_result do), because, the output of exec is not always columnar.
+
+.. note:: To specify a double quote within the string that replaces, we can use \"
+
+.. note:: If we use several ``replace_`` commands, for example, replace_regex, replace_result, etc, only the final one applies.
 
 .. _replace_regex:
 
@@ -1127,9 +1140,25 @@ replace_regex
 
 :program:`replace_regex /pattern/replacement/[i] ...`
 
+``replace_regex`` takes in two parameter ``pattern`` and ``replacement``. The ``pattern`` is used to find the specified patter in the output of the next statement and ``replacement`` is used to replace the found pattern with the specified replacement pattern. If more than one instance of the pattern is found in the string, then all of them are replaced. 
+
+.. note:: For the match to be case insensitive, we can use ``i`` modifier.
+
 :Example:
 
 .. code-block:: python
+
+    --replace_regex /strawberry/raspberry 
+    
+.. note:: The allowable patterns are the same as REGEXP SQL operator. Also, the pattern can contain parantheses for marking it as substrings. To refer to the substring we use ``\N``. \N in the replacement string will result in insertion of N-th substring matched by pattern.
+
+:Example:
+
+.. code-block:: python
+
+    --replace_regex /(strawberry)/raspberry and \1/
+    
+.. note:: We can have multiple ``pattern/replacement`` 
 
 .. _replace_result:
 
@@ -1361,11 +1390,22 @@ source
 
 :Syntax:
 
-:program:``
+:program:`source file_name`
+
+``source`` command is used mainly for creating modular test cases. For example, if we have certain number of tests, all of which perform some basic tasks initially in setting up the server, then those tasks can be written in another file. This file can be invoked in the test by using the ``source`` command. 
+
+.. note:: source command is similar to functions in programming languages like C
 
 :Example:
 
 .. code-block:: python
+
+    --source drizzletest/create_schema.inc
+    source drizzletest/create_schema.inc;
+    
+A file can use ``source`` to read other files. The maximum level of nesting allowed is 16.
+
+Variables can be used to specify the files. If these variables contain quotation marks, then those marks are also considered during variable expansion. So quotes are usually not included.
 
 .. _start_timer:
 
@@ -1387,11 +1427,15 @@ sync_slave_with_master
 
 :program:`sync_slave_with_master [connection_name]`
 
+``sync_slave_with_master`` saves the replication coordinates for the current server which acts as the master, and then switches to the slave server till it syncs with the replication coordinates. 
 
-
-:Example:
+This command is equivalent to 
 
 .. code-block:: python
+
+    save_master_pos;
+    connection connection_name;
+    sync_with_mater 0;
 
 .. _sync_with_master:
 
@@ -1400,11 +1444,11 @@ sync_with_master
 
 :Syntax:
 
-:program:``
+:program:`sync_with_master offset`
 
-:Example:
+``sync_with_master`` command is used for a slave replication server to wait untill it syncs with its master. The position to synchronize is specified by the ``save_master_pos`` and the ``offset``. So just specifying the offset would add its contents to the contents of ``save_master_pos``. 
 
-.. code-block:: python
+.. note:: The save_master_pos should contain a value / executed prior executing this command. 
 
 .. _system:
 
@@ -1413,11 +1457,20 @@ system
 
 :Syntax:
 
-:program:``
+:program:`system command [arg1[,arg2[,...]]]`
+
+``system`` command is used to execute ``shell command`` or ``system related functions`` using the ``system()`` library function. 
+
+.. note:: system command can reduce portablity. This is because, we give the command which are specific to an operating system (say unix-like), which can fail, if run on windows. For this purpose, there are commands like ``remove_file``, ``chmod_file``, which performs the system functions with added portability.
 
 :Example:
 
 .. code-block:: python
+
+    --system rm $DRIZZLE_TEMP_DIR
+    --system mkdir $DRIZZLE_REPO
+    
+.. note:: We can use variables as commands. The references of these variables are replaced by their corresponding values. If $ is being used, then preceed it by ``\`` ( \$ )
 
 .. _vertical_results:
 
