@@ -43,7 +43,7 @@ namespace json_server
       generator->generateSql(_type);
       sql= generator->getSQL();
 
-      SQLExecutor* executor = new SQLExecutor("",_schema);
+      SQLExecutor* executor = new SQLExecutor(_schema);
       SQLToJsonGenerator* jsonGenerator = new SQLToJsonGenerator(_json_out,_schema,_table,executor);
       if(executor->executeSQL(sql))
       {

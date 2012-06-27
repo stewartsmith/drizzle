@@ -87,10 +87,6 @@ namespace json_server
        */
       SQLExecutor* _sql_executor;
       /**
-       * Stores execption. 
-       */
-      sql::Exception _exception;
-      /**
        * Stores schema being used. 
        */
       const char* _schema;

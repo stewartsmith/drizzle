@@ -41,7 +41,7 @@ namespace json_server
   
   void SQLToJsonGenerator::generateSQLErrorJson()
   {  
-    _exception= _sql_executor->getException(); 
+    sql::Exception _exception= _sql_executor->getException(); 
     _json_out["error_type"]= "sql error";
     _json_out["error_message"]= _exception.getErrorMessage();
     _json_out["error_code"]= _exception.getErrorCode();
@@ -64,7 +64,7 @@ namespace json_server
   void SQLToJsonGenerator::generateGetJson()
   {
     sql::ResultSet *_result_set= _sql_executor->getResultSet();
-
+    sql::Exception _exception= _sql_executor->getException();
     // Handle each row of the result set
     while (_result_set->next())
     {
@@ -104,13 +104,13 @@ namespace json_server
   
   void SQLToJsonGenerator::generatePostJson()
   {
-    _exception= _sql_executor->getException();
+    sql::Exception _exception= _sql_executor->getException();
     _json_out["sqlstate"]= _exception.getSQLState();
   }
   
   void SQLToJsonGenerator::generateDeleteJson()
   {
-    _exception= _sql_executor->getException();
+    sql::Exception _exception= _sql_executor->getException();
    _json_out["sqlstate"]= _exception.getSQLState();
   }
 

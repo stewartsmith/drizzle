@@ -39,21 +39,26 @@ namespace drizzle_plugin
 {
 namespace json_server
 {
-SQLExecutor::SQLExecutor(const string &user, const string &schema)
+SQLExecutor::SQLExecutor(const string &schema)
   : _in_error_state(false)
 {
   /* setup a Session object */
   _session= Session::make_shared(plugin::Listen::getNullClient(), catalog::local());
   identifier::user::mptr user_id= identifier::User::make_shared();
-  user_id->setUser(user);
+  user_id->setUser("");
   _session->setUser(user_id);
   _session->set_schema(schema);
   _sql="";
+  _result_set=NULL;
 }
 
 bool SQLExecutor::executeSQL(string &sql)
 {
   _sql=sql;
+  if(_result_set)
+  {
+    delete(_result_set);
+  }
   _result_set= new sql::ResultSet(1);
   Execute execute(*(_session.get()), true);
   /*wraps the SQL to run within a transaction */
@@ -70,7 +75,6 @@ bool SQLExecutor::executeSQL(string &sql)
     {
       return true;
     }
-
 
     return false;
   }

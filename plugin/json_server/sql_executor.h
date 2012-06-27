@@ -60,7 +60,7 @@ namespace json_server
      * @param user a constant string.
      * @param schema a constant string.
      */
-    SQLExecutor(const string &user, const string &schema);
+    SQLExecutor(const string &schema);
     
     /**
      * set the error state as true.
