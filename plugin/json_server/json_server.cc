@@ -477,14 +477,9 @@ bool updateSchema(Session *, set_var* var)
 
 bool updateTable(Session *, set_var* var)
 {
-  if (not var->value->str_value.empty())
-  {
-    std::string new_table(var->value->str_value.data());
-    default_table=new_table;
-      return false; //success
-  }
-  errmsg_printf(error::ERROR, _("json_server_table cannot be NULL"));
-  return true; // error
+  std::string new_table(var->value->str_value.data());
+  default_table=new_table;
+  return false;
 }
 
 static int json_server_init(drizzled::module::Context &context)

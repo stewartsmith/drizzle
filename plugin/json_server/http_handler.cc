@@ -109,8 +109,7 @@ namespace json_server
       }
     }
     // Check parameters from URI string
-    // TODO: First if here is wrong: _id could have been given in query parameter
-    if(_json_in["query"]["_id"].isNull() && _req->type==EVHTTP_REQ_DELETE && !allow_drop_table)
+    if((_json_in["query"]["_id"].isNull() || _json_in["query"]["_id"].asString()=="")  && _req->type==EVHTTP_REQ_DELETE && !allow_drop_table)
     {
       generateDropTableError();
       return true;
