@@ -656,11 +656,49 @@ error
 
 :program:`error error_code [,error_code[,...]]`
 
+``error`` is used to specify the expected error values that might be returned by the next command that is executed. The error_codes are specific to drizzle error numbers or SQLSTATE value. If we specify a SQLSTATE value, then it should start with an ``s`` so that drizzletest can differentiate it from the drizzle error number. 
 
+:Example:
+
+Errors ``1050`` and ``42S01`` are the same. 
+
+.. note:: SQLSTATE values must be five characters long. It should contain only uppercase alphabets and numbers.
+
+.. note:: There are symbolic error representation, in the drizzle_error.h file.
 
 :Example:
 
 .. code-block:: python
+
+    --error ER_TABLE_EXISTS_ERROR
+    
+If an error other than the ones specified by the ``error`` command occurs, then drizzletest aborts and displays the error message which the drizzle server reports. However, if an error which has been specified in the ``error`` command occurs, then drizzletest does not abort, but displays a message to the result output.
+
+.. note:: If one error value is given in the command, then if a command fails with that error during the test, drizzletest reports the error message specific to that error
+
+.. code-block:: python
+
+    --error S42S02
+    DROP TABLE table_name;
+    
+    ERROR 42S02: Unknown table 'table_name'
+    
+.. note:: If more than one value is given in the command, then if a command fails with any one of the error specified, drizzletest gives a generic report.
+
+.. code-block:: python
+
+    --error S41S01,S42S02
+    DROP TABLE table_name;
+    
+    Got one of the listed errors
+    
+Error value 0 / S00000 is equivalent to ``no error``. So to indicate that, we expect a success, we can specify this value in the error list. 
+
+.. note:: If this value is put in other than first positions, then, the test will abort if the statement executes successfully.
+
+Other uses of error is to specify shell status values for testing shell commands that are executed via exec command. But this does not apply for system command. 
+
+If ``error`` is used in combination with other commands like ``reap`` and ``send``, then ``error`` should always used just before ``reap``.
 
 .. _eval:
 
@@ -805,12 +843,45 @@ let
 
 :program:`let $var_name = value`
 
+:program:`let $var_name = query_get_value(query, col_name, row_num)`
 
+``let`` command assigns a value to a variable. There are certain naming conventions for the variable names. The names cannot contain whitespaces and/or = character. It can contain numbers from [0-9]. The variable name cannot start with a number. 
+
+.. note:: variable references within a value are replaced by the corresponding values.
+
+.. note:: If the command is issued without beginning with ``--``, then everything upto the command delimiter is assigned as the value to the variable. 
 
 :Example:
 
 .. code-block:: python
 
+    --let $var = 100
+    let $var = 100;
+    
+.. note:: While we assign strings to a variable, we need not include the string within quotes. Moreover, any quotes included within the string will be treated like normal character. 
+
+.. note:: For assigning the result of executing a query to a variable, we need to enclose the query withing backticks.
+
+:Example:
+
+.. code-block:: python
+
+    let $query = `SELECT * FROM table_name`;
+    
+The let command is also used to assign values to environment variables. In such cases, we need to drop the $ character preceeding the variable name. 
+
+:Example:
+
+.. code-block:: python
+
+    let ENVIR_VAR = value;
+    
+This is useful in certain cases, where interaction with the external tools is needed. Example, Perl cannot access the test language variables directly. So we can access it through environment variables.
+
+.. code-block:: python
+
+    print $ENV{'ENVIR_VAR'};
+    
 .. _mkdir:
 
 mkdir
@@ -993,9 +1064,34 @@ query_get_value
 
 :program:`query_get_value(query,col_name,row_num)`
 
+``query_get_value`` is used to extract a value / data from the result set of a query, for example a SELECT statement. This command has three arguments, the first one specifying the query that is to be executed, the second and the third arguments together specify the cell from which the data is to be extracted. 
+
+.. note:: Column names are case sensitive. Row numbers begin with 1. ``query_get_value()`` function always appear to the right side of a variable.
+
 :Example:
 
 .. code-block:: python
+
+    SELECT * FROM db;
+    
++---------+---------+
+|Database |  Market |
++=========+=========+
+|Oracle   |    39.8%|
++---------+---------+
+|IBM      |    30.7%|
++---------+---------+
+|Microsoft|    14.4%|
++---------+---------+
+
+.. code-block:: python
+    
+    let $market = query_get_value(SELECT * FROM db,Market,2);
+    echo $market;
+    
+This would store the value 30.7% in variable ``market``
+
+.. note:: If a query fails, then an appropriate error message is displayed
 
 .. _query_horizontal:
 
@@ -1377,11 +1473,31 @@ sorted_result
 
 :program:`sorted_result`
 
+``sorted_result`` is used to sort the results produced from the statement that succeeds this command. If the statement does not produce any outputs, then this command has no effect. 
 
+.. note:: ``sorted_result`` command is applied just before the results are being displayed. If there are other commands like replace_result, replace_column, etc are present, then sorted_result is specified after all these commands. 
 
 :Example:
 
 .. code-block:: python
+
+    sorted_result;
+    SELECT rwreqps FROM sysbench_run_iterations WHERE concurrency=1;
+    
+If a query contains UNION, procedures, multi-statements, etc, such a query would display the data in certain fashion. However, using sorted_result would make the results to be displayed in some strange manner.
+
+:Example:
+
+.. code-block:: python
+
+    --sorted_result
+    SELECT min_req_lat_ms FROM sysbench_run_iterations WHERE concurrency=2;
+    UNION
+    SELECT max_req_lat_ms FROM sysbench_run_iterations WHERE concurrency=2;
+    
+The outcome of sorted_list can be achieved using ``ORDER BY``. But it can sometimes encounter some problems. For example, there may be different ordering stratergy for different servers. So the output generated from one server, when compared with the output generated from another server could conflict. In such situations, sorted_reults comes out to be handy. sorted_result produces a deterministic row order which eliminates the ordering difference.
+
+.. note:: sorted_result has the potential of blurring server bugs, thus resulting in some problems with result order.
 
 .. _source:
 
