@@ -32,20 +32,9 @@ drop table t1;
 create schema json;
 use json;
 {
-   "query" : {
-      "_id" : 1,
-      "document" : {
-         "age" : 35,
-         "firstname" : "Henrik",
-         "lastname" : "Ingo"
-      }
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1
-   },
    "result_set" : [
       {
          "_id" : 1,
@@ -59,20 +48,22 @@ use json;
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1,
-      "document" : {
-         "age" : 36,
-         "firstname" : "Henrik",
-         "lastname" : "Ingo"
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 35,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
       }
-   },
+   ],
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1
-   },
+   "sqlstate" : "00000"
+}
+{
    "result_set" : [
       {
          "_id" : 1,
@@ -86,28 +77,21 @@ use json;
    "sqlstate" : "00000"
 }
 {
-   "error_message" : "You must specify table in the request uri query string.",
+   "error_message" : "* Line 1, Column 1\n  Syntax error: value, object or array expected.\n",
+   "error_type" : "json error"
+}
+{
+   "error_message" : "table must be specified in URI query string.",
    "error_type" : "http error"
 }
 {
-   "error_message" : "You must specify \"table\" in the request uri query string.",
+   "error_message" : "table must be specified in URI query string.",
    "error_type" : "http error"
 }
 {
-   "query" : {
-      "_id" : null,
-      "document" : {
-         "age" : 21,
-         "firstname" : "Mohit",
-         "lastname" : "Srivastava"
-      }
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : null
-   },
    "result_set" : [
       {
          "_id" : 1,
@@ -129,43 +113,105 @@ use json;
    "sqlstate" : "00000"
 }
 {
-   "error_message" : "* Line 1, Column 10\n  Missing ',' or '}' in object declaration\n",
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      },
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      },
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+SET GLOBAL json_server_schema="json";
+{
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      },
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+SET GLOBAL json_server_table="people";
+{
+   "result_set" : [
+      {
+         "_id" : 1,
+         "document" : {
+            "age" : 36,
+            "firstname" : "Henrik",
+            "lastname" : "Ingo"
+         }
+      },
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
+   "sqlstate" : "00000"
+}
+{
+   "error_message" : "* Line 1, Column 19\n  Missing ',' or '}' in object declaration\n",
    "error_type" : "json error"
 }
 {
-   "query" : {
-      "_id" : 1,
-      "document" : "It is for testing"
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1,
-      "document" : 98765
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1,
-      "document" : {
-         "age" : 35,
-         "firstname" : "Henrik",
-         "lastname" : "Ingo"
-      },
-      "metadata" : {
-         "dob" : "16-feb-1977",
-         "interest" : "opensource",
-         "nick" : "hingo"
-      }
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : null
-   },
    "result_set" : [
       {
          "_id" : 1,
@@ -184,21 +230,60 @@ use json;
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1
-   },
    "sqlstate" : "00000"
 }
 {
-   "query" : {
-      "_id" : 1
-   },
+   "result_set" : [
+      {
+         "_id" : 2,
+         "document" : {
+            "age" : 21,
+            "firstname" : "Mohit",
+            "lastname" : "Srivastava"
+         }
+      }
+   ],
    "sqlstate" : "00000"
 }
 {
-   "error_message" : "You must specify \"table\" in the request uri query string.",
+   "sqlstate" : "00000"
+}
+{
+   "sqlstate" : "00000"
+}
+{
+   "error_message" : "_id must be specified in URI query string or set --json_server.allow_drop_table =true",
    "error_type" : "http error"
 }
-drop table people;
-drop table aboutpeople;
+{
+   "error_message" : "_id must be specified in URI query string or set --json_server.allow_drop_table =true",
+   "error_type" : "http error"
+}
+{
+   "error_message" : "_id must be specified in URI query string or set --json_server.allow_drop_table =true",
+   "error_type" : "http error"
+}
+{
+   "error_message" : "_id must be specified in URI query string or set --json_server.allow_drop_table =true",
+   "error_type" : "http error"
+}
+SET GLOBAL json_server_allow_drop_table="ON";
+{
+   "sqlstate" : "00000"
+}
+{
+   "error_code" : 1146,
+   "error_message" : "Unknown table 'json.people'",
+   "error_type" : "sql error",
+   "internal_sql_query" : "SELECT * FROM `json`.`people`;",
+   "schema" : "json",
+   "sqlstate" : "00000",
+   "table" : "people"
+}
+{
+   "sqlstate" : "00000"
+}
+SET GLOBAL json_server_allow_drop_table="OFF";
+SET GLOBAL json_server_table="";
+SET GLOBAL json_server_schema="test";
 drop schema json;

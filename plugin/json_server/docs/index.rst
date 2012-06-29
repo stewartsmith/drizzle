@@ -40,7 +40,32 @@ command line options.
    :Default: 8086
    :Variable: :ref:`json_server_port <json_server_port>`
 
-   Port number to use for connection or 0 for default (port 8086) 
+   Port number to use for connection or 0 for default (port 8086)
+
+.. option:: --json-server.schema ARG
+
+   :Default: test
+   :Variable: :ref:`json_server_schema <json_server_schema>`
+
+   Schema which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
+.. option:: --json-server.table ARG
+
+   :Default:
+   :Variable: :ref:`json_server_table <json_server_table>`
+
+   Table which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
+.. option:: --json-server.allow_drop_table ARG
+
+   :Default: OFF
+   :Variable: :ref:`json_server_allow_drop_table <json_server_allow_drop_table>`
+
+   When json-server.allow_drop_table is set to ON, it is possible to drop
+   a table with a HTTP DELETE request with no _id specified. When set to OFF
+   (the default), omitting _id will result in an error.
 
 .. _json_server_variables:
 
@@ -58,6 +83,37 @@ See `variables` for more information about querying and setting variables.
    :Dynamic: No
 
    Port number to use for connection or 0 for default (port 8086) 
+
+.. _json_server_schema:
+
+* ``json_server_schema``
+
+    :Scope: Global
+    :Dynamic: yes
+
+   Schema which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
+.. _json_server_table:
+
+* ``json_server_table``
+
+    :Scope: Global
+    :Dynamic: yes
+
+   Table which is used when not explicitly specified in request URI.
+   Note: Currently this is in the /json API only.
+
+.. _json_server_allow_drop_table:
+
+* ``json_server_allow_drop_table``
+
+    :Scope: Global
+    :Dynamic: yes
+
+   When json-server.allow_drop_table is set to ON, it is possible to drop
+   a table with a HTTP DELETE request with no _id specified. When set to OFF
+   (the default), omitting _id will result in an error.
 
 .. _json_server_apis:
 
@@ -103,11 +159,13 @@ course):
 
     $ curl http://localhost:8086/version
     {
+      "json_server_version" : "0.3"
       "version" : "7.1.31.2451-snapshot"
     }
 
-The root URI returns a simple HTML GUI that can be used to test both the SQL and
-pure JSON APIs. Just point your browser to http://localhost:8086/ and try it!
+The root URI / returns a simple HTML GUI that can be used to test both the SQL 
+and pure JSON APIs. Just point your browser to http://localhost:8086/ and try 
+it!
 
 .. _json_server_sql_api:
 
@@ -217,7 +275,7 @@ Following parameters can be passed in the URI query string:
 
    .. code-block:: none
 
-       { "_id" : 1 }
+       { query:{"_id" : 1 }}
 
 .. _json_server_json_parameters_schema:
 
@@ -225,9 +283,9 @@ Following parameters can be passed in the URI query string:
 
    :Type: String
    :Mandatory: No
-   :Default: test
+   :Default: Specified by json_server_schema
 
-   Name of the schema which we are querying. The schema must exist. 
+   Name of the schema which we are querying. The schema must exist.
 
 .. _json_server_parameters_table:
 
@@ -235,7 +293,7 @@ Following parameters can be passed in the URI query string:
 
    :Type: String
    :Mandatory: No
-   :Default: jsonkv
+   :Default: Specified by json_server_table
 
    Name of the table which we are querying. For POST requests, if the table 
    doesn't exist, it will be automatically created. For other requests the
@@ -249,8 +307,11 @@ POSTing a document
   POST /json?schema=test&table=people HTTP/1.1
 
   {
-    "_id" : 2, 
-    "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
+    query:
+    {
+      "_id" : 2, 
+      "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
+    }
   }
 
 Returns:
@@ -316,11 +377,11 @@ GET a document
 
 The equivalent of an SQL SELECT is HTTP GET.
 
-Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+Below we use the query document ``{ "query" : {"_id" : 1 } }`` in URL encoded form:
 
 .. code-block:: none
   
-  GET /json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D%0A
+  GET /json?schema=test&table=people&query={%22query%22%20:%20{%20%22_id%22%20:%201}%20}
 
 Returns
 
@@ -372,11 +433,11 @@ updating.)
 Deleting a record
 ^^^^^^^^^^^^^^^^^
  
-Below we use the query document ``{"_id" : 1 }`` in URL encoded form:
+Below we use the query document ``{ "query" : {"_id" : 1 } }`` in URL encoded form:
 
 .. code-block:: none
   
-  DELETE http://14.139.228.217:8086/json?schema=test&table=people&query=%7B%22_id%22%20%3A%201%7D
+  DELETE /json?schema=test&table=people&query={%22query%22%20:%20{%20%22_id%22%20:%201}%20}
 
 Returns:
 
@@ -429,7 +490,7 @@ Stewart Smith, Henrik Ingo, Mohit Srivastava
 Version
 -------
 
-This documentation applies to **json_server 0.2**.
+This documentation applies to **json_server 0.3**.
 
 To see which version of the plugin a Drizzle server is running, execute:
 
@@ -450,3 +511,13 @@ v0.2
 ^^^^
 * /json API supporting pure JSON key-value operations (POST, GET, DELETE)
 * Automatic creation of table on first post. 
+
+v0.3
+^^^^
+* Test cases for /json API
+* Major refactoring of the functionality behind /json
+* Changed structure of the query document to be 
+  ``{ "query" : <old query document> }`` This is to allow for future 
+  extensibility.
+* New options json_server.schema, json_server.table and 
+  json_server.allow_drop_table
