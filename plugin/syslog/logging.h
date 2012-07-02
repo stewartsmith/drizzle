@@ -30,6 +30,7 @@ class Syslog: public drizzled::plugin::Logging
 {
 private:
   int _facility;
+  std::string sysvar_facility;
   uint64_t _threshold_slow;
   uint64_t _threshold_big_resultset;
   uint64_t _threshold_big_examined;
@@ -44,6 +45,8 @@ public:
   bool setThresholdSlow(uint64_t new_threshold);
   bool setThresholdBigResultSet(uint64_t new_threshold);
   bool setThresholdBigExamined(uint64_t new_threshold);
+  bool setFacility(std::string new_facility);
+  std::string& getFacility();
 };
 
 } /* namespace logging */

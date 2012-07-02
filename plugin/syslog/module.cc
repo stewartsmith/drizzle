@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <drizzled/item.h>
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/plugin/error_message.h>
@@ -45,6 +46,7 @@ static bool sysvar_errmsg_enable= true;
 void updateLoggingThresholdSlow(Session *, sql_var_t);
 void updateLoggingThresholdBigResultSet(Session *, sql_var_t);
 void updateLoggingThresholdBigExamined(Session *, sql_var_t);
+bool updateFacility(Session *, set_var *);
 
 uint64_constraint sysvar_logging_threshold_slow;
 uint64_constraint sysvar_logging_threshold_big_resultset;
@@ -67,6 +69,20 @@ void updateLoggingThresholdBigExamined(Session *, sql_var_t)
   logging_syslog_handler->setThresholdBigExamined(sysvar_logging_threshold_big_examined);
 }
 
+bool updateFacility(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_facility(var->value->str_value.data());
+    if (logging_syslog_handler->setFacility(new_facility))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("syslog_facility cannot be NULL"));
+  return true; // error
+}
+
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
@@ -85,8 +101,7 @@ static int init(drizzled::module::Context &context)
 
   context.add(new plugin::Create_function<udf::Syslog>("syslog"));
 
-  context.registerVariable(new sys_var_const_string_val("facility",
-                                                        vm["facility"].as<string>()));
+  context.registerVariable(new sys_var_std_string("facility", logging_syslog_handler->getFacility(), NULL, &updateFacility));
   context.registerVariable(new sys_var_const_string_val("errmsg_priority",
                                                         vm["errmsg-priority"].as<string>()));
   context.registerVariable(new sys_var_const_string_val("logging_priority",

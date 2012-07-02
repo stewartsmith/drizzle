@@ -49,6 +49,7 @@ logging::Syslog::Syslog(const std::string &facility,
                         uint64_t threshold_big_examined) :
   drizzled::plugin::Logging("syslog_query_log"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str())),
+  sysvar_facility(facility),
   _threshold_slow(threshold_slow),
   _threshold_big_resultset(threshold_big_resultset),
   _threshold_big_examined(threshold_big_examined)
@@ -59,6 +60,7 @@ logging::Syslog::Syslog(const std::string &facility,
                             _("syslog facility \"%s\" not known, using \"local0\""),
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
+    sysvar_facility= "local0";
   }
 }
 
@@ -143,6 +145,23 @@ bool logging::Syslog::setThresholdBigExamined(uint64_t new_threshold)
 {
   _threshold_big_examined= new_threshold;
   return true;
+}
+
+bool logging::Syslog::setFacility(std::string new_facility)
+{
+  int tmp_facility= WrapSyslog::getFacilityByName(new_facility.c_str());
+  if(tmp_facility>0)
+  {
+    _facility= tmp_facility;
+    sysvar_facility= new_facility;
+    return true;
+  }
+  return false;
+}
+
+std::string& logging::Syslog::getFacility()
+{
+  return sysvar_facility;
 }
 
 } /* namespace syslog */
