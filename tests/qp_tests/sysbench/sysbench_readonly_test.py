@@ -23,12 +23,12 @@ import unittest
 import subprocess
 import time
 import re
-import MySQLdb
 
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
 from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
+from lib.util.database_connect import results_db_connect
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
@@ -100,7 +100,6 @@ class basicTest(mysqlBaseTestCase):
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
 
-            #print output
             #gathering the data from the output
             regexes={
               'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
@@ -120,20 +119,11 @@ class basicTest(mysqlBaseTestCase):
                         run[key]=float(result.group(1))
 
 
-            #inserting the data obtained into the results_db database
-            conn=MySQLdb.connect(host='127.0.0.1',user='root',passwd="",db="results_db",port=3306)
-            cursor=conn.cursor()
-            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency
-            cursor.execute(sql_select)
-            data=cursor.fetchone()
-            fetch={'tps':data[1],
-                   'min_req_lat_ms':data[2],
-                   'max_req_lat_ms':data[3],
-                   'avg_req_lat_ms':data[4],
-                   '95p_req_lat_ms':data[5],
-                   'rwreqps':data[6],
-                   'deadlocksps':data[7]}
-           
+            #fetching test results from results_db database
+            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency            
+            fetch=results_db_connect("select",sql_select)
+            
+            #updating the results_db database with test results
             sql_update="""UPDATE sysbench_run_iterations SET tps=%0.2f, min_req_lat_ms=%0.2f, max_req_lat_ms=%0.2f, avg_req_lat_ms=%0.2f, 95p_req_lat_ms=%0.2f,rwreqps=%0.2f, deadlocksps=%0.2f WHERE concurrency=%d""" % (  run['tps'],
                                                                        run['min_req_lat_ms'],
                                                                        run['max_req_lat_ms'],
@@ -142,11 +132,9 @@ class basicTest(mysqlBaseTestCase):
                                                                        run['rwreqps'],
                                                                        run['deadlocksps'],
                                                                        concurrency  )
-            cursor.execute(sql_update)
-            conn.autocommit(True)
-            cursor.close()
-            conn.close()
+            results_db_connect("update",sql_update)
 
+            #report generation
             self.logging.info("Displaying regression report...")
             print """==========================================================================
 field		value in database	recorded value		regression
