@@ -30,8 +30,8 @@
 #include <string>
 #include <zmq.h>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace zeromq {
 
 /**
  * @brief
@@ -46,6 +46,7 @@ class ZeroMQLog :
 private:
   void *_socket;
   pthread_mutex_t publishLock;
+  std::string sysvar_endpoint;
   std::string getSchemaName(const drizzled::message::Transaction &txn);
 public:
 
@@ -60,6 +61,26 @@ public:
   */
   ZeroMQLog(const std::string &name, const std::string &endpoint);
   ~ZeroMQLog();
+  
+  /**
+   * @brief
+   *   Getter for endpoint
+   * 
+   * @details
+   *   Returns value of sysvar_endpoint
+   */
+  std::string& getEndpoint();
+
+  /**
+   * @brief
+   *   Setter for endpoint
+   *
+   * @details
+   *   This function is called to change the value of sysvar_endpoint
+   *
+   * @param[in] new endpoint string
+   */
+  bool setEndpoint(std::string new_endpoint);
 
   /**
    * @brief
@@ -75,5 +96,6 @@ public:
 
 };
 
+} /* namespace zeromq */
 } /* namespace drizzle_plugin */
 
