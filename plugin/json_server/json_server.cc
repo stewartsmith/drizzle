@@ -46,7 +46,7 @@
 #include <event.h>
 #include <drizzled/execute.h>
 #include <drizzled/sql/result_set.h>
-
+#include <evhtp.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/catalog/local.h>
