@@ -29,6 +29,8 @@ from lib.util.sysbench_methods import execute_sysbench
 from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 from lib.util.database_connect import results_db_connect
+from lib.util.sysbench_report import getSysbenchReport
+from lib.util.mailing_report import sysbenchSendMail
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
@@ -144,6 +146,33 @@ field		value in database	recorded value		regression
             for key in fetch.keys():
                 print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
             print "=========================================================================="
+
+            report="""==============================
+  SYSBENCH REGRESSION REPORT
+==============================
+TPS             : %d     %d
+MIN_REQ_LAT_MS  : %d     %d
+MAX_REQ_LAT_MS  : %d     %d
+AVG_REQ_LAT_MS  : %d     %d
+95P_REQ_LAT_MS  : %d     %d
+RWREQPS         : %d     %d
+DEADLOCKSPS     : %d     %d
+==============================
+                   """ % (run['tps'],run['tps']-fetch['tps']
+                          ,run['min_req_lat_ms'],run['min_req_lat_ms']-fetch['min_req_lat_ms']
+                          ,run['max_req_lat_ms'],run['max_req_lat_ms']-fetch['max_req_lat_ms']
+                          ,run['avg_req_lat_ms'],run['avg_req_lat_ms']-fetch['avg_req_lat_ms']
+                          ,run['95p_req_lat_ms'],run['95p_req_lat_ms']-fetch['95p_req_lat_ms']
+                          ,run['rwreqps'],run['rwreqps']-fetch['rwreqps']
+                          ,run['deadlocksps'],run['deadlocksps']-fetch['deadlocksps']
+                         )
+            #print report
+            #print "\n"
+            sys_report=getSysbenchReport(run,fetch)
+            #print sys_report
+
+            #mailing sysbench report
+            sysbenchSendMail('sharan.monikantan@gmail.com',sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
