@@ -1,8 +1,7 @@
 CREATE TABLE
 ============
 
-A CREATE statement in SQL creates an object inside of Drizzle. One of
-the most common CREATE commands is the CREATE TABLE command.
+'TODO'
 
 .. code-block:: mysql
 

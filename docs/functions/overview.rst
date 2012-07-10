@@ -1,7 +1,7 @@
 SQL Functions
 =============
 
-Several SQL functions are built into Drizzle--functions perform calculations on data. They can be be understood in categories: 
+'TODO' 
    
 .. toctree::
    :maxdepth: 2

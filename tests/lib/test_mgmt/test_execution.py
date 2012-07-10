@@ -296,7 +296,7 @@ class testExecutor():
                        #,  'MYSQL_BASEDIR' : self.system_manager.code_manager.code_trees['mysql'][0].basedir
                        ,  'MYSQL_TEST_WORKDIR' : self.system_manager.workdir
                        ,  'SQLBENCH_DIR' : os.path.join( self.system_manager.testdir
-                                                       , 'sql-bench')
+                                                       , 'test_tools/sql-bench')
                        }         
 
         self.working_environment = self.system_manager.env_manager.create_working_environment(env_reqs)

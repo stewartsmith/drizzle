@@ -35,7 +35,7 @@ def execute_sqlbench(test_cmd, test_executor, servers):
     bot.logging.info("This may take some time...")
     sqlbench_subproc = subprocess.Popen( test_cmd
                                        , shell=True
-                                       , cwd=os.path.join(bot.system_manager.testdir, 'sql-bench')
+                                       , cwd=os.path.join(bot.system_manager.testdir, 'test_tools/sql-bench')
                                        , env=bot.working_environment
                                        , stdout = sqlbench_output
                                        , stderr = subprocess.STDOUT
