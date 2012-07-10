@@ -152,7 +152,9 @@ field		value in database	recorded value		regression
             sys_report=getSysbenchReport(run,fetch)
            
             #mailing sysbench report
-            sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+            if mail_tgt:
+              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+              sysbenchSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

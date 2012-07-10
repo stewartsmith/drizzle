@@ -276,9 +276,10 @@ def parse_qp_options(defaults):
       , help = "Run each test case the specified number of times.  For a given sequence, the first test will be run n times, then the second, etc [%default]"
       )
 
+
     test_control_group.add_option(
-        "--email-report"
-      , dest="email"
+        "--email-report-tgt"
+      , dest="emailreporttgt"
       , action="store"
       , type='string'
       , default=None
