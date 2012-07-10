@@ -79,9 +79,15 @@ bool ZeroMQLog::setEndpoint(std::string new_endpoint)
   int tmp_rc= zmq_bind(tmp_socket, new_endpoint.c_str());
   if(tmp_rc!=0)
     return false;
+  // need a mutex around this since other threads can try to write to _socket while we are changing the endpoint
+  pthread_mutex_lock(&publishLock);
+
   zmq_close(_socket);
   _socket= tmp_socket;
   sysvar_endpoint= new_endpoint;
+  
+  //Releasing the mutex lock
+  pthread_mutex_unlock(&publishLock);
   return true;
 }
 
