@@ -30,17 +30,17 @@ SELECT @@logging_query_threshold_slow;
 # This query should *not* log since it's below the threshold.
 SELECT SLEEP(0.4);
 # This should not print anything.
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 # This query should log since it's just a few microseconds past the threshold.
 SELECT SLEEP(0.5);
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 # Set query_log_threshold_execution_time back to zero.
 SET GLOBAL logging_query_threshold_slow=0;
 #This should be logged
 SELECT SLEEP(1);
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 # Clear log file.
 --exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
@@ -51,13 +51,13 @@ SELECT SLEEP(1);
 # logging_query_threshold_big_resultset
 # ###########################################################################
 # This should be logged
-SHOW VARIABLES LIKE "%logging_query%";
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 SET GLOBAL logging_query_threshold_big_resultset=2;
 
 #This should not be logged
 SELECT "This should not be logged";
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 # Clear log file.
 --exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
@@ -68,14 +68,14 @@ SELECT "This should not be logged";
 # logging_query_threshold_big_examined
 # ###########################################################################
 # This should be logged
-SHOW VARIABLES LIKE "%logging_query%";
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 #Changing threshold_big_examined to 2, so that queries which examine less that 2 rows will not be logged
 SET GLOBAL logging_query_threshold_big_examined=2;
 #This should not be logged
 SELECT "This should not be logged";
---exec wc -l $DRIZZLETEST_VARDIR/logging_query.log
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
 
 # ############################################################################
 # Clean up.

@@ -14,43 +14,41 @@ SELECT @@logging_query_threshold_slow;
 SELECT SLEEP(0.4);
 SLEEP(0.4)
 0
-1 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+1
 SELECT SLEEP(0.5);
 SLEEP(0.5)
 0
-2 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+2
 SET GLOBAL logging_query_threshold_slow=0;
 SELECT SLEEP(1);
 SLEEP(1)
 0
-4 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+4
 
-SHOW VARIABLES LIKE "%logging_query%";
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
 Variable_name	Value
 logging_query_enable	ON
-logging_query_filename	/home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
 logging_query_pcre	.+
 logging_query_threshold_big_examined	0
 logging_query_threshold_big_resultset	0
 logging_query_threshold_slow	0
-2 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+2
 SET GLOBAL logging_query_threshold_big_resultset=2;
 SELECT "This should not be logged";
 This should not be logged
 This should not be logged
-2 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+2
 
-SHOW VARIABLES LIKE "%logging_query%";
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
 Variable_name	Value
 logging_query_enable	ON
-logging_query_filename	/home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
 logging_query_pcre	.+
 logging_query_threshold_big_examined	0
 logging_query_threshold_big_resultset	2
 logging_query_threshold_slow	0
-2 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+2
 SET GLOBAL logging_query_threshold_big_examined=2;
 SELECT "This should not be logged";
 This should not be logged
 This should not be logged
-2 /home/ansh/repos/drizzle/logging_query_dynamic/tests/var/logging_query.log
+2
