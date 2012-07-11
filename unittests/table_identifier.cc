@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_SUITE(TableIdentifierTest)
 BOOST_AUTO_TEST_CASE(CreateStandard)
 {
   identifier::Table identifier("test", "a");
-  BOOST_REQUIRE_EQUAL("test/a", identifier.getPath());
+  BOOST_REQUIRE_EQUAL("local/test/a", identifier.getPath());
   BOOST_REQUIRE_EQUAL("test.a", identifier.getSQLPath());
 }
 
