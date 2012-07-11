@@ -35,7 +35,7 @@
 namespace drizzled {
 namespace identifier {
 
-class Catalog : public Identifier
+class DRIZZLED_API Catalog : public Identifier
 {
 public:
   Catalog(str_ref);
