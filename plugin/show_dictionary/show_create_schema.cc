@@ -47,7 +47,8 @@ ShowCreateSchema::Generator::Generator(Field **arg) :
   if (not select.getShowSchema().empty())
   {
     schema_name.append(select.getShowTable());
-    identifier::Schema identifier(select.getShowSchema());
+    identifier::Schema identifier(getSession().catalog().identifier(),
+                                  select.getShowSchema());
 
     if (not plugin::Authorization::isAuthorized(*getSession().user(),
                                                 identifier, false))

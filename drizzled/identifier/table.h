@@ -150,16 +150,18 @@ private:
 public:
 
   Table(const drizzled::Table &table);
-                   
+
   Table(const identifier::Schema &schema,
         const std::string &table_name_arg,
         Type tmp_arg= message::Table::STANDARD);
 
-  Table(const std::string &db_arg,
+  Table(const drizzled::identifier::Catalog &catalog,
+        const std::string &db_arg,
         const std::string &table_name_arg,
         Type tmp_arg= message::Table::STANDARD);
 
-  Table(const std::string &schema_name_arg,
+  Table(const drizzled::identifier::Catalog &catalog,
+        const std::string &schema_name_arg,
         const std::string &table_name_arg,
         const std::string &path_arg );
 

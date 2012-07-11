@@ -24,6 +24,7 @@
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/schema.h>
 #include <drizzled/sql_lex.h>
+#include <drizzled/catalog/instance.h>
 
 #include <string>
 
@@ -33,7 +34,8 @@ namespace drizzled {
 
 bool statement::ChangeSchema::execute()
 {
-  identifier::Schema identifier(str_ref(lex().select_lex.db));
+  identifier::Schema identifier(session().catalog().identifier(),
+                                str_ref(lex().select_lex.db));
   if (not schema::change(session(), identifier))
   {
     session().my_ok();

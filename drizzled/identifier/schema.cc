@@ -41,9 +41,10 @@ using namespace std;
 namespace drizzled {
 namespace identifier {
 
-Schema::Schema(str_ref db_arg) :
+Schema::Schema(const drizzled::identifier::Catalog &catalog_arg,
+                 str_ref db_arg) :
   db(db_arg.data(), db_arg.size()),
-  _catalog(drizzled::catalog::local_identifier())
+  _catalog(catalog_arg)
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);

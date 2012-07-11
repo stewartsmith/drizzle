@@ -28,6 +28,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/catalog/instance.h>
 
 namespace drizzled {
 
@@ -156,7 +157,10 @@ bool statement::RenameTable::rename(TableList *ren_table,
   plugin::StorageEngine *engine= NULL;
   message::table::shared_ptr table_message;
 
-  identifier::Table old_identifier(ren_table->getSchemaName(), old_alias, message::Table::STANDARD);
+  identifier::Table old_identifier(session().catalog().identifier(),
+                                   ren_table->getSchemaName(),
+                                   old_alias,
+                                   message::Table::STANDARD);
 
   if (not (table_message= plugin::StorageEngine::getTableMessage(session(), old_identifier)))
   {
@@ -166,7 +170,8 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   engine= plugin::StorageEngine::findByName(session(), table_message->engine().name());
 
-  identifier::Table new_identifier(new_db, new_alias, message::Table::STANDARD);
+  identifier::Table new_identifier(session().catalog().identifier(),
+                                   new_db, new_alias, message::Table::STANDARD);
   if (plugin::StorageEngine::doesTableExist(session(), new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, new_identifier);

@@ -33,6 +33,7 @@ class Schema : public drizzled::plugin::StorageEngine
   bool readSchemaFile(const drizzled::identifier::Schema &schema_identifier, drizzled::message::Schema &schema);
   bool readSchemaFile(std::string filename, drizzled::message::Schema &schema);
 
+  void prime_catalog(drizzled::identifier::Catalog &catalog_identifier);
   void prime();
 
   typedef boost::unordered_map<std::string, drizzled::message::schema::shared_ptr> SchemaCache;

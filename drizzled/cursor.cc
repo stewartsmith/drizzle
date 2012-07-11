@@ -89,7 +89,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
     when the clone Cursor object is destroyed.
   */
   new_handler->ref= mem_root->alloc(ALIGN_SIZE(ref_length)*2);
-  identifier::Table identifier(getTable()->getShare()->getSchemaName(), getTable()->getShare()->getTableName(), getTable()->getShare()->getType());
+  identifier::Table identifier(*getTable());
   return new_handler->ha_open(identifier, getTable()->getDBStat(), HA_OPEN_IGNORE_IF_LOCKED) ? NULL : new_handler;
 }
 

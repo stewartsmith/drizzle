@@ -23,6 +23,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/make_shared.hpp>
 
+#include <drizzled/identifier.h>
+#include <drizzled/identifier/catalog.h>
 #include <drizzled/message/catalog.h>
 
 namespace drizzled {
@@ -32,7 +34,8 @@ class Instance
 {
   Instance() :
     _locked(false),
-    _lock_id(0)
+    _lock_id(0),
+    _identifier(str_ref(""))
   { };
 
   bool _locked;
@@ -40,6 +43,7 @@ class Instance
   message::catalog::shared_ptr _message;
   mutable boost::mutex _schema_lock;
   mutable boost::mutex _system_variable_lock;
+  drizzled::identifier::Catalog _identifier;
 
 
 public:
@@ -49,12 +53,14 @@ public:
   typedef const Instance& const_reference;
   typedef Instance& reference;
 
-  Instance(message::catalog::shared_ptr &message_arg)
+  Instance(message::catalog::shared_ptr &message_arg) :
+    _identifier(message_arg->name())
   {
     _message= message_arg;
   };
 
-  Instance(const message::catalog::shared_ptr &message_arg)
+  Instance(const message::catalog::shared_ptr &message_arg) :
+    _identifier(message_arg->name())
   {
     _message= message_arg;
   };
@@ -70,6 +76,11 @@ public:
     drizzled::message::catalog::shared_ptr new_message= drizzled::message::catalog::make_shared(identifier);
     assert(not new_message->name().empty());
     return boost::make_shared<Instance>(new_message);
+  }
+
+  const drizzled::identifier::Catalog &identifier() const
+  {
+    return _identifier;
   }
 
   const std::string &getName() const

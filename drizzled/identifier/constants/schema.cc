@@ -20,6 +20,7 @@
 
 #include <config.h>
 #include <drizzled/identifier.h>
+#include <drizzled/catalog/local.h>
 
 namespace drizzled {
 namespace identifier {
@@ -29,8 +30,9 @@ namespace constants {
 class Schema : public identifier::Schema
 {
 public:
+  /* FIXME: use a global identifier for catalog */
   Schema(const char* name) :
-    identifier::Schema(str_ref(name))
+    identifier::Schema(drizzled::catalog::local_identifier(), str_ref(name))
   {
   }
 

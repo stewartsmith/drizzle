@@ -190,7 +190,8 @@ std::string Table::build_table_filename(const identifier::Table &table_identifie
 }
 
 Table::Table(const drizzled::Table &table) :
-  identifier::Schema(str_ref(table.getShare()->getSchemaName())),
+  identifier::Schema(table.getShare()->getTableIdentifier().getCatalog(),
+                     str_ref(table.getShare()->getSchemaName())),
   type(table.getShare()->getTableType()),
   table_name(table.getShare()->getTableName())
 {
@@ -212,20 +213,22 @@ Table::Table(const identifier::Schema &schema,
   init();
 }
 
-Table::Table(const std::string &db_arg,
+Table::Table(const drizzled::identifier::Catalog &catalog,
+             const std::string &db_arg,
              const std::string &table_name_arg,
              Type tmp_arg) :
-  Schema(db_arg),
+  Schema(catalog, db_arg),
   type(tmp_arg),
   table_name(table_name_arg)
 { 
   init();
 }
 
-Table::Table(const std::string &schema_name_arg,
+Table::Table(const drizzled::identifier::Catalog &catalog,
+             const std::string &schema_name_arg,
              const std::string &table_name_arg,
              const std::string &path_arg ) :
-  Schema(schema_name_arg),
+  Schema(catalog, schema_name_arg),
   type(message::Table::TEMPORARY),
   path(path_arg),
   table_name(table_name_arg)

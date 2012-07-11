@@ -278,6 +278,11 @@ public:
     return table_identifier->getSchemaName().c_str();
   }
 
+  const drizzled::identifier::Table &getTableIdentifier() const
+  {
+    return *table_identifier;
+  }
+
   uint32_t   block_size;                   /* create information */
 
 private:

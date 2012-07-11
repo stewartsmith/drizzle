@@ -47,7 +47,7 @@ class DRIZZLED_API Schema : public Identifier
   drizzled::identifier::Catalog _catalog;
 
 public:
-  Schema(str_ref);
+  Schema(const drizzled::identifier::Catalog &catalog_arg, str_ref);
 
   virtual std::string getSQLPath() const
 	{

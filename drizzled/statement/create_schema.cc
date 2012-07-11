@@ -29,6 +29,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/plugin/authorization.h>
+#include <drizzled/catalog/instance.h>
 
 #include <string>
 
@@ -47,7 +48,8 @@ bool statement::CreateSchema::execute()
     return true;
   }
 
-  identifier::Schema schema_identifier(to_string(lex().name));
+  identifier::Schema schema_identifier(session().catalog().identifier(),
+                                       to_string(lex().name));
   if (not check(schema_identifier))
     return false;
 

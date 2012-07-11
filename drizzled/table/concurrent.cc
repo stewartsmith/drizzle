@@ -31,6 +31,7 @@
 #include <drizzled/table/instance.h>
 #include <drizzled/table.h>
 #include <drizzled/table_list.h>
+#include <drizzled/catalog/instance.h>
 
 namespace drizzled {
 namespace table {
@@ -65,7 +66,10 @@ bool Concurrent::reopen_name_locked_table(TableList* table_list, Session *sessio
   if (session->getKilled())
     return true;
 
-  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  identifier::Table identifier(session->catalog().identifier(),
+                               table_list->getSchemaName(),
+                               table_list->getTableName());
+
   if (open_unireg_entry(session, table_list->getTableName(), identifier))
   {
     intern_close_table();

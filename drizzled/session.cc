@@ -666,7 +666,7 @@ bool Session::checkUser(const std::string &passwd_str, const std::string &in_db)
   }
 
   /* Change database if necessary */
-  if (not in_db.empty() && schema::change(*this, identifier::Schema(in_db)))
+  if (not in_db.empty() && schema::change(*this, identifier::Schema(catalog().identifier(), in_db)))
     return false; // change() has pushed the error message
   my_ok();
 
@@ -1640,7 +1640,7 @@ void Open_tables_state::nukeTable(Table *table)
   plugin::StorageEngine& table_type= *table->getShare()->db_type();
   table->free_io_cache();
   table->delete_table();
-  rm_temporary_table(table_type, identifier::Table(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath()));
+  rm_temporary_table(table_type, identifier::Table(table->getShare()->getTableIdentifier().getCatalog(), table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath()));
   boost::checked_delete(table->getMutableShare());
   boost::checked_delete(table);
 }

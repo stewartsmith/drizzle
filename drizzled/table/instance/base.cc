@@ -86,6 +86,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/key.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/catalog/local.h>
 
 using namespace std;
 
@@ -487,7 +488,9 @@ void TableShare::init(const char *new_table_name, const char *new_path)
   table_category= TABLE_CATEGORY_TEMPORARY;
   tmp_table= message::Table::INTERNAL;
 
-  identifier::Table *n= new identifier::Table("", new_table_name, new_path);
+  /* local_identifier() is okay to use here as the path is what matters */
+  identifier::Table *n= new identifier::Table(catalog::local_identifier(),
+                                              "", new_table_name, new_path);
   delete table_identifier;
   table_identifier= n;
 

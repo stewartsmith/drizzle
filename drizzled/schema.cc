@@ -98,8 +98,9 @@ bool create(Session &session, const message::Schema &schema_message, const bool 
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
 
-    // Check to see if it exists already.  
-    identifier::Schema schema_identifier(schema_message.name());
+    // Check to see if it exists already.
+    identifier::Schema schema_identifier(session.catalog().identifier(),
+                                         schema_message.name());
     if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
       if (not is_if_not_exists)
@@ -157,7 +158,8 @@ bool alter(Session &session,
   {
     boost::mutex::scoped_lock scopedLock(session.catalog().schemaLock());
 
-    identifier::Schema schema_idenifier(schema_message.name());
+    identifier::Schema schema_idenifier(session.catalog().identifier(),
+                                        schema_message.name());
     if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
     {
       my_error(ER_SCHEMA_DOES_NOT_EXIST, schema_idenifier);

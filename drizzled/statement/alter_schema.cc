@@ -27,6 +27,8 @@
 #include <drizzled/message.h>
 #include <drizzled/sql_lex.h>
 
+#include <drizzled/catalog/instance.h>
+
 #include <string>
 
 using namespace std;
@@ -38,7 +40,8 @@ bool statement::AlterSchema::execute()
   if (not validateSchemaOptions())
     return true;
 
-  identifier::Schema schema_identifier(lex().name);
+  identifier::Schema schema_identifier(session().catalog().identifier(),
+                                       lex().name);
 
   if (not schema::check(session(), schema_identifier))
   {
@@ -46,7 +49,7 @@ bool statement::AlterSchema::execute()
     return false;
   }
 
-  identifier::Schema identifier(lex().name);
+  identifier::Schema identifier(session().catalog().identifier(), lex().name);
   message::schema::shared_ptr old_definition= plugin::StorageEngine::getSchemaDefinition(identifier);
   if (not old_definition)
   {

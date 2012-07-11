@@ -29,6 +29,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/charset.h>
 #include <drizzled/field.h>
+#include <drizzled/catalog/local.h>
 
 #include <string>
 #include <set>
@@ -67,9 +68,11 @@ class DRIZZLED_API TableFunction : public Plugin
   void init();
 
 public:
+  /* FIXME: should use a universal catalog identifier */
   TableFunction(const char *schema_arg, const char *table_arg) :
     Plugin(local_string_append(schema_arg, table_arg) , "TableFunction"),
-    identifier(schema_arg, table_arg),
+    identifier(drizzled::catalog::local_identifier(),
+               schema_arg, table_arg),
     original_table_label(table_arg)
   {
     init();

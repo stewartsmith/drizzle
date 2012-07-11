@@ -93,6 +93,7 @@
 #include <drizzled/util/test.h>
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
+#include <drizzled/catalog/instance.h>
 
 #include <set>
 #include <vector>
@@ -618,7 +619,9 @@ DrizzleLock *Session::get_lock_data(Table **table_ptr, uint32_t count,
 
 int Session::lock_table_name(TableList *table_list)
 {
-  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  identifier::Table identifier(catalog().identifier(),
+                               table_list->getSchemaName(),
+                               table_list->getTableName());
   {
     /* Only insert the table if we haven't insert it already */
     table::CacheRange ppp= table::getCache().equal_range(identifier.getKey());

@@ -106,7 +106,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
+  identifier::Table identifier(table->getShare()->getTableIdentifier().getCatalog(), table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
   TableShare *share= new TableShare(identifier.getType(), identifier, identifier.getKey().vector(),  static_cast<uint32_t>(table->getShare()->getCacheKeySize()));
 
   table->cursor->close();
@@ -174,7 +174,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       bool found= false;
       for (TableList *table= tables; table; table= table->next_local)
       {
-        if (table::Cache::removeTable(*session, identifier::Table(table->getSchemaName(), table->getTableName()), RTFC_OWNED_BY_Session_FLAG))
+        if (table::Cache::removeTable(*session, identifier::Table(catalog().identifier(), table->getSchemaName(), table->getTableName()), RTFC_OWNED_BY_Session_FLAG))
         {
           found= true;
         }
@@ -473,7 +473,8 @@ void Open_tables_state::doGetTableIdentifiers(const identifier::Schema &schema_i
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
-      set_of_identifiers.push_back(identifier::Table(table->getShare()->getSchemaName(),
+      set_of_identifiers.push_back(identifier::Table(table->getShare()->getTableIdentifier().getCatalog(),
+                                                     table->getShare()->getSchemaName(),
                                                    table->getShare()->getTableName(),
                                                    table->getShare()->getPath()));
     }
@@ -725,7 +726,10 @@ table::Placeholder& Session::table_cache_insert_placeholder(const drizzled::iden
   /*
     Create a table entry with the right key and with an old refresh version
   */
-  identifier::Table identifier(arg.getSchemaName(), arg.getTableName(), message::Table::INTERNAL);
+  identifier::Table identifier(catalog().identifier(),
+                               arg.getSchemaName(),
+                               arg.getTableName(),
+                               message::Table::INTERNAL);
   table::Placeholder* table= new table::Placeholder(this, identifier);
   table::Cache::insert(table);
   return *table;
@@ -824,7 +828,9 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     return NULL;
   }
 
-  identifier::Table identifier(table_list->getSchemaName(), table_list->getTableName());
+  identifier::Table identifier(catalog().identifier(),
+                               table_list->getSchemaName(),
+                               table_list->getTableName());
   const identifier::Table::Key &key(identifier.getKey());
   table::CacheRange ppp;
 
@@ -1020,7 +1026,10 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 
         if (table_list->isCreate())
         {
-          identifier::Table  lock_table_identifier(table_list->getSchemaName(), table_list->getTableName(), message::Table::STANDARD);
+          identifier::Table  lock_table_identifier(catalog().identifier(),
+                                                   table_list->getSchemaName(),
+                                                   table_list->getTableName(),
+                                                   message::Table::STANDARD);
 
           if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
           {
@@ -1480,7 +1489,9 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
-    identifier::Table the_table(tables->getSchemaName(), tables->getTableName());
+    identifier::Table the_table(catalog().identifier(),
+                                tables->getSchemaName(),
+                                tables->getTableName());
     if (not plugin::Authorization::isAuthorized(*user(), the_table))
     {
       result= -1;                               // Fatal error

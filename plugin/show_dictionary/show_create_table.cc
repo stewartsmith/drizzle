@@ -48,7 +48,9 @@ ShowCreateTable::Generator::Generator(Field **arg) :
 
   if (not select.getShowTable().empty() && not select.getShowSchema().empty())
   {
-    identifier::Table identifier(select.getShowSchema(), select.getShowTable());
+    identifier::Table identifier(getSession().catalog().identifier(),
+                                 select.getShowSchema(),
+                                 select.getShowTable());
 
     if (not plugin::Authorization::isAuthorized(*getSession().user(),
                                             identifier, false))

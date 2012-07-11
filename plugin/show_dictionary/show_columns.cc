@@ -51,7 +51,9 @@ ShowColumns::Generator::Generator(Field **arg) :
   if (not select.getShowTable().empty() && not select.getShowSchema().empty())
   {
     table_name.append(select.getShowTable().c_str());
-    identifier::Table identifier(select.getShowSchema().c_str(), select.getShowTable().c_str());
+    identifier::Table identifier(getSession().catalog().identifier(),
+                                 select.getShowSchema().c_str(),
+                                 select.getShowTable().c_str());
 
     if (not plugin::Authorization::isAuthorized(*getSession().user(),
                                             identifier, false))

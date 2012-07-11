@@ -547,7 +547,10 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     message::Table definition;
     if (StorageEngine::readTableFile(path, definition))
     {
-      identifier::Table identifier(definition.schema(), definition.name(), path);
+      identifier::Table identifier(identifier::Catalog(definition.catalog()),
+                                   definition.schema(),
+                                   definition.name(),
+                                   path);
       table_identifiers.push_back(identifier);
     }
   }
@@ -733,8 +736,7 @@ void StorageEngine::print_error(int error, myf errflag, const Table &table) cons
     break;
   case HA_ERR_NO_SUCH_TABLE:
     {
-      identifier::Table identifier(table.getShare()->getSchemaName(), table.getShare()->getTableName());
-      my_error(ER_TABLE_UNKNOWN, identifier);
+      my_error(ER_TABLE_UNKNOWN, table.getShare()->getTableIdentifier());
       return;
     }
   case HA_ERR_LOG_ROW_FOR_REPLICATION_FAILED:

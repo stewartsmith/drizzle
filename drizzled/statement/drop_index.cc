@@ -26,6 +26,7 @@
 #include <drizzled/statement/alter_table.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/catalog/instance.h>
 
 namespace drizzled {
 
@@ -37,7 +38,9 @@ bool statement::DropIndex::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
-    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table identifier(session().catalog().identifier(),
+                                 first_table->getSchemaName(),
+                                 first_table->getTableName());
     if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
@@ -68,7 +71,9 @@ bool statement::DropIndex::execute()
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
   {
-    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table identifier(session().catalog().identifier(),
+                                 first_table->getSchemaName(),
+                                 first_table->getTableName());
 
     create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
@@ -84,11 +89,16 @@ bool statement::DropIndex::execute()
   }
   else
   {
-    identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table catch22(session().catalog().identifier(),
+                              first_table->getSchemaName(),
+                              first_table->getTableName());
     Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
-      identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getShare()->getPath());
+      identifier::Table identifier(session().catalog().identifier(),
+                                   first_table->getSchemaName(),
+                                   first_table->getTableName(),
+                                   table->getShare()->getPath());
       create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
       res= alter_table(&session(), 

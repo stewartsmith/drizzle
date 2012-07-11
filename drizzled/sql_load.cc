@@ -325,7 +325,8 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  identifier::Schema identifier(*schema);
+  identifier::Schema identifier(session->catalog().identifier(),
+                                *schema);
   READ_INFO read_info(file, tot_length,
                       ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
 		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
