@@ -70,6 +70,7 @@ class testExecutor(test_execution.testExecutor):
         test_module.servers = self.current_servers
         test_module.test_executor = self
         test_module.server_manager = self.server_manager
+        test_module.mail_tgt = self.system_manager.variables['emailreporttgt']
 
         # start our test
         self.time_manager.start(testcase_name,'test')

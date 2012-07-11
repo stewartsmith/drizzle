@@ -78,25 +78,20 @@ class basicTest(mysqlBaseTestCase):
         #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
         concurrencies = [1 ]
 
+
+        # we setup once.  This is a readonly test and we don't
+        # alter the test bed once it is created
+        exec_cmd = " ".join(test_cmd)
+        retcode, output = prepare_sysbench(test_executor, exec_cmd)
+        err_msg = ("sysbench 'prepare' phase failed.\n"
+                   "retcode:  %d"
+                   "output:  %s" %(retcode,output))
+        self.assertEqual(retcode, 0, msg = err_msg) 
+
         # start the test!
         for concurrency in concurrencies:
-            self.logging.info("Resetting test server...")
-            for query in ["DROP SCHEMA IF EXISTS test"
-                         ,"CREATE SCHEMA test"
-                         ]:
-                retcode, result = self.execute_query(query, master_server, schema="INFORMATION_SCHEMA")
-            test_cmd.append("--num-threads=%d" %concurrency)
-            # we setup once per concurrency, copying drizzle-automation
-            # this should likely change and if not for readonly, then definitely
-            # for readwrite
-
-            exec_cmd = " ".join(test_cmd)
-            retcode, output = prepare_sysbench(test_executor, exec_cmd)
-            err_msg = ("sysbench 'prepare' phase failed.\n"
-                       "retcode:  %d"
-                       "output:  %s" %(retcode,output))
-            self.assertEqual(retcode, 0, msg = err_msg) 
-
+          exec_cmd = " ".join(test_cmd)
+          exec_cmd += "--num-threads=%d" %concurrency
             for test_iteration in range(iterations):
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
@@ -127,6 +122,8 @@ class basicTest(mysqlBaseTestCase):
             fetch=results_db_connect("select",sql_select)
             
             #updating the results_db database with test results
+            # This should be an INSERT operation - we are collecting data for every run and storing
+            # it for historical comparison over the life of the code...
             sql_update="""UPDATE sysbench_run_iterations SET tps=%0.2f, min_req_lat_ms=%0.2f, max_req_lat_ms=%0.2f, avg_req_lat_ms=%0.2f, 95p_req_lat_ms=%0.2f,rwreqps=%0.2f, deadlocksps=%0.2f WHERE concurrency=%d""" % (  run['tps'],
                                                                        run['min_req_lat_ms'],
                                                                        run['max_req_lat_ms'],
@@ -152,7 +149,9 @@ field		value in database	recorded value		regression
             sys_report=getSysbenchReport(run,fetch)
            
             #mailing sysbench report
-            sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+            if mail_tgt:
+              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+              sysbenchSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
