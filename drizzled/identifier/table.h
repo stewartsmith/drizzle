@@ -238,7 +238,7 @@ public:
   }
 
   static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-  static std::string build_table_filename(const std::string &db, const std::string &table_name, bool is_tmp);
+  static std::string build_table_filename(const drizzled::identifier::Table&, bool is_tmp);
   static std::string build_tmptable_filename();
 
 public:

@@ -66,6 +66,11 @@ public:
     return _corrected_db;
   }
 
+  const drizzled::identifier::Catalog &getCatalog() const
+  {
+    return _catalog;
+  }
+
   const std::string &getCatalogName() const;
 
   virtual bool isValid() const;

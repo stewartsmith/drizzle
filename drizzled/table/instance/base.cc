@@ -472,7 +472,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    _path= identifier::Table::build_table_filename(table_identifier->getSchemaName(), table_identifier->getTableName(), false);
+    _path= identifier::Table::build_table_filename(*table_identifier, false);
   }
 
   char* path_buff= mem_root.strdup(_path);
