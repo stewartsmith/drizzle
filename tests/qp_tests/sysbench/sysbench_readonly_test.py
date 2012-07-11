@@ -90,8 +90,8 @@ class basicTest(mysqlBaseTestCase):
 
         # start the test!
         for concurrency in concurrencies:
-          exec_cmd = " ".join(test_cmd)
-          exec_cmd += "--num-threads=%d" %concurrency
+            exec_cmd = " ".join(test_cmd)
+            exec_cmd += "--num-threads=%d" %concurrency
             for test_iteration in range(iterations):
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
@@ -119,7 +119,8 @@ class basicTest(mysqlBaseTestCase):
 
             #fetching test results from results_db database
             sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency            
-            fetch=results_db_connect("select",sql_select)
+            self.logging.info("dsn_string:%s" % dsn_string)
+            fetch=results_db_connect(dsn_string,"select",sql_select)
             
             #updating the results_db database with test results
             # This should be an INSERT operation - we are collecting data for every run and storing
@@ -132,7 +133,8 @@ class basicTest(mysqlBaseTestCase):
                                                                        run['rwreqps'],
                                                                        run['deadlocksps'],
                                                                        concurrency  )
-            results_db_connect("update",sql_update)
+            
+            results_db_connect(dsn_string,"update",sql_update)
 
             #report generation
             self.logging.info("Displaying regression report...")

@@ -18,12 +18,16 @@ def results_db_fetch(cursor,query):
     return fetch
     
 
-def results_db_connect(operation,query):
+def results_db_connect(dsn_string,operation,query):
     """used to establish a database connection
     
     """
 
-    connection=MySQLdb.connect(host='127.0.0.1',user='root',passwd="",db="results_db",port=3306)
+    #getting the connection parameters
+    connect_param=dsn_string.split(":")
+
+    #establishing the connection
+    connection=MySQLdb.connect(host=connect_param[0],user=connect_param[1],passwd=connect_param[2],db=connect_param[3],port=int(connect_param[4]))
     cursor=connection.cursor()
     sql=query
 

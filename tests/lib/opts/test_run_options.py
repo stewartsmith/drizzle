@@ -479,6 +479,14 @@ def parse_qp_options(defaults):
         , help = "File path where subunit output will be logged [%default]"
         )
 
+    environment_control_group.add_option(
+          "--results-db-dsn"
+        , dest="resultsdbdsn"
+        , action='store'
+        , default="127.0.0.1:root::results_db:3306"
+        , help = "Specifies the database connection\nDefault string:'127.0.0.1:root::results_db:3306'"
+        )
+
     parser.add_option_group(environment_control_group)
     # end environment control group
 
