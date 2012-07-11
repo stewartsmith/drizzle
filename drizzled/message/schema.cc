@@ -38,24 +38,15 @@ shared_ptr make_shared(const identifier::Schema& identifier)
 {
   shared_ptr shared(new message::Schema);
 
-  init(*shared, identifier.getSchemaName());
+  init(*shared, identifier);
 
   return shared;
 }
 
-shared_ptr make_shared(const std::string &name_arg)
+void init(drizzled::message::Schema &arg, const drizzled::identifier::Schema &identifier)
 {
-  shared_ptr shared(new message::Schema);
-
-  init(*shared, name_arg);
-
-  return shared;
-}
-
-void init(drizzled::message::Schema &arg, const std::string &name_arg)
-{
-  arg.set_name(name_arg);
-  arg.set_catalog(drizzled::catalog::local()->name());
+  arg.set_name(identifier.getSchemaName());
+  arg.set_catalog(identifier.getCatalogName());
   arg.mutable_engine()->set_name(std::string("filesystem")); // For the moment we have only one.
   arg.set_creation_timestamp(time(NULL));
   arg.set_update_timestamp(time(NULL));

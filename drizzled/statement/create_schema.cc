@@ -53,7 +53,7 @@ bool statement::CreateSchema::execute()
   if (not check(schema_identifier))
     return false;
 
-  drizzled::message::schema::init(schema_message, lex().name.data());
+  drizzled::message::schema::init(schema_message, schema_identifier);
 
   message::set_definer(schema_message, *session().user());
 

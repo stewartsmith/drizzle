@@ -67,7 +67,7 @@ bool statement::AlterSchema::execute()
   */
 
   // First initialize the schema message
-  drizzled::message::schema::init(schema_message, old_definition->name());
+  drizzled::message::schema::init(schema_message, identifier);
 
   // We set the name from the old version to keep case preference
   schema_message.set_version(old_definition->version());
