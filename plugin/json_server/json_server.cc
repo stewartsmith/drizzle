@@ -360,7 +360,7 @@ static void run(struct event_base *base)
 class JsonServer : public drizzled::plugin::Daemon , public HTTPServer
 {
 private:
-  boost::thread* json_thread[12];
+  std::vector<drizzled::thread_ptr> json_thread;
   in_port_t _port;
   struct evhttp *httpd;
   struct event_base *base;
@@ -451,10 +451,11 @@ public:
           sql_perror("event_add");
           return false;
         }
+        drizzled::thread_ptr local_thread;
+        local_thread.reset(new boost::thread((boost::bind(&run, base))));
+        json_thread.push_back(local_thread);
 
-        json_thread[i]=new boost::thread((boost::bind(&run, base)));
-
-        if (not json_thread)
+        if (not json_thread[i])
           return false;
     }
     return true;
@@ -469,7 +470,7 @@ public:
     {
       for(uint32_t i=0;i<max_thread;i++)
       {
-        json_thread[i]->boost::thread::join();
+        json_thread[i]->join();
       }
       evhttp_free(httpd);
       event_base_free(base);
