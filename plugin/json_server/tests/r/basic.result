@@ -1,14 +1,14 @@
 create table t1 (a int primary key auto_increment, b varchar(100));
-select http_post("http://localhost:PORT/0.1/sql", 'select * from t1;');;
-http_post("http://localhost:PORT/0.1/sql", 'select * from t1;')
+select http_post("http://localhost:PORT/sql", 'select * from t1;');;
+http_post("http://localhost:PORT/sql", 'select * from t1;')
 {
    "query" : "select * from t1;",
    "sqlstate" : "00000"
 }
 
 insert into t1 (b) values ("from MySQL protocol");
-select http_post('http://localhost:PORT/0.1/sql', 'select * from t1;');;
-http_post('http://localhost:PORT/0.1/sql', 'select * from t1;')
+select http_post('http://localhost:PORT/sql', 'select * from t1;');;
+http_post('http://localhost:PORT/sql', 'select * from t1;')
 {
    "query" : "select * from t1;",
    "result_set" : [
@@ -17,8 +17,8 @@ http_post('http://localhost:PORT/0.1/sql', 'select * from t1;')
    "sqlstate" : "00000"
 }
 
-select http_post('http://localhost:PORT/0.1/sql', 'insert into t1 (b) values (\'from http\');');;
-http_post('http://localhost:PORT/0.1/sql', 'insert into t1 (b) values (\'from http\');')
+select http_post('http://localhost:PORT/sql', 'insert into t1 (b) values (\'from http\');');;
+http_post('http://localhost:PORT/sql', 'insert into t1 (b) values (\'from http\');')
 {
    "query" : "insert into t1 (b) values ('from http');",
    "sqlstate" : "00000"
