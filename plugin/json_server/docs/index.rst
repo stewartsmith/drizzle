@@ -67,6 +67,14 @@ command line options.
    a table with a HTTP DELETE request with no _id specified. When set to OFF
    (the default), omitting _id will result in an error.
 
+.. option:: --json-server.max_threads ARG
+
+   :Default: 32
+   :Variable: :ref:`json_server_max_threads <json_server_max_threads>`
+
+   Number of threads used by json server to handle request. 
+   When it is increased explicitly , server immediately spawns max_threads number of threads.  
+
 .. _json_server_variables:
 
 Variables
@@ -115,6 +123,17 @@ See `variables` for more information about querying and setting variables.
    a table with a HTTP DELETE request with no _id specified. When set to OFF
    (the default), omitting _id will result in an error.
 
+.. _json_server_max_threads:
+
+* ``json_server_max_threads``
+
+    :Scope: Global
+    :Dynamic: yes
+
+   Number of threads used by json server to handle request. 
+   When it is increased explicitly , server immediately spawns max_threads number of threads. 
+
+
 .. _json_server_apis:
 
 APIs
@@ -133,19 +152,15 @@ As of this writing, the following APIs exist:
 
 .. code-block:: none
 
-    /0.1/sql
-    /0.2/sql
     /sql
 
-Because the SQL API did not change between 0.1 and 0.2, all of the above URIs
-are exactly the same.
+The ``/sql`` URI used to handle sql request.
 
 .. code-block:: none
 
-    /0.2/json
     /json
 
-The pure JSON API did not exist in the 0.1 release, as you can see from above.
+The ``/json`` URI used to handle pure json request.
 
 .. code-block:: none
 
@@ -307,7 +322,7 @@ POSTing a document
   POST /json?schema=test&table=people HTTP/1.1
 
   {
-    query:
+    "query":
     {
       "_id" : 2, 
       "document" : { "firstname" : "Henrik", "lastname" : "Ingo", "age" : 35}
@@ -519,5 +534,5 @@ v0.3
 * Changed structure of the query document to be 
   ``{ "query" : <old query document> }`` This is to allow for future 
   extensibility.
-* New options json_server.schema, json_server.table and 
-  json_server.allow_drop_table
+* Support for multi-threading.
+* New options json_server.schema, json_server.table ,json_server.allow_drop_table and json_server.max_threads .

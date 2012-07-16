@@ -59,6 +59,7 @@
 #include <plugin/json_server/json/json.h>
 #include <plugin/json_server/db_access.h>
 #include <plugin/json_server/http_handler.h>
+#include <plugin/json_server/http_server.h>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -71,12 +72,16 @@ namespace json_server
 static const string DEFAULT_SCHEMA = "test";
 static const string DEFAULT_TABLE = "";
 static const string JSON_SERVER_VERSION = "0.3";
-static const bool ALLOW_DROP_TABLE=false;
+static const uint32_t DEFAULT_MAX_THREADS= 32;
+static const bool DEFAULT_ALLOW_DROP_TABLE=false;
 bool allow_drop_table;
 string default_schema;
 string default_table;
+uint32_t max_threads;
+uint32_t clone_max_threads=0;
 bool updateSchema(Session *, set_var* var); 
 bool updateTable(Session *, set_var* var); 
+void updateMaxThreads(Session *, sql_var_t);
 static port_constraint port;
 
 static in_port_t getPort(void)
@@ -86,9 +91,9 @@ static in_port_t getPort(void)
 
 extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
-extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
-extern "C" void process_api01_sql_req(struct evhttp_request *req, void* );
-extern "C" void process_api02_json_req(struct evhttp_request *req, void* );
+extern "C" void process_version_req(struct evhttp_request *req, void* );
+extern "C" void process_sql_req(struct evhttp_request *req, void* );
+extern "C" void process_json_req(struct evhttp_request *req, void* );
 extern "C" void process_request(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
@@ -214,7 +219,7 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
+extern "C" void process_version_req(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
@@ -230,7 +235,7 @@ extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
+extern "C" void process_sql_req(struct evhttp_request *req, void* )
 {
   struct evbuffer *buf = evbuffer_new();
   if (buf == NULL) return;
@@ -296,12 +301,11 @@ extern "C" void process_api01_sql_req(struct evhttp_request *req, void* )
 /**
  * Transform a HTTP request for sql transaction and return results based on input json document.
  * 
- * @todo allow DBA to set default schema (also in post,del methods)
  * @todo allow DBA to set whether to use strict mode for parsing json (should get rid of white space), especially for POST of course.
  * 
  * @param req should contain a "table" parameter in request uri. "query", "_id" and "schema" are optional.
  */
-extern "C" void process_api02_json_req(struct evhttp_request *req, void* )
+extern "C" void process_json_req(struct evhttp_request *req, void* )
 {
   Json::Value json_out;
   Json::Value json_in; 
@@ -344,7 +348,6 @@ static void shutdown_event(int fd, short, void *arg)
   close(fd);
 }
 
-
 static void run(struct event_base *base)
 {
   internal::my_thread_init();
@@ -353,15 +356,16 @@ static void run(struct event_base *base)
 }
 
 
-class JsonServer : public drizzled::plugin::Daemon
+class JsonServer : public drizzled::plugin::Daemon , public HTTPServer
 {
 private:
-  drizzled::thread_ptr json_thread;
+  std::vector<drizzled::thread_ptr> json_threads;
   in_port_t _port;
   struct evhttp *httpd;
   struct event_base *base;
   int wakeup_fd[2];
   struct event wakeup_event;
+  int nfd;
 
 public:
   JsonServer(in_port_t port_arg) :
@@ -392,59 +396,64 @@ public:
       sql_perror("F_SETFL");
       return false;
     }
-
-    if ((base= event_init()) == NULL)
-    {
-      sql_perror("event_init()");
-      return false;
-    }
-
-    if ((httpd= evhttp_new(base)) == NULL)
-    {
-      sql_perror("evhttp_new()");
-      return false;
-    }
-
-
-    if ((evhttp_bind_socket(httpd, "0.0.0.0", getPort())) == -1)
+    if ((nfd=BindSocket("0.0.0.0", getPort())) == -1)
     {
       sql_perror("evhttp_bind_socket()");
       return false;
     }
-
-    // These URLs are available. Bind worker method to each of them. 
-    // Please group by api version. Also unchanged functions must be copied to next version!
-    evhttp_set_cb(httpd, "/", process_root_request, NULL);
-    // API 0.1
-    evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
-    evhttp_set_cb(httpd, "/0.1/sql", process_api01_sql_req, NULL);
-    // API 0.2
-    evhttp_set_cb(httpd, "/0.2/version", process_api01_version_req, NULL);
-    evhttp_set_cb(httpd, "/0.2/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/0.2/json", process_api02_json_req, NULL);
-    // API "latest" and also available in top level
-    evhttp_set_cb(httpd, "/latest/version", process_api01_version_req, NULL);
-    evhttp_set_cb(httpd, "/latest/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/latest/json", process_api02_json_req, NULL);
-    evhttp_set_cb(httpd, "/version", process_api01_version_req, NULL);
-    evhttp_set_cb(httpd, "/sql", process_api01_sql_req, NULL);
-    evhttp_set_cb(httpd, "/json", process_api02_json_req, NULL);    
-    // Catch all does nothing and returns generic message.
-    //evhttp_set_gencb(httpd, process_request, NULL);
-
-    event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
-    event_base_set(base, &wakeup_event);
-    if (event_add(&wakeup_event, NULL) < 0)
+    
+    // Create Max_thread number of threads.
+    if(not createThreads(max_threads))
     {
-      sql_perror("event_add");
       return false;
     }
+    
+    return true;
+  }
 
-    json_thread.reset(new boost::thread((boost::bind(&run, base))));
+  bool createThreads(uint32_t num_threads)
+  {
+    for(uint32_t i =0;i<num_threads;i++)
+    {
+      if ((base= event_init()) == NULL)
+      {
+        sql_perror("event_init()");
+        return false;
+      }
 
-    if (not json_thread)
-      return false;
+      if ((httpd= evhttp_new(base)) == NULL)
+      {
+        sql_perror("evhttp_new()");
+        return false;
+      }
 
+      if(evhttp_accept_socket(httpd,nfd))
+      {
+        sql_perror("evhttp_accept_socket()");
+        return false;
+      }
+
+      // These URLs are available. Bind worker method to each of them. 
+        evhttp_set_cb(httpd, "/", process_root_request, NULL);
+        evhttp_set_cb(httpd, "/version", process_version_req, NULL);
+        evhttp_set_cb(httpd, "/sql", process_sql_req, NULL);
+        evhttp_set_cb(httpd, "/json", process_json_req, NULL);    
+        // Catch all does nothing and returns generic message.
+
+        event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
+        event_base_set(base, &wakeup_event);
+        if (event_add(&wakeup_event, NULL) < 0)
+        {
+          sql_perror("event_add");
+          return false;
+        }
+        drizzled::thread_ptr local_thread;
+        local_thread.reset(new boost::thread((boost::bind(&run, base))));
+        json_threads.push_back(local_thread);
+
+        if (not json_threads[i])
+          return false;
+    }
     return true;
   }
 
@@ -455,13 +464,37 @@ public:
     buffer[0]= 4;
     if ((write(wakeup_fd[1], &buffer, 1)) == 1)
     {
-      json_thread->join();
+      for(uint32_t i=0;i<max_threads;i++)
+      {
+        json_threads[i]->join();
+      }
       evhttp_free(httpd);
       event_base_free(base);
     }
   }
 };
 JsonServer *server=NULL;
+
+void updateMaxThreads(Session *, sql_var_t)
+{
+  if (clone_max_threads < max_threads)
+  {
+    if(server->createThreads(max_threads - clone_max_threads))
+    {
+      clone_max_threads=max_threads;//success
+    }
+    else
+    {
+      errmsg_printf(error::ERROR,_("json_server unable to create more threads"));
+    }
+  }
+  else
+  {
+    max_threads = clone_max_threads;
+    errmsg_printf(error::ERROR, _("json_server_max_thread cannot be smaller than previous configured value"));//error
+  }
+}
+
 
 bool updateSchema(Session *, set_var* var)
 {
@@ -491,7 +524,9 @@ static int json_server_init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_std_string("schema", default_schema, NULL, &updateSchema));
   context.registerVariable(new sys_var_std_string("table", default_table, NULL, &updateTable));
   context.registerVariable(new sys_var_bool_ptr("allow_drop_table", &allow_drop_table));
+  context.registerVariable(new sys_var_uint32_t_ptr("max_threads",&max_threads,&updateMaxThreads));
   
+  clone_max_threads=max_threads;
 
 
   if (server and not server->init())
@@ -514,8 +549,11 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(&default_table)->default_value(DEFAULT_TABLE),
           _("table in use by json server"));
   context("allow_drop_table",
-          po::value<bool>(&allow_drop_table)->default_value(ALLOW_DROP_TABLE),
+          po::value<bool>(&allow_drop_table)->default_value(DEFAULT_ALLOW_DROP_TABLE),
           _("allow to drop table"));
+  context("max_threads",
+          po::value<uint32_t>(&max_threads)->default_value(DEFAULT_MAX_THREADS),
+          _("Maximum threads in use by json server"));
 
 }
 
