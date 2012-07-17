@@ -91,6 +91,7 @@ static in_port_t getPort(void)
 
 extern "C" void process_request(struct evhttp_request *req, void* );
 extern "C" void process_root_request(struct evhttp_request *req, void* );
+extern "C" void process_api01_version_req(struct evhttp_request *req, void* );
 extern "C" void process_version_req(struct evhttp_request *req, void* );
 extern "C" void process_sql_req(struct evhttp_request *req, void* );
 extern "C" void process_json_req(struct evhttp_request *req, void* );
@@ -214,6 +215,21 @@ extern "C" void process_root_request(struct evhttp_request *req, void* )
                 "<hr /><p><textarea rows=\"12\" cols=\"80\" id=\"responseText\" ></textarea></p>"
                 "<script lang=\"javascript\">update_version(); run_sql_query();</script>\n"
                 "</body></html>\n");
+
+  evbuffer_add(buf, output.c_str(), output.length());
+  evhttp_send_reply(req, HTTP_OK, "OK", buf);
+}
+
+extern "C" void process_api01_version_req(struct evhttp_request *req, void* )
+{
+  struct evbuffer *buf = evbuffer_new();
+  if (buf == NULL) return;
+
+  Json::Value root;
+  root["version"]= ::drizzled::version();
+ 
+  Json::StyledWriter writer;
+  std::string output= writer.write(root);
 
   evbuffer_add(buf, output.c_str(), output.length());
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
@@ -436,9 +452,9 @@ public:
       // These URLs are available. Bind worker method to each of them. 
       evhttp_set_cb(httpd, "/", process_root_request, NULL);
       // API 0.1
-      evhttp_set_cb(httpd, "/0.1/version", process_version_req, NULL);
+      evhttp_set_cb(httpd, "/0.1/version", process_api01_version_req, NULL);
       // API 0.2
-      evhttp_set_cb(httpd, "/0.2/version", process_version_req, NULL);
+      evhttp_set_cb(httpd, "/0.2/version", process_api01_version_req, NULL);
       // API 0.3
       evhttp_set_cb(httpd, "/0.3/version", process_version_req, NULL);
       evhttp_set_cb(httpd, "/0.3/sql", process_sql_req, NULL);
