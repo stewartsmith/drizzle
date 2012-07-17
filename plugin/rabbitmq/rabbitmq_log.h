@@ -30,8 +30,8 @@
 #include <string>
 #include "rabbitmq_handler.h"
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace rabbitmq {
 
 /**
  * @brief
@@ -75,8 +75,10 @@ public:
    */
   drizzled::plugin::ReplicationReturnCode
   apply(drizzled::Session &session, const drizzled::message::Transaction &to_apply);
+  void setRabbitMQHandler(RabbitMQHandler* new_rabbitMQHandler);
 
 };
 
+} /* namespace rabbitmq */
 } /* namespace drizzle_plugin */
 

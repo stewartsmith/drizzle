@@ -30,8 +30,8 @@
 #include <amqp_framing.h>
 #include <netinet/in.h>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace rabbitmq {
 
 /**
  * exception thrown by the rabbitmq handler
@@ -70,6 +70,7 @@ private:
   const std::string &routingKey;
   pthread_mutex_t publishLock;
 public:
+  bool rabbitmq_connection_established;
   /**
    * @brief
    *   Constructs a new RabbitMQHandler, purpose is to 
@@ -114,6 +115,7 @@ public:
 
   void reconnect() throw(rabbitmq_handler_exception);
   void disconnect() throw(rabbitmq_handler_exception);
+  void connect() throw(rabbitmq_handler_exception);
 
 private:
   /**
@@ -130,9 +132,8 @@ private:
    */
   void handleAMQPError(amqp_rpc_reply_t x, std::string context) throw(rabbitmq_handler_exception);
 
-  void connect() throw(rabbitmq_handler_exception);
-
 };
 
+} /* namespace rabbitmq */
 } /* namespace drizzle_plugin */
 
