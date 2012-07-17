@@ -434,11 +434,23 @@ public:
       }
 
       // These URLs are available. Bind worker method to each of them. 
-        evhttp_set_cb(httpd, "/", process_root_request, NULL);
-        evhttp_set_cb(httpd, "/version", process_version_req, NULL);
-        evhttp_set_cb(httpd, "/sql", process_sql_req, NULL);
-        evhttp_set_cb(httpd, "/json", process_json_req, NULL);    
-        // Catch all does nothing and returns generic message.
+      evhttp_set_cb(httpd, "/", process_root_request, NULL);
+      // API 0.1
+      evhttp_set_cb(httpd, "/0.1/version", process_version_req, NULL);
+      // API 0.2
+      evhttp_set_cb(httpd, "/0.2/version", process_version_req, NULL);
+      // API 0.3
+      evhttp_set_cb(httpd, "/0.3/version", process_version_req, NULL);
+      evhttp_set_cb(httpd, "/0.3/sql", process_sql_req, NULL);
+      evhttp_set_cb(httpd, "/0.3/json", process_json_req, NULL);
+      // API "latest" and also available in top level
+      evhttp_set_cb(httpd, "/latest/version", process_version_req, NULL);
+      evhttp_set_cb(httpd, "/latest/sql", process_sql_req, NULL);
+      evhttp_set_cb(httpd, "/latest/json", process_json_req, NULL);
+      evhttp_set_cb(httpd, "/version", process_version_req, NULL);
+      evhttp_set_cb(httpd, "/sql", process_sql_req, NULL);
+      evhttp_set_cb(httpd, "/json", process_json_req, NULL);
+        
 
         event_set(&wakeup_event, wakeup_fd[0], EV_READ | EV_PERSIST, shutdown_event, base);
         event_base_set(base, &wakeup_event);
@@ -485,13 +497,17 @@ void updateMaxThreads(Session *, sql_var_t)
     }
     else
     {
+      //char buf[100];
+      //sprintf(buf,"json_server unable to create more threads");
+      //my_error(ER_SCRIPT,MYF(0),buf);
       errmsg_printf(error::ERROR,_("json_server unable to create more threads"));
     }
   }
   else
   {
     max_threads = clone_max_threads;
-    errmsg_printf(error::ERROR, _("json_server_max_thread cannot be smaller than previous configured value"));//error
+    //my_error(ER_SCRIPT,MYF(0),"json_server_max_threads cannot be smaller than previous configured value");
+    errmsg_printf(error::ERROR, _("json_server_max_threadscannot be smaller than previous configured value"));//error
   }
 }
 

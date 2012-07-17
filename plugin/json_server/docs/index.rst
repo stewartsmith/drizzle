@@ -39,6 +39,7 @@ command line options.
 
    :Default: 8086
    :Variable: :ref:`json_server_port <json_server_port>`
+   :Since: 0.1
 
    Port number to use for connection or 0 for default (port 8086)
 
@@ -46,6 +47,7 @@ command line options.
 
    :Default: test
    :Variable: :ref:`json_server_schema <json_server_schema>`
+   :Since: 0.3
 
    Schema which is used when not explicitly specified in request URI.
    Note: Currently this is in the /json API only.
@@ -54,6 +56,7 @@ command line options.
 
    :Default:
    :Variable: :ref:`json_server_table <json_server_table>`
+   :Since: 0.3
 
    Table which is used when not explicitly specified in request URI.
    Note: Currently this is in the /json API only.
@@ -62,6 +65,7 @@ command line options.
 
    :Default: OFF
    :Variable: :ref:`json_server_allow_drop_table <json_server_allow_drop_table>`
+   :Since: 0.3
 
    When json-server.allow_drop_table is set to ON, it is possible to drop
    a table with a HTTP DELETE request with no _id specified. When set to OFF
@@ -71,9 +75,11 @@ command line options.
 
    :Default: 32
    :Variable: :ref:`json_server_max_threads <json_server_max_threads>`
+   :Since: 0.3
 
-   Number of threads used by json server to handle request. 
-   When it is increased explicitly , server immediately spawns max_threads number of threads.  
+   Number of worker threads used by json server to handle http requests. Note
+   that despite the name, current implementation is to immediately spawn as many
+   threads as defined here.
 
 .. _json_server_variables:
 
@@ -89,6 +95,7 @@ See `variables` for more information about querying and setting variables.
 
    :Scope: Global
    :Dynamic: No
+    :Since: 0.1
 
    Port number to use for connection or 0 for default (port 8086) 
 
@@ -98,6 +105,7 @@ See `variables` for more information about querying and setting variables.
 
     :Scope: Global
     :Dynamic: yes
+    :Since: 0.3
 
    Schema which is used when not explicitly specified in request URI.
    Note: Currently this is in the /json API only.
@@ -108,6 +116,7 @@ See `variables` for more information about querying and setting variables.
 
     :Scope: Global
     :Dynamic: yes
+    :Since: 0.3
 
    Table which is used when not explicitly specified in request URI.
    Note: Currently this is in the /json API only.
@@ -118,6 +127,7 @@ See `variables` for more information about querying and setting variables.
 
     :Scope: Global
     :Dynamic: yes
+    :Since: 0.3
 
    When json-server.allow_drop_table is set to ON, it is possible to drop
    a table with a HTTP DELETE request with no _id specified. When set to OFF
@@ -129,9 +139,14 @@ See `variables` for more information about querying and setting variables.
 
     :Scope: Global
     :Dynamic: yes
+    :Since: 0.3
 
-   Number of threads used by json server to handle request. 
-   When it is increased explicitly , server immediately spawns max_threads number of threads. 
+   Number of threads used by json server to handle request. Note that despite 
+   the name, current implementation is to immediately spawn as many threads as 
+   defined here. Currently this variable can be increased dynamically, but an
+   attempt to set a value that is lower than the current value will be silently
+   ignored. (You have to restart drizzled to set a lower value as a startup
+   option.)
 
 
 .. _json_server_apis:
@@ -152,20 +167,36 @@ As of this writing, the following APIs exist:
 
 .. code-block:: none
 
+    /0.3/sql
+    /latest/sql
     /sql
 
-The ``/sql`` URI used to handle sql request.
+The ``/sql`` URI used to handle SQL-over-HTTP requests (examples below).
+
+Note that /0.1/sql and /0.2/sql have been removed since crashing bugs were
+found in them. Therefore, only the latest versions of this functionality
+are available.
 
 .. code-block:: none
 
+    /0.3/json
+    /latest/json
     /json
 
-The ``/json`` URI used to handle pure json request.
+The ``/json`` URI used to handle pure json requests (examples below).
+
+Note that /0.2/json has been removed since crashing bugs was
+found in the first version. Therefore, only the latest versions of this 
+functionality are available.
 
 .. code-block:: none
 
+    /0.1/version
+    /0.2/version
+    /0.3/version
+    /lastest/version
     /version
-    /
+
 
 The ``/version`` URI will return the version of Drizzle (in a JSON document, of 
 course):
@@ -177,6 +208,12 @@ course):
       "json_server_version" : "0.3"
       "version" : "7.1.31.2451-snapshot"
     }
+
+The key ``json_server_version`` was introduced in plugin version 0.3.
+
+.. code-block:: none
+
+    /
 
 The root URI / returns a simple HTML GUI that can be used to test both the SQL 
 and pure JSON APIs. Just point your browser to http://localhost:8086/ and try 
