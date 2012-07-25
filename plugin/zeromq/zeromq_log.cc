@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <drizzled/module/registry.h>
 #include <drizzled/plugin.h>
+#include <drizzled/item.h>
 #include <stdint.h>
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
@@ -40,11 +41,15 @@ using namespace std;
 using namespace drizzled;
 using namespace google;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace zeromq {
+
+bool updateEndpoint(Session *, set_var* var);
+
 
 ZeroMQLog::ZeroMQLog(const string &name, const string &endpoint) :
-  plugin::TransactionApplier(name)
+  plugin::TransactionApplier(name),
+  sysvar_endpoint(endpoint)
 {
   void *context= zmq_init(1);
   _socket= zmq_socket (context, ZMQ_PUB);
@@ -58,6 +63,32 @@ ZeroMQLog::~ZeroMQLog()
 {
   zmq_close(_socket);
   pthread_mutex_destroy(&publishLock);
+}
+
+std::string& ZeroMQLog::getEndpoint()
+{
+  return sysvar_endpoint;
+}
+
+bool ZeroMQLog::setEndpoint(std::string new_endpoint)
+{
+  void *tmp_context= zmq_init(1);
+  void *tmp_socket= zmq_socket(tmp_context, ZMQ_PUB);
+  if(!tmp_socket)
+    return false;
+  int tmp_rc= zmq_bind(tmp_socket, new_endpoint.c_str());
+  if(tmp_rc!=0)
+    return false;
+  // need a mutex around this since other threads can try to write to _socket while we are changing the endpoint
+  pthread_mutex_lock(&publishLock);
+
+  zmq_close(_socket);
+  _socket= tmp_socket;
+  sysvar_endpoint= new_endpoint;
+  
+  //Releasing the mutex lock
+  pthread_mutex_unlock(&publishLock);
+  return true;
 }
 
 plugin::ReplicationReturnCode
@@ -126,6 +157,25 @@ string ZeroMQLog::getSchemaName(const message::Transaction &txn) {
 static ZeroMQLog *zeromqLogger; ///< the actual plugin
 
 /**
+ * This function is called when the value of zeromq_endpoint is updated in the system
+ *
+ * @return False on success, True on error.
+ */
+bool updateEndpoint(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_endpoint(var->value->str_value.data());
+    if (zeromqLogger->setEndpoint(new_endpoint))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("zeromq_endpoint cannot be NULL"));
+  return true; // error
+}
+
+/**
  * Initialize the zeromq logger
  */
 static int init(drizzled::module::Context &context)
@@ -134,7 +184,7 @@ static int init(drizzled::module::Context &context)
   zeromqLogger= new ZeroMQLog("zeromq_applier", vm["endpoint"].as<string>());
   context.add(zeromqLogger);
   ReplicationServices::attachApplier(zeromqLogger, vm["use-replicator"].as<string>());
-  context.registerVariable(new sys_var_const_string_val("endpoint", vm["endpoint"].as<string>()));
+  context.registerVariable(new sys_var_std_string("endpoint", zeromqLogger->getEndpoint(), NULL, &updateEndpoint));
   return 0;
 }
 
@@ -150,6 +200,7 @@ static void init_options(drizzled::module::option_context &context)
 
 }
 
+} /* namespace zeromq */
 } /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
@@ -160,8 +211,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Marcus Eriksson",
   N_("Publishes transactions to ZeroMQ"),
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::init,
+  drizzle_plugin::zeromq::init,
   NULL,
-  drizzle_plugin::init_options,
+  drizzle_plugin::zeromq::init_options,
 }
 DRIZZLE_DECLARE_PLUGIN_END;
