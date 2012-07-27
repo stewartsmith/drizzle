@@ -126,8 +126,7 @@ Singular::Singular(Session *session, std::list<CreateField>& field_list) :
 
 bool Singular::open_tmp_table()
 {
-  identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getPath());
-  if (int error= cursor->ha_open(identifier, O_RDWR, HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE))
+  if (int error= cursor->ha_open(getShare()->getTableIdentifier(), O_RDWR, HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE))
   {
     print_error(error, MYF(0));
     db_stat= 0;
@@ -301,9 +300,8 @@ Singular::~Singular()
     if (db_stat)
       cursor->closeMarkForDelete();
 
-    identifier::Table identifier(getShare()->getSchemaName(), getShare()->getTableName(), getShare()->getTableName());
     drizzled::error_t ignored;
-    plugin::StorageEngine::dropTable(*in_use, *getShare()->getEngine(), identifier, ignored);
+    plugin::StorageEngine::dropTable(*in_use, *getShare()->getEngine(), getShare()->getTableIdentifier(), ignored);
     delete cursor;
   }
 

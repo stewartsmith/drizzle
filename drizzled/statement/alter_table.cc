@@ -51,6 +51,7 @@
 #include <drizzled/open_tables_state.h>
 #include <drizzled/table/cache.h>
 #include <drizzled/create_field.h>
+#include <drizzled/catalog/instance.h>
 
 using namespace std;
 
@@ -128,7 +129,9 @@ bool statement::AlterTable::execute()
   /* Chicken/Egg... we need to search for the table, to know if the table exists, so we can build a full identifier from it */
   message::table::shared_ptr original_table_message;
   {
-    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table identifier(session().catalog().identifier(),
+                                 first_table->getSchemaName(),
+                                 first_table->getTableName());
     if (not (original_table_message= plugin::StorageEngine::getTableMessage(session(), identifier)))
     {
       my_error(ER_BAD_TABLE_ERROR, identifier);
@@ -163,8 +166,11 @@ bool statement::AlterTable::execute()
   bool res;
   if (original_table_message->type() == message::Table::STANDARD )
   {
-    identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName());
-    identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+    identifier::Table identifier(session().catalog().identifier(),
+                                 first_table->getSchemaName(),
+                                 first_table->getTableName());
+    identifier::Table new_identifier(session().catalog().identifier(),
+                                     select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                    lex().name.data() ? lex().name.data() : first_table->getTableName());
 
     res= alter_table(&session(),
@@ -181,12 +187,19 @@ bool statement::AlterTable::execute()
   }
   else
   {
-    identifier::Table catch22(first_table->getSchemaName(), first_table->getTableName());
+    identifier::Table catch22(session().catalog().identifier(),
+                              first_table->getSchemaName(),
+                              first_table->getTableName());
     Table *table= session().open_tables.find_temporary_table(catch22);
     assert(table);
     {
-      identifier::Table identifier(first_table->getSchemaName(), first_table->getTableName(), table->getMutableShare()->getPath());
-      identifier::Table new_identifier(select_lex->db ? select_lex->db : first_table->getSchemaName(),
+      identifier::Table identifier(session().catalog().identifier(),
+                                   first_table->getSchemaName(),
+                                   first_table->getTableName(),
+                                   table->getMutableShare()->getPath());
+
+      identifier::Table new_identifier(session().catalog().identifier(),
+                                       select_lex->db ? select_lex->db : first_table->getSchemaName(),
                                        lex().name.data() ? lex().name.data() : first_table->getTableName(),
                                        table->getMutableShare()->getPath());
 
@@ -1048,7 +1061,7 @@ static bool internal_alter_table(Session *session,
     return true;
   }
 
-  set_table_default_charset(create_info, new_table_identifier.getSchemaName().c_str());
+  set_table_default_charset(session->catalog().identifier(), create_info, new_table_identifier.getSchemaName().c_str());
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
 
@@ -1058,10 +1071,11 @@ static bool internal_alter_table(Session *session,
     case we just use it as is. Neither of these tables require locks in order to  be
     filled.
   */
-  identifier::Table new_table_as_temporary(original_table_identifier.getSchemaName(),
-                                         tmp_name,
-                                         create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
-                                         message::Table::TEMPORARY);
+  identifier::Table new_table_as_temporary(session->catalog().identifier(),
+                                           original_table_identifier.getSchemaName(),
+                                           tmp_name,
+                                           create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
+                                           message::Table::TEMPORARY);
 
   /*
     Create a table with a temporary name.
@@ -1247,7 +1261,8 @@ static bool internal_alter_table(Session *session,
         table. This is when the old and new tables are compatible, according to
         compare_table(). Then, we need one additional call to
       */
-      identifier::Table original_table_to_drop(original_table_identifier.getSchemaName(),
+      identifier::Table original_table_to_drop(session->catalog().identifier(),
+                                               original_table_identifier.getSchemaName(),
                                              old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
                                              message::Table::TEMPORARY);
 

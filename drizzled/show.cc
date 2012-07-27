@@ -34,6 +34,7 @@
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/catalog/instance.h>
 
 #include <sys/stat.h>
 
@@ -116,7 +117,8 @@ bool buildTables(Session *session, const char *ident)
   util::string::ptr schema(session->schema());
   if (ident)
   {
-    identifier::Schema identifier= str_ref(ident);
+    identifier::Schema identifier(session->catalog().identifier(),
+                                  str_ref(ident));
     column_name.append(ident);
     session->lex().select_lex.db= ident;
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
@@ -182,7 +184,8 @@ bool buildTableStatus(Session *session, const char *ident)
   {
     session->lex().select_lex.db= ident;
 
-    identifier::Schema identifier= str_ref(ident);
+    identifier::Schema identifier(session->catalog().identifier(),
+                                  str_ref(ident));
     if (not plugin::StorageEngine::doesSchemaExist(identifier))
     {
       my_error(ER_BAD_DB_ERROR, identifier);
@@ -245,7 +248,9 @@ bool buildColumns(Session *session, const char *schema_ident, Table_ident *table
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.data());
+    drizzled::identifier::Table identifier(session->catalog().identifier(),
+                                           select->getShowSchema(),
+                                           table_ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);
@@ -308,7 +313,9 @@ bool buildIndex(Session *session, const char *schema_ident, Table_ident *table_i
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), table_ident->table.data());
+    drizzled::identifier::Table identifier(session->catalog().identifier(),
+                                           select->getShowSchema(),
+                                           table_ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);
@@ -483,7 +490,9 @@ bool buildDescribe(Session *session, Table_ident *ident)
   }
 
   {
-    drizzled::identifier::Table identifier(select->getShowSchema(), ident->table.data());
+    drizzled::identifier::Table identifier(session->catalog().identifier(),
+                                           select->getShowSchema(),
+                                           ident->table.data());
     if (not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       my_error(ER_TABLE_UNKNOWN, identifier);

@@ -25,6 +25,10 @@
 #include <drizzled/plugin/function.h>
 #include <drizzled/plugin/storage_engine.h>
 
+#include <drizzled/identifier.h>
+#include <drizzled/session.h>
+#include <drizzled/catalog/instance.h>
+
 #include <iostream>
 #include <stdio.h>
 #include <string>
@@ -74,7 +78,8 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
   null_value= false;
 
-  identifier::Schema schema_identifier(*db_sptr);
+  identifier::Schema schema_identifier(getSession().catalog().identifier(),
+                                       *db_sptr);
   message::schema::shared_ptr proto= plugin::StorageEngine::getSchemaDefinition(schema_identifier);
   if (not proto)
   {

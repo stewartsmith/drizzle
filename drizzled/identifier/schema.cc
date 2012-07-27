@@ -41,8 +41,10 @@ using namespace std;
 namespace drizzled {
 namespace identifier {
 
-Schema::Schema(str_ref db_arg) :
-  db(db_arg.data(), db_arg.size())
+Schema::Schema(const drizzled::identifier::Catalog &catalog_arg,
+                 str_ref db_arg) :
+  db(db_arg.data(), db_arg.size()),
+  _catalog(catalog_arg)
 { 
 #if 0
   string::size_type lastPos= db.find_first_of('/', 0);
@@ -56,7 +58,7 @@ Schema::Schema(str_ref db_arg) :
 
   if (db_arg.empty() == false)
   {
-    db_path += drizzled::catalog::local_identifier().getPath();
+    db_path += _catalog.getPath();
     db_path += FN_LIBCHAR;
     db_path += util::tablename_to_filename(db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
@@ -99,12 +101,12 @@ bool Schema::isValid() const
 
 const std::string &Schema::getCatalogName() const
 {
-  return drizzled::catalog::local_identifier().name();
+  return _catalog.name();
 }
 
 std::ostream& operator<<(std::ostream& output, const Schema&identifier)
 {
-  return output << "identifier::Schema:(" <<  drizzled::catalog::local_identifier() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
+  return output << "identifier::Schema:(" <<  identifier.getCatalogName() << ", " <<  identifier.getSchemaName() << ", " << identifier.getPath() << ")";
 }
 
 } /* namespace identifier */

@@ -225,7 +225,7 @@ bool dispatch_command(enum_server_command command, Session& session, str_ref pac
         my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
         break;
       }
-      if (not schema::change(session, identifier::Schema(packet)))
+      if (not schema::change(session, identifier::Schema(session.catalog().identifier(), packet)))
       {
         session.my_ok();
       }
@@ -906,7 +906,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (not table->is_derived_table() && table->db.data())
   {
     files_charset_info->casedn_str(table->db.str_);
-    if (not schema::check(*session, identifier::Schema(table->db)))
+    if (not schema::check(*session, identifier::Schema(session->catalog().identifier(), table->db)))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.data());
       return NULL;

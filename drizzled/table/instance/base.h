@@ -231,8 +231,7 @@ public:
 private:
   identifier::Table::Key private_key_for_cache; // This will not exist in the final design.
   std::vector<char> private_normalized_path; // This will not exist in the final design.
-  str_ref db;                        /* Pointer to db */
-  str_ref table_name;                /* Table name (for open) */
+  drizzled::identifier::Table *table_identifier;
   str_ref path;	/* Path to table (from datadir) */
   str_ref normalized_path;		/* unpack_filename(path) */
 
@@ -261,22 +260,27 @@ public:
 
   str_ref getTableNameRef() const
   {
-    return table_name;
+    return str_ref(table_identifier->getTableName());
   }
 
   const char *getTableName() const
   {
-    return table_name.data();
+    return table_identifier->getTableName().c_str();
   }
 
   str_ref getSchemaNameRef() const
   {
-    return db;
+    return str_ref(table_identifier->getSchemaName());
   }
 
   const char *getSchemaName() const
   {
-    return db.data();
+    return table_identifier->getSchemaName().c_str();
+  }
+
+  const drizzled::identifier::Table &getTableIdentifier() const
+  {
+    return *table_identifier;
   }
 
   uint32_t   block_size;                   /* create information */

@@ -26,7 +26,8 @@
 #include <drizzled/sql_table.h>
 #include <drizzled/charset.h>
 #include <drizzled/cursor.h>
-#include <drizzled/catalog/local.h>
+#include <drizzled/data_home.h>
+#include <drizzled/message/catalog.h>
 
 #include <drizzled/pthread_globals.h>
 
@@ -69,9 +70,9 @@ Schema::Schema() :
   table_definition_ext= DEFAULT_FILE_EXTENSION;
 }
 
-void Schema::prime()
+void Schema::prime_catalog(identifier::Catalog &catalog_identifier)
 {
-  CachedDirectory directory(catalog::local_identifier().getPath(),
+  CachedDirectory directory(catalog_identifier.getPath(),
                             CachedDirectory::DIRECTORY, true);
 
   CachedDirectory::Entries files= directory.getEntries();
@@ -83,13 +84,20 @@ void Schema::prime()
       continue;
     message::Schema schema_message;
 
-    std::string filename= catalog::local_identifier().getPath();
+    std::string filename= catalog_identifier.getPath();
     filename+= FN_LIBCHAR;
     filename+= entry->filename;
 
     if (readSchemaFile(filename, schema_message))
     {
-      identifier::Schema schema_identifier(schema_message.name());
+
+      identifier::Schema schema_identifier(catalog_identifier,
+                                           schema_message.name());
+
+      if (! schema_message.has_catalog())
+      {
+        schema_message.set_catalog(catalog_identifier.name());
+      }
 
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
@@ -99,11 +107,34 @@ void Schema::prime()
   }
 }
 
+void Schema::prime()
+{
+  drizzled::CachedDirectory directory(drizzled::getDataHome().file_string(),
+                                      drizzled::CachedDirectory::DIRECTORY,
+                                      true);
+  drizzled::CachedDirectory::Entries files= directory.getEntries();
+
+  for (drizzled::CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    drizzled::CachedDirectory::Entry *entry= *fileIter;
+    drizzled::message::catalog::shared_ptr message;
+
+    if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+      continue;
+
+    drizzled::identifier::Catalog identifier(entry->filename);
+
+    prime_catalog(identifier);
+  }
+}
+
 void Schema::doGetSchemaIdentifiers(identifier::schema::vector &set_of_names)
 {
   mutex.lock_shared();
   BOOST_FOREACH(SchemaCache::reference iter, schema_cache)
-    set_of_names.push_back(identifier::Schema(iter.second->name()));
+    set_of_names.push_back(identifier::Schema(identifier::Catalog(iter.second->catalog()),
+                                              iter.second->name()));
   mutex.unlock_shared();
 }
 
@@ -124,7 +155,8 @@ drizzled::message::schema::shared_ptr Schema::doGetSchemaDefinition(const identi
 
 bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
-  identifier::Schema schema_identifier(schema_message.name());
+  identifier::Schema schema_identifier(identifier::Catalog(schema_message.catalog()),
+                                       schema_message.name());
 
   if (mkdir(schema_identifier.getPath().c_str(), 0777) == -1)
   {
@@ -186,7 +218,8 @@ bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
 
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
-  identifier::Schema schema_identifier(schema_message.name());
+  identifier::Schema schema_identifier(identifier::Catalog(schema_message.catalog()),
+                                       schema_message.name());
 
   if (access(schema_identifier.getPath().c_str(), F_OK))
     return false;

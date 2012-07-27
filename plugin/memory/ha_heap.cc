@@ -250,9 +250,7 @@ int ha_heap::close(void)
 Cursor *ha_heap::clone(memory::Root *)
 {
   Cursor *new_handler= getTable()->getMutableShare()->db_type()->getCursor(*getTable());
-  identifier::Table identifier(getTable()->getShare()->getSchemaName(),
-                             getTable()->getShare()->getTableName(),
-                             getTable()->getShare()->getPath());
+  identifier::Table identifier(*getTable());
 
   if (new_handler && !new_handler->ha_open(identifier, getTable()->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))

@@ -29,6 +29,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/select_create.h>
 #include <drizzled/table_ident.h>
+#include <drizzled/catalog/instance.h>
 
 #include <iostream>
 
@@ -116,7 +117,8 @@ bool statement::CreateTable::execute()
 
   drizzled::message::table::init(createTableMessage(), createTableMessage().name(), create_table_list->getSchemaName(), create_info().db_type->getName());
 
-  identifier::Table new_table_identifier(create_table_list->getSchemaName(),
+  identifier::Table new_table_identifier(session().catalog().identifier(),
+                                         create_table_list->getSchemaName(),
                                        create_table_list->getTableName(),
                                        createTableMessage().type());
 
@@ -239,7 +241,8 @@ bool statement::CreateTable::executeInner(const identifier::Table& new_table_ide
       {
         res= create_like_table(&session(), 
                                new_table_identifier,
-                               identifier::Table(select_tables->getSchemaName(),
+                               identifier::Table(session().catalog().identifier(),
+                                                 select_tables->getSchemaName(),
                                                  select_tables->getTableName()),
                                createTableMessage(),
                                lex().exists(),

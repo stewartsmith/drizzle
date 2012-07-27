@@ -150,16 +150,18 @@ private:
 public:
 
   Table(const drizzled::Table &table);
-                   
+
   Table(const identifier::Schema &schema,
         const std::string &table_name_arg,
         Type tmp_arg= message::Table::STANDARD);
 
-  Table(const std::string &db_arg,
+  Table(const drizzled::identifier::Catalog &catalog,
+        const std::string &db_arg,
         const std::string &table_name_arg,
         Type tmp_arg= message::Table::STANDARD);
 
-  Table(const std::string &schema_name_arg,
+  Table(const drizzled::identifier::Catalog &catalog,
+        const std::string &schema_name_arg,
         const std::string &table_name_arg,
         const std::string &path_arg );
 
@@ -238,7 +240,7 @@ public:
   }
 
   static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-  static std::string build_table_filename(const std::string &db, const std::string &table_name, bool is_tmp);
+  static std::string build_table_filename(const drizzled::identifier::Table&, bool is_tmp);
   static std::string build_tmptable_filename();
 
 public:

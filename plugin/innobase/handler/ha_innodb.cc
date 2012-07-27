@@ -610,7 +610,10 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 
   if (search_string.compare("data_dictionary") == 0)
   {
-    set_of_identifiers.push_back(identifier::Table(schema_identifier.getSchemaName(), "SYS_REPLICATION_LOG"));
+    set_of_identifiers.push_back(identifier::Table(
+                                            catalog::local_identifier(),
+                                            schema_identifier.getSchemaName(),
+                                            "SYS_REPLICATION_LOG"));
   }
 
   for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
@@ -640,7 +643,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
            Using schema_identifier here to stop unused warning, could use
            definition.schema() instead
         */
-        identifier::Table identifier(schema_identifier.getSchemaName(), definition.name());
+        identifier::Table identifier(schema_identifier, definition.name());
         set_of_identifiers.push_back(identifier);
       }
     }

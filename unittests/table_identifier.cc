@@ -30,21 +30,21 @@ using namespace drizzled;
 BOOST_AUTO_TEST_SUITE(TableIdentifierTest)
 BOOST_AUTO_TEST_CASE(CreateStandard)
 {
-  identifier::Table identifier("test", "a");
-  BOOST_REQUIRE_EQUAL("test/a", identifier.getPath());
+  identifier::Table identifier(identifier::Catalog(str_ref("local")), "test", "a");
+  BOOST_REQUIRE_EQUAL("local/test/a", identifier.getPath());
   BOOST_REQUIRE_EQUAL("test.a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateTemporary)
 {
-  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
+  identifier::Table identifier(identifier::Catalog(str_ref("local")),"test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
   BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
 
 BOOST_AUTO_TEST_CASE(CreateInternal)
 {
-  identifier::Table identifier("test", "a", message::Table::TEMPORARY);
+  identifier::Table identifier(identifier::Catalog(str_ref("local")),"test", "a", message::Table::TEMPORARY);
   BOOST_REQUIRE_EQUAL("/#sql", identifier.getPath().substr(0, 5));
   BOOST_REQUIRE_EQUAL("test.#a", identifier.getSQLPath());
 }
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(StaticTmpTable)
 
 BOOST_AUTO_TEST_CASE(Key)
 {
-  identifier::Table identifier("test", "a");
+  identifier::Table identifier(identifier::Catalog(str_ref("LOCAL")),"test", "a");
 
   const identifier::Table::Key key= identifier.getKey();
 
@@ -82,8 +82,8 @@ BOOST_AUTO_TEST_CASE(Key)
 
 BOOST_AUTO_TEST_CASE(KeyCompare)
 {
-  identifier::Table identifier("test", "a");
-  identifier::Table identifier2("test", "a");
+  identifier::Table identifier(identifier::Catalog(str_ref("local")), "test", "a");
+  identifier::Table identifier2(identifier::Catalog(str_ref("local")), "test", "a");
 
   BOOST_REQUIRE_EQUAL((identifier.getKey() == identifier.getKey()), true);
 }

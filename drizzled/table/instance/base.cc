@@ -86,6 +86,7 @@
 #include <drizzled/typelib.h>
 #include <drizzled/key.h>
 #include <drizzled/open_tables_state.h>
+#include <drizzled/catalog/local.h>
 
 using namespace std;
 
@@ -230,6 +231,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg) :
   key_info(NULL),
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   all_set(),
+  table_identifier(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -289,6 +291,7 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
+  table_identifier(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -328,6 +331,8 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   keys_in_use(0),
   keys_for_keyread(0)
 {
+  table_identifier= new identifier::Table(identifier);
+
   assert(identifier.getKey() == key);
 
   private_key_for_cache= key;
@@ -335,14 +340,8 @@ TableShare::TableShare(const identifier::Table &identifier, const identifier::Ta
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
-  db= str_ref(private_key_for_cache.schema_name());
-  table_name= str_ref(private_key_for_cache.table_name());
   path= str_ref("");
   normalized_path= str_ref("");
-
-  std::string tb_name(identifier.getTableName());
-  boost::to_lower(tb_name);
-  assert(strcmp(tb_name.c_str(), table_name.data()) == 0);
 }
 
 TableShare::TableShare(const identifier::Table &identifier) : // Just used during createTable()
@@ -353,6 +352,7 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
+  table_identifier(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -392,6 +392,8 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   keys_in_use(0),
   keys_for_keyread(0)
 {
+  table_identifier= new identifier::Table(identifier);
+
   private_key_for_cache= identifier.getKey();
   assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
   private_normalized_path.resize(identifier.getPath().size() + 1);
@@ -400,8 +402,6 @@ TableShare::TableShare(const identifier::Table &identifier) : // Just used durin
   {
     table_category= TABLE_CATEGORY_TEMPORARY;
     tmp_table= message::Table::INTERNAL;
-    db= str_ref(private_key_for_cache.vector());
-    table_name= str_ref(db.data() + 1);
     path= private_normalized_path;
     normalized_path= path;
   }
@@ -422,6 +422,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   mem_root(TABLE_ALLOC_BLOCK_SIZE),
   table_charset(0),
   all_set(),
+  table_identifier(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -461,13 +462,9 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   keys_in_use(0),
   keys_for_keyread(0)
 {
+  table_identifier= new identifier::Table(identifier);
+
   private_key_for_cache= identifier.getKey();
-  /*
-    Let us use the fact that the key is "db/0/table_name/0" + optional
-    part for temporary tables.
-  */
-  db= str_ref(private_key_for_cache.schema_name());
-  table_name= str_ref(private_key_for_cache.table_name());
 
   std::string _path;
   if (path_arg)
@@ -476,7 +473,7 @@ TableShare::TableShare(const identifier::Table::Type type_arg,
   }
   else
   {
-    _path= identifier::Table::build_table_filename(db.data(), table_name.data(), false);
+    _path= identifier::Table::build_table_filename(*table_identifier, false);
   }
 
   char* path_buff= mem_root.strdup(_path);
@@ -490,8 +487,13 @@ void TableShare::init(const char *new_table_name, const char *new_path)
 {
   table_category= TABLE_CATEGORY_TEMPORARY;
   tmp_table= message::Table::INTERNAL;
-  db= str_ref("");
-  table_name= str_ref(new_table_name);
+
+  /* local_identifier() is okay to use here as the path is what matters */
+  identifier::Table *n= new identifier::Table(catalog::local_identifier(),
+                                              "", new_table_name, new_path);
+  delete table_identifier;
+  table_identifier= n;
+
   path= str_ref(new_path);
   normalized_path= str_ref(new_path);
 }
@@ -499,6 +501,7 @@ void TableShare::init(const char *new_table_name, const char *new_path)
 TableShare::~TableShare() 
 {
   storage_engine= NULL;
+  delete table_identifier;
 
   mem_root.free_root(MYF(0));                 // Free's share
 }
@@ -507,12 +510,8 @@ void TableShare::setIdentifier(const identifier::Table &identifier_arg)
 {
   private_key_for_cache= identifier_arg.getKey();
 
-  /*
-    Let us use the fact that the key is "db/0/table_name/0" + optional
-    part for temporary tables.
-  */
-  db= str_ref(private_key_for_cache.schema_name());
-  table_name= str_ref(private_key_for_cache.table_name());
+  delete table_identifier;
+  table_identifier= new identifier::Table(identifier_arg);
 
   getTableMessage()->set_name(identifier_arg.getTableName());
   getTableMessage()->set_schema(identifier_arg.getSchemaName());
@@ -1705,8 +1704,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 1:
     if (db_errno == ENOENT)
     {
-      identifier::Table identifier(db.data(), table_name.data());
-      my_error(ER_TABLE_UNKNOWN, identifier);
+      my_error(ER_TABLE_UNKNOWN, *table_identifier);
     }
     else
     {
@@ -1729,7 +1727,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
         snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
         csname= tmp;
       }
-      my_printf_error(ER_UNKNOWN_COLLATION, _("Unknown collation '%s' in table '%-.64s' definition"), MYF(0), csname, table_name.data());
+      my_printf_error(ER_UNKNOWN_COLLATION, _("Unknown collation '%s' in table '%-.64s' definition"), MYF(0), csname, table_identifier->getTableName().c_str());
       break;
     }
   case 6:

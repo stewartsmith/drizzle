@@ -65,7 +65,7 @@ static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *en
 static const char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
-void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
+void set_table_default_charset(const identifier::Catalog &catalog, HA_CREATE_INFO *create_info, const char *db)
 {
   /*
     If the table character set was not given explicitly,
@@ -73,7 +73,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (not create_info->default_table_charset)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(str_ref(db)));
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier::Schema(catalog, str_ref(db)));
 }
 
 /*
@@ -125,7 +125,9 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     for (table= tables; table; table= table->next_local)
     {
-      identifier::Table tmp_identifier(table->getSchemaName(), table->getTableName());
+      identifier::Table tmp_identifier(session->catalog().identifier(),
+                                       table->getSchemaName(),
+                                       table->getTableName());
 
       error= session->open_tables.drop_temporary_table(tmp_identifier);
 
@@ -159,7 +161,10 @@ int rm_table_part2(Session *session, TableList *tables, bool if_exists,
           break;
         }
       }
-      identifier::Table identifier(table->getSchemaName(), table->getTableName(), table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
+      identifier::Table identifier(session->catalog().identifier(),
+                                   table->getSchemaName(),
+                                   table->getTableName(),
+                                   table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
       message::table::shared_ptr message= plugin::StorageEngine::getTableMessage(*session, identifier, true);
 
@@ -1406,7 +1411,7 @@ bool create_table_no_lock(Session *session,
   assert(identifier.getTableName() == table_proto.name());
   db_options= create_info->table_options;
 
-  set_table_default_charset(create_info, identifier.getSchemaName().c_str());
+  set_table_default_charset(session->catalog().identifier(),create_info, identifier.getSchemaName().c_str());
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not prepare_create_table(session, create_info, table_proto, alter_info,
@@ -1639,7 +1644,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   session->abortLock(table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  identifier::Table identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName());
+  identifier::Table identifier(session->catalog().identifier(),table->getShare()->getSchemaName(), table->getShare()->getTableName());
   table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1711,7 +1716,7 @@ static bool admin_table(Session* session, TableList* tables,
 
   for (table= tables; table; table= table->next_local)
   {
-    identifier::Table table_identifier(table->getSchemaName(), table->getTableName());
+    identifier::Table table_identifier(session->catalog().identifier(), table->getSchemaName(), table->getTableName());
     bool fatal_error=0;
 
     std::string table_name = table_identifier.getSQLPath();
@@ -1785,7 +1790,7 @@ static bool admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(COND_refresh, table::Cache::mutex(),
                                                   "Waiting to get writelock");
       session->abortLock(table->table);
-      identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+      identifier::Table identifier(session->catalog().identifier(),table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
       table::Cache::removeTable(*session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG | RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
       if (session->getKilled())
@@ -1884,7 +1889,9 @@ send_result:
         else
         {
           boost::unique_lock<boost::mutex> lock(table::Cache::mutex());
-          identifier::Table identifier(table->table->getShare()->getSchemaName(), table->table->getShare()->getTableName());
+          identifier::Table identifier(session->catalog().identifier(),
+                                       table->table->getShare()->getSchemaName(),
+                                       table->table->getShare()->getTableName());
           table::Cache::removeTable(*session, identifier, RTFC_NO_FLAG);
         }
       }
