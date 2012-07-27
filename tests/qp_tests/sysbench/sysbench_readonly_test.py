@@ -138,14 +138,14 @@ class basicTest(mysqlBaseTestCase):
 
             #report generation
             self.logging.info("Displaying regression report...")
-            print """==========================================================================
-field		value in database	recorded value		regression
-==========================================================================
-                  """
-
-            for key in fetch.keys():
-                print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
-            print "=========================================================================="
+#            print """==========================================================================
+#field		value in database	recorded value		regression
+#==========================================================================
+#                  """
+#
+#            for key in fetch.keys():
+#                print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
+#            print "=========================================================================="
 
             #getting test result as report
             sys_report=getSysbenchReport(run,fetch)
