@@ -14,6 +14,8 @@ To load this plugin, start :program:`drizzled` with::
 
    --plugin-add=logging_gearman
 
+If this plugin is loaded without passing out the arguments ``logging_gearman_host`` and ``logging_gearman_function``, default values will be used. Desired values for these can either be set at server startup by passing out these arguments or setting these values dynamically at the runtime using ``SET GLOBAL logging_gearman_host=<newhost>`` and ``SET GLOBAL logging_gearman_function=<newfunction>``.
+
 Loading the plugin may not enable or configure it.  See the plugin's
 :ref:`logging_gearman_configuration` and :ref:`logging_gearman_variables`.
 
@@ -57,7 +59,7 @@ See `variables` for more information about querying and setting variables.
 * ``logging_gearman_function``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--logging-gearman.function`
 
    Gearman Function to send logging to
@@ -67,7 +69,7 @@ See `variables` for more information about querying and setting variables.
 * ``logging_gearman_host``
 
    :Scope: Global
-   :Dynamic: No
+   :Dynamic: Yes
    :Option: :option:`--logging-gearman.host`
 
    Hostname for logging to a Gearman server

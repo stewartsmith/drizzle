@@ -21,6 +21,7 @@
 
 #include <boost/scoped_array.hpp>
 
+#include <drizzled/item.h>
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
@@ -40,10 +41,15 @@
 #include <cerrno>
 #include <memory>
 
+using namespace drizzled;
+
 namespace drizzle_plugin {
+namespace logging_gearman {
 
 namespace po= boost::program_options;
 
+bool updateHost(Session *, set_var*);
+bool updateFunction(Session *, set_var*);
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
 
@@ -159,8 +165,8 @@ class LoggingGearman :
   public drizzled::plugin::Logging
 {
 
-  const std::string _host;
-  const std::string _function;
+  std::string sysvar_host;
+  std::string sysvar_function;
 
   int _gearman_client_ok;
   gearman_client_st _gearman_client;
@@ -173,8 +179,8 @@ public:
   LoggingGearman(const std::string &host,
                  const std::string &function) :
     drizzled::plugin::Logging("gearman_query_log"),
-    _host(host),
-    _function(function),
+    sysvar_host(host),
+    sysvar_function(function),
     _gearman_client_ok(0),
     _gearman_client()
   {
@@ -269,7 +275,7 @@ public:
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
     (void) gearman_client_do_background(&_gearman_client,
-                                        _function.c_str(),
+                                        sysvar_function.c_str(),
                                         NULL,
                                         (void *) msgbuf.get(),
                                         (size_t) msgbuf_len,
@@ -277,19 +283,121 @@ public:
   
     return false;
   }
+  
+  /**
+   * This function changes the current gearman host to the parameter passed to the function.
+   *
+   * @return True on success, False on error.
+   */
+  bool setHost(std::string &new_host)
+  {
+    gearman_return_t tmp_ret;
+    
+    /*
+      New server is added to the list of servers using gearman_client_add_server.
+      If the call does not result in error, then all the servers are removed from the list and
+      new server only is added. This is done to ensure that a bad server url does not replace
+      the existing server url.
+      TODO Create a new instance of gearman_client_st and add the new server in it. If success, release the
+      old gearman_client_st and use new instance of gearman_client_st everywhere.
+    */
+    tmp_ret= gearman_client_add_server(&_gearman_client,
+                                   new_host.c_str(), 0);
+    if (tmp_ret != GEARMAN_SUCCESS)
+    {
+      drizzled::errmsg_printf(drizzled::error::ERROR, _("fail gearman_client_add_server(): %s"),
+                              gearman_client_error(&_gearman_client));
+      return false;
+    }
+
+    gearman_client_remove_servers(&_gearman_client);
+    gearman_client_add_server(&_gearman_client, new_host.c_str(), 0);
+    sysvar_host= new_host;
+    return true;
+  }
+
+  /**
+   * This function changes the gearman function with the new one.
+   *
+   * @return True on success (as we dont have to do anything except updating the function string, this always return true.)
+   */
+  bool setFunction(std::string &new_function)
+  {
+    sysvar_function= new_function;
+    return true;
+  }
+  
+  /**
+   * Getter for host
+   *
+   * @return sysvar_host
+   */
+  std::string& getHost()
+  {
+    return sysvar_host;
+  }
+  
+  /**
+   * Getter for function
+   *
+   * @return sysvar_function
+   */
+  std::string& getFunction()
+  {
+    return sysvar_function;
+  }
 };
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(drizzled::module::Context &context)
+/**
+ * This function is called when the value of gearman host is updated dynamically from the drizzle server
+ *
+ * @return False on success, True on error
+ */
+bool updateHost(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string newHost(var->value->str_value.data());
+    if (handler->setHost(newHost))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("logging_gearman_host cannot be NULL"));
+  return true; // error
+}
+
+/**
+ * This function is called when the value of gearman function is updated dynamically
+ *
+ * @return False on error, True on success
+ */
+bool updateFunction(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string newFunction(var->value->str_value.data());
+    if (handler->setFunction(newFunction))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("logging_gearman_function cannot be NULL"));
+  return true; // error
+}
+
+
+static int init(drizzled::module::Context &context)
 {
   const drizzled::module::option_map &vm= context.getOptions();
 
   handler= new LoggingGearman(vm["host"].as<std::string>(),
                               vm["function"].as<std::string>());
   context.add(handler);
-  context.registerVariable(new drizzled::sys_var_const_string_val("host", vm["host"].as<std::string>()));
-  context.registerVariable(new drizzled::sys_var_const_string_val("function", vm["function"].as<std::string>()));
+  context.registerVariable(new sys_var_std_string("host", handler->getHost(), NULL, &updateHost));
+  context.registerVariable(new sys_var_std_string("function", handler->getFunction(), NULL, &updateFunction));
 
   return 0;
 }
@@ -304,6 +412,7 @@ static void init_options(drizzled::module::option_context &context)
           _("Gearman Function to send logging to"));
 }
 
+} /* namespace logging_gearman */
 } /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
@@ -314,8 +423,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Mark Atwood",
   N_("Logs queries to a Gearman server"),
   drizzled::PLUGIN_LICENSE_GPL,
-  drizzle_plugin::logging_gearman_plugin_init,
+  drizzle_plugin::logging_gearman::init,
   NULL,
-  drizzle_plugin::init_options
+  drizzle_plugin::logging_gearman::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;
