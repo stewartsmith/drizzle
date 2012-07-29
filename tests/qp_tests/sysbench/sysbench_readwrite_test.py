@@ -73,11 +73,11 @@ class basicTest(mysqlBaseTestCase):
         # We sleep for a minute to wait
         time.sleep(10) 
         # how many times to run sysbench at each concurrency
-        iterations = 1
+        iterations = 2
         
         # various concurrencies to use with sysbench
         #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
-        concurrencies = [1 ]
+        concurrencies = [1]
 
 
         # we setup once.  This is a readonly test and we don't
@@ -99,46 +99,53 @@ class basicTest(mysqlBaseTestCase):
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
 
-            #gathering the data from the output
-            regexes={
-              'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
-            , 'min_req_lat_ms':re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
-            , 'max_req_lat_ms':re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
-            , 'avg_req_lat_ms':re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
-            , '95p_req_lat_ms':re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
-            , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
-            , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
-            }
+                #gathering the data from the output
+                regexes={
+                  'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
+                , 'min_req_lat_ms':re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
+                , 'max_req_lat_ms':re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
+                , 'avg_req_lat_ms':re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
+                , '95p_req_lat_ms':re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
+                , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
+                , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
+                }
             
-            run={}
-            for line in output.split("\n"):
-                for key in regexes:
-                    result=regexes[key].match(line)
-                    if result:
-                        run[key]=float(result.group(1))
+                run={}
+                for line in output.split("\n"):
+                    for key in regexes:
+                        result=regexes[key].match(line)
+                        if result:
+                            run[key]=float(result.group(1))
+                run={'concurrency':concurrency,'iteration':test_iteration,'mode':"readwrite"}
 
+                # fetching test results from results_db database
+                sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
+                self.logging.info("dsn_string:%s" % dsn_string)
+                fetch=results_db_connect(dsn_string,"select",sql_select)
+                fetch={'concurrency':concurrency,'iteration':test_iteration}
 
-            #fetching test results from results_db database
-            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency            
-            self.logging.info("dsn_string:%s" % dsn_string)
-            fetch=results_db_connect(dsn_string,"select",sql_select)
+                # deleting record with current concurrency and iteration
+                if fetch['concurrency']==concurrency and fetch['iteration']==test_iteration:
+                    sql_delete="DELETE FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
+                    results_db_connect(dsn_string,"delete",sql_delete)
             
-            #updating the results_db database with test results
-            # This should be an INSERT operation - we are collecting data for every run and storing
-            # it for historical comparison over the life of the code...
-            sql_update="""UPDATE sysbench_run_iterations SET tps=%0.2f, min_req_lat_ms=%0.2f, max_req_lat_ms=%0.2f, avg_req_lat_ms=%0.2f, 95p_req_lat_ms=%0.2f,rwreqps=%0.2f, deadlocksps=%0.2f WHERE concurrency=%d""" % (  run['tps'],
-                                                                       run['min_req_lat_ms'],
-                                                                       run['max_req_lat_ms'],
-                                                                       run['avg_req_lat_ms'],
-                                                                       run['95p_req_lat_ms'],
-                                                                       run['rwreqps'],
-                                                                       run['deadlocksps'],
-                                                                       concurrency  )
+                # updating the results_db database with test results
+                # it for historical comparison over the life of the code...
+                sql_insert="""INSERT INTO  sysbench_run_iterations VALUES (%d, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %d)""" % ( 
+                                                                           concurrency,
+                                                                           run['tps'],
+                                                                           run['min_req_lat_ms'],
+                                                                           run['max_req_lat_ms'],
+                                                                           run['avg_req_lat_ms'],
+                                                                           run['95p_req_lat_ms'],
+                                                                           run['rwreqps'],
+                                                                           run['deadlocksps'],
+                                                                           test_iteration  )
             
-            results_db_connect(dsn_string,"update",sql_update)
+                results_db_connect(dsn_string,"insert",sql_insert)
 
             #report generation
-            self.logging.info("Displaying regression report...")
+                self.logging.info("Generating regression report...")
 #            print """==========================================================================
 #field		value in database	recorded value		regression
 #==========================================================================
@@ -149,12 +156,12 @@ class basicTest(mysqlBaseTestCase):
 #            print "=========================================================================="
 
             #getting test result as report
-            sys_report=getSysbenchReport(run,fetch)
+                sys_report=getSysbenchReport(run,fetch)
            
             #mailing sysbench report
-            if mail_tgt:
+                if mail_tgt:
               #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
-              sysbenchSendMail(test_executor,mail_tgt,sys_report)
+                  sysbenchSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

@@ -8,13 +8,15 @@ def results_db_fetch(cursor,query):
 
     cursor.execute(query)
     data=cursor.fetchone()
-    fetch={'tps':data[1],
-               'min_req_lat_ms':data[2],
-               'max_req_lat_ms':data[3],
-               'avg_req_lat_ms':data[4],
-               '95p_req_lat_ms':data[5],
-               'rwreqps':data[6],
-               'deadlocksps':data[7]}
+    fetch={
+           'tps':data[1],
+           'min_req_lat_ms':data[2],
+           'max_req_lat_ms':data[3],
+           'avg_req_lat_ms':data[4],
+           '95p_req_lat_ms':data[5],
+           'rwreqps':data[6],
+           'deadlocksps':data[7]
+          }
     return fetch
     
 
@@ -33,14 +35,28 @@ def results_db_connect(dsn_string,operation,query):
 
     #select operation - selects tests results from database and returns a dictionary
     if operation=="select":
-        fetch=results_db_fetch(cursor,query)
+
+        # returns a fetch value for the concurrency-iteration value which is not yet recorded
+        try:
+            fetch=results_db_fetch(cursor,query)
+        except TypeError:
+            fetch={
+                   'tps':0.0,
+                   'min_req_lat_ms':0.0,
+                   'max_req_lat_ms':0.0,
+                   'avg_req_lat_ms':0.0,
+                   '95p_req_lat_ms':0.0,
+                   'rwreqps':0.0,
+                   'deadlocksps':0.0
+                  }
         cursor.close()
         connection.close()
         return fetch
 
     #update operation - updates the database with the new test result
-    elif operation=="update":
+    elif operation=="insert" or operation=="delete":
         cursor.execute(query)
         connection.autocommit(True)
         cursor.close()
         connection.close()
+

@@ -76,7 +76,7 @@ class basicTest(mysqlBaseTestCase):
         
         # various concurrencies to use with sysbench
         #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
-        concurrencies = [1 ]
+        concurrencies = [1]
 
 
         # we setup once.  This is a readonly test and we don't
@@ -115,26 +115,34 @@ class basicTest(mysqlBaseTestCase):
                     result=regexes[key].match(line)
                     if result:
                         run[key]=float(result.group(1))
-
+            run={'concurrency':concurrency,'iteration':test_iteration,'mode':"readonly"}
 
             #fetching test results from results_db database
-            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d" % concurrency            
+            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
             self.logging.info("dsn_string:%s" % dsn_string)
             fetch=results_db_connect(dsn_string,"select",sql_select)
+            fetch={'concurrency':concurrency,'iteration':test_iteration}
             
-            #updating the results_db database with test results
-            # This should be an INSERT operation - we are collecting data for every run and storing
+
+            # delete record with current concurrency and iteration
+            if fetch['concurrency']==concurrency and fetch['iteration']==test_iteration:
+                sql_delete="DELETE FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
+                results_db_connect(dsn_string,"delete",sql_delete)
+
+            # updating results_db with new test results
             # it for historical comparison over the life of the code...
-            sql_update="""UPDATE sysbench_run_iterations SET tps=%0.2f, min_req_lat_ms=%0.2f, max_req_lat_ms=%0.2f, avg_req_lat_ms=%0.2f, 95p_req_lat_ms=%0.2f,rwreqps=%0.2f, deadlocksps=%0.2f WHERE concurrency=%d""" % (  run['tps'],
+            sql_insert="""INSERT INTO sysbench_run_iterations VALUES ( %d, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %d)"""  % (  
+                                                                       concurrency,
+                                                                       run['tps'],
                                                                        run['min_req_lat_ms'],
                                                                        run['max_req_lat_ms'],
                                                                        run['avg_req_lat_ms'],
                                                                        run['95p_req_lat_ms'],
                                                                        run['rwreqps'],
                                                                        run['deadlocksps'],
-                                                                       concurrency  )
+                                                                       test_iteration  )
             
-            results_db_connect(dsn_string,"update",sql_update)
+            results_db_connect(dsn_string,"insert",sql_insert)
 
             #report generation
             self.logging.info("Displaying regression report...")
