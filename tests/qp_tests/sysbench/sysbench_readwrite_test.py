@@ -116,13 +116,14 @@ class basicTest(mysqlBaseTestCase):
                         result=regexes[key].match(line)
                         if result:
                             run[key]=float(result.group(1))
-                run={'concurrency':concurrency,'iteration':test_iteration,'mode':"readwrite"}
+                run['mode']="readwrite"
 
                 # fetching test results from results_db database
                 sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
                 self.logging.info("dsn_string:%s" % dsn_string)
                 fetch=results_db_connect(dsn_string,"select",sql_select)
-                fetch={'concurrency':concurrency,'iteration':test_iteration}
+                fetch['concurrency']=concurrency
+                fetch['iteration']=test_iteration
 
                 # deleting record with current concurrency and iteration
                 if fetch['concurrency']==concurrency and fetch['iteration']==test_iteration:

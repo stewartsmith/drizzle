@@ -115,13 +115,14 @@ class basicTest(mysqlBaseTestCase):
                     result=regexes[key].match(line)
                     if result:
                         run[key]=float(result.group(1))
-            run={'concurrency':concurrency,'iteration':test_iteration,'mode':"readonly"}
+            run['mode']="readonly"
 
             #fetching test results from results_db database
             sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
             self.logging.info("dsn_string:%s" % dsn_string)
             fetch=results_db_connect(dsn_string,"select",sql_select)
-            fetch={'concurrency':concurrency,'iteration':test_iteration}
+            fetch['concurrency']=concurrency
+            fetch['iteration']=test_iteration
             
 
             # delete record with current concurrency and iteration
@@ -145,7 +146,7 @@ class basicTest(mysqlBaseTestCase):
             results_db_connect(dsn_string,"insert",sql_insert)
 
             #report generation
-            self.logging.info("Displaying regression report...")
+            self.logging.info("Generating regression report...")
 #            print """==========================================================================
 #field		value in database	recorded value		regression
 #==========================================================================

@@ -4,6 +4,9 @@ def getSysbenchReport(run,fetch):
     report="""==============================
   SYSBENCH REGRESSION REPORT
 ==============================
+CONCURRENCY    :  %d
+ITERATIONS     :  %d
+MODE           :  %s
 TPS            :  %f      %f
 MIN_REQ_LAT_MS :  %f      %f
 MAX_REQ_LAT_MS :  %f      %f
@@ -12,7 +15,10 @@ AVG_REQ_LAT_MS :  %f      %f
 RWREQPS        :  %f      %f
 DEADLOCKSPS    :  %f      %f
 =============================
-          """ % (run['tps'],           run['tps']-fetch['tps'],
+          """ % (fetch['concurrency'],
+                 fetch['iteration']+1,
+                 run['mode'],
+                 run['tps'],           run['tps']-fetch['tps'],
                  run['min_req_lat_ms'],run['min_req_lat_ms']-fetch['min_req_lat_ms'],
                  run['max_req_lat_ms'],run['max_req_lat_ms']-fetch['max_req_lat_ms'],
                  run['avg_req_lat_ms'],run['avg_req_lat_ms']-fetch['avg_req_lat_ms'],
