@@ -46,7 +46,7 @@ test_executor = None
 
 class basicTest(mysqlBaseTestCase):
         
-    def test_sysbench_readonly(self):
+    def test_sysbench_readwrite(self):
         self.logging = test_executor.logging
         master_server = servers[0]
         # our base test command
@@ -73,27 +73,42 @@ class basicTest(mysqlBaseTestCase):
         # We sleep for a minute to wait
         time.sleep(10) 
         # how many times to run sysbench at each concurrency
-        iterations = 2
+        iterations = 3
         
         # various concurrencies to use with sysbench
         #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
         concurrencies = [1]
 
 
-        # we setup once.  This is a readonly test and we don't
+        # we setup once.  This is a readwrite test and we don't
         # alter the test bed once it is created
         exec_cmd = " ".join(test_cmd)
-        retcode, output = prepare_sysbench(test_executor, exec_cmd)
-        err_msg = ("sysbench 'prepare' phase failed.\n"
-                   "retcode:  %d"
-                   "output:  %s" %(retcode,output))
-        self.assertEqual(retcode, 0, msg = err_msg) 
+        # retcode, output = prepare_sysbench(test_executor, exec_cmd)
+        # err_msg = ("sysbench 'prepare' phase failed.\n"
+        #            "retcode:  %d"
+        #            "output:  %s" %(retcode,output))
+        # self.assertEqual(retcode, 0, msg = err_msg) 
 
         # start the test!
         for concurrency in concurrencies:
             exec_cmd = " ".join(test_cmd)
             exec_cmd += "--num-threads=%d" %concurrency
-            for test_iteration in range(iterations):
+            for test_iteration in range(iterations): 
+
+                # pre-preparation
+                queries = ["DROP SCHEMA test",
+                           "CREATE SCHEMA test"
+                          ]
+                retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
+
+                # preparing test bed for each iteration
+                retcode, output = prepare_sysbench(test_executor, exec_cmd)
+                err_msg = ("sysbench 'prepare' phase failed. \n"
+                           "retcode:  %d"
+                           "output:   %s" %(retcode,output))
+                self.assertEqual(retcode, 0, msg = err_msg)
+          
+                # executing sysbench tests
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_sysbench_output(output)
@@ -159,10 +174,11 @@ class basicTest(mysqlBaseTestCase):
             #getting test result as report
                 sys_report=getSysbenchReport(run,fetch)
            
-            #mailing sysbench report
+                #mailing sysbench report
                 if mail_tgt:
-              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+                  #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
                   sysbenchSendMail(test_executor,mail_tgt,sys_report)
+
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
