@@ -91,22 +91,39 @@ class basicTest(mysqlBaseTestCase):
 
         # start the test!
         for concurrency in concurrencies:
+
+            # pre-preparation
+            queries = ["DROP SCHEMA test",
+                       "CREATE SCHEMA test"
+                      ]
+            retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
+
+            # preparing the test bed for each concurrency
+            retcode, output = prepare_sysbench(test_executor, exec_cmd)
+            err_msg = ("sysbench 'prepare' phase failed.\n"
+                       "retcode: %d"
+                       "output:  %s" %(retcode,output))
+            self.assertEqual(retcode, 0, msg=err_msg)
+            
+            
             exec_cmd = " ".join(test_cmd)
             exec_cmd += "--num-threads=%d" %concurrency
             for test_iteration in range(iterations): 
 
                 # pre-preparation
-                queries = ["DROP SCHEMA test",
-                           "CREATE SCHEMA test"
-                          ]
-                retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
+
+                # queries = ["DROP SCHEMA test",
+                #            "CREATE SCHEMA test"
+                #           ]
+                # retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
 
                 # preparing test bed for each iteration
-                retcode, output = prepare_sysbench(test_executor, exec_cmd)
-                err_msg = ("sysbench 'prepare' phase failed. \n"
-                           "retcode:  %d"
-                           "output:   %s" %(retcode,output))
-                self.assertEqual(retcode, 0, msg = err_msg)
+
+                # retcode, output = prepare_sysbench(test_executor, exec_cmd)
+                # err_msg = ("sysbench 'prepare' phase failed. \n"
+                #            "retcode:  %d"
+                #            "output:   %s" %(retcode,output))
+                # self.assertEqual(retcode, 0, msg = err_msg)
           
                 # executing sysbench tests
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
