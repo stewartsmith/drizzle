@@ -83,27 +83,27 @@ class basicTest(mysqlBaseTestCase):
         # we setup once.  This is a readwrite test and we don't
         # alter the test bed once it is created
         exec_cmd = " ".join(test_cmd)
-        # retcode, output = prepare_sysbench(test_executor, exec_cmd)
-        # err_msg = ("sysbench 'prepare' phase failed.\n"
-        #            "retcode:  %d"
-        #            "output:  %s" %(retcode,output))
-        # self.assertEqual(retcode, 0, msg = err_msg) 
+        retcode, output = prepare_sysbench(test_executor, exec_cmd)
+        err_msg = ("sysbench 'prepare' phase failed.\n"
+                   "retcode:  %d"
+                   "output:  %s" %(retcode,output))
+        self.assertEqual(retcode, 0, msg = err_msg) 
 
         # start the test!
         for concurrency in concurrencies:
 
             # pre-preparation
-            queries = ["DROP SCHEMA test",
-                       "CREATE SCHEMA test"
-                      ]
-            retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
+            # queries = ["DROP SCHEMA test",
+            #            "CREATE SCHEMA test"
+            #           ]
+            # retcode, result = self.execute_queries(queries, master_server, schema = "INFORMATION_SCHEMA")
 
             # preparing the test bed for each concurrency
-            retcode, output = prepare_sysbench(test_executor, exec_cmd)
-            err_msg = ("sysbench 'prepare' phase failed.\n"
-                       "retcode: %d"
-                       "output:  %s" %(retcode,output))
-            self.assertEqual(retcode, 0, msg=err_msg)
+            # retcode, output = prepare_sysbench(test_executor, exec_cmd)
+            # err_msg = ("sysbench 'prepare' phase failed.\n"
+            #            "retcode: %d"
+            #            "output:  %s" %(retcode,output))
+            # self.assertEqual(retcode, 0, msg=err_msg)
             
             
             exec_cmd = " ".join(test_cmd)
