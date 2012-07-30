@@ -34,7 +34,10 @@
 #include <drizzled/statistics_variables.h>
 #include <drizzled/system_variables.h>
 
+#define DRIZZLE_UNIX_SOCKET_PATH "/tmp/mysql.socket"
+
 using namespace drizzled;
+namespace fs= boost::filesystem;
 
 static uint32_t killed_threads;
 static bool segfaulted= false;
@@ -47,6 +50,22 @@ static bool segfaulted= false;
  */
 extern "C"
 {
+
+void drizzled_sigint_handler(int sig){
+    struct sigaction sa;
+    switch(sig){
+        case SIGINT:{
+            if (fs::exists(DRIZZLE_UNIX_SOCKET_PATH))
+            {
+                fs::remove(DRIZZLE_UNIX_SOCKET_PATH);
+            }
+            sa.sa_handler=SIG_DFL;
+            sigaction(SIGINT, &sa, NULL);
+            pthread_kill(pthread_self(),SIGINT);
+        break;
+        }
+    }
+}
 
 void drizzled_print_signal_warning(int sig)
 {

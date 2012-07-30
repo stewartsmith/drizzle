@@ -81,6 +81,7 @@ static uint32_t thr_kill_signal;
 extern bool opt_daemon;
 
 
+
 /**
   All global error messages are sent here where the first one is stored
   for the client.
@@ -219,8 +220,13 @@ static void init_signals(void)
   sigprocmask(SIG_UNBLOCK,&set,NULL);
   pthread_sigmask(SIG_UNBLOCK,&set,NULL);
 
+  sa.sa_handler = drizzled_sigint_handler;
+  sigaction(SIGINT,&sa,NULL);
+
   return;
 }
+
+
 
 static void GoogleProtoErrorThrower(google::protobuf::LogLevel level,
                                     const char* ,
@@ -291,8 +297,8 @@ int main(int argc, char **argv)
     init signals & alarm
     After this we can't quit by a simple unireg_abort
   */
-  init_signals();
 
+  init_signals();
 
   select_thread= pthread_self();
   select_thread_in_use=1;
