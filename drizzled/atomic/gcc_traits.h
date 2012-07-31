@@ -25,7 +25,6 @@ namespace internal {
 template<typename T, typename D>
 class gcc_traits
 {
-
 public:
   typedef T value_type;
 
@@ -66,7 +65,7 @@ public:
 
   inline value_type fetch(const volatile value_type *value) const volatile
   {
-    /* 
+    /*
      * This is necessary to ensure memory barriers are respected when
      * simply returning the value pointed at.  However, this does not
      * compile on ICC.
@@ -91,4 +90,3 @@ public:
 
 } /* namespace internal */
 } /* namespace drizzled */
-

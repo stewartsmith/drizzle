@@ -417,7 +417,7 @@ static void create_pid_file()
   if ((file = open(pid_file.file_string().c_str(), O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC, S_IRWXU|S_IRGRP|S_IROTH)) > 0)
   {
     char buff[1024];
-    int length= snprintf(buff, sizeof(buff), "%ld\n", (long) getpid()); 
+    int length= snprintf(buff, sizeof(buff), "%ld\n", (long) getpid());
 
     if ((write(file, buff, length)) == length)
     {
@@ -606,7 +606,7 @@ passwd *check_user(const char *user)
   {
     // Allow a numeric uid to be used
     const char *pos= user;
-    for (; my_charset_utf8_general_ci.isdigit(*pos); pos++) 
+    for (; my_charset_utf8_general_ci.isdigit(*pos); pos++)
     { }
     if (*pos)                                   // Not numeric id
     {
@@ -643,7 +643,7 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups(user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    unireg_abort << _("Set process group ID failed ") << strerror(errno); 
+    unireg_abort << _("Set process group ID failed ") << strerror(errno);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
@@ -1345,7 +1345,7 @@ bool init_variables_before_daemonizing(int argc, char **argv)
   }
   catch (po::validation_error &err)
   {
-    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. "; 
+    unireg_abort  << err.what() << ". " << "Use --help to get a list of available options. ";
   }
 
   if (vm.count("version"))
@@ -2243,10 +2243,10 @@ static void fix_paths()
   {
     if (errno != EEXIST)
     {
-      unireg_abort << "There was an error creating the '" 
-        << fs::path(drizzle_tmpdir).leaf() 
-        << "' part of the path '" 
-        << drizzle_tmpdir 
+      unireg_abort << "There was an error creating the '"
+        << fs::path(drizzle_tmpdir).leaf()
+        << "' part of the path '"
+        << drizzle_tmpdir
         << "'.  Please check the path exists and is writable.";
     }
   }
