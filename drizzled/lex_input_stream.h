@@ -38,7 +38,7 @@ namespace drizzled {
 class Lex_input_stream
 {
 public:
-  Lex_input_stream(Session *session, const char* buff, unsigned int length);
+  Lex_input_stream(Session&, str_ref);
 
   /**
     Set the echo mode.

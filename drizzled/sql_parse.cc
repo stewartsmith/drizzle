@@ -77,7 +77,7 @@ namespace drizzled {
 /* Prototypes */
 bool my_yyoverflow(short **a, ParserType **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void parse(Session&, const char *inBuf, uint32_t length);
+void parse(Session&, str_ref);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -236,7 +236,7 @@ bool dispatch_command(enum_server_command command, Session& session, str_ref pac
     {
       session.readAndStoreQuery(packet);
       DRIZZLE_QUERY_START(session.getQueryString()->c_str(), session.thread_id, session.schema()->c_str());
-      parse(session, session.getQueryString()->c_str(), session.getQueryString()->length());
+      parse(session, *session.getQueryString());
       break;
     }
 
@@ -744,7 +744,7 @@ void create_select_for_variable(Session *session, const char *var_name)
   @param       length  Length of the query text
 */
 
-void parse(Session& session, const char *inBuf, uint32_t length)
+void parse(Session& session, str_ref buf)
 {
   session.lex().start(&session);
   session.reset_for_next_command();
@@ -754,7 +754,7 @@ void parse(Session& session, const char *inBuf, uint32_t length)
    */
   if (plugin::QueryCache::isCached(&session) && not plugin::QueryCache::sendCachedResultset(&session))
     return;
-  Lex_input_stream lip(&session, inBuf, length);
+  Lex_input_stream lip(session, buf);
   if (parse_sql(&session, &lip))
     assert(session.is_error());
   else if (not session.is_error())

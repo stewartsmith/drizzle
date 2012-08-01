@@ -67,22 +67,20 @@ static void add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   list.link_in_list((unsigned char*) order, (unsigned char**) &order->next);
 }
 
-Lex_input_stream::Lex_input_stream(Session *session,
-                                   const char* buffer,
-                                   unsigned int length) :
-  m_session(session),
+Lex_input_stream::Lex_input_stream(Session& session, str_ref buffer) :
+  m_session(&session),
   yylineno(1),
   yytoklen(0),
   yylval(NULL),
   lookahead_token(END_OF_INPUT),
   lookahead_yylval(NULL),
-  m_ptr(buffer),
+  m_ptr(buffer.data()),
   m_tok_start(NULL),
   m_tok_end(NULL),
-  m_end_of_query(buffer + length),
+  m_end_of_query(buffer.end()),
   m_tok_start_prev(NULL),
-  m_buf(buffer),
-  m_buf_length(length),
+  m_buf(buffer.data()),
+  m_buf_length(buffer.size()),
   m_echo(true),
   m_cpp_tok_start(NULL),
   m_cpp_tok_start_prev(NULL),
@@ -93,7 +91,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
-  m_cpp_buf= (char*) session->mem.alloc(length + 1);
+  m_cpp_buf= (char*) session.mem.alloc(buffer.size() + 1);
   m_cpp_ptr= m_cpp_buf;
 }
 
