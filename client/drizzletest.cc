@@ -734,6 +734,10 @@ static void check_command_args(st_command* command,
       break;
     }
     assert(known_arg_type);
+    if (known_arg_type == false)
+    {
+      die("Bad argument");
+    }
 
     /* Check required arg */
     if (arg->ds->length() == 0 && arg->required)

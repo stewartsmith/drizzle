@@ -102,6 +102,7 @@ void Schema::prime_catalog(identifier::Catalog &catalog_identifier)
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
+      (void)(ret);
       assert(ret.second); // If this has happened, something really bad is going down.
     }
   }
@@ -121,7 +122,9 @@ void Schema::prime()
     drizzled::message::catalog::shared_ptr message;
 
     if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+    {
       continue;
+    }
 
     drizzled::identifier::Catalog identifier(entry->filename);
 
@@ -176,7 +179,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
     schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
   assert(ret.second); // If this has happened, something really bad is going down.
-  return true;
+  return ret.second;
 }
 
 bool Schema::doDropSchema(const identifier::Schema &schema_identifier)
@@ -222,7 +225,9 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
                                        schema_message.name());
 
   if (access(schema_identifier.getPath().c_str(), F_OK))
+  {
     return false;
+  }
 
   if (writeSchemaFile(schema_identifier, schema_message))
   {
@@ -233,9 +238,10 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
       schema_cache.insert(make_pair(schema_identifier.getPath(), new message::Schema(schema_message)));
 
     assert(ret.second); // If this has happened, something really bad is going down.
+    return ret.second;
   }
 
-  return true;
+  return false;
 }
 
 /**

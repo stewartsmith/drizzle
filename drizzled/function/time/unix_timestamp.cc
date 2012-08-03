@@ -70,6 +70,7 @@ int64_t Item_func_unix_timestamp::val_int()
     char buff[DateTime::MAX_STRING_LENGTH];
     int buff_len;
     buff_len= temporal.to_string(buff, DateTime::MAX_STRING_LENGTH);
+    (void)(buff_len);
     assert((buff_len+1) < DateTime::MAX_STRING_LENGTH);
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), buff);
     return 0;
