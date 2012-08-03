@@ -294,7 +294,9 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       information about fields lengths and exact types
     */
     if (!is_union_select)
+    {
       types= first_sl->item_list;
+    }
     else if (sl == first_sl)
     {
       /*
@@ -303,6 +305,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
         The main reason of this is that we can't create
         field object without table.
       */
+      (void)(empty_table);
       assert(!empty_table);
       empty_table= (Table*) session->mem.calloc(sizeof(Table));
       types.clear();

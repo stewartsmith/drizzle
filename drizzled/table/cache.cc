@@ -283,6 +283,7 @@ bool Cache::removeTable(Session& session, const identifier::Table &identifier, u
 void Cache::insert(table::Concurrent* arg)
 {
   CacheMap::iterator returnable= cache.insert(std::make_pair(arg->getShare()->getCacheKey(), arg));
+  (void)(returnable);
 	assert(returnable != cache.end());
 }
 
