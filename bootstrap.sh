@@ -1,4 +1,4 @@
-#!/bin/bassh
+#!/bin/bash
 # 
 # Copyright (C) 2012 Brian Aker
 # All rights reserved.
