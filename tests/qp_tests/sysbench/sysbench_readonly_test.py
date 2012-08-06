@@ -56,7 +56,7 @@ class basicTest(mysqlBaseTestCase):
                    , "--db-ps-mode=disable"
                    , "--%s-table-engine=innodb" %master_server.type
                    , "--oltp-read-only=on"
-                   , "--oltp-table-size=1000000"
+                   , "--oltp-table-size=10000" #1000000"
                    , "--%s-user=root" %master_server.type
                    , "--%s-db=test" %master_server.type
                    , "--%s-port=%d" %(master_server.type, master_server.master_port)
@@ -89,7 +89,9 @@ class basicTest(mysqlBaseTestCase):
         self.assertEqual(retcode, 0, msg = err_msg) 
 
         # start the test!
+        test_data = {}
         for concurrency in concurrencies:
+            test_data[concurrency] = []
             exec_cmd = " ".join(test_cmd)
             exec_cmd += "--num-threads=%d" %concurrency
             for test_iteration in range(iterations):
@@ -116,38 +118,10 @@ class basicTest(mysqlBaseTestCase):
                     if result:
                         run[key]=float(result.group(1))
             run['mode']="readonly"
+            run['iteration'] = test_iteration
+            test_data[concurrency].append(run)
 
-            # fetching test results from results_db database
-            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
-            self.logging.info("dsn_string:%s" % dsn_string)
-            fetch=results_db_connect(dsn_string,"select",sql_select)
-            fetch['concurrency']=concurrency
-            fetch['iteration']=test_iteration
-            
-            # updating results_db with new test results
-            # it for historical comparison over the life of the code...
-            sql_insert="""INSERT INTO sysbench_run_iterations VALUES ( %d, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %d)"""  % (  
-                                                                       concurrency,
-                                                                       run['tps'],
-                                                                       run['min_req_lat_ms'],
-                                                                       run['max_req_lat_ms'],
-                                                                       run['avg_req_lat_ms'],
-                                                                       run['95p_req_lat_ms'],
-                                                                       run['rwreqps'],
-                                                                       run['deadlocksps'],
-                                                                       test_iteration  )
-            
-            results_db_connect(dsn_string,"insert",sql_insert)
-
-            # report generation
-            self.logging.info("Generating regression report...")
-
-            # getting test result as report
-            sys_report=getSysbenchReport(run,fetch)
-           
-            # mailing sysbench report
-            if mail_tgt:
-              sysbenchSendMail(test_executor,mail_tgt,sys_report)
+        print test_data
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
