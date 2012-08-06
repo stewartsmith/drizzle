@@ -117,19 +117,13 @@ class basicTest(mysqlBaseTestCase):
                         run[key]=float(result.group(1))
             run['mode']="readonly"
 
-            #fetching test results from results_db database
+            # fetching test results from results_db database
             sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
             self.logging.info("dsn_string:%s" % dsn_string)
             fetch=results_db_connect(dsn_string,"select",sql_select)
             fetch['concurrency']=concurrency
             fetch['iteration']=test_iteration
             
-
-            # delete record with current concurrency and iteration
-            if fetch['concurrency']==concurrency and fetch['iteration']==test_iteration:
-                sql_delete="DELETE FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
-                results_db_connect(dsn_string,"delete",sql_delete)
-
             # updating results_db with new test results
             # it for historical comparison over the life of the code...
             sql_insert="""INSERT INTO sysbench_run_iterations VALUES ( %d, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %d)"""  % (  
@@ -145,23 +139,14 @@ class basicTest(mysqlBaseTestCase):
             
             results_db_connect(dsn_string,"insert",sql_insert)
 
-            #report generation
+            # report generation
             self.logging.info("Generating regression report...")
-#            print """==========================================================================
-#field		value in database	recorded value		regression
-#==========================================================================
-#                  """
-#
-#            for key in fetch.keys():
-#                print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
-#            print "=========================================================================="
 
-            #getting test result as report
+            # getting test result as report
             sys_report=getSysbenchReport(run,fetch)
            
-            #mailing sysbench report
+            # mailing sysbench report
             if mail_tgt:
-              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
               sysbenchSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
