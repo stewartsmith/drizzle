@@ -31,20 +31,21 @@ class Syslog: public drizzled::plugin::Logging
 private:
   int _facility;
   std::string sysvar_facility;
-  uint64_t _threshold_slow;
-  uint64_t _threshold_big_resultset;
-  uint64_t _threshold_big_examined;
 
 public:
   Syslog(const std::string &facility,
-         uint64_t threshold_slow,
-         uint64_t threshold_big_resultset,
-         uint64_t threshold_big_examined);
-
+         drizzled::uint64_constraint threshold_slow,
+         drizzled::uint64_constraint threshold_big_resultset,
+         drizzled::uint64_constraint threshold_big_examined);
+  
+  /*
+  These variables are made public as, otherwise, we will have to make setter functions for each of these variables to change their value 
+  at runtime or we will have to make these variables extern. Changing them to public ensures that they can be changed at runtime directly.
+  */
+  drizzled::uint64_constraint _threshold_slow;
+  drizzled::uint64_constraint _threshold_big_resultset;
+  drizzled::uint64_constraint _threshold_big_examined;
   virtual bool post (drizzled::Session *session);
-  bool setThresholdSlow(uint64_t new_threshold);
-  bool setThresholdBigResultSet(uint64_t new_threshold);
-  bool setThresholdBigExamined(uint64_t new_threshold);
   bool setFacility(std::string new_facility);
   std::string& getFacility();
 };

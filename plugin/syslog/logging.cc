@@ -40,13 +40,14 @@
 
 namespace drizzle_plugin {
 namespace syslog {
+using namespace drizzled;
 
 extern bool sysvar_logging_enable;
 
 logging::Syslog::Syslog(const std::string &facility,
-                        uint64_t threshold_slow,
-                        uint64_t threshold_big_resultset,
-                        uint64_t threshold_big_examined) :
+                        uint64_constraint threshold_slow,
+                        uint64_constraint threshold_big_resultset,
+                        uint64_constraint threshold_big_examined) :
   drizzled::plugin::Logging("syslog_query_log"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str())),
   sysvar_facility(facility),
@@ -127,24 +128,6 @@ bool logging::Syslog::post(drizzled::Session *session)
          (unsigned long) session->total_warn_count);
 
     return false;
-}
-
-bool logging::Syslog::setThresholdSlow(uint64_t new_threshold)
-{
-  _threshold_slow= new_threshold;
-  return true;
-}
-
-bool logging::Syslog::setThresholdBigResultSet(uint64_t new_threshold)
-{
-  _threshold_big_resultset= new_threshold;
-  return true;
-}
-
-bool logging::Syslog::setThresholdBigExamined(uint64_t new_threshold)
-{
-  _threshold_big_examined= new_threshold;
-  return true;
 }
 
 bool logging::Syslog::setFacility(std::string new_facility)

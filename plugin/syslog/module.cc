@@ -43,9 +43,6 @@ namespace syslog {
 
 bool sysvar_logging_enable= false;
 static bool sysvar_errmsg_enable= true;
-void updateLoggingThresholdSlow(Session *, sql_var_t);
-void updateLoggingThresholdBigResultSet(Session *, sql_var_t);
-void updateLoggingThresholdBigExamined(Session *, sql_var_t);
 bool updateFacility(Session *, set_var *);
 
 uint64_constraint sysvar_logging_threshold_slow;
@@ -53,21 +50,6 @@ uint64_constraint sysvar_logging_threshold_big_resultset;
 uint64_constraint sysvar_logging_threshold_big_examined;
 
 logging::Syslog *logging_syslog_handler = NULL;
-
-void updateLoggingThresholdSlow(Session *, sql_var_t)
-{
-  logging_syslog_handler->setThresholdSlow(sysvar_logging_threshold_slow);
-}
-
-void updateLoggingThresholdBigResultSet(Session *, sql_var_t)
-{
-  logging_syslog_handler->setThresholdBigResultSet(sysvar_logging_threshold_big_resultset);
-}
-
-void updateLoggingThresholdBigExamined(Session *, sql_var_t)
-{
-  logging_syslog_handler->setThresholdBigExamined(sysvar_logging_threshold_big_examined);
-}
 
 bool updateFacility(Session *, set_var* var)
 {
@@ -109,9 +91,9 @@ static int init(drizzled::module::Context &context)
   context.registerVariable(new sys_var_bool_ptr("logging_enable", &sysvar_logging_enable, NULL));
   context.registerVariable(new sys_var_bool_ptr_readonly("errmsg_enable",
                                                          &sysvar_errmsg_enable));
-  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_slow", sysvar_logging_threshold_slow, &updateLoggingThresholdSlow));
-  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_resultset", sysvar_logging_threshold_big_resultset, &updateLoggingThresholdBigResultSet));
-  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_examined", sysvar_logging_threshold_big_examined, &updateLoggingThresholdBigExamined));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_slow", logging_syslog_handler->_threshold_slow));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_resultset", logging_syslog_handler->_threshold_big_resultset));
+  context.registerVariable(new sys_var_constrained_value<uint64_t>("logging_threshold_big_examined", logging_syslog_handler->_threshold_big_examined));
 
   return 0;
 }
