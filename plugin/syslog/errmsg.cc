@@ -27,8 +27,8 @@
 #include <plugin/syslog/errmsg.h>
 #include <plugin/syslog/wrap.h>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace syslog {
 
 error_message::Syslog::Syslog(const std::string& facility) :
   drizzled::plugin::ErrorMessage("syslog_error_message"),
@@ -49,4 +49,5 @@ bool error_message::Syslog::errmsg(drizzled::error::priority_t priority, const c
   return false;
 }
 
+} /* namespace syslog */
 } /* namespace drizzle_plugin */

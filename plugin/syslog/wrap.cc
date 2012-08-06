@@ -34,6 +34,7 @@
 #endif
 
 namespace drizzle_plugin {
+namespace syslog {
 
 WrapSyslog::WrapSyslog () :
   _check(false)
@@ -101,4 +102,5 @@ void WrapSyslog::log (int facility, const drizzled::error::priority_t priority, 
   va_end(ap);
 }
 
+} /* namespace syslog */
 } /* namespace drizzle_plugin */

@@ -24,6 +24,7 @@
 #include <drizzled/function/str/strfunc.h>
 
 namespace drizzle_plugin {
+namespace syslog {
 namespace udf {
 
 class Syslog : public drizzled::Item_str_func
@@ -40,6 +41,7 @@ public:
 };
 
 } /* namespace udf */
+} /* namespace syslog */
 } /* namepsace drizzle_plugin */
 
 

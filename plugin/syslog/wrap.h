@@ -26,6 +26,7 @@
 #include <drizzled/error/priority_t.h>
 
 namespace drizzle_plugin {
+namespace syslog {
 
 class WrapSyslog
 {
@@ -51,5 +52,6 @@ inline WrapSyslog& WrapSyslog::singleton()
   return handle;
 }
 
+} /* namespace syslog */
 } /* namespsace drizzle_plugin */
 

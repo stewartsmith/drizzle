@@ -25,8 +25,8 @@
 #include <plugin/syslog/function.h>
 #include <plugin/syslog/wrap.h>
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace syslog {
 
 udf::Syslog::Syslog()
   : Item_str_func()
@@ -73,4 +73,5 @@ bool udf::Syslog::check_argument_count(int n)
   return (n == 3);
 }
 
+} /* namespace syslog */
 } /* namespace drizzle_plugin */

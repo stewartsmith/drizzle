@@ -39,13 +39,18 @@
 #include "wrap.h"
 
 namespace drizzle_plugin {
+namespace syslog {
+using namespace drizzled;
+
+extern bool sysvar_logging_enable;
 
 logging::Syslog::Syslog(const std::string &facility,
-                        uint64_t threshold_slow,
-                        uint64_t threshold_big_resultset,
-                        uint64_t threshold_big_examined) :
+                        uint64_constraint threshold_slow,
+                        uint64_constraint threshold_big_resultset,
+                        uint64_constraint threshold_big_examined) :
   drizzled::plugin::Logging("syslog_query_log"),
   _facility(WrapSyslog::getFacilityByName(facility.c_str())),
+  sysvar_facility(facility),
   _threshold_slow(threshold_slow),
   _threshold_big_resultset(threshold_big_resultset),
   _threshold_big_examined(threshold_big_examined)
@@ -56,6 +61,7 @@ logging::Syslog::Syslog(const std::string &facility,
                             _("syslog facility \"%s\" not known, using \"local0\""),
                             facility.c_str());
     _facility= WrapSyslog::getFacilityByName("local0");
+    sysvar_facility= "local0";
   }
 }
 
@@ -74,7 +80,12 @@ bool logging::Syslog::post(drizzled::Session *session)
   {
     return false;
   }
+  
+  // return if query logging is not enabled
+  if (sysvar_logging_enable == false)
+      return false;
 
+  
   /*
     TODO, the session object should have a "utime command completed"
     inside itself, so be more accurate, and so this doesnt have to
@@ -119,4 +130,22 @@ bool logging::Syslog::post(drizzled::Session *session)
     return false;
 }
 
+bool logging::Syslog::setFacility(std::string new_facility)
+{
+  int tmp_facility= WrapSyslog::getFacilityByName(new_facility.c_str());
+  if(tmp_facility>0)
+  {
+    _facility= tmp_facility;
+    sysvar_facility= new_facility;
+    return true;
+  }
+  return false;
+}
+
+std::string& logging::Syslog::getFacility()
+{
+  return sysvar_facility;
+}
+
+} /* namespace syslog */
 } /* namespsace drizzle_plugin */
