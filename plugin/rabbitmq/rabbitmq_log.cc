@@ -57,6 +57,12 @@ string sysvar_rabbitmq_exchange;
 string sysvar_rabbitmq_routingkey;
 void updateSysvarLoggingEnable(Session *, sql_var_t);
 bool updateSysvarRabbitMQHost(Session *, set_var *var);
+int updateSysvarRabbitMQPort(Session *, set_var *var);
+bool updateSysvarRabbitMQUserName(Session *, set_var *var);
+bool updateSysvarRabbitMQPassword(Session *, set_var *var);
+bool updateSysvarRabbitMQVirtualHost(Session *, set_var *var);
+bool updateSysvarRabbitMQExchange(Session *, set_var *var);
+bool updateSysvarRabbitMQRoutingKey(Session *, set_var *var);
 
 RabbitMQLog::RabbitMQLog(const string &name, 
                          RabbitMQHandler* mqHandler) :
@@ -172,6 +178,126 @@ bool updateSysvarRabbitMQHost(Session *, set_var *var)
   return true; // error
 }
 
+int updateSysvarRabbitMQPort(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_port cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return 1; // error
+  }
+  if (var->value->val_int())
+  {
+    sysvar_rabbitmq_port = var->value->val_int();
+    return 0;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_port cannot be NULL"));
+    return 1; // error
+  }
+  return 1; // error
+}
+
+bool updateSysvarRabbitMQUserName(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_username cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return true; // error
+  }
+  if (not var->value->str_value.empty())
+  {
+    sysvar_rabbitmq_username = var->value->str_value.data();
+    return false;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_username cannot be NULL"));
+    return true; // error
+  }
+  return true; // error
+}
+
+bool updateSysvarRabbitMQPassword(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_password cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return true; // error
+  }
+  if (not var->value->str_value.empty())
+  {
+    sysvar_rabbitmq_password = var->value->str_value.data();
+    return false;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_password cannot be NULL"));
+    return true; // error
+  }
+  return true; // error
+}
+
+bool updateSysvarRabbitMQVirtualHost(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_virtualhost cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return true; // error
+  }
+  if (not var->value->str_value.empty())
+  {
+    sysvar_rabbitmq_virtualhost = var->value->str_value.data();
+    return false;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_virtualhost cannot be NULL"));
+    return true; // error
+  }
+  return true; // error
+}
+
+bool updateSysvarRabbitMQExchange(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_exchange cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return true; // error
+  }
+  if (not var->value->str_value.empty())
+  {
+    sysvar_rabbitmq_exchange = var->value->str_value.data();
+    return false;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_exchange cannot be NULL"));
+    return true; // error
+  }
+  return true; // error
+}
+
+bool updateSysvarRabbitMQRoutingKey(Session *, set_var *var)
+{
+  if(sysvar_logging_enable)
+  {
+    errmsg_printf(error::ERROR, _("Value of rabbitmq_routingkey cannot be changed as rabbitmq plugin is enabled. You need to disable the plugin first."));
+    return true; // error
+  }
+  if (not var->value->str_value.empty())
+  {
+    sysvar_rabbitmq_routingkey = var->value->str_value.data();
+    return false;
+  }
+  else
+  {
+    errmsg_printf(error::ERROR, _("rabbitmq_routingkey cannot be NULL"));
+    return true; // error
+  }
+  return true; // error
+}
+
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
  * and creates the log handler with the dependency - makes it easier to swap out
@@ -217,12 +343,12 @@ static int init(drizzled::module::Context &context)
 
   context.registerVariable(new sys_var_bool_ptr("logging_enable", &sysvar_logging_enable, &updateSysvarLoggingEnable));
   context.registerVariable(new sys_var_std_string("host", sysvar_rabbitmq_host, NULL, &updateSysvarRabbitMQHost));
-  context.registerVariable(new sys_var_constrained_value_readonly<in_port_t>("port", sysvar_rabbitmq_port));
-  context.registerVariable(new sys_var_const_string_val("username", sysvar_rabbitmq_username));
-  context.registerVariable(new sys_var_const_string_val("password", sysvar_rabbitmq_password));
-  context.registerVariable(new sys_var_const_string_val("virtualhost", sysvar_rabbitmq_virtualhost));
-  context.registerVariable(new sys_var_const_string_val("exchange", sysvar_rabbitmq_exchange));
-  context.registerVariable(new sys_var_const_string_val("routingkey", sysvar_rabbitmq_routingkey));
+  context.registerVariable(new sys_var_constrained_value<in_port_t>("port", sysvar_rabbitmq_port, &updateSysvarRabbitMQPort));
+  context.registerVariable(new sys_var_std_string("username", sysvar_rabbitmq_username, NULL, &updateSysvarRabbitMQUserName));
+  context.registerVariable(new sys_var_std_string("password", sysvar_rabbitmq_password, NULL, &updateSysvarRabbitMQPassword));
+  context.registerVariable(new sys_var_std_string("virtualhost", sysvar_rabbitmq_virtualhost, NULL, &updateSysvarRabbitMQVirtualHost));
+  context.registerVariable(new sys_var_std_string("exchange", sysvar_rabbitmq_exchange, NULL, &updateSysvarRabbitMQExchange));
+  context.registerVariable(new sys_var_std_string("routingkey", sysvar_rabbitmq_routingkey, NULL, &updateSysvarRabbitMQRoutingKey));
 
   return 0;
 }
