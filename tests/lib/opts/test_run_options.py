@@ -276,6 +276,16 @@ def parse_qp_options(defaults):
       , help = "Run each test case the specified number of times.  For a given sequence, the first test will be run n times, then the second, etc [%default]"
       )
 
+
+    test_control_group.add_option(
+        "--email-report-tgt"
+      , dest="emailreporttgt"
+      , action="store"
+      , type='string'
+      , default=None
+      , help="Used to send report mails. sends the test report to the email ID given"
+      )
+
     parser.add_option_group(test_control_group)
 
     # test subject control group
@@ -467,6 +477,14 @@ def parse_qp_options(defaults):
         , action='store'
         , default=defaults['subunit_file']
         , help = "File path where subunit output will be logged [%default]"
+        )
+
+    environment_control_group.add_option(
+          "--results-db-dsn"
+        , dest="resultsdbdsn"
+        , action='store'
+        , default="127.0.0.1:root::results_db:3306"
+        , help = "Specifies the database connection\nDefault string:'127.0.0.1:root::results_db:3306'"
         )
 
     parser.add_option_group(environment_control_group)

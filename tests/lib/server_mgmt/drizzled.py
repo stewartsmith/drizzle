@@ -200,8 +200,9 @@ class drizzleServer(Server):
         # This is what test-run.pl does and it helps us pass logging_stats tests
         # while not self.ping_server(server, quiet=True) and timer != timeout:
 
-        return self.system_manager.find_path( [self.pid_file]
-                                            , required=0)
+        #return self.system_manager.find_path( [self.pid_file]
+        #                                    , required=0)
+        return self.ping(quiet=True)
 
     def create_slave_config_file(self):
        """ Create a config file suitable for use

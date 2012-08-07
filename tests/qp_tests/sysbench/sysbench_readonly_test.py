@@ -22,11 +22,16 @@
 import unittest
 import subprocess
 import time
+import re
 
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
 from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
+from lib.util.database_connect import results_db_connect
+from lib.util.sysbench_report import getSysbenchReport
+from lib.util.mailing_report import sysbenchSendMail
+from lib.opts.test_run_options import parse_qp_options
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
@@ -70,33 +75,94 @@ class basicTest(mysqlBaseTestCase):
         iterations = 1
         
         # various concurrencies to use with sysbench
-        #concurrencies = [16, 32, 64, 128, 256, 512, 1024]
-        concurrencies = [1, 4, 8 ]
+        #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
+        concurrencies = [1]
+
+
+        # we setup once.  This is a readonly test and we don't
+        # alter the test bed once it is created
+        exec_cmd = " ".join(test_cmd)
+        retcode, output = prepare_sysbench(test_executor, exec_cmd)
+        err_msg = ("sysbench 'prepare' phase failed.\n"
+                   "retcode:  %d"
+                   "output:  %s" %(retcode,output))
+        self.assertEqual(retcode, 0, msg = err_msg) 
 
         # start the test!
         for concurrency in concurrencies:
-            self.logging.info("Resetting test server...")
-            for query in ["DROP SCHEMA IF EXISTS test"
-                         ,"CREATE SCHEMA test"
-                         ]:
-                retcode, result = self.execute_query(query, master_server, schema="INFORMATION_SCHEMA")
-            test_cmd.append("--num-threads=%d" %concurrency)
-            # we setup once per concurrency, copying drizzle-automation
-            # this should likely change and if not for readonly, then definitely
-            # for readwrite
-
             exec_cmd = " ".join(test_cmd)
-            retcode, output = prepare_sysbench(test_executor, exec_cmd)
-            err_msg = ("sysbench 'prepare' phase failed.\n"
-                       "retcode:  %d"
-                       "output:  %s" %(retcode,output))
-            self.assertEqual(retcode, 0, msg = err_msg) 
-
+            exec_cmd += "--num-threads=%d" %concurrency
             for test_iteration in range(iterations):
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
+
+            #gathering the data from the output
+            regexes={
+              'tps':re.compile(r".*transactions\:\s+\d+\D*(\d+\.\d+).*")
+            , 'min_req_lat_ms':re.compile(r".*min\:\s+(\d*\.\d+)ms.*")
+            , 'max_req_lat_ms':re.compile(r".*max\:\s+(\d*\.\d+)ms.*")
+            , 'avg_req_lat_ms':re.compile(r".*avg\:\s+(\d*\.\d+)ms.*")
+            , '95p_req_lat_ms':re.compile(r".*approx.\s+95\s+percentile\:\s+(\d+\.\d+)ms.*")
+            , 'rwreqps':re.compile(r".*read\/write\s+requests\:\s+\d+\D*(\d+\.\d+).*")
+            , 'deadlocksps':re.compile(r".*deadlocks\:\s+\d+\D*(\d+\.\d+).*")
+            }
+            
+            run={}
+            for line in output.split("\n"):
+                for key in regexes:
+                    result=regexes[key].match(line)
+                    if result:
+                        run[key]=float(result.group(1))
+            run['mode']="readonly"
+
+            #fetching test results from results_db database
+            sql_select="SELECT * FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
+            self.logging.info("dsn_string:%s" % dsn_string)
+            fetch=results_db_connect(dsn_string,"select",sql_select)
+            fetch['concurrency']=concurrency
+            fetch['iteration']=test_iteration
+            
+
+            # delete record with current concurrency and iteration
+            if fetch['concurrency']==concurrency and fetch['iteration']==test_iteration:
+                sql_delete="DELETE FROM sysbench_run_iterations WHERE concurrency=%d AND iteration=%d" % (concurrency,test_iteration)
+                results_db_connect(dsn_string,"delete",sql_delete)
+
+            # updating results_db with new test results
+            # it for historical comparison over the life of the code...
+            sql_insert="""INSERT INTO sysbench_run_iterations VALUES ( %d, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %d)"""  % (  
+                                                                       concurrency,
+                                                                       run['tps'],
+                                                                       run['min_req_lat_ms'],
+                                                                       run['max_req_lat_ms'],
+                                                                       run['avg_req_lat_ms'],
+                                                                       run['95p_req_lat_ms'],
+                                                                       run['rwreqps'],
+                                                                       run['deadlocksps'],
+                                                                       test_iteration  )
+            
+            results_db_connect(dsn_string,"insert",sql_insert)
+
+            #report generation
+            self.logging.info("Generating regression report...")
+#            print """==========================================================================
+#field		value in database	recorded value		regression
+#==========================================================================
+#                  """
+#
+#            for key in fetch.keys():
+#                print key,"\t\t",fetch[key],"\t\t",run[key],"\t\t",run[key]-fetch[key]
+#            print "=========================================================================="
+
+            #getting test result as report
+            sys_report=getSysbenchReport(run,fetch)
+           
+            #mailing sysbench report
+            if mail_tgt:
+              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+              sysbenchSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
