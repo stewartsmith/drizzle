@@ -1,6 +1,6 @@
 import smtplib
 
-def sysbenchSendMail(mail_executor,to_address,message):
+def kewpieSendMail(mail_executor,to_address,message):
     """mails the report of sysbench test"""
 
     logging=mail_executor.logging

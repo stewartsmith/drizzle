@@ -24,6 +24,8 @@ import time
 
 from lib.util.crashme_methods import execute_crashme
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
+from lib.util.mailing_report import kewpieSendMail
+from lib.opts.test_run_options import parse_qp_options
 
 server_requirements = [[]]
 servers = []
@@ -50,7 +52,11 @@ class basicTest(mysqlBaseTestCase):
         test_status, retcode, output = execute_crashme(test_cmd, test_executor, master_server)
         self.assertEqual(retcode, 0, msg = output)
         self.assertEqual(test_status, 'pass', msg = output)
-        print "\nOUTPUT\n%s\n%s\n%s" % ( test_status,retcode,output )
+        print "output:%s" % test_status
+        crashme_report="BENCHMARK EXECUTED: crashme\nTEST RESULT:%s"%test_status
+
+        if mail_tgt:
+            kewpieSendMail(test_executor,mail_tgt,crashme_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

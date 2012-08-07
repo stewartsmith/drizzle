@@ -21,6 +21,7 @@
 
 import os
 import subprocess
+import re
 
 """ crashme_methods
 
@@ -83,6 +84,11 @@ def execute_crashme(test_cmd, test_executor, servers):
     output = ''.join(crashme_file.readlines())
     bot.logging.debug(output)
     crashme_file.close()
+    
+    regex={'order':re.compile(r".*number.*")}
+    for line in output.split("\n"):
+        report=regex['order'].match(line)
+    print "\nmatching regex...\n",report
 
     bot.logging.debug("crashme_retcode: %d" %(retcode))
     bot.current_test_retcode = retcode

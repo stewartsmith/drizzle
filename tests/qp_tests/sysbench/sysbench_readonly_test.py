@@ -30,7 +30,7 @@ from lib.util.sysbench_methods import process_sysbench_output
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 from lib.util.database_connect import results_db_connect
 from lib.util.sysbench_report import getSysbenchReport
-from lib.util.mailing_report import sysbenchSendMail
+from lib.util.mailing_report import kewpieSendMail
 from lib.opts.test_run_options import parse_qp_options
 
 # TODO:  make server_options vary depending on the type of server being used here
@@ -161,8 +161,8 @@ class basicTest(mysqlBaseTestCase):
            
             #mailing sysbench report
             if mail_tgt:
-              #sysbenchSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
-              sysbenchSendMail(test_executor,mail_tgt,sys_report)
+              #kewpieSendMail(test_executor,'sharan.monikantan@gmail.com',sys_report)
+              kewpieSendMail(test_executor,mail_tgt,sys_report)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
