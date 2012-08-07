@@ -54,9 +54,10 @@ class basicTest(mysqlBaseTestCase):
         self.assertEqual(test_status, 'pass', msg = output)
         print "output:%s" % test_status
         crashme_report="BENCHMARK EXECUTED: crashme\nTEST RESULT:%s"%test_status
+        print crashme_report
 
         if mail_tgt:
-            kewpieSendMail(test_executor,mail_tgt,crashme_report)
+            kewpieSendMail(test_executor,mail_tgt,test_status)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
