@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-06-08 05:12+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
+"PO-Revision-Date: 2012-08-07 21:52+0000\n"
+"Last-Translator: Zbyněk Schwarz <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2012-06-09 05:35+0000\n"
-"X-Generator: Launchpad (build 15376)\n"
+"X-Launchpad-Export-Date: 2012-08-08 04:36+0000\n"
+"X-Generator: Launchpad (build 15757)\n"
 
 msgid "Synonym for `help'."
 msgstr "Synonymum pro `nápověda'."
@@ -30,11 +30,10 @@ msgstr "Znovu připojit k serveru. Volitelné argumenty jsou db a host."
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"Nastavit oddělovač příkazů. POZOR: Jako oddělovač se použije vše až na konec "
-"řádku."
+"Nastavit oddělovač příkazů. POZOR: Jako oddělovač se použije zbytek řádku."
 
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Odeslat rozkaz na drizzle server a zobrazit výsledek vodorovně."
+msgstr "Odeslat rozkaz na drizzle server a zobrazit výsledek svisle."
 
 msgid "Exit drizzle. Same as quit."
 msgstr "Opustit drizzle. Stejné jako quit."
@@ -53,6 +52,8 @@ msgstr "Nezapíše do výstupního souboru."
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
+"Nastavit STRÁNKOVAČ [na_stránkovač]. Vypisovat výsledky dotazů pomocí "
+"stránkovače."
 
 msgid "Print current command."
 msgstr "Tisknout současný příkaz."
@@ -64,34 +65,36 @@ msgid "Quit drizzle."
 msgstr "Ukončit drizzle."
 
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Znovu sestavit hash dokončení."
 
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr ""
+msgstr "Spustit soubor skriptu SQL. Jako argument přijímá název souboru."
 
 msgid "Get status information from the server."
-msgstr "Obdrž informaci o stavu ze serveru."
+msgstr "Získat informaci o stavu ze serveru."
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Nastavit výstupní soubor [na_výstupní_soubor]. Připojit vše do daného "
+"výstupního souboru."
 
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "Použít jinou databázi. Přebírá název databáze jako argument."
 
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Zobrazovat varování po každém příkazu."
 
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Nezobrazovat varování po každém příkazu."
 
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Chyba: Neplatná hodnota"
 
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
+msgstr "Chyba: Neplatná hodnota pro max_input_line"
 
 msgid "Displays this help and exit."
-msgstr ""
+msgstr "Zobrazí tuto nápovědu a ukončí se."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -365,7 +368,7 @@ msgid "Bye"
 msgstr "Nashledanou"
 
 msgid "Query aborted by Ctrl+C\n"
-msgstr "Otázka zrušena od Ctrl+C\n"
+msgstr "Dotaz přerušen od Ctrl+C\n"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
