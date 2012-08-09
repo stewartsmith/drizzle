@@ -84,7 +84,8 @@ def execute_crashme(test_cmd, test_executor, servers):
     output = ''.join(crashme_file.readlines())
     bot.logging.debug(output)
     crashme_file.close()
-    
+   
+    print output 
     regex={'order':re.compile(r".*number.*")}
     for line in output.split("\n"):
         report=regex['order'].match(line)
