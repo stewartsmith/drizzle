@@ -37,7 +37,9 @@ from lib.opts.test_run_options import parse_qp_options
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
-server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+#server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+server_requirements = [['innodb.buffer-pool-size=2048M innodb.log-file-size=64M innodb.log-buffer-size=64M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=512M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+
 # mysql options
 #server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
 #server_requirements = [[]]
@@ -58,7 +60,7 @@ class basicTest(mysqlBaseTestCase):
                    , "--db-ps-mode=disable"
                    , "--%s-table-engine=innodb" %master_server.type
                    , "--oltp-read-only=on"
-                   , "--oltp-table-size=10000" #1000000"
+                   , "--oltp-table-size=1000000"
                    , "--%s-user=root" %master_server.type
                    , "--%s-db=test" %master_server.type
                    , "--%s-port=%d" %(master_server.type, master_server.master_port)
