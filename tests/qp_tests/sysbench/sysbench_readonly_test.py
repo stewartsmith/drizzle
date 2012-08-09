@@ -29,11 +29,11 @@ from copy import deepcopy
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
 from lib.util.sysbench_methods import process_sysbench_output
+from lib.util.sysbench_methods import getSysbenchReport
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 from lib.util.database_connect import results_db_connect
-from lib.util.sysbench_report import getSysbenchReport
-from lib.util.mailing_report import sysbenchSendMail
-from lib.opts.test_run_options import parse_qp_options
+from lib.util.mailing_report import sendMail
+
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
@@ -126,12 +126,25 @@ class basicTest(mysqlBaseTestCase):
                 run['mode']="readonly"
                 run['iteration'] = test_iteration
                 test_data[concurrency].append(deepcopy(run))
+
+        # If provided with a results_db, we process our data
+
+        # Report data
+        msg_data = []
         test_concurrencies = test_data.keys()
         test_concurrencies.sort()
         for concurrency in test_concurrencies:
-            self.logging.info('Concurrency: %d' %concurrency)
+            self.logging.info
+            msg_data.append('Concurrency: %d' %concurrency)
             for iteration in test_data[concurrency]:
-                self.logging.info("Iteration: %d || TPS:  %s" %(iteration['iteration'], iteration['tps']))
+                msg_data.append("Iteration: %d || TPS:  %s" %(iteration['iteration'], iteration['tps']))
+        for line in msg_data:
+            self.logging.info(line)
+
+            #mailing sysbench report
+            if mail_tgt:
+              sendMail(test_executor,mail_tgt,"\n".join(msg_data))
+
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)
 

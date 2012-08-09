@@ -2,7 +2,7 @@
 # -*- mode: python; indent-tabs-mode: nil; -*-
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
-# Copyright (C) 2011 Patrick Crews
+# Copyright (C) 2011, 2012 Patrick Crews, M.Sharan Kumar
 #
 #
 # This program is free software; you can redistribute it and/or modify
@@ -100,5 +100,35 @@ def process_sysbench_output(test_output):
         # we set our test output to the regex'd-up data
         # we also make it a single string, separated by newlines
         parsed_test_output = str(run)[1:-1].replace(',','\n').replace("'",'')
-        return parsed_test_output            
+        return parsed_test_output       
+
+def getSysbenchReport(run,fetch):
+    """returns the report of the last sysbench test executed"""
+
+    report="""==============================
+  SYSBENCH REGRESSION REPORT
+==============================
+CONCURRENCY    :  %d
+ITERATIONS     :  %d
+MODE           :  %s
+TPS            :  %f      %f
+MIN_REQ_LAT_MS :  %f      %f
+MAX_REQ_LAT_MS :  %f      %f
+AVG_REQ_LAT_MS :  %f      %f
+95P_REQ_LAT_MS :  %f      %f
+RWREQPS        :  %f      %f
+DEADLOCKSPS    :  %f      %f
+=============================
+          """ % (fetch['concurrency'],
+                 fetch['iteration']+1,
+                 run['mode'],
+                 run['tps'],           run['tps']-fetch['tps'],
+                 run['min_req_lat_ms'],run['min_req_lat_ms']-fetch['min_req_lat_ms'],
+                 run['max_req_lat_ms'],run['max_req_lat_ms']-fetch['max_req_lat_ms'],
+                 run['avg_req_lat_ms'],run['avg_req_lat_ms']-fetch['avg_req_lat_ms'],
+                 run['95p_req_lat_ms'],run['95p_req_lat_ms']-fetch['95p_req_lat_ms'],
+                 run['rwreqps'],       run['rwreqps']-fetch['rwreqps'],
+                 run['deadlocksps'],   run['deadlocksps']-fetch['deadlocksps']
+                )
+    return report     
         
