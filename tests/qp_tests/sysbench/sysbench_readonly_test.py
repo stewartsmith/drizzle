@@ -141,9 +141,13 @@ class basicTest(mysqlBaseTestCase):
         for line in msg_data:
             self.logging.info(line)
 
-            #mailing sysbench report
-            if mail_tgt:
-              sendMail(test_executor,mail_tgt,"\n".join(msg_data))
+        # Store / analyze data in results db, if available
+        if dsn_string:
+            result, msg_data = sysbench_db_analysis(test_data)
+
+        # mailing sysbench report
+        if mail_tgt:
+          sendMail(test_executor,mail_tgt,"\n".join(msg_data))
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

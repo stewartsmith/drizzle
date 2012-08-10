@@ -100,7 +100,17 @@ def process_sysbench_output(test_output):
         # we set our test output to the regex'd-up data
         # we also make it a single string, separated by newlines
         parsed_test_output = str(run)[1:-1].replace(',','\n').replace("'",'')
-        return parsed_test_output       
+        return parsed_test_output
+
+def sysbench_db_analysis(dsn_string, test_data):
+    """ We interact with the specified dsn to make sure
+        the current run is 'good'
+
+    """
+
+    print dsn_string
+    print test_data
+    return
 
 def getSysbenchReport(run,fetch):
     """returns the report of the last sysbench test executed"""
