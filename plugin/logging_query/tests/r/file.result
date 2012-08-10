@@ -1,0 +1,46 @@
+Log file exists
+1
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+Variable_name	Value
+logging_query_enable	OFF
+logging_query_pcre	 
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	0
+logging_query_threshold_slow	0
+1
+SET GLOBAL logging_query_enable=true;
+SELECT 1;
+1
+1
+3
+SET GLOBAL logging_query_pcre="SHOW.+";
+SELECT @@logging_query_enable;
+@@logging_query_enable
+1
+4
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+Variable_name	Value
+logging_query_enable	ON
+logging_query_pcre	SHOW.+
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	0
+logging_query_threshold_slow	0
+5
+SET GLOBAL logging_query_filename="DRIZZLETEST_VARDIR/logging_query1.log";
+1
+SELECT @@logging_query_enable;
+@@logging_query_enable
+1
+5
+1
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+Variable_name	Value
+logging_query_enable	ON
+logging_query_pcre	SHOW.+
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	0
+logging_query_threshold_slow	0
+5
+2
+SET GLOBAL logging_query_filename="";
+ERROR HY000: Incorrect arguments to SET

@@ -1,0 +1,54 @@
+SET GLOBAL logging_query_filename="DRIZZLETEST_VARDIR/logging_query.log";
+SET GLOBAL logging_query_pcre=".+";
+SET GLOBAL logging_query_enable=true;
+SHOW VARIABLES LIKE 'logging_query_threshold%';
+Variable_name	Value
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	0
+logging_query_threshold_slow	0
+SET GLOBAL logging_query_threshold_slow=500000;
+SELECT @@logging_query_threshold_slow;
+@@logging_query_threshold_slow
+500000
+
+SELECT SLEEP(0.4);
+SLEEP(0.4)
+0
+1
+SELECT SLEEP(0.5);
+SLEEP(0.5)
+0
+2
+SET GLOBAL logging_query_threshold_slow=0;
+SELECT SLEEP(1);
+SLEEP(1)
+0
+4
+
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+Variable_name	Value
+logging_query_enable	ON
+logging_query_pcre	.+
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	0
+logging_query_threshold_slow	0
+2
+SET GLOBAL logging_query_threshold_big_resultset=2;
+SELECT "This should not be logged";
+This should not be logged
+This should not be logged
+2
+
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+Variable_name	Value
+logging_query_enable	ON
+logging_query_pcre	.+
+logging_query_threshold_big_examined	0
+logging_query_threshold_big_resultset	2
+logging_query_threshold_slow	0
+2
+SET GLOBAL logging_query_threshold_big_examined=2;
+SELECT "This should not be logged";
+This should not be logged
+This should not be logged
+2

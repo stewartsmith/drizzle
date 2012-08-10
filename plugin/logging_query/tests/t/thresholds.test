@@ -1,0 +1,87 @@
+
+# ###########################################################################
+# This tests the various logging_query_threshold_ variables.
+# ###########################################################################
+
+# First make sure the logging_query plugin is enabled.
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL logging_query_filename="$DRIZZLETEST_VARDIR/logging_query.log";
+eval SET GLOBAL logging_query_pcre=".+";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+SET GLOBAL logging_query_enable=true;
+
+# Make sure we have all our threshold variables and that they're all
+# off (zero) by default.
+SHOW VARIABLES LIKE 'logging_query_threshold%';
+
+# ###########################################################################
+# logging_query_threshold_slow
+# ###########################################################################
+
+# Set a 0.5s execution time threshold.
+SET GLOBAL logging_query_threshold_slow=500000;
+SELECT @@logging_query_threshold_slow;
+
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
+# Double-check that log file is clear.
+--cat_file $DRIZZLETEST_VARDIR/logging_query.log
+
+# This query should *not* log since it's below the threshold.
+SELECT SLEEP(0.4);
+# This should not print anything.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# This query should log since it's just a few microseconds past the threshold.
+SELECT SLEEP(0.5);
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# Set query_log_threshold_execution_time back to zero.
+SET GLOBAL logging_query_threshold_slow=0;
+#This should be logged
+SELECT SLEEP(1);
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
+# Double-check that log file is clear.
+--cat_file $DRIZZLETEST_VARDIR/logging_query.log
+
+# ###########################################################################
+# logging_query_threshold_big_resultset
+# ###########################################################################
+# This should be logged
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+SET GLOBAL logging_query_threshold_big_resultset=2;
+
+#This should not be logged
+SELECT "This should not be logged";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
+# Double-check that log file is clear.
+--cat_file $DRIZZLETEST_VARDIR/logging_query.log
+
+# ###########################################################################
+# logging_query_threshold_big_examined
+# ###########################################################################
+# This should be logged
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+#Changing threshold_big_examined to 2, so that queries which examine less that 2 rows will not be logged
+SET GLOBAL logging_query_threshold_big_examined=2;
+#This should not be logged
+SELECT "This should not be logged";
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# ############################################################################
+# Clean up.
+# ############################################################################
+--exec rm $DRIZZLETEST_VARDIR/logging_query*.log
+
+# ###########################################################################
+# Done.
+# ###########################################################################

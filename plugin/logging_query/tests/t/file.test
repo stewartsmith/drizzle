@@ -1,0 +1,81 @@
+
+# ###########################################################################
+# This tests the dynamic behaviour of logging_query plugin
+# ###########################################################################
+
+# Logging_query plugin is loaded into the system. This checks if the file which we passed through the command line is opened or not.
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+--exec if [ -f $DRIZZLETEST_VARDIR/logging_query.log ]; then echo "Log file exists"; else echo "Log file does not exist"; fi
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/logging_query.log
+# Double-check that log file is clear.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+# Since logging_query_enable is OFF by default, this should not be logged into the log file.
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+
+#This should not print anything
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+#Enabling logging_query plugin
+SET GLOBAL logging_query_enable=true;
+
+#Now as logging_query_enable is set to true, this should be logged.
+SELECT 1;
+
+#This should print the content of log file as SET GLOBAL query and SELECT query
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+#Setting logging_query_pcre as "SHOW.+". Only queries starting with 'SHOW' will be logged from now.
+SET GLOBAL logging_query_pcre="SHOW.+";
+
+#This should not be logged
+SELECT @@logging_query_enable;
+
+#This should print the content of log file updated with
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log 
+
+#This should be logged
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+
+#This should print the content of log file updated with SHOW query as it matched the regex.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+#Now changing the query log filename
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+eval SET GLOBAL logging_query_filename="$DRIZZLETEST_VARDIR/logging_query1.log";
+--replace_result $DRIZZLETEST_VARDIR DRIZZLETEST_VARDIR
+#--exec if [ -f $DRIZZLETEST_VARDIR/logging_query1.log ]; then echo "New log file exists"; else echo "New log file does not exist"; fi
+
+# Clear log file.
+--exec echo "" > $DRIZZLETEST_VARDIR/logging_query1.log
+
+# Double-check that log file is clear.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query1.log
+
+#This should not be logged. Neither into new log file. Nor into new log file.
+SELECT @@logging_query_enable;
+
+#Checking the content of both the files.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query1.log
+
+#This should be logged into new log file
+SHOW VARIABLES WHERE Variable_Name NOT LIKE "%logging_query_filename%" AND Variable_Name LIKE "%logging_query%";
+
+#Checking the contents of boh the log files.
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query.log
+
+--exec $TOP_SRCDIR/plugin/logging_query/tests/parse-query-log.sh $DRIZZLETEST_VARDIR/logging_query1.log
+
+#Changing log file to null string. This should throw error.
+--error ER_WRONG_ARGUMENTS
+eval SET GLOBAL logging_query_filename="";
+
+--exec rm $DRIZZLETEST_VARDIR/logging_query*.log
+
+# ###########################################################################
+# Done.
+# ###########################################################################
+

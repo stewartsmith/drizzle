@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#include <drizzled/item.h>
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
@@ -44,14 +45,19 @@ using namespace std;
 #define ESCAPE_CHAR      '\\'
 #define SEPARATOR_CHAR   ','
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace logging_query {
+
 
 static bool sysvar_logging_query_enable= false;
 /* TODO fix these to not be unsigned long once we have sensible sys_var system */
 static uint32_constraint sysvar_logging_query_threshold_slow;
 static uint32_constraint sysvar_logging_query_threshold_big_resultset;
 static uint32_constraint sysvar_logging_query_threshold_big_examined;
+
+bool updateFileName(Session *, set_var*);
+bool updatePCRE(Session *, set_var*);
+
 
 /* quote a string to be safe to include in a CSV line
    that means backslash quoting all commas, doublequotes, backslashes,
@@ -146,8 +152,8 @@ static void quotify(const string &src, string &dst)
 
 class Logging_query: public drizzled::plugin::Logging
 {
-  const std::string _filename;
-  const std::string _query_pcre;
+  std::string sysvar_filename;
+  std::string sysvar_pcre;
   int fd;
   pcre *re;
   pcre_extra *pe;
@@ -160,36 +166,115 @@ public:
   Logging_query(const std::string &filename,
                 const std::string &query_pcre) :
     drizzled::plugin::Logging("csv_query_log"),
-    _filename(filename),
-    _query_pcre(query_pcre),
+    sysvar_filename(filename),
+    sysvar_pcre(query_pcre),
     fd(-1), re(NULL), pe(NULL),
     formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
               "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n")
   {
 
     /* if there is no destination filename, dont bother doing anything */
-    if (_filename.empty())
+    if (sysvar_filename.empty())
       return;
 
-    fd= open(_filename.c_str(),
+    fd= open(sysvar_filename.c_str(),
              O_WRONLY | O_APPEND | O_CREAT,
              S_IRUSR|S_IWUSR);
 
     if (fd < 0)
     {
-      sql_perror( _("fail open()"), _filename);
+      sql_perror( _("fail open()"), sysvar_filename);
       return;
     }
 
-    if (not _query_pcre.empty())
+    if (not sysvar_pcre.empty())
     {
       const char *this_pcre_error;
       int this_pcre_erroffset;
-      re= pcre_compile(_query_pcre.c_str(), 0, &this_pcre_error,
+      re= pcre_compile(sysvar_pcre.c_str(), 0, &this_pcre_error,
                        &this_pcre_erroffset, NULL);
       pe= pcre_study(re, 0, &this_pcre_error);
       /* TODO emit error messages if there is a problem */
     }
+  }
+ 
+
+  /**
+   * This function changes the current query log file to the parameter passed to the function.
+   *
+   * @return True on success, False on error.
+   */
+  bool setFileName(std::string new_filename)
+  {
+    if (new_filename.empty())
+      return false;
+
+    int tmp_fd= open(new_filename.c_str(),
+                O_WRONLY | O_APPEND | O_CREAT,
+                S_IRUSR|S_IWUSR);
+
+    if (tmp_fd < 0)
+    {
+      sql_perror( _("fail open()"), new_filename);
+      return false;
+    }
+    if(fd >= 0)
+    {
+      close(fd);
+    }
+    fd= tmp_fd;
+    sysvar_filename= new_filename;
+    return true;
+  }
+
+  /**
+   * This function updates the current regex expression with the new regex expression passed as parameter.
+   *
+   * @return True on success, False on error.
+   */
+  bool setPCRE(std::string new_pcre)
+  {
+    if (not new_pcre.empty())
+    {
+      if (pe != NULL)
+      {
+        pcre_free(pe);
+      }
+
+      if (re != NULL)
+      {
+        pcre_free(re);
+      }
+
+      const char *tmp_this_pcre_error;
+      int tmp_this_pcre_erroffset;
+      re= pcre_compile(new_pcre.c_str(), 0, &tmp_this_pcre_error,
+                       &tmp_this_pcre_erroffset, NULL);
+      pe= pcre_study(re, 0, &tmp_this_pcre_error);
+      /* TODO emit error messages if there is a problem */
+    }
+    sysvar_pcre= new_pcre;
+    return true;
+  }
+ 
+  /**
+   * Getter for query log filename
+   *
+   * @return sysvar_filename
+   */
+  std::string& getFileName()
+  {
+    return sysvar_filename;
+  }
+
+  /**
+   * Getter for pcre
+   *
+   * @return sysvar_pcre
+   */
+  std::string& getPCRE()
+  {
+    return sysvar_pcre;
   }
 
   ~Logging_query()
@@ -295,17 +380,58 @@ public:
   }
 };
 
-static int logging_query_plugin_init(drizzled::module::Context &context)
+static Logging_query *handler= NULL;
+
+/**
+ * This function is called when the value of logging_query_filename is updated dynamically.
+ *
+ * @return False on success, True on error.
+ */
+bool updateFileName(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_filename(var->value->str_value.data());
+    if (handler->setFileName(new_filename))
+      return false; //success
+    else
+      return true; // error
+  }
+  errmsg_printf(error::ERROR, _("logging_query_filename cannot be NULL"));
+  return true; // error
+}
+
+/**
+ * This function is called when the value of logging_query_pcre is updated dynamically.
+ *
+ * @return False on success, True on error.
+ */
+bool updatePCRE(Session *, set_var* var)
+{
+  if (not var->value->str_value.empty())
+  {
+    std::string new_pcre(var->value->str_value.data());
+    if (handler->setPCRE(new_pcre))
+      return false; //success
+    else
+      return true; // error
+  }
+  return false; // success
+}
+
+static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
   if (vm.count("filename"))
   {
-    context.add(new Logging_query(vm["filename"].as<string>(),
-                                  vm["pcre"].as<string>()));
+    handler= new Logging_query(vm["filename"].as<string>(),
+                                  vm["pcre"].as<string>());
+
+    context.add(handler);
     context.registerVariable(new sys_var_bool_ptr("enable", &sysvar_logging_query_enable));
-    context.registerVariable(new sys_var_const_string_val("filename", vm["filename"].as<string>()));
-    context.registerVariable(new sys_var_const_string_val("pcre", vm["pcre"].as<string>()));
+    context.registerVariable(new sys_var_std_string("filename", handler->getFileName(), NULL, &updateFileName));
+    context.registerVariable(new sys_var_std_string("pcre", handler->getPCRE(), NULL, &updatePCRE));
     context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_slow", sysvar_logging_query_threshold_slow));
     context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_big_resultset", sysvar_logging_query_threshold_big_resultset));
     context.registerVariable(new sys_var_constrained_value<uint32_t>("threshold_big_examined", sysvar_logging_query_threshold_big_examined));
@@ -336,6 +462,8 @@ static void init_options(drizzled::module::option_context &context)
           _("Threshold for logging big queries, for rows examined"));
 }
 
+} /* namespace logging_query */
+
 } /* namespace drizzle_plugin */
 
 DRIZZLE_DECLARE_PLUGIN
@@ -346,8 +474,8 @@ DRIZZLE_DECLARE_PLUGIN
   "Mark Atwood",
   N_("Logs queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
-  drizzle_plugin::logging_query_plugin_init,
+  drizzle_plugin::logging_query::init,
   NULL,
-  drizzle_plugin::init_options
+  drizzle_plugin::logging_query::init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;
