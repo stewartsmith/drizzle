@@ -859,6 +859,7 @@ void SortParam::make_sortkey(unsigned char *to, unsigned char *ref_pos)
               from= tmp_buffer;
             }
             tmp_length= cs->strnxfrm(to,sort_field->length, (unsigned char*) from, length);
+            (void)(tmp_length);
             assert(tmp_length == sort_field->length);
           }
           else

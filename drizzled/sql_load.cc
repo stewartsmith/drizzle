@@ -412,6 +412,7 @@ int load(Session *session,file_exchange *ex,TableList *table_list,
 
   session->my_ok(info.copied + info.deleted, 0, 0L, msg);
 err:
+  (void)(transactional_table);
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();

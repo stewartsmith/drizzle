@@ -456,6 +456,7 @@ bool insert_query(Session *session,TableList *table_list,
       if (session->transaction.stmt.hasModifiedNonTransData())
 	session->transaction.all.markModifiedNonTransData();
     }
+    (void)(transactional_table);
     assert(transactional_table || !changed || session->transaction.stmt.hasModifiedNonTransData());
 
   }
@@ -1394,6 +1395,8 @@ void select_insert::abort() {
 
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->cursor->has_transactions();
+    (void)(transactional_table);
+    (void)(changed);
     assert(transactional_table || !changed ||
 		session->transaction.stmt.hasModifiedNonTransData());
     table->cursor->ha_release_auto_increment();

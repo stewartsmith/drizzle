@@ -45,6 +45,7 @@ void TableFunctionContainer::getNames(const string &predicate, std::set<std::str
 void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
 {
   std::pair<ToolMap::iterator, bool> ret= table_map.insert(std::make_pair(tool->getPath(), tool));
+  (void)(ret);
   assert(ret.second);
 }
 
