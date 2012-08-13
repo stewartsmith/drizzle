@@ -483,7 +483,7 @@ def parse_qp_options(defaults):
           "--results-db-dsn"
         , dest="resultsdbdsn"
         , action='store'
-        , default="127.0.0.1:root::results_db:3306"
+        , default=None
         , help = "Specifies the database connection\nDefault string:'127.0.0.1:root::results_db:3306'"
         )
 

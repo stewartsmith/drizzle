@@ -29,6 +29,7 @@ from copy import deepcopy
 from lib.util.sysbench_methods import prepare_sysbench
 from lib.util.sysbench_methods import execute_sysbench
 from lib.util.sysbench_methods import process_sysbench_output
+from lib.util.sysbench_methods import sysbench_db_analysis
 from lib.util.sysbench_methods import getSysbenchReport
 from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 from lib.util.database_connect import results_db_connect
@@ -38,7 +39,8 @@ from lib.util.mailing_report import sendMail
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
 #server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
-server_requirements = [['innodb.buffer-pool-size=2048M innodb.log-file-size=64M innodb.log-buffer-size=64M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=512M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+
+server_requirements = [['innodb.buffer-pool-size=8192M innodb.log-file-size=64M innodb.log-buffer-size=64M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=8192M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
 
 # mysql options
 #server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
@@ -76,12 +78,12 @@ class basicTest(mysqlBaseTestCase):
         # We sleep for a minute to wait
         time.sleep(10) 
         # how many times to run sysbench at each concurrency
-        iterations = 3 
+        iterations = 1 
         
         # various concurrencies to use with sysbench
-        #concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
-        concurrencies = [128, 256, 512 ]
-
+        # concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
+        # concurrencies = [128, 256, 512 ]
+        concurrencies = [1,2] 
 
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
@@ -143,7 +145,7 @@ class basicTest(mysqlBaseTestCase):
 
         # Store / analyze data in results db, if available
         if dsn_string:
-            result, msg_data = sysbench_db_analysis(test_data)
+            result, msg_data = sysbench_db_analysis(dsn_string, test_data)
 
         # mailing sysbench report
         if mail_tgt:
