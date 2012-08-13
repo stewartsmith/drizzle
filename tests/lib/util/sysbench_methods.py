@@ -115,10 +115,6 @@ def sysbench_db_analysis(dsn_string, test_data):
 
     """
 
-       = datetime.datetime.now().isoformat()
-        test_data['test_machine'] = socket.gethostbyname()
-        test_data['test_server_type'] = master_server.type
-        test_data['test_server_revno'], test_data['test_server_comment'] = master-server.get_bzr_info()
     # log our sysbench_run
     run_id = getNextRunID(dsn_string)
     config_id = getConfigID(dsn_string)
@@ -270,11 +266,11 @@ FULL REVISION COMMENTARY:
   return report_text
 
 def get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string):
-  """Return a tuple with 2 ranges of run_id values for the last 5 and 20 runs
-     Ported from drizzle-automation
-     TODO:  Further refactor / eliminate this
+    """ Return a tuple with 2 ranges of run_id values for the last 5 and 20 runs
+        Ported from drizzle-automation
+        TODO:  Further refactor / eliminate this
 
-  """
+    """
 
     query = """ SELECT 
                 run_id
