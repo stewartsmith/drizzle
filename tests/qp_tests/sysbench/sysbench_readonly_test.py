@@ -19,11 +19,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-import unittest
-import subprocess
-import time
 import re
-
+import time
+import socket
+import subprocess
+import datetime
 from copy import deepcopy
 
 from lib.util.sysbench_methods import prepare_sysbench
@@ -38,22 +38,27 @@ from lib.util.mailing_report import sendMail
 
 # TODO:  make server_options vary depending on the type of server being used here
 # drizzle options
-#server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
-
-server_requirements = [['innodb.buffer-pool-size=8192M innodb.log-file-size=64M innodb.log-buffer-size=64M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=8192M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
+server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
 
 # mysql options
 #server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
-#server_requirements = [[]]
+
 servers = []
 server_manager = None
 test_executor = None
 
 class basicTest(mysqlBaseTestCase):
-        
     def test_sysbench_readonly(self):
         self.logging = test_executor.logging
         master_server = servers[0]
+
+        # data for results database / regression analysis
+        test_data = {}
+        test_data['run_date']= datetime.datetime.now().isoformat()
+        test_data['test_machine'] = socket.gethostbyname()
+        test_data['test_server_type'] = master_server.type
+        test_data['test_server_revno'], test_data['test_server_comment'] = master-server.get_bzr_info()
+            
         # our base test command
         test_cmd = [ "sysbench"
                    , "--max-time=240"
@@ -95,7 +100,6 @@ class basicTest(mysqlBaseTestCase):
         self.assertEqual(retcode, 0, msg = err_msg) 
 
         # start the test!
-        test_data = {}
         for concurrency in concurrencies:
             if concurrency not in test_data:
                 test_data[concurrency] = []
@@ -105,6 +109,7 @@ class basicTest(mysqlBaseTestCase):
                 self.logging.info("Iteration: %d" %test_iteration)
                 retcode, output = execute_sysbench(test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
+                # This might be inefficient/redundant...perhaps remove later
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
 
@@ -136,7 +141,6 @@ class basicTest(mysqlBaseTestCase):
         test_concurrencies = test_data.keys()
         test_concurrencies.sort()
         for concurrency in test_concurrencies:
-            self.logging.info
             msg_data.append('Concurrency: %d' %concurrency)
             for iteration in test_data[concurrency]:
                 msg_data.append("Iteration: %d || TPS:  %s" %(iteration['iteration'], iteration['tps']))

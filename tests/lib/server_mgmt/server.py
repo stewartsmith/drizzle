@@ -29,6 +29,7 @@
 # imports
 import os
 import time
+import commands
 import subprocess
 
 from lib.util.mysql_methods import execute_query
@@ -379,4 +380,28 @@ class Server(object):
         with open(self.error_log,'r') as errlog:
             data = errlog.readlines()
         return ''.join(data) 
+
+    def get_bzr_info(self):
+        """  Find the revision comment from BZR.
+             Taken from drizzle-automation's codebase
+
+        """
+        os.chdir(self.code_tree.basedir)
+        (retcode, rev_comment_output)= commands.getstatusoutput("bzr log -r-1 -n0 --line")
+
+        # Output from above command looks like this:
+        # jpipes@serialcoder:~/repos/drizzle/trunk-sysbench-r1046$ bzr log -r-1 -n0 --line
+        # 1046: Brian Aker 2009-05-31 [merge] Merge Jay.
+        # 1039.2.9: Jay Pipes 2009-05-31 Tiny cleanups
+        # 1039.2.8: Jay Pipes 2009-05-31 Yet more indentation and style cleanup
+        # 1039.2.7: Jay Pipes 2009-05-31 Yet more style and indentation cleanups.
+        # 1039.2.6: Jay Pipes 2009-05-31 No code changes...only indentation and style cleanup.
+
+        comment_lines= rev_comment_output.split("\n")
+        rev_comment= comment_lines[0]
+        if len(comment_lines) > 1:
+            full_commentary= "\n".join(comment_lines[1:])
+        else:
+            full_commentary= None
+        return rev_comment.split(':')[0], rev_comment
  
