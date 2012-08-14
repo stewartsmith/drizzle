@@ -150,6 +150,10 @@ def log_sysbench_run(run_id, config_id, server_name, server_version, run_date, d
                  , run_date
                  )
     retcode, result= execute_query(query, dsn_string=dsn_string)
+    print query
+    print retcode
+    print result
+    print '('*80
     return result
 
 
@@ -181,6 +185,10 @@ def log_sysbench_iteration(run_id, concurrency, iteration_data, dsn_string):
             , iteration_data['95p_req_lat_ms']
             )
     retcode, result= execute_query(query, dsn_string=dsn_string)
+    print query
+    print retcode
+    print result
+    print '*'*80
     return result
 
 def getSysbenchRegressionReport(run_id, test_data, dsn_string, diff_check_data = None):
@@ -241,7 +249,7 @@ TRENDING OVER Last 20 runs %s
 ====================================================================================================
 """
   if len(last_20_revs) > 0:
-    results= getRegressionData(run_id, last_20_revs)
+    results= getRegressionData(run_id, last_20_revs, dsn_string)
     for result in results:
       report_text= report_text + "%-6s %6s %12s %10s %10s %10s %10s %10s\n" % tuple(result)
 
@@ -291,11 +299,15 @@ def get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string):
                 AND r.run_id <= %d
                 ORDER BY run_id DESC
                 LIMIT 20
-                """ % ( test_data['test_server_type']
+                """ % ( test_data['test_machine']
                       , bzr_branch
                       , run_id
                       )
+    print query
     retcode, results = execute_query(query, dsn_string=dsn_string)
+    print retcode
+    print results
+    print '@'*80
     results_data = []
     for result in results:
         cur_run_id= int(result[0])
@@ -327,17 +339,21 @@ def getRegressionData(run_id, id_range, dsn_string):
              , MAX(tps) as max_tps
              , AVG(tps) as avg_tps
              , STDDEV(tps) as stddev_tps
-             FROM sysbench_run_iterations iter"""
-    if id_range:
-        query += "WHERE run_id IN (%s)" %(",".join(id_range))
-    query += """ GROUP BY concurrency
+             FROM sysbench_run_iterations iter
+             WHERE run_id IN (%s) 
+             GROUP BY concurrency
                  ) AS agg
                  ON i.concurrency = agg.concurrency
                  WHERE r.run_id = %d
                  GROUP BY i.concurrency
                  ORDER BY i.concurrency
-                 """ %(run_id)
+                 """ %( ",".join(id_range)
+                      , run_id)
     retcode, result= execute_query(query, dsn_string=dsn_string)
+    print query
+    print retcode
+    print result
+    print '!'*80
     return result          
 
 def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):

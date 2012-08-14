@@ -84,8 +84,7 @@ class basicTest(mysqlBaseTestCase):
         iterations = 3 
         
         # various concurrencies to use with sysbench
-        # concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-        concurrencies = [ 128, 256, 512 ]
+        concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
 
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
