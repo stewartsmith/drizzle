@@ -398,6 +398,7 @@ class Server(object):
         # 1039.2.6: Jay Pipes 2009-05-31 No code changes...only indentation and style cleanup.
 
         comment_lines= rev_comment_output.split("\n")
+        comment_lines = [line for line in comment_lines if line != 'cannot import name info'] 
         rev_comment= comment_lines[0]
         if len(comment_lines) > 1:
             full_commentary= "\n".join(comment_lines[1:])

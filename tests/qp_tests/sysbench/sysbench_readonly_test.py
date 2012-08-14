@@ -55,9 +55,9 @@ class basicTest(mysqlBaseTestCase):
         # data for results database / regression analysis
         test_data = {}
         test_data['run_date']= datetime.datetime.now().isoformat()
-        test_data['test_machine'] = socket.gethostbyname()
+        test_data['test_machine'] = socket.gethostname()
         test_data['test_server_type'] = master_server.type
-        test_data['test_server_revno'], test_data['test_server_comment'] = master-server.get_bzr_info()
+        test_data['test_server_revno'], test_data['test_server_comment'] = master_server.get_bzr_info()
             
         # our base test command
         test_cmd = [ "sysbench"
@@ -80,15 +80,12 @@ class basicTest(mysqlBaseTestCase):
         if master_server.type == 'mysql':
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
        
-        # We sleep for a minute to wait
-        time.sleep(10) 
         # how many times to run sysbench at each concurrency
-        iterations = 1 
+        iterations = 3 
         
         # various concurrencies to use with sysbench
-        # concurrencies = [4,8,16, 32, 64, 128, 256, 512, 1024]
-        # concurrencies = [128, 256, 512 ]
-        concurrencies = [1,2] 
+        # concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        concurrencies = [ 128, 256, 512 ]
 
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
@@ -138,18 +135,20 @@ class basicTest(mysqlBaseTestCase):
 
         # Report data
         msg_data = []
-        test_concurrencies = test_data.keys()
+        test_concurrencies = [i for i in test_data.keys() if type(i) is int]
         test_concurrencies.sort()
         for concurrency in test_concurrencies:
-            msg_data.append('Concurrency: %d' %concurrency)
-            for iteration in test_data[concurrency]:
-                msg_data.append("Iteration: %d || TPS:  %s" %(iteration['iteration'], iteration['tps']))
+            msg_data.append('Concurrency: %s' %concurrency)
+            for test_iteration in test_data[concurrency]:
+                msg_data.append("Iteration: %s || TPS:  %s" %(test_iteration['iteration'], test_iteration['tps']))
         for line in msg_data:
             self.logging.info(line)
 
         # Store / analyze data in results db, if available
         if dsn_string:
             result, msg_data = sysbench_db_analysis(dsn_string, test_data)
+        print result
+        print msg_data
 
         # mailing sysbench report
         if mail_tgt:

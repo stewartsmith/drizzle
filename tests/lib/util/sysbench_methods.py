@@ -98,7 +98,7 @@ def process_sysbench_output(test_output):
             for key in regexes.keys():
                 result= regexes[key].match(line)
                 if result:
-                    iteration_data[key]= float(result.group(1)) # group(0) is entire match...
+                    run[key]= float(result.group(1)) # group(0) is entire match...
         # we set our test output to the regex'd-up data
         # we also make it a single string, separated by newlines
         parsed_test_output = str(run)[1:-1].replace(',','\n').replace("'",'')
@@ -116,44 +116,48 @@ def sysbench_db_analysis(dsn_string, test_data):
     """
 
     # log our sysbench_run
-    run_id = getNextRunID(dsn_string)
-    config_id = getConfigID(dsn_string)
+    run_id = getNextRunId(dsn_string)
+    config_id = getConfigId(dsn_string)
     log_sysbench_run( run_id
                     , config_id
-                    , test_data['server_name']
+                    , test_data['test_machine']
                     , "staging-%s" %test_data['test_server_revno']
                     , test_data['run_date']
+                    , dsn_string
                     )
-    test_concurrencies = test_data.keys()
+    test_concurrencies = [ i for i in test_data.keys() if type(i) is int ]
     test_concurrencies.sort()
     for concurrency in test_concurrencies:
         for iteration_data in test_data[concurrency]:
-            log_sysbench_iteration(run_id, concurrency, iteration_data)
+            log_sysbench_iteration(run_id, concurrency, iteration_data, dsn_string)
     msg_data = getSysbenchRegressionReport(run_id, test_data, dsn_string)
+    return 0, msg_data
 
-def log_sysbench_run(run_id, config_id, server_name, server_version, run_date):
-  """Creates a new run record in the database for this run"""
+def log_sysbench_run(run_id, config_id, server_name, server_version, run_date, dsn_string):
+    """Creates a new run record in the database for this run"""
 
-  query = """INSERT INTO bench_runs (
-             run_id
-           , config_id
-           , server
-           , version
-           , run_date
-           ) VALUES (%d, %d, '%s', '%s', '%s')
-         """ % ( run_id
-               , config_id
-               , server_name
-               , server_version
-               , run_date
-               )
+    query = """INSERT INTO bench_runs (
+               run_id
+             , config_id
+             , server
+             , version
+             , run_date
+             ) VALUES (%d, %d, '%s', '%s', '%s')
+           """ % ( run_id
+                 , config_id
+                 , server_name
+                 , server_version
+                 , run_date
+                 )
+    retcode, result= execute_query(query, dsn_string=dsn_string)
+    return result
 
 
-def log_sysbench_iteration(run_id, concurrency, iteration_data):
-  # TODO: make sure we properly capture full commentary
-  full_commentary = None
-  # Write results to the DB
-  sql= """INSERT INTO sysbench_run_iterations (
+def log_sysbench_iteration(run_id, concurrency, iteration_data, dsn_string):
+    # TODO: make sure we properly capture full commentary
+    full_commentary = None
+    # Write results to the DB
+    query = """INSERT INTO sysbench_run_iterations (
           run_id
         , concurrency
         , iteration
@@ -176,13 +180,18 @@ def log_sysbench_iteration(run_id, concurrency, iteration_data):
             , iteration_data['avg_req_lat_ms']
             , iteration_data['95p_req_lat_ms']
             )
+    retcode, result= execute_query(query, dsn_string=dsn_string)
+    return result
 
-def getSysbenchRegressionReport(run_id, test_data, diff_check_data = None):
+def getSysbenchRegressionReport(run_id, test_data, dsn_string, diff_check_data = None):
   """Returns a textual report of the regression over a series of runs"""
 
   # TODO: Allow for comparing one branch name vs. another...
   # add greater flexibility for working with such data
   bzr_branch = 'staging'
+  report_notation = ''
+  full_commentary = None
+
   (last_5_revs, last_20_revs)= get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string)
   report_text= """====================================================================================================
 SYSBENCH BENCHMARK REPORT %s
@@ -286,13 +295,13 @@ def get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string):
                       , bzr_branch
                       , run_id
                       )
-    retcode, result= execute_query(query, dsn_string=dsn_string)
+    retcode, results = execute_query(query, dsn_string=dsn_string)
     results_data = []
     for result in results:
         cur_run_id= int(result[0])
         results_data.append(str(cur_run_id))
-        last_5_revs = results_data[0:5]
-        last_20_revs = results_data[0:20]
+    last_5_revs = results_data[0:5]
+    last_20_revs = results_data[0:20]
     return (last_5_revs, last_20_revs)
 
 def getRegressionData(run_id, id_range, dsn_string):
@@ -388,7 +397,7 @@ def getConfigId(dsn_string):
       # Insert a new record for this config and return the new ID...
       query = "INSERT INTO bench_config (config_id, name) VALUES (NULL, '%s')" %benchmark_name
       retcode, result= execute_query(query, dsn_string=dsn_string)
-      return getConfigId(bench_config_name)
+      return getConfigId(dsn_string)
   else:
       config_id= int(result[0][0])
   return config_id
