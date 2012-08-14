@@ -374,6 +374,7 @@ public:
 
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf.c_str(), msgbuf.length());
+    (void)(wrv);
     assert(wrv == msgbuf.length());
 
     return false;
