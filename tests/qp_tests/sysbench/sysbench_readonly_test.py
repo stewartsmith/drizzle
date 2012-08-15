@@ -3,6 +3,7 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 #
 # Copyright (C) 2011 Patrick Crews
+# Copyright (C) 2012 M.Sharan Kumar
 #
 #
 # This program is free software; you can redistribute it and/or modify

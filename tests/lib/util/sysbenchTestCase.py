@@ -118,9 +118,6 @@ class sysbenchTestCase(mysqlBaseTestCase):
     # the __main__ code for executing sysbench oltp test
     def executeSysbench(self):
 
-        # preparing sysbench
-        self.prepareSysbench()
-
         # executing sysbench test 
         for concurrency in self.concurrencies:
             if concurrency not in self.test_data:
@@ -137,9 +134,6 @@ class sysbenchTestCase(mysqlBaseTestCase):
 
                 # gathering the data from the output
                 self.saveTestData(test_iteration,output)
-        
-        # reporting the test result
-        self.reportTestData()
 
     # utility code for saving test run information for given concurrency
     def saveTestData(self,test_iteration,concurrency,output):
@@ -163,10 +157,11 @@ class sysbenchTestCase(mysqlBaseTestCase):
         run['mode']="readonly"
         run['iteration'] = test_iteration
         self.test_data[concurrency].append(deepcopy(run))
+        return self.test_data
 
     # If provided with a results_db, we process our data
     # utility code for reporting the test data
-    def reportTestData(self):
+    def reportTestData(self,test_data):
 
         # Report data
         msg_data = []
@@ -174,7 +169,7 @@ class sysbenchTestCase(mysqlBaseTestCase):
         test_concurrencies.sort()
         for concurrency in test_concurrencies:
             msg_data.append('Concurrency: %s' %concurrency)
-            for test_iteration in self.test_data[concurrency]:
+            for test_iteration in test_data[concurrency]:
                 msg_data.append("Iteration: %s || TPS:  %s" %(test_iteration['iteration'], test_iteration['tps']))
         for line in msg_data:
             self.logging.info(line)
