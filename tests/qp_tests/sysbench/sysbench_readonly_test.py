@@ -58,6 +58,7 @@ class basicTest(mysqlBaseTestCase):
         test_data['test_machine'] = socket.gethostname()
         test_data['test_server_type'] = master_server.type
         test_data['test_server_revno'], test_data['test_server_comment'] = master_server.get_bzr_info()
+        test_data['config_name'] = 'sysbench_readonly1000k'
             
         # our base test command
         test_cmd = [ "sysbench"
@@ -81,11 +82,11 @@ class basicTest(mysqlBaseTestCase):
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
        
         # how many times to run sysbench at each concurrency
-        iterations = 2 
+        iterations = 3 
         
         # various concurrencies to use with sysbench
-        # concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-        concurrencies = [ 128, 256, 512 ]
+        concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        # concurrencies = [ 128, 256, 512 ]
 
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
