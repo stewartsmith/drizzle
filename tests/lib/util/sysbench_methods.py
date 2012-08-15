@@ -150,10 +150,6 @@ def log_sysbench_run(run_id, config_id, server_name, server_version, run_date, d
                  , run_date
                  )
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '('*80
     return result
 
 
@@ -185,10 +181,6 @@ def log_sysbench_iteration(run_id, concurrency, iteration_data, dsn_string):
             , iteration_data['95p_req_lat_ms']
             )
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '*'*80
     return result
 
 def getSysbenchRegressionReport(run_id, test_data, dsn_string, diff_check_data = None):
@@ -265,7 +257,7 @@ TRENDING OVER ALL runs %s
 ====================================================================================================
 """
 
-  results= getAllRegressionData(test_data['test_server_type'], bzr_branch, run_id, dsn_string)
+  results= getAllRegressionData(test_data['test_machine'], bzr_branch, run_id, dsn_string)
   for result in results:
     report_text= report_text + "%-6s %6s %12s %10s %10s %10s %10s %10s\n" % tuple(result)
   report_text= report_text + "===================================================================================================="
@@ -303,11 +295,7 @@ def get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string):
                       , bzr_branch
                       , run_id
                       )
-    print query
     retcode, results = execute_query(query, dsn_string=dsn_string)
-    print retcode
-    print results
-    print '@'*80
     results_data = []
     for result in results:
         cur_run_id= int(result[0])
@@ -350,10 +338,6 @@ def getRegressionData(run_id, id_range, dsn_string):
                  """ %( ",".join(id_range)
                       , run_id)
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '!'*80
     return result          
 
 def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):

@@ -81,10 +81,11 @@ class basicTest(mysqlBaseTestCase):
             test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
        
         # how many times to run sysbench at each concurrency
-        iterations = 3 
+        iterations = 2 
         
         # various concurrencies to use with sysbench
-        concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        # concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        concurrencies = [ 128, 256, 512 ]
 
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
