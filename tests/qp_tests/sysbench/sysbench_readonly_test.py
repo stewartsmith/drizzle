@@ -52,16 +52,16 @@ class basicTest(sysbenchTestCase):
     def test_sysbench_readonly(self):
 
         # preparing sysbench_readonly test
-        prepareSysbench()
-        test_cmd.append("--oltp-read-only=on")
+        self.prepareSysbench(test_executor,servers)
+        self.test_cmd.append("--oltp-read-only=on")
 
         # start the test!
         # this method takes care of *running* the test and *saving* the test results
-        test_data=executeSysbench()
+        self.executeSysbench()
 
         # reporting the test result
         # this method handles *dsn_string* and *mail_tgt*
-        reportTestData(test_data)
+        self.reportTestData(dsn_string,mail_tgt)
 
     def tearDown(self):
             server_manager.reset_servers(test_executor.name)

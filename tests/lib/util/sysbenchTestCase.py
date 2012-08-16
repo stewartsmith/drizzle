@@ -51,8 +51,10 @@ test_executor = None
 class sysbenchTestCase(mysqlBaseTestCase):
 
     # initializing test_data ( data for regression analysis )
-    def initTestData(self):
+    def initTestData(self,test_executor,servers):
+        self.test_executor = test_executor
         self.logging = test_executor.logging
+        self.servers = servers
         self.master_server = servers[0]
         self.test_data = {}
         self.test_cmd = []
@@ -88,17 +90,17 @@ class sysbenchTestCase(mysqlBaseTestCase):
             self.test_cmd.append("--mysql-socket=%s" %self.master_server.socket_file)
        
     # utility code for configuring and preparing sysbench test
-    def prepareSysbench(self):
+    def prepareSysbench(self,test_executor,servers):
 
         # creating the initial test data
-        self.initTestData()
+        self.initTestData(test_executor,servers)
         # creating the initial test command
         self.initTestCmd()
         # how many times to run sysbench at each concurrency
-        self.iterations = 3 
+        self.iterations = 1 
         # various concurrencies to use with sysbench
-        self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-
+        #self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        self.concurrencies = [16]
         
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
@@ -118,17 +120,17 @@ class sysbenchTestCase(mysqlBaseTestCase):
             if concurrency not in self.test_data:
                 self.test_data[concurrency] = []
             exec_cmd = " ".join(self.test_cmd)
-            exec_cmd += "--num-threads=%d" %self.concurrency
+            exec_cmd += " --num-threads=%d" % concurrency
             for test_iteration in range(self.iterations):
-                self.logging.info("Iteration: %d" %test_iteration)
-                retcode, output = execute_sysbench(test_executor, exec_cmd)
+                self.logging.info("Concurrency: %d Iteration: %d" % (concurrency, test_iteration+1) )
+                retcode, output = execute_sysbench(self.test_executor, exec_cmd)
                 self.assertEqual(retcode, 0, msg = output)
                 # This might be inefficient/redundant...perhaps remove later
                 parsed_output = process_sysbench_output(output)
                 self.logging.info(parsed_output)
 
                 # gathering the data from the output
-                self.saveTestData(test_iteration,output)
+                self.saveTestData(test_iteration,concurrency,output)
 
     # utility code for saving test run information for given concurrency
     def saveTestData(self,test_iteration,concurrency,output):
@@ -152,27 +154,27 @@ class sysbenchTestCase(mysqlBaseTestCase):
         run['mode']="readonly"
         run['iteration'] = test_iteration
         self.test_data[concurrency].append(deepcopy(run))
-        return self.test_data
+        #return self.test_data
 
     # If provided with a results_db, we process our data
     # utility code for reporting the test data
-    def reportTestData(self,test_data):
+    def reportTestData(self,dsn_string,mail_tgt):
 
         # Report data
         msg_data = []
-        test_concurrencies = [i for i in test_data.keys() if type(i) is int]
+        test_concurrencies = [i for i in self.test_data.keys() if type(i) is int]
         test_concurrencies.sort()
         for concurrency in test_concurrencies:
             msg_data.append('Concurrency: %s' %concurrency)
-            for test_iteration in test_data[concurrency]:
-                msg_data.append("Iteration: %s || TPS:  %s" %(test_iteration['iteration'], test_iteration['tps']))
+            for test_iteration in self.test_data[concurrency]:
+                msg_data.append("Iteration: %s || TPS:  %s" %(test_iteration['iteration']+1, test_iteration['tps']))
         for line in msg_data:
             self.logging.info(line)
 
         # Store / analyze data in results db, if available
         if dsn_string:
             result, msg_data = sysbench_db_analysis(dsn_string, self.test_data)
-        print result
+            print result
         print msg_data
 
         # mailing sysbench report
