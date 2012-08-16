@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2012-08-10 21:28+0000\n"
+"PO-Revision-Date: 2012-08-15 21:01+0000\n"
 "Last-Translator: Zbyněk Schwarz <Unknown>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2012-08-11 05:45+0000\n"
-"X-Generator: Launchpad (build 15780)\n"
+"X-Launchpad-Export-Date: 2012-08-16 04:40+0000\n"
+"X-Generator: Launchpad (build 15810)\n"
 
 msgid "Synonym for `help'."
 msgstr "Synonymum pro `nápověda'."
@@ -387,19 +387,24 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Všechna práva vyhrazena (C) 2008 Sun Microsystems\n"
+"Tento software je NAPROSTO BEZ ZÁRUKY. Toto je volný\n"
+"software a můžete ho měnit a znovu šířit s licencí GPL.\n"
 
 #, c-format
 msgid "Usage: drizzle [OPTIONS] [database]\n"
-msgstr ""
+msgstr "Použití: drizzle [VOLBY] [databáze]\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
+msgstr "Vítejte v klientu Drizzle.. Příkazy končí ; nebo \\g."
 
 #, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"ID vašeho připojení Drizzle je %u\n"
+"Verze serveru: %s\n"
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -407,14 +412,16 @@ msgstr "Čtení souboru historie %s\n"
 
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "Nelze přidělit paměť do dočasného histfile!\n"
 
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"Zadejte 'help;' nebo '\\h' pro nápovědu. Zadejte '\\c' pro vyčištění "
+"mezipaměti.\n"
 
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "Zápis souboru historie %s\n"
 
 msgid "Aborted"
 msgstr "Přerušeno"
@@ -427,143 +434,153 @@ msgstr "Dotaz přerušen od Ctrl+C\n"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
-msgstr ""
+msgstr "Zpracovávání řádku: %<PRIu32>\n"
 
 msgid "Unknown command: "
-msgstr ""
+msgstr "Neznámý příkaz: "
 
 msgid ""
 "Reading table information for completion of table and column names\n"
 "You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
+"Čtení informací tabulky pro dokončení názvů sloupců a tabulky\n"
+"Tuto funkci můžete pro zrychlení spuštění vypnout pomocí -A\n"
+"\n"
 
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "Bez připojení. Pokus o znovu připojení..."
 
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "Nelze se připojit k serveru\n"
 
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "Seznam všech příkazů Drizzle:"
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
+"Nezapomeňte, že všechny textové příkazy musí být na řádku první a končit ';'"
 
 msgid "No query specified\n"
-msgstr ""
+msgstr "Nezadán žádný dotaz\n"
 
 msgid "Ignoring query to other database"
-msgstr ""
+msgstr "Ignorování dotazu pro druhou databázi"
 
 msgid "Empty set"
-msgstr ""
+msgstr "Prázdná sada"
 
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%ld řádek v sadě"
+msgstr[1] "%ld řádky v sadě"
+msgstr[2] "%ld řádků v sadě"
 
 msgid "Query OK"
-msgstr ""
+msgstr "Dotaz v pořádku"
 
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dotaz v pořádku, ovlivněn %ld řádek"
+msgstr[1] "Dotaz v pořádku, ovlivněny %ld řádky"
+msgstr[2] "Dotaz v pořádku, ovlivněno %ld řádků"
 
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
+msgstr "Při zápisu se vyskytla chyba č. %d"
 
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
-msgstr ""
+msgstr "%s: Musíte použít volbu  --tab s --fields-...\n"
 
 #, c-format
 msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
 msgstr ""
+"%s: Nemůžete najednou použít --single-transaction a --lock-all-tables.\n"
 
 #, c-format
 msgid ""
 "%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same "
 "time.\n"
 msgstr ""
+"%s: Nemůžete najednou použít ..enclosed.. a ..optionally-enclosed..\n"
 
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
-msgstr ""
+msgstr "%s: --databases nebo --all-databases nemůžete použít s --tab.\n"
 
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "Vyskytla se chyba: %s (%d) %s"
 
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "Vyskytla se chyba: %d %s"
 
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
-msgstr ""
+msgstr "Nelze spustit '%s': %s (%d)"
 
 #, c-format
 msgid "-- Connecting to %s...\n"
-msgstr ""
+msgstr "-- Připojování k %s...\n"
 
 #, c-format
 msgid "-- Disconnecting from %s...\n"
-msgstr ""
+msgstr "-- Odpojování od %s...\n"
 
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "Nelze přidělit paměť"
 
 #, c-format
 msgid ""
 "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 "type %s\n"
 msgstr ""
+"-- Varování: Nelze použít zpožděná vložení do tabulky '%s' protože její typ "
+"je %s\n"
 
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- Získávání struktury tabulky %s...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
-msgstr ""
+msgstr "%s: Varování: Nelze nastavit volbu SQL_QUOTE_SHOW_CREATE (%s)\n"
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
-msgstr ""
+msgstr "%s: Nelze získat klíče tabulky %s\n"
 
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "Chyba: Nelze přečíst informace o stavu tabulky %s\n"
 
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
-msgstr ""
+msgstr "Chyba při získávání struktury tabulky: \"%s\""
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
-msgstr ""
+msgstr "-- Přeskakování výpisu dat tabulky '%s', bylo použito --no-data\n"
 
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
-msgstr ""
+msgstr "-- Varování: Přeskakování dat tabulky '%s' protože její typ je %s\n"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
-msgstr ""
+msgstr "-- Přeskakování výpisu dat tabulky '%s', nemá žádná pole\n"
 
 msgid "-- Sending SELECT query...\n"
-msgstr ""
+msgstr "-- Odesílání dotazu SELECT...\n"
 
 msgid "when executing 'SELECT INTO OUTFILE'"
-msgstr ""
+msgstr "při spouštění 'SELECT INTO OUTFILE'"
 
 #, c-format
 msgid ""
@@ -572,72 +589,78 @@ msgid ""
 "-- Dumping data for table %s\n"
 "--\n"
 msgstr ""
+"\n"
+"--\n"
+"-- Vypisování data tabulky %s\n"
+"--\n"
 
 msgid "-- Retrieving rows...\n"
-msgstr ""
+msgstr "-- Získávání řádků...\n"
 
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr ""
+msgstr "%s: Chyba v počtu polí tabulky: %s! Ukončování.\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
-msgstr ""
+msgstr "%s: Chyba čtení polí tabulky: %s (%d:%s) ! Ukončování.\n"
 
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
-msgstr ""
+msgstr "-- %<PRIu32> z ~%<PRIu64> řádků vypsáno z tabulky %s\n"
 
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
-msgstr ""
+msgstr "Nedostatek polí z tabulky %s! Ukončování.\n"
 
 msgid "when doing refresh"
-msgstr ""
+msgstr "při provádění obnovení"
 
 msgid "alloc_root failure."
-msgstr ""
+msgstr "chyba alloc_root."
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "Nelze získat tabulku: \"%s\""
 
 #, c-format
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
+"Varování: Nelze přečíst klíče z tabulky %s; záznamy NEJSOU seřazeny (%s)\n"
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
-msgstr ""
+msgstr "Chyba: Nedostatek paměti pro uložení klauzule ORDER BY\n"
 
 msgid ""
 "Number of rows before each output progress report (requires --verbose)."
 msgstr ""
+"Počet řádků před každým výstupem hlášení o postupu (vyžaduje --verbose)."
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
+msgstr "Použití: %s [VOLBY] databáze [tabulky]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "OR     %s [VOLBY] --databases [VOLBY] DB1 [DB2 DB3...]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
+msgstr "OR     %s [VOLBY] --all-databases  [VOLBY]\n"
 
 #, c-format
 msgid "Value supplied for port is not valid.\n"
-msgstr ""
+msgstr "Hodnota zadaná pro port není platná.\n"
 
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "Vstupní název souboru je příliš dlouhý: %s"
 
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s  Drizzle %s libdrizzle %s, pro %s-%s (%s)\n"
 
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
