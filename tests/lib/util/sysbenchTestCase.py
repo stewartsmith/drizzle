@@ -67,35 +67,14 @@ class sysbenchTestCase(mysqlBaseTestCase):
         self.test_data['test_server_type'] = self.master_server.type
         self.test_data['test_server_revno'], self.test_data['test_server_comment'] = self.master_server.get_bzr_info()
         
-    # initializing test_cmd ( test commands for generic sysbench test [ readonly / readwrite ] )
-    def initTestCmd(self):    
-        # our base test command  
-        self.test_cmd.extend( [ "sysbench"
-                              , "--max-time=240"
-                              , "--max-requests=0"
-                              , "--test=oltp"
-                              , "--db-ps-mode=disable"
-                              , "--%s-table-engine=innodb" %self.master_server.type
-                              , "--oltp-table-size=1000000"
-                              , "--%s-user=root" %self.master_server.type
-                              , "--%s-db=test" %self.master_server.type
-                              , "--%s-port=%d" %(self.master_server.type, self.master_server.master_port)
-                              , "--%s-host=localhost" %self.master_server.type
-                              , "--db-driver=%s" %self.master_server.type
-                              ] )
-
-        if self.master_server.type == 'drizzle':
-            self.test_cmd.append("--drizzle-mysql=on")
-        if self.master_server.type == 'mysql':
-            self.test_cmd.append("--mysql-socket=%s" %self.master_server.socket_file)
        
     # utility code for configuring and preparing sysbench test
-    def prepareSysbench(self,test_executor,servers):
+    def prepareSysbench(self,test_cmd,test_executor,servers):
 
         # creating the initial test data
         self.initTestData(test_executor,servers)
         # creating the initial test command
-        self.initTestCmd()
+        self.test_cmd = test_cmd
         # how many times to run sysbench at each concurrency
         self.iterations = 1 
         # various concurrencies to use with sysbench

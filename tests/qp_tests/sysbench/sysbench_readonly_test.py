@@ -51,9 +51,30 @@ class basicTest(sysbenchTestCase):
 
     def test_sysbench_readonly(self):
 
+        # defining the test command
+        master_server = servers[0]
+        test_cmd = [ "sysbench"
+                   , "--max-time=240"
+                   , "--max-requests=0"
+                   , "--test=oltp"
+                   , "--db-ps-mode=disable"
+                   , "--%s-table-engine=innodb" %master_server.type
+                   , "--oltp-read-only=on"
+                   , "--oltp-table-size=1000000"
+                   , "--%s-user=root" %master_server.type
+                   , "--%s-db=test" %master_server.type
+                   , "--%s-port=%d" %(master_server.type, master_server.master_port)
+                   , "--%s-host=localhost" %master_server.type
+                   , "--db-driver=%s" %master_server.type
+                   ]
+
+        if master_server.type == 'drizzle':
+            test_cmd.append("--drizzle-mysql=on")
+        if master_server.type == 'mysql':
+            test_cmd.append("--mysql-socket=%s" %master_server.socket_file)
+
         # preparing sysbench_readonly test
-        self.prepareSysbench(test_executor,servers)
-        self.test_cmd.append("--oltp-read-only=on")
+        self.prepareSysbench(test_cmd,test_executor,servers)
 
         # start the test!
         # this method takes care of *running* the test and *saving* the test results
