@@ -50,20 +50,15 @@ test_executor = None
 
 class sysbenchTestCase(mysqlBaseTestCase):
 
-    # creating required variables for holding various test data
-    def __init__(self):
+    # initializing test_data ( data for regression analysis )
+    def initTestData(self):
         self.logging = test_executor.logging
         self.master_server = servers[0]
         self.test_data = {}
         self.test_cmd = []
         self.iterations = 0
-        self.concurrencies = [] 
-
-    # utility codes for initialization
-
-    # initializing test_data ( data for regression analysis )
-    def initTestData(self):
-   
+        self.concurrencies = []
+ 
         # data for results database / regression analysis
         self.test_data['run_date']= datetime.datetime.now().isoformat()
         self.test_data['test_machine'] = socket.gethostname()
