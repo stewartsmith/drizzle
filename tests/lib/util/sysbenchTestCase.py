@@ -153,8 +153,7 @@ class sysbenchTestCase(mysqlBaseTestCase):
         # Store / analyze data in results db, if available
         if dsn_string:
             result, msg_data = sysbench_db_analysis(dsn_string, self.test_data)
-            print result
-        print msg_data
+        self.logging.info(msg_data)
 
         # mailing sysbench report
         if mail_tgt:
