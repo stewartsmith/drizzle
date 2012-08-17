@@ -117,7 +117,7 @@ def sysbench_db_analysis(dsn_string, test_data):
 
     # log our sysbench_run
     run_id = getNextRunId(dsn_string)
-    config_id = getConfigId(dsn_string)
+    config_id = getConfigId(dsn_string, test_data)
     log_sysbench_run( run_id
                     , config_id
                     , test_data['test_machine']
@@ -150,10 +150,6 @@ def log_sysbench_run(run_id, config_id, server_name, server_version, run_date, d
                  , run_date
                  )
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '('*80
     return result
 
 
@@ -185,10 +181,6 @@ def log_sysbench_iteration(run_id, concurrency, iteration_data, dsn_string):
             , iteration_data['95p_req_lat_ms']
             )
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '*'*80
     return result
 
 def getSysbenchRegressionReport(run_id, test_data, dsn_string, diff_check_data = None):
@@ -220,7 +212,7 @@ TRENDING OVER LAST 5 runs %s
   , test_data['test_machine']
   , run_id
   , test_data['run_date']
-  , 'sysbench'
+  , test_data['config_name'] 
   , test_data['test_server_type']
   , bzr_branch 
   , int(test_data['test_server_revno'])
@@ -265,7 +257,7 @@ TRENDING OVER ALL runs %s
 ====================================================================================================
 """
 
-  results= getAllRegressionData(test_data['test_server_type'], bzr_branch, run_id, dsn_string)
+  results= getAllRegressionData(test_data['test_machine'], bzr_branch, run_id, dsn_string, test_data)
   for result in results:
     report_text= report_text + "%-6s %6s %12s %10s %10s %10s %10s %10s\n" % tuple(result)
   report_text= report_text + "===================================================================================================="
@@ -293,21 +285,18 @@ def get5and20RevisionRanges(run_id, bzr_branch, test_data, dsn_string):
                 run_id
                 FROM bench_config c
                 NATURAL JOIN bench_runs r
-                WHERE c.name = 'sysbench'
+                WHERE c.name = '%s'
                 AND r.server = '%s'
                 AND r.version LIKE '%s%%'
                 AND r.run_id <= %d
                 ORDER BY run_id DESC
                 LIMIT 20
-                """ % ( test_data['test_machine']
+                """ % ( test_data['config_name']
+                      , test_data['test_machine']
                       , bzr_branch
                       , run_id
                       )
-    print query
     retcode, results = execute_query(query, dsn_string=dsn_string)
-    print retcode
-    print results
-    print '@'*80
     results_data = []
     for result in results:
         cur_run_id= int(result[0])
@@ -350,13 +339,9 @@ def getRegressionData(run_id, id_range, dsn_string):
                  """ %( ",".join(id_range)
                       , run_id)
     retcode, result= execute_query(query, dsn_string=dsn_string)
-    print query
-    print retcode
-    print result
-    print '!'*80
     return result          
 
-def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):
+def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string, test_data):
     query = """ SELECT 
                 i.concurrency
                 , ROUND(AVG(i.tps), 2) AS tps
@@ -382,7 +367,7 @@ def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):
                   FROM bench_config conf
                   NATURAL JOIN bench_runs runs
                   NATURAL JOIN sysbench_run_iterations iter
-                  WHERE conf.name = 'sysbench'
+                  WHERE conf.name = '%s'
                   AND runs.server = '%s'
                   AND runs.version LIKE '%s%%'
                   GROUP BY iter.concurrency
@@ -391,7 +376,8 @@ def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):
                 WHERE r.run_id = %d
                 GROUP BY i.concurrency
                 ORDER BY i.concurrency
-                      """ % ( server_name
+                      """ % ( test_data['config_name']
+                            , server_name
                             , bzr_branch
                             , run_id
                             )
@@ -399,21 +385,21 @@ def getAllRegressionData(server_name, bzr_branch, run_id, dsn_string):
     retcode, result= execute_query(query, dsn_string=dsn_string)
     return result
 
-def getConfigId(dsn_string):
+def getConfigId(dsn_string, test_data):
   """Returns the integer ID of the configuration name used in this run."""
 
   # If we have not already done so, we query the local DB for the ID
   # matching this sqlbench config name.  If none is there, we insert
   # a new record in the bench_config table and return the newly generated
   # identifier.
-  benchmark_name = 'sysbench'
+  benchmark_name = test_data['config_name'] 
   query = "SELECT config_id FROM bench_config WHERE name = '%s'" %benchmark_name
   retcode, result= execute_query(query, dsn_string=dsn_string)
   if len(result) == 0:
       # Insert a new record for this config and return the new ID...
       query = "INSERT INTO bench_config (config_id, name) VALUES (NULL, '%s')" %benchmark_name
       retcode, result= execute_query(query, dsn_string=dsn_string)
-      return getConfigId(dsn_string)
+      return getConfigId(dsn_string, test_data)
   else:
       config_id= int(result[0][0])
   return config_id
