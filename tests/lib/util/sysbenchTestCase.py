@@ -35,15 +35,6 @@ from lib.util.mysqlBaseTestCase import mysqlBaseTestCase
 from lib.util.database_connect import results_db_connect
 from lib.util.mailing_report import sendMail
 
-# TODO:  make server_options vary depending on the type of server being used here
-
-# drizzle options
-server_requirements = [['innodb.buffer-pool-size=256M innodb.log-file-size=64M innodb.log-buffer-size=8M innodb.thread-concurrency=0 innodb.additional-mem-pool-size=16M table-open-cache=4096 table-definition-cache=4096 mysql-protocol.max-connections=2048']]
-
-# mysql options
-#server_requirements = [['innodb_buffer_pool_size=256M innodb_log_file_size=64M innodb_log_buffer_size=8M innodb_thread_concurrency=0 innodb_additional_mem_pool_size=16M table_open_cache=4096 table_definition_cache=4096 max_connections=2048']]
-
-
 servers = []
 server_manager = None
 test_executor = None
@@ -66,6 +57,7 @@ class sysbenchTestCase(mysqlBaseTestCase):
         self.test_data['test_machine'] = socket.gethostname()
         self.test_data['test_server_type'] = self.master_server.type
         self.test_data['test_server_revno'], self.test_data['test_server_comment'] = self.master_server.get_bzr_info()
+        self.test_data['config_name'] = self.config_name
         
        
     # utility code for configuring and preparing sysbench test
@@ -76,10 +68,10 @@ class sysbenchTestCase(mysqlBaseTestCase):
         # creating the initial test command
         self.test_cmd = test_cmd
         # how many times to run sysbench at each concurrency
-        self.iterations = 1 
+        self.iterations = 3 
         # various concurrencies to use with sysbench
-        #self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
-        self.concurrencies = [16]
+        # self.concurrencies = [16, 32, 64, 128, 256, 512, 1024 ]
+        self.concurrencies = [ 128, 256, 512 ]
         
         # we setup once.  This is a readonly test and we don't
         # alter the test bed once it is created
