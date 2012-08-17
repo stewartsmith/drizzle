@@ -53,6 +53,7 @@ class basicTest(sysbenchTestCase):
 
         # defining the test command
         master_server = servers[0]
+        self.config_name = 'innodb_1000K_readonly'
         test_cmd = [ "sysbench"
                    , "--max-time=240"
                    , "--max-requests=0"

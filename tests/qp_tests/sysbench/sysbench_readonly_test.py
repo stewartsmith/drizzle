@@ -53,6 +53,7 @@ class basicTest(sysbenchTestCase):
 
         # defining the test command
         master_server = servers[0]
+        self.config_name = 'innodb_1000K_readonly'
         test_cmd = [ "sysbench"
                    , "--max-time=240"
                    , "--max-requests=0"
@@ -67,7 +68,6 @@ class basicTest(sysbenchTestCase):
                    , "--%s-host=localhost" %master_server.type
                    , "--db-driver=%s" %master_server.type
                    ]
-
         if master_server.type == 'drizzle':
             test_cmd.append("--drizzle-mysql=on")
         if master_server.type == 'mysql':
