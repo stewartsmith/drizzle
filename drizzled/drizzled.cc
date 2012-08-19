@@ -1411,6 +1411,12 @@ bool init_variables_after_daemonizing(module::Registry &plugins)
 
   full_options.add(plugin_options);
 
+  if ( was_help_requested())
+  {
+	  bool usage();
+	  usage();
+  }
+
   vector<string> final_unknown_options;
   try
   {
@@ -2191,10 +2197,6 @@ static void get_options()
 
 static void fix_paths()
 {
-  if (vm.count("help"))
-  {
-    return;
-  }
 
   {
     if (pid_file.string().size() and pid_file.string()[0] == '/')
