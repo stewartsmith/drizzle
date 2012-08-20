@@ -30,8 +30,10 @@
 
 using namespace std;
 
-namespace drizzle_plugin
-{
+namespace drizzle_plugin {
+namespace rabbitmq {
+
+extern bool sysvar_logging_enable;
 
 RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost, 
                                  const in_port_t rabbitMQPort, 
@@ -48,7 +50,8 @@ RabbitMQHandler::RabbitMQHandler(const std::string &rabbitMQHost,
     password(rabbitMQPassword),
     virtualhost(rabbitMQVirtualhost),
     exchange(rabbitMQExchange), 
-    routingKey(rabbitMQRoutingKey)
+    routingKey(rabbitMQRoutingKey),
+    rabbitmq_connection_established(false)
 {
   pthread_mutex_init(&publishLock, NULL);
   connect();
@@ -64,6 +67,10 @@ void RabbitMQHandler::publish(void *message,
                               const int length)
 throw(rabbitmq_handler_exception)
 {
+  // return if query logging is not enabled
+  //if (sysvar_logging_enable == false)
+  //    return;
+
   pthread_mutex_lock(&publishLock);
   amqp_bytes_t b;
   b.bytes= message;
@@ -112,25 +119,34 @@ void RabbitMQHandler::connect() throw(rabbitmq_handler_exception) {
   sockfd = amqp_open_socket(hostname.c_str(), port);
   if(sockfd < 0) 
   {
-    throw rabbitmq_handler_exception(_("Could not open socket, is rabbitmq running?"));
+    rabbitmq_connection_established= false;
+    return;
   }
-  amqp_set_sockfd(rabbitmqConnection, sockfd);
-  /* login to rabbitmq, handleAMQPError throws exception if there is a problem */
-  handleAMQPError(amqp_login(rabbitmqConnection, 
-                             virtualhost.c_str(), 
-                             0, 
-                             131072, 
-                             0, 
-                             AMQP_SASL_METHOD_PLAIN, 
-                             username.c_str(), 
-                             password.c_str()), 
-                  "rabbitmq login");
-  /* open the channel */
-  amqp_channel_open(rabbitmqConnection, 1);
-  handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
-  amqp_table_t empty_table = { 0, NULL }; // for users of old librabbitmq users - amqp_empty_table did not exist
-  amqp_exchange_declare(rabbitmqConnection, 1, amqp_cstring_bytes(exchange.c_str()), amqp_cstring_bytes("fanout"), 0, 0, empty_table);
-  handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
+  try
+  {
+    amqp_set_sockfd(rabbitmqConnection, sockfd);
+    /* login to rabbitmq, handleAMQPError throws exception if there is a problem */
+    handleAMQPError(amqp_login(rabbitmqConnection, 
+                               virtualhost.c_str(), 
+                               0, 
+                               131072, 
+                               0, 
+                               AMQP_SASL_METHOD_PLAIN, 
+                               username.c_str(), 
+                               password.c_str()), 
+                    "rabbitmq login");
+    /* open the channel */
+    amqp_channel_open(rabbitmqConnection, 1);
+    handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
+    amqp_table_t empty_table = { 0, NULL }; // for users of old librabbitmq users - amqp_empty_table did not exist
+    amqp_exchange_declare(rabbitmqConnection, 1, amqp_cstring_bytes(exchange.c_str()), amqp_cstring_bytes("fanout"), 0, 0, empty_table);
+    handleAMQPError(amqp_get_rpc_reply(rabbitmqConnection), "RPC Reply");
+    rabbitmq_connection_established= true;
+  }
+  catch(exception& e)
+  {
+    rabbitmq_connection_established= false;
+  }
 }
 
 void RabbitMQHandler::handleAMQPError(amqp_rpc_reply_t x, string context) throw(rabbitmq_handler_exception)
@@ -162,4 +178,5 @@ void RabbitMQHandler::handleAMQPError(amqp_rpc_reply_t x, string context) throw(
   }
 }
 
+} /* namespace rabbitmq */
 } /* namespace drizzle_plugin */
